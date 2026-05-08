@@ -4,7 +4,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords, Folder, Check, Play, Clock, Ban, Heart, BarChart2, TrendingUp, ListOrdered, Globe, Lock } from "lucide-react";
+import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords, Folder, Check, Play, Clock, Ban, Heart, BarChart2, TrendingUp, ListOrdered, Globe, Lock, Bookmark } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -854,16 +854,16 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
             )}
             <div className="h-px bg-gray-100 mt-1" />
             {/* Row 1: Take · Review · Poll */}
-            <div className="flex items-center px-3 pt-2.5 pb-0 gap-1.5">
+            <div className="flex items-center px-3 pt-3 pb-0 gap-2">
               {([
-                { key: 'thought'  as const, label: 'Take',   icon: <Flame size={13} /> },
-                { key: 'review'   as const, label: 'Review', icon: <Star size={13} /> },
-                { key: 'question' as const, label: 'Poll',   icon: <BarChart2 size={13} /> },
+                { key: 'thought'  as const, label: 'Take',   icon: <Flame size={15} /> },
+                { key: 'review'   as const, label: 'Review', icon: <Star size={15} /> },
+                { key: 'question' as const, label: 'Poll',   icon: <BarChart2 size={15} /> },
               ] as const).map(({ key, label, icon }) => (
                 <button
                   key={key}
                   onClick={() => setTrackPostType(key)}
-                  className={`flex items-center gap-1 px-3 py-1.5 text-sm font-semibold transition-colors whitespace-nowrap rounded-full ${
+                  className={`flex items-center gap-1.5 px-3.5 py-2 text-[15px] font-semibold transition-colors whitespace-nowrap rounded-full ${
                     trackPostType === key ? 'text-purple-700 bg-purple-50' : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
@@ -872,18 +872,16 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                 </button>
               ))}
             </div>
-            {/* Row 2: Rank · Prediction */}
-            <div className="flex items-center px-3 pt-1 pb-1 gap-1.5">
+            {/* Row 2: Rank · Prediction · List */}
+            <div className="flex items-center px-3 pt-1.5 pb-1.5 gap-2">
               {([
-                { key: 'rank'       as const, label: 'Rank',       icon: <ListOrdered size={13} /> },
-                { key: 'prediction' as const, label: 'Prediction', icon: <TrendingUp size={13} /> },
-              ] as const).map(({ key, label, icon }) => (
+                { key: 'rank'       as const, label: 'Rank',       icon: <ListOrdered size={15} />, action: () => setShowCreateRankDialog(true) },
+                { key: 'prediction' as const, label: 'Prediction', icon: <TrendingUp size={15} />,  action: () => setTrackPostType('prediction') },
+              ] as const).map(({ key, label, icon, action }) => (
                 <button
                   key={key}
-                  onClick={() => {
-                    if (key === 'rank') { setShowCreateRankDialog(true); } else { setTrackPostType(key); }
-                  }}
-                  className={`flex items-center gap-1 px-3 py-1.5 text-sm font-semibold transition-colors whitespace-nowrap rounded-full ${
+                  onClick={action}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 text-[15px] font-semibold transition-colors whitespace-nowrap rounded-full ${
                     trackPostType === key ? 'text-purple-700 bg-purple-50' : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
@@ -891,18 +889,26 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                   <span>{label}</span>
                 </button>
               ))}
+              {/* List shortcut */}
+              <button
+                onClick={() => setIsListDrawerOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-[15px] font-semibold transition-colors whitespace-nowrap rounded-full text-gray-400 hover:text-gray-600"
+              >
+                <Bookmark size={15} />
+                <span>List</span>
+              </button>
             </div>
             <div className="h-px bg-gray-100" />
             {/* Post button */}
-            <div className="px-3 py-2.5">
+            <div className="px-3 py-3">
               <button
                 onClick={handlePost}
                 disabled={!canPost() || isPosting}
-                className="rounded-full bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white text-sm font-bold px-6 py-2 transition-colors shadow-sm"
+                className="rounded-full bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white text-[15px] font-bold px-7 py-2.5 transition-colors shadow-sm"
                 data-testid="submit-action-inline"
               >
                 {isPosting ? (
-                  <Loader2 className="animate-spin" size={14} />
+                  <Loader2 className="animate-spin" size={15} />
                 ) : (
                   roomId ? "Share" :
                   trackPostType === 'rank' ? "Add to Rank" :
@@ -914,15 +920,15 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
 
           {/* ── Rating (below composer, for review / prediction) ── */}
           {(trackPostType === 'review' || trackPostType === 'prediction') && (
-            <div className="flex items-center gap-2 px-1">
-              <span className="text-sm text-gray-600">Rating:</span>
-              <div className="relative flex gap-0.5">
+            <div className="flex items-center gap-3 px-1">
+              <span className="text-base font-medium text-gray-600">Rating:</span>
+              <div className="relative flex gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <div key={star} className="relative" style={{ width: 24, height: 24 }}>
-                    <Star className="w-6 h-6 text-gray-300 absolute inset-0" />
+                  <div key={star} className="relative" style={{ width: 30, height: 30 }}>
+                    <Star className="w-[30px] h-[30px] text-gray-300 absolute inset-0" />
                     <div className="absolute inset-0 overflow-hidden pointer-events-none"
                       style={{ width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%' }}>
-                      <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+                      <Star className="w-[30px] h-[30px] fill-yellow-400 text-yellow-400" />
                     </div>
                   </div>
                 ))}
@@ -931,7 +937,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   style={{ margin: 0 }} data-testid="rating-slider" />
               </div>
-              {ratingValue > 0 && <span className="text-sm font-medium text-gray-700">{ratingValue}/5</span>}
+              {ratingValue > 0 && <span className="text-sm font-semibold text-gray-700">{ratingValue}/5</span>}
             </div>
           )}
 
@@ -1592,24 +1598,24 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   return (
     <>
     <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <SheetContent side="bottom" className="rounded-t-3xl h-[92svh] !bg-white border-t border-gray-100 flex flex-col overflow-hidden p-0" style={{ backgroundColor: 'white', height: '92svh' }}>
+      <SheetContent side="bottom" className="rounded-t-3xl h-[92svh] !bg-white flex flex-col overflow-hidden p-0" style={{ backgroundColor: 'white', height: '92svh' }}>
         {/* ── Gradient header ── */}
         <div
-          className="flex-shrink-0 rounded-t-3xl px-5 pt-5 pb-5 flex items-center relative"
-          style={{ background: 'linear-gradient(160deg, #3b1f6e 0%, #5b2d8e 45%, #7c3aed 100%)' }}
+          className="flex-shrink-0 rounded-t-3xl px-5 pt-7 pb-7 flex items-center relative"
+          style={{ background: 'linear-gradient(160deg, #09031a 0%, #140730 40%, #1e0d4a 70%, #2d1269 100%)' }}
         >
           {selectedIntent && (
-            <button onClick={handleBack} className="absolute left-4 p-2 rounded-full hover:bg-white/20 transition-colors" data-testid="back-button">
-              <ArrowLeft size={20} className="text-white" />
+            <button onClick={handleBack} className="absolute left-4 p-2 rounded-full hover:bg-white/10 transition-colors" data-testid="back-button">
+              <ArrowLeft size={20} className="text-white/80" />
             </button>
           )}
           <div className="flex-1 text-center">
-            <h2 className="text-white text-xl font-bold tracking-tight">
+            <h2 className="text-white text-2xl font-bold tracking-tight">
               {selectedIntent ? getSheetTitle() : "What's on your mind?"}
             </h2>
-            <p className="text-purple-200 text-xs mt-0.5">
-              {selectedIntent ? '' : 'Share, rate, rank, or predict'}
-            </p>
+            {!selectedIntent && (
+              <p className="text-purple-300/70 text-sm mt-1">Share, rate, rank, or predict</p>
+            )}
           </div>
         </div>
 
