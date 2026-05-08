@@ -3128,7 +3128,6 @@ export default function PoolDetailPage() {
                               {tName[0].toUpperCase()}
                             </div>
                             <span className="text-[11px] font-semibold text-gray-700">{tName}</span>
-                            <span className="text-[10px] text-gray-400">· {timeAgo(t.created_at)}</span>
                             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full ml-auto" style={{ color: tagInfo.color, background: tagInfo.bg }}>
                               {tagInfo.icon} {tagInfo.label}
                             </span>
@@ -3144,6 +3143,7 @@ export default function PoolDetailPage() {
                               <MessageCircle size={13} />
                               <span>{t.reply_count || 0} {t.reply_count === 1 ? 'reply' : 'replies'}</span>
                             </button>
+                            <span className="text-[10px] text-gray-400 ml-auto">{timeAgo(t.created_at)}</span>
                           </div>
                         </div>
                       </div>
