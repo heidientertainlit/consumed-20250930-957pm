@@ -861,9 +861,74 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                 </div>
               )}
 
-              {/* Rating - only for review / prediction */}
+              {/* Composer card: textarea → hairline → type pills + Post pill */}
+              <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white">
+                {/* Text area — borderless inside the card */}
+                {trackPostType !== 'rank' && (
+                  <textarea
+                    value={contentText}
+                    onChange={(e) => setContentText(e.target.value)}
+                    placeholder={
+                      trackPostType === 'thought'    ? "What's your take?" :
+                      trackPostType === 'review'     ? "Write your review..." :
+                      trackPostType === 'prediction' ? "What do you predict?" :
+                      trackPostType === 'question'   ? "Ask fans a question to vote on…" :
+                      ""
+                    }
+                    className="w-full px-4 pt-3 pb-2 resize-none text-sm text-gray-900 bg-transparent border-0 outline-none focus:outline-none focus:ring-0"
+                    style={{ boxShadow: 'none' }}
+                    rows={trackPostType === 'thought' ? 3 : 2}
+                  />
+                )}
+                {trackPostType === 'rank' && (
+                  <div className="px-4 pt-3 pb-2 text-sm text-gray-400 min-h-[2.5rem]">Select a rank below…</div>
+                )}
+
+                {/* Hairline separator */}
+                <div className="h-px bg-gray-100" />
+
+                {/* Type pills + Post pill button */}
+                <div className="flex items-center px-2 py-1.5 gap-0.5 flex-wrap">
+                  {([
+                    { key: 'thought'    as const, label: 'Take',       icon: <Flame size={11} /> },
+                    { key: 'review'     as const, label: 'Review',     icon: <Star size={11} /> },
+                    { key: 'question'   as const, label: 'Poll',       icon: <BarChart2 size={11} /> },
+                    { key: 'rank'       as const, label: 'Rank',       icon: <ListOrdered size={11} /> },
+                    { key: 'prediction' as const, label: 'Prediction', icon: <TrendingUp size={11} /> },
+                  ] as const).map(({ key, label, icon }) => (
+                    <button
+                      key={key}
+                      onClick={() => setTrackPostType(key)}
+                      className={`flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium transition-colors whitespace-nowrap rounded-full ${
+                        trackPostType === key ? 'text-purple-700 bg-purple-50' : 'text-gray-400 hover:text-gray-600'
+                      }`}
+                    >
+                      {icon}
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                  <div className="flex-1" />
+                  <button
+                    onClick={handlePost}
+                    disabled={!canPost() || isPosting}
+                    className="rounded-full bg-purple-500 hover:bg-purple-600 disabled:opacity-40 text-white text-[13px] font-semibold px-4 py-1.5 shrink-0 ml-1 transition-colors"
+                    data-testid="submit-action-inline"
+                  >
+                    {isPosting ? (
+                      <Loader2 className="animate-spin" size={14} />
+                    ) : (
+                      roomId ? "Share" :
+                      trackPostType === 'rank'   ? "Add to Rank" :
+                      trackPostType === 'review' ? "Add Media" :
+                      "Post"
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Rating — below the card, for review / prediction */}
               {(trackPostType === 'review' || trackPostType === 'prediction') && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-1">
                   <span className="text-sm text-gray-600">Rating:</span>
                   <div className="relative flex gap-0.5">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -888,47 +953,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                   </div>
                   {ratingValue > 0 && <span className="text-sm font-medium text-gray-700">{ratingValue}/5</span>}
                 </div>
-              )}
-
-              {/* Post type selector — flat icon+text bar */}
-              <div className="flex items-center gap-0 border-t border-b border-gray-100 py-2 -mx-1">
-                {([
-                  { key: 'thought'    as const, label: 'Take',       icon: <Flame size={12} /> },
-                  { key: 'review'     as const, label: 'Review',     icon: <Star size={12} /> },
-                  { key: 'question'   as const, label: 'Poll',       icon: <BarChart2 size={12} /> },
-                  { key: 'rank'       as const, label: 'Rank',       icon: <ListOrdered size={12} /> },
-                  { key: 'prediction' as const, label: 'Prediction', icon: <TrendingUp size={12} /> },
-                ] as const).map(({ key, label, icon }, i, arr) => (
-                  <button
-                    key={key}
-                    onClick={() => setTrackPostType(key)}
-                    className={`flex items-center gap-1 px-3 py-1 text-[13px] font-medium transition-colors whitespace-nowrap ${
-                      i < arr.length - 1 ? 'border-r border-gray-200' : ''
-                    } ${
-                      trackPostType === key ? 'text-purple-700' : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    {icon}
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Text area — hidden for Rank tab */}
-              {trackPostType !== 'rank' && (
-                <textarea
-                  value={contentText}
-                  onChange={(e) => setContentText(e.target.value)}
-                  placeholder={
-                    trackPostType === 'thought'    ? "What's your take?" :
-                    trackPostType === 'review'     ? "Write your review..." :
-                    trackPostType === 'prediction' ? "What do you predict?" :
-                    trackPostType === 'question'   ? "Ask fans a question to vote on…" :
-                    ""
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none text-sm"
-                  rows={trackPostType === 'thought' ? 4 : 3}
-                />
               )}
 
               {/* Poll / Prediction options */}
@@ -1675,7 +1699,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
               renderActionContent()
             )}
             
-            {selectedAction && selectedAction !== "challenge" && (selectedAction !== "rank" || (selectedAction === "rank" && userRanks.length > 0)) && (
+            {selectedAction && selectedAction !== "challenge" && selectedAction !== "track" && (selectedAction !== "rank" || (selectedAction === "rank" && userRanks.length > 0)) && (
               <div className="pt-4 pb-20 space-y-3">
                 {roomId && (selectedAction === "post" || selectedAction === "track") && (
                   <button
