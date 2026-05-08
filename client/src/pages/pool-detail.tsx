@@ -1175,27 +1175,44 @@ function PlayTriviaCard({ poll, token, onVoted }: { poll: any; token: string; on
   const isCorrect = hasVoted && myVote?.toLowerCase() === correctAnswer.toLowerCase();
 
   const handleVote = async (option: string) => {
-    if (hasVoted || submitting || !token) return;
+    if (hasVoted || submitting) return;
     setSubmitting(true);
     setMyVote(option);
     setCounts(prev => ({ ...prev, [option]: (prev[option] || 0) + 1 }));
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/predictions`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pool_id: poll.id, prediction: option }),
-      });
-      const data = await res.json();
-      if (data.error) {
-        setMyVote(null);
-        setCounts(prev => ({ ...prev, [option]: Math.max(0, (prev[option] || 1) - 1) }));
-        toast({ title: data.error, variant: 'destructive' });
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error('Not logged in');
+
+      const isCorrect = !!correctAnswer && option.toLowerCase() === correctAnswer.toLowerCase();
+      const pointsEarned = isCorrect ? (poll.points_reward || 10) : 0;
+
+      const { error } = await supabase
+        .from('user_predictions')
+        .insert({
+          user_id: user.id,
+          pool_id: poll.id,
+          prediction: option,
+          points_earned: pointsEarned,
+        });
+
+      if (error) {
+        if (error.code === '23505' || error.message?.includes('duplicate')) {
+          toast({ title: 'Already answered', variant: 'destructive' });
+        } else {
+          setMyVote(null);
+          setCounts(prev => ({ ...prev, [option]: Math.max(0, (prev[option] || 1) - 1) }));
+          toast({ title: error.message, variant: 'destructive' });
+        }
       } else {
-        const answeredCorrectly = !!correctAnswer && option.toLowerCase() === correctAnswer.toLowerCase();
-        onVoted(answeredCorrectly);
+        if (pointsEarned > 0) {
+          await supabase.rpc('increment_trivia_points', { uid: user.id, pts: pointsEarned });
+        }
+        onVoted(isCorrect);
       }
-    } catch {
-      toast({ title: 'Network error', variant: 'destructive' });
+    } catch (err: any) {
+      setMyVote(null);
+      setCounts(prev => ({ ...prev, [option]: Math.max(0, (prev[option] || 1) - 1) }));
+      toast({ title: err.message || 'Network error', variant: 'destructive' });
     }
     setSubmitting(false);
   };
@@ -1769,7 +1786,7 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
   onManagePick: (id: string, action: 'close' | 'delete') => void;
 }) {
   const isPartnerRoom = featuredPolls.length > 0;
-  const [filter, setFilter] = useState<'all' | 'trivia' | 'vote' | 'dna'>('all');
+  const [filter, setFilter] = useState<'all' | 'trivia'>('all');
   const [showSearch, setShowSearch] = useState('');
   const [correctStreak, setCorrectStreak] = useState(0);
   const [streakBanner, setStreakBanner] = useState<{ message: string; sub: string; streak: number } | null>(null);
@@ -1920,8 +1937,6 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
 
   // Partner room: categorized game sections
   const triviaPolls = featuredPolls.filter(p => p.type === 'trivia' || (p.category || '').includes('trivia'));
-  const headToHeadPolls = featuredPolls.filter(p => p.category === 'head_to_head');
-  const dnaPolls = featuredPolls.filter(p => p.category === 'entertainment_dna');
 
   // Group trivia by show_tag, applying search filter
   const triviaByShow: Record<string, any[]> = {};
@@ -1936,13 +1951,9 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
   const FILTER_PILLS = [
     { key: 'all', label: 'All' },
     { key: 'trivia', label: 'Trivia' },
-    { key: 'vote', label: 'Cast Your Vote' },
-    { key: 'dna', label: 'Entertainment DNA' },
   ] as const;
 
   const showTrivia = filter === 'all' || filter === 'trivia';
-  const showVote = filter === 'all' || filter === 'vote';
-  const showDna = filter === 'all' || filter === 'dna';
 
   return (
     <>
