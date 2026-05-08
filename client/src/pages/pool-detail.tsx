@@ -2891,45 +2891,22 @@ export default function PoolDetailPage() {
               )}
             </h1>
             {!isLoading && (
-              <p className="text-white/50 text-[12px] mb-2">
-                {members.length} {members.length === 1 ? 'member' : 'members'}
-                <span className="mx-1.5 text-white/20">·</span>
+              <p className="text-[11px] mb-2">
                 <span className={isPublic ? 'text-emerald-400' : 'text-white/40'}>{isPublic ? 'Public' : 'Private'}</span>
               </p>
             )}
+            {!isLoading && (
+              <div className="rounded-xl px-3 py-2 flex items-center gap-2 mb-1" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest shrink-0">Vibe</span>
+                <span className="text-white/80 text-[12px] font-semibold flex-1 truncate">{vibeEmoji} {roomVibe}</span>
+                <div className="shrink-0 rounded-lg px-2 py-0.5 flex items-center gap-1" style={{ background: 'linear-gradient(135deg, #5b21b6, #4338ca)' }}>
+                  <p className="text-[9px] font-bold text-white/60 uppercase tracking-wider leading-none">Match</p>
+                  <p className="text-[13px] font-black text-white leading-none">{matchPct}%</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Room Vibe card */}
-        {!isLoading && (
-          <div className="px-4 pb-2">
-            <div className="rounded-xl px-3 py-2 flex items-center gap-2" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest shrink-0">Vibe</span>
-              <span className="text-white/80 text-[12px] font-semibold flex-1 truncate">{vibeEmoji} {roomVibe}</span>
-              <div className="shrink-0 rounded-lg px-2 py-0.5 flex items-center gap-1" style={{ background: 'linear-gradient(135deg, #5b21b6, #4338ca)' }}>
-                <p className="text-[9px] font-bold text-white/60 uppercase tracking-wider leading-none">Match</p>
-                <p className="text-[13px] font-black text-white leading-none">{matchPct}%</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Member avatars + online count */}
-        {!isLoading && members.length > 0 && (
-          <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
-            <div className="flex -space-x-2">
-              {members.slice(0, 5).map((m: any, i: number) => {
-                const name = (m.users as any)?.display_name || (m.users as any)?.user_name || '?';
-                return (
-                  <div key={m.id || i} className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold ring-2 ring-[#12121f] ${avatarColor(name)}`}>
-                    {name[0].toUpperCase()}
-                  </div>
-                );
-              })}
-            </div>
-            <span className="text-white/40 text-[11px]">{formatStat(members.length)} people in this room</span>
-          </div>
-        )}
 
         {/* Non-member join banner */}
         {!isLoading && !isMember && isPublic && (
