@@ -782,6 +782,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                   onClick={() => {
                     setShowAddMenu(false);
                     setIsSearchExpanded(true);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
                   style={{ background: '#7c3aed' }}
