@@ -783,7 +783,8 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                 <button
                   onClick={() => {
                     setShowAddMenu(false);
-                    setIsSaveMediaOpen(true);
+                    setQuickAddMedia(null);
+                    setIsQuickAddOpen(true);
                   }}
                   className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
                   style={{ background: '#7c3aed' }}

@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { APP_BASE } from "@/lib/share";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { X, Loader2, Check, Play, Clock, Ban, Heart, Folder, Star, MessageSquare, Share2, HelpCircle, Sparkles, TrendingUp, Minus, Plus } from "lucide-react";
+import { X, Loader2, Check, Play, Clock, Ban, Heart, Folder, Star, MessageSquare, Share2, HelpCircle, Sparkles, TrendingUp, Minus, Plus, Search, ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -45,6 +45,10 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   const [step, setStep] = useState<SheetStep>('select-list');
   const [addedListName, setAddedListName] = useState<string>('');
   const [addedItemId, setAddedItemId] = useState<string | null>(null);
+  const [inlineQuery, setInlineQuery] = useState('');
+  const [inlineSelectedMedia, setInlineSelectedMedia] = useState<{ title: string; mediaType: string; imageUrl?: string; externalId?: string; externalSource?: string; creator?: string } | null>(null);
+  const [showInlineResults, setShowInlineResults] = useState(false);
+  const inlineSearchRef = useRef<HTMLInputElement>(null);
   const [selectedRating, setSelectedRating] = useState<number>(0);
   const [hoveredRating, setHoveredRating] = useState<number>(0);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
@@ -92,6 +96,24 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
 
   const userLists = userListsData?.lists || [];
 
+  const { data: inlineSearchResults = [] } = useQuery<any[]>({
+    queryKey: ['quick-add-list-inline-search', inlineQuery],
+    queryFn: async () => {
+      if (!inlineQuery.trim() || !session?.access_token) return [];
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const res = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: inlineQuery }),
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (data.results || []).slice(0, 6);
+    },
+    enabled: !!inlineQuery.trim() && !!session?.access_token && isOpen && !media,
+    staleTime: 30_000,
+  });
+
   const handleClose = () => {
     setStep('select-list');
     setAddedListName('');
@@ -103,8 +125,13 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     setTriviaRevealed(false);
     setProgressLibraryId(null);
     setIsLoadingProgress(false);
+    setInlineQuery('');
+    setInlineSelectedMedia(null);
+    setShowInlineResults(false);
     onClose();
   };
+
+  const effectiveMedia = media || inlineSelectedMedia;
 
   const isWantToList = (listName: string) => {
     const lower = listName.toLowerCase();
@@ -199,7 +226,10 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   };
 
   const handleAddToList = async (listId: string, listName: string) => {
-    if (!session?.access_token || !media) return;
+    if (!session?.access_token || !effectiveMedia) {
+      if (!effectiveMedia) inlineSearchRef.current?.focus();
+      return;
+    }
     
     setIsAdding(listId);
     try {
@@ -240,12 +270,12 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
         },
         body: JSON.stringify({
           list_id: actualListId,
-          media_title: media.title,
-          media_type: media.mediaType,
-          media_creator: media.creator || '',
-          media_image_url: media.imageUrl || '',
-          media_external_id: media.externalId,
-          media_external_source: media.externalSource || 'tmdb',
+          media_title: effectiveMedia.title,
+          media_type: effectiveMedia.mediaType,
+          media_creator: effectiveMedia.creator || '',
+          media_image_url: effectiveMedia.imageUrl || '',
+          media_external_id: effectiveMedia.externalId,
+          media_external_source: effectiveMedia.externalSource || 'tmdb',
         }),
       });
 
@@ -262,14 +292,14 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       
       setAddedListName(listName);
-      if (isWantToList(listName) && media?.mediaType) {
-        const hasTrivia = await fetchTriviaForMediaType(media.mediaType);
+      if (isWantToList(listName) && effectiveMedia?.mediaType) {
+        const hasTrivia = await fetchTriviaForMediaType(effectiveMedia.mediaType);
         if (hasTrivia) {
           setStep('trivia');
         } else {
           setStep('just-tracked');
         }
-      } else if (shouldShowFollowUp(listName) && media?.externalId) {
+      } else if (shouldShowFollowUp(listName) && effectiveMedia?.externalId) {
         setStep('rate');
       } else {
         setStep('just-tracked');
@@ -641,12 +671,68 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     <>
       <Drawer open={isOpen && step === 'select-list'} onOpenChange={(open) => !open && step === 'select-list' && handleClose()}>
         <DrawerContent className="bg-white rounded-t-2xl">
-          <DrawerHeader className="text-center pb-2 border-b border-gray-100">
-            <DrawerTitle className="text-lg font-semibold text-gray-900">
+          <DrawerHeader className="pb-2 border-b border-gray-100">
+            <DrawerTitle className="text-lg font-semibold text-gray-900 text-center">
               Add to List
             </DrawerTitle>
-            {media && (
-              <p className="text-sm text-gray-500 mt-1">{media.title}</p>
+            {media ? (
+              <p className="text-sm text-gray-500 mt-1 text-center">{media.title}</p>
+            ) : (
+              <div className="mt-2 relative">
+                {inlineSelectedMedia ? (
+                  <button
+                    onClick={() => { setInlineSelectedMedia(null); setInlineQuery(''); setShowInlineResults(false); setTimeout(() => inlineSearchRef.current?.focus(), 50); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-50 border border-purple-200 text-left"
+                  >
+                    <span className="flex-1 text-sm font-medium text-gray-900 truncate">{inlineSelectedMedia.title}</span>
+                    <X size={14} className="text-gray-400 flex-shrink-0" />
+                  </button>
+                ) : (
+                  <div className="relative">
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      ref={inlineSearchRef}
+                      value={inlineQuery}
+                      onChange={(e) => { setInlineQuery(e.target.value); setShowInlineResults(true); }}
+                      onFocus={() => setShowInlineResults(true)}
+                      placeholder="Select media..."
+                      className="w-full pl-8 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-200"
+                    />
+                  </div>
+                )}
+                {showInlineResults && inlineSearchResults.length > 0 && !inlineSelectedMedia && (
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto">
+                    {inlineSearchResults.map((r: any, i: number) => {
+                      const poster = r.poster_url || r.image || '';
+                      return (
+                        <button
+                          key={`${r.external_id}-${i}`}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            setInlineSelectedMedia({
+                              title: r.title,
+                              mediaType: r.type === 'book_series' ? 'book' : (r.type || 'movie'),
+                              imageUrl: poster,
+                              externalId: r.external_id,
+                              externalSource: r.external_source === 'openai' ? 'openlibrary' : (r.external_source || 'tmdb'),
+                              creator: r.creator,
+                            });
+                            setInlineQuery(r.title);
+                            setShowInlineResults(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left border-b border-gray-100 last:border-0"
+                        >
+                          {poster && <img src={poster} alt="" className="w-7 h-9 object-cover rounded flex-shrink-0" onError={(e) => { e.currentTarget.style.display='none'; }} />}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{r.title}</p>
+                            <p className="text-xs text-gray-400 capitalize">{r.type === 'tv' ? 'TV Show' : r.type}{r.year ? ` · ${r.year}` : ''}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             )}
           </DrawerHeader>
           
