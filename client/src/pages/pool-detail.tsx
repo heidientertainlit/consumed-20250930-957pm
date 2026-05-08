@@ -3136,20 +3136,13 @@ export default function PoolDetailPage() {
                           <p className="text-[13px] font-semibold text-gray-800 leading-snug">{t.title}</p>
                           {t.body && <p className="text-[12px] text-gray-500 leading-relaxed mt-1">{t.body}</p>}
                           {/* Action row */}
-                          <div className="flex items-center gap-4 mt-2.5 pt-2 border-t border-gray-100">
-                            <button
-                              onClick={() => handleVoteTake(t.id, 1)}
-                              className={`flex items-center gap-1.5 text-[12px] transition-colors ${myVote?.vote === 1 ? 'text-purple-600 font-semibold' : 'text-gray-400 hover:text-purple-500'}`}
-                            >
-                              <ChevronUp size={14} />
-                              <span>{t.upvotes || 0}</span>
-                            </button>
+                          <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-gray-100">
                             <button
                               onClick={() => { setActiveTake(activeTake?.id === t.id ? null : t); setTakeReplyText(''); setReplyingToReplyId(null); }}
                               className={`flex items-center gap-1.5 text-[12px] transition-colors ${activeTake?.id === t.id ? 'text-purple-500 font-semibold' : 'text-gray-400 hover:text-purple-500'}`}
                             >
                               <MessageCircle size={13} />
-                              <span>{t.reply_count || 0}</span>
+                              <span>{t.reply_count || 0} {t.reply_count === 1 ? 'reply' : 'replies'}</span>
                             </button>
                           </div>
                         </div>
