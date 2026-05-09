@@ -355,15 +355,15 @@ function ScoreShareCard({
                   </div>
                   <div className="flex flex-col items-center rounded-xl p-2.5" style={{ background: '#f5f0ff' }}>
                     <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Percentile</p>
-                    {rankData?.topPct != null && rankData.topPct < 100 ? (
+                    {rankData?.beatenPct != null && rankData.beatenPct > 0 ? (
                       <>
-                        <p className="text-[20px] font-black text-gray-900 leading-none">Top {rankData.topPct}%</p>
-                        <p className="text-[8px] text-gray-400 mt-0.5">of players</p>
+                        <p className="text-[20px] font-black text-gray-900 leading-none">{rankData.beatenPct}%</p>
+                        <p className="text-[8px] text-gray-400 mt-0.5">of players beaten</p>
                       </>
                     ) : rankData?.total != null ? (
                       <>
-                        <p className="text-[13px] font-black text-gray-400 leading-none mt-1">Keep</p>
-                        <p className="text-[13px] font-black text-gray-400 leading-none">playing!</p>
+                        <p className="text-[20px] font-black text-gray-400 leading-none">—</p>
+                        <p className="text-[8px] text-gray-400 mt-0.5">percentile</p>
                       </>
                     ) : (
                       <>
@@ -1804,7 +1804,7 @@ export function DailyHeroSection() {
   });
 
   // ── Trivia rank + percentile (for scorecard) ──
-  const { data: rankData } = useQuery<{ rank: number | null; total: number | null; topPct?: number }>({
+  const { data: rankData } = useQuery<{ rank: number | null; total: number | null; beatenPct?: number }>({
     queryKey: ['hero-rank-data', user?.id],
     queryFn: async () => {
       if (!user?.id || !session?.access_token) return { rank: null, total: null };
@@ -1820,8 +1820,8 @@ export function DailyHeroSection() {
         if (!myEntry) return { rank: null, total: entries.length };
         const rank = myEntry.rank;
         const total = entries.length;
-        const topPct = Math.ceil((rank / total) * 100);
-        return { rank, total, topPct };
+        const beatenPct = Math.round(((total - rank) / total) * 100);
+        return { rank, total, beatenPct };
       } catch {
         return { rank: null, total: null };
       }
