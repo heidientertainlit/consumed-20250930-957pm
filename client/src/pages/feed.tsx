@@ -1015,8 +1015,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     return `${Math.floor(hrs / 24)}d`;
   };
 
-  const handleCommentToggle = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleCommentToggle = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     if (!showComments && !hasFetched.current) {
       hasFetched.current = true;
       setLoadingComments(true);
@@ -1882,7 +1882,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     </div>
                     <span className="text-xs font-semibold text-gray-700">{r.displayName || r.userName}</span>
                   </div>
-                  <div className="flex flex-col items-end">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <div className="flex items-center gap-0.5">
                       {[1,2,3,4,5].map(s => {
                         if (s <= Math.floor(r.rating)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
@@ -1890,7 +1890,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                         return <Star key={s} size={12} className="text-gray-200" />;
                       })}
                     </div>
-                    {ratingDiffLine(r.rating, 'mt-0.5 text-right')}
+                    <button
+                      onClick={() => { setCommentText(`@${r.displayName || r.userName} `); if (!showComments) handleCommentToggle(); }}
+                      className="text-[10px] font-semibold text-gray-400 hover:text-violet-500 transition-colors"
+                    >Reply</button>
                   </div>
                 </div>
               ))}
