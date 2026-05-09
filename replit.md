@@ -7,6 +7,18 @@ Consumed is a mobile-first platform designed to transform entertainment consumpt
 Preferred communication style: Simple, everyday language.
 - When user asks "give me the code to push to git", provide `git push origin main` command. User deploys from their own git repo.
 
+### Database — CRITICAL
+- **The app uses the HOSTED Supabase project (`mahpgcogwpawvviapqza`) as its database — NOT the local Replit PostgreSQL.**
+- The local Replit DB (accessible via `DATABASE_URL` / `executeSql` tool) is a separate, unused database. **Never run schema changes, inserts, or queries there** — they will have no effect on the live app.
+- To run SQL against the real database, always use the Supabase Management API via bash:
+  ```bash
+  curl -s -X POST "https://api.supabase.com/v1/projects/mahpgcogwpawvviapqza/database/query" \
+    -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"query": "YOUR SQL HERE"}'
+  ```
+- `SUPABASE_ACCESS_TOKEN` is available in bash and works for this. Never use `executeSql` or `npm run db:push` for production schema work.
+
 ### Edge Function Deployment
 - **Deploy command** (from Replit — must use `--use-api` flag to avoid Docker DNS issues):
   ```
