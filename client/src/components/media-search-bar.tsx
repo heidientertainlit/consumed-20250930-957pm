@@ -11,12 +11,16 @@ const normalizeMediaType = (type: string | undefined | null): string => {
   if (t === "book" || t === "book_series") return "book";
   if (t === "podcast") return "podcast";
   if (t === "music" || t === "album" || t === "song") return "music";
+  if (t === "youtube") return "youtube";
+  if (t === "game" || t === "gaming") return "game";
   return "movie";
 };
 
 const formatTypeLabel = (type: string, seriesCount?: number): string => {
   if (type === 'book_series') return seriesCount ? `${seriesCount}-book series` : 'book series';
   if (type === 'tv' || type === 'tv_show') return 'TV show';
+  if (type === 'youtube') return 'YouTube';
+  if (type === 'game' || type === 'gaming') return 'Game';
   return type;
 };
 

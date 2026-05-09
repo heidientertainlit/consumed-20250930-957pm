@@ -116,11 +116,12 @@ serve(async (req) => {
     // "series" alone is ambiguous (book series, film series, TV series) — never treat it as a TV-only hint
     const queryHasTv = /\b(tv show|television)\b/i.test(query);
     const queryHasPodcast = /\b(podcast|podcasts)\b/i.test(query);
+    const queryHasYoutube = /\b(youtube|youtuber|youtubers|yt channel)\b/i.test(query);
     
     // Strip type keywords from query for cleaner API searches
     // e.g., "anne of green gables book" → "anne of green gables"
     const cleanedQuery = query
-      .replace(/\b(book|novel|read|movie|film|song|album|music|listen|tv show|television|podcast|podcasts)\b/gi, '')
+      .replace(/\b(book|novel|read|movie|film|song|album|music|listen|tv show|television|podcast|podcasts|youtube|youtuber|youtubers|yt channel)\b/gi, '')
       .replace(/\s+/g, ' ')
       .trim();
     
@@ -191,13 +192,14 @@ serve(async (req) => {
     // If caller didn't pass an explicit type but query has an unambiguous type hint,
     // narrow the search so we only call the relevant API and avoid category collisions.
     if (!type) {
-      const hintCount = [queryHasBook, queryHasMovie, queryHasMusic, queryHasTv, queryHasPodcast].filter(Boolean).length;
+      const hintCount = [queryHasBook, queryHasMovie, queryHasMusic, queryHasTv, queryHasPodcast, queryHasYoutube].filter(Boolean).length;
       if (hintCount === 1) {
-        if (queryHasTv)      type = 'tv';
+        if (queryHasTv)        type = 'tv';
         else if (queryHasMovie)   type = 'movie';
         else if (queryHasBook)    type = 'book';
         else if (queryHasMusic)   type = 'music';
         else if (queryHasPodcast) type = 'podcast';
+        else if (queryHasYoutube) type = 'youtube';
       }
     }
 
