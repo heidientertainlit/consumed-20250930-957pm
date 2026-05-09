@@ -354,11 +354,11 @@ function ScoreShareCard({
                     <p className="text-[8px] text-gray-400 mt-0.5">day{(streak ?? 0) !== 1 ? 's' : ''}</p>
                   </div>
                   <div className="flex flex-col items-center rounded-xl p-2.5" style={{ background: '#f5f0ff' }}>
-                    <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Percentile</p>
-                    {rankData?.percentile != null ? (
+                    <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Players</p>
+                    {rankData?.total != null ? (
                       <>
-                        <p className="text-[20px] font-black text-gray-900 leading-none">{rankData.percentile}%</p>
-                        <p className="text-[8px] text-gray-400 mt-0.5">of players</p>
+                        <p className="text-[20px] font-black text-gray-900 leading-none">{rankData.total}</p>
+                        <p className="text-[8px] text-gray-400 mt-0.5">on leaderboard</p>
                       </>
                     ) : (
                       <>
@@ -1799,26 +1799,25 @@ export function DailyHeroSection() {
   });
 
   // ── Trivia rank + percentile (for scorecard) ──
-  const { data: rankData } = useQuery<{ rank: number | null; percentile: number | null }>({
+  const { data: rankData } = useQuery<{ rank: number | null; total: number | null }>({
     queryKey: ['hero-rank-data', user?.id],
     queryFn: async () => {
-      if (!user?.id || !session?.access_token) return { rank: null, percentile: null };
+      if (!user?.id || !session?.access_token) return { rank: null, total: null };
       try {
         const res = await fetch(`${SUPABASE_URL}/functions/v1/get-leaderboards?category=trivia&scope=global`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` },
         });
-        if (!res.ok) return { rank: null, percentile: null };
+        if (!res.ok) return { rank: null, total: null };
         const data = await res.json();
         const entries: any[] = data?.categories?.trivia ?? [];
-        if (!entries.length) return { rank: null, percentile: null };
+        if (!entries.length) return { rank: null, total: null };
         const myEntry = entries.find((e: any) => e.user_id === user.id);
-        if (!myEntry) return { rank: null, percentile: null };
+        if (!myEntry) return { rank: null, total: entries.length };
         const rank = myEntry.rank;
         const total = entries.length;
-        const percentile = Math.round(((total - rank) / total) * 100);
-        return { rank, percentile };
+        return { rank, total };
       } catch {
-        return { rank: null, percentile: null };
+        return { rank: null, total: null };
       }
     },
     enabled: !!user?.id && !!session?.access_token,
