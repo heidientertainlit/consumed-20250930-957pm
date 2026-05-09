@@ -1199,7 +1199,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       {/* Join the discussion — far right */}
       <button
         onClick={handleCommentToggle}
-        className="ml-auto flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+        className="ml-auto flex items-center gap-1.5 bg-purple-100 hover:bg-purple-200 active:bg-purple-300 text-purple-700 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
       >
         <span>Join the discussion</span>
         <MessageCircle size={14} />
