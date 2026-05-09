@@ -1086,19 +1086,23 @@ serve(async (req) => {
       }
       if (!queryHasGame && item.type === 'game') score -= 35;
 
-      // Boost books based on how well the title matches the query.
-      // intitle: results get the highest boost; all other books get a scaled boost
-      // so that e.g. the Twilight novel beats the Twilight movie even from Open Library.
+      // Book title-match confirmation bonus.
+      // Step 1 already scored title similarity; this section adds a SMALL extra signal
+      // only when the intitle: search confirmed a direct hit AND the title is a strong match.
+      // IMPORTANT: do NOT re-award points that step 1 already gave (avoid double-counting).
+      // e.g. "Paradise Lost" for query "paradise" already got +80 from step 1 (starts-with);
+      // adding another +65 here would push it above an exact-match TV show — which is wrong.
       if (item.type === 'book') {
         if ((item as any)._title_match) {
-          score += 65; // from intitle: search — direct title match
-        } else if (title === queryLower || normalizedTitle === normalizedQuery) {
-          score += 55; // exact title match from primary search
-        } else if (title.startsWith(queryLower) || normalizedTitle.startsWith(normalizedQuery)) {
-          score += 40; // title starts with query
-        } else if (title.includes(queryLower)) {
-          score += 25; // query appears anywhere in title
+          // intitle: search confirmed this book — only give extra credit for near-exact matches
+          if (title === queryLower || normalizedTitle === normalizedQuery) {
+            score += 20; // exact title confirmed by intitle: search
+          } else if (title.startsWith(queryLower) || normalizedTitle.startsWith(normalizedQuery)) {
+            score += 8;  // starts-with confirmed — step 1 already gave +80, just a small bump
+          }
+          // Titles that only CONTAIN the query (e.g. "Paradise Lost" for "paradise") get 0 extra
         }
+        // No extra bonus for non-intitle: results — step 1 scoring is sufficient
       }
       
       // 5. Type filter boost - if caller passed a specific type
@@ -1117,10 +1121,12 @@ serve(async (req) => {
         score += Math.min(30, voteCount / 80);
       }
       
-      // For books: use logarithmic scale so popular novels beat companion books
+      // For books: use logarithmic scale so popular novels beat companion books.
+      // Cap reduced to 35 (was 60) so a massively-reviewed classic (e.g. Paradise Lost)
+      // cannot outrank an exact-title TV/movie match purely on ratings volume.
       const ratingsCount = (item as any).ratings_count;
       if (typeof ratingsCount === 'number' && ratingsCount > 0) {
-        score += Math.min(60, Math.log10(ratingsCount + 1) * 18);
+        score += Math.min(35, Math.log10(ratingsCount + 1) * 12);
       }
       
       // Book quality signals: penalize companion/activity/illustrated books
@@ -1184,12 +1190,13 @@ serve(async (req) => {
         }
       }
       
-      // 8. Book classic bonus - old books with many editions are literary classics
+      // 8. Book classic bonus - old books with many editions are literary classics.
+      // Reduced (was 20/10) so classics don't overwhelm an exact-title TV/movie match.
       if (item.type === 'book') {
         if (editionCount && editionCount > 50) {
-          score += 20;  // Many editions = enduring classic
+          score += 10;  // Many editions = enduring classic
         } else if (editionCount && editionCount > 20) {
-          score += 10;
+          score += 5;
         }
       }
       
