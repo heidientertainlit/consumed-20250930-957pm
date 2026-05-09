@@ -2232,12 +2232,13 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
   const submitReact = async (content: string) => {
     if (!content.trim() || !currentUserId || !poolId) return;
     setSubmittingReact(true);
-    await supabase.from('social_posts').insert({
-      user_id: currentUserId,
-      room_id: poolId,
-      post_type: 'thought',
-      content: content.trim(),
-      visibility: 'public',
+    await supabase.functions.invoke('inline-post', {
+      body: {
+        content: content.trim(),
+        type: 'thought',
+        visibility: 'public',
+        room_id: poolId,
+      },
     });
     setReactText('');
     setSubmittingReact(false);

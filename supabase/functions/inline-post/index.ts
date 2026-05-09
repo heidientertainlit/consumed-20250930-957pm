@@ -89,7 +89,7 @@ serve(async (req) => {
     // Get or create app user
     let { data: appUser, error: appUserError } = await supabase
       .from('users')
-      .select('id, email, user_name')
+      .select('id, email, user_name, display_name')
       .eq('email', user.email)
       .single();
 
@@ -157,7 +157,8 @@ serve(async (req) => {
         poll_question,
         poll_options,
         list_id,
-        rec_category
+        rec_category,
+        room_id
       } = body;
       const media_type = normType(rawMediaType);
 
@@ -406,7 +407,8 @@ serve(async (req) => {
         visibility,
         contains_spoilers,
         list_id: list_id || null,
-        rec_category: rec_category || null
+        rec_category: rec_category || null,
+        room_id: room_id || null
       };
 
       const { data: post, error: postError } = await adminClient
@@ -423,6 +425,33 @@ serve(async (req) => {
         });
       }
       console.log('Post created:', post);
+
+      // If this is a room post, notify all room followers (except the poster)
+      if (room_id) {
+        try {
+          const [{ data: followers }, { data: room }] = await Promise.all([
+            adminClient.from('room_follows').select('user_id').eq('room_id', room_id),
+            adminClient.from('pools').select('name').eq('id', room_id).single(),
+          ]);
+          const roomName = room?.name || 'the room';
+          const posterName = (appUser as any).display_name || appUser.user_name || 'Someone';
+          const notifs = (followers || [])
+            .filter((f: any) => f.user_id !== appUser.id)
+            .map((f: any) => ({
+              user_id: f.user_id,
+              type: 'room_new_question',
+              triggered_by_user_id: appUser.id,
+              message: `${posterName} posted in ${roomName}`,
+              list_id: room_id,
+              read: false,
+            }));
+          if (notifs.length > 0) {
+            await adminClient.from('notifications').insert(notifs);
+          }
+        } catch (notifError) {
+          console.error('Room follower notification error (non-fatal):', notifError);
+        }
+      }
 
       // Award points for reviews only (10 points for reviews, no points for regular posts)
       try {

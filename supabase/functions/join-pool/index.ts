@@ -50,19 +50,6 @@ serve(async (req) => {
     const { error } = await svc.from('pool_members').insert({ pool_id: pool.id, user_id: appUser.id, role: 'member', total_points: 0 });
     if (error) return json({ error: error.message }, 500);
 
-    // Notify the host
-    if (pool.host_id && pool.host_id !== appUser.id) {
-      const displayName = appUser.display_name || appUser.user_name || 'Someone';
-      await svc.from('notifications').insert({
-        user_id: pool.host_id,
-        type: 'room_joined',
-        triggered_by_user_id: appUser.id,
-        message: `${displayName} joined your Room "${pool.name}"`,
-        list_id: pool.id,
-        read: false,
-      });
-    }
-
     return json({ success: true, pool_id: pool.id, pool_name: pool.name });
   } catch (e) {
     return json({ error: e.message }, 500);
