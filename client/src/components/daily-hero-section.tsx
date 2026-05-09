@@ -354,11 +354,11 @@ function ScoreShareCard({
                     <p className="text-[8px] text-gray-400 mt-0.5">day{(streak ?? 0) !== 1 ? 's' : ''}</p>
                   </div>
                   <div className="flex flex-col items-center rounded-xl p-2.5" style={{ background: '#f5f0ff' }}>
-                    <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Players</p>
-                    {rankData?.total != null ? (
+                    <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Percentile</p>
+                    {rankData?.topPct != null ? (
                       <>
-                        <p className="text-[20px] font-black text-gray-900 leading-none">{rankData.total}</p>
-                        <p className="text-[8px] text-gray-400 mt-0.5">on leaderboard</p>
+                        <p className="text-[20px] font-black text-gray-900 leading-none">Top {rankData.topPct}%</p>
+                        <p className="text-[8px] text-gray-400 mt-0.5">of players</p>
                       </>
                     ) : (
                       <>
@@ -1799,7 +1799,7 @@ export function DailyHeroSection() {
   });
 
   // ── Trivia rank + percentile (for scorecard) ──
-  const { data: rankData } = useQuery<{ rank: number | null; total: number | null }>({
+  const { data: rankData } = useQuery<{ rank: number | null; total: number | null; topPct?: number }>({
     queryKey: ['hero-rank-data', user?.id],
     queryFn: async () => {
       if (!user?.id || !session?.access_token) return { rank: null, total: null };
@@ -1815,7 +1815,8 @@ export function DailyHeroSection() {
         if (!myEntry) return { rank: null, total: entries.length };
         const rank = myEntry.rank;
         const total = entries.length;
-        return { rank, total };
+        const topPct = Math.ceil((rank / total) * 100);
+        return { rank, total, topPct };
       } catch {
         return { rank: null, total: null };
       }
