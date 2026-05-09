@@ -1828,11 +1828,11 @@ export function DailyHeroSection() {
       if (ids.length > 0) {
         const { data: preds } = await supabase
           .from('user_predictions')
-          .select('is_winner')
+          .select('points_earned')
           .eq('user_id', user.id)
           .in('pool_id', ids);
         if (preds && preds.length > 0) {
-          const correct = preds.filter((p: any) => p.is_winner).length;
+          const correct = preds.filter((p: any) => p.points_earned > 0).length;
           accuracy = Math.round((correct / preds.length) * 100);
         }
       }

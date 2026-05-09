@@ -71,11 +71,11 @@ function useStripData() {
       if (!ids.length) return { total: 0, correct: 0, accuracy: 0, points: pointsRes.data?.trivia_points ?? null };
       const { data: preds } = await supabase
         .from('user_predictions')
-        .select('is_winner')
+        .select('points_earned')
         .eq('user_id', user.id)
         .in('pool_id', ids);
       if (!preds?.length) return { total: 0, correct: 0, accuracy: 0, points: pointsRes.data?.trivia_points ?? null };
-      const correct = preds.filter((p: any) => p.is_winner).length;
+      const correct = preds.filter((p: any) => p.points_earned > 0).length;
       const total = preds.length;
       return { total, correct, accuracy: Math.round((correct / total) * 100), points: pointsRes.data?.trivia_points ?? null };
     },
