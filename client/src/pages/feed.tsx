@@ -1696,7 +1696,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   if (allRaters.length === 0) return null;
                   return (
                     <div className="mt-2 flex flex-col relative">
-                      {replyingToName && (
+                      {showComments && (
                         <div className="absolute right-0 top-0 h-full w-2 pointer-events-none">
                           <div className="absolute top-0 right-0 w-full h-px bg-violet-400" />
                           <div className="absolute top-0 right-0 w-px h-full bg-violet-400" />
@@ -1900,7 +1900,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {/* Other raters for the same media — shown in NORMAL layout too */}
           {relatedRatings.length > 0 && (
             <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2.5 relative">
-              {replyingToName && (
+              {showComments && (
                 <div className="absolute right-0 top-0 h-full w-2 pointer-events-none">
                   <div className="absolute top-0 right-0 w-full h-px bg-violet-400" />
                   <div className="absolute top-0 right-0 w-px h-full bg-violet-400" />
