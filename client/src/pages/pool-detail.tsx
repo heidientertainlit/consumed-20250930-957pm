@@ -3205,7 +3205,7 @@ export default function PoolDetailPage() {
             hot_take:   { label: 'Hot Take',   color: '#ea580c', bg: '#fff7ed', icon: '🔥' },
             debate:     { label: 'Debate',     color: '#dc2626', bg: '#fef2f2', icon: '⚡' },
             theory:     { label: 'Theory',     color: '#7c3aed', bg: '#f5f3ff', icon: '💡' },
-            discussion: { label: 'Conversation', color: '#8b5cf6', bg: '#faf5ff', icon: '💬' },
+            discussion: { label: 'DEEP DIVE', color: '#8b5cf6', bg: '#faf5ff', icon: '' },
             ranking:    { label: 'Ranking',    color: '#2563eb', bg: '#eff6ff', icon: '📊' },
             question:   { label: 'Question',   color: '#059669', bg: '#f0fdf4', icon: '❓' },
             thought:    { label: 'Take',       color: '#7c3aed', bg: '#f5f3ff', icon: '💬' },
@@ -3248,7 +3248,7 @@ export default function PoolDetailPage() {
                 </button>
                 <button
                   onClick={() => setIsComposerOpen(true)}
-                  className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full text-white text-sm font-semibold transition-opacity hover:opacity-90 active:opacity-80"
+                  className="hidden flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full text-white text-sm font-semibold transition-opacity hover:opacity-90 active:opacity-80"
                   style={{ background: 'linear-gradient(135deg, #f472b6, #a855f7)', border: 'none' }}
                 >
                   <Star size={14} />
