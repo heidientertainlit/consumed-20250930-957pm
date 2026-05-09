@@ -211,7 +211,6 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
       }
       queryClient.invalidateQueries({ queryKey: ['consumed-ranks-carousel'] });
       trackEvent('rank_submitted', { rank_id: rankId });
-      toast({ title: 'Ranking saved!', description: 'Your personal ranking has been recorded.' });
     },
     onError: (error: Error) => {
       toast({ title: 'Failed to save ranking', description: error.message, variant: 'destructive' });
