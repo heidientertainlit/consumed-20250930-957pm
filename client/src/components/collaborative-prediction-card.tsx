@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon, Target, ArrowBigUp, ArrowBigDown, User, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -86,6 +86,13 @@ export default function CollaborativePredictionCard({
   // currentUserId (app user ID) takes priority over session auth UUID to handle accounts
   // where the auth UUID differs from the app user ID stored in posts.
   const appUserId = currentUserId || session?.user?.user_metadata?.id || session?.user?.id;
+
+  // Initialise votedOption from server-side userVotes (the current user's previous vote)
+  useEffect(() => {
+    if (votedOption) return; // already set (e.g. just voted this session)
+    const myVote = userVotes?.find(uv => uv.userId === appUserId);
+    if (myVote?.vote) setVotedOption(myVote.vote);
+  }, [userVotes, appUserId]);
   const isCreator = (origin_user_id && appUserId === origin_user_id) ||
                     (creator?.id && appUserId === creator?.id);
 
@@ -519,7 +526,7 @@ export default function CollaborativePredictionCard({
               const optionData = optionVotes?.find(ov => ov.option === option);
               const percentage = optionData?.percentage || 0;
               const answered = userHasAnswered || hasVoted;
-              const isMyVote = votedOption === option || (userHasAnswered && optionData && optionData.count > 0);
+              const isMyVote = votedOption === option;
               
               return (
                 <button
