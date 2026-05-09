@@ -894,15 +894,24 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         const filtered = ratings.filter((r: any) => r.user_id !== primaryUserId && r.user_id !== currentId);
         if (filtered.length === 0) return;
         const ids = filtered.map((r: any) => r.user_id);
-        const { data: users } = await supabase.from('users').select('id, user_name, display_name').in('id', ids);
+        const { data: users } = await supabase.from('users').select('id, user_name, display_name, avatar_url').in('id', ids);
         const userMap: Record<string, any> = {};
         (users || []).forEach((u: any) => { userMap[u.id] = u; });
-        setRelatedRatings(filtered.map((r: any) => ({
-          userId: r.user_id,
-          userName: userMap[r.user_id]?.user_name || '',
-          displayName: userMap[r.user_id]?.display_name || userMap[r.user_id]?.user_name || 'User',
-          rating: Number(r.rating),
-        })));
+        setRelatedRatings(
+          filtered
+            .filter((r: any) => {
+              const u = userMap[r.user_id];
+              // Skip users we can't identify — prevents "User" placeholder rows
+              return u && (u.display_name || u.user_name);
+            })
+            .map((r: any) => ({
+              userId: r.user_id,
+              userName: userMap[r.user_id]?.user_name || '',
+              displayName: userMap[r.user_id]?.display_name || userMap[r.user_id]?.user_name,
+              avatar: userMap[r.user_id]?.avatar_url || null,
+              rating: Number(r.rating),
+            }))
+        );
       });
   }, [post.externalId, post.externalSource, post.user?.id, session?.user?.id]);
 
