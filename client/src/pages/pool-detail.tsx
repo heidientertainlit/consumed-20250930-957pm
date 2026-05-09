@@ -2752,7 +2752,7 @@ export default function PoolDetailPage() {
       ]);
       return { following: !!myFollow, count: count || 0 };
     },
-    enabled: !!params.id,
+    enabled: !!params.id && !!currentUserId,
   });
   const serverFollowing = followData?.following ?? false;
   const followerCount = followData?.count ?? 0;
