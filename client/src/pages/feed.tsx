@@ -1696,7 +1696,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   return (
                     <div className="mt-2 flex flex-col">
                       {(showAllRelated ? allRaters : allRaters.slice(0, 3)).map((r, idx) => (
-                        <div key={r.userId} className={`flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0 transition-all ${replyingToName === (r.displayName || r.userName) ? 'border-l-2 border-violet-400 pl-1 -ml-1' : ''}`}>
+                        <div key={r.userId} className="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0">
                           <div className={`w-6 h-6 rounded-full ${ratingColors[idx % ratingColors.length]} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 overflow-hidden`}>
                             {r.avatar ? <img src={r.avatar} className="w-full h-full object-cover" alt="" /> : (r.displayName || r.userName || 'U')[0]?.toUpperCase()}
                           </div>
@@ -1708,10 +1708,15 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                               return <Star key={s} size={12} className="text-gray-200" />;
                             })}
                           </div>
-                          <button
-                            onClick={() => { const name = r.displayName || r.userName; setCommentText(`@${name} `); setReplyingToName(name); if (!showComments) handleCommentToggle(); }}
-                            className="text-[10px] font-semibold text-gray-400 hover:text-violet-500 transition-colors flex-shrink-0"
-                          >Reply</button>
+                          <div className="flex flex-col items-end flex-shrink-0">
+                            <button
+                              onClick={() => { const name = r.displayName || r.userName; setCommentText(`@${name} `); setReplyingToName(name); if (!showComments) handleCommentToggle(); }}
+                              className={`text-[10px] font-semibold transition-colors ${replyingToName === (r.displayName || r.userName) ? 'text-violet-500' : 'text-gray-400 hover:text-violet-500'}`}
+                            >Reply</button>
+                            {replyingToName === (r.displayName || r.userName) && (
+                              <div className="w-px h-3 bg-violet-400 mt-0.5" />
+                            )}
+                          </div>
                         </div>
                       ))}
                       {allRaters.length > 3 && (
@@ -1893,7 +1898,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {relatedRatings.length > 0 && (
             <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2.5">
               {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
-                <div key={r.userId} className={`flex items-center justify-between transition-all ${replyingToName === (r.displayName || r.userName) ? 'border-l-2 border-violet-400 pl-1 -ml-1' : ''}`}>
+                <div key={r.userId} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 overflow-hidden">
                       {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
@@ -1908,10 +1913,15 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                         return <Star key={s} size={12} className="text-gray-200" />;
                       })}
                     </div>
-                    <button
-                      onClick={() => { const name = r.displayName || r.userName; setCommentText(`@${name} `); setReplyingToName(name); if (!showComments) handleCommentToggle(); }}
-                      className="text-[10px] font-semibold text-gray-400 hover:text-violet-500 transition-colors"
-                    >Reply</button>
+                    <div className="flex flex-col items-end">
+                      <button
+                        onClick={() => { const name = r.displayName || r.userName; setCommentText(`@${name} `); setReplyingToName(name); if (!showComments) handleCommentToggle(); }}
+                        className={`text-[10px] font-semibold transition-colors ${replyingToName === (r.displayName || r.userName) ? 'text-violet-500' : 'text-gray-400 hover:text-violet-500'}`}
+                      >Reply</button>
+                      {replyingToName === (r.displayName || r.userName) && (
+                        <div className="w-px h-3 bg-violet-400 mt-0.5" />
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
