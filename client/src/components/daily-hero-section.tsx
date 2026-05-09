@@ -333,42 +333,51 @@ function ScoreShareCard({
 
                 {/* Stats grid */}
                 <div className="h-px bg-gray-100 mb-4" />
-                <div className="grid grid-cols-3 gap-2 mb-4">
-                  <div className="flex flex-col items-center rounded-xl p-2.5" style={{ background: '#f5f0ff' }}>
-                    <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Weekly Rank</p>
+                <div className="grid grid-cols-4 gap-1.5 mb-4">
+                  <div className="flex flex-col items-center rounded-xl p-2" style={{ background: '#f5f0ff' }}>
+                    <p className="text-[6px] font-bold uppercase tracking-widest text-gray-400 mb-1">Weekly Rank</p>
                     {rankData?.rank != null ? (
                       <>
-                        <p className="text-[20px] font-black text-gray-900 leading-none">#{rankData.rank}</p>
-                        <p className="text-[8px] text-gray-400 mt-0.5">This week</p>
+                        <p className="text-[16px] font-black text-gray-900 leading-none">#{rankData.rank}</p>
+                        <p className="text-[7px] text-gray-400 mt-0.5">This week</p>
                       </>
                     ) : (
                       <>
-                        <Lock size={16} className="text-gray-300 mt-1" />
-                        <p className="text-[8px] text-gray-400 mt-0.5">Play to unlock</p>
+                        <Lock size={14} className="text-gray-300 mt-1" />
+                        <p className="text-[7px] text-gray-400 mt-0.5">Play to unlock</p>
                       </>
                     )}
                   </div>
-                  <div className="flex flex-col items-center rounded-xl p-2.5" style={{ background: '#f5f0ff' }}>
-                    <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Hot Streak</p>
-                    <p className="text-[20px] font-black text-gray-900 leading-none">{streak ?? 0}</p>
-                    <p className="text-[8px] text-gray-400 mt-0.5">day{(streak ?? 0) !== 1 ? 's' : ''}</p>
+                  <div className="flex flex-col items-center rounded-xl p-2" style={{ background: '#f5f0ff' }}>
+                    <p className="text-[6px] font-bold uppercase tracking-widest text-gray-400 mb-1">Hot Streak</p>
+                    <p className="text-[16px] font-black text-gray-900 leading-none">{streak ?? 0}</p>
+                    <p className="text-[7px] text-gray-400 mt-0.5">day{(streak ?? 0) !== 1 ? 's' : ''}</p>
                   </div>
-                  <div className="flex flex-col items-center rounded-xl p-2.5" style={{ background: '#f5f0ff' }}>
-                    <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Percentile</p>
-                    {rankData?.beatenPct != null && rankData.beatenPct > 0 ? (
+                  <div className="flex flex-col items-center rounded-xl p-2" style={{ background: '#f5f0ff' }}>
+                    <p className="text-[6px] font-bold uppercase tracking-widest text-gray-400 mb-1">Accuracy</p>
+                    {triviaStats?.accuracy != null ? (
                       <>
-                        <p className="text-[20px] font-black text-gray-900 leading-none">Top {100 - rankData.beatenPct}%</p>
-                        <p className="text-[8px] text-gray-400 mt-0.5">of players</p>
-                      </>
-                    ) : rankData?.total != null ? (
-                      <>
-                        <p className="text-[20px] font-black text-gray-400 leading-none">—</p>
-                        <p className="text-[8px] text-gray-400 mt-0.5">percentile</p>
+                        <p className="text-[16px] font-black text-gray-900 leading-none">{triviaStats.accuracy}%</p>
+                        <p className="text-[7px] text-gray-400 mt-0.5">correct</p>
                       </>
                     ) : (
                       <>
-                        <Lock size={16} className="text-gray-300 mt-1" />
-                        <p className="text-[8px] text-gray-400 mt-0.5">Play to unlock</p>
+                        <Lock size={14} className="text-gray-300 mt-1" />
+                        <p className="text-[7px] text-gray-400 mt-0.5">Play to unlock</p>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-center rounded-xl p-2" style={{ background: '#f5f0ff' }}>
+                    <p className="text-[6px] font-bold uppercase tracking-widest text-gray-400 mb-1">Total Pts</p>
+                    {triviaStats?.points != null ? (
+                      <>
+                        <p className="text-[16px] font-black text-gray-900 leading-none">{triviaStats.points.toLocaleString()}</p>
+                        <p className="text-[7px] text-gray-400 mt-0.5">trivia pts</p>
+                      </>
+                    ) : (
+                      <>
+                        <Lock size={14} className="text-gray-300 mt-1" />
+                        <p className="text-[7px] text-gray-400 mt-0.5">Play to unlock</p>
                       </>
                     )}
                   </div>
@@ -1803,7 +1812,35 @@ export function DailyHeroSection() {
     enabled: !!user?.id,
   });
 
-  // ── Trivia rank + percentile (for scorecard) ──
+  // ── Trivia accuracy + points (for scorecard) ──
+  const { data: triviaStats } = useQuery<{ accuracy: number | null; points: number | null }>({
+    queryKey: ['hero-trivia-stats', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return { accuracy: null, points: null };
+      const [poolRes, pointsRes] = await Promise.all([
+        supabase.from('prediction_pools').select('id').eq('type', 'trivia'),
+        supabase.from('user_points').select('trivia_points').eq('user_id', user.id).maybeSingle(),
+      ]);
+      const ids = (poolRes.data ?? []).map((p: any) => p.id);
+      let accuracy: number | null = null;
+      if (ids.length > 0) {
+        const { data: preds } = await supabase
+          .from('user_predictions')
+          .select('is_winner')
+          .eq('user_id', user.id)
+          .in('pool_id', ids);
+        if (preds && preds.length > 0) {
+          const correct = preds.filter((p: any) => p.is_winner).length;
+          accuracy = Math.round((correct / preds.length) * 100);
+        }
+      }
+      return { accuracy, points: pointsRes.data?.trivia_points ?? null };
+    },
+    enabled: !!user?.id,
+    staleTime: 120000,
+  });
+
+  // ── Trivia rank (for scorecard) ──
   const { data: rankData } = useQuery<{ rank: number | null; total: number | null; beatenPct?: number }>({
     queryKey: ['hero-rank-data', user?.id],
     queryFn: async () => {

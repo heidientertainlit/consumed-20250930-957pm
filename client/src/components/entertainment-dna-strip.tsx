@@ -62,22 +62,22 @@ function useStripData() {
   const { data: triviaStats } = useQuery({
     queryKey: ['dna-strip-trivia', user?.id],
     queryFn: async () => {
-      if (!user?.id) return { total: 0, correct: 0, accuracy: 0 };
-      const { data: triviaPoolIds } = await supabase
-        .from('prediction_pools')
-        .select('id')
-        .eq('type', 'trivia');
-      if (!triviaPoolIds?.length) return { total: 0, correct: 0, accuracy: 0 };
-      const ids = triviaPoolIds.map((p: any) => p.id);
+      if (!user?.id) return { total: 0, correct: 0, accuracy: 0, points: null as number | null };
+      const [poolRes, pointsRes] = await Promise.all([
+        supabase.from('prediction_pools').select('id').eq('type', 'trivia'),
+        supabase.from('user_points').select('trivia_points').eq('user_id', user.id).maybeSingle(),
+      ]);
+      const ids = (poolRes.data ?? []).map((p: any) => p.id);
+      if (!ids.length) return { total: 0, correct: 0, accuracy: 0, points: pointsRes.data?.trivia_points ?? null };
       const { data: preds } = await supabase
         .from('user_predictions')
         .select('is_winner')
         .eq('user_id', user.id)
         .in('pool_id', ids);
-      if (!preds?.length) return { total: 0, correct: 0, accuracy: 0 };
+      if (!preds?.length) return { total: 0, correct: 0, accuracy: 0, points: pointsRes.data?.trivia_points ?? null };
       const correct = preds.filter((p: any) => p.is_winner).length;
       const total = preds.length;
-      return { total, correct, accuracy: Math.round((correct / total) * 100) };
+      return { total, correct, accuracy: Math.round((correct / total) * 100), points: pointsRes.data?.trivia_points ?? null };
     },
     enabled: !!user?.id,
     staleTime: 120000,
@@ -226,9 +226,13 @@ function ExpandedCard({ state, streak, dnaProfile, triviaStats, rankData, onClos
   const streakVal = streak > 0 ? `${streak} day${streak !== 1 ? 's' : ''}` : '0 days';
   const streakSub = streak >= 3 ? 'On fire 🔥' : streak >= 1 ? 'Keep it going' : 'Start today';
 
-  // ── Stat: Percentile ──
-  const percentileVal = rankData.topPct != null ? `Top ${rankData.topPct}%` : '—';
-  const percentileSub = rankData.topPct != null ? 'of players' : 'Play to unlock';
+  // ── Stat: Accuracy ──
+  const accuracyVal = (triviaStats?.accuracy ?? 0) > 0 ? `${triviaStats!.accuracy}%` : '—';
+  const accuracySub = (triviaStats?.accuracy ?? 0) > 0 ? 'correct' : 'Play to unlock';
+
+  // ── Stat: Total Points ──
+  const pointsVal = triviaStats?.points != null ? triviaStats.points.toLocaleString() : '—';
+  const pointsSub = triviaStats?.points != null ? 'trivia pts' : 'Play to unlock';
 
   const ctaLabel = state <= 2
     ? "Start Today's Play →"
@@ -259,27 +263,36 @@ function ExpandedCard({ state, streak, dnaProfile, triviaStats, rankData, onClos
       <div className="flex items-stretch border-t border-purple-800/40 border-b border-purple-800/40 divide-x divide-purple-800/40">
         {/* Weekly Rank */}
         <div className="flex-1 py-3 text-center">
-          <p className="text-[10px] text-purple-400 uppercase tracking-wide font-medium">Weekly Rank</p>
+          <p className="text-[9px] text-purple-400 uppercase tracking-wide font-medium">Rank</p>
           {isLocked && rankData.rank == null
             ? <Lock size={14} className="text-purple-600 mx-auto mt-1.5" />
             : <p className="text-white font-bold text-lg leading-tight">{rankVal}</p>
           }
-          <p className="text-[10px] text-purple-400/70 leading-tight">{isLocked && rankData.rank == null ? 'Play to unlock' : rankSub}</p>
+          <p className="text-[9px] text-purple-400/70 leading-tight">{isLocked && rankData.rank == null ? 'Play to unlock' : rankSub}</p>
         </div>
         {/* Hot Streak */}
         <div className="flex-1 py-3 text-center">
-          <p className="text-[10px] text-purple-400 uppercase tracking-wide font-medium">Hot Streak</p>
+          <p className="text-[9px] text-purple-400 uppercase tracking-wide font-medium">Streak</p>
           <p className="text-white font-bold text-lg leading-tight">{streakVal}</p>
-          <p className="text-[10px] text-purple-400/70 leading-tight">{streakSub}</p>
+          <p className="text-[9px] text-purple-400/70 leading-tight">{streakSub}</p>
         </div>
-        {/* Percentile */}
+        {/* Accuracy */}
         <div className="flex-1 py-3 text-center">
-          <p className="text-[10px] text-purple-400 uppercase tracking-wide font-medium">Percentile</p>
-          {isLocked && rankData.topPct == null
+          <p className="text-[9px] text-purple-400 uppercase tracking-wide font-medium">Accuracy</p>
+          {isLocked && !triviaStats?.accuracy
             ? <Lock size={14} className="text-purple-600 mx-auto mt-1.5" />
-            : <p className="text-white font-bold text-lg leading-tight">{percentileVal}</p>
+            : <p className="text-white font-bold text-lg leading-tight">{accuracyVal}</p>
           }
-          <p className="text-[10px] text-purple-400/70 leading-tight">{isLocked && rankData.topPct == null ? 'Play to unlock' : percentileSub}</p>
+          <p className="text-[9px] text-purple-400/70 leading-tight">{accuracySub}</p>
+        </div>
+        {/* Total Points */}
+        <div className="flex-1 py-3 text-center">
+          <p className="text-[9px] text-purple-400 uppercase tracking-wide font-medium">Points</p>
+          {isLocked && triviaStats?.points == null
+            ? <Lock size={14} className="text-purple-600 mx-auto mt-1.5" />
+            : <p className="text-white font-bold text-lg leading-tight">{pointsVal}</p>
+          }
+          <p className="text-[9px] text-purple-400/70 leading-tight">{pointsSub}</p>
         </div>
       </div>
 
