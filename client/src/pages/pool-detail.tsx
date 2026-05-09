@@ -3083,7 +3083,7 @@ export default function PoolDetailPage() {
               }
             >
               {isFollowing ? <Check size={12} className="text-violet-400" /> : <Plus size={12} />}
-              {isFollowing ? `Following${followerCount > 0 ? ` · ${followerCount}` : ''}` : 'Follow'}
+              {isFollowing ? 'Following' : 'Follow'}
             </button>
             <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/70 text-xs font-medium border border-white/20 hover:bg-white/10 transition-colors">
               {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
