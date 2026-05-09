@@ -355,10 +355,15 @@ function ScoreShareCard({
                   </div>
                   <div className="flex flex-col items-center rounded-xl p-2.5" style={{ background: '#f5f0ff' }}>
                     <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Percentile</p>
-                    {rankData?.topPct != null ? (
+                    {rankData?.topPct != null && rankData.topPct < 100 ? (
                       <>
                         <p className="text-[20px] font-black text-gray-900 leading-none">Top {rankData.topPct}%</p>
                         <p className="text-[8px] text-gray-400 mt-0.5">of players</p>
+                      </>
+                    ) : rankData?.total != null ? (
+                      <>
+                        <p className="text-[13px] font-black text-gray-400 leading-none mt-1">Keep</p>
+                        <p className="text-[13px] font-black text-gray-400 leading-none">playing!</p>
                       </>
                     ) : (
                       <>
