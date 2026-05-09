@@ -1353,7 +1353,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
 
         {showComments && (
-          <div className={`border-t border-gray-200 bg-gray-50 ${replyingToName ? 'border-r-[3px] border-violet-400' : ''}`}>
+          <div className={`border-t border-gray-200 bg-gray-50 ${replyingToName ? 'border-l-[3px] border-violet-400' : ''}`}>
             {loadingComments ? (
               <p className="text-xs text-gray-400 text-center py-4">Loading...</p>
             ) : comments.length === 0 ? (
@@ -1517,7 +1517,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
 
         {showComments && (
-          <div className={`border-t border-gray-200 bg-gray-50 ${replyingToName ? 'border-r-[3px] border-violet-400' : ''}`}>
+          <div className={`border-t border-gray-200 bg-gray-50 ${replyingToName ? 'border-l-[3px] border-violet-400' : ''}`}>
             {loadingComments ? (
               <p className="text-xs text-gray-400 text-center py-4">Loading...</p>
             ) : comments.length === 0 ? (
@@ -1694,9 +1694,16 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   const allRaters = [...authorRow, ...relatedRatings];
                   if (allRaters.length === 0) return null;
                   return (
-                    <div className="mt-2 flex flex-col">
+                    <div className="mt-2 flex flex-col relative">
+                      {replyingToName && (
+                        <div className="absolute right-0 top-0 h-full w-2 pointer-events-none">
+                          <div className="absolute top-0 right-0 w-full h-px bg-violet-400" />
+                          <div className="absolute top-0 right-0 w-px h-full bg-violet-400" />
+                          <div className="absolute bottom-0 right-0 w-full h-px bg-violet-400" />
+                        </div>
+                      )}
                       {(showAllRelated ? allRaters : allRaters.slice(0, 3)).map((r, idx) => (
-                        <div key={r.userId} className="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0">
+                        <div key={r.userId} className="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0 pr-3">
                           <div className={`w-6 h-6 rounded-full ${ratingColors[idx % ratingColors.length]} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 overflow-hidden`}>
                             {r.avatar ? <img src={r.avatar} className="w-full h-full object-cover" alt="" /> : (r.displayName || r.userName || 'U')[0]?.toUpperCase()}
                           </div>
@@ -1891,9 +1898,16 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )}
           {/* Other raters for the same media — shown in NORMAL layout too */}
           {relatedRatings.length > 0 && (
-            <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2.5">
+            <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2.5 relative">
+              {replyingToName && (
+                <div className="absolute right-0 top-0 h-full w-2 pointer-events-none">
+                  <div className="absolute top-0 right-0 w-full h-px bg-violet-400" />
+                  <div className="absolute top-0 right-0 w-px h-full bg-violet-400" />
+                  <div className="absolute bottom-0 right-0 w-full h-px bg-violet-400" />
+                </div>
+              )}
               {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
-                <div key={r.userId} className="flex items-center justify-between">
+                <div key={r.userId} className="flex items-center justify-between pr-3">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 overflow-hidden">
                       {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
@@ -2020,7 +2034,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       )}
 
       {showComments && (
-        <div className={`border-t border-gray-100 bg-white px-4 pt-3 pb-4 ${replyingToName ? 'border-r-[3px] border-violet-400' : ''}`}>
+        <div className={`border-t border-gray-100 bg-white px-4 pt-3 pb-4 ${replyingToName ? 'border-l-[3px] border-violet-400' : ''}`}>
           {loadingComments ? (
             <p className="text-xs text-gray-400 text-center py-3">Loading replies…</p>
           ) : (
