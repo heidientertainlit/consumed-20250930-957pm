@@ -2797,7 +2797,7 @@ export default function PoolDetailPage() {
     await refetchFollow();
     setOptimisticFollowing(null); // hand back to server truth
     setTogglingFollow(false);
-    toast({ title: next ? 'Following! You\'ll be notified of new posts.' : 'Unfollowed room' });
+    if (!next) toast({ title: 'Unfollowed room' });
   };
 
   const { data: myTakeVotes, refetch: refetchMyVotes } = useQuery({
