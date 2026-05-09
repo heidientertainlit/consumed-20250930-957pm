@@ -1353,7 +1353,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
 
         {showComments && (
-          <div className={`border-t border-gray-200 bg-gray-50 ${replyingToName ? 'border-l-[3px] border-violet-400' : ''}`}>
+          <div className={`border-t border-gray-200 bg-gray-50 ${replyingToName ? 'border-r-[3px] border-violet-400' : ''}`}>
             {loadingComments ? (
               <p className="text-xs text-gray-400 text-center py-4">Loading...</p>
             ) : comments.length === 0 ? (
@@ -1517,7 +1517,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
 
         {showComments && (
-          <div className={`border-t border-gray-200 bg-gray-50 ${replyingToName ? 'border-l-[3px] border-violet-400' : ''}`}>
+          <div className={`border-t border-gray-200 bg-gray-50 ${replyingToName ? 'border-r-[3px] border-violet-400' : ''}`}>
             {loadingComments ? (
               <p className="text-xs text-gray-400 text-center py-4">Loading...</p>
             ) : comments.length === 0 ? (
@@ -2020,7 +2020,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       )}
 
       {showComments && (
-        <div className={`border-t border-gray-100 bg-white px-4 pt-3 pb-4 ${replyingToName ? 'border-l-[3px] border-violet-400' : ''}`}>
+        <div className={`border-t border-gray-100 bg-white px-4 pt-3 pb-4 ${replyingToName ? 'border-r-[3px] border-violet-400' : ''}`}>
           {loadingComments ? (
             <p className="text-xs text-gray-400 text-center py-3">Loading replies…</p>
           ) : (
