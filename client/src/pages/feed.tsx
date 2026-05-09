@@ -1601,15 +1601,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     );
   }
 
-  const allRaterNames = [
-    ...(post.user ? [(post.user.displayName || post.user.userName || '')] : []),
-    ...relatedRatings.map(r => r.displayName || r.userName || ''),
-  ].filter(Boolean).map(n => n.toLowerCase());
-  const showBracket = !!(replyingToName || (showComments && comments.some((c: any) =>
-    allRaterNames.some(name => c.content?.toLowerCase().startsWith('@' + name))
-  )));
-
   return (
+    <>
     <div className={`${forceActionFirst ? 'w-full' : 'snap-start flex-shrink-0 w-[85vw] max-w-[340px]'} md:w-full md:max-w-none md:snap-align-none md:flex-shrink bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden`}>
       {isActionFirst ? (
         // ACTION FIRST layout — stars on top, friend's take below
@@ -1703,11 +1696,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   if (allRaters.length === 0) return null;
                   return (
                     <div className="mt-2 flex flex-col">
-                      {(showAllRelated ? allRaters : allRaters.slice(0, 3)).map((r, idx) => {
-                        const rName = r.displayName || r.userName || '';
-                        const rowHighlighted = replyingToName === rName || (showComments && comments.some((c: any) => c.content?.toLowerCase().startsWith('@' + rName.toLowerCase())));
-                        return (
-                        <div key={r.userId} className={`relative flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0 ${rowHighlighted ? 'pr-4' : ''}`}>
+                      {(showAllRelated ? allRaters : allRaters.slice(0, 3)).map((r, idx) => (
+                        <div key={r.userId} className="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0">
                           <div className={`w-6 h-6 rounded-full ${ratingColors[idx % ratingColors.length]} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 overflow-hidden`}>
                             {r.avatar ? <img src={r.avatar} className="w-full h-full object-cover" alt="" /> : (r.displayName || r.userName || 'U')[0]?.toUpperCase()}
                           </div>
@@ -1723,15 +1713,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                             onClick={() => { const name = r.displayName || r.userName; setCommentText(`@${name} `); setReplyingToName(name); if (!showComments) handleCommentToggle(); }}
                             className={`text-[10px] font-semibold transition-colors flex-shrink-0 ${replyingToName === (r.displayName || r.userName) ? 'text-violet-500' : 'text-gray-400 hover:text-violet-500'}`}
                           >Reply</button>
-                          {rowHighlighted && (
-                            <div className="absolute right-0 top-0 h-full pointer-events-none" style={{ width: 10 }}>
-                              <div className="absolute top-0 right-0 h-px bg-violet-400" style={{ width: 8 }} />
-                              <div className="absolute top-0 right-0 w-px h-full bg-violet-400" />
-                              <div className="absolute bottom-0 right-0 h-px bg-violet-400" style={{ width: 8 }} />
-                            </div>
-                          )}
                         </div>
-                      ); })}
+                      ))}
                       {allRaters.length > 3 && (
                         <button onClick={() => setShowAllRelated(v => !v)} className="text-[10px] text-violet-500 font-medium text-left pt-1">
                           {showAllRelated ? 'Show less' : `+ ${allRaters.length - 3} more`}
@@ -1910,11 +1893,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {/* Other raters for the same media — shown in NORMAL layout too */}
           {relatedRatings.length > 0 && (
             <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2.5">
-              {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => {
-                const rName = r.displayName || r.userName || '';
-                const rowHighlighted = replyingToName === rName || (showComments && comments.some((c: any) => c.content?.toLowerCase().startsWith('@' + rName.toLowerCase())));
-                return (
-                <div key={r.userId} className={`relative flex items-center justify-between ${rowHighlighted ? 'pr-4' : ''}`}>
+              {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
+                <div key={r.userId} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 overflow-hidden">
                       {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
@@ -1934,16 +1914,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       className={`text-[10px] font-semibold transition-colors ${replyingToName === (r.displayName || r.userName) ? 'text-violet-500' : 'text-gray-400 hover:text-violet-500'}`}
                     >Reply</button>
                   </div>
-                  {rowHighlighted && (
-                    <div className="absolute right-0 top-0 h-full pointer-events-none" style={{ width: 10 }}>
-                      <div className="absolute top-0 right-0 h-px bg-violet-400" style={{ width: 8 }} />
-                      <div className="absolute top-0 right-0 w-px h-full bg-violet-400" />
-                      <div className="absolute bottom-0 right-0 h-px bg-violet-400" style={{ width: 8 }} />
-                    </div>
-                  )}
                 </div>
-                );
-              })}
+              ))}
               {relatedRatings.length > 2 && (
                 <button onClick={() => setShowAllRelated(v => !v)} className="text-[10px] text-violet-500 font-medium text-left">
                   {showAllRelated ? 'Show less' : `+ ${relatedRatings.length - 2} more`}
@@ -2064,8 +2036,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         reportedUserId={reportCommentTarget?.userId}
         reportedUserName={reportCommentTarget?.userName}
       />
+    </div>
     {showComments && (
-      <div className="border-t border-gray-100 px-4 pt-3 pb-4">
+      <div className="mt-1 rounded-2xl bg-white border border-gray-100 shadow-sm px-4 pt-3 pb-4">
         {loadingComments ? (
           <p className="text-xs text-gray-400 text-center py-3">Loading replies…</p>
         ) : (
@@ -2074,7 +2047,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               const cName = c.user?.displayName || c.user?.username || c.username || 'User';
               const cInitial = cName[0]?.toUpperCase();
               const isReplying = replyingToId === c.id;
-              const commentMentionsRater = allRaterNames.some(name => c.content?.toLowerCase().startsWith('@' + name));
               return (
                 <div key={c.id} className="flex gap-2.5 py-2">
                   {/* Avatar + thread line column */}
@@ -2087,7 +2059,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     )}
                   </div>
                   {/* Comment body */}
-                  <div className={`flex-1 min-w-0 ${commentMentionsRater ? 'border-l-[3px] pl-2' : ''}`} style={commentMentionsRater ? { borderLeftColor: '#8b5cf6' } : {}}>
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-xs font-semibold text-gray-900">{cName}</span>
                       <span className="text-[10px] text-gray-400">{c.created_at ? timeAgo(c.created_at) : ''}</span>
@@ -2194,7 +2166,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         )}
       </div>
     )}
-    </div>
+    </>
   );
 }
 
