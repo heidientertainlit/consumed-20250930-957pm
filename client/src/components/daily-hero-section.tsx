@@ -86,6 +86,7 @@ function ScoreShareCard({
   username,
   dnaStats,
   rankData,
+  triviaStats,
   onClose,
 }: {
   open: boolean;
@@ -99,7 +100,8 @@ function ScoreShareCard({
   questions?: { category?: string | null }[];
   username?: string | null;
   dnaStats?: { label: string | null; totalAnswered: number; topGenre: string | null; allGenres: string[] } | null;
-  rankData?: { rank: number | null; percentile: number | null } | null;
+  rankData?: { rank: number | null; total: number | null; beatenPct?: number } | null;
+  triviaStats?: { accuracy: number | null; points: number | null } | null;
   onClose: () => void;
 }) {
   const { toast } = useToast();
@@ -2409,6 +2411,8 @@ export function DailyHeroSection() {
         streak={streak}
         userId={user?.id}
         username={username ?? null}
+        rankData={rankData ?? null}
+        triviaStats={triviaStats ?? null}
         onClose={() => setShowPlayShare(false)}
       />
       <ScoreShareCard
@@ -2420,6 +2424,7 @@ export function DailyHeroSection() {
         userId={user?.id}
         dnaStats={dnaStats ?? null}
         rankData={rankData ?? null}
+        triviaStats={triviaStats ?? null}
         onClose={() => setShowCallShare(false)}
       />
     </>
