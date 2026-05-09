@@ -897,11 +897,29 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         const { data: users } = await supabase.from('users').select('id, user_name, display_name, avatar_url').in('id', ids);
         const userMap: Record<string, any> = {};
         (users || []).forEach((u: any) => { userMap[u.id] = u; });
+
+        // Some users only exist in `profiles` (uses `username`/`avatar_url` columns).
+        // Fall back to profiles for any IDs not found in users table.
+        const missingIds = ids.filter((id: string) => !userMap[id]);
+        if (missingIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, username, display_name, avatar_url')
+            .in('id', missingIds);
+          (profiles || []).forEach((p: any) => {
+            userMap[p.id] = {
+              id: p.id,
+              user_name: p.username || p.display_name,
+              display_name: p.display_name || p.username,
+              avatar_url: p.avatar_url,
+            };
+          });
+        }
+
         setRelatedRatings(
           filtered
             .filter((r: any) => {
               const u = userMap[r.user_id];
-              // Skip users we can't identify — prevents "User" placeholder rows
               return u && (u.display_name || u.user_name);
             })
             .map((r: any) => ({
