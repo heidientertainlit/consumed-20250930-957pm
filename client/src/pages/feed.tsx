@@ -1696,7 +1696,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   return (
                     <div className="mt-2 flex flex-col">
                       {(showAllRelated ? allRaters : allRaters.slice(0, 3)).map((r, idx) => (
-                        <div key={r.userId} className="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0">
+                        <div key={r.userId} className={`flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0 transition-all ${replyingToName === (r.displayName || r.userName) ? 'border-l-2 border-violet-400 pl-1 -ml-1' : ''}`}>
                           <div className={`w-6 h-6 rounded-full ${ratingColors[idx % ratingColors.length]} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 overflow-hidden`}>
                             {r.avatar ? <img src={r.avatar} className="w-full h-full object-cover" alt="" /> : (r.displayName || r.userName || 'U')[0]?.toUpperCase()}
                           </div>
@@ -1893,7 +1893,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {relatedRatings.length > 0 && (
             <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2.5">
               {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
-                <div key={r.userId} className="flex items-center justify-between">
+                <div key={r.userId} className={`flex items-center justify-between transition-all ${replyingToName === (r.displayName || r.userName) ? 'border-l-2 border-violet-400 pl-1 -ml-1' : ''}`}>
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 overflow-hidden">
                       {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
