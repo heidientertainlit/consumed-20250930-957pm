@@ -86,7 +86,7 @@ function useStripData() {
   const { data: rankData } = useQuery({
     queryKey: ['dna-strip-rank', user?.id],
     queryFn: async () => {
-      if (!user?.id || !session?.access_token) return { rank: null, percentile: null, total: 0 };
+      if (!user?.id || !session?.access_token) return { rank: null, topPct: null, total: 0 };
       try {
         const res = await fetch(`${SUPABASE_URL}/functions/v1/get-leaderboards?category=trivia&scope=global`, {
           headers: {
@@ -94,19 +94,20 @@ function useStripData() {
             'Content-Type': 'application/json',
           },
         });
-        if (!res.ok) return { rank: null, percentile: null, total: 0 };
+        if (!res.ok) return { rank: null, topPct: null, total: 0 };
         const data = await res.json();
         // Response: { categories: { trivia: [{ user_id, rank, ... }] }, ... }
         const entries: any[] = data?.categories?.trivia ?? [];
-        if (!entries.length) return { rank: null, percentile: null, total: 0 };
+        if (!entries.length) return { rank: null, topPct: null, total: 0 };
         const myEntry = entries.find((e: any) => e.user_id === user.id);
-        if (!myEntry) return { rank: null, percentile: null, total: entries.length };
+        if (!myEntry) return { rank: null, topPct: null, total: entries.length };
         const rank = myEntry.rank;
         const total = entries.length;
-        const percentile = Math.round(((total - rank) / total) * 100);
-        return { rank, percentile, total };
+        const beatenPct = Math.round(((total - rank) / total) * 100);
+        const topPct = beatenPct > 0 ? (100 - beatenPct) : null;
+        return { rank, topPct, total };
       } catch {
-        return { rank: null, percentile: null, total: 0 };
+        return { rank: null, topPct: null, total: 0 };
       }
     },
     enabled: !!user?.id && !!session?.access_token,
@@ -117,7 +118,7 @@ function useStripData() {
     streak: streak ?? 0,
     dnaProfile: dnaProfile ?? null,
     triviaStats: triviaStats ?? { total: 0, correct: 0, accuracy: 0 },
-    rankData: rankData ?? { rank: null, percentile: null, total: 0 },
+    rankData: rankData ?? { rank: null, topPct: null, total: 0 },
   };
 }
 
@@ -201,7 +202,7 @@ function CollapsedStrip({ state, streak, dnaProfile, onExpand }: {
 // ─── Expanded card ────────────────────────────────────────────────────────────
 function ExpandedCard({ state, streak, dnaProfile, triviaStats, rankData, onClose, onNavigate }: {
   state: StripState; streak: number; dnaProfile: any; triviaStats: any;
-  rankData: { rank: number | null; percentile: number | null; total: number };
+  rankData: { rank: number | null; topPct: number | null; total: number };
   onClose: () => void; onNavigate: () => void;
 }) {
   const topGenres: string[] = dnaProfile?.favorite_genres?.slice(0, 3) ?? [];
@@ -226,8 +227,8 @@ function ExpandedCard({ state, streak, dnaProfile, triviaStats, rankData, onClos
   const streakSub = streak >= 3 ? 'On fire 🔥' : streak >= 1 ? 'Keep it going' : 'Start today';
 
   // ── Stat: Percentile ──
-  const percentileVal = rankData.percentile != null ? `${rankData.percentile}%` : '—';
-  const percentileSub = rankData.percentile != null ? 'of players beaten' : 'Play to unlock';
+  const percentileVal = rankData.topPct != null ? `Top ${rankData.topPct}%` : '—';
+  const percentileSub = rankData.topPct != null ? 'of players' : 'Play to unlock';
 
   const ctaLabel = state <= 2
     ? "Start Today's Play →"
@@ -274,11 +275,11 @@ function ExpandedCard({ state, streak, dnaProfile, triviaStats, rankData, onClos
         {/* Percentile */}
         <div className="flex-1 py-3 text-center">
           <p className="text-[10px] text-purple-400 uppercase tracking-wide font-medium">Percentile</p>
-          {isLocked && rankData.percentile == null
+          {isLocked && rankData.topPct == null
             ? <Lock size={14} className="text-purple-600 mx-auto mt-1.5" />
             : <p className="text-white font-bold text-lg leading-tight">{percentileVal}</p>
           }
-          <p className="text-[10px] text-purple-400/70 leading-tight">{isLocked && rankData.percentile == null ? 'Play to unlock' : percentileSub}</p>
+          <p className="text-[10px] text-purple-400/70 leading-tight">{isLocked && rankData.topPct == null ? 'Play to unlock' : percentileSub}</p>
         </div>
       </div>
 
