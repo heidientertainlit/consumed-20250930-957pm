@@ -357,8 +357,8 @@ function ScoreShareCard({
                     <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Percentile</p>
                     {rankData?.beatenPct != null && rankData.beatenPct > 0 ? (
                       <>
-                        <p className="text-[20px] font-black text-gray-900 leading-none">{rankData.beatenPct}%</p>
-                        <p className="text-[8px] text-gray-400 mt-0.5">of players beaten</p>
+                        <p className="text-[20px] font-black text-gray-900 leading-none">Top {100 - rankData.beatenPct}%</p>
+                        <p className="text-[8px] text-gray-400 mt-0.5">of players</p>
                       </>
                     ) : rankData?.total != null ? (
                       <>
