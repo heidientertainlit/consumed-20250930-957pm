@@ -1,28 +1,38 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, Tv, BookOpen, Film, Music, Gamepad2, ChevronRight } from "lucide-react";
+import { Search, X, Tv, BookOpen, Film, Music, Gamepad2, ChevronRight, Mic2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
 import { createPortal } from "react-dom";
+import { supabase } from "@/lib/supabase";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
 const MEDIA_TYPES = [
-  { id: 'tv',    label: 'TV Show', Icon: Tv },
-  { id: 'movie', label: 'Movie',   Icon: Film },
-  { id: 'book',  label: 'Book',    Icon: BookOpen },
-  { id: 'music', label: 'Music',   Icon: Music },
-  { id: 'game',  label: 'Game',    Icon: Gamepad2 },
+  { id: 'tv',      label: 'TV Show',  Icon: Tv },
+  { id: 'movie',   label: 'Movie',    Icon: Film },
+  { id: 'book',    label: 'Book',     Icon: BookOpen },
+  { id: 'music',   label: 'Music',    Icon: Music },
+  { id: 'game',    label: 'Game',     Icon: Gamepad2 },
+  { id: 'podcast', label: 'Podcast',  Icon: Mic2 },
 ];
 
-function RequestRoomSheet({ onClose }: { onClose: () => void }) {
+function RequestRoomSheet({ onClose, userId }: { onClose: () => void; userId?: string }) {
   const [selectedType, setSelectedType] = useState('');
   const [title, setTitle] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    if (!title.trim()) return;
+  const handleSubmit = async () => {
+    if (!title.trim() || submitting) return;
+    setSubmitting(true);
+    await supabase.from('room_requests').insert({
+      user_id: userId ?? null,
+      media_type: selectedType || null,
+      title: title.trim(),
+    });
+    setSubmitting(false);
     setSubmitted(true);
   };
 
@@ -90,11 +100,12 @@ function RequestRoomSheet({ onClose }: { onClose: () => void }) {
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder={
-                  selectedType === 'tv'    ? 'e.g. The Bear, Severance…' :
-                  selectedType === 'movie' ? 'e.g. Dune, Inception…' :
-                  selectedType === 'book'  ? 'e.g. Fourth Wing, Atomic Habits…' :
-                  selectedType === 'music' ? 'e.g. Beyoncé, Taylor Swift…' :
-                  selectedType === 'game'  ? 'e.g. Elden Ring, Stardew Valley…' :
+                  selectedType === 'tv'      ? 'e.g. The Bear, Severance…' :
+                  selectedType === 'movie'   ? 'e.g. Dune, Inception…' :
+                  selectedType === 'book'    ? 'e.g. Fourth Wing, Atomic Habits…' :
+                  selectedType === 'music'   ? 'e.g. Beyoncé, Taylor Swift…' :
+                  selectedType === 'game'    ? 'e.g. Elden Ring, Stardew Valley…' :
+                  selectedType === 'podcast' ? 'e.g. Serial, SmartLess…' :
                   'Start typing a title…'
                 }
                 className="w-full px-4 py-3 rounded-xl text-sm text-gray-800 placeholder:text-gray-400 outline-none border border-gray-200 focus:border-purple-400"
@@ -103,11 +114,11 @@ function RequestRoomSheet({ onClose }: { onClose: () => void }) {
 
             <button
               onClick={handleSubmit}
-              disabled={!title.trim()}
+              disabled={!title.trim() || submitting}
               className="w-full py-3 rounded-2xl text-sm font-semibold text-white transition-opacity"
-              style={{ background: '#7c3aed', opacity: title.trim() ? 1 : 0.4 }}
+              style={{ background: '#7c3aed', opacity: title.trim() && !submitting ? 1 : 0.4 }}
             >
-              Send Request
+              {submitting ? 'Sending…' : 'Send Request'}
             </button>
           </>
         )}
@@ -219,7 +230,7 @@ export default function PoolsPage() {
         </div>
       </div>
 
-      {showRequest && <RequestRoomSheet onClose={() => setShowRequest(false)} />}
+      {showRequest && <RequestRoomSheet onClose={() => setShowRequest(false)} userId={session?.user?.id} />}
     </div>
   );
 }
