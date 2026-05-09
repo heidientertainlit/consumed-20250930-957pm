@@ -1602,6 +1602,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   }
 
   return (
+    <>
     <div className={`${forceActionFirst ? 'w-full' : 'snap-start flex-shrink-0 w-[85vw] max-w-[340px]'} md:w-full md:max-w-none md:snap-align-none md:flex-shrink bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden`}>
       {isActionFirst ? (
         // ACTION FIRST layout — stars on top, friend's take below
@@ -2033,135 +2034,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
       )}
 
-      {showComments && (
-        <div className={`border-t border-gray-100 bg-white px-4 pt-3 pb-4 ${replyingToName ? 'border-l-[3px] border-violet-400' : ''}`}>
-          {loadingComments ? (
-            <p className="text-xs text-gray-400 text-center py-3">Loading replies…</p>
-          ) : (
-            <div className="space-y-1">
-              {comments.map((c: any) => {
-                const cName = c.user?.displayName || c.user?.username || c.username || 'User';
-                const cInitial = cName[0]?.toUpperCase();
-                const isReplying = replyingToId === c.id;
-                return (
-                  <div key={c.id} className="flex gap-2.5 py-2">
-                    {/* Avatar + thread line column */}
-                    <div className="flex flex-col items-center gap-0 flex-shrink-0" style={{ width: 26 }}>
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-[10px] font-bold overflow-hidden">
-                        {c.user?.avatar ? <img src={c.user.avatar} className="w-full h-full object-cover" alt="" /> : cInitial}
-                      </div>
-                      {(c.replies?.length > 0 || isReplying) && (
-                        <div className="w-px flex-1 bg-gray-200 mt-1 min-h-[12px]" />
-                      )}
-                    </div>
-                    {/* Comment body */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-semibold text-gray-900">{cName}</span>
-                        <span className="text-[10px] text-gray-400">{c.created_at ? timeAgo(c.created_at) : ''}</span>
-                        <div className="ml-auto flex items-center gap-1.5">
-                          {(currentUserId === (c.user?.id || c.userId) || currentUserId === post.userId) && (
-                            <button onClick={(e) => { e.stopPropagation(); deleteComment(c.id); }} className="text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={9} /></button>
-                          )}
-                          {currentUserId && currentUserId !== (c.user?.id || c.userId) && (
-                            <button onClick={(e) => { e.stopPropagation(); setReportCommentTarget({ id: c.id, userId: c.user?.id || c.userId || '', userName: c.user?.username || c.username || 'User' }); }} className="text-gray-300 hover:text-red-400 transition-colors"><Flag size={9} /></button>
-                          )}
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-700 leading-snug mt-0.5 mb-1.5">{c.content}</p>
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => { setReplyingToId(isReplying ? null : c.id); setReplyText(''); }}
-                          className="text-[10px] font-semibold text-gray-400 hover:text-violet-500 transition-colors"
-                        >
-                          Reply
-                        </button>
-                        <div className="flex items-center gap-1 text-gray-400">
-                          <Heart size={10} />
-                          {(c.likes_count || 0) > 0 && <span className="text-[10px]">{c.likes_count}</span>}
-                        </div>
-                      </div>
-                      {/* Inline reply composer */}
-                      {isReplying && (
-                        <div className="mt-2 flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-violet-200">
-                          <input
-                            autoFocus
-                            type="text"
-                            value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
-                            placeholder={`Reply to ${cName}…`}
-                            className="flex-1 text-xs bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
-                            onKeyPress={(e) => e.key === 'Enter' && submitReply(c.id)}
-                          />
-                          <button onClick={() => submitReply(c.id)} disabled={!replyText.trim() || submitting} className="text-[11px] font-semibold text-violet-600 disabled:opacity-40">Post</button>
-                          <button onClick={() => { setReplyingToId(null); setReplyText(''); }} className="text-gray-400 hover:text-gray-600"><X size={11} /></button>
-                        </div>
-                      )}
-                      {/* Nested replies — threaded indent */}
-                      {c.replies?.length > 0 && (
-                        <div className="mt-2 pl-3 border-l-2 border-gray-100 space-y-2">
-                          {c.replies.map((r: any) => {
-                            const rName = r.user?.displayName || r.user?.username || r.username || 'User';
-                            return (
-                              <div key={r.id} className="flex gap-2 pt-1">
-                                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-300 to-blue-300 flex items-center justify-center text-white text-[9px] font-bold overflow-hidden flex-shrink-0">
-                                  {r.user?.avatar ? <img src={r.user.avatar} className="w-full h-full object-cover" alt="" /> : rName[0]?.toUpperCase()}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] font-semibold text-gray-800">{rName}</span>
-                                    <span className="text-[9px] text-gray-400">{r.created_at ? timeAgo(r.created_at) : ''}</span>
-                                  </div>
-                                  <p className="text-[11px] text-gray-600 leading-snug mt-0.5">{r.content}</p>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-              {/* New comment composer */}
-              {session && (
-                <div className="pt-2 mt-1 border-t border-gray-100">
-                  {replyingToName && (
-                    <div className="flex items-center gap-2 mb-2 pl-1 border-l-2 border-violet-400">
-                      <span className="text-[10px] text-violet-500 font-medium">Replying to @{replyingToName}</span>
-                      <button onClick={() => { setReplyingToName(null); setCommentText(''); }} className="text-gray-300 hover:text-gray-500 leading-none">×</button>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 overflow-hidden">
-                    {session.user?.user_metadata?.avatar_url
-                      ? <img src={session.user.user_metadata.avatar_url} className="w-full h-full object-cover" alt="" />
-                      : (session.user?.user_metadata?.display_name || session.user?.email || 'Y')[0]?.toUpperCase()}
-                  </div>
-                  <div className="flex-1 flex items-center gap-2 bg-gray-50 rounded-full border border-gray-200 px-3 py-2 focus-within:border-violet-300 transition-colors">
-                    <input
-                      type="text"
-                      value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
-                      placeholder="Add your take…"
-                      className="flex-1 text-xs bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
-                      onKeyPress={(e) => e.key === 'Enter' && submitComment()}
-                    />
-                    {commentText.trim() && (
-                      <button onClick={submitComment} disabled={submitting} className="text-[11px] font-semibold text-violet-600 disabled:opacity-40 flex-shrink-0">Post</button>
-                    )}
-                  </div>
-                  </div>
-                </div>
-              )}
-              {/* Empty state */}
-              {comments.length === 0 && !loadingComments && (
-                <p className="text-xs text-gray-400 text-center py-2">No replies yet — be first!</p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
       <ReportSheet
         isOpen={reportPostOpen}
         onClose={() => setReportPostOpen(false)}
@@ -2179,6 +2051,136 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         reportedUserName={reportCommentTarget?.userName}
       />
     </div>
+    {showComments && (
+      <div className={`mt-1 rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden px-4 pt-3 pb-4 ${replyingToName ? 'border-l-[3px] border-violet-400' : ''}`}>
+        {loadingComments ? (
+          <p className="text-xs text-gray-400 text-center py-3">Loading replies…</p>
+        ) : (
+          <div className="space-y-1">
+            {comments.map((c: any) => {
+              const cName = c.user?.displayName || c.user?.username || c.username || 'User';
+              const cInitial = cName[0]?.toUpperCase();
+              const isReplying = replyingToId === c.id;
+              return (
+                <div key={c.id} className="flex gap-2.5 py-2">
+                  {/* Avatar + thread line column */}
+                  <div className="flex flex-col items-center gap-0 flex-shrink-0" style={{ width: 26 }}>
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-[10px] font-bold overflow-hidden">
+                      {c.user?.avatar ? <img src={c.user.avatar} className="w-full h-full object-cover" alt="" /> : cInitial}
+                    </div>
+                    {(c.replies?.length > 0 || isReplying) && (
+                      <div className="w-px flex-1 bg-gray-200 mt-1 min-h-[12px]" />
+                    )}
+                  </div>
+                  {/* Comment body */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xs font-semibold text-gray-900">{cName}</span>
+                      <span className="text-[10px] text-gray-400">{c.created_at ? timeAgo(c.created_at) : ''}</span>
+                      <div className="ml-auto flex items-center gap-1.5">
+                        {(currentUserId === (c.user?.id || c.userId) || currentUserId === post.userId) && (
+                          <button onClick={(e) => { e.stopPropagation(); deleteComment(c.id); }} className="text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={9} /></button>
+                        )}
+                        {currentUserId && currentUserId !== (c.user?.id || c.userId) && (
+                          <button onClick={(e) => { e.stopPropagation(); setReportCommentTarget({ id: c.id, userId: c.user?.id || c.userId || '', userName: c.user?.username || c.username || 'User' }); }} className="text-gray-300 hover:text-red-400 transition-colors"><Flag size={9} /></button>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-700 leading-snug mt-0.5 mb-1.5">{c.content}</p>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => { setReplyingToId(isReplying ? null : c.id); setReplyText(''); }}
+                        className="text-[10px] font-semibold text-gray-400 hover:text-violet-500 transition-colors"
+                      >
+                        Reply
+                      </button>
+                      <div className="flex items-center gap-1 text-gray-400">
+                        <Heart size={10} />
+                        {(c.likes_count || 0) > 0 && <span className="text-[10px]">{c.likes_count}</span>}
+                      </div>
+                    </div>
+                    {/* Inline reply composer */}
+                    {isReplying && (
+                      <div className="mt-2 flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-violet-200">
+                        <input
+                          autoFocus
+                          type="text"
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder={`Reply to ${cName}…`}
+                          className="flex-1 text-xs bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
+                          onKeyPress={(e) => e.key === 'Enter' && submitReply(c.id)}
+                        />
+                        <button onClick={() => submitReply(c.id)} disabled={!replyText.trim() || submitting} className="text-[11px] font-semibold text-violet-600 disabled:opacity-40">Post</button>
+                        <button onClick={() => { setReplyingToId(null); setReplyText(''); }} className="text-gray-400 hover:text-gray-600"><X size={11} /></button>
+                      </div>
+                    )}
+                    {/* Nested replies — threaded indent */}
+                    {c.replies?.length > 0 && (
+                      <div className="mt-2 pl-3 border-l-2 border-gray-100 space-y-2">
+                        {c.replies.map((r: any) => {
+                          const rName = r.user?.displayName || r.user?.username || r.username || 'User';
+                          return (
+                            <div key={r.id} className="flex gap-2 pt-1">
+                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-300 to-blue-300 flex items-center justify-center text-white text-[9px] font-bold overflow-hidden flex-shrink-0">
+                                {r.user?.avatar ? <img src={r.user.avatar} className="w-full h-full object-cover" alt="" /> : rName[0]?.toUpperCase()}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[10px] font-semibold text-gray-800">{rName}</span>
+                                  <span className="text-[9px] text-gray-400">{r.created_at ? timeAgo(r.created_at) : ''}</span>
+                                </div>
+                                <p className="text-[11px] text-gray-600 leading-snug mt-0.5">{r.content}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {/* New comment composer */}
+            {session && (
+              <div className="pt-2 mt-1 border-t border-gray-100">
+                {replyingToName && (
+                  <div className="flex items-center gap-2 mb-2 pl-1 border-l-2 border-violet-400">
+                    <span className="text-[10px] text-violet-500 font-medium">Replying to @{replyingToName}</span>
+                    <button onClick={() => { setReplyingToName(null); setCommentText(''); }} className="text-gray-300 hover:text-gray-500 leading-none">×</button>
+                  </div>
+                )}
+                <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 overflow-hidden">
+                  {session.user?.user_metadata?.avatar_url
+                    ? <img src={session.user.user_metadata.avatar_url} className="w-full h-full object-cover" alt="" />
+                    : (session.user?.user_metadata?.display_name || session.user?.email || 'Y')[0]?.toUpperCase()}
+                </div>
+                <div className="flex-1 flex items-center gap-2 bg-gray-50 rounded-full border border-gray-200 px-3 py-2 focus-within:border-violet-300 transition-colors">
+                  <input
+                    type="text"
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Add your take…"
+                    className="flex-1 text-xs bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
+                    onKeyPress={(e) => e.key === 'Enter' && submitComment()}
+                  />
+                  {commentText.trim() && (
+                    <button onClick={submitComment} disabled={submitting} className="text-[11px] font-semibold text-violet-600 disabled:opacity-40 flex-shrink-0">Post</button>
+                  )}
+                </div>
+                </div>
+              </div>
+            )}
+            {/* Empty state */}
+            {comments.length === 0 && !loadingComments && (
+              <p className="text-xs text-gray-400 text-center py-2">No replies yet — be first!</p>
+            )}
+          </div>
+        )}
+      </div>
+    )}
+    </>
   );
 }
 
