@@ -616,6 +616,7 @@ function TodaysPlayGame({
 
       // Update streak for Today's Play completion — fire-and-forget
       const localDate = getLocalDateStr();
+      console.log('[streak] update_streak called, localDate:', localDate, 'userId:', session?.user?.id);
       fetch(`${SUPABASE_URL}/functions/v1/daily-challenge`, {
         method: 'POST',
         headers: {
@@ -627,13 +628,15 @@ function TodaysPlayGame({
       }).then(async (res) => {
         try {
           const data = await res.json();
+          console.log('[streak] update_streak response:', res.status, JSON.stringify(data));
           // Seed the cache directly with the returned value so RLS can't hide it
           if (typeof data.currentStreak === 'number') {
+            console.log('[streak] seeding cache with currentStreak:', data.currentStreak);
             queryClient.setQueryData(['play-streak-hero', session?.user?.id], data.currentStreak);
           }
-        } catch { /* ignore parse errors */ }
+        } catch (e) { console.warn('[streak] update_streak parse error:', e); }
         queryClient.invalidateQueries({ queryKey: ['play-streak-hero'] });
-      }).catch(() => { /* non-critical */ });
+      }).catch((e) => { console.warn('[streak] update_streak fetch error:', e); });
     }
   };
 
@@ -1119,6 +1122,8 @@ function DailyCallOverlay({
     if (!selected || submitting) return;
     setSubmitting(true);
     try {
+      const localDate = new Date().toLocaleDateString('en-CA');
+      console.log('[streak] Daily Call submit called, challengeId:', challenge.id, 'localDate:', localDate);
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/daily-challenge`, {
         method: 'POST',
         headers: {
@@ -1129,15 +1134,17 @@ function DailyCallOverlay({
           action: 'submit',
           challengeId: challenge.id,
           response: { answer: selected },
-          localDate: new Date().toLocaleDateString('en-CA'),
+          localDate,
         }),
       });
       const data = await resp.json();
+      console.log('[streak] Daily Call submit response:', resp.status, JSON.stringify(data));
       if (data.error && !data.error.includes('Already')) throw new Error(data.error);
       localStorage.setItem(getDailyCallKey(session?.user?.id), JSON.stringify({ completed: true, result: { userAnswer: selected } }));
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-response'] });
       // Seed streak cache directly from response so RLS can't hide it
       if (data.run?.currentRun && typeof data.run.currentRun === 'number') {
+        console.log('[streak] Daily Call seeding cache with currentRun:', data.run.currentRun);
         queryClient.setQueryData(['play-streak-hero', session?.user?.id], data.run.currentRun);
       }
 
@@ -1742,14 +1749,18 @@ export function DailyHeroSection() {
     queryKey: ['play-streak-hero', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('login_streaks')
         .select('current_streak')
         .eq('user_id', user.id)
         .single();
+      console.log('[streak] DB query result:', data?.current_streak, 'error:', error?.message);
       return data?.current_streak ?? null;
     },
     enabled: !!user?.id,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   // ── Username (for the score card) ──

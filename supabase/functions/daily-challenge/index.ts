@@ -148,6 +148,7 @@ serve(async (req) => {
     if (action === 'update_streak') {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
+        console.log('[update_streak] Unauthorized:', userError?.message);
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
@@ -157,6 +158,7 @@ serve(async (req) => {
       const [year, month, day] = todayDate.split('-').map(Number);
       const yesterdayObj = new Date(year, month - 1, day - 1);
       const yesterdayDate = yesterdayObj.toISOString().split('T')[0];
+      console.log(`[update_streak] user=${user.id} todayDate=${todayDate} yesterdayDate=${yesterdayDate}`);
 
       try {
         const { data: existing, error: fetchErr } = await supabaseAdmin
@@ -165,11 +167,14 @@ serve(async (req) => {
           .eq('user_id', user.id)
           .single();
 
+        console.log(`[update_streak] existing row:`, existing ? `current_streak=${existing.current_streak} last_login=${existing.last_login}` : 'none', fetchErr ? `err=${fetchErr.code}` : '');
+
         let currentStreak = 1;
         let longestStreak = 1;
 
         if (fetchErr && fetchErr.code !== 'PGRST116') {
           // Unexpected error — still return gracefully
+          console.log('[update_streak] Unexpected fetch error:', fetchErr.message);
           return new Response(JSON.stringify({ currentStreak: 1 }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
@@ -187,8 +192,10 @@ serve(async (req) => {
           // Normalise: last_login may be a full timestamp ("2026-05-07T00:00:00+00:00")
           // or a plain date ("2026-05-07"). Slice to first 10 chars for safe comparison.
           const lastLogin = (existing.last_login || '').slice(0, 10);
+          console.log(`[update_streak] comparison: lastLogin="${lastLogin}" todayDate="${todayDate}" yesterdayDate="${yesterdayDate}"`);
           if (lastLogin === todayDate) {
             // Already updated today — just return current value
+            console.log(`[update_streak] already updated today → returning existing streak ${existing.current_streak}`);
             return new Response(JSON.stringify({
               currentStreak: existing.current_streak,
               longestStreak: existing.longest_streak,
@@ -198,11 +205,13 @@ serve(async (req) => {
           } else if (lastLogin === yesterdayDate) {
             currentStreak = (existing.current_streak || 0) + 1;
             longestStreak = Math.max(currentStreak, existing.longest_streak || 1);
+            console.log(`[update_streak] consecutive day → incrementing to ${currentStreak}`);
             const milestone = streakMilestones.find(m => m.days === currentStreak);
             bonusPoints = milestone?.points || 0;
           } else {
             currentStreak = 1;
             longestStreak = existing.longest_streak || 1;
+            console.log(`[update_streak] streak broken (lastLogin="${lastLogin}" is not yesterday "${yesterdayDate}") → resetting to 1`);
           }
           // Try with play_completed_date first; fall back without if column is missing
           const { error: upErr } = await supabaseAdmin.from('login_streaks').update({
@@ -340,6 +349,7 @@ serve(async (req) => {
         const [year, month, day] = todayDate.split('-').map(Number);
         const yesterdayObj = new Date(year, month - 1, day - 1);
         const yesterdayDate = yesterdayObj.toISOString().split('T')[0];
+        console.log(`[submit/streak] user=${user.id} todayDate=${todayDate} yesterdayDate=${yesterdayDate}`);
         runInfo = { currentRun: 1, bonusPoints: 0, nextMilestone: 3, longestRun: 1 };
         
         // Get or create streak record using login_streaks table
@@ -357,13 +367,16 @@ serve(async (req) => {
           // Normalise: last_login may be a full timestamp ("2026-05-07T00:00:00+00:00")
           // or a plain date ("2026-05-07"). Slice to first 10 chars for safe comparison.
           const lastLoginStr = (existingStreak.last_login || '').slice(0, 10);
+          console.log(`[submit/streak] comparison: lastLoginStr="${lastLoginStr}" todayDate="${todayDate}" yesterdayDate="${yesterdayDate}" existing_streak=${existingStreak.current_streak}`);
           
           if (lastLoginStr === todayDate) {
             // Already played today - return existing streak info
+            console.log(`[submit/streak] already played today → returning existing streak ${existingStreak.current_streak}`);
             runInfo.currentRun = existingStreak.current_streak;
             runInfo.longestRun = existingStreak.longest_streak;
           } else if (lastLoginStr === yesterdayDate) {
             // Consecutive day! Increment streak
+            console.log(`[submit/streak] consecutive day → incrementing from ${existingStreak.current_streak}`);
             const newStreak = existingStreak.current_streak + 1;
             const newLongest = Math.max(newStreak, existingStreak.longest_streak);
             
@@ -400,6 +413,7 @@ serve(async (req) => {
             pointsEarned += bonusPoints;
           } else {
             // Streak broken - reset to 1
+            console.log(`[submit/streak] streak broken (lastLogin="${lastLoginStr}" is not yesterday "${yesterdayDate}") → resetting to 1`);
             const { error: upErr2 } = await supabaseAdmin
               .from('login_streaks')
               .update({
