@@ -65,19 +65,19 @@ function useStripData() {
       if (!user?.id) return { total: 0, correct: 0, accuracy: 0, points: null as number | null };
       const [poolRes, pointsRes] = await Promise.all([
         supabase.from('prediction_pools').select('id').eq('type', 'trivia'),
-        supabase.from('user_points').select('trivia_points').eq('user_id', user.id).maybeSingle(),
+        supabase.from('user_points').select('all_time').eq('user_id', user.id).maybeSingle(),
       ]);
       const ids = (poolRes.data ?? []).map((p: any) => p.id);
-      if (!ids.length) return { total: 0, correct: 0, accuracy: 0, points: pointsRes.data?.trivia_points ?? null };
+      if (!ids.length) return { total: 0, correct: 0, accuracy: 0, points: pointsRes.data?.all_time ?? null };
       const { data: preds } = await supabase
         .from('user_predictions')
         .select('points_earned')
         .eq('user_id', user.id)
         .in('pool_id', ids);
-      if (!preds?.length) return { total: 0, correct: 0, accuracy: 0, points: pointsRes.data?.trivia_points ?? null };
+      if (!preds?.length) return { total: 0, correct: 0, accuracy: 0, points: pointsRes.data?.all_time ?? null };
       const correct = preds.filter((p: any) => p.points_earned > 0).length;
       const total = preds.length;
-      return { total, correct, accuracy: Math.round((correct / total) * 100), points: pointsRes.data?.trivia_points ?? null };
+      return { total, correct, accuracy: Math.round((correct / total) * 100), points: pointsRes.data?.all_time ?? null };
     },
     enabled: !!user?.id,
     staleTime: 120000,
@@ -232,7 +232,7 @@ function ExpandedCard({ state, streak, dnaProfile, triviaStats, rankData, onClos
 
   // ── Stat: Total Points ──
   const pointsVal = triviaStats?.points != null ? triviaStats.points.toLocaleString() : '—';
-  const pointsSub = triviaStats?.points != null ? 'trivia pts' : 'Play to unlock';
+  const pointsSub = triviaStats?.points != null ? 'all time' : 'Play to unlock';
 
   const ctaLabel = state <= 2
     ? "Start Today's Play →"

@@ -374,7 +374,7 @@ function ScoreShareCard({
                     {triviaStats?.points != null ? (
                       <>
                         <p className="text-[16px] font-black text-gray-900 leading-none">{triviaStats.points.toLocaleString()}</p>
-                        <p className="text-[7px] text-gray-400 mt-0.5">trivia pts</p>
+                        <p className="text-[7px] text-gray-400 mt-0.5">all time</p>
                       </>
                     ) : (
                       <>
@@ -1821,7 +1821,7 @@ export function DailyHeroSection() {
       if (!user?.id) return { accuracy: null, points: null };
       const [poolRes, pointsRes] = await Promise.all([
         supabase.from('prediction_pools').select('id').eq('type', 'trivia'),
-        supabase.from('user_points').select('trivia_points').eq('user_id', user.id).maybeSingle(),
+        supabase.from('user_points').select('all_time').eq('user_id', user.id).maybeSingle(),
       ]);
       const ids = (poolRes.data ?? []).map((p: any) => p.id);
       let accuracy: number | null = null;
@@ -1836,7 +1836,7 @@ export function DailyHeroSection() {
           accuracy = Math.round((correct / preds.length) * 100);
         }
       }
-      return { accuracy, points: pointsRes.data?.trivia_points ?? null };
+      return { accuracy, points: pointsRes.data?.all_time ?? null };
     },
     enabled: !!user?.id,
     staleTime: 120000,
