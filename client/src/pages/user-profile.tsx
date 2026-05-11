@@ -2608,15 +2608,7 @@ export default function UserProfile() {
 
       // Media type filter
       if (mediaHistoryType !== 'all') {
-        const typeMap: any = {
-          'movies': 'movie',
-          'tv': 'tv',
-          'books': 'book',
-          'music': 'music',
-          'podcasts': 'podcast',
-          'games': 'game'
-        };
-        if (item.media_type !== typeMap[mediaHistoryType]) return false;
+        if (item.media_type?.toLowerCase() !== mediaHistoryType) return false;
       }
 
       // Year filter
