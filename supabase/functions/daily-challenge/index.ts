@@ -155,9 +155,7 @@ serve(async (req) => {
       }
 
       const todayDate = params.localDate || new Date().toISOString().split('T')[0];
-      const [year, month, day] = todayDate.split('-').map(Number);
-      const yesterdayObj = new Date(year, month - 1, day - 1);
-      const yesterdayDate = yesterdayObj.toISOString().split('T')[0];
+      const yesterdayDate = new Date(new Date(todayDate + 'T12:00:00Z').getTime() - 86400000).toISOString().split('T')[0];
       console.log(`[update_streak] user=${user.id} todayDate=${todayDate} yesterdayDate=${yesterdayDate}`);
 
       try {
@@ -345,10 +343,8 @@ serve(async (req) => {
       try {
         // Use client's local date for streak calculation (consistent with challenge lookup)
         const todayDate = localDate || new Date().toISOString().split('T')[0];
-        // Calculate yesterday in the same timezone
-        const [year, month, day] = todayDate.split('-').map(Number);
-        const yesterdayObj = new Date(year, month - 1, day - 1);
-        const yesterdayDate = yesterdayObj.toISOString().split('T')[0];
+        // Calculate yesterday using UTC-safe arithmetic (avoids timezone-induced off-by-one)
+        const yesterdayDate = new Date(new Date(todayDate + 'T12:00:00Z').getTime() - 86400000).toISOString().split('T')[0];
         console.log(`[submit/streak] user=${user.id} todayDate=${todayDate} yesterdayDate=${yesterdayDate}`);
         runInfo = { currentRun: 1, bonusPoints: 0, nextMilestone: 3, longestRun: 1 };
         
