@@ -630,29 +630,38 @@ function TodaysPlayGame({
       onComplete(score); // update parent card immediately
       setPhase('done');
 
-      // Update streak for Today's Play completion — fire-and-forget
+      // Update streak for Today's Play completion.
+      // Store pending date BEFORE the call so a failure leaves a retry marker.
       const localDate = getLocalDateStr();
+      const pendingKey = `pendingStreakDate_${session?.user?.id}`;
+      localStorage.setItem(pendingKey, localDate);
       console.log('[streak] update_streak called, localDate:', localDate, 'userId:', session?.user?.id);
-      fetch(`${SUPABASE_URL}/functions/v1/daily-challenge`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || ''}`,
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ action: 'update_streak', localDate }),
-      }).then(async (res) => {
+      (async () => {
         try {
+          const res = await fetch(`${SUPABASE_URL}/functions/v1/daily-challenge`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session?.access_token || ''}`,
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            },
+            body: JSON.stringify({ action: 'update_streak', localDate }),
+          });
           const data = await res.json();
           console.log('[streak] update_streak response:', res.status, JSON.stringify(data));
-          // Seed the cache directly with the returned value so RLS can't hide it
-          if (typeof data.currentStreak === 'number') {
+          if (res.ok && typeof data.currentStreak === 'number') {
+            localStorage.removeItem(pendingKey); // success — clear retry marker
             console.log('[streak] seeding cache with currentStreak:', data.currentStreak);
             queryClient.setQueryData(['play-streak-hero', session?.user?.id], data.currentStreak);
+          } else {
+            console.warn('[streak] update_streak non-OK response — retry marker kept:', data);
           }
-        } catch (e) { console.warn('[streak] update_streak parse error:', e); }
-        queryClient.invalidateQueries({ queryKey: ['play-streak-hero'] });
-      }).catch((e) => { console.warn('[streak] update_streak fetch error:', e); });
+        } catch (e) {
+          console.warn('[streak] update_streak failed — retry marker kept for next load:', e);
+        } finally {
+          queryClient.invalidateQueries({ queryKey: ['play-streak-hero'] });
+        }
+      })();
     }
   };
 
@@ -1519,6 +1528,43 @@ export function DailyHeroSection() {
       }
     } catch { /* ignore */ }
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Retry any pending streak update from a previous session that failed silently.
+  // If Today's Play completed but the update_streak call failed (network blip, expired token, etc.),
+  // we stored `pendingStreakDate` in localStorage. On next load we retry it once.
+  useEffect(() => {
+    if (!user?.id || !session?.access_token) return;
+    const pendingKey = `pendingStreakDate_${user.id}`;
+    const pendingDate = localStorage.getItem(pendingKey);
+    if (!pendingDate) return;
+    const today = getLocalDateStr();
+    // Only retry if the pending date is in the past (today's pending means the current session handled it)
+    if (pendingDate === today) return;
+    console.log('[streak] retrying pending update for date:', pendingDate);
+    (async () => {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/daily-challenge`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ action: 'update_streak', localDate: pendingDate }),
+        });
+        const data = await res.json();
+        if (res.ok && typeof data.currentStreak === 'number') {
+          localStorage.removeItem(pendingKey);
+          console.log('[streak] pending retry succeeded, streak:', data.currentStreak);
+          queryClient.invalidateQueries({ queryKey: ['play-streak-hero'] });
+        } else {
+          console.warn('[streak] pending retry failed — will try again next load:', data);
+        }
+      } catch (e) {
+        console.warn('[streak] pending retry error:', e);
+      }
+    })();
+  }, [user?.id, session?.access_token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-promote: play done → Daily Call; both done → DNA Moment
   useEffect(() => {
