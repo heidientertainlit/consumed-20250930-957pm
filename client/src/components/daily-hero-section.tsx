@@ -5,7 +5,7 @@ import {
   Flame, CheckCircle, CheckCircle2, Circle, XCircle,
   Trophy, X, Loader2, Star, Users, Radio, Share2, Check,
   Film, Tv, Music, BookOpen, Mic2, Gamepad2,
-  Zap, ArrowRight, Sparkles, MessageCircle,
+  Zap, ArrowRight, Sparkles, MessageCircle, TrendingUp,
   ChevronRight, ChevronDown, Lock, Dna,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -696,18 +696,19 @@ function TodaysPlayGame({
               const weakCat = wrongCats[0] ?? null;
 
               const perfectOptions: [string, string][] = [
-                ['Perfect. You\u2019ve got elite entertainment instincts.', 'Added to your Entertainment DNA.'],
-                ['Untouchable today.', 'Your Entertainment DNA just got stronger.'],
-                [`${doneScore.correct}/${doneScore.total}. Every category. Not easy.`, 'Added to your Entertainment DNA.'],
+                ['Nailed it.', 'Added to your Entertainment DNA.'],
+                ['You know your stuff.', 'Your Entertainment DNA just got stronger.'],
+                ['Got it. Clean answer.', 'Added to your Entertainment DNA.'],
+                ['Correct. Elite taste confirmed.', 'Your Entertainment DNA just got stronger.'],
               ];
               const goodOptions: [string, string][] = [
-                ...(strongCat && weakCat ? [[`Strong in ${strongCat}. ${weakCat} got you.`, 'Your Entertainment DNA is building.'] as [string, string]] : []),
-                ['Almost perfect. One away from dangerous.', 'Your Entertainment DNA just got stronger.'],
-                [`${doneScore.correct}/${doneScore.total}. Close enough to flex.`, 'Keep building your Entertainment DNA.'],
+                ['Nailed it.', 'Keep building your Entertainment DNA.'],
+                ['Got it.', 'Your Entertainment DNA just got stronger.'],
               ];
               const weakOptions: [string, string][] = [
-                ['Today humbled you. Tomorrow\u2019s yours.', 'Every play builds your Entertainment DNA.'],
-                ['The hard ones hit different.', 'Come back and strengthen your DNA.'],
+                ['Not this time.', 'Come back tomorrow and get it.'],
+                ['Missed it \u2014 one question, one shot.', 'Every play builds your Entertainment DNA.'],
+                ['It happens. Tomorrow\u2019s yours.', 'Every play builds your Entertainment DNA.'],
               ];
 
               const [headline, subhead] =
@@ -768,11 +769,22 @@ function TodaysPlayGame({
                       <p className="text-[11px] font-semibold text-gray-500 leading-snug">{subhead}</p>
                     </div>
 
-                    {/* Score */}
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-[44px] font-black leading-none text-gray-900">{doneScore.correct}</span>
-                      <span className="text-[20px] font-bold text-gray-300 leading-none">/{doneScore.total}</span>
-                    </div>
+                    {/* Score — single-question: show ✓/✗ instead of X/1 */}
+                    {doneScore.total === 1 ? (
+                      <div
+                        className="w-16 h-16 rounded-full flex items-center justify-center shadow-md"
+                        style={{ background: doneScore.correct === 1 ? '#dcfce7' : '#fee2e2' }}
+                      >
+                        {doneScore.correct === 1
+                          ? <CheckCircle size={34} className="text-green-600" />
+                          : <XCircle size={34} className="text-red-500" />}
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-[44px] font-black leading-none text-gray-900">{doneScore.correct}</span>
+                        <span className="text-[20px] font-bold text-gray-300 leading-none">/{doneScore.total}</span>
+                      </div>
+                    )}
 
                     {/* Per-question category pills */}
                     <div className="flex gap-2 flex-wrap justify-center">
@@ -859,7 +871,8 @@ function TodaysPlayGame({
                 Screenshot the card above to share on social
               </p>
 
-              {/* Action buttons */}
+              {/* Keep Playing section */}
+              <p className="text-center text-[11px] font-bold uppercase tracking-widest text-white/30 mb-2 mt-2">Keep Playing</p>
               <div className="flex flex-col gap-2.5">
                 <button
                   onClick={() => { onClose(); setLocation('/play/trivia'); }}
@@ -867,7 +880,15 @@ function TodaysPlayGame({
                   style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
                 >
                   <Zap size={15} className="opacity-80" fill="currentColor" />
-                  Play More Trivia
+                  More Trivia
+                </button>
+                <button
+                  onClick={() => { onClose(); setLocation('/play/predictions'); }}
+                  className="w-full py-3.5 rounded-2xl font-semibold text-[14px] text-white/90 flex items-center justify-center gap-2"
+                  style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
+                >
+                  <Radio size={15} className="opacity-80" />
+                  Make a Prediction
                 </button>
                 <button
                   onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('openAddMedia')); }}
@@ -875,9 +896,9 @@ function TodaysPlayGame({
                   style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
                 >
                   <MessageCircle size={15} className="opacity-80" />
-                  Have a Take? Rate &amp; Review
+                  Rate &amp; Review Something
                 </button>
-              </div>{/* end action buttons */}
+              </div>{/* end keep playing */}
                 </div>{/* end flex flex-col w-full */}
               </div>{/* end min-h-full */}
             </div>
@@ -912,8 +933,8 @@ function TodaysPlayGame({
                 ) : null}
                 <p className="text-gray-600 text-[13px] leading-relaxed px-4">
                   {streak && streak > 0
-                    ? 'Keep your streak alive — answer all 3 then challenge a friend.'
-                    : 'Answer all 3 then challenge a friend to beat your score.'}
+                    ? `${streak}-day streak on the line — one question, lock it in.`
+                    : 'One question. Answer it. See where you stand.'}
                 </p>
               </div>
 
@@ -1031,7 +1052,7 @@ function TodaysPlayGame({
                               className="w-full py-3.5 rounded-xl font-bold text-white text-base shadow-md active:scale-[0.98]"
                               style={{ background: PURPLE_GRADIENT }}
                             >
-                              {qIndex < questions.length - 1 ? 'Next Question' : 'See Your Score'}
+                              {qIndex < questions.length - 1 ? 'Next Question' : questions.length === 1 ? 'See the Answer' : 'See Your Score'}
                             </button>
                           )}
                         </div>
@@ -1587,7 +1608,7 @@ export function DailyHeroSection() {
         .eq('featured_date', today)
         .not('correct_answer', 'is', null)
         .not('options', 'is', null)
-        .limit(3);
+        .limit(1);
 
       const todaySet = (todayData || []).filter((q: any) => Array.isArray(q.options) && q.options.length > 1);
 
@@ -1613,7 +1634,7 @@ export function DailyHeroSection() {
         .not('correct_answer', 'is', null)
         .not('options', 'is', null)
         .order('created_at', { ascending: false })
-        .limit(3);
+        .limit(1);
 
       if (error || !data) return [];
       return data
@@ -1915,7 +1936,7 @@ export function DailyHeroSection() {
     staleTime: 300000,
   });
 
-  const readyQuestions = questions.slice(0, 3);
+  const readyQuestions = questions.slice(0, 1);
   // isTriviaDay: true when today's featured content is trivia (or nothing is scheduled yet)
   const isTriviaDay = !dailyCall || dailyCall.challenge_type === 'trivia';
   const isOpinionDay = !!dailyCall && dailyCall.challenge_type !== 'trivia';
@@ -2078,7 +2099,7 @@ export function DailyHeroSection() {
                     </span>
                   )}
                   <span className={`${front ? 'text-xs' : 'text-[10px]'} text-purple-200/60 font-medium`}>
-                    {isOpinionDay ? '1 question' : '3 questions'}
+                    1 question
                   </span>
                 </div>
                 {front ? (
