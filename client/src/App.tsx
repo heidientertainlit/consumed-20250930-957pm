@@ -26,6 +26,7 @@ import AdminRanksPage from "@/pages/admin-ranks";
 import AdminDnaMomentsPage from "@/pages/admin-dna-moments";
 import AdminDailyCallPage from "@/pages/admin-daily-call";
 import AdminTodaysPlayPage from "@/pages/admin-todays-play";
+import AdminRoomsPage from "@/pages/admin-rooms";
 import Feed from "@/pages/feed";
 import GameFirstFeed from "@/pages/game-first-feed";
 import QuickLog from "@/pages/quick-log";
@@ -606,6 +607,12 @@ function Router() {
           <Route path="/admin/todays-play">
             <ProtectedRoute>
               <AdminTodaysPlayPage />
+            </ProtectedRoute>
+          </Route>
+
+          <Route path="/admin/rooms">
+            <ProtectedRoute>
+              <AdminRoomsPage />
             </ProtectedRoute>
           </Route>
 
