@@ -510,7 +510,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                 {!voted ? (
                   <button
                     onClick={scrollToNext}
-                    className="text-xs text-blue-500 hover:text-blue-600 transition-colors font-medium"
+                    className="text-xs text-blue-500 hover:text-blue-600 transition-colors font-medium ml-2"
                   >
                     Skip &gt;
                   </button>
