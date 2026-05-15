@@ -273,7 +273,7 @@ export default function AdminRoomsPage() {
         {tab === "create" && (
           <>
             {createdRoom ? (
-              <SuccessBanner room={createdRoom} onAnother={resetForm} onView={() => setLocation(`/rooms/${createdRoom.id}`)} />
+              <SuccessBanner room={createdRoom} onAnother={resetForm} onView={() => setLocation(`/room/${createdRoom.id}`)} />
             ) : (
               <div className="space-y-6">
 
@@ -568,7 +568,7 @@ export default function AdminRoomsPage() {
                   key={room.id}
                   room={room}
                   memberCount={memberCounts?.[room.id] ?? 0}
-                  onView={() => setLocation(`/rooms/${room.id}`)}
+                  onView={() => setLocation(`/room/${room.id}`)}
                 />
               ))
             )}
@@ -671,27 +671,13 @@ function RoomCard({ room, memberCount, onView }: { room: RoomRow; memberCount: n
         </button>
       </div>
 
-      {/* Invite code row */}
-      <div className="px-4 pb-3 flex items-center gap-2">
-        <span className="text-[11px] text-gray-500">Invite code:</span>
-        <code className="text-[11px] font-mono font-bold text-purple-300 bg-purple-900/20 px-2 py-0.5 rounded">
-          {room.invite_code}
-        </code>
-        <button
-          onClick={() => {
-            navigator.clipboard.writeText(room.invite_code);
-            toast({ title: "Copied!", description: room.invite_code });
-          }}
-          className="text-gray-500 hover:text-gray-300 transition-colors"
-        >
-          <Copy size={12} />
-        </button>
-        {room.series_tag && (
-          <span className="ml-auto text-[11px] text-gray-500 flex items-center gap-1">
+      {room.series_tag && (
+        <div className="px-4 pb-3">
+          <span className="text-[11px] text-gray-500 flex items-center gap-1">
             <Hash size={9} />{room.series_tag}
           </span>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -709,20 +695,7 @@ function SuccessBanner({
       </div>
       <div>
         <h2 className="text-xl font-bold text-white mb-1">"{room.name}" is live!</h2>
-        <p className="text-sm text-gray-400">The room is open and members have been added.</p>
-      </div>
-      <div className="bg-gray-800 rounded-2xl px-6 py-4 text-center w-full max-w-xs">
-        <p className="text-xs text-gray-400 mb-1 uppercase tracking-wider font-semibold">Invite Code</p>
-        <p className="text-2xl font-mono font-black text-purple-300 tracking-widest">{room.invite_code}</p>
-        <button
-          onClick={() => {
-            navigator.clipboard.writeText(room.invite_code);
-            toast({ title: "Copied!", description: room.invite_code });
-          }}
-          className="mt-2 flex items-center gap-1.5 mx-auto text-xs text-gray-400 hover:text-white transition-colors"
-        >
-          <Copy size={12} /> Copy code
-        </button>
+        <p className="text-sm text-gray-400">The room is open and ready for members.</p>
       </div>
       <div className="flex gap-3 w-full">
         <button
