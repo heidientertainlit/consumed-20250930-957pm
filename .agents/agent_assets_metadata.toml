@@ -60,3 +60,9 @@ id = "KGX5OTqEfGLtKH_M3oTx5"
 uri = "file://consumed_media_engagement.csv"
 type = "table"
 title = "Media Engagement (tracked, rated, lists)"
+
+[[outputs]]
+id = "G5uVBTSL0n8TGcj8kmH7U"
+uri = "file://consumed_master.csv"
+type = "table"
+title = "Consumed Master — All Users, One Row Each"
