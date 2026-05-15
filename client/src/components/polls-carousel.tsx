@@ -506,15 +506,15 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                   )}
                 </div>
               )}
-              <div className="flex items-center justify-end gap-3 mt-4">
-                {!voted && (
+              <div className="flex items-center justify-between mt-4">
+                {!voted ? (
                   <button
                     onClick={scrollToNext}
-                    className="text-xs text-blue-500 underline underline-offset-2 hover:text-blue-600 transition-colors"
+                    className="text-xs text-blue-500 hover:text-blue-600 transition-colors font-medium"
                   >
-                    skip
+                    Skip &gt;
                   </button>
-                )}
+                ) : <div />}
                 <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold">
                   +{poll.pointsReward} pts
                 </div>
