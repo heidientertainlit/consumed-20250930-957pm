@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna, DoorOpen } from "lucide-react";
+import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna, DoorOpen, Download } from "lucide-react";
 
 const TOOLS = [
   {
@@ -68,6 +68,15 @@ const TOOLS = [
     color: "from-rose-900/40 to-rose-800/20 border-rose-700/40",
     iconColor: "text-rose-400",
     iconBg: "bg-rose-900/50",
+  },
+  {
+    path: "/admin/exports",
+    icon: Download,
+    title: "Data Exports",
+    description: "Download anonymous user data CSVs — genre profiles, behavioral signals, media engagement, and participation stats. Always live, no scripts needed.",
+    color: "from-amber-900/40 to-amber-800/20 border-amber-700/40",
+    iconColor: "text-amber-400",
+    iconBg: "bg-amber-900/50",
   },
 ];
 
