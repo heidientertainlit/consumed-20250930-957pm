@@ -9,6 +9,10 @@ const cors = {
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
+function slugToTitle(slug: string): string {
+  return slug.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
@@ -29,13 +33,13 @@ serve(async (req) => {
 
     if (pool_id) {
       // Joining a public room by pool_id (no invite code required)
-      const { data } = await svc.from('pools').select('id, name, host_id, status, is_public').eq('id', pool_id).single();
+      const { data } = await svc.from('pools').select('id, name, host_id, status, is_public, room_category, series_tag').eq('id', pool_id).single();
       if (!data) return json({ error: 'Room not found' }, 404);
       if (!data.is_public) return json({ error: 'This room is private. You need an invite link.' }, 403);
       pool = data;
     } else if (invite_code?.trim()) {
       // Joining by invite code (works for both public and private)
-      const { data } = await svc.from('pools').select('id, name, host_id, status, is_public').eq('invite_code', invite_code.toUpperCase().trim()).single();
+      const { data } = await svc.from('pools').select('id, name, host_id, status, is_public, room_category, series_tag').eq('invite_code', invite_code.toUpperCase().trim()).single();
       if (!data) return json({ error: 'Invalid invite link' }, 404);
       pool = data;
     } else {
@@ -49,6 +53,33 @@ serve(async (req) => {
 
     const { error } = await svc.from('pool_members').insert({ pool_id: pool.id, user_id: appUser.id, role: 'member', total_points: 0 });
     if (error) return json({ error: error.message }, 500);
+
+    // ── DNA passive signal: joining a genre room appends that genre to the user's favorite_genres ──
+    if (pool.room_category === 'genre' && pool.series_tag) {
+      try {
+        const genreName = slugToTitle(pool.series_tag);
+        const { data: dnaProfile } = await svc
+          .from('dna_profiles')
+          .select('id, favorite_genres')
+          .eq('user_id', appUser.id)
+          .single();
+
+        if (dnaProfile) {
+          const existing: string[] = dnaProfile.favorite_genres ?? [];
+          if (!existing.includes(genreName)) {
+            await svc
+              .from('dna_profiles')
+              .update({
+                favorite_genres: [...existing, genreName],
+                updated_at: new Date().toISOString(),
+              })
+              .eq('user_id', appUser.id);
+          }
+        }
+      } catch (_) {
+        // DNA update is best-effort — don't fail the join if it errors
+      }
+    }
 
     return json({ success: true, pool_id: pool.id, pool_name: pool.name });
   } catch (e) {

@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { APP_BASE } from "@/lib/share";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Film, Tv, Users, Share2, Dna, Sparkles, Clock, BarChart3, Send, Lock, Heart, X, RefreshCw, Check } from "lucide-react";
+import { Loader2, Film, Tv, Users, Share2, Dna, Sparkles, Clock, BarChart3, Send, Lock, Heart, X, RefreshCw, Check, DoorOpen, ChevronRight } from "lucide-react";
 import { ShareImageSheet } from "@/components/share-image-sheet";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
@@ -154,6 +154,43 @@ export default function DnaPage() {
     enabled: !!session?.access_token && !!user?.id && dnaLevel >= 2,
     staleTime: 60000,
   });
+
+  // Genre rooms matched to this user's DNA favorite_genres
+  const { data: genreRooms = [] } = useQuery({
+    queryKey: ['genre-rooms-dna', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('pools')
+        .select('id, name, description, series_tag, media_type, media_image, accent_color, is_official')
+        .eq('room_category', 'genre')
+        .eq('is_public', true)
+        .eq('status', 'open')
+        .order('created_at', { ascending: false });
+      return data ?? [];
+    },
+    enabled: !!user?.id && !!(dnaProfile?.favorite_genres?.length),
+    staleTime: 300000,
+  });
+
+  const { data: myRoomIds } = useQuery({
+    queryKey: ['my-pool-ids', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return new Set<string>();
+      const { data } = await supabase.from('pool_members').select('pool_id').eq('user_id', user.id);
+      return new Set((data ?? []).map((r: any) => r.pool_id));
+    },
+    enabled: !!user?.id,
+    staleTime: 60000,
+  });
+
+  function slugify(s: string) {
+    return s.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  }
+
+  const userGenreSlugs = new Set((dnaProfile?.favorite_genres ?? []).map((g: string) => slugify(g)));
+  const matchedGenreRooms = genreRooms.filter((r: any) => r.series_tag && userGenreSlugs.has(r.series_tag));
+  const otherGenreRooms = genreRooms.filter((r: any) => !r.series_tag || !userGenreSlugs.has(r.series_tag));
+  const rankedGenreRooms = [...matchedGenreRooms, ...otherGenreRooms];
 
   const eligibleFriends = friends.filter((f: any) => f.isEligible);
   const almostEligibleFriends = friends.filter((f: any) => !f.isEligible && f.itemCount > 0);
@@ -510,6 +547,67 @@ export default function DnaPage() {
                   </div>
                 </>
               ) : null}
+
+              {/* Rooms for Your Taste — genre rooms matched to DNA */}
+              {rankedGenreRooms.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="px-4 pt-4 pb-3 border-b border-gray-50">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <DoorOpen size={13} className="text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-gray-900">Rooms for Your Taste</h3>
+                        <p className="text-[11px] text-gray-400">Genre communities that match your DNA</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="divide-y divide-gray-50">
+                    {rankedGenreRooms.slice(0, 5).map((room: any) => {
+                      const isMatch = room.series_tag && userGenreSlugs.has(room.series_tag);
+                      const isMember = myRoomIds?.has(room.id);
+                      return (
+                        <button
+                          key={room.id}
+                          onClick={() => setLocation(`/room/${room.id}`)}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                        >
+                          {room.media_image ? (
+                            <img src={room.media_image} alt={room.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                          ) : (
+                            <div
+                              className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                              style={{ background: room.accent_color ? room.accent_color + '22' : 'linear-gradient(135deg, #7c3aed22, #a855f722)' }}
+                            >
+                              <DoorOpen size={16} className="text-purple-500" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <span className="text-sm font-semibold text-gray-900 truncate">{room.name}</span>
+                              {isMatch && (
+                                <span className="flex-shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-600">
+                                  Matches DNA
+                                </span>
+                              )}
+                            </div>
+                            {room.description && (
+                              <p className="text-[11px] text-gray-400 leading-snug line-clamp-1">{room.description}</p>
+                            )}
+                          </div>
+                          <div className="flex-shrink-0 flex flex-col items-end gap-1">
+                            {isMember ? (
+                              <span className="text-[10px] font-semibold text-green-500">Joined</span>
+                            ) : (
+                              <ChevronRight size={14} className="text-gray-300" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <RecommendationsGlimpse />
             </div>
