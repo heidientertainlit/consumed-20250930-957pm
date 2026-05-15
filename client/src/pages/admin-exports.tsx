@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, Download, Loader2, FileText, Table2, Users } from "lucide-react";
+import { ArrowLeft, Download, Loader2, FileText, Table2, BarChart2 } from "lucide-react";
 
 function downloadCSV(filename: string, rows: Record<string, any>[], fields: string[]) {
   const escape = (v: any) => {
@@ -459,13 +459,79 @@ async function buildMediaDetailExport() {
   return rows.length;
 }
 
+async function buildPollResponsesExport() {
+  const { data: users } = await supabase
+    .from("users")
+    .select("id")
+    .or("is_persona.is.null,is_persona.eq.false");
+  const realUserIds = new Set((users || []).map((u: any) => u.id));
+
+  // All poll pools
+  const { data: pollPools } = await supabase
+    .from("prediction_pools")
+    .select("id, title, category, show_tag, media_external_source")
+    .eq("type", "poll");
+
+  const pollMap: Record<string, any> = {};
+  (pollPools || []).forEach((p: any) => { pollMap[p.id] = p; });
+  const pollIds = Object.keys(pollMap);
+
+  if (pollIds.length === 0) return 0;
+
+  // All user responses to polls
+  const { data: responses } = await supabase
+    .from("user_predictions")
+    .select("user_id, pool_id, prediction, created_at")
+    .in("pool_id", pollIds);
+
+  const rows: any[] = [];
+  (responses || []).forEach((r: any) => {
+    if (!realUserIds.has(r.user_id)) return;
+    const pool = pollMap[r.pool_id];
+    if (!pool) return;
+
+    const mediaSource = pool.media_external_source || "";
+    const mediaType =
+      mediaSource === "tmdb" ? (pool.category === "movie" ? "movie" : "tv")
+      : mediaSource === "spotify" || mediaSource === "itunes" ? "music"
+      : mediaSource === "openlibrary" ? "book"
+      : pool.category || "";
+
+    rows.push({
+      anon_id: r.user_id,
+      poll_question: pool.title || "",
+      their_answer: r.prediction || "",
+      show_tag: pool.show_tag || "",
+      category: pool.category || "",
+      media_type: mediaType,
+      responded_at: (r.created_at || "").slice(0, 10),
+    });
+  });
+
+  // Sort by show_tag then poll question for easy reading
+  rows.sort((a, b) =>
+    (a.show_tag || "").localeCompare(b.show_tag || "") ||
+    (a.poll_question || "").localeCompare(b.poll_question || "")
+  );
+
+  const fields = [
+    "anon_id", "poll_question", "their_answer",
+    "show_tag", "category", "media_type", "responded_at",
+  ];
+  const today = new Date().toISOString().slice(0, 10);
+  downloadCSV(`consumed_poll_responses_${today}.csv`, rows, fields);
+  return rows.length;
+}
+
 export default function AdminExportsPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [masterLoading, setMasterLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [pollLoading, setPollLoading] = useState(false);
   const [masterCount, setMasterCount] = useState<number | null>(null);
   const [detailCount, setDetailCount] = useState<number | null>(null);
+  const [pollCount, setPollCount] = useState<number | null>(null);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["admin-profile-check", user?.id],
@@ -512,6 +578,17 @@ export default function AdminExportsPage() {
       setDetailCount(count);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const handlePolls = async () => {
+    setPollLoading(true);
+    setPollCount(null);
+    try {
+      const count = await buildPollResponsesExport();
+      setPollCount(count);
+    } finally {
+      setPollLoading(false);
     }
   };
 
@@ -600,6 +677,40 @@ export default function AdminExportsPage() {
                 </button>
                 {detailCount !== null && (
                   <p className="text-xs text-green-400 mt-2">✓ Downloaded {detailCount} rows</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Poll Responses Export */}
+          <div className="bg-gradient-to-br from-amber-900/40 to-amber-800/20 border border-amber-700/40 rounded-2xl p-6">
+            <div className="flex items-start gap-5">
+              <div className="bg-amber-900/50 rounded-xl p-3 flex-shrink-0">
+                <BarChart2 size={24} className="text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-semibold text-white mb-1">Poll Responses Export</p>
+                <p className="text-sm text-gray-400 leading-snug mb-2">
+                  One row per user × poll answered. What opinion they expressed, on which question, about which show or category.
+                </p>
+                <ul className="text-xs text-gray-500 space-y-0.5 mb-4 list-disc list-inside">
+                  <li>The exact poll question</li>
+                  <li>What they chose as their answer</li>
+                  <li>Show tag + category (Paradise, Music, TV, etc.)</li>
+                  <li>Media type (tv / movie / music / book)</li>
+                  <li>When they responded</li>
+                </ul>
+                <p className="text-xs text-amber-300/70 mb-4">One row per response · join to Master on <code className="text-amber-200">anon_id</code></p>
+                <button
+                  onClick={handlePolls}
+                  disabled={pollLoading}
+                  className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                >
+                  {pollLoading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                  {pollLoading ? "Building export…" : "Download consumed_poll_responses.csv"}
+                </button>
+                {pollCount !== null && (
+                  <p className="text-xs text-green-400 mt-2">✓ Downloaded {pollCount} responses</p>
                 )}
               </div>
             </div>
