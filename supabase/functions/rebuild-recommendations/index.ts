@@ -149,13 +149,21 @@ serve(async (req) => {
       .eq('user_id', userId)
       .limit(20);
 
-    // 8. Room Interest Signals (from room follows)
-    const { data: interestSignals } = await supabase
-      .from('user_interest_signals')
-      .select('source_type, category, media_title, media_source, tags, weight')
+    // 8. Behavioral DNA signals (from extract-dna-signals — aggregated across ratings, trivia, tracking)
+    const { data: dnaSignals } = await supabase
+      .from('user_dna_signals')
+      .select('signal_type, signal_value, strength, source_count, sources')
       .eq('user_id', userId)
-      .order('weight', { ascending: false })
+      .neq('signal_type', 'engagement')
+      .order('strength', { ascending: false })
       .limit(30);
+
+    // 8b. Engagement aggregate rows — tells us how active this user actually is
+    const { data: engagementSignals } = await supabase
+      .from('user_dna_signals')
+      .select('signal_value, source_count, sources')
+      .eq('user_id', userId)
+      .eq('signal_type', 'engagement');
 
     const userProfile = {
       dnaProfile: dnaProfile ? {
@@ -191,13 +199,16 @@ serve(async (req) => {
         name: c.creator_name,
         role: c.creator_role
       })) || [],
-      interestSignals: interestSignals?.map(s => ({
-        type: s.source_type,
-        category: s.category,
-        mediaTitle: s.media_title,
-        tags: s.tags,
-        weight: s.weight,
+      behavioralSignals: dnaSignals?.map(s => ({
+        type: s.signal_type,
+        value: s.signal_value,
+        strength: s.strength,
+        sourceCount: s.source_count,
+        sources: s.sources,
       })) || [],
+      engagementProfile: Object.fromEntries(
+        (engagementSignals ?? []).map((s: any) => [s.signal_value, s.source_count])
+      ),
     };
 
     console.log('User profile compiled:', {
@@ -243,18 +254,21 @@ ${userProfile.customListThemes.join(', ') || 'None'}
 Followed Creators (${userProfile.followedCreators.length}):
 ${userProfile.followedCreators.slice(0, 15).map(c => `- ${c.name} (${c.role})`).join('\n') || 'None'}
 
-Room & Interest Signals (${userProfile.interestSignals.length} explicit interests):
-${userProfile.interestSignals.length > 0
-  ? userProfile.interestSignals.map(s => {
-      const parts = [`[${s.category || s.type}]`];
-      if (s.mediaTitle) parts.push(s.mediaTitle);
-      if (s.tags?.length) parts.push(`tags: ${s.tags.join(', ')}`);
-      return `- ${parts.join(' — ')}`;
+Behavioral DNA Signals (derived from ratings, trivia, tracking, polls — strongest signals first):
+${userProfile.behavioralSignals.length > 0
+  ? userProfile.behavioralSignals.slice(0, 15).map(s => {
+      const src = s.sources ? Object.entries(s.sources).filter(([,v]) => (v as number) > 0).map(([k,v]) => `${k}:${v}`).join(', ') : '';
+      return `- [${s.type}] ${s.value} — strength ${s.strength} (${src})`;
     }).join('\n')
-  : 'None'}
+  : 'None — run extract-dna-signals to populate'}
+
+Engagement Profile (raw participation counts):
+${Object.keys(userProfile.engagementProfile).length > 0
+  ? Object.entries(userProfile.engagementProfile).map(([k, v]) => `- ${k}: ${v}`).join('\n')
+  : 'No engagement data yet'}
 
 TASK:
-Generate 8-10 personalized entertainment recommendations based on ALL the data above. Consider patterns in their consumption, ratings, engagement, the creators they follow, AND their explicit Room & Interest Signals. If they follow specific directors, musicians, or authors, PRIORITIZE recommending new/recent work from those creators or similar artists. Room interest signals represent the user's strongest current interests — weight them heavily when genres/categories/tags overlap with other signals.
+Generate 8-10 personalized entertainment recommendations based on ALL the data above. The Behavioral DNA Signals are the strongest indicators of taste — they are derived from actual behavior (what they rated highly, which trivia categories they answer, what they track). Weight signals with higher strength scores more heavily. If they follow specific directors, musicians, or authors, PRIORITIZE recommending new/recent work from those creators or similar artists.
 
 For each recommendation, provide:
 - title: exact title (must be real, existing media)
