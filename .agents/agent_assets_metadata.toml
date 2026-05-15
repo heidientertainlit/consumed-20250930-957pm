@@ -30,3 +30,21 @@ id = "kEFDIhXTHm28vui_bkqjI"
 uri = "file://consumed_media_detail.csv"
 type = "table"
 title = "Media Detail — Every Tracked & Rated Item per User"
+
+[[outputs]]
+id = "OsBgcYYLxn_XSf3DYAq1C"
+uri = "file://consumed_responses.csv"
+type = "table"
+title = "Poll, Trivia & Prediction Responses (817 rows)"
+
+[[outputs]]
+id = "KSqgMScQgt582J7szbJEL"
+uri = "file://consumed_tracked_items.csv"
+type = "table"
+title = "Tracked Items by List (765 rows)"
+
+[[outputs]]
+id = "xErjjVmZHjWMyb4QWJ6Um"
+uri = "file://consumed_ratings.csv"
+type = "table"
+title = "All Ratings Given (414 rows)"

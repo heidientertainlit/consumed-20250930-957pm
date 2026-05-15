@@ -1,0 +1,818 @@
+username,pool_type,category,show_tag,question,user_answer,result,points_earned,answered_date
+Ambiannie,predict,TV,,Which 90s sitcom deserves a reboot?,Seinfeld,Predicted,0,2026-04-28
+Ambiannie,predict,Pop Culture,,Best fictional school to attend:,Xavier's School for Gifted Youngsters,Predicted,0,2026-04-28
+Ambiannie,predict,TV,The Wheel of Time,Does 'The Wheel of Time' become the next Big Fantasy Hit?,"Yes, it's got potential",Predicted,0,2026-04-28
+Ambiannie,predict,Movies,,Pick your favorite superhero team:,Avengers,Predicted,0,2026-04-28
+Ambiannie,predict,Music,Taylor Swift,Will Taylor Swift's next album break streaming records?,"Yes, for sure",Predicted,0,2026-04-28
+Ambiannie,predict,Movies,The Lion King,Which adaptation was better: 'The Lion King' animated or live-action?,Animated,Predicted,0,2026-04-28
+Ambiannie,predict,Movies,Twilight,Team Edward or Team Jacob?,Team Jacob,Predicted,0,2026-04-28
+Ambiannie,predict,Movies,Marvel Cinematic Universe,Do you think Chris Evans will return as Captain America?,"No, he's done",Predicted,0,2026-04-28
+Ambiannie,predict,Movies,The Hunger Games,Will the new Hunger Games prequel meet fan expectations?,"No, it won't",Predicted,0,2026-04-28
+Ambiannie,predict,Pop Culture,,Will Secret Lives of Mormon Wives: OC flop — or will the drama carry it anyway?,👀 🍿🍿🍿🍿,Predicted,0,2026-04-28
+Ambiannie,predict,movie,,Will Taylor Frankie Paul's Season ever air?,Yes,Predicted,0,2026-04-28
+Ambiannie,trivia,Books,1984,Who wrote the novel '1984'?,George Orwell,Correct,10,2026-05-14
+Ambiannie,trivia,Books,Game of Thrones,In which book series would you find the character Daenerys Targaryen?,A Song of Ice and Fire,Correct,10,2026-05-14
+Ambiannie,trivia,Books,The Lord of the Rings,Which book contains the quote: 'Not all those who wander are lost'?,The Fellowship of the Ring,Correct,10,2026-05-14
+Ambiannie,trivia,Books,The Road,Who is the author of 'The Road'?,Haruki Murakami,Incorrect,0,2026-05-14
+Ambiannie,trivia,Books,Harry Potter,What is the real name of the character known as 'The Boy Who Lived'?,Harry Potter,Correct,10,2026-05-14
+Ambiannie,trivia,Books,Dune,What year did 'Dune' first release?,1970,Incorrect,0,2026-05-14
+Ambiannie,trivia,Books,The Handmaid's Tale,Who wrote 'The Handmaid's Tale'?,Margaret Atwood,Correct,10,2026-05-14
+Ambiannie,trivia,Books,The Hobbit,Who directed the movie adaptation of 'The Hobbit'?,Peter Jackson,Correct,10,2026-05-14
+Ambiannie,trivia,Books,Miss Marple,Who is the author of the 'Miss Marple' series?,Agatha Christie,Correct,10,2026-05-14
+Ambiannie,trivia,Books,The Shining,Who wrote 'The Shining'?,Stephen King,Correct,10,2026-05-14
+Ambiannie,trivia,Books,To Kill a Mockingbird,Who played Atticus Finch in the 1962 film adaptation of 'To Kill a Mockingbird'?,Cary Grant,Incorrect,0,2026-05-14
+Ambiannie,trivia,Books,Moby-Dick,What year was 'Moby-Dick' first published?,1851,Correct,10,2026-05-14
+Ambiannie,trivia,Books,His Dark Materials,Who wrote the 'His Dark Materials' series?,Philip Pullman,Correct,10,2026-05-14
+Ambiannie,trivia,Books,The Wheel of Time,Who created 'The Wheel of Time' series?,Robert Jordan,Correct,10,2026-05-14
+Ambiannie,trivia,Books,The Godfather,Who wrote 'The Godfather' novel?,Mario Puzo,Correct,10,2026-05-14
+Ambiannie,trivia,Books,The Catcher in the Rye,What is the name of Holden Caulfield's sister in The Catcher in the Rye?,Phoebe,Correct,10,2026-05-14
+Ambiannie,trivia,tv,Paradise,What is the name of Sterling K. Brown's character in Paradise?,Xavier Collins,Correct,10,2026-05-14
+Ambiannie,trivia,tv,Paradise,Paradise was created by the same showrunner behind which other hit drama series?,This Is Us,Correct,10,2026-05-14
+Ambiannie,trivia,Movies,Jurassic Park,Which sequel came THIRD in the Jurassic Park series?,Jurassic World,Incorrect,0,2026-05-14
+Ambiannie,trivia,Music,Queen,Finish the lyric from Queen's 'Bohemian Rhapsody': 'Is this the real life? Is this just...',fantasy,Correct,10,2026-05-08
+Ambiannie,trivia,TV,On Patrol: Live,On Patrol: Live is a revival of which cancelled show?,Cops,Incorrect,0,2026-04-28
+Ambiannie,trivia,TV,The Sopranos,What year did 'The Sopranos' premiere?,1997,Incorrect,0,2026-04-28
+Ambiannie,trivia,TV,Sailor Moon,"Finish the line: 'In the name of the moon, I will _____'",punish you,Correct,10,2026-04-28
+Ambiannie,trivia,TV,Friends,Who played Rachel Green on 'Friends'?,Jennifer Aniston,Correct,10,2026-04-28
+Ambiannie,trivia,TV,The Big Bang Theory,In what show does the character Sheldon Cooper appear?,The Big Bang Theory,Correct,10,2026-04-28
+Ambiannie,trivia,TV,Game of Thrones,Who played the character Tyrion Lannister in Game of Thrones?,Peter Dinklage,Correct,10,2026-04-28
+Ambiannie,trivia,TV,Vikings,Who played Ragnar Lothbrok in 'Vikings'?,Clive Standen,Incorrect,0,2026-04-28
+Ambiannie,trivia,TV,Breaking Bad,"In 'Breaking Bad', what does Walter White's alias 'Heisenberg' refer to?",A type of blue crystal,Incorrect,0,2026-04-28
+Ambiannie,trivia,TV,Friends,What year did 'Friends' premiere?,1994,Correct,10,2026-04-28
+Ambiannie,trivia,TV,The Office,"In 'The Office', what is the name of the company Michael Scott manages?",Dunder Mifflin,Correct,10,2026-04-28
+Ambiannie,trivia,TV,Fleabag,Who created the TV series Fleabag?,Phoebe Waller-Bridge,Correct,10,2026-04-28
+Ambiannie,trivia,TV,The X-Files,Who created the TV series 'The X-Files'?,Chris Carter,Correct,10,2026-04-28
+Ambiannie,vote,Books,,Your current reading era is…,Nonfiction,Voted,2,2026-05-14
+Ambiannie,vote,Books,,You buy books based on cover?,Sometimes,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Worst book hangover cause?,Sad ending,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Will you start an unfinished series?,Depends,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Which genre do you reach for when you need an escape?,Literary,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Which genre are you avoiding?,Fantasy,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Which classic do you actually enjoy?,To Kill a Mockingbird,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Which bookstore vibe do you love?,Barnes & Noble,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Which book would you reread if you had the time?,The Book Thief,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Which book-to-screen adaptation did justice to the book?,The Hunger Games,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Which book series did you race through?,Percy Jackson,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Which book emotionally wrecked you?,The Fault in Our Stars,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Which book do you reread?,None,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Which audiobook narrator is elite?,Michelle Obama,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Which adaptation did justice to the book?,Gone Girl,Voted,2,2026-05-14
+Ambiannie,vote,Books,,When do you read most?,Before bed,Voted,2,2026-05-14
+Ambiannie,vote,Books,,What section do you always wander into first?,Fiction,Voted,2,2026-05-14
+Ambiannie,vote,Books,,What makes you DNF a book?,Unlikable characters,Voted,2,2026-05-14
+Ambiannie,vote,Books,,What kind of book are you in the mood for right now?,Light & funny,Voted,2,2026-05-14
+Ambiannie,vote,Books,,What book mood matches today?,Cozy,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Preferred book length?,I’ll read anything,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Library or bookstore?,Both,Voted,2,2026-05-14
+Ambiannie,vote,Books,,How much romance spice do you want?,A little,Voted,2,2026-05-14
+Ambiannie,vote,Books,,How fast do you read?,Weeks,Voted,2,2026-05-14
+Ambiannie,vote,Books,,How do you usually read?,Physical book,Voted,2,2026-05-14
+Ambiannie,vote,Books,,How do you mark pages?,Random paper,Voted,2,2026-05-14
+Ambiannie,vote,Books,,How do you fix a slump?,Power through,Voted,2,2026-05-14
+Ambiannie,vote,Books,,How big is your TBR?,Manageable,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Favorite place to read?,Bed,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Do your friends read the same books?,Yes,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Do you write in your books?,Depends,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Do you wander or search?,Both,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Do you wait for paperback?,Sometimes,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Do you set reading goals?,Sometimes,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Do you save favorite quotes?,Sometimes,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Do you prefer series or standalones?,Both,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Do you judge books by spine color?,Yes,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Do you finish library books on time?,Sometimes,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Do you buy more books than you read?,Absolutely,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Do adaptations ruin reading for you?,No,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Best reading snack?,Chocolate,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Best book club pick energy?,Debate-heavy,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Best audiobook narrator vibe?,Full cast,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Audiobooks count as reading?,Stop asking,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Which dystopian world would you survive in?,The Hunger Games,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Which fantasy book series transported you to another world?,Lord of the Rings,Voted,2,2026-05-14
+Ambiannie,vote,Books,Harry Potter,Which Hogwarts house do you belong to?,Hufflepuff,Voted,2,2026-05-14
+Ambiannie,vote,Books,,Which book series defined your childhood?,Goosebumps,Voted,2,2026-05-14
+Ambiannie,vote,TV,How you watch,"Do you watch On Patrol: Live live, or catch it later?",I didn't know there was a difference,Voted,2,2026-05-14
+Ambiannie,vote,TV,How you watch,"When you watch a show like On Patrol or Autopsy, who's usually with you?",With a partner or spouse,Voted,2,2026-05-14
+Ambiannie,vote,Movies,,Which reboot actually worked?,Ocean’s 8,Voted,2,2026-05-14
+Ambiannie,vote,Movies,,Which comedy still makes you laugh out loud?,Bridesmaids,Voted,2,2026-05-14
+Ambiannie,vote,Movies,,Best ‘I need adrenaline’ watch?,John Wick,Voted,2,2026-05-14
+Ambiannie,vote,Movies,,Which movie makes you cry no matter what?,Coco,Voted,2,2026-05-08
+Ambiannie,vote,Movies,,Which soundtrack is undefeated?,The Greatest Showman,Voted,2,2026-05-08
+Ambiannie,vote,Movies,,Which movie villain did you secretly root for?,Thanos (Avengers),Voted,2,2026-05-08
+Ambiannie,vote,Movies,,Best holiday movie (don’t overthink it),The Holiday,Voted,2,2026-05-08
+Ambiannie,vote,Movies,,Which rom-com actually holds up on rewatch?,Notting Hill,Voted,2,2026-05-08
+Ambiannie,vote,Movies,,Which animated movie hits adults harder?,Up,Voted,2,2026-05-08
+Ambiannie,vote,Movies,,Which movie villain is iconic?,Miranda Priestly,Voted,2,2026-05-08
+Ambiannie,vote,Movies,,Who is the best classic Disney villain?,Maleficent,Voted,2,2026-05-08
+Ambiannie,vote,Movies,,Best ‘I can handle this’ scary movie?,A Quiet Place,Voted,2,2026-05-08
+Ambiannie,vote,Movies,,Best ‘we’re staying in’ movie night pick?,Knives Out,Voted,2,2026-05-08
+Ambiannie,vote,Movies,,Which franchise would you erase and rewatch fresh?,The Hunger Games,Voted,2,2026-05-08
+Ambiannie,vote,Movies,,Which movie would you rewatch right now?,Mean Girls,Voted,2,2026-05-08
+Ambiannie,vote,Movies,,Which actor instantly improves a movie?,Meryl Streep,Voted,2,2026-05-08
+Ambiannie,vote,Movies,,Which adaptation did the most justice to the book?,The Hunger Games,Voted,2,2026-05-08
+Ambiannie,vote,Movies,,Which movie had you stressed the entire time?,A Quiet Place,Voted,2,2026-05-08
+Ambiannie,vote,TV,,Which show gets better on rewatch?,The Office,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Which is the ultimate comfort show?,The Office,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Which TV character would make the best roommate?,Leslie Knope,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Best mystery binge?,Only Murders in the Building,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Your binge style is…,One episode/night,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Which show fumbled the ending the most?,Game of Thrones,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Which show deserved more hype?,Fleabag,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Which show do you put on while doing everything else?,The Office,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Best TV couple?,Jim & Pam,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Most chaotic reality energy?,Real Housewives,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Best comfort reality series?,Bake Off,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Which show has the best one-liners?,Schitt’s Creek,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Which TV series ending left you most satisfied?,The Office,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Which reality show is way smarter than it looks?,The Traitors,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Which show is your guilty pleasure?,Selling Sunset,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Which drama hooks you by episode one?,Breaking Bad,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Best theme song you never skip?,The Office,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Which '90s sitcom do you rewatch the most?,Friends,Voted,2,2026-04-28
+Ambiannie,vote,TV,,Which sitcom feels like home?,Parks & Rec,Voted,2,2026-04-28
+Amyjgardner,vote,Movies,,Which movie would you rewatch right now?,Mean Girls,Voted,2,2026-02-18
+AshleyJones,vote,Movies,,Which movie would you rewatch right now?,Mean Girls,Voted,2,2026-01-28
+Ashughes,trivia,Movies,Inception,Who directed 'Inception'?,Christopher Nolan,Correct,10,2026-04-27
+Ashughes,trivia,Movies,The Matrix,What year was 'The Matrix' released?,1999,Correct,10,2026-04-27
+Ashughes,trivia,Movies,The Dark Knight,Who played the Joker in 'The Dark Knight'?,Heath Ledger,Correct,10,2026-04-27
+Ashughes,trivia,Movies,Titanic,What year was the movie Titanic released?,1997,Correct,10,2026-04-27
+Ashughes,trivia,Movies,Ocean's Eleven,Which movie's plot revolves around a heist in Las Vegas?,Ocean's Eleven,Correct,10,2026-04-27
+Ashughes,trivia,Movies,The Lord of the Rings,Who directed the 'Lord of the Rings' trilogy?,Peter Jackson,Correct,10,2026-04-27
+Ashughes,trivia,Movies,Indiana Jones,Who played the character Indiana Jones?,Harrison Ford,Correct,10,2026-04-27
+Ashughes,trivia,Movies,Avatar,What year did 'Avatar' come out?,2009,Correct,10,2026-04-27
+Ashughes,trivia,Movies,The Matrix,Who played the character Neo in 'The Matrix'?,Keanu Reeves,Correct,10,2026-04-27
+Ashughes,trivia,Movies,Schindler's List,Who directed 'Schindler's List'?,Steven Spielberg,Correct,10,2026-04-27
+Ashughes,trivia,Movies,Terminator,Who played the character Sarah Connor in 'Terminator 2: Judgment Day'?,Sigourney Weaver,Incorrect,0,2026-04-27
+Ashughes,trivia,Movies,The Grand Budapest Hotel,Who directed the film 'The Grand Budapest Hotel'?,Wes Anderson,Correct,10,2026-04-27
+Ashughes,trivia,Movies,Good Will Hunting,Who wrote the screenplay for 'Good Will Hunting'?,Matt Damon and Ben Affleck,Correct,10,2026-04-27
+Ashughes,trivia,Movies,Back to the Future,Which actor was originally cast as Marty McFly in 'Back to the Future' before Michael J. Fox?,Matthew Broderick,Incorrect,0,2026-04-27
+Ashughes,trivia,Movies,The Lion King,What year did 'The Lion King' (animated) release?,1994,Correct,10,2026-04-27
+Ashughes,trivia,Movies,Parasite,Who directed the movie Parasite?,Park Chan-wook,Incorrect,0,2026-04-27
+Ashughes,trivia,Movies,Slumdog Millionaire,Who won the Oscar for Best Picture in 2008?,Slumdog Millionaire,Correct,10,2026-04-27
+Ashughes,trivia,Movies,The Matrix,"Which of these released first: 'The Matrix', 'Fight Club', 'The Sixth Sense', or 'American Beauty'?",American Beauty,Incorrect,0,2026-04-27
+Ashughes,trivia,Music,Michael Jackson,What year was the album 'Thriller' by Michael Jackson released?,1982,Correct,10,2026-04-27
+Ashughes,trivia,Music,Adele,What year did Adele win her first Grammy?,2008,Correct,10,2026-04-27
+Ashughes,trivia,Music,Queen,Finish the lyric from Queen's 'Bohemian Rhapsody': 'Is this the real life? Is this just...',fantasy,Correct,10,2026-04-27
+Ashughes,trivia,Music,U2,Who won the Grammy for Album of the Year in 2006?,Paul McCartney,Incorrect,0,2026-04-27
+Ashughes,trivia,TV,The X-Files,Who created the TV series 'The X-Files'?,J.J. Abrams,Incorrect,0,2026-04-27
+Ashughes,trivia,Movies,Jurassic Park,Which sequel came THIRD in the Jurassic Park series?,Jurassic Park III,Correct,10,2026-04-27
+Ashughes,vote,Movies,,Which actor instantly improves a movie?,Meryl Streep,Voted,2,2026-05-01
+Ashughes,vote,Movies,,Who is the best classic Disney villain?,Ursula,Voted,2,2026-05-01
+Ashughes,vote,Movies,,Which movie would you rewatch right now?,The Dark Knight,Voted,2,2026-05-01
+Ashughes,vote,Movies,,Best ‘I need adrenaline’ watch?,The Dark Knight,Voted,2,2026-05-01
+Ashughes,vote,Movies,,Which adaptation did the most justice to the book?,The Lord of the Rings,Voted,2,2026-05-01
+Ashughes,vote,Movies,,Best holiday movie (don’t overthink it),The Holiday,Voted,2,2026-05-01
+Ashughes,vote,Movies,,Which animated movie hits adults harder?,Toy Story 3,Voted,2,2026-05-01
+Ashughes,vote,Movies,,Which movie villain is iconic?,Darth Vader,Voted,2,2026-05-01
+Ashughes,vote,Movies,,Which reboot actually worked?,Jumanji,Voted,2,2026-05-01
+Ashughes,vote,Movies,,Best ‘we’re staying in’ movie night pick?,Knives Out,Voted,2,2026-05-01
+Ashughes,vote,Movies,Star Wars,Which is the best 'Star Wars' trilogy?,Sequel Trilogy,Voted,2,2026-05-01
+Ashughes,vote,Movies,,Which soundtrack is undefeated?,Black Panther,Voted,2,2026-05-01
+Ashughes,vote,Movies,,Which franchise would you erase and rewatch fresh?,Star Wars,Voted,2,2026-05-01
+Ashughes,vote,Movies,,Which movie makes you cry no matter what?,The Notebook,Voted,2,2026-05-01
+Ashughes,vote,Movies,,Which movie villain did you secretly root for?,Loki (Thor),Voted,2,2026-05-01
+Azurkan90,predict,Movies,Dune,Is the new Dune sequel destined for box office glory?,"No, it'll flop",Predicted,20,2026-04-27
+Azurkan90,trivia,Music,Michael Jackson,What year was the album 'Thriller' by Michael Jackson released?,1984,Incorrect,0,2026-04-27
+Azurkan90,trivia,Music,Adele,What year did Adele win her first Grammy?,2010,Incorrect,0,2026-04-27
+Azurkan90,trivia,Music,Queen,Finish the lyric from Queen's 'Bohemian Rhapsody': 'Is this the real life? Is this just...',fantasy,Correct,10,2026-04-27
+Azurkan90,trivia,Music,U2,Who won the Grammy for Album of the Year in 2006?,Green Day,Incorrect,0,2026-04-27
+Azurkan90,trivia,Movies,The Dark Knight,Who played the Joker in 'The Dark Knight'?,Heath Ledger,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,Inception,Who directed 'Inception'?,Christopher Nolan,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,The Matrix,What year was 'The Matrix' released?,1998,Incorrect,0,2026-04-27
+Azurkan90,trivia,Movies,Titanic,What year was the movie Titanic released?,1997,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,Ocean's Eleven,Which movie's plot revolves around a heist in Las Vegas?,Ocean's Eleven,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,The Lord of the Rings,Who directed the 'Lord of the Rings' trilogy?,Peter Jackson,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,Indiana Jones,Who played the character Indiana Jones?,Harrison Ford,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,Avatar,What year did 'Avatar' come out?,2010,Incorrect,0,2026-04-27
+Azurkan90,trivia,Movies,The Matrix,Who played the character Neo in 'The Matrix'?,Keanu Reeves,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,Schindler's List,Who directed 'Schindler's List'?,Steven Spielberg,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,Terminator,Who played the character Sarah Connor in 'Terminator 2: Judgment Day'?,Linda Hamilton,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,The Grand Budapest Hotel,Who directed the film 'The Grand Budapest Hotel'?,Wes Anderson,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,Good Will Hunting,Who wrote the screenplay for 'Good Will Hunting'?,Matt Damon and Ben Affleck,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,Back to the Future,Which actor was originally cast as Marty McFly in 'Back to the Future' before Michael J. Fox?,Matthew Broderick,Incorrect,0,2026-04-27
+Azurkan90,trivia,Movies,The Lion King,What year did 'The Lion King' (animated) release?,1994,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,Parasite,Who directed the movie Parasite?,Bong Joon-ho,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,Slumdog Millionaire,Who won the Oscar for Best Picture in 2008?,Slumdog Millionaire,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,The Matrix,"Which of these released first: 'The Matrix', 'Fight Club', 'The Sixth Sense', or 'American Beauty'?",Fight Club,Incorrect,0,2026-04-27
+Azurkan90,trivia,TV,On Patrol: Live,On Patrol: Live is a revival of which cancelled show?,Cops,Incorrect,0,2026-04-27
+Azurkan90,trivia,TV,The Sopranos,What year did 'The Sopranos' premiere?,1997,Incorrect,0,2026-04-27
+Azurkan90,trivia,TV,Sailor Moon,"Finish the line: 'In the name of the moon, I will _____'",vanquish you,Incorrect,0,2026-04-27
+Azurkan90,trivia,TV,Friends,Who played Rachel Green on 'Friends'?,Jennifer Aniston,Correct,10,2026-04-27
+Azurkan90,trivia,TV,The Big Bang Theory,In what show does the character Sheldon Cooper appear?,The Big Bang Theory,Correct,10,2026-04-27
+Azurkan90,trivia,TV,Game of Thrones,Who played the character Tyrion Lannister in Game of Thrones?,Peter Dinklage,Correct,10,2026-04-27
+Azurkan90,trivia,TV,Vikings,Who played Ragnar Lothbrok in 'Vikings'?,Travis Fimmel,Correct,10,2026-04-27
+Azurkan90,trivia,TV,Breaking Bad,"In 'Breaking Bad', what does Walter White's alias 'Heisenberg' refer to?",A physicist's principle,Correct,10,2026-04-27
+Azurkan90,trivia,TV,Friends,What year did 'Friends' premiere?,1996,Incorrect,0,2026-04-27
+Azurkan90,trivia,TV,The Office,"In 'The Office', what is the name of the company Michael Scott manages?",Dunder Mifflin,Correct,10,2026-04-27
+Azurkan90,trivia,TV,Fleabag,Who created the TV series Fleabag?,Phoebe Waller-Bridge,Correct,10,2026-04-27
+Azurkan90,trivia,TV,The X-Files,Who created the TV series 'The X-Files'?,Chris Carter,Correct,10,2026-04-27
+Azurkan90,trivia,Movies,Jurassic Park,Which sequel came THIRD in the Jurassic Park series?,The Lost World: Jurassic Park,Incorrect,0,2026-04-27
+Azurkan90,trivia,Books,1984,Who wrote the novel '1984'?,George Orwell,Correct,10,2026-04-27
+Azurkan90,trivia,Books,Game of Thrones,In which book series would you find the character Daenerys Targaryen?,A Song of Ice and Fire,Correct,10,2026-04-27
+Azurkan90,trivia,Books,The Lord of the Rings,Which book contains the quote: 'Not all those who wander are lost'?,The Hobbit,Incorrect,0,2026-04-27
+Azurkan90,trivia,Books,The Road,Who is the author of 'The Road'?,Cormac McCarthy,Correct,10,2026-04-27
+Azurkan90,trivia,Books,Harry Potter,What is the real name of the character known as 'The Boy Who Lived'?,Harry Potter,Correct,10,2026-04-27
+Azurkan90,trivia,Books,Dune,What year did 'Dune' first release?,1965,Correct,10,2026-04-27
+Azurkan90,trivia,Books,The Handmaid's Tale,Who wrote 'The Handmaid's Tale'?,Margaret Atwood,Correct,10,2026-04-27
+Azurkan90,trivia,Books,The Hobbit,Who directed the movie adaptation of 'The Hobbit'?,Peter Jackson,Correct,10,2026-04-27
+Azurkan90,trivia,Books,Miss Marple,Who is the author of the 'Miss Marple' series?,Agatha Christie,Correct,10,2026-04-27
+Azurkan90,trivia,Books,The Shining,Who wrote 'The Shining'?,Stephen King,Correct,10,2026-04-27
+Azurkan90,trivia,Books,To Kill a Mockingbird,Who played Atticus Finch in the 1962 film adaptation of 'To Kill a Mockingbird'?,Cary Grant,Incorrect,0,2026-04-27
+Azurkan90,trivia,Books,Moby-Dick,What year was 'Moby-Dick' first published?,1862,Incorrect,0,2026-04-27
+Azurkan90,trivia,Books,His Dark Materials,Who wrote the 'His Dark Materials' series?,Philip Pullman,Correct,10,2026-04-27
+Azurkan90,trivia,Books,The Wheel of Time,Who created 'The Wheel of Time' series?,Robert Jordan,Correct,10,2026-04-27
+Azurkan90,trivia,Books,The Godfather,Who wrote 'The Godfather' novel?,Mario Puzo,Correct,10,2026-04-27
+Azurkan90,trivia,Books,The Catcher in the Rye,What is the name of Holden Caulfield's sister in The Catcher in the Rye?,Phoebe,Correct,10,2026-04-27
+Azurkan90,vote,TV,,Which show has the best one-liners?,Veep,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Best mystery binge?,Big Little Lies,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Best theme song you never skip?,The O.C.,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Most chaotic reality energy?,Real Housewives,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Which show gets better on rewatch?,The Office,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Which show fumbled the ending the most?,Lost,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Which show deserved more hype?,The Good Place,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Which show do you put on while doing everything else?,The Office,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Your binge style is…,Weekend binge,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Which reality show is way smarter than it looks?,Survivor,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Which drama hooks you by episode one?,Breaking Bad,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Which sitcom feels like home?,Parks & Rec,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Best TV couple?,David & Patrick,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Best comfort reality series?,Bake Off,Voted,2,2026-04-27
+Azurkan90,vote,TV,Beyond Reelz,"If you're in a true crime mood but Reelz isn't on, where do you go first?",Netflix or Hulu,Voted,2,2026-04-27
+Azurkan90,vote,TV,Beyond Reelz,Which other true crime source do you consume regularly?,Netflix / HBO documentaries,Voted,2,2026-04-27
+Azurkan90,vote,TV,How you watch,"When you watch a show like On Patrol or Autopsy, who's usually with you?",It varies by show,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Which TV series ending left you most satisfied?,Breaking Bad,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Which TV character would make the best roommate?,Leslie Knope,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Which is the ultimate comfort show?,Parks and Recreation,Voted,2,2026-04-27
+Azurkan90,vote,TV,,Which '90s sitcom do you rewatch the most?,Friends,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Which rom-com actually holds up on rewatch?,Notting Hill,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Which reboot actually worked?,A Star Is Born,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Which movie villain is iconic?,The Joker,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Which movie makes you cry no matter what?,Coco,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Which movie is criminally underrated?,Palm Springs,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Which movie had you stressed the entire time?,Black Swan,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Which franchise would you erase and rewatch fresh?,Harry Potter,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Which comedy still makes you laugh out loud?,Superbad,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Which animated movie hits adults harder?,Up,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Which actor instantly improves a movie?,Leonardo DiCaprio,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Best ‘we’re staying in’ movie night pick?,Knives Out,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Best ‘I need adrenaline’ watch?,Mad Max: Fury Road,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Best ‘I can handle this’ scary movie?,Get Out,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Best holiday movie (don’t overthink it),Elf,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Which movie would you rewatch right now?,The Dark Knight,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Which soundtrack is undefeated?,Titanic,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Which adaptation did the most justice to the book?,The Lord of the Rings,Voted,2,2026-04-27
+Azurkan90,vote,Movies,Star Wars,Which is the best 'Star Wars' trilogy?,Original Trilogy,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Who is the best classic Disney villain?,Ursula,Voted,2,2026-04-27
+Azurkan90,vote,Movies,,Which movie villain did you secretly root for?,Thanos (Avengers),Voted,2,2026-04-27
+BrookeM22,vote,Books,,Which bookstore vibe do you love?,Indie,Voted,2,2026-02-06
+BrookeM22,vote,Movies,,Which movie would you rewatch right now?,Mean Girls,Voted,2,2026-02-06
+cass_matheney8,vote,Movies,,Which movie would you rewatch right now?,Jurassic Park,Voted,2,2026-01-28
+Char_Mehri,vote,Books,,What makes you DNF a book?,Bad pacing,Voted,2,2026-02-20
+Char_Mehri,vote,Books,,What section do you always wander into first?,Fiction,Voted,2,2026-02-20
+Char_Mehri,vote,Books,,Do you set reading goals?,Yes,Voted,2,2026-02-20
+Char_Mehri,vote,Books,,Do you save favorite quotes?,No,Voted,2,2026-02-20
+Char_Mehri,vote,Books,,Which book-to-screen adaptation did justice to the book?,Gone Girl,Voted,2,2026-02-20
+Char_Mehri,vote,Books,,Which audiobook narrator is elite?,Jim Dale,Voted,2,2026-02-20
+Char_Mehri,vote,Books,,Do you buy more books than you read?,Yes,Voted,2,2026-02-20
+Char_Mehri,vote,Movies,,Which movie would you rewatch right now?,Jurassic Park,Voted,2,2026-02-10
+HeidiIsConsumed,predict,Books,,This book will be the next big streaming hit:,Daisy Jones & The Six,Predicted,20,2026-05-11
+HeidiIsConsumed,predict,Music,Taylor Swift,Will Taylor Swift's next album break streaming records?,"Yes, for sure",Predicted,20,2026-05-10
+HeidiIsConsumed,predict,tv,,"ABC pulled Taylor Frankie Paul's Bachelorette season. Who steps in next?""",Ilona Maher,Predicted,0,2026-05-09
+HeidiIsConsumed,predict,Books,,This is the book series of the year:,Bridgerton,Predicted,20,2026-05-08
+HeidiIsConsumed,predict,TV,The Wheel of Time,Does 'The Wheel of Time' become the next Big Fantasy Hit?,"No, it's not quite there",Predicted,20,2026-05-06
+HeidiIsConsumed,predict,Pop Culture,,Best fictional school to attend:,Hogwarts,Predicted,20,2026-05-05
+HeidiIsConsumed,predict,book,,Will the next Hunger Games book be a prequel?,Yes,Predicted,0,2026-05-05
+HeidiIsConsumed,predict,TV,The Last of Us,Is 'The Last of Us' destined to become the biggest video game adaptation?,Not likely,Predicted,20,2026-05-04
+HeidiIsConsumed,predict,Movies,,Who is the ultimate action movie star?,Bruce Willis,Predicted,20,2026-05-02
+HeidiIsConsumed,predict,TV,Succession,Is 'Succession' the best drama series of the decade?,"No, there's better",Predicted,20,2026-04-30
+HeidiIsConsumed,predict,Movies,Avatar,Is the hype for Avatar sequels justified after all these years?,"No, it's overhyped",Predicted,20,2026-04-28
+HeidiIsConsumed,predict,Movies,Dune,Is the new Dune sequel destined for box office glory?,"Yes, for sure",Predicted,20,2026-04-27
+HeidiIsConsumed,predict,Movies,James Bond,Will the upcoming James Bond film redefine the franchise?,"No, more of the same",Predicted,20,2026-04-27
+HeidiIsConsumed,predict,TV,,This series finale left me speechless:,The Sopranos,Predicted,20,2026-04-26
+HeidiIsConsumed,predict,Movies,Star Wars,Will the new Star Wars film trilogy succeed?,"Yes, it'll be epic",Predicted,20,2026-04-24
+HeidiIsConsumed,predict,Music,Dua Lipa,Is Dua Lipa's next era going to be her best yet?,"No, she's peaked",Predicted,20,2026-04-24
+HeidiIsConsumed,predict,Movies,The Hunger Games,Will the new Hunger Games prequel meet fan expectations?,"Yes, for sure",Predicted,20,2026-04-21
+HeidiIsConsumed,predict,Music,Billie Eilish,Is Billie Eilish on the verge of releasing another hit album?,"Yes, any day now",Predicted,20,2026-04-16
+HeidiIsConsumed,predict,Books,,Which dystopian novel feels most relevant today?,1984,Predicted,20,2026-04-15
+HeidiIsConsumed,predict,movie,,Will Taylor Frankie Paul's Season ever air?,No,Predicted,0,2026-04-07
+HeidiIsConsumed,predict,movie,,Do Xavier and Teri reunite?,Yes,Predicted,0,2026-03-24
+HeidiIsConsumed,predict,movie,,"Will ""Reminders of Him"" be better or worse than ""It Ends With Us""?",Better,Predicted,0,2026-03-10
+HeidiIsConsumed,trivia,Movies,Good Will Hunting,Who wrote the screenplay for 'Good Will Hunting'?,Matt Damon and Ben Affleck,Correct,10,2026-05-14
+HeidiIsConsumed,trivia,tv,Paradise,Paradise was created by the same showrunner behind which other hit drama series?,This Is Us,Correct,10,2026-05-14
+HeidiIsConsumed,trivia,TV,The X-Files,Who created the TV series 'The X-Files'?,Vince Gilligan,Incorrect,0,2026-05-09
+HeidiIsConsumed,trivia,tv,Paradise,What is the name of Sterling K. Brown's character in Paradise?,Xavier Collins,Correct,10,2026-05-08
+HeidiIsConsumed,trivia,Movies,Slumdog Millionaire,Who won the Oscar for Best Picture in 2008?,Slumdog Millionaire,Correct,10,2026-05-06
+HeidiIsConsumed,trivia,Movies,Jurassic Park,Which sequel came THIRD in the Jurassic Park series?,Jurassic World,Incorrect,0,2026-05-06
+HeidiIsConsumed,trivia,Movies,Back to the Future,Which actor was originally cast as Marty McFly in 'Back to the Future' before Michael J. Fox?,Matthew Broderick,Incorrect,0,2026-05-05
+HeidiIsConsumed,trivia,Books,Moby-Dick,What year was 'Moby-Dick' first published?,1851,Correct,10,2026-04-28
+HeidiIsConsumed,trivia,TV,Friends,Who played Rachel Green on 'Friends'?,Jennifer Aniston,Correct,10,2026-04-27
+HeidiIsConsumed,trivia,TV,The Sopranos,What year did 'The Sopranos' premiere?,1997,Incorrect,0,2026-04-16
+HeidiIsConsumed,trivia,Movies,The Matrix,What year was 'The Matrix' released?,1997,Incorrect,0,2026-04-16
+HeidiIsConsumed,trivia,Movies,The Dark Knight,Who played the Joker in 'The Dark Knight'?,Jared Leto,Incorrect,0,2026-04-16
+HeidiIsConsumed,trivia,Movies,Titanic,What year was the movie Titanic released?,1997,Correct,10,2026-04-14
+HeidiIsConsumed,trivia,Movies,Inception,Who directed 'Inception'?,James Cameron,Incorrect,0,2026-04-14
+HeidiIsConsumed,vote,Movies,,Which adaptation did the most justice to the book?,The Hunger Games,Voted,2,2026-05-08
+HeidiIsConsumed,vote,TV,,Your binge style is…,Background binge,Voted,2,2026-05-07
+HeidiIsConsumed,vote,TV,,Which show gets better on rewatch?,The Office,Voted,2,2026-05-07
+HeidiIsConsumed,vote,TV,,Which TV character would make the best roommate?,Leslie Knope,Voted,2,2026-05-07
+HeidiIsConsumed,vote,TV,,Which TV series ending left you most satisfied?,Friends,Voted,2,2026-05-07
+HeidiIsConsumed,vote,TV,,Which '90s sitcom do you rewatch the most?,Friends,Voted,2,2026-05-07
+HeidiIsConsumed,vote,TV,,Best theme song you never skip?,The O.C.,Voted,2,2026-04-28
+HeidiIsConsumed,vote,TV,,Which is the ultimate comfort show?,Gilmore Girls,Voted,2,2026-04-28
+HeidiIsConsumed,vote,Movies,,Which movie villain did you secretly root for?,Loki (Thor),Voted,2,2026-04-24
+HeidiIsConsumed,vote,TV,,Which show has the best one-liners?,Schitt’s Creek,Voted,2,2026-04-07
+HeidiIsConsumed,vote,TV,,Which show fumbled the ending the most?,Lost,Voted,2,2026-04-05
+HeidiIsConsumed,vote,TV,,Which drama hooks you by episode one?,Grey’s Anatomy,Voted,2,2026-04-05
+HeidiIsConsumed,vote,TV,,Best mystery binge?,Big Little Lies,Voted,2,2026-04-05
+HeidiIsConsumed,vote,TV,,Which show deserved more hype?,Ted Lasso,Voted,2,2026-04-05
+HeidiIsConsumed,vote,Movies,,Which franchise would you erase and rewatch fresh?,Harry Potter,Voted,2,2026-04-04
+HeidiIsConsumed,vote,TV,,Best TV couple?,Monica & Chandler,Voted,2,2026-04-04
+HeidiIsConsumed,vote,TV,,Which show do you put on while doing everything else?,Friends,Voted,2,2026-04-04
+HeidiIsConsumed,vote,TV,,Which reality show is way smarter than it looks?,The Traitors,Voted,2,2026-03-16
+HeidiIsConsumed,vote,Movies,,Which actor instantly improves a movie?,Ryan Gosling,Voted,2,2026-03-12
+HeidiIsConsumed,vote,Movies,,Best ‘I can handle this’ scary movie?,A Quiet Place,Voted,2,2026-03-12
+HeidiIsConsumed,vote,Movies,,Best ‘I need adrenaline’ watch?,John Wick,Voted,2,2026-03-12
+HeidiIsConsumed,vote,Movies,,Best ‘we’re staying in’ movie night pick?,The Intern,Voted,2,2026-03-12
+HeidiIsConsumed,vote,Movies,,Which movie had you stressed the entire time?,Gone Girl,Voted,2,2026-03-12
+HeidiIsConsumed,vote,Movies,,Which reboot actually worked?,Jumanji,Voted,2,2026-03-12
+HeidiIsConsumed,vote,TV,,Which show is your guilty pleasure?,Selling Sunset,Voted,2,2026-03-12
+HeidiIsConsumed,vote,TV,,Best comfort reality series?,Queer Eye,Voted,2,2026-03-12
+HeidiIsConsumed,vote,Movies,,Best holiday movie (don’t overthink it),The Holiday,Voted,2,2026-03-12
+HeidiIsConsumed,vote,TV,,Which sitcom feels like home?,Friends,Voted,2,2026-03-12
+HeidiIsConsumed,vote,Movies,,Which movie is criminally underrated?,About Time,Voted,2,2026-03-12
+HeidiIsConsumed,vote,TV,,Do you like Dr. Langdon?,Yes,Voted,2,2026-02-12
+HeidiIsConsumed,vote,Movies,,Which movie would you rewatch right now?,Other,Voted,2,2026-01-22
+Jackie101189,trivia,Movies,Titanic,What year was the movie Titanic released?,1995,Incorrect,0,2026-04-28
+Jackie101189,trivia,TV,Friends,What year did 'Friends' premiere?,1994,Correct,10,2026-04-28
+jedivie,vote,Movies,,Which movie would you rewatch right now?,Jurassic Park,Voted,2,2026-01-30
+Jeeppler,predict,Books,,This book will be the next big streaming hit:,Where the Crawdads Sing,Predicted,20,2026-05-11
+Jeeppler,predict,tv,,"ABC pulled Taylor Frankie Paul's Bachelorette season. Who steps in next?""",Kristin Cavallari,Predicted,0,2026-05-08
+Jeeppler,predict,Movies,,Pick your favorite superhero team:,X-Men,Predicted,20,2026-05-08
+Jeeppler,predict,Movies,Avatar,Is the hype for Avatar sequels justified after all these years?,"No, it's overhyped",Predicted,20,2026-04-28
+Jeeppler,predict,Movies,Dune,Is the new Dune sequel destined for box office glory?,"Yes, for sure",Predicted,20,2026-04-27
+Jeeppler,predict,Movies,The Chronicles of Narnia,Will Greta Gerwig's Narnia adaptation redefine the fantasy genre?,"Yes, revolutionary",Predicted,20,2026-04-19
+Jeeppler,predict,movie,,Will Taylor Frankie Paul's Season ever air?,No,Predicted,0,2026-04-10
+Jeeppler,predict,movie,,Do Xavier and Teri reunite?,Yes,Predicted,0,2026-04-03
+Jeeppler,predict,movie,,"Will ""Reminders of Him"" be better or worse than ""It Ends With Us""?",Better,Predicted,0,2026-03-12
+Jeeppler,trivia,Movies,Good Will Hunting,Who wrote the screenplay for 'Good Will Hunting'?,Matt Damon and Ben Affleck,Correct,10,2026-05-14
+Jeeppler,trivia,Music,Michael Jackson,What year was the album 'Thriller' by Michael Jackson released?,1982,Correct,10,2026-05-11
+Jeeppler,trivia,Music,U2,Who won the Grammy for Album of the Year in 2006?,U2,Correct,10,2026-05-11
+Jeeppler,trivia,Music,Adele,What year did Adele win her first Grammy?,2006,Incorrect,0,2026-05-11
+Jeeppler,trivia,tv,Paradise,Paradise was created by the same showrunner behind which other hit drama series?,The Americans,Incorrect,0,2026-05-11
+Jeeppler,trivia,tv,Paradise,What is the name of Sterling K. Brown's character in Paradise?,Xavier Collins,Correct,10,2026-05-11
+Jeeppler,trivia,Music,Queen,Finish the lyric from Queen's 'Bohemian Rhapsody': 'Is this the real life? Is this just...',fantasy,Correct,10,2026-04-28
+Jeeppler,trivia,Books,The Catcher in the Rye,What is the name of Holden Caulfield's sister in The Catcher in the Rye?,Phoebe,Correct,10,2026-04-28
+Jeeppler,trivia,Books,The Godfather,Who wrote 'The Godfather' novel?,John Grisham,Incorrect,0,2026-04-28
+Jeeppler,trivia,TV,Sailor Moon,"Finish the line: 'In the name of the moon, I will _____'",vanquish you,Incorrect,0,2026-04-28
+Jeeppler,trivia,TV,The Sopranos,What year did 'The Sopranos' premiere?,2000,Incorrect,0,2026-04-28
+Jeeppler,trivia,TV,Friends,Who played Rachel Green on 'Friends'?,Jennifer Aniston,Correct,10,2026-04-28
+Jeeppler,trivia,TV,Breaking Bad,"In 'Breaking Bad', what does Walter White's alias 'Heisenberg' refer to?",A physicist's principle,Correct,10,2026-04-28
+Jeeppler,trivia,TV,Game of Thrones,Who played the character Tyrion Lannister in Game of Thrones?,Nikolaj Coster-Waldau,Incorrect,0,2026-04-28
+Jeeppler,trivia,TV,Fleabag,Who created the TV series Fleabag?,Phoebe Waller-Bridge,Correct,10,2026-04-28
+Jeeppler,trivia,TV,The Office,"In 'The Office', what is the name of the company Michael Scott manages?",Dunder Mifflin,Correct,10,2026-04-28
+Jeeppler,trivia,TV,Friends,What year did 'Friends' premiere?,1994,Correct,10,2026-04-28
+Jeeppler,trivia,TV,Vikings,Who played Ragnar Lothbrok in 'Vikings'?,Gustaf Skarsgård,Incorrect,0,2026-04-28
+Jeeppler,trivia,TV,The Big Bang Theory,In what show does the character Sheldon Cooper appear?,The Big Bang Theory,Correct,10,2026-04-28
+Jeeppler,trivia,Movies,Slumdog Millionaire,Who won the Oscar for Best Picture in 2008?,Slumdog Millionaire,Correct,10,2026-04-28
+Jeeppler,trivia,Movies,Jurassic Park,Which sequel came THIRD in the Jurassic Park series?,Jurassic World: Fallen Kingdom,Incorrect,0,2026-04-28
+Jeeppler,trivia,Movies,The Matrix,"Which of these released first: 'The Matrix', 'Fight Club', 'The Sixth Sense', or 'American Beauty'?",The Sixth Sense,Correct,10,2026-04-28
+Jeeppler,trivia,Movies,Parasite,Who directed the movie Parasite?,Bong Joon-ho,Correct,10,2026-04-28
+Jeeppler,trivia,Movies,Back to the Future,Which actor was originally cast as Marty McFly in 'Back to the Future' before Michael J. Fox?,Matthew Broderick,Incorrect,0,2026-04-28
+Jeeppler,trivia,TV,On Patrol: Live,On Patrol: Live is a revival of which cancelled show?,Cops,Incorrect,0,2026-04-27
+Jeeppler,trivia,TV,The X-Files,Who created the TV series 'The X-Files'?,David Lynch,Incorrect,0,2026-04-27
+Jeeppler,trivia,Movies,The Lion King,What year did 'The Lion King' (animated) release?,1994,Correct,10,2026-04-27
+Jeeppler,trivia,Books,Moby-Dick,What year was 'Moby-Dick' first published?,1848,Incorrect,0,2026-04-19
+Jeeppler,trivia,Books,To Kill a Mockingbird,Who played Atticus Finch in the 1962 film adaptation of 'To Kill a Mockingbird'?,Gregory Peck,Correct,10,2026-04-19
+Jeeppler,trivia,Books,His Dark Materials,Who wrote the 'His Dark Materials' series?,Philip Pullman,Correct,10,2026-04-19
+Jeeppler,trivia,Books,Game of Thrones,In which book series would you find the character Daenerys Targaryen?,A Song of Ice and Fire,Correct,10,2026-04-19
+Jeeppler,trivia,Books,The Road,Who is the author of 'The Road'?,Kurt Vonnegut,Incorrect,0,2026-04-19
+Jeeppler,trivia,Books,Harry Potter,What is the real name of the character known as 'The Boy Who Lived'?,Neville Longbottom,Incorrect,0,2026-04-19
+Jeeppler,trivia,Books,The Shining,Who wrote 'The Shining'?,Stephen King,Correct,10,2026-04-19
+Jeeppler,trivia,Books,Miss Marple,Who is the author of the 'Miss Marple' series?,Arthur Conan Doyle,Incorrect,0,2026-04-19
+Jeeppler,trivia,Books,The Hobbit,Who directed the movie adaptation of 'The Hobbit'?,Peter Jackson,Correct,10,2026-04-19
+Jeeppler,trivia,Books,1984,Who wrote the novel '1984'?,George Orwell,Correct,10,2026-04-19
+Jeeppler,trivia,Books,The Handmaid's Tale,Who wrote 'The Handmaid's Tale'?,Margaret Atwood,Correct,10,2026-04-14
+Jeeppler,trivia,Books,The Lord of the Rings,Which book contains the quote: 'Not all those who wander are lost'?,The Fellowship of the Ring,Correct,10,2026-04-14
+Jeeppler,trivia,Books,Dune,What year did 'Dune' first release?,1970,Incorrect,0,2026-04-14
+Jeeppler,trivia,Books,The Wheel of Time,Who created 'The Wheel of Time' series?,Robert Jordan,Correct,10,2026-04-14
+Jeeppler,trivia,Movies,The Dark Knight,Who played the Joker in 'The Dark Knight'?,Heath Ledger,Correct,10,2026-04-14
+Jeeppler,trivia,Movies,The Matrix,What year was 'The Matrix' released?,1999,Correct,10,2026-04-14
+Jeeppler,trivia,Movies,Titanic,What year was the movie Titanic released?,2001,Incorrect,0,2026-04-14
+Jeeppler,trivia,Movies,Inception,Who directed 'Inception'?,Christopher Nolan,Correct,10,2026-04-14
+Jeeppler,vote,TV,,Which is the ultimate comfort show?,The Office,Voted,2,2026-04-19
+Jeeppler,vote,TV,,Which TV series ending left you most satisfied?,Breaking Bad,Voted,2,2026-04-19
+Jeeppler,vote,TV,,Which TV character would make the best roommate?,Monica Geller,Voted,2,2026-04-19
+Jeeppler,vote,TV,,Which '90s sitcom do you rewatch the most?,Friends,Voted,2,2026-04-19
+Jeeppler,vote,Movies,,Who is the best classic Disney villain?,Ursula,Voted,2,2026-04-14
+Jeeppler,vote,Movies,,Which movie villain did you secretly root for?,Hannibal Lecter (Silence of the Lambs),Voted,2,2026-04-14
+Jeeppler,vote,Movies,Star Wars,Which is the best 'Star Wars' trilogy?,Prequel Trilogy,Voted,2,2026-04-14
+Jeeppler,vote,Movies,,Which adaptation did the most justice to the book?,The Hunger Games,Voted,2,2026-04-14
+Jeeppler,vote,TV,Beyond Reelz,"If you're in a true crime mood but Reelz isn't on, where do you go first?",Netflix or Hulu,Voted,2,2026-04-09
+Jeeppler,vote,TV,Fame & celebrity,The Price of Fame asks what celebrity costs. Do you think fame is worth it?,Depends entirely on the kind of fame,Voted,2,2026-04-09
+Jeeppler,vote,TV,Beyond Reelz,"Outside of Reelz, what do you watch the most?",Reality / competition TV,Voted,2,2026-04-09
+Jeeppler,vote,TV,Who you are,How would you describe yourself as a true crime viewer?,Casual — I watch when it's on,Voted,2,2026-04-09
+Jeeppler,vote,Pop Culture,,Which celeb couple surprised you the most?,Pete & Kim,Voted,2,2026-03-30
+Jeeppler,vote,Pop Culture,,Which awards show moment was the most chaotic?,Kanye interruption,Voted,2,2026-03-30
+Jeeppler,vote,Music,,Which music era raised you?,90s,Voted,2,2026-03-30
+Jeeppler,vote,Podcasts,,Which podcast did you binge straight through?,S-Town,Voted,2,2026-03-30
+Jeeppler,vote,Music,,Which lyric lives rent-free in your head?,"It’s me, hi",Voted,2,2026-03-30
+Jeeppler,vote,Music,,Which genre do you default to?,Indie,Voted,2,2026-03-30
+Jeeppler,vote,TV,,Which show deserved more hype?,Fleabag,Voted,2,2026-03-26
+Jeeppler,vote,TV,,Which reality show is way smarter than it looks?,The Great British Bake Off,Voted,2,2026-03-26
+Jeeppler,vote,TV,,Which show is your guilty pleasure?,Selling Sunset,Voted,2,2026-03-26
+Jeeppler,vote,TV,,Best TV couple?,Jim & Pam,Voted,2,2026-03-26
+Jeeppler,vote,TV,,Best theme song you never skip?,The Office,Voted,2,2026-03-26
+Jeeppler,vote,TV,,Most chaotic reality energy?,Jersey Shore,Voted,2,2026-03-26
+Jeeppler,vote,TV,,Best mystery binge?,Only Murders in the Building,Voted,2,2026-03-26
+Jeeppler,vote,TV / Reality,,Best sitcom era?,2010s,Voted,2,2026-03-14
+Jeeppler,vote,TV / Reality,,Best reality TV host?,Jeff Probst,Voted,2,2026-03-14
+Jeeppler,vote,Pop Culture,,Which awards show do you still care about?,None,Voted,2,2026-03-14
+Jeeppler,vote,Pop Culture,,Best award show host?,Tina Fey & Amy Poehler,Voted,2,2026-03-14
+Jeeppler,vote,Podcasts,,Which host could read you a grocery list and you’d listen?,Dax Shepard,Voted,2,2026-03-14
+Jeeppler,vote,Podcasts,,What kind of podcast are you into right now?,Pop culture,Voted,2,2026-03-14
+Jeeppler,vote,Podcasts,,Best weekend listen?,Armchair Expert,Voted,2,2026-03-14
+Jeeppler,vote,Podcasts,,Best podcast for a long drive?,Conan O’Brien Needs a Friend,Voted,2,2026-03-14
+Jeeppler,vote,Music,,Which collab broke the internet?,Taylor x Bon Iver,Voted,2,2026-03-14
+Jeeppler,vote,Music,,Which artist’s deep cuts are better than the hits?,Ed Sheeran,Voted,2,2026-03-14
+Jeeppler,vote,Music,,Which artist would you see live no questions asked?,Beyoncé,Voted,2,2026-03-14
+Jeeppler,vote,Music,,Which artist takes you straight back?,NSYNC,Voted,2,2026-03-14
+Jeeppler,vote,Music,,Which album did you play nonstop?,Lemonade,Voted,2,2026-03-14
+Jeeppler,vote,Music,,What’s your current music mood?,Chill,Voted,2,2026-03-14
+Jeeppler,vote,Music,,Best music for getting things done?,Throwbacks,Voted,2,2026-03-14
+Jeeppler,vote,Music,,Best breakup anthem energy?,Olivia Rodrigo,Voted,2,2026-03-14
+Jeeppler,vote,Books,,Best reading snack?,Tea,Voted,2,2026-03-14
+Jeeppler,vote,Books,,Best book club pick energy?,Fast-paced,Voted,2,2026-03-14
+Jeeppler,vote,Books,,Best audiobook narrator vibe?,Full cast,Voted,2,2026-03-14
+Jeeppler,vote,Books,,Audiobooks count as reading?,Yes,Voted,2,2026-03-14
+Jeeppler,vote,TV,,Which drama hooks you by episode one?,Bridgerton,Voted,2,2026-03-14
+Jeeppler,vote,Movies,,Which soundtrack is undefeated?,The Greatest Showman,Voted,2,2026-03-14
+Jeeppler,vote,Movies,,Which rom-com actually holds up on rewatch?,13 Going on 30,Voted,2,2026-03-14
+Jeeppler,vote,Movies,,Which reboot actually worked?,Creed,Voted,2,2026-03-14
+Jeeppler,vote,Movies,,Which movie villain is iconic?,The Joker,Voted,2,2026-03-14
+Jeeppler,vote,Movies,,Which movie makes you cry no matter what?,The Notebook,Voted,2,2026-03-14
+Jeeppler,vote,Movies,,Which movie had you stressed the entire time?,Black Swan,Voted,2,2026-03-14
+Jeeppler,vote,Movies,,Which franchise would you erase and rewatch fresh?,The Hunger Games,Voted,2,2026-03-14
+Jeeppler,vote,Movies,,Which comedy still makes you laugh out loud?,Bridesmaids,Voted,2,2026-03-14
+Jeeppler,vote,Movies,,Which animated movie hits adults harder?,Inside Out,Voted,2,2026-03-14
+Jeeppler,vote,Movies,,Which actor instantly improves a movie?,Viola Davis,Voted,2,2026-03-14
+Jeeppler,vote,Movies,,Best ‘we’re staying in’ movie night pick?,Knives Out,Voted,2,2026-03-14
+Jeeppler,vote,Movies,,Best ‘I need adrenaline’ watch?,Mad Max: Fury Road,Voted,2,2026-03-14
+Jeeppler,vote,Movies,,Best ‘I can handle this’ scary movie?,Get Out,Voted,2,2026-03-14
+Jeeppler,vote,Movies,,Best holiday movie (don’t overthink it),Elf,Voted,2,2026-03-14
+Jeeppler,vote,TV,,Best comfort reality series?,Queer Eye,Voted,2,2026-03-12
+Jeeppler,vote,TV,,Which show fumbled the ending the most?,Game of Thrones,Voted,2,2026-03-12
+Jeeppler,vote,TV,,Which show gets better on rewatch?,The Office,Voted,2,2026-03-12
+Jeeppler,vote,TV,,Which show do you put on while doing everything else?,The Office,Voted,2,2026-03-12
+Jeeppler,vote,TV,,Which show has the best one-liners?,Schitt’s Creek,Voted,2,2026-03-12
+Jeeppler,vote,TV,,Your binge style is…,Weekend binge,Voted,2,2026-03-12
+Jeeppler,vote,TV,,Which sitcom feels like home?,Friends,Voted,2,2026-03-12
+Jeeppler,vote,Books,,Do you set reading goals?,No,Voted,2,2026-01-26
+Jeeppler,vote,Books,,Favorite place to read?,Anywhere quiet,Voted,2,2026-01-26
+Jeeppler,vote,Movies,,Which movie would you rewatch right now?,Mean Girls,Voted,2,2026-01-26
+Jennalovesbooks,predict,TV,The Wheel of Time,Does 'The Wheel of Time' become the next Big Fantasy Hit?,"No, it's not quite there",Predicted,20,2026-05-06
+Jennalovesbooks,predict,tv,,"ABC pulled Taylor Frankie Paul's Bachelorette season. Who steps in next?""",Ilona Maher,Predicted,0,2026-05-05
+Jennalovesbooks,predict,book,,Will the next Hunger Games book be a prequel?,Yes,Predicted,0,2026-05-05
+Jennalovesbooks,predict,Movies,James Bond,Will the upcoming James Bond film redefine the franchise?,"Yes, groundbreaking",Predicted,20,2026-04-27
+Jennalovesbooks,trivia,Movies,Parasite,Who directed the movie Parasite?,Bong Joon-ho,Correct,10,2026-05-05
+Jennalovesbooks,trivia,Movies,Jurassic Park,Which sequel came THIRD in the Jurassic Park series?,Jurassic Park III,Correct,10,2026-04-27
+Jennalovesbooks,trivia,Movies,Inception,Who directed 'Inception'?,Christopher Nolan,Correct,10,2026-04-27
+Jennalovesbooks,trivia,Movies,The Matrix,"Which of these released first: 'The Matrix', 'Fight Club', 'The Sixth Sense', or 'American Beauty'?",Fight Club,Incorrect,0,2026-04-27
+Jennalovesbooks,vote,TV,,Which TV series ending left you most satisfied?,Friends,Voted,2,2026-04-27
+Jennalovesbooks,vote,Movies,,Which movie would you rewatch right now?,Mean Girls,Voted,2,2026-03-11
+jillplacer12,predict,book,,Will the next Hunger Games book be a prequel?,No,Predicted,0,2026-05-08
+jillplacer12,predict,Books,,This is the book series of the year:,Bridgerton,Predicted,20,2026-05-08
+jillplacer12,predict,TV,The Last of Us,Is 'The Last of Us' destined to become the biggest video game adaptation?,Not likely,Predicted,20,2026-05-04
+jillplacer12,trivia,Music,Queen,Finish the lyric from Queen's 'Bohemian Rhapsody': 'Is this the real life? Is this just...',fantasy,Correct,10,2026-05-08
+jillplacer12,trivia,TV,The Sopranos,What year did 'The Sopranos' premiere?,1997,Incorrect,0,2026-05-08
+jillplacer12,trivia,Movies,Back to the Future,Which actor was originally cast as Marty McFly in 'Back to the Future' before Michael J. Fox?,Eric Stoltz,Correct,10,2026-05-08
+jillplacer12,trivia,Movies,Slumdog Millionaire,Who won the Oscar for Best Picture in 2008?,Slumdog Millionaire,Correct,10,2026-05-04
+jillplacer12,trivia,Movies,The Matrix,"Which of these released first: 'The Matrix', 'Fight Club', 'The Sixth Sense', or 'American Beauty'?",American Beauty,Incorrect,0,2026-05-04
+jillplacer12,trivia,Movies,Inception,Who directed 'Inception'?,Christopher Nolan,Correct,10,2026-05-04
+jillplacer12,trivia,Movies,Parasite,Who directed the movie Parasite?,Lee Chang-dong,Incorrect,0,2026-05-04
+jillplacer12,trivia,Movies,Jurassic Park,Which sequel came THIRD in the Jurassic Park series?,The Lost World: Jurassic Park,Incorrect,0,2026-05-04
+jillplacer12,trivia,Movies,The Lion King,What year did 'The Lion King' (animated) release?,1994,Correct,10,2026-05-04
+jillplacer12,trivia,Movies,The Matrix,What year was 'The Matrix' released?,1999,Correct,10,2026-05-04
+jillplacer12,vote,Movies,,Which reboot actually worked?,Jumanji,Voted,2,2026-05-08
+jillplacer12,vote,TV,,Which show deserved more hype?,Friday Night Lights,Voted,2,2026-05-08
+jim,predict,Movies,James Bond,Will the upcoming James Bond film redefine the franchise?,"No, more of the same",Predicted,20,2026-04-26
+jim,vote,Movies,,Which movie villain is iconic?,Darth Vader,Voted,2,2026-04-26
+jim,vote,Movies,,Which soundtrack is undefeated?,The Greatest Showman,Voted,2,2026-04-26
+jim,vote,Movies,Star Wars,Which is the best 'Star Wars' trilogy?,Prequel Trilogy,Voted,2,2026-04-26
+jim,vote,Movies,,Which animated movie hits adults harder?,Coco,Voted,2,2026-04-26
+jordancroninger@gmail.com,predict,book,,Will the next Hunger Games book be a prequel?,Yes,Predicted,0,2026-05-12
+jordancroninger@gmail.com,predict,Books,,This book will be the next big streaming hit:,Where the Crawdads Sing,Predicted,20,2026-05-12
+jordancroninger@gmail.com,vote,TV,How you watch,When do you usually watch Reelz?,Weekend afternoons / evenings,Voted,2,2026-05-12
+jordancroninger@gmail.com,vote,TV,How you watch,"When you watch a show like On Patrol or Autopsy, who's usually with you?",It varies by show,Voted,2,2026-05-12
+jordancroninger@gmail.com,vote,TV,,Which TV series ending left you most satisfied?,Breaking Bad,Voted,2,2026-05-12
+jordancroninger@gmail.com,vote,TV,,Which TV character would make the best roommate?,Sheldon Cooper,Voted,2,2026-05-12
+jordancroninger@gmail.com,vote,TV,,Which is the ultimate comfort show?,The Office,Voted,2,2026-05-12
+jordancroninger@gmail.com,vote,TV,,Which show deserved more hype?,Friday Night Lights,Voted,2,2026-05-12
+jordancroninger@gmail.com,vote,TV,,Which '90s sitcom do you rewatch the most?,The Fresh Prince of Bel-Air,Voted,2,2026-05-12
+jordancroninger@gmail.com,vote,TV,,Which reality show is way smarter than it looks?,Survivor,Voted,2,2026-05-12
+jordancroninger@gmail.com,vote,TV,,Which show has the best one-liners?,Schitt’s Creek,Voted,2,2026-05-12
+jordancroninger@gmail.com,vote,TV,,Which show gets better on rewatch?,The Office,Voted,2,2026-05-12
+jordancroninger@gmail.com,vote,TV,,Which drama hooks you by episode one?,Yellowstone,Voted,2,2026-05-12
+jordancroninger@gmail.com,vote,TV,,Your binge style is…,Weekend binge,Voted,2,2026-05-12
+jordancroninger@gmail.com,vote,TV,,Most chaotic reality energy?,Love Island,Voted,2,2026-05-12
+jordancroninger@gmail.com,vote,Sports,,Does replay make games better?,Yes,Voted,2,2026-04-27
+jordancroninger@gmail.com,vote,Music,,Who is the most iconic pop diva?,Britney Spears,Voted,2,2026-04-27
+jordancroninger@gmail.com,vote,Books,,Which book series defined your childhood?,The Chronicles of Narnia,Voted,2,2026-04-27
+jordancroninger@gmail.com,vote,TV,,Which sitcom feels like home?,Friends,Voted,2,2026-04-27
+jordanrivers24,predict,Movies,James Bond,Will the upcoming James Bond film redefine the franchise?,"No, more of the same",Predicted,20,2026-04-26
+jordanrivers24,predict,movie,,"Will ""Reminders of Him"" be better or worse than ""It Ends With Us""?",Worse,Predicted,0,2026-03-09
+jordanrivers24,trivia,Movies,Slumdog Millionaire,Who won the Oscar for Best Picture in 2008?,The Curious Case of Benjamin Button,Incorrect,0,2026-05-01
+jordanrivers24,trivia,Movies,Parasite,Who directed the movie Parasite?,Park Chan-wook,Incorrect,0,2026-05-01
+jordanrivers24,trivia,Movies,The Lion King,What year did 'The Lion King' (animated) release?,1992,Incorrect,0,2026-05-01
+jordanrivers24,trivia,Movies,Titanic,What year was the movie Titanic released?,1997,Correct,10,2026-04-26
+jordanrivers24,trivia,Movies,Jurassic Park,Which sequel came THIRD in the Jurassic Park series?,Jurassic Park III,Correct,10,2026-04-26
+jordanrivers24,trivia,Movies,Inception,Who directed 'Inception'?,Christopher Nolan,Correct,10,2026-04-26
+jordanrivers24,trivia,Movies,The Matrix,"Which of these released first: 'The Matrix', 'Fight Club', 'The Sixth Sense', or 'American Beauty'?",The Matrix,Incorrect,0,2026-04-26
+jordanrivers24,vote,Movies,,Which movie would you rewatch right now?,Jurassic Park,Voted,2,2026-01-28
+Jrgibsongirl,predict,Pop Culture,,Best fictional school to attend:,Hogwarts,Predicted,20,2026-05-06
+Jrgibsongirl,predict,Movies,Dune,Is the new Dune sequel destined for box office glory?,"Yes, for sure",Predicted,20,2026-04-27
+Jrgibsongirl,trivia,Movies,The Dark Knight,Who played the Joker in 'The Dark Knight'?,Heath Ledger,Correct,10,2026-05-01
+Jrgibsongirl,trivia,Movies,Titanic,What year was the movie Titanic released?,1997,Correct,10,2026-05-01
+Jrgibsongirl,trivia,Movies,Inception,Who directed 'Inception'?,Christopher Nolan,Correct,10,2026-05-01
+Jrgibsongirl,trivia,Movies,The Matrix,What year was 'The Matrix' released?,1999,Correct,10,2026-05-01
+Jrgibsongirl,trivia,Music,Queen,Finish the lyric from Queen's 'Bohemian Rhapsody': 'Is this the real life? Is this just...',fantasy,Correct,10,2026-04-27
+Jrgibsongirl,trivia,Music,Adele,What year did Adele win her first Grammy?,2008,Correct,10,2026-04-27
+Jrgibsongirl,trivia,TV,Friends,Who played Rachel Green on 'Friends'?,Jennifer Aniston,Correct,10,2026-04-27
+Jrgibsongirl,trivia,Books,1984,Who wrote the novel '1984'?,George Orwell,Correct,10,2026-04-27
+Jrgibsongirl,trivia,Books,Harry Potter,What is the real name of the character known as 'The Boy Who Lived'?,Harry Potter,Correct,10,2026-04-27
+Jrgibsongirl,trivia,Books,The Shining,Who wrote 'The Shining'?,Stephen King,Correct,10,2026-04-27
+Jrgibsongirl,trivia,Books,The Handmaid's Tale,Who wrote 'The Handmaid's Tale'?,Margaret Atwood,Correct,10,2026-04-27
+Jrgibsongirl,trivia,Books,His Dark Materials,Who wrote the 'His Dark Materials' series?,Philip Pullman,Correct,10,2026-04-27
+Jrgibsongirl,trivia,Books,The Godfather,Who wrote 'The Godfather' novel?,Mario Puzo,Correct,10,2026-04-27
+Jrgibsongirl,trivia,Books,Game of Thrones,In which book series would you find the character Daenerys Targaryen?,A Song of Ice and Fire,Correct,10,2026-04-27
+Jrgibsongirl,trivia,Books,To Kill a Mockingbird,Who played Atticus Finch in the 1962 film adaptation of 'To Kill a Mockingbird'?,Gregory Peck,Correct,10,2026-04-27
+Jrgibsongirl,trivia,Books,The Wheel of Time,Who created 'The Wheel of Time' series?,Robert Jordan,Correct,10,2026-04-27
+Jrgibsongirl,trivia,Books,The Hobbit,Who directed the movie adaptation of 'The Hobbit'?,Peter Jackson,Correct,10,2026-04-27
+Jrgibsongirl,trivia,Books,Miss Marple,Who is the author of the 'Miss Marple' series?,Agatha Christie,Correct,10,2026-04-27
+Jrgibsongirl,trivia,Books,Dune,What year did 'Dune' first release?,1970,Incorrect,0,2026-04-27
+Jrgibsongirl,trivia,TV,The Big Bang Theory,In what show does the character Sheldon Cooper appear?,The Big Bang Theory,Correct,10,2026-04-27
+Jrgibsongirl,trivia,TV,Breaking Bad,"In 'Breaking Bad', what does Walter White's alias 'Heisenberg' refer to?",A city in Germany,Incorrect,0,2026-04-27
+Jrgibsongirl,trivia,TV,On Patrol: Live,On Patrol: Live is a revival of which cancelled show?,Cops,Incorrect,0,2026-04-27
+Jrgibsongirl,trivia,TV,The X-Files,Who created the TV series 'The X-Files'?,Chris Carter,Correct,10,2026-04-27
+Jrgibsongirl,vote,TV,,Your binge style is…,Background binge,Voted,2,2026-04-27
+Jrgibsongirl,vote,TV,,Which is the ultimate comfort show?,Gilmore Girls,Voted,2,2026-04-27
+Jrgibsongirl,vote,TV,,Which show do you put on while doing everything else?,Gilmore Girls,Voted,2,2026-04-27
+Jrgibsongirl,vote,TV,,Best theme song you never skip?,Friends,Voted,2,2026-04-27
+kacyesplin,vote,Movies,,Which movie would you rewatch right now?,The Dark Knight,Voted,2,2026-01-30
+Katieparry,vote,Movies,,Which movie would you rewatch right now?,Other,Voted,2,2026-01-29
+KendallK,vote,Movies,,Which movie would you rewatch right now?,Mean Girls,Voted,2,2026-01-30
+KJWoodsEMH,predict,book,,Will the next Hunger Games book be a prequel?,Yes,Predicted,0,2026-05-11
+KJWoodsEMH,predict,Books,,This book will be the next big streaming hit:,Where the Crawdads Sing,Predicted,20,2026-05-11
+KJWoodsEMH,predict,TV,The Wheel of Time,Does 'The Wheel of Time' become the next Big Fantasy Hit?,"No, it's not quite there",Predicted,20,2026-05-06
+KJWoodsEMH,predict,Movies,Avatar,Is the hype for Avatar sequels justified after all these years?,"No, it's overhyped",Predicted,20,2026-04-28
+KJWoodsEMH,predict,movie,,Will Taylor Frankie Paul's Season ever air?,Yes,Predicted,0,2026-04-27
+KJWoodsEMH,trivia,Music,Michael Jackson,What year was the album 'Thriller' by Michael Jackson released?,1982,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Music,Adele,What year did Adele win her first Grammy?,2008,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Music,Queen,Finish the lyric from Queen's 'Bohemian Rhapsody': 'Is this the real life? Is this just...',fantasy,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Music,U2,Who won the Grammy for Album of the Year in 2006?,Paul McCartney,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,Books,1984,Who wrote the novel '1984'?,George Orwell,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Books,Game of Thrones,In which book series would you find the character Daenerys Targaryen?,A Song of Ice and Fire,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Books,The Lord of the Rings,Which book contains the quote: 'Not all those who wander are lost'?,The Hobbit,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,Books,The Road,Who is the author of 'The Road'?,Cormac McCarthy,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Books,Harry Potter,What is the real name of the character known as 'The Boy Who Lived'?,Harry Potter,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Books,Dune,What year did 'Dune' first release?,1970,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,Books,The Handmaid's Tale,Who wrote 'The Handmaid's Tale'?,Margaret Atwood,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Books,The Hobbit,Who directed the movie adaptation of 'The Hobbit'?,Peter Jackson,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Books,Miss Marple,Who is the author of the 'Miss Marple' series?,Agatha Christie,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Books,The Shining,Who wrote 'The Shining'?,Stephen King,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Books,To Kill a Mockingbird,Who played Atticus Finch in the 1962 film adaptation of 'To Kill a Mockingbird'?,Gregory Peck,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Books,Moby-Dick,What year was 'Moby-Dick' first published?,1862,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,Books,His Dark Materials,Who wrote the 'His Dark Materials' series?,Philip Pullman,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Books,The Wheel of Time,Who created 'The Wheel of Time' series?,Robert Jordan,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Books,The Godfather,Who wrote 'The Godfather' novel?,Mario Puzo,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Books,The Catcher in the Rye,What is the name of Holden Caulfield's sister in The Catcher in the Rye?,Sally,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,TV,On Patrol: Live,On Patrol: Live is a revival of which cancelled show?,Cops,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,TV,The Sopranos,What year did 'The Sopranos' premiere?,1997,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,TV,Sailor Moon,"Finish the line: 'In the name of the moon, I will _____'",vanquish you,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,TV,Friends,Who played Rachel Green on 'Friends'?,Jennifer Aniston,Correct,10,2026-04-27
+KJWoodsEMH,trivia,TV,The Big Bang Theory,In what show does the character Sheldon Cooper appear?,The Big Bang Theory,Correct,10,2026-04-27
+KJWoodsEMH,trivia,TV,Game of Thrones,Who played the character Tyrion Lannister in Game of Thrones?,Peter Dinklage,Correct,10,2026-04-27
+KJWoodsEMH,trivia,TV,Vikings,Who played Ragnar Lothbrok in 'Vikings'?,Gustaf Skarsgård,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,TV,Breaking Bad,"In 'Breaking Bad', what does Walter White's alias 'Heisenberg' refer to?",A physicist's principle,Correct,10,2026-04-27
+KJWoodsEMH,trivia,TV,Friends,What year did 'Friends' premiere?,1992,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,TV,The Office,"In 'The Office', what is the name of the company Michael Scott manages?",Dunder Mifflin,Correct,10,2026-04-27
+KJWoodsEMH,trivia,TV,Fleabag,Who created the TV series Fleabag?,Lena Dunham,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,TV,The X-Files,Who created the TV series 'The X-Files'?,David Lynch,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,Movies,The Dark Knight,Who played the Joker in 'The Dark Knight'?,Heath Ledger,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Movies,Inception,Who directed 'Inception'?,Christopher Nolan,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Movies,The Matrix,What year was 'The Matrix' released?,1999,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Movies,Titanic,What year was the movie Titanic released?,1997,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Movies,Ocean's Eleven,Which movie's plot revolves around a heist in Las Vegas?,Ocean's Eleven,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Movies,The Lord of the Rings,Who directed the 'Lord of the Rings' trilogy?,Peter Jackson,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Movies,Indiana Jones,Who played the character Indiana Jones?,Harrison Ford,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Movies,Avatar,What year did 'Avatar' come out?,2010,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,Movies,The Matrix,Who played the character Neo in 'The Matrix'?,Keanu Reeves,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Movies,Schindler's List,Who directed 'Schindler's List'?,Steven Spielberg,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Movies,Terminator,Who played the character Sarah Connor in 'Terminator 2: Judgment Day'?,Linda Hamilton,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Movies,The Grand Budapest Hotel,Who directed the film 'The Grand Budapest Hotel'?,Wes Anderson,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Movies,Good Will Hunting,Who wrote the screenplay for 'Good Will Hunting'?,Matt Damon and Ben Affleck,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Movies,Back to the Future,Which actor was originally cast as Marty McFly in 'Back to the Future' before Michael J. Fox?,Matthew Broderick,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,Movies,The Lion King,What year did 'The Lion King' (animated) release?,1992,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,Movies,Parasite,Who directed the movie Parasite?,Park Chan-wook,Incorrect,0,2026-04-27
+KJWoodsEMH,trivia,Movies,Slumdog Millionaire,Who won the Oscar for Best Picture in 2008?,Slumdog Millionaire,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Movies,Jurassic Park,Which sequel came THIRD in the Jurassic Park series?,Jurassic Park III,Correct,10,2026-04-27
+KJWoodsEMH,trivia,Movies,The Matrix,"Which of these released first: 'The Matrix', 'Fight Club', 'The Sixth Sense', or 'American Beauty'?",American Beauty,Incorrect,0,2026-04-27
+KJWoodsEMH,vote,TV,Who you are,Why do you think you're drawn to true crime content?,I'm just fascinated by the dark side of humanity,Voted,2,2026-04-28
+KJWoodsEMH,vote,TV,Who you are,How would you describe yourself as a true crime viewer?,"I've tried to cut back, honestly",Voted,2,2026-04-28
+KJWoodsEMH,vote,TV,Taste signals,What makes you trust a true crime show?,They give the victim's story equal weight,Voted,2,2026-04-28
+KJWoodsEMH,vote,TV,Taste signals,What genre do you watch when you need something lighter after a heavy Reelz session?,Comedy or sitcoms,Voted,2,2026-04-28
+KJWoodsEMH,vote,TV,Beyond Reelz,"If you're in a true crime mood but Reelz isn't on, where do you go first?",A podcast,Voted,2,2026-04-28
+KJWoodsEMH,vote,TV,Beyond Reelz,Which other true crime source do you consume regularly?,True crime podcasts,Voted,2,2026-04-28
+KJWoodsEMH,vote,TV,Beyond Reelz,"Outside of Reelz, what do you watch the most?","Scripted dramas (HBO, Netflix, etc.)",Voted,2,2026-04-28
+KJWoodsEMH,vote,TV,How you watch,How do you usually find out about a new Reelz show?,Just stumble on it while browsing,Voted,2,2026-04-28
+KJWoodsEMH,vote,TV,How you watch,When do you usually watch Reelz?,Late night (10pm+),Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Your default book genre?,Fantasy,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Your current reading era is…,Fantasy,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,You buy books based on cover?,Sometimes,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Worst book hangover cause?,Character death,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Will you start an unfinished series?,Yes,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Which genre do you reach for when you need an escape?,Fantasy,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Which genre are you avoiding?,Nonfiction,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Which BookTok favorite actually lived up to the hype?,Fourth Wing,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Which bookstore vibe do you love?,Barnes & Noble,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Which book would you reread if you had the time?,Harry Potter,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Which book series did you race through?,Harry Potter,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Which book do you reread?,Harry Potter,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Which book did you start but never finish?,A Court of Thorns and Roses,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,When do you read most?,Before bed,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,What section do you always wander into first?,Fantasy,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,What makes you DNF a book?,Life got busy,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,What kind of book are you in the mood for right now?,Page-turner,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,What book mood matches today?,Chaotic,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Preferred book length?,I’ll read anything,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Library or bookstore?,Bookstore,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,How much romance spice do you want?,Medium,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,How fast do you read?,Months,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,How do you usually read?,Kindle,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,How do you mark pages?,Memory,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,How do you fix a slump?,Switch genres,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,How big is your TBR?,Don’t ask,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Favorite place to read?,Bed,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Do your friends read the same books?,Some,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Do you write in your books?,Depends,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Do you wander or search?,Both,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Do you wait for paperback?,Sometimes,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Do you set reading goals?,Sometimes,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Do you save favorite quotes?,Sometimes,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Do you prefer series or standalones?,Series,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Do you judge books by spine color?,A little,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Do you buy more books than you read?,Absolutely,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Do adaptations ruin reading for you?,No,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Best reading snack?,Chocolate,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Best book club pick energy?,Debate-heavy,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Best audiobook narrator vibe?,Dramatic,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Audiobooks count as reading?,Yes,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Which dystopian world would you survive in?,Divergent,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,,Which fantasy book series transported you to another world?,Harry Potter,Voted,2,2026-04-28
+KJWoodsEMH,vote,Books,Harry Potter,Which Hogwarts house do you belong to?,Slytherin,Voted,2,2026-04-28
+KJWoodsEMH,vote,Music,,Who’s had the most iconic pop run?,Taylor Swift,Voted,2,2026-04-28
+KJWoodsEMH,vote,Music,,Which throwback still slaps?,Crazy in Love – Beyoncé,Voted,2,2026-04-28
+KJWoodsEMH,vote,Music,,Which soundtrack deserves more love?,Shrek,Voted,2,2026-04-28
+KJWoodsEMH,vote,Music,,Which song makes you dance immediately?,Uptown Funk,Voted,2,2026-04-28
+KJWoodsEMH,vote,Music,,Which song is your guilty pleasure?,Party in the U.S.A.,Voted,2,2026-04-28
+KJWoodsEMH,vote,Music,,Which playlist do you return to most?,Focus,Voted,2,2026-04-28
+KJWoodsEMH,vote,Music,,Which music era raised you?,90s,Voted,2,2026-04-28
+KJWoodsEMH,vote,Music,,Which genre do you default to?,Country,Voted,2,2026-04-28
+KJWoodsEMH,vote,Music,,What’s your current music mood?,Throwbacks,Voted,2,2026-04-28
+KJWoodsEMH,vote,Music,,Best music for getting things done?,Throwbacks,Voted,2,2026-04-28
+KJWoodsEMH,vote,Music,,Best breakup anthem energy?,Kelly Clarkson,Voted,2,2026-04-28
+KJWoodsEMH,vote,Podcasts,,Which true crime podcast hooked you immediately?,My Favorite Murder,Voted,2,2026-04-28
+KJWoodsEMH,vote,Podcasts,,Which podcast makes you feel smarter after listening?,Stuff You Should Know,Voted,2,2026-04-28
+KJWoodsEMH,vote,Podcasts,,Which podcast did you binge straight through?,Dr. Death,Voted,2,2026-04-28
+KJWoodsEMH,vote,Podcasts,,Which news podcast do you actually listen to?,Pod Save America,Voted,2,2026-04-28
+KJWoodsEMH,vote,Podcasts,,What kind of podcast are you into right now?,Comedy,Voted,2,2026-04-28
+KJWoodsEMH,vote,Podcasts,,Best weekend listen?,How I Built This,Voted,2,2026-04-28
+KJWoodsEMH,vote,Sports,,Which sport argues with refs the most?,MLB,Voted,2,2026-04-28
+KJWoodsEMH,vote,Sports,,Which dynasty annoyed people the most?,Patriots,Voted,2,2026-04-28
+KJWoodsEMH,vote,Pop Culture,,Which reality star actually built a brand?,Kim Kardashian,Voted,2,2026-04-28
+KJWoodsEMH,vote,Pop Culture,,Which internet era was elite?,TikTok,Voted,2,2026-04-28
+KJWoodsEMH,vote,Pop Culture,,Which celeb rebrand actually worked?,Robert Pattinson,Voted,2,2026-04-28
+KJWoodsEMH,vote,Pop Culture,,Which celeb has the most cultural influence right now?,Taylor Swift,Voted,2,2026-04-28
+KJWoodsEMH,vote,True Crime,This or that,"More satisfying? Seeing a suspect caught live on On Patrol, or a cold case solved on America's Most Wanted?",Honestly both hit different,Voted,2,2026-04-28
+KJWoodsEMH,vote,True Crime,This or that,More disturbing? Copycat Killers or Murder Made Me Famous?,Copycat Killers — the idea that others will follow is terrifying,Voted,2,2026-04-28
+KJWoodsEMH,vote,True Crime,This or that,Which format do you prefer? Live patrol footage or post-crime documentary?,Documentary — I want the full story with context,Voted,2,2026-04-28
+KJWoodsEMH,vote,True Crime,Prediction,Which Reelz show do you think will still be running in 10 years?,Something we haven't seen yet,Voted,2,2026-04-28
+KJWoodsEMH,vote,True Crime,Prediction,Which format do you think will dominate true crime in 5 years?,Deep-dive docuseries,Voted,2,2026-04-28
+KJWoodsEMH,vote,True Crime,Hot take,True crime content has gotten too popular. Do you agree?,No — demand exists for a reason,Voted,2,2026-04-28
+KJWoodsEMH,vote,True Crime,America's Most Wanted,"If someone you knew was featured on America's Most Wanted, what would you do?",Depends entirely on what they did,Voted,2,2026-04-28
+KJWoodsEMH,vote,True Crime,Moral dilemma,"Who carries more responsibility for the 'killer fame' problem — the media, the audience, or the platforms?","All three, equally",Voted,2,2026-04-28
+KJWoodsEMH,vote,True Crime,Moral dilemma,Do you ever feel guilty after bingeing true crime?,Guilty? It's basically self-education,Voted,2,2026-04-28
+KJWoodsEMH,vote,True Crime,Moral dilemma,Should true crime shows be required to donate a portion of revenue to victims' families?,No — that's not how content works,Voted,2,2026-04-28
+KJWoodsEMH,vote,True Crime,Moral dilemma,True crime content profits off real tragedies. Does that bother you?,"Sometimes, depending on how it's done",Voted,2,2026-04-28
+KJWoodsEMH,vote,True Crime,Moral dilemma,Is it okay to find a killer's story genuinely fascinating — even if you'd never condone what they did?,It's complicated — fascination can slide into glorification,Voted,2,2026-04-28
+KJWoodsEMH,vote,True Crime,Moral dilemma,Does watching true crime make you more informed — or does it just make you more scared?,"Neither — it's entertainment, I'm not internalizing it",Voted,2,2026-04-28
+KJWoodsEMH,vote,True Crime,America's Most Wanted,Do you think America's Most Wanted actually helps catch criminals — or is it mostly TV?,Mostly TV — the cases they pick are already high-profile,Voted,2,2026-04-28
+KJWoodsEMH,vote,Pop Culture,,Which awards show do you still care about?,None,Voted,2,2026-04-28
+KJWoodsEMH,vote,Movies,,Which comedy still makes you laugh out loud?,Bridesmaids,Voted,2,2026-04-28
+KJWoodsEMH,vote,Movies,Star Wars,Which is the best 'Star Wars' trilogy?,Original Trilogy,Voted,2,2026-04-28
+KJWoodsEMH,vote,Movies,,Best ‘we’re staying in’ movie night pick?,Crazy Rich Asians,Voted,2,2026-04-28
+KJWoodsEMH,vote,Movies,,Who is the best classic Disney villain?,Ursula,Voted,2,2026-04-28
+KJWoodsEMH,vote,Movies,,Which actor instantly improves a movie?,Meryl Streep,Voted,2,2026-04-28
+KJWoodsEMH,vote,Movies,,Which animated movie hits adults harder?,Up,Voted,2,2026-04-28
+KJWoodsEMH,vote,Movies,,Which franchise would you erase and rewatch fresh?,Harry Potter,Voted,2,2026-04-28
+KJWoodsEMH,vote,Movies,,Which movie would you rewatch right now?,Jurassic Park,Voted,2,2026-04-28
+KJWoodsEMH,vote,Movies,,Which movie makes you cry no matter what?,Steel Magnolias,Voted,2,2026-04-28
+KJWoodsEMH,vote,Movies,,Which rom-com actually holds up on rewatch?,13 Going on 30,Voted,2,2026-04-28
+KJWoodsEMH,vote,Movies,,Which adaptation did the most justice to the book?,The Hunger Games,Voted,2,2026-04-28
+KJWoodsEMH,vote,Movies,,Best ‘I need adrenaline’ watch?,The Dark Knight,Voted,2,2026-04-28
+KJWoodsEMH,vote,Movies,,Best holiday movie (don’t overthink it),Elf,Voted,2,2026-04-28
+KJWoodsEMH,vote,Movies,,Which movie villain is iconic?,Darth Vader,Voted,2,2026-04-27
+KJWoodsEMH,vote,True Crime,Autopsy: The Last Hours of...,Is it ethical to do a full forensic autopsy documentary on someone without their family's blessing?,It depends on what the documentary actually does with it,Voted,2,2026-04-27
+KJWoodsEMH,vote,Pop Culture,,Best award show host?,Tina Fey & Amy Poehler,Voted,2,2026-04-27
+KJWoodsEMH,vote,Sports,,Does replay make games better?,Sometimes,Voted,2,2026-04-27
+KJWoodsEMH,vote,Podcasts,,Best podcast for a long drive?,How I Built This,Voted,2,2026-04-27
+KJWoodsEMH,vote,Books,,Which book series defined your childhood?,Harry Potter,Voted,2,2026-04-27
+KJWoodsEMH,vote,Movies,,Which movie villain did you secretly root for?,Loki (Thor),Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Which is the ultimate comfort show?,Gilmore Girls,Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Which TV character would make the best roommate?,Leslie Knope,Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Best mystery binge?,Only Murders in the Building,Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Your binge style is…,Wait for finale,Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Which show fumbled the ending the most?,Game of Thrones,Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Which show deserved more hype?,The Good Place,Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Which show do you put on while doing everything else?,Gilmore Girls,Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Best TV couple?,Jim & Pam,Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Best comfort reality series?,Bake Off,Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Which reality show is way smarter than it looks?,The Traitors,Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Which show is your guilty pleasure?,Riverdale,Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Which drama hooks you by episode one?,Grey’s Anatomy,Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Best theme song you never skip?,Friends,Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Which '90s sitcom do you rewatch the most?,Friends,Voted,2,2026-04-27
+KJWoodsEMH,vote,TV,,Which sitcom feels like home?,Friends,Voted,2,2026-04-27
+Kruberto,trivia,Movies,Titanic,What year was the movie Titanic released?,1995,Incorrect,0,2026-04-28
+Kruberto,trivia,TV,Friends,What year did 'Friends' premiere?,1994,Correct,10,2026-04-28
+Lester,vote,Movies,,Which movie would you rewatch right now?,The Dark Knight,Voted,2,2026-02-20
+linds047,predict,book,,Will the next Hunger Games book be a prequel?,No,Predicted,0,2026-05-14
+matilderobnff,predict,movie,,Will Taylor Frankie Paul's Season ever air?,No,Predicted,0,2026-04-28
+matilderobnff,trivia,Music,Queen,Finish the lyric from Queen's 'Bohemian Rhapsody': 'Is this the real life? Is this just...',fantasy,Correct,10,2026-04-28
+matilderobnff,trivia,TV,Friends,Who played Rachel Green on 'Friends'?,Jennifer Aniston,Correct,10,2026-04-28
+matilderobnff,trivia,TV,Fleabag,Who created the TV series Fleabag?,Phoebe Waller-Bridge,Correct,10,2026-04-28
+matilderobnff,trivia,TV,The X-Files,Who created the TV series 'The X-Files'?,David Lynch,Incorrect,0,2026-04-28
+matilderobnff,trivia,Movies,The Dark Knight,Who played the Joker in 'The Dark Knight'?,Heath Ledger,Correct,10,2026-04-28
+matilderobnff,trivia,Movies,Inception,Who directed 'Inception'?,Christopher Nolan,Correct,10,2026-04-28
+matilderobnff,trivia,Movies,The Matrix,What year was 'The Matrix' released?,1998,Incorrect,0,2026-04-28
+matilderobnff,trivia,Movies,Titanic,What year was the movie Titanic released?,1999,Incorrect,0,2026-04-28
+matilderobnff,trivia,Movies,Ocean's Eleven,Which movie's plot revolves around a heist in Las Vegas?,Ocean's Eleven,Correct,10,2026-04-28
+matilderobnff,trivia,Movies,The Lord of the Rings,Who directed the 'Lord of the Rings' trilogy?,Peter Jackson,Correct,10,2026-04-28
+matilderobnff,trivia,Movies,Indiana Jones,Who played the character Indiana Jones?,Harrison Ford,Correct,10,2026-04-28
+matilderobnff,trivia,Movies,Avatar,What year did 'Avatar' come out?,2008,Incorrect,0,2026-04-28
+matilderobnff,trivia,Movies,The Matrix,Who played the character Neo in 'The Matrix'?,Keanu Reeves,Correct,10,2026-04-28
+matilderobnff,trivia,Movies,Schindler's List,Who directed 'Schindler's List'?,Ridley Scott,Incorrect,0,2026-04-28
+matilderobnff,trivia,Movies,Terminator,Who played the character Sarah Connor in 'Terminator 2: Judgment Day'?,Demi Moore,Incorrect,0,2026-04-28
+matilderobnff,trivia,Movies,The Grand Budapest Hotel,Who directed the film 'The Grand Budapest Hotel'?,Wes Anderson,Correct,10,2026-04-28
+matilderobnff,trivia,Movies,Good Will Hunting,Who wrote the screenplay for 'Good Will Hunting'?,Matt Damon and Ben Affleck,Correct,10,2026-04-28
+matilderobnff,trivia,Movies,Back to the Future,Which actor was originally cast as Marty McFly in 'Back to the Future' before Michael J. Fox?,Matthew Broderick,Incorrect,0,2026-04-28
+matilderobnff,trivia,Movies,The Lion King,What year did 'The Lion King' (animated) release?,1992,Incorrect,0,2026-04-28
+matilderobnff,trivia,Movies,Parasite,Who directed the movie Parasite?,Bong Joon-ho,Correct,10,2026-04-28
+matilderobnff,trivia,Movies,Slumdog Millionaire,Who won the Oscar for Best Picture in 2008?,The Curious Case of Benjamin Button,Incorrect,0,2026-04-28
+matilderobnff,trivia,Movies,The Matrix,"Which of these released first: 'The Matrix', 'Fight Club', 'The Sixth Sense', or 'American Beauty'?",The Sixth Sense,Correct,10,2026-04-28
+matilderobnff,trivia,Movies,Jurassic Park,Which sequel came THIRD in the Jurassic Park series?,Jurassic Park III,Correct,10,2026-04-28
+MeanColMustard,trivia,Movies,The Dark Knight,Who played the Joker in 'The Dark Knight'?,Heath Ledger,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,Inception,Who directed 'Inception'?,Christopher Nolan,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,The Matrix,What year was 'The Matrix' released?,1999,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,Titanic,What year was the movie Titanic released?,1997,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,Ocean's Eleven,Which movie's plot revolves around a heist in Las Vegas?,Ocean's Eleven,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,The Lord of the Rings,Who directed the 'Lord of the Rings' trilogy?,Peter Jackson,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,Indiana Jones,Who played the character Indiana Jones?,Harrison Ford,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,Avatar,What year did 'Avatar' come out?,2009,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,The Matrix,Who played the character Neo in 'The Matrix'?,Keanu Reeves,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,Schindler's List,Who directed 'Schindler's List'?,Steven Spielberg,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,Terminator,Who played the character Sarah Connor in 'Terminator 2: Judgment Day'?,Linda Hamilton,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,The Grand Budapest Hotel,Who directed the film 'The Grand Budapest Hotel'?,Wes Anderson,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,Good Will Hunting,Who wrote the screenplay for 'Good Will Hunting'?,Matt Damon and Ben Affleck,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,Back to the Future,Which actor was originally cast as Marty McFly in 'Back to the Future' before Michael J. Fox?,Eric Stoltz,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,The Lion King,What year did 'The Lion King' (animated) release?,1994,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,Parasite,Who directed the movie Parasite?,Bong Joon-ho,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,Slumdog Millionaire,Who won the Oscar for Best Picture in 2008?,Slumdog Millionaire,Correct,10,2026-04-27
+MeanColMustard,trivia,Movies,The Matrix,"Which of these released first: 'The Matrix', 'Fight Club', 'The Sixth Sense', or 'American Beauty'?",American Beauty,Incorrect,0,2026-04-27
+MeanColMustard,trivia,Movies,Jurassic Park,Which sequel came THIRD in the Jurassic Park series?,Jurassic Park III,Correct,10,2026-04-27
+mhrncirik,vote,Movies,,Which movie would you rewatch right now?,The Dark Knight,Voted,2,2026-02-03
+mjimenez,predict,Movies,Dune,Is the new Dune sequel destined for box office glory?,"No, it'll flop",Predicted,20,2026-04-27
+mjimenez,trivia,Movies,Parasite,Who directed the movie Parasite?,Bong Joon-ho,Correct,10,2026-04-27
+mjimenez,trivia,Movies,The Matrix,"Which of these released first: 'The Matrix', 'Fight Club', 'The Sixth Sense', or 'American Beauty'?",The Matrix,Incorrect,0,2026-04-27
+mjimenez,trivia,Movies,Jurassic Park,Which sequel came THIRD in the Jurassic Park series?,Jurassic Park III,Correct,10,2026-04-27
+mjimenez,vote,TV,,Which '90s sitcom do you rewatch the most?,Seinfeld,Voted,2,2026-04-27
+mjimenez,vote,TV,,Which sitcom feels like home?,Parks & Rec,Voted,2,2026-04-27
+MoDjanie,vote,Movies,,Which movie would you rewatch right now?,Mean Girls,Voted,2,2026-01-30
+Mon_Anne,vote,Movies,,Which movie would you rewatch right now?,Jurassic Park,Voted,2,2026-03-04
+punkinpie123,predict,movie,,"Will ""Reminders of Him"" be better or worse than ""It Ends With Us""?",Worse,Predicted,0,2026-03-09
+punkinpie123,vote,Music,,Best breakup anthem energy?,Olivia Rodrigo,Voted,2,2026-03-07
+punkinpie123,vote,TV,,Do you like Dr. Langdon?,Yes,Voted,2,2026-03-07
+punkinpie123,vote,Movies,,Best holiday movie (don’t overthink it),Home Alone,Voted,2,2026-03-07
+punkinpie123,vote,Movies,,Which movie would you rewatch right now?,Mean Girls,Voted,2,2026-02-19
+Rannykindle,vote,Movies,,Which movie would you rewatch right now?,Mean Girls,Voted,2,2026-01-30
+riner1428,predict,Movies,James Bond,Will the upcoming James Bond film redefine the franchise?,"No, more of the same",Predicted,20,2026-04-27
+Samanthanickle,vote,TV,,Best mystery binge?,Only Murders in the Building,Voted,2,2026-03-15
+Samanthanickle,vote,Movies,,Which movie would you rewatch right now?,The Dark Knight,Voted,2,2026-01-28
+sara612,vote,Movies,,Which movie would you rewatch right now?,Mean Girls,Voted,2,2026-01-24
+Seth,vote,Movies,,Which movie would you rewatch right now?,Jurassic Park,Voted,2,2026-02-12
+skilikeagirl7,vote,Movies,,Which movie would you rewatch right now?,Mean Girls,Voted,2,2026-01-28
+Snazzyman,vote,Movies,,Which movie would you rewatch right now?,Jurassic Park,Voted,2,2026-02-21
+Trey,trivia,Music,U2,Who won the Grammy for Album of the Year in 2006?,Green Day,Incorrect,0,2026-04-28
+Trey,trivia,Books,The Catcher in the Rye,What is the name of Holden Caulfield's sister in The Catcher in the Rye?,Sally,Incorrect,0,2026-04-28
+Trey,trivia,TV,The X-Files,Who created the TV series 'The X-Files'?,Vince Gilligan,Incorrect,0,2026-04-28
+Trey,trivia,Movies,Jurassic Park,Which sequel came THIRD in the Jurassic Park series?,Jurassic Park III,Correct,10,2026-04-28
+Trey,vote,Movies,,Which movie villain is iconic?,Darth Vader,Voted,2,2026-04-01
+Trey,vote,Movies,,Which animated movie hits adults harder?,Coco,Voted,2,2026-04-01
