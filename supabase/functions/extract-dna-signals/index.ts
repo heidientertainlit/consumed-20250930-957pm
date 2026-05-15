@@ -222,7 +222,7 @@ serve(async (req) => {
       if (!pool) continue;
 
       const isTrivia = pool.type === 'trivia';
-      const isPoll = pool.type === 'poll';
+      const isPoll = pool.type === 'vote';
       if (!isTrivia && !isPoll) continue;
 
       const isCorrect = isTrivia && Number(pred.points_earned) > 0;
@@ -280,7 +280,7 @@ serve(async (req) => {
     const triviaCorrect = (rawPredictions ?? [])
       .filter((p: any) => poolMap[p.pool_id]?.type === 'trivia' && Number(p.points_earned) > 0).length;
     const pollVotes = (rawPredictions ?? [])
-      .filter((p: any) => poolMap[p.pool_id]?.type === 'poll').length;
+      .filter((p: any) => poolMap[p.pool_id]?.type === 'vote').length;
     const ratingsGiven = (ratings ?? []).length;
     const highRatings = (ratings ?? []).filter((r: any) => Number(r.rating) >= 4).length;
     const momentAnswers = (momentResponses ?? []).length;
