@@ -18,3 +18,15 @@ id = "IeQxCV_y1F8aWK5e2eR4w"
 uri = "file://consumed_dna_export.csv"
 type = "table"
 title = "Consumed — Full User DNA & Engagement Export"
+
+[[outputs]]
+id = "8e_joFcVS2_eiuyhrWOiP"
+uri = "file://consumed_user_profiles.csv"
+type = "table"
+title = "User Profiles — DNA, Genre Alignment & Activity Mix"
+
+[[outputs]]
+id = "kEFDIhXTHm28vui_bkqjI"
+uri = "file://consumed_media_detail.csv"
+type = "table"
+title = "Media Detail — Every Tracked & Rated Item per User"
