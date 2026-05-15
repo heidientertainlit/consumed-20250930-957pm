@@ -48,3 +48,15 @@ id = "xErjjVmZHjWMyb4QWJ6Um"
 uri = "file://consumed_ratings.csv"
 type = "table"
 title = "All Ratings Given (414 rows)"
+
+[[outputs]]
+id = "dOQJXXU5Qm026B1UF-8SX"
+uri = "file://consumed_genre_profiles.csv"
+type = "table"
+title = "Genre Profiles (claimed + behavioral)"
+
+[[outputs]]
+id = "KGX5OTqEfGLtKH_M3oTx5"
+uri = "file://consumed_media_engagement.csv"
+type = "table"
+title = "Media Engagement (tracked, rated, lists)"

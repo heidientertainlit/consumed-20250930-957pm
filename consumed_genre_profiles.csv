@@ -1,0 +1,171 @@
+anon_id,claimed_tv_genre,claimed_book_escape_genre,claimed_book_default_genre,claimed_music_genre,top_behavioral_genre,behavioral_genres,media_type_signals,total_genre_signal_count
+00ca7193-be90-412f-9f6c-21be44b255a2,,,,,drama,drama (0.39); crime (0.32); comedy (0.26); thriller (0.13); romance (0.06); marriage & divorce (0.06); mystery (0.06); reality (0.06); science fiction (0.06); history (0.06); city life (0.06); family life (0.06),tv (1.00); movie (0.55); book (0.32); podcast (0.10),12
+062d0022-6e3b-4858-a5d3-df0ac93baf64,,,,,,,,0
+08067432-b5b7-47dc-a406-6d890cd41d95,,,,,business,business (1.00),music (1.00); podcast (1.00); youtube (1.00); movie (0.90),1
+08c793da-83be-4a02-962b-f97039b58e9f,,,,,,,movie (0.90),0
+09c3b4a2-02e9-45d3-8c64-49aad0a84a26,,,,,,,,0
+0a864ef6-b04a-4b78-9cd2-fa885a60a9dd,,,,,comedy,comedy (1.00); drama (1.00),tv (1.00),2
+0beb2f2a-3e7c-4ab5-aa73-0be92d5aef55,,,,,,,,0
+0ccb989c-161e-443d-9fd8-67a384603d2a,,,,,comedy,comedy (0.40); history (0.20); crime (0.20); romance (0.20); self-improvement (0.20); education (0.20),book (1.00); tv (0.80); youtube (0.40); podcast (0.20); movie (0.20),6
+0dabc886-d249-4398-a909-1698a42f0551,,,,,,,,0
+0ef568e6-d405-4fea-acb9-f2c54d1cba41,,,,,,,,0
+0fac3c67-db9f-4b10-8841-175024257821,,,,,drama,drama (0.42); crime (0.42); action & adventure (0.11); mystery (0.11); sci-fi & fantasy (0.11),tv (1.00),5
+0fc0ab3e-ff78-4f6d-9ee9-4b94a7ee6977,,,,,,,,0
+10ad8ab3-daa5-4e1a-9638-8b1e4d1378b9,,,,,,,,0
+1307a674-a580-451b-baf9-4d8b887f908f,,,,,,,,0
+135c2365-09ef-40aa-9b5b-8a7fe156bca3,,,,,thriller,thriller (0.69); action (0.69); comedy (0.69); crime (0.69); sci-fi & fantasy (0.34); mystery (0.34); drama (0.34),movie (1.00); tv (0.69); music (0.34),7
+15eeebba-c31a-41f7-82fd-5be8bb9447ff,,,,,,,,0
+172d92bc-882f-47c1-8cfb-54f1342ec553,,,,,,,,0
+17aaaa42-4e11-49dd-bc64-4dd22b79aa61,,,,,action,action (0.14); adventure (0.14); science fiction (0.07); reality (0.07); fantasy (0.07),movie (1.00); tv (0.32); music (0.10); book (0.07),5
+188feb17-6711-43d4-bf24-b117c377591c,,,,,action & adventure,action & adventure (0.11); science fiction (0.06); comedy (0.06); sci-fi & fantasy (0.06); adventure (0.06); drama (0.06); war & politics (0.06); fantasy (0.06); epic (0.06); magical realism (0.06),book (1.00); tv (0.74); movie (0.64); music (0.22); game (0.06),10
+1a6b60fa-a07b-4181-8a50-28c6978d84b0,,,,,romance,romance (1.00); contemporary (0.40); drama (0.20); history (0.20); science fiction (0.20); adventure (0.20); romantic comedy (0.20); small town & rural (0.20); holidays (0.20),book (1.00); movie (0.88),9
+1b2c82db-216f-4f69-85ea-c98617771b5b,,,,,,,,0
+1dc73a23-42df-4ae3-b495-869871d5d564,,,,,comedy,comedy (0.67); drama (0.20); crime (0.13); fantasy (0.13); adventure (0.13); romance (0.13); mystery (0.07),tv (1.00); movie (0.40); music (0.10); mixed (0.07),7
+1e7a0902-3af3-4171-beef-02b8ba590c5a,,,,,drama,drama (0.44); thriller (0.44); action (0.44); science fiction (0.22); crime (0.22),movie (1.00); tv (0.78); mixed (0.67); book (0.56); music (0.22),5
+1f80f848-caec-44a5-b45e-971df7ae363f,,,,,mystery,mystery (0.13); comedy (0.13); thriller (0.11); horror (0.11); science fiction (0.11); drama (0.11); fantasy (0.08); documentary (0.08); adventure (0.08); sci-fi & fantasy (0.05); family (0.05); crime (0.05); romance (0.03); action & adventure (0.03); animation (0.03),movie (1.00); tv (0.34); podcast (0.07); game (0.03),16
+1f930a88-adec-459f-a69a-76338a2c4460,,,,,,,movie (0.90),0
+1ff2e19e-8be8-4b0b-9da5-7ea27300f908,,,,,,,,0
+20836319-984d-4c53-aeec-90066b3fdee1,,,,,,,book (1.00); movie (0.26),0
+23e8d49b-d1e6-49e2-8fef-d0f01c4dbb0b,,,,,comedy,comedy (0.50); drama (0.50),tv (1.00); book (0.50),2
+2510625e-8a51-4637-9eb4-4d91ba3e76af,,Literary,,,science fiction,science fiction (0.03); adventure (0.03); literary (0.02); sci-fi & fantasy (0.01); animation (0.01); mystery (0.01); thriller (0.01); action & adventure (0.01),book (1.00); tv (0.57); movie (0.34); music (0.02),8
+2684000b-936e-4c52-83ef-abf13f8466d4,,,,,,,,0
+2726e7dc-6f9e-4ef9-bf7c-2b34502c0237,,,,,,,tv (1.00),0
+28fff49c-712b-4a43-9ded-dc1cdc9cd889,,,,,,,,0
+2a1c1fe4-041b-4ad7-a4d1-ae06a5027b96,,,,,mystery,mystery (0.52); thriller (0.39); horror (0.39); drama (0.26); comedy (0.26); science fiction (0.19); psychology (0.19); sci-fi & fantasy (0.19); action & adventure (0.13); documentary (0.13); crime (0.13); fantasy (0.13); true crime (0.13); biography & autobiography (0.06); adventure (0.06),movie (1.00); book (0.68); tv (0.68); podcast (0.45); game (0.06),24
+2a491833-5b15-469e-a08b-acb862a69ff4,,,,,drama,drama (0.15); comedy (0.15),book (1.00); tv (0.15),2
+2b61f206-ac64-44b9-b4bb-4b9c7f11659c,,,,,,,,0
+35d2e118-3263-426d-8bec-798b88f28ceb,,,,,,,,0
+35f5eabf-e679-4ad8-ae44-8c7a0026748b,,,,,,,,0
+36b0ad0c-4463-41ab-b3f8-1f1d913ee309,,,,,political science,political science (0.13); comedy (0.06); science fiction (0.06); apocalyptic & post-apocalyptic (0.06); business (0.06); entrepreneurship (0.06); african (0.06); social science (0.06); race & ethnic relations (0.06); genocide & war crimes (0.06); world (0.06),book (1.00); podcast (0.35); tv (0.26); movie (0.25),11
+3a07d0ef-6b0a-4c4b-b967-5ea3837f69f5,,,,,drama,drama (1.00); comedy (1.00),tv (1.00),2
+3a154b5e-7c14-47b5-8cd9-76ea9fc25e8c,,,,,,,tv (1.00); movie (0.71),0
+3a20c196-bedf-4298-877b-df56da2f836c,,,,,,,,0
+3a444874-9585-4320-a3d0-cd8442677933,,,,,,,book (1.00),0
+3acb5b61-74af-435b-9928-af0e817410d8,,,,,,,,0
+3b5f886a-27c2-499b-afb5-8dac8fbff660,,,,,,,,0
+3b753d99-9b89-40ae-bec6-f9fe07aa38dd,,,,,,,,0
+3b774852-d872-4221-b075-cbaef232a998,,,,,drama,drama (0.40),movie (1.00),1
+3bfadd69-56a4-48f0-9990-68947315bcad,,,,,,,,0
+3c0522e0-953a-41a4-980c-d2320677b31b,,,,,drama,drama (0.50); sci-fi & fantasy (0.17); comedy (0.17); crime (0.17); action & adventure (0.17),tv (1.00),5
+3c7da7e4-4da9-4798-818a-f21d7fffb7be,,,,,drama,drama (0.80); sci-fi & fantasy (0.40); mystery (0.40); romance (0.40),book (1.00); movie (0.40); tv (0.40),4
+3dda5530-8fe5-41cd-b945-2223fe75db4b,,,,,,,,0
+3e181762-f144-4007-9038-5c533b48ee5f,,,,,,,,0
+3e36f8ce-84c4-44c7-808c-d187f9f634aa,,,,,,,,0
+3e9f5ca0-4ece-4bd4-9d63-a67aa7e640bc,,,,,,,,0
+41663aca-5dd3-4bf8-a1d2-04e94e8c02b6,,,,,,,movie (0.90),0
+41849796-014e-414c-ad4f-7fe99bdc69f8,,,,Indie,comedy,comedy (0.12); drama (0.10); crime (0.06); self-help (0.04); thrillers (0.04); humorous (0.03); reality (0.03); thriller (0.02); romance (0.02); mystery (0.02); psychological (0.02); suspense (0.02); literary (0.02); satire (0.02); dark humor (0.02),tv (1.00); movie (0.60); book (0.45); music (0.17); podcast (0.13); mixed (0.07),35
+4741e6ea-ab79-4f94-89be-ecf87051ad5e,,,,,,,mixed (1.00),0
+47989cff-afcb-4625-975b-9128b8ed625a,,,,,,,,0
+4cfa5e17-e21e-49d2-848a-27bc28c30086,,,,,comedy,comedy (0.75); thrillers (0.38); thriller (0.25); science fiction (0.13); family (0.13); mystery (0.13); sci-fi & fantasy (0.13); reality (0.13); animation (0.13); true crime (0.13); domestic (0.13); suspense (0.13); psychological (0.13); crime (0.13),tv (1.00); movie (0.36); book (0.36); podcast (0.13),14
+4d69c1b4-5495-4159-9472-eabbe8a89cb0,,,,,,,,0
+50104dd0-6671-417c-be6b-7eedae7572e0,,,,,,,,0
+50e7aa23-200a-43a3-82d0-c0296f450e46,,,,,historical,historical (0.29); fantasy (0.23); romance (0.17); epic (0.06); paranormal (0.06),book (1.00),5
+5344d6a2-9698-4663-9f4d-20b20283fec7,,,,,,,,0
+559b0c1b-b399-45db-ad31-21d75d4cb58a,,,,,,,movie (1.00); tv (0.16); music (0.06),0
+561f2c21-69e9-4282-bceb-51146a405ea3,,,,,drama,drama (0.63); comedy (0.16); mystery (0.16); reality (0.11); biography & autobiography (0.11); thriller (0.11); romance (0.11); family (0.05); european (0.05); science fiction (0.05); memoirs (0.05); business (0.05); sports & recreation (0.05); running & jogging (0.05); fantasy (0.05),tv (1.00); movie (0.55); book (0.34); podcast (0.05); music (0.05),18
+56bae5f8-0f4b-4eb5-a0ac-677227b4f8c5,,,,,action,action (0.15); drama (0.15); comedy (0.15); romance (0.15); true crime (0.15); society & culture (0.15); personal journals (0.15),book (1.00); movie (0.45); podcast (0.15),7
+58becf56-a234-48d0-8abe-24c61e3ec76d,,,,,,,,0
+59888511-dfc4-47d9-a0bc-a923657d59b2,,,,,,,movie (0.90),0
+5b5d5f24-f755-4780-9e41-4983696f3f0e,,,,,,,,0
+5c19a110-514c-4e6e-b01f-d3767d885d35,,,,,,,,0
+603c3b72-0133-4ed9-912a-49210721ad3a,,,,,comedy,comedy (0.29); romance (0.29); drama (0.29),movie (1.00); music (0.43); book (0.29),3
+6061572a-3f21-4791-9caf-2e8fd421730a,,,,,,,tv (1.00),0
+61a4de25-91fa-45b8-8bbe-0678dd1ce7f9,,,,,comedy,comedy (0.67),movie (1.00); tv (0.67),1
+61c80614-cca7-4b59-aee9-cabb2cf72341,,,,,mystery,mystery (1.00); sci-fi & fantasy (0.67); drama (0.33); action & adventure (0.33); crime (0.33); comedy (0.33),tv (0.67); movie (0.33),6
+6b9efde3-35f3-47e6-b1ca-71a6555ddb37,,,,,science fiction,science fiction (1.00); drama (1.00); adventure (1.00),book (1.00); tv (1.00); movie (1.00),3
+6e5800d8-954c-4e59-a7cb-09eac74cc269,,,,,,,tv (1.00),0
+721ca253-5ea6-41db-a60e-130a90fb78af,,,,,,,,0
+72ff9e8e-7d11-4cc4-9630-1156ce542dbf,,,,,,,,0
+73a4a555-2832-4f56-b32f-8eb807f2f52c,,,,,,,,0
+746d8c63-940e-4671-a35f-7b69d79ecbf8,,,,,,,movie (0.90),0
+75b1a48f-02a0-4ad0-a9d6-5e5389237566,,,,,,,tv (1.00); movie (1.00),0
+76108f51-bfe5-4f75-b02f-646b370b24ca,,,,,drama,drama (1.00),movie (1.00); music (1.00),1
+76d0cba3-ab11-48cb-b79a-f5b3d404a9bb,,,,,comedy,comedy (1.00); mystery (1.00); thriller (1.00),movie (1.00),3
+7a6df5c0-e459-48f4-bb5c-76777baea243,,,,,,,,0
+7a7a0c3a-f2a4-47ed-b05d-1daf40d46d40,,,,,drama,drama (0.14); comedy (0.14); sci-fi & fantasy (0.14); documentary (0.14); family life (0.14); historical (0.14); literary (0.14),movie (1.00); tv (0.63); book (0.28); music (0.14),7
+7b31ed24-e740-4747-a19a-4a78ba0bc962,,,,,,,,0
+7c818f29-afad-4aec-a484-c5cd469e32a5,,,,,,,,0
+7e3adb7f-de90-463f-a26e-035264f7cac0,,,,,drama,drama (0.40); sci-fi & fantasy (0.40),tv (1.00),2
+7ead7283-3144-4aa0-b6f3-3fa3b1351598,,,,,science fiction,science fiction (0.14); drama (0.14); thriller (0.14); action (0.14),movie (1.00); tv (0.25),4
+80703bd1-40cb-4f43-be5e-5dd25e656578,,,,,,,,0
+821922eb-2782-441c-8d94-62d3c8f5daf8,,,,,,,,0
+83e0eafb-7a10-4a04-a882-64976d68157e,,,,,,,tv (1.00); movie (0.78),0
+8664124b-c4b5-46dc-b834-a2ff40309838,,,,,comedy,comedy (0.40); sci-fi & fantasy (0.20); mystery (0.20),tv (1.00),3
+87d12235-8412-4297-b33c-e7d1ed225595,,,,,,,movie (1.00),0
+88bfb2a0-e8ce-4081-b731-2a49567ff093,,,,,history,history (0.12); drama (0.11); historical (0.07); sports & recreation (0.07); comedy (0.07); biography & autobiography (0.06); 20th century (0.05); business & economics (0.05); united states (0.04); thrillers (0.03); society & culture (0.03); science fiction (0.02); romance (0.02); entrepreneurship (0.02); psychological (0.02),movie (1.00); tv (0.94); book (0.60); podcast (0.10); music (0.05); mixed (0.04); youtube (0.02),64
+89acd285-70c4-4e71-8512-c732acf9f45a,,,,,,,movie (0.90),0
+8bfec5d6-b593-474e-af04-d4a5c9d804c5,,,,,reality,reality (0.09); drama (0.09),movie (1.00); book (0.41); mixed (0.18); tv (0.17),2
+8cd5a23d-12a1-407f-9a46-92f460f96f2a,,,,,,,,0
+8ed1767b-afd7-4fdd-9fd7-58ce4f8ddcb0,,,,,comedy,comedy (0.48); action (0.19); mystery (0.19); family (0.19); thriller (0.19); science fiction (0.19); fantasy (0.19); horror (0.19); adventure (0.19); drama (0.10); crime (0.10),movie (1.00),11
+8f711560-e234-429c-9528-1839a42c8820,,,,,,,,0
+94f7dd65-8961-4177-8d15-359ffc6bff9c,,,,,,,,0
+9574eb1a-4073-4ad0-a21c-f13fff38d35d,,,,,,,,0
+965987ac-52c5-4544-8918-4c1fa214bab3,,,,,comedy,comedy (1.00); drama (1.00),movie (1.00); tv (1.00),2
+9a6359e2-fb7a-43c1-b4a6-a893d3e7a269,,,,,,,,0
+9c02e2ba-6ea6-47ce-98ab-e2c9a1672334,,,,,,,,0
+9df216e1-20f0-497b-a351-f63f2f989746,,,,,,,,0
+9e5ab0fd-ed01-454f-9ebf-d8f98fe1467d,,,,,crime,crime (0.40); mystery (0.40),tv (1.00),2
+9efced81-07a1-4040-9aff-8771748933ee,,,,,reality,reality (0.31); comedy (0.31); talk (0.15); drama (0.15); documentary (0.15),book (1.00); tv (0.69); movie (0.14),5
+9f792875-fecf-47ed-bf0e-4838129f340a,,,,,,,,0
+a272a510-01a2-42d2-8e03-b198dfd601aa,,,,,comedy,comedy (0.46); drama (0.23); crime (0.23); talk (0.15); after shows (0.08); sci-fi & fantasy (0.08); action & adventure (0.08); tv & film (0.08); news (0.08),tv (1.00); podcast (0.19),9
+a348dc9b-597c-49ff-8de9-698b10b22ae3,,,,,,,,0
+a468f3e8-4ba7-4e52-b040-56b057195937,,,,,,,book (1.00),0
+a5896cf9-57fa-412a-8cd9-88bbd9f6dc5f,,,,,drama,drama (1.00); mystery (1.00); comedy (1.00),tv (1.00),3
+a69b2e71-5dd8-4485-99e3-1242e3d38463,,,,,,,movie (1.00),0
+a7520820-e6c3-48b4-ba89-fbdd97554a19,,,,,,,,0
+aaa908ca-8eb3-423d-9f94-4be318b4819a,,,,,,,,0
+abdafc88-4d88-4086-a825-177e9ea54a76,,,,,comedy,comedy (0.24); drama (0.24); romance (0.15); thriller (0.09); mystery (0.09); adventure (0.09); fantasy (0.09); science fiction (0.09); crime (0.09); action (0.06); society & culture (0.03); true crime (0.03); music (0.03); documentary (0.03); history (0.03),movie (1.00); tv (0.23); book (0.08); podcast (0.03),18
+ada8defb-1864-44fa-9b24-2848bf24447f,,,,,science fiction,science fiction (1.00); thriller (1.00); action (1.00),movie (1.00),3
+af5c211f-f0d0-4a99-84f8-006568a15730,,,,,action & adventure,action & adventure (0.42); sci-fi & fantasy (0.33); drama (0.30); animation (0.30); comedy (0.15); romance (0.12); fantasy (0.09); science fiction (0.09); society & culture (0.06); horror (0.06); history (0.06); mystery (0.06); women (0.03); action (0.03); tv & film (0.03),tv (1.00); movie (0.60); book (0.24); podcast (0.23); game (0.17); mixed (0.06),22
+afdb35f6-55a9-46cb-bbb2-c9c1a62c382a,,,,,drama,drama (0.67); comedy (0.44); crime (0.22),tv (1.00); book (0.22),3
+b0c5e33e-331b-44f0-9d2f-fc3e5e595d15,,,,,fantasy,fantasy (0.11); romance (0.04); crime (0.02); epic (0.02); contemporary (0.02); dark fantasy (0.02); vampires (0.02); thriller (0.02); action & adventure (0.02),movie (1.00); music (0.35); book (0.13); tv (0.02),9
+b287422e-5536-4488-85a0-556c36fee539,,,,,self-help,self-help (0.73); personal growth (0.20); united states (0.13); self-esteem (0.13); motivational & inspirational (0.13); creativity (0.13); spiritual (0.13); history (0.13); military (0.07); terrorism (0.07); political science (0.07); 21st century (0.07); stress management (0.07); self-management (0.07); happiness (0.07),tv (1.00); book (0.42); music (0.13); movie (0.10),20
+b5983fbb-9f17-43b8-8956-37a3fe4dbba1,,,,,,,,0
+b5fe0c6c-5f40-4231-832a-ca8e847bd4e7,,,,,,,,0
+b646d63e-7e3b-4f5e-9120-a4f204722c85,,,,,,,,0
+b7021279-6936-4f60-a720-fff72b55cd09,,,,,,,,0
+bca16a10-14f7-4b9a-9cd1-1c74de106bb7,,,,,,,,0
+bfcb688b-0928-4e32-8d1d-711493090c23,,,,,,,,0
+c038bd87-7ad8-4700-bfdb-09ef1d4210be,,,,,,,,0
+c2c9a8bd-81d1-47cc-a74b-22d860723049,,,,,thriller,thriller (0.40); horror (0.40); drama (0.40),movie (1.00); tv (0.60),3
+c3349565-887f-4af1-a4ea-c16b0ccde3b5,,,,,,,,0
+c5a93667-67bf-4d0c-ac2e-1606fa9a2010,,,,,,,,0
+c703856c-2f14-4bbf-8965-00d68a42e1b5,,,,,,,tv (1.00); movie (0.38),0
+c79b66be-bac2-4dec-a55a-0e9dc1b23e1d,,,,,,,,0
+cb54e43c-bfae-495f-8b76-c99eb3ce7962,,,,,comedy,comedy (1.00),tv (1.00),1
+cea1c0e7-8b37-4c31-9a09-e46c78d4ddc7,,,,,thriller,thriller (0.71); action & adventure (0.40); sci-fi & fantasy (0.40); horror (0.40); drama (0.30); science fiction (0.30); action (0.30); mystery (0.20); crime (0.20); comedy (0.10); adventure (0.10),movie (1.00); tv (0.51),11
+d22cdf2e-0e95-4f80-aac8-19e6918bab8d,,,,,,,,0
+d4935553-139f-46bc-8ed9-28a9b9098b05,,,,,,,,0
+d554954c-acd6-4136-bd37-e720ad15eb33,,,,,,,book (1.00),0
+d71289ab-ddfe-4289-b561-78d3bb7794b3,,,,,,,,0
+d8e333c1-3cd3-482b-8a57-a32270d03d3e,,,,,historical,"historical (0.67); drama (0.56); religion (0.33); thrillers (0.22); history (0.22); war (0.22); family (0.22); fantasy (0.22); romance (0.22); victorian (0.22); epistolary (letters, diaries, etc.) (0.22); letters (0.22); christianity (0.22); world war ii & holocaust (0.11); coming of age (0.11)",book (1.00); movie (0.89); podcast (0.39),34
+d9848c67-a520-4e60-819e-958834038a26,,,,,,,,0
+da467a4b-d188-492b-ac4b-ebd0b265aeb7,,,,,drama,drama (0.41); mystery (0.20),tv (1.00); movie (0.20); music (0.20),2
+da624258-ecec-4a73-b0a0-22062b81b7c3,,,,,adventure,adventure (1.00); science fiction (1.00); drama (1.00),movie (1.00),3
+db8dd23b-bfa8-482c-9c2b-005841614eab,,,,,,,tv (1.00),0
+dcbf7e94-7f07-45d3-9007-ebcecb271069,,,,,adventure,adventure (0.34); science fiction (0.34); family (0.17); action (0.17); comedy (0.17); animation (0.17),movie (1.00); book (0.17),6
+dd4e2f47-ae3f-4ea0-99d6-e28871d059f4,,,,,,,,0
+dd702302-8e1a-4184-9323-909edd21b5ef,,,,,drama,drama (0.55); comedy (0.36); thriller (0.18); war & politics (0.18); reality (0.18),tv (1.00); mixed (0.18); movie (0.18),5
+de28a949-4f22-4a3e-a7f4-7c0a90f8c07a,,,,,,,,0
+de8b2fcd-c83b-4816-8678-8015ae5ee07d,,,,,,,,0
+e20fdea1-26b2-4102-b6be-200343bbea10,,,,,,,,0
+e41a976a-128b-4412-b080-8fc0c1b3d1d0,,,,,,,,0
+e56adc68-681a-40b2-8bba-8950737dbec0,,,,,,,,0
+e599ddbe-e9c9-487b-b790-7c7c8c2cf1f8,,,,,,,,0
+e62d3664-460c-43b0-ad1a-82393f278027,,,,,,,,0
+e872d37d-ddc5-40ca-b101-4aed63e4ff7c,,,,,comedy,comedy (0.24); adventure (0.20); fantasy (0.20); drama (0.16); science fiction (0.12); family (0.08); romance (0.08); crime (0.08); action (0.08); thrillers (0.04); suspense (0.04); after shows (0.04); reality (0.04); tv & film (0.04); tv reviews (0.04),movie (1.00); book (0.56); podcast (0.26); tv (0.22); music (0.06); mixed (0.04),20
+e92ee57c-52fb-44d7-886c-4c78c1a3c5ab,,,,,,,,0
+ebb151df-a001-42d1-b711-bb45b9af292f,,,,,,,,0
+ec17bdff-9268-4505-97a9-007447556ad5,,,,,,,book (1.00),0
+eccc6544-cfea-40cd-8068-1c703aae1d0a,,,,,,,,0
+f0ca9868-a1e9-4d94-87cd-ecfbe9dcda91,,,,,,,,0
+f2245c7b-f93b-4f11-8ceb-5b4f9c334f6c,,,,,drama,drama (0.15); action & adventure (0.09); sci-fi & fantasy (0.09); mystery (0.07); comedy (0.07); crime (0.07); thriller (0.04); animation (0.02); action (0.02),movie (1.00); tv (0.93); book (0.50); music (0.10),9
+f57f8e39-5e94-44bb-8cca-99d5fc3b08cf,,,,,,,,0
+f9a1a4c0-ef7d-40ed-b101-289fa5b5a4e8,,,,,,,,0
+fa6d73af-da96-494b-b8ee-33d059bed7d5,Comedy or sitcoms,Fantasy,Fantasy,Country,fantasy,fantasy (0.10); comedy (0.08); drama (0.08); thrillers (0.07); crime (0.06); action & adventure (0.05); humorous (0.05); mystery (0.04); mystery & detective (0.03); medical (0.03); women sleuths (0.03); suspense (0.03); sci-fi & fantasy (0.03); adventure (0.03); music (0.02),book (1.00); tv (0.51); movie (0.45); music (0.14); podcast (0.14); mixed (0.01); game (0.01); tv show (0.01),50
+fafe14c2-c78a-4978-ac54-dfe270ca0caa,,,,,,,book (1.00); music (0.16); movie (0.14),0
+fb16dfe5-6924-4f18-ae6e-2e2fcefc1724,,,,,,,,0
+fcacf7ab-4d46-4399-931f-1e89ccf76f19,,,,,,,,0
+ff399528-c198-447a-a848-a1866c44df3b,,,,,,,,0
+ffb20b95-ff32-407d-b722-73218b93912b,,,,,,,,0
+ffd752bb-8495-4317-b45a-45cc60205c9b,,,,,,,,0
