@@ -12,3 +12,9 @@ id = "vgcysVIIHyt7syO6CmOY1"
 uri = "file://rob_data_export-2.csv"
 type = "table"
 title = "rob_data_export-2 — 726 responses, 17 columns"
+
+[[outputs]]
+id = "IeQxCV_y1F8aWK5e2eR4w"
+uri = "file://consumed_dna_export.csv"
+type = "table"
+title = "Consumed — Full User DNA & Engagement Export"
