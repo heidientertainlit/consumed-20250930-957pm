@@ -216,6 +216,74 @@ serve(async (req) => {
       }
     }
 
+    // Google Books genre lookup for tracked books (first 20 with googlebooks source)
+    const googleBooksApiKey = Deno.env.get('GOOGLE_BOOKS_API_KEY');
+    // Too broad/generic to be meaningful as taste signals
+    const skipBookCategories = new Set([
+      'fiction', 'nonfiction', 'non-fiction', 'general', 'juvenile fiction',
+      'juvenile nonfiction', 'young adult fiction', 'young adult nonfiction',
+      'comics & graphic novels', 'literary collections', 'literary criticism'
+    ]);
+    const bookItems = listItems
+      .filter((item: any) => {
+        const mt = item.media_type || item.type;
+        return mt === 'book' && item.external_source === 'googlebooks' && item.external_id;
+      })
+      .slice(0, 20);
+
+    if (googleBooksApiKey && bookItems.length > 0) {
+      for (const item of bookItems) {
+        try {
+          const res = await fetch(
+            `https://www.googleapis.com/books/v1/volumes/${item.external_id}?key=${googleBooksApiKey}&fields=volumeInfo/categories`
+          );
+          if (res.ok) {
+            const book = await res.json();
+            // Categories look like "Fiction / Thriller" — split and use each meaningful part
+            for (const cat of (book.volumeInfo?.categories ?? [])) {
+              const parts = cat.split('/').map((p: string) => p.trim().toLowerCase())
+                .filter((p: string) => p.length > 2 && !skipBookCategories.has(p));
+              for (const part of parts) {
+                const s = touch('genre', part);
+                if (s) { s.weightedCount += 1.0; s.sources.tracked += 1; }
+              }
+            }
+          }
+          await new Promise(r => setTimeout(r, 100));
+        } catch (_) { /* skip */ }
+      }
+    }
+
+    // iTunes genre lookup for tracked podcasts (first 20 with itunes source)
+    // Note: Spotify podcasts/music are skipped here — Spotify requires OAuth, no key configured.
+    const skipPodcastGenres = new Set(['podcasts', 'arts', 'podcast']);
+    const podcastItems = listItems
+      .filter((item: any) => {
+        const mt = item.media_type || item.type;
+        return mt === 'podcast' && item.external_source === 'itunes' && item.external_id;
+      })
+      .slice(0, 20);
+
+    if (podcastItems.length > 0) {
+      for (const item of podcastItems) {
+        try {
+          const res = await fetch(`https://itunes.apple.com/lookup?id=${item.external_id}`);
+          if (res.ok) {
+            const data = await res.json();
+            const result = data.results?.[0];
+            for (const genre of (result?.genres ?? [])) {
+              const normalized = genre.trim().toLowerCase();
+              if (!skipPodcastGenres.has(normalized) && normalized.length > 2) {
+                const s = touch('genre', normalized);
+                if (s) { s.weightedCount += 1.0; s.sources.tracked += 1; }
+              }
+            }
+          }
+          await new Promise(r => setTimeout(r, 100));
+        } catch (_) { /* skip */ }
+      }
+    }
+
     // ── Source 2: Ratings — weight 1.5 for ≥4★, 1.0 for others ──────────────
     for (const rating of (ratings ?? [])) {
       const isHigh = Number(rating.rating) >= 4;
