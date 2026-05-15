@@ -2,23 +2,26 @@
  * extract-dna-signals
  *
  * Aggregates behavioral signals from every user action into user_dna_signals.
- * Four sources, each weighted by signal quality:
+ * Sources, each weighted by signal quality:
  *
- *   Source              Table(s)                          Weight
- *   ──────────────────  ────────────────────────────────  ──────
- *   Tracked media       list_items                        1.0
- *   Ratings ≥ 4★        media_ratings                     1.5
- *   Trivia (correct)    user_predictions+prediction_pools 1.4
- *   Trivia (attempt)    user_predictions+prediction_pools 1.0
- *   Poll votes          user_predictions+prediction_pools 0.9
- *   DNA Moments         dna_moment_responses+dna_moments  0.8
+ *   Source                  Table(s)                            Weight
+ *   ──────────────────────  ──────────────────────────────────  ──────
+ *   Tracked media           list_items                          1.0
+ *   Ratings ≥ 4★            media_ratings                       1.5
+ *   Trivia (correct)        user_predictions+prediction_pools   1.4
+ *   Trivia (attempt)        user_predictions+prediction_pools   1.0
+ *   Poll votes              user_predictions+prediction_pools   0.9
+ *   Genre polls (explicit)  user_predictions (show_tag=Genres)  1.3
+ *   TMDB genre lookup       TMDB API (movies/TV tracked items)  1.0
+ *   DNA Moments             dna_moment_responses+dna_moments    0.8
+ *
+ * Genre polls: pools tagged show_tag='Genres' are explicit genre preference
+ * questions (e.g. "Your default book genre?"). The user's answer IS the genre.
+ * These produce signal_type='genre' rows covering Books, Music, TV, Movies.
+ * TMDB lookup adds additional implicit genre signals from everything tracked.
  *
  * Every row in user_dna_signals includes a `sources` JSONB column that
  * breaks down exactly how many events from each source drove that signal.
- * This is the export layer for behavioral and participation insights.
- *
- * Engagement aggregate rows (signal_type = 'engagement') give partners
- * a single-row summary of how active a user is across each mechanic.
  *
  * Call pattern:
  *   POST with JWT header  → extracts for the authenticated user
@@ -52,6 +55,17 @@ function categoryToMediaType(raw: string | null): string | null {
   return null; // unknown — skip
 }
 
+// Normalise a poll genre answer to a clean, lowercase signal value.
+// Handles multi-word answers like "Comedy or sitcoms" → "comedy"
+function normalizeGenreAnswer(raw: string | null): string | null {
+  if (!raw) return null;
+  const s = raw.trim().toLowerCase();
+  // Take only the first meaningful word/phrase before "or", "/", "&"
+  const first = s.split(/\s+or\s+|\s*\/\s*|\s*&\s*/)[0].trim();
+  if (!first || first.length < 2) return null;
+  return first;
+}
+
 interface SignalAccum {
   type: string;
   value: string;
@@ -63,6 +77,7 @@ interface SignalAccum {
     trivia_attempts: number;
     trivia_correct: number;
     polls: number;
+    genre_polls: number;
     moments: number;
   };
 }
@@ -108,7 +123,7 @@ serve(async (req) => {
         .select('media_type, media_title, media_external_id, media_external_source, rating')
         .eq('user_id', userId),
       svc.from('user_predictions')
-        .select('pool_id, points_earned')
+        .select('pool_id, points_earned, prediction')
         .eq('user_id', userId),
       svc.from('dna_moment_responses')
         .select('moment_id, answer')
@@ -156,7 +171,7 @@ serve(async (req) => {
           type,
           value,
           weightedCount: 0,
-          sources: { tracked: 0, rated: 0, rated_high: 0, trivia_attempts: 0, trivia_correct: 0, polls: 0, moments: 0 }
+          sources: { tracked: 0, rated: 0, rated_high: 0, trivia_attempts: 0, trivia_correct: 0, polls: 0, genre_polls: 0, moments: 0 }
         });
       }
       return signals.get(key)!;
@@ -243,8 +258,17 @@ serve(async (req) => {
         }
       }
 
-      // Show/franchise as a named engagement signal
-      if (pool.show_tag) {
+      // Genre polls — explicit self-reported genre preference (weight 1.3)
+      // Pools tagged show_tag='Genres' have the user's answer as the genre itself.
+      if (isPoll && pool.show_tag === 'Genres') {
+        const genre = normalizeGenreAnswer(pred.prediction);
+        if (genre) {
+          const s = touch('genre', genre);
+          if (s) { s.weightedCount += 1.3; s.sources.genre_polls += 1; }
+        }
+        // Don't also record 'Genres' as a show signal — it's not a show name
+      } else if (pool.show_tag) {
+        // Show/franchise as a named engagement signal
         const s = touch('show', pool.show_tag);
         if (s) {
           s.weightedCount += weight * 0.8;
