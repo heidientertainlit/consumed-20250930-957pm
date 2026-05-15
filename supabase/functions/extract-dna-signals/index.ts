@@ -254,13 +254,12 @@ serve(async (req) => {
       }
     }
 
-    // iTunes genre lookup for tracked podcasts (first 20 with itunes source)
-    // Note: Spotify podcasts/music are skipped here — Spotify requires OAuth, no key configured.
+    // iTunes genre lookup for tracked music + podcasts with itunes source
     const skipPodcastGenres = new Set(['podcasts', 'arts', 'podcast']);
     const podcastItems = listItems
       .filter((item: any) => {
         const mt = item.media_type || item.type;
-        return mt === 'podcast' && item.external_source === 'itunes' && item.external_id;
+        return (mt === 'podcast' || mt === 'music') && item.external_source === 'itunes' && item.external_id;
       })
       .slice(0, 20);
 
