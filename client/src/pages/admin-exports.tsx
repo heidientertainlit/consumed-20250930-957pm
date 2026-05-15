@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, Download, Loader2, FileText, Table2 } from "lucide-react";
+import { ArrowLeft, Download, Loader2, FileText, Table2, Users } from "lucide-react";
 
 function downloadCSV(filename: string, rows: Record<string, any>[], fields: string[]) {
   const escape = (v: any) => {
@@ -31,7 +31,7 @@ function flt(v: any): number {
 }
 
 async function buildMasterExport() {
-  // 1. Non-persona users
+  // 1. Non-persona real users
   const { data: users } = await supabase
     .from("users")
     .select("id, created_at, is_admin")
@@ -42,7 +42,7 @@ async function buildMasterExport() {
   const userMap: Record<string, any> = {};
   (users || []).forEach((u: any) => { userMap[u.id] = u; });
 
-  // 2. Genre signals
+  // 2. Genre + media type behavioral signals
   const { data: genreSigs } = await supabase
     .from("user_dna_signals")
     .select("user_id, signal_value, strength")
@@ -53,6 +53,19 @@ async function buildMasterExport() {
     .from("user_dna_signals")
     .select("user_id, signal_value, strength")
     .eq("signal_type", "media_type")
+    .order("strength", { ascending: false });
+
+  // 3. Show + creator signals
+  const { data: showSigs } = await supabase
+    .from("user_dna_signals")
+    .select("user_id, signal_value, strength")
+    .eq("signal_type", "show")
+    .order("strength", { ascending: false });
+
+  const { data: creatorSigs } = await supabase
+    .from("user_dna_signals")
+    .select("user_id, signal_value, strength")
+    .eq("signal_type", "creator")
     .order("strength", { ascending: false });
 
   const userGenres: Record<string, any[]> = {};
@@ -67,7 +80,27 @@ async function buildMasterExport() {
     userMediaTypes[r.user_id].push(r);
   });
 
-  // 3. Genre poll responses (show_tag = 'Genres')
+  const userShows: Record<string, any[]> = {};
+  (showSigs || []).forEach((r: any) => {
+    if (!userShows[r.user_id]) userShows[r.user_id] = [];
+    userShows[r.user_id].push(r);
+  });
+
+  const userCreators: Record<string, any[]> = {};
+  (creatorSigs || []).forEach((r: any) => {
+    if (!userCreators[r.user_id]) userCreators[r.user_id] = [];
+    userCreators[r.user_id].push(r);
+  });
+
+  // 4. DNA profiles (archetype, tagline, flavor notes)
+  const { data: dnaProfiles } = await supabase
+    .from("dna_profiles")
+    .select("user_id, label, tagline, flavor_notes, favorite_genres");
+
+  const dnaMap: Record<string, any> = {};
+  (dnaProfiles || []).forEach((d: any) => { dnaMap[d.user_id] = d; });
+
+  // 5. Claimed genres from genre polls
   const { data: genrePoolsRaw } = await supabase
     .from("prediction_pools")
     .select("id, title")
@@ -95,7 +128,7 @@ async function buildMasterExport() {
     else if (t.includes("music") || t.includes("default to")) claimed[row.user_id]["Music"] = row.prediction;
   });
 
-  // 4. Game stats (trivia + polls)
+  // 6. Game stats (trivia + polls)
   const { data: allPredictions } = await supabase
     .from("user_predictions")
     .select("user_id, pool_id, points_earned");
@@ -107,19 +140,30 @@ async function buildMasterExport() {
   const poolTypeMap: Record<string, string> = {};
   (allPools || []).forEach((p: any) => { poolTypeMap[p.id] = p.type; });
 
-  const gameStats: Record<string, { trivia_attempts: number; trivia_points: number; poll_votes: number }> = {};
+  const gameStats: Record<string, { trivia_attempts: number; trivia_correct: number; trivia_points: number; poll_votes: number }> = {};
   (allPredictions || []).forEach((p: any) => {
     const type = poolTypeMap[p.pool_id];
-    if (!gameStats[p.user_id]) gameStats[p.user_id] = { trivia_attempts: 0, trivia_points: 0, poll_votes: 0 };
+    if (!gameStats[p.user_id]) gameStats[p.user_id] = { trivia_attempts: 0, trivia_correct: 0, trivia_points: 0, poll_votes: 0 };
     if (type === "trivia") {
       gameStats[p.user_id].trivia_attempts++;
+      if (flt(p.points_earned) > 0) gameStats[p.user_id].trivia_correct++;
       gameStats[p.user_id].trivia_points += flt(p.points_earned);
     } else if (type === "poll") {
       gameStats[p.user_id].poll_votes++;
     }
   });
 
-  // 5. List items + list names
+  // 7. DNA moment responses count
+  const { data: momentResponses } = await supabase
+    .from("dna_moment_responses")
+    .select("user_id");
+
+  const momentCounts: Record<string, number> = {};
+  (momentResponses || []).forEach((r: any) => {
+    momentCounts[r.user_id] = (momentCounts[r.user_id] || 0) + 1;
+  });
+
+  // 8. List items
   const { data: listItems } = await supabase
     .from("list_items")
     .select("user_id, title, media_type, external_id, external_source, list_id")
@@ -132,21 +176,25 @@ async function buildMasterExport() {
   const listNameMap: Record<string, string> = {};
   (lists || []).forEach((l: any) => { listNameMap[l.id] = l.title; });
 
-  // 6. Ratings
+  // 9. Ratings — all of them for high/low breakdown
   const { data: ratings } = await supabase
     .from("media_ratings")
-    .select("user_id, media_external_id, media_external_source, rating");
+    .select("user_id, media_external_id, media_external_source, media_title, rating");
 
   const ratingMap: Record<string, number> = {};
   (ratings || []).forEach((r: any) => {
     ratingMap[`${r.user_id}|${r.media_external_id}|${r.media_external_source}`] = flt(r.rating);
   });
 
-  const ratingSummary: Record<string, { total: number; sum: number }> = {};
+  const ratingSummary: Record<string, { total: number; sum: number; low: number; lowTitles: string[] }> = {};
   (ratings || []).forEach((r: any) => {
-    if (!ratingSummary[r.user_id]) ratingSummary[r.user_id] = { total: 0, sum: 0 };
+    if (!ratingSummary[r.user_id]) ratingSummary[r.user_id] = { total: 0, sum: 0, low: 0, lowTitles: [] };
     ratingSummary[r.user_id].total++;
     ratingSummary[r.user_id].sum += flt(r.rating);
+    if (flt(r.rating) <= 2 && r.media_title) {
+      ratingSummary[r.user_id].low++;
+      ratingSummary[r.user_id].lowTitles.push(r.media_title);
+    }
   });
 
   // Group list items per user
@@ -165,19 +213,39 @@ async function buildMasterExport() {
     }
   });
 
+  // Count items per list type across all users for each user
+  const userListBreakdown: Record<string, Record<string, number>> = {};
+  (listItems || []).forEach((item: any) => {
+    const uid = item.user_id;
+    if (!uid) return;
+    const lname = listNameMap[item.list_id];
+    if (!lname) return;
+    if (!userListBreakdown[uid]) userListBreakdown[uid] = {};
+    userListBreakdown[uid][lname] = (userListBreakdown[uid][lname] || 0) + 1;
+  });
+
   // Build rows
   const rows = userIds.map((uid: string) => {
     const u = userMap[uid];
     const genres = (userGenres[uid] || []).slice(0, 15);
     const mts = userMediaTypes[uid] || [];
+    const shows = (userShows[uid] || []).slice(0, 8);
+    const creators = (userCreators[uid] || []).slice(0, 6);
+    const dna = dnaMap[uid] || {};
     const cl = claimed[uid] || {};
     const items = userItems[uid] || {};
-    const gstat = gameStats[uid] || { trivia_attempts: 0, trivia_points: 0, poll_votes: 0 };
-    const rstat = ratingSummary[uid] || { total: 0, sum: 0 };
+    const gstat = gameStats[uid] || { trivia_attempts: 0, trivia_correct: 0, trivia_points: 0, poll_votes: 0 };
+    const rstat = ratingSummary[uid] || { total: 0, sum: 0, low: 0, lowTitles: [] };
+    const listBreak = userListBreakdown[uid] || {};
 
     const claimedStr = Object.entries(cl).map(([k, v]) => `${v} (${k})`).join("; ");
     const behavioralStr = genres.map(g => `${g.signal_value}: ${flt(g.strength).toFixed(2)}`).join("; ");
     const mtStr = mts.map((m: any) => `${m.signal_value}: ${flt(m.strength).toFixed(2)}`).join("; ");
+    const showStr = shows.map((s: any) => s.signal_value).join("; ");
+    const creatorStr = creators.map((c: any) => c.signal_value).join("; ");
+
+    const flavorNotes = Array.isArray(dna.flavor_notes) ? dna.flavor_notes.join("; ") : (dna.flavor_notes || "");
+    const dnaFavGenres = Array.isArray(dna.favorite_genres) ? dna.favorite_genres.join("; ") : (dna.favorite_genres || "");
 
     const byType: Record<string, Array<{ rating: number; title: string }>> = {};
     const allLists = new Set<string>();
@@ -193,7 +261,7 @@ async function buildMasterExport() {
       (byType[type] || []).sort((a, b) => b.rating - a.rating).slice(0, n).map(x => x.title).join("; ");
 
     const allRated = Object.entries(items)
-      .filter(([, e]) => e.rating !== null)
+      .filter(([, e]) => e.rating !== null && e.rating >= 3)
       .map(([key, e]) => ({ title: key.split("|")[0], rating: e.rating! }))
       .sort((a, b) => b.rating - a.rating)
       .slice(0, 8)
@@ -201,40 +269,88 @@ async function buildMasterExport() {
       .join("; ");
 
     const avgRating = rstat.total > 0 ? (rstat.sum / rstat.total).toFixed(1) : "";
+    const triviaAccuracy = gstat.trivia_attempts > 0
+      ? `${Math.round((gstat.trivia_correct / gstat.trivia_attempts) * 100)}%`
+      : "";
+
+    // List breakdown columns
+    const watched = listBreak["Watched"] || listBreak["Already Watched"] || 0;
+    const wantToWatch = listBreak["Want to Watch"] || listBreak["Watchlist"] || 0;
+    const watching = listBreak["Watching"] || listBreak["Currently Watching"] || 0;
+    const reading = listBreak["Reading"] || listBreak["Currently Reading"] || 0;
+    const wantToRead = listBreak["Want to Read"] || 0;
+    const haveRead = listBreak["Have Read"] || listBreak["Read"] || 0;
+    const dnf = listBreak["Did Not Finish"] || listBreak["DNF"] || 0;
+    const favorites = listBreak["Favorites"] || listBreak["Favourite"] || 0;
 
     return {
       anon_id: uid,
       joined_at: (u.created_at || "").slice(0, 10),
       is_admin: u.is_admin ? "yes" : "",
+      // DNA profile
+      dna_archetype: dna.label || "",
+      dna_tagline: dna.tagline || "",
+      dna_flavor_notes: flavorNotes,
+      dna_favorite_genres: dnaFavGenres,
+      // Genre signals
       claimed_genres: claimedStr,
       behavioral_genres: behavioralStr,
       genre_signal_count: genres.length,
+      // Media type
       top_media_type: mts[0]?.signal_value || "",
       media_type_breakdown: mtStr,
+      // Shows + creators they gravitate toward
+      top_shows_engaged: showStr,
+      top_creators_engaged: creatorStr,
+      // Tracking summary
       total_items_tracked: Object.keys(items).length,
       lists_used: Array.from(allLists).sort().join("; "),
+      watched_count: watched,
+      want_to_watch_count: wantToWatch,
+      currently_watching_count: watching,
+      reading_count: reading,
+      want_to_read_count: wantToRead,
+      have_read_count: haveRead,
+      did_not_finish_count: dnf,
+      favorites_count: favorites,
+      // Ratings
       total_rated: rstat.total,
       avg_rating: avgRating,
+      low_ratings_count: rstat.low,
+      low_rated_items: rstat.lowTitles.slice(0, 5).join("; "),
       top_rated_items: allRated,
+      // Top items by type
       top_tv: topTitles("tv"),
       top_movies: topTitles("movie"),
       top_books: topTitles("book"),
       top_music: topTitles("music"),
       top_podcasts: topTitles("podcast"),
+      // Game engagement
       trivia_attempts: gstat.trivia_attempts,
+      trivia_correct: gstat.trivia_correct,
+      trivia_accuracy: triviaAccuracy,
       trivia_points: gstat.trivia_points,
       poll_votes: gstat.poll_votes,
+      dna_moments_answered: momentCounts[uid] || 0,
     };
   });
 
   const fields = [
     "anon_id", "joined_at", "is_admin",
+    "dna_archetype", "dna_tagline", "dna_flavor_notes", "dna_favorite_genres",
     "claimed_genres", "behavioral_genres", "genre_signal_count",
     "top_media_type", "media_type_breakdown",
+    "top_shows_engaged", "top_creators_engaged",
     "total_items_tracked", "lists_used",
-    "total_rated", "avg_rating", "top_rated_items",
+    "watched_count", "want_to_watch_count", "currently_watching_count",
+    "reading_count", "want_to_read_count", "have_read_count",
+    "did_not_finish_count", "favorites_count",
+    "total_rated", "avg_rating",
+    "low_ratings_count", "low_rated_items",
+    "top_rated_items",
     "top_tv", "top_movies", "top_books", "top_music", "top_podcasts",
-    "trivia_attempts", "trivia_points", "poll_votes",
+    "trivia_attempts", "trivia_correct", "trivia_accuracy", "trivia_points",
+    "poll_votes", "dna_moments_answered",
   ];
 
   const today = new Date().toISOString().slice(0, 10);
@@ -249,9 +365,10 @@ async function buildMediaDetailExport() {
     .or("is_persona.is.null,is_persona.eq.false");
   const realUserIds = new Set((users || []).map((u: any) => u.id));
 
+  // All list items with creator field
   const { data: listItems } = await supabase
     .from("list_items")
-    .select("user_id, title, media_type, external_id, external_source, list_id")
+    .select("user_id, title, creator, media_type, external_id, external_source, list_id, created_at")
     .not("title", "is", null);
 
   const { data: lists } = await supabase.from("lists").select("id, title");
@@ -266,13 +383,31 @@ async function buildMediaDetailExport() {
     ratingMap[`${r.user_id}|${r.media_external_id}|${r.media_external_source}`] = flt(r.rating);
   });
 
-  const userItems: Record<string, Record<string, { lists: string[]; rating: number | null; media_type: string; external_source: string }>> = {};
+  // One row per user × item, collecting all lists for that item
+  const userItems: Record<string, Record<string, {
+    lists: string[];
+    rating: number | null;
+    media_type: string;
+    external_source: string;
+    creator: string;
+    added_at: string;
+  }>> = {};
+
   (listItems || []).forEach((item: any) => {
     const uid = item.user_id;
     if (!uid || !realUserIds.has(uid)) return;
-    const key = `${item.title}|${item.external_id || ""}`;
+    const key = `${item.title}|||${item.external_id || ""}|||${item.media_type || ""}`;
     if (!userItems[uid]) userItems[uid] = {};
-    if (!userItems[uid][key]) userItems[uid][key] = { lists: [], rating: null, media_type: item.media_type, external_source: item.external_source };
+    if (!userItems[uid][key]) {
+      userItems[uid][key] = {
+        lists: [],
+        rating: null,
+        media_type: item.media_type || "",
+        external_source: item.external_source || "",
+        creator: item.creator || "",
+        added_at: (item.created_at || "").slice(0, 10),
+      };
+    }
     const lname = listNameMap[item.list_id];
     if (lname && !userItems[uid][key].lists.includes(lname)) userItems[uid][key].lists.push(lname);
     const rKey = `${uid}|${item.external_id}|${item.external_source}`;
@@ -284,25 +419,41 @@ async function buildMediaDetailExport() {
   const rows: any[] = [];
   Object.entries(userItems).sort(([a], [b]) => a.localeCompare(b)).forEach(([uid, items]) => {
     Object.entries(items).sort(([a], [b]) => a.localeCompare(b)).forEach(([key, entry]) => {
-      const title = key.split("|")[0];
-      const types = ["tracked"];
-      if (entry.rating !== null) {
+      const title = key.split("|||")[0];
+      const rating = entry.rating;
+      const sentiment = rating === null ? "unrated"
+        : rating >= 4 ? "liked"
+        : rating <= 2 ? "disliked"
+        : "neutral";
+
+      const types: string[] = ["tracked"];
+      if (rating !== null) {
         types.push("rated");
-        if (entry.rating >= 4) types.push("rated_high");
+        if (rating >= 4) types.push("rated_high");
+        if (rating <= 2) types.push("rated_low");
       }
+      if (entry.lists.includes("Did Not Finish") || entry.lists.includes("DNF")) types.push("did_not_finish");
+      if (entry.lists.includes("Favorites") || entry.lists.includes("Favourite")) types.push("favorited");
+
       rows.push({
         anon_id: uid,
         media_title: title,
-        media_type: entry.media_type || "",
-        external_source: entry.external_source || "",
-        rating: entry.rating ?? "",
+        creator: entry.creator,
+        media_type: entry.media_type,
+        external_source: entry.external_source,
+        rating: rating ?? "",
+        sentiment,
         lists: entry.lists.join("; "),
         engagement_types: types.join("; "),
+        added_at: entry.added_at,
       });
     });
   });
 
-  const fields = ["anon_id", "media_title", "media_type", "external_source", "rating", "lists", "engagement_types"];
+  const fields = [
+    "anon_id", "media_title", "creator", "media_type", "external_source",
+    "rating", "sentiment", "lists", "engagement_types", "added_at",
+  ];
   const today = new Date().toISOString().slice(0, 10);
   downloadCSV(`consumed_media_detail_${today}.csv`, rows, fields);
   return rows.length;
@@ -391,22 +542,26 @@ export default function AdminExportsPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-base font-semibold text-white mb-1">Master Export</p>
-                <p className="text-sm text-gray-400 leading-snug mb-1">
-                  One row per user. Includes claimed genres (from polls), behavioral genre signals with strength scores, media type breakdown, top tracked items per category, ratings summary, and trivia/poll participation.
+                <p className="text-sm text-gray-400 leading-snug mb-2">
+                  One row per user. Every behavioral dimension in one place.
                 </p>
-                <p className="text-xs text-purple-300/70 mb-4">
-                  ~170 rows · fully anonymous (UUID only, no names or email)
-                </p>
+                <ul className="text-xs text-gray-500 space-y-0.5 mb-4 list-disc list-inside">
+                  <li>DNA archetype, tagline, flavor notes</li>
+                  <li>Claimed genres (from polls) + behavioral genre signals with strength scores</li>
+                  <li>Media type breakdown (TV / movie / book / music / podcast)</li>
+                  <li>Top shows + creators they engage with most</li>
+                  <li>Tracking counts per list type (Watched, Want to Watch, DNF, Favorites, etc.)</li>
+                  <li>Ratings summary + explicit dislikes (items rated 1–2★)</li>
+                  <li>Top rated items per media category</li>
+                  <li>Trivia attempts, accuracy %, poll votes, DNA moments answered</li>
+                </ul>
+                <p className="text-xs text-purple-300/70 mb-4">~170 rows · fully anonymous (UUID only, no names or email)</p>
                 <button
                   onClick={handleMaster}
                   disabled={masterLoading}
                   className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
                 >
-                  {masterLoading ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Download size={14} />
-                  )}
+                  {masterLoading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                   {masterLoading ? "Building export…" : "Download consumed_master.csv"}
                 </button>
                 {masterCount !== null && (
@@ -424,22 +579,23 @@ export default function AdminExportsPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-base font-semibold text-white mb-1">Media Detail Export</p>
-                <p className="text-sm text-gray-400 leading-snug mb-1">
-                  One row per user-item pair. Every piece of media tracked by every user — which lists it's in, their rating, and engagement type (tracked / rated / rated_high). Join to Master Export on <code className="text-teal-300 text-xs">anon_id</code>.
+                <p className="text-sm text-gray-400 leading-snug mb-2">
+                  One row per user × media item. Their complete media behavior, item by item.
                 </p>
-                <p className="text-xs text-teal-300/70 mb-4">
-                  ~700+ rows · same anonymous ID as Master Export
-                </p>
+                <ul className="text-xs text-gray-500 space-y-0.5 mb-4 list-disc list-inside">
+                  <li>Every tracked item with title + creator</li>
+                  <li>Which list(s) it's on (Watched, Want to Watch, Did Not Finish, Favorites, etc.)</li>
+                  <li>Rating + sentiment label (liked / neutral / disliked / unrated)</li>
+                  <li>Engagement type flags (tracked, rated, rated_high, rated_low, did_not_finish, favorited)</li>
+                  <li>When they added it</li>
+                </ul>
+                <p className="text-xs text-teal-300/70 mb-4">~700+ rows · join to Master on <code className="text-teal-200">anon_id</code></p>
                 <button
                   onClick={handleDetail}
                   disabled={detailLoading}
                   className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
                 >
-                  {detailLoading ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Download size={14} />
-                  )}
+                  {detailLoading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                   {detailLoading ? "Building export…" : "Download consumed_media_detail.csv"}
                 </button>
                 {detailCount !== null && (
@@ -449,14 +605,14 @@ export default function AdminExportsPage() {
             </div>
           </div>
 
-          {/* Instructions */}
+          {/* How to use */}
           <div className="bg-gray-900/60 border border-gray-800 rounded-2xl p-5 mt-2">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">How to join the files</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">How to use these files</p>
             <div className="space-y-2 text-sm text-gray-400">
-              <p>Both files share the same <span className="text-white font-medium">anon_id</span> column — a consistent anonymous ID per user.</p>
-              <p><span className="text-white font-medium">Google Sheets:</span> Use <code className="text-purple-300 text-xs">VLOOKUP(A2, 'Media Detail'!A:G, 5, false)</code> to pull any column from the detail file into the master.</p>
-              <p><span className="text-white font-medium">Excel:</span> Use Power Query → Merge Queries on <code className="text-purple-300 text-xs">anon_id</code>.</p>
-              <p><span className="text-white font-medium">Pivot tables:</span> The Master Export is ready to pivot directly — filter by <code className="text-purple-300 text-xs">top_media_type</code> or <code className="text-purple-300 text-xs">top_genre</code>.</p>
+              <p>Both files share the same <span className="text-white font-medium">anon_id</span> — a consistent anonymous ID per user across both downloads.</p>
+              <p><span className="text-white font-medium">Full picture:</span> Master tells you who a user is (DNA archetype, genre affinities, engagement level). Detail tells you exactly what they've watched, read, rated, and abandoned, item by item.</p>
+              <p><span className="text-white font-medium">Google Sheets:</span> Import both files, then use <code className="text-purple-300 text-xs">VLOOKUP(A2, 'Master'!A:Z, col, false)</code> to enrich the detail rows with profile data.</p>
+              <p><span className="text-white font-medium">Pivot tables:</span> Filter Master by <code className="text-purple-300 text-xs">top_media_type</code>, <code className="text-purple-300 text-xs">dna_archetype</code>, or <code className="text-purple-300 text-xs">top_shows_engaged</code>. Filter Detail by <code className="text-purple-300 text-xs">sentiment</code> or <code className="text-purple-300 text-xs">lists</code>.</p>
             </div>
           </div>
         </div>
