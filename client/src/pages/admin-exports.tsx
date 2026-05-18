@@ -163,6 +163,37 @@ async function buildMasterExport() {
     momentCounts[r.user_id] = (momentCounts[r.user_id] || 0) + 1;
   });
 
+  // 10. Login streaks — last active, current streak, longest streak
+  const { data: streaks } = await supabase
+    .from("login_streaks")
+    .select("user_id, last_login, current_streak, longest_streak");
+
+  const streakMap: Record<string, any> = {};
+  (streaks || []).forEach((s: any) => { streakMap[s.user_id] = s; });
+
+  // 11. Social posts — posts written, likes received, comments received
+  const { data: socialPosts } = await supabase
+    .from("social_posts")
+    .select("user_id, post_type, likes_count, comments_count, room_id")
+    .or("origin_type.is.null,origin_type.eq.user");
+
+  const socialMap: Record<string, {
+    posts: number;
+    room_posts: number;
+    likes_received: number;
+    comments_received: number;
+  }> = {};
+  (socialPosts || []).forEach((p: any) => {
+    if (!socialMap[p.user_id]) socialMap[p.user_id] = { posts: 0, room_posts: 0, likes_received: 0, comments_received: 0 };
+    if (p.room_id) {
+      socialMap[p.user_id].room_posts++;
+    } else {
+      socialMap[p.user_id].posts++;
+    }
+    socialMap[p.user_id].likes_received += p.likes_count || 0;
+    socialMap[p.user_id].comments_received += p.comments_count || 0;
+  });
+
   // 8. List items
   const { data: listItems } = await supabase
     .from("list_items")
@@ -237,6 +268,13 @@ async function buildMasterExport() {
     const gstat = gameStats[uid] || { trivia_attempts: 0, trivia_correct: 0, trivia_points: 0, poll_votes: 0 };
     const rstat = ratingSummary[uid] || { total: 0, sum: 0, low: 0, lowTitles: [] };
     const listBreak = userListBreakdown[uid] || {};
+    const streak = streakMap[uid] || {};
+    const social = socialMap[uid] || { posts: 0, room_posts: 0, likes_received: 0, comments_received: 0 };
+    const totalPosts = social.posts + social.room_posts;
+    const engagementLevel = totalPosts >= 10 ? "active_poster"
+      : totalPosts >= 3 ? "occasional_poster"
+      : totalPosts >= 1 ? "light_poster"
+      : "lurker";
 
     const claimedStr = Object.entries(cl).map(([k, v]) => `${v} (${k})`).join("; ");
     const behavioralStr = genres.map(g => `${g.signal_value}: ${flt(g.strength).toFixed(2)}`).join("; ");
@@ -332,6 +370,17 @@ async function buildMasterExport() {
       trivia_points: gstat.trivia_points,
       poll_votes: gstat.poll_votes,
       dna_moments_answered: momentCounts[uid] || 0,
+      // Engagement frequency
+      last_active: streak.last_login || "",
+      current_streak: streak.current_streak || 0,
+      longest_streak: streak.longest_streak || 0,
+      // Social behavior
+      feed_posts_written: social.posts,
+      room_posts_written: social.room_posts,
+      total_posts_written: totalPosts,
+      total_likes_received: social.likes_received,
+      total_comments_received: social.comments_received,
+      social_engagement_level: engagementLevel,
     };
   });
 
@@ -351,6 +400,9 @@ async function buildMasterExport() {
     "top_tv", "top_movies", "top_books", "top_music", "top_podcasts",
     "trivia_attempts", "trivia_correct", "trivia_accuracy", "trivia_points",
     "poll_votes", "dna_moments_answered",
+    "last_active", "current_streak", "longest_streak",
+    "feed_posts_written", "room_posts_written", "total_posts_written",
+    "total_likes_received", "total_comments_received", "social_engagement_level",
   ];
 
   const today = new Date().toISOString().slice(0, 10);
