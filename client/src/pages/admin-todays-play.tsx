@@ -346,16 +346,36 @@ export default function AdminTodaysPlayPage() {
 
   useEffect(() => {
     if (!drafts.length) return;
-    const today = toLocalDateStr(new Date());
     const isValidDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && parseInt(s.slice(0, 4)) >= 2020;
     setDates(prev => {
       const next = { ...prev };
+
+      // Step 1: restore any date already saved on the draft record in the DB
       for (const d of drafts) {
-        const existing = next[d.id];
-        if (!existing || !isValidDate(existing)) {
-          next[d.id] = (d.featured_date && isValidDate(d.featured_date)) ? d.featured_date : today;
+        if (!next[d.id] || !isValidDate(next[d.id])) {
+          if (d.featured_date && isValidDate(d.featured_date)) {
+            next[d.id] = d.featured_date;
+          }
         }
       }
+
+      // Step 2: auto-assign still-unassigned drafts — 1 per day starting tomorrow
+      const takenDates = new Set(Object.values(next).filter(Boolean));
+      const unassigned = drafts.filter(d => !next[d.id]);
+      const cursor = new Date();
+      cursor.setDate(cursor.getDate() + 1);
+      for (const draft of unassigned) {
+        while (cursor.getFullYear() <= 2027) {
+          const ds = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`;
+          cursor.setDate(cursor.getDate() + 1);
+          if (!takenDates.has(ds)) {
+            next[draft.id] = ds;
+            takenDates.add(ds);
+            break;
+          }
+        }
+      }
+
       return next;
     });
   }, [drafts]);
