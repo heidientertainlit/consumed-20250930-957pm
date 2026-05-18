@@ -194,6 +194,39 @@ async function buildMasterExport() {
     socialMap[p.user_id].comments_received += p.comments_count || 0;
   });
 
+  // 12. Room membership — which official rooms each user has joined
+  const { data: officialRooms } = await supabase
+    .from("pools")
+    .select("id, name, room_category, media_type")
+    .eq("is_official", true);
+
+  const roomNameMap: Record<string, string> = {};
+  (officialRooms || []).forEach((r: any) => { roomNameMap[r.id] = r.name; });
+
+  const { data: poolMembers } = await supabase
+    .from("pool_members")
+    .select("pool_id, user_id")
+    .in("pool_id", (officialRooms || []).map((r: any) => r.id));
+
+  const userRooms: Record<string, string[]> = {};
+  (poolMembers || []).forEach((m: any) => {
+    const name = roomNameMap[m.pool_id];
+    if (!name) return;
+    if (!userRooms[m.user_id]) userRooms[m.user_id] = [];
+    userRooms[m.user_id].push(name);
+  });
+
+  // 13. Room takes — to find most active room per user
+  const { data: allRoomTakes } = await supabase
+    .from("room_takes")
+    .select("user_id, room_id");
+
+  const userRoomPostCounts: Record<string, Record<string, number>> = {};
+  (allRoomTakes || []).forEach((t: any) => {
+    if (!userRoomPostCounts[t.user_id]) userRoomPostCounts[t.user_id] = {};
+    userRoomPostCounts[t.user_id][t.room_id] = (userRoomPostCounts[t.user_id][t.room_id] || 0) + 1;
+  });
+
   // 8. List items
   const { data: listItems } = await supabase
     .from("list_items")
@@ -381,6 +414,14 @@ async function buildMasterExport() {
       total_likes_received: social.likes_received,
       total_comments_received: social.comments_received,
       social_engagement_level: engagementLevel,
+      // Room membership
+      rooms_joined: (userRooms[uid] || []).join("; "),
+      rooms_joined_count: (userRooms[uid] || []).length,
+      most_active_room: (() => {
+        const roomCounts = userRoomPostCounts[uid] || {};
+        const topRoomId = Object.entries(roomCounts).sort(([, a], [, b]) => b - a)[0]?.[0];
+        return topRoomId ? (roomNameMap[topRoomId] || "") : "";
+      })(),
     };
   });
 
@@ -403,6 +444,7 @@ async function buildMasterExport() {
     "last_active", "current_streak", "longest_streak",
     "feed_posts_written", "room_posts_written", "total_posts_written",
     "total_likes_received", "total_comments_received", "social_engagement_level",
+    "rooms_joined", "rooms_joined_count", "most_active_room",
   ];
 
   const today = new Date().toISOString().slice(0, 10);
@@ -575,15 +617,136 @@ async function buildPollResponsesExport() {
   return rows.length;
 }
 
+async function buildRoomEngagementExport() {
+  // Real users only
+  const { data: users } = await supabase
+    .from("users")
+    .select("id")
+    .or("is_persona.is.null,is_persona.eq.false");
+  const realUserIds = new Set((users || []).map((u: any) => u.id));
+
+  // Official rooms
+  const { data: officialRooms } = await supabase
+    .from("pools")
+    .select("id, name, room_category, media_type, series_tag")
+    .eq("is_official", true);
+
+  if (!officialRooms || officialRooms.length === 0) return 0;
+
+  const roomMap: Record<string, any> = {};
+  (officialRooms || []).forEach((r: any) => { roomMap[r.id] = r; });
+  const roomIds = Object.keys(roomMap);
+
+  // Members of official rooms
+  const { data: members } = await supabase
+    .from("pool_members")
+    .select("pool_id, user_id, role, joined_at")
+    .in("pool_id", roomIds);
+
+  // Room takes (discussion posts) per user per room
+  const { data: takes } = await supabase
+    .from("room_takes")
+    .select("user_id, room_id, upvotes");
+
+  const takesMap: Record<string, Record<string, { count: number; upvotes: number }>> = {};
+  (takes || []).forEach((t: any) => {
+    if (!takesMap[t.user_id]) takesMap[t.user_id] = {};
+    if (!takesMap[t.user_id][t.room_id]) takesMap[t.user_id][t.room_id] = { count: 0, upvotes: 0 };
+    takesMap[t.user_id][t.room_id].count++;
+    takesMap[t.user_id][t.room_id].upvotes += t.upvotes || 0;
+  });
+
+  // Room take replies per user per room (need take→room mapping)
+  const takeRoomMap: Record<string, string> = {};
+  (takes || []).forEach((t: any) => { takeRoomMap[t.id] = t.room_id; });
+
+  const { data: allTakesWithId } = await supabase
+    .from("room_takes")
+    .select("id, room_id");
+  const takeIdToRoom: Record<string, string> = {};
+  (allTakesWithId || []).forEach((t: any) => { takeIdToRoom[t.id] = t.room_id; });
+
+  const { data: replies } = await supabase
+    .from("room_take_replies")
+    .select("user_id, take_id");
+
+  const repliesMap: Record<string, Record<string, number>> = {};
+  (replies || []).forEach((r: any) => {
+    const roomId = takeIdToRoom[r.take_id];
+    if (!roomId) return;
+    if (!repliesMap[r.user_id]) repliesMap[r.user_id] = {};
+    repliesMap[r.user_id][roomId] = (repliesMap[r.user_id][roomId] || 0) + 1;
+  });
+
+  // Room take votes per user per room
+  const { data: votes } = await supabase
+    .from("room_take_votes")
+    .select("user_id, take_id");
+
+  const votesMap: Record<string, Record<string, number>> = {};
+  (votes || []).forEach((v: any) => {
+    const roomId = takeIdToRoom[v.take_id];
+    if (!roomId) return;
+    if (!votesMap[v.user_id]) votesMap[v.user_id] = {};
+    votesMap[v.user_id][roomId] = (votesMap[v.user_id][roomId] || 0) + 1;
+  });
+
+  const rows: any[] = [];
+  (members || []).forEach((m: any) => {
+    if (!realUserIds.has(m.user_id)) return;
+    const room = roomMap[m.pool_id];
+    if (!room) return;
+
+    const rid = m.pool_id;
+    const uid = m.user_id;
+    const takeData = (takesMap[uid] || {})[rid] || { count: 0, upvotes: 0 };
+    const replyCount = (repliesMap[uid] || {})[rid] || 0;
+    const voteCount = (votesMap[uid] || {})[rid] || 0;
+    const isActive = takeData.count > 0 || replyCount > 0 || voteCount > 0;
+
+    rows.push({
+      anon_id: uid,
+      room_name: room.name || "",
+      room_category: room.room_category || "",
+      room_media_type: room.media_type || "",
+      joined_at: (m.joined_at || "").slice(0, 10),
+      role: m.role || "member",
+      takes_posted: takeData.count,
+      replies_posted: replyCount,
+      votes_cast: voteCount,
+      total_upvotes_received: takeData.upvotes,
+      is_active: isActive ? "yes" : "no",
+    });
+  });
+
+  // Sort by room then by takes_posted desc
+  rows.sort((a, b) =>
+    (a.room_name || "").localeCompare(b.room_name || "") ||
+    b.takes_posted - a.takes_posted
+  );
+
+  const fields = [
+    "anon_id", "room_name", "room_category", "room_media_type",
+    "joined_at", "role",
+    "takes_posted", "replies_posted", "votes_cast",
+    "total_upvotes_received", "is_active",
+  ];
+  const today = new Date().toISOString().slice(0, 10);
+  downloadCSV(`consumed_room_engagement_${today}.csv`, rows, fields);
+  return rows.length;
+}
+
 export default function AdminExportsPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [masterLoading, setMasterLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [pollLoading, setPollLoading] = useState(false);
+  const [roomLoading, setRoomLoading] = useState(false);
   const [masterCount, setMasterCount] = useState<number | null>(null);
   const [detailCount, setDetailCount] = useState<number | null>(null);
   const [pollCount, setPollCount] = useState<number | null>(null);
+  const [roomCount, setRoomCount] = useState<number | null>(null);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["admin-profile-check", user?.id],
@@ -641,6 +804,17 @@ export default function AdminExportsPage() {
       setPollCount(count);
     } finally {
       setPollLoading(false);
+    }
+  };
+
+  const handleRooms = async () => {
+    setRoomLoading(true);
+    setRoomCount(null);
+    try {
+      const count = await buildRoomEngagementExport();
+      setRoomCount(count);
+    } finally {
+      setRoomLoading(false);
     }
   };
 
@@ -763,6 +937,41 @@ export default function AdminExportsPage() {
                 </button>
                 {pollCount !== null && (
                   <p className="text-xs text-green-400 mt-2">✓ Downloaded {pollCount} responses</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Room Engagement Export */}
+          <div className="bg-gradient-to-br from-sky-900/40 to-sky-800/20 border border-sky-700/40 rounded-2xl p-6">
+            <div className="flex items-start gap-5">
+              <div className="bg-sky-900/50 rounded-xl p-3 flex-shrink-0">
+                <FileText size={24} className="text-sky-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-semibold text-white mb-1">Room Engagement Export</p>
+                <p className="text-sm text-gray-400 leading-snug mb-2">
+                  One row per user × room they've joined. Who's in which room, how active they are, and how their content lands.
+                </p>
+                <ul className="text-xs text-gray-500 space-y-0.5 mb-4 list-disc list-inside">
+                  <li>Room name, category (media / genre / platform), and media type</li>
+                  <li>When they joined + their role (host or member)</li>
+                  <li>Takes (posts) written in that room</li>
+                  <li>Replies written + votes cast on others' takes</li>
+                  <li>Total upvotes their takes have received</li>
+                  <li>Active flag — yes if they've posted, replied, or voted at least once</li>
+                </ul>
+                <p className="text-xs text-sky-300/70 mb-4">One row per user × room · join to Master on <code className="text-sky-200">anon_id</code></p>
+                <button
+                  onClick={handleRooms}
+                  disabled={roomLoading}
+                  className="flex items-center gap-2 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                >
+                  {roomLoading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                  {roomLoading ? "Building export…" : "Download consumed_room_engagement.csv"}
+                </button>
+                {roomCount !== null && (
+                  <p className="text-xs text-green-400 mt-2">✓ Downloaded {roomCount} rows</p>
                 )}
               </div>
             </div>
