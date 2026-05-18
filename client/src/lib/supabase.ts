@@ -9,6 +9,10 @@ if (!supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
+// Export raw URL and key for direct fetch calls to edge functions
+export const SUPABASE_URL = supabaseUrl
+export const SUPABASE_ANON_KEY = supabaseKey
+
 // Export URL for function calls
 export const getSupabaseFunctionUrl = (functionName: string) => 
   `${supabaseUrl}/functions/v1/${functionName}`

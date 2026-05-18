@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/lib/supabase";
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 import {
   ArrowLeft, Sparkles, Loader2, Check, X, CalendarDays, Send,
   ChevronDown, ChevronUp, ShieldCheck, AlertTriangle, Film, BookOpen, Zap, Pencil,
@@ -15,6 +15,7 @@ import {
 type Draft = {
   id: string;
   title: string;
+  content_type: string;
   options: string[];
   correct_answer: string | null;
   category: string;
@@ -81,9 +82,9 @@ function MediaSearchPicker({
       setSearching(true);
       try {
         const searchType = (mediaType === "mixed" || !mediaType) ? undefined : mediaType;
-        const resp = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/media-search`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "apikey": supabaseAnonKey },
+          headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
           body: JSON.stringify({ query: q, ...(searchType ? { type: searchType } : {}) }),
         });
         const data = await resp.json();
@@ -334,11 +335,11 @@ export default function AdminTodaysPlayPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("trivia_poll_drafts")
-        .select("id, title, options, correct_answer, category, show_tag, media_tags, media_type, media_external_id, media_external_source, featured_date, status, created_at")
-        .eq("content_type", "trivia")
+        .select("id, title, content_type, options, correct_answer, category, show_tag, media_tags, media_type, media_external_id, media_external_source, featured_date, status, created_at")
+        .in("content_type", ["trivia", "poll", "featured_play"])
         .in("status", ["draft", "pending"])
         .order("created_at", { ascending: false })
-        .limit(90);
+        .limit(120);
       return data || [];
     },
   });
@@ -359,15 +360,15 @@ export default function AdminTodaysPlayPage() {
     });
   }, [drafts]);
 
-  // Published (past + today scheduled) trivia
+  // Published (past + today scheduled)
   const { data: published = [] } = useQuery<{ date: string; questions: any[] }[]>({
     queryKey: ["todays-play-published"],
     queryFn: async () => {
       const today = toLocalDateStr(new Date());
       const { data } = await supabase
         .from("prediction_pools")
-        .select("id, title, category, featured_date")
-        .eq("type", "trivia")
+        .select("id, title, category, type, featured_date")
+        .in("type", ["trivia", "poll", "predict"])
         .not("featured_date", "is", null)
         .eq("featured_date", today)
         .order("featured_date", { ascending: false })
@@ -384,15 +385,15 @@ export default function AdminTodaysPlayPage() {
     },
   });
 
-  // Scheduled (published) sets
+  // Scheduled (future) sets
   const { data: scheduled = [], refetch: refetchScheduled } = useQuery<{ date: string; questions: any[] }[]>({
     queryKey: ["todays-play-scheduled"],
     queryFn: async () => {
       const today = toLocalDateStr(new Date());
       const { data } = await supabase
         .from("prediction_pools")
-        .select("id, title, category, featured_date")
-        .eq("type", "trivia")
+        .select("id, title, category, type, featured_date")
+        .in("type", ["trivia", "poll", "predict"])
         .not("featured_date", "is", null)
         .gte("featured_date", today)
         .order("featured_date", { ascending: true })
@@ -435,104 +436,28 @@ export default function AdminTodaysPlayPage() {
   });
 
   function suggestDates(forceAll = false) {
-    // forceAll = true → reassign all non-duplicate drafts (used by Re-suggest button)
-    // forceAll = false → only fill in drafts that have no date yet (initial auto-fill)
+    // One question per day — assign each draft its own free date sequentially
     const dupIds = new Set(computeDuplicateIds(drafts, scheduled, published));
     const unassigned = drafts.filter(d => !dupIds.has(d.id) && (forceAll || !dates[d.id]));
-    const movieDrafts = [...unassigned.filter(d => typeMeta(d).mediaType === "movie")];
-    const bookDrafts  = [...unassigned.filter(d => typeMeta(d).mediaType === "book")];
-    const tvDrafts    = [...unassigned.filter(d => typeMeta(d).mediaType === "tv")];
-    const extraDrafts = [...unassigned.filter(d => !["movie", "book", "tv"].includes(typeMeta(d).mediaType))];
-    const maxSets = Math.max(movieDrafts.length, bookDrafts.length, tvDrafts.length);
 
-    // Count pending (state) assignments per date
-    const pendingCount: Record<string, number> = {};
-    Object.values(dates).forEach(ds => { if (ds) pendingCount[ds] = (pendingCount[ds] ?? 0) + 1; });
-
-    // A date is "full" if it has 3+ scheduled (DB) OR 3+ pending draft assignments (state)
-    const fullDates = new Set([
-      ...scheduled.filter(s => s.questions.length >= 3).map(s => s.date),
-      ...Object.entries(pendingCount).filter(([, c]) => c >= 3).map(([d]) => d),
+    // Dates already taken: either scheduled in DB or already assigned in state
+    const takenDates = new Set([
+      ...scheduled.filter(s => s.questions.length >= 1).map(s => s.date),
+      ...Object.values(dates).filter(Boolean),
     ]);
 
-    const freeDates: string[] = [];
+    const newDates: Record<string, string> = { ...dates };
     const cursor = new Date();
     cursor.setDate(cursor.getDate() + 1);
-    while (freeDates.length < maxSets && freeDates.length < 60) {
-      const ds = toLocalDateStr(cursor);
-      if (!fullDates.has(ds)) freeDates.push(ds);
-      cursor.setDate(cursor.getDate() + 1);
-    }
 
-    const newDates: Record<string, string> = { ...dates };
-    let mi = 0, bi = 0, ti = 0, ei = 0;
-
-    // Phase 1: assign primaries + sprinkle extras every 3rd day
-    for (let dayIdx = 0; dayIdx < freeDates.length; dayIdx++) {
-      const dateStr = freeDates[dayIdx];
-      // Every 3rd day (dayIdx 2, 5, 8…) swap one primary slot out for an extra
-      const useExtra = extraDrafts.length > 0 && ei < extraDrafts.length && dayIdx % 3 === 2;
-
-      if (useExtra) {
-        // Which primary to drop rotates: 0=movie, 1=book, 2=tv
-        const dropSlot = Math.floor(dayIdx / 3) % 3;
-        newDates[extraDrafts[ei++].id] = dateStr;
-        if (dropSlot !== 0 && movieDrafts[mi]) newDates[movieDrafts[mi++].id] = dateStr;
-        if (dropSlot !== 1 && bookDrafts[bi])  newDates[bookDrafts[bi++].id]  = dateStr;
-        if (dropSlot !== 2 && tvDrafts[ti])    newDates[tvDrafts[ti++].id]    = dateStr;
-      } else {
-        // Standard day: one of each primary
-        if (movieDrafts[mi]) newDates[movieDrafts[mi++].id] = dateStr;
-        if (bookDrafts[bi])  newDates[bookDrafts[bi++].id]  = dateStr;
-        if (tvDrafts[ti])    newDates[tvDrafts[ti++].id]    = dateStr;
-      }
-    }
-
-    // Phase 2: place any remaining extras into existing day groups (every 3rd group),
-    // replacing a primary from that group so the day still has exactly 3 questions.
-    if (ei < extraDrafts.length) {
-      // Tally how many drafts are pending per date (after Phase 1)
-      const countByDate: Record<string, number> = {};
-      Object.values(newDates).forEach(ds => { if (ds) countByDate[ds] = (countByDate[ds] ?? 0) + 1; });
-
-      // Candidate dates are those with exactly 3 primary drafts, sorted chronologically
-      const candidateDates = Object.entries(countByDate)
-        .filter(([, c]) => c === 3)
-        .map(([ds]) => ds)
-        .sort();
-
-      let slotIdx = 0;
-      for (const ds of candidateDates) {
-        if (ei >= extraDrafts.length) break;
-        // Only take every 3rd candidate date
-        if (slotIdx % 3 !== 2) { slotIdx++; continue; }
-
-        // Find a primary in this group to evict (rotating: movie → book → tv)
-        const dropType = ["movie", "book", "tv"][Math.floor(slotIdx / 3) % 3];
-        const evictId = Object.entries(newDates).find(([id, d]) => {
-          if (d !== ds) return false;
-          const dr = drafts.find(x => x.id === id);
-          return dr ? typeMeta(dr).mediaType === dropType : false;
-        })?.[0];
-        if (evictId) delete newDates[evictId];
-
-        newDates[extraDrafts[ei++].id] = ds;
-        slotIdx++;
-      }
-
-      // Phase 2b: any still-remaining extras get the next free date that has NO existing content
-      if (ei < extraDrafts.length) {
-        const assignedSet = new Set(Object.values(newDates).filter(Boolean));
-        const cur2 = new Date();
-        cur2.setDate(cur2.getDate() + 1);
-        while (ei < extraDrafts.length) {
-          const ds = toLocalDateStr(cur2);
-          if (!fullDates.has(ds) && !assignedSet.has(ds)) {
-            newDates[extraDrafts[ei++].id] = ds;
-            assignedSet.add(ds);
-          }
-          cur2.setDate(cur2.getDate() + 1);
-          if (cur2.getFullYear() > 2027) break;
+    for (const draft of unassigned) {
+      while (cursor.getFullYear() <= 2027) {
+        const ds = toLocalDateStr(cursor);
+        cursor.setDate(cursor.getDate() + 1);
+        if (!takenDates.has(ds)) {
+          newDates[draft.id] = ds;
+          takenDates.add(ds);
+          break;
         }
       }
     }
@@ -540,20 +465,20 @@ export default function AdminTodaysPlayPage() {
     setDates(newDates);
   }
 
-  async function callGenerate(slot: SlotMeta, count = 14) {
+  async function callGenerateDailyPlay(contentType: "trivia" | "poll" | "featured_play", count: number) {
     const { data: { session: s } } = await supabase.auth.getSession();
-    const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-trivia-polls`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${s?.access_token}`,
-        "apikey": supabaseAnonKey,
+        "apikey": SUPABASE_ANON_KEY,
       },
       body: JSON.stringify({
-        contentType: "trivia",
+        contentType,
         count,
-        mediaType: slot.mediaType,
-        focusTopic: slot.focusTopic,
+        mediaType: "mixed",
+        useTrending: true,
         difficulty: "medium",
       }),
     });
@@ -589,26 +514,25 @@ export default function AdminTodaysPlayPage() {
     return ids.length;
   }
 
-  async function handleGenerate() {
-    setGenStage("movie");
-    let movieCount = 0, bookCount = 0, tvCount = 0;
+  async function handleGenerateDailyPlays() {
+    setGenStage("trivia");
+    let triviaCount = 0, pollCount = 0, predictionCount = 0;
     try {
-      const r1 = await callGenerate(PRIMARY_SLOTS[0]);
-      movieCount = r1.generated ?? 0;
-      setGenStage("book");
-      const r2 = await callGenerate(PRIMARY_SLOTS[1]);
-      bookCount = r2.generated ?? 0;
-      setGenStage("tv");
-      const r3 = await callGenerate(PRIMARY_SLOTS[2]);
-      tvCount = r3.generated ?? 0;
+      const r1 = await callGenerateDailyPlay("trivia", 5);
+      triviaCount = r1.generated ?? 0;
+      setGenStage("poll");
+      const r2 = await callGenerateDailyPlay("poll", 5);
+      pollCount = r2.generated ?? 0;
+      setGenStage("predict");
+      const r3 = await callGenerateDailyPlay("featured_play", 4);
+      predictionCount = r3.generated ?? 0;
       setGenStage("done");
-
       const refetchResult = await refetchDrafts();
       const removed = await purgeDuplicates(refetchResult.data ?? []);
-      const total = movieCount + bookCount + tvCount;
+      const total = triviaCount + pollCount + predictionCount;
       toast({
-        title: `Generated ${total} questions${removed > 0 ? `, removed ${removed} duplicate${removed !== 1 ? "s" : ""}` : ""}`,
-        description: `${movieCount} Movie · ${bookCount} Book · ${tvCount} TV — review in Drafts.`,
+        title: `Generated ${total} daily plays${removed > 0 ? `, removed ${removed} duplicate${removed !== 1 ? "s" : ""}` : ""}`,
+        description: `${triviaCount} Trivia · ${pollCount} Polls · ${predictionCount} Predictions — review in Drafts.`,
       });
       setTab("drafts");
     } catch (err: any) {
@@ -618,32 +542,10 @@ export default function AdminTodaysPlayPage() {
     }
   }
 
-  async function handleGenerateExtras() {
-    setExtrasStage("music");
-    let musicCount = 0, podcastCount = 0, gamingCount = 0;
-    try {
-      const r1 = await callGenerate(EXTRA_SLOTS[0], 6);
-      musicCount = r1.generated ?? 0;
-      setExtrasStage("podcast");
-      const r2 = await callGenerate(EXTRA_SLOTS[1], 6);
-      podcastCount = r2.generated ?? 0;
-      setExtrasStage("gaming");
-      const r3 = await callGenerate(EXTRA_SLOTS[2], 6);
-      gamingCount = r3.generated ?? 0;
-      setExtrasStage("done");
-      const refetchResult = await refetchDrafts();
-      const removed = await purgeDuplicates(refetchResult.data ?? []);
-      const total = musicCount + podcastCount + gamingCount;
-      toast({
-        title: `Generated ${total} extra questions${removed > 0 ? `, removed ${removed} duplicate${removed !== 1 ? "s" : ""}` : ""}`,
-        description: `${musicCount} Music · ${podcastCount} Podcast · ${gamingCount} Gaming — review in Queue.`,
-      });
-      setTab("drafts");
-    } catch (err: any) {
-      toast({ title: "Generation failed", description: err.message, variant: "destructive" });
-    } finally {
-      setExtrasStage("idle");
-    }
+  function getPoolType(draft: Draft): "trivia" | "poll" | "predict" {
+    if (draft.content_type === "poll") return "poll";
+    if (draft.content_type === "featured_play") return "predict";
+    return "trivia";
   }
 
   async function publishDraft(draft: Draft) {
@@ -653,12 +555,13 @@ export default function AdminTodaysPlayPage() {
     try {
       const { data: { session: s } } = await supabase.auth.getSession();
       const meta = typeMeta(draft);
+      const poolType = getPoolType(draft);
       const poolData = {
         id: crypto.randomUUID(),
         title: draft.title,
-        type: "trivia",
+        type: poolType,
         options: draft.options,
-        correct_answer: draft.correct_answer || null,
+        correct_answer: poolType === "trivia" ? (draft.correct_answer || null) : null,
         category: meta.categoryHint,
         show_tag: draft.show_tag || null,
         media_tags: draft.media_tags || (draft.show_tag ? [draft.show_tag] : null),
@@ -669,15 +572,15 @@ export default function AdminTodaysPlayPage() {
         status: "open",
         origin_type: "consumed",
         inline: true,
-        icon: "help-circle",
+        icon: poolType === "trivia" ? "help-circle" : poolType === "poll" ? "bar-chart-2" : "trending-up",
         points_reward: 10,
       };
-      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-trivia-polls`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${s?.access_token}`,
-          "apikey": supabaseAnonKey,
+          "apikey": SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({ action: "publish", poolData, draftId: draft.id }),
       });
@@ -700,24 +603,20 @@ export default function AdminTodaysPlayPage() {
   }
 
   async function scheduleGroup(dateStr: string, groupDrafts: Draft[]) {
-    // Block if this date already has any of the same categories (true duplicate prevention)
-    const existingCategories = new Set(
-      scheduled.find(s => s.date === dateStr)?.questions.map(q => q.category) ?? []
-    );
-    const incomingCategories = groupDrafts.map(d => typeMeta(d).categoryHint);
-    const dupes = incomingCategories.filter(c => existingCategories.has(c));
-    if (dupes.length > 0) {
+    // Block if this date already has a question scheduled
+    const existingCount = scheduled.find(s => s.date === dateStr)?.questions.length ?? 0;
+    if (existingCount >= 1) {
       toast({
-        title: "Duplicate categories on this date",
-        description: `${dateStr} already has: ${dupes.join(", ")}. Change the date or remove the duplicates.`,
+        title: "Date already has a question",
+        description: `${dateStr} already has ${existingCount} question scheduled. Pick a different date.`,
         variant: "destructive",
       });
       return;
     }
 
-    // Pre-filter drafts that can never be scheduled (missing show_tag)
-    const noTagDrafts = groupDrafts.filter(d => !d.show_tag);
-    const schedulable = groupDrafts.filter(d => !!d.show_tag);
+    // Trivia requires show_tag; polls and predictions don't
+    const noTagDrafts = groupDrafts.filter(d => !d.show_tag && (!d.content_type || d.content_type === "trivia"));
+    const schedulable = groupDrafts.filter(d => !!d.show_tag || (d.content_type && d.content_type !== "trivia"));
 
     if (noTagDrafts.length > 0 && schedulable.length === 0) {
       toast({
@@ -742,12 +641,13 @@ export default function AdminTodaysPlayPage() {
       try {
         const { data: { session: s } } = await supabase.auth.getSession();
         const meta = typeMeta(draft);
+        const poolType = getPoolType(draft);
         const poolData = {
           id: crypto.randomUUID(),
           title: draft.title,
-          type: "trivia",
+          type: poolType,
           options: draft.options,
-          correct_answer: draft.correct_answer || null,
+          correct_answer: poolType === "trivia" ? (draft.correct_answer || null) : null,
           category: meta.categoryHint,
           show_tag: draft.show_tag || null,
           media_tags: draft.media_tags || (draft.show_tag ? [draft.show_tag] : null),
@@ -758,15 +658,15 @@ export default function AdminTodaysPlayPage() {
           status: "open",
           origin_type: "consumed",
           inline: true,
-          icon: "help-circle",
+          icon: poolType === "trivia" ? "help-circle" : poolType === "poll" ? "bar-chart-2" : "trending-up",
           points_reward: 10,
         };
-        const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-trivia-polls`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${s?.access_token}`,
-            "apikey": supabaseAnonKey,
+            "apikey": SUPABASE_ANON_KEY,
           },
           body: JSON.stringify({ action: "publish", poolData, draftId: draft.id }),
         });
@@ -822,12 +722,12 @@ export default function AdminTodaysPlayPage() {
     try {
       const { data: { session: s } } = await supabase.auth.getSession();
       const updates = ids.map(id => ({ id, featured_date: newDate }));
-      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-trivia-polls`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${s?.access_token}`,
-          "apikey": supabaseAnonKey,
+          "apikey": SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({ action: "reschedule_featured", updates }),
       });
@@ -852,12 +752,12 @@ export default function AdminTodaysPlayPage() {
     setUnschedulingId(poolId);
     try {
       const { data: { session: s } } = await supabase.auth.getSession();
-      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-trivia-polls`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${s?.access_token}`,
-          "apikey": supabaseAnonKey,
+          "apikey": SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({ action: "unschedule", poolId }),
       });
@@ -992,17 +892,12 @@ export default function AdminTodaysPlayPage() {
   const generating = !["idle", "done"].includes(genStage);
   const generatingExtras = !["idle", "done"].includes(extrasStage);
 
-  const PRIMARY_STAGE_ORDER = ["movie", "book", "tv"];
-  const EXTRA_STAGE_ORDER = ["music", "podcast", "gaming"];
+  const DAILY_STAGE_ORDER = ["trivia", "poll", "predict"];
 
   const STAGE_LABELS: Record<string, string> = {
-    movie: "Generating Movie questions...",
-    book: "Generating Book questions...",
-    tv: "Generating TV / Shows questions...",
-    pop: "Generating Pop Culture questions...",
-    music: "Generating Music questions...",
-    podcast: "Generating Podcast questions...",
-    gaming: "Generating Gaming questions...",
+    trivia: "Generating trivia questions...",
+    poll: "Generating opinion polls...",
+    predict: "Generating predictions...",
   };
 
   return (
@@ -1016,7 +911,7 @@ export default function AdminTodaysPlayPage() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-white">Today's Play Generator</h1>
-            <p className="text-gray-400 text-sm mt-0.5">3-question trivia sets — movie, book, TV</p>
+            <p className="text-gray-400 text-sm mt-0.5">One question per day — trivia, poll, or prediction</p>
           </div>
         </div>
 
@@ -1051,32 +946,38 @@ export default function AdminTodaysPlayPage() {
               </div>
             </div>
 
-            {/* Primary slots */}
+            {/* What gets generated */}
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Daily core (14 each)</p>
-              {PRIMARY_SLOTS.map(meta => (
-                <div key={meta.mediaType} className="flex items-center justify-between">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${meta.pillClass}`}>
-                    {meta.icon} {meta.label}
-                  </span>
-                  <span className="text-xs text-gray-500">14 questions</span>
-                </div>
-              ))}
-              <p className="text-xs text-gray-500 pt-1 border-t border-gray-800">56 total — 4 per day: Movie + Book + TV + Pop Culture</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">What gets generated — 14 days, 1 per day</p>
+              <div className="space-y-2.5">
+                {[
+                  { icon: <Zap size={11} />, label: "5 Trivia", desc: "Trendy facts, casting drama, chart history, iconic moments", pillClass: "bg-teal-500/20 text-teal-300" },
+                  { icon: <Shuffle size={11} />, label: "5 Opinion Polls", desc: "Fan debates, hot takes, team picks, finale verdicts", pillClass: "bg-purple-500/20 text-purple-300" },
+                  { icon: <Sparkles size={11} />, label: "4 Predictions", desc: "Trending spec — renewals, feuds, award season, comeback rumors", pillClass: "bg-pink-500/20 text-pink-300" },
+                ].map(({ icon, label, desc, pillClass }) => (
+                  <div key={label} className="flex items-start gap-3">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium flex-shrink-0 ${pillClass}`}>
+                      {icon} {label}
+                    </span>
+                    <p className="text-xs text-gray-500 leading-snug pt-0.5">{desc}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-600 pt-2 border-t border-gray-800">Pop culture + entertainment. Uses live trending data from TMDB + Open Library.</p>
             </div>
 
-            {/* Generate primary button */}
-            {!generating && !generatingExtras && (
+            {/* Generate button */}
+            {!generating && (
               <Button
-                onClick={handleGenerate}
+                onClick={handleGenerateDailyPlays}
                 className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-base"
               >
                 <Sparkles size={18} className="mr-2" />
-                Generate 14 Days of Questions
+                Generate 14 Daily Plays
               </Button>
             )}
 
-            {/* Primary progress */}
+            {/* Progress */}
             {generating && (
               <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-5">
                 <div className="text-center">
@@ -1084,72 +985,23 @@ export default function AdminTodaysPlayPage() {
                   <p className="text-sm font-semibold text-white">{STAGE_LABELS[genStage] || "Working..."}</p>
                 </div>
                 <div className="space-y-2">
-                  {PRIMARY_SLOTS.map((meta, i) => {
-                    const stageIdx = PRIMARY_STAGE_ORDER.indexOf(genStage);
-                    const isDone = i < stageIdx;
-                    const isActive = i === stageIdx;
+                  {[
+                    { stage: "trivia", label: "Trivia", count: "5 questions", icon: <Zap size={11} />, pillClass: "bg-teal-500/20 text-teal-300" },
+                    { stage: "poll", label: "Opinion Polls", count: "5 questions", icon: <Shuffle size={11} />, pillClass: "bg-purple-500/20 text-purple-300" },
+                    { stage: "predict", label: "Predictions", count: "4 questions", icon: <Sparkles size={11} />, pillClass: "bg-pink-500/20 text-pink-300" },
+                  ].map(({ stage, label, count, icon, pillClass }) => {
+                    const stageIdx = DAILY_STAGE_ORDER.indexOf(genStage);
+                    const myIdx = DAILY_STAGE_ORDER.indexOf(stage);
+                    const isDone = myIdx < stageIdx;
+                    const isActive = myIdx === stageIdx;
                     return (
-                      <div key={meta.mediaType} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive ? "bg-teal-500/10 border border-teal-500/30" : isDone ? "opacity-50" : "opacity-30"}`}>
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${meta.pillClass}`}>
-                          {meta.icon} {meta.label}
+                      <div key={stage} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive ? "bg-teal-500/10 border border-teal-500/30" : isDone ? "opacity-50" : "opacity-30"}`}>
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${pillClass}`}>
+                          {icon} {label}
                         </span>
-                        <span className="flex-1 text-xs text-gray-500">14 questions</span>
+                        <span className="flex-1 text-xs text-gray-500">{count}</span>
                         {isDone && <Check size={14} className="text-teal-400" />}
                         {isActive && <Loader2 size={14} className="animate-spin text-teal-400" />}
-                      </div>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-center text-gray-600">Don't close this page while generating</p>
-              </div>
-            )}
-
-            {/* Extra slots */}
-            <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Extras — less frequent (6 each)</p>
-              {EXTRA_SLOTS.map(meta => (
-                <div key={meta.mediaType} className="flex items-center justify-between">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${meta.pillClass}`}>
-                    {meta.icon} {meta.label}
-                  </span>
-                  <span className="text-xs text-gray-500">6 questions</span>
-                </div>
-              ))}
-              <p className="text-xs text-gray-500 pt-1 border-t border-gray-800">Mix into the schedule manually — swap in occasionally for variety.</p>
-            </div>
-
-            {/* Generate extras button */}
-            {!generating && !generatingExtras && (
-              <Button
-                onClick={handleGenerateExtras}
-                variant="outline"
-                className="w-full py-3 border-purple-600 bg-purple-950/60 text-purple-200 hover:bg-purple-900/60 hover:text-white hover:border-purple-500 rounded-xl"
-              >
-                <Sparkles size={15} className="mr-2" />
-                Generate Extras (Music · Podcast · Gaming)
-              </Button>
-            )}
-
-            {/* Extras progress */}
-            {generatingExtras && (
-              <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-5">
-                <div className="text-center">
-                  <Loader2 size={28} className="animate-spin text-purple-400 mx-auto mb-3" />
-                  <p className="text-sm font-semibold text-white">{STAGE_LABELS[extrasStage] || "Working..."}</p>
-                </div>
-                <div className="space-y-2">
-                  {EXTRA_SLOTS.map((meta, i) => {
-                    const stageIdx = EXTRA_STAGE_ORDER.indexOf(extrasStage);
-                    const isDone = i < stageIdx;
-                    const isActive = i === stageIdx;
-                    return (
-                      <div key={meta.mediaType} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive ? "bg-purple-500/10 border border-purple-500/30" : isDone ? "opacity-50" : "opacity-30"}`}>
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${meta.pillClass}`}>
-                          {meta.icon} {meta.label}
-                        </span>
-                        <span className="flex-1 text-xs text-gray-500">6 questions</span>
-                        {isDone && <Check size={14} className="text-teal-400" />}
-                        {isActive && <Loader2 size={14} className="animate-spin text-purple-400" />}
                       </div>
                     );
                   })}
@@ -1327,8 +1179,8 @@ export default function AdminTodaysPlayPage() {
                   {scheduled.map(({ date, questions }) => (
                     <div key={date} className="flex items-center justify-between">
                       <span className="text-sm text-gray-300">{date}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${questions.length >= 3 ? "bg-teal-500/20 text-teal-300" : "bg-yellow-500/20 text-yellow-300"}`}>
-                        {questions.length}/3
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${questions.length >= 1 ? "bg-teal-500/20 text-teal-300" : "bg-yellow-500/20 text-yellow-300"}`}>
+                        {questions.length} scheduled
                       </span>
                     </div>
                   ))}
@@ -1709,8 +1561,8 @@ export default function AdminTodaysPlayPage() {
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm font-bold text-white">{date}</p>
                         <div className="flex items-center gap-2">
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${questions.length >= 3 ? "bg-teal-500/20 text-teal-300" : "bg-yellow-500/20 text-yellow-300"}`}>
-                            {questions.length}/3
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${questions.length >= 1 ? "bg-teal-500/20 text-teal-300" : "bg-yellow-500/20 text-yellow-300"}`}>
+                            {questions.length} scheduled
                           </span>
                           <button
                             onClick={() => {
