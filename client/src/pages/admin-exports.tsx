@@ -736,6 +736,93 @@ async function buildRoomEngagementExport() {
   return rows.length;
 }
 
+async function buildTodaysPlayExport() {
+  // Real users only
+  const { data: users } = await supabase
+    .from("users")
+    .select("id")
+    .or("is_persona.is.null,is_persona.eq.false");
+  const realUserIds = new Set((users || []).map((u: any) => u.id));
+
+  // All Today's Play questions (prediction_pools where featured_date is set)
+  const { data: featuredPools } = await supabase
+    .from("prediction_pools")
+    .select("id, title, type, show_tag, category, featured_date, options, correct_answer")
+    .not("featured_date", "is", null)
+    .order("featured_date", { ascending: false });
+
+  if (!featuredPools || featuredPools.length === 0) return 0;
+
+  const poolMap: Record<string, any> = {};
+  (featuredPools || []).forEach((p: any) => { poolMap[p.id] = p; });
+  const poolIds = Object.keys(poolMap);
+
+  // All responses to these questions
+  const { data: responses } = await supabase
+    .from("user_predictions")
+    .select("user_id, pool_id, prediction, points_earned, created_at")
+    .in("pool_id", poolIds);
+
+  // DNA profiles for archetype labels
+  const respondentIds = [...new Set((responses || []).map((r: any) => r.user_id))];
+  const { data: dnaProfiles } = respondentIds.length > 0
+    ? await supabase
+        .from("dna_profiles")
+        .select("user_id, label, favorite_genres")
+        .in("user_id", respondentIds)
+    : { data: [] };
+
+  const dnaMap: Record<string, any> = {};
+  (dnaProfiles || []).forEach((d: any) => { dnaMap[d.user_id] = d; });
+
+  const rows: any[] = [];
+  (responses || []).forEach((r: any) => {
+    if (!realUserIds.has(r.user_id)) return;
+    const pool = poolMap[r.pool_id];
+    if (!pool) return;
+
+    const dna = dnaMap[r.user_id];
+    const isTrivia = pool.type === "trivia";
+    const isCorrect = isTrivia
+      ? (r.points_earned > 0 ? "yes" : "no")
+      : "";
+
+    const topGenres = dna?.favorite_genres
+      ? (Array.isArray(dna.favorite_genres) ? dna.favorite_genres : JSON.parse(dna.favorite_genres)).slice(0, 4).join(" | ")
+      : "";
+
+    rows.push({
+      featured_date: pool.featured_date || "",
+      question_type: pool.type || "",
+      question: pool.title || "",
+      show_tag: pool.show_tag || "",
+      category: pool.category || "",
+      anon_id: r.user_id,
+      dna_archetype: dna?.label || "",
+      top_genres: topGenres,
+      their_answer: r.prediction || "",
+      correct: isCorrect,
+      points_earned: r.points_earned ?? "",
+      answered_at: (r.created_at || "").slice(0, 10),
+    });
+  });
+
+  // Sort by date desc then question
+  rows.sort((a, b) =>
+    (b.featured_date || "").localeCompare(a.featured_date || "") ||
+    (a.question || "").localeCompare(b.question || "")
+  );
+
+  const fields = [
+    "featured_date", "question_type", "question", "show_tag", "category",
+    "anon_id", "dna_archetype", "top_genres",
+    "their_answer", "correct", "points_earned", "answered_at",
+  ];
+  const today = new Date().toISOString().slice(0, 10);
+  downloadCSV(`consumed_todays_play_responses_${today}.csv`, rows, fields);
+  return rows.length;
+}
+
 export default function AdminExportsPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -743,10 +830,12 @@ export default function AdminExportsPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [pollLoading, setPollLoading] = useState(false);
   const [roomLoading, setRoomLoading] = useState(false);
+  const [todaysPlayLoading, setTodaysPlayLoading] = useState(false);
   const [masterCount, setMasterCount] = useState<number | null>(null);
   const [detailCount, setDetailCount] = useState<number | null>(null);
   const [pollCount, setPollCount] = useState<number | null>(null);
   const [roomCount, setRoomCount] = useState<number | null>(null);
+  const [todaysPlayCount, setTodaysPlayCount] = useState<number | null>(null);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["admin-profile-check", user?.id],
@@ -815,6 +904,17 @@ export default function AdminExportsPage() {
       setRoomCount(count);
     } finally {
       setRoomLoading(false);
+    }
+  };
+
+  const handleTodaysPlay = async () => {
+    setTodaysPlayLoading(true);
+    setTodaysPlayCount(null);
+    try {
+      const count = await buildTodaysPlayExport();
+      setTodaysPlayCount(count);
+    } finally {
+      setTodaysPlayLoading(false);
     }
   };
 
@@ -972,6 +1072,40 @@ export default function AdminExportsPage() {
                 </button>
                 {roomCount !== null && (
                   <p className="text-xs text-green-400 mt-2">✓ Downloaded {roomCount} rows</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Today's Play Responses Export */}
+          <div className="bg-gradient-to-br from-teal-900/40 to-emerald-800/20 border border-teal-700/40 rounded-2xl p-6">
+            <div className="flex items-start gap-5">
+              <div className="bg-teal-900/50 rounded-xl p-3 flex-shrink-0">
+                <BarChart2 size={24} className="text-teal-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-semibold text-white mb-1">Today's Play Responses</p>
+                <p className="text-sm text-gray-400 leading-snug mb-2">
+                  One row per user × featured daily question answered. Covers all three types — trivia, opinion polls, and predictions — filtered to featured daily content only.
+                </p>
+                <ul className="text-xs text-gray-500 space-y-0.5 mb-4 list-disc list-inside">
+                  <li>Featured date + question type (trivia / poll / predict)</li>
+                  <li>The exact question + show tag + category</li>
+                  <li>What they answered</li>
+                  <li>Whether they got it right (trivia only) + points earned</li>
+                  <li>Their DNA archetype + top genres — so you can see who engaged with what</li>
+                </ul>
+                <p className="text-xs text-teal-300/70 mb-4">One row per response · join to Master on <code className="text-teal-200">anon_id</code></p>
+                <button
+                  onClick={handleTodaysPlay}
+                  disabled={todaysPlayLoading}
+                  className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                >
+                  {todaysPlayLoading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                  {todaysPlayLoading ? "Building export…" : "Download consumed_todays_play_responses.csv"}
+                </button>
+                {todaysPlayCount !== null && (
+                  <p className="text-xs text-green-400 mt-2">✓ Downloaded {todaysPlayCount} responses</p>
                 )}
               </div>
             </div>
