@@ -209,82 +209,109 @@ Deno.serve(async (req) => {
         ).join('\n')
       : '';
 
-    // ── 3. Fetch trending titles if requested ──
-    // Sources: TMDB (TV + Movies, free tier), Open Library (Books, free), Google Books (Books, free key)
+    // ── 3. Fetch popular/top-rated titles if requested ──
+    // Sources: TMDB popular + top-rated (all-time), Open Library all-time, Google Books bestsellers
+    // NOTE: we intentionally use popular/top-rated rather than "trending this week" to get
+    // a rich, diverse pool of iconic titles — not just whatever happened to blow up last Tuesday.
     let trendingBlock = '';
     if (useTrending) {
       try {
         const tmdbKey = Deno.env.get('TMDB_API_KEY') || '';
         const googleBooksKey = Deno.env.get('GOOGLE_BOOKS_API_KEY') || '';
-        const trendingTitles: string[] = [];
+        const popularTitles: string[] = [];
 
-        // TMDB: trending TV shows and movies this week (free, no FlixPatrol needed)
+        // TMDB: most popular + top-rated TV and movies (all-time leaderboards, not just this week)
         if (tmdbKey) {
           try {
-            const [tvRes, movieRes] = await Promise.all([
-              fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${tmdbKey}`),
-              fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${tmdbKey}`),
+            const [tvPopRes, tvTopRes, moviePopRes, movieTopRes] = await Promise.all([
+              fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${tmdbKey}&page=1`),
+              fetch(`https://api.themoviedb.org/3/tv/top_rated?api_key=${tmdbKey}&page=1`),
+              fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${tmdbKey}&page=1`),
+              fetch(`https://api.themoviedb.org/3/movie/top_rated?api_key=${tmdbKey}&page=1`),
             ]);
-            if (tvRes.ok) {
-              const d = await tvRes.json();
-              (d.results || []).slice(0, 10).forEach((s: any, i: number) => {
-                if (s.name) trendingTitles.push(`${s.name} (Trending TV #${i + 1})`);
+            // TV: mix popular + top-rated, pick 6 from each (12 TV total)
+            if (tvPopRes.ok) {
+              const d = await tvPopRes.json();
+              (d.results || []).slice(0, 6).forEach((s: any) => {
+                if (s.name) popularTitles.push(`${s.name} (Popular TV)`);
               });
             }
-            if (movieRes.ok) {
-              const d = await movieRes.json();
-              (d.results || []).slice(0, 8).forEach((m: any, i: number) => {
-                if (m.title) trendingTitles.push(`${m.title} (Trending Movie #${i + 1})`);
+            if (tvTopRes.ok) {
+              const d = await tvTopRes.json();
+              (d.results || []).slice(0, 6).forEach((s: any) => {
+                if (s.name) popularTitles.push(`${s.name} (Top-Rated TV)`);
+              });
+            }
+            // Movies: mix popular + top-rated, pick 5 from each (10 movies total)
+            if (moviePopRes.ok) {
+              const d = await moviePopRes.json();
+              (d.results || []).slice(0, 5).forEach((m: any) => {
+                if (m.title) popularTitles.push(`${m.title} (Popular Movie)`);
+              });
+            }
+            if (movieTopRes.ok) {
+              const d = await movieTopRes.json();
+              (d.results || []).slice(0, 5).forEach((m: any) => {
+                if (m.title) popularTitles.push(`${m.title} (Top-Rated Movie)`);
               });
             }
           } catch (_) {}
         }
 
-        // Open Library: trending books this week (completely free, no key)
+        // Open Library: all-time popular books
         try {
-          const olRes = await fetch('https://openlibrary.org/trending/weekly.json?limit=10', {
+          const olRes = await fetch('https://openlibrary.org/trending/yearly.json?limit=10', {
             headers: { 'User-Agent': 'Consumed-App/1.0' },
           });
           if (olRes.ok) {
             const d = await olRes.json();
-            ((d.works || []) as any[]).slice(0, 8).forEach((w: any, i: number) => {
-              if (w.title) trendingTitles.push(`${w.title} (Trending Book #${i + 1})`);
+            ((d.works || []) as any[]).slice(0, 8).forEach((w: any) => {
+              if (w.title) popularTitles.push(`${w.title} (Popular Book)`);
             });
           }
         } catch (_) {}
 
-        // Google Books: popular / recently published (free key)
+        // Google Books: bestsellers / most-discussed fiction and nonfiction
         if (googleBooksKey) {
           try {
-            const gbRes = await fetch(
-              `https://www.googleapis.com/books/v1/volumes?q=subject:fiction&orderBy=newest&maxResults=8&key=${googleBooksKey}`
-            );
-            if (gbRes.ok) {
-              const d = await gbRes.json();
-              ((d.items || []) as any[]).slice(0, 6).forEach((item: any) => {
+            const [ficRes, nonficRes] = await Promise.all([
+              fetch(`https://www.googleapis.com/books/v1/volumes?q=subject:fiction&orderBy=relevance&maxResults=6&key=${googleBooksKey}`),
+              fetch(`https://www.googleapis.com/books/v1/volumes?q=subject:biography+bestseller&orderBy=relevance&maxResults=4&key=${googleBooksKey}`),
+            ]);
+            if (ficRes.ok) {
+              const d = await ficRes.json();
+              ((d.items || []) as any[]).slice(0, 5).forEach((item: any) => {
                 const title = item.volumeInfo?.title;
-                if (title) trendingTitles.push(`${title} (New Book)`);
+                if (title) popularTitles.push(`${title} (Popular Fiction)`);
+              });
+            }
+            if (nonficRes.ok) {
+              const d = await nonficRes.json();
+              ((d.items || []) as any[]).slice(0, 3).forEach((item: any) => {
+                const title = item.volumeInfo?.title;
+                if (title) popularTitles.push(`${title} (Popular Nonfiction)`);
               });
             }
           } catch (_) {}
         }
 
-        if (trendingTitles.length > 0) {
-          trendingBlock = `\n\nTRENDING RIGHT NOW — base your questions heavily on these titles (at least 70% of your content should be about one of these):\n` +
-            trendingTitles.map((t, i) => `${i + 1}. ${t}`).join('\n');
+        if (popularTitles.length > 0) {
+          trendingBlock = `\n\nPOPULAR & ICONIC TITLES — draw from this pool for your questions. Spread across MANY different titles — never write more than 1 question about the same title in a single batch:\n` +
+            popularTitles.map((t, i) => `${i + 1}. ${t}`).join('\n') +
+            `\n\nYou are NOT limited to this list — also freely include beloved classics, cult favorites, and iconic titles from any era that aren't listed above. The goal is breadth and variety across the entire history of entertainment.`;
         }
       } catch (_) {
-        // Trending fetch is best-effort — don't block generation if it fails
+        // Popular fetch is best-effort — don't block generation if it fails
       }
     }
 
     const mediaFocus = focusTopic
       ? `Focus heavily on: "${focusTopic}"`
       : useTrending
-        ? 'Focus on the trending titles listed above.'
+        ? `Draw from the popular titles listed above, but spread questions across AS MANY DIFFERENT TITLES as possible — never more than 1 question per title per batch. Also freely include beloved classics, cult favorites, and iconic titles not on the list. Media mix: 45% TV shows, 30% Movies, 15% Books, 10% Music/Podcasts/Pop Culture. CRITICAL: each question in the batch must be about a DIFFERENT show, movie, or franchise — no two questions about the same title.`
         : mediaType === 'mixed'
-          ? 'Use this media mix: 40% TV, 30% Movies, 20% Books, 10% Music/other'
-          : `Focus on: ${mediaType} content`;
+          ? 'Media mix: 45% TV shows, 30% Movies, 15% Books, 10% Music/Podcasts/Pop Culture. Each question must be about a DIFFERENT title — never 2 questions about the same show, movie, or franchise in one batch.'
+          : `Focus on: ${mediaType} content. Each question must be about a DIFFERENT title.`;
 
     const typeInstructions: Record<string, string> = {
       trivia: `Generate TRIVIA questions only. Use these high-engagement templates:

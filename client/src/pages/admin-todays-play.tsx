@@ -305,6 +305,8 @@ export default function AdminTodaysPlayPage() {
   const [newDateForEdit, setNewDateForEdit] = useState<string>("");
   const [movingDate, setMovingDate] = useState(false);
   const [unschedulingId, setUnschedulingId] = useState<string | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -619,7 +621,20 @@ export default function AdminTodaysPlayPage() {
 
   async function deleteDraft(id: string) {
     await supabase.from("trivia_poll_drafts").delete().eq("id", id);
+    setDates(d => { const u = { ...d }; delete u[id]; return u; });
     await refetchDrafts();
+  }
+
+  async function rejectDraft(id: string, reason: string) {
+    await supabase
+      .from("trivia_poll_drafts")
+      .update({ status: "rejected", rejection_reason: reason.trim() || "No reason given" })
+      .eq("id", id);
+    setDates(d => { const u = { ...d }; delete u[id]; return u; });
+    setRejectingId(null);
+    setRejectReason("");
+    await refetchDrafts();
+    toast({ title: "Feedback saved — AI will avoid this next time" });
   }
 
   async function scheduleGroup(dateStr: string, groupDrafts: Draft[]) {
@@ -1407,38 +1422,95 @@ export default function AdminTodaysPlayPage() {
                               </>
                             )}
                             {!showDatePicker && (
-                              <div className="flex items-center gap-2">
-                                <select
-                                  defaultValue=""
-                                  onChange={e => {
-                                    const val = e.target.value;
-                                    if (!val) return;
-                                    if (val === "__ungroup__") {
-                                      setDates(d => { const u = { ...d }; delete u[draft.id]; return u; });
-                                    } else {
-                                      setDates(d => ({ ...d, [draft.id]: val }));
-                                    }
-                                    e.currentTarget.value = "";
-                                  }}
-                                  className="flex-1 bg-gray-800 border border-gray-700 text-xs text-gray-300 rounded-lg px-2 py-1.5 h-8"
-                                >
-                                  <option value="">Move to another day...</option>
-                                  {sortedDates.filter(d => d !== dates[draft.id]).map(d => (
-                                    <option key={d} value={d}>
-                                      {new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-                                    </option>
-                                  ))}
-                                  <option value="__ungroup__">Remove date (leave unscheduled)</option>
-                                </select>
-                                <Button
-                                  onClick={() => deleteDraft(draft.id)}
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10 flex-shrink-0"
-                                  title="Delete question"
-                                >
-                                  <X size={13} />
-                                </Button>
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <select
+                                    defaultValue=""
+                                    onChange={e => {
+                                      const val = e.target.value;
+                                      if (!val) return;
+                                      if (val === "__ungroup__") {
+                                        setDates(d => { const u = { ...d }; delete u[draft.id]; return u; });
+                                      } else {
+                                        setDates(d => ({ ...d, [draft.id]: val }));
+                                      }
+                                      e.currentTarget.value = "";
+                                    }}
+                                    className="flex-1 bg-gray-800 border border-gray-700 text-xs text-gray-300 rounded-lg px-2 py-1.5 h-8"
+                                  >
+                                    <option value="">Move to another day...</option>
+                                    {sortedDates.filter(d => d !== dates[draft.id]).map(d => (
+                                      <option key={d} value={d}>
+                                        {new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                                      </option>
+                                    ))}
+                                    <option value="__ungroup__">Remove date (leave unscheduled)</option>
+                                  </select>
+                                  <button
+                                    onClick={() => { setRejectingId(rejectingId === draft.id ? null : draft.id); setRejectReason(""); }}
+                                    className="text-xs px-2 py-1 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border border-orange-500/20 transition-colors flex-shrink-0"
+                                    title="Reject with feedback for AI"
+                                  >
+                                    Reject
+                                  </button>
+                                  <Button
+                                    onClick={() => deleteDraft(draft.id)}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10 flex-shrink-0"
+                                    title="Delete question"
+                                  >
+                                    <X size={13} />
+                                  </Button>
+                                </div>
+
+                                {/* Reject with reason — inline */}
+                                {rejectingId === draft.id && (
+                                  <div className="bg-orange-500/5 border border-orange-500/20 rounded-xl p-3 space-y-2">
+                                    <p className="text-xs text-orange-300 font-medium">Tell the AI why this isn't right — it'll avoid this next time</p>
+                                    <div className="flex gap-2 flex-wrap">
+                                      {[
+                                        "Too much content about this show already",
+                                        "Wrong topic — not what our audience watches",
+                                        "Too obscure",
+                                        "Too obvious / boring",
+                                        "Bad answer options",
+                                        "Factually wrong",
+                                      ].map(preset => (
+                                        <button
+                                          key={preset}
+                                          onClick={() => setRejectReason(preset)}
+                                          className={`text-xs px-2 py-1 rounded-full border transition-colors ${rejectReason === preset ? "bg-orange-500/30 border-orange-400 text-orange-200" : "bg-gray-800 border-gray-700 text-gray-400 hover:border-orange-500/40 hover:text-orange-300"}`}
+                                        >
+                                          {preset}
+                                        </button>
+                                      ))}
+                                    </div>
+                                    <Input
+                                      value={rejectReason}
+                                      onChange={e => setRejectReason(e.target.value)}
+                                      placeholder="Or type your own reason..."
+                                      className="bg-gray-900 border-gray-700 text-white text-xs h-8"
+                                    />
+                                    <div className="flex gap-2">
+                                      <Button
+                                        onClick={() => rejectDraft(draft.id, rejectReason)}
+                                        size="sm"
+                                        className="bg-orange-600 hover:bg-orange-500 text-white text-xs"
+                                      >
+                                        Send Feedback &amp; Remove
+                                      </Button>
+                                      <Button
+                                        onClick={() => { setRejectingId(null); setRejectReason(""); }}
+                                        size="sm"
+                                        variant="ghost"
+                                        className="text-gray-400 text-xs"
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
