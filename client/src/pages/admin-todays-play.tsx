@@ -1663,38 +1663,40 @@ export default function AdminTodaysPlayPage() {
                                 setNewDateForEdit("");
                               } else {
                                 setEditingScheduledDate(date);
-                                setNewDateForEdit(date);
+                                setNewDateForEdit("");
                               }
                             }}
-                            className="text-gray-500 hover:text-teal-400 transition-colors"
-                            title="Change date"
+                            className="text-xs px-2 py-0.5 rounded-md bg-gray-800 text-gray-400 hover:text-teal-300 hover:bg-gray-700 transition-colors border border-gray-700"
                           >
-                            <Pencil size={12} />
+                            Reschedule
                           </button>
                         </div>
                       </div>
 
-                      {/* Inline date editor */}
+                      {/* Inline reschedule */}
                       {isEditingThis && (
-                        <div className="flex items-center gap-2 mb-3 p-2 bg-gray-800/60 rounded-lg">
-                          <CalendarDays size={13} className="text-teal-400 flex-shrink-0" />
-                          <Input
-                            type="date"
-                            value={newDateForEdit}
-                            onChange={e => setNewDateForEdit(e.target.value)}
-                            className="bg-gray-900 border-gray-700 text-white h-7 text-xs flex-1"
-                          />
-                          <Button
-                            onClick={() => moveScheduledDate(date, newDateForEdit)}
-                            disabled={movingDate || !newDateForEdit || newDateForEdit === date}
-                            size="sm"
-                            className="bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold h-7 px-3 whitespace-nowrap"
-                          >
-                            {movingDate ? <Loader2 size={11} className="animate-spin" /> : "Move"}
-                          </Button>
-                          <button onClick={() => { setEditingScheduledDate(null); setNewDateForEdit(""); }} className="text-gray-500 hover:text-white transition-colors">
-                            <X size={13} />
-                          </button>
+                        <div className="mb-3 p-3 bg-gray-800/60 rounded-xl space-y-2">
+                          <p className="text-xs text-gray-400">Pick a new date for this question:</p>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="date"
+                              value={newDateForEdit}
+                              min={toLocalDateStr(new Date())}
+                              onChange={e => setNewDateForEdit(e.target.value)}
+                              className="bg-gray-900 border-gray-700 text-white h-8 text-sm flex-1"
+                            />
+                            <Button
+                              onClick={() => moveScheduledDate(date, newDateForEdit)}
+                              disabled={movingDate || !newDateForEdit || newDateForEdit === date}
+                              size="sm"
+                              className="bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold px-4 whitespace-nowrap"
+                            >
+                              {movingDate ? <Loader2 size={11} className="animate-spin" /> : "Move"}
+                            </Button>
+                            <button onClick={() => { setEditingScheduledDate(null); setNewDateForEdit(""); }} className="text-gray-500 hover:text-white transition-colors flex-shrink-0">
+                              <X size={13} />
+                            </button>
+                          </div>
                         </div>
                       )}
 
