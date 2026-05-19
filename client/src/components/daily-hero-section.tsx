@@ -1160,6 +1160,7 @@ function DailyCallOverlay({
   const [phase, setPhase] = useState<'playing' | 'done'>('playing');
   const [doneAnswer, setDoneAnswer] = useState<string | null>(null);
   const [socialProof, setSocialProof] = useState<number | null>(null);
+  const [voteBreakdown, setVoteBreakdown] = useState<Record<string, number> | null>(null);
   const { toast } = useToast();
 
   const BLUE_GRADIENT = 'linear-gradient(160deg,#1e40af 0%,#1d4ed8 45%,#1e3a8a 100%)';
@@ -1194,21 +1195,29 @@ function DailyCallOverlay({
         queryClient.setQueryData(['play-streak-hero', session?.user?.id], data.run.currentRun);
       }
 
-      // Fetch how many other players picked the same option (social proof)
+      // Fetch full vote breakdown for all options
       try {
         const { data: votes } = await supabase
           .from('user_predictions')
-          .select('answer_text')
+          .select('prediction')
           .eq('pool_id', challenge.id)
           .limit(500);
         if (votes && votes.length > 0) {
-          const same = votes.filter((v: any) => v.answer_text === selected).length;
-          setSocialProof(Math.round((same / votes.length) * 100));
-        } else {
-          setSocialProof(Math.floor(Math.random() * 25) + 38);
+          const counts: Record<string, number> = {};
+          for (const v of votes) {
+            const key = v.prediction ?? '';
+            counts[key] = (counts[key] ?? 0) + 1;
+          }
+          const total = votes.length;
+          const pcts: Record<string, number> = {};
+          for (const [opt, cnt] of Object.entries(counts)) {
+            pcts[opt] = Math.round((cnt / total) * 100);
+          }
+          setVoteBreakdown(pcts);
+          setSocialProof(pcts[selected!] ?? 0);
         }
       } catch {
-        setSocialProof(Math.floor(Math.random() * 25) + 38);
+        // leave breakdown null — won't show if unavailable
       }
 
       setDoneAnswer(selected!);
@@ -1237,7 +1246,7 @@ function DailyCallOverlay({
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-3 pb-3 border-b border-gray-100 shrink-0">
           <div className="w-9" />
-          <h1 className="text-[15px] font-bold text-gray-900">Daily Call</h1>
+          <h1 className="text-[15px] font-bold text-gray-900">Today's Play</h1>
           <button
             onClick={onClose}
             className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200"
@@ -1282,13 +1291,13 @@ function DailyCallOverlay({
                         className="h-4 w-auto opacity-95"
                       />
                       <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">
-                        Daily Call
+                        Today's Play
                       </span>
                     </div>
 
                     <div className="px-6 pt-6 pb-7 flex flex-col items-center text-center">
                       <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400 mb-1">
-                        {possessive} Daily Call
+                        {possessive} Today's Play
                       </p>
                       <h2 className="text-3xl font-black text-gray-900 mb-1.5 leading-tight">
                         {headline}
@@ -1336,6 +1345,39 @@ function DailyCallOverlay({
                       </div>
                     </div>
                   </div>
+
+                  {/* How others voted — full breakdown */}
+                  {voteBreakdown && challenge.options && challenge.options.length > 0 && (
+                    <div className="mb-5">
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">How Everyone Voted</p>
+                      <div className="flex flex-col gap-2.5">
+                        {challenge.options.map((opt) => {
+                          const pct = voteBreakdown[opt] ?? 0;
+                          const isYours = opt === doneAnswer;
+                          return (
+                            <div key={opt}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className={`text-[13px] font-semibold leading-snug ${isYours ? 'text-blue-700' : 'text-gray-600'}`}>
+                                  {opt}{isYours && <span className="ml-1.5 text-[10px] font-bold text-blue-500 uppercase tracking-wide">← you</span>}
+                                </span>
+                                <span className={`text-[13px] font-bold ${isYours ? 'text-blue-700' : 'text-gray-500'}`}>{pct}%</span>
+                              </div>
+                              <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all duration-700"
+                                  style={{
+                                    width: `${pct}%`,
+                                    background: isYours ? BLUE_GRADIENT : '#e5e7eb',
+                                    minWidth: pct > 0 ? '4px' : '0',
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   <button
                     onClick={() => { onClose(); onShare(doneAnswer); }}
@@ -1401,7 +1443,7 @@ function DailyCallOverlay({
                         <MessageCircle size={12} />
                       </div>
                       <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">
-                        Daily Call
+                        Today's Play
                       </span>
                     </div>
                     <div
