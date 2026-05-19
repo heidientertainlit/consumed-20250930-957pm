@@ -2502,8 +2502,8 @@ export function DailyHeroSection() {
           onComplete={(answer) => {
             setCallAnswer(answer);
             setCallCompleted(true);
-            setShowCallOverlay(false);
-            setShowCallShare(true);
+            // Keep the overlay open so the done screen (with vote breakdown) is visible.
+            // The done screen's Share button calls onShare which transitions to ScoreShareCard.
           }}
           onShare={() => { setShowCallOverlay(false); setShowCallShare(true); }}
           onClose={() => setShowCallOverlay(false)}
