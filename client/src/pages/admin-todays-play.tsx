@@ -1307,7 +1307,7 @@ export default function AdminTodaysPlayPage() {
                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${meta.pillClass}`}>
                               {meta.icon} {meta.label}
                             </span>
-                            <p className="text-sm text-white font-medium line-clamp-1 flex-1">{draft.title}</p>
+                            <p className="text-sm text-white font-medium flex-1">{draft.title}</p>
                             {!draft.show_tag && (
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-300 border border-red-500/30 flex-shrink-0" title="No show_tag — cannot publish">
                                 <AlertTriangle size={9} /> No Media
