@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { Trophy, Flame, Users, Zap } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth';
 
-function todayStr() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+const todayStr = () =>
+  new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // YYYY-MM-DD Pacific Time
 
 interface NudgeItem {
   id: string;
@@ -16,6 +15,8 @@ interface NudgeItem {
 
 export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'light' }) {
   const today = todayStr();
+  const { user } = useAuth();
+  const currentUserId = user?.id;
 
   // Mirror the same two-step logic as daily-hero-section: featured today → fallback to recent unscheduled
   const { data: pools = [] } = useQuery({
@@ -46,7 +47,7 @@ export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'ligh
   });
 
   const { data: activityData } = useQuery({
-    queryKey: ['todays-play-nudge-activity', pools],
+    queryKey: ['todays-play-nudge-activity', pools, currentUserId],
     queryFn: async () => {
       if (pools.length === 0) return null;
       const { data } = await supabase
@@ -57,6 +58,7 @@ export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'ligh
 
       const byUser: Record<string, { answered: number; correct: number }> = {};
       for (const row of data) {
+        if (row.user_id === currentUserId) continue; // exclude self
         if (!byUser[row.user_id]) byUser[row.user_id] = { answered: 0, correct: 0 };
         byUser[row.user_id].answered++;
         if ((row.points_earned ?? 0) > 0) byUser[row.user_id].correct++;
@@ -77,7 +79,7 @@ export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'ligh
   });
 
   const { data: perfectNames = [] } = useQuery({
-    queryKey: ['todays-play-nudge-names', pools, activityData?.perfectScorers],
+    queryKey: ['todays-play-nudge-names', pools, activityData?.perfectScorers, currentUserId],
     queryFn: async () => {
       if (!activityData || activityData.perfectScorers === 0 || pools.length === 0) return [];
       const { data: predictions } = await supabase
@@ -88,6 +90,7 @@ export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'ligh
 
       const byUser: Record<string, { answered: number; correct: number }> = {};
       for (const row of predictions) {
+        if (row.user_id === currentUserId) continue; // exclude self
         if (!byUser[row.user_id]) byUser[row.user_id] = { answered: 0, correct: 0 };
         byUser[row.user_id].answered++;
         if ((row.points_earned ?? 0) > 0) byUser[row.user_id].correct++;
