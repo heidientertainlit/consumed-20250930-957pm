@@ -79,6 +79,8 @@ function ScoreShareCard({
   playScore,
   callAnswer,
   callQuestion,
+  callOptions,
+  callVoteBreakdown,
   streak,
   userId,
   answers,
@@ -94,6 +96,8 @@ function ScoreShareCard({
   playScore?: PlayScore | null;
   callAnswer?: string | null;
   callQuestion?: string | null;
+  callOptions?: string[] | null;
+  callVoteBreakdown?: Record<string, number> | null;
   streak?: number | null;
   userId?: string;
   answers?: { correct: boolean; category?: string }[];
@@ -159,7 +163,7 @@ function ScoreShareCard({
                   className="h-7 w-auto mb-1 -ml-1"
                 />
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">
-                  {type === 'play' ? "Today's Play" : 'Daily Call'}
+                  {type === 'play' ? "Today's Play" : "Today's Play"}
                 </p>
               </div>
               <p className="text-[11px] font-semibold text-white/50 mt-1">{today}</p>
@@ -332,6 +336,39 @@ function ScoreShareCard({
                     <p className="text-[17px] font-bold text-gray-900 mb-1">"{callAnswer}"</p>
                   )}
                 </div>
+
+                {/* How everyone voted */}
+                {callVoteBreakdown && callOptions && callOptions.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-2.5 text-center">How Everyone Voted</p>
+                    <div className="flex flex-col gap-2">
+                      {callOptions.map((opt) => {
+                        const pct = callVoteBreakdown[opt] ?? 0;
+                        const isYours = opt === callAnswer;
+                        return (
+                          <div key={opt}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`text-[12px] font-semibold leading-snug ${isYours ? 'text-purple-700' : 'text-gray-600'}`}>
+                                {opt}{isYours && <span className="ml-1.5 text-[9px] font-bold text-purple-500 uppercase tracking-wide">← you</span>}
+                              </span>
+                              <span className={`text-[12px] font-bold ${isYours ? 'text-purple-700' : 'text-gray-500'}`}>{pct}%</span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all duration-700"
+                                style={{
+                                  width: `${pct}%`,
+                                  background: isYours ? 'linear-gradient(90deg,#7c3aed,#4f46e5)' : '#e5e7eb',
+                                  minWidth: pct > 0 ? '3px' : '0',
+                                }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Stats grid */}
                 <div className="h-px bg-gray-100 mb-4" />
@@ -1150,17 +1187,12 @@ function DailyCallOverlay({
   session: any;
   streak?: number | null;
   username?: string | null;
-  onComplete: (answer: string) => void;
+  onComplete: (answer: string, breakdown: Record<string, number> | null) => void;
   onShare: (answer: string) => void;
   onClose: () => void;
 }) {
-  const [, setLocation] = useLocation();
   const [selected, setSelected] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [phase, setPhase] = useState<'playing' | 'done'>('playing');
-  const [doneAnswer, setDoneAnswer] = useState<string | null>(null);
-  const [socialProof, setSocialProof] = useState<number | null>(null);
-  const [voteBreakdown, setVoteBreakdown] = useState<Record<string, number> | null>(null);
   const { toast } = useToast();
 
   const BLUE_GRADIENT = 'linear-gradient(160deg,#1e40af 0%,#1d4ed8 45%,#1e3a8a 100%)';
@@ -1189,13 +1221,13 @@ function DailyCallOverlay({
       if (data.error && !data.error.includes('Already')) throw new Error(data.error);
       localStorage.setItem(getDailyCallKey(session?.user?.id), JSON.stringify({ completed: true, result: { userAnswer: selected } }));
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-response'] });
-      // Seed streak cache directly from response so RLS can't hide it
       if (data.run?.currentRun && typeof data.run.currentRun === 'number') {
         console.log('[streak] Daily Call seeding cache with currentRun:', data.run.currentRun);
         queryClient.setQueryData(['play-streak-hero', session?.user?.id], data.run.currentRun);
       }
 
-      // Fetch full vote breakdown for all options
+      // Fetch vote breakdown to pass through to ScoreShareCard
+      let breakdown: Record<string, number> | null = null;
       try {
         const { data: votes } = await supabase
           .from('user_predictions')
@@ -1213,16 +1245,11 @@ function DailyCallOverlay({
           for (const [opt, cnt] of Object.entries(counts)) {
             pcts[opt] = Math.round((cnt / total) * 100);
           }
-          setVoteBreakdown(pcts);
-          setSocialProof(pcts[selected!] ?? 0);
+          breakdown = pcts;
         }
-      } catch {
-        // leave breakdown null — won't show if unavailable
-      }
+      } catch { /* leave null */ }
 
-      setDoneAnswer(selected!);
-      onComplete(selected!);
-      setPhase('done');
+      onComplete(selected!, breakdown);
     } catch (e: any) {
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
     } finally {
@@ -1233,7 +1260,7 @@ function DailyCallOverlay({
   return createPortal(
     <div className="fixed inset-0 z-[190] flex items-end">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={phase === 'playing' ? onClose : undefined} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
       {/* Bottom sheet — light theme */}
       <div
@@ -1257,179 +1284,14 @@ function DailyCallOverlay({
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto">
-          {phase === 'done' && doneAnswer ? (
-            // ── Combined done + share screen — mirrors Today's Play ──
-            (() => {
-              const headline = 'Locked in.';
-              const subhead = socialProof !== null && socialProof >= 60
-                ? `You're with the majority — ${socialProof}% of players agree.`
-                : socialProof !== null && socialProof <= 35
-                  ? `Bold call — only ${socialProof}% of players see it your way.`
-                  : socialProof !== null
-                    ? `${socialProof}% of players called it the same.`
-                    : 'Your call is in. Come back when results drop.';
-              const possessive = (() => {
-                const name = (username || 'Your').trim();
-                if (!username) return 'Your';
-                return name.endsWith('s') || name.endsWith('S') ? `${name}'` : `${name}'s`;
-              })();
-              return (
-                <div className="flex flex-col px-5 pt-6 pb-10">
-                  {/* Score card — designed to be screenshot-worthy */}
-                  <div
-                    className="rounded-3xl overflow-hidden shadow-xl border border-gray-100 mb-6"
-                    style={{ background: 'linear-gradient(180deg,#ffffff 0%,#eff6ff 100%)' }}
-                  >
-                    {/* Top branded strip */}
-                    <div
-                      className="px-5 py-3 flex items-center justify-between"
-                      style={{ background: BLUE_GRADIENT }}
-                    >
-                      <img
-                        src="/consumed-logo-white.png"
-                        alt="Consumed"
-                        className="h-4 w-auto opacity-95"
-                      />
-                      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">
-                        Today's Play
-                      </span>
-                    </div>
-
-                    <div className="px-6 pt-6 pb-7 flex flex-col items-center text-center">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400 mb-1">
-                        {possessive} Today's Play
-                      </p>
-                      <h2 className="text-3xl font-black text-gray-900 mb-1.5 leading-tight">
-                        {headline}
-                      </h2>
-                      <p className="text-gray-500 text-[13px] mb-5 leading-snug max-w-[280px]">
-                        {subhead}
-                      </p>
-
-                      {/* The question */}
-                      <p className="text-[13px] font-medium text-gray-500 mb-3 leading-snug max-w-[300px]">
-                        {challenge.title}
-                      </p>
-
-                      {/* The locked-in answer — the hero element */}
-                      <div
-                        className="w-full rounded-2xl px-5 py-4 mb-5 flex items-center justify-center gap-2"
-                        style={{
-                          background: BLUE_GRADIENT,
-                          boxShadow: '0 6px 18px rgba(30,58,138,0.25)',
-                        }}
-                      >
-                        <CheckCircle2 size={18} className="text-white shrink-0" />
-                        <span className="text-white font-bold text-[17px] leading-snug">
-                          {doneAnswer}
-                        </span>
-                      </div>
-
-                      {/* Stats footer row */}
-                      <div className="flex items-center gap-4 text-[11px] text-gray-500 font-medium">
-                        {socialProof !== null && (
-                          <div className="flex items-center gap-1">
-                            <Users size={12} className="text-blue-600" />
-                            <span><span className="font-bold text-gray-900">{socialProof}%</span> agree</span>
-                          </div>
-                        )}
-                        {streak && streak > 0 && (
-                          <>
-                            {socialProof !== null && <span className="w-px h-3 bg-gray-200" />}
-                            <div className="flex items-center gap-1">
-                              <Flame size={12} className="text-orange-500 fill-orange-500" />
-                              <span><span className="font-bold text-gray-900">{streak}-day</span> streak</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* How others voted — full breakdown */}
-                  {voteBreakdown && challenge.options && challenge.options.length > 0 && (
-                    <div className="mb-5">
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">How Everyone Voted</p>
-                      <div className="flex flex-col gap-2.5">
-                        {challenge.options.map((opt) => {
-                          const pct = voteBreakdown[opt] ?? 0;
-                          const isYours = opt === doneAnswer;
-                          return (
-                            <div key={opt}>
-                              <div className="flex items-center justify-between mb-1">
-                                <span className={`text-[13px] font-semibold leading-snug ${isYours ? 'text-blue-700' : 'text-gray-600'}`}>
-                                  {opt}{isYours && <span className="ml-1.5 text-[10px] font-bold text-blue-500 uppercase tracking-wide">← you</span>}
-                                </span>
-                                <span className={`text-[13px] font-bold ${isYours ? 'text-blue-700' : 'text-gray-500'}`}>{pct}%</span>
-                              </div>
-                              <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-                                <div
-                                  className="h-full rounded-full transition-all duration-700"
-                                  style={{
-                                    width: `${pct}%`,
-                                    background: isYours ? BLUE_GRADIENT : '#e5e7eb',
-                                    minWidth: pct > 0 ? '4px' : '0',
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => { onClose(); onShare(doneAnswer); }}
-                    className="w-full py-4 px-5 rounded-2xl font-bold text-[15px] text-white flex items-center justify-between mb-3 shadow-md"
-                    style={{ background: BLUE_GRADIENT }}
-                  >
-                    <span>Share Your Call</span>
-                    <Share2 size={16} className="opacity-80" />
-                  </button>
-
-                  <button
-                    onClick={() => { onClose(); setLocation('/add'); }}
-                    className="w-full py-3.5 px-5 rounded-2xl font-semibold text-[14px] flex items-center justify-between mb-3 bg-gray-50 border border-gray-100 text-gray-700"
-                  >
-                    <span>Share a Take</span>
-                    <ChevronRight size={15} className="opacity-50" />
-                  </button>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => { onClose(); setLocation('/play'); }}
-                      className="py-4 px-4 rounded-2xl font-semibold text-[13px] flex flex-col items-center gap-1.5 bg-purple-50 border border-purple-100 text-purple-700"
-                    >
-                      <Zap size={18} className="text-purple-600" fill="currentColor" />
-                      Play More
-                    </button>
-                    <button
-                      onClick={() => { onClose(); setLocation('/play/predictions'); }}
-                      className="py-4 px-4 rounded-2xl font-semibold text-[13px] flex flex-col items-center gap-1.5 bg-blue-50 border border-blue-100 text-blue-700"
-                    >
-                      <Radio size={18} className="text-blue-600" />
-                      Call More
-                    </button>
-                  </div>
-                </div>
-              );
-            })()
-          ) : (
-            // ── Question screen — mirrors Today's Play active card ──
-            <div className="flex flex-col px-4 pt-5 pb-32">
-              {/* Streak chip + motivational header */}
-              <div className="flex flex-col items-center text-center mb-5">
-                {streak && streak > 0 ? (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 mb-2.5">
-                    <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
-                    <span className="text-[12px] font-bold text-orange-700">{streak}-Day Streak</span>
-                  </div>
-                ) : null}
-                <p className="text-gray-600 text-[13px] leading-relaxed px-4">
-                  Make your call before the day ends — see how the rest of Consumed votes.
-                </p>
-              </div>
+          {/* Question screen */}
+          <div className="flex flex-col px-4 pt-5 pb-32">
+            {/* Motivational header */}
+            <div className="flex flex-col items-center text-center mb-5">
+              <p className="text-gray-600 text-[13px] leading-relaxed px-4">
+                Make your call before the day ends — see how the rest of Consumed votes.
+              </p>
+            </div>
 
               {/* Single question card */}
               <div className="rounded-2xl bg-white shadow-sm border border-gray-100">
@@ -1494,10 +1356,9 @@ function DailyCallOverlay({
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
-    </div>,
+      </div>,
     document.body
   );
 }
@@ -1533,6 +1394,7 @@ export function DailyHeroSection() {
   // ── Daily Call state ──
   const [showCallOverlay, setShowCallOverlay] = useState(false);
   const [showCallShare, setShowCallShare] = useState(false);
+  const [callVoteBreakdown, setCallVoteBreakdown] = useState<Record<string, number> | null>(null);
   const [callAnswer, setCallAnswer] = useState<string | null>(() => {
     try {
       const s = localStorage.getItem(getDailyCallKey());
@@ -2499,11 +2361,12 @@ export function DailyHeroSection() {
           session={session}
           streak={streak}
           username={username}
-          onComplete={(answer) => {
+          onComplete={(answer, breakdown) => {
             setCallAnswer(answer);
             setCallCompleted(true);
-            // Keep the overlay open so the done screen (with vote breakdown) is visible.
-            // The done screen's Share button calls onShare which transitions to ScoreShareCard.
+            setCallVoteBreakdown(breakdown);
+            setShowCallOverlay(false);
+            setShowCallShare(true);
           }}
           onShare={() => { setShowCallOverlay(false); setShowCallShare(true); }}
           onClose={() => setShowCallOverlay(false)}
@@ -2529,6 +2392,8 @@ export function DailyHeroSection() {
         type="call"
         callAnswer={callAnswer}
         callQuestion={dailyCall?.title}
+        callOptions={dailyCall?.options}
+        callVoteBreakdown={callVoteBreakdown}
         streak={streak}
         userId={user?.id}
         dnaStats={dnaStats ?? null}
