@@ -6,6 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
+// Returns today's date as YYYY-MM-DD in US Pacific Time (Hollywood clock).
+const getPacificDateStr = () =>
+  new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+
 // Shared helper: calls the update_user_streak DB function (atomic, single source of truth).
 // Returns { currentStreak, longestStreak, bonusPoints, nextMilestone } or throws.
 async function runStreakUpdate(supabaseAdmin: ReturnType<typeof createClient>, userId: string, todayDate: string) {
@@ -85,9 +89,9 @@ serve(async (req) => {
     }
 
     if (action === 'getToday') {
-      const today = params.localDate || new Date().toISOString().split('T')[0];
+      const today = params.localDate || getPacificDateStr();
       console.log('[daily-challenge] getToday - params received:', JSON.stringify(params));
-      console.log('[daily-challenge] getToday - looking for featured_date:', today, params.localDate ? '(from client)' : '(UTC fallback)');
+      console.log('[daily-challenge] getToday - looking for featured_date:', today, params.localDate ? '(from client)' : '(Pacific fallback)');
       
       const { data: challenge, error } = await supabaseAdmin
         .from('prediction_pools')
@@ -174,7 +178,7 @@ serve(async (req) => {
         });
       }
 
-      const todayDate = params.localDate || new Date().toISOString().split('T')[0];
+      const todayDate = params.localDate || getPacificDateStr();
 
       try {
         const { currentStreak, longestStreak, bonusPoints, nextMilestone } = await runStreakUpdate(supabaseAdmin, user.id, todayDate);
@@ -199,7 +203,7 @@ serve(async (req) => {
       }
 
       const { challengeId, response, localDate } = params;
-      const today = localDate || new Date().toISOString().split('T')[0];
+      const today = localDate || getPacificDateStr();
       console.log('[daily-challenge] submit - looking for challenge:', challengeId, 'on date:', today);
 
       const { data: challenge, error: challengeError } = await supabaseAdmin
@@ -256,7 +260,7 @@ serve(async (req) => {
       // Update streak via shared DB function
       let runInfo: { currentRun: number; bonusPoints: number; nextMilestone: number; longestRun: number } | null = null;
       try {
-        const todayDate = localDate || new Date().toISOString().split('T')[0];
+        const todayDate = localDate || getPacificDateStr();
         const { currentStreak, longestStreak, bonusPoints, nextMilestone } = await runStreakUpdate(supabaseAdmin, user.id, todayDate);
         pointsEarned += bonusPoints;
         runInfo = { currentRun: currentStreak, longestRun: longestStreak, bonusPoints, nextMilestone };

@@ -47,7 +47,7 @@ const getStoredUserId = (): string => {
   } catch { return 'anon'; }
 };
 
-const getLocalDateStr = () => new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local date, never UTC
+const getLocalDateStr = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // YYYY-MM-DD Pacific Time
 
 const getTodayPlayKey = (userId?: string) =>
   `todays-play-${getLocalDateStr()}-${userId ?? getStoredUserId()}`;
@@ -184,7 +184,7 @@ function ScoreShareCard({
                     Podcasts: '🎙️', Podcast: '🎙️',
                   };
                   const ratio = playScore.correct / playScore.total;
-                  const daySeed = parseInt(new Date().toISOString().split('T')[0].replace(/-/g, ''), 10) % 97;
+                  const daySeed = parseInt(new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }).replace(/-/g, ''), 10) % 97;
                   const pick = <T,>(arr: T[]): T => arr[daySeed % arr.length];
 
                   const correctCats = (answers || []).filter(a => a.correct).map(a => a.category).filter(Boolean) as string[];
@@ -675,7 +675,7 @@ function TodaysPlayGame({
               const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
               // Day-based seed so lines rotate daily but stay consistent within a day
-              const daySeed = parseInt(new Date().toISOString().split('T')[0].replace(/-/g, ''), 10) % 97;
+              const daySeed = parseInt(new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }).replace(/-/g, ''), 10) % 97;
               const pick = <T,>(arr: T[]): T => arr[daySeed % arr.length];
 
               const CAT_EMOJI: Record<string, string> = {
@@ -1168,7 +1168,7 @@ function DailyCallOverlay({
     if (!selected || submitting) return;
     setSubmitting(true);
     try {
-      const localDate = new Date().toLocaleDateString('en-CA');
+      const localDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
       console.log('[streak] Daily Call submit called, challengeId:', challenge.id, 'localDate:', localDate);
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/daily-challenge`, {
         method: 'POST',
@@ -1597,7 +1597,7 @@ export function DailyHeroSection() {
   const { data: questions = [] } = useQuery<TriviaQuestion[]>({
     queryKey: ['todays-play-questions'],
     queryFn: async () => {
-      const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // YYYY-MM-DD Pacific Time
 
       // First: try to get today's scheduled set (featured_date = today)
       const { data: todayData } = await supabase
@@ -1662,7 +1662,7 @@ export function DailyHeroSection() {
         },
         body: JSON.stringify({
           action: 'getToday',
-          localDate: new Date().toLocaleDateString('en-CA'),
+          localDate: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }),
         }),
       });
       const data = await resp.json();
@@ -1810,7 +1810,7 @@ export function DailyHeroSection() {
         .select('moment_id')
         .eq('user_id', user.id);
       const answeredIds = new Set((answered || []).map((r: any) => r.moment_id));
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
       let skipped: string[] = [];
       try { skipped = JSON.parse(localStorage.getItem(`dna-hero-skipped-${today}`) || '[]'); } catch {}
       const excluded = new Set([...answeredIds, ...skipped]);
@@ -2224,7 +2224,7 @@ export function DailyHeroSection() {
 
           const handleDnaSkip = () => {
             if (!heroDnaMoment) return;
-            const today = new Date().toISOString().split('T')[0];
+            const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
             const key = `dna-hero-skipped-${today}`;
             try {
               const skipped: string[] = JSON.parse(localStorage.getItem(key) || '[]');

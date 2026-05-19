@@ -156,7 +156,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
     queryKey: ['trivia-carousel', user?.id],
     queryFn: async () => {
       const now = new Date().toISOString();
-      const today = now.slice(0, 10); // YYYY-MM-DD
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // YYYY-MM-DD Pacific Time
       const { data: pools, error } = await supabase
         .from('prediction_pools')
         .select('*')
