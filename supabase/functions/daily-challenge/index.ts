@@ -224,15 +224,18 @@ serve(async (req) => {
         });
       }
 
+      const isSkip = response.answer === '__skip';
       let pointsEarned = 0;
       let isCorrect = false;
 
       if (challenge.type === 'trivia' && challenge.correct_answer) {
         isCorrect = response.answer === challenge.correct_answer;
-        pointsEarned = isCorrect ? challenge.points_reward : 0;
-      } else {
-        pointsEarned = challenge.points_reward;
+        pointsEarned = isCorrect ? (challenge.points_reward || 10) : 0;
+      } else if (!isSkip) {
+        // Base participation points for a real answer on a daily call / poll
+        pointsEarned = 5;
       }
+      // skip: pointsEarned stays 0 — streak still updates below
 
       const { error: insertError } = await supabaseAdmin
         .from('user_predictions')
@@ -269,12 +272,15 @@ serve(async (req) => {
       }
 
       if (pointsEarned > 0) {
+        // Increment user_points.trivia_points (canonical game participation total)
+        await supabaseAdmin.rpc('increment_trivia_points', { uid: user.id, pts: pointsEarned });
+
+        // Also update users.points legacy column
         const { data: currentUser } = await supabaseAdmin
           .from('users')
           .select('points')
           .eq('id', user.id)
           .single();
-
         if (currentUser) {
           await supabaseAdmin
             .from('users')

@@ -332,8 +332,11 @@ function ScoreShareCard({
                   {callQuestion && (
                     <p className="text-[13px] font-medium text-gray-500 mb-2 leading-snug px-2">{callQuestion}</p>
                   )}
-                  {callAnswer && (
+                  {callAnswer && callAnswer !== '__skip' && (
                     <p className="text-[17px] font-bold text-gray-900 mb-1">"{callAnswer}"</p>
+                  )}
+                  {callAnswer === '__skip' && (
+                    <p className="text-[13px] text-gray-400 italic mb-1">Sat this one out</p>
                   )}
                 </div>
 
@@ -1197,12 +1200,13 @@ function DailyCallOverlay({
 
   const BLUE_GRADIENT = 'linear-gradient(160deg,#1e40af 0%,#1d4ed8 45%,#1e3a8a 100%)';
 
-  const handleSubmit = async () => {
-    if (!selected || submitting) return;
+  const handleSubmit = async (answerOverride?: string) => {
+    const answer = answerOverride ?? selected;
+    if (!answer || submitting) return;
     setSubmitting(true);
     try {
       const localDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-      console.log('[streak] Daily Call submit called, challengeId:', challenge.id, 'localDate:', localDate);
+      console.log('[streak] Daily Call submit called, challengeId:', challenge.id, 'localDate:', localDate, 'answer:', answer);
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/daily-challenge`, {
         method: 'POST',
         headers: {
@@ -1212,29 +1216,30 @@ function DailyCallOverlay({
         body: JSON.stringify({
           action: 'submit',
           challengeId: challenge.id,
-          response: { answer: selected },
+          response: { answer },
           localDate,
         }),
       });
       const data = await resp.json();
       console.log('[streak] Daily Call submit response:', resp.status, JSON.stringify(data));
       if (data.error && !data.error.includes('Already')) throw new Error(data.error);
-      localStorage.setItem(getDailyCallKey(session?.user?.id), JSON.stringify({ completed: true, result: { userAnswer: selected } }));
+      localStorage.setItem(getDailyCallKey(session?.user?.id), JSON.stringify({ completed: true, result: { userAnswer: answer } }));
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-response'] });
       if (data.run?.currentRun && typeof data.run.currentRun === 'number') {
         console.log('[streak] Daily Call seeding cache with currentRun:', data.run.currentRun);
         queryClient.setQueryData(['play-streak-hero', session?.user?.id], data.run.currentRun);
       }
 
-      // Fetch vote breakdown to pass through to ScoreShareCard
+      // Fetch vote breakdown — exclude __skip rows so poll data stays clean
       let breakdown: Record<string, number> | null = null;
       try {
-        const { data: votes } = await supabase
+        const { data: allVotes } = await supabase
           .from('user_predictions')
           .select('prediction')
           .eq('pool_id', challenge.id)
           .limit(500);
-        if (votes && votes.length > 0) {
+        const votes = (allVotes ?? []).filter(v => v.prediction !== '__skip');
+        if (votes.length > 0) {
           const counts: Record<string, number> = {};
           for (const v of votes) {
             const key = v.prediction ?? '';
@@ -1249,7 +1254,7 @@ function DailyCallOverlay({
         }
       } catch { /* leave null */ }
 
-      onComplete(selected!, breakdown);
+      onComplete(answer, breakdown);
     } catch (e: any) {
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
     } finally {
@@ -1345,13 +1350,22 @@ function DailyCallOverlay({
                   </div>
 
                   <button
-                    onClick={handleSubmit}
+                    onClick={() => handleSubmit()}
                     disabled={!selected || submitting}
                     className="w-full py-3.5 rounded-xl font-bold text-white text-base shadow-md transition-all active:scale-[0.98] disabled:opacity-40 disabled:shadow-none flex items-center justify-center gap-2"
                     style={{ background: BLUE_GRADIENT }}
                   >
                     {submitting && <Loader2 size={15} className="animate-spin" />}
                     Lock In Your Call
+                  </button>
+
+                  {/* Quiet skip option — plain text, not a button */}
+                  <button
+                    onClick={() => handleSubmit('__skip')}
+                    disabled={submitting}
+                    className="w-full text-center text-[12px] text-gray-400 py-1 hover:text-gray-600 transition-colors disabled:opacity-40"
+                  >
+                    Not my thing / Not sure
                   </button>
                 </div>
               </div>
