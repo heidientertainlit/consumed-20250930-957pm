@@ -28,6 +28,7 @@ Preferred communication style: Simple, everyday language.
 - The `SUPABASE_ACCESS_TOKEN` is a **personal access token** from supabase.com → Account → Access Tokens (not a project API key).
 
 ### CRITICAL Rules
+- **NEVER guess about database schema, table contents, or what data exists. Always query first.** Before making any claim about what a table contains, which columns exist, or whether data is present — run a real SQL query via the Supabase Management API. The canonical data reference is at `docs/data-reference.md` (live row counts, full column lists, dead tables, key joins, export map). If something in that doc might be stale, query to verify before proceeding.
 - **ONLY fix what the user explicitly asks for.** If you notice something else that looks wrong while working, say so in your reply and ask before touching it. Do NOT silently fix, refactor, or "improve" anything that wasn't part of the request. This applies to all code, data, edge functions, and configuration.
 - **NEVER remove or fundamentally change existing functionality without explicit user approval.** This includes removing fallbacks, changing core logic, or altering behavior that was previously working. If you think something should be removed or changed significantly, explain why and ask first.
 - **NEVER PUBLISH / DEPLOY the app.** User handles deployment themselves. Do not suggest or trigger publishing under any circumstances.
