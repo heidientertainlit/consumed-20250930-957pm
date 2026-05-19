@@ -307,6 +307,7 @@ export default function AdminTodaysPlayPage() {
   const [unschedulingId, setUnschedulingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [contentBrief, setContentBrief] = useState("");
 
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -487,7 +488,7 @@ export default function AdminTodaysPlayPage() {
     setDates(newDates);
   }
 
-  async function callGenerateDailyPlay(contentType: "trivia" | "poll" | "featured_play", count: number) {
+  async function callGenerateDailyPlay(contentType: "trivia" | "poll" | "featured_play", count: number, brief?: string) {
     const { data: { session: s } } = await supabase.auth.getSession();
     const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-trivia-polls`, {
       method: "POST",
@@ -502,6 +503,7 @@ export default function AdminTodaysPlayPage() {
         mediaType: "mixed",
         useTrending: true,
         difficulty: "medium",
+        ...(brief?.trim() ? { focusTopic: brief.trim() } : {}),
       }),
     });
     const result = await resp.json();
@@ -537,16 +539,17 @@ export default function AdminTodaysPlayPage() {
   }
 
   async function handleGenerateDailyPlays() {
+    const brief = contentBrief.trim() || undefined;
     setGenStage("trivia");
     let triviaCount = 0, pollCount = 0, predictionCount = 0;
     try {
-      const r1 = await callGenerateDailyPlay("trivia", 5);
+      const r1 = await callGenerateDailyPlay("trivia", 5, brief);
       triviaCount = r1.generated ?? 0;
       setGenStage("poll");
-      const r2 = await callGenerateDailyPlay("poll", 5);
+      const r2 = await callGenerateDailyPlay("poll", 5, brief);
       pollCount = r2.generated ?? 0;
       setGenStage("predict");
-      const r3 = await callGenerateDailyPlay("featured_play", 4);
+      const r3 = await callGenerateDailyPlay("featured_play", 4, brief);
       predictionCount = r3.generated ?? 0;
       setGenStage("done");
       const refetchResult = await refetchDrafts();
@@ -1001,14 +1004,61 @@ export default function AdminTodaysPlayPage() {
               <p className="text-xs text-gray-600 pt-2 border-t border-gray-800">Pop culture + entertainment. Uses live trending data from TMDB + Open Library.</p>
             </div>
 
+            {/* Content Brief */}
+            <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Content Brief <span className="text-gray-600 normal-case font-normal">(optional)</span></p>
+                {contentBrief && (
+                  <button onClick={() => setContentBrief("")} className="text-xs text-gray-500 hover:text-gray-300 transition-colors">Clear</button>
+                )}
+              </div>
+              <p className="text-xs text-gray-500">Direct the AI to focus on a specific topic, show, or client. Leave blank for the default mix.</p>
+
+              {/* Quick presets */}
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { label: "🎬 Heavy Movies", value: "Focus heavily on movies and cinema — multiple eras, multiple genres, cast trivia, director history, box office moments" },
+                  { label: "📺 Heavy TV", value: "Focus heavily on TV shows and streaming series — both current hits and classic shows, fan debates, showrunner history" },
+                  { label: "🎵 Music Focus", value: "Focus heavily on music — artists, albums, chart history, Grammy moments, music videos, iconic performances, band drama" },
+                  { label: "📚 Books & YA", value: "Focus heavily on books — bestsellers, literary adaptations, YA series, author history, book-to-screen comparisons" },
+                  { label: "🌐 Pop Culture", value: "Focus on viral cultural moments, celebrity drama, award show moments, memes and phrases that defined the year" },
+                  { label: "🏆 Awards Season", value: "Focus on Oscar history, Emmy moments, Grammy drama, award show predictions, historic wins and snubs" },
+                  { label: "📡 Streaming Wars", value: "Focus on Netflix, HBO, Disney+, Amazon Prime — originals, cancellations, streaming hits and flops, platform rivalries" },
+                ].map(({ label, value }) => (
+                  <button
+                    key={label}
+                    onClick={() => setContentBrief(contentBrief === value ? "" : value)}
+                    className={`text-xs px-2.5 py-1.5 rounded-full border transition-colors ${contentBrief === value ? "bg-teal-500/20 border-teal-400 text-teal-200" : "bg-gray-800 border-gray-700 text-gray-400 hover:border-teal-500/40 hover:text-teal-300"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom brief text area */}
+              <Textarea
+                value={contentBrief}
+                onChange={e => setContentBrief(e.target.value)}
+                placeholder={`Or type your own brief — e.g. "We have a partnership with HBO this week — skew heavily toward HBO shows, Succession, The Wire, Euphoria, White Lotus. Mix in some fun pop culture."`}
+                className="bg-gray-950 border-gray-700 text-white text-xs min-h-[72px] resize-none placeholder:text-gray-600"
+              />
+
+              {contentBrief.trim() && (
+                <div className="flex items-start gap-2 p-2.5 bg-teal-500/5 border border-teal-500/20 rounded-lg">
+                  <Sparkles size={11} className="text-teal-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-teal-300">Brief active — all 3 generation stages (trivia, polls, predictions) will use this directive</p>
+                </div>
+              )}
+            </div>
+
             {/* Generate button */}
             {!generating && (
               <Button
                 onClick={handleGenerateDailyPlays}
-                className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-base"
+                className={`w-full py-4 font-bold rounded-xl text-base ${contentBrief.trim() ? "bg-teal-700 hover:bg-teal-600" : "bg-teal-600 hover:bg-teal-500"} text-white`}
               >
                 <Sparkles size={18} className="mr-2" />
-                Generate 14 Daily Plays
+                {contentBrief.trim() ? "Generate 14 Daily Plays (with brief)" : "Generate 14 Daily Plays"}
               </Button>
             )}
 
