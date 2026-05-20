@@ -235,7 +235,7 @@ function ExpandedCard({ state, streak, dnaProfile, triviaStats, rankData, onClos
   const pointsSub = triviaStats?.points != null ? 'all time' : 'Play to unlock';
 
   const ctaLabel = state <= 2
-    ? "Start Today's Play →"
+    ? "Take the DNA quiz →"
     : state === 5
     ? "View full Entertainment DNA →"
     : "See your full Entertainment DNA →";
@@ -325,14 +325,6 @@ function ExpandedCard({ state, streak, dnaProfile, triviaStats, rankData, onClos
         >
           {ctaLabel} <ChevronRight size={14} />
         </button>
-        {state === 1 && (
-          <button
-            onClick={onNavigate}
-            className="w-full text-center text-purple-600 hover:text-purple-400 text-xs mt-1.5 transition-colors"
-          >
-            Take the DNA quiz →
-          </button>
-        )}
       </div>
     </div>
   );
@@ -351,7 +343,7 @@ export function EntertainmentDNAStrip() {
 
   const handleNavigate = () => {
     setExpanded(false);
-    setLocation(state >= 4 ? '/dna' : '/play');
+    setLocation(state <= 2 || state >= 4 ? '/dna' : '/play');
   };
 
   return (
