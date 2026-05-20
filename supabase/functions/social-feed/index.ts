@@ -225,6 +225,24 @@ serve(async (req) => {
       // Helper function to fetch poster URL from various sources based on media type
       const fetchPosterUrl = async (externalId: string, mediaType?: string, externalSource?: string, mediaTitle?: string): Promise<string | null> => {
         try {
+          // iTunes podcasts: direct lookup by collection ID — fastest, no credentials needed
+          if (externalSource === 'itunes' && externalId) {
+            try {
+              const lookupRes = await fetch(`https://itunes.apple.com/lookup?id=${externalId}&entity=podcast`, { signal: AbortSignal.timeout(4000) });
+              if (lookupRes.ok) {
+                const lookupData = await lookupRes.json();
+                const result = lookupData.results?.[0];
+                const artwork = result?.artworkUrl600 || result?.artworkUrl100 || result?.artworkUrl60;
+                if (artwork) {
+                  console.log('iTunes lookup found artwork for id:', externalId);
+                  return artwork;
+                }
+              }
+            } catch (itunesLookupError) {
+              console.error('iTunes lookup error:', itunesLookupError);
+            }
+          }
+
           // For Spotify podcasts/music - use Spotify Web API
           if (externalSource === 'spotify' || mediaType === 'podcast' || mediaType === 'music') {
             const spotifyClientId = Deno.env.get('SPOTIFY_CLIENT_ID');

@@ -1198,14 +1198,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           <Trash2 size={14} />
         </button>
       )}
-      {/* Join the discussion — far right */}
       <button
         onClick={handleCommentToggle}
-        className="ml-auto flex items-center gap-1.5 bg-purple-100 hover:bg-purple-200 active:bg-purple-300 text-purple-700 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+        className={`ml-auto flex items-center gap-1.5 text-sm ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
       >
-        <span>Join the discussion</span>
-        <MessageCircle size={14} />
-        <span>{Math.max(post.comments || 0, comments.length)}</span>
+        <MessageCircle size={18} />
+        <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
       </button>
     </div>
   );
@@ -2146,7 +2144,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             })}
             {/* New comment composer */}
             {session && (
-              <div className="pt-2 mt-1 border-t border-gray-100">
+              <div className="pt-2 mt-2">
                 {replyingToName && (
                   <div className="flex items-center gap-2 mb-2 pl-1 border-l-2 border-violet-400">
                     <span className="text-[10px] text-violet-500 font-medium">Replying to @{replyingToName}</span>
