@@ -1895,7 +1895,9 @@ export function DailyHeroSection() {
                   {isTriviaDay ? (
                     <p className="text-white text-[20px] font-black leading-none">{playScore?.correct ?? '–'}<span className="text-white/30 text-[13px] font-bold">/{playScore?.total ?? 3}</span></p>
                   ) : (
-                    <p className="text-white/90 text-[14px] font-bold leading-snug line-clamp-1">{callAnswer ?? 'Done'}</p>
+                    <p className="text-white/90 text-[14px] font-bold leading-snug line-clamp-1">
+                      {callAnswer === '__skip' ? 'Skipped — still counts!' : (callAnswer ?? 'Done')}
+                    </p>
                   )}
                   {streak && streak > 0 ? (
                     <span className="flex items-center gap-0.5 text-orange-400 text-[11px] font-bold leading-none mb-0.5">
