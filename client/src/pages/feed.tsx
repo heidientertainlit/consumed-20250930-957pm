@@ -1682,47 +1682,51 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
                   </p>
                 )}
-                {/* All raters: post author first, then others — all inside the gray section */}
-                {(() => {
-                  const ratingColors = ['bg-violet-500','bg-orange-400','bg-teal-500','bg-rose-500','bg-blue-500','bg-emerald-500','bg-amber-500'];
-                  const authorRow = post.rating && post.rating > 0 ? [{
-                    userId: post.user?.id || 'author',
-                    displayName: post.user?.displayName || post.user?.username || 'Someone',
-                    userName: post.user?.username || '',
-                    avatar: post.user?.avatar,
-                    rating: post.rating as number,
-                  }] : [];
-                  const allRaters = [...authorRow, ...relatedRatings];
-                  if (allRaters.length === 0) return null;
-                  return (
-                    <div className="mt-2 flex flex-col">
-                      {(showAllRelated ? allRaters : allRaters.slice(0, 3)).map((r, idx) => (
-                        <div key={r.userId} className="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0">
-                          <div className={`w-6 h-6 rounded-full ${ratingColors[idx % ratingColors.length]} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 overflow-hidden`}>
-                            {r.avatar ? <img src={r.avatar} className="w-full h-full object-cover" alt="" /> : (r.displayName || r.userName || 'U')[0]?.toUpperCase()}
+                {/* Primary reply CTA for action-first layout */}
+                {isOtherUser && post.user && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); const name = post.user?.displayName || post.user?.username; if (name) { setCommentText(`@${name} `); setReplyingToName(name); } if (!showComments) handleCommentToggle(); }}
+                    className="mt-2 text-[11px] font-semibold text-violet-600 hover:text-violet-700 transition-colors"
+                  >
+                    Reply to @{post.user?.displayName || post.user?.username}
+                  </button>
+                )}
+                {/* Other raters — visually secondary */}
+                {relatedRatings.length > 0 && (
+                  <div className="mt-2 border-t border-gray-100 pt-2">
+                    <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-300 mb-1.5">Also rated</p>
+                    <div className="flex flex-col gap-1">
+                      {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
+                        <div key={r.userId} className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-[9px] font-bold flex-shrink-0 overflow-hidden">
+                              {r.avatar ? <img src={r.avatar} className="w-full h-full object-cover" alt="" /> : (r.displayName || r.userName || 'U')[0]?.toUpperCase()}
+                            </div>
+                            <span className="text-[10px] text-gray-400 truncate">{r.displayName || r.userName}</span>
                           </div>
-                          <span className="text-xs font-semibold text-gray-800 flex-1 min-w-0 truncate">{r.displayName || r.userName}</span>
-                          <div className="flex items-center gap-0.5 flex-shrink-0">
-                            {[1,2,3,4,5].map(s => {
-                              if (s <= Math.floor(r.rating)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
-                              if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative w-3 h-3"><Star size={12} className="absolute text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                              return <Star key={s} size={12} className="text-gray-200" />;
-                            })}
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <div className="flex items-center gap-0.5">
+                              {[1,2,3,4,5].map(s => {
+                                if (s <= Math.floor(r.rating)) return <Star key={s} size={9} className="text-yellow-400 fill-yellow-400" />;
+                                if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative w-2.5 h-2.5"><Star size={9} className="absolute text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={9} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                                return <Star key={s} size={9} className="text-gray-200" />;
+                              })}
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); const name = r.displayName || r.userName; setCommentText(`@${name} `); setReplyingToName(name); if (!showComments) handleCommentToggle(); }}
+                              className={`text-[9px] font-medium transition-colors ${replyingToName === (r.displayName || r.userName) ? 'text-violet-500' : 'text-gray-300 hover:text-violet-400'}`}
+                            >Reply</button>
                           </div>
-                          <button
-                            onClick={() => { const name = r.displayName || r.userName; setCommentText(`@${name} `); setReplyingToName(name); if (!showComments) handleCommentToggle(); }}
-                            className={`text-[10px] font-semibold transition-colors flex-shrink-0 ${replyingToName === (r.displayName || r.userName) ? 'text-violet-500' : 'text-gray-400 hover:text-violet-500'}`}
-                          >Reply</button>
                         </div>
                       ))}
-                      {allRaters.length > 3 && (
-                        <button onClick={() => setShowAllRelated(v => !v)} className="text-[10px] text-violet-500 font-medium text-left pt-1">
-                          {showAllRelated ? 'Show less' : `+ ${allRaters.length - 3} more`}
+                      {relatedRatings.length > 2 && (
+                        <button onClick={() => setShowAllRelated(v => !v)} className="text-[9px] text-violet-400 font-medium text-left pt-0.5">
+                          {showAllRelated ? 'Show less' : `+ ${relatedRatings.length - 2} more`}
                         </button>
                       )}
                     </div>
-                  );
-                })()}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1890,37 +1894,50 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               </div>
             )
           )}
-          {/* Other raters for the same media — shown in NORMAL layout too */}
+          {/* Primary reply CTA — directly to the poster, shown before secondary raters */}
+          {isOtherUser && post.user && (
+            <button
+              onClick={(e) => { e.stopPropagation(); const name = post.user?.displayName || post.user?.username; if (name) { setCommentText(`@${name} `); setReplyingToName(name); } if (!showComments) handleCommentToggle(); }}
+              className="mt-2 text-[11px] font-semibold text-violet-600 hover:text-violet-700 transition-colors"
+            >
+              Reply to @{post.user?.displayName || post.user?.username}
+            </button>
+          )}
+
+          {/* Other raters — visually secondary: small avatars, muted text */}
           {relatedRatings.length > 0 && (
-            <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2.5">
-              {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
-                <div key={r.userId} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 overflow-hidden">
-                      {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
+            <div className="mt-2 border-t border-gray-100 pt-2">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-300 mb-1.5">Also rated</p>
+              <div className="flex flex-col gap-1">
+                {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
+                  <div key={r.userId} className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-[9px] font-bold flex-shrink-0 overflow-hidden">
+                        {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
+                      </div>
+                      <span className="text-[10px] text-gray-400">{r.displayName || r.userName}</span>
                     </div>
-                    <span className="text-xs font-semibold text-gray-700">{r.displayName || r.userName}</span>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <div className="flex items-center gap-0.5">
-                      {[1,2,3,4,5].map(s => {
-                        if (s <= Math.floor(r.rating)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
-                        if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative"><Star size={12} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                        return <Star key={s} size={12} className="text-gray-200" />;
-                      })}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="flex items-center gap-0.5">
+                        {[1,2,3,4,5].map(s => {
+                          if (s <= Math.floor(r.rating)) return <Star key={s} size={9} className="text-yellow-400 fill-yellow-400" />;
+                          if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative"><Star size={9} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={9} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                          return <Star key={s} size={9} className="text-gray-200" />;
+                        })}
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); const name = r.displayName || r.userName; setCommentText(`@${name} `); setReplyingToName(name); if (!showComments) handleCommentToggle(); }}
+                        className={`text-[9px] font-medium transition-colors ${replyingToName === (r.displayName || r.userName) ? 'text-violet-500' : 'text-gray-300 hover:text-violet-400'}`}
+                      >Reply</button>
                     </div>
-                    <button
-                      onClick={() => { const name = r.displayName || r.userName; setCommentText(`@${name} `); setReplyingToName(name); if (!showComments) handleCommentToggle(); }}
-                      className={`text-[10px] font-semibold transition-colors ${replyingToName === (r.displayName || r.userName) ? 'text-violet-500' : 'text-gray-400 hover:text-violet-500'}`}
-                    >Reply</button>
                   </div>
-                </div>
-              ))}
-              {relatedRatings.length > 2 && (
-                <button onClick={() => setShowAllRelated(v => !v)} className="text-[10px] text-violet-500 font-medium text-left">
-                  {showAllRelated ? 'Show less' : `+ ${relatedRatings.length - 2} more`}
-                </button>
-              )}
+                ))}
+                {relatedRatings.length > 2 && (
+                  <button onClick={() => setShowAllRelated(v => !v)} className="text-[9px] text-violet-400 font-medium text-left">
+                    {showAllRelated ? 'Show less' : `+ ${relatedRatings.length - 2} more`}
+                  </button>
+                )}
+              </div>
             </div>
           )}
           <div className="mt-3 pt-3 border-t border-gray-50">{actionBar}</div>
