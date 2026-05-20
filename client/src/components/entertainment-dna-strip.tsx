@@ -343,7 +343,7 @@ export function EntertainmentDNAStrip() {
 
   const handleNavigate = () => {
     setExpanded(false);
-    setLocation(state <= 2 || state >= 4 ? '/dna' : '/play');
+    setLocation(state <= 2 ? '/entertainment-dna' : state >= 4 ? '/dna' : '/play');
   };
 
   return (
