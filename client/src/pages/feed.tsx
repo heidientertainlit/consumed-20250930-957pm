@@ -1680,14 +1680,32 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
                   </p>
                 )}
-                {/* Primary reply CTA for action-first layout */}
-                {isOtherUser && post.user && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); const name = post.user?.displayName || post.user?.username; if (name) { setCommentText(`@${name} `); setReplyingToName(name); } if (!showComments) handleCommentToggle(); }}
-                    className="mt-2 text-[11px] font-semibold text-violet-600 hover:text-violet-700 transition-colors"
-                  >
-                    Reply to @{post.user?.displayName || post.user?.username}
-                  </button>
+                {/* Primary poster identity — always visible, shows "You" for own posts */}
+                {post.user && (post.rating || 0) > 0 && (
+                  <div className="flex items-center gap-2 mt-2 pt-1.5 border-t border-gray-100">
+                    <div className="w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 overflow-hidden">
+                      {post.user?.avatar
+                        ? <img src={post.user.avatar} className="w-full h-full object-cover" alt="" />
+                        : (post.user?.displayName || post.user?.username || 'U')[0]?.toUpperCase()}
+                    </div>
+                    <span className="text-xs font-semibold text-gray-800 flex-1 min-w-0 truncate">
+                      {isOtherUser ? (post.user?.displayName || post.user?.username) : 'You'}
+                    </span>
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
+                      {[1,2,3,4,5].map(s => {
+                        const r = post.rating!;
+                        if (s <= Math.floor(r)) return <Star key={s} size={11} className="text-yellow-400 fill-yellow-400" />;
+                        if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={11} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={11} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                        return <Star key={s} size={11} className="text-gray-200" />;
+                      })}
+                    </div>
+                    {isOtherUser && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); const name = post.user?.displayName || post.user?.username; if (name) { setCommentText(`@${name} `); setReplyingToName(name); } if (!showComments) handleCommentToggle(); }}
+                        className={`text-[10px] font-semibold transition-colors flex-shrink-0 ${replyingToName === (post.user?.displayName || post.user?.username) ? 'text-violet-500' : 'text-gray-400 hover:text-violet-500'}`}
+                      >Reply</button>
+                    )}
+                  </div>
                 )}
                 {/* Other raters — visually secondary */}
                 {relatedRatings.length > 0 && (
