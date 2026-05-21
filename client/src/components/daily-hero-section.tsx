@@ -345,11 +345,9 @@ function ScoreShareCard({
 
                 <div className="h-px mb-5" style={{ background: '#ede9f8' }} />
 
-                {/* Emotional rank callout — "Only X% agreed — but you're top Y%" */}
-                {(() => {
-                  const userPct = callVoteBreakdown && callAnswer && callAnswer !== '__skip'
-                    ? (callVoteBreakdown[callAnswer] ?? null)
-                    : null;
+                {/* Name + vote % callout — always shows if user answered */}
+                {callAnswer && callAnswer !== '__skip' && (() => {
+                  const userPct = callVoteBreakdown ? (callVoteBreakdown[callAnswer] ?? null) : null;
                   const topPct = rankData?.beatenPct != null
                     ? Math.round(rankData.beatenPct)
                     : rankData?.rank != null && rankData?.total != null && rankData.total > 0
@@ -357,24 +355,23 @@ function ScoreShareCard({
                       : null;
                   const displayName = username || 'You';
 
-                  if (userPct === null && topPct === null) return null;
                   return (
                     <div className="rounded-2xl px-4 py-4 mb-4 text-center" style={{ background: '#f5f3ff' }}>
-                      {userPct !== null && (
-                        <p className="text-[13px] mb-1" style={{ color: '#9b8fd4' }}>
-                          Only {userPct}% agreed — but
-                        </p>
-                      )}
-                      {topPct !== null && (
-                        <p className="text-[22px] font-extrabold leading-tight" style={{ color: '#2d2080', letterSpacing: '-0.02em' }}>
-                          {displayName} is in the<br />top {topPct}% on Consumed.
-                        </p>
-                      )}
-                      {topPct === null && userPct !== null && (
-                        <p className="text-[18px] font-extrabold" style={{ color: '#2d2080' }}>
-                          {displayName} called it.
-                        </p>
-                      )}
+                      <p className="text-[13px] mb-2" style={{ color: '#9b8fd4' }}>
+                        {userPct !== null
+                          ? userPct <= 30
+                            ? `Only ${userPct}% agreed — but`
+                            : userPct >= 70
+                            ? `${userPct}% agreed — and`
+                            : `${userPct}% of players agreed — and`
+                          : `That\u2019s your call \u2014 and`}
+                      </p>
+                      <p className="text-[24px] font-extrabold leading-tight" style={{ color: '#2d2080', letterSpacing: '-0.02em' }}>
+                        {topPct !== null
+                          ? <>{displayName} is in the<br />top {topPct}% on Consumed.</>
+                          : <>{displayName} made the call.</>
+                        }
+                      </p>
                     </div>
                   );
                 })()}
