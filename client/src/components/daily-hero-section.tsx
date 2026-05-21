@@ -465,7 +465,8 @@ function ScoreShareCard({
           </button>
           <button
             onClick={() => {
-              const msg = encodeURIComponent("Come play today's Daily Call on Consumed 🎮 Where entertainment gets played — consumedapp.com");
+              const appUrl = import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com';
+              const msg = encodeURIComponent(`Come play today's Daily Call on Consumed 🎮 Where entertainment gets played — ${appUrl}`);
               window.open(`sms:?body=${msg}`, '_blank');
             }}
             className="flex-1 py-4 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 shadow-lg"
@@ -922,7 +923,8 @@ function TodaysPlayGame({
                 </button>
                 <button
                   onClick={() => {
-                    const msg = encodeURIComponent("Come play today's Daily Call on Consumed 🎮 Where entertainment gets played — consumedapp.com");
+                    const appUrl = import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com';
+                    const msg = encodeURIComponent(`Come play today's Daily Call on Consumed 🎮 Where entertainment gets played — ${appUrl}`);
                     window.open(`sms:?body=${msg}`, '_blank');
                   }}
                   className="flex-1 py-4 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 shadow-lg"
