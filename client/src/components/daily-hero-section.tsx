@@ -89,6 +89,7 @@ function ScoreShareCard({
   dnaStats,
   rankData,
   triviaStats,
+  socialProof,
   onClose,
 }: {
   open: boolean;
@@ -100,12 +101,13 @@ function ScoreShareCard({
   callVoteBreakdown?: Record<string, number> | null;
   streak?: number | null;
   userId?: string;
-  answers?: { correct: boolean; category?: string }[];
-  questions?: { category?: string | null }[];
+  answers?: { correct: boolean; category?: string; picked?: string }[];
+  questions?: { category?: string | null; title?: string | null; options?: string[] | null }[];
   username?: string | null;
   dnaStats?: { label: string | null; totalAnswered: number; topGenre: string | null; allGenres: string[] } | null;
   rankData?: { rank: number | null; total: number | null; beatenPct?: number } | null;
   triviaStats?: { accuracy: number | null; points: number | null } | null;
+  socialProof?: number | null;
   onClose: () => void;
 }) {
   const { toast } = useToast();
@@ -152,7 +154,7 @@ function ScoreShareCard({
           {/* ── Purple gradient header ── */}
           <div
             className="px-5 pt-5 pb-4"
-            style={{ background: type === 'play' ? 'linear-gradient(135deg,#1e40af 0%,#2563eb 35%,#0ea5e9 75%,#38bdf8 100%)' : 'linear-gradient(135deg,#1e3a8a 0%,#1e1b4b 100%)' }}
+            style={{ background: type === 'play' ? 'linear-gradient(135deg,#12091F 0%,#1E0B4A 50%,#2D1B69 100%)' : 'linear-gradient(135deg,#1e3a8a 0%,#1e1b4b 100%)' }}
           >
             <div className="flex items-start justify-between">
               {/* Logo */}
@@ -170,156 +172,172 @@ function ScoreShareCard({
             </div>
           </div>
 
-          {/* ── White body ── */}
-          <div className="bg-white px-6 pt-7 pb-12">
+          {/* ── Body ── */}
+          <div className={type === 'play' ? 'px-5 pt-5 pb-6' : 'bg-white px-6 pt-7 pb-12'} style={type === 'play' ? { background: '#0D0A1F' } : {}}>
 
             {type === 'play' && playScore ? (
               <>
-                {/* DNA copy — same logic as done screen */}
-                {(() => {
-                  const CAT_EMOJI: Record<string, string> = {
-                    Movies: '🎬', Movie: '🎬',
-                    TV: '📺', Television: '📺',
-                    Music: '🎵',
-                    Books: '📚', Book: '📚',
-                    'Pop Culture': '⭐',
-                    Sports: '🏆',
-                    Games: '🎮', Gaming: '🎮',
-                    Podcasts: '🎙️', Podcast: '🎙️',
-                  };
-                  const ratio = playScore.correct / playScore.total;
-                  const daySeed = parseInt(new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }).replace(/-/g, ''), 10) % 97;
-                  const pick = <T,>(arr: T[]): T => arr[daySeed % arr.length];
+                {/* ── Question text ── */}
+                {questions?.[0]?.title && (
+                  <p className="text-[12px] leading-snug mb-4 px-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                    {truncateWords(questions[0].title, 90)}
+                  </p>
+                )}
 
-                  const correctCats = (answers || []).filter(a => a.correct).map(a => a.category).filter(Boolean) as string[];
-                  const wrongCats = (answers || []).filter(a => !a.correct).map(a => a.category).filter(Boolean) as string[];
-                  const strongCat = correctCats[0] ?? null;
-                  const weakCat = wrongCats[0] ?? null;
-
-                  const perfectHeadlines: [string, string][] = [
-                    ['Perfect. You\u2019ve got elite entertainment instincts.', 'Added to your Entertainment DNA.'],
-                    ['Untouchable today.', 'Your Entertainment DNA just got stronger.'],
-                    [`${playScore.correct}/${playScore.total}. Every category. Not easy.`, 'Added to your Entertainment DNA.'],
-                  ];
-                  const goodHeadlines: [string, string][] = [
-                    ...(strongCat && weakCat ? [[`Strong in ${strongCat}. ${weakCat} got you.`, 'Your Entertainment DNA is building.'] as [string, string]] : []),
-                    ['Almost perfect. One away from dangerous.', 'Your Entertainment DNA just got stronger.'],
-                    [`${playScore.correct}/${playScore.total}. Close enough to flex.`, 'Keep building your Entertainment DNA.'],
-                  ];
-                  const weakHeadlines: [string, string][] = [
-                    ['Today humbled you. Tomorrow\u2019s yours.', 'Every play builds your Entertainment DNA.'],
-                    ['The hard ones hit different.', 'Come back and strengthen your DNA.'],
-                  ];
-
-                  const [headline, subhead] =
-                    playScore.correct === playScore.total ? pick(perfectHeadlines)
-                    : ratio >= 0.5 ? pick(goodHeadlines)
-                    : pick(weakHeadlines);
-
-                  const insightLine = (() => {
-                    if (playScore.correct === playScore.total) return pick([
-                      'Strong across everything. No weak spots today.',
-                      'Balanced taste. That\u2019s rare.',
-                      'Perfect across the board. Most people don\u2019t pull that off.',
-                    ]);
-                    if (strongCat && weakCat && strongCat !== weakCat)
-                      return `Strong in ${strongCat}. ${weakCat} got you.`;
-                    if (weakCat) return `${weakCat} tripped you up \u2014 worth a revisit.`;
-                    return null;
-                  })();
-
-                  const tomorrowLine = pick([
-                    'Think you can do it again tomorrow?',
-                    'Let\u2019s see if you can stay perfect.',
-                    'Tomorrow might not be this easy.',
-                  ]);
-
-                  return (
-                    <div className="flex flex-col items-center text-center gap-4">
-
-                      {/* Display name */}
-                      {username && (
-                        <p className="text-[22px] font-bold uppercase tracking-widest text-gray-400">{username}</p>
-                      )}
-
-                      {/* Headline block */}
-                      <div>
-                        <h2 className="text-[15px] font-black text-gray-900 leading-snug mb-1">{headline}</h2>
-                        <p className="text-[11px] font-semibold text-gray-500 leading-snug">{subhead}</p>
+                {/* ── Big answer + Better Than box ── */}
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: '#a89ee0' }}>
+                      {answers?.[0]?.picked ? 'I SAID:' : 'SCORE:'}
+                    </p>
+                    {answers?.[0]?.picked ? (
+                      <p className="text-[30px] font-black leading-tight text-white break-words" style={{ letterSpacing: '-0.02em' }}>
+                        {answers[0].picked}.
+                      </p>
+                    ) : (
+                      <p className="text-[38px] font-black leading-none text-white" style={{ letterSpacing: '-0.02em' }}>
+                        {playScore.correct}/{playScore.total}
+                      </p>
+                    )}
+                    {socialProof != null && (
+                      <div
+                        className="mt-2 inline-flex items-center px-2.5 py-1 rounded-full"
+                        style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      >
+                        <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                          Only {socialProof}% agreed with you
+                        </span>
                       </div>
+                    )}
+                  </div>
 
-                      {/* Score */}
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-[44px] font-black leading-none text-gray-900">{playScore.correct}</span>
-                        <span className="text-[20px] font-bold text-gray-300 leading-none">/{playScore.total}</span>
+                  {/* Better than % glowing box */}
+                  {(() => {
+                    const topPct = rankData?.beatenPct != null
+                      ? Math.round(rankData.beatenPct)
+                      : rankData?.rank != null && rankData?.total != null && rankData.total > 0
+                        ? Math.round((1 - rankData.rank / rankData.total) * 100)
+                        : null;
+                    if (topPct === null) return null;
+                    return (
+                      <div
+                        className="rounded-2xl px-3 py-3 text-center shrink-0"
+                        style={{
+                          minWidth: 88,
+                          background: '#1a1030',
+                          border: '1px solid rgba(124,58,237,0.45)',
+                          boxShadow: '0 0 22px rgba(124,58,237,0.28)',
+                        }}
+                      >
+                        <p className="text-[7px] font-bold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>BETTER THAN</p>
+                        <p
+                          className="text-[28px] font-black leading-none"
+                          style={{ background: 'linear-gradient(135deg,#a78bfa 0%,#38bdf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+                        >
+                          {topPct}%
+                        </p>
+                        <p className="text-[7px] font-bold uppercase tracking-widest mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>OF PLAYERS</p>
+                        <p className="text-[11px] mt-1">👑</p>
                       </div>
+                    );
+                  })()}
+                </div>
 
-                      {/* Per-question category pills */}
-                      <div className="flex gap-2 flex-wrap justify-center">
-                        {Array.from({ length: playScore.total }).map((_, i) => {
-                          const correct = answers?.[i]?.correct ?? (i < playScore.correct);
-                          const rawCat = answers?.[i]?.category || questions?.[i]?.category;
-                          const cat = rawCat && rawCat !== 'General' ? rawCat : null;
-                          const emoji = cat ? (CAT_EMOJI[cat] || '🎯') : null;
-                          const label = cat || `Q${i + 1}`;
-                          return (
-                            <div
-                              key={i}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-                              style={{
-                                background: correct ? '#f0fdf4' : '#fff1f2',
-                                border: `1px solid ${correct ? '#bbf7d0' : '#fecdd3'}`,
-                              }}
-                            >
-                              {emoji && <span className="text-[13px] leading-none">{emoji}</span>}
-                              <span
-                                className="text-[10px] font-bold uppercase tracking-wide"
-                                style={{ color: correct ? '#15803d' : '#dc2626' }}
-                              >
-                                {label}
-                              </span>
-                              {correct
-                                ? <CheckCircle size={11} className="text-green-600" />
-                                : <XCircle size={11} className="text-red-500" />}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Insight line */}
-                      {insightLine && (
-                        <p className="text-[11px] font-medium text-gray-500 leading-snug">{insightLine}</p>
-                      )}
-
-                      {/* Divider */}
-                      <div className="w-full h-px bg-gray-100" />
-
-                      {/* Points + streak side by side */}
-                      <div className="flex items-center gap-2.5 text-[11px] text-gray-500 font-medium">
-                        {playScore.totalPoints > 0 && (
-                          <div className="flex items-center gap-1">
-                            <Zap size={11} className="text-purple-600" fill="currentColor" />
-                            <span>
-                              <span className="font-bold text-gray-900">+{playScore.totalPoints} pts</span>
-                            </span>
-                          </div>
-                        )}
-                        {streak && streak > 0 && (
-                          <>
-                            {playScore.totalPoints > 0 && <span className="text-gray-300">·</span>}
-                            <div className="flex items-center gap-1">
-                              <Flame size={11} className="text-orange-500 fill-orange-500" />
-                              <span className="font-semibold text-gray-700">
-                                {streak === 1 ? 'streak started — play again tomorrow' : `${streak}-day streak`}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-
+                {/* ── 4-stat row ── */}
+                <div className="grid grid-cols-4 gap-1.5 mb-4">
+                  {[
+                    {
+                      icon: '🏆',
+                      value: rankData?.rank != null ? `#${rankData.rank}` : '—',
+                      label: 'RANK',
+                      sub: 'THIS WEEK',
+                    },
+                    {
+                      icon: '🔥',
+                      value: `${streak ?? 0}`,
+                      label: 'STREAK',
+                      sub: (streak ?? 0) === 1 ? 'DAY' : 'DAYS',
+                    },
+                    {
+                      icon: '🎯',
+                      value: triviaStats?.accuracy != null ? `${Math.round(triviaStats.accuracy)}%` : `${playScore.total > 0 ? Math.round((playScore.correct / playScore.total) * 100) : 0}%`,
+                      label: 'ACCURACY',
+                      sub: 'THIS WEEK',
+                    },
+                    {
+                      icon: '⭐',
+                      value: triviaStats?.points != null
+                        ? triviaStats.points >= 1000 ? `${(triviaStats.points / 1000).toFixed(1)}K` : String(triviaStats.points)
+                        : playScore.totalPoints > 0 ? `+${playScore.totalPoints}` : '—',
+                      label: 'TOTAL PTS',
+                      sub: 'ALL TIME',
+                    },
+                  ].map(({ icon, value, label, sub }) => (
+                    <div
+                      key={label}
+                      className="rounded-xl py-2.5 px-1 text-center"
+                      style={{ background: '#1a1030', border: '1px solid rgba(255,255,255,0.06)' }}
+                    >
+                      <span className="text-[11px]">{icon}</span>
+                      <p className="text-[13px] font-black leading-none text-white mt-0.5">{value}</p>
+                      <p className="text-[7px] font-bold uppercase tracking-wide mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{label}</p>
+                      <p className="text-[6px] uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.2)' }}>{sub}</p>
                     </div>
-                  );
-                })()}
+                  ))}
+                </div>
+
+                {/* ── Entertainment DNA chips ── */}
+                {dnaStats && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Dna size={10} className="text-purple-400" />
+                      <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                        Your Entertainment DNA
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(() => {
+                        const chips: { emoji: string; text: string }[] = [];
+                        if (dnaStats.label) chips.push({ emoji: '🧬', text: dnaStats.label });
+                        if (dnaStats.topGenre) {
+                          const genreMap: Record<string, string> = {
+                            Drama: 'Prestige Devotee', Thriller: 'Edge-of-Seat Viewer',
+                            Comedy: 'Laughs Detector', Action: 'Action Addict',
+                            Horror: 'Horror Hunter', 'Sci-Fi': 'Galaxy Brain',
+                            Romance: 'Romance Radar', Crime: 'Crime Obsessive',
+                            Animation: 'Cartoon Connoisseur', Documentary: 'Doc Devotee',
+                            Music: 'Music Maven', Fantasy: 'World Builder',
+                          };
+                          chips.push({ emoji: '🎬', text: genreMap[dnaStats.topGenre] || `${dnaStats.topGenre} Fan` });
+                        }
+                        const acc = triviaStats?.accuracy ?? (playScore.total > 0 ? (playScore.correct / playScore.total) * 100 : null);
+                        if (acc !== null) {
+                          chips.push({ emoji: '🎯', text: acc >= 70 ? 'Trivia Sharp' : acc >= 50 ? 'Chaos Viewer' : 'Binge-Worthy Detector' });
+                        }
+                        return chips.slice(0, 3).map(c => (
+                          <div
+                            key={c.text}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                            style={{ background: '#1a1030', border: '1px solid rgba(124,58,237,0.35)' }}
+                          >
+                            <span className="text-[11px]">{c.emoji}</span>
+                            <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.8)' }}>{c.text}</span>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Branding footer ── */}
+                <div className="pt-3 text-center" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                  <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                    Everyone's playing. Where do you rank?
+                  </p>
+                  <p className="text-[8px] mt-0.5" style={{ color: 'rgba(255,255,255,0.15)' }}>
+                    @consumedapp · where entertainment gets played
+                  </p>
+                </div>
               </>
             ) : (
               /* Daily Call body — emotional redesign */
@@ -438,14 +456,16 @@ function ScoreShareCard({
               </>
             )}
 
-            {/* Footer tagline */}
-            <div className="pt-5 border-t border-gray-100 text-center">
-              <p className="text-[11px] font-bold text-purple-600">@consumedapp</p>
-              <p className="text-[9px] text-gray-400 mt-0.5">where entertainment gets played</p>
-            </div>
-
-            {/* Everyone's playing */}
-            <p className="text-[11px] font-semibold text-gray-400 leading-snug text-center">Everyone's playing. Where do you rank?</p>
+            {/* Footer tagline — call type only (play has its own branding built in) */}
+            {type !== 'play' && (
+              <>
+                <div className="pt-5 border-t border-gray-100 text-center">
+                  <p className="text-[11px] font-bold text-purple-600">@consumedapp</p>
+                  <p className="text-[9px] text-gray-400 mt-0.5">where entertainment gets played</p>
+                </div>
+                <p className="text-[11px] font-semibold text-gray-400 leading-snug text-center">Everyone's playing. Where do you rank?</p>
+              </>
+            )}
           </div>
         </div>
 
@@ -590,14 +610,14 @@ function TodaysPlayGame({
   username?: string | null;
   onComplete: (score: PlayScore) => void;
   onClose: () => void;
-  onShare: (answers: { correct: boolean; category?: string }[]) => void;
+  onShare: (answers: { correct: boolean; category?: string; picked?: string }[], socialProof?: number | null) => void;
 }) {
   const [, setLocation] = useLocation();
   const { session } = useAuth();
   const [qIndex, setQIndex] = useState(0);
   const [phase, setPhase] = useState<'playing' | 'result' | 'done'>('playing');
   const [selected, setSelected] = useState<string | null>(null);
-  const [answers, setAnswers] = useState<{ correct: boolean; points: number; category?: string }[]>([]);
+  const [answers, setAnswers] = useState<{ correct: boolean; points: number; category?: string; picked?: string }[]>([]);
   const [socialProof, setSocialProof] = useState<number | null>(null);
   const [doneScore, setDoneScore] = useState<PlayScore | null>(null);
 
@@ -652,7 +672,7 @@ function TodaysPlayGame({
       setSocialProof(Math.floor(Math.random() * 25) + 52);
     }
 
-    setAnswers(prev => [...prev, { correct: isCorrect, points, category: q.category || 'General' }]);
+    setAnswers(prev => [...prev, { correct: isCorrect, points, category: q.category || 'General', picked: selected ?? undefined }]);
     setPhase('result');
   };
 
@@ -674,7 +694,7 @@ function TodaysPlayGame({
         completed: true,
         date: getLocalDateStr(),
         score,
-        answers: allAnswers.map(a => ({ correct: a.correct, category: a.category })),
+        answers: allAnswers.map(a => ({ correct: a.correct, category: a.category, picked: a.picked })),
       }));
       setDoneScore(score);
       onComplete(score); // update parent card immediately
@@ -910,7 +930,7 @@ function TodaysPlayGame({
               {/* Share + Nudge buttons side by side */}
               <div className="flex gap-2">
                 <button
-                  onClick={() => { onClose(); onShare(answers); }}
+                  onClick={() => { onClose(); onShare(answers, socialProof); }}
                   className="flex-1 py-4 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 shadow-lg"
                   style={{ background: 'linear-gradient(90deg,#7c3aed,#4f46e5)' }}
                 >
@@ -1410,7 +1430,8 @@ export function DailyHeroSection() {
   // ── Today's Play state ──
   const [showPlayGame, setShowPlayGame] = useState(false);
   const [showPlayShare, setShowPlayShare] = useState(false);
-  const [playAnswers, setPlayAnswers] = useState<{ correct: boolean; category?: string }[] | null>(() => {
+  const [playSocialProof, setPlaySocialProof] = useState<number | null>(null);
+  const [playAnswers, setPlayAnswers] = useState<{ correct: boolean; category?: string; picked?: string }[] | null>(() => {
     try {
       const s = localStorage.getItem(getTodayPlayKey());
       if (!s) return null;
@@ -2390,7 +2411,7 @@ export function DailyHeroSection() {
             // sheet stays open showing the combined done+share screen
           }}
           onClose={() => setShowPlayGame(false)}
-          onShare={(ans) => { setPlayAnswers(ans); setShowPlayGame(false); setShowPlayShare(true); }}
+          onShare={(ans, sp) => { setPlayAnswers(ans); setPlaySocialProof(sp ?? null); setShowPlayGame(false); setShowPlayShare(true); }}
         />
       )}
 
@@ -2423,8 +2444,10 @@ export function DailyHeroSection() {
         streak={streak}
         userId={user?.id}
         username={username ?? null}
+        dnaStats={dnaStats ?? null}
         rankData={rankData ?? null}
         triviaStats={triviaStats ?? null}
+        socialProof={playSocialProof}
         onClose={() => setShowPlayShare(false)}
       />
       <ScoreShareCard
