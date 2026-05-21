@@ -373,10 +373,10 @@ function ScoreShareCard({
               /* Daily Call body — dark dramatic redesign */
               <>
                 {/* Question text */}
-                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>My Daily Call</p>
+                {/* Huge question with quotes */}
                 {callQuestion && (
-                  <p className="text-[23px] font-black italic leading-tight mb-4 text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                    {truncateWords(callQuestion, 120)}
+                  <p className="font-black italic leading-[1.05] mb-5 text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '34px', letterSpacing: '-0.02em' }}>
+                    &ldquo;{truncateWords(callQuestion, 100)}&rdquo;
                   </p>
                 )}
 
@@ -385,20 +385,20 @@ function ScoreShareCard({
                     {/* Big answer + Better Than box */}
                     <div className="flex items-start gap-3 mb-4">
                       <div className="flex-1 min-w-0">
-                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: '#a89ee0' }}>
-                          🔥 HOT TAKE LOCKED
+                        <p className="text-[9px] font-bold uppercase tracking-[0.2em] mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                          {username ? `${username} said:` : 'I said:'}
                         </p>
-                        <p className="text-[30px] font-black leading-tight text-white break-words" style={{ letterSpacing: '-0.02em' }}>
+                        <p className="font-black leading-none text-white break-words" style={{ fontSize: '52px', letterSpacing: '-0.03em', lineHeight: 1 }}>
                           {callAnswer}.
                         </p>
                         {/* Only X% agreed */}
                         {callVoteBreakdown && callAnswer && (callVoteBreakdown[callAnswer] ?? null) !== null && (
                           <div
-                            className="mt-2 inline-flex items-center px-2.5 py-1 rounded-full"
-                            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+                            className="mt-3 inline-flex items-center px-3 py-1.5 rounded-full"
+                            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}
                           >
-                            <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                              Only {callVoteBreakdown[callAnswer]}% agreed with you ◇◇
+                            <span className="text-[11px] font-bold" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                              Only <strong className="text-white">{callVoteBreakdown[callAnswer]}%</strong> agreed
                             </span>
                           </div>
                         )}
@@ -414,23 +414,23 @@ function ScoreShareCard({
                         if (topPct === null) return null;
                         return (
                           <div
-                            className="rounded-2xl px-3 py-3 text-center shrink-0"
+                            className="rounded-2xl px-3 py-4 text-center shrink-0"
                             style={{
-                              minWidth: 88,
+                              minWidth: 100,
                               background: '#1a1030',
                               border: '1px solid rgba(124,58,237,0.45)',
-                              boxShadow: '0 0 22px rgba(124,58,237,0.28)',
+                              boxShadow: '0 0 28px rgba(124,58,237,0.3)',
                             }}
                           >
-                            <p className="text-[7px] font-bold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>BETTER THAN</p>
+                            <p className="text-[7px] font-bold uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>BETTER THAN</p>
                             <p
-                              className="text-[28px] font-black leading-none"
-                              style={{ background: 'linear-gradient(135deg,#a78bfa 0%,#38bdf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+                              className="font-black leading-none"
+                              style={{ fontSize: '40px', background: 'linear-gradient(135deg,#a78bfa 0%,#38bdf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
                             >
                               {topPct}%
                             </p>
-                            <p className="text-[7px] font-bold uppercase tracking-widest mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>OF PLAYERS</p>
-                            <p className="text-[11px] mt-1">👑</p>
+                            <p className="text-[7px] font-bold uppercase tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>OF PLAYERS</p>
+                            <p className="text-[13px] mt-1.5">👑</p>
                           </div>
                         );
                       })()}
@@ -471,9 +471,20 @@ function ScoreShareCard({
                     })()}
                   </>
                 ) : (
-                  /* Skipped */
-                  <div className="mb-4 py-2">
-                    <p className="text-[13px] font-semibold italic text-white/30">Sat this one out</p>
+                  /* Skipped — show provocative Start a Fight block */
+                  <div className="rounded-xl px-4 py-4 mb-4" style={{ background: '#1a1030', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: '#a89ee0' }}>💬 Start a fight</p>
+                    {(() => {
+                      if (callVoteBreakdown && callOptions && callOptions.length >= 2) {
+                        const top = [...callOptions].sort((a, b) => (callVoteBreakdown[b] ?? 0) - (callVoteBreakdown[a] ?? 0))[0];
+                        const topPct = top ? Math.round(callVoteBreakdown[top] ?? 0) : null;
+                        if (top && topPct) {
+                          return <p className="text-[14px] font-bold leading-snug text-white">{topPct}% went with &ldquo;{top}&rdquo; — are they right or are they all wrong?</p>;
+                        }
+                      }
+                      return <p className="text-[14px] font-bold leading-snug text-white">The crowd has spoken. Think they got it right? Share and settle it.</p>;
+                    })()}
+                    <p className="text-[11px] mt-2 italic" style={{ color: 'rgba(255,255,255,0.35)' }}>You sat this one out — but your friends didn&apos;t.</p>
                   </div>
                 )}
 
@@ -579,30 +590,19 @@ function ScoreShareCard({
                   </div>
                 )}
 
-                {/* Spicy CTA */}
-                {(() => {
-                  const skipped = !callAnswer || callAnswer === '__skip';
-                  const safeAnswer = (!skipped && callAnswer) ? callAnswer : '';
-                  const userPct = (safeAnswer && callVoteBreakdown) ? (callVoteBreakdown[safeAnswer] ?? null) : null;
-                  let headline: string;
-                  let sub: string;
-                  if (skipped) {
-                    headline = `The crowd made their call. Can you guess which way they went?`;
-                    sub = `Nudge a friend and find out. 👀`;
-                  } else if (userPct !== null) {
-                    headline = `${userPct}% of players said \u201c${callAnswer}.\u201d Where do your friends sit?`;
-                    sub = `Share and start the debate. 🔥`;
-                  } else {
-                    headline = `You made your call. Where does everyone else stand?`;
-                    sub = `Share and start the debate. 🔥`;
-                  }
+                {/* Spicy CTA — only for non-skipped answers */}
+                {callAnswer && callAnswer !== '__skip' && (() => {
+                  const userPct = callVoteBreakdown ? (callVoteBreakdown[callAnswer] ?? null) : null;
+                  const headline = userPct !== null
+                    ? `${userPct}% of players said \u201c${callAnswer}.\u201d Where do your friends sit?`
+                    : `You made your call. Where does everyone else stand?`;
                   return (
                     <div
                       className="rounded-xl px-4 py-3.5 mb-4 text-center"
                       style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.18) 0%,rgba(56,189,248,0.08) 100%)', border: '1px solid rgba(124,58,237,0.3)' }}
                     >
                       <p className="text-[15px] font-black text-white leading-tight">{headline}</p>
-                      <p className="text-[11px] mt-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>{sub}</p>
+                      <p className="text-[11px] mt-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>Share and start the debate. 🔥</p>
                     </div>
                   );
                 })()}
