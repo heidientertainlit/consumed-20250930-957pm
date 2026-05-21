@@ -379,24 +379,41 @@ function ScoreShareCard({
                   );
                 })()}
 
-                {/* "Start a fight" — provocateur block */}
+                {/* "Start a fight" — always shows, uses vote data if available */}
                 {(() => {
-                  if (!callVoteBreakdown || !callOptions || callOptions.length < 2 || !callAnswer || callAnswer === '__skip') return null;
-                  const opponent = callOptions
-                    .filter(o => o !== callAnswer)
-                    .sort((a, b) => (callVoteBreakdown[b] ?? 0) - (callVoteBreakdown[a] ?? 0))[0];
-                  if (!opponent) return null;
-                  const oppPct = callVoteBreakdown[opponent] ?? 0;
-                  const provocateurs = [
-                    `${oppPct}% went with "${opponent}" — bold choice. Are they onto something or just wrong?`,
-                    `${oppPct}% disagree with you. Think they're missing something? Tell them.`,
-                    `Most people said "${opponent}". ${oppPct}% of takes can't all be right… can they?`,
-                  ];
-                  const seed = new Date().getDate() % provocateurs.length;
+                  const seed = new Date().getDate() % 3;
+                  let taunt: string;
+
+                  if (callVoteBreakdown && callOptions && callOptions.length >= 2 && callAnswer && callAnswer !== '__skip') {
+                    const opponent = callOptions
+                      .filter(o => o !== callAnswer)
+                      .sort((a, b) => (callVoteBreakdown[b] ?? 0) - (callVoteBreakdown[a] ?? 0))[0];
+                    const oppPct = opponent ? (callVoteBreakdown[opponent] ?? 0) : 0;
+                    const taunts = [
+                      opponent && oppPct > 0
+                        ? `${oppPct}% went with "${opponent}" — bold choice. Are they onto something or just wrong?`
+                        : `Not everyone sees it your way. Think you can change their minds?`,
+                      `Most people picked something else. Think they're missing the point? Tell them.`,
+                      opponent
+                        ? `"${opponent}" is what the crowd went with. ${oppPct}% of takes can't all be right… can they?`
+                        : `The crowd went a different way. Think you're the smart one here?`,
+                    ];
+                    taunt = taunts[seed];
+                  } else if (callAnswer && callAnswer !== '__skip') {
+                    const genericTaunts = [
+                      `Not everyone will agree with you here. Ready to defend your take?`,
+                      `Bold call. Think you can convince the skeptics?`,
+                      `Plenty of people see this differently — think you're right?`,
+                    ];
+                    taunt = genericTaunts[seed];
+                  } else {
+                    return null;
+                  }
+
                   return (
                     <div className="rounded-xl px-4 py-3.5 mb-5" style={{ background: '#2d2080' }}>
                       <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: '#a89ee0' }}>💬 Start a fight</p>
-                      <p className="text-[13px] leading-snug" style={{ color: '#ede9f8' }}>{provocateurs[seed]}</p>
+                      <p className="text-[13px] leading-snug" style={{ color: '#ede9f8' }}>{taunt}</p>
                     </div>
                   );
                 })()}
@@ -2422,6 +2439,7 @@ export function DailyHeroSection() {
         callVoteBreakdown={callVoteBreakdown}
         streak={streak}
         userId={user?.id}
+        username={username ?? null}
         dnaStats={dnaStats ?? null}
         rankData={rankData ?? null}
         triviaStats={triviaStats ?? null}
