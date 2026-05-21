@@ -453,15 +453,28 @@ function ScoreShareCard({
           </div>
         </div>
 
-        {/* Share button (outside the card, not screenshotted) */}
-        <button
-          onClick={handleShare}
-          className="w-full py-4 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 shadow-lg"
-          style={{ background: 'linear-gradient(90deg,#7c3aed,#4f46e5)' }}
-        >
-          <Share2 size={17} />
-          Share Your Score
-        </button>
+        {/* Share + Nudge buttons side by side */}
+        <div className="flex gap-2">
+          <button
+            onClick={handleShare}
+            className="flex-1 py-4 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 shadow-lg"
+            style={{ background: 'linear-gradient(90deg,#7c3aed,#4f46e5)' }}
+          >
+            <Share2 size={17} />
+            Share Score
+          </button>
+          <button
+            onClick={() => {
+              const msg = encodeURIComponent("Come play today's Daily Call on Consumed 🎮 Where entertainment gets played — consumedapp.com");
+              window.open(`sms:?body=${msg}`, '_blank');
+            }}
+            className="flex-1 py-4 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 shadow-lg"
+            style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)' }}
+          >
+            <MessageCircle size={17} />
+            Nudge a Friend
+          </button>
+        </div>
 
         <p className="text-center text-[11px] text-white/30">
           Screenshot the card above to share on social
@@ -897,15 +910,28 @@ function TodaysPlayGame({
                 </div>
               </div>
 
-              {/* Share button */}
-              <button
-                onClick={() => { onClose(); onShare(answers); }}
-                className="w-full py-4 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 shadow-lg"
-                style={{ background: 'linear-gradient(90deg,#7c3aed,#4f46e5)' }}
-              >
-                <Share2 size={17} />
-                Share Your Score
-              </button>
+              {/* Share + Nudge buttons side by side */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { onClose(); onShare(answers); }}
+                  className="flex-1 py-4 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 shadow-lg"
+                  style={{ background: 'linear-gradient(90deg,#7c3aed,#4f46e5)' }}
+                >
+                  <Share2 size={17} />
+                  Share Score
+                </button>
+                <button
+                  onClick={() => {
+                    const msg = encodeURIComponent("Come play today's Daily Call on Consumed 🎮 Where entertainment gets played — consumedapp.com");
+                    window.open(`sms:?body=${msg}`, '_blank');
+                  }}
+                  className="flex-1 py-4 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 shadow-lg"
+                  style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)' }}
+                >
+                  <MessageCircle size={17} />
+                  Nudge a Friend
+                </button>
+              </div>
 
               <p className="text-center text-[11px] text-white/40 mt-2 mb-4">
                 Screenshot the card above to share on social
