@@ -322,123 +322,105 @@ function ScoreShareCard({
                 })()}
               </>
             ) : (
-              /* Daily Call body */
+              /* Daily Call body — emotional redesign */
               <>
-                <div className="flex flex-col items-center text-center pb-4">
+                {/* Icon + label + question + big answer */}
+                <div className="flex flex-col items-center text-center pb-5">
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: '#f3f0ff' }}>
                     <Sparkles size={22} className="text-purple-600" />
                   </div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">My Daily Call</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: '#9b8fd4' }}>My Daily Call</p>
                   {callQuestion && (
-                    <p className="text-[13px] font-medium text-gray-500 mb-2 leading-snug px-2">{callQuestion}</p>
+                    <p className="text-[14px] text-gray-500 mb-3 leading-snug px-2">{callQuestion}</p>
                   )}
                   {callAnswer && callAnswer !== '__skip' && (
-                    <p className="text-[17px] font-bold text-gray-900 mb-1">"{callAnswer}"</p>
+                    <p className="text-[30px] font-extrabold leading-tight" style={{ color: '#2d2080', letterSpacing: '-0.02em' }}>
+                      {callAnswer}.
+                    </p>
                   )}
                   {callAnswer === '__skip' && (
-                    <p className="text-[13px] text-gray-400 italic mb-1">Sat this one out</p>
+                    <p className="text-[16px] font-semibold text-gray-400 italic">Sat this one out</p>
                   )}
                 </div>
 
-                {/* How everyone voted */}
-                {callVoteBreakdown && callOptions && callOptions.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-2.5 text-center">How Everyone Voted</p>
-                    <div className="flex flex-col gap-2">
-                      {callOptions.map((opt) => {
-                        const pct = callVoteBreakdown[opt] ?? 0;
-                        const isYours = opt === callAnswer;
-                        return (
-                          <div key={opt}>
-                            <div className="flex items-center justify-between mb-1">
-                              <span className={`text-[12px] font-semibold leading-snug ${isYours ? 'text-purple-700' : 'text-gray-600'}`}>
-                                {opt}{isYours && <span className="ml-1.5 text-[9px] font-bold text-purple-500 uppercase tracking-wide">← you</span>}
-                              </span>
-                              <span className={`text-[12px] font-bold ${isYours ? 'text-purple-700' : 'text-gray-500'}`}>{pct}%</span>
-                            </div>
-                            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                              <div
-                                className="h-full rounded-full transition-all duration-700"
-                                style={{
-                                  width: `${pct}%`,
-                                  background: isYours ? 'linear-gradient(90deg,#7c3aed,#4f46e5)' : '#e5e7eb',
-                                  minWidth: pct > 0 ? '3px' : '0',
-                                }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                <div className="h-px mb-5" style={{ background: '#ede9f8' }} />
 
-                {/* Stats grid */}
-                <div className="h-px bg-gray-100 mb-4" />
-                <div className="grid grid-cols-4 gap-1.5 mb-4">
-                  <div className="flex flex-col items-center rounded-xl p-2" style={{ background: '#f5f0ff' }}>
-                    <p className="text-[6px] font-bold uppercase tracking-widest text-gray-400 mb-1">Weekly Rank</p>
-                    {rankData?.rank != null ? (
-                      <>
-                        <p className="text-[16px] font-black text-gray-900 leading-none">#{rankData.rank}</p>
-                        <p className="text-[7px] text-gray-400 mt-0.5">This week</p>
-                      </>
-                    ) : (
-                      <>
-                        <Lock size={14} className="text-gray-300 mt-1" />
-                        <p className="text-[7px] text-gray-400 mt-0.5">Play to unlock</p>
-                      </>
-                    )}
+                {/* Emotional rank callout — "Only X% agreed — but you're top Y%" */}
+                {(() => {
+                  const userPct = callVoteBreakdown && callAnswer && callAnswer !== '__skip'
+                    ? (callVoteBreakdown[callAnswer] ?? null)
+                    : null;
+                  const topPct = rankData?.beatenPct != null
+                    ? Math.round(rankData.beatenPct)
+                    : rankData?.rank != null && rankData?.total != null && rankData.total > 0
+                      ? Math.round((1 - rankData.rank / rankData.total) * 100)
+                      : null;
+                  const displayName = username || 'You';
+
+                  if (userPct === null && topPct === null) return null;
+                  return (
+                    <div className="rounded-2xl px-4 py-4 mb-4 text-center" style={{ background: '#f5f3ff' }}>
+                      {userPct !== null && (
+                        <p className="text-[13px] mb-1" style={{ color: '#9b8fd4' }}>
+                          Only {userPct}% agreed — but
+                        </p>
+                      )}
+                      {topPct !== null && (
+                        <p className="text-[22px] font-extrabold leading-tight" style={{ color: '#2d2080', letterSpacing: '-0.02em' }}>
+                          {displayName} is in the<br />top {topPct}% on Consumed.
+                        </p>
+                      )}
+                      {topPct === null && userPct !== null && (
+                        <p className="text-[18px] font-extrabold" style={{ color: '#2d2080' }}>
+                          {displayName} called it.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* "Start a fight" — provocateur block */}
+                {(() => {
+                  if (!callVoteBreakdown || !callOptions || callOptions.length < 2 || !callAnswer || callAnswer === '__skip') return null;
+                  const opponent = callOptions
+                    .filter(o => o !== callAnswer)
+                    .sort((a, b) => (callVoteBreakdown[b] ?? 0) - (callVoteBreakdown[a] ?? 0))[0];
+                  if (!opponent) return null;
+                  const oppPct = callVoteBreakdown[opponent] ?? 0;
+                  const provocateurs = [
+                    `${oppPct}% went with "${opponent}" — bold choice. Are they onto something or just wrong?`,
+                    `${oppPct}% disagree with you. Think they're missing something? Tell them.`,
+                    `Most people said "${opponent}". ${oppPct}% of takes can't all be right… can they?`,
+                  ];
+                  const seed = new Date().getDate() % provocateurs.length;
+                  return (
+                    <div className="rounded-xl px-4 py-3.5 mb-5" style={{ background: '#2d2080' }}>
+                      <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: '#a89ee0' }}>💬 Start a fight</p>
+                      <p className="text-[13px] leading-snug" style={{ color: '#ede9f8' }}>{provocateurs[seed]}</p>
+                    </div>
+                  );
+                })()}
+
+                {/* 2-stat row — Hot Streak + Total Pts */}
+                <div className="grid grid-cols-2 gap-2.5 mb-5">
+                  <div className="flex flex-col items-center rounded-xl py-3 px-2" style={{ background: '#f5f3ff' }}>
+                    <p className="text-[16px] font-black leading-none" style={{ color: '#2d2080' }}>{streak ?? 0} day{(streak ?? 0) !== 1 ? 's' : ''}</p>
+                    <p className="text-[9px] font-bold uppercase tracking-widest mt-1" style={{ color: '#9b8fd4' }}>Hot Streak</p>
                   </div>
-                  <div className="flex flex-col items-center rounded-xl p-2" style={{ background: '#f5f0ff' }}>
-                    <p className="text-[6px] font-bold uppercase tracking-widest text-gray-400 mb-1">Hot Streak</p>
-                    <p className="text-[16px] font-black text-gray-900 leading-none">{streak ?? 0}</p>
-                    <p className="text-[7px] text-gray-400 mt-0.5">day{(streak ?? 0) !== 1 ? 's' : ''}</p>
-                  </div>
-                  <div className="flex flex-col items-center rounded-xl p-2" style={{ background: '#f5f0ff' }}>
-                    <p className="text-[6px] font-bold uppercase tracking-widest text-gray-400 mb-1">Accuracy</p>
-                    {triviaStats?.accuracy != null ? (
-                      <>
-                        <p className="text-[16px] font-black text-gray-900 leading-none">{triviaStats.accuracy}%</p>
-                        <p className="text-[7px] text-gray-400 mt-0.5">correct</p>
-                      </>
-                    ) : (
-                      <>
-                        <Lock size={14} className="text-gray-300 mt-1" />
-                        <p className="text-[7px] text-gray-400 mt-0.5">Play to unlock</p>
-                      </>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-center rounded-xl p-2" style={{ background: '#f5f0ff' }}>
-                    <p className="text-[6px] font-bold uppercase tracking-widest text-gray-400 mb-1">Total Pts</p>
+                  <div className="flex flex-col items-center rounded-xl py-3 px-2" style={{ background: '#f5f3ff' }}>
                     {triviaStats?.points != null ? (
                       <>
-                        <p className="text-[16px] font-black text-gray-900 leading-none">{triviaStats.points.toLocaleString()}</p>
-                        <p className="text-[7px] text-gray-400 mt-0.5">all time</p>
+                        <p className="text-[16px] font-black leading-none" style={{ color: '#2d2080' }}>{triviaStats.points.toLocaleString()} pts</p>
+                        <p className="text-[9px] font-bold uppercase tracking-widest mt-1" style={{ color: '#9b8fd4' }}>All Time</p>
                       </>
                     ) : (
                       <>
-                        <Lock size={14} className="text-gray-300 mt-1" />
-                        <p className="text-[7px] text-gray-400 mt-0.5">Play to unlock</p>
+                        <Lock size={14} className="mb-1" style={{ color: '#c4b8e8' }} />
+                        <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#9b8fd4' }}>Play to unlock</p>
                       </>
                     )}
                   </div>
                 </div>
-
-                {/* Strongest categories pills */}
-                {(dnaStats?.allGenres?.length ?? 0) > 0 && (
-                  <>
-                    <p className="text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-2">Strongest Categories</p>
-                    <div className="flex gap-1.5 flex-wrap mb-3">
-                      {dnaStats!.allGenres.map(g => (
-                        <span key={g} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold" style={{ background: '#ede9fe', color: '#6d28d9' }}>
-                          <Star size={9} fill="currentColor" />
-                          {g}
-                        </span>
-                      ))}
-                    </div>
-                  </>
-                )}
               </>
             )}
 
