@@ -243,6 +243,21 @@ function ScoreShareCard({
                   })()}
                 </div>
 
+                {/* ── Name header ── */}
+                {username && (
+                  <div className="mb-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                      {username} is
+                    </p>
+                    <p
+                      className="text-[22px] font-black leading-tight text-white"
+                      style={{ letterSpacing: '-0.02em' }}
+                    >
+                      {rankData?.rank != null ? `#${rankData.rank} on Consumed` : 'Playing on Consumed'}
+                    </p>
+                  </div>
+                )}
+
                 {/* ── 4-stat row ── */}
                 <div className="grid grid-cols-4 gap-1.5 mb-4">
                   {[
@@ -459,6 +474,21 @@ function ScoreShareCard({
                   /* Skipped */
                   <div className="mb-4 py-2">
                     <p className="text-[13px] font-semibold italic text-white/30">Sat this one out</p>
+                  </div>
+                )}
+
+                {/* Name header */}
+                {username && (
+                  <div className="mb-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                      {username} is
+                    </p>
+                    <p
+                      className="text-[22px] font-black leading-tight text-white"
+                      style={{ letterSpacing: '-0.02em' }}
+                    >
+                      {rankData?.rank != null ? `#${rankData.rank} on Consumed` : 'Playing on Consumed'}
+                    </p>
                   </div>
                 )}
 
