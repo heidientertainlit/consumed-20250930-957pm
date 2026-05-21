@@ -1,177 +1,151 @@
-import React from 'react';
+import React from "react";
+import { Check, Flame } from "lucide-react";
 
 export function NeonPulse() {
   return (
-    <div className="relative min-h-[100dvh] w-full flex flex-col font-sans overflow-hidden" style={{ backgroundColor: '#0A0A0F', color: '#FFFFFF' }}>
-      <style>
-        {`
-          @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
-          
-          .neon-pulse-container {
-            font-family: 'Outfit', sans-serif;
-          }
-          
-          .bg-glow {
-            position: absolute;
-            top: 20%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, rgba(10, 10, 15, 0) 70%);
-            pointer-events: none;
-            z-index: 0;
-          }
-
-          .gradient-text {
-            background: linear-gradient(to right, #A855F7, #06B6D4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            color: transparent;
-          }
-
-          .neon-divider {
-            height: 1px;
-            width: 100%;
-            background: linear-gradient(90deg, transparent, #A855F7, #06B6D4, transparent);
-            opacity: 0.5;
-          }
-        `}
-      </style>
-      
-      <div className="neon-pulse-container flex flex-col flex-1 relative z-10 px-6 py-10 max-w-md mx-auto w-full">
-        <div className="bg-glow" />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
         
-        {/* Header */}
-        <div className="flex justify-center mb-8">
-          <span className="text-[11px] font-bold tracking-[0.2em] uppercase" style={{ color: '#A855F7' }}>
-            Jordan
-          </span>
-        </div>
+        .font-outfit { font-family: 'Outfit', sans-serif; }
+        .font-space { font-family: 'Space Grotesk', sans-serif; }
+        
+        .neon-glow-purple { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+        .neon-glow-green { box-shadow: 0 0 15px rgba(34, 197, 94, 0.3); }
+        .neon-text-purple { text-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
+      `}</style>
+      
+      <div className="min-h-[100dvh] bg-[#0A0A0F] text-white font-outfit pb-32 overflow-x-hidden selection:bg-purple-500/30 flex flex-col relative w-full">
+        
+        {/* Background Ambient Glows */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-600/5 rounded-full blur-[80px] pointer-events-none" />
 
-        {/* Score Section */}
-        <div className="flex flex-col items-center justify-center mb-10 mt-4 relative">
-          <div className="flex items-baseline justify-center">
-            <span 
-              className="text-[110px] font-extrabold leading-none tracking-tighter"
-              style={{ 
-                textShadow: '0 0 30px #A855F7, 0 0 60px #7C3AED',
-                color: '#FFFFFF'
-              }}
-            >
-              2
-            </span>
-            <span className="text-4xl font-semibold ml-2 opacity-40" style={{ color: '#A855F7' }}>
-              /3
-            </span>
-          </div>
+        <div className="max-w-md mx-auto px-6 py-8 relative z-10 flex flex-col gap-6 w-full flex-1">
           
-          <div className="mt-8 text-center space-y-2 max-w-[280px]">
-            <h1 className="text-[22px] font-bold leading-tight">
-              Almost perfect. <span className="gradient-text">One away from dangerous.</span>
+          {/* Header */}
+          <header className="flex justify-center items-center">
+            <div className="text-[#A855F7] text-xs font-bold uppercase tracking-[0.2em] neon-text-purple">
+              Jordan
+            </div>
+          </header>
+
+          {/* Question */}
+          <div className="mt-2 text-center">
+            <h1 className="text-[16px] leading-relaxed font-medium text-white/90">
+              What year did The Sopranos first premiere?
             </h1>
-            <p className="text-sm font-light text-white/60">
-              Your Entertainment DNA just got stronger.
+          </div>
+
+          {/* You Picked Block */}
+          <div className="bg-[#1A1A2E] border-l-[3px] border-l-[#22C55E] p-5 rounded-r-xl rounded-l-sm neon-glow-green relative overflow-hidden mt-2">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#22C55E]/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+            <div className="text-purple-400/80 text-[11px] font-bold uppercase tracking-wider mb-2 font-space relative z-10">
+              You Picked
+            </div>
+            <div className="flex items-center justify-between relative z-10">
+              <span className="text-4xl font-space font-bold text-white tracking-tight">1999</span>
+              <div className="w-10 h-10 rounded-full bg-[#22C55E]/20 flex items-center justify-center border border-[#22C55E]/30 shadow-[0_0_15px_rgba(34,197,94,0.4)]">
+                <Check className="text-[#22C55E]" size={20} strokeWidth={3} />
+              </div>
+            </div>
+          </div>
+
+          {/* Vote Breakdown */}
+          <div className="space-y-3 mt-4">
+            <div className="space-y-2.5">
+              {/* Option 1: Picked */}
+              <div className="relative h-12 bg-white/5 rounded-lg overflow-hidden flex items-center border border-purple-500/30">
+                <div className="absolute left-0 top-0 bottom-0 bg-[#A855F7]/40 w-[62%] neon-glow-purple border-r border-purple-400" />
+                <div className="relative z-10 flex justify-between w-full px-4 items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white">1999</span>
+                    <span className="text-[10px] bg-[#A855F7] text-white px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">You</span>
+                  </div>
+                  <span className="font-bold text-white font-space">62%</span>
+                </div>
+              </div>
+
+              {/* Option 2 */}
+              <div className="relative h-12 bg-white/5 rounded-lg overflow-hidden flex items-center border border-white/5">
+                <div className="absolute left-0 top-0 bottom-0 bg-white/10 w-[22%]" />
+                <div className="relative z-10 flex justify-between w-full px-4 items-center">
+                  <span className="font-medium text-white/70">1997</span>
+                  <span className="font-medium text-white/70 font-space">22%</span>
+                </div>
+              </div>
+
+              {/* Option 3 */}
+              <div className="relative h-12 bg-white/5 rounded-lg overflow-hidden flex items-center border border-white/5">
+                <div className="absolute left-0 top-0 bottom-0 bg-white/10 w-[9%]" />
+                <div className="relative z-10 flex justify-between w-full px-4 items-center">
+                  <span className="font-medium text-white/70">2001</span>
+                  <span className="font-medium text-white/70 font-space">9%</span>
+                </div>
+              </div>
+
+              {/* Option 4 */}
+              <div className="relative h-12 bg-white/5 rounded-lg overflow-hidden flex items-center border border-white/5">
+                <div className="absolute left-0 top-0 bottom-0 bg-white/10 w-[7%]" />
+                <div className="relative z-10 flex justify-between w-full px-4 items-center">
+                  <span className="font-medium text-white/70">1995</span>
+                  <span className="font-medium text-white/70 font-space">7%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Start a Fight Block */}
+          <div className="bg-[#111827] border-l-[4px] border-[#A855F7] p-5 rounded-xl mt-4">
+            <p className="text-[15px] font-medium text-white/90 leading-relaxed mb-4">
+              <span className="font-bold text-white">38%</span> of fans got this wrong. Think they just haven't watched enough TV?
             </p>
+            <button className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-[#A855F7]/50 text-[#A855F7] font-bold hover:bg-[#A855F7]/10 transition-colors neon-glow-purple text-sm">
+              Start a debate &rarr;
+            </button>
           </div>
-        </div>
 
-        {/* Categories Results */}
-        <div className="space-y-3 mb-8 w-full">
-          <div className="flex items-center rounded-xl overflow-hidden" style={{ backgroundColor: '#1A1A2E' }}>
-            <div className="w-1.5 h-full self-stretch" style={{ backgroundColor: '#10B981' }} />
-            <div className="flex-1 flex items-center justify-between py-3.5 px-4">
-              <div className="flex items-center gap-3">
-                <span className="text-xl">🎬</span>
-                <span className="font-medium text-white/90">Movies</span>
-              </div>
-              <div className="flex items-center justify-center w-6 h-6 rounded-full" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)' }}>
-                <svg className="w-3.5 h-3.5" style={{ color: '#10B981' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinelinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
+          {/* DNA Strip */}
+          <div className="bg-[#1A1A2E]/50 border border-white/10 rounded-xl p-5 mt-2">
+            <div className="flex items-center gap-2 mb-1">
+              <h4 className="text-[#A855F7] font-bold tracking-wide font-space uppercase text-sm">TV Obsessive</h4>
+            </div>
+            <p className="text-white/60 text-sm mb-4">Knows their prestige TV inside out</p>
+            <div className="flex flex-wrap gap-2">
+              {['Drama', 'Crime', 'Thriller'].map((genre) => (
+                <span key={genre} className="bg-[#1A1A2E] border border-[#A855F7] text-[#A855F7] text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+                  {genre}
+                </span>
+              ))}
             </div>
           </div>
 
-          <div className="flex items-center rounded-xl overflow-hidden" style={{ backgroundColor: '#1A1A2E' }}>
-            <div className="w-1.5 h-full self-stretch" style={{ backgroundColor: '#10B981' }} />
-            <div className="flex-1 flex items-center justify-between py-3.5 px-4">
-              <div className="flex items-center gap-3">
-                <span className="text-xl">🎵</span>
-                <span className="font-medium text-white/90">Music</span>
+          {/* Spacer */}
+          <div className="flex-1 min-h-[40px]" />
+
+          {/* Fixed Bottom Actions */}
+          <div className="mt-auto">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-1.5 text-[#A855F7] font-bold font-space text-lg">
+                <span>+10 pts</span>
               </div>
-              <div className="flex items-center justify-center w-6 h-6 rounded-full" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)' }}>
-                <svg className="w-3.5 h-3.5" style={{ color: '#10B981' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinelinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
+              <div className="flex items-center gap-1.5 font-bold font-space text-sm text-[#F97316]">
+                <Flame size={16} className="text-[#F97316]" fill="currentColor" />
+                <span>5-day streak</span>
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white py-3.5 rounded-xl font-bold transition-colors neon-glow-purple flex items-center justify-center gap-2">
+                Share Score
+              </button>
+              <button className="border border-[#A855F7]/50 hover:bg-[#A855F7]/10 text-[#A855F7] py-3.5 rounded-xl font-bold transition-colors flex items-center justify-center gap-2">
+                Nudge a Friend
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center rounded-xl overflow-hidden" style={{ backgroundColor: '#1A1A2E' }}>
-            <div className="w-1.5 h-full self-stretch" style={{ backgroundColor: '#EF4444' }} />
-            <div className="flex-1 flex items-center justify-between py-3.5 px-4">
-              <div className="flex items-center gap-3">
-                <span className="text-xl">📺</span>
-                <span className="font-medium text-white/90">TV</span>
-              </div>
-              <div className="flex items-center justify-center w-6 h-6 rounded-full" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}>
-                <svg className="w-3.5 h-3.5" style={{ color: '#EF4444' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinelinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Insight */}
-        <div className="text-center mb-8">
-          <p className="text-[13px] font-medium text-white/50 italic">
-            TV tripped you up — worth a revisit.
-          </p>
-        </div>
-
-        <div className="neon-divider mb-8" />
-
-        {/* Stats */}
-        <div className="flex justify-between items-center mb-10 px-4">
-          <div className="flex flex-col items-center">
-            <span className="text-xs text-white/50 uppercase tracking-wide mb-1 font-semibold">Earned</span>
-            <span className="text-xl font-bold" style={{ color: '#A855F7' }}>+20 pts</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-xs text-white/50 uppercase tracking-wide mb-1 font-semibold">Streak</span>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xl font-bold" style={{ color: '#F97316', textShadow: '0 0 10px rgba(249, 115, 22, 0.5)' }}>5 days</span>
-              <span className="text-lg">🔥</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-auto pt-4 space-y-4">
-          <button 
-            className="w-full py-4 rounded-xl font-bold text-base transition-transform active:scale-[0.98]"
-            style={{ 
-              backgroundColor: '#7C3AED', 
-              boxShadow: '0 8px 25px -5px rgba(124, 58, 237, 0.5), 0 0 10px rgba(124, 58, 237, 0.3)' 
-            }}
-          >
-            Share Score
-          </button>
-          
-          <button 
-            className="w-full py-4 rounded-xl font-bold text-base transition-transform active:scale-[0.98] border"
-            style={{ 
-              backgroundColor: 'transparent',
-              borderColor: 'rgba(168, 85, 247, 0.4)',
-              color: '#A855F7'
-            }}
-          >
-            Nudge a Friend
-          </button>
         </div>
       </div>
-    </div>
+    </>
   );
 }
