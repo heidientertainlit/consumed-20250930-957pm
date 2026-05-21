@@ -372,10 +372,9 @@ function ScoreShareCard({
             ) : (
               /* Daily Call body — dark dramatic redesign */
               <>
-                {/* Question text */}
-                {/* Huge question with quotes */}
+                {/* Huge question — ALL CAPS */}
                 {callQuestion && (
-                  <p className="font-black italic leading-[1.05] mb-5 text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '34px', letterSpacing: '-0.02em' }}>
+                  <p className="font-black leading-[1.0] mb-5 text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '34px', letterSpacing: '-0.01em', textTransform: 'uppercase' }}>
                     &ldquo;{truncateWords(callQuestion, 100)}&rdquo;
                   </p>
                 )}
@@ -388,7 +387,7 @@ function ScoreShareCard({
                         <p className="text-[9px] font-bold uppercase tracking-[0.2em] mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
                           {username ? `${username} said:` : 'I said:'}
                         </p>
-                        <p className="font-black leading-none text-white break-words" style={{ fontSize: '52px', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                        <p className="font-black leading-none text-white break-words" style={{ fontSize: '52px', letterSpacing: '-0.03em', lineHeight: 1, textTransform: 'uppercase' }}>
                           {callAnswer}.
                         </p>
                         {/* Only X% agreed */}
@@ -404,36 +403,30 @@ function ScoreShareCard({
                         )}
                       </div>
 
-                      {/* Better than % glowing box */}
-                      {(() => {
-                        const topPct = rankData?.beatenPct != null
-                          ? Math.round(rankData.beatenPct)
-                          : rankData?.rank != null && rankData?.total != null && rankData.total > 0
-                            ? Math.round((1 - rankData.rank / rankData.total) * 100)
-                            : null;
-                        if (topPct === null) return null;
-                        return (
-                          <div
-                            className="rounded-2xl px-3 py-4 text-center shrink-0"
-                            style={{
-                              minWidth: 100,
-                              background: '#1a1030',
-                              border: '1px solid rgba(124,58,237,0.45)',
-                              boxShadow: '0 0 28px rgba(124,58,237,0.3)',
-                            }}
+                      {/* Rank box — #N on Consumed */}
+                      {rankData?.rank != null && (
+                        <div
+                          className="rounded-2xl px-3 py-4 text-center shrink-0"
+                          style={{
+                            minWidth: 100,
+                            background: '#1a1030',
+                            border: '1px solid rgba(124,58,237,0.45)',
+                            boxShadow: '0 0 28px rgba(124,58,237,0.3)',
+                          }}
+                        >
+                          {username && (
+                            <p className="text-[7px] font-bold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{username} is</p>
+                          )}
+                          <p
+                            className="font-black leading-none"
+                            style={{ fontSize: '36px', background: 'linear-gradient(135deg,#a78bfa 0%,#38bdf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
                           >
-                            <p className="text-[7px] font-bold uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>BETTER THAN</p>
-                            <p
-                              className="font-black leading-none"
-                              style={{ fontSize: '40px', background: 'linear-gradient(135deg,#a78bfa 0%,#38bdf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-                            >
-                              {topPct}%
-                            </p>
-                            <p className="text-[7px] font-bold uppercase tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>OF PLAYERS</p>
-                            <p className="text-[13px] mt-1.5">👑</p>
-                          </div>
-                        );
-                      })()}
+                            #{rankData.rank}
+                          </p>
+                          <p className="text-[7px] font-bold uppercase tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>ON CONSUMED</p>
+                          <p className="text-[13px] mt-1.5">👑</p>
+                        </div>
+                      )}
                     </div>
 
                     {/* "Start a fight" block */}
@@ -485,21 +478,6 @@ function ScoreShareCard({
                       return <p className="text-[14px] font-bold leading-snug text-white">The crowd has spoken. Think they got it right? Share and settle it.</p>;
                     })()}
                     <p className="text-[11px] mt-2 italic" style={{ color: 'rgba(255,255,255,0.35)' }}>You sat this one out — but your friends didn&apos;t.</p>
-                  </div>
-                )}
-
-                {/* Name header */}
-                {username && (
-                  <div className="mb-3">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                      {username} is
-                    </p>
-                    <p
-                      className="text-[22px] font-black leading-tight text-white"
-                      style={{ letterSpacing: '-0.02em' }}
-                    >
-                      {rankData?.rank != null ? `#${rankData.rank} on Consumed` : 'Playing on Consumed'}
-                    </p>
                   </div>
                 )}
 
