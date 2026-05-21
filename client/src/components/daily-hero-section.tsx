@@ -179,8 +179,8 @@ function ScoreShareCard({
               <>
                 {/* ── Question text ── */}
                 {questions?.[0]?.title && (
-                  <p className="text-[12px] leading-snug mb-4 px-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                    {truncateWords(questions[0].title, 90)}
+                  <p className="text-[23px] font-black italic leading-tight mb-4 text-white" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                    {truncateWords(questions[0].title, 120)}
                   </p>
                 )}
 
@@ -329,6 +329,21 @@ function ScoreShareCard({
                   </div>
                 )}
 
+                {/* ── Spicy CTA ── */}
+                <div
+                  className="rounded-xl px-4 py-3.5 mb-4 text-center"
+                  style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.18) 0%,rgba(56,189,248,0.08) 100%)', border: '1px solid rgba(124,58,237,0.3)' }}
+                >
+                  <p className="text-[15px] font-black text-white leading-tight">
+                    {playScore.correct === playScore.total
+                      ? `Perfect score. Think your friends can match you?`
+                      : playScore.correct === 0
+                        ? `Rough one. Can your squad do any better? 👀`
+                        : `${playScore.correct}/${playScore.total} right — think your friends can beat you?`}
+                  </p>
+                  <p className="text-[11px] mt-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>Share and find out. 👀</p>
+                </div>
+
                 {/* ── Branding footer ── */}
                 <div className="pt-3 text-center" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                   <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.25)' }}>
@@ -343,9 +358,10 @@ function ScoreShareCard({
               /* Daily Call body — dark dramatic redesign */
               <>
                 {/* Question text */}
+                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>My Daily Call</p>
                 {callQuestion && (
-                  <p className="text-[12px] leading-snug mb-4 px-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                    {truncateWords(callQuestion, 90)}
+                  <p className="text-[23px] font-black italic leading-tight mb-4 text-white" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+                    {truncateWords(callQuestion, 120)}
                   </p>
                 )}
 
@@ -533,6 +549,33 @@ function ScoreShareCard({
                     </div>
                   </div>
                 )}
+
+                {/* Spicy CTA */}
+                {callAnswer && callAnswer !== '__skip' && (() => {
+                  const userPct = callVoteBreakdown ? (callVoteBreakdown[callAnswer] ?? null) : null;
+                  return (
+                    <div
+                      className="rounded-xl px-4 py-3.5 mb-4 text-center"
+                      style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.18) 0%,rgba(56,189,248,0.08) 100%)', border: '1px solid rgba(124,58,237,0.3)' }}
+                    >
+                      {userPct !== null ? (
+                        <>
+                          <p className="text-[15px] font-black text-white leading-tight">
+                            {userPct}% of players said &ldquo;{callAnswer}.&rdquo; Where do your friends sit?
+                          </p>
+                          <p className="text-[11px] mt-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>Share and start the debate. 🔥</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-[15px] font-black text-white leading-tight">
+                            You made your call. Where does everyone else stand?
+                          </p>
+                          <p className="text-[11px] mt-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>Share and start the debate. 🔥</p>
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Branding footer */}
                 <div className="pt-3 text-center" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
