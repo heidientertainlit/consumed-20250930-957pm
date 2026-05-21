@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, Flame } from "lucide-react";
+import { Flame } from "lucide-react";
 
 export function NeonPulse() {
   return (
@@ -11,7 +11,6 @@ export function NeonPulse() {
         .font-space { font-family: 'Space Grotesk', sans-serif; }
         
         .neon-glow-purple { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
-        .neon-glow-green { box-shadow: 0 0 15px rgba(34, 197, 94, 0.3); }
         .neon-text-purple { text-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
       `}</style>
       
@@ -38,16 +37,13 @@ export function NeonPulse() {
           </div>
 
           {/* You Picked Block */}
-          <div className="bg-[#1A1A2E] border-l-[3px] border-l-[#22C55E] p-5 rounded-r-xl rounded-l-sm neon-glow-green relative overflow-hidden mt-2">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#22C55E]/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+          <div className="bg-[#1A1A2E] border-l-[3px] border-l-[#A855F7] p-5 rounded-r-xl rounded-l-sm neon-glow-purple relative overflow-hidden mt-2">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#A855F7]/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
             <div className="text-purple-400/80 text-[11px] font-bold uppercase tracking-wider mb-2 font-space relative z-10">
               You Picked
             </div>
             <div className="flex items-center justify-between relative z-10">
               <span className="text-4xl font-space font-bold text-white tracking-tight">1999</span>
-              <div className="w-10 h-10 rounded-full bg-[#22C55E]/20 flex items-center justify-center border border-[#22C55E]/30 shadow-[0_0_15px_rgba(34,197,94,0.4)]">
-                <Check className="text-[#22C55E]" size={20} strokeWidth={3} />
-              </div>
             </div>
           </div>
 
@@ -105,18 +101,30 @@ export function NeonPulse() {
             </button>
           </div>
 
-          {/* DNA Strip */}
-          <div className="bg-[#1A1A2E]/50 border border-white/10 rounded-xl p-5 mt-2">
-            <div className="flex items-center gap-2 mb-1">
-              <h4 className="text-[#A855F7] font-bold tracking-wide font-space uppercase text-sm">TV Obsessive</h4>
-            </div>
-            <p className="text-white/60 text-sm mb-4">Knows their prestige TV inside out</p>
-            <div className="flex flex-wrap gap-2">
-              {['Drama', 'Crime', 'Thriller'].map((genre) => (
-                <span key={genre} className="bg-[#1A1A2E] border border-[#A855F7] text-[#A855F7] text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
-                  {genre}
-                </span>
-              ))}
+          {/* DNA Glimpses */}
+          <div className="mt-6 flex flex-col gap-3">
+            <h3 className="text-white/50 text-[11px] font-bold uppercase tracking-[0.15em] font-space mb-1">DNA Glimpses</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-3 relative overflow-hidden backdrop-blur-sm">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+                <div className="text-2xl drop-shadow-md">🎬</div>
+                <span className="text-[13px] font-medium text-white/90 leading-tight">Better at Movies than 78% of fans</span>
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-3 relative overflow-hidden backdrop-blur-sm">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+                <div className="text-2xl drop-shadow-md">🔥</div>
+                <span className="text-[13px] font-medium text-white/90 leading-tight">Thriller obsessive</span>
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-3 relative overflow-hidden backdrop-blur-sm">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+                <div className="text-2xl drop-shadow-md">📺</div>
+                <span className="text-[13px] font-medium text-white/90 leading-tight">Prestige TV devotee</span>
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-3 relative overflow-hidden backdrop-blur-sm">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+                <div className="text-2xl drop-shadow-md">🎯</div>
+                <span className="text-[13px] font-medium text-white/90 leading-tight">Knows 90s pop culture cold</span>
+              </div>
             </div>
           </div>
 

@@ -52,9 +52,6 @@ export function Wrapped() {
               <span className="text-white/70 text-[10px] font-bold tracking-wider uppercase">You Picked</span>
               <div className="flex items-center gap-3">
                 <span className="text-4xl font-black tracking-tight">1999</span>
-                <div className="w-8 h-8 rounded-full bg-white text-[#7C3AED] flex items-center justify-center font-black text-lg">
-                  ✓
-                </div>
               </div>
             </div>
           </div>
@@ -68,7 +65,7 @@ export function Wrapped() {
                 <div className="absolute inset-0 flex items-center justify-between px-4 z-10">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-[#2D1B69] mix-blend-plus-lighter">1999</span>
-                    <span className="bg-[#2D1B69] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">✓ You</span>
+                    <span className="bg-[#2D1B69] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">You</span>
                   </div>
                   <span className="font-black text-[#2D1B69] mix-blend-plus-lighter">62%</span>
                 </div>
@@ -113,20 +110,25 @@ export function Wrapped() {
             </button>
           </div>
 
-          {/* DNA Strip */}
+          {/* DNA Glimpses */}
           <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500 fill-mode-both">
-            <div className="flex items-center gap-2">
-              <span className="bg-[#EC4899] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                TV Obsessive
-              </span>
-            </div>
-            <p className="text-white/70 text-[13px] font-medium">
-              Knows their prestige TV inside out
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <span className="glass-pill px-3 py-1 rounded-lg text-[11px] font-semibold text-white/90">Drama</span>
-              <span className="glass-pill px-3 py-1 rounded-lg text-[11px] font-semibold text-white/90">Crime</span>
-              <span className="glass-pill px-3 py-1 rounded-lg text-[11px] font-semibold text-white/90">Thriller</span>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="glass-panel p-3 rounded-xl flex flex-col gap-1.5 justify-center">
+                <span className="text-xl">🎬</span>
+                <span className="text-white/90 text-[11px] font-bold leading-tight">Better at Movies than 78% of fans</span>
+              </div>
+              <div className="glass-panel p-3 rounded-xl flex flex-col gap-1.5 justify-center">
+                <span className="text-xl">🔥</span>
+                <span className="text-white/90 text-[11px] font-bold leading-tight">Thriller obsessive</span>
+              </div>
+              <div className="glass-panel p-3 rounded-xl flex flex-col gap-1.5 justify-center">
+                <span className="text-xl">📺</span>
+                <span className="text-white/90 text-[11px] font-bold leading-tight">Prestige TV devotee</span>
+              </div>
+              <div className="glass-panel p-3 rounded-xl flex flex-col gap-1.5 justify-center">
+                <span className="text-xl">🎯</span>
+                <span className="text-white/90 text-[11px] font-bold leading-tight">Knows 90s pop culture cold</span>
+              </div>
             </div>
           </div>
           
