@@ -154,7 +154,7 @@ function ScoreShareCard({
           {/* ── Purple gradient header ── */}
           <div
             className="px-5 pt-5 pb-4"
-            style={{ background: type === 'play' ? 'linear-gradient(135deg,#12091F 0%,#1E0B4A 50%,#2D1B69 100%)' : 'linear-gradient(135deg,#1e3a8a 0%,#1e1b4b 100%)' }}
+            style={{ background: 'linear-gradient(135deg,#12091F 0%,#1E0B4A 50%,#2D1B69 100%)' }}
           >
             <div className="flex items-start justify-between">
               {/* Logo */}
@@ -165,7 +165,7 @@ function ScoreShareCard({
                   className="h-7 w-auto mb-1 -ml-1"
                 />
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">
-                  {type === 'play' ? "Today's Play" : "Today's Play"}
+                  {type === 'play' ? "Today's Play ✦" : "Daily Call ✦"}
                 </p>
               </div>
               <p className="text-[11px] font-semibold text-white/50 mt-1">{today}</p>
@@ -173,7 +173,7 @@ function ScoreShareCard({
           </div>
 
           {/* ── Body ── */}
-          <div className={type === 'play' ? 'px-5 pt-5 pb-6' : 'bg-white px-6 pt-7 pb-12'} style={type === 'play' ? { background: '#0D0A1F' } : {}}>
+          <div className="px-5 pt-5 pb-6" style={{ background: '#0D0A1F' }}>
 
             {type === 'play' && playScore ? (
               <>
@@ -340,130 +340,209 @@ function ScoreShareCard({
                 </div>
               </>
             ) : (
-              /* Daily Call body — emotional redesign */
+              /* Daily Call body — dark dramatic redesign */
               <>
-                {/* Icon + label + question + big answer */}
-                <div className="flex flex-col items-center text-center pb-5">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: '#f3f0ff' }}>
-                    <Sparkles size={22} className="text-purple-600" />
+                {/* Question text */}
+                {callQuestion && (
+                  <p className="text-[12px] leading-snug mb-4 px-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                    {truncateWords(callQuestion, 90)}
+                  </p>
+                )}
+
+                {callAnswer && callAnswer !== '__skip' ? (
+                  <>
+                    {/* Big answer + Better Than box */}
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: '#a89ee0' }}>
+                          🔥 HOT TAKE LOCKED
+                        </p>
+                        <p className="text-[30px] font-black leading-tight text-white break-words" style={{ letterSpacing: '-0.02em' }}>
+                          {callAnswer}.
+                        </p>
+                        {/* Only X% agreed */}
+                        {callVoteBreakdown && callAnswer && (callVoteBreakdown[callAnswer] ?? null) !== null && (
+                          <div
+                            className="mt-2 inline-flex items-center px-2.5 py-1 rounded-full"
+                            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+                          >
+                            <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                              Only {callVoteBreakdown[callAnswer]}% agreed with you ◇◇
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Better than % glowing box */}
+                      {(() => {
+                        const topPct = rankData?.beatenPct != null
+                          ? Math.round(rankData.beatenPct)
+                          : rankData?.rank != null && rankData?.total != null && rankData.total > 0
+                            ? Math.round((1 - rankData.rank / rankData.total) * 100)
+                            : null;
+                        if (topPct === null) return null;
+                        return (
+                          <div
+                            className="rounded-2xl px-3 py-3 text-center shrink-0"
+                            style={{
+                              minWidth: 88,
+                              background: '#1a1030',
+                              border: '1px solid rgba(124,58,237,0.45)',
+                              boxShadow: '0 0 22px rgba(124,58,237,0.28)',
+                            }}
+                          >
+                            <p className="text-[7px] font-bold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>BETTER THAN</p>
+                            <p
+                              className="text-[28px] font-black leading-none"
+                              style={{ background: 'linear-gradient(135deg,#a78bfa 0%,#38bdf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+                            >
+                              {topPct}%
+                            </p>
+                            <p className="text-[7px] font-bold uppercase tracking-widest mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>OF PLAYERS</p>
+                            <p className="text-[11px] mt-1">👑</p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* "Start a fight" block */}
+                    {(() => {
+                      const seed = new Date().getDate() % 3;
+                      let taunt: string;
+                      if (callVoteBreakdown && callOptions && callOptions.length >= 2) {
+                        const opponent = callOptions
+                          .filter(o => o !== callAnswer)
+                          .sort((a, b) => (callVoteBreakdown[b] ?? 0) - (callVoteBreakdown[a] ?? 0))[0];
+                        const oppPct = opponent ? (callVoteBreakdown[opponent] ?? 0) : 0;
+                        const taunts = [
+                          opponent && oppPct > 0
+                            ? `${oppPct}% went with "${opponent}" — are they onto something or just wrong?`
+                            : `Not everyone sees it your way. Think you can change their minds?`,
+                          `Most people picked something else. Think they're missing the point? Tell them.`,
+                          opponent
+                            ? `"${opponent}" is what the crowd went with. ${oppPct}% of takes can't all be right… can they?`
+                            : `The crowd went a different way. Think you're the smart one here?`,
+                        ];
+                        taunt = taunts[seed];
+                      } else {
+                        taunt = [
+                          `Not everyone will agree with you here. Ready to defend your take?`,
+                          `Bold call. Think you can convince the skeptics?`,
+                          `Plenty of people see this differently — think you're right?`,
+                        ][seed];
+                      }
+                      return (
+                        <div className="rounded-xl px-4 py-3 mb-4" style={{ background: '#1a1030', border: '1px solid rgba(255,255,255,0.06)' }}>
+                          <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: '#a89ee0' }}>💬 Start a fight</p>
+                          <p className="text-[12px] leading-snug" style={{ color: 'rgba(255,255,255,0.7)' }}>{taunt}</p>
+                        </div>
+                      );
+                    })()}
+                  </>
+                ) : (
+                  /* Skipped */
+                  <div className="mb-4 py-3">
+                    <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: '#a89ee0' }}>MY DAILY CALL</p>
+                    <p className="text-[20px] font-bold text-white/40 italic">Sat this one out</p>
                   </div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: '#9b8fd4' }}>My Daily Call</p>
-                  {callQuestion && (
-                    <p className="text-[14px] text-gray-500 mb-3 leading-snug px-2">{callQuestion}</p>
-                  )}
-                  {callAnswer && callAnswer !== '__skip' && (
-                    <p className="text-[30px] font-extrabold leading-tight" style={{ color: '#2d2080', letterSpacing: '-0.02em' }}>
-                      {callAnswer}.
-                    </p>
-                  )}
-                  {callAnswer === '__skip' && (
-                    <p className="text-[16px] font-semibold text-gray-400 italic">Sat this one out</p>
-                  )}
+                )}
+
+                {/* 4-stat row */}
+                <div className="grid grid-cols-4 gap-1.5 mb-4">
+                  {[
+                    {
+                      icon: '🏆',
+                      value: rankData?.rank != null ? `#${rankData.rank}` : '—',
+                      label: 'RANK',
+                      sub: 'THIS WEEK',
+                    },
+                    {
+                      icon: '🔥',
+                      value: `${streak ?? 0}`,
+                      label: 'STREAK',
+                      sub: (streak ?? 0) === 1 ? 'DAY' : 'DAYS',
+                    },
+                    {
+                      icon: '🎯',
+                      value: triviaStats?.accuracy != null ? `${Math.round(triviaStats.accuracy)}%` : '—',
+                      label: 'ACCURACY',
+                      sub: 'THIS WEEK',
+                    },
+                    {
+                      icon: '⭐',
+                      value: triviaStats?.points != null
+                        ? triviaStats.points >= 1000 ? `${(triviaStats.points / 1000).toFixed(1)}K` : String(triviaStats.points)
+                        : '—',
+                      label: 'TOTAL PTS',
+                      sub: 'ALL TIME',
+                    },
+                  ].map(({ icon, value, label, sub }) => (
+                    <div
+                      key={label}
+                      className="rounded-xl py-2.5 px-1 text-center"
+                      style={{ background: '#1a1030', border: '1px solid rgba(255,255,255,0.06)' }}
+                    >
+                      <span className="text-[11px]">{icon}</span>
+                      <p className="text-[13px] font-black leading-none text-white mt-0.5">{value}</p>
+                      <p className="text-[7px] font-bold uppercase tracking-wide mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{label}</p>
+                      <p className="text-[6px] uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.2)' }}>{sub}</p>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="h-px mb-5" style={{ background: '#ede9f8' }} />
-
-                {/* Name + vote % callout — always shows if user answered */}
-                {callAnswer && callAnswer !== '__skip' && (() => {
-                  const userPct = callVoteBreakdown ? (callVoteBreakdown[callAnswer] ?? null) : null;
-                  const topPct = rankData?.beatenPct != null
-                    ? Math.round(rankData.beatenPct)
-                    : rankData?.rank != null && rankData?.total != null && rankData.total > 0
-                      ? Math.round((1 - rankData.rank / rankData.total) * 100)
-                      : null;
-                  const displayName = username || 'You';
-
-                  return (
-                    <div className="rounded-2xl px-4 py-4 mb-4 text-center" style={{ background: '#f5f3ff' }}>
-                      <p className="text-[13px] mb-2" style={{ color: '#9b8fd4' }}>
-                        {userPct !== null
-                          ? userPct <= 30
-                            ? `Only ${userPct}% agreed — but`
-                            : userPct >= 70
-                            ? `${userPct}% agreed — and`
-                            : `${userPct}% of players agreed — and`
-                          : `That\u2019s your call \u2014 and`}
+                {/* DNA chips */}
+                {dnaStats && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Dna size={10} className="text-purple-400" />
+                      <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                        Your Entertainment DNA
                       </p>
-                      <p className="text-[24px] font-extrabold leading-tight" style={{ color: '#2d2080', letterSpacing: '-0.02em' }}>
-                        {topPct !== null
-                          ? <>{displayName} is in the<br />top {topPct}% on Consumed.</>
-                          : <>{displayName} made the call.</>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(() => {
+                        const chips: { emoji: string; text: string }[] = [];
+                        if (dnaStats.label) chips.push({ emoji: '🧬', text: dnaStats.label });
+                        if (dnaStats.topGenre) {
+                          const genreMap: Record<string, string> = {
+                            Drama: 'Prestige Devotee', Thriller: 'Edge-of-Seat Viewer',
+                            Comedy: 'Laughs Detector', Action: 'Action Addict',
+                            Horror: 'Horror Hunter', 'Sci-Fi': 'Galaxy Brain',
+                            Romance: 'Romance Radar', Crime: 'Crime Obsessive',
+                            Animation: 'Cartoon Connoisseur', Documentary: 'Doc Devotee',
+                            Music: 'Music Maven', Fantasy: 'World Builder',
+                          };
+                          chips.push({ emoji: '🎬', text: genreMap[dnaStats.topGenre] || `${dnaStats.topGenre} Fan` });
                         }
-                      </p>
+                        if (triviaStats?.accuracy != null) {
+                          chips.push({ emoji: '🎯', text: triviaStats.accuracy >= 70 ? 'Trivia Sharp' : 'Chaos Viewer' });
+                        } else {
+                          chips.push({ emoji: '🎯', text: 'Chaos Viewer' });
+                        }
+                        return chips.slice(0, 3).map(c => (
+                          <div
+                            key={c.text}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                            style={{ background: '#1a1030', border: '1px solid rgba(124,58,237,0.35)' }}
+                          >
+                            <span className="text-[11px]">{c.emoji}</span>
+                            <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.8)' }}>{c.text}</span>
+                          </div>
+                        ));
+                      })()}
                     </div>
-                  );
-                })()}
-
-                {/* "Start a fight" — always shows, uses vote data if available */}
-                {(() => {
-                  const seed = new Date().getDate() % 3;
-                  let taunt: string;
-
-                  if (callVoteBreakdown && callOptions && callOptions.length >= 2 && callAnswer && callAnswer !== '__skip') {
-                    const opponent = callOptions
-                      .filter(o => o !== callAnswer)
-                      .sort((a, b) => (callVoteBreakdown[b] ?? 0) - (callVoteBreakdown[a] ?? 0))[0];
-                    const oppPct = opponent ? (callVoteBreakdown[opponent] ?? 0) : 0;
-                    const taunts = [
-                      opponent && oppPct > 0
-                        ? `${oppPct}% went with "${opponent}" — bold choice. Are they onto something or just wrong?`
-                        : `Not everyone sees it your way. Think you can change their minds?`,
-                      `Most people picked something else. Think they're missing the point? Tell them.`,
-                      opponent
-                        ? `"${opponent}" is what the crowd went with. ${oppPct}% of takes can't all be right… can they?`
-                        : `The crowd went a different way. Think you're the smart one here?`,
-                    ];
-                    taunt = taunts[seed];
-                  } else if (callAnswer && callAnswer !== '__skip') {
-                    const genericTaunts = [
-                      `Not everyone will agree with you here. Ready to defend your take?`,
-                      `Bold call. Think you can convince the skeptics?`,
-                      `Plenty of people see this differently — think you're right?`,
-                    ];
-                    taunt = genericTaunts[seed];
-                  } else {
-                    return null;
-                  }
-
-                  return (
-                    <div className="rounded-xl px-4 py-3.5 mb-5" style={{ background: '#2d2080' }}>
-                      <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: '#a89ee0' }}>💬 Start a fight</p>
-                      <p className="text-[13px] leading-snug" style={{ color: '#ede9f8' }}>{taunt}</p>
-                    </div>
-                  );
-                })()}
-
-                {/* 2-stat row — Hot Streak + Total Pts */}
-                <div className="grid grid-cols-2 gap-2.5 mb-5">
-                  <div className="flex flex-col items-center rounded-xl py-3 px-2" style={{ background: '#f5f3ff' }}>
-                    <p className="text-[16px] font-black leading-none" style={{ color: '#2d2080' }}>{streak ?? 0} day{(streak ?? 0) !== 1 ? 's' : ''}</p>
-                    <p className="text-[9px] font-bold uppercase tracking-widest mt-1" style={{ color: '#9b8fd4' }}>Hot Streak</p>
                   </div>
-                  <div className="flex flex-col items-center rounded-xl py-3 px-2" style={{ background: '#f5f3ff' }}>
-                    {triviaStats?.points != null ? (
-                      <>
-                        <p className="text-[16px] font-black leading-none" style={{ color: '#2d2080' }}>{triviaStats.points.toLocaleString()} pts</p>
-                        <p className="text-[9px] font-bold uppercase tracking-widest mt-1" style={{ color: '#9b8fd4' }}>All Time</p>
-                      </>
-                    ) : (
-                      <>
-                        <Lock size={14} className="mb-1" style={{ color: '#c4b8e8' }} />
-                        <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: '#9b8fd4' }}>Play to unlock</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
+                )}
 
-            {/* Footer tagline — call type only (play has its own branding built in) */}
-            {type !== 'play' && (
-              <>
-                <div className="pt-5 border-t border-gray-100 text-center">
-                  <p className="text-[11px] font-bold text-purple-600">@consumedapp</p>
-                  <p className="text-[9px] text-gray-400 mt-0.5">where entertainment gets played</p>
+                {/* Branding footer */}
+                <div className="pt-3 text-center" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                  <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                    Everyone's playing. Where do you rank?
+                  </p>
+                  <p className="text-[8px] mt-0.5" style={{ color: 'rgba(255,255,255,0.15)' }}>
+                    @consumedapp · where entertainment gets played
+                  </p>
                 </div>
-                <p className="text-[11px] font-semibold text-gray-400 leading-snug text-center">Everyone's playing. Where do you rank?</p>
               </>
             )}
           </div>
