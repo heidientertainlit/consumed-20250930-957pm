@@ -1714,8 +1714,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {post.mediaTitle && (
                   <div className="mb-1.5">
                     {post.externalId && post.externalSource
-                      ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-sm font-semibold text-gray-800 hover:text-purple-600 cursor-pointer leading-snug">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span></Link>
-                      : <span className="text-sm font-semibold text-gray-800 leading-snug">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span>
+                      ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[11px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer leading-snug">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span></Link>
+                      : <span className="text-[11px] font-light tracking-widest uppercase text-gray-400 leading-snug">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span>
                     }
                   </div>
                 )}
@@ -1849,8 +1849,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     {post.mediaTitle && (
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {post.externalId && post.externalSource
-                          ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-sm font-semibold text-gray-700 hover:text-purple-600 cursor-pointer leading-snug">{post.mediaTitle}{isSeries ? ' Series' : ''}</span></Link>
-                          : <span className="text-sm font-semibold text-gray-700 leading-snug">{post.mediaTitle}{isSeries ? ' Series' : ''}</span>
+                          ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[11px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer leading-snug">{post.mediaTitle}{isSeries ? ' Series' : ''}</span></Link>
+                          : <span className="text-[11px] font-light tracking-widest uppercase text-gray-400 leading-snug">{post.mediaTitle}{isSeries ? ' Series' : ''}</span>
                         }
                       </div>
                     )}
