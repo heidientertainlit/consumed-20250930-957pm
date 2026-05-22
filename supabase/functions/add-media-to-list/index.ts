@@ -160,7 +160,8 @@ serve(async (req) => {
       episode_title,
       rating,
       review,
-      skip_social_post
+      skip_social_post,
+      series_name
     } = requestBody;
 
     console.log('add-media-to-list request:', { 
@@ -258,7 +259,8 @@ serve(async (req) => {
         creator: media_creator || '',
         image_url: finalImageUrl,
         external_id: media_external_id || null,
-        external_source: media_external_source || 'tmdb'
+        external_source: media_external_source || 'tmdb',
+        ...(series_name ? { series_name } : {})
       })
       .select()
       .single();

@@ -22,6 +22,7 @@ interface QuickAddListSheetProps {
     externalId?: string;
     externalSource?: string;
     creator?: string;
+    seriesName?: string;
   } | null;
   onOpenHotTakeComposer?: (media: { title: string; mediaType: string; imageUrl?: string; externalId?: string; externalSource?: string }) => void;
 }
@@ -276,6 +277,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
           media_image_url: effectiveMedia.imageUrl || '',
           media_external_id: effectiveMedia.externalId,
           media_external_source: effectiveMedia.externalSource || 'tmdb',
+          ...(effectiveMedia.seriesName ? { series_name: effectiveMedia.seriesName } : {}),
         }),
       });
 

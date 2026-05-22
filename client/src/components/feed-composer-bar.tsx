@@ -207,9 +207,14 @@ export default function FeedComposerBar() {
   const [expandedSeriesId, setExpandedSeriesId] = useState<string | null>(null);
   const [seriesBooksMap, setSeriesBooksMap] = useState<Record<string, any[]>>({});
   const [loadingSeriesId, setLoadingSeriesId] = useState<string | null>(null);
+  const [seriesBulkTarget, setSeriesBulkTarget] = useState<any | null>(null);
+  const [seriesBulkStep, setSeriesBulkStep] = useState<'choice' | 'pick-list'>('choice');
+  const [seriesBulkAdding, setSeriesBulkAdding] = useState(false);
+  const [seriesUserLists, setSeriesUserLists] = useState<any[]>([]);
+  const [seriesUserListsLoading, setSeriesUserListsLoading] = useState(false);
 
-  const fetchSeriesBooks = async (seriesTitle: string, seriesId: string, author?: string) => {
-    if (seriesBooksMap[seriesId]) return;
+  const fetchSeriesBooks = async (seriesTitle: string, seriesId: string, author?: string): Promise<any[]> => {
+    if (seriesBooksMap[seriesId]) return seriesBooksMap[seriesId];
     setLoadingSeriesId(seriesId);
     try {
       const params = new URLSearchParams({ q: seriesTitle, limit: '12', fields: 'title,author_name,first_publish_year,cover_i,key' });
@@ -231,9 +236,11 @@ export default function FeedComposerBar() {
             year: d.first_publish_year ? String(d.first_publish_year) : '',
           }));
         setSeriesBooksMap(prev => ({ ...prev, [seriesId]: books }));
+        return books;
       }
     } catch (_) {}
     finally { setLoadingSeriesId(null); }
+    return [];
   };
 
   const toggleSeries = (r: any) => {
@@ -241,6 +248,68 @@ export default function FeedComposerBar() {
     if (expandedSeriesId === sid) { setExpandedSeriesId(null); return; }
     setExpandedSeriesId(sid);
     fetchSeriesBooks(r.title, sid, r.creator);
+  };
+
+  const openSeriesBulkAdd = (r: any) => {
+    setSeriesBulkTarget(r);
+    setSeriesBulkStep('choice');
+  };
+
+  const fetchUserListsForSeries = async () => {
+    if (!session?.access_token) return;
+    setSeriesUserListsLoading(true);
+    try {
+      const url = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
+      const res = await fetch(`${url}/functions/v1/get-user-lists-with-media`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const systemNames = ['Want To', 'Currently', 'Finished', 'Did Not Finish', 'Favorites'];
+        const lists = (data.lists || []).filter((l: any) =>
+          systemNames.some(n => l.title?.startsWith(n))
+        );
+        setSeriesUserLists(lists.length ? lists : (data.lists || []).slice(0, 5));
+      }
+    } catch (_) {}
+    finally { setSeriesUserListsLoading(false); }
+  };
+
+  const bulkAddSeries = async (listId: string, listTitle: string) => {
+    if (!seriesBulkTarget || !session?.access_token) return;
+    setSeriesBulkAdding(true);
+    try {
+      const sid = seriesBulkTarget.external_id;
+      const books = await fetchSeriesBooks(seriesBulkTarget.title, sid, seriesBulkTarget.creator);
+      if (!books.length) {
+        toast({ title: "Couldn't load books for this series", variant: "destructive" });
+        return;
+      }
+      const url = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
+      for (const book of books) {
+        await fetch(`${url}/functions/v1/add-media-to-list`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            list_id: listId,
+            media_title: book.title,
+            media_type: 'book',
+            media_creator: book.creator || seriesBulkTarget.creator || '',
+            media_image_url: book.poster_url || '',
+            media_external_id: book.external_id,
+            media_external_source: book.external_source || 'openlibrary',
+            series_name: seriesBulkTarget.title,
+            skip_social_post: true,
+          }),
+        });
+      }
+      toast({ title: `Added ${books.length} books to ${listTitle}` });
+      setSeriesBulkTarget(null);
+    } catch (_) {
+      toast({ title: "Something went wrong", variant: "destructive" });
+    } finally {
+      setSeriesBulkAdding(false);
+    }
   };
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -698,13 +767,16 @@ export default function FeedComposerBar() {
                     const externalSource = r.external_source === 'openai' ? 'openlibrary' : (r.external_source || 'tmdb');
                     return (
                       <MediaRow key={i} item={r}
-                        onTrack={() => { setQuickAddMedia({ title: r.title, mediaType, imageUrl: r.image_url, externalId: r.external_id, externalSource: externalSource, creator: r.creator }); setIsQuickAddOpen(true); }}
+                        onTrack={() => {
+                          if (r.type === 'book_series') { openSeriesBulkAdd(r); }
+                          else { setQuickAddMedia({ title: r.title, mediaType, imageUrl: r.image_url, externalId: r.external_id, externalSource: externalSource, creator: r.creator }); setIsQuickAddOpen(true); }
+                        }}
                         onRate={() => { setActiveTab("review"); selectMedia({ ...r, type: mediaType, external_source: externalSource }); }}
                         seriesExpanded={expandedSeriesId === r.external_id}
                         seriesBooks={seriesBooksMap[r.external_id]}
                         seriesLoading={loadingSeriesId === r.external_id}
                         onToggleSeries={() => toggleSeries(r)}
-                        onTrackBook={(book) => { setQuickAddMedia({ title: book.title, mediaType: 'book', imageUrl: book.poster_url, externalId: book.external_id, externalSource: book.external_source || 'openlibrary', creator: book.creator }); setIsQuickAddOpen(true); }}
+                        onTrackBook={(book) => { setQuickAddMedia({ title: book.title, mediaType: 'book', imageUrl: book.poster_url, externalId: book.external_id, externalSource: book.external_source || 'openlibrary', creator: book.creator, seriesName: r.type === 'book_series' ? r.title : undefined }); setIsQuickAddOpen(true); }}
                         onRateBook={(book) => { setActiveTab("review"); selectMedia({ ...book, image_url: book.poster_url }); }}
                       />
                     );
@@ -717,6 +789,86 @@ export default function FeedComposerBar() {
               )}
             </div>
           )}
+        {/* ── Series bulk-add sheet ── */}
+        {seriesBulkTarget && (
+          <div
+            className="absolute inset-0 flex flex-col justify-end"
+            style={{ zIndex: 20, background: 'rgba(0,0,0,0.7)' }}
+            onClick={(e) => { if (e.target === e.currentTarget) setSeriesBulkTarget(null); }}
+          >
+            <div className="rounded-t-3xl px-5 pt-5 pb-10" style={{ background: 'linear-gradient(160deg, #12121f 0%, #1a1030 100%)' }}>
+              {/* Handle */}
+              <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-5" />
+
+              {seriesBulkStep === 'choice' && (
+                <>
+                  {/* Series info */}
+                  <div className="flex items-center gap-3 mb-6">
+                    {seriesBulkTarget.image_url && (
+                      <img src={seriesBulkTarget.image_url} className="w-12 h-16 rounded-lg object-cover flex-shrink-0" />
+                    )}
+                    <div>
+                      <p className="text-white font-bold text-base leading-tight">{seriesBulkTarget.title}</p>
+                      <p className="text-white/50 text-sm mt-0.5">Book Series · {seriesBulkTarget.series_count || seriesBooksMap[seriesBulkTarget.external_id]?.length || '?'} books · {seriesBulkTarget.creator}</p>
+                    </div>
+                  </div>
+
+                  {/* Add all button */}
+                  <button
+                    onClick={() => { setSeriesBulkStep('pick-list'); fetchUserListsForSeries(); }}
+                    className="w-full py-4 rounded-2xl font-bold text-white text-base mb-3"
+                    style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
+                  >
+                    📚 Add all {seriesBulkTarget.series_count || seriesBooksMap[seriesBulkTarget.external_id]?.length || ''} books
+                  </button>
+
+                  {/* Choose individually */}
+                  <button
+                    onClick={() => { toggleSeries(seriesBulkTarget); setSeriesBulkTarget(null); }}
+                    className="w-full py-3.5 rounded-2xl font-semibold text-white/70 text-sm border border-white/15"
+                  >
+                    Browse individually
+                  </button>
+                </>
+              )}
+
+              {seriesBulkStep === 'pick-list' && (
+                <>
+                  <p className="text-white font-bold text-lg mb-1">Add all books to…</p>
+                  <p className="text-white/40 text-sm mb-5">{seriesBulkTarget.title}</p>
+
+                  {seriesUserListsLoading ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 size={24} className="text-purple-400 animate-spin" />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {seriesUserLists.map((list: any) => (
+                        <button
+                          key={list.id}
+                          disabled={seriesBulkAdding}
+                          onClick={() => bulkAddSeries(list.id, list.title)}
+                          className="w-full py-4 px-5 rounded-2xl text-left font-semibold text-white text-sm flex items-center justify-between disabled:opacity-50"
+                          style={{ background: 'rgba(255,255,255,0.07)' }}
+                        >
+                          <span>{list.title}</span>
+                          {seriesBulkAdding ? <Loader2 size={16} className="text-purple-400 animate-spin" /> : <span className="text-white/30 text-xs">{list.item_count ?? ''}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => setSeriesBulkStep('choice')}
+                    className="w-full mt-4 py-3 text-white/40 text-sm font-medium"
+                  >
+                    ← Back
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
         </div>,
         document.body
       )}
