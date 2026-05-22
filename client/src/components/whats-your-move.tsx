@@ -77,10 +77,10 @@ export function WhatsYourMove() {
                 key={tile.label}
                 onClick={() => open(tile.id)}
                 className="rounded-xl px-3 py-2.5 flex flex-col gap-1.5 active:opacity-70 transition-opacity text-left"
-                style={{ background: "rgba(255,255,255,0.06)" }}
+                style={{ background: "rgba(124,58,237,0.10)" }}
               >
                 {tile.icon}
-                <p className="text-white font-semibold text-[13px] leading-tight">{tile.label}</p>
+                <p className="text-gray-800 font-semibold text-[13px] leading-tight">{tile.label}</p>
               </button>
             ))}
           </div>
