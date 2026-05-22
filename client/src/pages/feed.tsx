@@ -1300,7 +1300,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </Link>
             <div>
               <Link href={`/user/${post.user?.id}`}>
-                <span className="text-sm font-semibold text-gray-900 hover:text-orange-500 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+                <span className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
               </Link>
               {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
                 <p className="text-[10px] text-gray-400 leading-none">@{post.user.username}</p>
@@ -1486,7 +1486,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </Link>
             <div>
               <Link href={`/user/${post.user?.id}`}>
-                <span className="text-sm font-semibold text-gray-900 hover:text-blue-500 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+                <span className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
               </Link>
               {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
                 <p className="text-[10px] text-gray-400 leading-none">@{post.user.username}</p>
@@ -1707,7 +1707,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {post.user && (
                   <div className="mb-0.5">
                     <Link href={`/user/${post.user.id || ''}`}>
-                      <p className="text-sm font-medium text-purple-800 hover:text-purple-900 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
+                      <p className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
                     </Link>
                   </div>
                 )}
@@ -1842,7 +1842,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   return (
                     <>
                       <Link href={`/user/${post.user?.id || ''}`}>
-                        <span className="text-sm font-bold text-purple-500 hover:text-purple-700 cursor-pointer leading-snug">{cardDisplayName}</span>
+                        <span className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer leading-snug">{cardDisplayName}</span>
                       </Link>
                       {post.rating && post.rating > 0 && (post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought') && (
                         <>
@@ -1892,7 +1892,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <div className="flex items-start mb-3">
                     <div className="flex-1 min-w-0">
                       <Link href={`/user/${post.user?.id || ''}`}>
-                        <span className="text-sm font-bold text-purple-500 hover:text-purple-700 cursor-pointer leading-snug">{cardDisplayName}</span>
+                        <span className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer leading-snug">{cardDisplayName}</span>
                       </Link>
                     </div>
                   </div>
