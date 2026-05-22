@@ -343,8 +343,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   };
 
   const handleBack = () => {
-    // If opened directly into the room composer, back = close
-    if (roomId && (selectedIntent === "say" || selectedIntent === "capture")) {
+    // If opened with a preselected entry point (no chooser was ever shown), back = close
+    if (preselectedIntent || preselectedTab || preselectedMedia || roomId) {
       handleClose();
       return;
     }
