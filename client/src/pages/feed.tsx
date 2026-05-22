@@ -3177,7 +3177,7 @@ function CurrentlyConsumingFeedCard({
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <Link href={`/user/${post.user?.id}`}>
-                    <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+                    <span className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
                   </Link>
                   {post.mediaType && (
                     <span className="text-xs px-2 py-0.5 rounded-full border border-purple-200 text-purple-500">{post.mediaType}</span>
