@@ -14,7 +14,7 @@ export function WhatsYourMove() {
     {
       id: "review" as Tab,
       label: "Rate",
-      icon: <Star size={20} className="text-yellow-400" fill="currentColor" />,
+      icon: <Star size={20} className="text-yellow-400" />,
     },
     {
       id: "prediction" as Tab,
