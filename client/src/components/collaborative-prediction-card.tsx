@@ -446,7 +446,7 @@ export default function CollaborativePredictionCard({
             className="flex-shrink-0 block"
             data-testid="button-poll-media-poster"
           >
-            <div className="w-[88px] h-[132px] rounded-xl overflow-hidden shadow-md">
+            <div className="w-[104px] h-[156px] rounded-xl overflow-hidden shadow-md">
               <img
                 src={mediaItems[0].imageUrl}
                 alt={mediaTitle || 'Media poster'}
