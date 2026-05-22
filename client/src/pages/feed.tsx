@@ -1163,6 +1163,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </button>
       )}
       <div className="ml-auto flex items-center gap-1.5">
+        {post.externalId?.startsWith('series-') && <span className="text-[9px] font-semibold text-purple-500 bg-purple-50 border border-purple-200 rounded-full px-1.5 py-0.5">Series</span>}
         <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
         <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
       </div>
