@@ -4084,6 +4084,14 @@ export default function Feed() {
     const out: any[] = [];
     let promotedIdx = 0;
     let bingePromoCount = 0;
+
+    // Flatten all carousel posts into a secondary UGC pool for organic interleaving.
+    // These fill the "extra" UGC slots so the feed alternates:
+    //   play → UGC,  play → UGC → UGC,  play → UGC,  play → UGC → UGC …
+    // To revert to 1:1 interleave only: remove extraUGC + wrapExtra + the extra inject block.
+    const extraUGC = feedRatingCarousels.flatMap((c: any) => c.posts);
+    let extraIdx = 0;
+
     // Wrap a promoted rating so we keep its original `type` (needed for the
     // "WHAT'S YOUR TAKE?" action-first UGCGroupCard layout) but still tag it
     // so renderFeedItem can route it through the standalone branch.
@@ -4092,6 +4100,12 @@ export default function Feed() {
       _isPromoted: true,
       _promotedKey: `promoted-${idx}`,
     });
+    const wrapExtra = (idx: number) => ({
+      ...extraUGC[idx],
+      _isPromoted: true,
+      _promotedKey: `extra-${idx}`,
+    });
+
     // Lead with the first promoted rating so it's the very first item in the feed
     if (promotedRatings.length > 0) {
       out.push(wrapPromoted(promotedIdx));
@@ -4105,6 +4119,12 @@ export default function Feed() {
         out.push(wrapPromoted(promotedIdx));
         promotedIdx++;
       }
+      // Every other play item, inject an extra UGC from the carousel pool.
+      // This gives the organic "user post - play - user post - user post - play" rhythm.
+      if (i % 2 === 1 && extraIdx < extraUGC.length) {
+        out.push(wrapExtra(extraIdx));
+        extraIdx++;
+      }
       // Sprinkle 2 binge-battle promo cards across the feed (positions 5 and 11)
       if ((i === 4 || i === 10) && bingePromoCount < 2) {
         out.push({
@@ -4115,13 +4135,18 @@ export default function Feed() {
         bingePromoCount++;
       }
     });
-    // Append any leftover promoted ratings so they don't get dropped on short feeds
+    // Append any leftover promoted ratings
     while (promotedIdx < promotedRatings.length) {
       out.push(wrapPromoted(promotedIdx));
       promotedIdx++;
     }
+    // Append remaining extra UGC after all play slots are consumed
+    while (extraIdx < extraUGC.length) {
+      out.push(wrapExtra(extraIdx));
+      extraIdx++;
+    }
     return out;
-  }, [feedPlaySlots, promotedRatings]);
+  }, [feedPlaySlots, promotedRatings, feedRatingCarousels]);
 
   // Map each play slot to a sequential index for renderPostBatchByIndex
   const slotAssignments = useMemo(() => {
@@ -4577,41 +4602,54 @@ export default function Feed() {
     return renderFeedItem(item, `batch-${batchIndex}`);
   };
 
-  // Renders rating posts vertically inline (previously a horizontal swipe carousel).
-  // To revert to carousel: restore the flex overflow-x-auto wrapper + dot indicators.
-  const renderRatingCarousel = (carouselIndex: number) => {
-    if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
-    const carousel = feedRatingCarousels[carouselIndex];
-    if (!carousel || carousel.posts.length === 0) return null;
-    return (
-      <div key={carousel.id} className="flex flex-col gap-3 mb-2">
-        {carousel.posts.map((post: any) => (
-          <UGCGroupCard
-            key={post.id}
-            post={post}
-            onLike={handleLike}
-            isLiked={likedPosts.has(post.id)}
-            session={session}
-            fetchComments={fetchComments}
-            currentUserId={currentAppUserId || undefined}
-            onDeletePost={handleDeletePost}
-            onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
-            forceNormal={true}
-          />
-        ))}
-      </div>
-    );
-  };
+  // Rating carousel posts are now folded into mixedFeedSlots for organic interleaving
+  // (play → UGC, play → UGC → UGC, play → UGC …). The hardcoded renderRatingCarousel(0..3)
+  // calls in JSX safely return null.
+  //
+  // ── HOW TO RESTORE HORIZONTAL SWIPE CAROUSEL ───────────────────────────────────────
+  // 1. Remove the `return null` below and restore the full function body:
+  //
+  //   if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
+  //   const carousel = feedRatingCarousels[carouselIndex];
+  //   if (!carousel || carousel.posts.length === 0) return null;
+  //   return (
+  //     <div key={carousel.id} className="mb-2">
+  //       <div className="flex items-stretch gap-3 overflow-x-auto pb-1 scrollbar-hide
+  //                       snap-x snap-mandatory touch-pan-x
+  //                       md:flex-col md:overflow-x-visible md:snap-none md:pb-0 md:items-stretch">
+  //         {carousel.posts.map((post: any) => (
+  //           <UGCGroupCard key={post.id} post={post} onLike={handleLike}
+  //             isLiked={likedPosts.has(post.id)} session={session}
+  //             fetchComments={fetchComments} currentUserId={currentAppUserId || undefined}
+  //             onDeletePost={handleDeletePost}
+  //             onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+  //             forceNormal={true} />
+  //         ))}
+  //       </div>
+  //       {carousel.posts.length > 1 && (
+  //         <div className="flex justify-center gap-1.5 mt-2">
+  //           {carousel.posts.map((_: any, i: number) => (
+  //             <div key={i} className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+  //           ))}
+  //         </div>
+  //       )}
+  //     </div>
+  //   );
+  //
+  // 2. In mixedFeedSlots, remove the extraUGC / wrapExtra / extra inject block.
+  // 3. In renderRemainingPosts, restore: feedRatingCarousels.slice(4).map(...)
+  // ───────────────────────────────────────────────────────────────────────────────────
+  const renderRatingCarousel = (_carouselIndex: number) => null;
 
   const renderRemainingPosts = () => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
     const remaining = mixedFeedSlots.slice(7);
-    const remainingRatings = feedRatingCarousels.slice(4);
-    if (remaining.length === 0 && remainingRatings.length === 0) return null;
+    // Carousel posts are now part of mixedFeedSlots — no separate carousel tail.
+    // To restore: add `feedRatingCarousels.slice(4).map((_, i) => renderRatingCarousel(4 + i))`
+    if (remaining.length === 0) return null;
     return (
       <>
         {remaining.map((item, i) => renderFeedItem(item, `remaining-${i}`))}
-        {remainingRatings.map((carousel, i) => renderRatingCarousel(4 + i))}
       </>
     );
   };
