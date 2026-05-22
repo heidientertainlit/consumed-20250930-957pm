@@ -824,7 +824,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                     </span>
                   )}
                 </div>
-                <h3 className="text-gray-900 font-semibold text-base leading-snug mb-4">{item.question}</h3>
+                <h3 className="text-gray-900 font-semibold text-[18px] leading-snug mb-4">{item.question}</h3>
                 
                 {!answered ? (
                   <div className="flex flex-col gap-2">
