@@ -14,26 +14,22 @@ export function WhatsYourMove() {
     {
       id: "review" as Tab,
       label: "Rate",
-      sub: "What'd you think?",
-      icon: <Star size={20} className="text-yellow-400" fill="currentColor" />,
+      icon: <Star size={18} className="text-yellow-400" fill="currentColor" />,
     },
     {
       id: "prediction" as Tab,
       label: "Predict",
-      sub: "Call what happens",
-      icon: <Eye size={20} className="text-purple-400" />,
+      icon: <Eye size={18} className="text-purple-400" />,
     },
     {
       id: "poll" as Tab,
       label: "Poll",
-      sub: "Ask the community",
-      icon: <BarChart2 size={20} className="text-green-400" />,
+      icon: <BarChart2 size={18} className="text-green-400" />,
     },
     {
       id: null as Tab,
       label: "More",
-      sub: "Ranks, lists & more",
-      icon: <MoreHorizontal size={20} className="text-gray-400" />,
+      icon: <MoreHorizontal size={18} className="text-gray-400" />,
     },
   ];
 
@@ -70,7 +66,6 @@ export function WhatsYourMove() {
                   <Flame size={18} className="text-white" />
                   <span className="text-white font-bold text-base leading-tight">Take</span>
                 </div>
-                <p className="text-white/80 text-[11px] leading-snug">Share a hot take</p>
               </div>
               <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center ml-2 shrink-0">
                 <Plus size={14} className="text-white" />
@@ -84,14 +79,11 @@ export function WhatsYourMove() {
               <button
                 key={tile.label}
                 onClick={() => open(tile.id)}
-                className="rounded-xl p-3 flex flex-col justify-between active:opacity-70 transition-opacity text-left"
-                style={{ background: "rgba(255,255,255,0.06)", minHeight: 56 }}
+                className="rounded-xl px-3 py-2.5 flex flex-col gap-1.5 active:opacity-70 transition-opacity text-left"
+                style={{ background: "rgba(255,255,255,0.06)" }}
               >
                 {tile.icon}
-                <div className="mt-1.5">
-                  <p className="text-white font-semibold text-[13px] leading-tight">{tile.label}</p>
-                  <p className="text-white/50 text-[10px] leading-snug mt-0.5">{tile.sub}</p>
-                </div>
+                <p className="text-white font-semibold text-[13px] leading-tight">{tile.label}</p>
               </button>
             ))}
           </div>
