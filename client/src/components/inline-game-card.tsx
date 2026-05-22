@@ -465,7 +465,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             </div>
           )}
           <div className="p-5 px-4 pt-3">
-            <p className="text-base font-semibold text-gray-900 mb-4 leading-snug">{triviaQuestion.question}</p>
+            <p className="text-[18px] font-semibold text-gray-900 mb-4 leading-snug">{triviaQuestion.question}</p>
             <div className="flex flex-col gap-2 mb-4">
               {triviaQuestion.options.map((option, index) => (
                 <button
@@ -540,7 +540,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           </div>
         </div>
         <div className="p-5 px-4 pt-0">
-          <p className="text-base font-semibold text-white mb-4 leading-snug">{game.title}</p>
+          <p className="text-[18px] font-semibold text-white mb-4 leading-snug">{game.title}</p>
           <div className="flex flex-col gap-2 mb-4">
             {(game.options || []).map((option: any, optIndex: number) => {
               const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
