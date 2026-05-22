@@ -135,7 +135,7 @@ serve(async (req) => {
           user_id: appUser.id,
           title: title || 'Untitled',
           creator: creator || '',
-          media_type: media_type || 'mixed',
+          media_type: media_type || null,
           image_url: image_url || null,
           description: description || null,
           external_id: external_id || null,

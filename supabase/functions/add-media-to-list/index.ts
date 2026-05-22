@@ -254,7 +254,7 @@ serve(async (req) => {
         list_id: list_id,
         user_id: appUser?.id,
         title: media_title || 'Untitled',
-        media_type: media_type || 'mixed',
+        media_type: media_type || null,
         creator: media_creator || '',
         image_url: finalImageUrl,
         external_id: media_external_id || null,

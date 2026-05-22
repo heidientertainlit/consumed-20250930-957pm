@@ -492,7 +492,7 @@ export default function UserProfile() {
         body: JSON.stringify({
           title: media.title,
           creator: media.creator || '',
-          media_type: media.type || media.media_type || 'mixed',
+          media_type: media.type || media.media_type || null,
           image_url: media.image || media.image_url || null,
           description: media.description || null,
           external_id: media.external_id || null,

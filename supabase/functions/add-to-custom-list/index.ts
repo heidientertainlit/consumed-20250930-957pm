@@ -193,7 +193,7 @@ serve(async (req) => {
         list_id: customList.id,
         user_id: appUser.id,
         title: title || 'Untitled',
-        media_type: mediaType || 'mixed',
+        media_type: mediaType || null,
         creator: creator || '',
         image_url: finalImageUrl,
         external_id: externalId || null,
