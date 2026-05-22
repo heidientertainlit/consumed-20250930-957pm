@@ -1685,12 +1685,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                         <p className="text-sm font-bold text-gray-900 hover:text-purple-600 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
                       </Link>
                       <p className="text-sm text-gray-400 leading-snug">
-                        <span>{(post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'shared a take on' : 'reviewed'} </span>
-                        {post.mediaTitle && (
-                          post.externalId && post.externalSource
-                            ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="hover:text-purple-500 cursor-pointer">{post.mediaTitle}</span></Link>
-                            : <span>{post.mediaTitle}</span>
-                        )}
+                        {(post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'shared a take on' : 'reviewed'}
                       </p>
                     </div>
                     {currentUserId && post.user?.id !== currentUserId && (
