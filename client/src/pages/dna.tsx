@@ -799,7 +799,7 @@ export default function DnaPage() {
                             )}
 
                             <div className="pt-2 mt-2 border-t border-purple-100 text-center">
-                              <p className="text-xs text-gray-400">consumed.app</p>
+                              <p className="text-xs text-gray-400">app.consumedapp.com</p>
                             </div>
                           </div>
 

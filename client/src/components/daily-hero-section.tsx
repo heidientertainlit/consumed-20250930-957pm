@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
+import { APP_BASE } from '@/lib/share';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
@@ -118,12 +119,11 @@ function ScoreShareCard({
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   const handleShare = async () => {
-    const appUrl = 'consumed.app';
     let text = '';
     if (type === 'play' && playScore) {
-      text = `My entertainment score on Consumed Today's Play: ${playScore.correct}/${playScore.total} correct! Think you can beat me? consumed.app`;
+      text = `My entertainment score on Consumed Today's Play: ${playScore.correct}/${playScore.total} correct! Think you can beat me? ${APP_BASE}`;
     } else {
-      text = `I just made my Daily Call on Consumed — join me! consumed.app`;
+      text = `I just made my Daily Call on Consumed — join me! ${APP_BASE}`;
     }
     try {
       if (navigator.share) {

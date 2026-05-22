@@ -2489,7 +2489,7 @@ export default function UserProfile() {
 
         // Bottom text: "consumedapp.com" (BELOW the white box)
         ctx.font = 'bold 38px Poppins, sans-serif';
-        ctx.fillText('consumedapp.com', canvas.width / 2, 1750);
+        ctx.fillText('app.consumedapp.com', canvas.width / 2, 1750);
 
         // Bottom text: "@consumedapp" 
         ctx.font = 'bold 38px Poppins, sans-serif';

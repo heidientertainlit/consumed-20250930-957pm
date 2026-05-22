@@ -64,7 +64,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
   const card1Ref = useRef<HTMLDivElement>(null);
 
   const canCompare = hasSurvey && dnaLevel >= 2;
-  const appUrl = import.meta.env.VITE_APP_URL || 'https://consumed.app';
+  const appUrl = import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com';
 
   // Split friends into eligible and almost eligible
   const eligibleFriends = friends.filter(f => f.isEligible);
@@ -652,7 +652,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
 
                     {/* Footer */}
                     <div className="pt-3 mt-3 border-t border-purple-100 text-center">
-                      <p className="text-xs text-gray-400">consumed.app</p>
+                      <p className="text-xs text-gray-400">app.consumedapp.com</p>
                     </div>
                   </div>
 
