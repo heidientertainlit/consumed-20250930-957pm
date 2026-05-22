@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Flame, Star, Target, CheckSquare, Layers, Plus } from "lucide-react";
+import { Flame, Star, Target, CheckSquare, MoreHorizontal, Plus } from "lucide-react";
 import { QuickActionSheet } from "./quick-action-sheet";
 
 type Tab = "hot_take" | "review" | "prediction" | "poll" | null;
@@ -29,7 +29,8 @@ export function WhatsYourMove() {
     {
       id: null as Tab,
       label: "More",
-      icon: <Layers size={20} className="text-purple-400" />,
+      sub: "Ranks, lists & more",
+      icon: <MoreHorizontal size={20} className="text-white/60" />,
     },
   ];
 
@@ -63,7 +64,6 @@ export function WhatsYourMove() {
                   <Flame size={16} className="text-white" />
                   <span className="text-white font-bold text-sm leading-tight">Take</span>
                 </div>
-                <p className="text-white/75 text-[10px] leading-tight">Share a hot take</p>
               </div>
               <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center ml-1 shrink-0">
                 <Plus size={12} className="text-white" />
@@ -81,6 +81,9 @@ export function WhatsYourMove() {
             >
               {tile.icon}
               <p className="text-white font-bold text-[12px] leading-tight">{tile.label}</p>
+              {'sub' in tile && tile.sub && (
+                <p className="text-white/45 text-[9px] leading-tight text-center">{tile.sub}</p>
+              )}
             </button>
           ))}
         </div>
