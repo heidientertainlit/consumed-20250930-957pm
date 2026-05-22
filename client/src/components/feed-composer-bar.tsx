@@ -28,6 +28,47 @@ const MEDIA_FILTERS: { id: MediaFilter; label: string }[] = [
   { id: "youtube", label: "YouTube" },
 ];
 
+function typeLabel(type: string) {
+  if (type === "tv") return "TV Show";
+  if (type === "movie") return "Movie";
+  if (type === "book") return "Book";
+  if (type === "podcast") return "Podcast";
+  if (type === "music") return "Music";
+  if (type === "game") return "Game";
+  return type || "Media";
+}
+
+function MediaCard({ item, onTrack, onRate }: { item: any; onTrack: () => void; onRate: () => void }) {
+  return (
+    <div className="flex-shrink-0 w-[104px]">
+      {item.image_url
+        ? <img src={item.image_url} alt={item.title} className="w-full rounded-xl object-cover" style={{ height: '148px' }} />
+        : <div className="w-full rounded-xl flex items-center justify-center" style={{ height: '148px', background: 'rgba(255,255,255,0.08)' }}>
+            <Search size={24} className="text-white/20" />
+          </div>
+      }
+      <p className="text-xs font-semibold text-white mt-2 leading-snug line-clamp-2">{item.title}</p>
+      <p className="text-[10px] text-white/40 mt-0.5">{typeLabel(item.type)}</p>
+      <div className="flex gap-1.5 mt-2">
+        <button
+          onClick={onTrack}
+          className="flex-1 h-7 rounded-full bg-purple-600 flex items-center justify-center transition-all active:scale-90"
+        >
+          <Bookmark size={12} className="text-white" fill="white" />
+        </button>
+        <button
+          onClick={onRate}
+          className="flex-1 h-7 rounded-full flex items-center justify-center transition-all active:scale-90 relative"
+          style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
+        >
+          <MessageSquarePlus size={12} className="text-white" />
+          <Star size={6} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function MediaRow({ item, onTrack, onRate }: { item: any; onTrack: () => void; onRate: () => void }) {
   return (
     <div className="flex items-center gap-3 px-4 py-3">
@@ -38,25 +79,15 @@ function MediaRow({ item, onTrack, onRate }: { item: any; onTrack: () => void; o
       <div className="flex-1 min-w-0">
         <p className="text-base font-semibold text-white truncate leading-snug">{item.title}</p>
         <p className="text-xs text-white/40 capitalize mt-0.5">
-          {item.type === "tv" ? "TV Show" : item.type === "movie" ? "Movie" : item.type}
-          {item.year ? ` • ${item.year}` : ""}
+          {typeLabel(item.type)}{item.year ? ` • ${item.year}` : ""}
           {item.creator && item.creator !== "Unknown Author" ? ` • ${item.creator}` : ""}
         </p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
-        <button
-          onClick={onTrack}
-          className="w-9 h-9 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-all active:scale-90"
-          title="Add to list"
-        >
+        <button onClick={onTrack} className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center transition-all active:scale-90">
           <Bookmark size={15} className="text-white" fill="white" />
         </button>
-        <button
-          onClick={onRate}
-          className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90 relative"
-          style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
-          title="Rate / review"
-        >
+        <button onClick={onRate} className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90 relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
           <MessageSquarePlus size={14} className="text-white" />
           <Star size={7} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
         </button>
@@ -169,24 +200,37 @@ export default function FeedComposerBar() {
       .from("list_items")
       .select("title, media_type, image_url, external_id, external_source")
       .not("image_url", "is", null)
-      .limit(200)
+      .limit(400)
       .then(({ data }) => {
         if (!data) return;
         const counts: Record<string, { item: any; count: number }> = {};
         data.forEach(r => {
           if (!r.external_id || !r.image_url) return;
-          const key = r.external_id;
+          const key = `${r.media_type}::${r.external_id}`;
           if (!counts[key]) counts[key] = { item: r, count: 0 };
           counts[key].count++;
         });
-        const sorted = Object.values(counts)
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 10)
-          .map(({ item }) => ({
+        const perType: Record<string, { item: any; count: number }[]> = {};
+        Object.values(counts).forEach(entry => {
+          const t = entry.item.media_type || "other";
+          if (!perType[t]) perType[t] = [];
+          perType[t].push(entry);
+        });
+        Object.keys(perType).forEach(t => perType[t].sort((a, b) => b.count - a.count));
+        const mixed: any[] = [];
+        const typeOrder = ["tv", "movie", "book", "game", "podcast", "music"];
+        const maxPerType = 3;
+        for (let slot = 0; slot < maxPerType; slot++) {
+          typeOrder.forEach(t => {
+            if (perType[t] && perType[t][slot]) mixed.push(perType[t][slot].item);
+          });
+        }
+        setTrendingItems(
+          mixed.slice(0, 16).map(item => ({
             title: item.title, type: item.media_type, image_url: item.image_url,
             external_id: item.external_id, external_source: item.external_source,
-          }));
-        setTrendingItems(sorted);
+          }))
+        );
       });
   }, [showMediaSearch, session]);
 
@@ -407,7 +451,7 @@ export default function FeedComposerBar() {
           {/* ── Full-screen media search layer (slides up) ── */}
           {showMediaSearch && (
             <div
-              className="absolute inset-0 flex flex-col"
+              className="absolute inset-0 overflow-y-auto"
               style={{
                 zIndex: 1,
                 background: 'linear-gradient(160deg, #0a0a0f 0%, #12121f 50%, #2d1f4e 100%)',
@@ -415,14 +459,21 @@ export default function FeedComposerBar() {
                 transition: 'transform 260ms cubic-bezier(0.32, 0.72, 0, 1)',
               }}
             >
-              {/* Header */}
-              <div className="px-4 pt-16 pb-2 flex-shrink-0">
-                <div className="flex items-center gap-3 mb-4">
-                  <button onClick={closeMediaSearch} className="p-2 rounded-full hover:bg-white/10 transition-colors flex-shrink-0">
-                    <ArrowLeft size={22} className="text-white" />
-                  </button>
-                  <p className="text-lg font-bold text-white">Add Media</p>
-                </div>
+              {/* Header row */}
+              <div className="flex items-center px-4 pt-14 pb-2">
+                <button onClick={closeMediaSearch} className="p-2 rounded-full hover:bg-white/10 transition-colors mr-2 flex-shrink-0">
+                  <ArrowLeft size={22} className="text-white" />
+                </button>
+                <p className="text-base font-bold text-white flex-1 text-center pr-8">Add Media</p>
+              </div>
+
+              {/* Big headline */}
+              <div className="px-5 pt-4 pb-5">
+                <h2 className="text-3xl font-extrabold text-white leading-tight">What are you<br />looking for?</h2>
+              </div>
+
+              {/* Search bar */}
+              <div className="px-4 pb-4">
                 <div className="flex items-center gap-2 rounded-2xl px-4 py-3.5" style={{ background: 'rgba(255,255,255,0.1)' }}>
                   <Search size={16} className="text-white/50 flex-shrink-0" />
                   <input
@@ -431,7 +482,6 @@ export default function FeedComposerBar() {
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Search movies, shows, books…"
                     className="flex-1 text-sm text-white placeholder:text-white/40 bg-transparent outline-none"
-                    autoFocus
                   />
                   {searchQuery && (
                     isSearching
@@ -442,13 +492,11 @@ export default function FeedComposerBar() {
               </div>
 
               {/* Filter pills */}
-              <div className="flex gap-2 px-4 pb-4 overflow-x-auto flex-shrink-0">
+              <div className="flex gap-2 px-4 pb-5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                 {MEDIA_FILTERS.map(f => (
                   <button key={f.id} onClick={() => setMediaFilter(f.id)}
                     className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                      mediaFilter === f.id
-                        ? "bg-purple-500 text-white"
-                        : "text-white/60 hover:text-white hover:bg-white/10"
+                      mediaFilter === f.id ? "bg-purple-500 text-white" : "text-white/60"
                     }`}
                     style={mediaFilter !== f.id ? { background: 'rgba(255,255,255,0.08)' } : {}}
                   >
@@ -457,76 +505,82 @@ export default function FeedComposerBar() {
                 ))}
               </div>
 
-              {/* Results / Pre-search sections */}
-              <div className="flex-1 overflow-y-auto">
-
-                {/* ── Pre-search: Recommended + Trending ── */}
-                {!searchQuery && (
-                  <div className="pb-8">
-                    {/* Recommended */}
-                    {recommendedItems.length > 0 && (
-                      <div className="pt-5">
-                        <p className="px-5 text-xs font-bold text-white/40 uppercase tracking-widest mb-3">For You (Trending & Recommended)</p>
-                        {recommendedItems.map((r, i) => (
-                          <MediaRow key={i} item={r}
-                            onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
-                            onRate={() => { setActiveTab("review"); selectMedia(r); }}
-                          />
-                        ))}
+              {/* ── Pre-search: poster grid sections ── */}
+              {!searchQuery && (
+                <div className="pb-10">
+                  {trendingItems.length > 0 && (
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between px-5 mb-3">
+                        <p className="text-sm font-bold text-white">Trending Now</p>
+                        <span className="text-xs text-purple-400 font-medium">See all</span>
                       </div>
-                    )}
-                    {/* Trending */}
-                    {trendingItems.length > 0 && (
-                      <div className="pt-5">
-                        <p className="px-5 text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Trending on Consumed</p>
+                      <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                         {trendingItems.map((r, i) => (
-                          <MediaRow key={i} item={r}
+                          <MediaCard key={i} item={r}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source }); setIsQuickAddOpen(true); }}
                             onRate={() => { setActiveTab("review"); selectMedia(r); }}
                           />
                         ))}
                       </div>
-                    )}
-                    {recommendedItems.length === 0 && trendingItems.length === 0 && (
-                      <div className="flex flex-col items-center justify-center h-48 gap-3 text-center px-8">
-                        <Search size={32} className="text-white/20" />
-                        <p className="text-sm text-white/40">Search for a movie, show, book, or anything else to tag it to your post.</p>
+                    </div>
+                  )}
+
+                  {recommendedItems.length > 0 && (
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between px-5 mb-3">
+                        <p className="text-sm font-bold text-white">Recommended for You</p>
+                        <span className="text-xs text-purple-400 font-medium">See all</span>
                       </div>
-                    )}
-                  </div>
-                )}
+                      <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                        {recommendedItems.map((r, i) => (
+                          <MediaCard key={i} item={r}
+                            onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
+                            onRate={() => { setActiveTab("review"); selectMedia(r); }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                {/* Loading */}
-                {searchQuery && isSearching && (
-                  <div className="flex justify-center py-10">
-                    <Loader2 size={24} className="text-purple-400 animate-spin" />
-                  </div>
-                )}
+                  {recommendedItems.length === 0 && trendingItems.length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-40 gap-3 text-center px-8">
+                      <Loader2 size={24} className="text-white/20 animate-spin" />
+                      <p className="text-sm text-white/40">Loading suggestions…</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
-                {/* No results */}
-                {searchQuery && !isSearching && searchResults.length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-40 text-center px-8">
-                    <p className="text-sm text-white/40">No results for "<span className="text-white/60">{searchQuery}</span>"</p>
-                  </div>
-                )}
+              {/* Loading */}
+              {searchQuery && isSearching && (
+                <div className="flex justify-center py-10">
+                  <Loader2 size={24} className="text-purple-400 animate-spin" />
+                </div>
+              )}
 
-                {/* Search results */}
-                {searchResults.length > 0 && (
-                  <div className="pt-4 pb-8">
-                    <p className="px-5 text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Results</p>
-                    {searchResults.map((r, i) => (
-                      <MediaRow key={i} item={r}
-                        onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
-                        onRate={() => { setActiveTab("review"); selectMedia(r); }}
-                      />
-                    ))}
-                    <p className="text-center text-xs text-white/25 mt-6 px-8">
-                      Can't find what you're looking for?{" "}
-                      <span className="text-purple-400 font-medium">Search more specifically →</span>
-                    </p>
-                  </div>
-                )}
-              </div>
+              {/* No results */}
+              {searchQuery && !isSearching && searchResults.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-40 text-center px-8">
+                  <p className="text-sm text-white/40">No results for "<span className="text-white/60">{searchQuery}</span>"</p>
+                </div>
+              )}
+
+              {/* Search results */}
+              {searchResults.length > 0 && (
+                <div className="pt-2 pb-10">
+                  <p className="px-5 text-xs font-bold text-white/40 uppercase tracking-widest mb-2">Results</p>
+                  {searchResults.map((r, i) => (
+                    <MediaRow key={i} item={r}
+                      onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
+                      onRate={() => { setActiveTab("review"); selectMedia(r); }}
+                    />
+                  ))}
+                  <p className="text-center text-xs text-white/25 mt-6 px-8">
+                    Can't find what you're looking for?{" "}
+                    <span className="text-purple-400 font-medium">Search more specifically →</span>
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>,
