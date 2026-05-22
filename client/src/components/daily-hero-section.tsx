@@ -443,30 +443,20 @@ function ScoreShareCard({
                       const agreedPct = callVoteBreakdown && callAnswer ? (callVoteBreakdown[callAnswer] ?? null) : null;
 
                       const headline = agreedPct !== null
-                        ? agreedPct >= 75
-                          ? `${agreedPct}% of players agreed — where do you and your friends sit?`
-                          : `Only ${agreedPct}% agreed — where do you and your friends sit?`
-                        : `Where do you and your friends sit?`;
+                        ? `${agreedPct}% of players said \u201c${callAnswer}.\u201d Where do your friends sit?`
+                        : `Where do your friends sit?`;
 
                       return (
                         <div
-                          className="rounded-2xl flex items-center gap-4 px-4 py-4 mb-4"
+                          className="rounded-2xl px-4 py-4 mb-4"
                           style={{ background: 'rgba(237,233,254,0.08)', border: '1px solid rgba(167,139,250,0.2)' }}
                         >
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold leading-snug text-white" style={{ fontSize: '15px' }}>
-                              {headline}
-                            </p>
-                          </div>
-                          {rankData?.rank != null && (
-                            <div
-                              className="rounded-xl px-3 py-2 text-center shrink-0"
-                              style={{ background: '#2D1B69', minWidth: 70 }}
-                            >
-                              <p className="font-black leading-none text-white" style={{ fontSize: '28px' }}>#{rankData.rank}</p>
-                              <p className="text-[8px] font-bold uppercase tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>OVERALL</p>
-                            </div>
-                          )}
+                          <p className="font-bold leading-snug text-white mb-1" style={{ fontSize: '16px' }}>
+                            {headline}
+                          </p>
+                          <p className="text-[12px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                            Share and start the debate. 🔥
+                          </p>
                         </div>
                       );
                     })()}
