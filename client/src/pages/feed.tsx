@@ -1328,8 +1328,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {post.mediaTitle && (
             <div className="flex items-center gap-2 mt-3 p-2.5 bg-gray-50 rounded-xl border border-gray-100">
               {post.mediaImage && <img src={post.mediaImage} alt="" className="w-8 h-11 rounded-lg object-cover shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />}
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-gray-800 truncate">{post.mediaTitle}</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-xs font-semibold text-gray-800 truncate">{post.mediaTitle}</p>
+                  {post.externalId?.startsWith('series-') && <span className="text-[9px] font-semibold text-purple-500 bg-purple-50 border border-purple-200 rounded-full px-1.5 py-0.5 shrink-0">Series</span>}
+                </div>
                 {mediaTypeLabel && <span className="text-[10px] text-gray-400">{mediaTypeLabel}</span>}
               </div>
             </div>
@@ -1839,6 +1842,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                             ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="font-semibold text-gray-800 hover:text-purple-600 cursor-pointer">{post.mediaTitle}</span></Link>
                             : <span className="font-semibold text-gray-800">{post.mediaTitle}</span>
                           }
+                          {post.externalId?.startsWith('series-') && <span className="ml-1 text-[10px] font-semibold text-purple-500 bg-purple-50 border border-purple-200 rounded-full px-1.5 py-0.5 align-middle">Series</span>}
                         </>
                       )}
                     </p>
