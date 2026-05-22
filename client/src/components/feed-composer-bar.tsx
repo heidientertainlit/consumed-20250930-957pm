@@ -31,6 +31,7 @@ export default function FeedComposerBar() {
 
   const [isOpen, setIsOpen] = useState(false);
   const [showMediaSearch, setShowMediaSearch] = useState(false);
+  const [searchSlideIn, setSearchSlideIn] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("review");
   const [contentText, setContentText] = useState("");
   const [ratingValue, setRatingValue] = useState(0);
@@ -97,11 +98,20 @@ export default function FeedComposerBar() {
     setIsOpen(false);
   };
 
+  useEffect(() => {
+    if (showMediaSearch) {
+      requestAnimationFrame(() => setSearchSlideIn(true));
+    }
+  }, [showMediaSearch]);
+
   const closeMediaSearch = () => {
-    setShowMediaSearch(false);
-    setSearchQuery("");
-    setSearchResults([]);
-    setMediaFilter("all");
+    setSearchSlideIn(false);
+    setTimeout(() => {
+      setShowMediaSearch(false);
+      setSearchQuery("");
+      setSearchResults([]);
+      setMediaFilter("all");
+    }, 260);
   };
 
   const selectMedia = (media: any) => {
@@ -308,40 +318,49 @@ export default function FeedComposerBar() {
             </div>
           </div>
 
-          {/* ── Full-screen media search layer ── */}
+          {/* ── Full-screen media search layer (slides up) ── */}
           {showMediaSearch && (
-            <div className="absolute inset-0 bg-white flex flex-col" style={{ zIndex: 1 }}>
+            <div
+              className="absolute inset-0 flex flex-col"
+              style={{
+                zIndex: 1,
+                background: 'linear-gradient(160deg, #0a0a0f 0%, #12121f 50%, #2d1f4e 100%)',
+                transform: searchSlideIn ? 'translateY(0)' : 'translateY(100%)',
+                transition: 'transform 260ms cubic-bezier(0.32, 0.72, 0, 1)',
+              }}
+            >
               {/* Header */}
-              <div className="flex items-center gap-3 px-4 pt-12 pb-3 border-b border-gray-100 flex-shrink-0">
-                <button onClick={closeMediaSearch} className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
-                  <ArrowLeft size={20} className="text-gray-700" />
+              <div className="flex items-center gap-3 px-4 pt-12 pb-3 border-b border-white/10 flex-shrink-0">
+                <button onClick={closeMediaSearch} className="p-1.5 rounded-full hover:bg-white/10 transition-colors">
+                  <ArrowLeft size={20} className="text-white" />
                 </button>
-                <div className="flex-1 flex items-center gap-2 bg-gray-100 rounded-2xl px-3 py-2.5">
-                  <Search size={16} className="text-gray-400 flex-shrink-0" />
+                <div className="flex-1 flex items-center gap-2 rounded-2xl px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                  <Search size={16} className="text-white/50 flex-shrink-0" />
                   <input
                     ref={searchInputRef}
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Search movies, shows, books…"
-                    className="flex-1 text-sm text-gray-800 placeholder:text-gray-400 bg-transparent outline-none"
+                    className="flex-1 text-sm text-white placeholder:text-white/40 bg-transparent outline-none"
                   />
                   {searchQuery && (
                     isSearching
-                      ? <Loader2 size={14} className="text-gray-400 animate-spin flex-shrink-0" />
-                      : <button onClick={() => { setSearchQuery(""); setSearchResults([]); }}><X size={14} className="text-gray-400" /></button>
+                      ? <Loader2 size={14} className="text-white/40 animate-spin flex-shrink-0" />
+                      : <button onClick={() => { setSearchQuery(""); setSearchResults([]); }}><X size={14} className="text-white/40" /></button>
                   )}
                 </div>
               </div>
 
               {/* Filter pills */}
-              <div className="flex gap-2 px-4 py-3 overflow-x-auto flex-shrink-0 border-b border-gray-100">
+              <div className="flex gap-2 px-4 py-3 overflow-x-auto flex-shrink-0 border-b border-white/10">
                 {MEDIA_FILTERS.map(f => (
                   <button key={f.id} onClick={() => setMediaFilter(f.id)}
                     className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                       mediaFilter === f.id
-                        ? "bg-purple-600 text-white"
-                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                        ? "bg-purple-500 text-white"
+                        : "text-white/60 hover:text-white hover:bg-white/10"
                     }`}
+                    style={mediaFilter !== f.id ? { background: 'rgba(255,255,255,0.08)' } : {}}
                   >
                     {f.label}
                   </button>
@@ -352,44 +371,47 @@ export default function FeedComposerBar() {
               <div className="flex-1 overflow-y-auto">
                 {!searchQuery && (
                   <div className="flex flex-col items-center justify-center h-48 gap-3 text-center px-8">
-                    <Search size={32} className="text-gray-200" />
-                    <p className="text-sm text-gray-400">Search for a movie, show, book, or anything else to tag it to your post.</p>
+                    <Search size={32} className="text-white/20" />
+                    <p className="text-sm text-white/40">Search for a movie, show, book, or anything else to tag it to your post.</p>
                   </div>
                 )}
 
                 {searchQuery && isSearching && (
                   <div className="flex justify-center py-10">
-                    <Loader2 size={24} className="text-purple-500 animate-spin" />
+                    <Loader2 size={24} className="text-purple-400 animate-spin" />
                   </div>
                 )}
 
                 {searchQuery && !isSearching && searchResults.length === 0 && (
                   <div className="flex flex-col items-center justify-center h-40 text-center px-8">
-                    <p className="text-sm text-gray-400">No results found for "<span className="font-medium text-gray-600">{searchQuery}</span>"</p>
+                    <p className="text-sm text-white/40">No results for "<span className="text-white/60">{searchQuery}</span>"</p>
                   </div>
                 )}
 
                 {searchResults.length > 0 && (
-                  <div className="px-4 pt-3 pb-6">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Results</p>
+                  <div className="px-4 pt-4 pb-8">
+                    <p className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-3">Results</p>
                     <div className="space-y-1">
                       {searchResults.map((r, i) => (
                         <button key={i} onClick={() => selectMedia(r)}
-                          className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-gray-50 active:bg-gray-100 text-left transition-colors"
+                          className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left transition-colors active:scale-[0.98]"
+                          style={{ background: 'rgba(255,255,255,0.04)' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
                         >
                           {r.image_url
                             ? <img src={r.image_url} alt="" className="w-10 h-14 object-cover rounded-lg flex-shrink-0" />
-                            : <div className="w-10 h-14 rounded-lg bg-gray-100 flex-shrink-0" />
+                            : <div className="w-10 h-14 rounded-lg flex-shrink-0" style={{ background: 'rgba(255,255,255,0.1)' }} />
                           }
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{r.title}</p>
-                            <p className="text-xs text-gray-400 capitalize mt-0.5">
+                            <p className="text-sm font-semibold text-white truncate">{r.title}</p>
+                            <p className="text-xs text-white/40 capitalize mt-0.5">
                               {r.type}{r.year ? ` · ${r.year}` : ""}
                               {r.creator && r.creator !== "Unknown Author" ? ` · ${r.creator}` : ""}
                             </p>
                           </div>
-                          <div className="w-7 h-7 rounded-full border-2 border-purple-200 flex items-center justify-center flex-shrink-0">
-                            <Plus size={14} className="text-purple-500" />
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(139,92,246,0.3)' }}>
+                            <Plus size={14} className="text-purple-300" />
                           </div>
                         </button>
                       ))}
