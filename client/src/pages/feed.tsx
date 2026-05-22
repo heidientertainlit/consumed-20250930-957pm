@@ -1842,7 +1842,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   return (
                     <>
                       <Link href={`/user/${post.user?.id || ''}`}>
-                        <span className="text-sm font-bold text-gray-900 hover:text-purple-600 cursor-pointer leading-snug">{cardDisplayName}</span>
+                        <span className="text-sm font-bold text-purple-500 hover:text-purple-700 cursor-pointer leading-snug">{cardDisplayName}</span>
                       </Link>
                       {post.rating && post.rating > 0 && (post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought') && (
                         <>
@@ -1892,7 +1892,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <div className="flex items-start mb-3">
                     <div className="flex-1 min-w-0">
                       <Link href={`/user/${post.user?.id || ''}`}>
-                        <span className="text-sm font-bold text-gray-900 hover:text-purple-600 cursor-pointer leading-snug">{cardDisplayName}</span>
+                        <span className="text-sm font-bold text-purple-500 hover:text-purple-700 cursor-pointer leading-snug">{cardDisplayName}</span>
                       </Link>
                     </div>
                   </div>
