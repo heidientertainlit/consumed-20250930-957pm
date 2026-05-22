@@ -2244,33 +2244,29 @@ export function DailyHeroSection() {
                 )}
               </div>
 
-              <div className={`flex items-center justify-between ${front ? 'mt-4' : ''}`}>
-                <div className="flex items-center gap-1.5">
-                  {front && (
+              {front ? (
+                <>
+                  <div className="mt-4">
+                    <span className="bg-white text-purple-950 text-sm font-bold px-6 py-2.5 rounded-full shadow-lg inline-flex items-center gap-1.5">
+                      {isTriviaDay ? (playCompleted ? 'Share' : 'Play') : (callCompleted ? 'Share' : 'Weigh In')}
+                      <ArrowRight size={14} strokeWidth={2.5} />
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <TodaysPlayNudge variant="subtle" />
                     <span className="flex items-center gap-1 bg-purple-400/20 rounded-full px-1.5 py-0.5 border border-purple-400/30">
                       <Sparkles size={8} className="text-purple-200" />
                       <span className="text-[8px] font-bold text-purple-100">+{isOpinionDay ? (dailyCall?.points_reward ?? 10) : readyQuestions.length * 10} pts</span>
                     </span>
-                  )}
-                  {!front && (
-                    <span className="text-[10px] text-purple-200/60 font-medium">1 question</span>
-                  )}
-                </div>
-                {front ? (
-                  <span className="bg-white text-purple-950 text-sm font-bold px-6 py-2.5 rounded-full shadow-lg flex items-center gap-1.5">
-                    {isTriviaDay ? (playCompleted ? 'Share' : 'Play') : (callCompleted ? 'Share' : 'Weigh In')}
-                    <ArrowRight size={14} strokeWidth={2.5} />
-                  </span>
-                ) : (
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-between mt-0">
+                  <span className="text-[10px] text-purple-200/60 font-medium">1 question</span>
                   <span className="bg-white/95 text-purple-900 text-[11px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
                     {isTriviaDay ? (playCompleted ? 'Share' : 'Play') : (callCompleted ? 'Share' : 'Weigh In')}
                     <ArrowRight size={12} strokeWidth={2.5} />
                   </span>
-                )}
-              </div>
-              {front && (
-                <div className="mt-2">
-                  <TodaysPlayNudge variant="subtle" />
                 </div>
               )}
             </button>
