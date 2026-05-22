@@ -77,24 +77,24 @@ function MediaCard({ item, onTrack, onRate }: { item: any; onTrack: () => void; 
 
 function MediaRow({ item, onTrack, onRate }: { item: any; onTrack: () => void; onRate: () => void }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
+    <div className="flex items-center gap-3.5 px-4 py-3.5">
       {item.image_url
-        ? <img src={item.image_url} alt="" className="object-cover rounded-lg flex-shrink-0" style={{ height: '60px', width: '44px' }} />
-        : <div className="rounded-lg flex-shrink-0" style={{ width: 44, height: 60, background: 'rgba(255,255,255,0.1)' }} />
+        ? <img src={item.image_url} alt="" className="object-cover rounded-lg flex-shrink-0" style={{ height: '72px', width: '52px' }} />
+        : <div className="rounded-lg flex-shrink-0" style={{ width: 52, height: 72, background: 'rgba(255,255,255,0.1)' }} />
       }
       <div className="flex-1 min-w-0">
-        <p className="text-base font-semibold text-white truncate leading-snug">{item.title}</p>
-        <p className="text-xs text-white/40 capitalize mt-0.5">
+        <p className="text-sm font-semibold text-white leading-snug line-clamp-2">{item.title}</p>
+        <p className="text-xs text-white/40 mt-1">
           {typeLabel(item.type)}{item.year ? ` • ${item.year}` : ""}
           {item.creator && item.creator !== "Unknown Author" ? ` • ${item.creator}` : ""}
         </p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
-        <button onClick={onTrack} className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center transition-all active:scale-90">
-          <Bookmark size={15} className="text-white" fill="white" />
+        <button onClick={onTrack} className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center transition-all active:scale-90">
+          <Bookmark size={16} className="text-white" fill="white" />
         </button>
-        <button onClick={onRate} className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90 relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
-          <MessageSquarePlus size={14} className="text-white" />
+        <button onClick={onRate} className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90 relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
+          <MessageSquarePlus size={15} className="text-white" />
           <Star size={7} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
         </button>
       </div>
