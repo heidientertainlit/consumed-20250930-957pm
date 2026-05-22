@@ -1218,17 +1218,26 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     </div>
   );
 
-  // Poster helper — falls back to a placeholder tile if no image
+  // Poster helper — styled placeholder tile when no image is available
+  const posterFallbackBg: Record<string, string> = {
+    podcast: 'from-pink-700 to-rose-900',
+    music: 'from-fuchsia-700 to-purple-900',
+    book: 'from-emerald-700 to-teal-900',
+    game: 'from-blue-700 to-indigo-900',
+    tv: 'from-violet-700 to-purple-900',
+    movie: 'from-gray-700 to-gray-900',
+  };
   const posterFallback = post.mediaTitle ? (
-    <div className="relative flex-shrink-0 w-[88px] h-[132px] rounded-xl overflow-hidden shadow-md bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center gap-1.5 px-2">
-      {mediaTypeNorm === 'podcast' && <Headphones size={24} className="text-gray-400" />}
-      {mediaTypeNorm === 'music' && <Music size={24} className="text-gray-400" />}
-      {mediaTypeNorm === 'book' && <Book size={24} className="text-gray-400" />}
-      {mediaTypeNorm === 'game' && <Gamepad2 size={24} className="text-gray-400" />}
-      {mediaTypeNorm === 'tv' && <Tv2 size={24} className="text-gray-400" />}
-      {mediaTypeNorm === 'movie' && <Film size={24} className="text-gray-400" />}
-      {(!mediaTypeNorm || !['podcast','music','book','game','tv','movie'].includes(mediaTypeNorm)) && <Film size={24} className="text-gray-400" />}
-      <p className="text-[9px] text-gray-500 text-center font-medium leading-tight line-clamp-3">{post.mediaTitle}</p>
+    <div className={`relative flex-shrink-0 w-[88px] h-[132px] rounded-xl overflow-hidden shadow-md bg-gradient-to-br ${posterFallbackBg[mediaTypeNorm || ''] || 'from-gray-700 to-gray-900'} flex flex-col items-end justify-between p-2`}>
+      <div className="self-start opacity-60">
+        {mediaTypeNorm === 'podcast' && <Headphones size={16} className="text-white" />}
+        {mediaTypeNorm === 'music' && <Music size={16} className="text-white" />}
+        {mediaTypeNorm === 'book' && <Book size={16} className="text-white" />}
+        {mediaTypeNorm === 'game' && <Gamepad2 size={16} className="text-white" />}
+        {mediaTypeNorm === 'tv' && <Tv2 size={16} className="text-white" />}
+        {(mediaTypeNorm === 'movie' || !mediaTypeNorm) && <Film size={16} className="text-white" />}
+      </div>
+      <p className="text-white text-[11px] font-bold leading-tight line-clamp-4 w-full drop-shadow">{post.mediaTitle}</p>
     </div>
   ) : null;
 
@@ -1719,7 +1728,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </div>
                 ) : null}
                 {tasteAlignment !== null && (
-                  <p className="text-[11px] text-violet-600 italic mt-1.5">
+                  <p className="text-sm font-semibold text-violet-600 mt-1.5">
                     You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
                   </p>
                 )}
@@ -1862,7 +1871,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               <div className="min-w-0 flex-1">
                 {/* Taste alignment */}
                 {tasteAlignment !== null && isOtherUser && (
-                  <p className="text-[11px] text-violet-600 italic mb-1">
+                  <p className="text-sm font-semibold text-violet-600 mb-1.5">
                     You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste overall
                   </p>
                 )}
