@@ -196,7 +196,7 @@ serve(async (req) => {
     const { media, rating, review, listType, skip_social_post, rewatchCount, containsSpoilers, privateMode } = requestBody;
     const { title, mediaType: rawMediaType, mediaSubtype, creator, imageUrl, externalId, externalSource, seasonNumber, episodeNumber, episodeTitle, pageCount } = media || {};
     // Normalize media type to lowercase canonical form — prevents 'Movie'/'TV Show'/'Podcast' drift
-    const normalizeMediaType = (mt?: string): string => {
+    const normalizeMediaType = (mt?: string): string | null => {
       const t = (mt || '').toLowerCase().trim();
       if (t === 'tv show' || t === 'tv') return 'tv';
       if (t === 'movie') return 'movie';
@@ -204,7 +204,7 @@ serve(async (req) => {
       if (t === 'music') return 'music';
       if (t === 'podcast') return 'podcast';
       if (t === 'game') return 'game';
-      return t || 'mixed';
+      return null; // unknown or missing type — don't guess
     };
     const mediaType = normalizeMediaType(rawMediaType);
 
