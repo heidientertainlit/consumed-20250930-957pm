@@ -55,7 +55,7 @@ export function WhatsYourMove() {
               className="self-start text-[8px] font-bold tracking-widest uppercase rounded-full px-2 py-0.5 mt-1"
               style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}
             >
-              ★ Most Popular
+              ★ Popular
             </span>
           </button>
 
