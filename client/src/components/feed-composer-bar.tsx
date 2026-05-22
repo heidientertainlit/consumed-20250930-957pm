@@ -32,10 +32,17 @@ function typeLabel(type: string) {
   if (type === "tv") return "TV Show";
   if (type === "movie") return "Movie";
   if (type === "book") return "Book";
+  if (type === "book_series") return "Book Series";
   if (type === "podcast") return "Podcast";
   if (type === "music") return "Music";
   if (type === "game") return "Game";
   return type || "Media";
+}
+
+function inferSeries(title: string): string | null {
+  const m = /^(.+?)\s+and\s+the\s+/i.exec(title);
+  if (m) { const c = m[1].trim(); if (c.split(/\s+/).length <= 4) return c; }
+  return null;
 }
 
 function MediaCard({ item, onTrack, onRate }: { item: any; onTrack: () => void; onRate: () => void }) {
@@ -75,29 +82,101 @@ function MediaCard({ item, onTrack, onRate }: { item: any; onTrack: () => void; 
   );
 }
 
-function MediaRow({ item, onTrack, onRate }: { item: any; onTrack: () => void; onRate: () => void }) {
+function MediaRow({
+  item, onTrack, onRate,
+  seriesExpanded, seriesBooks, seriesLoading, onToggleSeries,
+  onTrackBook, onRateBook,
+}: {
+  item: any;
+  onTrack: () => void;
+  onRate: () => void;
+  seriesExpanded?: boolean;
+  seriesBooks?: any[];
+  seriesLoading?: boolean;
+  onToggleSeries?: () => void;
+  onTrackBook?: (book: any) => void;
+  onRateBook?: (book: any) => void;
+}) {
+  const isSeries = item.type === "book_series";
+  const seriesLabel = item.type === "book" ? (item.series || inferSeries(item.title)) : null;
+  const seriesCount = item.series_count;
+
   return (
-    <div className="flex items-center gap-3.5 px-4 py-3.5">
-      {item.image_url
-        ? <img src={item.image_url} alt="" className="object-cover rounded-lg flex-shrink-0" style={{ height: '72px', width: '52px' }} />
-        : <div className="rounded-lg flex-shrink-0" style={{ width: 52, height: 72, background: 'rgba(255,255,255,0.1)' }} />
-      }
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-white leading-snug line-clamp-2">{item.title}</p>
-        <p className="text-xs text-white/40 mt-1">
-          {typeLabel(item.type)}{item.year ? ` • ${item.year}` : ""}
-          {item.creator && item.creator !== "Unknown Author" ? ` • ${item.creator}` : ""}
-        </p>
+    <div>
+      <div className="flex items-center gap-3.5 px-4 py-3.5">
+        {item.image_url
+          ? <img src={item.image_url} alt="" className="object-cover rounded-lg flex-shrink-0" style={{ height: '72px', width: '52px' }} />
+          : <div className="rounded-lg flex-shrink-0" style={{ width: 52, height: 72, background: 'rgba(255,255,255,0.1)' }} />
+        }
+        <div className="flex-1 min-w-0" onClick={isSeries ? onToggleSeries : undefined} style={isSeries ? { cursor: 'pointer' } : {}}>
+          <p className="text-sm font-semibold text-white leading-snug line-clamp-2">{item.title}</p>
+          <p className="text-xs text-white/40 mt-1">
+            {typeLabel(item.type)}{item.year ? ` • ${item.year}` : ""}
+            {item.creator && item.creator !== "Unknown Author" ? ` • ${item.creator}` : ""}
+          </p>
+          {isSeries && seriesCount > 0 && (
+            <span className="inline-block text-[10px] font-medium bg-purple-500/30 text-purple-200 border border-purple-400/40 px-1.5 py-0.5 rounded-full mt-1.5">
+              📚 {seriesCount} books {seriesExpanded ? "▲" : "▼"}
+            </span>
+          )}
+          {seriesLabel && (
+            <span className="inline-block text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded-full mt-1.5 max-w-[140px] truncate">
+              📚 {seriesLabel}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button onClick={onTrack} className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center transition-all active:scale-90">
+            <Bookmark size={16} className="text-white" fill="white" />
+          </button>
+          <button onClick={onRate} className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90 relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
+            <MessageSquarePlus size={15} className="text-white" />
+            <Star size={7} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
+          </button>
+        </div>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <button onClick={onTrack} className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center transition-all active:scale-90">
-          <Bookmark size={16} className="text-white" fill="white" />
-        </button>
-        <button onClick={onRate} className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90 relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
-          <MessageSquarePlus size={15} className="text-white" />
-          <Star size={7} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
-        </button>
-      </div>
+
+      {/* Expanded series books panel */}
+      {isSeries && seriesExpanded && (
+        <div className="mx-4 mb-3 rounded-xl overflow-hidden border border-purple-500/20" style={{ background: 'rgba(109,40,217,0.08)' }}>
+          <div className="px-3 py-1.5 border-b border-purple-500/15">
+            <span className="text-[10px] font-semibold text-purple-300 uppercase tracking-wider">Books in this series</span>
+          </div>
+          {seriesLoading ? (
+            <div className="px-4 py-3 flex items-center gap-2">
+              <Loader2 size={12} className="text-purple-400 animate-spin" />
+              <span className="text-xs text-white/40">Loading books…</span>
+            </div>
+          ) : !seriesBooks || seriesBooks.length === 0 ? (
+            <p className="px-4 py-3 text-xs text-white/30">No individual books found.</p>
+          ) : (
+            seriesBooks.map((book: any, bIdx: number) => {
+              const bPoster = book.poster_url || book.image_url || "";
+              return (
+                <div key={`${book.external_id}-b${bIdx}`} className="flex items-center gap-2.5 px-3 py-2 border-b border-purple-500/10 last:border-0">
+                  {bPoster
+                    ? <img src={bPoster} alt={book.title} className="w-8 h-11 object-cover rounded flex-shrink-0" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                    : <div className="w-8 h-11 rounded flex-shrink-0 flex items-center justify-center text-sm" style={{ background: 'rgba(255,255,255,0.06)' }}>📖</div>
+                  }
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/90 text-xs font-medium line-clamp-2 leading-snug">{book.title}</p>
+                    {book.year && <p className="text-white/30 text-[10px] mt-0.5">{book.year}</p>}
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button onClick={() => onTrackBook?.(book)} className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center active:scale-90 transition-all">
+                      <Bookmark size={12} className="text-white" fill="white" />
+                    </button>
+                    <button onClick={() => onRateBook?.(book)} className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-all relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
+                      <MessageSquarePlus size={11} className="text-white" />
+                      <Star size={5} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -124,6 +203,45 @@ export default function FeedComposerBar() {
   const [trendingItems, setTrendingItems] = useState<any[]>([]);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+
+  const [expandedSeriesId, setExpandedSeriesId] = useState<string | null>(null);
+  const [seriesBooksMap, setSeriesBooksMap] = useState<Record<string, any[]>>({});
+  const [loadingSeriesId, setLoadingSeriesId] = useState<string | null>(null);
+
+  const fetchSeriesBooks = async (seriesTitle: string, seriesId: string, author?: string) => {
+    if (seriesBooksMap[seriesId]) return;
+    setLoadingSeriesId(seriesId);
+    try {
+      const params = new URLSearchParams({ q: seriesTitle, limit: '12', fields: 'title,author_name,first_publish_year,cover_i,key' });
+      if (author && author !== 'Unknown Author') params.set('author', author);
+      const resp = await fetch(`https://openlibrary.org/search.json?${params.toString()}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        const seen = new Set<string>();
+        const books = (data.docs || [])
+          .filter((d: any) => d.key && d.title)
+          .filter((d: any) => { if (seen.has(d.key)) return false; seen.add(d.key); return true; })
+          .slice(0, 8)
+          .map((d: any) => ({
+            title: d.title, type: 'book',
+            creator: d.author_name?.[0] || author || '',
+            poster_url: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : '',
+            external_id: d.key.replace('/works/', ''),
+            external_source: 'openlibrary',
+            year: d.first_publish_year ? String(d.first_publish_year) : '',
+          }));
+        setSeriesBooksMap(prev => ({ ...prev, [seriesId]: books }));
+      }
+    } catch (_) {}
+    finally { setLoadingSeriesId(null); }
+  };
+
+  const toggleSeries = (r: any) => {
+    const sid = r.external_id;
+    if (expandedSeriesId === sid) { setExpandedSeriesId(null); return; }
+    setExpandedSeriesId(sid);
+    fetchSeriesBooks(r.title, sid, r.creator);
+  };
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -575,12 +693,21 @@ export default function FeedComposerBar() {
               {searchResults.length > 0 && (
                 <div className="pt-2 pb-10">
                   <p className="px-5 text-xs font-bold text-white/40 uppercase tracking-widest mb-2">Results</p>
-                  {searchResults.map((r, i) => (
-                    <MediaRow key={i} item={r}
-                      onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
-                      onRate={() => { setActiveTab("review"); selectMedia(r); }}
-                    />
-                  ))}
+                  {searchResults.map((r, i) => {
+                    const mediaType = r.type === 'book_series' ? 'book' : r.type;
+                    return (
+                      <MediaRow key={i} item={r}
+                        onTrack={() => { setQuickAddMedia({ title: r.title, mediaType, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
+                        onRate={() => { setActiveTab("review"); selectMedia({ ...r, type: mediaType }); }}
+                        seriesExpanded={expandedSeriesId === r.external_id}
+                        seriesBooks={seriesBooksMap[r.external_id]}
+                        seriesLoading={loadingSeriesId === r.external_id}
+                        onToggleSeries={() => toggleSeries(r)}
+                        onTrackBook={(book) => { setQuickAddMedia({ title: book.title, mediaType: 'book', imageUrl: book.poster_url, externalId: book.external_id, externalSource: book.external_source || 'openlibrary', creator: book.creator }); setIsQuickAddOpen(true); }}
+                        onRateBook={(book) => { setActiveTab("review"); selectMedia({ ...book, image_url: book.poster_url }); }}
+                      />
+                    );
+                  })}
                   <p className="text-center text-xs text-white/25 mt-6 px-8">
                     Can't find what you're looking for?{" "}
                     <span className="text-purple-400 font-medium">Search more specifically →</span>
