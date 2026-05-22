@@ -1,4 +1,3 @@
-console.log('[QAS-v2] MODULE LOADED ✓');
 import { useState, useEffect, useRef } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -1569,15 +1568,13 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
     );
   };
 
-  if (isOpen) console.log('[QAS-v2] rendering new composer, action:', selectedAction);
-
   return (
     <>
     <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <SheetContent side="bottom" className="rounded-t-3xl !bg-white flex flex-col overflow-hidden p-0 !shadow-none !border-0 !outline-none" style={{ backgroundColor: 'white', height: '92svh', boxShadow: 'none', border: 'none' }}>
         {/* ── Drag handle ── */}
         <div className="flex-shrink-0 pt-3 pb-1 flex items-center justify-center">
-          <div className="w-10 h-1 rounded-full bg-purple-400" />
+          <div className="w-10 h-1 rounded-full bg-gray-200" />
         </div>
 
         {/* ── Scrollable body ── */}

@@ -68,7 +68,6 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
   const queryClient = useQueryClient();
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
-  const [showAddMenu, setShowAddMenu] = useState(false);
   const [isSaveMediaOpen, setIsSaveMediaOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
@@ -760,49 +759,6 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
 
       {createPortal(
         <nav className="fixed bottom-0 left-0 right-0 z-[9999]" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden' }}>
-          {/* Add menu backdrop */}
-          {showAddMenu && (
-            <div
-              className="fixed inset-0 z-[-1]"
-              onClick={() => setShowAddMenu(false)}
-            />
-          )}
-
-          {showAddMenu && (
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 flex gap-5 items-center px-6 py-4 rounded-3xl" style={{ background: 'rgba(15, 10, 30, 0.92)', backdropFilter: 'blur(12px)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-              {/* Bookmark / Add to List */}
-              <div className="flex flex-col items-center gap-1.5">
-                <button
-                  onClick={() => {
-                    setShowAddMenu(false);
-                    setQuickAddMedia(null);
-                    setIsQuickAddOpen(true);
-                  }}
-                  className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
-                  style={{ background: '#7c3aed' }}
-                  aria-label="Add to list"
-                >
-                  <Bookmark size={24} className="text-white" fill="white" />
-                </button>
-                <span className="text-white text-[10px] font-medium">Save</span>
-              </div>
-
-              {/* Compose — opens QuickActionSheet modal */}
-              <div className="flex flex-col items-center gap-1.5">
-                <button
-                  onClick={() => { setShowAddMenu(false); setIsQuickActionOpen(true); }}
-                  className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform relative"
-                  style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
-                  aria-label="Share a take"
-                >
-                  <MessageSquarePlus size={24} className="text-white" />
-                  <Star size={10} className="absolute top-1 right-1 fill-yellow-300 text-yellow-300" />
-                </button>
-                <span className="text-white text-[10px] font-medium">Post</span>
-              </div>
-            </div>
-          )}
-
           <div className="flex justify-around items-center px-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 8px), 8px)', paddingTop: '8px' }}>
             <Link href="/activity" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/activity" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-activity">
               <div className="h-[22px] flex items-center justify-center"><Activity className="text-white" size={22} /></div>
@@ -812,30 +768,15 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               <div className="h-[22px] flex items-center justify-center"><Brain size={22} className="text-white" strokeWidth={1.4} /></div>
               <span className="text-white text-[10px] mt-0.5">Play</span>
             </Link>
-            <button
-              onClick={() => setShowAddMenu(v => !v)}
-              className={`flex flex-col items-center justify-center p-2 transition-all ${showAddMenu ? '' : 'opacity-55'}`}
-              data-testid="nav-add"
-              aria-label="Add"
-            >
-              <div className="h-[22px] flex items-center justify-center">
-                <Plus size={22} strokeWidth={1.8} className="text-white" />
-              </div>
-              <span className="text-white text-[10px] mt-0.5">Add</span>
-            </button>
             <Link href="/rooms" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/rooms" || location.startsWith("/room/") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-rooms">
               <div className="h-[22px] flex items-center justify-center"><DoorOpen className="text-white" size={22} /></div>
               <span className="text-white text-[10px] mt-0.5">Rooms</span>
             </Link>
             <Link href="/profile" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/profile" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-me" aria-label="Profile">
               <div className="h-[22px] flex items-center justify-center">
-                {navAvatar ? (
-                  <img src={navAvatar} alt="Me" className="w-[22px] h-[22px] rounded-full object-cover border border-white/30" />
-                ) : (
-                  <User className="text-white" size={22} />
-                )}
+                <Dna className="text-white" size={22} strokeWidth={1.4} />
               </div>
-              <span className="text-white text-[10px] mt-0.5">Me</span>
+              <span className="text-white text-[10px] mt-0.5">My DNA</span>
             </Link>
           </div>
         </nav>,
