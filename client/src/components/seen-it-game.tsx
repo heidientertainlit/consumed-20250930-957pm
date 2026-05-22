@@ -559,18 +559,18 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
                         className="flex-1 py-1 rounded-lg bg-green-50 border border-green-200 text-[11px] font-semibold text-green-700 hover:bg-green-100 active:scale-95 transition-all flex items-center justify-center gap-0.5"
                       >
                         <Check className="w-3 h-3" />
-                        Yes
+                        Seen it?
                       </button>
                       <button
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          handleResponse(currentSet.id, item, false);
+                          handleResponse(currentSet.id, item, 'want_to');
                         }}
-                        className="flex-1 py-1 rounded-lg bg-red-50 border border-red-200 text-[11px] font-semibold text-red-500 hover:bg-red-100 active:scale-95 transition-all flex items-center justify-center gap-0.5"
+                        className="flex-1 py-1 rounded-lg bg-purple-50 border border-purple-200 text-[11px] font-semibold text-purple-600 hover:bg-purple-100 active:scale-95 transition-all flex items-center justify-center gap-0.5"
                       >
-                        <X className="w-3 h-3" />
-                        No
+                        <Plus className="w-3 h-3" />
+                        Add it
                       </button>
                     </div>
                   )}
