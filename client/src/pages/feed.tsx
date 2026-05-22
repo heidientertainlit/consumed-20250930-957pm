@@ -1714,21 +1714,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {relatedRatings.length > 0 && (
                   <div className="mt-2 border-t border-gray-100 pt-2">
                     <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-300 mb-1.5">Also rated</p>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1.5">
                       {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
                         <div key={r.userId} className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-[9px] font-bold flex-shrink-0 overflow-hidden">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-[10px] font-bold flex-shrink-0 overflow-hidden">
                               {r.avatar ? <img src={r.avatar} className="w-full h-full object-cover" alt="" /> : (r.displayName || r.userName || 'U')[0]?.toUpperCase()}
                             </div>
-                            <span className="text-[10px] text-gray-400 truncate">{r.displayName || r.userName}</span>
+                            <span className="text-xs text-gray-500 truncate">{r.displayName || r.userName}</span>
                           </div>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <div className="flex items-center gap-0.5">
                               {[1,2,3,4,5].map(s => {
-                                if (s <= Math.floor(r.rating)) return <Star key={s} size={9} className="text-yellow-400 fill-yellow-400" />;
-                                if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative w-2.5 h-2.5"><Star size={9} className="absolute text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={9} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                                return <Star key={s} size={9} className="text-gray-200" />;
+                                if (s <= Math.floor(r.rating)) return <Star key={s} size={11} className="text-yellow-400 fill-yellow-400" />;
+                                if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative w-3 h-3"><Star size={11} className="absolute text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={11} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                                return <Star key={s} size={11} className="text-gray-200" />;
                               })}
                             </div>
                           </div>
@@ -1902,21 +1902,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {relatedRatings.length > 0 && (
             <div className="mt-2 border-t border-gray-100 pt-2">
               <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-300 mb-1.5">Also rated</p>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1.5">
                 {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
                   <div key={r.userId} className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-[9px] font-bold flex-shrink-0 overflow-hidden">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-[10px] font-bold flex-shrink-0 overflow-hidden">
                         {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
                       </div>
-                      <span className="text-[10px] text-gray-400">{r.displayName || r.userName}</span>
+                      <span className="text-xs text-gray-500">{r.displayName || r.userName}</span>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <div className="flex items-center gap-0.5">
                         {[1,2,3,4,5].map(s => {
-                          if (s <= Math.floor(r.rating)) return <Star key={s} size={9} className="text-yellow-400 fill-yellow-400" />;
-                          if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative"><Star size={9} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={9} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                          return <Star key={s} size={9} className="text-gray-200" />;
+                          if (s <= Math.floor(r.rating)) return <Star key={s} size={11} className="text-yellow-400 fill-yellow-400" />;
+                          if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative"><Star size={11} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={11} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                          return <Star key={s} size={11} className="text-gray-200" />;
                         })}
                       </div>
                       <button
