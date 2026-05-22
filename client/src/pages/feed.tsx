@@ -1809,19 +1809,17 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       ) : (
         // NORMAL layout — for already-rated or own posts
         <div className="p-4">
-          {/* Letterboxd-style header: avatar | [name] rated [title] • time */}
-          <div className="flex items-start gap-2.5 mb-3">
-            <Link href={`/user/${post.user?.id || ''}`} className="flex-shrink-0">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold overflow-hidden">
-                {post.user?.avatar
-                  ? <img src={post.user.avatar} alt="" className="w-full h-full object-cover" />
-                  : (post.user?.displayName || post.user?.username || '?')[0]?.toUpperCase()}
-              </div>
-            </Link>
+          {/* Trash — absolute top-right, own posts only */}
+          {currentUserId && post.user?.id === currentUserId && onDeletePost && (
+            <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="absolute top-3 right-3 text-gray-300 hover:text-red-400 transition-colors z-10">
+              <Trash2 size={14} />
+            </button>
+          )}
+          {/* Header: name + verb + title + timestamp */}
+          <div className="flex items-start mb-3">
             <div className="flex-1 min-w-0">
               {(() => {
                 const cardDisplayName = post.user?.displayName || post.user?.username || 'Someone';
-                const cardUsername = post.user?.username;
                 const cardIsRatingType = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review' || post.type === 'thought';
                 const verb = post.rating && post.rating > 0 ? 'rated' : 'reviewed';
                 return (
@@ -1840,7 +1838,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       )}
                     </p>
                     <p className="text-[11px] text-gray-400 leading-tight mt-0.5">
-                      {cardUsername ? `@${cardUsername} · ` : ''}{timeAgo(post.timestamp)}
+                      {timeAgo(post.timestamp)}
                     </p>
                     {/* Stars — left-aligned below the name/title line */}
                     {post.rating && post.rating > 0 && (post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought') && (
@@ -1857,13 +1855,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </>
                 );
               })()}
-            </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              {currentUserId && post.user?.id === currentUserId && onDeletePost && (
-                <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors p-1">
-                  <Trash2 size={13} />
-                </button>
-              )}
             </div>
           </div>
           {post.mediaTitle ? (
