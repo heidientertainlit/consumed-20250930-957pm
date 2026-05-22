@@ -432,7 +432,7 @@ function ScoreShareCard({
                         <p className="text-[9px] font-bold uppercase tracking-[0.2em] mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
                           {username ? `${username} said:` : 'I said:'}
                         </p>
-                        <p className="font-black leading-none text-white break-words" style={{ fontSize: '52px', letterSpacing: '-0.03em', lineHeight: 1, textTransform: 'uppercase' }}>
+                        <p className="font-black leading-none text-white break-words" style={{ fontSize: '36px', letterSpacing: '-0.02em', lineHeight: 1.05, textTransform: 'uppercase' }}>
                           {callAnswer}.
                         </p>
                       </div>
@@ -457,9 +457,15 @@ function ScoreShareCard({
                                 <p className="text-[12px] mb-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
                                   Only {agreedPct}% agreed — but
                                 </p>
-                                <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
-                                  {username || 'You'} is in the top {topPct ?? rankData?.rank ?? '?'}% 👑
-                                </p>
+                                {topPct !== null ? (
+                                  <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
+                                    {username || 'You'} is in the top {topPct}% 👑
+                                  </p>
+                                ) : (
+                                  <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
+                                    {username || 'Your'} take is locked in 🔥
+                                  </p>
+                                )}
                               </>
                             ) : topPct !== null ? (
                               <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
