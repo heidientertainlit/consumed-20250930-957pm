@@ -1219,8 +1219,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           <Trash2 size={14} />
         </button>
       )}
-      {/* Timestamp — right side */}
-      <span className="ml-auto text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
+      {/* Pill + timestamp — right side */}
+      <div className="ml-auto flex items-center gap-1.5">
+        <span className="text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">
+          {(post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'take' : 'reviewed'}
+        </span>
+        <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
+      </div>
     </div>
   );
 
@@ -1684,11 +1689,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       <Link href={`/user/${post.user.id || ''}`}>
                         <p className="text-sm font-medium text-purple-800 hover:text-purple-900 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
                       </Link>
-                      {(() => {
-                        const verb = (post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'take' : 'reviewed';
-                        const cls = verb === 'rated' ? 'bg-amber-100 text-amber-600' : verb === 'take' ? 'bg-orange-100 text-orange-600' : 'bg-teal-100 text-teal-600';
-                        return <span className={`inline-block mt-0.5 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full ${cls}`}>{verb}</span>;
-                      })()}
                     </div>
                     {currentUserId && post.user?.id !== currentUserId && (
                       <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-400 p-1 flex-shrink-0 transition-colors"><Flag size={13} /></button>

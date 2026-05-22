@@ -464,18 +464,13 @@ export default function CollaborativePredictionCard({
               {isConsumedPrediction ? (
                 <span className="text-sm font-bold text-purple-700">🏆 Consumed {isPoll ? 'Poll' : 'Prediction'}</span>
               ) : (
-                <>
-                  <button
+                <button
                     onClick={() => setLocation(`/profile/${creator.username}`)}
                     className="text-sm font-medium text-purple-800 hover:text-purple-900 transition-colors block"
                     data-testid="link-prediction-creator"
                   >
                     {creator.username}
                   </button>
-                  <span className={`inline-block mt-0.5 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full ${isPoll ? 'bg-sky-100 text-sky-600' : 'bg-indigo-100 text-indigo-600'}`}>
-                    {isPoll ? 'poll' : 'prediction'}
-                  </span>
-                </>
               )}
             </div>
             {origin_type === 'user' && isCreator && (
@@ -556,13 +551,9 @@ export default function CollaborativePredictionCard({
           className="flex items-center gap-1.5 text-gray-600 hover:text-red-500 transition-colors"
           data-testid="button-like-prediction"
         >
-          <Heart
-            size={18}
-            className={liked ? "fill-red-500 text-red-500" : ""}
-          />
+          <Heart size={18} className={liked ? "fill-red-500 text-red-500" : ""} />
           <span className="text-sm">{currentLikesCount}</span>
         </button>
-
         <button
           onClick={() => setShowComments(!showComments)}
           className="flex items-center gap-1.5 text-gray-600 hover:text-gray-800 transition-colors"
@@ -571,6 +562,9 @@ export default function CollaborativePredictionCard({
           <MessageCircle size={18} />
           <span className="text-sm">{commentsData?.comments?.length || commentsCount}</span>
         </button>
+        <span className="ml-auto text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">
+          {isPoll ? 'poll' : 'prediction'}
+        </span>
       </div>
       
       {/* Participants Dropdown */}
