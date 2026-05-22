@@ -181,7 +181,7 @@ export default function FeedComposerBar() {
           {/* Card — positioned in the top third */}
           <div
             className="absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden"
-            style={{ top: '10%' }}
+            style={{ top: '20%' }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
