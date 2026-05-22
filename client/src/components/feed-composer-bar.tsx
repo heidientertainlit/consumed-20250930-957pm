@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Star, BarChart2, TrendingUp, X, Search, Loader2, Flame, ArrowLeft, Bookmark, MessageSquare } from "lucide-react";
+import { Plus, Star, BarChart2, TrendingUp, X, Search, Loader2, Flame, ArrowLeft, Bookmark, MessageSquarePlus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 
 type TabType = "take" | "review" | "poll" | "prediction";
 type MediaFilter = "all" | "tv" | "movie" | "book" | "podcast" | "music" | "game" | "youtube";
@@ -27,15 +28,15 @@ const MEDIA_FILTERS: { id: MediaFilter; label: string }[] = [
   { id: "youtube", label: "YouTube" },
 ];
 
-function MediaRow({ item, onTag, onRate }: { item: any; onTag: () => void; onRate: () => void }) {
+function MediaRow({ item, onTrack, onRate }: { item: any; onTrack: () => void; onRate: () => void }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 active:opacity-80">
+    <div className="flex items-center gap-3 px-4 py-3">
       {item.image_url
-        ? <img src={item.image_url} alt="" className="w-11 h-15 object-cover rounded-lg flex-shrink-0" style={{ height: '60px', width: '44px' }} />
+        ? <img src={item.image_url} alt="" className="object-cover rounded-lg flex-shrink-0" style={{ height: '60px', width: '44px' }} />
         : <div className="rounded-lg flex-shrink-0" style={{ width: 44, height: 60, background: 'rgba(255,255,255,0.1)' }} />
       }
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-white truncate leading-snug">{item.title}</p>
+        <p className="text-base font-semibold text-white truncate leading-snug">{item.title}</p>
         <p className="text-xs text-white/40 capitalize mt-0.5">
           {item.type === "tv" ? "TV Show" : item.type === "movie" ? "Movie" : item.type}
           {item.year ? ` • ${item.year}` : ""}
@@ -44,20 +45,20 @@ function MediaRow({ item, onTag, onRate }: { item: any; onTag: () => void; onRat
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <button
-          onClick={onRate}
-          className="w-9 h-9 rounded-full flex items-center justify-center transition-transform active:scale-90"
-          style={{ background: 'rgba(251,146,60,0.25)' }}
-          title="Rate this"
+          onClick={onTrack}
+          className="w-9 h-9 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-all active:scale-90"
+          title="Add to list"
         >
-          <Star size={15} className="text-orange-400" />
+          <Bookmark size={15} className="text-white" fill="white" />
         </button>
         <button
-          onClick={onTag}
-          className="w-9 h-9 rounded-full flex items-center justify-center transition-transform active:scale-90"
-          style={{ background: 'rgba(139,92,246,0.3)' }}
-          title="Tag to post"
+          onClick={onRate}
+          className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90 relative"
+          style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
+          title="Rate / review"
         >
-          <Bookmark size={15} className="text-purple-300" />
+          <MessageSquarePlus size={14} className="text-white" />
+          <Star size={7} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
         </button>
       </div>
     </div>
@@ -84,6 +85,8 @@ export default function FeedComposerBar() {
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [recommendedItems, setRecommendedItems] = useState<any[]>([]);
   const [trendingItems, setTrendingItems] = useState<any[]>([]);
+  const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -413,11 +416,14 @@ export default function FeedComposerBar() {
               }}
             >
               {/* Header */}
-              <div className="flex items-center gap-3 px-4 pt-14 pb-4 flex-shrink-0">
-                <button onClick={closeMediaSearch} className="p-2 rounded-full hover:bg-white/10 transition-colors flex-shrink-0">
-                  <ArrowLeft size={20} className="text-white" />
-                </button>
-                <div className="flex-1 flex items-center gap-2 rounded-2xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.1)' }}>
+              <div className="px-4 pt-16 pb-2 flex-shrink-0">
+                <div className="flex items-center gap-3 mb-4">
+                  <button onClick={closeMediaSearch} className="p-2 rounded-full hover:bg-white/10 transition-colors flex-shrink-0">
+                    <ArrowLeft size={22} className="text-white" />
+                  </button>
+                  <p className="text-lg font-bold text-white">Add Media</p>
+                </div>
+                <div className="flex items-center gap-2 rounded-2xl px-4 py-3.5" style={{ background: 'rgba(255,255,255,0.1)' }}>
                   <Search size={16} className="text-white/50 flex-shrink-0" />
                   <input
                     ref={searchInputRef}
@@ -460,10 +466,10 @@ export default function FeedComposerBar() {
                     {/* Recommended */}
                     {recommendedItems.length > 0 && (
                       <div className="pt-5">
-                        <p className="px-5 text-xs font-bold text-white/40 uppercase tracking-widest mb-3">For You</p>
+                        <p className="px-5 text-xs font-bold text-white/40 uppercase tracking-widest mb-3">For You (Trending & Recommended)</p>
                         {recommendedItems.map((r, i) => (
                           <MediaRow key={i} item={r}
-                            onTag={() => selectMedia(r)}
+                            onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
                             onRate={() => { setActiveTab("review"); selectMedia(r); }}
                           />
                         ))}
@@ -475,7 +481,7 @@ export default function FeedComposerBar() {
                         <p className="px-5 text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Trending on Consumed</p>
                         {trendingItems.map((r, i) => (
                           <MediaRow key={i} item={r}
-                            onTag={() => selectMedia(r)}
+                            onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source }); setIsQuickAddOpen(true); }}
                             onRate={() => { setActiveTab("review"); selectMedia(r); }}
                           />
                         ))}
@@ -510,7 +516,7 @@ export default function FeedComposerBar() {
                     <p className="px-5 text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Results</p>
                     {searchResults.map((r, i) => (
                       <MediaRow key={i} item={r}
-                        onTag={() => selectMedia(r)}
+                        onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
                         onRate={() => { setActiveTab("review"); selectMedia(r); }}
                       />
                     ))}
@@ -526,6 +532,12 @@ export default function FeedComposerBar() {
         </div>,
         document.body
       )}
+
+      <QuickAddListSheet
+        isOpen={isQuickAddOpen}
+        onClose={() => { setIsQuickAddOpen(false); setQuickAddMedia(null); }}
+        media={quickAddMedia}
+      />
     </>
   );
 }
