@@ -3928,7 +3928,7 @@ export default function Feed() {
     const prioritised = [...realItems, ...personaItems];
 
     // Cap total posts
-    const MAX_RATING_POSTS = 60;
+    const MAX_RATING_POSTS = 120;
     const capped = prioritised.slice(0, MAX_RATING_POSTS);
 
     // Two streams:
@@ -3995,8 +3995,8 @@ export default function Feed() {
     // Priority 1: the current user's OWN most-recent rating posts (pulled directly from
     //   ratingItems, bypassing one-per-media dedup so they always surface).
     // Priority 2: other real (non-persona) users, most recent, one per author.
-    // Cap at 4 so play stays dominant in the feed.
-    const MAX_PROMOTED = 4;
+    // Cap at 50 so UGC posts appear at least every other slot in the feed.
+    const MAX_PROMOTED = 50;
     const seenAuthors = new Set<string>();
     const seenMediaTitles = new Set<string>();
     const promoted: any[] = [];
@@ -4096,8 +4096,8 @@ export default function Feed() {
 
     feedPlaySlots.forEach((item: any, i: number) => {
       out.push(item);
-      // After every 3rd play item, surface a promoted rating if we still have one
-      if ((i + 1) % 3 === 0 && promotedIdx < promotedRatings.length) {
+      // After every play item, surface a promoted rating (UGC at least every other post)
+      if (promotedIdx < promotedRatings.length) {
         out.push(wrapPromoted(promotedIdx));
         promotedIdx++;
       }
@@ -8607,22 +8607,16 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* Infinite Scroll Loading Indicator - DISABLED */}
-              {/* 
               {isFetchingNextPage && (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
                   <p className="text-gray-500 mt-3">Loading more posts...</p>
                 </div>
               )}
-              */}
 
-              {/* Intersection Observer Target - DISABLED */}
-              {/* 
               {hasNextPage && !isFetchingNextPage && (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
                 <div ref={loadMoreRef} className="h-20" />
               )}
-              */}
 
               {/* Category carousels for trivia filter */}
               {selectedFilter === 'trivia' && (
