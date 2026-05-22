@@ -1637,7 +1637,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   return (
     <>
-    <div className={`relative ${forceActionFirst ? 'w-full' : 'snap-start flex-shrink-0 w-[85vw] max-w-[340px]'} md:w-full md:max-w-none md:snap-align-none md:flex-shrink bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden`}>
+    <div className={`relative ${forceActionFirst ? 'w-full' : 'snap-start flex-shrink-0 w-[90vw]'} md:w-full md:max-w-none md:snap-align-none md:flex-shrink bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden`}>
       {isActionFirst ? (
         // ACTION FIRST layout — stars on top, friend's take below
         <>
@@ -4198,7 +4198,7 @@ export default function Feed() {
       return (
         <div key={`${keyPrefix}-${grp.id}`} className="mb-4">
           {/* Horizontally swipeable post cards — user name is inside each card */}
-          <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory md:flex-col md:overflow-x-visible md:snap-none md:pb-0">
+          <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory touch-pan-x md:flex-col md:overflow-x-visible md:snap-none md:pb-0">
             {grp.posts.map((p) => (
               <UGCGroupCard
                 key={p.id}
@@ -4213,6 +4213,13 @@ export default function Feed() {
               />
             ))}
           </div>
+          {grp.posts.length > 1 && (
+            <div className="flex justify-center gap-1.5 mt-2">
+              {grp.posts.map((_: any, i: number) => (
+                <div key={i} className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+              ))}
+            </div>
+          )}
         </div>
       );
     }
@@ -4583,7 +4590,7 @@ export default function Feed() {
     if (!carousel || carousel.posts.length === 0) return null;
     return (
       <div key={carousel.id} className="mb-2">
-        <div className="flex items-stretch gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory md:flex-col md:overflow-x-visible md:snap-none md:pb-0 md:items-stretch">
+        <div className="flex items-stretch gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory touch-pan-x md:flex-col md:overflow-x-visible md:snap-none md:pb-0 md:items-stretch">
           {carousel.posts.map((post: any) => (
             <UGCGroupCard
               key={post.id}
@@ -4598,6 +4605,13 @@ export default function Feed() {
             />
           ))}
         </div>
+        {carousel.posts.length > 1 && (
+          <div className="flex justify-center gap-1.5 mt-2">
+            {carousel.posts.map((_: any, i: number) => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+            ))}
+          </div>
+        )}
       </div>
     );
   };
