@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
 type TabType = "take" | "review" | "poll" | "prediction";
-type MediaFilter = "all" | "tv" | "movie" | "book" | "podcast" | "music" | "game";
+type MediaFilter = "all" | "tv" | "movie" | "book" | "podcast" | "music" | "game" | "youtube";
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode; placeholder: string }[] = [
   { id: "take",       label: "Take",       icon: <Flame className="w-3.5 h-3.5" />,       placeholder: "What's your hot take?" },
@@ -23,6 +23,7 @@ const MEDIA_FILTERS: { id: MediaFilter; label: string }[] = [
   { id: "podcast", label: "Podcasts" },
   { id: "music",   label: "Music" },
   { id: "game",    label: "Games" },
+  { id: "youtube", label: "YouTube" },
 ];
 
 export default function FeedComposerBar() {
