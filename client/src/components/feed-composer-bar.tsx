@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Star, BarChart2, TrendingUp, X, Search, Loader2, Flame } from "lucide-react";
+import { Plus, Star, BarChart2, TrendingUp, X, Search, Loader2, Flame, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
 type TabType = "take" | "review" | "poll" | "prediction";
+type MediaFilter = "all" | "tv" | "movie" | "book" | "podcast" | "music" | "game";
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode; placeholder: string }[] = [
   { id: "take",       label: "Take",       icon: <Flame className="w-3.5 h-3.5" />,       placeholder: "What's your hot take?" },
@@ -14,11 +15,22 @@ const TABS: { id: TabType; label: string; icon: React.ReactNode; placeholder: st
   { id: "prediction", label: "Prediction", icon: <TrendingUp className="w-3.5 h-3.5" />,   placeholder: "Make a prediction..." },
 ];
 
+const MEDIA_FILTERS: { id: MediaFilter; label: string }[] = [
+  { id: "all",     label: "All" },
+  { id: "tv",      label: "TV Shows" },
+  { id: "movie",   label: "Movies" },
+  { id: "book",    label: "Books" },
+  { id: "podcast", label: "Podcasts" },
+  { id: "music",   label: "Music" },
+  { id: "game",    label: "Games" },
+];
+
 export default function FeedComposerBar() {
   const { session } = useAuth();
   const { toast } = useToast();
 
   const [isOpen, setIsOpen] = useState(false);
+  const [showMediaSearch, setShowMediaSearch] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("review");
   const [contentText, setContentText] = useState("");
   const [ratingValue, setRatingValue] = useState(0);
@@ -29,9 +41,10 @@ export default function FeedComposerBar() {
   const [isSearching, setIsSearching] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
   const [pollOptions, setPollOptions] = useState(["", ""]);
-  const [showSearch, setShowSearch] = useState(false);
+  const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentTab = TABS.find(t => t.id === activeTab)!;
@@ -39,10 +52,13 @@ export default function FeedComposerBar() {
   const showPollOptions = activeTab === "poll" || activeTab === "prediction";
 
   useEffect(() => {
-    if (isOpen && textareaRef.current) {
+    if (isOpen && !showMediaSearch && textareaRef.current) {
       setTimeout(() => textareaRef.current?.focus(), 50);
     }
-  }, [isOpen]);
+    if (showMediaSearch && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    }
+  }, [isOpen, showMediaSearch]);
 
   useEffect(() => {
     if (!searchQuery.trim()) { setSearchResults([]); return; }
@@ -55,18 +71,18 @@ export default function FeedComposerBar() {
         const res = await fetch(`${url}/functions/v1/media-search`, {
           method: "POST",
           headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ query: searchQuery }),
+          body: JSON.stringify({ query: searchQuery, type: mediaFilter === "all" ? undefined : mediaFilter }),
         });
         if (!res.ok) return;
         const data = await res.json();
-        setSearchResults((data.results || []).slice(0, 5).map((r: any) => ({
+        setSearchResults((data.results || []).slice(0, 10).map((r: any) => ({
           ...r,
           image_url: r.image_url || r.poster_url || r.image || "",
         })));
       } catch {}
       finally { setIsSearching(false); }
-    }, 400);
-  }, [searchQuery, session]);
+    }, 350);
+  }, [searchQuery, mediaFilter, session]);
 
   const resetForm = () => {
     setContentText("");
@@ -76,8 +92,21 @@ export default function FeedComposerBar() {
     setSearchQuery("");
     setSearchResults([]);
     setPollOptions(["", ""]);
-    setShowSearch(false);
+    setShowMediaSearch(false);
+    setMediaFilter("all");
     setIsOpen(false);
+  };
+
+  const closeMediaSearch = () => {
+    setShowMediaSearch(false);
+    setSearchQuery("");
+    setSearchResults([]);
+    setMediaFilter("all");
+  };
+
+  const selectMedia = (media: any) => {
+    setSelectedMedia(media);
+    closeMediaSearch();
   };
 
   const canPost = () => {
@@ -99,8 +128,7 @@ export default function FeedComposerBar() {
           headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             content: contentText.trim(), type: "thought", post_type: "hot_take", visibility: "public",
-            media_title: selectedMedia?.title,
-            media_type: selectedMedia?.type || selectedMedia?.mediaType,
+            media_title: selectedMedia?.title, media_type: selectedMedia?.type || selectedMedia?.mediaType,
             media_creator: selectedMedia?.creator || selectedMedia?.author || selectedMedia?.artist,
             media_image_url: selectedMedia?.image_url || selectedMedia?.poster_url || selectedMedia?.image,
             media_external_id: selectedMedia?.external_id || selectedMedia?.id,
@@ -172,22 +200,19 @@ export default function FeedComposerBar() {
         <span className="text-gray-400 text-sm flex-1">What's your next move?</span>
       </button>
 
-      {/* Focused overlay — card anchored near the top, feed dimmed below */}
       {isOpen && createPortal(
         <div className="fixed inset-0 z-[99999]">
-          {/* Full-screen dim */}
+          {/* Dim backdrop */}
           <div className="absolute inset-0 bg-black/65" onClick={resetForm} />
 
-          {/* Card — positioned in the top third */}
+          {/* ── Composer card ── */}
           <div
             className="absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden"
             style={{ top: '20%' }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
-              <button onClick={resetForm} className="text-sm font-medium text-gray-400 hover:text-gray-700">
-                Cancel
-              </button>
+              <button onClick={resetForm} className="text-sm font-medium text-gray-400 hover:text-gray-700">Cancel</button>
               <span className="text-sm font-semibold text-gray-700">{currentTab.label}</span>
               <button
                 onClick={handlePost}
@@ -199,7 +224,7 @@ export default function FeedComposerBar() {
               </button>
             </div>
 
-            {/* Composer body */}
+            {/* Textarea */}
             <div className="px-5 pt-3 pb-2">
               <textarea
                 ref={textareaRef}
@@ -219,7 +244,7 @@ export default function FeedComposerBar() {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-gray-800 truncate">{selectedMedia.title}</p>
-                  <p className="text-[10px] text-gray-400 capitalize">{selectedMedia.type}</p>
+                  <p className="text-[10px] text-gray-400 capitalize">{selectedMedia.type}{selectedMedia.year ? ` · ${selectedMedia.year}` : ""}</p>
                 </div>
                 <button onClick={() => setSelectedMedia(null)} className="text-gray-300 hover:text-red-400 p-1">
                   <X className="w-3.5 h-3.5" />
@@ -258,43 +283,8 @@ export default function FeedComposerBar() {
               </div>
             )}
 
-            {/* Media search */}
-            {showSearch && (
-              <div className="mx-5 mb-2">
-                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
-                  <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <input
-                    value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Search movies, shows, books…" autoFocus
-                    className="flex-1 text-sm text-gray-800 placeholder:text-gray-400 border-0 outline-none bg-transparent"
-                  />
-                  {isSearching
-                    ? <Loader2 className="w-3.5 h-3.5 text-gray-400 animate-spin flex-shrink-0" />
-                    : <button onClick={() => { setShowSearch(false); setSearchQuery(""); setSearchResults([]); }}><X className="w-3.5 h-3.5 text-gray-300" /></button>
-                  }
-                </div>
-                {searchResults.length > 0 && (
-                  <div className="mt-1.5 border border-gray-100 rounded-xl overflow-hidden max-h-44 overflow-y-auto">
-                    {searchResults.map((r, i) => (
-                      <button key={i}
-                        onClick={() => { setSelectedMedia(r); setSearchQuery(""); setSearchResults([]); setShowSearch(false); }}
-                        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 text-left border-b border-gray-50 last:border-0"
-                      >
-                        {r.image_url ? <img src={r.image_url} alt="" className="w-7 h-10 object-cover rounded flex-shrink-0" /> : <div className="w-7 h-10 rounded bg-gray-100 flex-shrink-0" />}
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-800 truncate">{r.title}</p>
-                          <p className="text-xs text-gray-400 capitalize">{r.type}{r.year ? ` · ${r.year}` : ""}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Bottom toolbar */}
             <div className="px-5 pb-4 pt-2 border-t border-gray-100 space-y-2">
-              {/* Type tabs */}
               <div className="flex gap-1.5">
                 {TABS.map(tab => (
                   <button key={tab.id} onClick={() => setActiveTab(tab.id)}
@@ -306,15 +296,10 @@ export default function FeedComposerBar() {
                   </button>
                 ))}
               </div>
-              {/* Add media pill */}
               <div>
                 <button
-                  onClick={() => setShowSearch(s => !s)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                    showSearch
-                      ? 'bg-purple-100 border-purple-300 text-purple-700'
-                      : 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100'
-                  }`}
+                  onClick={() => setShowMediaSearch(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100 transition-all"
                 >
                   <Plus size={13} strokeWidth={2.5} />
                   Add media
@@ -322,6 +307,98 @@ export default function FeedComposerBar() {
               </div>
             </div>
           </div>
+
+          {/* ── Full-screen media search layer ── */}
+          {showMediaSearch && (
+            <div className="absolute inset-0 bg-white flex flex-col" style={{ zIndex: 1 }}>
+              {/* Header */}
+              <div className="flex items-center gap-3 px-4 pt-12 pb-3 border-b border-gray-100 flex-shrink-0">
+                <button onClick={closeMediaSearch} className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
+                  <ArrowLeft size={20} className="text-gray-700" />
+                </button>
+                <div className="flex-1 flex items-center gap-2 bg-gray-100 rounded-2xl px-3 py-2.5">
+                  <Search size={16} className="text-gray-400 flex-shrink-0" />
+                  <input
+                    ref={searchInputRef}
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Search movies, shows, books…"
+                    className="flex-1 text-sm text-gray-800 placeholder:text-gray-400 bg-transparent outline-none"
+                  />
+                  {searchQuery && (
+                    isSearching
+                      ? <Loader2 size={14} className="text-gray-400 animate-spin flex-shrink-0" />
+                      : <button onClick={() => { setSearchQuery(""); setSearchResults([]); }}><X size={14} className="text-gray-400" /></button>
+                  )}
+                </div>
+              </div>
+
+              {/* Filter pills */}
+              <div className="flex gap-2 px-4 py-3 overflow-x-auto flex-shrink-0 border-b border-gray-100">
+                {MEDIA_FILTERS.map(f => (
+                  <button key={f.id} onClick={() => setMediaFilter(f.id)}
+                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                      mediaFilter === f.id
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Results */}
+              <div className="flex-1 overflow-y-auto">
+                {!searchQuery && (
+                  <div className="flex flex-col items-center justify-center h-48 gap-3 text-center px-8">
+                    <Search size={32} className="text-gray-200" />
+                    <p className="text-sm text-gray-400">Search for a movie, show, book, or anything else to tag it to your post.</p>
+                  </div>
+                )}
+
+                {searchQuery && isSearching && (
+                  <div className="flex justify-center py-10">
+                    <Loader2 size={24} className="text-purple-500 animate-spin" />
+                  </div>
+                )}
+
+                {searchQuery && !isSearching && searchResults.length === 0 && (
+                  <div className="flex flex-col items-center justify-center h-40 text-center px-8">
+                    <p className="text-sm text-gray-400">No results found for "<span className="font-medium text-gray-600">{searchQuery}</span>"</p>
+                  </div>
+                )}
+
+                {searchResults.length > 0 && (
+                  <div className="px-4 pt-3 pb-6">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Results</p>
+                    <div className="space-y-1">
+                      {searchResults.map((r, i) => (
+                        <button key={i} onClick={() => selectMedia(r)}
+                          className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-gray-50 active:bg-gray-100 text-left transition-colors"
+                        >
+                          {r.image_url
+                            ? <img src={r.image_url} alt="" className="w-10 h-14 object-cover rounded-lg flex-shrink-0" />
+                            : <div className="w-10 h-14 rounded-lg bg-gray-100 flex-shrink-0" />
+                          }
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{r.title}</p>
+                            <p className="text-xs text-gray-400 capitalize mt-0.5">
+                              {r.type}{r.year ? ` · ${r.year}` : ""}
+                              {r.creator && r.creator !== "Unknown Author" ? ` · ${r.creator}` : ""}
+                            </p>
+                          </div>
+                          <div className="w-7 h-7 rounded-full border-2 border-purple-200 flex items-center justify-center flex-shrink-0">
+                            <Plus size={14} className="text-purple-500" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>,
         document.body
       )}
