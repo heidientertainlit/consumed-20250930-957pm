@@ -485,13 +485,13 @@ function ScoreShareCard({
                               {cta}
                             </p>
                           </div>
-                          {topPct !== null && (
+                          {rankData?.rank != null && (
                             <div
                               className="rounded-xl px-3 py-2 text-center shrink-0"
                               style={{ background: '#2D1B69', minWidth: 70 }}
                             >
-                              <p className="font-black leading-none text-white" style={{ fontSize: '28px' }}>{topPct}%</p>
-                              <p className="text-[8px] font-bold uppercase tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>TOP</p>
+                              <p className="font-black leading-none text-white" style={{ fontSize: '28px' }}>#{rankData.rank}</p>
+                              <p className="text-[8px] font-bold uppercase tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>OVERALL</p>
                             </div>
                           )}
                         </div>
