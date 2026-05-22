@@ -446,11 +446,13 @@ export default function CollaborativePredictionCard({
             className="flex-shrink-0"
             data-testid="button-poll-media-poster"
           >
-            <img
-              src={mediaItems[0].imageUrl}
-              alt={mediaTitle || 'Media poster'}
-              className="w-[88px] h-[132px] object-cover rounded-xl shadow-md"
-            />
+            <div className="relative flex-shrink-0 w-[88px] h-[132px] rounded-xl overflow-hidden shadow-md">
+              <img
+                src={mediaItems[0].imageUrl}
+                alt={mediaTitle || 'Media poster'}
+                className="w-full h-full object-cover"
+              />
+            </div>
           </button>
         )}
 
@@ -490,7 +492,7 @@ export default function CollaborativePredictionCard({
           </div>
 
           {/* Question */}
-          <p className="text-sm font-semibold text-gray-900 mb-2 leading-snug">
+          <p className="text-[18px] font-medium text-gray-800 mb-2 leading-snug">
             {title}
           </p>
 
@@ -508,7 +510,7 @@ export default function CollaborativePredictionCard({
                   key={index}
                   onClick={() => handleSelectOption(option)}
                   disabled={answered || voteMutation.isPending}
-                  className={`w-full rounded-full px-4 py-3 transition-all duration-300 flex items-center justify-between ${
+                  className={`w-full rounded-full px-3 py-1.5 transition-all duration-300 flex items-center justify-between ${
                     answered && isMyVote
                       ? "bg-purple-600 ring-2 ring-purple-200 cursor-default"
                       : answered
@@ -517,12 +519,12 @@ export default function CollaborativePredictionCard({
                   }`}
                   data-testid={`button-vote-option-${index}`}
                 >
-                  <span className={`text-sm font-medium flex items-center gap-2 ${answered && isMyVote ? 'text-white' : 'text-gray-800'}`}>
-                    {answered && isMyVote && <Check className="w-4 h-4" />}
+                  <span className={`text-xs font-medium flex items-center gap-1.5 ${answered && isMyVote ? 'text-white' : 'text-gray-800'}`}>
+                    {answered && isMyVote && <Check className="w-3 h-3" />}
                     {option}
                   </span>
                   {answered && (
-                    <span className={`text-sm font-semibold ${answered && isMyVote ? 'text-white' : 'text-gray-500'}`}>
+                    <span className={`text-xs font-semibold ${answered && isMyVote ? 'text-white' : 'text-gray-500'}`}>
                       {userHasAnswered ? `${percentage}%` : ''}
                     </span>
                   )}
