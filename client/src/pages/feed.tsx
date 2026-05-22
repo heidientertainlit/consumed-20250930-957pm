@@ -4643,7 +4643,9 @@ export default function Feed() {
 
   const renderRemainingPosts = () => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
-    const remaining = mixedFeedSlots.slice(7);
+    // Slots 0–18 are placed explicitly in JSX. Everything from 19 onwards flows here.
+    // If you add more explicit slots above, bump this number to match.
+    const remaining = mixedFeedSlots.slice(19);
     // Carousel posts are now part of mixedFeedSlots — no separate carousel tail.
     // To restore: add `feedRatingCarousels.slice(4).map((_, i) => renderRatingCarousel(4 + i))`
     if (remaining.length === 0) return null;
@@ -6794,10 +6796,16 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Movies" />
               )}
 
+              {/* UGC slot 7 — between Movies trivia and TV Polls */}
+              {renderPostBatchByIndex(7)}
+
               {/* TV Polls — round 1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
               )}
+
+              {/* UGC slot 8 — after TV Polls */}
+              {renderPostBatchByIndex(8)}
 
               {/* DNA Moment #1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
@@ -6823,6 +6831,9 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
               )}
 
+              {/* UGC slot 9 — after TV trivia round 1 */}
+              {renderPostBatchByIndex(9)}
+
               {/* — BLOCK 2 — */}
               {/* Movies Polls */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') &&
@@ -6830,10 +6841,16 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Movies" />
               )}
 
+              {/* UGC slot 10 — after Movies Polls */}
+              {renderPostBatchByIndex(10)}
+
               {/* Books trivia */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
               )}
+
+              {/* UGC slot 11 — after Books trivia */}
+              {renderPostBatchByIndex(11)}
 
               {/* Leaderboard #1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 1 && (
@@ -6854,6 +6871,9 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Music" />
               )}
+
+              {/* UGC slot 12 — after Music trivia */}
+              {renderPostBatchByIndex(12)}
 
               {/* TV Polls — round 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
@@ -6880,6 +6900,9 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Movies" />
               )}
 
+              {/* UGC slot 13 — after Movies trivia round 2 */}
+              {renderPostBatchByIndex(13)}
+
               {/* DNA Moment #2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
                 <DnaMomentCard />
@@ -6890,6 +6913,9 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
               )}
 
+              {/* UGC slot 14 — after TV trivia round 2 */}
+              {renderPostBatchByIndex(14)}
+
               {/* — Rating carousel #2 — */}
               {renderRatingCarousel(2)}
 
@@ -6898,6 +6924,9 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Podcasts" />
               )}
+
+              {/* UGC slot 15 — after Podcasts trivia */}
+              {renderPostBatchByIndex(15)}
 
               {/* Ranks set 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
@@ -6922,6 +6951,9 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Gaming" />
               )}
 
+              {/* UGC slot 16 — after Games trivia */}
+              {renderPostBatchByIndex(16)}
+
               {/* Movies Polls — round 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Movies" />
@@ -6944,10 +6976,16 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
               )}
 
+              {/* UGC slot 17 — after Books trivia round 2 */}
+              {renderPostBatchByIndex(17)}
+
               {/* Music trivia — round 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Music" />
               )}
+
+              {/* UGC slot 18 — after Music trivia round 2 */}
+              {renderPostBatchByIndex(18)}
 
               {/* Seen It? — Music */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
