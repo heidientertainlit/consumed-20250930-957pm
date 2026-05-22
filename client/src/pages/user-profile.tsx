@@ -50,6 +50,7 @@ import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { ShareImageSheet } from "@/components/share-image-sheet";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
+import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
 import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
 import { ReportSheet } from "@/components/report-sheet";
@@ -3299,6 +3300,7 @@ export default function UserProfile() {
         {/* Full DNA Section for Own Profile */}
         {isOwnProfile && activeSection === 'dna' && (
           <div className="px-4 py-4 space-y-4">
+            <EntertainmentDNAStrip />
             {/* Sub-tabs */}
             <div className="flex gap-2">
               <button

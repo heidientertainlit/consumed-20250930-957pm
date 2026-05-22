@@ -6515,7 +6515,6 @@ export default function Feed() {
               Your Turn
             </h1>
 
-            <EntertainmentDNAStrip />
             <DailyHeroSection />
             <div className="mt-4">
               <DnaMomentFeaturedCard />
