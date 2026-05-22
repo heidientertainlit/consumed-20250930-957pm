@@ -244,7 +244,10 @@ serve(async (req) => {
           }
 
           // For Spotify podcasts/music - use Spotify Web API
-          if (externalSource === 'spotify' || mediaType === 'podcast' || mediaType === 'music') {
+          // Also try for 'mixed' type if the title contains 'podcast' (common misclassification)
+          const isPodcastLike = mediaType === 'podcast' || mediaType === 'music' || externalSource === 'spotify'
+            || (mediaType === 'mixed' && mediaTitle && /podcast/i.test(mediaTitle));
+          if (isPodcastLike) {
             const spotifyClientId = Deno.env.get('SPOTIFY_CLIENT_ID');
             const spotifyClientSecret = Deno.env.get('SPOTIFY_CLIENT_SECRET');
             

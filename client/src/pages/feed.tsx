@@ -1235,7 +1235,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         {mediaTypeNorm === 'book' && <Book size={16} className="text-white" />}
         {mediaTypeNorm === 'game' && <Gamepad2 size={16} className="text-white" />}
         {mediaTypeNorm === 'tv' && <Tv2 size={16} className="text-white" />}
-        {(mediaTypeNorm === 'movie' || !mediaTypeNorm) && <Film size={16} className="text-white" />}
+        {(!mediaTypeNorm || mediaTypeNorm === 'movie' || !['podcast','music','book','game','tv'].includes(mediaTypeNorm)) && <Film size={16} className="text-white" />}
       </div>
       <p className="text-white text-[11px] font-bold leading-tight line-clamp-4 w-full drop-shadow">{post.mediaTitle}</p>
     </div>
