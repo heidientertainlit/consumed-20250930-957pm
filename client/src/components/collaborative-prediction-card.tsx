@@ -432,50 +432,25 @@ export default function CollaborativePredictionCard({
   
   return (
     <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border-0 shadow-none'} rounded-2xl p-4`}>
-      {/* Header: Avatar + Username action + Media Title */}
-      <div className="flex items-start gap-3 mb-2">
-        {/* Avatar */}
-        {!isConsumedPrediction && (
-          <button
-            onClick={() => setLocation(`/profile/${creator.username}`)}
-            className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold flex-shrink-0 hover:opacity-90 transition-opacity"
-            data-testid="avatar-prediction-creator"
-          >
-            <span className="text-sm">{creator.username?.[0]?.toUpperCase() || '?'}</span>
-          </button>
-        )}
+      {/* Header: Username + pill — no avatar, no media title */}
+      <div className="flex items-start gap-2 mb-2">
         <div className="flex-1 min-w-0">
-          {/* Username posted a poll/prediction about [Media Title] */}
-          <p className="text-sm text-gray-700 mb-1">
-            {isConsumedPrediction ? (
-              <span className="font-bold text-purple-700">🏆 Consumed {isPoll ? 'Poll' : 'Prediction'}</span>
-            ) : (
-              <>
-                <button
-                  onClick={() => setLocation(`/profile/${creator.username}`)}
-                  className="text-purple-600 font-semibold hover:text-purple-800 transition-colors"
-                  data-testid="link-prediction-creator"
-                >
-                  {creator.username}
-                </button>
-                <span className="text-gray-500"> posted a {isPoll ? 'poll' : 'prediction'}{actualMediaTitle ? ' about ' : ''}</span>
-                {actualMediaTitle && (
-                  <button
-                    onClick={() => {
-                      const media = mediaItems?.[0];
-                      if (media?.externalId && media?.externalSource) {
-                        setLocation(`/media/${media.mediaType?.toLowerCase() || 'movie'}/${media.externalSource}/${media.externalId}`);
-                      }
-                    }}
-                    className="text-gray-500 hover:text-purple-700 transition-colors"
-                    data-testid="link-prediction-media-title"
-                  >
-                    {actualMediaTitle}
-                  </button>
-                )}
-              </>
-            )}
-          </p>
+          {isConsumedPrediction ? (
+            <span className="text-sm font-bold text-purple-700">🏆 Consumed {isPoll ? 'Poll' : 'Prediction'}</span>
+          ) : (
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => setLocation(`/profile/${creator.username}`)}
+                className="text-sm font-bold text-purple-500 hover:text-purple-700 transition-colors"
+                data-testid="link-prediction-creator"
+              >
+                {creator.username}
+              </button>
+              <span className="inline-block text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-500">
+                {isPoll ? 'poll' : 'prediction'}
+              </span>
+            </div>
+          )}
         </div>
         
         {/* Delete button - Show for creators of user-generated predictions */}

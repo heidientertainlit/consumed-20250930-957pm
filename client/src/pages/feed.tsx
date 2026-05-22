@@ -1682,9 +1682,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <div className="flex items-start justify-between mb-1.5">
                     <div className="flex-1 min-w-0 pr-1">
                       <Link href={`/user/${post.user.id || ''}`}>
-                        <p className="text-sm font-bold text-gray-900 hover:text-purple-600 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
+                        <p className="text-sm font-bold text-purple-500 hover:text-purple-700 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
                       </Link>
-                      <span className="inline-block mt-0.5 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                      <span className="inline-block mt-0.5 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-500">
                         {(post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'take' : 'reviewed'}
                       </span>
                     </div>
