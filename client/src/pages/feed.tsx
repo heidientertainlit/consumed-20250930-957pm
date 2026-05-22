@@ -1711,7 +1711,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 )}
                 {post.content ? (
                   <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
-                    <p className={`text-gray-800 text-[18px] leading-snug font-medium ${contentExpanded ? '' : 'line-clamp-4'}`}>{post.content}</p>
+                    <p className={`text-gray-900 text-[20px] leading-snug font-semibold ${contentExpanded ? '' : 'line-clamp-4'}`}>{post.content}</p>
                     {!contentExpanded && post.content.length > 120 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
                   </div>
                 ) : null}

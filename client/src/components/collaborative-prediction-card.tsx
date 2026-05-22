@@ -487,12 +487,12 @@ export default function CollaborativePredictionCard({
           </div>
 
           {/* Question */}
-          <p className="text-[18px] font-medium text-gray-800 mb-2 leading-snug">
+          <p className="text-[20px] font-semibold text-gray-900 mb-2 leading-snug">
             {title}
           </p>
 
           {/* Options */}
-          <div className="flex flex-col items-start gap-1.5">
+          <div className="flex flex-col gap-1.5">
             {options && options.length > 0 ? (
               options.map((option, index) => {
               const optionData = optionVotes?.find(ov => ov.option === option);
@@ -505,7 +505,7 @@ export default function CollaborativePredictionCard({
                   key={index}
                   onClick={() => handleSelectOption(option)}
                   disabled={answered || voteMutation.isPending}
-                  className={`rounded-full px-4 py-2 transition-all duration-300 flex items-center gap-3 ${
+                  className={`w-full rounded-full px-4 py-2 transition-all duration-300 flex items-center justify-between ${
                     answered && isMyVote
                       ? "bg-purple-600 ring-2 ring-purple-200 cursor-default"
                       : answered
