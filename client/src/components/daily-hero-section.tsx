@@ -81,7 +81,8 @@ function ScoreShareCard({
   callAnswer,
   callQuestion,
   callOptions,
-  callVoteBreakdown,
+  callVoteBreakdown: callVoteBreakdownProp,
+  callPoolId,
   streak,
   userId,
   answers,
@@ -100,6 +101,7 @@ function ScoreShareCard({
   callQuestion?: string | null;
   callOptions?: string[] | null;
   callVoteBreakdown?: Record<string, number> | null;
+  callPoolId?: string | null;
   streak?: number | null;
   userId?: string;
   answers?: { correct: boolean; category?: string; picked?: string }[];
@@ -113,6 +115,29 @@ function ScoreShareCard({
 }) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+
+  // Live-fetch vote breakdown if prop is null (e.g. after a page reload)
+  const [livevoteBreakdown, setLiveVoteBreakdown] = useState<Record<string, number> | null>(null);
+  useEffect(() => {
+    if (!open || type !== 'call' || !callPoolId || callVoteBreakdownProp != null) return;
+    supabase
+      .from('user_predictions')
+      .select('prediction')
+      .eq('pool_id', callPoolId)
+      .limit(500)
+      .then(({ data }) => {
+        const votes = (data ?? []).filter((v: any) => v.prediction !== '__skip');
+        if (!votes.length) return;
+        const counts: Record<string, number> = {};
+        for (const v of votes) { const k = v.prediction ?? ''; counts[k] = (counts[k] ?? 0) + 1; }
+        const total = votes.length;
+        const pcts: Record<string, number> = {};
+        for (const [opt, cnt] of Object.entries(counts)) pcts[opt] = Math.round((cnt / total) * 100);
+        setLiveVoteBreakdown(pcts);
+      });
+  }, [open, type, callPoolId, callVoteBreakdownProp]);
+
+  const callVoteBreakdown = callVoteBreakdownProp ?? livevoteBreakdown;
 
   if (!open) return null;
 
@@ -1425,7 +1450,7 @@ function DailyCallOverlay({
       const data = await resp.json();
       console.log('[streak] Daily Call submit response:', resp.status, JSON.stringify(data));
       if (data.error && !data.error.includes('Already')) throw new Error(data.error);
-      localStorage.setItem(getDailyCallKey(session?.user?.id), JSON.stringify({ completed: true, result: { userAnswer: answer } }));
+      localStorage.setItem(getDailyCallKey(session?.user?.id), JSON.stringify({ completed: true, result: { userAnswer: answer }, breakdown: null }));
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-response'] });
       if (data.run?.currentRun && typeof data.run.currentRun === 'number') {
         console.log('[streak] Daily Call seeding cache with currentRun:', data.run.currentRun);
@@ -1455,6 +1480,16 @@ function DailyCallOverlay({
           breakdown = pcts;
         }
       } catch { /* leave null */ }
+
+      // Persist breakdown so share card can use it after a page reload
+      try {
+        const stored = localStorage.getItem(getDailyCallKey(session?.user?.id));
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          parsed.breakdown = breakdown;
+          localStorage.setItem(getDailyCallKey(session?.user?.id), JSON.stringify(parsed));
+        }
+      } catch { /* ignore */ }
 
       onComplete(answer, breakdown);
     } catch (e: any) {
@@ -1611,7 +1646,13 @@ export function DailyHeroSection() {
   // ── Daily Call state ──
   const [showCallOverlay, setShowCallOverlay] = useState(false);
   const [showCallShare, setShowCallShare] = useState(false);
-  const [callVoteBreakdown, setCallVoteBreakdown] = useState<Record<string, number> | null>(null);
+  const [callVoteBreakdown, setCallVoteBreakdown] = useState<Record<string, number> | null>(() => {
+    try {
+      const s = localStorage.getItem(getDailyCallKey());
+      if (!s) return null;
+      return JSON.parse(s).breakdown ?? null;
+    } catch { return null; }
+  });
   const [callAnswer, setCallAnswer] = useState<string | null>(() => {
     try {
       const s = localStorage.getItem(getDailyCallKey());
@@ -2615,6 +2656,7 @@ export function DailyHeroSection() {
         callQuestion={dailyCall?.title}
         callOptions={dailyCall?.options}
         callVoteBreakdown={callVoteBreakdown}
+        callPoolId={dailyCall?.id}
         streak={streak}
         userId={user?.id}
         username={username ?? null}
