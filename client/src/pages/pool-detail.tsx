@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
 import { supabase } from "@/lib/supabase";
 import { formatDistanceToNow } from "date-fns";
-import { QuickActionSheet } from "@/components/quick-action-sheet";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
 import BingeBattleFeedCard from "@/components/binge-battle-feed-card";
 
@@ -2584,7 +2583,6 @@ export default function PoolDetailPage() {
   const [addingId, setAddingId] = useState<string | null>(null);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
   const [joiningRoom, setJoiningRoom] = useState(false);
-  const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [isConvComposerOpen, setIsConvComposerOpen] = useState(false);
   const [convTitle, setConvTitle] = useState('');
   const [convBody, setConvBody] = useState('');
@@ -3545,20 +3543,7 @@ export default function PoolDetailPage() {
         </div>
       )}
 
-      <QuickActionSheet
-        isOpen={isComposerOpen}
-        onClose={() => setIsComposerOpen(false)}
-        roomId={params.id}
-        roomDefaultMedia={pool ? {
-          title: pool.name,
-          mediaType: pool.media_type ?? null,
-          imageUrl: pool.media_image ?? null,
-        } : null}
-        onPosted={() => {
-          setIsComposerOpen(false);
-          refetchRoomPosts();
-        }}
-      />
+
     </div>
   );
 }

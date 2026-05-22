@@ -18,7 +18,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { QuickActionSheet } from "./quick-action-sheet";
 import { useFeatureFlags } from "@/lib/feature-flags";
 import { QuickAddListSheet } from "./quick-add-list-sheet";
 import { SaveMediaSheet } from "./save-media-sheet";
@@ -66,25 +65,16 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [isSaveMediaOpen, setIsSaveMediaOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
-  const [actionSheetMedia, setActionSheetMedia] = useState<any>(null);
-  const [directCapture, setDirectCapture] = useState(false);
   const [totalPoints, setTotalPoints] = useState<number | null>(null);
   const [searchFeedbackSent, setSearchFeedbackSent] = useState<string | null>(null); // stores query that was reported
 
   useEffect(() => {
-    const handler = () => setIsQuickActionOpen(true);
-    window.addEventListener('openQuickAction', handler);
-    return () => window.removeEventListener('openQuickAction', handler);
-  }, []);
-
-  useEffect(() => {
-    const handler = () => { setDirectCapture(true); setIsQuickActionOpen(true); };
+    const handler = () => { setLocation('/add'); };
     window.addEventListener('openAddMedia', handler);
     return () => window.removeEventListener('openAddMedia', handler);
   }, []);
@@ -671,7 +661,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                                 <Bookmark size={15} className="text-white" fill="white" />
                               </button>
                               <button
-                                onClick={(e) => { e.stopPropagation(); setActionSheetMedia(mediaObj); setDirectCapture(true); setIsQuickActionOpen(true); }}
+                                onClick={(e) => { e.stopPropagation(); setLocation('/add'); }}
                                 className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
                               >
                                 <MessageSquarePlus size={14} className="text-white" />
@@ -849,14 +839,6 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
         </nav>,
         document.body
       )}
-
-      {/* Quick Action Sheet */}
-      <QuickActionSheet
-        isOpen={isQuickActionOpen}
-        onClose={() => { setIsQuickActionOpen(false); setActionSheetMedia(null); setDirectCapture(false); }}
-        preselectedMedia={actionSheetMedia}
-        preselectedIntent={directCapture ? "capture" : null}
-      />
 
       {/* Quick Add to List Sheet */}
       <QuickAddListSheet
