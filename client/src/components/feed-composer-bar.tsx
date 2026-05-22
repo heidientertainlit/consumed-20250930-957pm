@@ -1,22 +1,19 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, Star, BarChart2, List, TrendingUp, AlignJustify, X, Search, Loader2, Flame } from "lucide-react";
+import { Plus, Star, BarChart2, TrendingUp, X, Search, Loader2, Flame } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
-type TabType = "take" | "review" | "poll" | "rank" | "prediction" | "list";
+type TabType = "take" | "review" | "poll" | "prediction";
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode; placeholder: string }[] = [
-  { id: "take",       label: "Take",       icon: <Flame className="w-3.5 h-3.5" />,          placeholder: "What's your hot take?" },
-  { id: "review",     label: "Review",     icon: <Star className="w-3.5 h-3.5" />,            placeholder: "Write your review..." },
-  { id: "poll",       label: "Poll",       icon: <BarChart2 className="w-3.5 h-3.5" />,       placeholder: "Ask a question..." },
-  { id: "rank",       label: "Rank",       icon: <AlignJustify className="w-3.5 h-3.5" />,    placeholder: "What are you ranking?" },
-  { id: "prediction", label: "Prediction", icon: <TrendingUp className="w-3.5 h-3.5" />,      placeholder: "Make a prediction..." },
-  { id: "list",       label: "List",       icon: <List className="w-3.5 h-3.5" />,             placeholder: "Add to a list..." },
+  { id: "take",       label: "Take",       icon: <Flame className="w-3.5 h-3.5" />,       placeholder: "What's your hot take?" },
+  { id: "review",     label: "Review",     icon: <Star className="w-3.5 h-3.5" />,         placeholder: "Write your review..." },
+  { id: "poll",       label: "Poll",       icon: <BarChart2 className="w-3.5 h-3.5" />,    placeholder: "Ask a question..." },
+  { id: "prediction", label: "Prediction", icon: <TrendingUp className="w-3.5 h-3.5" />,   placeholder: "Make a prediction..." },
 ];
 
-const ROW1: TabType[] = ["take", "review", "poll"];
-const ROW2: TabType[] = ["rank", "prediction", "list"];
+const ROW1: TabType[] = ["take", "review", "poll", "prediction"];
 
 export default function FeedComposerBar() {
   const { session, user } = useAuth();
@@ -40,7 +37,7 @@ export default function FeedComposerBar() {
 
   const currentTab = TABS.find(t => t.id === activeTab)!;
 
-  const needsMedia = activeTab === "review" || activeTab === "take" || activeTab === "rank" || activeTab === "prediction" || activeTab === "list";
+  const needsMedia = activeTab === "review" || activeTab === "take" || activeTab === "prediction";
   const showRating = activeTab === "review";
   const showSearch = needsMedia;
   const showPollOptions = activeTab === "poll";
@@ -101,9 +98,7 @@ export default function FeedComposerBar() {
     if (activeTab === "take") return contentText.trim().length > 0;
     if (activeTab === "review") return !!selectedMedia && (ratingValue > 0 || contentText.trim().length > 0);
     if (activeTab === "poll") return pollOptions[0].trim().length > 0 && pollOptions[1].trim().length > 0;
-    if (activeTab === "rank") return !!selectedMedia;
     if (activeTab === "prediction") return contentText.trim().length > 0 && pollOptions[0].trim() && pollOptions[1].trim();
-    if (activeTab === "list") return !!selectedMedia;
     return false;
   };
 
@@ -182,11 +177,6 @@ export default function FeedComposerBar() {
         });
         if (!res.ok) throw new Error("Failed to create prediction");
         toast({ title: "Prediction posted!" });
-
-      } else if (activeTab === "rank" || activeTab === "list") {
-        toast({ title: activeTab === "rank" ? "Go to your profile to manage ranks." : "Go to your profile to manage lists.", description: "Select media from there to add." });
-        resetForm();
-        return;
       }
 
       setTimeout(() => queryClient.refetchQueries({ queryKey: ["social-feed"] }), 800);
@@ -262,30 +252,28 @@ export default function FeedComposerBar() {
         {/* Divider */}
         <div className="border-t border-gray-100 mx-4" />
 
-        {/* Tab rows */}
-        <div className="px-4 pt-2 pb-1 space-y-1">
-          {[ROW1, ROW2].map((row, ri) => (
-            <div key={ri} className="flex gap-1">
-              {row.map(tabId => {
-                const tab = TABS.find(t => t.id === tabId)!;
-                const active = activeTab === tabId;
-                return (
-                  <button
-                    key={tabId}
-                    onClick={() => setActiveTab(tabId)}
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                      active
-                        ? "bg-purple-100 text-purple-700"
-                        : "text-gray-500 hover:bg-gray-100"
-                    }`}
-                  >
-                    {tab.icon}
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+        {/* Tab row */}
+        <div className="px-4 pt-2 pb-1">
+          <div className="flex gap-1">
+            {ROW1.map(tabId => {
+              const tab = TABS.find(t => t.id === tabId)!;
+              const active = activeTab === tabId;
+              return (
+                <button
+                  key={tabId}
+                  onClick={() => setActiveTab(tabId)}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    active
+                      ? "bg-purple-100 text-purple-700"
+                      : "text-gray-500 hover:bg-gray-100"
+                  }`}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Divider */}
