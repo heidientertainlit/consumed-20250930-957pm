@@ -787,18 +787,17 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                 <span className="text-white text-[10px] font-medium">Save</span>
               </div>
 
-              {/* Compose — navigates to /add instead of opening modal */}
+              {/* Compose — opens QuickActionSheet modal */}
               <div className="flex flex-col items-center gap-1.5">
-                <Link
-                  href="/add"
-                  onClick={() => setShowAddMenu(false)}
+                <button
+                  onClick={() => { setShowAddMenu(false); setIsQuickActionOpen(true); }}
                   className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform relative"
                   style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
                   aria-label="Share a take"
                 >
                   <MessageSquarePlus size={24} className="text-white" />
                   <Star size={10} className="absolute top-1 right-1 fill-yellow-300 text-yellow-300" />
-                </Link>
+                </button>
                 <span className="text-white text-[10px] font-medium">Post</span>
               </div>
             </div>
