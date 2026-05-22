@@ -680,7 +680,7 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList, forceActionFirst }: {
+function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList, forceActionFirst, forceNormal }: {
   post: UGCPost;
   onLike: (id: string) => void;
   isLiked: boolean;
@@ -690,6 +690,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   onDeletePost?: (postId: string) => void;
   onAddToList?: (media: any) => void;
   forceActionFirst?: boolean;
+  forceNormal?: boolean;
 }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
@@ -1121,7 +1122,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   // Action First layout: other users' unrated rating posts, OR any promoted card (forceActionFirst).
   // When forceActionFirst is set we skip the ratingSubmitted check so the section stays visible
   // even after the useEffect loads the user's existing rating from media_ratings.
-  const isActionFirst = isRatingPost && (forceActionFirst || (isOtherUser && !ratingSubmitted)) && session?.access_token;
+  const isActionFirst = !forceNormal && isRatingPost && (forceActionFirst || (isOtherUser && !ratingSubmitted)) && session?.access_token;
 
   // Use external (3rd-party) rating as comparison baseline when available; convert /10 → /5
   const baselineRating = externalRating ? externalRating / 2 : communityRating;
@@ -4210,6 +4211,7 @@ export default function Feed() {
                 currentUserId={currentAppUserId || undefined}
                 onDeletePost={handleDeletePost}
                 onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+                forceNormal={true}
               />
             ))}
           </div>
@@ -4602,6 +4604,7 @@ export default function Feed() {
               currentUserId={currentAppUserId || undefined}
               onDeletePost={handleDeletePost}
               onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+              forceNormal={true}
             />
           ))}
         </div>
