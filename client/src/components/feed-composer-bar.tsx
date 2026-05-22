@@ -204,16 +204,10 @@ export default function FeedComposerBar() {
         onClick={() => setIsExpanded(true)}
         className="w-full rounded-2xl bg-white border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
       >
-        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
-          {user?.user_metadata?.avatar_url
-            ? <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
-            : <span className="text-gray-500 text-xs font-bold">{(user?.user_metadata?.display_name || user?.email || "U")[0].toUpperCase()}</span>
-          }
-        </div>
-        <span className="text-gray-400 text-sm flex-1">What's your next move?</span>
-        <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
           <Plus className="w-4 h-4 text-white" />
         </div>
+        <span className="text-gray-400 text-sm flex-1">What's your next move?</span>
       </button>
     );
   }
