@@ -1631,7 +1631,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </div>
                 </Link>
                 <div className="flex-1 min-w-0">
-                  {/* Row 1: name · verb · time · TV pill */}
+                  {/* Row 1: name · verb · time — clean sentence, no pill */}
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <Link href={`/user/${post.user.id || ''}`}>
                       <span className="text-sm font-bold text-gray-900 hover:text-purple-600 cursor-pointer">{post.user.displayName || post.user.username}</span>
@@ -1639,13 +1639,16 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     <span className="text-sm text-gray-400">{(post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'shared a take on' : 'reviewed'}</span>
                     <span className="text-[11px] text-gray-300">·</span>
                     <span className="text-[11px] text-gray-400">{timeAgo(post.timestamp)}</span>
-                    {mediaTypeLabel && <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">{mediaTypeLabel}</span>}
                   </div>
-                  {/* Row 2: title only — clean dedicated line */}
+                  {/* Row 2: title + TV pill side by side */}
                   {post.mediaTitle && (
-                    post.externalId && post.externalSource
-                      ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><p className="text-[15px] font-semibold text-gray-800 hover:text-purple-600 leading-tight mt-0.5 line-clamp-1 cursor-pointer">{post.mediaTitle}</p></Link>
-                      : <p className="text-[15px] font-semibold text-gray-800 leading-tight mt-0.5 line-clamp-1">{post.mediaTitle}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      {post.externalId && post.externalSource
+                        ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><p className="text-[15px] font-semibold text-gray-800 hover:text-purple-600 leading-tight line-clamp-1 cursor-pointer">{post.mediaTitle}</p></Link>
+                        : <p className="text-[15px] font-semibold text-gray-800 leading-tight line-clamp-1">{post.mediaTitle}</p>
+                      }
+                      {mediaTypeLabel && <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200 flex-shrink-0">{mediaTypeLabel}</span>}
+                    </div>
                   )}
                 </div>
                 {currentUserId && post.user?.id !== currentUserId && (
