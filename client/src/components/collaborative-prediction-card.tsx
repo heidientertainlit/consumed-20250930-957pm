@@ -497,7 +497,7 @@ export default function CollaborativePredictionCard({
           </p>
 
           {/* Options */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col items-start gap-1.5">
             {options && options.length > 0 ? (
               options.map((option, index) => {
               const optionData = optionVotes?.find(ov => ov.option === option);
@@ -510,7 +510,7 @@ export default function CollaborativePredictionCard({
                   key={index}
                   onClick={() => handleSelectOption(option)}
                   disabled={answered || voteMutation.isPending}
-                  className={`w-full rounded-full px-3 py-1.5 transition-all duration-300 flex items-center justify-between ${
+                  className={`rounded-full px-4 py-2 transition-all duration-300 flex items-center gap-3 ${
                     answered && isMyVote
                       ? "bg-purple-600 ring-2 ring-purple-200 cursor-default"
                       : answered
@@ -519,12 +519,12 @@ export default function CollaborativePredictionCard({
                   }`}
                   data-testid={`button-vote-option-${index}`}
                 >
-                  <span className={`text-xs font-medium flex items-center gap-1.5 ${answered && isMyVote ? 'text-white' : 'text-gray-800'}`}>
-                    {answered && isMyVote && <Check className="w-3 h-3" />}
+                  <span className={`text-sm font-medium flex items-center gap-2 ${answered && isMyVote ? 'text-white' : 'text-gray-800'}`}>
+                    {answered && isMyVote && <Check className="w-4 h-4" />}
                     {option}
                   </span>
                   {answered && (
-                    <span className={`text-xs font-semibold ${answered && isMyVote ? 'text-white' : 'text-gray-500'}`}>
+                    <span className={`text-sm font-semibold ${answered && isMyVote ? 'text-white' : 'text-gray-500'}`}>
                       {userHasAnswered ? `${percentage}%` : ''}
                     </span>
                   )}
