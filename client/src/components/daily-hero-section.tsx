@@ -2252,9 +2252,7 @@ export function DailyHeroSection() {
                       <span className="text-[8px] font-bold text-purple-100">+{isOpinionDay ? (dailyCall?.points_reward ?? 10) : readyQuestions.length * 10} pts</span>
                     </span>
                   )}
-                  {front ? (
-                    <TodaysPlayNudge variant="subtle" />
-                  ) : (
+                  {!front && (
                     <span className="text-[10px] text-purple-200/60 font-medium">1 question</span>
                   )}
                 </div>
@@ -2270,6 +2268,11 @@ export function DailyHeroSection() {
                   </span>
                 )}
               </div>
+              {front && (
+                <div className="mt-2">
+                  <TodaysPlayNudge variant="subtle" />
+                </div>
+              )}
             </button>
           );
 
