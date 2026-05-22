@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Flame, Star, Target, CheckSquare, MoreHorizontal, Plus } from "lucide-react";
+import { Flame, Star, Target, CheckSquare, MoreHorizontal } from "lucide-react";
 import { QuickActionSheet } from "./quick-action-sheet";
 
 type Tab = "hot_take" | "review" | "prediction" | "poll" | null;
@@ -52,23 +52,16 @@ export function WhatsYourMove() {
               background: "linear-gradient(135deg, #f97316, #ec4899)",
             }}
           >
+            <div className="flex items-center gap-1">
+              <Flame size={16} className="text-white" />
+              <span className="text-white font-bold text-sm leading-tight">Take</span>
+            </div>
             <span
-              className="self-start text-[8px] font-bold tracking-widest uppercase rounded-full px-2 py-0.5"
+              className="self-start text-[8px] font-bold tracking-widest uppercase rounded-full px-2 py-0.5 mt-1"
               style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}
             >
               ★ Most Popular
             </span>
-            <div className="flex items-end justify-between mt-2">
-              <div className="text-left">
-                <div className="flex items-center gap-1 mb-0.5">
-                  <Flame size={16} className="text-white" />
-                  <span className="text-white font-bold text-sm leading-tight">Take</span>
-                </div>
-              </div>
-              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center ml-1 shrink-0">
-                <Plus size={12} className="text-white" />
-              </div>
-            </div>
           </button>
 
           {/* Flat tiles — single row */}
