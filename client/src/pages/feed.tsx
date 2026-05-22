@@ -1228,21 +1228,31 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const posterEl = post.mediaImage && post.mediaImage.startsWith('http') ? (
     post.externalId && post.externalSource ? (
       <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-        <div className="relative flex-shrink-0 w-20 h-[120px] rounded-xl overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
+        <div className="relative flex-shrink-0 w-[88px] h-[132px] rounded-xl overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
           <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          {mediaTypeLabel && (
-            <div className="absolute bottom-1.5 left-1.5 bg-white/90 backdrop-blur-sm rounded px-1.5 py-0.5">
-              <span className="text-[9px] font-bold uppercase tracking-wide text-violet-700">{mediaTypeLabel}</span>
+          {mediaTypeNorm && (
+            <div className="absolute bottom-1 left-1 bg-black/25 backdrop-blur-[2px] rounded p-[3px]">
+              {mediaTypeNorm === 'tv' && <Tv2 size={10} className="text-white/75" />}
+              {mediaTypeNorm === 'movie' && <Film size={10} className="text-white/75" />}
+              {mediaTypeNorm === 'book' && <Book size={10} className="text-white/75" />}
+              {mediaTypeNorm === 'music' && <Music size={10} className="text-white/75" />}
+              {mediaTypeNorm === 'podcast' && <Headphones size={10} className="text-white/75" />}
+              {mediaTypeNorm === 'game' && <Gamepad2 size={10} className="text-white/75" />}
             </div>
           )}
         </div>
       </Link>
     ) : (
-      <div className="relative flex-shrink-0 w-20 h-[120px] rounded-xl overflow-hidden shadow-md">
+      <div className="relative flex-shrink-0 w-[88px] h-[132px] rounded-xl overflow-hidden shadow-md">
         <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-        {mediaTypeLabel && (
-          <div className="absolute bottom-1.5 left-1.5 bg-white/90 backdrop-blur-sm rounded px-1.5 py-0.5">
-            <span className="text-[9px] font-bold uppercase tracking-wide text-violet-700">{mediaTypeLabel}</span>
+        {mediaTypeNorm && (
+          <div className="absolute bottom-1 left-1 bg-black/25 backdrop-blur-[2px] rounded p-[3px]">
+            {mediaTypeNorm === 'tv' && <Tv2 size={10} className="text-white/75" />}
+            {mediaTypeNorm === 'movie' && <Film size={10} className="text-white/75" />}
+            {mediaTypeNorm === 'book' && <Book size={10} className="text-white/75" />}
+            {mediaTypeNorm === 'music' && <Music size={10} className="text-white/75" />}
+            {mediaTypeNorm === 'podcast' && <Headphones size={10} className="text-white/75" />}
+            {mediaTypeNorm === 'game' && <Gamepad2 size={10} className="text-white/75" />}
           </div>
         )}
       </div>
@@ -1611,53 +1621,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       {isActionFirst ? (
         // ACTION FIRST layout — stars on top, friend's take below
         <>
-          {/* Letterboxd-style card — no "WHAT'S YOUR TAKE?" header, no big stars */}
+          {/* Poster-left, header+caption-right layout */}
           <div className="px-4 pt-4 pb-3">
-            {/* Header: avatar | name @username | [TV pill] | time */}
-            {post.user && (
-              <div className="flex items-center gap-2 mb-3">
-                <Link href={`/user/${post.user.id || ''}`} className="flex-shrink-0">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-bold overflow-hidden">
-                    {post.user.avatar
-                      ? <img src={post.user.avatar} alt="" className="w-full h-full object-cover" />
-                      : (post.user.displayName || post.user.username || '?')[0]?.toUpperCase()}
-                  </div>
-                </Link>
-                <div className="flex-1 min-w-0">
-                  {/* Line 1: name only (bold) */}
-                  <Link href={`/user/${post.user.id || ''}`}>
-                    <p className="text-sm font-bold text-gray-900 hover:text-purple-600 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
-                  </Link>
-                  {/* Line 2: verb + title — same size/weight, no bold name competing */}
-                  <p className="text-sm text-gray-400 leading-snug mt-0.5">
-                    <span>{(post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'shared a take on' : 'reviewed'} </span>
-                    {post.mediaTitle && (
-                      post.externalId && post.externalSource
-                        ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="hover:text-purple-500 cursor-pointer">{post.mediaTitle}</span></Link>
-                        : <span>{post.mediaTitle}</span>
-                    )}
-                  </p>
-                </div>
-                {currentUserId && post.user?.id !== currentUserId && (
-                  <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-400 p-1 flex-shrink-0 transition-colors"><Flag size={13} /></button>
-                )}
-                {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
-                  <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 p-1 flex-shrink-0 transition-colors"><Trash2 size={13} /></button>
-                )}
-              </div>
-            )}
-
-            {/* Poster's rating stars — shown if they gave a rating */}
-            {(post.rating || 0) > 0 && (
-              <div className="flex items-center gap-0.5 mb-2.5">
-                {[1,2,3,4,5].map(s => {
-                  const r = post.rating!;
-                  if (s <= Math.floor(r)) return <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />;
-                  if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={14} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={14} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                  return <Star key={s} size={14} className="text-gray-200" />;
-                })}
-              </div>
-            )}
 
             {/* Inline compact star rater — shown when ⭐ in action bar is tapped */}
             {showInlineRater && !ratingSubmitted && (
@@ -1708,10 +1673,45 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               </div>
             )}
 
-            {/* Main body: poster + big review caption */}
+            {/* Main body: bigger poster left | [name + verb/title + stars + caption] right */}
             <div className="flex gap-3 items-start">
               {posterEl}
               <div className="flex-1 min-w-0">
+                {/* Name + verb/title header (no avatar) */}
+                {post.user && (
+                  <div className="flex items-start justify-between mb-1.5">
+                    <div className="flex-1 min-w-0 pr-1">
+                      <Link href={`/user/${post.user.id || ''}`}>
+                        <p className="text-sm font-bold text-gray-900 hover:text-purple-600 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
+                      </Link>
+                      <p className="text-sm text-gray-400 leading-snug">
+                        <span>{(post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'shared a take on' : 'reviewed'} </span>
+                        {post.mediaTitle && (
+                          post.externalId && post.externalSource
+                            ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="hover:text-purple-500 cursor-pointer">{post.mediaTitle}</span></Link>
+                            : <span>{post.mediaTitle}</span>
+                        )}
+                      </p>
+                    </div>
+                    {currentUserId && post.user?.id !== currentUserId && (
+                      <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-400 p-1 flex-shrink-0 transition-colors"><Flag size={13} /></button>
+                    )}
+                    {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
+                      <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 p-1 flex-shrink-0 transition-colors"><Trash2 size={13} /></button>
+                    )}
+                  </div>
+                )}
+                {/* Stars if rated */}
+                {(post.rating || 0) > 0 && (
+                  <div className="flex items-center gap-0.5 mb-2">
+                    {[1,2,3,4,5].map(s => {
+                      const r = post.rating!;
+                      if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
+                      if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                      return <Star key={s} size={13} className="text-gray-200" />;
+                    })}
+                  </div>
+                )}
                 {post.content ? (
                   <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
                     <p className={`text-gray-800 text-[18px] leading-snug font-medium ${contentExpanded ? '' : 'line-clamp-4'}`}>{post.content}</p>
