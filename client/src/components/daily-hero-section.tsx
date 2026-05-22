@@ -168,7 +168,27 @@ function ScoreShareCard({
                   {type === 'play' ? "Today's Play ✦" : "Daily Call ✦"}
                 </p>
               </div>
-              <p className="text-[11px] font-semibold text-white/50 mt-1">{today}</p>
+              {/* Top-right: date + rank badge for call, just date for play */}
+              <div className="text-right">
+                <p className="text-[10px] font-semibold text-white/40 mb-1">{today}</p>
+                {type === 'call' && rankData?.rank != null && (
+                  <div
+                    className="inline-flex flex-col items-center rounded-xl px-3 py-2"
+                    style={{ background: 'rgba(124,58,237,0.22)', border: '1px solid rgba(124,58,237,0.45)' }}
+                  >
+                    {username && (
+                      <p className="text-[7px] font-bold uppercase tracking-widest leading-none" style={{ color: 'rgba(255,255,255,0.45)' }}>{username} ranks</p>
+                    )}
+                    <p
+                      className="font-black leading-none my-0.5"
+                      style={{ fontSize: '22px', background: 'linear-gradient(135deg,#a78bfa 0%,#38bdf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+                    >
+                      #{rankData.rank}
+                    </p>
+                    <p className="text-[7px] font-bold uppercase tracking-widest leading-none" style={{ color: 'rgba(255,255,255,0.35)' }}>on Consumed</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -403,30 +423,6 @@ function ScoreShareCard({
                         )}
                       </div>
 
-                      {/* Rank box — #N on Consumed */}
-                      {rankData?.rank != null && (
-                        <div
-                          className="rounded-2xl px-3 py-4 text-center shrink-0"
-                          style={{
-                            minWidth: 100,
-                            background: '#1a1030',
-                            border: '1px solid rgba(124,58,237,0.45)',
-                            boxShadow: '0 0 28px rgba(124,58,237,0.3)',
-                          }}
-                        >
-                          {username && (
-                            <p className="text-[7px] font-bold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{username} is</p>
-                          )}
-                          <p
-                            className="font-black leading-none"
-                            style={{ fontSize: '36px', background: 'linear-gradient(135deg,#a78bfa 0%,#38bdf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-                          >
-                            #{rankData.rank}
-                          </p>
-                          <p className="text-[7px] font-bold uppercase tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>ON CONSUMED</p>
-                          <p className="text-[13px] mt-1.5">👑</p>
-                        </div>
-                      )}
                     </div>
 
                     {/* "Start a fight" block */}
@@ -479,6 +475,13 @@ function ScoreShareCard({
                     })()}
                     <p className="text-[11px] mt-2 italic" style={{ color: 'rgba(255,255,255,0.35)' }}>You sat this one out — but your friends didn&apos;t.</p>
                   </div>
+                )}
+
+                {/* Username label above stats */}
+                {username && (
+                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                    {username}&apos;s stats
+                  </p>
                 )}
 
                 {/* 4-stat row */}
