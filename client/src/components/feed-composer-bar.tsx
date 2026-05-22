@@ -294,6 +294,18 @@ export default function FeedComposerBar() {
 
             {/* Bottom toolbar */}
             <div className="px-5 pb-4 pt-2 border-t border-gray-100 space-y-2">
+              {/* Type tabs */}
+              <div className="flex gap-1.5">
+                {TABS.map(tab => (
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-all ${
+                      activeTab === tab.id ? "bg-purple-100 text-purple-700" : "text-gray-400 hover:bg-gray-100"
+                    }`}
+                  >
+                    {tab.icon}{tab.label}
+                  </button>
+                ))}
+              </div>
               {/* Add media pill */}
               <div>
                 <button
@@ -307,18 +319,6 @@ export default function FeedComposerBar() {
                   <Plus size={13} strokeWidth={2.5} />
                   Add media
                 </button>
-              </div>
-              {/* Type tabs */}
-              <div className="flex gap-1.5">
-                {TABS.map(tab => (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-all ${
-                      activeTab === tab.id ? "bg-purple-100 text-purple-700" : "text-gray-400 hover:bg-gray-100"
-                    }`}
-                  >
-                    {tab.icon}{tab.label}
-                  </button>
-                ))}
               </div>
             </div>
           </div>
