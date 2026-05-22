@@ -526,14 +526,55 @@ serve(async (req) => {
           } catch (e) { console.error('Open Library parallel error:', e); return []; }
         })();
 
+        // When the query has a trailing number (e.g. "emma m lion volume 8"), also fire
+        // base-query searches without the number ("emma m lion volume") in parallel.
+        // This ensures the series still surfaces even when Vol. 8 is stored as "Vol. 8"
+        // or "vol. 8" in the catalog and doesn't match the literal word "volume 8".
+        const hasTrailingNum = !byMatch && !!earlySeqBase && earlySeqBase !== searchQuery;
+
+        const gbBasePromise = (hasTrailingNum && googleBooksApiKey) ? (async () => {
+          try {
+            const baseUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(`intitle:${earlySeqBase}`)}&maxResults=10&printType=books&key=${googleBooksApiKey}`;
+            const res = await fetchWithTimeout(baseUrl, {}, 4000);
+            if (!res.ok) return [];
+            const data = await res.json();
+            console.log('Google Books (base/no-num intitle) items:', data.items?.length ?? 0);
+            return (data.items || []).slice(0, 10).filter((item: any) => item.volumeInfo && isContentAppropriate(item.volumeInfo, 'book')).map((item: any) => {
+              const v = item.volumeInfo;
+              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`, external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [] };
+            });
+          } catch (e) { console.error('Google Books base error:', e); return []; }
+        })() : Promise.resolve([]);
+
+        const olBasePromise = hasTrailingNum ? (async () => {
+          try {
+            const baseUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(earlySeqBase!)}&limit=10`;
+            console.log('Fetching Open Library (base/no-num):', baseUrl);
+            const res = await fetchWithTimeout(baseUrl, { headers: { 'User-Agent': 'Consumed-App/1.0 (support@consumed.app)' } }, 6000);
+            if (!res.ok) return [];
+            const data = await res.json();
+            console.log('Open Library (base) docs:', data.docs?.length ?? 0);
+            return (data.docs || []).slice(0, 10).filter((book: any) => isContentAppropriate(book, 'book')).map((book: any) => ({
+              title: book.title, type: 'book', creator: book.author_name?.[0] || 'Unknown Author',
+              poster_url: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` : '',
+              external_id: book.key, external_source: 'openlibrary',
+              description: book.first_sentence?.[0] || '',
+              release_date: book.first_publish_year ? `${book.first_publish_year}` : null,
+              edition_count: book.edition_count ?? 0, series: book.series?.[0] || null,
+            }));
+          } catch (e) { console.error('Open Library base error:', e); return []; }
+        })() : Promise.resolve([]);
+
         // Wait for all book sources in parallel
-        const [gbPrimary, gbIntitle, olResults] = await Promise.all([
-          gbPrimaryPromise, gbIntitlePromise, olPromise,
+        const [gbPrimary, gbIntitle, olResults, gbBase, olBase] = await Promise.all([
+          gbPrimaryPromise, gbIntitlePromise, olPromise, gbBasePromise, olBasePromise,
         ]);
 
         // Merge: Google Books results take priority (better metadata/covers).
         // Open Library results fill in books that Google Books didn't find.
         // Deduplicate by normalised title (prefer GB over OL for same title).
+        // Base (no-number) results come last — they fill in series entries the
+        // numbered query missed (e.g. "Vol. 8" catalogued differently than "volume 8").
         const seenIds = new Set<string>();
         const seenTitles = new Set<string>();
 
@@ -546,12 +587,14 @@ serve(async (req) => {
           bookResults.push(book);
         };
 
-        // Priority order: intitle (highest title signal) → primary → Open Library
+        // Priority order: intitle (highest title signal) → primary → Open Library → base fallbacks
         for (const b of gbIntitle) addBook(b);
         for (const b of gbPrimary) addBook(b);
         for (const b of olResults) addBook(b);
+        for (const b of gbBase) addBook(b);
+        for (const b of olBase) addBook(b);
 
-        console.log('Total book results after merge:', bookResults.length, '(GB intitle:', gbIntitle.length, 'GB primary:', gbPrimary.length, 'OL:', olResults.length, ')');
+        console.log('Total book results after merge:', bookResults.length, '(GB intitle:', gbIntitle.length, 'GB primary:', gbPrimary.length, 'OL:', olResults.length, 'GB base:', gbBase.length, 'OL base:', olBase.length, ')');
       })());
     }
 
