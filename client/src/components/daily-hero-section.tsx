@@ -352,7 +352,7 @@ function ScoreShareCard({
                     <div className="flex items-center gap-1.5 mb-2">
                       <Dna size={10} className="text-purple-400" />
                       <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                        Your Entertainment DNA
+                        {username ? `${username}'s` : 'Your'} Entertainment DNA Glimpse
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -441,36 +441,12 @@ function ScoreShareCard({
                     {/* Unified social proof + CTA card */}
                     {(() => {
                       const agreedPct = callVoteBreakdown && callAnswer ? (callVoteBreakdown[callAnswer] ?? null) : null;
-                      const topPct = rankData?.beatenPct != null
-                        ? Math.round(100 - rankData.beatenPct)
-                        : rankData?.rank != null && rankData?.total != null && rankData.total > 0
-                          ? Math.round((rankData.rank / rankData.total) * 100)
-                          : null;
 
-                      // Build a single sentence that merges agreed% + rank
-                      let headline: string;
-                      if (agreedPct !== null && topPct !== null) {
-                        headline = agreedPct >= 75
-                          ? `${agreedPct}% of players agreed — and ${username || 'you'}'re in the top ${topPct}%${topPct < 50 ? ' 👑' : ''}`
-                          : `Only ${agreedPct}% agreed — but ${username || 'you'}'re in the top ${topPct}%${topPct < 50 ? ' 👑' : ''}`;
-                      } else if (agreedPct !== null) {
-                        headline = agreedPct >= 75
-                          ? `${agreedPct}% of players said "${callAnswer}"`
-                          : `Only ${agreedPct}% agreed with "${callAnswer}"`;
-                      } else if (topPct !== null) {
-                        headline = `${username || 'You'}'re in the top ${topPct}% of players${topPct < 50 ? ' 👑' : ''}`;
-                      } else {
-                        headline = `${username || 'Your'} take is locked in 🔥`;
-                      }
-
-                      // CTA sub-line
-                      const opponent = callVoteBreakdown && callOptions
-                        ? callOptions.filter(o => o !== callAnswer).sort((a, b) => (callVoteBreakdown[b] ?? 0) - (callVoteBreakdown[a] ?? 0))[0]
-                        : null;
-                      const oppPct = opponent && callVoteBreakdown ? Math.round(callVoteBreakdown[opponent] ?? 0) : 0;
-                      const cta = opponent && oppPct > 0
-                        ? `${oppPct}% went with "${opponent}" — where do your friends sit?`
-                        : `Where do your friends sit? Share and start the debate.`;
+                      const headline = agreedPct !== null
+                        ? agreedPct >= 75
+                          ? `${agreedPct}% of players agreed — where do you and your friends sit?`
+                          : `Only ${agreedPct}% agreed — where do you and your friends sit?`
+                        : `Where do you and your friends sit?`;
 
                       return (
                         <div
@@ -478,11 +454,8 @@ function ScoreShareCard({
                           style={{ background: 'rgba(237,233,254,0.08)', border: '1px solid rgba(167,139,250,0.2)' }}
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="font-bold leading-snug text-white mb-1" style={{ fontSize: '15px' }}>
+                            <p className="font-bold leading-snug text-white" style={{ fontSize: '15px' }}>
                               {headline}
-                            </p>
-                            <p className="text-[12px] leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                              {cta}
                             </p>
                           </div>
                           {rankData?.rank != null && (
@@ -572,7 +545,7 @@ function ScoreShareCard({
                     <div className="flex items-center gap-1.5 mb-2">
                       <Dna size={10} className="text-purple-400" />
                       <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                        Your Entertainment DNA
+                        {username ? `${username}'s` : 'Your'} Entertainment DNA Glimpse
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -2057,7 +2030,7 @@ export function DailyHeroSection() {
       return { accuracy, points: pointsRes.data?.all_time ?? null };
     },
     enabled: !!user?.id,
-    staleTime: 120000,
+    staleTime: 0,
   });
 
   // ── Trivia rank (for play scorecard) ──
