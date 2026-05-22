@@ -1845,27 +1845,23 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                         <span className="text-sm font-bold text-gray-900 hover:text-purple-600 cursor-pointer leading-snug">{cardDisplayName}</span>
                       </Link>
                       {post.rating && post.rating > 0 && (post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought') && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex items-center gap-0.5">
-                            {[1,2,3,4,5].map(s => {
-                              const r = post.rating!;
-                              if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
-                              if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                              return <Star key={s} size={13} className="text-gray-200" />;
-                            })}
+                        <>
+                          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-1">
+                            <div className="flex items-center gap-0.5 flex-shrink-0">
+                              {[1,2,3,4,5].map(s => {
+                                const r = post.rating!;
+                                if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
+                                if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                                return <Star key={s} size={13} className="text-gray-200" />;
+                              })}
+                            </div>
+                            {post.externalId && post.externalSource
+                              ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer">{post.mediaTitle}{isSeries ? ' Series' : ''}</span></Link>
+                              : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400">{post.mediaTitle}{isSeries ? ' Series' : ''}</span>
+                            }
                           </div>
-                          {post.externalId && post.externalSource
-                            ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer">{post.mediaTitle}{isSeries ? ' Series' : ''}</span></Link>
-                            : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400">{post.mediaTitle}{isSeries ? ' Series' : ''}</span>
-                          }
-                          {ratingDiffLine(post.rating, '')}
-                        </div>
-                      )}
-                      {/* Taste alignment */}
-                      {tasteAlignment !== null && isOtherUser && (
-                        <p className="text-sm font-semibold text-violet-600 mt-1.5">
-                          You're {tasteAlignment}% aligned with {cardDisplayName}'s taste overall
-                        </p>
+                          {ratingDiffLine(post.rating, 'mt-0.5')}
+                        </>
                       )}
                       {post.content ? (
                         <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mt-1">
@@ -1918,15 +1914,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 </div>
               )}
             </div>
-          )}
-          {/* Primary reply CTA — directly to the poster, shown before secondary raters */}
-          {isOtherUser && post.user && (
-            <button
-              onClick={(e) => { e.stopPropagation(); const name = post.user?.displayName || post.user?.username; if (name) { setCommentText(`@${name} `); setReplyingToName(name); } if (!showComments) handleCommentToggle(); }}
-              className="mt-2 text-[11px] font-semibold text-violet-600 hover:text-violet-700 transition-colors"
-            >
-              Reply to @{post.user?.displayName || post.user?.username}
-            </button>
           )}
 
           {/* Other raters — visually secondary: small avatars, muted text */}
@@ -2049,6 +2036,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {ratingValue ? ratingDiffLine(ratingValue) : null}
               </div>
             )}
+          </div>
+        )}
+        {tasteAlignment !== null && isOtherUser && (
+          <div className="mt-3 pt-3 border-t border-gray-100 px-0">
+            <p className="text-sm font-semibold text-violet-600">
+              You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste overall
+            </p>
           </div>
         )}
         </div>
