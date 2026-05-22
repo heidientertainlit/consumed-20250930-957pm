@@ -455,7 +455,11 @@ function ScoreShareCard({
                             {headline}
                           </p>
                           <p className="text-[12px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                            Share and start the debate. 🔥
+                            {[
+                              'Know someone who\'d lose it over this?',
+                              'Is this a hot take?',
+                              'Would your group chat agree?',
+                            ][new Date().getDate() % 3]}
                           </p>
                         </div>
                       );
@@ -585,7 +589,13 @@ function ScoreShareCard({
                       style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.18) 0%,rgba(56,189,248,0.08) 100%)', border: '1px solid rgba(124,58,237,0.3)' }}
                     >
                       <p className="text-[15px] font-black text-white leading-tight">{headline}</p>
-                      <p className="text-[11px] mt-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>Share and start the debate. 🔥</p>
+                      <p className="text-[11px] mt-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                        {[
+                          'Someone in your group chat definitely knew this.',
+                          'How many of your friends would\'ve known?',
+                          'Did your friends do better?',
+                        ][new Date().getDate() % 3]}
+                      </p>
                     </div>
                   );
                 })()}
