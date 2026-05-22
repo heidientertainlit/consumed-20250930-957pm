@@ -14,6 +14,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { APP_BASE } from '@/lib/share';
+import { TodaysPlayNudge } from '@/components/todays-play-nudge';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
@@ -2251,9 +2252,11 @@ export function DailyHeroSection() {
                       <span className="text-[8px] font-bold text-purple-100">+{isOpinionDay ? (dailyCall?.points_reward ?? 10) : readyQuestions.length * 10} pts</span>
                     </span>
                   )}
-                  <span className={`${front ? 'text-xs' : 'text-[10px]'} text-purple-200/60 font-medium`}>
-                    1 question
-                  </span>
+                  {front ? (
+                    <TodaysPlayNudge variant="subtle" />
+                  ) : (
+                    <span className="text-[10px] text-purple-200/60 font-medium">1 question</span>
+                  )}
                 </div>
                 {front ? (
                   <span className="bg-white text-purple-950 text-sm font-bold px-6 py-2.5 rounded-full shadow-lg flex items-center gap-1.5">

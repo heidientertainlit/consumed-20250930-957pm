@@ -6517,9 +6517,11 @@ export default function Feed() {
             </h1>
 
             <DailyHeroSection />
-            <TodaysPlayNudge variant="subtle" />
             <div className="mt-4">
               <DnaMomentFeaturedCard />
+            </div>
+            <div className="mt-3">
+              <WhatsYourMove />
             </div>
 
           </div>
@@ -6528,8 +6530,6 @@ export default function Feed() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-6" data-feed-content>
-        <WhatsYourMove />
-
         {/* Pending Friend Casts - You've Been Cast! - At top of white feed area */}
         {pendingCasts.length > 0 && (
           <div className="space-y-3 mb-4">
