@@ -695,10 +695,11 @@ export default function FeedComposerBar() {
                   <p className="px-5 text-xs font-bold text-white/40 uppercase tracking-widest mb-2">Results</p>
                   {searchResults.map((r, i) => {
                     const mediaType = r.type === 'book_series' ? 'book' : r.type;
+                    const externalSource = r.external_source === 'openai' ? 'openlibrary' : (r.external_source || 'tmdb');
                     return (
                       <MediaRow key={i} item={r}
-                        onTrack={() => { setQuickAddMedia({ title: r.title, mediaType, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
-                        onRate={() => { setActiveTab("review"); selectMedia({ ...r, type: mediaType }); }}
+                        onTrack={() => { setQuickAddMedia({ title: r.title, mediaType, imageUrl: r.image_url, externalId: r.external_id, externalSource: externalSource, creator: r.creator }); setIsQuickAddOpen(true); }}
+                        onRate={() => { setActiveTab("review"); selectMedia({ ...r, type: mediaType, external_source: externalSource }); }}
                         seriesExpanded={expandedSeriesId === r.external_id}
                         seriesBooks={seriesBooksMap[r.external_id]}
                         seriesLoading={loadingSeriesId === r.external_id}
