@@ -8,7 +8,7 @@ type TabType = "take" | "review" | "poll" | "prediction";
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode; placeholder: string }[] = [
   { id: "take",       label: "Take",       icon: <Flame className="w-3.5 h-3.5" />,       placeholder: "What's your hot take?" },
-  { id: "review",     label: "Review",     icon: <Star className="w-3.5 h-3.5" />,         placeholder: "Write your review..." },
+  { id: "review",     label: "Rate",       icon: <Star className="w-3.5 h-3.5" />,         placeholder: "Write your review..." },
   { id: "poll",       label: "Poll",       icon: <BarChart2 className="w-3.5 h-3.5" />,    placeholder: "Ask a question..." },
   { id: "prediction", label: "Prediction", icon: <TrendingUp className="w-3.5 h-3.5" />,   placeholder: "Make a prediction..." },
 ];
