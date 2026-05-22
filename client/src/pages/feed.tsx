@@ -1698,37 +1698,27 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
               </div>
             )}
-            {/* Threads-style layout: avatar left | everything right */}
+            {/* Main body: poster left | name + stars + caption right */}
             <div className="flex gap-3 items-start">
-              {/* Circular avatar */}
-              <Link href={`/user/${post.user?.id || ''}`} onClick={(e) => e.stopPropagation()}>
-                <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-gray-100">
-                  {post.user?.avatar
-                    ? <img src={post.user.avatar} className="w-full h-full object-cover" alt="" />
-                    : <div className="w-full h-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-sm font-bold">
-                        {(post.user?.displayName || post.user?.username || '?')[0].toUpperCase()}
-                      </div>
-                  }
-                </div>
-              </Link>
-              {/* Right column */}
+              {posterEl ?? posterFallback}
               <div className="flex-1 min-w-0">
-                {/* Username + timestamp row */}
-                <div className="flex items-baseline gap-1.5 mb-1">
-                  <Link href={`/user/${post.user?.id || ''}`}>
-                    <span className="text-[14px] font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
-                  </Link>
-                  <span className="text-[12px] text-gray-400">· {timeAgo(post.timestamp)}</span>
-                </div>
+                {/* Name */}
+                {post.user && (
+                  <div className="mb-0.5">
+                    <Link href={`/user/${post.user.id || ''}`}>
+                      <p className="text-sm font-medium text-purple-800 hover:text-purple-900 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
+                    </Link>
+                  </div>
+                )}
                 {/* Stars + media title */}
                 {(post.rating || 0) > 0 && (
-                  <div className="flex items-center gap-2 mb-1.5">
+                  <div className="flex items-center gap-2 mb-2">
                     <div className="flex items-center gap-0.5">
                       {[1,2,3,4,5].map(s => {
                         const r = post.rating!;
-                        if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
-                        if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                        return <Star key={s} size={13} className="text-gray-200" />;
+                        if (s <= Math.floor(r)) return <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />;
+                        if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={14} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={14} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                        return <Star key={s} size={14} className="text-gray-200" />;
                       })}
                     </div>
                     {post.mediaTitle && (
@@ -1742,19 +1732,15 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     {ratingJustSaved && <span className="text-[11px] text-green-600 font-semibold">✓ Saved!</span>}
                   </div>
                 )}
-                {/* Content text — Threads style */}
+                {/* Content text */}
                 {post.content ? (
-                  <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mb-2">
-                    <p className={`text-gray-800 text-[15px] leading-relaxed ${contentExpanded ? '' : 'line-clamp-4'}`}>{post.content}</p>
+                  <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
+                    <p className={`text-gray-700 text-[15px] leading-relaxed font-normal ${contentExpanded ? '' : 'line-clamp-4'}`}>{post.content}</p>
                     {!contentExpanded && post.content.length > 120 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
                   </div>
                 ) : null}
-                {/* Poster below the text */}
-                {(posterEl ?? posterFallback) && (
-                  <div className="mb-2">{posterEl ?? posterFallback}</div>
-                )}
                 {tasteAlignment !== null && (
-                  <p className="text-sm font-semibold text-violet-600 mt-1">
+                  <p className="text-sm font-semibold text-violet-600 mt-1.5">
                     You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
                   </p>
                 )}
