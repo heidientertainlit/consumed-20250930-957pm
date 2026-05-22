@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Star, BarChart2, TrendingUp, X, Search, Loader2, Flame, ArrowLeft } from "lucide-react";
+import { Plus, Star, BarChart2, TrendingUp, X, Search, Loader2, Flame, ArrowLeft, Bookmark, MessageSquare } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -26,6 +27,43 @@ const MEDIA_FILTERS: { id: MediaFilter; label: string }[] = [
   { id: "youtube", label: "YouTube" },
 ];
 
+function MediaRow({ item, onTag, onRate }: { item: any; onTag: () => void; onRate: () => void }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-2.5 active:opacity-80">
+      {item.image_url
+        ? <img src={item.image_url} alt="" className="w-11 h-15 object-cover rounded-lg flex-shrink-0" style={{ height: '60px', width: '44px' }} />
+        : <div className="rounded-lg flex-shrink-0" style={{ width: 44, height: 60, background: 'rgba(255,255,255,0.1)' }} />
+      }
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-white truncate leading-snug">{item.title}</p>
+        <p className="text-xs text-white/40 capitalize mt-0.5">
+          {item.type === "tv" ? "TV Show" : item.type === "movie" ? "Movie" : item.type}
+          {item.year ? ` • ${item.year}` : ""}
+          {item.creator && item.creator !== "Unknown Author" ? ` • ${item.creator}` : ""}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <button
+          onClick={onRate}
+          className="w-9 h-9 rounded-full flex items-center justify-center transition-transform active:scale-90"
+          style={{ background: 'rgba(251,146,60,0.25)' }}
+          title="Rate this"
+        >
+          <Star size={15} className="text-orange-400" />
+        </button>
+        <button
+          onClick={onTag}
+          className="w-9 h-9 rounded-full flex items-center justify-center transition-transform active:scale-90"
+          style={{ background: 'rgba(139,92,246,0.3)' }}
+          title="Tag to post"
+        >
+          <Bookmark size={15} className="text-purple-300" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function FeedComposerBar() {
   const { session } = useAuth();
   const { toast } = useToast();
@@ -44,6 +82,8 @@ export default function FeedComposerBar() {
   const [isPosting, setIsPosting] = useState(false);
   const [pollOptions, setPollOptions] = useState(["", ""]);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
+  const [recommendedItems, setRecommendedItems] = useState<any[]>([]);
+  const [trendingItems, setTrendingItems] = useState<any[]>([]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -100,10 +140,52 @@ export default function FeedComposerBar() {
   };
 
   useEffect(() => {
-    if (showMediaSearch) {
-      requestAnimationFrame(() => setSearchSlideIn(true));
-    }
-  }, [showMediaSearch]);
+    if (!showMediaSearch) return;
+    requestAnimationFrame(() => setSearchSlideIn(true));
+
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    supabase
+      .from("list_items")
+      .select("title, media_type, image_url, external_id, external_source, creator")
+      .eq("user_id", userId)
+      .not("image_url", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(10)
+      .then(({ data }) => {
+        if (data) setRecommendedItems(
+          data.filter(r => r.image_url).map(r => ({
+            title: r.title, type: r.media_type, image_url: r.image_url,
+            external_id: r.external_id, external_source: r.external_source, creator: r.creator,
+          }))
+        );
+      });
+
+    supabase
+      .from("list_items")
+      .select("title, media_type, image_url, external_id, external_source")
+      .not("image_url", "is", null)
+      .limit(200)
+      .then(({ data }) => {
+        if (!data) return;
+        const counts: Record<string, { item: any; count: number }> = {};
+        data.forEach(r => {
+          if (!r.external_id || !r.image_url) return;
+          const key = r.external_id;
+          if (!counts[key]) counts[key] = { item: r, count: 0 };
+          counts[key].count++;
+        });
+        const sorted = Object.values(counts)
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10)
+          .map(({ item }) => ({
+            title: item.title, type: item.media_type, image_url: item.image_url,
+            external_id: item.external_id, external_source: item.external_source,
+          }));
+        setTrendingItems(sorted);
+      });
+  }, [showMediaSearch, session]);
 
   const closeMediaSearch = () => {
     setSearchSlideIn(false);
@@ -331,11 +413,11 @@ export default function FeedComposerBar() {
               }}
             >
               {/* Header */}
-              <div className="flex items-center gap-3 px-4 pt-12 pb-3 border-b border-white/10 flex-shrink-0">
-                <button onClick={closeMediaSearch} className="p-1.5 rounded-full hover:bg-white/10 transition-colors">
+              <div className="flex items-center gap-3 px-4 pt-14 pb-4 flex-shrink-0">
+                <button onClick={closeMediaSearch} className="p-2 rounded-full hover:bg-white/10 transition-colors flex-shrink-0">
                   <ArrowLeft size={20} className="text-white" />
                 </button>
-                <div className="flex-1 flex items-center gap-2 rounded-2xl px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                <div className="flex-1 flex items-center gap-2 rounded-2xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.1)' }}>
                   <Search size={16} className="text-white/50 flex-shrink-0" />
                   <input
                     ref={searchInputRef}
@@ -343,6 +425,7 @@ export default function FeedComposerBar() {
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Search movies, shows, books…"
                     className="flex-1 text-sm text-white placeholder:text-white/40 bg-transparent outline-none"
+                    autoFocus
                   />
                   {searchQuery && (
                     isSearching
@@ -353,7 +436,7 @@ export default function FeedComposerBar() {
               </div>
 
               {/* Filter pills */}
-              <div className="flex gap-2 px-4 py-3 overflow-x-auto flex-shrink-0 border-b border-white/10">
+              <div className="flex gap-2 px-4 pb-4 overflow-x-auto flex-shrink-0">
                 {MEDIA_FILTERS.map(f => (
                   <button key={f.id} onClick={() => setMediaFilter(f.id)}
                     className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
@@ -368,55 +451,73 @@ export default function FeedComposerBar() {
                 ))}
               </div>
 
-              {/* Results */}
+              {/* Results / Pre-search sections */}
               <div className="flex-1 overflow-y-auto">
+
+                {/* ── Pre-search: Recommended + Trending ── */}
                 {!searchQuery && (
-                  <div className="flex flex-col items-center justify-center h-48 gap-3 text-center px-8">
-                    <Search size={32} className="text-white/20" />
-                    <p className="text-sm text-white/40">Search for a movie, show, book, or anything else to tag it to your post.</p>
+                  <div className="pb-8">
+                    {/* Recommended */}
+                    {recommendedItems.length > 0 && (
+                      <div className="pt-5">
+                        <p className="px-5 text-xs font-bold text-white/40 uppercase tracking-widest mb-3">For You</p>
+                        {recommendedItems.map((r, i) => (
+                          <MediaRow key={i} item={r}
+                            onTag={() => selectMedia(r)}
+                            onRate={() => { setActiveTab("review"); selectMedia(r); }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {/* Trending */}
+                    {trendingItems.length > 0 && (
+                      <div className="pt-5">
+                        <p className="px-5 text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Trending on Consumed</p>
+                        {trendingItems.map((r, i) => (
+                          <MediaRow key={i} item={r}
+                            onTag={() => selectMedia(r)}
+                            onRate={() => { setActiveTab("review"); selectMedia(r); }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {recommendedItems.length === 0 && trendingItems.length === 0 && (
+                      <div className="flex flex-col items-center justify-center h-48 gap-3 text-center px-8">
+                        <Search size={32} className="text-white/20" />
+                        <p className="text-sm text-white/40">Search for a movie, show, book, or anything else to tag it to your post.</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
+                {/* Loading */}
                 {searchQuery && isSearching && (
                   <div className="flex justify-center py-10">
                     <Loader2 size={24} className="text-purple-400 animate-spin" />
                   </div>
                 )}
 
+                {/* No results */}
                 {searchQuery && !isSearching && searchResults.length === 0 && (
                   <div className="flex flex-col items-center justify-center h-40 text-center px-8">
                     <p className="text-sm text-white/40">No results for "<span className="text-white/60">{searchQuery}</span>"</p>
                   </div>
                 )}
 
+                {/* Search results */}
                 {searchResults.length > 0 && (
-                  <div className="px-4 pt-4 pb-8">
-                    <p className="text-xs font-semibold text-white/30 uppercase tracking-wide mb-3">Results</p>
-                    <div className="space-y-1">
-                      {searchResults.map((r, i) => (
-                        <button key={i} onClick={() => selectMedia(r)}
-                          className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left transition-colors active:scale-[0.98]"
-                          style={{ background: 'rgba(255,255,255,0.04)' }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-                        >
-                          {r.image_url
-                            ? <img src={r.image_url} alt="" className="w-10 h-14 object-cover rounded-lg flex-shrink-0" />
-                            : <div className="w-10 h-14 rounded-lg flex-shrink-0" style={{ background: 'rgba(255,255,255,0.1)' }} />
-                          }
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-white truncate">{r.title}</p>
-                            <p className="text-xs text-white/40 capitalize mt-0.5">
-                              {r.type}{r.year ? ` · ${r.year}` : ""}
-                              {r.creator && r.creator !== "Unknown Author" ? ` · ${r.creator}` : ""}
-                            </p>
-                          </div>
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(139,92,246,0.3)' }}>
-                            <Plus size={14} className="text-purple-300" />
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                  <div className="pt-4 pb-8">
+                    <p className="px-5 text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Results</p>
+                    {searchResults.map((r, i) => (
+                      <MediaRow key={i} item={r}
+                        onTag={() => selectMedia(r)}
+                        onRate={() => { setActiveTab("review"); selectMedia(r); }}
+                      />
+                    ))}
+                    <p className="text-center text-xs text-white/25 mt-6 px-8">
+                      Can't find what you're looking for?{" "}
+                      <span className="text-purple-400 font-medium">Search more specifically →</span>
+                    </p>
                   </div>
                 )}
               </div>
