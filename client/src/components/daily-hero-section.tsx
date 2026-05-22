@@ -432,13 +432,13 @@ function ScoreShareCard({
                         <p className="text-[9px] font-bold uppercase tracking-[0.2em] mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
                           {username ? `${username} said:` : 'I said:'}
                         </p>
-                        <p className="font-black leading-none text-white break-words" style={{ fontSize: '36px', letterSpacing: '-0.02em', lineHeight: 1.05, textTransform: 'uppercase' }}>
+                        <p className="font-black leading-none text-white break-words" style={{ fontSize: '26px', letterSpacing: '-0.01em', lineHeight: 1.1, textTransform: 'uppercase' }}>
                           {callAnswer}.
                         </p>
                       </div>
                     </div>
 
-                    {/* Social proof + rank card — always shown */}
+                    {/* Unified social proof + CTA card */}
                     {(() => {
                       const agreedPct = callVoteBreakdown && callAnswer ? (callVoteBreakdown[callAnswer] ?? null) : null;
                       const topPct = rankData?.beatenPct != null
@@ -446,80 +446,54 @@ function ScoreShareCard({
                         : rankData?.rank != null && rankData?.total != null && rankData.total > 0
                           ? Math.round((rankData.rank / rankData.total) * 100)
                           : null;
+
+                      // Build a single sentence that merges agreed% + rank
+                      let headline: string;
+                      if (agreedPct !== null && topPct !== null) {
+                        headline = agreedPct >= 75
+                          ? `${agreedPct}% of players agreed — and ${username || 'you'}'re in the top ${topPct}%${topPct < 50 ? ' 👑' : ''}`
+                          : `Only ${agreedPct}% agreed — but ${username || 'you'}'re in the top ${topPct}%${topPct < 50 ? ' 👑' : ''}`;
+                      } else if (agreedPct !== null) {
+                        headline = agreedPct >= 75
+                          ? `${agreedPct}% of players said "${callAnswer}"`
+                          : `Only ${agreedPct}% agreed with "${callAnswer}"`;
+                      } else if (topPct !== null) {
+                        headline = `${username || 'You'}'re in the top ${topPct}% of players${topPct < 50 ? ' 👑' : ''}`;
+                      } else {
+                        headline = `${username || 'Your'} take is locked in 🔥`;
+                      }
+
+                      // CTA sub-line
+                      const opponent = callVoteBreakdown && callOptions
+                        ? callOptions.filter(o => o !== callAnswer).sort((a, b) => (callVoteBreakdown[b] ?? 0) - (callVoteBreakdown[a] ?? 0))[0]
+                        : null;
+                      const oppPct = opponent && callVoteBreakdown ? Math.round(callVoteBreakdown[opponent] ?? 0) : 0;
+                      const cta = opponent && oppPct > 0
+                        ? `${oppPct}% went with "${opponent}" — where do your friends sit?`
+                        : `Where do your friends sit? Share and start the debate.`;
+
                       return (
                         <div
                           className="rounded-2xl flex items-center gap-4 px-4 py-4 mb-4"
-                          style={{ background: 'rgba(237,233,254,0.1)', border: '1px solid rgba(167,139,250,0.25)' }}
+                          style={{ background: 'rgba(237,233,254,0.08)', border: '1px solid rgba(167,139,250,0.2)' }}
                         >
                           <div className="flex-1 min-w-0">
-                            {agreedPct !== null ? (
-                              <>
-                                <p className="text-[12px] mb-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                                  {agreedPct >= 75 ? `${agreedPct}% of players agreed` : `Only ${agreedPct}% agreed — but`}
-                                </p>
-                                {topPct !== null ? (
-                                  <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
-                                    {username || 'You'} is in the top {topPct}% of players{topPct < 50 ? ' 👑' : ''}
-                                  </p>
-                                ) : (
-                                  <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
-                                    {username || 'Your'} take is locked in 🔥
-                                  </p>
-                                )}
-                              </>
-                            ) : topPct !== null ? (
-                              <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
-                                {username || 'You'} is in the top {topPct}% of players{topPct < 50 ? ' 👑' : ''}
-                              </p>
-                            ) : (
-                              <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
-                                {username || 'Your'} take is locked in 🔥
-                              </p>
-                            )}
+                            <p className="font-bold leading-snug text-white mb-1" style={{ fontSize: '15px' }}>
+                              {headline}
+                            </p>
+                            <p className="text-[12px] leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                              {cta}
+                            </p>
                           </div>
                           {topPct !== null && (
                             <div
-                              className="rounded-xl px-4 py-3 text-center shrink-0"
-                              style={{ background: '#2D1B69', minWidth: 84 }}
+                              className="rounded-xl px-3 py-2 text-center shrink-0"
+                              style={{ background: '#2D1B69', minWidth: 70 }}
                             >
-                              <p className="font-black leading-none text-white" style={{ fontSize: '34px' }}>{topPct}%</p>
-                              <p className="text-[9px] font-bold uppercase tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>OF PLAYERS</p>
+                              <p className="font-black leading-none text-white" style={{ fontSize: '28px' }}>{topPct}%</p>
+                              <p className="text-[8px] font-bold uppercase tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>TOP</p>
                             </div>
                           )}
-                        </div>
-                      );
-                    })()}
-
-                    {/* "Start a fight" block */}
-                    {(() => {
-                      const seed = new Date().getDate() % 3;
-                      let taunt: string;
-                      if (callVoteBreakdown && callOptions && callOptions.length >= 2) {
-                        const opponent = callOptions
-                          .filter(o => o !== callAnswer)
-                          .sort((a, b) => (callVoteBreakdown[b] ?? 0) - (callVoteBreakdown[a] ?? 0))[0];
-                        const oppPct = opponent ? (callVoteBreakdown[opponent] ?? 0) : 0;
-                        const taunts = [
-                          opponent && oppPct > 0
-                            ? `${oppPct}% went with "${opponent}" — are they onto something or just wrong?`
-                            : `Not everyone sees it your way. Think you can change their minds?`,
-                          `Most people picked something else. Think they're missing the point? Tell them.`,
-                          opponent
-                            ? `"${opponent}" is what the crowd went with. ${oppPct}% of takes can't all be right… can they?`
-                            : `The crowd went a different way. Think you're the smart one here?`,
-                        ];
-                        taunt = taunts[seed];
-                      } else {
-                        taunt = [
-                          `Not everyone will agree with you here. Ready to defend your take?`,
-                          `Bold call. Think you can convince the skeptics?`,
-                          `Plenty of people see this differently — think you're right?`,
-                        ][seed];
-                      }
-                      return (
-                        <div className="rounded-xl px-4 py-3 mb-4" style={{ background: '#1a1030', border: '1px solid rgba(255,255,255,0.06)' }}>
-                          <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: '#a89ee0' }}>💬 Start a fight</p>
-                          <p className="text-[12px] leading-snug" style={{ color: 'rgba(255,255,255,0.7)' }}>{taunt}</p>
                         </div>
                       );
                     })()}
