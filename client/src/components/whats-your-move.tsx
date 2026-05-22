@@ -17,13 +17,8 @@ export function WhatsYourMove() {
       icon: <Star size={20} className="text-yellow-400" />,
     },
     {
-      id: "prediction" as Tab,
-      label: "Predict",
-      icon: <Target size={20} className="text-red-400" />,
-    },
-    {
       id: "poll" as Tab,
-      label: "Poll",
+      label: "Vote",
       icon: <CheckSquare size={20} className="text-blue-400" />,
     },
     {
