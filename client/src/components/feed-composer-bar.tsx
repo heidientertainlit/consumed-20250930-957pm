@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Flame, Star, BarChart2, List, TrendingUp, AlignJustify, X, Search, Loader2 } from "lucide-react";
+import { Plus, Star, BarChart2, List, TrendingUp, AlignJustify, X, Search, Loader2, Flame } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -202,16 +202,18 @@ export default function FeedComposerBar() {
     return (
       <button
         onClick={() => setIsExpanded(true)}
-        className="w-full rounded-2xl bg-white/10 border border-white/15 px-4 py-3 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
+        className="w-full rounded-2xl bg-white border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
       >
-        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
           {user?.user_metadata?.avatar_url
             ? <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
-            : <span className="text-white text-xs font-bold">{(user?.user_metadata?.display_name || user?.email || "U")[0].toUpperCase()}</span>
+            : <span className="text-gray-500 text-xs font-bold">{(user?.user_metadata?.display_name || user?.email || "U")[0].toUpperCase()}</span>
           }
         </div>
-        <span className="text-white/50 text-sm flex-1">What's your next move?</span>
-        <Flame className="w-4 h-4 text-white/30" />
+        <span className="text-gray-400 text-sm flex-1">What's your next move?</span>
+        <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+          <Plus className="w-4 h-4 text-white" />
+        </div>
       </button>
     );
   }

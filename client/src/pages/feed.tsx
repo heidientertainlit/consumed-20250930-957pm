@@ -6519,9 +6519,6 @@ export default function Feed() {
 
             <DailyHeroSection />
             <div className="mt-3">
-              <FeedComposerBar />
-            </div>
-            <div className="mt-3">
               <DnaMomentFeaturedCard />
             </div>
 
@@ -6531,6 +6528,11 @@ export default function Feed() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-6" data-feed-content>
+        {/* Composer bar — top of white feed */}
+        <div className="mb-4">
+          <FeedComposerBar />
+        </div>
+
         {/* Pending Friend Casts - You've Been Cast! - At top of white feed area */}
         {pendingCasts.length > 0 && (
           <div className="space-y-3 mb-4">
