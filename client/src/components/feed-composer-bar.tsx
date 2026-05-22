@@ -293,15 +293,23 @@ export default function FeedComposerBar() {
             )}
 
             {/* Bottom toolbar */}
-            <div className="flex items-center gap-2 px-5 pb-4 pt-2 border-t border-gray-100">
-              <button
-                onClick={() => setShowSearch(s => !s)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold flex-shrink-0 transition-all ${showSearch ? 'bg-purple-600 text-white' : 'bg-purple-600 text-white'}`}
-              >
-                <Plus size={13} strokeWidth={2.5} />
-                Add media
-              </button>
-              <div className="flex gap-1.5 overflow-x-auto flex-1">
+            <div className="px-5 pb-4 pt-2 border-t border-gray-100 space-y-2">
+              {/* Add media pill */}
+              <div>
+                <button
+                  onClick={() => setShowSearch(s => !s)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                    showSearch
+                      ? 'bg-purple-100 border-purple-300 text-purple-700'
+                      : 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100'
+                  }`}
+                >
+                  <Plus size={13} strokeWidth={2.5} />
+                  Add media
+                </button>
+              </div>
+              {/* Type tabs */}
+              <div className="flex gap-1.5">
                 {TABS.map(tab => (
                   <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-all ${
