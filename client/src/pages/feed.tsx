@@ -1225,7 +1225,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const posterEl = post.mediaImage && post.mediaImage.startsWith('http') ? (
     post.externalId && post.externalSource ? (
       <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-        <div className="relative flex-shrink-0 w-14 h-[84px] rounded-xl overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
+        <div className="relative flex-shrink-0 w-20 h-[120px] rounded-xl overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
           <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           {mediaTypeNorm && (
             <div className="absolute bottom-1 left-1 bg-purple-600/50 backdrop-blur-sm rounded-md p-0.5">
@@ -1240,7 +1240,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
       </Link>
     ) : (
-      <div className="relative flex-shrink-0 w-14 h-[84px] rounded-xl overflow-hidden shadow-md">
+      <div className="relative flex-shrink-0 w-20 h-[120px] rounded-xl overflow-hidden shadow-md">
         <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         {mediaTypeNorm && (
           <div className="absolute bottom-1 left-1 bg-purple-600/50 backdrop-blur-sm rounded-md p-0.5">
@@ -1631,26 +1631,22 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </div>
                 </Link>
                 <div className="flex-1 min-w-0">
+                  {/* Row 1: name · verb · time · TV pill */}
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <Link href={`/user/${post.user.id || ''}`}>
                       <span className="text-sm font-bold text-gray-900 hover:text-purple-600 cursor-pointer">{post.user.displayName || post.user.username}</span>
                     </Link>
-                    {post.mediaTitle && (
-                      <>
-                        <span className="text-sm text-gray-500">{(post.rating || 0) > 0 ? 'rated' : 'reviewed'}</span>
-                        {post.externalId && post.externalSource
-                          ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-sm font-semibold text-gray-800 hover:text-purple-600 cursor-pointer line-clamp-1">{post.mediaTitle}</span></Link>
-                          : <span className="text-sm font-semibold text-gray-800 line-clamp-1">{post.mediaTitle}</span>
-                        }
-                      </>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {post.user.username && <span className="text-[11px] text-gray-400">@{post.user.username}</span>}
+                    <span className="text-sm text-gray-400">{(post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'shared a take on' : 'reviewed'}</span>
                     <span className="text-[11px] text-gray-300">·</span>
                     <span className="text-[11px] text-gray-400">{timeAgo(post.timestamp)}</span>
                     {mediaTypeLabel && <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">{mediaTypeLabel}</span>}
                   </div>
+                  {/* Row 2: title only — clean dedicated line */}
+                  {post.mediaTitle && (
+                    post.externalId && post.externalSource
+                      ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><p className="text-[15px] font-semibold text-gray-800 hover:text-purple-600 leading-tight mt-0.5 line-clamp-1 cursor-pointer">{post.mediaTitle}</p></Link>
+                      : <p className="text-[15px] font-semibold text-gray-800 leading-tight mt-0.5 line-clamp-1">{post.mediaTitle}</p>
+                  )}
                 </div>
                 {currentUserId && post.user?.id !== currentUserId && (
                   <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-400 p-1 flex-shrink-0 transition-colors"><Flag size={13} /></button>
@@ -1728,7 +1724,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               <div className="flex-1 min-w-0">
                 {post.content ? (
                   <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
-                    <p className={`text-gray-800 text-[15px] leading-snug font-medium ${contentExpanded ? '' : 'line-clamp-4'}`}>{post.content}</p>
+                    <p className={`text-gray-800 text-[18px] leading-snug font-medium ${contentExpanded ? '' : 'line-clamp-4'}`}>{post.content}</p>
                     {!contentExpanded && post.content.length > 120 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
                   </div>
                 ) : null}
