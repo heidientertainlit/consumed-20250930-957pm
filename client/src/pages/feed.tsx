@@ -1609,6 +1609,23 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         <>
           {/* Top: violet action section */}
           <div className="px-4 pt-4 pb-4 bg-gray-50">
+            {/* Poster identity — always visible so you know whose post this is */}
+            {post.user && (
+              <div className="flex items-center gap-2 mb-2.5">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 overflow-hidden">
+                  {post.user.avatar
+                    ? <img src={post.user.avatar} alt="" className="w-full h-full object-cover" />
+                    : (post.user.displayName || post.user.username || '?')[0]?.toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-bold text-gray-800">{post.user.displayName || post.user.username}</span>
+                  {post.user.username && (
+                    <span className="text-[10px] text-gray-400 ml-1">@{post.user.username}</span>
+                  )}
+                </div>
+                <span className="text-[10px] text-gray-400 flex-shrink-0">{timeAgo(post.timestamp)}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <p className="text-[10px] font-bold text-violet-600 tracking-widest uppercase">What's Your Take?</p>
@@ -1813,32 +1830,59 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       ) : (
         // NORMAL layout — for already-rated or own posts
         <div className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <Link href={`/user/${post.user?.id || ''}`} className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold overflow-hidden flex-shrink-0">
+          {/* Letterboxd-style header: avatar | [name] rated [title] • time */}
+          <div className="flex items-start gap-2.5 mb-3">
+            <Link href={`/user/${post.user?.id || ''}`} className="flex-shrink-0">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold overflow-hidden">
                 {post.user?.avatar
                   ? <img src={post.user.avatar} alt="" className="w-full h-full object-cover" />
                   : (post.user?.displayName || post.user?.username || '?')[0]?.toUpperCase()}
               </div>
-              <div>
-                {(() => {
-                  const cardDisplayName = post.user?.displayName || post.user?.username || 'Someone';
-                  const cardIsRatingType = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review' || post.type === 'thought';
-                  return (
-                    <p className="text-xs font-semibold text-gray-900 leading-tight hover:text-purple-600">
-                      {cardIsRatingType ? `${cardDisplayName}'s Take` : cardDisplayName}
-                    </p>
-                  );
-                })()}
-                {post.user?.username && post.user.username !== post.user?.displayName && (
-                  <p className="text-[10px] text-gray-400 leading-tight">@{post.user.username}</p>
-                )}
-              </div>
             </Link>
-            <div className="flex items-center gap-1.5">
+            <div className="flex-1 min-w-0">
+              {(() => {
+                const cardDisplayName = post.user?.displayName || post.user?.username || 'Someone';
+                const cardUsername = post.user?.username;
+                const cardIsRatingType = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review' || post.type === 'thought';
+                const verb = post.rating && post.rating > 0 ? 'rated' : 'reviewed';
+                return (
+                  <>
+                    <p className="text-sm leading-snug text-gray-700">
+                      <Link href={`/user/${post.user?.id || ''}`}>
+                        <span className="font-bold text-gray-900 hover:text-purple-600 cursor-pointer">{cardDisplayName}</span>
+                      </Link>
+                      {cardIsRatingType && post.mediaTitle && (
+                        <> <span className="font-normal text-gray-500">{verb}</span>{' '}
+                          {post.externalId && post.externalSource
+                            ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="font-semibold text-gray-800 hover:text-purple-600 cursor-pointer">{post.mediaTitle}</span></Link>
+                            : <span className="font-semibold text-gray-800">{post.mediaTitle}</span>
+                          }
+                        </>
+                      )}
+                    </p>
+                    <p className="text-[11px] text-gray-400 leading-tight mt-0.5">
+                      {cardUsername ? `@${cardUsername} · ` : ''}{timeAgo(post.timestamp)}
+                    </p>
+                    {/* Stars — left-aligned below the name/title line */}
+                    {post.rating && post.rating > 0 && (post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought') && (
+                      <div className="flex items-center gap-0.5 mt-1">
+                        {[1,2,3,4,5].map(s => {
+                          const r = post.rating!;
+                          if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
+                          if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                          return <Star key={s} size={13} className="text-gray-200" />;
+                        })}
+                        {ratingDiffLine(post.rating, 'ml-1')}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
               {currentUserId && post.user?.id === currentUserId && onDeletePost && (
-                <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors">
-                  <Trash2 size={14} />
+                <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors p-1">
+                  <Trash2 size={13} />
                 </button>
               )}
             </div>
@@ -1847,50 +1891,26 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <div className="flex gap-3 items-start">
               {posterEl}
               <div className="min-w-0 flex-1">
-                {/* Title row + stars right-aligned for rating posts */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    {post.externalId && post.externalSource ? (
-                      <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-                        <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{post.mediaTitle}</p>
-                      </Link>
-                    ) : (
-                      <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
-                    )}
-                  </div>
-                  {post.rating && post.rating > 0 && (post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought') && (
-                    <div className="flex flex-col items-end flex-shrink-0">
-                      <div className="flex items-center gap-0.5">
-                        {[1,2,3,4,5].map(s => {
-                          const r = post.rating!;
-                          if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
-                          if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                          return <Star key={s} size={13} className="text-gray-200" />;
-                        })}
-                      </div>
-                      {ratingDiffLine(post.rating, 'mt-0.5 text-right')}
-                    </div>
-                  )}
-                </div>
                 {/* Taste alignment */}
                 {tasteAlignment !== null && isOtherUser && (
-                  <p className="text-[11px] text-violet-600 italic mt-1">
+                  <p className="text-[11px] text-violet-600 italic mb-1">
                     You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste overall
                   </p>
                 )}
-                {post.content && (
-                  <div className="mt-1.5">
-                    <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
-                      <p className={`text-gray-700 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
-                      {!contentExpanded && post.content.length > 100 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
-                    </div>
-                    {currentUserId && post.user?.id !== currentUserId && (
-                      <div className="flex justify-end mt-0.5">
-                        <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-red-400 transition-colors" title="Report post">
-                          <Flag size={11} />
-                        </button>
-                      </div>
-                    )}
+                {post.content ? (
+                  <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
+                    <p className={`text-gray-700 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-3'}`}>{post.content}</p>
+                    {!contentExpanded && post.content.length > 100 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
+                  </div>
+                ) : (
+                  /* No review text — just show title as fallback so card isn't empty */
+                  <p className="text-xs text-gray-400 italic">No review written</p>
+                )}
+                {currentUserId && post.user?.id !== currentUserId && post.content && (
+                  <div className="flex justify-end mt-0.5">
+                    <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-red-400 transition-colors" title="Report post">
+                      <Flag size={11} />
+                    </button>
                   </div>
                 )}
               </div>
