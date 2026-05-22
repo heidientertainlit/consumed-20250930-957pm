@@ -176,7 +176,7 @@ export default function FeedComposerBar() {
       {isOpen && createPortal(
         <div className="fixed inset-0 z-[99999]">
           {/* Full-screen dim */}
-          <div className="absolute inset-0 bg-black/40" onClick={resetForm} />
+          <div className="absolute inset-0 bg-black/65" onClick={resetForm} />
 
           {/* Card — positioned in the top third */}
           <div
