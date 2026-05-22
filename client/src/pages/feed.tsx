@@ -1704,10 +1704,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               <div className="flex-1 min-w-0">
                 {/* Name only — trash is absolute top-right of card */}
                 {post.user && (
-                  <div className="mb-1.5">
+                  <div className="mb-0.5">
                     <Link href={`/user/${post.user.id || ''}`}>
                       <p className="text-sm font-medium text-purple-800 hover:text-purple-900 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
                     </Link>
+                  </div>
+                )}
+                {/* Media title — own row between username and stars */}
+                {post.mediaTitle && (
+                  <div className="mb-1.5">
+                    {post.externalId && post.externalSource
+                      ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-sm font-semibold text-gray-800 hover:text-purple-600 cursor-pointer leading-snug">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span></Link>
+                      : <span className="text-sm font-semibold text-gray-800 leading-snug">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span>
+                    }
                   </div>
                 )}
                 {/* Stars + inline "You rated X/5 · Remove" */}
