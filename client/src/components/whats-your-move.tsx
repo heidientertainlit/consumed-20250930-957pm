@@ -35,10 +35,7 @@ export function WhatsYourMove() {
 
   return (
     <>
-      <div
-        className="rounded-2xl mb-4 overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #1a1040 0%, #0f0a2e 100%)" }}
-      >
+      <div className="rounded-2xl mb-4 overflow-hidden bg-transparent">
         <p className="text-[10px] font-bold tracking-widest text-purple-400 uppercase px-4 pt-4 pb-3">
           What's your move?
         </p>
