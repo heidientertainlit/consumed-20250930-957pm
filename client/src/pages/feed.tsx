@@ -1740,7 +1740,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
                         <div key={r.userId} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500 truncate">{r.displayName || r.userName}</span>
+                            <span className="text-sm text-gray-500 truncate">{r.displayName || r.userName}</span>
                           </div>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <div className="flex items-center gap-0.5">
@@ -1925,7 +1925,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
                   <div key={r.userId} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500">{r.displayName || r.userName}</span>
+                      <span className="text-sm text-gray-500">{r.displayName || r.userName}</span>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <div className="flex items-center gap-0.5">
