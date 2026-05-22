@@ -4340,6 +4340,7 @@ export default function Feed() {
               onDeletePost={handleDeletePost}
               onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
               forceActionFirst={true}
+              forceNormal={true}
             />
           </div>
         </div>
