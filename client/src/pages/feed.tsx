@@ -3981,12 +3981,16 @@ export default function Feed() {
       .sort((a: any, b: any) =>
         new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
       );
-    const seenFinalMedia = new Set<string>();
+    // Allow up to 3 posts per media title so persona users aren't collapsed to 1.
+    // Previously was a Set (max 1 per media); now a Map counting occurrences.
+    // To revert to strict 1-per-media: replace Map logic with the old Set version.
+    const seenFinalMediaCount = new Map<string, number>();
     const finalOrder: any[] = merged.filter((item: any) => {
       const key = (item.externalId || item.mediaTitle || '').toLowerCase().trim();
       if (!key) return true; // no media info — always keep
-      if (seenFinalMedia.has(key)) return false;
-      seenFinalMedia.add(key);
+      const count = seenFinalMediaCount.get(key) || 0;
+      if (count >= 3) return false;
+      seenFinalMediaCount.set(key, count + 1);
       return true;
     });
 
@@ -4573,35 +4577,28 @@ export default function Feed() {
     return renderFeedItem(item, `batch-${batchIndex}`);
   };
 
+  // Renders rating posts vertically inline (previously a horizontal swipe carousel).
+  // To revert to carousel: restore the flex overflow-x-auto wrapper + dot indicators.
   const renderRatingCarousel = (carouselIndex: number) => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
     const carousel = feedRatingCarousels[carouselIndex];
     if (!carousel || carousel.posts.length === 0) return null;
     return (
-      <div key={carousel.id} className="mb-2">
-        <div className="flex items-stretch gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory touch-pan-x md:flex-col md:overflow-x-visible md:snap-none md:pb-0 md:items-stretch">
-          {carousel.posts.map((post: any) => (
-            <UGCGroupCard
-              key={post.id}
-              post={post}
-              onLike={handleLike}
-              isLiked={likedPosts.has(post.id)}
-              session={session}
-              fetchComments={fetchComments}
-              currentUserId={currentAppUserId || undefined}
-              onDeletePost={handleDeletePost}
-              onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
-              forceNormal={true}
-            />
-          ))}
-        </div>
-        {carousel.posts.length > 1 && (
-          <div className="flex justify-center gap-1.5 mt-2">
-            {carousel.posts.map((_: any, i: number) => (
-              <div key={i} className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-            ))}
-          </div>
-        )}
+      <div key={carousel.id} className="flex flex-col gap-3 mb-2">
+        {carousel.posts.map((post: any) => (
+          <UGCGroupCard
+            key={post.id}
+            post={post}
+            onLike={handleLike}
+            isLiked={likedPosts.has(post.id)}
+            session={session}
+            fetchComments={fetchComments}
+            currentUserId={currentAppUserId || undefined}
+            onDeletePost={handleDeletePost}
+            onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+            forceNormal={true}
+          />
+        ))}
       </div>
     );
   };
