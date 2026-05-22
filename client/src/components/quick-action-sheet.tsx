@@ -4,7 +4,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords, Folder, Check, Play, Clock, Ban, Heart, BarChart2, TrendingUp, ListOrdered, Globe, Lock, Bookmark } from "lucide-react";
+import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords, Folder, Check, Play, Clock, Ban, Heart, BarChart2, TrendingUp, ListOrdered, Globe, Lock, Bookmark, Paperclip, Eye } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -98,6 +98,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
       setSelectedIntent("capture");
       setSelectedAction("track");
       setTrackPostType(preselectedTab === 'poll' ? 'thought' : preselectedTab);
+    } else if (isOpen) {
+      // Default: go straight to the composer
+      setSelectedIntent("capture");
+      setSelectedAction("track");
     }
     if (isOpen && !roomId) {
       setShareToFeed(true);
@@ -132,7 +136,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   const [newRankName, setNewRankName] = useState("");
   const [newRankVisibility, setNewRankVisibility] = useState("public");
   const [shareToFeed, setShareToFeed] = useState(true);
-  
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<string | null>(null);
+
   const episodeCache = useRef<Record<string, any[]>>({});
 
   const { data: userListsData } = useQuery<any>({
@@ -238,7 +244,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query, include_book_series: true })
+        body: JSON.stringify({ query, include_book_series: true, ...(mediaTypeFilter ? { media_type: mediaTypeFilter } : {}) })
       });
       if (response.ok) {
         const data = await response.json();
@@ -839,90 +845,70 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
       return (
         <div className="space-y-4 pb-20">
 
-          {/* ── Composer card: textarea → hairline → type pills + Post pill ── */}
+          {/* ── Composer card ── */}
           <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white">
-            {trackPostType !== 'rank' && (
-              <textarea
-                value={contentText}
-                onChange={(e) => setContentText(e.target.value)}
-                placeholder={
-                  trackPostType === 'thought'    ? "What's your take?" :
-                  trackPostType === 'review'     ? "Write your review..." :
-                  trackPostType === 'prediction' ? "What do you predict?" :
-                  trackPostType === 'question'   ? "Ask fans a question to vote on…" :
-                  ""
-                }
-                className="w-full px-4 pt-4 pb-2 resize-none text-base text-gray-900 bg-transparent border-0 outline-none focus:outline-none focus:ring-0 placeholder:text-gray-400"
-                style={{ boxShadow: 'none' }}
-                rows={5}
-              />
-            )}
-            {trackPostType === 'rank' && (
-              <div className="px-4 pt-3 pb-2 text-sm text-gray-400 min-h-[2.5rem]">Select a rank below…</div>
-            )}
-            <div className="h-px bg-gray-100 mt-1" />
-            {/* Row 1: Take · Review · Poll */}
-            <div className="flex items-center px-3 pt-3 pb-0 gap-2">
+            <textarea
+              value={contentText}
+              onChange={(e) => setContentText(e.target.value)}
+              placeholder={
+                trackPostType === 'thought'    ? "What's your take?" :
+                trackPostType === 'review'     ? "Write your review..." :
+                trackPostType === 'prediction' ? "What do you predict?" :
+                trackPostType === 'question'   ? "Ask fans a question to vote on…" :
+                "Say something..."
+              }
+              className="w-full px-4 pt-4 pb-3 resize-none text-base text-gray-900 bg-transparent border-0 outline-none focus:outline-none focus:ring-0 placeholder:text-gray-400 min-h-[100px]"
+              style={{ boxShadow: 'none' }}
+              rows={4}
+            />
+
+            <div className="h-px bg-gray-100 mx-4" />
+
+            {/* 4 action type icon buttons */}
+            <div className="flex items-center justify-around px-4 py-4">
               {([
-                { key: 'thought'  as const, label: 'Take',   icon: <Flame size={15} /> },
-                { key: 'review'   as const, label: 'Review', icon: <Star size={15} /> },
-                { key: 'question' as const, label: 'Poll',   icon: <BarChart2 size={15} /> },
-              ] as const).map(({ key, label, icon }) => (
-                <button
-                  key={key}
-                  onClick={() => setTrackPostType(key)}
-                  className={`flex items-center gap-1.5 px-3.5 py-2 text-[15px] font-semibold transition-colors whitespace-nowrap rounded-full ${
-                    trackPostType === key ? 'text-purple-700 bg-purple-50' : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                >
-                  {icon}
-                  <span>{label}</span>
+                { key: 'thought'    as const, label: 'Take',    icon: <Flame size={22} />,     active: 'bg-orange-100 text-orange-500' },
+                { key: 'review'     as const, label: 'Rate',    icon: <Star size={22} />,      active: 'bg-yellow-100 text-yellow-500' },
+                { key: 'prediction' as const, label: 'Predict', icon: <Eye size={22} />,       active: 'bg-teal-100 text-teal-500' },
+                { key: 'question'   as const, label: 'Poll',    icon: <BarChart2 size={22} />, active: 'bg-green-100 text-green-500' },
+              ] as const).map(({ key, label, icon, active }) => (
+                <button key={key} onClick={() => setTrackPostType(key)} className="flex flex-col items-center gap-1.5">
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
+                    trackPostType === key ? active : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    {icon}
+                  </div>
+                  <span className={`text-xs font-semibold transition-colors ${trackPostType === key ? 'text-gray-800' : 'text-gray-400'}`}>
+                    {label}
+                  </span>
                 </button>
               ))}
             </div>
-            {/* Row 2: Rank · Prediction · List */}
-            <div className="flex items-center px-3 pt-1.5 pb-1.5 gap-2">
-              {([
-                { key: 'rank'       as const, label: 'Rank',       icon: <ListOrdered size={15} />, action: () => setShowCreateRankDialog(true) },
-                { key: 'prediction' as const, label: 'Prediction', icon: <TrendingUp size={15} />,  action: () => setTrackPostType('prediction') },
-              ] as const).map(({ key, label, icon, action }) => (
-                <button
-                  key={key}
-                  onClick={action}
-                  className={`flex items-center gap-1.5 px-3.5 py-2 text-[15px] font-semibold transition-colors whitespace-nowrap rounded-full ${
-                    trackPostType === key ? 'text-purple-700 bg-purple-50' : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                >
-                  {icon}
-                  <span>{label}</span>
-                </button>
-              ))}
-              {/* List shortcut */}
-              <button
-                onClick={() => setIsListDrawerOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-[15px] font-semibold transition-colors whitespace-nowrap rounded-full text-gray-400 hover:text-gray-600"
-              >
-                <Bookmark size={15} />
-                <span>List</span>
-              </button>
-            </div>
+
             <div className="h-px bg-gray-100" />
-            {/* Post button */}
-            <div className="px-3 py-3">
+
+            {/* Bottom bar: Add media (left) | Post + Cancel (right) */}
+            <div className="flex items-center px-4 py-3">
               <button
-                onClick={handlePost}
-                disabled={!canPost() || isPosting}
-                className="rounded-full bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white text-[15px] font-bold px-7 py-2.5 transition-colors shadow-sm"
-                data-testid="submit-action-inline"
+                onClick={() => setIsMediaModalOpen(true)}
+                className="flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-purple-500 transition-colors"
               >
-                {isPosting ? (
-                  <Loader2 className="animate-spin" size={15} />
-                ) : (
-                  roomId ? "Share" :
-                  trackPostType === 'rank' ? "Add to Rank" :
-                  "Post"
-                )}
+                <Paperclip size={15} />
+                <span>{selectedMedia ? 'Change media' : 'Add media'}</span>
               </button>
+              <div className="ml-auto flex items-center gap-3">
+                <button
+                  onClick={handlePost}
+                  disabled={!canPost() || isPosting}
+                  className="rounded-full bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white text-sm font-bold px-6 py-2.5 transition-colors"
+                  data-testid="submit-action-inline"
+                >
+                  {isPosting ? <Loader2 className="animate-spin" size={15} /> : roomId ? "Share" : "Post"}
+                </button>
+                <button onClick={handleClose} className="text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
 
@@ -988,47 +974,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           )}
 
 
-          {/* ── Attach media section ── */}
+          {/* ── Attached media ── */}
           <div>
-            {!selectedMedia ? (
-              <>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <input
-                    type="text" value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search for a movie, show, book..."
-                    className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    data-testid="quick-action-search"
-                  />
-                </div>
-                {isSearching && (
-                  <div className="flex justify-center py-3">
-                    <Loader2 className="animate-spin text-purple-500" size={20} />
-                  </div>
-                )}
-                {searchResults.length > 0 && (
-                  <div className="max-h-48 overflow-y-auto space-y-1 mt-2 border border-gray-100 rounded-xl overflow-hidden">
-                    {searchResults.slice(0, 6).map((result, idx) => (
-                      <button
-                        key={`${result.external_id}-${idx}`}
-                        onClick={() => { setSelectedMedia(result); setSearchResults([]); setSearchQuery(""); }}
-                        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 text-left"
-                        data-testid={`search-result-${result.external_id}`}
-                      >
-                        {result.image && <img src={result.image} alt={result.title} className="w-8 h-11 object-cover rounded flex-shrink-0" />}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 text-sm line-clamp-1">{result.title}</p>
-                          <p className="text-xs text-gray-500">{result.type === 'book_series' ? (result.series_count ? `${result.series_count}-book series` : 'book series') : result.type}{result.year && ` • ${result.year}`}</p>
-                          {result.creator && result.creator !== 'Unknown Author' && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
-                        </div>
-                        <Plus size={16} className="text-purple-500 shrink-0" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </>
-            ) : (
+            {selectedMedia && (
               <>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Attached media</p>
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
@@ -1623,104 +1571,96 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   return (
     <>
     <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <SheetContent side="bottom" className="rounded-t-3xl h-[92svh] !bg-white flex flex-col overflow-hidden p-0 !shadow-none !border-0 !outline-none" style={{ backgroundColor: 'white', height: '92svh', boxShadow: 'none', border: 'none' }}>
-        {/* ── Gradient header ── */}
-        <div
-          className="flex-shrink-0 rounded-t-3xl px-5 pt-7 pb-7 flex items-center relative"
-          style={{ background: 'linear-gradient(160deg, #09031a 0%, #140730 40%, #1e0d4a 70%, #2d1269 100%)' }}
-        >
-          {selectedIntent && (
-            <button onClick={handleBack} className="absolute left-4 p-2 rounded-full hover:bg-white/10 transition-colors" data-testid="back-button">
-              <ArrowLeft size={20} className="text-white/80" />
-            </button>
-          )}
-          <div className="flex-1 text-center">
-            <h2 className="text-white text-2xl font-bold tracking-tight">
-              {selectedIntent ? getSheetTitle() : "What's on your mind?"}
-            </h2>
-            {!selectedIntent && (
-              <p className="text-purple-300/70 text-sm mt-1">Share, rate, rank, or predict</p>
-            )}
-          </div>
+      <SheetContent side="bottom" className="rounded-t-3xl !bg-white flex flex-col overflow-hidden p-0 !shadow-none !border-0 !outline-none" style={{ backgroundColor: 'white', height: '92svh', boxShadow: 'none', border: 'none' }}>
+        {/* ── Drag handle ── */}
+        <div className="flex-shrink-0 pt-3 pb-1 flex items-center justify-center">
+          <div className="w-10 h-1 rounded-full bg-gray-200" />
         </div>
 
         {/* ── Scrollable body ── */}
-        <div className="flex-1 overflow-y-auto px-4 pb-safe">
-        {!selectedIntent ? (
-          <>
-            <div className="flex flex-col gap-3 py-5">
-              {intents.map((intent) => (
-                <button
-                  key={intent.id}
-                  onClick={() => handleIntentSelect(intent.id)}
-                  className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors"
-                  data-testid={`intent-${intent.id}`}
-                >
-                  <div className={`w-14 h-14 rounded-xl ${intent.bgColor} flex items-center justify-center shadow-md flex-shrink-0`}>
-                    <intent.icon size={24} className="text-white" />
-                  </div>
-                  <div className="text-left flex-1">
-                    <p className="font-semibold text-gray-900 text-base">{intent.label}</p>
-                    <p className="text-sm text-gray-500 mt-0.5">{intent.desc}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            
-            {selectedIntent === "play" && !selectedAction ? (
-              renderPlayHub()
-            ) : selectedIntent === "say" && selectedAction !== "prediction" && selectedAction !== "rank" ? (
-              renderSayContent()
-            ) : (
-              renderActionContent()
-            )}
-            
-            {selectedAction && selectedAction !== "challenge" && selectedAction !== "track" && (selectedAction !== "rank" || (selectedAction === "rank" && userRanks.length > 0)) && (
-              <div className="pt-4 pb-20 space-y-3">
-                {roomId && (selectedAction === "post" || selectedAction === "track") && (
-                  <button
-                    onClick={() => setShareToFeed(v => !v)}
-                    className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 rounded-xl border border-gray-100"
-                  >
-                    <div className="flex flex-col items-start">
-                      <span className="text-sm font-medium text-gray-800">Also share to main feed</span>
-                      <span className="text-xs text-gray-400">Your followers will see this too</span>
-                    </div>
-                    <div className={`w-10 h-6 rounded-full transition-colors relative ${shareToFeed ? 'bg-purple-600' : 'bg-gray-200'}`}>
-                      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${shareToFeed ? 'translate-x-5' : 'translate-x-1'}`} />
-                    </div>
-                  </button>
-                )}
-                <Button
-                  onClick={handlePost}
-                  disabled={!canPost() || isPosting}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6"
-                  data-testid="submit-action"
-                >
-                  {isPosting ? (
-                    <Loader2 className="animate-spin" size={20} />
-                  ) : (
-                    selectedAction === "track" ? (
-                      roomId ? "Share" :
-                      trackPostType === 'review' ? "Add Media" :
-                      trackPostType === 'rank'   ? "Add to Rank" :
-                      "Post"
-                    ) : 
-                    selectedAction === "rank" ? "Add to Rank" : 
-                    sayMode === "ask" ? "Ask" :
-                    "Share"
-                  )}
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-        </div>{/* end scrollable body */}
+        <div className="flex-1 overflow-y-auto px-4 pb-safe pt-2">
+          {renderActionContent()}
+        </div>
       </SheetContent>
     </Sheet>
+
+    {/* ── Media search modal ── */}
+    <Dialog open={isMediaModalOpen} onOpenChange={(open) => { setIsMediaModalOpen(open); if (!open) { setSearchQuery(""); setSearchResults([]); setMediaTypeFilter(null); } }}>
+      <DialogContent className="rounded-2xl !bg-white w-[calc(100vw-2rem)] max-w-md flex flex-col gap-3" style={{ maxHeight: '80vh' }}>
+        <DialogHeader className="pb-0">
+          <DialogTitle className="text-base font-semibold text-gray-900">Add media</DialogTitle>
+        </DialogHeader>
+
+        {/* Type filter pills */}
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 flex-shrink-0">
+          {([
+            { value: null,      label: 'All' },
+            { value: 'tv',      label: 'TV' },
+            { value: 'movie',   label: 'Movie' },
+            { value: 'book',    label: 'Book' },
+            { value: 'music',   label: 'Music' },
+            { value: 'podcast', label: 'Podcast' },
+            { value: 'game',    label: 'Game' },
+          ] as const).map(({ value, label }) => (
+            <button
+              key={label}
+              onClick={() => setMediaTypeFilter(value)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                mediaTypeFilter === value
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Search input */}
+        <div className="relative flex-shrink-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={mediaTypeFilter ? `Search ${mediaTypeFilter}s…` : 'Search movies, shows, books…'}
+            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            autoFocus
+            data-testid="quick-action-search"
+          />
+        </div>
+
+        {/* Results */}
+        {isSearching && (
+          <div className="flex justify-center py-4">
+            <Loader2 className="animate-spin text-purple-500" size={20} />
+          </div>
+        )}
+        {searchResults.length > 0 && (
+          <div className="overflow-y-auto border border-gray-100 rounded-xl flex-1 min-h-0">
+            {(mediaTypeFilter
+              ? searchResults.filter(r => r.type === mediaTypeFilter || (mediaTypeFilter === 'book' && r.type === 'book_series'))
+              : searchResults
+            ).slice(0, 8).map((result, idx) => (
+              <button
+                key={`${result.external_id}-${idx}`}
+                onClick={() => { setSelectedMedia(result); setSearchResults([]); setSearchQuery(""); setMediaTypeFilter(null); setIsMediaModalOpen(false); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 text-left border-b border-gray-50 last:border-0"
+                data-testid={`search-result-${result.external_id}`}
+              >
+                {result.image && <img src={result.image} alt={result.title} className="w-8 h-11 object-cover rounded flex-shrink-0" />}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-900 text-sm line-clamp-1">{result.title}</p>
+                  <p className="text-xs text-gray-500">{result.type === 'book_series' ? (result.series_count ? `${result.series_count}-book series` : 'book series') : result.type}{result.year && ` • ${result.year}`}</p>
+                  {result.creator && result.creator !== 'Unknown Author' && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
+                </div>
+                <Plus size={16} className="text-purple-500 shrink-0" />
+              </button>
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
 
     {/* List Selection Drawer */}
     <Drawer open={isListDrawerOpen} onOpenChange={setIsListDrawerOpen}>
