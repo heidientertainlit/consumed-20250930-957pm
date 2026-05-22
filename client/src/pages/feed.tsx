@@ -1628,13 +1628,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         <>
           {/* Trash — absolute top-right, own posts only */}
           {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
-            <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="absolute top-3 right-3 text-gray-300 hover:text-red-400 transition-colors z-10" title="Delete post">
+            <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="absolute top-3 right-3 text-gray-400 hover:text-red-400 transition-colors z-10" title="Delete post">
               <Trash2 size={14} />
             </button>
           )}
           {/* Report — absolute top-right for other users' posts */}
           {currentUserId && post.user?.id !== currentUserId && (
-            <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="absolute top-3 right-3 text-gray-300 hover:text-orange-400 transition-colors z-10">
+            <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="absolute top-3 right-3 text-gray-400 hover:text-orange-400 transition-colors z-10">
               <Flag size={13} />
             </button>
           )}
@@ -1683,13 +1683,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
               </div>
             )}
-            {ratingSubmitted && ratingValue > 0 && (
-              <div className="flex items-center gap-1.5 mb-2.5 text-xs text-yellow-600 font-medium">
-                <span>{ratingJustSaved ? '✓ Rating saved!' : `You rated ${ratingValue}/5`}</span>
-                {!ratingJustSaved && <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 ml-1 transition-colors">× Remove</button>}
-              </div>
-            )}
-
             {/* Main body: bigger poster left | [name + verb/title + stars + caption] right */}
             <div className="flex gap-3 items-start">
               {posterEl}
@@ -1702,15 +1695,22 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     </Link>
                   </div>
                 )}
-                {/* Stars if rated */}
+                {/* Stars + inline "You rated X/5 · Remove" */}
                 {(post.rating || 0) > 0 && (
-                  <div className="flex items-center gap-0.5 mb-2">
+                  <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                     {[1,2,3,4,5].map(s => {
                       const r = post.rating!;
-                      if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
-                      if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                      return <Star key={s} size={13} className="text-gray-200" />;
+                      if (s <= Math.floor(r)) return <Star key={s} size={16} className="text-yellow-400 fill-yellow-400" />;
+                      if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={16} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={16} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                      return <Star key={s} size={16} className="text-gray-200" />;
                     })}
+                    {ratingSubmitted && ratingValue > 0 && !ratingJustSaved && (
+                      <>
+                        <span className="text-[11px] text-yellow-600 font-semibold ml-0.5">You rated {ratingValue}/5</span>
+                        <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove</button>
+                      </>
+                    )}
+                    {ratingJustSaved && <span className="text-[11px] text-green-600 font-semibold ml-0.5">✓ Saved!</span>}
                   </div>
                 )}
                 {post.content ? (
@@ -1811,7 +1811,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         <div className="p-4">
           {/* Trash — absolute top-right, own posts only */}
           {currentUserId && post.user?.id === currentUserId && onDeletePost && (
-            <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="absolute top-3 right-3 text-gray-300 hover:text-red-400 transition-colors z-10">
+            <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="absolute top-3 right-3 text-gray-400 hover:text-red-400 transition-colors z-10">
               <Trash2 size={14} />
             </button>
           )}
