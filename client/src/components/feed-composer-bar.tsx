@@ -41,30 +41,36 @@ function typeLabel(type: string) {
 function MediaCard({ item, onTrack, onRate }: { item: any; onTrack: () => void; onRate: () => void }) {
   return (
     <div className="flex-shrink-0 w-[104px]">
-      {item.image_url
-        ? <img src={item.image_url} alt={item.title} className="w-full rounded-xl object-cover" style={{ height: '148px' }} />
-        : <div className="w-full rounded-xl flex items-center justify-center" style={{ height: '148px', background: 'rgba(255,255,255,0.08)' }}>
-            <Search size={24} className="text-white/20" />
-          </div>
-      }
+      <div className="relative w-full rounded-xl overflow-hidden" style={{ height: '148px' }}>
+        {item.image_url
+          ? <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+          : <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.08)' }}>
+              <Search size={24} className="text-white/20" />
+            </div>
+        }
+        {/* Gradient scrim so icons are readable */}
+        <div className="absolute inset-x-0 bottom-0 h-16 pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)' }} />
+        {/* Action buttons overlaid at poster bottom */}
+        <div className="absolute bottom-2 inset-x-0 flex justify-center gap-2 px-2">
+          <button
+            onClick={onTrack}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-90"
+            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+          >
+            <Bookmark size={13} className="text-white" />
+          </button>
+          <button
+            onClick={onRate}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-90 relative"
+            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+          >
+            <MessageSquarePlus size={13} className="text-white" />
+            <Star size={6} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
+          </button>
+        </div>
+      </div>
       <p className="text-xs font-semibold text-white mt-2 leading-snug line-clamp-2">{item.title}</p>
       <p className="text-[10px] text-white/40 mt-0.5">{typeLabel(item.type)}</p>
-      <div className="flex gap-1.5 mt-2">
-        <button
-          onClick={onTrack}
-          className="flex-1 h-7 rounded-full bg-purple-600 flex items-center justify-center transition-all active:scale-90"
-        >
-          <Bookmark size={12} className="text-white" fill="white" />
-        </button>
-        <button
-          onClick={onRate}
-          className="flex-1 h-7 rounded-full flex items-center justify-center transition-all active:scale-90 relative"
-          style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
-        >
-          <MessageSquarePlus size={12} className="text-white" />
-          <Star size={6} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
-        </button>
-      </div>
     </div>
   );
 }
