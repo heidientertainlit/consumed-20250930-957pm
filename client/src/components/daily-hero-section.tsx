@@ -438,7 +438,7 @@ function ScoreShareCard({
                       </div>
                     </div>
 
-                    {/* Social proof + rank card */}
+                    {/* Social proof + rank card — always shown */}
                     {(() => {
                       const agreedPct = callVoteBreakdown && callAnswer ? (callVoteBreakdown[callAnswer] ?? null) : null;
                       const topPct = rankData?.beatenPct != null
@@ -446,21 +446,30 @@ function ScoreShareCard({
                         : rankData?.rank != null && rankData?.total != null && rankData.total > 0
                           ? Math.round((rankData.rank / rankData.total) * 100)
                           : null;
-                      if (agreedPct === null && topPct === null) return null;
                       return (
                         <div
                           className="rounded-2xl flex items-center gap-4 px-4 py-4 mb-4"
                           style={{ background: 'rgba(237,233,254,0.1)', border: '1px solid rgba(167,139,250,0.25)' }}
                         >
                           <div className="flex-1 min-w-0">
-                            {agreedPct !== null && (
-                              <p className="text-[12px] mb-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                                Only {agreedPct}% agreed — but
+                            {agreedPct !== null ? (
+                              <>
+                                <p className="text-[12px] mb-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                                  Only {agreedPct}% agreed — but
+                                </p>
+                                <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
+                                  {username || 'You'} is in the top {topPct ?? rankData?.rank ?? '?'}% 👑
+                                </p>
+                              </>
+                            ) : topPct !== null ? (
+                              <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
+                                {username || 'You'} is in the top {topPct}% of players 👑
+                              </p>
+                            ) : (
+                              <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
+                                {username || 'Your'} take is locked in 🔥
                               </p>
                             )}
-                            <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
-                              {username || 'You'} is in the top {topPct ?? '?'}% 👑
-                            </p>
                           </div>
                           {topPct !== null && (
                             <div
