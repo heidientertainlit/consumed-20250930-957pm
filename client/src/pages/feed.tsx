@@ -1922,22 +1922,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-300 mb-1.5">Also rated</p>
               <div className="flex flex-col gap-1.5">
                 {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
-                  <div key={r.userId} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">{r.displayName || r.userName}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <div className="flex items-center gap-0.5">
-                        {[1,2,3,4,5].map(s => {
-                          if (s <= Math.floor(r.rating)) return <Star key={s} size={11} className="text-yellow-400 fill-yellow-400" />;
-                          if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative"><Star size={11} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={11} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                          return <Star key={s} size={11} className="text-gray-200" />;
-                        })}
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); const name = r.displayName || r.userName; setCommentText(`@${name} `); setReplyingToName(name); if (!showComments) handleCommentToggle(); }}
-                        className={`text-[9px] font-medium transition-colors ${replyingToName === (r.displayName || r.userName) ? 'text-violet-500' : 'text-gray-300 hover:text-violet-400'}`}
-                      >Reply</button>
+                  <div key={r.userId} className="flex items-center justify-end gap-2">
+                    <span className="text-sm text-gray-500">{r.displayName || r.userName}</span>
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
+                      {[1,2,3,4,5].map(s => {
+                        if (s <= Math.floor(r.rating)) return <Star key={s} size={11} className="text-yellow-400 fill-yellow-400" />;
+                        if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative"><Star size={11} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={11} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                        return <Star key={s} size={11} className="text-gray-200" />;
+                      })}
                     </div>
                   </div>
                 ))}
@@ -2039,10 +2031,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         )}
         {tasteAlignment !== null && isOtherUser && (
-          <div className="mt-3 pt-3 border-t border-gray-100 px-0">
-            <p className="text-sm font-semibold text-violet-600">
-              You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste overall
-            </p>
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
+              <Users size={14} className="text-violet-500 flex-shrink-0" />
+              <p className="text-xs text-gray-500">
+                You're <span className="font-bold text-violet-600">{tasteAlignment}%</span> aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
+              </p>
+            </div>
           </div>
         )}
         </div>
