@@ -113,6 +113,17 @@ export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'ligh
     staleTime: 60_000,
   });
 
+  // For subtle variant: always just show the count
+  if (variant === 'subtle') {
+    const count = (activityData?.totalPlayers ?? 0) + 50;
+    if (!activityData || activityData.totalPlayers === 0) return null;
+    return (
+      <div className="flex items-center px-1 py-2 opacity-60">
+        <p className="text-[11px] text-purple-200 leading-snug">{count} people have guessed today</p>
+      </div>
+    );
+  }
+
   // If pools exist but no one has played yet, show a "be the first" fallback in the feed
   if (!activityData || activityData.totalPlayers === 0) {
     if (variant === 'light' && pools.length > 0) {

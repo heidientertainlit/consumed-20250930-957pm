@@ -43,9 +43,10 @@ interface QuickActionSheetProps {
   } | null;
   onPosted?: () => void;
   preselectedIntent?: "capture" | null;
+  preselectedTab?: "hot_take" | "review" | "prediction" | "poll" | null;
 }
 
-export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, roomDefaultMedia, onPosted, preselectedIntent }: QuickActionSheetProps) {
+export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, roomDefaultMedia, onPosted, preselectedIntent, preselectedTab }: QuickActionSheetProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   
@@ -90,6 +91,13 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
       // Direct Add Media flow (e.g. from "Have a Take?" score card button)
       setSelectedIntent("capture");
       setSelectedAction("track");
+      if (preselectedTab) {
+        setTrackPostType(preselectedTab === 'poll' ? 'thought' : preselectedTab);
+      }
+    } else if (isOpen && preselectedTab && !preselectedMedia && !roomId) {
+      setSelectedIntent("capture");
+      setSelectedAction("track");
+      setTrackPostType(preselectedTab === 'poll' ? 'thought' : preselectedTab);
     }
     if (isOpen && !roomId) {
       setShareToFeed(true);
