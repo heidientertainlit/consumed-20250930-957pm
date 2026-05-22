@@ -13,7 +13,7 @@ interface NudgeItem {
   color: string;
 }
 
-export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'light' }) {
+export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'light' | 'subtle' }) {
   const today = todayStr();
   const { user } = useAuth();
   const currentUserId = user?.id;
@@ -193,6 +193,17 @@ export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'ligh
     users: 'text-purple-500',
     zap: 'text-blue-500',
   };
+
+  if (variant === 'subtle') {
+    const nudge = nudges[0];
+    const Icon = iconMap[nudge.icon];
+    return (
+      <div className="flex items-center gap-2 px-1 py-2 opacity-60">
+        <Icon size={12} className="shrink-0 text-purple-300" />
+        <p className="text-[11px] text-purple-200 leading-snug">{nudge.text}</p>
+      </div>
+    );
+  }
 
   if (variant === 'light') {
     // In the white feed — show only the first nudge, styled as a clean white card
