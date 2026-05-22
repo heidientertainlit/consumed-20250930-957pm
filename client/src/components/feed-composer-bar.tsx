@@ -271,7 +271,7 @@ export default function FeedComposerBar() {
         const res = await fetch(`${url}/functions/v1/media-search`, {
           method: "POST",
           headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ query: searchQuery, type: mediaFilter === "all" ? undefined : mediaFilter }),
+          body: JSON.stringify({ query: searchQuery, type: mediaFilter === "all" ? undefined : mediaFilter, include_book_series: true }),
         });
         if (!res.ok) return;
         const data = await res.json();
