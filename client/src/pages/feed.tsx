@@ -4646,12 +4646,40 @@ export default function Feed() {
     // Slots 0–18 are placed explicitly in JSX. Everything from 19 onwards flows here.
     // If you add more explicit slots above, bump this number to match.
     const remaining = mixedFeedSlots.slice(19);
-    // Carousel posts are now part of mixedFeedSlots — no separate carousel tail.
-    // To restore: add `feedRatingCarousels.slice(4).map((_, i) => renderRatingCarousel(4 + i))`
     if (remaining.length === 0) return null;
+
+    // Split overflow into UGC (rating/review posts) and play items.
+    // UGC overflow → one horizontal swipe carousel so they don't pile up vertically.
+    // Play overflow → rendered normally as interactive cards.
+    const ugcOverflow = remaining.filter((item: any) => item._isPromoted === true);
+    const playOverflow = remaining.filter((item: any) => item._isPromoted !== true);
+
     return (
       <>
-        {remaining.map((item, i) => renderFeedItem(item, `remaining-${i}`))}
+        {ugcOverflow.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-stretch gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory touch-pan-x">
+              {ugcOverflow.map((item: any, i: number) => {
+                const { _isPromoted, _promotedKey, ...post } = item;
+                return (
+                  <UGCGroupCard
+                    key={post.id || `overflow-${i}`}
+                    post={post}
+                    onLike={handleLike}
+                    isLiked={likedPosts.has(post.id)}
+                    session={session}
+                    fetchComments={fetchComments}
+                    currentUserId={currentAppUserId || undefined}
+                    onDeletePost={handleDeletePost}
+                    onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+                    forceNormal={true}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
+        {playOverflow.map((item: any, i: number) => renderFeedItem(item, `play-overflow-${i}`))}
       </>
     );
   };
