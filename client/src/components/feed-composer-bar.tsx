@@ -461,7 +461,7 @@ export default function FeedComposerBar() {
           headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             content: contentText.trim(), type: "thought", post_type: "hot_take", visibility: "public",
-            media_title: selectedMedia?.title, media_type: selectedMedia?.type || selectedMedia?.mediaType,
+            media_title: selectedMedia?.title, media_type: (selectedMedia?.type || selectedMedia?.mediaType) === 'book_series' ? 'book' : (selectedMedia?.type || selectedMedia?.mediaType),
             media_creator: selectedMedia?.creator || selectedMedia?.author || selectedMedia?.artist,
             media_image_url: selectedMedia?.image_url || selectedMedia?.poster_url || selectedMedia?.image,
             media_external_id: selectedMedia?.external_id || selectedMedia?.id,
@@ -477,7 +477,7 @@ export default function FeedComposerBar() {
           headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             content, type: "rate-review", rating: ratingValue > 0 ? ratingValue : undefined, visibility: "public",
-            media_title: selectedMedia.title, media_type: selectedMedia.type || selectedMedia.mediaType,
+            media_title: selectedMedia.title, media_type: (selectedMedia.type || selectedMedia.mediaType) === 'book_series' ? 'book' : (selectedMedia.type || selectedMedia.mediaType),
             media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
             media_image_url: selectedMedia.image_url || selectedMedia.poster_url || selectedMedia.image,
             media_external_id: selectedMedia.external_id || selectedMedia.id,
@@ -502,7 +502,7 @@ export default function FeedComposerBar() {
           headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             question: contentText.trim(), options: filled, type: "predict",
-            media_title: selectedMedia?.title || null, media_type: selectedMedia?.type || null,
+            media_title: selectedMedia?.title || null, media_type: selectedMedia?.type === 'book_series' ? 'book' : (selectedMedia?.type || null),
             media_image_url: selectedMedia?.image_url || selectedMedia?.poster_url || null,
             media_external_id: selectedMedia?.external_id || null,
             media_external_source: selectedMedia?.external_source || null,
@@ -577,7 +577,7 @@ export default function FeedComposerBar() {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-gray-800 truncate">{selectedMedia.title}</p>
-                  <p className="text-[10px] text-gray-400 capitalize">{selectedMedia.type}{selectedMedia.year ? ` · ${selectedMedia.year}` : ""}</p>
+                  <p className="text-[10px] text-gray-400">{typeLabel(selectedMedia.type)}{selectedMedia.year ? ` · ${selectedMedia.year}` : ""}</p>
                 </div>
                 <button onClick={() => setSelectedMedia(null)} className="text-gray-300 hover:text-red-400 p-1">
                   <X className="w-3.5 h-3.5" />
@@ -771,7 +771,7 @@ export default function FeedComposerBar() {
                           if (r.type === 'book_series') { openSeriesBulkAdd(r); }
                           else { setQuickAddMedia({ title: r.title, mediaType, imageUrl: r.image_url, externalId: r.external_id, externalSource: externalSource, creator: r.creator }); setIsQuickAddOpen(true); }
                         }}
-                        onRate={() => { setActiveTab("review"); selectMedia({ ...r, type: mediaType, external_source: externalSource }); }}
+                        onRate={() => { setActiveTab("review"); selectMedia({ ...r, type: r.type, external_source: externalSource }); }}
                         seriesExpanded={expandedSeriesId === r.external_id}
                         seriesBooks={seriesBooksMap[r.external_id]}
                         seriesLoading={loadingSeriesId === r.external_id}
