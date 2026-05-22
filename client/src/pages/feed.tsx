@@ -61,7 +61,8 @@ import { GameMomentCard } from "@/components/game-moment-card";
 import { SocialProofCard, buildGameMomentSocialProof, buildLeaderboardSocialProof } from "@/components/social-proof-card";
 import BingeBattleFeedCard from "@/components/binge-battle-feed-card";
 import { TodaysPlayNudge } from "@/components/todays-play-nudge";
-import { WhatsYourMove } from "@/components/whats-your-move";
+import { WhatsYourMove } from "@/components/whats-your-move"; // kept for reference — not currently rendered
+import FeedComposerBar from "@/components/feed-composer-bar";
 
 interface SocialPost {
   id: string;
@@ -6518,7 +6519,7 @@ export default function Feed() {
 
             <DailyHeroSection />
             <div className="mt-3">
-              <WhatsYourMove />
+              <FeedComposerBar />
             </div>
             <div className="mt-3">
               <DnaMomentFeaturedCard />
