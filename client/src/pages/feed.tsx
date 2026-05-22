@@ -1165,11 +1165,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       <div className="ml-auto flex items-center gap-1.5">
         <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
         <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
-        {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
-          <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors" title="Delete post">
-            <Trash2 size={13} />
-          </button>
-        )}
       </div>
     </div>
   );
@@ -1211,12 +1206,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           title={ratingSubmitted ? `Your rating: ${ratingValue}/5` : 'Rate this'}
         >
           <Star size={18} fill={ratingSubmitted ? 'currentColor' : 'none'} />
-        </button>
-      )}
-      {/* Delete (owner only) */}
-      {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
-        <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors" title="Delete post">
-          <Trash2 size={14} />
         </button>
       )}
       {/* Pill + timestamp — right side */}
@@ -1705,10 +1694,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       return <Star key={s} size={16} className="text-gray-200" />;
                     })}
                     {ratingSubmitted && ratingValue > 0 && !ratingJustSaved && (
-                      <>
-                        <span className="text-[11px] text-yellow-600 font-semibold ml-0.5">You rated {ratingValue}/5</span>
-                        <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove</button>
-                      </>
+                      <span className="text-[11px] text-yellow-600 font-semibold ml-0.5">You rated {ratingValue}/5</span>
                     )}
                     {ratingJustSaved && <span className="text-[11px] text-green-600 font-semibold ml-0.5">✓ Saved!</span>}
                   </div>
@@ -1958,9 +1944,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               <>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[10px] font-bold text-purple-600 tracking-widest uppercase">{ratingSubmitted ? 'Change Rating' : 'Your Turn'}</p>
-                  {ratingSubmitted && (
-                    <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove</button>
-                  )}
                 </div>
                 <div
                   ref={starsRef}
@@ -2027,8 +2010,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </p>
                   {!ratingJustSaved && <div className="flex items-center gap-2">
                     <button onClick={() => setShowStarPicker(true)} className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors">Edit</button>
-                    <span className="text-gray-200 text-[10px]">·</span>
-                    <button onClick={() => { setRatingSubmitted(false); setRatingValue(0); }} className="text-[10px] text-gray-300 hover:text-red-400 transition-colors">Remove</button>
                   </div>}
                 </div>
                 <div className="flex items-center gap-0.5">
