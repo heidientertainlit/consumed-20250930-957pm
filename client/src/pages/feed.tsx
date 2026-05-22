@@ -1684,9 +1684,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       <Link href={`/user/${post.user.id || ''}`}>
                         <p className="text-sm font-bold text-gray-900 hover:text-purple-600 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
                       </Link>
-                      <p className="text-sm text-gray-400 leading-snug">
-                        {(post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'shared a take on' : 'reviewed'}
-                      </p>
+                      <span className="inline-block mt-0.5 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                        {(post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'take' : 'reviewed'}
+                      </span>
                     </div>
                     {currentUserId && post.user?.id !== currentUserId && (
                       <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-400 p-1 flex-shrink-0 transition-colors"><Flag size={13} /></button>
