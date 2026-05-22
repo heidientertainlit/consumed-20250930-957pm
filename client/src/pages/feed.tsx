@@ -1712,22 +1712,24 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 )}
                 {/* Stars + media title on same row */}
                 {(post.rating || 0) > 0 && (
-                  <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                    {[1,2,3,4,5].map(s => {
-                      const r = post.rating!;
-                      if (s <= Math.floor(r)) return <Star key={s} size={16} className="text-yellow-400 fill-yellow-400" />;
-                      if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={16} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={16} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                      return <Star key={s} size={16} className="text-gray-200" />;
-                    })}
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-0.5">
+                      {[1,2,3,4,5].map(s => {
+                        const r = post.rating!;
+                        if (s <= Math.floor(r)) return <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />;
+                        if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={14} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={14} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                        return <Star key={s} size={14} className="text-gray-200" />;
+                      })}
+                    </div>
                     {post.mediaTitle && (
                       post.externalId && post.externalSource
-                        ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer ml-1">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span></Link>
-                        : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400 ml-1">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span>
+                        ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span></Link>
+                        : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span>
                     )}
                     {ratingSubmitted && ratingValue > 0 && !ratingJustSaved && (
-                      <span className="text-[11px] text-yellow-600 font-semibold ml-0.5">You rated {ratingValue}/5</span>
+                      <span className="text-[11px] text-yellow-600 font-semibold">You rated {ratingValue}/5</span>
                     )}
-                    {ratingJustSaved && <span className="text-[11px] text-green-600 font-semibold ml-0.5">✓ Saved!</span>}
+                    {ratingJustSaved && <span className="text-[11px] text-green-600 font-semibold">✓ Saved!</span>}
                   </div>
                 )}
                 {post.content ? (
@@ -1846,19 +1848,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     </p>
                     {/* Stars + title inline */}
                     {post.rating && post.rating > 0 && (post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought') && (
-                      <div className="flex items-center gap-0.5 mt-1 flex-wrap">
-                        {[1,2,3,4,5].map(s => {
-                          const r = post.rating!;
-                          if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
-                          if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                          return <Star key={s} size={13} className="text-gray-200" />;
-                        })}
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-0.5">
+                          {[1,2,3,4,5].map(s => {
+                            const r = post.rating!;
+                            if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
+                            if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                            return <Star key={s} size={13} className="text-gray-200" />;
+                          })}
+                        </div>
                         {post.mediaTitle && (
                           post.externalId && post.externalSource
-                            ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer ml-1">{post.mediaTitle}{isSeries ? ' Series' : ''}</span></Link>
-                            : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400 ml-1">{post.mediaTitle}{isSeries ? ' Series' : ''}</span>
+                            ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer">{post.mediaTitle}{isSeries ? ' Series' : ''}</span></Link>
+                            : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400">{post.mediaTitle}{isSeries ? ' Series' : ''}</span>
                         )}
-                        {ratingDiffLine(post.rating, 'ml-1')}
+                        {ratingDiffLine(post.rating, '')}
                       </div>
                     )}
                   </>
