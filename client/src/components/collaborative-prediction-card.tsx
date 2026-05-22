@@ -443,10 +443,10 @@ export default function CollaborativePredictionCard({
                 setLocation(`/media/${media.mediaType?.toLowerCase() || 'movie'}/${media.externalSource}/${media.externalId}`);
               }
             }}
-            className="flex-shrink-0"
+            className="flex-shrink-0 block"
             data-testid="button-poll-media-poster"
           >
-            <div className="relative flex-shrink-0 w-[88px] h-[132px] rounded-xl overflow-hidden shadow-md">
+            <div className="w-[88px] h-[132px] rounded-xl overflow-hidden shadow-md">
               <img
                 src={mediaItems[0].imageUrl}
                 alt={mediaTitle || 'Media poster'}
