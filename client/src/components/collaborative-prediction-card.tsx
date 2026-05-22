@@ -486,7 +486,7 @@ export default function CollaborativePredictionCard({
           </div>
 
           {/* Question */}
-          <p className="text-[20px] font-semibold text-gray-900 mb-2 leading-snug">
+          <p className="text-[15px] font-normal text-gray-700 mb-2 leading-relaxed">
             {title}
           </p>
 
