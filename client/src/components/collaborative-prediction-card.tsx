@@ -441,12 +441,12 @@ export default function CollaborativePredictionCard({
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setLocation(`/profile/${creator.username}`)}
-                className="text-sm font-bold text-purple-500 hover:text-purple-700 transition-colors"
+                className="text-sm font-medium text-purple-500 hover:text-purple-700 transition-colors"
                 data-testid="link-prediction-creator"
               >
                 {creator.username}
               </button>
-              <span className="inline-block text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-500">
+              <span className={`inline-block text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full ${isPoll ? 'bg-sky-100 text-sky-600' : 'bg-indigo-100 text-indigo-600'}`}>
                 {isPoll ? 'poll' : 'prediction'}
               </span>
             </div>
