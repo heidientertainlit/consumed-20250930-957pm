@@ -1177,13 +1177,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   // Action bar variant for promoted rating cards
   const actionFirstBar = (
     <div className="flex items-center gap-3 py-2">
-      {/* Like */}
+      {/* ❤️ Like */}
       <button
         onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
         className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
       >
         <Heart size={18} fill={isLiked ? 'currentColor' : 'none'} />
         <span className="text-xs">{post.likes || 0}</span>
+      </button>
+      {/* 💬 Comment — next to like */}
+      <button
+        onClick={handleCommentToggle}
+        className={`flex items-center gap-1.5 text-sm ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
+      >
+        <MessageCircle size={18} />
+        <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
       </button>
       {/* + add to list */}
       {(post.externalId || post.mediaTitle) && onAddToList && (
@@ -1211,13 +1219,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           <Trash2 size={14} />
         </button>
       )}
-      <button
-        onClick={handleCommentToggle}
-        className={`ml-auto flex items-center gap-1.5 text-sm ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
-      >
-        <MessageCircle size={18} />
-        <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
-      </button>
+      {/* Timestamp — right side */}
+      <span className="ml-auto text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
     </div>
   );
 
@@ -1227,14 +1230,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
         <div className="relative flex-shrink-0 w-20 h-[120px] rounded-xl overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
           <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          {mediaTypeNorm && (
-            <div className="absolute bottom-1 left-1 bg-purple-600/50 backdrop-blur-sm rounded-md p-0.5">
-              {mediaTypeNorm === 'tv' && <Tv2 size={9} className="text-white" />}
-              {mediaTypeNorm === 'movie' && <Film size={9} className="text-white" />}
-              {mediaTypeNorm === 'book' && <Book size={9} className="text-white" />}
-              {mediaTypeNorm === 'music' && <Music size={9} className="text-white" />}
-              {mediaTypeNorm === 'podcast' && <Headphones size={9} className="text-white" />}
-              {mediaTypeNorm === 'game' && <Gamepad2 size={9} className="text-white" />}
+          {mediaTypeLabel && (
+            <div className="absolute bottom-1.5 left-1.5 bg-white/90 backdrop-blur-sm rounded px-1.5 py-0.5">
+              <span className="text-[9px] font-bold uppercase tracking-wide text-violet-700">{mediaTypeLabel}</span>
             </div>
           )}
         </div>
@@ -1242,14 +1240,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     ) : (
       <div className="relative flex-shrink-0 w-20 h-[120px] rounded-xl overflow-hidden shadow-md">
         <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-        {mediaTypeNorm && (
-          <div className="absolute bottom-1 left-1 bg-purple-600/50 backdrop-blur-sm rounded-md p-0.5">
-            {mediaTypeNorm === 'tv' && <Tv2 size={9} className="text-white" />}
-            {mediaTypeNorm === 'movie' && <Film size={9} className="text-white" />}
-            {mediaTypeNorm === 'book' && <Book size={9} className="text-white" />}
-            {mediaTypeNorm === 'music' && <Music size={9} className="text-white" />}
-            {mediaTypeNorm === 'podcast' && <Headphones size={9} className="text-white" />}
-            {mediaTypeNorm === 'game' && <Gamepad2 size={9} className="text-white" />}
+        {mediaTypeLabel && (
+          <div className="absolute bottom-1.5 left-1.5 bg-white/90 backdrop-blur-sm rounded px-1.5 py-0.5">
+            <span className="text-[9px] font-bold uppercase tracking-wide text-violet-700">{mediaTypeLabel}</span>
           </div>
         )}
       </div>
@@ -1631,7 +1624,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </div>
                 </Link>
                 <div className="flex-1 min-w-0">
-                  {/* Single sentence: [Name] reviewed [Title] · time [TV] */}
+                  {/* Single sentence: [Name] reviewed [Title] — no pill, no timestamp (both moved) */}
                   <p className="text-sm leading-snug">
                     <Link href={`/user/${post.user.id || ''}`}>
                       <span className="font-bold text-gray-900 hover:text-purple-600 cursor-pointer">{post.user.displayName || post.user.username}</span>
@@ -1642,9 +1635,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                         ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-gray-400 hover:text-purple-500 cursor-pointer">{post.mediaTitle}</span></Link>
                         : <span className="text-gray-400">{post.mediaTitle}</span>
                     )}
-                    <span className="text-gray-300"> · </span>
-                    <span className="text-gray-400">{timeAgo(post.timestamp)}</span>
-                    {mediaTypeLabel && <> <span className="inline-block text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200 align-middle">{mediaTypeLabel}</span></>}
                   </p>
                 </div>
                 {currentUserId && post.user?.id !== currentUserId && (
