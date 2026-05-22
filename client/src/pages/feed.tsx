@@ -1644,8 +1644,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   {post.mediaTitle && (
                     <div className="flex items-center gap-1.5 mt-0.5">
                       {post.externalId && post.externalSource
-                        ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><p className="text-[15px] font-semibold text-gray-800 hover:text-purple-600 leading-tight line-clamp-1 cursor-pointer">{post.mediaTitle}</p></Link>
-                        : <p className="text-[15px] font-semibold text-gray-800 leading-tight line-clamp-1">{post.mediaTitle}</p>
+                        ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><p className="text-sm text-gray-400 hover:text-purple-500 leading-tight line-clamp-1 cursor-pointer">{post.mediaTitle}</p></Link>
+                        : <p className="text-sm text-gray-400 leading-tight line-clamp-1">{post.mediaTitle}</p>
                       }
                       {mediaTypeLabel && <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200 flex-shrink-0">{mediaTypeLabel}</span>}
                     </div>
