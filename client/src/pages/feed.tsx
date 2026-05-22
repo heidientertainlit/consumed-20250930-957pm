@@ -1724,8 +1724,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     </div>
                     {post.mediaTitle && (
                       post.externalId && post.externalSource
-                        ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer leading-tight">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span></Link>
-                        : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400 leading-tight">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span>
+                        ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span style={{ lineHeight: 1.1 }} className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span></Link>
+                        : <span style={{ lineHeight: 1.1 }} className="text-[10px] font-light tracking-widest uppercase text-gray-400">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span>
                     )}
                     {ratingSubmitted && ratingValue > 0 && !ratingJustSaved && (
                       <span className="text-[11px] text-yellow-600 font-semibold">You rated {ratingValue}/5</span>
@@ -1856,8 +1856,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                               })}
                             </div>
                             {post.externalId && post.externalSource
-                              ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer leading-tight">{post.mediaTitle}{isSeries ? ' Series' : ''}</span></Link>
-                              : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400 leading-tight">{post.mediaTitle}{isSeries ? ' Series' : ''}</span>
+                              ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span style={{ lineHeight: 1.1 }} className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer">{post.mediaTitle}{isSeries ? ' Series' : ''}</span></Link>
+                              : <span style={{ lineHeight: 1.1 }} className="text-[10px] font-light tracking-widest uppercase text-gray-400">{post.mediaTitle}{isSeries ? ' Series' : ''}</span>
                             }
                           </div>
                           {ratingDiffLine(post.rating, 'mt-0.5')}
@@ -4365,6 +4365,7 @@ export default function Feed() {
       return (
         <BingeBattleFeedCard
           key={`${keyPrefix}-${item.id}`}
+          isPromo
           post={{
             id: item.id,
             content: isStart

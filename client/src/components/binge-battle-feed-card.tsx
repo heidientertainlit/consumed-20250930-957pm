@@ -1,4 +1,4 @@
-import { Zap, Trash2, Trophy } from "lucide-react";
+import { Zap, Trash2, Trophy, Swords } from "lucide-react";
 import { useLocation } from "wouter";
 
 interface BingeBattleFeedCardProps {
@@ -14,6 +14,7 @@ interface BingeBattleFeedCardProps {
     };
   };
   isOwn?: boolean;
+  isPromo?: boolean;
   onDelete?: (id: string) => void;
 }
 
@@ -30,12 +31,12 @@ function parseContent(content: string, fallbackTitle?: string) {
   return { winner: null, opponent: null, title: fallbackTitle || null };
 }
 
-export default function BingeBattleFeedCard({ post, isOwn, onDelete }: BingeBattleFeedCardProps) {
+export default function BingeBattleFeedCard({ post, isOwn, isPromo, onDelete }: BingeBattleFeedCardProps) {
   const [, setLocation] = useLocation();
   const { winner, opponent, title } = parseContent(post.content, post.media_title);
 
   const displayTitle = title || post.media_title || "this title";
-  const displayWinner = winner || post.user?.displayName || "Someone";
+  const displayWinner = winner || post.user?.displayName || post.user?.username || null;
   const displayOpponent = opponent || "their opponent";
 
   return (
@@ -63,38 +64,55 @@ export default function BingeBattleFeedCard({ post, isOwn, onDelete }: BingeBatt
             <span className="text-[10px] font-bold text-yellow-400 uppercase tracking-widest">Binge Battle</span>
           </div>
 
-          {/* Winner headline */}
-          <div className="flex items-start gap-2">
-            <Trophy size={20} className="text-yellow-400 shrink-0 mt-0.5" />
-            <span className="text-white font-extrabold text-[18px] leading-tight">
-              {displayWinner} Won the Binge Battle!
-            </span>
-          </div>
-
-          {/* Narrative */}
-          <p className="text-white/70 text-[12px] leading-snug">
-            <span className="text-white/90 font-semibold">{displayWinner}</span>
-            {" v. "}
-            <span className="text-white/90 font-semibold">{displayOpponent}</span>
-            {" competed in a "}
-            <span className="text-white/90 font-semibold">{displayTitle}</span>
-            {" binge battle and "}
-            <span className="text-white/90 font-semibold">{displayWinner}</span>
-            {" won. "}
-            <span className="text-yellow-400 font-bold">+100 pts</span>
-            {" to "}
-            <span className="text-white/90 font-semibold">{displayWinner}</span>
-            {"!"}
-          </p>
-
-          {/* CTA button */}
-          <button
-            onClick={() => setLocation("/play/binge-battle")}
-            className="mt-1 self-start px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-[12px] font-semibold flex items-center gap-1.5 transition-colors border border-white/20"
-          >
-            <Zap size={11} fill="currentColor" />
-            Start Your Own Binge Battle
-          </button>
+          {isPromo || !displayWinner ? (
+            /* Promo / CTA variant — no real winner */
+            <>
+              <div className="flex items-start gap-2">
+                <Swords size={20} className="text-yellow-400 shrink-0 mt-0.5" />
+                <span className="text-white font-extrabold text-[18px] leading-tight">
+                  {post.content || "Race a friend. First to finish wins."}
+                </span>
+              </div>
+              <button
+                onClick={() => setLocation("/play/binge-battle")}
+                className="mt-1 self-start px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-[12px] font-semibold flex items-center gap-1.5 transition-colors border border-white/20"
+              >
+                <Zap size={11} fill="currentColor" />
+                Start a Binge Battle
+              </button>
+            </>
+          ) : (
+            /* Real battle result — winner known */
+            <>
+              <div className="flex items-start gap-2">
+                <Trophy size={20} className="text-yellow-400 shrink-0 mt-0.5" />
+                <span className="text-white font-extrabold text-[18px] leading-tight">
+                  {displayWinner} Won the Binge Battle!
+                </span>
+              </div>
+              <p className="text-white/70 text-[12px] leading-snug">
+                <span className="text-white/90 font-semibold">{displayWinner}</span>
+                {" v. "}
+                <span className="text-white/90 font-semibold">{displayOpponent}</span>
+                {" competed in a "}
+                <span className="text-white/90 font-semibold">{displayTitle}</span>
+                {" binge battle and "}
+                <span className="text-white/90 font-semibold">{displayWinner}</span>
+                {" won. "}
+                <span className="text-yellow-400 font-bold">+100 pts</span>
+                {" to "}
+                <span className="text-white/90 font-semibold">{displayWinner}</span>
+                {"!"}
+              </p>
+              <button
+                onClick={() => setLocation("/play/binge-battle")}
+                className="mt-1 self-start px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-[12px] font-semibold flex items-center gap-1.5 transition-colors border border-white/20"
+              >
+                <Zap size={11} fill="currentColor" />
+                Start Your Own Binge Battle
+              </button>
+            </>
+          )}
         </div>
 
         {/* Media cover — flush right edge */}
