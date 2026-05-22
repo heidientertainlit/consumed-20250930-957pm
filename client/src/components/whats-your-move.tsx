@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Flame, Star, Eye, BarChart2, MoreHorizontal, Plus } from "lucide-react";
+import { Flame, Star, Target, CheckSquare, Layers, Plus } from "lucide-react";
 import { QuickActionSheet } from "./quick-action-sheet";
 
 type Tab = "hot_take" | "review" | "prediction" | "poll" | null;
@@ -14,26 +14,22 @@ export function WhatsYourMove() {
     {
       id: "review" as Tab,
       label: "Rate",
-      sub: "What did you think?",
       icon: <Star size={20} className="text-yellow-400" fill="currentColor" />,
     },
     {
       id: "prediction" as Tab,
       label: "Predict",
-      sub: "Call what happens",
-      icon: <Eye size={20} className="text-purple-400" />,
+      icon: <Target size={20} className="text-red-400" />,
     },
     {
       id: "poll" as Tab,
       label: "Poll",
-      sub: "Ask the community",
-      icon: <BarChart2 size={20} className="text-green-400" />,
+      icon: <CheckSquare size={20} className="text-blue-400" />,
     },
     {
       id: null as Tab,
       label: "More",
-      sub: "Ranks, lists & more",
-      icon: <MoreHorizontal size={20} className="text-gray-400" />,
+      icon: <Layers size={20} className="text-purple-400" />,
     },
   ];
 
@@ -85,7 +81,6 @@ export function WhatsYourMove() {
             >
               {tile.icon}
               <p className="text-white font-bold text-[12px] leading-tight">{tile.label}</p>
-              <p className="text-white/45 text-[9px] leading-tight">{tile.sub}</p>
             </button>
           ))}
         </div>
