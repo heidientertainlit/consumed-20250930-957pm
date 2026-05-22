@@ -775,7 +775,42 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             />
           )}
 
-          {/* Floating two-button fan-out */}
+          {showAddMenu && (
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 flex gap-5 items-center px-6 py-4 rounded-3xl" style={{ background: 'rgba(15, 10, 30, 0.92)', backdropFilter: 'blur(12px)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+              {/* Bookmark / Add to List */}
+              <div className="flex flex-col items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    setShowAddMenu(false);
+                    setQuickAddMedia(null);
+                    setIsQuickAddOpen(true);
+                  }}
+                  className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+                  style={{ background: '#7c3aed' }}
+                  aria-label="Add to list"
+                >
+                  <Bookmark size={24} className="text-white" fill="white" />
+                </button>
+                <span className="text-white text-[10px] font-medium">Save</span>
+              </div>
+
+              {/* Compose — navigates to /add instead of opening modal */}
+              <div className="flex flex-col items-center gap-1.5">
+                <Link
+                  href="/add"
+                  onClick={() => setShowAddMenu(false)}
+                  className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform relative"
+                  style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
+                  aria-label="Share a take"
+                >
+                  <MessageSquarePlus size={24} className="text-white" />
+                  <Star size={10} className="absolute top-1 right-1 fill-yellow-300 text-yellow-300" />
+                </Link>
+                <span className="text-white text-[10px] font-medium">Post</span>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-around items-center px-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 8px), 8px)', paddingTop: '8px' }}>
             <Link href="/activity" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/activity" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-activity">
               <div className="h-[22px] flex items-center justify-center"><Activity className="text-white" size={22} /></div>
@@ -785,9 +820,9 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               <div className="h-[22px] flex items-center justify-center"><Brain size={22} className="text-white" strokeWidth={1.4} /></div>
               <span className="text-white text-[10px] mt-0.5">Play</span>
             </Link>
-            <Link
-              href="/add"
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/add" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`}
+            <button
+              onClick={() => setShowAddMenu(v => !v)}
+              className={`flex flex-col items-center justify-center p-2 transition-all ${showAddMenu ? '' : 'opacity-55'}`}
               data-testid="nav-add"
               aria-label="Add"
             >
@@ -795,7 +830,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                 <Plus size={22} strokeWidth={1.8} className="text-white" />
               </div>
               <span className="text-white text-[10px] mt-0.5">Add</span>
-            </Link>
+            </button>
             <Link href="/rooms" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/rooms" || location.startsWith("/room/") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-rooms">
               <div className="h-[22px] flex items-center justify-center"><DoorOpen className="text-white" size={22} /></div>
               <span className="text-white text-[10px] mt-0.5">Rooms</span>
