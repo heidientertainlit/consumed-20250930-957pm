@@ -136,15 +136,15 @@ export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'ligh
     const extra = perfectScorers > 1 ? ` +${perfectScorers - 1} more` : '';
     nudges.push({
       id: 'perfect',
-      icon: 'trophy',
-      text: `${firstName}${extra} got a perfect score — you have competition`,
+      icon: 'zap',
+      text: `${firstName}${extra} got all ${maxQuestions} trivia question${maxQuestions !== 1 ? 's' : ''} right — can you?`,
       color: 'from-yellow-500/20 to-amber-500/10 border-yellow-500/30 text-yellow-200',
     });
   } else if (perfectScorers > 0) {
     nudges.push({
       id: 'perfect-anon',
-      icon: 'trophy',
-      text: `${perfectScorers} player${perfectScorers !== 1 ? 's' : ''} already aced Today's Play`,
+      icon: 'zap',
+      text: `${perfectScorers} player${perfectScorers !== 1 ? 's' : ''} answered all today's trivia correctly`,
       color: 'from-yellow-500/20 to-amber-500/10 border-yellow-500/30 text-yellow-200',
     });
   }
@@ -153,14 +153,14 @@ export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'ligh
     nudges.push({
       id: 'players',
       icon: 'users',
-      text: `${totalPlayers + 50} people have played today's trivia so far`,
+      text: `${totalPlayers + 50} people have answered today's trivia`,
       color: 'from-purple-500/20 to-indigo-500/10 border-purple-500/30 text-purple-200',
     });
   } else if (totalPlayers === 1 && perfectScorers === 0) {
     nudges.push({
       id: 'first',
       icon: 'zap',
-      text: `Be one of the first to play today — no one's aced it yet`,
+      text: `Be one of the first to answer today's trivia`,
       color: 'from-blue-500/20 to-cyan-500/10 border-blue-500/30 text-blue-200',
     });
   }
@@ -196,10 +196,8 @@ export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'ligh
 
   if (variant === 'subtle') {
     const nudge = nudges[0];
-    const Icon = iconMap[nudge.icon];
     return (
-      <div className="flex items-center gap-2 px-1 py-2 opacity-60">
-        <Icon size={12} className="shrink-0 text-purple-300" />
+      <div className="flex items-center px-1 py-2 opacity-60">
         <p className="text-[11px] text-purple-200 leading-snug">{nudge.text}</p>
       </div>
     );
