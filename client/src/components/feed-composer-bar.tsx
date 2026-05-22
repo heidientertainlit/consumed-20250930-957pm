@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Star, BarChart2, TrendingUp, X, Search, Loader2, Flame, Paperclip } from "lucide-react";
+import { Plus, Star, BarChart2, TrendingUp, X, Search, Loader2, Flame } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -296,9 +296,10 @@ export default function FeedComposerBar() {
             <div className="flex items-center gap-2 px-5 pb-4 pt-2 border-t border-gray-100">
               <button
                 onClick={() => setShowSearch(s => !s)}
-                className={`p-2 rounded-full transition-colors flex-shrink-0 ${showSearch ? 'bg-purple-100 text-purple-600' : 'text-gray-400 hover:bg-gray-100'}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold flex-shrink-0 transition-all ${showSearch ? 'bg-purple-600 text-white' : 'bg-purple-600 text-white'}`}
               >
-                <Paperclip size={16} />
+                <Plus size={13} strokeWidth={2.5} />
+                Add media
               </button>
               <div className="flex gap-1.5 overflow-x-auto flex-1">
                 {TABS.map(tab => (
