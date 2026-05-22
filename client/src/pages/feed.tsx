@@ -1622,10 +1622,22 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   return (
     <>
-    <div className={`${forceActionFirst ? 'w-full' : 'snap-start flex-shrink-0 w-[85vw] max-w-[340px]'} md:w-full md:max-w-none md:snap-align-none md:flex-shrink bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden`}>
+    <div className={`relative ${forceActionFirst ? 'w-full' : 'snap-start flex-shrink-0 w-[85vw] max-w-[340px]'} md:w-full md:max-w-none md:snap-align-none md:flex-shrink bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden`}>
       {isActionFirst ? (
         // ACTION FIRST layout — stars on top, friend's take below
         <>
+          {/* Trash — absolute top-right, own posts only */}
+          {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
+            <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="absolute top-3 right-3 text-gray-300 hover:text-red-400 transition-colors z-10" title="Delete post">
+              <Trash2 size={14} />
+            </button>
+          )}
+          {/* Report — absolute top-right for other users' posts */}
+          {currentUserId && post.user?.id !== currentUserId && (
+            <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="absolute top-3 right-3 text-gray-300 hover:text-orange-400 transition-colors z-10">
+              <Flag size={13} />
+            </button>
+          )}
           {/* Poster-left, header+caption-right layout */}
           <div className="px-4 pt-4 pb-3">
 
@@ -1682,20 +1694,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <div className="flex gap-3 items-start">
               {posterEl}
               <div className="flex-1 min-w-0">
-                {/* Name + verb/title header (no avatar) */}
+                {/* Name only — trash is absolute top-right of card */}
                 {post.user && (
-                  <div className="flex items-start justify-between mb-1.5">
-                    <div className="flex-1 min-w-0 pr-1">
-                      <Link href={`/user/${post.user.id || ''}`}>
-                        <p className="text-sm font-medium text-purple-800 hover:text-purple-900 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
-                      </Link>
-                    </div>
-                    {currentUserId && post.user?.id !== currentUserId && (
-                      <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-400 p-1 flex-shrink-0 transition-colors"><Flag size={13} /></button>
-                    )}
-                    {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
-                      <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 p-1 flex-shrink-0 transition-colors"><Trash2 size={13} /></button>
-                    )}
+                  <div className="mb-1.5">
+                    <Link href={`/user/${post.user.id || ''}`}>
+                      <p className="text-sm font-medium text-purple-800 hover:text-purple-900 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
+                    </Link>
                   </div>
                 )}
                 {/* Stars if rated */}

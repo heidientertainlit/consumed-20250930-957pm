@@ -431,7 +431,19 @@ export default function CollaborativePredictionCard({
       : null;
   
   return (
-    <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border-0 shadow-none'} rounded-2xl p-4`}>
+    <Card className={`relative ${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border-0 shadow-none'} rounded-2xl p-4`}>
+      {/* Trash — absolute top-right, own predictions only */}
+      {origin_type === 'user' && isCreator && (
+        <button
+          onClick={() => deleteMutation.mutate()}
+          disabled={deleteMutation.isPending}
+          className="absolute top-3 right-3 text-gray-300 hover:text-red-400 transition-colors z-10"
+          title={isPoll ? "Delete poll" : "Delete prediction"}
+          data-testid="button-delete-prediction"
+        >
+          <Trash2 size={14} />
+        </button>
+      )}
       {/* Poster-left layout — mirrors review card */}
       <div className="flex gap-3 items-start mb-3">
         {/* Bigger poster on the left */}
@@ -459,29 +471,16 @@ export default function CollaborativePredictionCard({
         {/* Right column: header + question + options */}
         <div className="flex-1 min-w-0">
           {/* Header */}
-          <div className="flex items-start justify-between mb-1.5">
-            <div className="flex-1 min-w-0 pr-1">
-              {isConsumedPrediction ? (
-                <span className="text-sm font-bold text-purple-700">🏆 Consumed {isPoll ? 'Poll' : 'Prediction'}</span>
-              ) : (
-                <button
-                    onClick={() => setLocation(`/profile/${creator.username}`)}
-                    className="text-sm font-medium text-purple-800 hover:text-purple-900 transition-colors block"
-                    data-testid="link-prediction-creator"
-                  >
-                    {creator.username}
-                  </button>
-              )}
-            </div>
-            {origin_type === 'user' && isCreator && (
+          <div className="mb-1.5">
+            {isConsumedPrediction ? (
+              <span className="text-sm font-bold text-purple-700">🏆 Consumed {isPoll ? 'Poll' : 'Prediction'}</span>
+            ) : (
               <button
-                onClick={() => deleteMutation.mutate()}
-                disabled={deleteMutation.isPending}
-                className="text-gray-300 hover:text-red-500 p-1 flex-shrink-0 transition-colors"
-                title={isPoll ? "Delete poll" : "Delete prediction"}
-                data-testid="button-delete-prediction"
+                onClick={() => setLocation(`/profile/${creator.username}`)}
+                className="text-sm font-medium text-purple-800 hover:text-purple-900 transition-colors block"
+                data-testid="link-prediction-creator"
               >
-                <Trash2 size={13} />
+                {creator.username}
               </button>
             )}
           </div>
