@@ -432,49 +432,9 @@ export default function CollaborativePredictionCard({
   
   return (
     <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border-0 shadow-none'} rounded-2xl p-4`}>
-      {/* Header: Username + pill — no avatar, no media title */}
-      <div className="flex items-start gap-2 mb-2">
-        <div className="flex-1 min-w-0">
-          {isConsumedPrediction ? (
-            <span className="text-sm font-bold text-purple-700">🏆 Consumed {isPoll ? 'Poll' : 'Prediction'}</span>
-          ) : (
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => setLocation(`/profile/${creator.username}`)}
-                className="text-sm font-medium text-purple-500 hover:text-purple-700 transition-colors"
-                data-testid="link-prediction-creator"
-              >
-                {creator.username}
-              </button>
-              <span className={`inline-block text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full ${isPoll ? 'bg-sky-100 text-sky-600' : 'bg-indigo-100 text-indigo-600'}`}>
-                {isPoll ? 'poll' : 'prediction'}
-              </span>
-            </div>
-          )}
-        </div>
-        
-        {/* Delete button - Show for creators of user-generated predictions */}
-        {origin_type === 'user' && isCreator && (
-          <button
-            onClick={() => deleteMutation.mutate()}
-            disabled={deleteMutation.isPending}
-            className="flex items-center justify-center p-1.5 rounded-full transition-colors flex-shrink-0 text-gray-400 hover:text-red-500 hover:bg-red-50 cursor-pointer"
-            title={isPoll ? "Delete poll" : "Delete prediction"}
-            data-testid="button-delete-prediction"
-          >
-            <Trash2 size={18} />
-          </button>
-        )}
-      </div>
-
-      {/* Question */}
-      <p className="text-base font-semibold text-gray-900 mb-4">
-        {title}
-      </p>
-
-      {/* Voting Options with Media Poster */}
-      <div className="flex gap-3 mb-3">
-        {/* Media Poster - show inline with options if available */}
+      {/* Poster-left layout — mirrors review card */}
+      <div className="flex gap-3 items-start mb-3">
+        {/* Bigger poster on the left */}
         {mediaItems?.[0]?.imageUrl && (
           <button
             onClick={() => {
@@ -486,18 +446,58 @@ export default function CollaborativePredictionCard({
             className="flex-shrink-0"
             data-testid="button-poll-media-poster"
           >
-            <img 
-              src={mediaItems[0].imageUrl} 
+            <img
+              src={mediaItems[0].imageUrl}
               alt={mediaTitle || 'Media poster'}
-              className="w-20 h-28 object-cover rounded-lg shadow-sm"
+              className="w-[88px] h-[132px] object-cover rounded-xl shadow-md"
             />
           </button>
         )}
-        
-        {/* Options */}
-        <div className="flex-1 space-y-2">
-          {options && options.length > 0 ? (
-            options.map((option, index) => {
+
+        {/* Right column: header + question + options */}
+        <div className="flex-1 min-w-0">
+          {/* Header */}
+          <div className="flex items-start justify-between mb-1.5">
+            <div className="flex-1 min-w-0 pr-1">
+              {isConsumedPrediction ? (
+                <span className="text-sm font-bold text-purple-700">🏆 Consumed {isPoll ? 'Poll' : 'Prediction'}</span>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setLocation(`/profile/${creator.username}`)}
+                    className="text-sm font-medium text-purple-800 hover:text-purple-900 transition-colors block"
+                    data-testid="link-prediction-creator"
+                  >
+                    {creator.username}
+                  </button>
+                  <span className={`inline-block mt-0.5 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full ${isPoll ? 'bg-sky-100 text-sky-600' : 'bg-indigo-100 text-indigo-600'}`}>
+                    {isPoll ? 'poll' : 'prediction'}
+                  </span>
+                </>
+              )}
+            </div>
+            {origin_type === 'user' && isCreator && (
+              <button
+                onClick={() => deleteMutation.mutate()}
+                disabled={deleteMutation.isPending}
+                className="text-gray-300 hover:text-red-500 p-1 flex-shrink-0 transition-colors"
+                title={isPoll ? "Delete poll" : "Delete prediction"}
+                data-testid="button-delete-prediction"
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
+          </div>
+
+          {/* Question */}
+          <p className="text-sm font-semibold text-gray-900 mb-2 leading-snug">
+            {title}
+          </p>
+
+          {/* Options */}
+          <div className="space-y-1.5">
+            {options && options.length > 0 ? (
+              options.map((option, index) => {
               const optionData = optionVotes?.find(ov => ov.option === option);
               const percentage = optionData?.percentage || 0;
               const answered = userHasAnswered || hasVoted;
@@ -530,8 +530,9 @@ export default function CollaborativePredictionCard({
               );
             })
           ) : null}
-        </div>
-      </div>
+          </div>
+        </div>{/* end right column */}
+      </div>{/* end poster-left flex */}
 
       {/* Vote count */}
       {totalVotes > 0 && (
