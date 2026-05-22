@@ -2086,7 +2086,7 @@ export function DailyHeroSection() {
     staleTime: 120000,
   });
 
-  // ── Trivia rank (for scorecard) ──
+  // ── Trivia rank (for play scorecard) ──
   const { data: rankData } = useQuery<{ rank: number | null; total: number | null; beatenPct?: number }>({
     queryKey: ['hero-rank-data', user?.id],
     queryFn: async () => {
@@ -2098,6 +2098,33 @@ export function DailyHeroSection() {
         if (!res.ok) return { rank: null, total: null };
         const data = await res.json();
         const entries: any[] = data?.categories?.trivia ?? [];
+        if (!entries.length) return { rank: null, total: null };
+        const myEntry = entries.find((e: any) => e.user_id === user.id);
+        if (!myEntry) return { rank: null, total: entries.length };
+        const rank = myEntry.rank;
+        const total = entries.length;
+        const beatenPct = Math.round(((total - rank) / total) * 100);
+        return { rank, total, beatenPct };
+      } catch {
+        return { rank: null, total: null };
+      }
+    },
+    enabled: !!user?.id && !!session?.access_token,
+    staleTime: 300000,
+  });
+
+  // ── Predictions rank (for Daily Call scorecard) ──
+  const { data: callRankData } = useQuery<{ rank: number | null; total: number | null; beatenPct?: number }>({
+    queryKey: ['hero-call-rank-data', user?.id],
+    queryFn: async () => {
+      if (!user?.id || !session?.access_token) return { rank: null, total: null };
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/get-leaderboards?category=predictions&scope=global`, {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) return { rank: null, total: null };
+        const data = await res.json();
+        const entries: any[] = data?.categories?.predictions ?? [];
         if (!entries.length) return { rank: null, total: null };
         const myEntry = entries.find((e: any) => e.user_id === user.id);
         if (!myEntry) return { rank: null, total: entries.length };
@@ -2676,7 +2703,7 @@ export function DailyHeroSection() {
         userId={user?.id}
         username={username ?? null}
         dnaStats={dnaStats ?? null}
-        rankData={rankData ?? null}
+        rankData={callRankData ?? null}
         triviaStats={triviaStats ?? null}
         onClose={() => setShowCallShare(false)}
       />
