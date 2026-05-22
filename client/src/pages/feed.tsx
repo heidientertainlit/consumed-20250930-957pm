@@ -1218,7 +1218,20 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     </div>
   );
 
-  // Poster helper
+  // Poster helper — falls back to a placeholder tile if no image
+  const posterFallback = post.mediaTitle ? (
+    <div className="relative flex-shrink-0 w-[88px] h-[132px] rounded-xl overflow-hidden shadow-md bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center gap-1.5 px-2">
+      {mediaTypeNorm === 'podcast' && <Headphones size={24} className="text-gray-400" />}
+      {mediaTypeNorm === 'music' && <Music size={24} className="text-gray-400" />}
+      {mediaTypeNorm === 'book' && <Book size={24} className="text-gray-400" />}
+      {mediaTypeNorm === 'game' && <Gamepad2 size={24} className="text-gray-400" />}
+      {mediaTypeNorm === 'tv' && <Tv2 size={24} className="text-gray-400" />}
+      {mediaTypeNorm === 'movie' && <Film size={24} className="text-gray-400" />}
+      {(!mediaTypeNorm || !['podcast','music','book','game','tv','movie'].includes(mediaTypeNorm)) && <Film size={24} className="text-gray-400" />}
+      <p className="text-[9px] text-gray-500 text-center font-medium leading-tight line-clamp-3">{post.mediaTitle}</p>
+    </div>
+  ) : null;
+
   const posterEl = post.mediaImage && post.mediaImage.startsWith('http') ? (
     post.externalId && post.externalSource ? (
       <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
@@ -1674,7 +1687,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             )}
             {/* Main body: bigger poster left | [name + verb/title + stars + caption] right */}
             <div className="flex gap-3 items-start">
-              {posterEl}
+              {posterEl ?? posterFallback}
               <div className="flex-1 min-w-0">
                 {/* Name only — trash is absolute top-right of card */}
                 {post.user && (
@@ -1845,7 +1858,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
           {post.mediaTitle ? (
             <div className="flex gap-3 items-start">
-              {posterEl}
+              {posterEl ?? posterFallback}
               <div className="min-w-0 flex-1">
                 {/* Taste alignment */}
                 {tasteAlignment !== null && isOtherUser && (
