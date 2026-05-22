@@ -410,20 +410,45 @@ function ScoreShareCard({
                         <p className="font-black leading-none text-white break-words" style={{ fontSize: '52px', letterSpacing: '-0.03em', lineHeight: 1, textTransform: 'uppercase' }}>
                           {callAnswer}.
                         </p>
-                        {/* Only X% agreed */}
-                        {callVoteBreakdown && callAnswer && (callVoteBreakdown[callAnswer] ?? null) !== null && (
-                          <div
-                            className="mt-3 inline-flex items-center px-3 py-1.5 rounded-full"
-                            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}
-                          >
-                            <span className="text-[11px] font-bold" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                              Only <strong className="text-white">{callVoteBreakdown[callAnswer]}%</strong> agreed
-                            </span>
-                          </div>
-                        )}
                       </div>
-
                     </div>
+
+                    {/* Social proof + rank card */}
+                    {(() => {
+                      const agreedPct = callVoteBreakdown && callAnswer ? (callVoteBreakdown[callAnswer] ?? null) : null;
+                      const topPct = rankData?.beatenPct != null
+                        ? Math.round(100 - rankData.beatenPct)
+                        : rankData?.rank != null && rankData?.total != null && rankData.total > 0
+                          ? Math.round((rankData.rank / rankData.total) * 100)
+                          : null;
+                      if (agreedPct === null && topPct === null) return null;
+                      return (
+                        <div
+                          className="rounded-2xl flex items-center gap-4 px-4 py-4 mb-4"
+                          style={{ background: 'rgba(237,233,254,0.1)', border: '1px solid rgba(167,139,250,0.25)' }}
+                        >
+                          <div className="flex-1 min-w-0">
+                            {agreedPct !== null && (
+                              <p className="text-[12px] mb-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                                Only {agreedPct}% agreed — but
+                              </p>
+                            )}
+                            <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
+                              {username || 'You'} is in the top {topPct ?? '?'}% 👑
+                            </p>
+                          </div>
+                          {topPct !== null && (
+                            <div
+                              className="rounded-xl px-4 py-3 text-center shrink-0"
+                              style={{ background: '#2D1B69', minWidth: 84 }}
+                            >
+                              <p className="font-black leading-none text-white" style={{ fontSize: '34px' }}>{topPct}%</p>
+                              <p className="text-[9px] font-bold uppercase tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>OF PLAYERS</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* "Start a fight" block */}
                     {(() => {
