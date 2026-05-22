@@ -455,11 +455,11 @@ function ScoreShareCard({
                             {agreedPct !== null ? (
                               <>
                                 <p className="text-[12px] mb-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                                  Only {agreedPct}% agreed — but
+                                  {agreedPct >= 75 ? `${agreedPct}% of players agreed` : `Only ${agreedPct}% agreed — but`}
                                 </p>
                                 {topPct !== null ? (
                                   <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
-                                    {username || 'You'} is in the top {topPct}% 👑
+                                    {username || 'You'} is in the top {topPct}% of players{topPct < 50 ? ' 👑' : ''}
                                   </p>
                                 ) : (
                                   <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
@@ -469,7 +469,7 @@ function ScoreShareCard({
                               </>
                             ) : topPct !== null ? (
                               <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
-                                {username || 'You'} is in the top {topPct}% of players 👑
+                                {username || 'You'} is in the top {topPct}% of players{topPct < 50 ? ' 👑' : ''}
                               </p>
                             ) : (
                               <p className="font-black leading-tight text-white" style={{ fontSize: '20px' }}>
