@@ -1624,16 +1624,17 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </div>
                 </Link>
                 <div className="flex-1 min-w-0">
-                  {/* Single sentence: [Name] reviewed [Title] — no pill, no timestamp (both moved) */}
-                  <p className="text-sm leading-snug">
-                    <Link href={`/user/${post.user.id || ''}`}>
-                      <span className="font-bold text-gray-900 hover:text-purple-600 cursor-pointer">{post.user.displayName || post.user.username}</span>
-                    </Link>
-                    <span className="text-gray-400"> {(post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'shared a take on' : 'reviewed'} </span>
+                  {/* Line 1: name only (bold) */}
+                  <Link href={`/user/${post.user.id || ''}`}>
+                    <p className="text-sm font-bold text-gray-900 hover:text-purple-600 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
+                  </Link>
+                  {/* Line 2: verb + title — same size/weight, no bold name competing */}
+                  <p className="text-sm text-gray-400 leading-snug mt-0.5">
+                    <span>{(post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'shared a take on' : 'reviewed'} </span>
                     {post.mediaTitle && (
                       post.externalId && post.externalSource
-                        ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-gray-400 hover:text-purple-500 cursor-pointer">{post.mediaTitle}</span></Link>
-                        : <span className="text-gray-400">{post.mediaTitle}</span>
+                        ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="hover:text-purple-500 cursor-pointer">{post.mediaTitle}</span></Link>
+                        : <span>{post.mediaTitle}</span>
                     )}
                   </p>
                 </div>
