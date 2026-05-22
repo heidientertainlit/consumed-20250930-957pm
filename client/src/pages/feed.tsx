@@ -1724,8 +1724,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     </div>
                     {post.mediaTitle && (
                       post.externalId && post.externalSource
-                        ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span></Link>
-                        : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span>
+                        ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer leading-tight">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span></Link>
+                        : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400 leading-tight">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span>
                     )}
                     {ratingSubmitted && ratingValue > 0 && !ratingJustSaved && (
                       <span className="text-[11px] text-yellow-600 font-semibold">You rated {ratingValue}/5</span>
@@ -1856,8 +1856,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                               })}
                             </div>
                             {post.externalId && post.externalSource
-                              ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer">{post.mediaTitle}{isSeries ? ' Series' : ''}</span></Link>
-                              : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400">{post.mediaTitle}{isSeries ? ' Series' : ''}</span>
+                              ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer leading-tight">{post.mediaTitle}{isSeries ? ' Series' : ''}</span></Link>
+                              : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400 leading-tight">{post.mediaTitle}{isSeries ? ' Series' : ''}</span>
                             }
                           </div>
                           {ratingDiffLine(post.rating, 'mt-0.5')}
@@ -4648,38 +4648,9 @@ export default function Feed() {
     const remaining = mixedFeedSlots.slice(19);
     if (remaining.length === 0) return null;
 
-    // Split overflow into UGC (rating/review posts) and play items.
-    // UGC overflow → one horizontal swipe carousel so they don't pile up vertically.
-    // Play overflow → rendered normally as interactive cards.
-    const ugcOverflow = remaining.filter((item: any) => item._isPromoted === true);
-    const playOverflow = remaining.filter((item: any) => item._isPromoted !== true);
-
     return (
       <>
-        {ugcOverflow.length > 0 && (
-          <div className="mb-4">
-            <div className="flex items-stretch gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory touch-pan-x">
-              {ugcOverflow.map((item: any, i: number) => {
-                const { _isPromoted, _promotedKey, ...post } = item;
-                return (
-                  <UGCGroupCard
-                    key={post.id || `overflow-${i}`}
-                    post={post}
-                    onLike={handleLike}
-                    isLiked={likedPosts.has(post.id)}
-                    session={session}
-                    fetchComments={fetchComments}
-                    currentUserId={currentAppUserId || undefined}
-                    onDeletePost={handleDeletePost}
-                    onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
-                    forceNormal={true}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        )}
-        {playOverflow.map((item: any, i: number) => renderFeedItem(item, `play-overflow-${i}`))}
+        {remaining.map((item: any, i: number) => renderFeedItem(item, `remaining-${i}`))}
       </>
     );
   };
@@ -6956,10 +6927,6 @@ export default function Feed() {
               {/* UGC slot 15 — after Podcasts trivia */}
               {renderPostBatchByIndex(15)}
 
-              {/* Ranks set 2 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <RanksCarousel offset={1} />
-              )}
 
               {/* Play slot #3 */}
               {renderPostBatchByIndex(3)}
