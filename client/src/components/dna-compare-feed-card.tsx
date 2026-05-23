@@ -415,12 +415,12 @@ function CompareSheet({
                         post_type: "dna_compare",
                         content: JSON.stringify({
                           match_score: result.match_score,
-                          friend_name: result.friend_name,
+                          friend_name: result.friend_name || selected?.display_name || selected?.user_name || "a friend",
                           friend_id: selected?.id,
-                          friend_dna_label: result.friend_dna_label,
-                          your_dna_label: result.your_dna_label,
-                          shared_genres: result.shared_genres,
-                          compatibility_line: result.insights?.compatibilityLine,
+                          friend_dna_label: result.friend_dna_label || null,
+                          your_dna_label: result.your_dna_label || null,
+                          shared_genres: result.shared_genres || [],
+                          compatibility_line: result.insights?.compatibilityLine || null,
                         }),
                       }),
                     });

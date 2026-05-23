@@ -3877,7 +3877,7 @@ export default function Feed() {
       // Filter out thought posts that have no rating AND no media — they're low-signal filler.
       // But keep thoughts that reference a specific media item (e.g. "Godzilla is my comfort watch").
       if (p.type === 'thought') return !!(p.rating && p.rating > 0) || !!p.mediaTitle;
-      return p.type === 'review' || p.type === 'rating' || p.type === 'rate-review' || p.type === 'finished' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment' || p.type === 'binge_battle' || p.type === 'hot_take' || p.type === 'question';
+      return p.type === 'review' || p.type === 'rating' || p.type === 'rate-review' || p.type === 'finished' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment' || p.type === 'binge_battle' || p.type === 'hot_take' || p.type === 'question' || p.type === 'dna_compare';
     });
 
     // Group posts by user within 24-hour rolling windows.
@@ -3889,7 +3889,7 @@ export default function Feed() {
     for (const post of allUGC) {
       // game_moment, cast_approved, rank, and binge_battle posts must always be solo cards —
       // never grouped into the 24h carousel because UGCGroupCard doesn't know how to render them
-      const uid = (post.type === 'game_moment' || post.type === 'cast_approved' || post.type === 'rank' || post.type === 'binge_battle' || post.type === 'hot_take' || post.type === 'question' || post.type === 'predict' || post.type === 'prediction' || post.type === 'poll')
+      const uid = (post.type === 'game_moment' || post.type === 'cast_approved' || post.type === 'rank' || post.type === 'binge_battle' || post.type === 'hot_take' || post.type === 'question' || post.type === 'predict' || post.type === 'prediction' || post.type === 'poll' || post.type === 'dna_compare')
         ? `solo-${post.id}`
         : post.user?.id || 'anon';
       if (!byUser.has(uid)) byUser.set(uid, []);
@@ -3952,7 +3952,8 @@ export default function Feed() {
     item.type === 'rank' ||
     item.type === 'binge_battle' ||
     item.type === 'hot_take' ||
-    item.type === 'question'
+    item.type === 'question' ||
+    item.type === 'dna_compare'
   );
 
   const { feedRatingCarousels, promotedRatings } = (() => {
