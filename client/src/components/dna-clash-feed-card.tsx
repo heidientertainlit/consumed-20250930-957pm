@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Zap, Check, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+
 export interface ClashUser {
   displayName: string;
   username: string;
@@ -23,6 +25,7 @@ interface DnaClashFeedCardProps {
   currentUserId?: string;
   session?: any;
   onOptOut?: () => void;
+  poolId?: string;
 }
 
 function Avatar({ user }: { user: ClashUser }) {
@@ -104,14 +107,41 @@ export default function DnaClashFeedCard({
   currentUserId,
   session,
   onOptOut,
+  poolId,
 }: DnaClashFeedCardProps) {
   const [voted, setVoted] = useState<string | null>(null);
   const [optingOut, setOptingOut] = useState(false);
   const [optedOut, setOptedOut] = useState(false);
   const [showOptOutConfirm, setShowOptOutConfirm] = useState(false);
+  const [liveCounts, setLiveCounts] = useState<Record<string, number>>({
+    [user1.username]: user1.votes,
+    [user2.username]: user2.votes,
+  });
 
   const clashKey = `clash_notified_${user1.username}_${user2.username}_${mediaTitle}`;
   const isInClash = currentUserId && (currentUserId === user1.userId || currentUserId === user2.userId);
+
+  // Load live vote counts + check if current user already voted
+  useEffect(() => {
+    if (!poolId) return;
+    async function loadVotes() {
+      const { data } = await supabase
+        .from('user_predictions')
+        .select('prediction, user_id')
+        .eq('pool_id', poolId);
+
+      if (!data) return;
+      const counts: Record<string, number> = {};
+      let myVote: string | null = null;
+      data.forEach((row: any) => {
+        counts[row.prediction] = (counts[row.prediction] || 0) + 1;
+        if (currentUserId && row.user_id === currentUserId) myVote = row.prediction;
+      });
+      setLiveCounts(prev => ({ ...prev, ...counts }));
+      if (myVote) setVoted(myVote);
+    }
+    loadVotes();
+  }, [poolId, currentUserId]);
 
   // Send "you're featured" notification once per clash per session
   useEffect(() => {
@@ -127,8 +157,36 @@ export default function DnaClashFeedCard({
   }, [isInClash, currentUserId]);
 
   const handleVote = async (username: string) => {
-    if (voted) return;
+    if (voted || !session) return;
+
+    // Optimistic update
     setVoted(username);
+    setLiveCounts(prev => ({ ...prev, [username]: (prev[username] || 0) + 1 }));
+
+    // Persist to user_predictions if we have a poolId
+    if (poolId && session?.access_token) {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/predictions/predict`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ pool_id: poolId, prediction: username }),
+        });
+        if (!res.ok) {
+          // Rollback optimistic update on failure
+          setVoted(null);
+          setLiveCounts(prev => ({ ...prev, [username]: Math.max(0, (prev[username] || 1) - 1) }));
+          return;
+        }
+      } catch {
+        setVoted(null);
+        setLiveCounts(prev => ({ ...prev, [username]: Math.max(0, (prev[username] || 1) - 1) }));
+        return;
+      }
+    }
+
     // Notify both featured users
     const votedFor = username === user1.username ? user1 : user2;
     const votedAgainst = username === user1.username ? user2 : user1;
@@ -165,8 +223,8 @@ export default function DnaClashFeedCard({
 
   if (optedOut) return null;
 
-  const v1 = voted === user1.username ? user1.votes + 1 : user1.votes;
-  const v2 = voted === user2.username ? user2.votes + 1 : user2.votes;
+  const v1 = liveCounts[user1.username] || 0;
+  const v2 = liveCounts[user2.username] || 0;
   const total = v1 + v2;
   const pct1 = total > 0 ? Math.round((v1 / total) * 100) : 50;
   const pct2 = 100 - pct1;

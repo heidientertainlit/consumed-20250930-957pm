@@ -5768,6 +5768,24 @@ export default function Feed() {
     refetchOnWindowFocus: false,
   });
 
+  // Fetch clash pools from prediction_pools (type='clash')
+  const { data: clashPools = [] } = useQuery({
+    queryKey: ['/api/clash-pools', user?.id],
+    queryFn: async () => {
+      if (!session?.access_token) return [];
+      const { data } = await supabase
+        .from('prediction_pools')
+        .select('*')
+        .eq('type', 'clash')
+        .eq('status', 'open')
+        .is('partner_tag', null)
+        .order('created_at', { ascending: false });
+      return data || [];
+    },
+    enabled: !!session?.access_token,
+    refetchOnWindowFocus: false,
+  });
+
   // Fetch creator updates
   const { data: creatorUpdates = [] } = useQuery({
     queryKey: ["/api/creator-updates"],
@@ -6990,32 +7008,83 @@ export default function Feed() {
               {/* UGC slot #1 — second user post, acts as buffer before DNA Clash */}
               {renderPostBatchByIndex(1)}
 
-              {/* DNA Clash card — rotates every 2 days */}
+              {/* DNA Clash card — rotates every 2 days, data from prediction_pools (type='clash') */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (() => {
-                const clashMatchups = [
+                // Hardcoded fallback used until DB pools are populated
+                const hardcodedMatchups = [
                   {
-                    user1: { displayName: 'Ambiannie', username: 'Ambiannie', userId: '2510625e-8a51-4637-9eb4-4d91ba3e76af', dnaLabel: 'Emotional Sleuth', rating: 5, initials: 'A', color: '#a855f7', votes: 47 },
-                    user2: { displayName: 'Kimberly Woods', username: 'KJWoodsEMH', userId: 'fa6d73af-da96-494b-b8ee-33d059bed7d5', dnaLabel: 'Mystery-Loving Escapist', rating: 1, initials: 'KW', color: '#3b82f6', votes: 21 },
+                    id: null,
+                    user1: { displayName: 'Ambiannie', username: 'Ambiannie', userId: '2510625e-8a51-4637-9eb4-4d91ba3e76af', dnaLabel: 'Emotional Sleuth', rating: 5, initials: 'A', color: '#a855f7', votes: 0 },
+                    user2: { displayName: 'Kimberly Woods', username: 'KJWoodsEMH', userId: 'fa6d73af-da96-494b-b8ee-33d059bed7d5', dnaLabel: 'Mystery-Loving Escapist', rating: 1, initials: 'KW', color: '#3b82f6', votes: 0 },
                     mediaTitle: 'The Lord of the Rings: Fellowship of the Ring', mediaType: 'movie', externalId: '120', externalSource: 'tmdb',
                   },
                   {
-                    user1: { displayName: 'Trey', username: 'Trey', userId: '7a7a0c3a-f2a4-47ed-b05d-1daf40d46d40', dnaLabel: 'Drama Devotee', rating: 5, initials: 'T', color: '#a855f7', votes: 38 },
-                    user2: { displayName: 'Jordan F.', username: 'Jrgibsongirl', userId: '188feb17-6711-43d4-bf24-b117c377591c', dnaLabel: 'Casual Binger', rating: 2, initials: 'JF', color: '#3b82f6', votes: 34 },
+                    id: null,
+                    user1: { displayName: 'Trey', username: 'Trey', userId: '7a7a0c3a-f2a4-47ed-b05d-1daf40d46d40', dnaLabel: 'Drama Devotee', rating: 5, initials: 'T', color: '#a855f7', votes: 0 },
+                    user2: { displayName: 'Jordan F.', username: 'Jrgibsongirl', userId: '188feb17-6711-43d4-bf24-b117c377591c', dnaLabel: 'Casual Binger', rating: 2, initials: 'JF', color: '#3b82f6', votes: 0 },
                     mediaTitle: 'Euphoria', mediaType: 'tv', externalId: '85552', externalSource: 'tmdb',
                   },
                   {
-                    user1: { displayName: 'Jeeppler', username: 'Jeeppler', userId: '41849796-014e-414c-ad4f-7fe99bdc69f8', dnaLabel: 'Crime Obsessive', rating: 5, initials: 'J', color: '#a855f7', votes: 61 },
-                    user2: { displayName: 'Punkin Pie', username: 'punkinpie123', userId: '561f2c21-69e9-4282-bceb-51146a405ea3', dnaLabel: 'Light & Breezy Fan', rating: 1, initials: 'PP', color: '#3b82f6', votes: 18 },
+                    id: null,
+                    user1: { displayName: 'Jeeppler', username: 'Jeeppler', userId: '41849796-014e-414c-ad4f-7fe99bdc69f8', dnaLabel: 'Crime Obsessive', rating: 5, initials: 'J', color: '#a855f7', votes: 0 },
+                    user2: { displayName: 'Punkin Pie', username: 'punkinpie123', userId: '561f2c21-69e9-4282-bceb-51146a405ea3', dnaLabel: 'Light & Breezy Fan', rating: 1, initials: 'PP', color: '#3b82f6', votes: 0 },
                     mediaTitle: 'Breaking Bad', mediaType: 'tv', externalId: '1396', externalSource: 'tmdb',
                   },
                   {
-                    user1: { displayName: 'Heidi', username: 'HeidiIsConsumed', userId: '88bfb2a0-e8ce-4081-b731-2a49567ff093', dnaLabel: 'Genre Adventurer', rating: 5, initials: 'H', color: '#a855f7', votes: 29 },
-                    user2: { displayName: 'Ambiannie', username: 'Ambiannie', userId: '2510625e-8a51-4637-9eb4-4d91ba3e76af', dnaLabel: 'Emotional Sleuth', rating: 2, initials: 'A', color: '#3b82f6', votes: 44 },
+                    id: null,
+                    user1: { displayName: 'Heidi', username: 'HeidiIsConsumed', userId: '88bfb2a0-e8ce-4081-b731-2a49567ff093', dnaLabel: 'Genre Adventurer', rating: 5, initials: 'H', color: '#a855f7', votes: 0 },
+                    user2: { displayName: 'Ambiannie', username: 'Ambiannie', userId: '2510625e-8a51-4637-9eb4-4d91ba3e76af', dnaLabel: 'Emotional Sleuth', rating: 2, initials: 'A', color: '#3b82f6', votes: 0 },
                     mediaTitle: 'The Office', mediaType: 'tv', externalId: '2316', externalSource: 'tmdb',
                   },
                 ];
+
                 const dayIndex = Math.floor(Date.now() / 86400000);
-                const clash = clashMatchups[Math.floor(dayIndex / 2) % clashMatchups.length];
+
+                // Use DB pools if available; fall back to hardcoded
+                if (clashPools.length > 0) {
+                  const pool = clashPools[Math.floor(dayIndex / 2) % clashPools.length];
+                  const opts: any[] = Array.isArray(pool.options) ? pool.options : [];
+                  if (opts.length < 2) return null;
+                  const [o1, o2] = opts;
+                  const u1 = {
+                    displayName: o1.displayName || o1.label,
+                    username: o1.username || o1.label,
+                    userId: o1.userId || o1.user_id || '',
+                    dnaLabel: o1.dnaLabel || o1.archetype || '',
+                    rating: o1.rating || 0,
+                    initials: o1.initials || (o1.displayName || o1.label || '').slice(0, 2).toUpperCase(),
+                    color: o1.color || '#a855f7',
+                    votes: 0,
+                  };
+                  const u2 = {
+                    displayName: o2.displayName || o2.label,
+                    username: o2.username || o2.label,
+                    userId: o2.userId || o2.user_id || '',
+                    dnaLabel: o2.dnaLabel || o2.archetype || '',
+                    rating: o2.rating || 0,
+                    initials: o2.initials || (o2.displayName || o2.label || '').slice(0, 2).toUpperCase(),
+                    color: o2.color || '#3b82f6',
+                    votes: 0,
+                  };
+                  return (
+                    <DnaClashFeedCard
+                      key={`clash-${pool.id}`}
+                      poolId={pool.id}
+                      user1={u1}
+                      user2={u2}
+                      mediaTitle={pool.media_title || ''}
+                      mediaType={pool.media_type || ''}
+                      externalId={pool.media_external_id || ''}
+                      externalSource={pool.media_external_source || ''}
+                      currentUserId={effectiveUserId || undefined}
+                      session={session}
+                      onOptOut={() => {}}
+                    />
+                  );
+                }
+
+                // Fallback: hardcoded matchups (no DB pools yet)
+                const clash = hardcodedMatchups[Math.floor(dayIndex / 2) % hardcodedMatchups.length];
                 return (
                   <DnaClashFeedCard
                     key={`clash-${clash.mediaTitle}`}
@@ -7027,7 +7096,7 @@ export default function Feed() {
                     externalSource={clash.externalSource}
                     currentUserId={effectiveUserId || undefined}
                     session={session}
-                    onOptOut={() => {/* card hides itself on opt-out */}}
+                    onOptOut={() => {}}
                   />
                 );
               })()}
