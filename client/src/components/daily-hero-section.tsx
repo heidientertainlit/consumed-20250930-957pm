@@ -844,7 +844,7 @@ function TodaysPlayGame({
       }));
       setDoneScore(score);
       onComplete(score); // update parent card immediately
-      setPhase('done');
+      onShare(allAnswers.map(a => ({ correct: a.correct, category: a.category, picked: a.picked })), socialProof ?? null);
 
       // Update streak for Today's Play completion.
       // Store pending date BEFORE the call so a failure leaves a retry marker.
@@ -2127,7 +2127,13 @@ export function DailyHeroSection() {
                 <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-cyan-300/70">Today's Play</span>
                 <div className="flex items-end gap-1.5 mt-0.5">
                   {isTriviaDay ? (
-                    <p className="text-white text-[20px] font-black leading-none">{playScore?.correct ?? '–'}<span className="text-white/30 text-[13px] font-bold">/{playScore?.total ?? 3}</span></p>
+                    (playScore?.total ?? 1) === 1 ? (
+                      <span className={`text-[22px] font-black leading-none ${playScore?.correct === 1 ? 'text-green-300' : 'text-red-300'}`}>
+                        {playScore?.correct === 1 ? '✓' : '✗'}
+                      </span>
+                    ) : (
+                      <p className="text-white text-[20px] font-black leading-none">{playScore?.correct ?? '–'}<span className="text-white/30 text-[13px] font-bold">/{playScore?.total}</span></p>
+                    )
                   ) : (
                     <p className="text-white/90 text-[14px] font-bold leading-snug line-clamp-1">
                       {callAnswer === '__skip' ? 'Skipped — still counts!' : (callAnswer ?? 'Done')}
@@ -2226,11 +2232,17 @@ export function DailyHeroSection() {
               <div className={`flex-1 flex flex-col justify-center ${front ? 'py-2' : 'pt-3 pb-2'}`}>
                 {isTriviaDay && playCompleted && playScore ? (
                   <div>
-                    <p className={`${front ? 'text-[28px]' : 'text-[22px]'} font-black text-white leading-none`}>
-                      {playScore.correct}
-                      <span className={`text-white/30 ${front ? 'text-[18px]' : 'text-[14px]'} font-bold`}> / {playScore.total}</span>
-                    </p>
-                    <p className={`${front ? 'text-[10px]' : 'text-[9px]'} text-white/40 uppercase tracking-wider font-semibold mt-1`}>correct</p>
+                    {playScore.total === 1 ? (
+                      <span className={`${front ? 'text-[32px]' : 'text-[26px]'} font-black leading-none ${playScore.correct === 1 ? 'text-green-300' : 'text-red-300'}`}>
+                        {playScore.correct === 1 ? '✓' : '✗'}
+                      </span>
+                    ) : (
+                      <p className={`${front ? 'text-[28px]' : 'text-[22px]'} font-black text-white leading-none`}>
+                        {playScore.correct}
+                        <span className={`text-white/30 ${front ? 'text-[18px]' : 'text-[14px]'} font-bold`}> / {playScore.total}</span>
+                      </p>
+                    )}
+                    <p className={`${front ? 'text-[10px]' : 'text-[9px]'} text-white/40 uppercase tracking-wider font-semibold mt-1`}>{playScore.total === 1 ? (playScore.correct === 1 ? 'correct' : 'not this time') : 'correct'}</p>
                   </div>
                 ) : (!isTriviaDay && callCompleted && callAnswer) ? (
                   <>
