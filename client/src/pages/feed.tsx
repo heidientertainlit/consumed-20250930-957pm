@@ -3946,16 +3946,26 @@ export default function Feed() {
   // Split standaloneUGCPosts into two streams:
   // 1. feedPlaySlots — game_moments + user predictions (shown standalone, interleaved with play carousels)
   // 2. feedRatingCarousels — rate/review posts, grouped into cross-user batches of 4 for compact carousels
-  const feedPlaySlots: any[] = standaloneUGCPosts.filter((item: any) =>
-    item.type === 'game_moment' ||
-    item.type === 'predict' ||
-    item.type === 'prediction' ||
-    item.type === 'rank' ||
-    item.type === 'binge_battle' ||
-    item.type === 'hot_take' ||
-    item.type === 'question' ||
-    item.type === 'dna_compare'
-  );
+  const feedPlaySlots: any[] = (() => {
+    const raw = standaloneUGCPosts.filter((item: any) =>
+      item.type === 'game_moment' ||
+      item.type === 'predict' ||
+      item.type === 'prediction' ||
+      item.type === 'rank' ||
+      item.type === 'binge_battle' ||
+      item.type === 'hot_take' ||
+      item.type === 'question' ||
+      item.type === 'dna_compare'
+    );
+    // dna_compare posts go after the first non-dna_compare play item
+    // so there's always a trivia/prediction card before them in the feed
+    const dnaItems = raw.filter((i: any) => i.type === 'dna_compare');
+    const others = raw.filter((i: any) => i.type !== 'dna_compare');
+    if (dnaItems.length === 0) return others;
+    return others.length > 0
+      ? [others[0], ...dnaItems, ...others.slice(1)]
+      : dnaItems;
+  })();
 
   const { feedRatingCarousels, promotedRatings } = (() => {
     const ratingItems: any[] = [];
@@ -3969,7 +3979,8 @@ export default function Feed() {
         item.type !== 'rank' &&
         item.type !== 'binge_battle' &&
         item.type !== 'hot_take' &&
-        item.type !== 'question'
+        item.type !== 'question' &&
+        item.type !== 'dna_compare'
       ) {
         ratingItems.push(item);
       }
@@ -4439,7 +4450,7 @@ export default function Feed() {
       let cmp: any = {};
       try { cmp = JSON.parse(item.content || '{}'); } catch {}
       const poster = item.user;
-      const posterName = (poster?.display_name || poster?.user_name || 'Someone') as string;
+      const posterName = (poster?.displayName || poster?.display_name || poster?.username || poster?.user_name || 'Someone') as string;
       const posterInitials = posterName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
       const matchScore = cmp.match_score || 0;
       const friendName = (cmp.friend_name || 'a friend') as string;
