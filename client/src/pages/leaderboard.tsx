@@ -657,13 +657,8 @@ export default function Leaderboard() {
                     { title: 'Most Niche Taste',         data: undefined },
                     { title: 'Most Mainstream',          data: undefined },
                     { title: 'The Tastemaker',           data: undefined },
-                    { title: 'Hidden Gem Hunter',        data: undefined },
                     { title: 'Most Agreed With',         data: undefined },
-                    { title: 'Most Divisive',            data: undefined },
-                    { title: 'The Trendsetter',          data: undefined },
-                    { title: 'Most Copied Watchlist',    data: undefined },
                     { title: 'Most Unique DNA',          data: undefined },
-                    { title: 'The Connector',            data: undefined },
                     { title: 'Cult Following',           data: undefined },
                   ] as { title: string; data: LeaderboardEntry[] | undefined }[]).map(({ title, data }, index) => {
                     const holder = data?.[0];
