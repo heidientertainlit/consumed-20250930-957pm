@@ -3539,6 +3539,7 @@ export default function Feed() {
   const [expandedAddRecInput, setExpandedAddRecInput] = useState<Set<string>>(new Set()); // Track recs posts with add input expanded
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [stackIndices, setStackIndices] = useState<Record<string, number>>({});
   const likedPostsInitialized = useRef(false); // Track if we've done initial sync
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const [commentVotes, setCommentVotes] = useState<Map<string, 'up' | 'down'>>(new Map()); // Track user's comment votes
@@ -4856,31 +4857,41 @@ export default function Feed() {
       if (buffer.length === 0) return;
       if (buffer.length === 3) {
         const k = groupKey++;
+        const stackKey = `stack-${k}`;
+        const activeIdx = stackIndices[stackKey] || 0;
+        const { _isPromoted: _p0, _promotedKey: _pk0, ...activePost } = buffer[activeIdx];
         output.push(
-          <div key={`ugc-carousel-${k}`} className="mb-3">
-            <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory touch-pan-x px-4 -mx-0">
-              {buffer.map((item: any, ci: number) => {
-                const { _isPromoted, _promotedKey, ...post } = item;
-                return (
-                  <div key={post.id || ci} className="shrink-0 snap-start w-[78vw] max-w-[290px]">
-                    <UGCGroupCard
-                      post={post as any}
-                      onLike={handleLike}
-                      isLiked={likedPosts.has(post.id)}
-                      session={session}
-                      fetchComments={fetchComments}
-                      currentUserId={currentAppUserId || undefined}
-                      onDeletePost={handleDeletePost}
-                      onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
-                      forceNormal={true}
-                    />
-                  </div>
-                );
-              })}
+          <div key={`ugc-stack-${k}`} className="mb-4">
+            {/* Stacked card deck — active card on top, 2 decorative edges below */}
+            <div>
+              <UGCGroupCard
+                post={activePost as any}
+                onLike={handleLike}
+                isLiked={likedPosts.has(activePost.id)}
+                session={session}
+                fetchComments={fetchComments}
+                currentUserId={currentAppUserId || undefined}
+                onDeletePost={handleDeletePost}
+                onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+                forceNormal={true}
+              />
+              {/* Card 2 peek */}
+              {buffer.length >= 2 && (
+                <div className="h-3 -mt-1.5 mx-2.5 rounded-b-2xl bg-white border border-t-0 border-gray-200 shadow-sm" />
+              )}
+              {/* Card 3 peek */}
+              {buffer.length >= 3 && (
+                <div className="h-2.5 -mt-1 mx-5 rounded-b-2xl bg-gray-100 border border-t-0 border-gray-200" />
+              )}
             </div>
-            <div className="flex justify-center gap-1.5 mt-1.5 mb-1">
+            {/* Dot nav */}
+            <div className="flex justify-center items-center gap-1.5 mt-3">
               {buffer.map((_: any, di: number) => (
-                <div key={di} className="w-1.5 h-1.5 rounded-full bg-gray-600/40" />
+                <button
+                  key={di}
+                  onClick={() => setStackIndices(prev => ({ ...prev, [stackKey]: di }))}
+                  className={`rounded-full transition-all duration-200 ${di === activeIdx ? 'w-4 h-1.5 bg-purple-500' : 'w-1.5 h-1.5 bg-gray-300'}`}
+                />
               ))}
             </div>
           </div>

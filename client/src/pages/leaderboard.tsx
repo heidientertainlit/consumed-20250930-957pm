@@ -651,7 +651,7 @@ export default function Leaderboard() {
                 </div>
                 <div className="divide-y divide-gray-100">
                   {([
-                    { emoji: '🧠', title: 'Trivia Oracle',          sub: 'knows every answer',     data: leaderboardData?.categories?.trivia },
+                    { emoji: '📡', title: 'The Completionist',      sub: 'most content tracked',   data: leaderboardData?.categories?.total_consumption },
                     { emoji: '🎯', title: 'Called the Finale',       sub: 'best prediction accuracy', data: leaderboardData?.categories?.predictions },
                     { emoji: '🗣️', title: 'Most Controversial Take', sub: 'top poll voter',          data: leaderboardData?.categories?.polls },
                     { emoji: '🎬', title: 'Film Buff',               sub: 'most movies tracked',    data: leaderboardData?.categories?.movies },
