@@ -517,14 +517,14 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
           
           <div className="flex items-center">
             {totalPoints !== null && (
-              <Link href="/points" className="flex items-center gap-1 bg-white/10 active:bg-white/20 rounded-full px-2.5 py-1 transition-colors mr-3">
+              <Link href="/points" className="flex items-center gap-1 bg-white/10 active:bg-white/20 rounded-full px-2.5 py-1 transition-colors mr-5">
                 <Star size={11} className="text-amber-400" fill="currentColor" />
                 <span className="text-white text-xs font-semibold">{totalPoints.toLocaleString()}</span>
                 <span className="text-white/60 text-[10px]">pts</span>
               </Link>
             )}
             <Link href="/leaderboard" className="hover:opacity-70 transition-opacity mr-6" aria-label="Leaderboard">
-              <Trophy className="text-white" size={20} />
+              <Trophy className="text-white/80" size={20} />
             </Link>
             <button
               onClick={handleSearchToggle}
