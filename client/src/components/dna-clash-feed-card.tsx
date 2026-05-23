@@ -28,29 +28,28 @@ function FilledStars({ rating, color }: { rating: number; color: string }) {
   );
 }
 
-function Avatar({ user, size = 50 }: { user: ClashUser; size?: number }) {
+function Avatar({ user }: { user: ClashUser }) {
   const firstName = user.displayName.split(" ")[0];
-  const charCount = firstName.length;
-  const nameFontSize = charCount <= 4 ? Math.round(size * 0.26) : charCount <= 6 ? Math.round(size * 0.22) : Math.round(size * 0.18);
-  const starFontSize = Math.round(size * 0.18);
-  const minWidth = charCount <= 4 ? size * 1.3 : charCount <= 6 ? size * 1.7 : size * 2.1;
   return (
     <div
-      className="shrink-0 flex flex-col items-center justify-center font-extrabold text-white text-center gap-0.5"
+      className="shrink-0 flex flex-col items-center justify-center font-bold text-white text-center gap-1"
       style={{
-        minWidth,
-        paddingLeft: 12,
-        paddingRight: 12,
-        paddingTop: 10,
-        paddingBottom: 10,
+        paddingLeft: 16,
+        paddingRight: 16,
+        paddingTop: 12,
+        paddingBottom: 12,
         borderRadius: 999,
         background: user.color,
-        boxShadow: `0 0 0 2px rgba(255,255,255,0.12), 0 0 16px ${user.color}88`,
+        minWidth: 90,
+        boxShadow: `0 0 0 2px rgba(255,255,255,0.15)`,
       }}
     >
-      <span style={{ fontSize: nameFontSize, lineHeight: 1.1 }}>{firstName}</span>
-      <span style={{ fontSize: starFontSize, letterSpacing: 1, opacity: 0.9, lineHeight: 1 }}>
+      <span style={{ fontSize: 16, lineHeight: 1.1, fontWeight: 800 }}>{firstName}</span>
+      <span style={{ fontSize: 13, letterSpacing: 1.5, lineHeight: 1, opacity: 0.95 }}>
         {"★".repeat(user.rating)}{"☆".repeat(5 - user.rating)}
+      </span>
+      <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.85, lineHeight: 1.2, textAlign: 'center' }}>
+        {user.dnaLabel}
       </span>
     </div>
   );
@@ -117,23 +116,9 @@ export default function DnaClashFeedCard({
 
         {/* Avatars + waveform */}
         <div className="flex items-center justify-center gap-0">
-          <Avatar user={user1} size={52} />
+          <Avatar user={user1} />
           <Waveform />
-          <Avatar user={user2} size={52} />
-        </div>
-
-        {/* Info columns — name + DNA label only (rating is in the avatar pill) */}
-        <div className="flex gap-3">
-          {[user1, user2].map((u) => (
-            <div
-              key={u.username}
-              className="flex-1 flex flex-col gap-1 p-3 rounded-xl"
-              style={{ background: `${u.color}18`, border: `1px solid ${u.color}40` }}
-            >
-              <span className="text-white font-semibold text-[13px] leading-tight">{u.displayName}</span>
-              <span className="text-white/60 text-[11px] font-medium leading-tight">{u.dnaLabel}</span>
-            </div>
-          ))}
+          <Avatar user={user2} />
         </div>
 
         {/* CTA + vote buttons */}
