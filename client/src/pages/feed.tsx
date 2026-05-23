@@ -3946,26 +3946,20 @@ export default function Feed() {
   // Split standaloneUGCPosts into two streams:
   // 1. feedPlaySlots — game_moments + user predictions (shown standalone, interleaved with play carousels)
   // 2. feedRatingCarousels — rate/review posts, grouped into cross-user batches of 4 for compact carousels
-  const feedPlaySlots: any[] = (() => {
-    const raw = standaloneUGCPosts.filter((item: any) =>
-      item.type === 'game_moment' ||
-      item.type === 'predict' ||
-      item.type === 'prediction' ||
-      item.type === 'rank' ||
-      item.type === 'binge_battle' ||
-      item.type === 'hot_take' ||
-      item.type === 'question' ||
-      item.type === 'dna_compare'
-    );
-    // dna_compare posts go after the first non-dna_compare play item
-    // so there's always a trivia/prediction card before them in the feed
-    const dnaItems = raw.filter((i: any) => i.type === 'dna_compare');
-    const others = raw.filter((i: any) => i.type !== 'dna_compare');
-    if (dnaItems.length === 0) return others;
-    return others.length > 0
-      ? [others[0], ...dnaItems, ...others.slice(1)]
-      : dnaItems;
-  })();
+  const feedPlaySlots: any[] = standaloneUGCPosts.filter((item: any) =>
+    item.type === 'game_moment' ||
+    item.type === 'predict' ||
+    item.type === 'prediction' ||
+    item.type === 'rank' ||
+    item.type === 'binge_battle' ||
+    item.type === 'hot_take' ||
+    item.type === 'question'
+    // dna_compare intentionally excluded — injected directly in JSX at slot 2
+  );
+
+  // dna_compare shared posts — pulled out of the feed pipeline so we can place them
+  // precisely in the JSX at position 2 (between the first two UGC posts)
+  const dnaComparePostsForFeed = standaloneUGCPosts.filter((item: any) => item.type === 'dna_compare');
 
   const { feedRatingCarousels, promotedRatings } = (() => {
     const ratingItems: any[] = [];
@@ -4445,7 +4439,7 @@ export default function Feed() {
       );
     }
 
-    // DNA Compare posts — render comparison result card
+    // DNA Compare posts — rendered to match the DnaCompareFeedCard visual style
     if (item?.type === 'dna_compare') {
       let cmp: any = {};
       try { cmp = JSON.parse(item.content || '{}'); } catch {}
@@ -4454,46 +4448,69 @@ export default function Feed() {
       const posterInitials = posterName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
       const matchScore = cmp.match_score || 0;
       const friendName = (cmp.friend_name || 'a friend') as string;
-      const friendFirst = friendName.split(' ')[0];
-      const posterFirst = posterName.split(' ')[0];
+      const friendInitials = friendName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
       const sharedGenres: string[] = cmp.shared_genres || [];
       const compatLine: string = cmp.compatibility_line || '';
-      const yourLabel: string = cmp.your_dna_label || '';
-      const friendLabel: string = cmp.friend_dna_label || '';
       return (
-        <div key={item.id} className="mx-3 mb-3 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #2d1b69 100%)', border: '1px solid rgba(168,85,247,0.2)' }}>
-          <div className="flex items-center gap-2 px-4 pt-3 pb-2">
-            <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0">{posterInitials}</div>
-            <p className="text-white/70 text-[12px]"><span className="text-white font-medium">{posterName}</span> compared their DNA</p>
-            <div className="ml-auto">
-              <span className="text-purple-400 text-[9px] uppercase tracking-widest font-semibold">Compare DNA</span>
-            </div>
-          </div>
-          <div className="px-4 pb-4 flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <p className="font-extrabold" style={{ fontSize: 34, color: '#c084fc' }}>{matchScore}%</p>
-              <p className="text-white/60 text-[13px] leading-snug">match with<br /><span className="text-white font-semibold">{friendName}</span></p>
-            </div>
-            {compatLine ? <p className="text-white/60 text-[12px] italic">"{compatLine}"</p> : null}
-            {(yourLabel || friendLabel) ? (
-              <div className="flex gap-2">
-                {yourLabel ? <div className="flex-1 px-2 py-1.5 rounded-xl text-center" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' }}>
-                  <p className="text-white/40 text-[9px] uppercase tracking-widest">{posterFirst}</p>
-                  <p className="text-indigo-300 font-semibold text-[10px] leading-tight">{yourLabel}</p>
-                </div> : null}
-                {friendLabel ? <div className="flex-1 px-2 py-1.5 rounded-xl text-center" style={{ background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)' }}>
-                  <p className="text-white/40 text-[9px] uppercase tracking-widest">{friendFirst}</p>
-                  <p className="text-purple-300 font-semibold text-[10px] leading-tight">{friendLabel}</p>
-                </div> : null}
+        <div key={item.id} className="mx-3 mb-3 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f0a2e 0%, #1a1050 45%, #1e1460 100%)' }}>
+          <div className="p-4 flex flex-col gap-4">
+            {/* Header — poster attribution */}
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">{posterInitials}</div>
+              <p className="text-white/60 text-[11px]"><span className="text-white/90 font-semibold">{posterName}</span> compared their DNA</p>
+              <div className="ml-auto flex items-center gap-1">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-indigo-300"><path d="M12 2a7 7 0 0 1 7 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                <span className="text-[9px] font-bold text-indigo-300 uppercase tracking-widest">Compare DNA</span>
               </div>
-            ) : null}
-            {sharedGenres.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {sharedGenres.slice(0, 5).map((g: string) => (
-                  <span key={g} className="px-2.5 py-0.5 rounded-full text-[11px] font-medium text-purple-200" style={{ background: 'rgba(168,85,247,0.18)', border: '1px solid rgba(168,85,247,0.3)' }}>{g}</span>
-                ))}
+            </div>
+
+            {/* Main two-column content */}
+            <div className="flex gap-3 -mt-1">
+              {/* Left — avatars + score + quote */}
+              <div className="flex-1 min-w-0 flex flex-col gap-2">
+                {/* Avatar row: poster bubble → waveform → friend bubble */}
+                <div className="flex items-center gap-0">
+                  <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 38, height: 38, fontSize: 12 }}>
+                    {posterInitials}
+                  </div>
+                  <svg width="40" height="34" viewBox="0 0 44 38" fill="none" className="shrink-0">
+                    <defs>
+                      <linearGradient id={`wave-shared-${item.id}`} x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#a855f7" />
+                        <stop offset="100%" stopColor="#818cf8" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M0,19 Q4,8 8,19 Q12,30 16,19 Q20,8 22,19 Q24,30 28,19 Q32,8 36,19 Q40,30 44,19"
+                      stroke={`url(#wave-shared-${item.id})`} strokeWidth="2" strokeLinecap="round" fill="none" />
+                  </svg>
+                  <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-purple-500" style={{ width: 38, height: 38, fontSize: 12 }}>
+                    {friendInitials}
+                  </div>
+                </div>
+                {/* Score */}
+                <div>
+                  <p className="text-white font-extrabold leading-tight" style={{ fontSize: 17 }}>
+                    <span style={{ color: '#c084fc' }}>{matchScore}%</span> aligned with
+                  </p>
+                  <p className="text-white font-extrabold leading-tight" style={{ fontSize: 17 }}>{friendName}</p>
+                </div>
+                {/* Quote */}
+                {compatLine ? <p className="text-white/50 text-[11px] leading-snug italic">"{compatLine}"</p> : null}
               </div>
-            ) : null}
+
+              {/* Right — shared genres */}
+              {sharedGenres.length > 0 && (
+                <div className="flex flex-col gap-1 pt-1 min-w-[100px]">
+                  <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest mb-0.5">You both love</span>
+                  {sharedGenres.slice(0, 4).map((g: string) => (
+                    <div key={g} className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
+                      <span className="text-white/70 text-[11px] truncate">{g}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       );
@@ -6906,23 +6923,53 @@ export default function Feed() {
               )}
 
               {/* — BLOCK 1 — */}
-              {/* Play slot #0 */}
+              {/* UGC slot #0 — most recent user post */}
               {renderPostBatchByIndex(0)}
 
-              {/* Play slot #1 — promoted rating card immediately after the first play post */}
+              {/* DNA Compare shared post — injected at slot 2 so it's always near the top */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && dnaComparePostsForFeed.length > 0 &&
+                renderFeedItem(dnaComparePostsForFeed[0], 'dna-compare-shared')}
+
+              {/* UGC slot #1 — second user post, acts as buffer before DNA Clash */}
               {renderPostBatchByIndex(1)}
 
-              {/* DNA Clash card — Ambiannie (5★) vs Kimberly Woods (1★) on LOTR */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <DnaClashFeedCard
-                  user1={{ displayName: 'Ambiannie', username: 'Ambiannie', dnaLabel: 'Emotional Sleuth', rating: 5, initials: 'A', color: '#f59e0b' }}
-                  user2={{ displayName: 'Kimberly Woods', username: 'KJWoodsEMH', dnaLabel: 'Mystery-Loving Escapist', rating: 1, initials: 'KW', color: '#a855f7' }}
-                  mediaTitle="The Lord of the Rings: Fellowship of the Ring"
-                  mediaType="movie"
-                  externalId="120"
-                  externalSource="tmdb"
-                />
-              )}
+              {/* DNA Clash card — rotates every 2 days */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (() => {
+                const clashMatchups = [
+                  {
+                    user1: { displayName: 'Ambiannie', username: 'Ambiannie', dnaLabel: 'Emotional Sleuth', rating: 5, initials: 'A', color: '#f59e0b' },
+                    user2: { displayName: 'Kimberly Woods', username: 'KJWoodsEMH', dnaLabel: 'Mystery-Loving Escapist', rating: 1, initials: 'KW', color: '#a855f7' },
+                    mediaTitle: 'The Lord of the Rings: Fellowship of the Ring', mediaType: 'movie', externalId: '120', externalSource: 'tmdb',
+                  },
+                  {
+                    user1: { displayName: 'Trey', username: 'Trey', dnaLabel: 'Drama Devotee', rating: 5, initials: 'T', color: '#10b981' },
+                    user2: { displayName: 'Jordan F.', username: 'Jrgibsongirl', dnaLabel: 'Casual Binger', rating: 2, initials: 'JF', color: '#ec4899' },
+                    mediaTitle: 'Euphoria', mediaType: 'tv', externalId: '85552', externalSource: 'tmdb',
+                  },
+                  {
+                    user1: { displayName: 'Jeeppler', username: 'Jeeppler', dnaLabel: 'Crime Obsessive', rating: 5, initials: 'J', color: '#6366f1' },
+                    user2: { displayName: 'Punkin Pie', username: 'punkinpie123', dnaLabel: 'Light & Breezy Fan', rating: 1, initials: 'PP', color: '#f43f5e' },
+                    mediaTitle: 'Breaking Bad', mediaType: 'tv', externalId: '1396', externalSource: 'tmdb',
+                  },
+                  {
+                    user1: { displayName: 'Heidi', username: 'HeidiIsConsumed', dnaLabel: 'Genre Adventurer', rating: 5, initials: 'H', color: '#8b5cf6' },
+                    user2: { displayName: 'Ambiannie', username: 'Ambiannie', dnaLabel: 'Emotional Sleuth', rating: 2, initials: 'A', color: '#f59e0b' },
+                    mediaTitle: 'The Office', mediaType: 'tv', externalId: '2316', externalSource: 'tmdb',
+                  },
+                ];
+                const dayIndex = Math.floor(Date.now() / 86400000);
+                const clash = clashMatchups[Math.floor(dayIndex / 2) % clashMatchups.length];
+                return (
+                  <DnaClashFeedCard
+                    user1={clash.user1}
+                    user2={clash.user2}
+                    mediaTitle={clash.mediaTitle}
+                    mediaType={clash.mediaType}
+                    externalId={clash.externalId}
+                    externalSource={clash.externalSource}
+                  />
+                );
+              })()}
 
               {/* Movies trivia — round 1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') &&
