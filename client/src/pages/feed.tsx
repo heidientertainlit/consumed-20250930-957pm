@@ -61,6 +61,7 @@ import { GameMomentCard } from "@/components/game-moment-card";
 import { SocialProofCard, buildGameMomentSocialProof, buildLeaderboardSocialProof } from "@/components/social-proof-card";
 import BingeBattleFeedCard from "@/components/binge-battle-feed-card";
 import DnaClashFeedCard from "@/components/dna-clash-feed-card";
+import DnaCompareFeedCard from "@/components/dna-compare-feed-card";
 import { TodaysPlayNudge } from "@/components/todays-play-nudge";
 import { WhatsYourMove } from "@/components/whats-your-move"; // kept for reference — not currently rendered
 import FeedComposerBar from "@/components/feed-composer-bar";
@@ -4130,33 +4131,6 @@ export default function Feed() {
     return { feedRatingCarousels: batches, promotedRatings: promoted };
   })();
 
-  // Real rating clash used for the DNA Clash feed card.
-  // Sourced from media_ratings: Ambiannie (5★) vs KJWoodsEMH (1★) on LOTR: Fellowship.
-  const DNA_CLASH_CARD = {
-    type: 'dna_clash',
-    id: 'dna-clash-lotr',
-    user1: {
-      displayName: 'Ambiannie',
-      username: 'Ambiannie',
-      dnaLabel: 'Emotional Sleuth',
-      rating: 5,
-      initials: 'A',
-      color: '#f59e0b',
-    },
-    user2: {
-      displayName: 'Kimberly Woods',
-      username: 'KJWoodsEMH',
-      dnaLabel: 'Mystery-Loving Escapist',
-      rating: 1,
-      initials: 'KW',
-      color: '#a855f7',
-    },
-    mediaTitle: 'The Lord of the Rings: Fellowship of the Ring',
-    mediaType: 'movie',
-    externalId: '120',
-    externalSource: 'tmdb',
-  };
-
   // Interleave play slots with promoted standalone ratings and binge battle promo cards.
   // Pattern (1-indexed): every 3 play items inserts one promoted rating; positions 5 and 11
   // insert binge-battle promo cards (max 2). Play stays the dominant rhythm of the feed.
@@ -4225,8 +4199,6 @@ export default function Feed() {
       out.push(wrapExtra(extraIdx));
       extraIdx++;
     }
-    // Splice DNA clash card into slot 3 so renderPostBatchByIndex(3) in the JSX always shows it.
-    out.splice(3, 0, DNA_CLASH_CARD);
     return out;
   }, [feedPlaySlots, promotedRatings, feedRatingCarousels]);
 
@@ -4455,21 +4427,6 @@ export default function Feed() {
               : "Think you binge faster? Challenge someone and prove it.",
             media_title: isStart ? "Pick a show, pick a friend" : "Binge Battle",
           }}
-        />
-      );
-    }
-
-    // DNA Clash card — two real users with opposite ratings on the same media
-    if (item?.type === 'dna_clash') {
-      return (
-        <DnaClashFeedCard
-          key={item.id}
-          user1={item.user1}
-          user2={item.user2}
-          mediaTitle={item.mediaTitle}
-          mediaType={item.mediaType}
-          externalId={item.externalId}
-          externalSource={item.externalSource}
         />
       );
     }
@@ -6887,6 +6844,18 @@ export default function Feed() {
               {/* Play slot #1 — promoted rating card immediately after the first play post */}
               {renderPostBatchByIndex(1)}
 
+              {/* DNA Clash card — Ambiannie (5★) vs Kimberly Woods (1★) on LOTR */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+                <DnaClashFeedCard
+                  user1={{ displayName: 'Ambiannie', username: 'Ambiannie', dnaLabel: 'Emotional Sleuth', rating: 5, initials: 'A', color: '#f59e0b' }}
+                  user2={{ displayName: 'Kimberly Woods', username: 'KJWoodsEMH', dnaLabel: 'Mystery-Loving Escapist', rating: 1, initials: 'KW', color: '#a855f7' }}
+                  mediaTitle="The Lord of the Rings: Fellowship of the Ring"
+                  mediaType="movie"
+                  externalId="120"
+                  externalSource="tmdb"
+                />
+              )}
+
               {/* Movies trivia — round 1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') &&
                (!selectedCategory || selectedCategory === 'movies') && (
@@ -6907,6 +6876,18 @@ export default function Feed() {
               {/* DNA Moment #1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
                 <DnaMomentCard />
+              )}
+
+              {/* DNA Compare card */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+                <DnaCompareFeedCard
+                  featured={{ displayName: 'Hillary Hess', initials: 'HH', color: '#6366f1', pct: 42, tagline: 'You both love epic adventures and genre-spanning stories.' }}
+                  overlaps={[
+                    { displayName: 'Jeeppler', initials: 'J', color: '#a855f7', pct: 38 },
+                    { displayName: 'Jordan F.', initials: 'JF', color: '#ec4899', pct: 31 },
+                    { displayName: 'Ambiannie', initials: 'A', color: '#f59e0b', pct: 24 },
+                  ]}
+                />
               )}
 
               {/* Leaderboard #0 */}
