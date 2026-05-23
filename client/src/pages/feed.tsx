@@ -1125,7 +1125,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const isActionFirst = !forceNormal && isRatingPost && (forceActionFirst || (isOtherUser && !ratingSubmitted)) && session?.access_token;
 
   // Use external (3rd-party) rating as comparison baseline when available; convert /10 → /5
-  const baselineRating = externalRating ? externalRating / 2 : communityRating;
+  // Only use external API rating (TMDB/Google Books/etc.) as baseline.
+  // Fall back to community rating only when we have 5+ in-app ratings — a
+  // sample of 1-2 people would produce misleading "rare rave / overrated" labels.
+  const baselineRating = externalRating
+    ? externalRating / 2
+    : (ratingCount >= 5 ? communityRating : null);
   const baselineLabel = 'avg';
 
   const ratingDiffLine = (rating: number, className = 'mt-0.5') => {
@@ -2552,12 +2557,30 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   const spIsActionFirst = isRatingType && spIsOtherUser && !ratingSubmitted && !!session?.access_token;
 
   const spRatingDiffLine = (rating: number, extraClass = '') => {
-    const ref = externalRating !== null ? externalRating / 2 : communityRating;
+    const ref = externalRating !== null ? externalRating / 2 : (ratingCount >= 5 ? communityRating : null);
     if (ref === null) return null;
     const diff = rating - ref;
-    if (Math.abs(diff) <= 0.3) return <p className={`text-[11px] text-gray-400 ${extraClass}`}>= Average rating</p>;
-    if (diff > 0) return <p className={`text-[11px] text-green-600 ${extraClass}`}>↑ {diff.toFixed(1)} above avg</p>;
-    return <p className={`text-[11px] text-orange-500 ${extraClass}`}>↓ {Math.abs(diff).toFixed(1)} below avg</p>;
+    const abs = Math.abs(diff);
+    let phrase: string;
+    let colorClass: string;
+    if (abs <= 0.3) {
+      if (rating >= 4.5) phrase = 'Everyone agrees. A classic.';
+      else if (rating >= 4) phrase = 'Crowd-pleaser. You agree.';
+      else if (rating <= 2) phrase = "You're not alone on this one.";
+      else phrase = 'Safe take.';
+      colorClass = 'text-orange-400';
+    } else if (diff > 0) {
+      if (diff >= 2.0) phrase = rating >= 4.5 ? 'A rare rave.' : 'Way more into this than most.';
+      else if (diff >= 1.0) phrase = 'Above the crowd on this one.';
+      else phrase = 'Warmer than most.';
+      colorClass = 'text-green-600';
+    } else {
+      if (diff <= -2.0) phrase = 'Called this overrated.';
+      else if (diff <= -1.0) phrase = 'Tougher than the crowd.';
+      else phrase = 'Colder than most.';
+      colorClass = 'text-orange-500';
+    }
+    return <p className={`text-[10px] italic ${colorClass} ${extraClass}`}>{phrase}</p>;
   };
 
   const spPosterEl = post.mediaImage && post.mediaImage.startsWith('http') ? (
