@@ -28,18 +28,23 @@ function FilledStars({ rating, color }: { rating: number; color: string }) {
 }
 
 function Avatar({ user, size = 50 }: { user: ClashUser; size?: number }) {
+  const firstName = user.displayName.split(" ")[0];
+  const charCount = firstName.length;
+  const fontSize = charCount <= 4 ? Math.round(size * 0.28) : charCount <= 7 ? Math.round(size * 0.22) : Math.round(size * 0.17);
   return (
     <div
-      className="rounded-full shrink-0 flex items-center justify-center font-bold text-white"
+      className="rounded-full shrink-0 flex items-center justify-center font-extrabold text-white text-center px-1"
       style={{
         width: size,
         height: size,
         background: user.color,
         boxShadow: `0 0 0 2px rgba(255,255,255,0.12), 0 0 16px ${user.color}88`,
-        fontSize: Math.round(size * 0.3),
+        fontSize,
+        lineHeight: 1.1,
+        wordBreak: "break-word",
       }}
     >
-      {user.initials}
+      {firstName}
     </div>
   );
 }
