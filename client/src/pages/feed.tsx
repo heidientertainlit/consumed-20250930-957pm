@@ -4511,7 +4511,7 @@ export default function Feed() {
                 )}
                 {topSharedTitle && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest mb-0.5">Both rated</span>
+                    <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest mb-0.5">Both loved</span>
                     <div className="flex items-start gap-1.5">
                       <Star size={9} className="text-yellow-400 shrink-0 mt-[2px]" />
                       <span className="text-white/70 text-[11px] leading-tight">{topSharedTitle.title}</span>
