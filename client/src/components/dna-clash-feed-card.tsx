@@ -31,25 +31,27 @@ function FilledStars({ rating, color }: { rating: number; color: string }) {
 function Avatar({ user, size = 50 }: { user: ClashUser; size?: number }) {
   const firstName = user.displayName.split(" ")[0];
   const charCount = firstName.length;
-  const height = size;
-  const width = charCount <= 4 ? size : charCount <= 6 ? Math.round(size * 1.5) : Math.round(size * 1.9);
-  const fontSize = charCount <= 4 ? Math.round(size * 0.28) : charCount <= 6 ? Math.round(size * 0.24) : Math.round(size * 0.2);
+  const nameFontSize = charCount <= 4 ? Math.round(size * 0.26) : charCount <= 6 ? Math.round(size * 0.22) : Math.round(size * 0.18);
+  const starFontSize = Math.round(size * 0.18);
+  const minWidth = charCount <= 4 ? size * 1.3 : charCount <= 6 ? size * 1.7 : size * 2.1;
   return (
     <div
-      className="shrink-0 flex items-center justify-center font-extrabold text-white text-center"
+      className="shrink-0 flex flex-col items-center justify-center font-extrabold text-white text-center gap-0.5"
       style={{
-        width,
-        height,
-        borderRadius: height / 2,
+        minWidth,
+        paddingLeft: 12,
+        paddingRight: 12,
+        paddingTop: 10,
+        paddingBottom: 10,
+        borderRadius: 999,
         background: user.color,
         boxShadow: `0 0 0 2px rgba(255,255,255,0.12), 0 0 16px ${user.color}88`,
-        fontSize,
-        lineHeight: 1.1,
-        paddingLeft: 8,
-        paddingRight: 8,
       }}
     >
-      {firstName}
+      <span style={{ fontSize: nameFontSize, lineHeight: 1.1 }}>{firstName}</span>
+      <span style={{ fontSize: starFontSize, letterSpacing: 1, opacity: 0.9, lineHeight: 1 }}>
+        {"★".repeat(user.rating)}{"☆".repeat(5 - user.rating)}
+      </span>
     </div>
   );
 }
@@ -120,23 +122,15 @@ export default function DnaClashFeedCard({
           <Avatar user={user2} size={52} />
         </div>
 
-        {/* Info columns — name, then combined rating+DNA pill */}
+        {/* Info columns — name + DNA label only (rating is in the avatar pill) */}
         <div className="flex gap-3">
           {[user1, user2].map((u) => (
             <div
               key={u.username}
-              className="flex-1 flex flex-col gap-2 p-3 rounded-xl"
+              className="flex-1 flex flex-col gap-1 p-3 rounded-xl"
               style={{ background: `${u.color}18`, border: `1px solid ${u.color}40` }}
             >
               <span className="text-white font-semibold text-[13px] leading-tight">{u.displayName}</span>
-              <div
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl self-start"
-                style={{ background: `${u.color}45`, border: `1px solid ${u.color}80` }}
-              >
-                <span style={{ color: '#fff', fontSize: 13, letterSpacing: 1, lineHeight: 1 }}>
-                  {"★".repeat(u.rating)}{"☆".repeat(5 - u.rating)}
-                </span>
-              </div>
               <span className="text-white/60 text-[11px] font-medium leading-tight">{u.dnaLabel}</span>
             </div>
           ))}
