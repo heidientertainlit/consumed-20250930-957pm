@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
-import { Zap, X, Check } from "lucide-react";
+import { Zap, Check } from "lucide-react";
 
 export interface ClashUser {
   displayName: string;
@@ -9,6 +8,7 @@ export interface ClashUser {
   rating: number;
   initials: string;
   color: string;
+  votes: number;
 }
 
 interface DnaClashFeedCardProps {
@@ -22,7 +22,7 @@ interface DnaClashFeedCardProps {
 
 function FilledStars({ rating, color }: { rating: number; color: string }) {
   return (
-    <span style={{ color, fontSize: 14, letterSpacing: 1 }}>
+    <span style={{ color, fontSize: 15, letterSpacing: 1 }}>
       {"★".repeat(rating)}{"☆".repeat(5 - rating)}
     </span>
   );
@@ -80,221 +80,122 @@ function Waveform() {
   );
 }
 
-function VoteSheet({
-  user1,
-  user2,
-  mediaTitle,
-  voted,
-  onVote,
-  onClose,
-}: {
-  user1: ClashUser;
-  user2: ClashUser;
-  mediaTitle: string;
-  voted: string | null;
-  onVote: (username: string) => void;
-  onClose: () => void;
-}) {
-  return createPortal(
-    <div
-      className="fixed inset-0 flex items-end justify-center"
-      style={{ background: "rgba(0,0,0,0.72)", zIndex: 10000 }}
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-t-3xl p-6 pb-10 flex flex-col gap-5"
-        style={{ background: "linear-gradient(160deg, #1e0a3c 0%, #2d1465 60%, #3b1a78 100%)" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto" />
-
-        <div className="flex items-center justify-between -mt-2">
-          <span className="text-white font-bold text-[17px]">Who's right?</span>
-          <button onClick={onClose} className="p-1 rounded-full bg-white/10 text-white/50 hover:text-white transition-colors">
-            <X size={16} />
-          </button>
-        </div>
-
-        <p className="text-white/55 text-[12px] -mt-3">
-          on <span className="text-white/80 font-medium">{mediaTitle}</span>
-        </p>
-
-        <div className="flex gap-3">
-          {[user1, user2].map((u) => {
-            const isVoted = voted === u.username;
-            const otherVoted = voted && voted !== u.username;
-            return (
-              <button
-                key={u.username}
-                onClick={() => !voted && onVote(u.username)}
-                className="flex-1 flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-200 border"
-                style={{
-                  background: isVoted ? `${u.color}22` : "rgba(255,255,255,0.05)",
-                  borderColor: isVoted ? u.color : "rgba(255,255,255,0.1)",
-                  opacity: otherVoted ? 0.4 : 1,
-                  cursor: voted ? "default" : "pointer",
-                  transform: isVoted ? "scale(1.03)" : "scale(1)",
-                }}
-              >
-                <Avatar user={u} size={56} />
-                <div className="flex flex-col items-center gap-1.5 text-center">
-                  <span className="text-white font-bold text-[14px] leading-tight">{u.displayName}</span>
-                  <FilledStars rating={u.rating} color={u.color} />
-                  <span
-                    className="text-[9px] font-semibold px-2 py-0.5 rounded-full mt-0.5"
-                    style={{ background: `${u.color}28`, color: u.color, border: `1px solid ${u.color}45` }}
-                  >
-                    {u.dnaLabel}
-                  </span>
-                </div>
-                {isVoted && (
-                  <div className="flex items-center gap-1 text-[11px] font-bold" style={{ color: u.color }}>
-                    <Check size={12} /> You agree
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {voted && (
-          <p className="text-center text-white/50 text-[12px]">
-            You're with <span className="text-white font-semibold">
-              {voted === user1.username ? user1.displayName : user2.displayName}
-            </span> on this one.
-          </p>
-        )}
-      </div>
-    </div>,
-    document.body
-  );
-}
-
 export default function DnaClashFeedCard({
   user1,
   user2,
   mediaTitle,
-  mediaType,
-  externalId,
-  externalSource,
 }: DnaClashFeedCardProps) {
-  const [sheetOpen, setSheetOpen] = useState(false);
   const [voted, setVoted] = useState<string | null>(null);
 
+  const v1 = voted === user1.username ? user1.votes + 1 : user1.votes;
+  const v2 = voted === user2.username ? user2.votes + 1 : user2.votes;
+  const total = v1 + v2;
+  const pct1 = total > 0 ? Math.round((v1 / total) * 100) : 50;
+  const pct2 = 100 - pct1;
+
   return (
-    <>
-      <div
-        className="relative rounded-2xl overflow-hidden mb-4 shadow-lg"
-        style={{ background: "linear-gradient(135deg, #1e0a3c 0%, #2d1465 45%, #3b1a78 100%)" }}
-      >
-        <div className="p-4 flex flex-col gap-3">
-          {/* Label */}
-          <div className="flex items-center gap-1.5">
-            <Zap size={11} className="text-purple-300 shrink-0" fill="currentColor" />
-            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">DNA Clash</span>
-          </div>
+    <div
+      className="relative rounded-2xl overflow-hidden mb-4 shadow-lg"
+      style={{ background: "linear-gradient(135deg, #1e0a3c 0%, #2d1465 45%, #3b1a78 100%)" }}
+    >
+      <div className="p-4 flex flex-col gap-3">
+        {/* Label */}
+        <div className="flex items-center gap-1.5">
+          <Zap size={11} className="text-purple-300 shrink-0" fill="currentColor" />
+          <span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">DNA Clash</span>
+        </div>
 
-          {/* Headline + media title */}
-          <div className="-mt-1">
-            <p className="text-white font-extrabold text-[18px] leading-tight">
-              Completely different takes.
-            </p>
-            <p className="text-white/60 text-[14px] font-semibold mt-0.5">on {mediaTitle}</p>
-          </div>
+        {/* Headline + media title */}
+        <div className="-mt-1">
+          <p className="text-white font-extrabold text-[18px] leading-tight">
+            Completely different takes.
+          </p>
+          <p className="text-white/60 text-[14px] font-semibold mt-0.5">on {mediaTitle}</p>
+        </div>
 
-          {/* Avatars + waveform — centred */}
-          <div className="flex items-center justify-center gap-0">
-            <Avatar user={user1} size={52} />
-            <Waveform />
-            <Avatar user={user2} size={52} />
-          </div>
+        {/* Avatars + waveform */}
+        <div className="flex items-center justify-center gap-0">
+          <Avatar user={user1} size={52} />
+          <Waveform />
+          <Avatar user={user2} size={52} />
+        </div>
 
-          {/* Info columns — one per user */}
-          <div className="flex gap-3">
-            {/* User 1 */}
-            <div
-              className="flex-1 flex flex-col gap-1 p-3 rounded-xl"
-              style={{ background: `${user1.color}15`, border: `1px solid ${user1.color}30` }}
+        {/* Info columns — stars first, then name, then DNA pill */}
+        <div className="flex gap-3">
+          <div
+            className="flex-1 flex flex-col gap-1.5 p-3 rounded-xl"
+            style={{ background: `${user1.color}15`, border: `1px solid ${user1.color}30` }}
+          >
+            <FilledStars rating={user1.rating} color={user1.color} />
+            <span className="text-white font-semibold text-[13px] leading-tight">{user1.displayName}</span>
+            <span
+              className="text-[11px] font-bold px-2 py-1 rounded-full self-start"
+              style={{ background: `${user1.color}28`, color: user1.color, border: `1px solid ${user1.color}55` }}
             >
-              <span className="text-white font-semibold text-[13px] leading-tight">{user1.displayName}</span>
-              <FilledStars rating={user1.rating} color={user1.color} />
-              <span
-                className="text-[9px] font-bold px-1.5 py-0.5 rounded-full self-start mt-0.5"
-                style={{ background: `${user1.color}28`, color: user1.color, border: `1px solid ${user1.color}45` }}
-              >
-                {user1.dnaLabel}
-              </span>
-            </div>
-
-            {/* User 2 */}
-            <div
-              className="flex-1 flex flex-col gap-1 p-3 rounded-xl"
-              style={{ background: `${user2.color}15`, border: `1px solid ${user2.color}30` }}
-            >
-              <span className="text-white font-semibold text-[13px] leading-tight">{user2.displayName}</span>
-              <FilledStars rating={user2.rating} color={user2.color} />
-              <span
-                className="text-[9px] font-bold px-1.5 py-0.5 rounded-full self-start mt-0.5"
-                style={{ background: `${user2.color}28`, color: user2.color, border: `1px solid ${user2.color}45` }}
-              >
-                {user2.dnaLabel}
-              </span>
-            </div>
+              {user1.dnaLabel}
+            </span>
           </div>
 
-          {/* Inline vote buttons */}
-          {!voted ? (
+          <div
+            className="flex-1 flex flex-col gap-1.5 p-3 rounded-xl"
+            style={{ background: `${user2.color}15`, border: `1px solid ${user2.color}30` }}
+          >
+            <FilledStars rating={user2.rating} color={user2.color} />
+            <span className="text-white font-semibold text-[13px] leading-tight">{user2.displayName}</span>
+            <span
+              className="text-[11px] font-bold px-2 py-1 rounded-full self-start"
+              style={{ background: `${user2.color}28`, color: user2.color, border: `1px solid ${user2.color}55` }}
+            >
+              {user2.dnaLabel}
+            </span>
+          </div>
+        </div>
+
+        {/* CTA + vote buttons */}
+        {!voted ? (
+          <div className="flex flex-col gap-2">
+            <p className="text-white/50 text-[11px] font-semibold text-center uppercase tracking-widest">Which side are you on?</p>
             <div className="flex gap-2">
               <button
                 onClick={() => setVoted(user1.username)}
-                className="flex-1 py-2 rounded-xl text-white text-[12px] font-semibold transition-all border"
+                className="flex-1 py-2 rounded-xl text-[12px] font-semibold transition-all border"
                 style={{ background: `${user1.color}22`, borderColor: `${user1.color}55`, color: user1.color }}
               >
                 {user1.displayName}'s side
               </button>
               <button
                 onClick={() => setVoted(user2.username)}
-                className="flex-1 py-2 rounded-xl text-white text-[12px] font-semibold transition-all border"
+                className="flex-1 py-2 rounded-xl text-[12px] font-semibold transition-all border"
                 style={{ background: `${user2.color}22`, borderColor: `${user2.color}55`, color: user2.color }}
               >
                 {user2.displayName}'s side
               </button>
             </div>
-          ) : (
-            <div className="flex gap-2">
-              <div
-                className="flex-1 py-2 rounded-xl text-[12px] font-semibold flex items-center justify-center gap-1 border"
-                style={voted === user1.username
-                  ? { background: `${user1.color}33`, borderColor: user1.color, color: user1.color }
-                  : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' }}
-              >
-                {voted === user1.username && <Check size={11} />}
-                {user1.displayName}'s side
-              </div>
-              <div
-                className="flex-1 py-2 rounded-xl text-[12px] font-semibold flex items-center justify-center gap-1 border"
-                style={voted === user2.username
-                  ? { background: `${user2.color}33`, borderColor: user2.color, color: user2.color }
-                  : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' }}
-              >
-                {voted === user2.username && <Check size={11} />}
-                {user2.displayName}'s side
-              </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {/* Result bars */}
+            <div className="flex flex-col gap-1.5">
+              {[{ u: user1, pct: pct1, v: v1 }, { u: user2, pct: pct2, v: v2 }].map(({ u, pct, v }) => (
+                <div key={u.username} className="flex items-center gap-2">
+                  <span className="text-[10px] font-semibold w-[72px] truncate" style={{ color: u.color }}>
+                    {voted === u.username && <Check size={9} className="inline mr-0.5" />}
+                    {u.displayName}
+                  </span>
+                  <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${pct}%`, background: u.color }}
+                    />
+                  </div>
+                  <span className="text-[11px] font-bold w-8 text-right" style={{ color: u.color }}>{pct}%</span>
+                </div>
+              ))}
             </div>
-          )}
-        </div>
+            <p className="text-white/35 text-[10px] text-center">{total} votes</p>
+          </div>
+        )}
       </div>
-
-      {sheetOpen && (
-        <VoteSheet
-          user1={user1}
-          user2={user2}
-          mediaTitle={mediaTitle}
-          voted={voted}
-          onVote={(u) => setVoted(u)}
-          onClose={() => setSheetOpen(false)}
-        />
-      )}
-    </>
+    </div>
   );
 }
