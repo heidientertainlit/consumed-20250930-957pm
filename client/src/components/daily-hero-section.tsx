@@ -231,63 +231,20 @@ function ScoreShareCard({
                   </p>
                 )}
 
-                {/* Big answer + Better Than box */}
-                <div className="flex items-start gap-3 mb-5">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: 'rgba(168,158,224,0.8)' }}>
-                      {answers?.[0]?.picked ? 'I SAID:' : 'SCORE:'}
+                {/* Answer */}
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: 'rgba(168,158,224,0.8)' }}>
+                    {answers?.[0]?.picked ? 'I SAID:' : 'SCORE:'}
+                  </p>
+                  {answers?.[0]?.picked ? (
+                    <p className="text-[30px] font-black leading-tight text-white break-words" style={{ letterSpacing: '-0.02em' }}>
+                      {answers[0].picked}.
                     </p>
-                    {answers?.[0]?.picked ? (
-                      <p className="text-[30px] font-black leading-tight text-white break-words" style={{ letterSpacing: '-0.02em' }}>
-                        {answers[0].picked}.
-                      </p>
-                    ) : (
-                      <p className="text-[38px] font-black leading-none text-white" style={{ letterSpacing: '-0.02em' }}>
-                        {playScore.correct}/{playScore.total}
-                      </p>
-                    )}
-                    {socialProof != null && (
-                      <div
-                        className="mt-2 inline-flex items-center px-2.5 py-1 rounded-full"
-                        style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
-                      >
-                        <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                          Only {socialProof}% agreed with you
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Better than % box */}
-                  {(() => {
-                    const topPct = rankData?.beatenPct != null
-                      ? Math.round(rankData.beatenPct)
-                      : rankData?.rank != null && rankData?.total != null && rankData.total > 0
-                        ? Math.round((1 - rankData.rank / rankData.total) * 100)
-                        : null;
-                    if (topPct === null) return null;
-                    return (
-                      <div
-                        className="rounded-2xl px-3 py-3 text-center shrink-0"
-                        style={{
-                          minWidth: 88,
-                          background: 'rgba(0,0,0,0.35)',
-                          border: '1px solid rgba(124,58,237,0.5)',
-                          boxShadow: '0 0 20px rgba(124,58,237,0.2)',
-                        }}
-                      >
-                        <p className="text-[7px] font-bold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>BETTER THAN</p>
-                        <p
-                          className="text-[28px] font-black leading-none"
-                          style={{ background: 'linear-gradient(135deg,#a78bfa 0%,#38bdf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-                        >
-                          {topPct}%
-                        </p>
-                        <p className="text-[7px] font-bold uppercase tracking-widest mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>OF PLAYERS</p>
-                        <p className="text-[11px] mt-1">👑</p>
-                      </div>
-                    );
-                  })()}
+                  ) : (
+                    <p className="text-[38px] font-black leading-none text-white" style={{ letterSpacing: '-0.02em' }}>
+                      {playScore.correct}/{playScore.total}
+                    </p>
+                  )}
                 </div>
 
               </div>
