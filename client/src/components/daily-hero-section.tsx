@@ -237,11 +237,11 @@ function ScoreShareCard({
                     {answers?.[0]?.picked ? 'I SAID:' : 'SCORE:'}
                   </p>
                   {answers?.[0]?.picked ? (
-                    <p className="text-[30px] font-black leading-tight text-white break-words" style={{ letterSpacing: '-0.02em' }}>
+                    <p className="text-[20px] font-black leading-tight text-white break-words" style={{ letterSpacing: '-0.02em' }}>
                       {answers[0].picked}.
                     </p>
                   ) : (
-                    <p className="text-[38px] font-black leading-none text-white" style={{ letterSpacing: '-0.02em' }}>
+                    <p className="text-[26px] font-black leading-none text-white" style={{ letterSpacing: '-0.02em' }}>
                       {playScore.correct}/{playScore.total}
                     </p>
                   )}
