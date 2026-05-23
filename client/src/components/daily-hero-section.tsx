@@ -218,22 +218,23 @@ function ScoreShareCard({
             </div>
           </div>
 
-          {/* ── Body ── */}
-          <div className="px-5 pt-5 pb-6" style={{ background: '#0D0A1F' }}>
+          {/* ── Body: play gets 3-zone layout, call stays dark ── */}
+          {type === 'play' && playScore ? (
+            <>
+              {/* ── ZONE 1: Dark purple (seamless from header) — question + answer + rank ── */}
+              <div className="px-5 pt-3 pb-6" style={{ background: 'linear-gradient(175deg,#1E0B4A 0%,#130630 100%)' }}>
 
-            {type === 'play' && playScore ? (
-              <>
-                {/* ── Question text ── */}
+                {/* Question text */}
                 {questions?.[0]?.title && (
-                  <p className="text-[23px] font-black italic leading-tight mb-4 text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  <p className="text-[23px] font-black italic leading-tight mb-5 text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
                     {truncateWords(questions[0].title, 120)}
                   </p>
                 )}
 
-                {/* ── Big answer + Better Than box ── */}
-                <div className="flex items-start gap-3 mb-4">
+                {/* Big answer + Better Than box */}
+                <div className="flex items-start gap-3 mb-5">
                   <div className="flex-1 min-w-0">
-                    <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: '#a89ee0' }}>
+                    <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: 'rgba(168,158,224,0.8)' }}>
                       {answers?.[0]?.picked ? 'I SAID:' : 'SCORE:'}
                     </p>
                     {answers?.[0]?.picked ? (
@@ -248,16 +249,16 @@ function ScoreShareCard({
                     {socialProof != null && (
                       <div
                         className="mt-2 inline-flex items-center px-2.5 py-1 rounded-full"
-                        style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+                        style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
                       >
-                        <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                        <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.6)' }}>
                           Only {socialProof}% agreed with you
                         </span>
                       </div>
                     )}
                   </div>
 
-                  {/* Better than % glowing box */}
+                  {/* Better than % box */}
                   {(() => {
                     const topPct = rankData?.beatenPct != null
                       ? Math.round(rankData.beatenPct)
@@ -270,12 +271,12 @@ function ScoreShareCard({
                         className="rounded-2xl px-3 py-3 text-center shrink-0"
                         style={{
                           minWidth: 88,
-                          background: '#1a1030',
-                          border: '1px solid rgba(124,58,237,0.45)',
-                          boxShadow: '0 0 22px rgba(124,58,237,0.28)',
+                          background: 'rgba(0,0,0,0.35)',
+                          border: '1px solid rgba(124,58,237,0.5)',
+                          boxShadow: '0 0 20px rgba(124,58,237,0.2)',
                         }}
                       >
-                        <p className="text-[7px] font-bold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>BETTER THAN</p>
+                        <p className="text-[7px] font-bold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>BETTER THAN</p>
                         <p
                           className="text-[28px] font-black leading-none"
                           style={{ background: 'linear-gradient(135deg,#a78bfa 0%,#38bdf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
@@ -289,23 +290,24 @@ function ScoreShareCard({
                   })()}
                 </div>
 
-                {/* ── Name header ── */}
+                {/* Name + rank headline */}
                 {username && (
-                  <div className="mb-3">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
                       {username} is
                     </p>
-                    <p
-                      className="text-[22px] font-black leading-tight text-white"
-                      style={{ letterSpacing: '-0.02em' }}
-                    >
+                    <p className="text-[22px] font-black leading-tight text-white" style={{ letterSpacing: '-0.02em' }}>
                       {rankData?.rank != null ? `#${rankData.rank} on Consumed` : 'Playing on Consumed'}
                     </p>
                   </div>
                 )}
+              </div>
 
-                {/* ── 4-stat row ── */}
-                <div className="grid grid-cols-4 gap-1.5 mb-4">
+              {/* ── ZONE 2: Light — stats + DNA + CTA ── */}
+              <div className="px-5 pt-5 pb-5" style={{ background: '#EDEAF8' }}>
+
+                {/* 4-stat grid */}
+                <div className="grid grid-cols-4 gap-1.5 mb-5">
                   {[
                     {
                       icon: '🏆',
@@ -337,22 +339,22 @@ function ScoreShareCard({
                     <div
                       key={label}
                       className="rounded-xl py-2.5 px-1 text-center"
-                      style={{ background: '#1a1030', border: '1px solid rgba(255,255,255,0.06)' }}
+                      style={{ background: '#FFFFFF', border: '1px solid rgba(124,58,237,0.1)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
                     >
                       <span className="text-[11px]">{icon}</span>
-                      <p className="text-[13px] font-black leading-none text-white mt-0.5">{value}</p>
-                      <p className="text-[7px] font-bold uppercase tracking-wide mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{label}</p>
-                      <p className="text-[6px] uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.2)' }}>{sub}</p>
+                      <p className="text-[13px] font-black leading-none mt-0.5" style={{ color: '#1a0040' }}>{value}</p>
+                      <p className="text-[7px] font-bold uppercase tracking-wide mt-0.5" style={{ color: 'rgba(75,16,150,0.55)' }}>{label}</p>
+                      <p className="text-[6px] uppercase tracking-wide" style={{ color: 'rgba(75,16,150,0.35)' }}>{sub}</p>
                     </div>
                   ))}
                 </div>
 
-                {/* ── Entertainment DNA chips ── */}
+                {/* Entertainment DNA chips */}
                 {dnaStats && (
-                  <div className="mb-4">
+                  <div className="mb-5">
                     <div className="flex items-center gap-1.5 mb-2">
-                      <Dna size={10} className="text-purple-400" />
-                      <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                      <Dna size={10} className="text-purple-500" />
+                      <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: 'rgba(75,16,150,0.55)' }}>
                         {username ? `${username}'s` : 'Your'} Entertainment DNA Glimpse
                       </p>
                     </div>
@@ -379,10 +381,10 @@ function ScoreShareCard({
                           <div
                             key={c.text}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-                            style={{ background: '#1a1030', border: '1px solid rgba(124,58,237,0.35)' }}
+                            style={{ background: '#FFFFFF', border: '1px solid rgba(124,58,237,0.35)' }}
                           >
                             <span className="text-[11px]">{c.emoji}</span>
-                            <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.8)' }}>{c.text}</span>
+                            <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: '#5b21b6' }}>{c.text}</span>
                           </div>
                         ));
                       })()}
@@ -390,34 +392,35 @@ function ScoreShareCard({
                   </div>
                 )}
 
-                {/* ── Spicy CTA ── */}
+                {/* CTA */}
                 <div
-                  className="rounded-xl px-4 py-3.5 mb-4 text-center"
-                  style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.18) 0%,rgba(56,189,248,0.08) 100%)', border: '1px solid rgba(124,58,237,0.3)' }}
+                  className="rounded-xl px-4 py-3.5 text-center"
+                  style={{ background: '#FFFFFF', border: '1px solid rgba(124,58,237,0.2)', boxShadow: '0 1px 8px rgba(124,58,237,0.08)' }}
                 >
-                  <p className="text-[15px] font-black text-white leading-tight">
+                  <p className="text-[15px] font-black leading-tight" style={{ color: '#1a0040' }}>
                     {playScore.correct === playScore.total
                       ? `Perfect score. Think your friends can match you?`
                       : playScore.correct === 0
                         ? `Rough one. Can your squad do any better? 👀`
                         : `${playScore.correct}/${playScore.total} right — think your friends can beat you?`}
                   </p>
-                  <p className="text-[11px] mt-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>Share and find out. 👀</p>
+                  <p className="text-[11px] mt-1.5" style={{ color: '#6b21a8' }}>Share and find out. 👀</p>
                 </div>
+              </div>
 
-                {/* ── Branding footer ── */}
-                <div className="pt-3 text-center" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-                  <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.25)' }}>
-                    Everyone's playing. Where do you rank?
-                  </p>
-                  <p className="text-[8px] mt-0.5" style={{ color: 'rgba(255,255,255,0.15)' }}>
-                    @consumedapp · where entertainment gets played
-                  </p>
-                </div>
-              </>
-            ) : (
+              {/* ── ZONE 3: Purple gradient footer — branding ── */}
+              <div className="px-5 py-4 text-center" style={{ background: 'linear-gradient(160deg,#2d1069 0%,#12091F 100%)' }}>
+                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  Everyone's playing. Where do you rank?
+                </p>
+                <p className="text-[8px] mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                  @consumedapp · where entertainment gets played
+                </p>
+              </div>
+            </>
+          ) : (
               /* Daily Call body — dark dramatic redesign */
-              <>
+              <div className="px-5 pt-5 pb-6" style={{ background: '#0D0A1F' }}>
                 {/* Huge question — ALL CAPS */}
                 {callQuestion && (
                   <p className="font-black leading-[1.0] mb-5 text-white" style={{ fontFamily: 'Poppins, sans-serif', fontSize: '34px', letterSpacing: '-0.01em', textTransform: 'uppercase' }}>
@@ -610,9 +613,8 @@ function ScoreShareCard({
                     @consumedapp · where entertainment gets played
                   </p>
                 </div>
-              </>
+              </div>
             )}
-          </div>
         </div>
 
         {/* Share + Nudge buttons side by side */}
