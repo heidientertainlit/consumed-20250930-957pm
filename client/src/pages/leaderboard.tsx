@@ -639,6 +639,52 @@ export default function Leaderboard() {
                 'Start posting and engaging to appear here!',
                 'from-purple-600 to-pink-600'
               )}
+
+              {/* ── Taste Status ── */}
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
+                <div className="bg-gradient-to-r from-violet-600 to-indigo-500 px-4 py-3 flex items-center gap-2">
+                  <Trophy size={18} className="text-white" />
+                  <div>
+                    <h3 className="text-sm font-bold text-white leading-tight">Taste Status</h3>
+                    <p className="text-[10px] text-white/70 leading-tight">Current title holders</p>
+                  </div>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {([
+                    { emoji: '🧠', title: 'Trivia Oracle',          sub: 'knows every answer',     data: leaderboardData?.categories?.trivia },
+                    { emoji: '🎯', title: 'Called the Finale',       sub: 'best prediction accuracy', data: leaderboardData?.categories?.predictions },
+                    { emoji: '🗣️', title: 'Most Controversial Take', sub: 'top poll voter',          data: leaderboardData?.categories?.polls },
+                    { emoji: '🎬', title: 'Film Buff',               sub: 'most movies tracked',    data: leaderboardData?.categories?.movies },
+                    { emoji: '📺', title: 'Binge Champion',          sub: 'most TV tracked',        data: leaderboardData?.categories?.tv },
+                    { emoji: '📚', title: 'Bookworm',                sub: 'most books tracked',     data: leaderboardData?.categories?.books },
+                    { emoji: '🎵', title: 'Ear Worm',                sub: 'top music tracker',      data: leaderboardData?.categories?.music },
+                  ] as { emoji: string; title: string; sub: string; data: LeaderboardEntry[] | undefined }[]).map(({ emoji, title, sub, data }) => {
+                    const holder = data?.[0];
+                    const isMe = holder?.user_id === currentUserId;
+                    return (
+                      <div key={title} className="flex items-center gap-3 px-4 py-3">
+                        <span className="text-lg w-7 text-center shrink-0">{emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-bold text-gray-800 leading-tight">{title}</p>
+                          <p className="text-[10px] text-gray-400 leading-tight">{sub}</p>
+                        </div>
+                        {holder ? (
+                          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${isMe ? 'bg-purple-100' : 'bg-gray-100'}`}>
+                            <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white ${isMe ? 'bg-purple-600' : 'bg-gray-400'}`}>
+                              {(holder.display_name || holder.username)?.[0]?.toUpperCase()}
+                            </div>
+                            <span className={`text-[11px] font-semibold max-w-[90px] truncate ${isMe ? 'text-purple-700' : 'text-gray-700'}`}>
+                              {isMe ? 'You' : (holder.display_name || holder.username)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-gray-300 italic">No one yet</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="games">

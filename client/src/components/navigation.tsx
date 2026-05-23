@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation } from "wouter";
-import { Brain, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Gamepad2, MessageSquarePlus, Home, Star, DoorOpen, Bookmark } from "lucide-react";
+import { Brain, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Gamepad2, MessageSquarePlus, Home, Star, DoorOpen, Bookmark, Trophy } from "lucide-react";
 import { FeedbackDialog } from "./feedback-dialog";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
@@ -523,6 +523,9 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                 <span className="text-white/60 text-[10px]">pts</span>
               </Link>
             )}
+            <Link href="/leaderboard" className="hover:opacity-70 transition-opacity" aria-label="Leaderboard">
+              <Trophy className="text-white" size={20} />
+            </Link>
             <button
               onClick={handleSearchToggle}
               className="hover:opacity-70 transition-opacity"
