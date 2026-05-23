@@ -2763,7 +2763,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                 {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
                   <button onClick={() => onDeletePost(post.id)} className="text-gray-300 hover:text-red-400 p-1 shrink-0 transition-colors"><Trash2 size={13} /></button>
                 )}
-                {currentUserId && post.user?.id !== currentUserId && !post.user?.is_persona && (
+                {currentUserId && post.user?.id !== currentUserId && !(post.user?.is_persona && onDeletePost) && (
                   <button onClick={() => setIsReportOpen(true)} className="text-gray-300 hover:text-orange-400 p-1 shrink-0 transition-colors"><Flag size={13} /></button>
                 )}
               </div>
