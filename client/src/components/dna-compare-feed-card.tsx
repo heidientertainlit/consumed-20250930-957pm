@@ -548,7 +548,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
     fetchPersonalized();
   }, [session?.access_token, user?.id]);
 
-  const featured = dynFeatured ?? featuredProp ?? { displayName: 'Hillary Hess', initials: 'HH', color: '#6366f1', pct: 42, tagline: 'You both love epic adventures and genre-spanning stories.' };
+  const featured = dynFeatured ?? featuredProp ?? { displayName: 'Heidi', initials: 'HP', color: '#8b5cf6', pct: 71, tagline: 'You both love genre-spanning stories and thrilling narratives.' };
   const overlaps = dynOverlaps.length > 0 ? dynOverlaps : (overlapsProp ?? [
     { displayName: 'Jeeppler', initials: 'J', color: '#a855f7', pct: 38 },
     { displayName: 'Jordan F.', initials: 'JF', color: '#ec4899', pct: 31 },
