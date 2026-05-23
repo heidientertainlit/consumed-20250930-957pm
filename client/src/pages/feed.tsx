@@ -4225,9 +4225,8 @@ export default function Feed() {
       out.push(wrapExtra(extraIdx));
       extraIdx++;
     }
-    // Splice DNA clash card into a fixed slot (index 6) so it always hits
-    // renderPostBatchByIndex(6) in the JSX regardless of how many play slots exist.
-    out.splice(6, 0, DNA_CLASH_CARD);
+    // Splice DNA clash card into slot 3 so renderPostBatchByIndex(3) in the JSX always shows it.
+    out.splice(3, 0, DNA_CLASH_CARD);
     return out;
   }, [feedPlaySlots, promotedRatings, feedRatingCarousels]);
 
