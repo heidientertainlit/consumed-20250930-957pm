@@ -180,7 +180,7 @@ function ScoreShareCard({
           {/* ── Purple gradient header ── */}
           <div
             className="px-5 pt-5 pb-4"
-            style={{ background: 'linear-gradient(135deg,#12091F 0%,#1E0B4A 50%,#2D1B69 100%)' }}
+            style={{ background: 'linear-gradient(180deg,#2D1B69 0%,#1E0B4A 55%,#130630 100%)' }}
           >
             <div className="flex items-start justify-between">
               {/* Logo */}
@@ -222,7 +222,7 @@ function ScoreShareCard({
           {type === 'play' && playScore ? (
             <>
               {/* ── ZONE 1: Dark purple (seamless from header) — question + answer + rank ── */}
-              <div className="px-5 pt-3 pb-6" style={{ background: 'linear-gradient(175deg,#1E0B4A 0%,#130630 100%)' }}>
+              <div className="px-5 pt-3 pb-6" style={{ background: 'linear-gradient(180deg,#130630 0%,#0d0420 100%)' }}>
 
                 {/* Question text */}
                 {questions?.[0]?.title && (
@@ -290,21 +290,22 @@ function ScoreShareCard({
                   })()}
                 </div>
 
-                {/* Name + rank headline */}
-                {username && (
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                      {username} is
-                    </p>
-                    <p className="text-[22px] font-black leading-tight text-white" style={{ letterSpacing: '-0.02em' }}>
-                      {rankData?.rank != null ? `#${rankData.rank} on Consumed` : 'Playing on Consumed'}
-                    </p>
-                  </div>
-                )}
               </div>
 
               {/* ── ZONE 2: Light — stats + DNA + CTA ── */}
               <div className="px-5 pt-5 pb-5" style={{ background: '#EDEAF8' }}>
+
+                {/* Name + rank headline */}
+                {username && (
+                  <div className="mb-4">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: 'rgba(75,16,150,0.45)' }}>
+                      {username} is
+                    </p>
+                    <p className="text-[22px] font-black leading-tight" style={{ letterSpacing: '-0.02em', color: '#1a0040' }}>
+                      {rankData?.rank != null ? `#${rankData.rank} on Consumed` : 'Playing on Consumed'}
+                    </p>
+                  </div>
+                )}
 
                 {/* 4-stat grid */}
                 <div className="grid grid-cols-4 gap-1.5 mb-5">
@@ -408,15 +409,6 @@ function ScoreShareCard({
                 </div>
               </div>
 
-              {/* ── ZONE 3: Purple gradient footer — branding ── */}
-              <div className="px-5 py-4 text-center" style={{ background: 'linear-gradient(160deg,#2d1069 0%,#12091F 100%)' }}>
-                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  Everyone's playing. Where do you rank?
-                </p>
-                <p className="text-[8px] mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>
-                  @consumedapp · where entertainment gets played
-                </p>
-              </div>
             </>
           ) : (
               /* Daily Call body — dark dramatic redesign */
