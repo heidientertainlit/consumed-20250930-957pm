@@ -30,18 +30,22 @@ function FilledStars({ rating, color }: { rating: number; color: string }) {
 function Avatar({ user, size = 50 }: { user: ClashUser; size?: number }) {
   const firstName = user.displayName.split(" ")[0];
   const charCount = firstName.length;
-  const fontSize = charCount <= 4 ? Math.round(size * 0.28) : charCount <= 7 ? Math.round(size * 0.22) : Math.round(size * 0.17);
+  const height = size;
+  const width = charCount <= 4 ? size : charCount <= 6 ? Math.round(size * 1.5) : Math.round(size * 1.9);
+  const fontSize = charCount <= 4 ? Math.round(size * 0.28) : charCount <= 6 ? Math.round(size * 0.24) : Math.round(size * 0.2);
   return (
     <div
-      className="rounded-full shrink-0 flex items-center justify-center font-extrabold text-white text-center px-1"
+      className="shrink-0 flex items-center justify-center font-extrabold text-white text-center"
       style={{
-        width: size,
-        height: size,
+        width,
+        height,
+        borderRadius: height / 2,
         background: user.color,
         boxShadow: `0 0 0 2px rgba(255,255,255,0.12), 0 0 16px ${user.color}88`,
         fontSize,
         lineHeight: 1.1,
-        wordBreak: "break-word",
+        paddingLeft: 8,
+        paddingRight: 8,
       }}
     >
       {firstName}
