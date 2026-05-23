@@ -38,7 +38,7 @@ function Avatar({ user }: { user: ClashUser }) {
         paddingRight: 16,
         paddingTop: 12,
         paddingBottom: 12,
-        borderRadius: 999,
+        borderRadius: 16,
         background: user.color,
         minWidth: 90,
         boxShadow: `0 0 0 2px rgba(255,255,255,0.15)`,
