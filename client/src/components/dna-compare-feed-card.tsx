@@ -53,10 +53,10 @@ function calcOverlapPct(a: string[], b: string[]): number {
 }
 
 function buildTagline(pct: number, firstName: string): string {
-  if (pct >= 70) return `You and ${firstName} are practically entertainment twins.`;
-  if (pct >= 50) return `You and ${firstName} share a deep love for the same content.`;
-  if (pct >= 30) return `Plenty of overlap — great source of recommendations.`;
-  return `Different tastes that make for great conversations.`;
+  if (pct >= 70) return `You and ${firstName} have seriously similar taste.`;
+  if (pct >= 50) return `Your watchlists probably look a lot alike.`;
+  if (pct >= 30) return `Enough in common to trade good recommendations.`;
+  return `Different tastes — which means interesting suggestions either way.`;
 }
 
 /* ── helpers ────────────────────────────────────────── */

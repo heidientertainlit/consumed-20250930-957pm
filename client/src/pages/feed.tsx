@@ -4456,7 +4456,6 @@ export default function Feed() {
           <div className="p-4 flex flex-col gap-4">
             {/* Header — poster attribution */}
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">{posterInitials}</div>
               <p className="text-white/60 text-[11px]"><span className="text-white/90 font-semibold">{posterName}</span> compared their DNA</p>
               <div className="ml-auto flex items-center gap-1">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-indigo-300"><path d="M12 2a7 7 0 0 1 7 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>

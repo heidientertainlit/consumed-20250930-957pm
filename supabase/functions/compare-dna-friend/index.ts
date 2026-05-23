@@ -318,12 +318,12 @@ Titles They Both Rated 4-5 Stars or Favorited: ${sharedTitles.slice(0, 5).map((t
 
 Based on their shared interests, recommend SPECIFIC entertainment they should consume together.
 Generate:
-1. A fun one-liner about their compatibility
+1. A short, natural compatibility line (1 sentence, conversational tone — NO metaphors, NO hyperbole, NO "puzzle pieces" or "narrative" type language). It should sound like something a real person would text a friend. Examples of the right tone: "You two have seriously similar taste.", "Your watchlists probably look almost identical.", "You'd argue about the same shows for hours and both be right."
 2. 4-6 SPECIFIC recommendations of movies, TV shows, books, podcasts, or music they'd both enjoy based on their shared tastes. Be specific with actual titles - not generic descriptions. Group by media type.
 
 Respond with JSON:
 {
-  "compatibilityLine": "string (fun one-liner about their entertainment chemistry)",
+  "compatibilityLine": "string (short, natural, conversational — no metaphors or flowery language)",
   "consumeTogether": {
     "movies": ["Specific Movie Title 1", "Specific Movie Title 2"],
     "tv": ["Specific TV Show 1"],
