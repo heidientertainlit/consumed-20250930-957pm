@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon, Target, ArrowBigUp, ArrowBigDown, User, Check } from "lucide-react";
+import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon, Target, ArrowBigUp, ArrowBigDown, User, Check, Flag } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { ReportSheet } from "@/components/report-sheet";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -78,6 +79,7 @@ export default function CollaborativePredictionCard({
   const [liked, setLiked] = useState(isLiked);
   const [currentLikesCount, setCurrentLikesCount] = useState(likesCount);
   const [showParticipants, setShowParticipants] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [votedOption, setVotedOption] = useState<string | null>(null);
@@ -431,6 +433,7 @@ export default function CollaborativePredictionCard({
       : null;
   
   return (
+    <>
     <Card className={`relative ${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border-0 shadow-none'} rounded-2xl p-4`}>
       {/* Trash — absolute top-right, own predictions only */}
       {origin_type === 'user' && isCreator && (
@@ -561,6 +564,13 @@ export default function CollaborativePredictionCard({
           <MessageCircle size={18} />
           <span className="text-sm">{commentsData?.comments?.length || commentsCount}</span>
         </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); setReportOpen(true); }}
+          className="p-1 text-gray-300 hover:text-red-400 transition-colors"
+          title="Flag as inappropriate"
+        >
+          <Flag size={15} />
+        </button>
         <span className="ml-auto text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">
           {isPoll ? 'poll' : 'prediction'}
         </span>
@@ -689,5 +699,14 @@ export default function CollaborativePredictionCard({
         </div>
       )}
     </Card>
+    <ReportSheet
+      isOpen={reportOpen}
+      onClose={() => setReportOpen(false)}
+      contentType="post"
+      contentId={prediction.id}
+      reportedUserId={creator.id}
+      reportedUserName={creator.username}
+    />
+    </>
   );
 }

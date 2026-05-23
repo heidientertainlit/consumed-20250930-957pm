@@ -2011,7 +2011,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 ))}
               </div>
               {!ratingJustSaved && (
-                <button onClick={(e) => { e.stopPropagation(); setShowStarPicker(true); }} className="text-[9px] text-gray-400 hover:text-gray-600 transition-colors">Edit</button>
+                <>
+                  <button onClick={(e) => { e.stopPropagation(); setShowStarPicker(true); }} className="text-[9px] text-gray-400 hover:text-gray-600 transition-colors">Edit</button>
+                  <button onClick={(e) => { e.stopPropagation(); handleRemoveRating(); }} className="text-[9px] text-red-300 hover:text-red-500 transition-colors">Remove</button>
+                </>
               )}
             </div>
           )}

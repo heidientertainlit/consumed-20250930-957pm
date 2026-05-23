@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
-import { CheckCircle, XCircle, Trophy, Vote, Zap } from "lucide-react";
+import { CheckCircle, XCircle, Trophy, Vote, Zap, Flag } from "lucide-react";
+import { ReportSheet } from "@/components/report-sheet";
 
 interface GameMomentCardProps {
   post: {
@@ -60,11 +62,13 @@ function getGameLabel(gameType: string) {
 }
 
 export function GameMomentCard({ post }: GameMomentCardProps) {
+  const [reportOpen, setReportOpen] = useState(false);
   const raw = post._rawPost || post;
   const userObj = raw.user || raw.creator || post.user || post.creator;
   const content = raw.content || post.content || '';
   const gameTitle = raw.mediaTitle || raw.media_title || post.mediaTitle || '';
   const timestamp = raw.timestamp || raw.created_at || raw.createdAt || post.timestamp || post.created_at || '';
+  const postId = raw.id || post.id;
 
   const moment = parseMomentData(content);
 
@@ -82,6 +86,7 @@ export function GameMomentCard({ post }: GameMomentCardProps) {
     : '';
 
   return (
+    <>
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-3">
       <div className="flex items-start gap-3">
         <Link href={`/user/${userObj?.id}`}>
@@ -95,11 +100,20 @@ export function GameMomentCard({ post }: GameMomentCardProps) {
         </Link>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Link href={`/user/${userObj?.id}`}>
-              <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">{displayName}</span>
-            </Link>
-            <span className="text-sm text-gray-500">{getActionText(moment.gameType)}</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Link href={`/user/${userObj?.id}`}>
+                <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">{displayName}</span>
+              </Link>
+              <span className="text-sm text-gray-500">{getActionText(moment.gameType)}</span>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); setReportOpen(true); }}
+              className="p-1 text-gray-300 hover:text-red-400 transition-colors flex-shrink-0"
+              title="Flag as inappropriate"
+            >
+              <Flag size={13} />
+            </button>
           </div>
           {formattedTime && (
             <p className="text-xs text-gray-400 mt-0.5">{formattedTime}</p>
@@ -125,5 +139,14 @@ export function GameMomentCard({ post }: GameMomentCardProps) {
         </div>
       </div>
     </div>
+    <ReportSheet
+      isOpen={reportOpen}
+      onClose={() => setReportOpen(false)}
+      contentType="post"
+      contentId={postId}
+      reportedUserId={userObj?.id}
+      reportedUserName={userObj?.username}
+    />
+    </>
   );
 }
