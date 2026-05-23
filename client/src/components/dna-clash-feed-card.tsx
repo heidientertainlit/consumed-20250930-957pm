@@ -194,20 +194,23 @@ export default function DnaClashFeedCard({
             <span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">DNA Clash</span>
           </div>
 
-          {/* Headline */}
-          <p className="text-white font-extrabold text-[18px] leading-tight -mt-1">
-            Completely different takes.
-          </p>
+          {/* Headline + media title */}
+          <div className="-mt-1">
+            <p className="text-white font-extrabold text-[18px] leading-tight">
+              Completely different takes.
+            </p>
+            <p className="text-white/40 text-[11px] mt-0.5">on {mediaTitle}</p>
+          </div>
 
           {/* Avatars + waveform — centred */}
-          <div className="flex items-center justify-center gap-0 mt-1">
+          <div className="flex items-center justify-center gap-0">
             <Avatar user={user1} size={52} />
             <Waveform />
             <Avatar user={user2} size={52} />
           </div>
 
-          {/* Info columns — one per user, stacked below their avatar */}
-          <div className="flex gap-3 mt-1">
+          {/* Info columns — one per user */}
+          <div className="flex gap-3">
             {/* User 1 */}
             <div
               className="flex-1 flex flex-col gap-1 p-3 rounded-xl"
@@ -239,16 +242,46 @@ export default function DnaClashFeedCard({
             </div>
           </div>
 
-          {/* Media title + CTA */}
-          <p className="text-white/35 text-[11px] truncate -mb-1">on {mediaTitle}</p>
-          <button
-            onClick={() => setSheetOpen(true)}
-            className="self-start px-3 py-1.5 rounded-xl text-white text-[11px] font-semibold flex items-center gap-1.5 transition-colors border border-white/15"
-            style={{ background: voted ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.10)" }}
-          >
-            <Zap size={10} fill="currentColor" className="text-purple-300" />
-            {voted ? "You voted · See result" : "Which side are you on?"}
-          </button>
+          {/* Inline vote buttons */}
+          {!voted ? (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setVoted(user1.username)}
+                className="flex-1 py-2 rounded-xl text-white text-[12px] font-semibold transition-all border"
+                style={{ background: `${user1.color}22`, borderColor: `${user1.color}55`, color: user1.color }}
+              >
+                {user1.displayName}'s side
+              </button>
+              <button
+                onClick={() => setVoted(user2.username)}
+                className="flex-1 py-2 rounded-xl text-white text-[12px] font-semibold transition-all border"
+                style={{ background: `${user2.color}22`, borderColor: `${user2.color}55`, color: user2.color }}
+              >
+                {user2.displayName}'s side
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <div
+                className="flex-1 py-2 rounded-xl text-[12px] font-semibold flex items-center justify-center gap-1 border"
+                style={voted === user1.username
+                  ? { background: `${user1.color}33`, borderColor: user1.color, color: user1.color }
+                  : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' }}
+              >
+                {voted === user1.username && <Check size={11} />}
+                {user1.displayName}'s side
+              </div>
+              <div
+                className="flex-1 py-2 rounded-xl text-[12px] font-semibold flex items-center justify-center gap-1 border"
+                style={voted === user2.username
+                  ? { background: `${user2.color}33`, borderColor: user2.color, color: user2.color }
+                  : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' }}
+              >
+                {voted === user2.username && <Check size={11} />}
+                {user2.displayName}'s side
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
