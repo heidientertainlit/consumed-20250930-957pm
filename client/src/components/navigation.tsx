@@ -524,7 +524,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               </Link>
             )}
             <Link href="/leaderboard" className="hover:opacity-70 transition-opacity" aria-label="Leaderboard">
-              <Trophy className="text-white/50" size={18} />
+              <Trophy className="text-white" size={20} />
             </Link>
             <button
               onClick={handleSearchToggle}
