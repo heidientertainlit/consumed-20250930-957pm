@@ -4520,6 +4520,29 @@ export default function Feed() {
                 )}
               </div>
             </div>
+
+            {/* Action buttons */}
+            <div className="flex flex-col gap-2 mt-1">
+              <button
+                onClick={() => setLocation('/entertainment-dna')}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                <span className="text-white/70 text-[12px]">What's your entertainment DNA?</span>
+                <span className="text-purple-400 text-[11px] font-bold shrink-0 ml-2">Take the quiz →</span>
+              </button>
+              <button
+                onClick={() => setLocation('/me')}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                <span className="text-white/70 text-[12px] flex items-center gap-2">
+                  <Users size={13} className="text-white/40" />
+                  Compare your DNA with a friend
+                </span>
+                <ChevronRight size={14} className="text-white/40 shrink-0" />
+              </button>
+            </div>
           </div>
         </div>
       );

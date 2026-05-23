@@ -642,7 +642,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           {/* Two CTA buttons */}
           <div className="flex flex-col gap-2 -mt-1">
             <button
-              onClick={() => setLocation("/dna")}
+              onClick={() => setLocation("/entertainment-dna")}
               className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-white/15 text-white text-[12px] font-semibold hover:bg-white/10 transition-colors"
               style={{ background: "rgba(255,255,255,0.06)" }}
             >
