@@ -2001,7 +2001,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )}
           <div className="mt-3 pt-3 border-t border-gray-50">{actionBar}</div>
           {ratingSubmitted && ratingValue > 0 && isOtherUser && (
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex items-center justify-start gap-2 pt-2">
               <span className="text-sm text-gray-500">
                 {ratingJustSaved ? <span className="text-green-600 text-xs font-semibold">✓ Saved!</span> : 'Your rating'}
               </span>
