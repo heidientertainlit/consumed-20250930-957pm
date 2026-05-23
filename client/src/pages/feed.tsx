@@ -4164,7 +4164,6 @@ export default function Feed() {
     const out: any[] = [];
     let promotedIdx = 0;
     let bingePromoCount = 0;
-    let dnaClashInserted = false;
 
     // Flatten all carousel posts into a secondary UGC pool for organic interleaving.
     // These fill the "extra" UGC slots so the feed alternates:
@@ -4215,11 +4214,6 @@ export default function Feed() {
         });
         bingePromoCount++;
       }
-      // Inject DNA clash card once, at position 7
-      if (i === 6 && !dnaClashInserted) {
-        out.push(DNA_CLASH_CARD);
-        dnaClashInserted = true;
-      }
     });
     // Append any leftover promoted ratings
     while (promotedIdx < promotedRatings.length) {
@@ -4231,6 +4225,9 @@ export default function Feed() {
       out.push(wrapExtra(extraIdx));
       extraIdx++;
     }
+    // Splice DNA clash card into a fixed slot (index 6) so it always hits
+    // renderPostBatchByIndex(6) in the JSX regardless of how many play slots exist.
+    out.splice(6, 0, DNA_CLASH_CARD);
     return out;
   }, [feedPlaySlots, promotedRatings, feedRatingCarousels]);
 
