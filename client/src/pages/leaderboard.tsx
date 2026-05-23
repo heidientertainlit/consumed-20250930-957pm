@@ -640,46 +640,54 @@ export default function Leaderboard() {
                 'from-purple-600 to-pink-600'
               )}
 
-              {/* ── Taste Status ── */}
+              {/* ── Top of Taste ── */}
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
-                <div className="bg-gradient-to-r from-violet-600 to-indigo-500 px-4 py-3 flex items-center gap-2">
-                  <Trophy size={18} className="text-white" />
-                  <div>
-                    <h3 className="text-sm font-bold text-white leading-tight">Taste Status</h3>
-                    <p className="text-[10px] text-white/70 leading-tight">Current title holders</p>
+                <div className="bg-gradient-to-r from-violet-600 to-indigo-500 p-4">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="text-white" size={20} />
+                    <h3 className="text-base font-bold text-white">Top of Taste</h3>
                   </div>
                 </div>
                 <div className="divide-y divide-gray-100">
                   {([
-                    { emoji: '📡', title: 'The Completionist',      sub: 'most content tracked',   data: leaderboardData?.categories?.total_consumption },
-                    { emoji: '🎯', title: 'Called the Finale',       sub: 'best prediction accuracy', data: leaderboardData?.categories?.predictions },
-                    { emoji: '🗣️', title: 'Most Controversial Take', sub: 'top poll voter',          data: leaderboardData?.categories?.polls },
-                    { emoji: '🎬', title: 'Film Buff',               sub: 'most movies tracked',    data: leaderboardData?.categories?.movies },
-                    { emoji: '📺', title: 'Binge Champion',          sub: 'most TV tracked',        data: leaderboardData?.categories?.tv },
-                    { emoji: '📚', title: 'Bookworm',                sub: 'most books tracked',     data: leaderboardData?.categories?.books },
-                    { emoji: '🎵', title: 'Ear Worm',                sub: 'top music tracker',      data: leaderboardData?.categories?.music },
-                  ] as { emoji: string; title: string; sub: string; data: LeaderboardEntry[] | undefined }[]).map(({ emoji, title, sub, data }) => {
+                    { title: 'The Completionist',      data: leaderboardData?.categories?.total_consumption },
+                    { title: 'Called the Finale',      data: leaderboardData?.categories?.predictions },
+                    { title: 'Most Controversial Take',data: leaderboardData?.categories?.polls },
+                    { title: 'Film Buff',               data: leaderboardData?.categories?.movies },
+                    { title: 'Binge Champion',          data: leaderboardData?.categories?.tv },
+                    { title: 'Bookworm',                data: leaderboardData?.categories?.books },
+                    { title: 'Ear Worm',                data: leaderboardData?.categories?.music },
+                  ] as { title: string; data: LeaderboardEntry[] | undefined }[]).map(({ title, data }, index) => {
                     const holder = data?.[0];
                     const isMe = holder?.user_id === currentUserId;
+                    const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
                     return (
-                      <div key={title} className="flex items-center gap-3 px-4 py-3">
-                        <span className="text-lg w-7 text-center shrink-0">{emoji}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[11px] font-bold text-gray-800 leading-tight">{title}</p>
-                          <p className="text-[10px] text-gray-400 leading-tight">{sub}</p>
+                      <div
+                        key={title}
+                        className={`flex items-center gap-4 p-4 ${isMe ? 'bg-purple-50' : 'hover:bg-gray-50'} transition-colors`}
+                      >
+                        <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                          {index < 3 ? (
+                            <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                              {index + 1}
+                            </div>
+                          ) : (
+                            <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
+                          )}
                         </div>
                         {holder ? (
-                          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${isMe ? 'bg-purple-100' : 'bg-gray-100'}`}>
-                            <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white ${isMe ? 'bg-purple-600' : 'bg-gray-400'}`}>
-                              {(holder.display_name || holder.username)?.[0]?.toUpperCase()}
-                            </div>
-                            <span className={`text-[11px] font-semibold max-w-[90px] truncate ${isMe ? 'text-purple-700' : 'text-gray-700'}`}>
+                          <Link href={`/user/${holder.user_id}`} className="flex-1 min-w-0">
+                            <p className={`font-semibold text-sm truncate ${isMe ? 'text-purple-700' : 'text-gray-900'}`}>
                               {isMe ? 'You' : (holder.display_name || holder.username)}
-                            </span>
-                          </div>
+                            </p>
+                            <p className="text-xs text-gray-500">@{holder.username}</p>
+                          </Link>
                         ) : (
-                          <span className="text-[10px] text-gray-300 italic">No one yet</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-300 italic">No one yet</p>
+                          </div>
                         )}
+                        <p className="text-xs font-medium text-gray-500 text-right shrink-0 max-w-[110px]">{title}</p>
                       </div>
                     );
                   })}
