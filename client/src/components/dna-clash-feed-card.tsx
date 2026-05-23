@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
-import { Zap, Check, X } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Zap, Check, MessageCircle, Send, Trash2, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
@@ -13,6 +16,7 @@ export interface ClashUser {
   initials: string;
   color: string;
   votes: number;
+  avatar?: string | null;
 }
 
 interface DnaClashFeedCardProps {
@@ -28,65 +32,102 @@ interface DnaClashFeedCardProps {
   poolId?: string;
 }
 
-function Avatar({ user }: { user: ClashUser }) {
-  const firstName = user.displayName.split(" ")[0];
+// ─── Avatar card matching the screenshot design ───────────────────────────────
+function UserCard({
+  user,
+  isMyVote,
+  onVote,
+  hasVoted,
+  side,
+}: {
+  user: ClashUser;
+  isMyVote: boolean;
+  onVote: () => void;
+  hasVoted: boolean;
+  side: 'left' | 'right';
+}) {
+  const accentColor = side === 'left' ? '#a855f7' : '#6366f1';
   return (
-    <div
-      className="shrink-0 flex flex-col items-center justify-center font-bold text-white text-center gap-1"
+    <button
+      onClick={onVote}
+      disabled={hasVoted}
+      className="flex-1 flex flex-col gap-2.5 p-3 rounded-2xl text-left transition-all active:scale-[0.97]"
       style={{
-        paddingLeft: 16,
-        paddingRight: 16,
-        paddingTop: 12,
-        paddingBottom: 12,
-        borderRadius: 16,
-        background: user.color,
-        minWidth: 90,
-        boxShadow: `0 0 0 2px rgba(255,255,255,0.15)`,
+        background: isMyVote ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.06)',
+        border: `1.5px solid ${isMyVote ? 'rgba(139,92,246,0.50)' : 'rgba(255,255,255,0.10)'}`,
       }}
     >
-      <span style={{ fontSize: 16, lineHeight: 1.1, fontWeight: 800 }}>{firstName}</span>
-      <span style={{ fontSize: 13, letterSpacing: 1.5, lineHeight: 1, opacity: 0.95 }}>
-        {"★".repeat(user.rating)}{"☆".repeat(5 - user.rating)}
-      </span>
-      <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.85, lineHeight: 1.2, textAlign: 'center' }}>
-        {user.dnaLabel}
-      </span>
-    </div>
+      {/* Avatar row */}
+      <div className="flex items-center gap-2">
+        <div
+          className="w-10 h-10 rounded-full shrink-0 overflow-hidden flex items-center justify-center font-bold text-white text-[13px]"
+          style={{
+            background: user.avatar ? 'transparent' : accentColor,
+            border: '2px solid rgba(255,255,255,0.18)',
+            boxShadow: `0 0 0 1px ${accentColor}55`,
+          }}
+        >
+          {user.avatar ? (
+            <img src={user.avatar} alt={user.displayName} className="w-full h-full object-cover" />
+          ) : (
+            user.initials
+          )}
+        </div>
+        <span className="text-white font-bold text-[14px] leading-tight truncate">
+          {user.displayName.split(' ')[0]}
+        </span>
+        {isMyVote && <Check size={11} className="text-purple-300 shrink-0 ml-auto" />}
+      </div>
+
+      {/* Stars */}
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map(s => (
+          <span key={s} style={{ fontSize: 13, lineHeight: 1, color: s <= user.rating ? accentColor : 'rgba(255,255,255,0.18)' }}>
+            {s <= user.rating ? '★' : '☆'}
+          </span>
+        ))}
+      </div>
+
+      {/* DNA label pill */}
+      <div
+        className="flex items-center gap-1.5 px-2 py-1 rounded-full self-start"
+        style={{ background: 'rgba(255,255,255,0.08)' }}
+      >
+        <Sparkles size={9} className="text-white/45 shrink-0" />
+        <span className="text-white/65 text-[10px] font-medium leading-none">{user.dnaLabel}</span>
+      </div>
+    </button>
   );
 }
 
+// ─── Animated waveform between the two cards ──────────────────────────────────
 function Waveform() {
   return (
-    <svg width="90" height="48" viewBox="0 0 90 48" fill="none" className="shrink-0">
+    <svg width="72" height="52" viewBox="0 0 72 52" fill="none" className="shrink-0">
       <defs>
-        <filter id="clash-glow">
-          <feGaussianBlur stdDeviation="1.6" result="blur" />
+        <filter id="clash-glow2">
+          <feGaussianBlur stdDeviation="1.8" result="blur" />
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
-        <linearGradient id="clash-wave" x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id="clash-wave2" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="#3b82f6" />
           <stop offset="50%" stopColor="#7c3aed" />
           <stop offset="100%" stopColor="#a855f7" />
         </linearGradient>
       </defs>
       <path
-        d="M0,24 L8,24 L11,6 L14,42 L17,10 L20,38 L25,24 L30,2 L33,46 L36,12 L40,24 L43,4 L46,44 L49,14 L54,24 L58,8 L61,40 L64,16 L69,28 L73,24 L82,24 L90,24"
-        stroke="url(#clash-wave)"
-        strokeWidth="2.4"
+        d="M0,26 L6,26 L9,8 L12,44 L15,12 L18,40 L22,26 L26,4 L29,48 L32,14 L36,26 L39,6 L42,46 L45,16 L50,26 L54,10 L57,42 L60,18 L64,30 L68,26 L72,26"
+        stroke="url(#clash-wave2)"
+        strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        filter="url(#clash-glow)"
+        filter="url(#clash-glow2)"
       />
     </svg>
   );
 }
 
-async function sendNotification(
-  userId: string,
-  message: string,
-  triggeredBy: string | undefined,
-  session: any
-) {
+async function sendNotification(userId: string, message: string, triggeredBy: string | undefined, session: any) {
   try {
     await supabase.from('notifications').insert({
       user_id: userId,
@@ -100,22 +141,30 @@ async function sendNotification(
   }
 }
 
+// ─── Main component ───────────────────────────────────────────────────────────
 export default function DnaClashFeedCard({
   user1,
   user2,
   mediaTitle,
   currentUserId,
-  session,
+  session: sessionProp,
   onOptOut,
   poolId,
 }: DnaClashFeedCardProps) {
+  const { session: authSession } = useAuth();
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const activeSession = sessionProp || authSession;
+
   const [voted, setVoted] = useState<string | null>(null);
   const [optingOut, setOptingOut] = useState(false);
   const [optedOut, setOptedOut] = useState(false);
   const [showOptOutConfirm, setShowOptOutConfirm] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
   const [liveCounts, setLiveCounts] = useState<Record<string, number>>({
-    [user1.username]: user1.votes,
-    [user2.username]: user2.votes,
+    [user1.username]: 0,
+    [user2.username]: 0,
   });
 
   const clashKey = `clash_notified_${user1.username}_${user2.username}_${mediaTitle}`;
@@ -129,7 +178,6 @@ export default function DnaClashFeedCard({
         .from('user_predictions')
         .select('prediction, user_id')
         .eq('pool_id', poolId);
-
       if (!data) return;
       const counts: Record<string, number> = {};
       let myVote: string | null = null;
@@ -143,39 +191,89 @@ export default function DnaClashFeedCard({
     loadVotes();
   }, [poolId, currentUserId]);
 
-  // Send "you're featured" notification once per clash per session
+  // "You're featured" notification — once per session
   useEffect(() => {
-    if (!isInClash || !currentUserId || !session) return;
+    if (!isInClash || !currentUserId || !activeSession) return;
     if (sessionStorage.getItem(clashKey)) return;
     sessionStorage.setItem(clashKey, '1');
     sendNotification(
       currentUserId,
       `You're featured in a DNA Clash on "${mediaTitle}" — people are voting now!`,
       undefined,
-      session
+      activeSession
     );
   }, [isInClash, currentUserId]);
 
-  const handleVote = async (username: string) => {
-    if (voted || !session) return;
+  // ── Comments ────────────────────────────────────────────────────────────────
+  const { data: commentsData } = useQuery({
+    queryKey: ['/api/clash-comments', poolId],
+    queryFn: async () => {
+      if (!activeSession?.access_token || !poolId) return { comments: [] };
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/prediction-comments?pool_id=${poolId}&include=meta`, {
+        headers: { 'Authorization': `Bearer ${activeSession.access_token}` },
+      });
+      if (!res.ok) return { comments: [] };
+      return res.json();
+    },
+    enabled: showComments && !!poolId && !!activeSession?.access_token,
+  });
 
-    // Optimistic update
+  const commentMutation = useMutation({
+    mutationFn: async (content: string) => {
+      if (!activeSession?.access_token || !poolId) return;
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/prediction-comments`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${activeSession.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ pool_id: poolId, content }),
+      });
+      if (!res.ok) throw new Error('Failed to post comment');
+      return res.json();
+    },
+    onSuccess: () => {
+      setCommentText('');
+      qc.invalidateQueries({ queryKey: ['/api/clash-comments', poolId] });
+    },
+    onError: () => toast({ title: 'Failed to post comment', variant: 'destructive' }),
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: async (commentId: string) => {
+      if (!activeSession?.access_token) return;
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/prediction-comments?comment_id=${commentId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${activeSession.access_token}` },
+      });
+      if (!res.ok) throw new Error('Failed to delete comment');
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['/api/clash-comments', poolId] }),
+  });
+
+  const handlePostComment = () => {
+    const trimmed = commentText.trim();
+    if (!trimmed || commentMutation.isPending) return;
+    commentMutation.mutate(trimmed);
+  };
+
+  // ── Voting ──────────────────────────────────────────────────────────────────
+  const handleVote = async (username: string) => {
+    if (voted || !activeSession) return;
     setVoted(username);
     setLiveCounts(prev => ({ ...prev, [username]: (prev[username] || 0) + 1 }));
 
-    // Persist to user_predictions if we have a poolId
-    if (poolId && session?.access_token) {
+    if (poolId && activeSession?.access_token) {
       try {
         const res = await fetch(`${SUPABASE_URL}/functions/v1/predictions/predict`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${session.access_token}`,
+            'Authorization': `Bearer ${activeSession.access_token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ pool_id: poolId, prediction: username }),
         });
         if (!res.ok) {
-          // Rollback optimistic update on failure
           setVoted(null);
           setLiveCounts(prev => ({ ...prev, [username]: Math.max(0, (prev[username] || 1) - 1) }));
           return;
@@ -187,22 +285,11 @@ export default function DnaClashFeedCard({
       }
     }
 
-    // Notify both featured users
     const votedFor = username === user1.username ? user1 : user2;
     const votedAgainst = username === user1.username ? user2 : user1;
     await Promise.all([
-      sendNotification(
-        votedFor.userId,
-        `Someone agreed with your take on "${mediaTitle}" in a DNA Clash!`,
-        currentUserId,
-        session
-      ),
-      sendNotification(
-        votedAgainst.userId,
-        `Someone sided with ${votedFor.displayName} over you on "${mediaTitle}" in a DNA Clash.`,
-        currentUserId,
-        session
-      ),
+      sendNotification(votedFor.userId, `Someone agreed with your take on "${mediaTitle}" in a DNA Clash!`, currentUserId, activeSession),
+      sendNotification(votedAgainst.userId, `Someone sided with ${votedFor.displayName} over you on "${mediaTitle}" in a DNA Clash.`, currentUserId, activeSession),
     ]);
   };
 
@@ -228,104 +315,164 @@ export default function DnaClashFeedCard({
   const total = v1 + v2;
   const pct1 = total > 0 ? Math.round((v1 / total) * 100) : 50;
   const pct2 = 100 - pct1;
+  const commentCount = commentsData?.comments?.length ?? 0;
 
   return (
     <div
       className="relative rounded-2xl overflow-hidden mb-4 shadow-lg"
-      style={{ background: "linear-gradient(135deg, #1e0a3c 0%, #2d1465 45%, #3b1a78 100%)" }}
+      style={{ background: 'linear-gradient(135deg, #0f0525 0%, #1a0b38 50%, #200d42 100%)' }}
     >
       <div className="p-4 flex flex-col gap-3">
-        {/* Label row + opt-out button */}
+
+        {/* Badge row */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Zap size={11} className="text-purple-300 shrink-0" fill="currentColor" />
             <span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">DNA Clash</span>
           </div>
           {isInClash && !showOptOutConfirm && (
-            <button
-              onClick={() => setShowOptOutConfirm(true)}
-              className="text-[10px] text-white/30 hover:text-white/60 transition-colors"
-            >
+            <button onClick={() => setShowOptOutConfirm(true)} className="text-[10px] text-white/25 hover:text-white/55 transition-colors">
               Opt out
             </button>
           )}
         </div>
 
-        {/* Opt-out confirmation */}
+        {/* Opt-out confirm */}
         {showOptOutConfirm && (
-          <div className="flex items-center justify-between rounded-xl px-3 py-2.5 gap-2" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}>
-            <span className="text-white/70 text-[11px] leading-snug">Remove yourself from DNA Clash cards?</span>
+          <div className="flex items-center justify-between rounded-xl px-3 py-2.5 gap-2"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
+            <span className="text-white/65 text-[11px] leading-snug">Remove yourself from DNA Clash cards?</span>
             <div className="flex gap-2 shrink-0">
-              <button
-                onClick={handleOptOut}
-                disabled={optingOut}
+              <button onClick={handleOptOut} disabled={optingOut}
                 className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white"
-                style={{ background: '#a855f7' }}
-              >
+                style={{ background: '#a855f7' }}>
                 {optingOut ? '…' : 'Yes'}
               </button>
-              <button
-                onClick={() => setShowOptOutConfirm(false)}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white/60"
-                style={{ background: 'rgba(255,255,255,0.08)' }}
-              >
+              <button onClick={() => setShowOptOutConfirm(false)}
+                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white/55"
+                style={{ background: 'rgba(255,255,255,0.07)' }}>
                 Cancel
               </button>
             </div>
           </div>
         )}
 
-        {/* Headline + media title */}
-        <div className="-mt-1">
+        {/* Headline */}
+        <div className="-mt-0.5">
           <p className="text-white font-extrabold text-[18px] leading-tight">Completely different takes.</p>
-          <p className="text-white/60 text-[14px] font-semibold mt-0.5">on {mediaTitle}</p>
+          <p className="text-white/55 text-[13px] font-semibold mt-0.5">on {mediaTitle}</p>
         </div>
 
-        {/* Avatars + waveform */}
-        <div className="flex items-center justify-center gap-0">
-          <Avatar user={user1} />
+        {/* Two user cards + waveform */}
+        <div className="flex items-center gap-1">
+          <UserCard user={user1} isMyVote={voted === user1.username} onVote={() => handleVote(user1.username)} hasVoted={!!voted} side="left" />
           <Waveform />
-          <Avatar user={user2} />
+          <UserCard user={user2} isMyVote={voted === user2.username} onVote={() => handleVote(user2.username)} hasVoted={!!voted} side="right" />
         </div>
 
-        {/* CTA + vote buttons */}
-        {!voted ? (
-          <div className="flex flex-col gap-2">
-            <p className="text-white/50 text-[11px] font-semibold text-center uppercase tracking-widest">Which side are you on?</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleVote(user1.username)}
-                className="flex-1 py-2 rounded-xl text-[12px] font-semibold transition-all border"
-                style={{ background: `${user1.color}22`, borderColor: `${user1.color}55`, color: user1.color }}
-              >
-                {user1.displayName}'s side
-              </button>
-              <button
-                onClick={() => handleVote(user2.username)}
-                className="flex-1 py-2 rounded-xl text-[12px] font-semibold transition-all border"
-                style={{ background: `${user2.color}22`, borderColor: `${user2.color}55`, color: user2.color }}
-              >
-                {user2.displayName}'s side
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {[{ u: user1, pct: pct1, v: v1 }, { u: user2, pct: pct2, v: v2 }].map(({ u, pct }) => (
-              <div key={u.username} className="flex items-center gap-2">
-                <span className="text-[10px] font-semibold w-[72px] truncate" style={{ color: u.color }}>
-                  {voted === u.username && <Check size={9} className="inline mr-0.5" />}
-                  {u.displayName}
-                </span>
-                <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: u.color }} />
+        {/* Which side CTA — pre-vote */}
+        {!voted && (
+          <p className="text-white/35 text-[10px] font-semibold text-center uppercase tracking-widest -mt-1">
+            Tap a card — which side are you on?
+          </p>
+        )}
+
+        {/* Vote bars — post-vote */}
+        {voted && (
+          <div className="flex flex-col gap-1.5">
+            {[{ u: user1, pct: pct1 }, { u: user2, pct: pct2 }].map(({ u, pct }) => {
+              const isMine = voted === u.username;
+              const barColor = isMine ? '#a855f7' : '#6366f1';
+              return (
+                <div key={u.username} className="flex items-center gap-2">
+                  {isMine && <Check size={9} className="text-purple-300 shrink-0" />}
+                  <span className={`text-[11px] font-semibold w-[70px] truncate shrink-0 ${isMine ? 'text-purple-300' : 'text-white/45'}`}
+                    style={!isMine ? { marginLeft: 13 } : {}}>
+                    {u.displayName.split(' ')[0]}
+                  </span>
+                  <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                    <div className="h-full rounded-full transition-all duration-600"
+                      style={{ width: `${pct}%`, background: barColor }} />
+                  </div>
+                  <span className={`text-[11px] font-bold w-7 text-right shrink-0 ${isMine ? 'text-purple-300' : 'text-white/40'}`}>
+                    {pct}%
+                  </span>
                 </div>
-                <span className="text-[11px] font-bold w-8 text-right" style={{ color: u.color }}>{pct}%</span>
-              </div>
-            ))}
-            <p className="text-white/35 text-[10px] text-center">{total} votes</p>
+              );
+            })}
+            <p className="text-white/25 text-[10px] text-center">{total} {total === 1 ? 'vote' : 'votes'}</p>
           </div>
         )}
+
+        {/* Bottom action bar */}
+        <div className="flex items-center gap-3 pt-0.5 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+          <button
+            onClick={() => setShowComments(s => !s)}
+            className={`flex items-center gap-1.5 transition-colors ${showComments ? 'text-purple-300' : 'text-white/35 hover:text-white/60'}`}
+          >
+            <MessageCircle size={15} fill={showComments ? 'currentColor' : 'none'} />
+            <span className="text-[12px] font-medium">{commentCount > 0 ? commentCount : 'Debate'}</span>
+          </button>
+        </div>
+
+        {/* Comments section */}
+        {showComments && (
+          <div className="flex flex-col gap-3 -mx-4 px-4 pt-3 pb-1" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+
+            {/* Existing comments */}
+            {(commentsData?.comments || []).length === 0 ? (
+              <p className="text-white/30 text-[12px] text-center py-1">No comments yet. Start the debate.</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {commentsData.comments.map((c: any) => (
+                  <div key={c.id} className="flex items-start gap-2 group">
+                    <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-bold"
+                      style={{ background: 'rgba(139,92,246,0.4)' }}>
+                      {(c.username || '?').slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-white/70 text-[11px] font-semibold mr-1.5">{c.username}</span>
+                      <span className="text-white/80 text-[12px] break-words">{c.content}</span>
+                    </div>
+                    {c.user_id === (activeSession?.user?.id) && (
+                      <button
+                        onClick={() => deleteCommentMutation.mutate(String(c.id))}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-white/25 hover:text-red-400 transition-all shrink-0"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Comment input */}
+            {activeSession ? (
+              <div className="flex items-center gap-2">
+                <input
+                  value={commentText}
+                  onChange={e => setCommentText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePostComment(); } }}
+                  placeholder="Add your take…"
+                  className="flex-1 text-[13px] text-white placeholder-white/25 bg-transparent outline-none py-1.5 px-0 border-b"
+                  style={{ borderColor: 'rgba(255,255,255,0.15)' }}
+                />
+                <button
+                  onClick={handlePostComment}
+                  disabled={!commentText.trim() || commentMutation.isPending}
+                  className="p-1.5 rounded-lg transition-colors disabled:opacity-30"
+                  style={{ background: commentText.trim() ? '#a855f7' : 'rgba(255,255,255,0.08)' }}
+                >
+                  <Send size={12} className="text-white" />
+                </button>
+              </div>
+            ) : (
+              <p className="text-white/30 text-[11px] text-center">Sign in to join the debate</p>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );
