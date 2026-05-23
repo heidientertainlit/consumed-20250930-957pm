@@ -4450,6 +4450,8 @@ export default function Feed() {
       const friendName = (cmp.friend_name || 'a friend') as string;
       const friendInitials = friendName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
       const sharedGenres: string[] = cmp.shared_genres || [];
+      const sharedTitles: { title: string; your_rating?: number; friend_rating?: number }[] = cmp.shared_titles || [];
+      const topSharedTitle = sharedTitles[0] || null;
       const compatLine: string = cmp.compatibility_line || '';
       return (
         <div key={item.id} className="mx-3 mb-3 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f0a2e 0%, #1a1050 45%, #1e1460 100%)' }}>
@@ -4494,18 +4496,29 @@ export default function Feed() {
                 {compatLine ? <p className="text-white/50 text-[11px] leading-snug italic">"{compatLine}"</p> : null}
               </div>
 
-              {/* Right — shared genres */}
-              {sharedGenres.length > 0 && (
-                <div className="flex flex-col gap-1 pt-1 min-w-[100px]">
-                  <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest mb-0.5">You both love</span>
-                  {sharedGenres.slice(0, 4).map((g: string) => (
-                    <div key={g} className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
-                      <span className="text-white/70 text-[11px] truncate">{g}</span>
+              {/* Right — shared genres + shared title */}
+              <div className="flex flex-col gap-2 pt-1 min-w-[100px]">
+                {sharedGenres.length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest mb-0.5">You both love</span>
+                    {sharedGenres.slice(0, 2).map((g: string) => (
+                      <div key={g} className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
+                        <span className="text-white/70 text-[11px] truncate">{g}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {topSharedTitle && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest mb-0.5">Both rated</span>
+                    <div className="flex items-start gap-1.5">
+                      <Star size={9} className="text-yellow-400 shrink-0 mt-[2px]" />
+                      <span className="text-white/70 text-[11px] leading-tight">{topSharedTitle.title}</span>
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
