@@ -77,7 +77,7 @@ export default function DnaCompareFeedCard({ featured, overlaps }: DnaCompareFee
         {/* Label */}
         <div className="flex items-center gap-1.5">
           <Dna size={11} className="text-indigo-300 shrink-0" />
-          <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">Compare</span>
+          <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">Compare DNA</span>
         </div>
 
         {/* Main content: left = text, right = overlaps list */}

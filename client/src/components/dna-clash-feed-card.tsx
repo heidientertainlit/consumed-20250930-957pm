@@ -189,7 +189,7 @@ export default function DnaClashFeedCard({
           {/* Label */}
           <div className="flex items-center gap-1.5">
             <Zap size={11} className="text-purple-300 shrink-0" fill="currentColor" />
-            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">Clash</span>
+            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">DNA Clash</span>
           </div>
 
           {/* Headline */}
