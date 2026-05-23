@@ -60,6 +60,7 @@ import { FeedbackDialog } from "@/components/feedback-dialog";
 import { GameMomentCard } from "@/components/game-moment-card";
 import { SocialProofCard, buildGameMomentSocialProof, buildLeaderboardSocialProof } from "@/components/social-proof-card";
 import BingeBattleFeedCard from "@/components/binge-battle-feed-card";
+import DnaClashFeedCard from "@/components/dna-clash-feed-card";
 import { TodaysPlayNudge } from "@/components/todays-play-nudge";
 import { WhatsYourMove } from "@/components/whats-your-move"; // kept for reference — not currently rendered
 import FeedComposerBar from "@/components/feed-composer-bar";
@@ -4129,6 +4130,33 @@ export default function Feed() {
     return { feedRatingCarousels: batches, promotedRatings: promoted };
   })();
 
+  // Real rating clash used for the DNA Clash feed card.
+  // Sourced from media_ratings: Ambiannie (5★) vs KJWoodsEMH (1★) on LOTR: Fellowship.
+  const DNA_CLASH_CARD = {
+    type: 'dna_clash',
+    id: 'dna-clash-lotr',
+    user1: {
+      displayName: 'Ambiannie',
+      username: 'Ambiannie',
+      dnaLabel: 'Emotional Sleuth',
+      rating: 5,
+      initials: 'A',
+      color: '#f59e0b',
+    },
+    user2: {
+      displayName: 'Kimberly Woods',
+      username: 'KJWoodsEMH',
+      dnaLabel: 'Mystery-Loving Escapist',
+      rating: 1,
+      initials: 'KW',
+      color: '#a855f7',
+    },
+    mediaTitle: 'The Lord of the Rings: Fellowship of the Ring',
+    mediaType: 'movie',
+    externalId: '120',
+    externalSource: 'tmdb',
+  };
+
   // Interleave play slots with promoted standalone ratings and binge battle promo cards.
   // Pattern (1-indexed): every 3 play items inserts one promoted rating; positions 5 and 11
   // insert binge-battle promo cards (max 2). Play stays the dominant rhythm of the feed.
@@ -4136,6 +4164,7 @@ export default function Feed() {
     const out: any[] = [];
     let promotedIdx = 0;
     let bingePromoCount = 0;
+    let dnaClashInserted = false;
 
     // Flatten all carousel posts into a secondary UGC pool for organic interleaving.
     // These fill the "extra" UGC slots so the feed alternates:
@@ -4185,6 +4214,11 @@ export default function Feed() {
           _variant: bingePromoCount === 0 ? 'start' : 'compete',
         });
         bingePromoCount++;
+      }
+      // Inject DNA clash card once, at position 7
+      if (i === 6 && !dnaClashInserted) {
+        out.push(DNA_CLASH_CARD);
+        dnaClashInserted = true;
       }
     });
     // Append any leftover promoted ratings
@@ -4425,6 +4459,21 @@ export default function Feed() {
               : "Think you binge faster? Challenge someone and prove it.",
             media_title: isStart ? "Pick a show, pick a friend" : "Binge Battle",
           }}
+        />
+      );
+    }
+
+    // DNA Clash card — two real users with opposite ratings on the same media
+    if (item?.type === 'dna_clash') {
+      return (
+        <DnaClashFeedCard
+          key={item.id}
+          user1={item.user1}
+          user2={item.user2}
+          mediaTitle={item.mediaTitle}
+          mediaType={item.mediaType}
+          externalId={item.externalId}
+          externalSource={item.externalSource}
         />
       );
     }
