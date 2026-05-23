@@ -417,27 +417,31 @@ export default function DnaClashFeedCard({
 
         {/* Comments section */}
         {showComments && (
-          <div className="flex flex-col gap-3 -mx-4 px-4 pt-3 pb-1" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-
+          <div
+            className="flex flex-col gap-3 -mx-4 px-4 pt-3 pb-3 rounded-b-2xl"
+            style={{ background: 'rgba(0,0,0,0.25)', borderTop: '1px solid rgba(255,255,255,0.10)' }}
+          >
             {/* Existing comments */}
             {(commentsData?.comments || []).length === 0 ? (
-              <p className="text-white/30 text-[12px] text-center py-1">No comments yet. Start the debate.</p>
+              <p className="text-white/60 text-[12px] text-center py-1">No comments yet. Start the debate.</p>
             ) : (
               <div className="flex flex-col gap-3">
                 {commentsData.comments.map((c: any) => (
                   <div key={c.id} className="flex items-start gap-2 group">
-                    <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-bold"
-                      style={{ background: 'rgba(139,92,246,0.4)' }}>
+                    <div
+                      className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-bold"
+                      style={{ background: 'rgba(139,92,246,0.5)' }}
+                    >
                       {(c.username || '?').slice(0, 1).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-white/70 text-[11px] font-semibold mr-1.5">{c.username}</span>
-                      <span className="text-white/80 text-[12px] break-words">{c.content}</span>
+                      <span className="text-purple-200 text-[11px] font-semibold mr-1.5">{c.username}</span>
+                      <span className="text-white text-[13px] break-words leading-snug">{c.content}</span>
                     </div>
                     {c.user_id === (activeSession?.user?.id) && (
                       <button
                         onClick={() => deleteCommentMutation.mutate(String(c.id))}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-white/25 hover:text-red-400 transition-all shrink-0"
+                        className="opacity-0 group-hover:opacity-100 p-1 text-white/40 hover:text-red-400 transition-all shrink-0"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -449,26 +453,29 @@ export default function DnaClashFeedCard({
 
             {/* Comment input */}
             {activeSession ? (
-              <div className="flex items-center gap-2">
+              <div
+                className="flex items-center gap-2 rounded-xl px-3 py-2"
+                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}
+              >
                 <input
                   value={commentText}
                   onChange={e => setCommentText(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePostComment(); } }}
                   placeholder="Add your take…"
-                  className="flex-1 text-[13px] text-white placeholder-white/25 bg-transparent outline-none py-1.5 px-0 border-b"
-                  style={{ borderColor: 'rgba(255,255,255,0.15)' }}
+                  className="flex-1 text-[13px] text-white bg-transparent outline-none"
+                  style={{ caretColor: '#a855f7' }}
                 />
                 <button
                   onClick={handlePostComment}
                   disabled={!commentText.trim() || commentMutation.isPending}
-                  className="p-1.5 rounded-lg transition-colors disabled:opacity-30"
-                  style={{ background: commentText.trim() ? '#a855f7' : 'rgba(255,255,255,0.08)' }}
+                  className="p-1.5 rounded-lg transition-all disabled:opacity-30 shrink-0"
+                  style={{ background: commentText.trim() ? '#a855f7' : 'rgba(255,255,255,0.10)' }}
                 >
                   <Send size={12} className="text-white" />
                 </button>
               </div>
             ) : (
-              <p className="text-white/30 text-[11px] text-center">Sign in to join the debate</p>
+              <p className="text-white/50 text-[11px] text-center">Sign in to join the debate</p>
             )}
           </div>
         )}
