@@ -4845,11 +4845,68 @@ export default function Feed() {
     const remaining = mixedFeedSlots.slice(19);
     if (remaining.length === 0) return null;
 
-    return (
-      <>
-        {remaining.map((item: any, i: number) => renderFeedItem(item, `remaining-${i}`))}
-      </>
-    );
+    // Group consecutive _isPromoted (safe UGC) posts into batches of 3 → horizontal carousel.
+    // Game moments, predictions, polls, binge promos, cast_approved are never _isPromoted
+    // and always render individually — the data pipeline is completely untouched.
+    const output: React.ReactNode[] = [];
+    let buffer: any[] = [];
+    let groupKey = 0;
+
+    const flushBuffer = () => {
+      if (buffer.length === 0) return;
+      if (buffer.length === 3) {
+        const k = groupKey++;
+        output.push(
+          <div key={`ugc-carousel-${k}`} className="mb-3">
+            <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory touch-pan-x px-4 -mx-0">
+              {buffer.map((item: any, ci: number) => {
+                const { _isPromoted, _promotedKey, ...post } = item;
+                return (
+                  <div key={post.id || ci} className="shrink-0 snap-start w-[78vw] max-w-[290px]">
+                    <UGCGroupCard
+                      post={post as any}
+                      onLike={handleLike}
+                      isLiked={likedPosts.has(post.id)}
+                      session={session}
+                      fetchComments={fetchComments}
+                      currentUserId={currentAppUserId || undefined}
+                      onDeletePost={handleDeletePost}
+                      onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+                      forceNormal={true}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex justify-center gap-1.5 mt-1.5 mb-1">
+              {buffer.map((_: any, di: number) => (
+                <div key={di} className="w-1.5 h-1.5 rounded-full bg-gray-600/40" />
+              ))}
+            </div>
+          </div>
+        );
+      } else {
+        // Fewer than 3 — render individually so no card gets orphaned in an ugly partial row
+        buffer.forEach((item: any, bi: number) => {
+          output.push(renderFeedItem(item, `remaining-solo-${groupKey}-${bi}`));
+        });
+        groupKey++;
+      }
+      buffer = [];
+    };
+
+    remaining.forEach((item: any, i: number) => {
+      if (item?._isPromoted) {
+        buffer.push(item);
+        if (buffer.length === 3) flushBuffer();
+      } else {
+        flushBuffer();
+        output.push(renderFeedItem(item, `remaining-${i}`));
+      }
+    });
+    flushBuffer(); // flush any leftover
+
+    return <>{output}</>;
   };
 
 
