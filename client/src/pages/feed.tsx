@@ -1132,9 +1132,32 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     if (!baselineRating) return null;
     const diff = rating - baselineRating;
     const abs = Math.abs(diff);
-    if (abs <= 0.3) return <p className={`text-[10px] text-orange-400 ${className}`}>= Average rating</p>;
-    if (diff > 0) return <p className={`text-[10px] text-green-600 ${className}`}>↑ {abs.toFixed(1)} above {baselineLabel}</p>;
-    return <p className={`text-[10px] text-orange-500 ${className}`}>↓ {abs.toFixed(1)} below {baselineLabel}</p>;
+
+    let phrase: string;
+    let colorClass: string;
+
+    if (abs <= 0.3) {
+      // At average — vary by the actual star level
+      if (rating >= 4.5) phrase = 'Everyone agrees. A classic.';
+      else if (rating >= 4) phrase = 'Crowd-pleaser. You agree.';
+      else if (rating <= 2) phrase = "You're not alone on this one.";
+      else phrase = 'Safe take.';
+      colorClass = 'text-orange-400';
+    } else if (diff > 0) {
+      // Rated above average
+      if (diff >= 2.0) phrase = rating >= 4.5 ? 'A rare rave.' : 'Way more into this than most.';
+      else if (diff >= 1.0) phrase = 'Above the crowd on this one.';
+      else phrase = 'Warmer than most.';
+      colorClass = 'text-green-600';
+    } else {
+      // Rated below average
+      if (diff <= -2.0) phrase = 'Called this overrated.';
+      else if (diff <= -1.0) phrase = 'Tougher than the crowd.';
+      else phrase = 'Colder than most.';
+      colorClass = 'text-orange-500';
+    }
+
+    return <p className={`text-[10px] italic ${colorClass} ${className}`}>{phrase}</p>;
   };
 
   // Reusable action bar
