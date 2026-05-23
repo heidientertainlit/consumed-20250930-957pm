@@ -120,35 +120,26 @@ export default function DnaClashFeedCard({
           <Avatar user={user2} size={52} />
         </div>
 
-        {/* Info columns — stars first, then name, then DNA pill */}
+        {/* Info columns — name, then combined rating+DNA pill */}
         <div className="flex gap-3">
-          <div
-            className="flex-1 flex flex-col gap-1.5 p-3 rounded-xl"
-            style={{ background: `${user1.color}15`, border: `1px solid ${user1.color}30` }}
-          >
-            <FilledStars rating={user1.rating} color={user1.color} />
-            <span className="text-white font-semibold text-[13px] leading-tight">{user1.displayName}</span>
-            <span
-              className="text-[11px] font-bold px-2 py-1 rounded-full self-start"
-              style={{ background: `${user1.color}28`, color: user1.color, border: `1px solid ${user1.color}55` }}
+          {[user1, user2].map((u) => (
+            <div
+              key={u.username}
+              className="flex-1 flex flex-col gap-2 p-3 rounded-xl"
+              style={{ background: `${u.color}18`, border: `1px solid ${u.color}40` }}
             >
-              {user1.dnaLabel}
-            </span>
-          </div>
-
-          <div
-            className="flex-1 flex flex-col gap-1.5 p-3 rounded-xl"
-            style={{ background: `${user2.color}15`, border: `1px solid ${user2.color}30` }}
-          >
-            <FilledStars rating={user2.rating} color={user2.color} />
-            <span className="text-white font-semibold text-[13px] leading-tight">{user2.displayName}</span>
-            <span
-              className="text-[11px] font-bold px-2 py-1 rounded-full self-start"
-              style={{ background: `${user2.color}28`, color: user2.color, border: `1px solid ${user2.color}55` }}
-            >
-              {user2.dnaLabel}
-            </span>
-          </div>
+              <span className="text-white font-semibold text-[13px] leading-tight">{u.displayName}</span>
+              <div
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl self-start"
+                style={{ background: `${u.color}45`, border: `1px solid ${u.color}80` }}
+              >
+                <span style={{ color: '#fff', fontSize: 13, letterSpacing: 1, lineHeight: 1 }}>
+                  {"★".repeat(u.rating)}{"☆".repeat(5 - u.rating)}
+                </span>
+              </div>
+              <span className="text-white/60 text-[11px] font-medium leading-tight">{u.dnaLabel}</span>
+            </div>
+          ))}
         </div>
 
         {/* CTA + vote buttons */}
