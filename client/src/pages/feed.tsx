@@ -1961,7 +1961,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )}
 
           {/* Other raters — visually secondary: collapsed avatar tease */}
-          {(relatedRatings.length > 0 || (ratingSubmitted && ratingValue > 0 && isOtherUser)) && (
+          {relatedRatings.length > 0 && (
             <div className="mt-2 border-t border-gray-100 pt-2">
               <>
               {relatedRatings.length > 0 && (
@@ -1996,25 +1996,25 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </div>
                 )
               )}
-                {ratingSubmitted && ratingValue > 0 && isOtherUser && (
-                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-50">
-                    <span className="text-sm text-gray-500">
-                      {ratingJustSaved ? <span className="text-green-600 text-xs font-semibold">✓ Saved!</span> : 'Your rating'}
-                    </span>
-                    <div className="flex items-center gap-0.5 flex-shrink-0">
-                      {[1,2,3,4,5].map(s => (
-                        <Star key={s} size={11} className={s <= Math.floor(ratingValue) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(ratingValue) && ratingValue % 1 >= 0.5 ? 'text-yellow-300 fill-yellow-200' : 'text-gray-200'} />
-                      ))}
-                    </div>
-                    {!ratingJustSaved && (
-                      <button onClick={(e) => { e.stopPropagation(); setShowStarPicker(true); }} className="text-[9px] text-gray-400 hover:text-gray-600 transition-colors">Edit</button>
-                    )}
-                  </div>
-                )}
               </>
             </div>
           )}
           <div className="mt-3 pt-3 border-t border-gray-50">{actionBar}</div>
+          {ratingSubmitted && ratingValue > 0 && isOtherUser && (
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <span className="text-sm text-gray-500">
+                {ratingJustSaved ? <span className="text-green-600 text-xs font-semibold">✓ Saved!</span> : 'Your rating'}
+              </span>
+              <div className="flex items-center gap-0.5 flex-shrink-0">
+                {[1,2,3,4,5].map(s => (
+                  <Star key={s} size={11} className={s <= Math.floor(ratingValue) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(ratingValue) && ratingValue % 1 >= 0.5 ? 'text-yellow-300 fill-yellow-200' : 'text-gray-200'} />
+                ))}
+              </div>
+              {!ratingJustSaved && (
+                <button onClick={(e) => { e.stopPropagation(); setShowStarPicker(true); }} className="text-[9px] text-gray-400 hover:text-gray-600 transition-colors">Edit</button>
+              )}
+            </div>
+          )}
 
         {/* YOUR TURN / Post-rating section */}
         {isRatingPost && isOtherUser && session?.access_token && (showStarPicker || !ratingSubmitted) && (
