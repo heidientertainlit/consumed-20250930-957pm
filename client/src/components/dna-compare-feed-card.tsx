@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { Dna, ArrowRight, Users, X, ChevronLeft, Loader2 } from "lucide-react";
@@ -196,10 +197,10 @@ function CompareSheet({
 
   const friendLabel = (f: Friend) => f.display_name || f.user_name;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ background: "rgba(0,0,0,0.72)" }}
+      className="fixed inset-0 flex items-end justify-center"
+      style={{ background: "rgba(0,0,0,0.72)", zIndex: 10000 }}
       onClick={onClose}
     >
       <div
@@ -395,7 +396,8 @@ function CompareSheet({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

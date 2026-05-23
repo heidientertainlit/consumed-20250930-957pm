@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Zap, X, Check } from "lucide-react";
 
 export interface ClashUser {
@@ -94,10 +95,10 @@ function VoteSheet({
   onVote: (username: string) => void;
   onClose: () => void;
 }) {
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ background: "rgba(0,0,0,0.72)" }}
+      className="fixed inset-0 flex items-end justify-center"
+      style={{ background: "rgba(0,0,0,0.72)", zIndex: 10000 }}
       onClick={onClose}
     >
       <div
@@ -164,7 +165,8 @@ function VoteSheet({
           </p>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
