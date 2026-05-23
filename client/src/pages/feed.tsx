@@ -4454,12 +4454,10 @@ export default function Feed() {
       return (
         <div key={item.id} className="mx-3 mb-3 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f0a2e 0%, #1a1050 45%, #1e1460 100%)' }}>
           <div className="p-4 flex flex-col gap-4">
-            {/* Header — attribution in the badge only */}
-            <div className="flex items-center justify-end">
-              <div className="flex items-center gap-1">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-indigo-300"><path d="M12 2a7 7 0 0 1 7 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
-                <span className="text-indigo-300 text-[10px] font-semibold">{posterName} · compared DNA</span>
-              </div>
+            {/* Header — attribution */}
+            <div className="flex items-center gap-1">
+              <Dna size={11} className="text-indigo-300 shrink-0" />
+              <span className="text-indigo-300 text-[10px] font-semibold">{posterName} · compared DNA</span>
             </div>
 
             {/* Main two-column content */}
