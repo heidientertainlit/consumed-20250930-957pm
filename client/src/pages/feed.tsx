@@ -6946,23 +6946,23 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (() => {
                 const clashMatchups = [
                   {
-                    user1: { displayName: 'Ambiannie', username: 'Ambiannie', dnaLabel: 'Emotional Sleuth', rating: 5, initials: 'A', color: '#f59e0b' },
-                    user2: { displayName: 'Kimberly Woods', username: 'KJWoodsEMH', dnaLabel: 'Mystery-Loving Escapist', rating: 1, initials: 'KW', color: '#a855f7' },
+                    user1: { displayName: 'Ambiannie', username: 'Ambiannie', dnaLabel: 'Emotional Sleuth', rating: 5, initials: 'A', color: '#a855f7' },
+                    user2: { displayName: 'Kimberly Woods', username: 'KJWoodsEMH', dnaLabel: 'Mystery-Loving Escapist', rating: 1, initials: 'KW', color: '#3b82f6' },
                     mediaTitle: 'The Lord of the Rings: Fellowship of the Ring', mediaType: 'movie', externalId: '120', externalSource: 'tmdb',
                   },
                   {
-                    user1: { displayName: 'Trey', username: 'Trey', dnaLabel: 'Drama Devotee', rating: 5, initials: 'T', color: '#10b981' },
-                    user2: { displayName: 'Jordan F.', username: 'Jrgibsongirl', dnaLabel: 'Casual Binger', rating: 2, initials: 'JF', color: '#ec4899' },
+                    user1: { displayName: 'Trey', username: 'Trey', dnaLabel: 'Drama Devotee', rating: 5, initials: 'T', color: '#a855f7' },
+                    user2: { displayName: 'Jordan F.', username: 'Jrgibsongirl', dnaLabel: 'Casual Binger', rating: 2, initials: 'JF', color: '#3b82f6' },
                     mediaTitle: 'Euphoria', mediaType: 'tv', externalId: '85552', externalSource: 'tmdb',
                   },
                   {
-                    user1: { displayName: 'Jeeppler', username: 'Jeeppler', dnaLabel: 'Crime Obsessive', rating: 5, initials: 'J', color: '#6366f1' },
-                    user2: { displayName: 'Punkin Pie', username: 'punkinpie123', dnaLabel: 'Light & Breezy Fan', rating: 1, initials: 'PP', color: '#f43f5e' },
+                    user1: { displayName: 'Jeeppler', username: 'Jeeppler', dnaLabel: 'Crime Obsessive', rating: 5, initials: 'J', color: '#a855f7' },
+                    user2: { displayName: 'Punkin Pie', username: 'punkinpie123', dnaLabel: 'Light & Breezy Fan', rating: 1, initials: 'PP', color: '#3b82f6' },
                     mediaTitle: 'Breaking Bad', mediaType: 'tv', externalId: '1396', externalSource: 'tmdb',
                   },
                   {
-                    user1: { displayName: 'Heidi', username: 'HeidiIsConsumed', dnaLabel: 'Genre Adventurer', rating: 5, initials: 'H', color: '#8b5cf6' },
-                    user2: { displayName: 'Ambiannie', username: 'Ambiannie', dnaLabel: 'Emotional Sleuth', rating: 2, initials: 'A', color: '#f59e0b' },
+                    user1: { displayName: 'Heidi', username: 'HeidiIsConsumed', dnaLabel: 'Genre Adventurer', rating: 5, initials: 'H', color: '#a855f7' },
+                    user2: { displayName: 'Ambiannie', username: 'Ambiannie', dnaLabel: 'Emotional Sleuth', rating: 2, initials: 'A', color: '#3b82f6' },
                     mediaTitle: 'The Office', mediaType: 'tv', externalId: '2316', externalSource: 'tmdb',
                   },
                 ];

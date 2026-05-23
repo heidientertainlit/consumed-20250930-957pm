@@ -63,9 +63,9 @@ function Waveform() {
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
         <linearGradient id="clash-wave" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#f59e0b" />
-          <stop offset="50%" stopColor="#a855f7" />
-          <stop offset="100%" stopColor="#7c3aed" />
+          <stop offset="0%" stopColor="#3b82f6" />
+          <stop offset="50%" stopColor="#7c3aed" />
+          <stop offset="100%" stopColor="#a855f7" />
         </linearGradient>
       </defs>
       <path
