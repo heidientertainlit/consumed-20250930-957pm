@@ -1,9 +1,11 @@
-import { useState } from "react";
-import { Zap, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Zap, Check, X } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export interface ClashUser {
   displayName: string;
   username: string;
+  userId: string;
   dnaLabel: string;
   rating: number;
   initials: string;
@@ -18,14 +20,9 @@ interface DnaClashFeedCardProps {
   mediaType?: string;
   externalId?: string;
   externalSource?: string;
-}
-
-function FilledStars({ rating, color }: { rating: number; color: string }) {
-  return (
-    <span style={{ color, fontSize: 15, letterSpacing: 1 }}>
-      {"★".repeat(rating)}{"☆".repeat(5 - rating)}
-    </span>
-  );
+  currentUserId?: string;
+  session?: any;
+  onOptOut?: () => void;
 }
 
 function Avatar({ user }: { user: ClashUser }) {
@@ -81,12 +78,92 @@ function Waveform() {
   );
 }
 
+async function sendNotification(
+  userId: string,
+  message: string,
+  triggeredBy: string | undefined,
+  session: any
+) {
+  try {
+    await supabase.from('notifications').insert({
+      user_id: userId,
+      type: 'dna_clash',
+      message,
+      triggered_by_user_id: triggeredBy || null,
+      read: false,
+    });
+  } catch (e) {
+    console.error('[clash notify error]', e);
+  }
+}
+
 export default function DnaClashFeedCard({
   user1,
   user2,
   mediaTitle,
+  currentUserId,
+  session,
+  onOptOut,
 }: DnaClashFeedCardProps) {
   const [voted, setVoted] = useState<string | null>(null);
+  const [optingOut, setOptingOut] = useState(false);
+  const [optedOut, setOptedOut] = useState(false);
+  const [showOptOutConfirm, setShowOptOutConfirm] = useState(false);
+
+  const clashKey = `clash_notified_${user1.username}_${user2.username}_${mediaTitle}`;
+  const isInClash = currentUserId && (currentUserId === user1.userId || currentUserId === user2.userId);
+
+  // Send "you're featured" notification once per clash per session
+  useEffect(() => {
+    if (!isInClash || !currentUserId || !session) return;
+    if (sessionStorage.getItem(clashKey)) return;
+    sessionStorage.setItem(clashKey, '1');
+    sendNotification(
+      currentUserId,
+      `You're featured in a DNA Clash on "${mediaTitle}" — people are voting now!`,
+      undefined,
+      session
+    );
+  }, [isInClash, currentUserId]);
+
+  const handleVote = async (username: string) => {
+    if (voted) return;
+    setVoted(username);
+    // Notify both featured users
+    const votedFor = username === user1.username ? user1 : user2;
+    const votedAgainst = username === user1.username ? user2 : user1;
+    await Promise.all([
+      sendNotification(
+        votedFor.userId,
+        `Someone agreed with your take on "${mediaTitle}" in a DNA Clash!`,
+        currentUserId,
+        session
+      ),
+      sendNotification(
+        votedAgainst.userId,
+        `Someone sided with ${votedFor.displayName} over you on "${mediaTitle}" in a DNA Clash.`,
+        currentUserId,
+        session
+      ),
+    ]);
+  };
+
+  const handleOptOut = async () => {
+    if (!currentUserId) return;
+    setOptingOut(true);
+    try {
+      await supabase.from('users').update({ clash_opt_out: true }).eq('id', currentUserId);
+      setOptedOut(true);
+      setShowOptOutConfirm(false);
+      onOptOut?.();
+    } catch (e) {
+      console.error('[clash opt-out error]', e);
+    } finally {
+      setOptingOut(false);
+    }
+  };
+
+  if (optedOut) return null;
 
   const v1 = voted === user1.username ? user1.votes + 1 : user1.votes;
   const v2 = voted === user2.username ? user2.votes + 1 : user2.votes;
@@ -100,17 +177,49 @@ export default function DnaClashFeedCard({
       style={{ background: "linear-gradient(135deg, #1e0a3c 0%, #2d1465 45%, #3b1a78 100%)" }}
     >
       <div className="p-4 flex flex-col gap-3">
-        {/* Label */}
-        <div className="flex items-center gap-1.5">
-          <Zap size={11} className="text-purple-300 shrink-0" fill="currentColor" />
-          <span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">DNA Clash</span>
+        {/* Label row + opt-out button */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Zap size={11} className="text-purple-300 shrink-0" fill="currentColor" />
+            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">DNA Clash</span>
+          </div>
+          {isInClash && !showOptOutConfirm && (
+            <button
+              onClick={() => setShowOptOutConfirm(true)}
+              className="text-[10px] text-white/30 hover:text-white/60 transition-colors"
+            >
+              Opt out
+            </button>
+          )}
         </div>
+
+        {/* Opt-out confirmation */}
+        {showOptOutConfirm && (
+          <div className="flex items-center justify-between rounded-xl px-3 py-2.5 gap-2" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}>
+            <span className="text-white/70 text-[11px] leading-snug">Remove yourself from DNA Clash cards?</span>
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={handleOptOut}
+                disabled={optingOut}
+                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white"
+                style={{ background: '#a855f7' }}
+              >
+                {optingOut ? '…' : 'Yes'}
+              </button>
+              <button
+                onClick={() => setShowOptOutConfirm(false)}
+                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white/60"
+                style={{ background: 'rgba(255,255,255,0.08)' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Headline + media title */}
         <div className="-mt-1">
-          <p className="text-white font-extrabold text-[18px] leading-tight">
-            Completely different takes.
-          </p>
+          <p className="text-white font-extrabold text-[18px] leading-tight">Completely different takes.</p>
           <p className="text-white/60 text-[14px] font-semibold mt-0.5">on {mediaTitle}</p>
         </div>
 
@@ -127,14 +236,14 @@ export default function DnaClashFeedCard({
             <p className="text-white/50 text-[11px] font-semibold text-center uppercase tracking-widest">Which side are you on?</p>
             <div className="flex gap-2">
               <button
-                onClick={() => setVoted(user1.username)}
+                onClick={() => handleVote(user1.username)}
                 className="flex-1 py-2 rounded-xl text-[12px] font-semibold transition-all border"
                 style={{ background: `${user1.color}22`, borderColor: `${user1.color}55`, color: user1.color }}
               >
                 {user1.displayName}'s side
               </button>
               <button
-                onClick={() => setVoted(user2.username)}
+                onClick={() => handleVote(user2.username)}
                 className="flex-1 py-2 rounded-xl text-[12px] font-semibold transition-all border"
                 style={{ background: `${user2.color}22`, borderColor: `${user2.color}55`, color: user2.color }}
               >
@@ -144,24 +253,18 @@ export default function DnaClashFeedCard({
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {/* Result bars */}
-            <div className="flex flex-col gap-1.5">
-              {[{ u: user1, pct: pct1, v: v1 }, { u: user2, pct: pct2, v: v2 }].map(({ u, pct, v }) => (
-                <div key={u.username} className="flex items-center gap-2">
-                  <span className="text-[10px] font-semibold w-[72px] truncate" style={{ color: u.color }}>
-                    {voted === u.username && <Check size={9} className="inline mr-0.5" />}
-                    {u.displayName}
-                  </span>
-                  <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${pct}%`, background: u.color }}
-                    />
-                  </div>
-                  <span className="text-[11px] font-bold w-8 text-right" style={{ color: u.color }}>{pct}%</span>
+            {[{ u: user1, pct: pct1, v: v1 }, { u: user2, pct: pct2, v: v2 }].map(({ u, pct }) => (
+              <div key={u.username} className="flex items-center gap-2">
+                <span className="text-[10px] font-semibold w-[72px] truncate" style={{ color: u.color }}>
+                  {voted === u.username && <Check size={9} className="inline mr-0.5" />}
+                  {u.displayName}
+                </span>
+                <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: u.color }} />
                 </div>
-              ))}
-            </div>
+                <span className="text-[11px] font-bold w-8 text-right" style={{ color: u.color }}>{pct}%</span>
+              </div>
+            ))}
             <p className="text-white/35 text-[10px] text-center">{total} votes</p>
           </div>
         )}
