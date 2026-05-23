@@ -1128,8 +1128,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   // Only use external API rating (TMDB/Google Books/etc.) as baseline.
   // Fall back to community rating only when we have 5+ in-app ratings — a
   // sample of 1-2 people would produce misleading "rare rave / overrated" labels.
+  // get-media-details already converts /10 → /5, so use externalRating directly.
   const baselineRating = externalRating
-    ? externalRating / 2
+    ? externalRating
     : (ratingCount >= 5 ? communityRating : null);
   const baselineLabel = 'avg';
 
@@ -2557,7 +2558,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   const spIsActionFirst = isRatingType && spIsOtherUser && !ratingSubmitted && !!session?.access_token;
 
   const spRatingDiffLine = (rating: number, extraClass = '') => {
-    const ref = externalRating !== null ? externalRating / 2 : (ratingCount >= 5 ? communityRating : null);
+    const ref = externalRating !== null ? externalRating : (ratingCount >= 5 ? communityRating : null);
     if (ref === null) return null;
     const diff = rating - ref;
     const abs = Math.abs(diff);
