@@ -199,7 +199,7 @@ export default function DnaClashFeedCard({
             <p className="text-white font-extrabold text-[18px] leading-tight">
               Completely different takes.
             </p>
-            <p className="text-white/40 text-[11px] mt-0.5">on {mediaTitle}</p>
+            <p className="text-white/60 text-[14px] font-semibold mt-0.5">on {mediaTitle}</p>
           </div>
 
           {/* Avatars + waveform — centred */}
