@@ -3813,6 +3813,7 @@ export default function Feed() {
         if (p.type === 'thought' || p.post_type === 'thought') return true;
         if (p.type === 'hot_take' || p.post_type === 'hot_take') return true;
         if (p.type === 'question' || p.post_type === 'question') return true;
+        if (p.type === 'dna_compare' || p.post_type === 'dna_compare') return true;
         const content = (p.content || '').trim();
         if (p.rating && p.rating > 0) return true;
         if (content.length > 20 && !isAutoGen(content)) return true;
@@ -4428,6 +4429,60 @@ export default function Feed() {
             media_title: isStart ? "Pick a show, pick a friend" : "Binge Battle",
           }}
         />
+      );
+    }
+
+    // DNA Compare posts — render comparison result card
+    if (item?.type === 'dna_compare') {
+      let cmp: any = {};
+      try { cmp = JSON.parse(item.content || '{}'); } catch {}
+      const poster = item.user;
+      const posterName = (poster?.display_name || poster?.user_name || 'Someone') as string;
+      const posterInitials = posterName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+      const matchScore = cmp.match_score || 0;
+      const friendName = (cmp.friend_name || 'a friend') as string;
+      const friendFirst = friendName.split(' ')[0];
+      const posterFirst = posterName.split(' ')[0];
+      const sharedGenres: string[] = cmp.shared_genres || [];
+      const compatLine: string = cmp.compatibility_line || '';
+      const yourLabel: string = cmp.your_dna_label || '';
+      const friendLabel: string = cmp.friend_dna_label || '';
+      return (
+        <div key={item.id} className="mx-3 mb-3 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #2d1b69 100%)', border: '1px solid rgba(168,85,247,0.2)' }}>
+          <div className="flex items-center gap-2 px-4 pt-3 pb-2">
+            <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0">{posterInitials}</div>
+            <p className="text-white/70 text-[12px]"><span className="text-white font-medium">{posterName}</span> compared their DNA</p>
+            <div className="ml-auto">
+              <span className="text-purple-400 text-[9px] uppercase tracking-widest font-semibold">Compare DNA</span>
+            </div>
+          </div>
+          <div className="px-4 pb-4 flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <p className="font-extrabold" style={{ fontSize: 34, color: '#c084fc' }}>{matchScore}%</p>
+              <p className="text-white/60 text-[13px] leading-snug">match with<br /><span className="text-white font-semibold">{friendName}</span></p>
+            </div>
+            {compatLine ? <p className="text-white/60 text-[12px] italic">"{compatLine}"</p> : null}
+            {(yourLabel || friendLabel) ? (
+              <div className="flex gap-2">
+                {yourLabel ? <div className="flex-1 px-2 py-1.5 rounded-xl text-center" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' }}>
+                  <p className="text-white/40 text-[9px] uppercase tracking-widest">{posterFirst}</p>
+                  <p className="text-indigo-300 font-semibold text-[10px] leading-tight">{yourLabel}</p>
+                </div> : null}
+                {friendLabel ? <div className="flex-1 px-2 py-1.5 rounded-xl text-center" style={{ background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)' }}>
+                  <p className="text-white/40 text-[9px] uppercase tracking-widest">{friendFirst}</p>
+                  <p className="text-purple-300 font-semibold text-[10px] leading-tight">{friendLabel}</p>
+                </div> : null}
+              </div>
+            ) : null}
+            {sharedGenres.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {sharedGenres.slice(0, 5).map((g: string) => (
+                  <span key={g} className="px-2.5 py-0.5 rounded-full text-[11px] font-medium text-purple-200" style={{ background: 'rgba(168,85,247,0.18)', border: '1px solid rgba(168,85,247,0.3)' }}>{g}</span>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
       );
     }
 
