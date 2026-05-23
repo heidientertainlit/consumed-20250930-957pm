@@ -4861,28 +4861,37 @@ export default function Feed() {
         const activeIdx = stackIndices[stackKey] || 0;
         const { _isPromoted: _p0, _promotedKey: _pk0, ...activePost } = buffer[activeIdx];
         output.push(
-          <div key={`ugc-stack-${k}`} className="mb-4">
-            {/* Stacked card deck — active card on top, 2 decorative edges below */}
-            <div>
-              <UGCGroupCard
-                post={activePost as any}
-                onLike={handleLike}
-                isLiked={likedPosts.has(activePost.id)}
-                session={session}
-                fetchComments={fetchComments}
-                currentUserId={currentAppUserId || undefined}
-                onDeletePost={handleDeletePost}
-                onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
-                forceNormal={true}
-              />
-              {/* Card 2 peek */}
-              {buffer.length >= 2 && (
-                <div className="h-3 -mt-1.5 mx-2.5 rounded-b-2xl bg-white border border-t-0 border-gray-200 shadow-sm" />
-              )}
-              {/* Card 3 peek */}
+          <div key={`ugc-stack-${k}`} className="mb-6 px-2">
+            {/* Stacked card deck — rotated cards behind give a real physical deck feel */}
+            <div className="relative py-2">
+              {/* Card 3 (deepest) — most rotated, peeking from behind */}
               {buffer.length >= 3 && (
-                <div className="h-2.5 -mt-1 mx-5 rounded-b-2xl bg-gray-100 border border-t-0 border-gray-200" />
+                <div
+                  className="absolute inset-0 rounded-2xl bg-gray-100 border border-gray-200 shadow-sm pointer-events-none"
+                  style={{ transform: 'rotate(-4deg) translate(-4px, 6px)', zIndex: 0 }}
+                />
               )}
+              {/* Card 2 (middle) */}
+              {buffer.length >= 2 && (
+                <div
+                  className="absolute inset-0 rounded-2xl bg-white border border-gray-200 shadow-md pointer-events-none"
+                  style={{ transform: 'rotate(-2deg) translate(-2px, 3px)', zIndex: 1 }}
+                />
+              )}
+              {/* Active card — front of the deck */}
+              <div className="relative" style={{ zIndex: 2 }}>
+                <UGCGroupCard
+                  post={activePost as any}
+                  onLike={handleLike}
+                  isLiked={likedPosts.has(activePost.id)}
+                  session={session}
+                  fetchComments={fetchComments}
+                  currentUserId={currentAppUserId || undefined}
+                  onDeletePost={handleDeletePost}
+                  onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+                  forceNormal={true}
+                />
+              </div>
             </div>
             {/* Dot nav */}
             <div className="flex justify-center items-center gap-1.5 mt-3">
