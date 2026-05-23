@@ -650,13 +650,21 @@ export default function Leaderboard() {
                 </div>
                 <div className="divide-y divide-gray-100">
                   {([
-                    { title: 'The Completionist',      data: leaderboardData?.categories?.total_consumption },
-                    { title: 'Called the Finale',      data: leaderboardData?.categories?.predictions },
-                    { title: 'Most Controversial Take',data: leaderboardData?.categories?.polls },
-                    { title: 'Film Buff',               data: leaderboardData?.categories?.movies },
-                    { title: 'Binge Champion',          data: leaderboardData?.categories?.tv },
-                    { title: 'Bookworm',                data: leaderboardData?.categories?.books },
-                    { title: 'Ear Worm',                data: leaderboardData?.categories?.music },
+                    { title: 'Most Unpopular Opinion',   data: undefined },
+                    { title: 'Most Controversial Take',  data: leaderboardData?.categories?.polls },
+                    { title: 'Boldest Caller',           data: leaderboardData?.categories?.predictions },
+                    { title: 'The Contrarian',           data: undefined },
+                    { title: 'Most Niche Taste',         data: undefined },
+                    { title: 'Most Mainstream',          data: undefined },
+                    { title: 'The Tastemaker',           data: undefined },
+                    { title: 'Hidden Gem Hunter',        data: undefined },
+                    { title: 'Most Agreed With',         data: undefined },
+                    { title: 'Most Divisive',            data: undefined },
+                    { title: 'The Trendsetter',          data: undefined },
+                    { title: 'Most Copied Watchlist',    data: undefined },
+                    { title: 'Most Unique DNA',          data: undefined },
+                    { title: 'The Connector',            data: undefined },
+                    { title: 'Cult Following',           data: undefined },
                   ] as { title: string; data: LeaderboardEntry[] | undefined }[]).map(({ title, data }, index) => {
                     const holder = data?.[0];
                     const isMe = holder?.user_id === currentUserId;

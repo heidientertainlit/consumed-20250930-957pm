@@ -515,7 +515,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             />
           </Link>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {totalPoints !== null && (
               <Link href="/points" className="flex items-center gap-1 bg-white/10 active:bg-white/20 rounded-full px-2.5 py-1 transition-colors">
                 <Star size={11} className="text-amber-400" fill="currentColor" />
@@ -523,7 +523,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                 <span className="text-white/60 text-[10px]">pts</span>
               </Link>
             )}
-            <Link href="/leaderboard" className="hover:opacity-70 transition-opacity mr-3" aria-label="Leaderboard">
+            <Link href="/leaderboard" className="hover:opacity-70 transition-opacity" aria-label="Leaderboard">
               <Trophy className="text-white/50" size={18} />
             </Link>
             <button
