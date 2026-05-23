@@ -8,7 +8,7 @@ import {
 
 export interface UGCPost {
   id: string;
-  type: 'ask_for_rec' | 'ask_for_recs' | 'poll' | 'predict' | 'rating' | 'review' | 'thought' | 'cast_approved' | 'rank' | 'finished' | 'general' | 'game_moment' | 'binge_battle' | 'hot_take' | 'question';
+  type: 'ask_for_rec' | 'ask_for_recs' | 'poll' | 'predict' | 'rating' | 'review' | 'thought' | 'cast_approved' | 'rank' | 'finished' | 'general' | 'game_moment' | 'binge_battle' | 'hot_take' | 'question' | 'dna_compare';
   user?: {
     id: string;
     username: string;

@@ -3832,6 +3832,7 @@ export default function Feed() {
         else if (p.type === 'rank' || p.type === 'shared_rank' || p.type === 'rank_share') postType = 'rank';
         else if (p.type === 'hot_take' || p.post_type === 'hot_take') postType = 'hot_take';
         else if (p.type === 'question' || p.post_type === 'question') postType = 'question';
+        else if (p.type === 'dna_compare' || p.post_type === 'dna_compare') postType = 'dna_compare';
         else if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) postType = 'finished';
         else if ((p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review' || p.type === 'rate_review' || p.post_type === 'rate_review') && content) postType = 'review';
         else if (p.type === 'thought' || p.post_type === 'thought') postType = 'thought';
