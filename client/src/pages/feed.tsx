@@ -1752,7 +1752,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       })}
                     </div>
                     {post.mediaTitle && (
-                      <div style={{ lineHeight: 1.1 }}>
+                      <div className="truncate min-w-0">
                         {post.externalId && post.externalSource
                           ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span></Link>
                           : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span>
@@ -1887,7 +1887,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                                 return <Star key={s} size={13} className="text-gray-200" />;
                               })}
                             </div>
-                            <div style={{ lineHeight: 1.1 }}>
+                            <div className="truncate min-w-0">
                               {post.externalId && post.externalSource
                                 ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer">{post.mediaTitle}{isSeries ? ' Series' : ''}</span></Link>
                                 : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400">{post.mediaTitle}{isSeries ? ' Series' : ''}</span>
