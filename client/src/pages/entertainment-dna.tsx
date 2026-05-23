@@ -437,7 +437,7 @@ export default function EntertainmentDNAPage() {
       >
         {/* Back Button */}
         <button
-          onClick={() => window.history.back()}
+          onClick={() => setLocation('/')}
           className="flex items-center gap-2 text-white/50 hover:text-white/80 mb-6 transition-colors"
         >
           <ArrowLeft size={18} />
