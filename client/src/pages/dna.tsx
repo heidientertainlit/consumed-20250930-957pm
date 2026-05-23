@@ -25,6 +25,8 @@ export default function DnaPage() {
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
   const [shareSheetTitle, setShareSheetTitle] = useState("Your Entertainment DNA");
+  const [isPostingToFeed, setIsPostingToFeed] = useState(false);
+  const [postedToFeed, setPostedToFeed] = useState(false);
   const { session, user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -309,6 +311,41 @@ export default function DnaPage() {
     } catch (error) {
       navigator.clipboard.writeText(`I have a ${comparisonResult.match_score}% entertainment DNA match with ${selectedFriend?.user_name}!`);
       toast({ title: "Copied!", description: "Share text copied to clipboard" });
+    }
+  };
+
+  const handlePostToFeed = async () => {
+    if (!comparisonResult || !selectedFriendId || !user?.id) return;
+    setIsPostingToFeed(true);
+    try {
+      const content = {
+        friend_id: selectedFriendId,
+        friend_name: comparisonResult.friend_name || selectedFriend?.user_name || 'Friend',
+        match_score: comparisonResult.match_score,
+        shared_genres: comparisonResult.shared_genres || [],
+        shared_titles: comparisonResult.shared_titles || [],
+        compatibility_line: comparisonResult.insights?.compatibilityLine || comparisonResult.compatibility_line || '',
+      };
+      const { data: post } = await supabase
+        .from('social_posts')
+        .insert({ user_id: user.id, post_type: 'dna_compare', content: JSON.stringify(content) })
+        .select('id')
+        .single();
+      await supabase.from('notifications').insert({
+        user_id: selectedFriendId,
+        type: 'dna_compare',
+        post_id: post?.id || null,
+        triggered_by_user_id: user.id,
+        message: `${user.user_metadata?.display_name || user.email?.split('@')[0] || 'Someone'} compared DNA with you and shared it to the feed`,
+        read: false,
+      });
+      setPostedToFeed(true);
+      toast({ title: "Shared to feed!", description: "Your DNA comparison is now on the feed." });
+    } catch (err) {
+      console.error('Post to feed failed:', err);
+      toast({ title: "Error", description: "Could not post to feed", variant: "destructive" });
+    } finally {
+      setIsPostingToFeed(false);
     }
   };
 
@@ -812,6 +849,21 @@ export default function DnaPage() {
                             >
                               <Share2 size={12} className="mr-1" />
                               Share Match
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handlePostToFeed}
+                              disabled={isPostingToFeed || postedToFeed}
+                              className="border-purple-200 text-purple-600 text-xs"
+                            >
+                              {postedToFeed ? (
+                                <><Check size={12} className="mr-1" /> Posted</>
+                              ) : isPostingToFeed ? (
+                                <><Loader2 size={12} className="mr-1 animate-spin" /> Posting…</>
+                              ) : (
+                                <>Post to feed</>
+                              )}
                             </Button>
                           </div>
                         </div>
