@@ -30,7 +30,7 @@ import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 
-import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap } from "lucide-react";
+import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronRight, ChevronDown, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -1782,28 +1782,36 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {/* Other raters */}
                 {relatedRatings.length > 0 && (
                   <div className="mt-2 border-t border-gray-100 pt-2">
-                    <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-300 mb-1.5">Also rated</p>
-                    <div className="flex flex-col gap-1.5">
-                      {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
-                        <div key={r.userId} className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-500 truncate">{r.displayName || r.userName}</span>
-                          </div>
-                          <div className="flex items-center gap-0.5 flex-shrink-0">
-                            {[1,2,3,4,5].map(s => {
-                              if (s <= Math.floor(r.rating)) return <Star key={s} size={11} className="text-yellow-400 fill-yellow-400" />;
-                              if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative w-3 h-3"><Star size={11} className="absolute text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={11} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                              return <Star key={s} size={11} className="text-gray-200" />;
-                            })}
-                          </div>
+                    {!showAllRelated ? (
+                      <button onClick={() => setShowAllRelated(true)} className="flex items-center gap-2 w-full">
+                        <div className="flex -space-x-1.5">
+                          {relatedRatings.slice(0, 3).map((r, i) => {
+                            const colors = ['bg-purple-500','bg-pink-500','bg-blue-500','bg-indigo-500','bg-teal-500'];
+                            const initials = (r.displayName || r.userName || '?').split(' ').map((w: string) => w[0]).join('').slice(0,2).toUpperCase();
+                            return <div key={r.userId} className={`w-6 h-6 rounded-full ${colors[i % colors.length]} flex items-center justify-center text-white text-[9px] font-bold ring-2 ring-white`}>{initials}</div>;
+                          })}
+                          {relatedRatings.length > 3 && <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-[9px] font-bold ring-2 ring-white">+{relatedRatings.length - 3}</div>}
                         </div>
-                      ))}
-                      {relatedRatings.length > 2 && (
-                        <button onClick={() => setShowAllRelated(v => !v)} className="text-[9px] text-violet-400 font-medium text-left pt-0.5">
-                          {showAllRelated ? 'Show less' : `+ ${relatedRatings.length - 2} more`}
-                        </button>
-                      )}
-                    </div>
+                        <span className="text-[12px] text-gray-400">{relatedRatings.length} more rating{relatedRatings.length !== 1 ? 's' : ''}</span>
+                        <ChevronDown size={13} className="text-gray-300 ml-auto" />
+                      </button>
+                    ) : (
+                      <div className="flex flex-col gap-1.5">
+                        {relatedRatings.map(r => (
+                          <div key={r.userId} className="flex items-center justify-between">
+                            <span className="text-sm text-gray-500 truncate">{r.displayName || r.userName}</span>
+                            <div className="flex items-center gap-0.5 flex-shrink-0">
+                              {[1,2,3,4,5].map(s => {
+                                if (s <= Math.floor(r.rating)) return <Star key={s} size={11} className="text-yellow-400 fill-yellow-400" />;
+                                if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative w-3 h-3"><Star size={11} className="absolute text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={11} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                                return <Star key={s} size={11} className="text-gray-200" />;
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={() => setShowAllRelated(false)} className="text-[9px] text-violet-400 font-medium text-left pt-0.5">Show less</button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1952,28 +1960,42 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           )}
 
-          {/* Other raters — visually secondary: small avatars, muted text */}
+          {/* Other raters — visually secondary: collapsed avatar tease */}
           {(relatedRatings.length > 0 || (ratingSubmitted && ratingValue > 0 && isOtherUser)) && (
             <div className="mt-2 border-t border-gray-100 pt-2">
-              <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-300 mb-1.5">Also rated</p>
-              <div className="flex flex-col gap-1.5">
-                {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
-                  <div key={r.userId} className="flex items-center justify-end gap-2">
-                    <span className="text-sm text-gray-500">{r.displayName || r.userName}</span>
-                    <div className="flex items-center gap-0.5 flex-shrink-0">
-                      {[1,2,3,4,5].map(s => {
-                        if (s <= Math.floor(r.rating)) return <Star key={s} size={11} className="text-yellow-400 fill-yellow-400" />;
-                        if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative"><Star size={11} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={11} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                        return <Star key={s} size={11} className="text-gray-200" />;
+              <>
+              {relatedRatings.length > 0 && (
+                !showAllRelated ? (
+                  <button onClick={() => setShowAllRelated(true)} className="flex items-center gap-2 w-full mb-1.5">
+                    <div className="flex -space-x-1.5">
+                      {relatedRatings.slice(0, 3).map((r, i) => {
+                        const colors = ['bg-purple-500','bg-pink-500','bg-blue-500','bg-indigo-500','bg-teal-500'];
+                        const initials = (r.displayName || r.userName || '?').split(' ').map((w: string) => w[0]).join('').slice(0,2).toUpperCase();
+                        return <div key={r.userId} className={`w-6 h-6 rounded-full ${colors[i % colors.length]} flex items-center justify-center text-white text-[9px] font-bold ring-2 ring-white`}>{initials}</div>;
                       })}
+                      {relatedRatings.length > 3 && <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-[9px] font-bold ring-2 ring-white">+{relatedRatings.length - 3}</div>}
                     </div>
-                  </div>
-                ))}
-                {relatedRatings.length > 2 && (
-                  <button onClick={() => setShowAllRelated(v => !v)} className="text-[9px] text-violet-400 font-medium text-left">
-                    {showAllRelated ? 'Show less' : `+ ${relatedRatings.length - 2} more`}
+                    <span className="text-[12px] text-gray-400">{relatedRatings.length} more rating{relatedRatings.length !== 1 ? 's' : ''}</span>
+                    <ChevronDown size={13} className="text-gray-300 ml-auto" />
                   </button>
-                )}
+                ) : (
+                  <div className="flex flex-col gap-1.5 mb-1.5">
+                    {relatedRatings.map(r => (
+                      <div key={r.userId} className="flex items-center justify-end gap-2">
+                        <span className="text-sm text-gray-500">{r.displayName || r.userName}</span>
+                        <div className="flex items-center gap-0.5 flex-shrink-0">
+                          {[1,2,3,4,5].map(s => {
+                            if (s <= Math.floor(r.rating)) return <Star key={s} size={11} className="text-yellow-400 fill-yellow-400" />;
+                            if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative"><Star size={11} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={11} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                            return <Star key={s} size={11} className="text-gray-200" />;
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                    <button onClick={() => setShowAllRelated(false)} className="text-[9px] text-violet-400 font-medium text-left">Show less</button>
+                  </div>
+                )
+              )}
                 {ratingSubmitted && ratingValue > 0 && isOtherUser && (
                   <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-50">
                     <span className="text-sm text-gray-500">
@@ -1989,7 +2011,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     )}
                   </div>
                 )}
-              </div>
+              </>
             </div>
           )}
           <div className="mt-3 pt-3 border-t border-gray-50">{actionBar}</div>
