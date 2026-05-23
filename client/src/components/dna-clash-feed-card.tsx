@@ -55,10 +55,10 @@ function Avatar({ user, size = 50 }: { user: ClashUser; size?: number }) {
 
 function Waveform() {
   return (
-    <svg width="52" height="44" viewBox="0 0 52 44" fill="none" className="shrink-0">
+    <svg width="90" height="48" viewBox="0 0 90 48" fill="none" className="shrink-0">
       <defs>
         <filter id="clash-glow">
-          <feGaussianBlur stdDeviation="1.4" result="blur" />
+          <feGaussianBlur stdDeviation="1.6" result="blur" />
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
         <linearGradient id="clash-wave" x1="0" y1="0" x2="1" y2="0">
@@ -68,9 +68,9 @@ function Waveform() {
         </linearGradient>
       </defs>
       <path
-        d="M0,22 L4,22 L6,6 L8,38 L10,12 L12,32 L16,22 L19,2 L21,42 L23,14 L26,22 L28,4 L30,40 L32,16 L36,22 L39,8 L41,36 L43,18 L46,26 L48,22 L52,22"
+        d="M0,24 L8,24 L11,6 L14,42 L17,10 L20,38 L25,24 L30,2 L33,46 L36,12 L40,24 L43,4 L46,44 L49,14 L54,24 L58,8 L61,40 L64,16 L69,28 L73,24 L82,24 L90,24"
         stroke="url(#clash-wave)"
-        strokeWidth="2.2"
+        strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"
         filter="url(#clash-glow)"
