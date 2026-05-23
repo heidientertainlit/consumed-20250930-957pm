@@ -38,8 +38,25 @@ interface ComparisonResult {
 }
 
 interface DnaCompareFeedCardProps {
-  featured: CompareUser;
-  overlaps: OverlapUser[];
+  featured?: CompareUser;
+  overlaps?: OverlapUser[];
+}
+
+const AVATAR_COLORS = ['#6366f1', '#a855f7', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#f97316'];
+
+function calcOverlapPct(a: string[], b: string[]): number {
+  const setA = new Set(a.map(g => g.toLowerCase()));
+  const setB = new Set(b.map(g => g.toLowerCase()));
+  const intersection = [...setA].filter(g => setB.has(g)).length;
+  const union = new Set([...setA, ...setB]).size;
+  return union === 0 ? 0 : Math.round((intersection / union) * 100);
+}
+
+function buildTagline(pct: number, firstName: string): string {
+  if (pct >= 70) return `You and ${firstName} are practically entertainment twins.`;
+  if (pct >= 50) return `You and ${firstName} share a deep love for the same content.`;
+  if (pct >= 30) return `Plenty of overlap — great source of recommendations.`;
+  return `Different tastes that make for great conversations.`;
 }
 
 /* ── helpers ────────────────────────────────────────── */
@@ -456,10 +473,87 @@ function CompareSheet({
 }
 
 /* ── Main card ──────────────────────────────────────── */
-export default function DnaCompareFeedCard({ featured, overlaps }: DnaCompareFeedCardProps) {
+export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: overlapsProp }: DnaCompareFeedCardProps) {
   const [, setLocation] = useLocation();
   const { session, user } = useAuth();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [dynFeatured, setDynFeatured] = useState<CompareUser | null>(null);
+  const [dynOverlaps, setDynOverlaps] = useState<OverlapUser[]>([]);
+  const [loadingPersonal, setLoadingPersonal] = useState(true);
+
+  useEffect(() => {
+    if (!session?.access_token || !user?.id) { setLoadingPersonal(false); return; }
+    const headers = { Authorization: `Bearer ${session.access_token}`, apikey: ANON_KEY, "Content-Type": "application/json" };
+
+    async function fetchPersonalized() {
+      try {
+        // 1. Fetch my DNA profile + friends list in parallel
+        const [myDnaRes, fsRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=eq.${user!.id}&select=favorite_genres,label`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/friendships?or=(user_id.eq.${user!.id},friend_id.eq.${user!.id})&status=eq.accepted&select=user_id,friend_id`, { headers }),
+        ]);
+        const [myDna] = await myDnaRes.json();
+        const friendships = await fsRes.json();
+        if (!myDna?.favorite_genres?.length || !Array.isArray(friendships) || friendships.length === 0) return;
+
+        const myGenres: string[] = myDna.favorite_genres;
+        const friendIds = [...new Set(
+          friendships.map((f: any) => f.user_id === user!.id ? f.friend_id : f.user_id)
+        )].filter((id: string) => id !== user!.id) as string[];
+        if (friendIds.length === 0) return;
+
+        // 2. Fetch friends' DNA profiles + display names in parallel
+        const [friendDnaRes, friendUsersRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=in.(${friendIds.join(',')})&select=user_id,favorite_genres,label`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/users?id=in.(${friendIds.join(',')})&select=id,display_name,user_name`, { headers }),
+        ]);
+        const friendDnas = await friendDnaRes.json();
+        const friendUsers = await friendUsersRes.json();
+        if (!Array.isArray(friendDnas) || friendDnas.length === 0) return;
+
+        // 3. Score each friend by genre overlap, sort descending
+        const scored = friendDnas
+          .map((fd: any, i: number) => {
+            const genres: string[] = Array.isArray(fd.favorite_genres) ? fd.favorite_genres : [];
+            const pct = calcOverlapPct(myGenres, genres);
+            const info = Array.isArray(friendUsers) ? friendUsers.find((u: any) => u.id === fd.user_id) : null;
+            const displayName = info?.display_name || info?.user_name || 'Friend';
+            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length] };
+          })
+          .sort((a: any, b: any) => b.pct - a.pct);
+
+        if (scored.length === 0) return;
+        const [top, ...rest] = scored;
+        const firstName = top.displayName.split(' ')[0];
+
+        setDynFeatured({
+          displayName: top.displayName,
+          initials: initials(top.displayName),
+          color: top.color,
+          pct: top.pct,
+          tagline: buildTagline(top.pct, firstName),
+        });
+        setDynOverlaps(rest.slice(0, 3).map((r: any) => ({
+          displayName: r.displayName,
+          initials: initials(r.displayName),
+          color: r.color,
+          pct: r.pct,
+        })));
+      } catch {
+        // silent — fall through to prop defaults
+      } finally {
+        setLoadingPersonal(false);
+      }
+    }
+    fetchPersonalized();
+  }, [session?.access_token, user?.id]);
+
+  const featured = dynFeatured ?? featuredProp ?? { displayName: 'Hillary Hess', initials: 'HH', color: '#6366f1', pct: 42, tagline: 'You both love epic adventures and genre-spanning stories.' };
+  const overlaps = dynOverlaps.length > 0 ? dynOverlaps : (overlapsProp ?? [
+    { displayName: 'Jeeppler', initials: 'J', color: '#a855f7', pct: 38 },
+    { displayName: 'Jordan F.', initials: 'JF', color: '#ec4899', pct: 31 },
+    { displayName: 'Ambiannie', initials: 'A', color: '#f59e0b', pct: 24 },
+  ]);
 
   return (
     <>
