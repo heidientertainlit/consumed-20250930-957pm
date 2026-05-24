@@ -437,7 +437,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
         </div>
       </div>
 
-      <div ref={scrollRef} onScroll={handleScroll} style={{ height: containerHeight ? `${containerHeight}px` : undefined }} className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1 transition-[height] duration-300">
+      <div ref={scrollRef} onScroll={handleScroll} style={{ height: containerHeight ? `${containerHeight}px` : undefined }} className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory -mx-1 px-1 transition-[height] duration-300">
         {filteredData.map((poll) => {
           const voted = votedPolls[poll.id];
           const selected = selectedOption[poll.id];

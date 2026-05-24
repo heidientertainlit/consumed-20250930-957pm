@@ -800,7 +800,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
           ref={scrollRef}
           onScroll={handleScroll}
           style={{ height: containerHeight ? `${containerHeight}px` : undefined }}
-          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1 items-start transition-[height] duration-300"
+          className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory -mx-1 px-1 items-start transition-[height] duration-300"
         >
           {filteredData.map((item, idx) => {
             const answered = answeredQuestions[item.id];
