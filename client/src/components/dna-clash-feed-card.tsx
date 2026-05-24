@@ -35,8 +35,8 @@ interface DnaClashFeedCardProps {
 // ─── Two-colored waveform ─────────────────────────────────────────────────────
 function Waveform() {
   return (
-    <div className="flex-1 flex items-center justify-center min-w-0">
-      <svg width="100%" height="52" viewBox="0 0 80 52" fill="none" preserveAspectRatio="none">
+    <div className="flex-1 flex items-start justify-center min-w-0">
+      <svg width="100%" height="40" viewBox="0 0 80 40" fill="none" preserveAspectRatio="none">
         <defs>
           <linearGradient id="wave-left" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#a855f7" />
@@ -49,14 +49,14 @@ function Waveform() {
         </defs>
         {/* Left half — purple */}
         <path
-          d="M0,26 L5,26 L8,10 L11,42 L14,14 L17,38 L20,26 L23,8 L26,44 L29,18 L32,26 L35,26"
+          d="M0,20 L5,20 L8,6 L11,34 L14,8 L17,32 L20,20 L23,4 L26,36 L29,14 L32,20 L35,20"
           stroke="url(#wave-left)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
         />
         {/* VS label */}
-        <text x="40" y="30" textAnchor="middle" fontSize="9" fontWeight="800" fill="#9ca3af" letterSpacing="0.5">VS</text>
+        <text x="40" y="24" textAnchor="middle" fontSize="9" fontWeight="800" fill="#9ca3af" letterSpacing="0.5">VS</text>
         {/* Right half — pink */}
         <path
-          d="M45,26 L48,26 L51,12 L54,40 L57,16 L60,36 L63,26 L66,6 L69,46 L72,20 L75,26 L80,26"
+          d="M45,20 L48,20 L51,8 L54,34 L57,10 L60,32 L63,20 L66,4 L69,38 L72,14 L75,20 L80,20"
           stroke="url(#wave-right)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
         />
       </svg>
