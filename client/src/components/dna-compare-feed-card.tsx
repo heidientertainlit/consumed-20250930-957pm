@@ -565,75 +565,54 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           <span className="text-[11px] font-bold text-purple-500 uppercase tracking-widest">Compare DNA</span>
         </div>
 
-        {/* Main content */}
-        <div className="px-4 pb-4 flex flex-col gap-4">
-          {/* Left + right columns */}
-          <div className="flex gap-3">
-            {/* Left: avatars + score + tagline */}
-            <div className="flex-1 min-w-0 flex flex-col gap-2">
-              <div className="flex items-center gap-0">
-                <div
-                  className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500"
-                  style={{ width: 40, height: 40, fontSize: 13 }}
-                >
-                  Me
-                </div>
-                <svg width="44" height="38" viewBox="0 0 44 38" fill="none" className="shrink-0">
-                  <defs>
-                    <linearGradient id="cmp-wave-card" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#a855f7" />
-                      <stop offset="100%" stopColor="#818cf8" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d="M0,19 Q4,8 8,19 Q12,30 16,19 Q20,8 22,19 Q24,30 28,19 Q32,8 36,19 Q40,30 44,19"
-                    stroke="url(#cmp-wave-card)"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                </svg>
-                <div
-                  className="rounded-full shrink-0 flex items-center justify-center font-bold text-white"
-                  style={{ width: 40, height: 40, background: featured.color, fontSize: 13 }}
-                >
-                  {featured.initials}
-                </div>
-              </div>
-              <div>
-                <p className="text-gray-900 font-extrabold leading-tight" style={{ fontSize: 18 }}>
-                  <span style={{ color: "#a855f7" }}>{featured.pct}%</span> aligned with
-                </p>
-                <p className="text-gray-900 font-extrabold leading-tight" style={{ fontSize: 18 }}>
-                  {featured.displayName}
-                </p>
-              </div>
-              <p className="text-gray-400 text-[11px] leading-snug">{featured.tagline}</p>
+        {/* Main content — centered hero layout */}
+        <div className="px-4 pb-5 flex flex-col items-center gap-3">
+          {/* Avatars + waveform */}
+          <div className="flex items-center">
+            <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 44, height: 44, fontSize: 14 }}>
+              Me
             </div>
-
-            {/* Right: overlap list */}
-            <div className="flex flex-col gap-1 pt-1 min-w-[110px]">
-              <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-0.5">Top overlaps</span>
-              {overlaps.map((u) => (
-                <div key={u.displayName} className="flex items-center gap-2">
-                  <div
-                    className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]"
-                    style={{ width: 22, height: 22, background: u.color }}
-                  >
-                    {u.initials}
-                  </div>
-                  <span className="text-gray-700 text-[11px] truncate flex-1">{u.displayName}</span>
-                  <span className="text-gray-400 text-[11px] font-semibold shrink-0">{u.pct}%</span>
-                </div>
-              ))}
-              <button
-                onClick={() => setLocation("/friends")}
-                className="flex items-center gap-0.5 text-purple-500 text-[11px] font-semibold mt-1 hover:text-purple-600 transition-colors"
-              >
-                See all <ArrowRight size={11} />
-              </button>
+            <svg width="56" height="38" viewBox="0 0 44 38" fill="none" className="shrink-0">
+              <defs>
+                <linearGradient id="cmp-wave-card" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#a855f7" />
+                  <stop offset="100%" stopColor="#818cf8" />
+                </linearGradient>
+              </defs>
+              <path d="M0,19 Q4,8 8,19 Q12,30 16,19 Q20,8 22,19 Q24,30 28,19 Q32,8 36,19 Q40,30 44,19"
+                stroke="url(#cmp-wave-card)" strokeWidth="2" strokeLinecap="round" fill="none" />
+            </svg>
+            <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white" style={{ width: 44, height: 44, background: featured.color, fontSize: 14 }}>
+              {featured.initials}
             </div>
           </div>
+
+          {/* Hero percentage */}
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="font-extrabold leading-none" style={{ fontSize: 52, color: '#a855f7' }}>
+              {featured.pct}%
+            </span>
+            <p className="text-gray-800 font-bold text-[16px] text-center">aligned with {featured.displayName}</p>
+            <p className="text-gray-400 text-[12px] text-center italic mt-0.5">{featured.tagline}</p>
+          </div>
+
+          {/* Top overlaps row */}
+          {overlaps.length > 0 && (
+            <div className="flex items-center gap-3 pt-1">
+              <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Top overlaps</span>
+              {overlaps.map((u) => (
+                <div key={u.displayName} className="flex items-center gap-1.5">
+                  <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]" style={{ width: 20, height: 20, background: u.color }}>
+                    {u.initials}
+                  </div>
+                  <span className="text-gray-500 text-[11px]">{u.pct}%</span>
+                </div>
+              ))}
+              <button onClick={() => setLocation("/friends")} className="text-purple-500 text-[11px] font-semibold hover:text-purple-600 transition-colors">
+                See all
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Action bar */}
@@ -685,45 +664,45 @@ export function DnaComparePostCard({ item }: { item: any }) {
           <span className="text-gray-400 text-[11px] ml-1">· {posterName}</span>
         </div>
 
-        {/* Main two-column content */}
-        <div className="px-4 pb-4 flex gap-3">
-          {/* Left — avatars + score + quote */}
-          <div className="flex-1 min-w-0 flex flex-col gap-2">
-            <div className="flex items-center gap-0">
-              <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 38, height: 38, fontSize: 12 }}>
-                {posterInitials}
-              </div>
-              <svg width="40" height="34" viewBox="0 0 44 38" fill="none" className="shrink-0">
-                <defs>
-                  <linearGradient id={`wave-post-${item.id}`} x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#a855f7" />
-                    <stop offset="100%" stopColor="#818cf8" />
-                  </linearGradient>
-                </defs>
-                <path d="M0,19 Q4,8 8,19 Q12,30 16,19 Q20,8 22,19 Q24,30 28,19 Q32,8 36,19 Q40,30 44,19"
-                  stroke={`url(#wave-post-${item.id})`} strokeWidth="2" strokeLinecap="round" fill="none" />
-              </svg>
-              <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-purple-500" style={{ width: 38, height: 38, fontSize: 12 }}>
-                {friendInitials}
-              </div>
+        {/* Main content — centered hero layout */}
+        <div className="px-4 pb-5 flex flex-col items-center gap-3">
+          {/* Avatars + waveform */}
+          <div className="flex items-center">
+            <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 44, height: 44, fontSize: 14 }}>
+              {posterInitials}
             </div>
-            <div>
-              <p className="text-gray-900 font-extrabold leading-tight" style={{ fontSize: 17 }}>
-                <span style={{ color: '#a855f7' }}>{matchScore}%</span> aligned with
-              </p>
-              <p className="text-gray-900 font-extrabold leading-tight" style={{ fontSize: 17 }}>{friendName}</p>
+            <svg width="56" height="38" viewBox="0 0 44 38" fill="none" className="shrink-0">
+              <defs>
+                <linearGradient id={`wave-post-${item.id}`} x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#a855f7" />
+                  <stop offset="100%" stopColor="#818cf8" />
+                </linearGradient>
+              </defs>
+              <path d="M0,19 Q4,8 8,19 Q12,30 16,19 Q20,8 22,19 Q24,30 28,19 Q32,8 36,19 Q40,30 44,19"
+                stroke={`url(#wave-post-${item.id})`} strokeWidth="2" strokeLinecap="round" fill="none" />
+            </svg>
+            <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-purple-500" style={{ width: 44, height: 44, fontSize: 14 }}>
+              {friendInitials}
             </div>
-            {compatLine ? <p className="text-gray-400 text-[11px] leading-snug italic">"{compatLine}"</p> : null}
           </div>
 
-          {/* Right — shared genres */}
+          {/* Hero percentage */}
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="font-extrabold leading-none" style={{ fontSize: 52, color: '#a855f7' }}>
+              {matchScore}%
+            </span>
+            <p className="text-gray-800 font-bold text-[16px] text-center">aligned with {friendName}</p>
+            {compatLine ? <p className="text-gray-400 text-[12px] text-center italic mt-0.5">"{compatLine}"</p> : null}
+          </div>
+
+          {/* Shared genres row */}
           {sharedGenres.length > 0 && (
-            <div className="flex flex-col gap-1 pt-1 min-w-[100px]">
-              <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-0.5">You both love</span>
+            <div className="flex items-center gap-2 flex-wrap justify-center">
+              <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">You both love</span>
               {sharedGenres.slice(0, 3).map((g: string) => (
-                <div key={g} className="flex items-center gap-1.5">
+                <div key={g} className="flex items-center gap-1">
                   <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
-                  <span className="text-gray-600 text-[11px] truncate">{g}</span>
+                  <span className="text-gray-500 text-[11px]">{g}</span>
                 </div>
               ))}
             </div>
