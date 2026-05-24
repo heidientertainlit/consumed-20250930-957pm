@@ -35,7 +35,7 @@ interface DnaClashFeedCardProps {
 // ─── Two-colored waveform ─────────────────────────────────────────────────────
 function Waveform() {
   return (
-    <div className="flex-1 flex items-start justify-center min-w-0">
+    <div className="flex-1 flex items-start justify-center min-w-0 -mx-5">
       <svg width="100%" height="40" viewBox="0 0 80 40" fill="none" preserveAspectRatio="none">
         <defs>
           <linearGradient id="wave-left" x1="0" y1="0" x2="1" y2="0">
