@@ -226,7 +226,7 @@ function ScoreShareCard({
 
                 {/* Question text */}
                 {questions?.[0]?.title && (
-                  <p className="text-[23px] font-black italic leading-tight mb-5 text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  <p className="text-[23px] font-black leading-tight mb-5 text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
                     {truncateWords(questions[0].title, 120)}
                   </p>
                 )}

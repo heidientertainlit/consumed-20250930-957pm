@@ -4866,10 +4866,10 @@ export default function Feed() {
             {/* Stacked card deck — swipeable, rotated cards behind for physical deck feel */}
             <div
               className="relative py-3 px-1"
-              onTouchStart={(e) => {
+              onTouchStartCapture={(e) => {
                 swipeTouchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
               }}
-              onTouchEnd={(e) => {
+              onTouchEndCapture={(e) => {
                 const dx = e.changedTouches[0].clientX - swipeTouchStart.current.x;
                 const dy = e.changedTouches[0].clientY - swipeTouchStart.current.y;
                 if (Math.abs(dx) < 40 || Math.abs(dy) > Math.abs(dx)) return;
@@ -4887,7 +4887,7 @@ export default function Feed() {
                   style={{
                     transform: 'rotate(-5deg) translate(-5px, 8px)',
                     zIndex: 0,
-                    background: '#e0ddf5',
+                    background: '#ebebeb',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.10)',
                   }}
                 />
@@ -4899,7 +4899,7 @@ export default function Feed() {
                   style={{
                     transform: 'rotate(-2.5deg) translate(-2px, 4px)',
                     zIndex: 1,
-                    background: '#f0eefb',
+                    background: '#f5f5f5',
                     boxShadow: '0 4px 14px rgba(0,0,0,0.10)',
                   }}
                 />
