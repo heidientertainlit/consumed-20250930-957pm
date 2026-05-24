@@ -4568,16 +4568,9 @@ export default function Feed() {
           </div>
 
           {/* Action bar */}
-          <div className="border-t border-gray-100 flex flex-col divide-y divide-gray-100">
+          <div className="border-t border-gray-100">
             <button
-              onClick={() => setLocation('/entertainment-dna')}
-              className="w-full flex items-center justify-between px-4 py-2.5 text-[12px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              <span>What's your entertainment DNA?</span>
-              <span className="text-purple-500 text-[11px] font-bold shrink-0 ml-2">Take the quiz →</span>
-            </button>
-            <button
-              onClick={() => setLocation('/me')}
+              onClick={() => setLocation('/dna?compare=1')}
               className="w-full flex items-center justify-between px-4 py-2.5 text-[12px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <span className="flex items-center gap-2">
