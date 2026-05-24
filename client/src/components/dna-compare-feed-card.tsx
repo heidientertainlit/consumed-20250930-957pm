@@ -480,6 +480,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
   const [dynFeatured, setDynFeatured] = useState<CompareUser | null>(null);
   const [dynOverlaps, setDynOverlaps] = useState<OverlapUser[]>([]);
   const [loadingPersonal, setLoadingPersonal] = useState(true);
+  const [noFriends, setNoFriends] = useState(false);
 
   useEffect(() => {
     if (!session?.access_token || !user?.id) { setLoadingPersonal(false); return; }
@@ -494,13 +495,13 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         ]);
         const [myDna] = await myDnaRes.json();
         const friendships = await fsRes.json();
-        if (!myDna?.favorite_genres?.length || !Array.isArray(friendships) || friendships.length === 0) return;
+        if (!myDna?.favorite_genres?.length || !Array.isArray(friendships) || friendships.length === 0) { setNoFriends(true); return; }
 
         const myGenres: string[] = myDna.favorite_genres;
         const friendIds = [...new Set(
           friendships.map((f: any) => f.user_id === user!.id ? f.friend_id : f.user_id)
         )].filter((id: string) => id !== user!.id) as string[];
-        if (friendIds.length === 0) return;
+        if (friendIds.length === 0) { setNoFriends(true); return; }
 
         // 2. Fetch friends' DNA profiles + display names in parallel
         const [friendDnaRes, friendUsersRes] = await Promise.all([
@@ -567,21 +568,36 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
         {/* Main content — two column layout */}
         <div className="px-4 pb-5 flex gap-8 items-start">
-          {/* Left — hero number */}
+          {/* Left — hero number or no-friends fallback */}
           <div className="flex flex-col gap-1 flex-1 min-w-0">
-            {/* Big number */}
-            <span className="font-extrabold leading-none block" style={{ fontSize: 52, color: '#a855f7' }}>
-              {featured.pct}%
-            </span>
-            <p className="text-gray-400 text-[12px] font-medium mt-0.5">You're aligned with</p>
-            <p className="text-gray-700 text-[14px] font-semibold -mt-0.5">{featured.displayName}</p>
-            {/* Button */}
-            <button
-              onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
-              className="mt-4 py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
-            >
-              Compare yours
-            </button>
+            {noFriends && !featuredProp ? (
+              <>
+                <p className="text-gray-500 text-[14px] font-medium leading-snug">No friends to compare with yet.</p>
+                <p className="text-gray-400 text-[12px] mt-0.5">Add or invite friends to see how your DNA stacks up.</p>
+                <button
+                  onClick={() => setLocation("/friends")}
+                  className="mt-4 py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
+                >
+                  Add or invite friends
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Big number */}
+                <span className="font-extrabold leading-none block" style={{ fontSize: 52, color: '#a855f7' }}>
+                  {featured.pct}%
+                </span>
+                <p className="text-gray-400 text-[12px] font-medium mt-0.5">You're aligned with</p>
+                <p className="text-gray-700 text-[14px] font-semibold -mt-0.5">{featured.displayName}</p>
+                {/* Button */}
+                <button
+                  onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
+                  className="mt-4 py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
+                >
+                  Compare with another friend
+                </button>
+              </>
+            )}
           </div>
 
           {/* Right — other overlaps stacked */}
