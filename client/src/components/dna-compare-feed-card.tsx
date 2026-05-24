@@ -640,7 +640,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         <div className="border-t border-gray-100 px-4 py-3">
           <button
             onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-semibold text-purple-600 border border-purple-200 bg-purple-50 hover:bg-purple-100 transition-all active:scale-[0.97]"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-full text-[13px] font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
           >
             <Users size={14} />
             Compare your DNA with a friend
@@ -735,7 +735,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
         <div className="border-t border-gray-100 px-4 py-3">
           <button
             onClick={() => session ? setSheetOpen(true) : undefined}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-semibold text-purple-600 border border-purple-200 bg-purple-50 hover:bg-purple-100 transition-all active:scale-[0.97]"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-full text-[13px] font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
           >
             <Users size={14} />
             Compare your DNA with a friend
