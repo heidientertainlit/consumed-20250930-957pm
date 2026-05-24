@@ -567,44 +567,18 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
         {/* Main content — two column layout */}
         <div className="px-4 pb-5 flex gap-4 items-start">
-          {/* Left — avatars + hero number */}
-          <div className="flex flex-col gap-2 flex-1 min-w-0">
-            {/* Avatars + waveform */}
-            <div className="flex items-end gap-0">
-              <div className="flex flex-col items-center gap-1">
-                <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 38, height: 38, fontSize: 12 }}>
-                  Me
-                </div>
-                <span className="text-gray-400 text-[10px]">You</span>
-              </div>
-              <svg width="44" height="34" viewBox="0 0 44 38" fill="none" className="shrink-0 mb-3">
-                <defs>
-                  <linearGradient id="cmp-wave-card" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#a855f7" />
-                    <stop offset="100%" stopColor="#818cf8" />
-                  </linearGradient>
-                </defs>
-                <path d="M0,19 Q4,8 8,19 Q12,30 16,19 Q20,8 22,19 Q24,30 28,19 Q32,8 36,19 Q40,30 44,19"
-                  stroke="url(#cmp-wave-card)" strokeWidth="2" strokeLinecap="round" fill="none" />
-              </svg>
-              <div className="flex flex-col items-center gap-1">
-                <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white" style={{ width: 38, height: 38, background: featured.color, fontSize: 12 }}>
-                  {featured.initials}
-                </div>
-                <span className="text-gray-400 text-[10px]">{featured.displayName.split(' ')[0]}</span>
-              </div>
-            </div>
+          {/* Left — hero number */}
+          <div className="flex flex-col gap-1 flex-1 min-w-0">
+            <p className="text-gray-400 text-[12px] font-medium">You're aligned with</p>
+            <p className="text-gray-900 font-bold text-[15px] -mt-0.5">{featured.displayName}</p>
             {/* Big number */}
-            <div>
-              <span className="font-extrabold leading-none block" style={{ fontSize: 52, color: '#a855f7' }}>
-                {featured.pct}%
-              </span>
-              <p className="text-gray-700 font-semibold text-[13px] mt-0.5">aligned with {featured.displayName.split(' ')[0]}</p>
-            </div>
+            <span className="font-extrabold leading-none block mt-1" style={{ fontSize: 52, color: '#a855f7' }}>
+              {featured.pct}%
+            </span>
             {/* Button */}
             <button
               onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
-              className="mt-1 py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
+              className="mt-3 py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
             >
               Compare yours
             </button>
