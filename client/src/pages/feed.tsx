@@ -4503,7 +4503,7 @@ export default function Feed() {
       const topSharedTitle = sharedTitles[0] || null;
       const compatLine: string = cmp.compatibility_line || '';
       return (
-        <div key={item.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
+        <div key={item.id} className="bg-purple-50 rounded-2xl border border-purple-100 shadow-sm overflow-hidden mb-4">
           {/* Header */}
           <div className="flex items-center gap-1.5 px-4 pt-3 pb-2">
             <Dna size={11} className="text-purple-500 shrink-0" />

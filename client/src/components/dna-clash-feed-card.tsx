@@ -264,7 +264,7 @@ export default function DnaClashFeedCard({
   const winnerName = pct1 >= pct2 ? user1.displayName.split(' ')[0] : user2.displayName.split(' ')[0];
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
+    <div className="bg-purple-50 rounded-2xl border border-purple-100 shadow-sm overflow-hidden mb-4">
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
