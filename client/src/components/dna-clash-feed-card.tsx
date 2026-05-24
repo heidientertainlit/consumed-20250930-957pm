@@ -51,11 +51,7 @@ function UserCard({
     <button
       onClick={onVote}
       disabled={hasVoted}
-      className="flex-1 flex flex-col gap-2.5 p-3 rounded-xl text-left transition-all active:scale-[0.97]"
-      style={{
-        background: isMyVote ? 'rgba(139,92,246,0.08)' : '#f9f9fb',
-        border: `1.5px solid ${isMyVote ? 'rgba(139,92,246,0.30)' : '#ebebf0'}`,
-      }}
+      className="flex-1 flex flex-col gap-2.5 p-2 text-left transition-all active:scale-[0.97]"
     >
       {/* Name row */}
       <div className="flex items-center gap-1.5">
