@@ -568,11 +568,14 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         {/* Main content — centered hero layout */}
         <div className="px-4 pb-5 flex flex-col items-center gap-3">
           {/* Avatars + waveform */}
-          <div className="flex items-center">
-            <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 44, height: 44, fontSize: 14 }}>
-              Me
+          <div className="flex items-end gap-0">
+            <div className="flex flex-col items-center gap-1">
+              <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 44, height: 44, fontSize: 14 }}>
+                Me
+              </div>
+              <span className="text-gray-500 text-[11px] font-medium">You</span>
             </div>
-            <svg width="56" height="38" viewBox="0 0 44 38" fill="none" className="shrink-0">
+            <svg width="56" height="38" viewBox="0 0 44 38" fill="none" className="shrink-0 mb-3">
               <defs>
                 <linearGradient id="cmp-wave-card" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="#a855f7" />
@@ -582,8 +585,11 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
               <path d="M0,19 Q4,8 8,19 Q12,30 16,19 Q20,8 22,19 Q24,30 28,19 Q32,8 36,19 Q40,30 44,19"
                 stroke="url(#cmp-wave-card)" strokeWidth="2" strokeLinecap="round" fill="none" />
             </svg>
-            <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white" style={{ width: 44, height: 44, background: featured.color, fontSize: 14 }}>
-              {featured.initials}
+            <div className="flex flex-col items-center gap-1">
+              <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white" style={{ width: 44, height: 44, background: featured.color, fontSize: 14 }}>
+                {featured.initials}
+              </div>
+              <span className="text-gray-500 text-[11px] font-medium">{featured.displayName.split(' ')[0]}</span>
             </div>
           </div>
 
@@ -667,11 +673,14 @@ export function DnaComparePostCard({ item }: { item: any }) {
         {/* Main content — centered hero layout */}
         <div className="px-4 pb-5 flex flex-col items-center gap-3">
           {/* Avatars + waveform */}
-          <div className="flex items-center">
-            <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 44, height: 44, fontSize: 14 }}>
-              {posterInitials}
+          <div className="flex items-end gap-0">
+            <div className="flex flex-col items-center gap-1">
+              <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 44, height: 44, fontSize: 14 }}>
+                {posterInitials}
+              </div>
+              <span className="text-gray-500 text-[11px] font-medium">{posterName.split(' ')[0]}</span>
             </div>
-            <svg width="56" height="38" viewBox="0 0 44 38" fill="none" className="shrink-0">
+            <svg width="56" height="38" viewBox="0 0 44 38" fill="none" className="shrink-0 mb-3">
               <defs>
                 <linearGradient id={`wave-post-${item.id}`} x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="#a855f7" />
@@ -681,8 +690,11 @@ export function DnaComparePostCard({ item }: { item: any }) {
               <path d="M0,19 Q4,8 8,19 Q12,30 16,19 Q20,8 22,19 Q24,30 28,19 Q32,8 36,19 Q40,30 44,19"
                 stroke={`url(#wave-post-${item.id})`} strokeWidth="2" strokeLinecap="round" fill="none" />
             </svg>
-            <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-purple-500" style={{ width: 44, height: 44, fontSize: 14 }}>
-              {friendInitials}
+            <div className="flex flex-col items-center gap-1">
+              <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-purple-500" style={{ width: 44, height: 44, fontSize: 14 }}>
+                {friendInitials}
+              </div>
+              <span className="text-gray-500 text-[11px] font-medium">{friendName.split(' ')[0]}</span>
             </div>
           </div>
 
