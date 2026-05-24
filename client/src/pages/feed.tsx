@@ -3547,13 +3547,13 @@ function SwipeableCardStack({ posts, stackKey, activeIdx, onIndexChange, onLike,
       const dir = dx < 0 ? 1 : -1;
       onIndexChange(stackKey, Math.max(0, Math.min(posts.length - 1, activeIdx + dir)));
     };
-    el.addEventListener('touchstart', onStart, { passive: true });
-    el.addEventListener('touchmove', onMove, { passive: false });
-    el.addEventListener('touchend', onEnd, { passive: true });
+    el.addEventListener('touchstart', onStart, { passive: true, capture: true });
+    el.addEventListener('touchmove', onMove, { passive: false, capture: true });
+    el.addEventListener('touchend', onEnd, { passive: true, capture: true });
     return () => {
-      el.removeEventListener('touchstart', onStart);
-      el.removeEventListener('touchmove', onMove);
-      el.removeEventListener('touchend', onEnd);
+      el.removeEventListener('touchstart', onStart, { capture: true } as any);
+      el.removeEventListener('touchmove', onMove, { capture: true } as any);
+      el.removeEventListener('touchend', onEnd, { capture: true } as any);
     };
   }, [stackKey, posts.length, activeIdx, onIndexChange]);
 
@@ -4939,38 +4939,64 @@ export default function Feed() {
     const remaining = mixedFeedSlots.slice(19);
     if (remaining.length === 0) return null;
 
-    // Separate promoted UGC posts from game/feed items
-    const promoted = remaining.filter((item: any) => item?._isPromoted);
-    const nonPromoted = remaining.filter((item: any) => !item?._isPromoted);
-
-    // Split promoted posts into 3 stacks of up to 5 cards each, placed at top/middle/bottom
+    // Collect all promoted posts into up to 3 stacks of up to 5 cards each
     const MAX_PER_STACK = 5;
-    const rawStacks: any[][] = [[], [], []];
-    promoted.forEach((item: any, i: number) => {
-      const slot = i < MAX_PER_STACK ? 0 : i < MAX_PER_STACK * 2 ? 1 : 2;
-      if (rawStacks[slot].length < MAX_PER_STACK) rawStacks[slot].push(item);
-    });
-    const stacks = rawStacks.filter(s => s.length >= 2); // need at least 2 to be a stack
+    const promoted = remaining.filter((item: any) => item?._isPromoted);
+    const promotedSet = new Set(promoted.map((item: any) => item._promotedKey));
+    const rawStacks: any[][] = [];
+    for (let i = 0; i < promoted.length && rawStacks.length < 3; i += MAX_PER_STACK) {
+      const chunk = promoted.slice(i, i + MAX_PER_STACK);
+      if (chunk.length >= 2) rawStacks.push(chunk);
+    }
+
+    // If no valid stacks, render everything normally
+    if (rawStacks.length === 0) {
+      return <>{remaining.map((item: any, i: number) => renderFeedItem(item, `remaining-${i}`))}</>;
+    }
+
+    // Compute insertion indices: evenly spread stacks across the remaining array
+    const insertAt = rawStacks.map((_, si) =>
+      Math.floor(remaining.length * (si + 1) / (rawStacks.length + 1))
+    );
 
     const output: React.ReactNode[] = [];
+    let nextStackSlot = 0;
 
-    // Divide nonPromoted into (stacks.length + 1) segments, insert a stack between each
-    const seg = Math.ceil(nonPromoted.length / (stacks.length + 1));
-    let npIdx = 0;
+    remaining.forEach((item: any, i: number) => {
+      // Insert any stacks whose position we've reached
+      while (nextStackSlot < rawStacks.length && i >= insertAt[nextStackSlot]) {
+        const stackKey = `stack-fixed-${nextStackSlot}`;
+        output.push(
+          <SwipeableCardStack
+            key={stackKey}
+            posts={rawStacks[nextStackSlot]}
+            stackKey={stackKey}
+            activeIdx={stackIndices[stackKey] || 0}
+            onIndexChange={handleStackIndexChange}
+            onLike={handleLike}
+            likedPosts={likedPosts}
+            session={session}
+            fetchComments={fetchComments}
+            currentUserId={currentAppUserId || undefined}
+            onDeletePost={handleDeletePost}
+            onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+          />
+        );
+        nextStackSlot++;
+      }
+      // Render non-promoted items normally; skip individual promoted items (they're in stacks)
+      if (!promotedSet.has(item._promotedKey)) {
+        output.push(renderFeedItem(item, `remaining-${i}`));
+      }
+    });
 
-    stacks.forEach((stackPosts: any[], si: number) => {
-      // Emit nonPromoted segment before this stack
-      const segEnd = Math.min(npIdx + seg, nonPromoted.length);
-      nonPromoted.slice(npIdx, segEnd).forEach((item: any, i: number) => {
-        output.push(renderFeedItem(item, `np-${si}-${i}`));
-      });
-      npIdx = segEnd;
-
-      const stackKey = `stack-fixed-${si}`;
+    // Flush any stacks not yet inserted (edge case: short remaining array)
+    while (nextStackSlot < rawStacks.length) {
+      const stackKey = `stack-fixed-${nextStackSlot}`;
       output.push(
         <SwipeableCardStack
           key={stackKey}
-          posts={stackPosts}
+          posts={rawStacks[nextStackSlot]}
           stackKey={stackKey}
           activeIdx={stackIndices[stackKey] || 0}
           onIndexChange={handleStackIndexChange}
@@ -4983,18 +5009,7 @@ export default function Feed() {
           onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
         />
       );
-    });
-
-    // Emit remaining nonPromoted after last stack
-    nonPromoted.slice(npIdx).forEach((item: any, i: number) => {
-      output.push(renderFeedItem(item, `np-tail-${i}`));
-    });
-
-    // Any promoted posts that didn't make it into a stack render individually
-    if (stacks.length === 0) {
-      remaining.forEach((item: any, i: number) => {
-        output.push(renderFeedItem(item, `remaining-${i}`));
-      });
+      nextStackSlot++;
     }
 
     return <>{output}</>;
