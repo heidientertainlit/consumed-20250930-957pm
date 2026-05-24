@@ -596,6 +596,21 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                 >
                   Compare with a friend
                 </button>
+                <button
+                  onClick={() => {
+                    const text = `I'm ${featured.pct}% aligned with ${featured.displayName} on Consumed! Check your Entertainment DNA 🧬`;
+                    const url = import.meta.env.VITE_APP_URL || window.location.origin;
+                    if (navigator.share) {
+                      navigator.share({ title: 'My Entertainment DNA', text, url }).catch(() => {});
+                    } else {
+                      window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+                    }
+                  }}
+                  className="mt-2 flex items-center justify-center gap-1.5 text-gray-400 text-[12px] hover:text-gray-600 transition-colors"
+                >
+                  <Share2 size={12} />
+                  Share with a friend
+                </button>
               </>
             )}
           </div>
