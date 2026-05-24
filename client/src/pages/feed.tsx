@@ -4223,8 +4223,6 @@ export default function Feed() {
   const mixedFeedSlots = useMemo(() => {
     const out: any[] = [];
     let promotedIdx = 0;
-    let bingePromoCount = 0;
-
     // Flatten all carousel posts into a secondary UGC pool for organic interleaving.
     // These fill the "extra" UGC slots so the feed alternates:
     //   play → UGC,  play → UGC → UGC,  play → UGC,  play → UGC → UGC …
@@ -4264,15 +4262,6 @@ export default function Feed() {
       if (i % 2 === 1 && extraIdx < extraUGC.length) {
         out.push(wrapExtra(extraIdx));
         extraIdx++;
-      }
-      // Sprinkle 2 binge-battle promo cards across the feed (positions 5 and 11)
-      if ((i === 4 || i === 10) && bingePromoCount < 2) {
-        out.push({
-          type: 'binge_battle_promo',
-          id: `binge-promo-${bingePromoCount}`,
-          _variant: bingePromoCount === 0 ? 'start' : 'compete',
-        });
-        bingePromoCount++;
       }
     });
     // Append any leftover promoted ratings
@@ -4498,24 +4487,6 @@ export default function Feed() {
       );
     }
 
-    // Binge Battle promo card — synthetic CTA encouraging users to start a battle.
-    // Reuses BingeBattleFeedCard with synthetic content; two variants alternate.
-    if (item?.type === 'binge_battle_promo') {
-      const isStart = item._variant === 'start';
-      return (
-        <BingeBattleFeedCard
-          key={`${keyPrefix}-${item.id}`}
-          isPromo
-          post={{
-            id: item.id,
-            content: isStart
-              ? "Race a friend through a show. First to finish wins."
-              : "Think you binge faster? Challenge someone and prove it.",
-            media_title: isStart ? "Pick a show, pick a friend" : "Binge Battle",
-          }}
-        />
-      );
-    }
 
     // DNA Compare posts — rendered to match the DnaCompareFeedCard visual style
     if (item?.type === 'dna_compare') {
@@ -4532,95 +4503,89 @@ export default function Feed() {
       const topSharedTitle = sharedTitles[0] || null;
       const compatLine: string = cmp.compatibility_line || '';
       return (
-        <div key={item.id} className="mx-3 mb-3 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f0a2e 0%, #1a1050 45%, #1e1460 100%)' }}>
-          <div className="p-4 flex flex-col gap-4">
-            {/* Header — attribution */}
-            <div className="flex items-center gap-1">
-              <Dna size={11} className="text-indigo-300 shrink-0" />
-              <span className="text-indigo-300 text-[10px] font-semibold">{posterName} · compared DNA</span>
+        <div key={item.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
+          {/* Header */}
+          <div className="flex items-center gap-1.5 px-4 pt-3 pb-2">
+            <Dna size={11} className="text-purple-500 shrink-0" />
+            <span className="text-purple-500 text-[11px] font-bold uppercase tracking-widest">Compare DNA</span>
+            <span className="text-gray-400 text-[11px] ml-1">· {posterName}</span>
+          </div>
+
+          {/* Main two-column content */}
+          <div className="px-4 pb-4 flex gap-3">
+            {/* Left — avatars + score + quote */}
+            <div className="flex-1 min-w-0 flex flex-col gap-2">
+              <div className="flex items-center gap-0">
+                <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 38, height: 38, fontSize: 12 }}>
+                  {posterInitials}
+                </div>
+                <svg width="40" height="34" viewBox="0 0 44 38" fill="none" className="shrink-0">
+                  <defs>
+                    <linearGradient id={`wave-shared-${item.id}`} x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#a855f7" />
+                      <stop offset="100%" stopColor="#818cf8" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M0,19 Q4,8 8,19 Q12,30 16,19 Q20,8 22,19 Q24,30 28,19 Q32,8 36,19 Q40,30 44,19"
+                    stroke={`url(#wave-shared-${item.id})`} strokeWidth="2" strokeLinecap="round" fill="none" />
+                </svg>
+                <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-purple-500" style={{ width: 38, height: 38, fontSize: 12 }}>
+                  {friendInitials}
+                </div>
+              </div>
+              <div>
+                <p className="text-gray-900 font-extrabold leading-tight" style={{ fontSize: 17 }}>
+                  <span style={{ color: '#a855f7' }}>{matchScore}%</span> aligned with
+                </p>
+                <p className="text-gray-900 font-extrabold leading-tight" style={{ fontSize: 17 }}>{friendName}</p>
+              </div>
+              {compatLine ? <p className="text-gray-400 text-[11px] leading-snug italic">"{compatLine}"</p> : null}
             </div>
 
-            {/* Main two-column content */}
-            <div className="flex gap-3 -mt-1">
-              {/* Left — avatars + score + quote */}
-              <div className="flex-1 min-w-0 flex flex-col gap-2">
-                {/* Avatar row: poster bubble → waveform → friend bubble */}
-                <div className="flex items-center gap-0">
-                  <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 38, height: 38, fontSize: 12 }}>
-                    {posterInitials}
-                  </div>
-                  <svg width="40" height="34" viewBox="0 0 44 38" fill="none" className="shrink-0">
-                    <defs>
-                      <linearGradient id={`wave-shared-${item.id}`} x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#a855f7" />
-                        <stop offset="100%" stopColor="#818cf8" />
-                      </linearGradient>
-                    </defs>
-                    <path d="M0,19 Q4,8 8,19 Q12,30 16,19 Q20,8 22,19 Q24,30 28,19 Q32,8 36,19 Q40,30 44,19"
-                      stroke={`url(#wave-shared-${item.id})`} strokeWidth="2" strokeLinecap="round" fill="none" />
-                  </svg>
-                  <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-purple-500" style={{ width: 38, height: 38, fontSize: 12 }}>
-                    {friendInitials}
-                  </div>
-                </div>
-                {/* Score */}
-                <div>
-                  <p className="text-white font-extrabold leading-tight" style={{ fontSize: 17 }}>
-                    <span style={{ color: '#c084fc' }}>{matchScore}%</span> aligned with
-                  </p>
-                  <p className="text-white font-extrabold leading-tight" style={{ fontSize: 17 }}>{friendName}</p>
-                </div>
-                {/* Quote */}
-                {compatLine ? <p className="text-white/50 text-[11px] leading-snug italic">"{compatLine}"</p> : null}
-              </div>
-
-              {/* Right — shared genres + shared title */}
-              <div className="flex flex-col gap-2 pt-1 min-w-[100px]">
-                {sharedGenres.length > 0 && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest mb-0.5">You both love</span>
-                    {sharedGenres.slice(0, 2).map((g: string) => (
-                      <div key={g} className="flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
-                        <span className="text-white/70 text-[11px] truncate">{g}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {topSharedTitle && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest mb-0.5">Both loved</span>
-                    <div className="flex items-start gap-1.5">
-                      <Star size={9} className="text-yellow-400 shrink-0 mt-[2px]" />
-                      <span className="text-white/70 text-[11px] leading-tight">{topSharedTitle.title}</span>
+            {/* Right — shared genres + shared title */}
+            <div className="flex flex-col gap-2 pt-1 min-w-[100px]">
+              {sharedGenres.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-0.5">You both love</span>
+                  {sharedGenres.slice(0, 2).map((g: string) => (
+                    <div key={g} className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
+                      <span className="text-gray-600 text-[11px] truncate">{g}</span>
                     </div>
+                  ))}
+                </div>
+              )}
+              {topSharedTitle && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-0.5">Both loved</span>
+                  <div className="flex items-start gap-1.5">
+                    <Star size={9} className="text-yellow-400 shrink-0 mt-[2px]" />
+                    <span className="text-gray-600 text-[11px] leading-tight">{topSharedTitle.title}</span>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
+          </div>
 
-            {/* Action buttons */}
-            <div className="flex flex-col gap-2 mt-1">
-              <button
-                onClick={() => setLocation('/entertainment-dna')}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                <span className="text-white/70 text-[12px]">What's your entertainment DNA?</span>
-                <span className="text-purple-400 text-[11px] font-bold shrink-0 ml-2">Take the quiz →</span>
-              </button>
-              <button
-                onClick={() => setLocation('/me')}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                <span className="text-white/70 text-[12px] flex items-center gap-2">
-                  <Users size={13} className="text-white/40" />
-                  Compare your DNA with a friend
-                </span>
-                <ChevronRight size={14} className="text-white/40 shrink-0" />
-              </button>
-            </div>
+          {/* Action bar */}
+          <div className="border-t border-gray-100 flex flex-col divide-y divide-gray-100">
+            <button
+              onClick={() => setLocation('/entertainment-dna')}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-[12px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <span>What's your entertainment DNA?</span>
+              <span className="text-purple-500 text-[11px] font-bold shrink-0 ml-2">Take the quiz →</span>
+            </button>
+            <button
+              onClick={() => setLocation('/me')}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-[12px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <Users size={13} className="text-purple-400 shrink-0" />
+                Compare your DNA with a friend
+              </span>
+              <ChevronRight size={14} className="text-purple-400 shrink-0" />
+            </button>
           </div>
         </div>
       );
