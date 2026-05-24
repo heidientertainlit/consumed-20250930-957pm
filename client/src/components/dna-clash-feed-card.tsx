@@ -350,7 +350,7 @@ export default function DnaClashFeedCard({
           className={`flex items-center gap-1.5 transition-colors ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-gray-600'}`}
         >
           <MessageCircle size={15} fill={showComments ? 'currentColor' : 'none'} />
-          <span className="text-[12px] font-medium">{commentCount > 0 ? commentCount : 'Debate'}</span>
+          {commentCount > 0 && <span className="text-[12px] font-medium">{commentCount}</span>}
         </button>
         {voted && total > 0 && (
           <span className="text-[11px] font-semibold text-purple-500">
