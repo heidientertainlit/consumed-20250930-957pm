@@ -3511,6 +3511,96 @@ function CurrentlyConsumingFeedCard({
   );
 }
 
+function SwipeableCardStack({ posts, stackKey, activeIdx, onIndexChange, onLike, likedPosts, session, fetchComments, currentUserId, onDeletePost, onAddToList }: {
+  posts: any[];
+  stackKey: string;
+  activeIdx: number;
+  onIndexChange: (key: string, idx: number) => void;
+  onLike: (id: string) => void;
+  likedPosts: Set<string>;
+  session: any;
+  fetchComments: any;
+  currentUserId: string | undefined;
+  onDeletePost: (id: string) => void;
+  onAddToList: (media: any) => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const touchStart = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onStart = (e: TouchEvent) => {
+      touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    };
+    const onMove = (e: TouchEvent) => {
+      const dx = e.touches[0].clientX - touchStart.current.x;
+      const dy = e.touches[0].clientY - touchStart.current.y;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) {
+        e.preventDefault();
+      }
+    };
+    const onEnd = (e: TouchEvent) => {
+      const dx = e.changedTouches[0].clientX - touchStart.current.x;
+      const dy = e.changedTouches[0].clientY - touchStart.current.y;
+      if (Math.abs(dx) < 35 || Math.abs(dy) > Math.abs(dx)) return;
+      const dir = dx < 0 ? 1 : -1;
+      onIndexChange(stackKey, Math.max(0, Math.min(posts.length - 1, activeIdx + dir)));
+    };
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+    };
+  }, [stackKey, posts.length, activeIdx, onIndexChange]);
+
+  const { _isPromoted: _p, _promotedKey: _pk, ...activePost } = posts[activeIdx] || {};
+  const total = posts.length;
+
+  return (
+    <div className="mb-6 px-2">
+      <div ref={containerRef} className="relative py-3 px-1">
+        {total >= 3 && (
+          <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ transform: 'rotate(-5deg) translate(-5px, 8px)', zIndex: 0, background: '#e8e8e8', boxShadow: '0 4px 12px rgba(0,0,0,0.10)' }} />
+        )}
+        {total >= 2 && (
+          <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ transform: 'rotate(-2.5deg) translate(-2px, 4px)', zIndex: 1, background: '#f3f3f3', boxShadow: '0 4px 14px rgba(0,0,0,0.10)' }} />
+        )}
+        <div className="relative" style={{ zIndex: 2, boxShadow: '0 8px 28px rgba(0,0,0,0.14)', borderRadius: '1rem' }}>
+          <UGCGroupCard
+            post={activePost as any}
+            onLike={onLike}
+            isLiked={likedPosts.has(activePost?.id)}
+            session={session}
+            fetchComments={fetchComments}
+            currentUserId={currentUserId}
+            onDeletePost={onDeletePost}
+            onAddToList={onAddToList}
+            forceNormal={true}
+          />
+        </div>
+      </div>
+      <div className="flex flex-col items-center gap-1 mt-2">
+        <div className="flex items-center gap-1.5">
+          {posts.map((_: any, di: number) => (
+            <button
+              key={di}
+              onClick={() => onIndexChange(stackKey, di)}
+              className={`rounded-full transition-all duration-200 ${di === activeIdx ? 'w-4 h-1.5 bg-purple-500' : 'w-1.5 h-1.5 bg-gray-300'}`}
+            />
+          ))}
+        </div>
+        {activeIdx === 0 && total > 1 && (
+          <p className="text-[10px] text-gray-400 tracking-wide">swipe to see more</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Feed() {
   const [, setLocation] = useLocation();
   
@@ -4840,125 +4930,72 @@ export default function Feed() {
   // ───────────────────────────────────────────────────────────────────────────────────
   const renderRatingCarousel = (_carouselIndex: number) => null;
 
+  const handleStackIndexChange = useCallback((key: string, idx: number) => {
+    setStackIndices(prev => ({ ...prev, [key]: idx }));
+  }, []);
+
   const renderRemainingPosts = () => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
-    // Slots 0–18 are placed explicitly in JSX. Everything from 19 onwards flows here.
-    // If you add more explicit slots above, bump this number to match.
     const remaining = mixedFeedSlots.slice(19);
     if (remaining.length === 0) return null;
 
-    // Group consecutive _isPromoted (safe UGC) posts into batches of 3 → horizontal carousel.
-    // Game moments, predictions, polls, binge promos, cast_approved are never _isPromoted
-    // and always render individually — the data pipeline is completely untouched.
-    const output: React.ReactNode[] = [];
-    let buffer: any[] = [];
-    let groupKey = 0;
+    // Separate promoted UGC posts from game/feed items
+    const promoted = remaining.filter((item: any) => item?._isPromoted);
+    const nonPromoted = remaining.filter((item: any) => !item?._isPromoted);
 
-    const flushBuffer = () => {
-      if (buffer.length === 0) return;
-      if (buffer.length === 3) {
-        const k = groupKey++;
-        const stackKey = `stack-${k}`;
-        const activeIdx = stackIndices[stackKey] || 0;
-        const { _isPromoted: _p0, _promotedKey: _pk0, ...activePost } = buffer[activeIdx];
-        output.push(
-          <div key={`ugc-stack-${k}`} className="mb-6 px-2">
-            {/* Stacked card deck — swipeable, rotated cards behind for physical deck feel */}
-            <div
-              className="relative py-3 px-1"
-              onTouchStartCapture={(e) => {
-                swipeTouchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-              }}
-              onTouchEndCapture={(e) => {
-                const dx = e.changedTouches[0].clientX - swipeTouchStart.current.x;
-                const dy = e.changedTouches[0].clientY - swipeTouchStart.current.y;
-                if (Math.abs(dx) < 40 || Math.abs(dy) > Math.abs(dx)) return;
-                const dir = dx < 0 ? 1 : -1;
-                setStackIndices(prev => ({
-                  ...prev,
-                  [stackKey]: Math.max(0, Math.min(buffer.length - 1, (prev[stackKey] || 0) + dir))
-                }));
-              }}
-            >
-              {/* Card 3 (deepest) — most rotated */}
-              {buffer.length >= 3 && (
-                <div
-                  className="absolute inset-0 rounded-2xl pointer-events-none"
-                  style={{
-                    transform: 'rotate(-5deg) translate(-5px, 8px)',
-                    zIndex: 0,
-                    background: '#ebebeb',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.10)',
-                  }}
-                />
-              )}
-              {/* Card 2 (middle) */}
-              {buffer.length >= 2 && (
-                <div
-                  className="absolute inset-0 rounded-2xl pointer-events-none"
-                  style={{
-                    transform: 'rotate(-2.5deg) translate(-2px, 4px)',
-                    zIndex: 1,
-                    background: '#f5f5f5',
-                    boxShadow: '0 4px 14px rgba(0,0,0,0.10)',
-                  }}
-                />
-              )}
-              {/* Active card — front of the deck */}
-              <div
-                className="relative"
-                style={{ zIndex: 2, boxShadow: '0 8px 28px rgba(0,0,0,0.14)', borderRadius: '1rem' }}
-              >
-                <UGCGroupCard
-                  post={activePost as any}
-                  onLike={handleLike}
-                  isLiked={likedPosts.has(activePost.id)}
-                  session={session}
-                  fetchComments={fetchComments}
-                  currentUserId={currentAppUserId || undefined}
-                  onDeletePost={handleDeletePost}
-                  onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
-                  forceNormal={true}
-                />
-              </div>
-            </div>
-            {/* Dot nav + swipe hint */}
-            <div className="flex flex-col items-center gap-1 mt-2">
-              <div className="flex items-center gap-1.5">
-                {buffer.map((_: any, di: number) => (
-                  <button
-                    key={di}
-                    onClick={() => setStackIndices(prev => ({ ...prev, [stackKey]: di }))}
-                    className={`rounded-full transition-all duration-200 ${di === activeIdx ? 'w-4 h-1.5 bg-purple-500' : 'w-1.5 h-1.5 bg-gray-300'}`}
-                  />
-                ))}
-              </div>
-              {activeIdx === 0 && (
-                <p className="text-[10px] text-gray-400 tracking-wide">swipe to see more</p>
-              )}
-            </div>
-          </div>
-        );
-      } else {
-        // Fewer than 3 — render individually so no card gets orphaned in an ugly partial row
-        buffer.forEach((item: any, bi: number) => {
-          output.push(renderFeedItem(item, `remaining-solo-${groupKey}-${bi}`));
-        });
-        groupKey++;
-      }
-      buffer = [];
-    };
-
-    remaining.forEach((item: any, i: number) => {
-      if (item?._isPromoted) {
-        buffer.push(item);
-        if (buffer.length === 3) flushBuffer();
-      } else {
-        flushBuffer();
-        output.push(renderFeedItem(item, `remaining-${i}`));
-      }
+    // Split promoted posts into 3 stacks of up to 5 cards each, placed at top/middle/bottom
+    const MAX_PER_STACK = 5;
+    const rawStacks: any[][] = [[], [], []];
+    promoted.forEach((item: any, i: number) => {
+      const slot = i < MAX_PER_STACK ? 0 : i < MAX_PER_STACK * 2 ? 1 : 2;
+      if (rawStacks[slot].length < MAX_PER_STACK) rawStacks[slot].push(item);
     });
-    flushBuffer(); // flush any leftover
+    const stacks = rawStacks.filter(s => s.length >= 2); // need at least 2 to be a stack
+
+    const output: React.ReactNode[] = [];
+
+    // Divide nonPromoted into (stacks.length + 1) segments, insert a stack between each
+    const seg = Math.ceil(nonPromoted.length / (stacks.length + 1));
+    let npIdx = 0;
+
+    stacks.forEach((stackPosts: any[], si: number) => {
+      // Emit nonPromoted segment before this stack
+      const segEnd = Math.min(npIdx + seg, nonPromoted.length);
+      nonPromoted.slice(npIdx, segEnd).forEach((item: any, i: number) => {
+        output.push(renderFeedItem(item, `np-${si}-${i}`));
+      });
+      npIdx = segEnd;
+
+      const stackKey = `stack-fixed-${si}`;
+      output.push(
+        <SwipeableCardStack
+          key={stackKey}
+          posts={stackPosts}
+          stackKey={stackKey}
+          activeIdx={stackIndices[stackKey] || 0}
+          onIndexChange={handleStackIndexChange}
+          onLike={handleLike}
+          likedPosts={likedPosts}
+          session={session}
+          fetchComments={fetchComments}
+          currentUserId={currentAppUserId || undefined}
+          onDeletePost={handleDeletePost}
+          onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+        />
+      );
+    });
+
+    // Emit remaining nonPromoted after last stack
+    nonPromoted.slice(npIdx).forEach((item: any, i: number) => {
+      output.push(renderFeedItem(item, `np-tail-${i}`));
+    });
+
+    // Any promoted posts that didn't make it into a stack render individually
+    if (stacks.length === 0) {
+      remaining.forEach((item: any, i: number) => {
+        output.push(renderFeedItem(item, `remaining-${i}`));
+      });
+    }
 
     return <>{output}</>;
   };
