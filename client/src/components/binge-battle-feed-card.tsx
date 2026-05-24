@@ -19,14 +19,9 @@ interface BingeBattleFeedCardProps {
 }
 
 function parseContent(content: string, fallbackTitle?: string) {
-  // Expected format: "{winner} just beat {opponent} in a Binge Battle on {title}!"
   const match = content.match(/^(.+?) just beat (.+?) in a Binge Battle on (.+?)!?$/i);
   if (match) {
-    return {
-      winner: match[1].trim(),
-      opponent: match[2].trim(),
-      title: match[3].trim(),
-    };
+    return { winner: match[1].trim(), opponent: match[2].trim(), title: match[3].trim() };
   }
   return { winner: null, opponent: null, title: fallbackTitle || null };
 }
@@ -40,15 +35,13 @@ export default function BingeBattleFeedCard({ post, isOwn, isPromo, onDelete }: 
   const displayOpponent = opponent || "their opponent";
 
   return (
-    <div
-      className="relative rounded-2xl overflow-hidden mb-4 shadow-lg"
-      style={{ background: "linear-gradient(135deg, #3b0764 0%, #4c1d95 40%, #5b21b6 100%)" }}
-    >
-      {/* Delete button — top right, only for own post */}
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4 relative">
+
+      {/* Delete button */}
       {isOwn && onDelete && (
         <button
           onClick={() => onDelete(post.id)}
-          className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/40 hover:text-white/80 transition-colors"
+          className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
           aria-label="Delete post"
         >
           <Trash2 size={13} />
@@ -57,75 +50,72 @@ export default function BingeBattleFeedCard({ post, isOwn, isPromo, onDelete }: 
 
       <div className="flex items-stretch">
         {/* Main content */}
-        <div className="flex-1 p-4 pr-3 flex flex-col gap-2.5">
-          {/* Label */}
-          <div className="flex items-center gap-1.5">
-            <Zap size={11} className="text-yellow-400" fill="currentColor" />
-            <span className="text-[10px] font-bold text-yellow-400 uppercase tracking-widest">Binge Battle</span>
+        <div className="flex-1 flex flex-col">
+
+          {/* Header row */}
+          <div className="flex items-center gap-1.5 px-4 pt-3 pb-2">
+            <Zap size={11} className="text-amber-500 shrink-0" fill="currentColor" />
+            <span className="text-[11px] font-bold text-amber-500 uppercase tracking-widest">Binge Battle</span>
           </div>
 
-          {isPromo || !displayWinner ? (
-            /* Promo / CTA variant — no real winner */
-            <>
-              <div className="flex items-start gap-2">
-                <Swords size={20} className="text-yellow-400 shrink-0 mt-0.5" />
-                <span className="text-white font-extrabold text-[18px] leading-tight">
-                  {post.content || "Race a friend. First to finish wins."}
-                </span>
-              </div>
-              <button
-                onClick={() => setLocation("/play/binge-battle")}
-                className="mt-1 self-start px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-[12px] font-semibold flex items-center gap-1.5 transition-colors border border-white/20"
-              >
-                <Zap size={11} fill="currentColor" />
-                Start a Binge Battle
-              </button>
-            </>
-          ) : (
-            /* Real battle result — winner known */
-            <>
-              <div className="flex items-start gap-2">
-                <Trophy size={20} className="text-yellow-400 shrink-0 mt-0.5" />
-                <span className="text-white font-extrabold text-[18px] leading-tight">
-                  {displayWinner} Won the Binge Battle!
-                </span>
-              </div>
-              <p className="text-white/70 text-[12px] leading-snug">
-                <span className="text-white/90 font-semibold">{displayWinner}</span>
-                {" v. "}
-                <span className="text-white/90 font-semibold">{displayOpponent}</span>
-                {" competed in a "}
-                <span className="text-white/90 font-semibold">{displayTitle}</span>
-                {" binge battle and "}
-                <span className="text-white/90 font-semibold">{displayWinner}</span>
-                {" won. "}
-                <span className="text-yellow-400 font-bold">+100 pts</span>
-                {" to "}
-                <span className="text-white/90 font-semibold">{displayWinner}</span>
-                {"!"}
-              </p>
-              <button
-                onClick={() => setLocation("/play/binge-battle")}
-                className="mt-1 self-start px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-[12px] font-semibold flex items-center gap-1.5 transition-colors border border-white/20"
-              >
-                <Zap size={11} fill="currentColor" />
-                Start Your Own Binge Battle
-              </button>
-            </>
-          )}
+          {/* Content */}
+          <div className="px-4 pb-4 flex flex-col gap-2.5 flex-1">
+            {isPromo || !displayWinner ? (
+              <>
+                <div className="flex items-start gap-2">
+                  <Swords size={20} className="text-amber-500 shrink-0 mt-0.5" />
+                  <span className="text-gray-900 font-extrabold text-[18px] leading-tight">
+                    {post.content || "Race a friend. First to finish wins."}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setLocation("/play/binge-battle")}
+                  className="mt-1 self-start px-4 py-2 rounded-xl text-[12px] font-bold text-white flex items-center gap-1.5 transition-colors"
+                  style={{ background: '#f59e0b' }}
+                >
+                  <Zap size={11} fill="currentColor" />
+                  Start a Binge Battle
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="flex items-start gap-2">
+                  <Trophy size={20} className="text-amber-500 shrink-0 mt-0.5" />
+                  <span className="text-gray-900 font-extrabold text-[18px] leading-tight">
+                    {displayWinner} Won!
+                  </span>
+                </div>
+                <p className="text-gray-500 text-[13px] leading-snug">
+                  <span className="text-gray-800 font-semibold">{displayWinner}</span>
+                  {" beat "}
+                  <span className="text-gray-800 font-semibold">{displayOpponent}</span>
+                  {" in a "}
+                  <span className="text-gray-800 font-semibold">{displayTitle}</span>
+                  {" binge battle. "}
+                  <span className="text-amber-500 font-bold">+100 pts</span>
+                </p>
+                <button
+                  onClick={() => setLocation("/play/binge-battle")}
+                  className="mt-1 self-start px-4 py-2 rounded-xl text-[12px] font-bold text-white flex items-center gap-1.5 transition-colors"
+                  style={{ background: '#f59e0b' }}
+                >
+                  <Zap size={11} fill="currentColor" />
+                  Start Your Own
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Media cover — flush right edge */}
+        {/* Media cover — flush right, rounded on right side only */}
         {post.image_url && (
-          <div className="w-[72px] shrink-0 self-stretch">
+          <div className="w-[80px] shrink-0 self-stretch overflow-hidden" style={{ borderRadius: '0 16px 16px 0' }}>
             <img
               src={post.image_url}
               alt={displayTitle}
               className="w-full h-full object-cover"
-              style={{ minHeight: 130 }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).parentElement!.style.display = "none";
-              }}
+              style={{ minHeight: 140 }}
+              onError={e => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
             />
           </div>
         )}
