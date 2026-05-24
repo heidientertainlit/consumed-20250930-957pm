@@ -68,9 +68,10 @@ interface RankComment {
 interface RanksCarouselProps {
   expanded?: boolean;
   offset?: number;
+  rankIndex?: number; // fetch a single specific rank (0-based); if set, ignores offset batching
 }
 
-export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselProps) {
+export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: RanksCarouselProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -92,15 +93,17 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
   const [reportCommentTarget, setReportCommentTarget] = useState<{id: string; userId: string; userName: string} | null>(null);
 
   const { data: ranks, isLoading } = useQuery({
-    queryKey: ['consumed-ranks-carousel', offset],
+    queryKey: ['consumed-ranks-carousel', rankIndex ?? `offset-${offset}`],
     queryFn: async () => {
+      const from = rankIndex !== undefined ? rankIndex : offset * 3;
+      const to   = rankIndex !== undefined ? rankIndex : (offset * 3) + 2;
       const { data: ranksData, error: ranksError } = await supabase
         .from('ranks')
         .select('*')
         .eq('origin_type', 'consumed')
         .eq('visibility', 'public')
         .order('created_at', { ascending: false })
-        .range(offset * 3, (offset * 3) + 2);
+        .range(from, to);
       
       if (ranksError) throw ranksError;
       if (!ranksData || ranksData.length === 0) return [];

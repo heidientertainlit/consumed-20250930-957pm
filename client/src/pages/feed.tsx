@@ -7186,9 +7186,9 @@ export default function Feed() {
                 <SocialProofCard card={buildLeaderboardSocialProof(playActivity[1], 1)} />
               )}
 
-              {/* Ranks set 1 */}
+              {/* Debate the Rank #1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <RanksCarousel offset={0} />
+                <RanksCarousel rankIndex={0} />
               )}
 
               {/* Seen It? — Movies/TV */}
@@ -7248,6 +7248,11 @@ export default function Feed() {
               {/* — Rating carousel #2 — */}
               {renderRatingCarousel(2)}
 
+              {/* Debate the Rank #2 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+                <RanksCarousel rankIndex={1} />
+              )}
+
               {/* — BLOCK 4 — */}
               {/* Podcasts trivia */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
@@ -7291,6 +7296,11 @@ export default function Feed() {
 
               {/* — Rating carousel #3 — */}
               {renderRatingCarousel(3)}
+
+              {/* Debate the Rank #3 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+                <RanksCarousel rankIndex={2} />
+              )}
 
               {/* — BLOCK 5 — */}
               {/* Play slot #4 */}
