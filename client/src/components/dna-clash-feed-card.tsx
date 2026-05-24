@@ -304,169 +304,159 @@ export default function DnaClashFeedCard({
   const commentCount = commentsData?.comments?.length ?? 0;
 
   return (
-    <div
-      className="relative rounded-2xl overflow-hidden mb-4 shadow-lg"
-      style={{ background: 'linear-gradient(135deg, #0f0525 0%, #1a0b38 50%, #200d42 100%)' }}
-    >
-      <div className="p-4 flex flex-col gap-3">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
 
-        {/* Badge row */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <Zap size={11} className="text-purple-300 shrink-0" fill="currentColor" />
-            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">DNA Clash</span>
-          </div>
+      {/* White header row — matches rate card structure */}
+      <div className="flex items-center justify-between px-4 pt-3 pb-2">
+        <div className="flex items-center gap-1.5">
+          <Zap size={11} className="text-purple-500 shrink-0" fill="currentColor" />
+          <span className="text-[11px] font-bold text-purple-500 uppercase tracking-widest">DNA Clash</span>
+        </div>
+        <div className="flex items-center gap-2">
           {isInClash && !showOptOutConfirm && (
-            <button onClick={() => setShowOptOutConfirm(true)} className="text-[10px] text-white/25 hover:text-white/55 transition-colors">
+            <button onClick={() => setShowOptOutConfirm(true)} className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors">
               Opt out
             </button>
           )}
         </div>
+      </div>
 
-        {/* Opt-out confirm */}
-        {showOptOutConfirm && (
-          <div className="flex items-center justify-between rounded-xl px-3 py-2.5 gap-2"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
-            <span className="text-white/65 text-[11px] leading-snug">Remove yourself from DNA Clash cards?</span>
-            <div className="flex gap-2 shrink-0">
-              <button onClick={handleOptOut} disabled={optingOut}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white"
-                style={{ background: '#a855f7' }}>
-                {optingOut ? '…' : 'Yes'}
-              </button>
-              <button onClick={() => setShowOptOutConfirm(false)}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white/55"
-                style={{ background: 'rgba(255,255,255,0.07)' }}>
-                Cancel
+      {/* Opt-out confirm — white bg */}
+      {showOptOutConfirm && (
+        <div className="mx-4 mb-2 flex items-center justify-between rounded-xl px-3 py-2.5 gap-2 bg-gray-50 border border-gray-200">
+          <span className="text-gray-600 text-[11px] leading-snug">Remove yourself from DNA Clash cards?</span>
+          <div className="flex gap-2 shrink-0">
+            <button onClick={handleOptOut} disabled={optingOut}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white bg-purple-500">
+              {optingOut ? '…' : 'Yes'}
+            </button>
+            <button onClick={() => setShowOptOutConfirm(false)}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-gray-500 bg-gray-100">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Dark content panel */}
+      <div
+        className="mx-3 mb-3 rounded-xl overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #0f0525 0%, #1a0b38 50%, #200d42 100%)' }}
+      >
+        <div className="p-3 flex flex-col gap-3">
+
+          {/* Headline */}
+          <div>
+            <p className="text-white font-extrabold text-[17px] leading-tight">Completely different takes.</p>
+            <p className="text-white/55 text-[13px] font-semibold mt-0.5">on {mediaTitle}</p>
+          </div>
+
+          {/* Two user cards + waveform */}
+          <div className="flex items-center gap-1">
+            <UserCard user={user1} isMyVote={voted === user1.username} onVote={() => handleVote(user1.username)} hasVoted={!!voted} side="left" />
+            <Waveform />
+            <UserCard user={user2} isMyVote={voted === user2.username} onVote={() => handleVote(user2.username)} hasVoted={!!voted} side="right" />
+          </div>
+
+          {/* Which side CTA — pre-vote */}
+          {!voted && (
+            <p className="text-white/35 text-[10px] font-semibold text-center uppercase tracking-widest -mt-1">
+              Tap a card — which side are you on?
+            </p>
+          )}
+
+          {/* Vote bars — post-vote */}
+          {voted && (
+            <div className="flex flex-col gap-1.5">
+              {[{ u: user1, pct: pct1 }, { u: user2, pct: pct2 }].map(({ u, pct }) => {
+                const isMine = voted === u.username;
+                const barColor = isMine ? '#a855f7' : '#6366f1';
+                return (
+                  <div key={u.username} className="flex items-center gap-2">
+                    {isMine && <Check size={9} className="text-purple-300 shrink-0" />}
+                    <span className={`text-[11px] font-semibold w-[70px] truncate shrink-0 ${isMine ? 'text-purple-300' : 'text-white/45'}`}
+                      style={!isMine ? { marginLeft: 13 } : {}}>
+                      {u.displayName.split(' ')[0]}
+                    </span>
+                    <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                      <div className="h-full rounded-full transition-all duration-600"
+                        style={{ width: `${pct}%`, background: barColor }} />
+                    </div>
+                    <span className={`text-[11px] font-bold w-7 text-right shrink-0 ${isMine ? 'text-purple-300' : 'text-white/40'}`}>
+                      {pct}%
+                    </span>
+                  </div>
+                );
+              })}
+              <p className="text-white/25 text-[10px] text-center">{total} {total === 1 ? 'vote' : 'votes'}</p>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* White action bar — matches rate card */}
+      <div className="flex items-center gap-3 px-4 py-2.5 border-t border-gray-100">
+        <button
+          onClick={() => setShowComments(s => !s)}
+          className={`flex items-center gap-1.5 transition-colors ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-gray-600'}`}
+        >
+          <MessageCircle size={15} fill={showComments ? 'currentColor' : 'none'} />
+          <span className="text-[12px] font-medium">{commentCount > 0 ? commentCount : 'Debate'}</span>
+        </button>
+      </div>
+
+      {/* Comments section — white bg */}
+      {showComments && (
+        <div className="flex flex-col gap-3 px-4 pt-3 pb-4 border-t border-gray-100">
+          {(commentsData?.comments || []).length === 0 ? (
+            <p className="text-gray-400 text-[12px] text-center py-1">No comments yet. Start the debate.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {commentsData.comments.map((c: any) => (
+                <div key={c.id} className="flex items-start gap-2 group">
+                  <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-bold bg-purple-400">
+                    {(c.username || '?').slice(0, 1).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-purple-600 text-[11px] font-semibold mr-1.5">{c.username}</span>
+                    <span className="text-gray-800 text-[13px] break-words leading-snug">{c.content}</span>
+                  </div>
+                  {c.user_id === (activeSession?.user?.id) && (
+                    <button
+                      onClick={() => deleteCommentMutation.mutate(String(c.id))}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-400 transition-all shrink-0"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {activeSession ? (
+            <div className="flex items-center gap-2 rounded-xl px-3 py-2 bg-gray-50 border border-gray-200">
+              <input
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePostComment(); } }}
+                placeholder="Add your take…"
+                className="flex-1 text-[13px] text-gray-800 bg-transparent outline-none placeholder:text-gray-400"
+              />
+              <button
+                onClick={handlePostComment}
+                disabled={!commentText.trim() || commentMutation.isPending}
+                className="p-1.5 rounded-lg transition-all disabled:opacity-30 shrink-0 bg-purple-500"
+              >
+                <Send size={12} className="text-white" />
               </button>
             </div>
-          </div>
-        )}
-
-        {/* Headline */}
-        <div className="-mt-0.5">
-          <p className="text-white font-extrabold text-[18px] leading-tight">Completely different takes.</p>
-          <p className="text-white/55 text-[13px] font-semibold mt-0.5">on {mediaTitle}</p>
+          ) : (
+            <p className="text-gray-400 text-[11px] text-center">Sign in to join the debate</p>
+          )}
         </div>
+      )}
 
-        {/* Two user cards + waveform */}
-        <div className="flex items-center gap-1">
-          <UserCard user={user1} isMyVote={voted === user1.username} onVote={() => handleVote(user1.username)} hasVoted={!!voted} side="left" />
-          <Waveform />
-          <UserCard user={user2} isMyVote={voted === user2.username} onVote={() => handleVote(user2.username)} hasVoted={!!voted} side="right" />
-        </div>
-
-        {/* Which side CTA — pre-vote */}
-        {!voted && (
-          <p className="text-white/35 text-[10px] font-semibold text-center uppercase tracking-widest -mt-1">
-            Tap a card — which side are you on?
-          </p>
-        )}
-
-        {/* Vote bars — post-vote */}
-        {voted && (
-          <div className="flex flex-col gap-1.5">
-            {[{ u: user1, pct: pct1 }, { u: user2, pct: pct2 }].map(({ u, pct }) => {
-              const isMine = voted === u.username;
-              const barColor = isMine ? '#a855f7' : '#6366f1';
-              return (
-                <div key={u.username} className="flex items-center gap-2">
-                  {isMine && <Check size={9} className="text-purple-300 shrink-0" />}
-                  <span className={`text-[11px] font-semibold w-[70px] truncate shrink-0 ${isMine ? 'text-purple-300' : 'text-white/45'}`}
-                    style={!isMine ? { marginLeft: 13 } : {}}>
-                    {u.displayName.split(' ')[0]}
-                  </span>
-                  <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                    <div className="h-full rounded-full transition-all duration-600"
-                      style={{ width: `${pct}%`, background: barColor }} />
-                  </div>
-                  <span className={`text-[11px] font-bold w-7 text-right shrink-0 ${isMine ? 'text-purple-300' : 'text-white/40'}`}>
-                    {pct}%
-                  </span>
-                </div>
-              );
-            })}
-            <p className="text-white/25 text-[10px] text-center">{total} {total === 1 ? 'vote' : 'votes'}</p>
-          </div>
-        )}
-
-        {/* Bottom action bar */}
-        <div className="flex items-center gap-3 pt-0.5 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-          <button
-            onClick={() => setShowComments(s => !s)}
-            className={`flex items-center gap-1.5 transition-colors ${showComments ? 'text-purple-300' : 'text-white/35 hover:text-white/60'}`}
-          >
-            <MessageCircle size={15} fill={showComments ? 'currentColor' : 'none'} />
-            <span className="text-[12px] font-medium">{commentCount > 0 ? commentCount : 'Debate'}</span>
-          </button>
-        </div>
-
-        {/* Comments section */}
-        {showComments && (
-          <div
-            className="flex flex-col gap-3 -mx-4 px-4 pt-3 pb-3 rounded-b-2xl"
-            style={{ background: 'rgba(0,0,0,0.25)', borderTop: '1px solid rgba(255,255,255,0.10)' }}
-          >
-            {/* Existing comments */}
-            {(commentsData?.comments || []).length === 0 ? (
-              <p className="text-white/60 text-[12px] text-center py-1">No comments yet. Start the debate.</p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {commentsData.comments.map((c: any) => (
-                  <div key={c.id} className="flex items-start gap-2 group">
-                    <div
-                      className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-bold"
-                      style={{ background: 'rgba(139,92,246,0.5)' }}
-                    >
-                      {(c.username || '?').slice(0, 1).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-purple-200 text-[11px] font-semibold mr-1.5">{c.username}</span>
-                      <span className="text-white text-[13px] break-words leading-snug">{c.content}</span>
-                    </div>
-                    {c.user_id === (activeSession?.user?.id) && (
-                      <button
-                        onClick={() => deleteCommentMutation.mutate(String(c.id))}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-white/40 hover:text-red-400 transition-all shrink-0"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Comment input */}
-            {activeSession ? (
-              <div
-                className="flex items-center gap-2 rounded-xl px-3 py-2"
-                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}
-              >
-                <input
-                  value={commentText}
-                  onChange={e => setCommentText(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePostComment(); } }}
-                  placeholder="Add your take…"
-                  className="flex-1 text-[13px] text-white bg-transparent outline-none"
-                  style={{ caretColor: '#a855f7' }}
-                />
-                <button
-                  onClick={handlePostComment}
-                  disabled={!commentText.trim() || commentMutation.isPending}
-                  className="p-1.5 rounded-lg transition-all disabled:opacity-30 shrink-0"
-                  style={{ background: commentText.trim() ? '#a855f7' : 'rgba(255,255,255,0.10)' }}
-                >
-                  <Send size={12} className="text-white" />
-                </button>
-              </div>
-            ) : (
-              <p className="text-white/50 text-[11px] text-center">Sign in to join the debate</p>
-            )}
-          </div>
-        )}
-
-      </div>
     </div>
   );
 }
