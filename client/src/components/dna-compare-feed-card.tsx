@@ -662,19 +662,44 @@ export function DnaComparePostCard({ item }: { item: any }) {
           <span className="text-gray-400 text-[11px] ml-1">· {posterName}</span>
         </div>
 
-        {/* Main content — left-aligned, same pattern as static card */}
-        <div className="px-4 pb-5 flex flex-col gap-1">
-          <span className="font-extrabold leading-none block" style={{ fontSize: 52, color: '#a855f7' }}>
-            {matchScore}%
-          </span>
-          <p className="text-gray-400 text-[12px] font-medium mt-0.5">{posterName.split(' ')[0]} is aligned with</p>
-          <p className="text-gray-700 text-[14px] font-semibold -mt-0.5">{friendName}</p>
-          <button
-            onClick={() => session ? setSheetOpen(true) : undefined}
-            className="mt-4 py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
-          >
-            Compare with a friend
-          </button>
+        {/* Main content — two column layout, mirrors static card */}
+        <div className="px-4 pb-5 flex gap-8 items-start">
+          {/* Left — hero number */}
+          <div className="flex flex-col gap-1 flex-1 min-w-0">
+            <span className="font-extrabold leading-none block" style={{ fontSize: 52, color: '#a855f7' }}>
+              {matchScore}%
+            </span>
+            <p className="text-gray-400 text-[12px] font-medium mt-0.5">{posterName.split(' ')[0]} is aligned with</p>
+            <p className="text-gray-700 text-[14px] font-semibold -mt-0.5">{friendName}</p>
+            <button
+              onClick={() => session ? setSheetOpen(true) : undefined}
+              className="mt-4 py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
+            >
+              Compare with a friend
+            </button>
+          </div>
+
+          {/* Right — shared genres or compat line */}
+          {(sharedGenres.length > 0 || compatLine) && (
+            <div className="flex flex-col gap-2 pt-1 min-w-[110px]">
+              {sharedGenres.length > 0 ? (
+                <>
+                  <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">They both love</span>
+                  {sharedGenres.slice(0, 3).map((g: string) => (
+                    <div key={g} className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
+                      <span className="text-gray-700 text-[12px] font-medium">{g}</span>
+                    </div>
+                  ))}
+                </>
+              ) : compatLine ? (
+                <>
+                  <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Vibe</span>
+                  <p className="text-gray-500 text-[11px] italic leading-snug">"{compatLine}"</p>
+                </>
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
 
