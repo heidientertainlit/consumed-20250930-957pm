@@ -274,7 +274,7 @@ export default function RankFeedCard({
       </AlertDialog>
 
       <div className="p-4">
-        {/* Header: author + rank label + timestamp */}
+        {/* Header: author + delete/report */}
         <div className="flex items-center justify-between mb-3">
           <div>
             <Link href={`/user/${author.id}`}>
@@ -284,12 +284,7 @@ export default function RankFeedCard({
             </Link>
             <span className="text-xs text-gray-500 ml-2">shared a ranked list</span>
           </div>
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">
-              <BarChart2 size={9} />
-              Rank
-            </span>
-            {createdAt && <span className="text-xs text-gray-400">{formatTimeAgo(createdAt)}</span>}
+          <div className="flex items-center">
             {isOwner && (
               <button onClick={() => setShowDeleteDialog(true)} className="p-1 hover:bg-red-50 rounded-full transition-colors" data-testid={`delete-rank-${rank.id}`}>
                 <Trash2 size={14} className="text-gray-300 hover:text-red-400 transition-colors" />
@@ -426,7 +421,7 @@ export default function RankFeedCard({
         )}
       </div>
 
-      {/* Footer: like & comment */}
+      {/* Footer: like & comment + rank label + timestamp */}
       {postId && (
         <div className="px-4 py-2.5 border-t border-gray-100 flex items-center gap-4">
           <button
@@ -450,6 +445,13 @@ export default function RankFeedCard({
             <MessageCircle size={16} />
             <span className="text-xs font-medium text-gray-500">{commentsCount}</span>
           </button>
+          <div className="ml-auto flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">
+              <BarChart2 size={9} />
+              Rank
+            </span>
+            {createdAt && <span className="text-xs text-gray-400">{formatTimeAgo(createdAt)}</span>}
+          </div>
         </div>
       )}
 
