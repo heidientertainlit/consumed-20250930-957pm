@@ -3540,6 +3540,7 @@ export default function Feed() {
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [stackIndices, setStackIndices] = useState<Record<string, number>>({});
+  const swipeTouchStart = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const likedPostsInitialized = useRef(false); // Track if we've done initial sync
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const [commentVotes, setCommentVotes] = useState<Map<string, 'up' | 'down'>>(new Map()); // Track user's comment votes
@@ -4862,24 +4863,52 @@ export default function Feed() {
         const { _isPromoted: _p0, _promotedKey: _pk0, ...activePost } = buffer[activeIdx];
         output.push(
           <div key={`ugc-stack-${k}`} className="mb-6 px-2">
-            {/* Stacked card deck — rotated cards behind give a real physical deck feel */}
-            <div className="relative py-2">
-              {/* Card 3 (deepest) — most rotated, peeking from behind */}
+            {/* Stacked card deck — swipeable, rotated cards behind for physical deck feel */}
+            <div
+              className="relative py-3 px-1"
+              onTouchStart={(e) => {
+                swipeTouchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+              }}
+              onTouchEnd={(e) => {
+                const dx = e.changedTouches[0].clientX - swipeTouchStart.current.x;
+                const dy = e.changedTouches[0].clientY - swipeTouchStart.current.y;
+                if (Math.abs(dx) < 40 || Math.abs(dy) > Math.abs(dx)) return;
+                const dir = dx < 0 ? 1 : -1;
+                setStackIndices(prev => ({
+                  ...prev,
+                  [stackKey]: Math.max(0, Math.min(buffer.length - 1, (prev[stackKey] || 0) + dir))
+                }));
+              }}
+            >
+              {/* Card 3 (deepest) — most rotated */}
               {buffer.length >= 3 && (
                 <div
-                  className="absolute inset-0 rounded-2xl bg-gray-100 border border-gray-200 shadow-sm pointer-events-none"
-                  style={{ transform: 'rotate(-4deg) translate(-4px, 6px)', zIndex: 0 }}
+                  className="absolute inset-0 rounded-2xl pointer-events-none"
+                  style={{
+                    transform: 'rotate(-5deg) translate(-5px, 8px)',
+                    zIndex: 0,
+                    background: '#e0ddf5',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.10)',
+                  }}
                 />
               )}
               {/* Card 2 (middle) */}
               {buffer.length >= 2 && (
                 <div
-                  className="absolute inset-0 rounded-2xl bg-white border border-gray-200 shadow-md pointer-events-none"
-                  style={{ transform: 'rotate(-2deg) translate(-2px, 3px)', zIndex: 1 }}
+                  className="absolute inset-0 rounded-2xl pointer-events-none"
+                  style={{
+                    transform: 'rotate(-2.5deg) translate(-2px, 4px)',
+                    zIndex: 1,
+                    background: '#f0eefb',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.10)',
+                  }}
                 />
               )}
               {/* Active card — front of the deck */}
-              <div className="relative" style={{ zIndex: 2 }}>
+              <div
+                className="relative"
+                style={{ zIndex: 2, boxShadow: '0 8px 28px rgba(0,0,0,0.14)', borderRadius: '1rem' }}
+              >
                 <UGCGroupCard
                   post={activePost as any}
                   onLike={handleLike}
@@ -4893,15 +4922,20 @@ export default function Feed() {
                 />
               </div>
             </div>
-            {/* Dot nav */}
-            <div className="flex justify-center items-center gap-1.5 mt-3">
-              {buffer.map((_: any, di: number) => (
-                <button
-                  key={di}
-                  onClick={() => setStackIndices(prev => ({ ...prev, [stackKey]: di }))}
-                  className={`rounded-full transition-all duration-200 ${di === activeIdx ? 'w-4 h-1.5 bg-purple-500' : 'w-1.5 h-1.5 bg-gray-300'}`}
-                />
-              ))}
+            {/* Dot nav + swipe hint */}
+            <div className="flex flex-col items-center gap-1 mt-2">
+              <div className="flex items-center gap-1.5">
+                {buffer.map((_: any, di: number) => (
+                  <button
+                    key={di}
+                    onClick={() => setStackIndices(prev => ({ ...prev, [stackKey]: di }))}
+                    className={`rounded-full transition-all duration-200 ${di === activeIdx ? 'w-4 h-1.5 bg-purple-500' : 'w-1.5 h-1.5 bg-gray-300'}`}
+                  />
+                ))}
+              </div>
+              {activeIdx === 0 && (
+                <p className="text-[10px] text-gray-400 tracking-wide">swipe to see more</p>
+              )}
             </div>
           </div>
         );
