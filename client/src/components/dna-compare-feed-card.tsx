@@ -596,21 +596,6 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                 >
                   Compare with a friend
                 </button>
-                <button
-                  onClick={() => {
-                    const text = `I'm ${featured.pct}% aligned with ${featured.displayName} on Consumed! Check your Entertainment DNA 🧬`;
-                    const url = import.meta.env.VITE_APP_URL || window.location.origin;
-                    if (navigator.share) {
-                      navigator.share({ title: 'My Entertainment DNA', text, url }).catch(() => {});
-                    } else {
-                      window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`, '_blank');
-                    }
-                  }}
-                  className="mt-2 flex items-center justify-center gap-1.5 text-gray-400 text-[12px] hover:text-gray-600 transition-colors"
-                >
-                  <Share2 size={12} />
-                  Share with a friend
-                </button>
               </>
             )}
           </div>
@@ -636,6 +621,25 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
               </button>
             </div>
           )}
+        </div>
+
+        {/* Action bar */}
+        <div className="border-t border-gray-100 px-4 py-2.5 flex items-center justify-end">
+          <button
+            onClick={() => {
+              const text = `I'm ${featured.pct}% aligned with ${featured.displayName} on Consumed! Check your Entertainment DNA 🧬`;
+              const url = (import.meta.env.VITE_APP_URL as string) || window.location.origin;
+              if (navigator.share) {
+                navigator.share({ title: 'My Entertainment DNA', text, url }).catch(() => {});
+              } else {
+                window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+              }
+            }}
+            className="flex items-center gap-1.5 text-gray-400 hover:text-purple-500 transition-colors group"
+          >
+            <Share2 size={14} className="group-hover:scale-110 transition-transform" />
+            <span className="text-[12px] font-medium">Share</span>
+          </button>
         </div>
       </div>
 
