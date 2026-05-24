@@ -3522,40 +3522,63 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
   onAddToList: (media: any) => void;
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
 
   const remaining = posts.length - currentIndex;
   if (remaining === 0) return null;
 
-  const peekCount = Math.min(remaining - 1, 2); // 0, 1, or 2 peek slivers
+  const peekCount = Math.min(remaining - 1, 2);
   const { _isPromoted: _p, _promotedKey: _pk, ...frontPost } = posts[currentIndex];
 
-  // Container bottom padding = total peek height (8px per level)
-  const bottomPad = peekCount === 2 ? 16 : peekCount === 1 ? 8 : 0;
+  const advance = () => {
+    if (currentIndex < posts.length - 1) setCurrentIndex(i => i + 1);
+  };
+
+  // Each peek sliver shows as a strip below the front card
+  const PEEK_H = 14; // px visible per sliver
+  const containerPadding = peekCount === 2 ? PEEK_H * 2 + 4 : peekCount === 1 ? PEEK_H : 0;
 
   return (
-    <div style={{ position: 'relative', paddingBottom: bottomPad, marginBottom: 16 }}>
-      {/* Card 3 — furthest back, narrowest, extends to full container bottom */}
+    <div
+      style={{ position: 'relative', paddingBottom: containerPadding, marginBottom: 16 }}
+      onTouchStart={(e) => {
+        touchStartX.current = e.touches[0].clientX;
+        touchStartY.current = e.touches[0].clientY;
+      }}
+      onTouchEnd={(e) => {
+        const dx = e.changedTouches[0].clientX - touchStartX.current;
+        const dy = e.changedTouches[0].clientY - touchStartY.current;
+        // Horizontal swipe left = advance, ignore mostly-vertical scrolls
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+          if (dx < 0) advance();
+        }
+      }}
+    >
+      {/* Sliver 3 — furthest back, most inset, at very bottom */}
       {peekCount >= 2 && (
         <div style={{
           position: 'absolute',
-          left: 16, right: 16,
-          top: 0, bottom: 0,
-          backgroundColor: '#f3f4f6',
-          borderRadius: 16,
-          border: '1px solid #e5e7eb',
+          left: 20, right: 20,
+          bottom: 0,
+          height: PEEK_H * 2 + 32,
+          backgroundColor: '#e9eaec',
+          borderRadius: 18,
+          border: '1px solid #d1d5db',
           zIndex: 1,
         }} />
       )}
-      {/* Card 2 — middle, slightly narrower, stops 8px from container bottom */}
+      {/* Sliver 2 — middle, slightly less inset */}
       {peekCount >= 1 && (
         <div style={{
           position: 'absolute',
-          left: 8, right: 8,
-          top: 0, bottom: peekCount >= 2 ? 8 : 0,
-          backgroundColor: '#fafafa',
-          borderRadius: 16,
-          border: '1px solid #e5e7eb',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+          left: 10, right: 10,
+          bottom: peekCount >= 2 ? PEEK_H + 2 : 0,
+          height: PEEK_H + 32,
+          backgroundColor: '#f1f2f4',
+          borderRadius: 18,
+          border: '1px solid #d1d5db',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
           zIndex: 2,
         }} />
       )}
@@ -3576,8 +3599,9 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
         {/* Counter + tap-to-advance */}
         {remaining > 1 && (
           <button
-            onClick={() => setCurrentIndex(i => i + 1)}
+            onClick={advance}
             className="absolute bottom-3 right-3 flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2.5 py-1 shadow-sm z-20"
+            style={{ pointerEvents: 'auto' }}
           >
             <span className="text-[10px] font-medium text-gray-500">{currentIndex + 1}/{posts.length}</span>
             <ChevronRight size={10} className="text-gray-400" />
