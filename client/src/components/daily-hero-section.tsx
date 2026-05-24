@@ -1233,7 +1233,7 @@ function TodaysPlayGame({
                               className="w-full py-3.5 rounded-xl font-bold text-white text-base shadow-md active:scale-[0.98]"
                               style={{ background: PURPLE_GRADIENT }}
                             >
-                              {qIndex < questions.length - 1 ? 'Next Question' : questions.length === 1 ? 'See the Answer' : 'See Your Score'}
+                              {qIndex < questions.length - 1 ? 'Next Question' : 'See Your Score'}
                             </button>
                           )}
                         </div>
