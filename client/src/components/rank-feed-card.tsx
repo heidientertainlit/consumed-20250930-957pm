@@ -303,9 +303,6 @@ export default function RankFeedCard({
           <Link href={`/rank/${rank.id}`}>
             <h3 className="font-semibold text-gray-900 hover:text-purple-700 cursor-pointer leading-snug">{rank.title}</h3>
           </Link>
-          {caption && caption.trim() && (
-            <p className="text-xs text-gray-500 mt-0.5">{caption}</p>
-          )}
         </div>
 
         {/* Items */}
