@@ -598,34 +598,13 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
             <span className="font-extrabold leading-none" style={{ fontSize: 52, color: '#a855f7' }}>
               {featured.pct}%
             </span>
-            <p className="text-gray-800 font-bold text-[16px] text-center">aligned with {featured.displayName}</p>
-            <p className="text-gray-400 text-[12px] text-center italic mt-0.5">{featured.tagline}</p>
+            <p className="text-gray-800 font-bold text-[16px] text-center">aligned with {featured.displayName.split(' ')[0]}</p>
           </div>
 
-          {/* Top overlaps row */}
-          {overlaps.length > 0 && (
-            <div className="flex items-center gap-3 pt-1">
-              <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Top overlaps</span>
-              {overlaps.map((u) => (
-                <div key={u.displayName} className="flex items-center gap-1.5">
-                  <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]" style={{ width: 20, height: 20, background: u.color }}>
-                    {u.initials}
-                  </div>
-                  <span className="text-gray-500 text-[11px]">{u.pct}%</span>
-                </div>
-              ))}
-              <button onClick={() => setLocation("/friends")} className="text-purple-500 text-[11px] font-semibold hover:text-purple-600 transition-colors">
-                See all
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Action bar */}
-        <div className="border-t border-gray-100 px-4 py-3">
+          {/* Button */}
           <button
             onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
-            className="w-full py-3 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-left"
+            className="w-full py-3 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
           >
             Compare your DNA with a friend
           </button>
@@ -703,29 +682,13 @@ export function DnaComparePostCard({ item }: { item: any }) {
             <span className="font-extrabold leading-none" style={{ fontSize: 52, color: '#a855f7' }}>
               {matchScore}%
             </span>
-            <p className="text-gray-800 font-bold text-[16px] text-center">aligned with {friendName}</p>
-            {compatLine ? <p className="text-gray-400 text-[12px] text-center italic mt-0.5">"{compatLine}"</p> : null}
+            <p className="text-gray-800 font-bold text-[16px] text-center">aligned with {friendName.split(' ')[0]}</p>
           </div>
 
-          {/* Shared genres row */}
-          {sharedGenres.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap justify-center">
-              <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">You both love</span>
-              {sharedGenres.slice(0, 3).map((g: string) => (
-                <div key={g} className="flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
-                  <span className="text-gray-500 text-[11px]">{g}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Action bar */}
-        <div className="border-t border-gray-100 px-4 py-3">
+          {/* Button */}
           <button
             onClick={() => session ? setSheetOpen(true) : undefined}
-            className="w-full py-3 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-left"
+            className="w-full py-3 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
           >
             Compare your DNA with a friend
           </button>
