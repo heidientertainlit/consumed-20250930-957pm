@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
-import { BarChart3, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Loader2, Plus, X, MessageCircle, Send, Heart, Flag, GripVertical, Check } from 'lucide-react';
+import { BarChart3, ChevronDown, ChevronUp, Loader2, Plus, X, MessageCircle, Send, Heart, Flag, GripVertical, Check } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { ReportSheet } from '@/components/report-sheet';
 
@@ -447,52 +447,21 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
   }
 
   return (
-    <div className="bg-white border border-gray-100 shadow rounded-2xl overflow-hidden">
-      {/* Header */}
-      <div className="px-4 pt-3 pb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
-            <BarChart3 className="w-3.5 h-3.5 text-white" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-900 leading-none">Debate the Rank</p>
-            <p className="text-[10px] text-gray-400 mt-0.5">ranked list</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          {currentIndex > 0 && (
-            <button onClick={scrollToPrev} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-              <ChevronLeft className="w-3.5 h-3.5 text-gray-600" />
-            </button>
-          )}
-          {currentIndex < ranks.length - 1 && (
-            <button onClick={scrollToNext} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-              <ChevronRight className="w-3.5 h-3.5 text-gray-600" />
-            </button>
-          )}
-          <span className="text-xs text-gray-400 ml-1">{currentIndex + 1}/{ranks.length}</span>
-        </div>
-      </div>
+    <>
+      {ranks.map((rank) => {
+        const isVotingExpanded = expandedVoting[rank.id];
+        const isExpanded = expandedRanks[rank.id];
+        const currentItems = localRankings[rank.id] || rank.items;
+        const displayItems = isExpanded ? currentItems : currentItems.slice(0, 5);
+        const previewItems = currentItems.slice(0, 2);
+        const hiddenCount = currentItems.length - previewItems.length;
 
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
-      >
-        {ranks.map((rank) => {
-          const isVotingExpanded = expandedVoting[rank.id];
-          const isExpanded = expandedRanks[rank.id];
-          const currentItems = localRankings[rank.id] || rank.items;
-          const displayItems = isExpanded ? currentItems : currentItems.slice(0, 5);
-          const previewItems = currentItems.slice(0, 2);
-          const hiddenCount = currentItems.length - previewItems.length;
-
-          return (
-            <div key={rank.id} className="flex-shrink-0 w-full snap-center pb-3">
-              {/* Rank title */}
-              <div className="px-3 pb-2">
-                <h3 className="text-gray-900 font-bold text-base leading-snug">{rank.title}</h3>
-              </div>
+        return (
+          <div key={rank.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
+            {/* Header: title */}
+            <div className="px-4 pt-4 pb-3">
+              <h3 className="text-gray-900 font-bold text-base leading-snug">{rank.title}</h3>
+            </div>
 
               {/* ── COLLAPSED GLIMPSE ── */}
               {!isVotingExpanded && (
@@ -592,8 +561,8 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                 </>
               )}
 
-              {/* Always-visible footer: like + debate */}
-              <div className="px-3 py-2.5 border-t border-gray-100 flex items-center gap-4">
+              {/* Always-visible footer: like + debate + rank pill */}
+              <div className="px-4 py-2.5 border-t border-gray-100 flex items-center gap-4">
                 {(() => {
                   const socialPostId = rankToSocialPost.current[rank.id];
                   const isLiked = socialPostId ? likedPosts.has(socialPostId) : false;
@@ -618,6 +587,12 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                     {(rankComments[rank.id]?.length || 0) > 0 ? ` · ${rankComments[rank.id].length}` : ''}
                   </span>
                 </button>
+                <div className="ml-auto">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">
+                    <BarChart3 size={9} />
+                    Rank
+                  </span>
+                </div>
               </div>
 
               {/* Comments */}
@@ -688,21 +663,6 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
             </div>
           );
         })}
-      </div>
-
-      {ranks.length > 1 && (
-        <div className="flex justify-center gap-1.5 py-3">
-          {ranks.map((_, idx) => (
-            <div
-              key={idx}
-              className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                idx === currentIndex ? 'bg-purple-500' : 'bg-gray-200'
-              }`}
-            />
-          ))}
-        </div>
-      )}
-
       <ReportSheet
         isOpen={!!reportCommentTarget}
         onClose={() => setReportCommentTarget(null)}
@@ -711,6 +671,6 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
         reportedUserId={reportCommentTarget?.userId}
         reportedUserName={reportCommentTarget?.userName}
       />
-    </div>
+    </>
   );
 }
