@@ -51,36 +51,33 @@ function UserCard({
     <button
       onClick={onVote}
       disabled={hasVoted}
-      className="flex-1 flex flex-col gap-2.5 p-3 rounded-2xl text-left transition-all active:scale-[0.97]"
+      className="flex-1 flex flex-col gap-2.5 p-3 rounded-xl text-left transition-all active:scale-[0.97]"
       style={{
-        background: isMyVote ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.06)',
-        border: `1.5px solid ${isMyVote ? 'rgba(139,92,246,0.50)' : 'rgba(255,255,255,0.10)'}`,
+        background: isMyVote ? 'rgba(139,92,246,0.08)' : '#f9f9fb',
+        border: `1.5px solid ${isMyVote ? 'rgba(139,92,246,0.30)' : '#ebebf0'}`,
       }}
     >
       {/* Name row */}
       <div className="flex items-center gap-1.5">
-        <span className="text-white font-bold text-[14px] leading-tight truncate">
+        <span className="text-gray-900 font-bold text-[14px] leading-tight truncate">
           {user.displayName.split(' ')[0]}
         </span>
-        {isMyVote && <Check size={11} className="text-purple-300 shrink-0 ml-auto" />}
+        {isMyVote && <Check size={11} className="text-purple-500 shrink-0 ml-auto" />}
       </div>
 
       {/* Stars */}
       <div className="flex items-center gap-0.5">
         {[1, 2, 3, 4, 5].map(s => (
-          <span key={s} style={{ fontSize: 13, lineHeight: 1, color: s <= user.rating ? accentColor : 'rgba(255,255,255,0.18)' }}>
-            {s <= user.rating ? '★' : '☆'}
+          <span key={s} style={{ fontSize: 13, lineHeight: 1, color: s <= user.rating ? accentColor : '#e2e2e8' }}>
+            {s <= user.rating ? '★' : '★'}
           </span>
         ))}
       </div>
 
       {/* DNA label pill */}
-      <div
-        className="flex items-center gap-1.5 px-2 py-1 rounded-full self-start"
-        style={{ background: 'rgba(255,255,255,0.08)' }}
-      >
-        <Sparkles size={9} className="text-white/45 shrink-0" />
-        <span className="text-white/65 text-[10px] font-medium leading-none">{user.dnaLabel}</span>
+      <div className="flex items-center gap-1.5 px-2 py-1 rounded-full self-start bg-white border border-gray-200">
+        <Sparkles size={9} className="text-purple-400 shrink-0" />
+        <span className="text-gray-500 text-[10px] font-medium leading-none">{user.dnaLabel}</span>
       </div>
     </button>
   );
@@ -338,61 +335,56 @@ export default function DnaClashFeedCard({
         </div>
       )}
 
-      {/* Dark content panel */}
-      <div
-        className="mx-3 mb-3 rounded-xl overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #0f0525 0%, #1a0b38 50%, #200d42 100%)' }}
-      >
-        <div className="p-3 flex flex-col gap-3">
+      {/* Content */}
+      <div className="px-4 pb-3 flex flex-col gap-3">
 
-          {/* Headline */}
-          <div>
-            <p className="text-white font-extrabold text-[17px] leading-tight">Completely different takes.</p>
-            <p className="text-white/55 text-[13px] font-semibold mt-0.5">on {mediaTitle}</p>
-          </div>
-
-          {/* Two user cards + waveform */}
-          <div className="flex items-center gap-1">
-            <UserCard user={user1} isMyVote={voted === user1.username} onVote={() => handleVote(user1.username)} hasVoted={!!voted} side="left" />
-            <Waveform />
-            <UserCard user={user2} isMyVote={voted === user2.username} onVote={() => handleVote(user2.username)} hasVoted={!!voted} side="right" />
-          </div>
-
-          {/* Which side CTA — pre-vote */}
-          {!voted && (
-            <p className="text-white/35 text-[10px] font-semibold text-center uppercase tracking-widest -mt-1">
-              Tap a card — which side are you on?
-            </p>
-          )}
-
-          {/* Vote bars — post-vote */}
-          {voted && (
-            <div className="flex flex-col gap-1.5">
-              {[{ u: user1, pct: pct1 }, { u: user2, pct: pct2 }].map(({ u, pct }) => {
-                const isMine = voted === u.username;
-                const barColor = isMine ? '#a855f7' : '#6366f1';
-                return (
-                  <div key={u.username} className="flex items-center gap-2">
-                    {isMine && <Check size={9} className="text-purple-300 shrink-0" />}
-                    <span className={`text-[11px] font-semibold w-[70px] truncate shrink-0 ${isMine ? 'text-purple-300' : 'text-white/45'}`}
-                      style={!isMine ? { marginLeft: 13 } : {}}>
-                      {u.displayName.split(' ')[0]}
-                    </span>
-                    <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                      <div className="h-full rounded-full transition-all duration-600"
-                        style={{ width: `${pct}%`, background: barColor }} />
-                    </div>
-                    <span className={`text-[11px] font-bold w-7 text-right shrink-0 ${isMine ? 'text-purple-300' : 'text-white/40'}`}>
-                      {pct}%
-                    </span>
-                  </div>
-                );
-              })}
-              <p className="text-white/25 text-[10px] text-center">{total} {total === 1 ? 'vote' : 'votes'}</p>
-            </div>
-          )}
-
+        {/* Headline */}
+        <div>
+          <p className="text-gray-900 font-extrabold text-[17px] leading-tight">Completely different takes.</p>
+          <p className="text-gray-400 text-[13px] font-medium mt-0.5">on {mediaTitle}</p>
         </div>
+
+        {/* Two user cards + waveform */}
+        <div className="flex items-center gap-1">
+          <UserCard user={user1} isMyVote={voted === user1.username} onVote={() => handleVote(user1.username)} hasVoted={!!voted} side="left" />
+          <Waveform />
+          <UserCard user={user2} isMyVote={voted === user2.username} onVote={() => handleVote(user2.username)} hasVoted={!!voted} side="right" />
+        </div>
+
+        {/* Which side CTA — pre-vote */}
+        {!voted && (
+          <p className="text-gray-400 text-[10px] font-semibold text-center uppercase tracking-widest -mt-1">
+            Tap a card — which side are you on?
+          </p>
+        )}
+
+        {/* Vote bars — post-vote */}
+        {voted && (
+          <div className="flex flex-col gap-1.5">
+            {[{ u: user1, pct: pct1 }, { u: user2, pct: pct2 }].map(({ u, pct }) => {
+              const isMine = voted === u.username;
+              const barColor = isMine ? '#a855f7' : '#6366f1';
+              return (
+                <div key={u.username} className="flex items-center gap-2">
+                  {isMine && <Check size={9} className="text-purple-500 shrink-0" />}
+                  <span className={`text-[11px] font-semibold w-[70px] truncate shrink-0 ${isMine ? 'text-purple-600' : 'text-gray-400'}`}
+                    style={!isMine ? { marginLeft: 13 } : {}}>
+                    {u.displayName.split(' ')[0]}
+                  </span>
+                  <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-gray-100">
+                    <div className="h-full rounded-full transition-all duration-600"
+                      style={{ width: `${pct}%`, background: barColor }} />
+                  </div>
+                  <span className={`text-[11px] font-bold w-7 text-right shrink-0 ${isMine ? 'text-purple-600' : 'text-gray-400'}`}>
+                    {pct}%
+                  </span>
+                </div>
+              );
+            })}
+            <p className="text-gray-400 text-[10px] text-center">{total} {total === 1 ? 'vote' : 'votes'}</p>
+          </div>
+        )}
+
       </div>
 
       {/* White action bar — matches rate card */}
