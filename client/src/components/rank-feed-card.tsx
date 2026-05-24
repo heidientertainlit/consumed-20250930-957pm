@@ -73,6 +73,7 @@ interface RankFeedCardProps {
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 const MAX_ITEMS = 10;
+const PREVIEW_ITEMS = 5;
 
 function VoteCount({ upCount, downCount }: { upCount: number; downCount: number }) {
   const total = upCount + downCount;
@@ -131,6 +132,7 @@ export default function RankFeedCard({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [reportPostOpen, setReportPostOpen] = useState(false);
   const [myOrder, setMyOrder] = useState<RankItemWithVotes[]>([]);
+  const [showAll, setShowAll] = useState(false);
   const initializedRef = useRef(false);
 
   const isOwner = user?.id === rank.user_id;
@@ -351,22 +353,32 @@ export default function RankFeedCard({
           </div>
         ) : isOwner ? (
           /* Owner: read-only with community pct bars */
-          <div className="space-y-1.5">
-            {myOrder.map((item, idx) => (
-              <div key={item.id} className="flex items-center gap-2.5 py-2 px-3 bg-gray-50 rounded-lg">
-                <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-orange-100 text-orange-700 flex-shrink-0">
-                  {item.position || idx + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
-                  {item.creator && item.creator.toLowerCase() !== 'unknown' && (
-                    <p className="text-xs text-gray-500 truncate">{item.creator}</p>
-                  )}
+          <>
+            <div className="space-y-1.5">
+              {(showAll ? myOrder : myOrder.slice(0, PREVIEW_ITEMS)).map((item, idx) => (
+                <div key={item.id} className="flex items-center gap-2.5 py-2 px-3 bg-gray-50 rounded-lg">
+                  <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-orange-100 text-orange-700 flex-shrink-0">
+                    {item.position || idx + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
+                    {item.creator && item.creator.toLowerCase() !== 'unknown' && (
+                      <p className="text-xs text-gray-500 truncate">{item.creator}</p>
+                    )}
+                  </div>
+                  <VoteCount upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
                 </div>
-                <VoteCount upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+            {myOrder.length > PREVIEW_ITEMS && (
+              <button
+                onClick={() => setShowAll(s => !s)}
+                className="mt-2 w-full text-xs font-medium text-purple-600 hover:text-purple-700 py-1.5 text-center"
+              >
+                {showAll ? '↑ Show less' : `See all ${myOrder.length} →`}
+              </button>
+            )}
+          </>
         ) : (
           /* Everyone else: drag to set personal order, community % shown live */
           <>
@@ -379,7 +391,7 @@ export default function RankFeedCard({
               <Droppable droppableId={`rank-drag-${rank.id}`}>
                 {(provided) => (
                   <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1.5">
-                    {myOrder.map((item, idx) => (
+                    {(showAll ? myOrder : myOrder.slice(0, PREVIEW_ITEMS)).map((item, idx) => (
                       <Draggable key={item.id} draggableId={item.id} index={idx}>
                         {(provided, snapshot) => (
                           <div
@@ -417,6 +429,14 @@ export default function RankFeedCard({
                 )}
               </Droppable>
             </DragDropContext>
+            {myOrder.length > PREVIEW_ITEMS && (
+              <button
+                onClick={() => setShowAll(s => !s)}
+                className="mt-2 w-full text-xs font-medium text-purple-600 hover:text-purple-700 py-1.5 text-center"
+              >
+                {showAll ? '↑ Show less' : `See all ${myOrder.length} →`}
+              </button>
+            )}
           </>
         )}
       </div>
