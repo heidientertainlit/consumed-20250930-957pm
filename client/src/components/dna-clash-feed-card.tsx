@@ -35,8 +35,8 @@ interface DnaClashFeedCardProps {
 // ─── Two-colored waveform ─────────────────────────────────────────────────────
 function Waveform() {
   return (
-    <div className="shrink-0 flex items-center justify-center" style={{ width: 80 }}>
-      <svg width="80" height="52" viewBox="0 0 80 52" fill="none">
+    <div className="flex-1 flex items-center justify-center min-w-0">
+      <svg width="100%" height="52" viewBox="0 0 80 52" fill="none" preserveAspectRatio="none">
         <defs>
           <linearGradient id="wave-left" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#a855f7" />
@@ -264,7 +264,7 @@ export default function DnaClashFeedCard({
   const winnerName = pct1 >= pct2 ? user1.displayName.split(' ')[0] : user2.displayName.split(' ')[0];
 
   return (
-    <div className="bg-purple-50 rounded-2xl border border-purple-100 shadow-sm overflow-hidden mb-4">
+    <div className="bg-gray-50 rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
@@ -303,7 +303,7 @@ export default function DnaClashFeedCard({
       </div>
 
       {/* Two sides + waveform */}
-      <div className="flex items-start gap-2 px-4 pb-4">
+      <div className="flex items-start gap-0 px-4 pb-4">
         <UserSide user={user1} side="left" />
         <Waveform />
         <UserSide user={user2} side="right" />

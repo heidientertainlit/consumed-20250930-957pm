@@ -557,7 +557,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
   return (
     <>
-      <div className="bg-purple-50 rounded-2xl border border-purple-100 shadow-sm overflow-hidden mb-4">
+      <div className="bg-gray-50 rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
 
         {/* Header row */}
         <div className="flex items-center gap-1.5 px-4 pt-3 pb-2">
