@@ -601,6 +601,25 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
             <p className="text-gray-800 font-bold text-[16px] text-center">aligned with {featured.displayName.split(' ')[0]}</p>
           </div>
 
+          {/* Other overlaps — compact inline row */}
+          {overlaps.length > 0 && (
+            <div className="flex items-center gap-2.5 flex-wrap justify-center">
+              {overlaps.map((u) => (
+                <div key={u.displayName} className="flex items-center gap-1.5">
+                  <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]"
+                    style={{ width: 22, height: 22, background: u.color }}>
+                    {u.initials}
+                  </div>
+                  <span className="text-gray-500 text-[11px]">{u.displayName.split(' ')[0]}</span>
+                  <span className="text-gray-300 text-[11px] font-semibold">{u.pct}%</span>
+                </div>
+              ))}
+              <button onClick={() => setLocation("/friends")} className="text-purple-500 text-[11px] font-semibold hover:text-purple-600 transition-colors">
+                See all →
+              </button>
+            </div>
+          )}
+
           {/* Button */}
           <button
             onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
