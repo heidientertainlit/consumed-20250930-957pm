@@ -36,7 +36,7 @@ interface DnaClashFeedCardProps {
 function Waveform() {
   return (
     <div className="flex-1 flex items-start justify-center min-w-0 -mx-5">
-      <svg width="100%" height="40" viewBox="0 0 80 40" fill="none" preserveAspectRatio="none">
+      <svg width="100%" height="56" viewBox="0 0 80 56" fill="none" preserveAspectRatio="none">
         <defs>
           <linearGradient id="wave-left" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#a855f7" />
@@ -49,14 +49,14 @@ function Waveform() {
         </defs>
         {/* Left half — purple */}
         <path
-          d="M0,20 L5,20 L8,6 L11,34 L14,8 L17,32 L20,20 L23,4 L26,36 L29,14 L32,20 L35,20"
+          d="M0,28 L5,28 L8,14 L11,42 L14,16 L17,40 L20,28 L23,12 L26,44 L29,22 L32,28 L35,28"
           stroke="url(#wave-left)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
         />
         {/* VS label */}
-        <text x="40" y="24" textAnchor="middle" fontSize="9" fontWeight="800" fill="#9ca3af" letterSpacing="0.5">VS</text>
+        <text x="40" y="32" textAnchor="middle" fontSize="9" fontWeight="800" fill="#9ca3af" letterSpacing="0.5">VS</text>
         {/* Right half — pink */}
         <path
-          d="M45,20 L48,20 L51,8 L54,34 L57,10 L60,32 L63,20 L66,4 L69,38 L72,14 L75,20 L80,20"
+          d="M45,28 L48,28 L51,16 L54,42 L57,18 L60,40 L63,28 L66,12 L69,44 L72,22 L75,28 L80,28"
           stroke="url(#wave-right)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
         />
       </svg>
@@ -71,14 +71,14 @@ function UserSide({ user, side }: { user: ClashUser; side: 'left' | 'right' }) {
   return (
     <div className={`flex-1 flex flex-col gap-1.5 ${align}`}>
       {/* Avatar */}
-      <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-bold text-sm shrink-0"
+      <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center text-white font-bold text-base shrink-0"
         style={{ background: side === 'left' ? '#a855f7' : '#ec4899' }}>
         {user.avatar
           ? <img src={user.avatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           : user.initials || user.displayName[0]?.toUpperCase()}
       </div>
       {/* Name */}
-      <span className="text-gray-900 font-bold text-[14px] leading-tight">
+      <span className="text-gray-900 font-bold text-[16px] leading-tight">
         {user.displayName.split(' ')[0]}
       </span>
       {/* Stars */}
