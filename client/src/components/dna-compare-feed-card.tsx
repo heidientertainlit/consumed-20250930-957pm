@@ -549,7 +549,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
     fetchPersonalized();
   }, [session?.access_token, user?.id]);
 
-  const featured = dynFeatured ?? featuredProp ?? { displayName: 'Heidi', initials: 'HP', color: '#8b5cf6', pct: 71, tagline: 'You both love genre-spanning stories and thrilling narratives.' };
+  const featured = dynFeatured ?? featuredProp ?? { displayName: 'Heidi Peters Tagliaferri', initials: 'HP', color: '#8b5cf6', pct: 71, tagline: 'You both love genre-spanning stories and thrilling narratives.' };
   const overlaps = dynOverlaps.length > 0 ? dynOverlaps : (overlapsProp ?? [
     { displayName: 'Jeeppler', initials: 'J', color: '#a855f7', pct: 38 },
     { displayName: 'Jordan F.', initials: 'JF', color: '#ec4899', pct: 31 },
@@ -594,7 +594,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                   onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
                   className="mt-4 py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
                 >
-                  Compare with another friend
+                  Compare with a friend
                 </button>
               </>
             )}
@@ -673,7 +673,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
             onClick={() => session ? setSheetOpen(true) : undefined}
             className="mt-4 py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
           >
-            Compare with another friend
+            Compare with a friend
           </button>
         </div>
       </div>
