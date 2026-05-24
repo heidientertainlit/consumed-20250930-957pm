@@ -3511,11 +3511,8 @@ function CurrentlyConsumingFeedCard({
   );
 }
 
-function SwipeableCardStack({ posts, stackKey, activeIdx, onIndexChange, onLike, likedPosts, session, fetchComments, currentUserId, onDeletePost, onAddToList }: {
+function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments, currentUserId, onDeletePost, onAddToList }: {
   posts: any[];
-  stackKey: string;
-  activeIdx: number;
-  onIndexChange: (key: string, idx: number) => void;
   onLike: (id: string) => void;
   likedPosts: Set<string>;
   session: any;
@@ -3524,79 +3521,45 @@ function SwipeableCardStack({ posts, stackKey, activeIdx, onIndexChange, onLike,
   onDeletePost: (id: string) => void;
   onAddToList: (media: any) => void;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const touchStart = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const onStart = (e: TouchEvent) => {
-      touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    };
-    const onMove = (e: TouchEvent) => {
-      const dx = e.touches[0].clientX - touchStart.current.x;
-      const dy = e.touches[0].clientY - touchStart.current.y;
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) {
-        e.preventDefault();
-      }
-    };
-    const onEnd = (e: TouchEvent) => {
-      const dx = e.changedTouches[0].clientX - touchStart.current.x;
-      const dy = e.changedTouches[0].clientY - touchStart.current.y;
-      if (Math.abs(dx) < 35 || Math.abs(dy) > Math.abs(dx)) return;
-      const dir = dx < 0 ? 1 : -1;
-      onIndexChange(stackKey, Math.max(0, Math.min(posts.length - 1, activeIdx + dir)));
-    };
-    el.addEventListener('touchstart', onStart, { passive: true, capture: true });
-    el.addEventListener('touchmove', onMove, { passive: false, capture: true });
-    el.addEventListener('touchend', onEnd, { passive: true, capture: true });
-    return () => {
-      el.removeEventListener('touchstart', onStart, { capture: true } as any);
-      el.removeEventListener('touchmove', onMove, { capture: true } as any);
-      el.removeEventListener('touchend', onEnd, { capture: true } as any);
-    };
-  }, [stackKey, posts.length, activeIdx, onIndexChange]);
-
-  const { _isPromoted: _p, _promotedKey: _pk, ...activePost } = posts[activeIdx] || {};
-  const total = posts.length;
-
   return (
-    <div className="mb-6 px-2">
-      <div ref={containerRef} className="relative py-3 px-1">
-        {total >= 3 && (
-          <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ transform: 'rotate(-5deg) translate(-5px, 8px)', zIndex: 0, background: '#e8e8e8', boxShadow: '0 4px 12px rgba(0,0,0,0.10)' }} />
-        )}
-        {total >= 2 && (
-          <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ transform: 'rotate(-2.5deg) translate(-2px, 4px)', zIndex: 1, background: '#f3f3f3', boxShadow: '0 4px 14px rgba(0,0,0,0.10)' }} />
-        )}
-        <div className="relative" style={{ zIndex: 2, boxShadow: '0 8px 28px rgba(0,0,0,0.14)', borderRadius: '1rem' }}>
-          <UGCGroupCard
-            post={activePost as any}
-            onLike={onLike}
-            isLiked={likedPosts.has(activePost?.id)}
-            session={session}
-            fetchComments={fetchComments}
-            currentUserId={currentUserId}
-            onDeletePost={onDeletePost}
-            onAddToList={onAddToList}
-            forceNormal={true}
-          />
+    <div className="mb-6">
+      <div
+        style={{
+          overflowX: 'auto',
+          scrollSnapType: 'x mandatory',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
+      >
+        <div className="flex pl-3 pr-1">
+          {posts.map((rawPost: any, i: number) => {
+            const { _isPromoted: _p, _promotedKey: _pk, ...post } = rawPost;
+            return (
+              <div
+                key={post.id || i}
+                className="shrink-0 pr-3"
+                style={{ scrollSnapAlign: 'start', width: 'calc(100% - 32px)' }}
+              >
+                <UGCGroupCard
+                  post={post as any}
+                  onLike={onLike}
+                  isLiked={likedPosts.has(post?.id)}
+                  session={session}
+                  fetchComments={fetchComments}
+                  currentUserId={currentUserId}
+                  onDeletePost={onDeletePost}
+                  onAddToList={onAddToList}
+                  forceNormal={true}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
-      <div className="flex flex-col items-center gap-1 mt-2">
-        <div className="flex items-center gap-1.5">
-          {posts.map((_: any, di: number) => (
-            <button
-              key={di}
-              onClick={() => onIndexChange(stackKey, di)}
-              className={`rounded-full transition-all duration-200 ${di === activeIdx ? 'w-4 h-1.5 bg-purple-500' : 'w-1.5 h-1.5 bg-gray-300'}`}
-            />
-          ))}
-        </div>
-        {activeIdx === 0 && total > 1 && (
-          <p className="text-[10px] text-gray-400 tracking-wide">swipe to see more</p>
-        )}
-      </div>
+      {posts.length > 1 && (
+        <p className="text-center text-[10px] text-gray-400 tracking-wide mt-1.5">swipe to see more</p>
+      )}
     </div>
   );
 }
@@ -3629,8 +3592,6 @@ export default function Feed() {
   const [expandedAddRecInput, setExpandedAddRecInput] = useState<Set<string>>(new Set()); // Track recs posts with add input expanded
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
-  const [stackIndices, setStackIndices] = useState<Record<string, number>>({});
-  const swipeTouchStart = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const likedPostsInitialized = useRef(false); // Track if we've done initial sync
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const [commentVotes, setCommentVotes] = useState<Map<string, 'up' | 'down'>>(new Map()); // Track user's comment votes
@@ -4930,9 +4891,6 @@ export default function Feed() {
   // ───────────────────────────────────────────────────────────────────────────────────
   const renderRatingCarousel = (_carouselIndex: number) => null;
 
-  const handleStackIndexChange = useCallback((key: string, idx: number) => {
-    setStackIndices(prev => ({ ...prev, [key]: idx }));
-  }, []);
 
   const renderRemainingPosts = () => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
@@ -4970,9 +4928,6 @@ export default function Feed() {
           <SwipeableCardStack
             key={stackKey}
             posts={rawStacks[nextStackSlot]}
-            stackKey={stackKey}
-            activeIdx={stackIndices[stackKey] || 0}
-            onIndexChange={handleStackIndexChange}
             onLike={handleLike}
             likedPosts={likedPosts}
             session={session}
@@ -4997,9 +4952,6 @@ export default function Feed() {
         <SwipeableCardStack
           key={stackKey}
           posts={rawStacks[nextStackSlot]}
-          stackKey={stackKey}
-          activeIdx={stackIndices[stackKey] || 0}
-          onIndexChange={handleStackIndexChange}
           onLike={handleLike}
           likedPosts={likedPosts}
           session={session}
