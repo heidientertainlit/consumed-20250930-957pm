@@ -565,68 +565,72 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           <span className="text-[11px] font-bold text-purple-500 uppercase tracking-widest">Compare DNA</span>
         </div>
 
-        {/* Main content — centered hero layout */}
-        <div className="px-4 pb-5 flex flex-col items-center gap-3">
-          {/* Avatars + waveform */}
-          <div className="flex items-end gap-0">
-            <div className="flex flex-col items-center gap-1">
-              <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 44, height: 44, fontSize: 14 }}>
-                Me
+        {/* Main content — two column layout */}
+        <div className="px-4 pb-5 flex gap-4 items-start">
+          {/* Left — avatars + hero number */}
+          <div className="flex flex-col gap-2 flex-1 min-w-0">
+            {/* Avatars + waveform */}
+            <div className="flex items-end gap-0">
+              <div className="flex flex-col items-center gap-1">
+                <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 38, height: 38, fontSize: 12 }}>
+                  Me
+                </div>
+                <span className="text-gray-400 text-[10px]">You</span>
               </div>
-              <span className="text-gray-500 text-[11px] font-medium">You</span>
-            </div>
-            <svg width="56" height="38" viewBox="0 0 44 38" fill="none" className="shrink-0 mb-3">
-              <defs>
-                <linearGradient id="cmp-wave-card" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#a855f7" />
-                  <stop offset="100%" stopColor="#818cf8" />
-                </linearGradient>
-              </defs>
-              <path d="M0,19 Q4,8 8,19 Q12,30 16,19 Q20,8 22,19 Q24,30 28,19 Q32,8 36,19 Q40,30 44,19"
-                stroke="url(#cmp-wave-card)" strokeWidth="2" strokeLinecap="round" fill="none" />
-            </svg>
-            <div className="flex flex-col items-center gap-1">
-              <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white" style={{ width: 44, height: 44, background: featured.color, fontSize: 14 }}>
-                {featured.initials}
+              <svg width="44" height="34" viewBox="0 0 44 38" fill="none" className="shrink-0 mb-3">
+                <defs>
+                  <linearGradient id="cmp-wave-card" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#a855f7" />
+                    <stop offset="100%" stopColor="#818cf8" />
+                  </linearGradient>
+                </defs>
+                <path d="M0,19 Q4,8 8,19 Q12,30 16,19 Q20,8 22,19 Q24,30 28,19 Q32,8 36,19 Q40,30 44,19"
+                  stroke="url(#cmp-wave-card)" strokeWidth="2" strokeLinecap="round" fill="none" />
+              </svg>
+              <div className="flex flex-col items-center gap-1">
+                <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white" style={{ width: 38, height: 38, background: featured.color, fontSize: 12 }}>
+                  {featured.initials}
+                </div>
+                <span className="text-gray-400 text-[10px]">{featured.displayName.split(' ')[0]}</span>
               </div>
-              <span className="text-gray-500 text-[11px] font-medium">{featured.displayName.split(' ')[0]}</span>
             </div>
+            {/* Big number */}
+            <div>
+              <span className="font-extrabold leading-none block" style={{ fontSize: 52, color: '#a855f7' }}>
+                {featured.pct}%
+              </span>
+              <p className="text-gray-700 font-semibold text-[13px] mt-0.5">aligned with {featured.displayName.split(' ')[0]}</p>
+            </div>
+            {/* Button */}
+            <button
+              onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
+              className="mt-1 py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
+            >
+              Compare yours
+            </button>
           </div>
 
-          {/* Hero percentage */}
-          <div className="flex flex-col items-center gap-0.5">
-            <span className="font-extrabold leading-none" style={{ fontSize: 52, color: '#a855f7' }}>
-              {featured.pct}%
-            </span>
-            <p className="text-gray-800 font-bold text-[16px] text-center">aligned with {featured.displayName.split(' ')[0]}</p>
-          </div>
-
-          {/* Other overlaps — compact inline row */}
+          {/* Right — other overlaps stacked */}
           {overlaps.length > 0 && (
-            <div className="flex items-center gap-2.5 flex-wrap justify-center">
+            <div className="flex flex-col gap-2 pt-1 min-w-[110px]">
+              <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Also aligned</span>
               {overlaps.map((u) => (
-                <div key={u.displayName} className="flex items-center gap-1.5">
+                <div key={u.displayName} className="flex items-center gap-2">
                   <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]"
-                    style={{ width: 22, height: 22, background: u.color }}>
+                    style={{ width: 24, height: 24, background: u.color }}>
                     {u.initials}
                   </div>
-                  <span className="text-gray-500 text-[11px]">{u.displayName.split(' ')[0]}</span>
-                  <span className="text-gray-300 text-[11px] font-semibold">{u.pct}%</span>
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-gray-700 text-[12px] font-medium">{u.displayName.split(' ')[0]}</span>
+                    <span className="text-purple-400 text-[11px] font-bold">{u.pct}%</span>
+                  </div>
                 </div>
               ))}
-              <button onClick={() => setLocation("/friends")} className="text-purple-500 text-[11px] font-semibold hover:text-purple-600 transition-colors">
+              <button onClick={() => setLocation("/friends")} className="text-gray-400 text-[10px] font-semibold hover:text-gray-600 transition-colors text-left">
                 See all →
               </button>
             </div>
           )}
-
-          {/* Button */}
-          <button
-            onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
-            className="w-full py-3 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
-          >
-            Compare your DNA with a friend
-          </button>
         </div>
       </div>
 
