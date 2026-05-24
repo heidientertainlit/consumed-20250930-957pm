@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { GripVertical, Heart, MessageCircle, Trash2, BarChart2, Users, Flag, Loader2 } from "lucide-react";
+import { GripVertical, Heart, MessageCircle, Trash2, BarChart2, Flag, Loader2 } from "lucide-react";
 import { ReportSheet } from "@/components/report-sheet";
 import {
   AlertDialog,
@@ -274,40 +274,8 @@ export default function RankFeedCard({
       </AlertDialog>
 
       <div className="p-4">
-        {/* Type pills */}
-        <div className="flex items-center gap-2 mb-3">
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">
-            <BarChart2 size={9} />
-            RANK
-          </span>
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
-            <Users size={10} />
-            Community
-          </span>
-          {createdAt && (
-            <span className="text-xs text-gray-400 ml-auto">{formatTimeAgo(createdAt)}</span>
-          )}
-          {isOwner && (
-            <button onClick={() => setShowDeleteDialog(true)} className="p-1 hover:bg-red-50 rounded-full transition-colors ml-1" data-testid={`delete-rank-${rank.id}`}>
-              <Trash2 size={14} className="text-gray-300 hover:text-red-400 transition-colors" />
-            </button>
-          )}
-          {!isOwner && (
-            <button onClick={() => setReportPostOpen(true)} className="p-1 hover:bg-red-50 rounded-full transition-colors ml-1" title="Report">
-              <Flag size={13} className="text-gray-400" />
-            </button>
-          )}
-        </div>
-
-        {/* Author */}
-        <div className="flex items-center gap-2 mb-3">
-          <Link href={`/user/${author.id}`}>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold cursor-pointer flex-shrink-0 overflow-hidden">
-              {author.profile_image_url
-                ? <img src={author.profile_image_url} alt="" className="w-full h-full object-cover" />
-                : (author.display_name || author.user_name || 'U')[0].toUpperCase()}
-            </div>
-          </Link>
+        {/* Header: author + rank label + timestamp */}
+        <div className="flex items-center justify-between mb-3">
           <div>
             <Link href={`/user/${author.id}`}>
               <span className="text-sm font-medium text-gray-900 hover:text-purple-600 cursor-pointer">
@@ -315,6 +283,23 @@ export default function RankFeedCard({
               </span>
             </Link>
             <span className="text-xs text-gray-500 ml-2">shared a ranked list</span>
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">
+              <BarChart2 size={9} />
+              Rank
+            </span>
+            {createdAt && <span className="text-xs text-gray-400">{formatTimeAgo(createdAt)}</span>}
+            {isOwner && (
+              <button onClick={() => setShowDeleteDialog(true)} className="p-1 hover:bg-red-50 rounded-full transition-colors" data-testid={`delete-rank-${rank.id}`}>
+                <Trash2 size={14} className="text-gray-300 hover:text-red-400 transition-colors" />
+              </button>
+            )}
+            {!isOwner && (
+              <button onClick={() => setReportPostOpen(true)} className="p-1 hover:bg-red-50 rounded-full transition-colors" title="Report">
+                <Flag size={13} className="text-gray-400" />
+              </button>
+            )}
           </div>
         </div>
 
