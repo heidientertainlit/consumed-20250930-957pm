@@ -574,12 +574,6 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
               <>
                 <p className="text-gray-500 text-[14px] font-medium leading-snug">No friends to compare with yet.</p>
                 <p className="text-gray-400 text-[12px] mt-0.5">Add or invite friends to see how your DNA stacks up.</p>
-                <button
-                  onClick={() => setLocation("/friends")}
-                  className="mt-4 py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
-                >
-                  Add or invite friends
-                </button>
               </>
             ) : (
               <>
@@ -589,13 +583,6 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                 </span>
                 <p className="text-gray-400 text-[12px] font-medium mt-0.5">You're aligned with</p>
                 <p className="text-gray-700 text-[14px] font-semibold -mt-0.5">{featured.displayName}</p>
-                {/* Button */}
-                <button
-                  onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
-                  className="mt-4 block w-full py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
-                >
-                  Compare with a friend
-                </button>
               </>
             )}
           </div>
@@ -620,6 +607,25 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                 See all →
               </button>
             </div>
+          )}
+        </div>
+
+        {/* Button — full width below both columns */}
+        <div className="px-4 pb-4">
+          {noFriends && !featuredProp ? (
+            <button
+              onClick={() => setLocation("/friends")}
+              className="block w-full py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
+            >
+              Add or invite friends
+            </button>
+          ) : (
+            <button
+              onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
+              className="block w-full py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
+            >
+              Compare with a friend
+            </button>
           )}
         </div>
 
@@ -728,7 +734,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
         </div>
 
         {/* Main content — two column layout, mirrors static card */}
-        <div className="px-4 pb-5 flex gap-8 items-start">
+        <div className="px-4 pb-3 flex gap-8 items-start">
           {/* Left — hero number */}
           <div className="flex flex-col gap-1 flex-1 min-w-0">
             <span className="font-extrabold leading-none block" style={{ fontSize: 52, color: '#a855f7' }}>
@@ -736,12 +742,6 @@ export function DnaComparePostCard({ item }: { item: any }) {
             </span>
             <p className="text-gray-400 text-[12px] font-medium mt-0.5">{posterName.split(' ')[0]} is aligned with</p>
             <p className="text-gray-700 text-[14px] font-semibold -mt-0.5">{friendName}</p>
-            <button
-              onClick={() => session ? setSheetOpen(true) : undefined}
-              className="mt-4 block w-full py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
-            >
-              Compare with a friend
-            </button>
           </div>
 
           {/* Right — poster's other friend alignments, identical to static card */}
@@ -762,6 +762,16 @@ export function DnaComparePostCard({ item }: { item: any }) {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Button — full width below both columns */}
+        <div className="px-4 pb-4">
+          <button
+            onClick={() => session ? setSheetOpen(true) : undefined}
+            className="block w-full py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
+          >
+            Compare with a friend
+          </button>
         </div>
 
         {/* Action bar — identical to static card */}
