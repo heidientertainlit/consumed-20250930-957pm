@@ -557,20 +557,19 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
   return (
     <>
-      <div
-        className="relative rounded-2xl overflow-hidden mb-4 shadow-lg"
-        style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #1a1050 45%, #1e1460 100%)" }}
-      >
-        <div className="p-4 flex flex-col gap-4">
-          {/* Label */}
-          <div className="flex items-center gap-1.5">
-            <Dna size={11} className="text-indigo-300 shrink-0" />
-            <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">Compare DNA</span>
-          </div>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
 
-          {/* Main content: left = text, right = overlaps list */}
-          <div className="flex gap-3 -mt-1">
-            {/* Left */}
+        {/* Header row */}
+        <div className="flex items-center gap-1.5 px-4 pt-3 pb-2">
+          <Dna size={11} className="text-purple-500 shrink-0" />
+          <span className="text-[11px] font-bold text-purple-500 uppercase tracking-widest">Compare DNA</span>
+        </div>
+
+        {/* Main content */}
+        <div className="px-4 pb-4 flex flex-col gap-4">
+          {/* Left + right columns */}
+          <div className="flex gap-3">
+            {/* Left: avatars + score + tagline */}
             <div className="flex-1 min-w-0 flex flex-col gap-2">
               <div className="flex items-center gap-0">
                 <div
@@ -602,19 +601,19 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                 </div>
               </div>
               <div>
-                <p className="text-white font-extrabold leading-tight" style={{ fontSize: 18 }}>
-                  <span style={{ color: "#c084fc" }}>{featured.pct}%</span> aligned with
+                <p className="text-gray-900 font-extrabold leading-tight" style={{ fontSize: 18 }}>
+                  <span style={{ color: "#a855f7" }}>{featured.pct}%</span> aligned with
                 </p>
-                <p className="text-white font-extrabold leading-tight" style={{ fontSize: 18 }}>
+                <p className="text-gray-900 font-extrabold leading-tight" style={{ fontSize: 18 }}>
                   {featured.displayName}
                 </p>
               </div>
-              <p className="text-white/55 text-[11px] leading-snug">{featured.tagline}</p>
+              <p className="text-gray-400 text-[11px] leading-snug">{featured.tagline}</p>
             </div>
 
             {/* Right: overlap list */}
             <div className="flex flex-col gap-1 pt-1 min-w-[110px]">
-              <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest mb-0.5">Top overlaps</span>
+              <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-0.5">Top overlaps</span>
               {overlaps.map((u) => (
                 <div key={u.displayName} className="flex items-center gap-2">
                   <div
@@ -623,44 +622,39 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                   >
                     {u.initials}
                   </div>
-                  <span className="text-white/70 text-[11px] truncate flex-1">{u.displayName}</span>
-                  <span className="text-white/50 text-[11px] font-semibold shrink-0">{u.pct}%</span>
+                  <span className="text-gray-700 text-[11px] truncate flex-1">{u.displayName}</span>
+                  <span className="text-gray-400 text-[11px] font-semibold shrink-0">{u.pct}%</span>
                 </div>
               ))}
               <button
                 onClick={() => setLocation("/friends")}
-                className="flex items-center gap-0.5 text-purple-400 text-[11px] font-semibold mt-1 hover:text-purple-300 transition-colors"
+                className="flex items-center gap-0.5 text-purple-500 text-[11px] font-semibold mt-1 hover:text-purple-600 transition-colors"
               >
-                See all Friends <ArrowRight size={11} />
+                See all <ArrowRight size={11} />
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Divider */}
-          <div className="h-px bg-white/[0.08]" />
-
-          {/* Two CTA buttons */}
-          <div className="flex flex-col gap-2 -mt-1">
-            <button
-              onClick={() => setLocation("/entertainment-dna")}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-white/15 text-white text-[12px] font-semibold hover:bg-white/10 transition-colors"
-              style={{ background: "rgba(255,255,255,0.06)" }}
-            >
-              <span>What's your entertainment DNA?</span>
-              <span className="text-purple-400 text-[11px] font-bold shrink-0 ml-2">Take the quiz →</span>
-            </button>
-            <button
-              onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
-              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-white/15 text-white text-[12px] font-semibold hover:bg-white/10 transition-colors"
-              style={{ background: "rgba(255,255,255,0.06)" }}
-            >
-              <span className="flex items-center gap-2">
-                <Users size={13} className="text-indigo-300 shrink-0" />
-                Compare your DNA with a friend
-              </span>
-              <ArrowRight size={13} className="text-indigo-300 shrink-0 ml-2" />
-            </button>
-          </div>
+        {/* Action bar */}
+        <div className="border-t border-gray-100 flex flex-col divide-y divide-gray-100">
+          <button
+            onClick={() => setLocation("/entertainment-dna")}
+            className="w-full flex items-center justify-between px-4 py-2.5 text-[12px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <span>What's your entertainment DNA?</span>
+            <span className="text-purple-500 text-[11px] font-bold shrink-0 ml-2">Take the quiz →</span>
+          </button>
+          <button
+            onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
+            className="w-full flex items-center justify-between px-4 py-2.5 text-[12px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <Users size={13} className="text-purple-400 shrink-0" />
+              Compare your DNA with a friend
+            </span>
+            <ArrowRight size={13} className="text-purple-400 shrink-0 ml-2" />
+          </button>
         </div>
       </div>
 
