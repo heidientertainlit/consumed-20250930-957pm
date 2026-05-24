@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Zap, Check, MessageCircle, Send, Trash2, Sparkles } from "lucide-react";
+import { Zap, MessageCircle, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -32,89 +32,64 @@ interface DnaClashFeedCardProps {
   poolId?: string;
 }
 
-// ─── Avatar card matching the screenshot design ───────────────────────────────
-function UserCard({
-  user,
-  isMyVote,
-  onVote,
-  hasVoted,
-  side,
-}: {
-  user: ClashUser;
-  isMyVote: boolean;
-  onVote: () => void;
-  hasVoted: boolean;
-  side: 'left' | 'right';
-}) {
-  const accentColor = side === 'left' ? '#a855f7' : '#6366f1';
+// ─── Two-colored waveform ─────────────────────────────────────────────────────
+function Waveform() {
   return (
-    <button
-      onClick={onVote}
-      disabled={hasVoted}
-      className="flex-1 flex flex-col gap-2.5 p-2 text-left transition-all active:scale-[0.97]"
-    >
-      {/* Name row */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-gray-900 font-bold text-[14px] leading-tight truncate">
-          {user.displayName.split(' ')[0]}
-        </span>
-        {isMyVote && <Check size={11} className="text-purple-500 shrink-0 ml-auto" />}
-      </div>
-
-      {/* Stars */}
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map(s => (
-          <span key={s} style={{ fontSize: 13, lineHeight: 1, color: s <= user.rating ? accentColor : '#e2e2e8' }}>
-            {s <= user.rating ? '★' : '★'}
-          </span>
-        ))}
-      </div>
-
-      {/* DNA label */}
-      <div className="flex items-center gap-1">
-        <Sparkles size={9} className="text-purple-400 shrink-0" />
-        <span className="text-gray-400 text-[10px] font-medium leading-none">{user.dnaLabel}</span>
-      </div>
-
-      {/* Vote pill */}
-      <div
-        className="mt-1 self-start px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all"
-        style={{
-          background: isMyVote ? accentColor : 'transparent',
-          border: `1.5px solid ${isMyVote ? accentColor : '#d1d5db'}`,
-          color: isMyVote ? '#fff' : '#6b7280',
-        }}
-      >
-        {isMyVote ? '✓ Your pick' : `Side with ${user.displayName.split(' ')[0]}`}
-      </div>
-    </button>
+    <div className="shrink-0 flex items-center justify-center" style={{ width: 80 }}>
+      <svg width="80" height="52" viewBox="0 0 80 52" fill="none">
+        <defs>
+          <linearGradient id="wave-left" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#a855f7" />
+            <stop offset="100%" stopColor="#c084fc" />
+          </linearGradient>
+          <linearGradient id="wave-right" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#f472b6" />
+            <stop offset="100%" stopColor="#ec4899" />
+          </linearGradient>
+        </defs>
+        {/* Left half — purple */}
+        <path
+          d="M0,26 L5,26 L8,10 L11,42 L14,14 L17,38 L20,26 L23,8 L26,44 L29,18 L32,26 L35,26"
+          stroke="url(#wave-left)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        />
+        {/* VS label */}
+        <text x="40" y="30" textAnchor="middle" fontSize="9" fontWeight="800" fill="#9ca3af" letterSpacing="0.5">VS</text>
+        {/* Right half — pink */}
+        <path
+          d="M45,26 L48,26 L51,12 L54,40 L57,16 L60,36 L63,26 L66,6 L69,46 L72,20 L75,26 L80,26"
+          stroke="url(#wave-right)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        />
+      </svg>
+    </div>
   );
 }
 
-// ─── Animated waveform between the two cards ──────────────────────────────────
-function Waveform() {
+// ─── User side ────────────────────────────────────────────────────────────────
+function UserSide({ user, side }: { user: ClashUser; side: 'left' | 'right' }) {
+  const starColor = side === 'left' ? '#a855f7' : '#ec4899';
+  const align = side === 'left' ? 'items-start' : 'items-end text-right';
   return (
-    <svg width="72" height="52" viewBox="0 0 72 52" fill="none" className="shrink-0">
-      <defs>
-        <filter id="clash-glow2">
-          <feGaussianBlur stdDeviation="1.8" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-        <linearGradient id="clash-wave2" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#3b82f6" />
-          <stop offset="50%" stopColor="#7c3aed" />
-          <stop offset="100%" stopColor="#a855f7" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M0,26 L6,26 L9,8 L12,44 L15,12 L18,40 L22,26 L26,4 L29,48 L32,14 L36,26 L39,6 L42,46 L45,16 L50,26 L54,10 L57,42 L60,18 L64,30 L68,26 L72,26"
-        stroke="url(#clash-wave2)"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#clash-glow2)"
-      />
-    </svg>
+    <div className={`flex-1 flex flex-col gap-1.5 ${align}`}>
+      {/* Avatar */}
+      <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-bold text-sm shrink-0"
+        style={{ background: side === 'left' ? '#a855f7' : '#ec4899' }}>
+        {user.avatar
+          ? <img src={user.avatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          : user.initials || user.displayName[0]?.toUpperCase()}
+      </div>
+      {/* Name */}
+      <span className="text-gray-900 font-bold text-[14px] leading-tight">
+        {user.displayName.split(' ')[0]}
+      </span>
+      {/* Stars */}
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map(s => (
+          <span key={s} style={{ fontSize: 13, color: s <= user.rating ? starColor : '#e2e2e8' }}>★</span>
+        ))}
+      </div>
+      {/* DNA label */}
+      <span className="text-gray-400 text-[10px] font-medium">{user.dnaLabel}</span>
+    </div>
   );
 }
 
@@ -161,7 +136,6 @@ export default function DnaClashFeedCard({
   const clashKey = `clash_notified_${user1.username}_${user2.username}_${mediaTitle}`;
   const isInClash = currentUserId && (currentUserId === user1.userId || currentUserId === user2.userId);
 
-  // Load live vote counts + check if current user already voted
   useEffect(() => {
     if (!poolId) return;
     async function loadVotes() {
@@ -182,7 +156,6 @@ export default function DnaClashFeedCard({
     loadVotes();
   }, [poolId, currentUserId]);
 
-  // "You're featured" notification — once per session
   useEffect(() => {
     if (!isInClash || !currentUserId || !activeSession) return;
     if (sessionStorage.getItem(clashKey)) return;
@@ -195,7 +168,6 @@ export default function DnaClashFeedCard({
     );
   }, [isInClash, currentUserId]);
 
-  // ── Comments ────────────────────────────────────────────────────────────────
   const { data: commentsData } = useQuery({
     queryKey: ['/api/clash-comments', poolId],
     queryFn: async () => {
@@ -214,19 +186,13 @@ export default function DnaClashFeedCard({
       if (!activeSession?.access_token || !poolId) return;
       const res = await fetch(`${SUPABASE_URL}/functions/v1/prediction-comments`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${activeSession.access_token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `Bearer ${activeSession.access_token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ pool_id: poolId, content }),
       });
       if (!res.ok) throw new Error('Failed to post comment');
       return res.json();
     },
-    onSuccess: () => {
-      setCommentText('');
-      qc.invalidateQueries({ queryKey: ['/api/clash-comments', poolId] });
-    },
+    onSuccess: () => { setCommentText(''); qc.invalidateQueries({ queryKey: ['/api/clash-comments', poolId] }); },
     onError: () => toast({ title: 'Failed to post comment', variant: 'destructive' }),
   });
 
@@ -242,26 +208,15 @@ export default function DnaClashFeedCard({
     onSuccess: () => qc.invalidateQueries({ queryKey: ['/api/clash-comments', poolId] }),
   });
 
-  const handlePostComment = () => {
-    const trimmed = commentText.trim();
-    if (!trimmed || commentMutation.isPending) return;
-    commentMutation.mutate(trimmed);
-  };
-
-  // ── Voting ──────────────────────────────────────────────────────────────────
   const handleVote = async (username: string) => {
     if (voted || !activeSession) return;
     setVoted(username);
     setLiveCounts(prev => ({ ...prev, [username]: (prev[username] || 0) + 1 }));
-
     if (poolId && activeSession?.access_token) {
       try {
         const res = await fetch(`${SUPABASE_URL}/functions/v1/predictions/predict`, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${activeSession.access_token}`,
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Authorization': `Bearer ${activeSession.access_token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ pool_id: poolId, prediction: username }),
         });
         if (!res.ok) {
@@ -275,7 +230,6 @@ export default function DnaClashFeedCard({
         return;
       }
     }
-
     const votedFor = username === user1.username ? user1 : user2;
     const votedAgainst = username === user1.username ? user2 : user1;
     await Promise.all([
@@ -307,26 +261,25 @@ export default function DnaClashFeedCard({
   const pct1 = total > 0 ? Math.round((v1 / total) * 100) : 50;
   const pct2 = 100 - pct1;
   const commentCount = commentsData?.comments?.length ?? 0;
+  const winnerName = pct1 >= pct2 ? user1.displayName.split(' ')[0] : user2.displayName.split(' ')[0];
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
 
-      {/* White header row — matches rate card structure */}
+      {/* Header */}
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
         <div className="flex items-center gap-1.5">
           <Zap size={11} className="text-purple-500 shrink-0" fill="currentColor" />
           <span className="text-[11px] font-bold text-purple-500 uppercase tracking-widest">DNA Clash</span>
         </div>
-        <div className="flex items-center gap-2">
-          {isInClash && !showOptOutConfirm && (
-            <button onClick={() => setShowOptOutConfirm(true)} className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors">
-              Opt out
-            </button>
-          )}
-        </div>
+        {isInClash && !showOptOutConfirm && (
+          <button onClick={() => setShowOptOutConfirm(true)} className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors">
+            Opt out
+          </button>
+        )}
       </div>
 
-      {/* Opt-out confirm — white bg */}
+      {/* Opt-out confirm */}
       {showOptOutConfirm && (
         <div className="mx-4 mb-2 flex items-center justify-between rounded-xl px-3 py-2.5 gap-2 bg-gray-50 border border-gray-200">
           <span className="text-gray-600 text-[11px] leading-snug">Remove yourself from DNA Clash cards?</span>
@@ -343,60 +296,55 @@ export default function DnaClashFeedCard({
         </div>
       )}
 
-      {/* Content */}
-      <div className="px-4 pb-3 flex flex-col gap-3">
-
-        {/* Headline */}
-        <div>
-          <p className="text-gray-900 font-extrabold text-[17px] leading-tight">Completely different takes.</p>
-          <p className="text-gray-400 text-[13px] font-medium mt-0.5">on {mediaTitle}</p>
-        </div>
-
-        {/* Two user cards + waveform */}
-        <div className="flex items-center gap-1">
-          <UserCard user={user1} isMyVote={voted === user1.username} onVote={() => handleVote(user1.username)} hasVoted={!!voted} side="left" />
-          <Waveform />
-          <UserCard user={user2} isMyVote={voted === user2.username} onVote={() => handleVote(user2.username)} hasVoted={!!voted} side="right" />
-        </div>
-
-        {/* Which side CTA — pre-vote */}
-        {!voted && (
-          <p className="text-gray-400 text-[10px] font-semibold text-center uppercase tracking-widest -mt-1">
-            Tap a card — which side are you on?
-          </p>
-        )}
-
-        {/* Vote bars — post-vote */}
-        {voted && (
-          <div className="flex flex-col gap-1.5">
-            {[{ u: user1, pct: pct1 }, { u: user2, pct: pct2 }].map(({ u, pct }) => {
-              const isMine = voted === u.username;
-              const barColor = isMine ? '#a855f7' : '#6366f1';
-              return (
-                <div key={u.username} className="flex items-center gap-2">
-                  {isMine && <Check size={9} className="text-purple-500 shrink-0" />}
-                  <span className={`text-[11px] font-semibold w-[70px] truncate shrink-0 ${isMine ? 'text-purple-600' : 'text-gray-400'}`}
-                    style={!isMine ? { marginLeft: 13 } : {}}>
-                    {u.displayName.split(' ')[0]}
-                  </span>
-                  <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-gray-100">
-                    <div className="h-full rounded-full transition-all duration-600"
-                      style={{ width: `${pct}%`, background: barColor }} />
-                  </div>
-                  <span className={`text-[11px] font-bold w-7 text-right shrink-0 ${isMine ? 'text-purple-600' : 'text-gray-400'}`}>
-                    {pct}%
-                  </span>
-                </div>
-              );
-            })}
-            <p className="text-gray-400 text-[10px] text-center">{total} {total === 1 ? 'vote' : 'votes'}</p>
-          </div>
-        )}
-
+      {/* Headline */}
+      <div className="px-4 pb-3">
+        <p className="text-gray-900 font-extrabold text-[18px] leading-tight">Completely different takes.</p>
+        <p className="text-gray-400 text-[13px] font-medium mt-0.5">on {mediaTitle}</p>
       </div>
 
-      {/* White action bar — matches rate card */}
-      <div className="flex items-center gap-3 px-4 py-2.5 border-t border-gray-100">
+      {/* Two sides + waveform */}
+      <div className="flex items-start gap-2 px-4 pb-4">
+        <UserSide user={user1} side="left" />
+        <Waveform />
+        <UserSide user={user2} side="right" />
+      </div>
+
+      {/* Vote buttons */}
+      {!voted ? (
+        <div className="flex gap-2 px-4 pb-4">
+          <button
+            onClick={() => handleVote(user1.username)}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all active:scale-[0.97]"
+            style={{ background: '#a855f7' }}
+          >
+            I'm with {user1.displayName.split(' ')[0]}
+          </button>
+          <button
+            onClick={() => handleVote(user2.username)}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all active:scale-[0.97]"
+            style={{ background: '#ec4899' }}
+          >
+            I'm with {user2.displayName.split(' ')[0]}
+          </button>
+        </div>
+      ) : (
+        <div className="px-4 pb-4 flex flex-col gap-2">
+          {/* Result bars */}
+          {[{ u: user1, pct: pct1, color: '#a855f7' }, { u: user2, pct: pct2, color: '#ec4899' }].map(({ u, pct, color }) => (
+            <div key={u.username} className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold w-16 truncate shrink-0 text-gray-600">{u.displayName.split(' ')[0]}</span>
+              <div className="flex-1 h-2 rounded-full overflow-hidden bg-gray-100">
+                <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+              </div>
+              <span className="text-[11px] font-bold w-7 text-right shrink-0 text-gray-700">{pct}%</span>
+            </div>
+          ))}
+          <p className="text-gray-400 text-[10px] text-center mt-0.5">{total} {total === 1 ? 'vote' : 'votes'}</p>
+        </div>
+      )}
+
+      {/* Action bar */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-100">
         <button
           onClick={() => setShowComments(s => !s)}
           className={`flex items-center gap-1.5 transition-colors ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-gray-600'}`}
@@ -404,9 +352,14 @@ export default function DnaClashFeedCard({
           <MessageCircle size={15} fill={showComments ? 'currentColor' : 'none'} />
           <span className="text-[12px] font-medium">{commentCount > 0 ? commentCount : 'Debate'}</span>
         </button>
+        {voted && total > 0 && (
+          <span className="text-[11px] font-semibold text-purple-500">
+            {pct1 >= pct2 ? pct1 : pct2}% sided with {winnerName}
+          </span>
+        )}
       </div>
 
-      {/* Comments section — white bg */}
+      {/* Comments */}
       {showComments && (
         <div className="flex flex-col gap-3 px-4 pt-3 pb-4 border-t border-gray-100">
           {(commentsData?.comments || []).length === 0 ? (
@@ -422,11 +375,9 @@ export default function DnaClashFeedCard({
                     <span className="text-purple-600 text-[11px] font-semibold mr-1.5">{c.username}</span>
                     <span className="text-gray-800 text-[13px] break-words leading-snug">{c.content}</span>
                   </div>
-                  {c.user_id === (activeSession?.user?.id) && (
-                    <button
-                      onClick={() => deleteCommentMutation.mutate(String(c.id))}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-400 transition-all shrink-0"
-                    >
+                  {c.user_id === activeSession?.user?.id && (
+                    <button onClick={() => deleteCommentMutation.mutate(String(c.id))}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-400 transition-all shrink-0">
                       <Trash2 size={12} />
                     </button>
                   )}
@@ -439,15 +390,13 @@ export default function DnaClashFeedCard({
               <input
                 value={commentText}
                 onChange={e => setCommentText(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePostComment(); } }}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commentMutation.mutate(commentText.trim()); } }}
                 placeholder="Add your take…"
                 className="flex-1 text-[13px] text-gray-800 bg-transparent outline-none placeholder:text-gray-400"
               />
-              <button
-                onClick={handlePostComment}
+              <button onClick={() => commentMutation.mutate(commentText.trim())}
                 disabled={!commentText.trim() || commentMutation.isPending}
-                className="p-1.5 rounded-lg transition-all disabled:opacity-30 shrink-0 bg-purple-500"
-              >
+                className="p-1.5 rounded-lg transition-all disabled:opacity-30 shrink-0 bg-purple-500">
                 <Send size={12} className="text-white" />
               </button>
             </div>
