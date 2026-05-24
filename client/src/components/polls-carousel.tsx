@@ -56,6 +56,8 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [containerHeight, setContainerHeight] = useState<number | undefined>(undefined);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<Record<string, string>>({});
   const [votedPolls, setVotedPolls] = useState<Record<string, { vote: string; stats: Record<string, number> }>>({});
@@ -383,6 +385,19 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
     return today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
   }, []);
 
+  useEffect(() => {
+    const updateHeight = () => {
+      const el = slideRefs.current[currentIndex];
+      if (el) setContainerHeight(el.offsetHeight);
+    };
+    updateHeight();
+    const el = slideRefs.current[currentIndex];
+    if (!el) return;
+    const ro = new ResizeObserver(updateHeight);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [currentIndex, votedPolls]);
+
   if (!session) return null;
   if (isLoading || !votedLoaded) {
     return (
@@ -422,13 +437,13 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
         </div>
       </div>
 
-      <div ref={scrollRef} onScroll={handleScroll} className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1">
+      <div ref={scrollRef} onScroll={handleScroll} style={{ height: containerHeight ? `${containerHeight}px` : undefined }} className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1 transition-[height] duration-300">
         {filteredData.map((poll) => {
           const voted = votedPolls[poll.id];
           const selected = selectedOption[poll.id];
           
           return (
-            <div key={poll.id} className="flex-shrink-0 w-full snap-center">
+            <div key={poll.id} ref={(el) => { slideRefs.current[filteredData.indexOf(poll)] = el; }} className="flex-shrink-0 w-full snap-center h-auto">
               <div className="flex items-start justify-between gap-2 mb-3">
                 <h3 className="text-gray-900 font-semibold text-base leading-snug flex-1">{poll.title}</h3>
                 {voted && (
