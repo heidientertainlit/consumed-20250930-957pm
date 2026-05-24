@@ -639,18 +639,65 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 export function DnaComparePostCard({ item }: { item: any }) {
   const { session, user } = useAuth();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [posterOverlaps, setPosterOverlaps] = useState<OverlapUser[]>([]);
 
   let cmp: any = {};
   try { cmp = JSON.parse(item.content || '{}'); } catch {}
 
   const poster = item.user;
+  const posterId: string = item.user_id || poster?.id || poster?.user_id || '';
   const posterName = (poster?.displayName || poster?.display_name || poster?.username || poster?.user_name || 'Someone') as string;
-  const posterInitials = posterName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
   const matchScore = cmp.match_score || 0;
   const friendName = (cmp.friend_name || 'a friend') as string;
-  const friendInitials = friendName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
   const sharedGenres: string[] = cmp.shared_genres || [];
-  const compatLine: string = cmp.compatibility_line || '';
+
+  // Fetch poster's friend alignments for the right column
+  useEffect(() => {
+    if (!posterId || !session?.access_token) return;
+    const headers = { Authorization: `Bearer ${session.access_token}`, apikey: ANON_KEY, 'Content-Type': 'application/json' };
+
+    async function fetchPosterAlignments() {
+      try {
+        const [myDnaRes, fsRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=eq.${posterId}&select=favorite_genres`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/friendships?or=(user_id.eq.${posterId},friend_id.eq.${posterId})&status=eq.accepted&select=user_id,friend_id`, { headers }),
+        ]);
+        const [posterDna] = await myDnaRes.json();
+        const friendships = await fsRes.json();
+        if (!posterDna?.favorite_genres?.length || !Array.isArray(friendships) || friendships.length === 0) return;
+
+        const posterGenres: string[] = posterDna.favorite_genres;
+        const friendIds = [...new Set(
+          friendships.map((f: any) => f.user_id === posterId ? f.friend_id : f.user_id)
+        )].filter((id: string) => id !== posterId) as string[];
+        if (friendIds.length === 0) return;
+
+        const [friendDnaRes, friendUsersRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=in.(${friendIds.join(',')})&select=user_id,favorite_genres`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/users?id=in.(${friendIds.join(',')})&select=id,display_name,user_name`, { headers }),
+        ]);
+        const friendDnas = await friendDnaRes.json();
+        const friendUsers = await friendUsersRes.json();
+        if (!Array.isArray(friendDnas) || friendDnas.length === 0) return;
+
+        const scored = friendDnas
+          .map((fd: any, i: number) => {
+            const genres: string[] = Array.isArray(fd.favorite_genres) ? fd.favorite_genres : [];
+            const pct = calcOverlapPct(posterGenres, genres);
+            const info = Array.isArray(friendUsers) ? friendUsers.find((u: any) => u.id === fd.user_id) : null;
+            const displayName = info?.display_name || info?.user_name || 'Friend';
+            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length] };
+          })
+          .filter((u: any) => u.displayName !== friendName) // exclude the featured friend
+          .sort((a: any, b: any) => b.pct - a.pct)
+          .slice(0, 3)
+          .map((r: any) => ({ displayName: r.displayName, initials: initials(r.displayName), color: r.color, pct: r.pct }));
+
+        setPosterOverlaps(scored);
+      } catch { /* silent */ }
+    }
+    fetchPosterAlignments();
+  }, [posterId, session?.access_token, friendName]);
 
   return (
     <>
@@ -679,24 +726,22 @@ export function DnaComparePostCard({ item }: { item: any }) {
             </button>
           </div>
 
-          {/* Right — shared genres, same structure as static card overlaps */}
-          {sharedGenres.length > 0 && (
+          {/* Right — poster's other friend alignments, identical to static card */}
+          {posterOverlaps.length > 0 && (
             <div className="flex flex-col gap-2 pt-1 min-w-[110px]">
-              <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">They both love</span>
-              {sharedGenres.slice(0, 3).map((g: string, i: number) => {
-                const colors = ['#a855f7', '#ec4899', '#f59e0b'];
-                return (
-                  <div key={g} className="flex items-center gap-2">
-                    <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]"
-                      style={{ width: 24, height: 24, background: colors[i % colors.length] }}>
-                      {g[0].toUpperCase()}
-                    </div>
-                    <div className="flex flex-col leading-tight">
-                      <span className="text-gray-700 text-[12px] font-medium">{g}</span>
-                    </div>
+              <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Also aligned</span>
+              {posterOverlaps.map((u) => (
+                <div key={u.displayName} className="flex items-center gap-2">
+                  <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]"
+                    style={{ width: 24, height: 24, background: u.color }}>
+                    {u.initials}
                   </div>
-                );
-              })}
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-gray-700 text-[12px] font-medium">{u.displayName.split(' ')[0]}</span>
+                    <span className="text-purple-400 text-[11px] font-bold">{u.pct}%</span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
