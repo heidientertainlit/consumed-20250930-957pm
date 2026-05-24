@@ -1793,7 +1793,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                           {relatedRatings.length > 3 && <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-[9px] font-bold ring-2 ring-white">+{relatedRatings.length - 3}</div>}
                         </div>
                         <span className="text-[12px] text-gray-400">{relatedRatings.length} more rating{relatedRatings.length !== 1 ? 's' : ''}</span>
-                        <ChevronDown size={13} className="text-gray-300 ml-auto" />
+                        <ChevronDown size={15} className="text-gray-500 ml-auto" />
                       </button>
                     ) : (
                       <div className="flex flex-col gap-1.5">
@@ -1976,7 +1976,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       {relatedRatings.length > 3 && <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-[9px] font-bold ring-2 ring-white">+{relatedRatings.length - 3}</div>}
                     </div>
                     <span className="text-[12px] text-gray-400">{relatedRatings.length} more rating{relatedRatings.length !== 1 ? 's' : ''}</span>
-                    <ChevronDown size={13} className="text-gray-300 ml-auto" />
+                    <ChevronDown size={15} className="text-gray-500 ml-auto" />
                   </button>
                 ) : (
                   <div className="flex flex-col gap-1.5 mb-1.5">
@@ -3530,14 +3530,26 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
   currentIndexRef.current = currentIndex;
   postsLengthRef.current = posts.length;
 
-  // Use capture-phase native listeners so child stopPropagation can't block us
+  // Native listeners: touchmove with passive:false lets us preventDefault on horizontal
+  // drags so the browser doesn't steal the gesture for page-scroll.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+
     const onStart = (e: TouchEvent) => {
       touchStartX.current = e.touches[0].clientX;
       touchStartY.current = e.touches[0].clientY;
     };
+
+    const onMove = (e: TouchEvent) => {
+      const dx = e.touches[0].clientX - touchStartX.current;
+      const dy = e.touches[0].clientY - touchStartY.current;
+      // If mostly horizontal, prevent scroll so the swipe is ours
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) {
+        e.preventDefault();
+      }
+    };
+
     const onEnd = (e: TouchEvent) => {
       const dx = e.changedTouches[0].clientX - touchStartX.current;
       const dy = e.changedTouches[0].clientY - touchStartY.current;
@@ -3547,11 +3559,15 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
         }
       }
     };
-    el.addEventListener('touchstart', onStart, { capture: true, passive: true });
-    el.addEventListener('touchend', onEnd, { capture: true, passive: true });
+
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false }); // must be non-passive to preventDefault
+    el.addEventListener('touchend', onEnd, { passive: true });
+
     return () => {
-      el.removeEventListener('touchstart', onStart, { capture: true } as any);
-      el.removeEventListener('touchend', onEnd, { capture: true } as any);
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
     };
   }, []);
 
@@ -3572,7 +3588,7 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
   return (
     <div
       ref={containerRef}
-      style={{ position: 'relative', paddingBottom: containerPadding, marginBottom: 16 }}
+      style={{ position: 'relative', paddingBottom: containerPadding, marginBottom: 16, touchAction: 'pan-y' }}
     >
       {/* Sliver 3 — furthest back, most inset, at very bottom */}
       {peekCount >= 2 && (
