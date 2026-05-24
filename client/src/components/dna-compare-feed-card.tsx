@@ -107,7 +107,7 @@ function Waveform() {
 }
 
 /* ── CompareSheet ───────────────────────────────────── */
-function CompareSheet({
+export function CompareSheet({
   onClose,
   session,
   userId,
@@ -637,16 +637,110 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         </div>
 
         {/* Action bar */}
-        <div className="border-t border-gray-100">
+        <div className="border-t border-gray-100 px-4 py-3">
           <button
             onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
-            className="w-full flex items-center justify-between px-4 py-2.5 text-[12px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all active:scale-[0.97]"
+            style={{ background: '#a855f7' }}
           >
-            <span className="flex items-center gap-2">
-              <Users size={13} className="text-purple-400 shrink-0" />
-              Compare your DNA with a friend
-            </span>
-            <ArrowRight size={13} className="text-purple-400 shrink-0 ml-2" />
+            <Users size={14} />
+            Compare your DNA with a friend
+          </button>
+        </div>
+      </div>
+
+      {sheetOpen && session && user && (
+        <CompareSheet
+          onClose={() => setSheetOpen(false)}
+          session={session}
+          userId={user.id}
+        />
+      )}
+    </>
+  );
+}
+
+/* ── Inline post card (shared dna_compare social posts) ─────────────────── */
+export function DnaComparePostCard({ item }: { item: any }) {
+  const { session, user } = useAuth();
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  let cmp: any = {};
+  try { cmp = JSON.parse(item.content || '{}'); } catch {}
+
+  const poster = item.user;
+  const posterName = (poster?.displayName || poster?.display_name || poster?.username || poster?.user_name || 'Someone') as string;
+  const posterInitials = posterName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+  const matchScore = cmp.match_score || 0;
+  const friendName = (cmp.friend_name || 'a friend') as string;
+  const friendInitials = friendName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+  const sharedGenres: string[] = cmp.shared_genres || [];
+  const compatLine: string = cmp.compatibility_line || '';
+
+  return (
+    <>
+      <div className="bg-gray-50 rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
+        {/* Header */}
+        <div className="flex items-center gap-1.5 px-4 pt-3 pb-2">
+          <Dna size={11} className="text-purple-500 shrink-0" />
+          <span className="text-purple-500 text-[11px] font-bold uppercase tracking-widest">Compare DNA</span>
+          <span className="text-gray-400 text-[11px] ml-1">· {posterName}</span>
+        </div>
+
+        {/* Main two-column content */}
+        <div className="px-4 pb-4 flex gap-3">
+          {/* Left — avatars + score + quote */}
+          <div className="flex-1 min-w-0 flex flex-col gap-2">
+            <div className="flex items-center gap-0">
+              <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 38, height: 38, fontSize: 12 }}>
+                {posterInitials}
+              </div>
+              <svg width="40" height="34" viewBox="0 0 44 38" fill="none" className="shrink-0">
+                <defs>
+                  <linearGradient id={`wave-post-${item.id}`} x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#a855f7" />
+                    <stop offset="100%" stopColor="#818cf8" />
+                  </linearGradient>
+                </defs>
+                <path d="M0,19 Q4,8 8,19 Q12,30 16,19 Q20,8 22,19 Q24,30 28,19 Q32,8 36,19 Q40,30 44,19"
+                  stroke={`url(#wave-post-${item.id})`} strokeWidth="2" strokeLinecap="round" fill="none" />
+              </svg>
+              <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-purple-500" style={{ width: 38, height: 38, fontSize: 12 }}>
+                {friendInitials}
+              </div>
+            </div>
+            <div>
+              <p className="text-gray-900 font-extrabold leading-tight" style={{ fontSize: 17 }}>
+                <span style={{ color: '#a855f7' }}>{matchScore}%</span> aligned with
+              </p>
+              <p className="text-gray-900 font-extrabold leading-tight" style={{ fontSize: 17 }}>{friendName}</p>
+            </div>
+            {compatLine ? <p className="text-gray-400 text-[11px] leading-snug italic">"{compatLine}"</p> : null}
+          </div>
+
+          {/* Right — shared genres */}
+          {sharedGenres.length > 0 && (
+            <div className="flex flex-col gap-1 pt-1 min-w-[100px]">
+              <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-0.5">You both love</span>
+              {sharedGenres.slice(0, 3).map((g: string) => (
+                <div key={g} className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
+                  <span className="text-gray-600 text-[11px] truncate">{g}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Action bar */}
+        <div className="border-t border-gray-100 px-4 py-3">
+          <button
+            onClick={() => session ? setSheetOpen(true) : undefined}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all active:scale-[0.97]"
+            style={{ background: '#a855f7' }}
+          >
+            <Users size={14} />
+            Compare your DNA with a friend
           </button>
         </div>
       </div>
