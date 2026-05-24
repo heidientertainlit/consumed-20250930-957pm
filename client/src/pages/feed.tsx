@@ -3521,45 +3521,69 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
   onDeletePost: (id: string) => void;
   onAddToList: (media: any) => void;
 }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const remaining = posts.length - currentIndex;
+  if (remaining === 0) return null;
+
+  const peekCount = Math.min(remaining - 1, 2); // 0, 1, or 2 peek slivers
+  const { _isPromoted: _p, _promotedKey: _pk, ...frontPost } = posts[currentIndex];
+
+  // Container bottom padding = total peek height (8px per level)
+  const bottomPad = peekCount === 2 ? 16 : peekCount === 1 ? 8 : 0;
+
   return (
-    <div className="mb-6">
-      <div
-        style={{
-          overflowX: 'auto',
-          scrollSnapType: 'x mandatory',
-          WebkitOverflowScrolling: 'touch',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          scrollPaddingLeft: '16px',
-        }}
-      >
-        <div style={{ display: 'flex', paddingLeft: 16, paddingRight: 16, gap: 12 }}>
-          {posts.map((rawPost: any, i: number) => {
-            const { _isPromoted: _p, _promotedKey: _pk, ...post } = rawPost;
-            return (
-              <div
-                key={post.id || i}
-                style={{ scrollSnapAlign: 'start', minWidth: 'calc(100vw - 64px)', maxWidth: 'calc(100vw - 64px)' }}
-              >
-                <UGCGroupCard
-                  post={post as any}
-                  onLike={onLike}
-                  isLiked={likedPosts.has(post?.id)}
-                  session={session}
-                  fetchComments={fetchComments}
-                  currentUserId={currentUserId}
-                  onDeletePost={onDeletePost}
-                  onAddToList={onAddToList}
-                  forceNormal={true}
-                />
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      {posts.length > 1 && (
-        <p className="text-center text-[10px] text-gray-400 tracking-wide mt-2">swipe to see more</p>
+    <div style={{ position: 'relative', paddingBottom: bottomPad, marginBottom: 16 }}>
+      {/* Card 3 — furthest back, narrowest, extends to full container bottom */}
+      {peekCount >= 2 && (
+        <div style={{
+          position: 'absolute',
+          left: 16, right: 16,
+          top: 0, bottom: 0,
+          backgroundColor: '#f3f4f6',
+          borderRadius: 16,
+          border: '1px solid #e5e7eb',
+          zIndex: 1,
+        }} />
       )}
+      {/* Card 2 — middle, slightly narrower, stops 8px from container bottom */}
+      {peekCount >= 1 && (
+        <div style={{
+          position: 'absolute',
+          left: 8, right: 8,
+          top: 0, bottom: peekCount >= 2 ? 8 : 0,
+          backgroundColor: '#fafafa',
+          borderRadius: 16,
+          border: '1px solid #e5e7eb',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+          zIndex: 2,
+        }} />
+      )}
+      {/* Front card */}
+      <div style={{ position: 'relative', zIndex: 3 }}>
+        <UGCGroupCard
+          post={frontPost as any}
+          onLike={onLike}
+          isLiked={likedPosts.has(frontPost?.id)}
+          session={session}
+          fetchComments={fetchComments}
+          currentUserId={currentUserId}
+          onDeletePost={onDeletePost}
+          onAddToList={onAddToList}
+          forceActionFirst={true}
+          forceNormal={true}
+        />
+        {/* Counter + tap-to-advance */}
+        {remaining > 1 && (
+          <button
+            onClick={() => setCurrentIndex(i => i + 1)}
+            className="absolute bottom-3 right-3 flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2.5 py-1 shadow-sm z-20"
+          >
+            <span className="text-[10px] font-medium text-gray-500">{currentIndex + 1}/{posts.length}</span>
+            <ChevronRight size={10} className="text-gray-400" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
