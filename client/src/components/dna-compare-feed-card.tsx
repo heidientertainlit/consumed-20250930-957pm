@@ -734,7 +734,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
         </div>
 
         {/* Main content — two column layout, mirrors static card */}
-        <div className="px-4 pb-3 flex gap-8 items-start">
+        <div className="px-4 pb-5 flex gap-8 items-start">
           {/* Left — hero number */}
           <div className="flex flex-col gap-1 flex-1 min-w-0">
             <span className="font-extrabold leading-none block" style={{ fontSize: 52, color: '#a855f7' }}>
