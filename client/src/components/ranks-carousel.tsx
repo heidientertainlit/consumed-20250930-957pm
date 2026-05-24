@@ -463,103 +463,79 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
               <h3 className="text-gray-900 font-bold text-base leading-snug">{rank.title}</h3>
             </div>
 
-              {/* ── COLLAPSED GLIMPSE ── */}
-              {!isVotingExpanded && (
-                <button className="w-full text-left" onClick={() => setExpandedVoting(prev => ({ ...prev, [rank.id]: true }))}>
-                  <div className="px-3 space-y-1.5 mb-2">
-                    {previewItems.map((item, index) => (
-                      <div key={item.id} className="flex items-center gap-2.5">
-                        <span className={`w-5 h-5 flex items-center justify-center text-[11px] font-bold text-white rounded flex-shrink-0 ${
-                          index === 0 ? 'bg-purple-600' : index === 1 ? 'bg-purple-400' : 'bg-purple-300'
-                        }`}>{item.position}</span>
-                        {item.image_url && <img src={item.image_url} alt={item.title} className="w-7 h-7 rounded object-cover flex-shrink-0" />}
-                        <span className="text-sm text-gray-800 font-medium truncate">{item.title}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mx-3 flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
-                    <span className="text-xs text-gray-500">
-                      {hiddenCount > 0 ? `+${hiddenCount} more · ` : ''}Tap to drag &amp; rank
-                    </span>
-                    <ChevronDown size={14} className="text-purple-500" />
-                  </div>
-                </button>
-              )}
-
-              {/* ── EXPANDED DRAG RANKING ── */}
-              {isVotingExpanded && (
-                <>
-                  <div className="px-3 mb-1.5">
-                    <div className="flex items-center gap-1.5 text-[11px] text-purple-600 bg-purple-50 rounded-lg px-2.5 py-1.5 mb-2">
-                      <GripVertical size={11} />
-                      Drag items into your preferred order
-                    </div>
-                    <DragDropContext onDragEnd={(result) => handleDragEnd(rank.id, result)}>
-                      <Droppable droppableId={`carousel-rank-${rank.id}`}>
-                        {(provided) => (
-                          <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1.5">
-                            {currentItems.map((item, index) => (
-                              <Draggable key={item.id} draggableId={`${rank.id}-${item.id}`} index={index}>
-                                {(provided, snapshot) => (
-                                  <div
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    className={`flex items-center gap-2 py-2 px-2.5 rounded-xl border transition-colors ${
-                                      snapshot.isDragging
-                                        ? 'bg-purple-50 border-purple-300 shadow-md'
-                                        : 'bg-gray-50 border-transparent'
-                                    }`}
-                                  >
-                                    <div {...provided.dragHandleProps} className="text-gray-300 hover:text-purple-400 cursor-grab active:cursor-grabbing flex-shrink-0">
-                                      <GripVertical size={14} />
-                                    </div>
-                                    <div className={`w-5 h-5 rounded flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 ${
-                                      index === 0 ? 'bg-gradient-to-br from-teal-500 to-emerald-600' :
-                                      index === 1 ? 'bg-gradient-to-br from-teal-400 to-emerald-500' :
-                                      'bg-gradient-to-br from-teal-300 to-emerald-400'
-                                    }`}>
-                                      {index + 1}
-                                    </div>
-                                    {item.image_url && (
-                                      <img src={item.image_url} alt={item.title} className="w-6 h-6 rounded object-cover flex-shrink-0" />
-                                    )}
-                                    <span className="text-gray-900 font-medium text-sm truncate" style={{maxWidth: '45%'}}>{item.title}</span>
-                                    <VoteCount upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
-                                  </div>
+              {/* ── DRAG & RANK VIEW ── always visible */}
+              <div className="px-4 mb-2">
+                <div className="flex items-center gap-1.5 text-[11px] text-purple-600 bg-purple-50 rounded-lg px-2.5 py-1.5 mb-3">
+                  <GripVertical size={11} />
+                  Drag to reorder — saves automatically
+                </div>
+                <DragDropContext onDragEnd={(result) => handleDragEnd(rank.id, result)}>
+                  <Droppable droppableId={`carousel-rank-${rank.id}`}>
+                    {(provided) => (
+                      <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1.5">
+                        {displayItems.map((item, index) => (
+                          <Draggable key={item.id} draggableId={`${rank.id}-${item.id}`} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className={`flex items-center gap-2.5 py-2 px-2 rounded-xl border transition-colors ${
+                                  snapshot.isDragging
+                                    ? 'bg-purple-50 border-purple-200 shadow-md'
+                                    : 'bg-gray-50 border-transparent'
+                                }`}
+                              >
+                                <div {...provided.dragHandleProps} className="text-gray-300 hover:text-purple-400 cursor-grab active:cursor-grabbing flex-shrink-0">
+                                  <GripVertical size={14} />
+                                </div>
+                                <span className={`w-6 h-6 flex items-center justify-center text-[11px] font-bold text-white rounded flex-shrink-0 ${
+                                  index === 0 ? 'bg-purple-600' :
+                                  index === 1 ? 'bg-purple-500' :
+                                  index === 2 ? 'bg-purple-400' :
+                                  'bg-purple-300'
+                                }`}>{index + 1}</span>
+                                {item.image_url && (
+                                  <img src={item.image_url} alt={item.title} className="w-8 h-11 rounded object-cover flex-shrink-0" />
                                 )}
-                              </Draggable>
-                            ))}
-                            {provided.placeholder}
-                          </div>
-                        )}
-                      </Droppable>
-                    </DragDropContext>
-                  </div>
+                                <span className="text-gray-900 font-medium text-sm truncate flex-1">{item.title}</span>
+                                <VoteCount upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
 
-                  <div className="px-3 flex items-center gap-2 mb-1">
-                    <button
-                      onClick={() => submitMutation.mutate({ rankId: rank.id, items: currentItems })}
-                      disabled={submitMutation.isPending}
-                      className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-purple-600 text-white hover:bg-purple-700 transition-colors font-medium disabled:opacity-60"
-                    >
-                      {submitMutation.isPending ? (
-                        <><Loader2 size={11} className="animate-spin" /> Saving...</>
-                      ) : submittedRankIds.has(rank.id) ? (
-                        <><Check size={11} /> Re-submit Ranking</>
-                      ) : (
-                        <><Check size={11} /> Submit My Ranking</>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setExpandedVoting(prev => ({ ...prev, [rank.id]: false }))}
-                      className="ml-auto flex items-center gap-0.5 text-xs text-gray-400 hover:text-purple-500 transition-colors"
-                    >
-                      <ChevronUp size={13} />
-                      Collapse
-                    </button>
-                  </div>
-                </>
-              )}
+                {/* See all / See less */}
+                {currentItems.length > 5 && (
+                  <button
+                    onClick={() => setExpandedRanks(prev => ({ ...prev, [rank.id]: !prev[rank.id] }))}
+                    className="w-full text-center text-sm text-purple-600 font-medium py-2.5 mt-1"
+                  >
+                    {isExpanded ? '↑ Show less' : `See all ${currentItems.length} →`}
+                  </button>
+                )}
+
+                {/* Submit */}
+                <div className="pt-2 pb-1">
+                  <button
+                    onClick={() => submitMutation.mutate({ rankId: rank.id, items: currentItems })}
+                    disabled={submitMutation.isPending}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-purple-600 text-white hover:bg-purple-700 transition-colors font-medium disabled:opacity-60"
+                  >
+                    {submitMutation.isPending ? (
+                      <><Loader2 size={11} className="animate-spin" /> Saving...</>
+                    ) : submittedRankIds.has(rank.id) ? (
+                      <><Check size={11} /> Re-submit Ranking</>
+                    ) : (
+                      <><Check size={11} /> Submit My Ranking</>
+                    )}
+                  </button>
+                </div>
+              </div>
 
               {/* Always-visible footer: like + debate + rank pill */}
               <div className="px-4 py-2.5 border-t border-gray-100 flex items-center gap-4">
