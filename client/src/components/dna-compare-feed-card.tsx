@@ -662,48 +662,18 @@ export function DnaComparePostCard({ item }: { item: any }) {
           <span className="text-gray-400 text-[11px] ml-1">· {posterName}</span>
         </div>
 
-        {/* Main content — centered hero layout */}
-        <div className="px-4 pb-5 flex flex-col items-center gap-3">
-          {/* Avatars + waveform */}
-          <div className="flex items-end gap-0">
-            <div className="flex flex-col items-center gap-1">
-              <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500" style={{ width: 44, height: 44, fontSize: 14 }}>
-                {posterInitials}
-              </div>
-              <span className="text-gray-500 text-[11px] font-medium">{posterName.split(' ')[0]}</span>
-            </div>
-            <svg width="56" height="38" viewBox="0 0 44 38" fill="none" className="shrink-0 mb-3">
-              <defs>
-                <linearGradient id={`wave-post-${item.id}`} x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#a855f7" />
-                  <stop offset="100%" stopColor="#818cf8" />
-                </linearGradient>
-              </defs>
-              <path d="M0,19 Q4,8 8,19 Q12,30 16,19 Q20,8 22,19 Q24,30 28,19 Q32,8 36,19 Q40,30 44,19"
-                stroke={`url(#wave-post-${item.id})`} strokeWidth="2" strokeLinecap="round" fill="none" />
-            </svg>
-            <div className="flex flex-col items-center gap-1">
-              <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-purple-500" style={{ width: 44, height: 44, fontSize: 14 }}>
-                {friendInitials}
-              </div>
-              <span className="text-gray-500 text-[11px] font-medium">{friendName.split(' ')[0]}</span>
-            </div>
-          </div>
-
-          {/* Hero percentage */}
-          <div className="flex flex-col items-center gap-0.5">
-            <span className="font-extrabold leading-none" style={{ fontSize: 52, color: '#a855f7' }}>
-              {matchScore}%
-            </span>
-            <p className="text-gray-800 font-bold text-[16px] text-center">aligned with {friendName.split(' ')[0]}</p>
-          </div>
-
-          {/* Button */}
+        {/* Main content — left-aligned, same pattern as static card */}
+        <div className="px-4 pb-5 flex flex-col gap-1">
+          <span className="font-extrabold leading-none block" style={{ fontSize: 52, color: '#a855f7' }}>
+            {matchScore}%
+          </span>
+          <p className="text-gray-400 text-[12px] font-medium mt-0.5">{posterName.split(' ')[0]} is aligned with</p>
+          <p className="text-gray-700 text-[14px] font-semibold -mt-0.5">{friendName}</p>
           <button
             onClick={() => session ? setSheetOpen(true) : undefined}
-            className="w-full py-3 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
+            className="mt-4 py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
           >
-            Compare your DNA with a friend
+            Compare with another friend
           </button>
         </div>
       </div>
