@@ -679,25 +679,24 @@ export function DnaComparePostCard({ item }: { item: any }) {
             </button>
           </div>
 
-          {/* Right — shared genres or compat line */}
-          {(sharedGenres.length > 0 || compatLine) && (
+          {/* Right — shared genres, same structure as static card overlaps */}
+          {sharedGenres.length > 0 && (
             <div className="flex flex-col gap-2 pt-1 min-w-[110px]">
-              {sharedGenres.length > 0 ? (
-                <>
-                  <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">They both love</span>
-                  {sharedGenres.slice(0, 3).map((g: string) => (
-                    <div key={g} className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
+              <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">They both love</span>
+              {sharedGenres.slice(0, 3).map((g: string, i: number) => {
+                const colors = ['#a855f7', '#ec4899', '#f59e0b'];
+                return (
+                  <div key={g} className="flex items-center gap-2">
+                    <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]"
+                      style={{ width: 24, height: 24, background: colors[i % colors.length] }}>
+                      {g[0].toUpperCase()}
+                    </div>
+                    <div className="flex flex-col leading-tight">
                       <span className="text-gray-700 text-[12px] font-medium">{g}</span>
                     </div>
-                  ))}
-                </>
-              ) : compatLine ? (
-                <>
-                  <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Vibe</span>
-                  <p className="text-gray-500 text-[11px] italic leading-snug">"{compatLine}"</p>
-                </>
-              ) : null}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
