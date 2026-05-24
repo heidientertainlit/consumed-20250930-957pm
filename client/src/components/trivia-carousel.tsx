@@ -752,7 +752,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
           </div>
         </div>
       )}
-      <div className="bg-white border border-gray-100 shadow rounded-2xl p-4 pb-2 overflow-hidden relative">
+      <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4 pb-2 overflow-hidden relative">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             {category ? (
@@ -1087,7 +1087,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                     )}
                   </>)}
                 
-                <div className="flex items-center justify-end mt-4">
+                <div className="flex items-center justify-end mt-4 pt-3 border-t border-gray-100">
                   <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold">
                     +{item.pointsReward} pts
                   </div>
