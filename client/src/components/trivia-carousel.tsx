@@ -86,7 +86,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; points?: number; stats: any; friendAnswers?: FriendAnswer[] }>>({});
   const [answeredLoaded, setAnsweredLoaded] = useState(false);
   const [lockedOrder, setLockedOrder] = useState<TriviaItem[] | null>(null);
-  const [celebratingItems, setCelebratingItems] = useState<Record<string, number>>({});
   const [socialProofMap, setSocialProofMap] = useState<Record<string, { userName: string; option: string; pct: number; total: number }>>({});
   const [correctStreak, setCorrectStreak] = useState(0);
   const [streakBanner, setStreakBanner] = useState<{ message: string; sub: string; streak: number } | null>(null);
@@ -534,10 +533,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
     },
     onSuccess: (result) => {
       if (result.isCorrect) {
-        setCelebratingItems(prev => ({ ...prev, [result.itemId]: result.points }));
-        setTimeout(() => {
-          setCelebratingItems(prev => { const next = { ...prev }; delete next[result.itemId]; return next; });
-        }, 1600);
 
         setCorrectStreak(prev => {
           const newStreak = prev + 1;
@@ -1007,18 +1002,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                       </button>
                     </div>
 
-                    {/* Celebration overlay — semi-transparent dark, reveals dimmed bars behind */}
-                    <div className={`absolute inset-0 rounded-xl flex flex-col items-center justify-center gap-3 transition-opacity duration-300 bg-black/60 ${
-                      celebratingItems[item.id] !== undefined ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                    }`}>
-                      <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center shadow-lg">
-                        <CheckCircle className="w-7 h-7 text-white" />
-                      </div>
-                      <p className="text-xl font-bold text-white">Correct!</p>
-                      <div className="bg-white/20 rounded-xl px-5 py-2.5 border border-white/30">
-                        <span className="text-2xl font-bold text-white">+{celebratingItems[item.id] ?? 0} pts</span>
-                      </div>
-                    </div>
                   </div>
                     {/* Friend answers section */}
                     {answered && answered.friendAnswers && answered.friendAnswers.length > 0 && (
