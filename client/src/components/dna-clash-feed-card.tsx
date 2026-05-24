@@ -57,22 +57,8 @@ function UserCard({
         border: `1.5px solid ${isMyVote ? 'rgba(139,92,246,0.50)' : 'rgba(255,255,255,0.10)'}`,
       }}
     >
-      {/* Avatar row */}
-      <div className="flex items-center gap-2">
-        <div
-          className="w-10 h-10 rounded-full shrink-0 overflow-hidden flex items-center justify-center font-bold text-white text-[13px]"
-          style={{
-            background: user.avatar ? 'transparent' : accentColor,
-            border: '2px solid rgba(255,255,255,0.18)',
-            boxShadow: `0 0 0 1px ${accentColor}55`,
-          }}
-        >
-          {user.avatar ? (
-            <img src={user.avatar} alt={user.displayName} className="w-full h-full object-cover" />
-          ) : (
-            user.initials
-          )}
-        </div>
+      {/* Name row */}
+      <div className="flex items-center gap-1.5">
         <span className="text-white font-bold text-[14px] leading-tight truncate">
           {user.displayName.split(' ')[0]}
         </span>
