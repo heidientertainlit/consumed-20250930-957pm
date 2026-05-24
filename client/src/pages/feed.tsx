@@ -3530,16 +3530,16 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
+          scrollPaddingLeft: '16px',
         }}
       >
-        <div className="flex pl-3 pr-1">
+        <div style={{ display: 'flex', paddingLeft: 16, paddingRight: 16, gap: 12 }}>
           {posts.map((rawPost: any, i: number) => {
             const { _isPromoted: _p, _promotedKey: _pk, ...post } = rawPost;
             return (
               <div
                 key={post.id || i}
-                className="shrink-0 pr-3"
-                style={{ scrollSnapAlign: 'start', width: 'calc(100% - 32px)' }}
+                style={{ scrollSnapAlign: 'start', minWidth: 'calc(100vw - 64px)', maxWidth: 'calc(100vw - 64px)' }}
               >
                 <UGCGroupCard
                   post={post as any}
@@ -3558,7 +3558,7 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
         </div>
       </div>
       {posts.length > 1 && (
-        <p className="text-center text-[10px] text-gray-400 tracking-wide mt-1.5">swipe to see more</p>
+        <p className="text-center text-[10px] text-gray-400 tracking-wide mt-2">swipe to see more</p>
       )}
     </div>
   );
