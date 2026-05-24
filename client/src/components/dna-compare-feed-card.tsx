@@ -566,19 +566,18 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         </div>
 
         {/* Main content — two column layout */}
-        <div className="px-4 pb-5 flex gap-4 items-start">
+        <div className="px-4 pb-5 flex gap-8 items-start">
           {/* Left — hero number */}
           <div className="flex flex-col gap-1 flex-1 min-w-0">
-            <p className="text-gray-400 text-[12px] font-medium">You're aligned with</p>
-            <p className="text-gray-900 font-bold text-[15px] -mt-0.5">{featured.displayName}</p>
             {/* Big number */}
-            <span className="font-extrabold leading-none block mt-1" style={{ fontSize: 52, color: '#a855f7' }}>
+            <span className="font-extrabold leading-none block" style={{ fontSize: 52, color: '#a855f7' }}>
               {featured.pct}%
             </span>
+            <p className="text-gray-600 text-[13px] font-medium mt-0.5">You're aligned with {featured.displayName}</p>
             {/* Button */}
             <button
               onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
-              className="mt-3 py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
+              className="mt-4 py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
             >
               Compare yours
             </button>
