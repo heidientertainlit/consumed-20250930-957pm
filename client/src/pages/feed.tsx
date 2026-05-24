@@ -3522,8 +3522,38 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
   onAddToList: (media: any) => void;
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
+  const currentIndexRef = useRef(currentIndex);
+  const postsLengthRef = useRef(posts.length);
+  currentIndexRef.current = currentIndex;
+  postsLengthRef.current = posts.length;
+
+  // Use capture-phase native listeners so child stopPropagation can't block us
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+    };
+    const onEnd = (e: TouchEvent) => {
+      const dx = e.changedTouches[0].clientX - touchStartX.current;
+      const dy = e.changedTouches[0].clientY - touchStartY.current;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 44 && dx < 0) {
+        if (currentIndexRef.current < postsLengthRef.current - 1) {
+          setCurrentIndex(i => i + 1);
+        }
+      }
+    };
+    el.addEventListener('touchstart', onStart, { capture: true, passive: true });
+    el.addEventListener('touchend', onEnd, { capture: true, passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onStart, { capture: true } as any);
+      el.removeEventListener('touchend', onEnd, { capture: true } as any);
+    };
+  }, []);
 
   const remaining = posts.length - currentIndex;
   if (remaining === 0) return null;
@@ -3541,19 +3571,8 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
 
   return (
     <div
+      ref={containerRef}
       style={{ position: 'relative', paddingBottom: containerPadding, marginBottom: 16 }}
-      onTouchStart={(e) => {
-        touchStartX.current = e.touches[0].clientX;
-        touchStartY.current = e.touches[0].clientY;
-      }}
-      onTouchEnd={(e) => {
-        const dx = e.changedTouches[0].clientX - touchStartX.current;
-        const dy = e.changedTouches[0].clientY - touchStartY.current;
-        // Horizontal swipe left = advance, ignore mostly-vertical scrolls
-        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
-          if (dx < 0) advance();
-        }
-      }}
     >
       {/* Sliver 3 — furthest back, most inset, at very bottom */}
       {peekCount >= 2 && (
