@@ -70,10 +70,22 @@ function UserCard({
         ))}
       </div>
 
-      {/* DNA label pill */}
-      <div className="flex items-center gap-1.5 px-2 py-1 rounded-full self-start bg-white border border-gray-200">
+      {/* DNA label */}
+      <div className="flex items-center gap-1">
         <Sparkles size={9} className="text-purple-400 shrink-0" />
-        <span className="text-gray-500 text-[10px] font-medium leading-none">{user.dnaLabel}</span>
+        <span className="text-gray-400 text-[10px] font-medium leading-none">{user.dnaLabel}</span>
+      </div>
+
+      {/* Vote pill */}
+      <div
+        className="mt-1 self-start px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all"
+        style={{
+          background: isMyVote ? accentColor : 'transparent',
+          border: `1.5px solid ${isMyVote ? accentColor : '#d1d5db'}`,
+          color: isMyVote ? '#fff' : '#6b7280',
+        }}
+      >
+        {isMyVote ? '✓ Your pick' : `Side with ${user.displayName.split(' ')[0]}`}
       </div>
     </button>
   );
