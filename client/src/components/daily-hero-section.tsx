@@ -2094,49 +2094,49 @@ export function DailyHeroSection() {
               <button
                 onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true)}
                 className="w-full rounded-xl text-left overflow-hidden"
-                style={{ background: '#12151f', border: '1px solid rgba(255,255,255,0.07)' }}
+                style={{ background: 'linear-gradient(160deg,#1a1230 0%,#160f2a 60%,#0f0d1e 100%)', border: '1px solid rgba(160,120,255,0.2)' }}
               >
                 {/* Top row */}
                 <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3">
                   <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                    <span style={{ fontSize: 10, letterSpacing: '0.1em', color: '#454d6a', textTransform: 'uppercase', fontWeight: 500 }}>Today's Play</span>
-                    <span style={{ fontSize: 20, fontWeight: 500, color: '#eeeaf8', lineHeight: 1.2 }}>{headline}</span>
-                    <span style={{ fontSize: 12, color: '#5a6280', marginTop: 2, lineHeight: 1.5 }}>{subCopy}</span>
+                    <span style={{ fontSize: 10, letterSpacing: '0.12em', color: '#9b7fe8', textTransform: 'uppercase', fontWeight: 600 }}>Today's Play</span>
+                    <span style={{ fontSize: 21, fontWeight: 600, color: '#f0ecff', lineHeight: 1.2 }}>{headline}</span>
+                    <span style={{ fontSize: 12, color: '#a090c8', marginTop: 3, lineHeight: 1.5 }}>{subCopy}</span>
                   </div>
                   {/* Score ring */}
                   <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
                     <svg width="52" height="52" viewBox="0 0 56 56">
-                      <circle cx="28" cy="28" r="23" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3.5" />
-                      <circle cx="28" cy="28" r="23" fill="none" stroke={ringColor} strokeWidth="3.5"
+                      <circle cx="28" cy="28" r="23" fill="none" stroke="rgba(160,120,255,0.15)" strokeWidth="3.5" />
+                      <circle cx="28" cy="28" r="23" fill="none" stroke="#a855f7" strokeWidth="3.5"
                         strokeDasharray={circ} strokeDashoffset={dashOffset}
                         strokeLinecap="round" transform="rotate(-90 28 28)" />
                     </svg>
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: '#eeeaf8', lineHeight: 1 }}>{score}</span>
-                      <span style={{ fontSize: 8, color: '#454d6a', letterSpacing: '0.04em', marginTop: 1 }}>score</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#f0ecff', lineHeight: 1 }}>{score}</span>
+                      <span style={{ fontSize: 8, color: '#7c60b0', letterSpacing: '0.05em', marginTop: 1 }}>score</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Divider */}
-                <div style={{ height: '0.5px', background: 'rgba(255,255,255,0.06)', margin: '0 16px' }} />
+                <div style={{ height: '1px', background: 'rgba(160,120,255,0.12)', margin: '0 16px' }} />
 
                 {/* Bottom row */}
                 <div className="flex items-center justify-between gap-3 px-4 py-3">
-                  <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                  <div className="flex flex-col gap-2 flex-1 min-w-0">
                     {genres.length > 0 && (
                       <div className="flex gap-1.5 flex-wrap">
                         {genres.map((g: string) => (
-                          <span key={g} style={{ fontSize: 11, background: 'rgba(180,160,230,0.1)', border: '0.5px solid rgba(180,160,230,0.2)', color: '#b8a8e8', borderRadius: 20, padding: '3px 9px' }}>{g}</span>
+                          <span key={g} style={{ fontSize: 11, background: 'rgba(168,85,247,0.18)', border: '1px solid rgba(168,85,247,0.35)', color: '#d4b8ff', borderRadius: 20, padding: '3px 10px', fontWeight: 500 }}>{g}</span>
                         ))}
                       </div>
                     )}
-                    <span style={{ fontSize: 11, color: '#454d6a' }}>
+                    <span style={{ fontSize: 12, color: '#7c6aaa' }}>
                       Your DNA is getting sharper —{' '}
-                      <span style={{ color: '#7060b0', fontWeight: 600 }}>day {streak ?? 1}</span>
+                      <span style={{ color: '#b48eff', fontWeight: 700 }}>day {streak ?? 1}</span>
                     </span>
                   </div>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.05)', border: '0.5px solid rgba(255,255,255,0.09)', borderRadius: 20, padding: '6px 12px', color: '#6b7394', fontSize: 12, flexShrink: 0 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.25)', borderRadius: 20, padding: '6px 13px', color: '#c4a0ff', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>
                     <Share2 size={12} />
                     Share
                   </span>
