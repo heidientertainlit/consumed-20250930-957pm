@@ -2075,24 +2075,19 @@ export function DailyHeroSection() {
           {(() => {
             const noneRight = isTriviaDay && playScore && playScore.correct === 0;
             const headline = noneRight ? 'Keep going.' : callAnswer === '__skip' ? 'Streak saved.' : 'Called it.';
-            // Score 0–100
-            const score = isTriviaDay && playScore
+            // Score: trivia = correct/total %; daily call = ring full (completed indicator, no numeric score)
+            const triviaScore = isTriviaDay && playScore
               ? Math.round((playScore.correct / Math.max(1, playScore.total)) * 100)
-              : callAnswer === '__skip' ? 50 : 100;
-            // SVG ring: r=23, circumference≈144.5
+              : null;
             const circ = 144.5;
-            const dashOffset = circ * (1 - score / 100);
-            const ringColor = score === 100 ? '#9070d0' : score >= 50 ? '#9070d0' : '#6366f1';
-            // DNA tags — up to 3 genres
-            const genres = (dnaProfile?.favorite_genres ?? []).slice(0, 3);
+            const dashOffset = triviaScore !== null ? circ * (1 - triviaScore / 100) : 0;
             // Sub copy — use first flavor note or DNA label
             const flavorNote = dnaProfile?.flavor_notes?.[0] ?? dnaProfile?.label ?? null;
             const subCopy = flavorNote
               ? `Your ${flavorNote.toLowerCase()} is showing.`
               : 'Your taste is getting sharper.';
             return (
-              <button
-                onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true)}
+              <div
                 className="w-full rounded-xl text-left overflow-hidden"
                 style={{ background: 'linear-gradient(160deg,#1a1230 0%,#160f2a 60%,#0f0d1e 100%)', border: '1px solid rgba(160,120,255,0.2)' }}
               >
@@ -2112,8 +2107,14 @@ export function DailyHeroSection() {
                         strokeLinecap="round" transform="rotate(-90 28 28)" />
                     </svg>
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#f0ecff', lineHeight: 1 }}>{score}</span>
-                      <span style={{ fontSize: 8, color: '#7c60b0', letterSpacing: '0.05em', marginTop: 1 }}>score</span>
+                      {triviaScore !== null ? (
+                        <>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: '#f0ecff', lineHeight: 1 }}>{triviaScore}</span>
+                          <span style={{ fontSize: 8, color: '#7c60b0', letterSpacing: '0.05em', marginTop: 1 }}>score</span>
+                        </>
+                      ) : (
+                        <Check size={18} strokeWidth={2.5} color="#a855f7" />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2138,25 +2139,19 @@ export function DailyHeroSection() {
 
                 {/* Bottom row */}
                 <div className="flex items-center justify-between gap-3 px-4 py-3">
-                  <div className="flex flex-col gap-2 flex-1 min-w-0">
-                    {genres.length > 0 && (
-                      <div className="flex gap-1.5 flex-wrap">
-                        {genres.map((g: string) => (
-                          <span key={g} style={{ fontSize: 11, background: 'rgba(168,85,247,0.18)', border: '1px solid rgba(168,85,247,0.35)', color: '#d4b8ff', borderRadius: 20, padding: '3px 10px', fontWeight: 500 }}>{g}</span>
-                        ))}
-                      </div>
-                    )}
-                    <span style={{ fontSize: 12, color: '#7c6aaa' }}>
-                      Your DNA is getting sharper —{' '}
-                      <span style={{ color: '#b48eff', fontWeight: 700 }}>day {streak ?? 1}</span>
-                    </span>
-                  </div>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.25)', borderRadius: 20, padding: '6px 13px', color: '#c4a0ff', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>
+                  <span style={{ fontSize: 12, color: '#7c6aaa' }}>
+                    Your DNA is getting sharper —{' '}
+                    <span style={{ color: '#b48eff', fontWeight: 700 }}>day {streak ?? 1}</span>
+                  </span>
+                  <button
+                    onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.25)', borderRadius: 20, padding: '6px 13px', color: '#c4a0ff', fontSize: 12, fontWeight: 500, flexShrink: 0, cursor: 'pointer' }}
+                  >
                     <Share2 size={12} />
                     Share
-                  </span>
+                  </button>
                 </div>
-              </button>
+              </div>
             );
           })()}
         </div>
