@@ -3528,6 +3528,8 @@ function useSwipeGesture({
   const isHoriz = useRef<boolean | null>(null);
   const offsetRef = useRef(0);
   const active = useRef(false);
+  // Persists across attachTo re-calls (which happen on every card swap)
+  const wheelCooldownUntil = useRef(0);
 
   const doStart = useCallback((cx: number, cy: number) => {
     startX.current = cx;
@@ -3587,7 +3589,7 @@ function useSwipeGesture({
     // This makes it feel like a natural carousel swipe on laptop trackpads — no click-drag needed.
     let wheelAccum = 0;
     let wheelTimer: ReturnType<typeof setTimeout> | null = null;
-    let wheelCooldownUntil = 0; // timestamp — ignore wheel events until cooldown expires
+    // wheelCooldownUntil lives in a ref (hook level) so it survives attachTo re-calls
     const onWheel = (e: WheelEvent) => {
       const absX = Math.abs(e.deltaX);
       const absY = Math.abs(e.deltaY);
@@ -3595,13 +3597,13 @@ function useSwipeGesture({
       if (absX < 5 || absX < absY * 0.5) return;
       e.preventDefault();
       // Cooldown: a trackpad swipe fires many events; ignore the tail after a dismiss
-      if (Date.now() < wheelCooldownUntil) { wheelAccum = 0; return; }
+      if (Date.now() < wheelCooldownUntil.current) { wheelAccum = 0; return; }
       wheelAccum += e.deltaX;
       // Dismiss once the swipe crosses 60px of accumulated horizontal movement
       if (Math.abs(wheelAccum) > 60) {
         const dir = wheelAccum > 0 ? 1 : -1 as 1 | -1;
         wheelAccum = 0;
-        wheelCooldownUntil = Date.now() + 600; // 600ms cooldown — one card at a time
+        wheelCooldownUntil.current = Date.now() + 700;
         if (wheelTimer) { clearTimeout(wheelTimer); wheelTimer = null; }
         onDismiss(dir);
         return;
