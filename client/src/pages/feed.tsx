@@ -1306,31 +1306,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
           <div className="relative w-full h-full rounded-xl overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
             <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-            {mediaTypeNorm && (
-              <div className="absolute bottom-1 left-1 bg-black/25 backdrop-blur-[2px] rounded p-[3px]">
-                {mediaTypeNorm === 'tv' && <Tv2 size={10} className="text-white/75" />}
-                {mediaTypeNorm === 'movie' && <Film size={10} className="text-white/75" />}
-                {mediaTypeNorm === 'book' && <Book size={10} className="text-white/75" />}
-                {mediaTypeNorm === 'music' && <Music size={10} className="text-white/75" />}
-                {mediaTypeNorm === 'podcast' && <Headphones size={10} className="text-white/75" />}
-                {mediaTypeNorm === 'game' && <Gamepad2 size={10} className="text-white/75" />}
-              </div>
-            )}
           </div>
         </Link>
       ) : (
         <div className="relative w-full h-full rounded-xl overflow-hidden shadow-md">
           <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          {mediaTypeNorm && (
-            <div className="absolute bottom-1 left-1 bg-black/25 backdrop-blur-[2px] rounded p-[3px]">
-              {mediaTypeNorm === 'tv' && <Tv2 size={10} className="text-white/75" />}
-              {mediaTypeNorm === 'movie' && <Film size={10} className="text-white/75" />}
-              {mediaTypeNorm === 'book' && <Book size={10} className="text-white/75" />}
-              {mediaTypeNorm === 'music' && <Music size={10} className="text-white/75" />}
-              {mediaTypeNorm === 'podcast' && <Headphones size={10} className="text-white/75" />}
-              {mediaTypeNorm === 'game' && <Gamepad2 size={10} className="text-white/75" />}
-            </div>
-          )}
         </div>
       )}
       {onAddToList && (post.externalId || post.mediaTitle) && (
@@ -1726,18 +1706,22 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       {isActionFirst ? (
         // ACTION FIRST layout — stars on top, friend's take below
         <>
-          {/* Trash — absolute top-right, own posts only */}
-          {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
-            <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="absolute top-3 right-3 text-gray-400 hover:text-red-400 transition-colors z-10" title="Delete post">
-              <Trash2 size={14} />
-            </button>
-          )}
-          {/* Report — absolute top-right for other users' posts */}
-          {currentUserId && post.user?.id !== currentUserId && (
-            <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="absolute top-3 right-3 text-gray-400 hover:text-orange-400 transition-colors z-10">
-              <Flag size={13} />
-            </button>
-          )}
+          {/* Top-right: media type pill + action button */}
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
+            {mediaTypeLabel && (
+              <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{mediaTypeLabel}</span>
+            )}
+            {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
+              <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-400 hover:text-red-400 transition-colors" title="Delete post">
+                <Trash2 size={14} />
+              </button>
+            )}
+            {currentUserId && post.user?.id !== currentUserId && (
+              <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-400 hover:text-orange-400 transition-colors">
+                <Flag size={13} />
+              </button>
+            )}
+          </div>
           {/* Poster-left, header+caption-right layout */}
           <div className="px-4 pt-4 pb-3">
 
@@ -1920,12 +1904,22 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       ) : (
         // NORMAL layout — for already-rated or own posts
         <div className="p-4">
-          {/* Trash — absolute top-right, own posts only */}
-          {currentUserId && post.user?.id === currentUserId && onDeletePost && (
-            <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="absolute top-3 right-3 text-gray-400 hover:text-red-400 transition-colors z-10">
-              <Trash2 size={14} />
-            </button>
-          )}
+          {/* Top-right: media type pill + action button */}
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
+            {mediaTypeLabel && (
+              <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{mediaTypeLabel}</span>
+            )}
+            {currentUserId && post.user?.id === currentUserId && onDeletePost && (
+              <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-400 hover:text-red-400 transition-colors" title="Delete post">
+                <Trash2 size={14} />
+              </button>
+            )}
+            {currentUserId && post.user?.id !== currentUserId && (
+              <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-400 hover:text-orange-400 transition-colors">
+                <Flag size={13} />
+              </button>
+            )}
+          </div>
           {post.mediaTitle ? (
             // Poster-left layout: all metadata lives to the right of the poster
             <div className="flex gap-3 items-start">
