@@ -3555,10 +3555,15 @@ function useSwipeGesture({
     if (!active.current) return;
     active.current = false;
     onDraggingChange(false);
+    // Capture direction lock before resetting — if gesture was clearly vertical, ignore it
+    const wasVertical = isHoriz.current === false;
     isHoriz.current = null;
-    // If no mousemove fired (very fast flick), fall back to displacement at mouseup
-    const dx = offsetRef.current !== 0 ? offsetRef.current
-      : (finalX !== undefined ? finalX - startX.current : 0);
+    // For mouse gestures use full start→end displacement (fast flicks may only produce
+    // 1–2 mousemove events so offsetRef only holds a partial distance).
+    // For touch gestures finalX is undefined, fall back to last tracked offset.
+    const dx = wasVertical ? 0
+      : finalX !== undefined ? finalX - startX.current
+      : offsetRef.current;
     const dt = Math.max(1, Date.now() - startTime.current);
     const velocity = Math.abs(dx) / dt; // px/ms
     // Dismiss: dragged far enough OR quick flick (velocity > 0.3 px/ms with at least 15px)
