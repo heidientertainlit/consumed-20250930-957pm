@@ -238,7 +238,7 @@ function ScoreShareCard({
                   </p>
                   <p className="text-[26px] font-black leading-tight text-white" style={{ letterSpacing: '-0.02em' }}>
                     {playScore.correct === playScore.total
-                      ? 'Nailed it.'
+                      ? '✅ Nailed it.'
                       : playScore.correct > 0
                         ? `Got ${playScore.correct}/${playScore.total}.`
                         : 'Tough one.'}
