@@ -530,16 +530,16 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
                 </div>
               )}
               {showSkipOverlay && (
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(239,68,68,0.30)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 16 }}>
-                  <div style={{ border: '3px solid #ef4444', borderRadius: 8, padding: '4px 14px' }}>
-                    <span style={{ color: '#ef4444', fontWeight: 800, fontSize: 22, letterSpacing: 2 }}>SKIP</span>
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 16 }}>
+                  <div style={{ border: '2px solid rgba(255,255,255,0.7)', borderRadius: 8, padding: '4px 14px' }}>
+                    <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 800, fontSize: 22, letterSpacing: 2 }}>NEXT</span>
                   </div>
                 </div>
               )}
-              {/* Side cards: show X on left, ♥ on right */}
+              {/* Side cards: show chevron on left, ♥ on right */}
               {!isCenter && fanPos < 2 && (
                 <div style={{ position: 'absolute', bottom: 10, left: 10, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <X size={16} className="text-gray-500" />
+                  <ChevronRight size={16} className="text-gray-500" />
                 </div>
               )}
               {!isCenter && fanPos > 2 && (
@@ -576,15 +576,15 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
 
       {/* Action buttons */}
       <div className="flex items-center justify-around px-4 py-3">
-        {/* X — skip / not interested */}
+        {/* Next — move on without judging */}
         <button
           onClick={() => handleResponse(currentSet.id, activeItem, 'skip')}
           className="flex flex-col items-center gap-1 group"
         >
           <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
-            <X size={20} className="text-gray-500" />
+            <ChevronRight size={22} className="text-gray-500" />
           </div>
-          <span className="text-[10px] text-gray-400">Not for me</span>
+          <span className="text-[10px] text-gray-400">Next</span>
         </button>
 
         {/* ♥ — maybe later / want to */}
