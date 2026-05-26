@@ -3511,6 +3511,105 @@ function CurrentlyConsumingFeedCard({
   );
 }
 
+// ── Tinder-style swipeable wrapper for individual UGC feed cards ──────────────
+function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: string) => void; children: React.ReactNode }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [offset, setOffset] = useState(0);
+  const [dismissed, setDismissed] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const isHorizontal = useRef<boolean | null>(null);
+  const offsetRef = useRef(0);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    const onStart = (e: TouchEvent) => {
+      startX.current = e.touches[0].clientX;
+      startY.current = e.touches[0].clientY;
+      isHorizontal.current = null;
+      setIsDragging(true);
+    };
+
+    const onMove = (e: TouchEvent) => {
+      const dx = e.touches[0].clientX - startX.current;
+      const dy = e.touches[0].clientY - startY.current;
+
+      if (isHorizontal.current === null) {
+        if (Math.abs(dx) > Math.abs(dy) + 6) {
+          isHorizontal.current = true;
+        } else if (Math.abs(dy) > Math.abs(dx) + 6) {
+          isHorizontal.current = false;
+        } else {
+          return;
+        }
+      }
+
+      if (isHorizontal.current) {
+        e.preventDefault();
+        offsetRef.current = dx;
+        setOffset(dx);
+      }
+    };
+
+    const onEnd = () => {
+      setIsDragging(false);
+      isHorizontal.current = null;
+      const dx = offsetRef.current;
+      if (Math.abs(dx) > 80) {
+        const dir = dx > 0 ? 1 : -1;
+        offsetRef.current = dir * 500;
+        setOffset(dir * 500);
+        setTimeout(() => {
+          setDismissed(true);
+          onDismiss(id);
+        }, 280);
+      } else {
+        offsetRef.current = 0;
+        setOffset(0);
+      }
+    };
+
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+    };
+  }, [id, onDismiss]);
+
+  if (dismissed) return null;
+
+  const rotation = (offset / 220) * 10;
+  const showRight = offset > 24;
+  const showLeft = offset < -24;
+
+  return (
+    <div
+      ref={cardRef}
+      style={{
+        transform: `translateX(${offset}px) rotate(${rotation}deg)`,
+        transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
+        willChange: 'transform',
+        position: 'relative',
+        transformOrigin: 'bottom center',
+      }}
+    >
+      {showRight && (
+        <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(34,197,94,0.10)', border: '2px solid rgba(34,197,94,0.35)', zIndex: 1, pointerEvents: 'none', transition: 'opacity 0.1s' }} />
+      )}
+      {showLeft && (
+        <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(156,163,175,0.10)', border: '2px solid rgba(156,163,175,0.30)', zIndex: 1, pointerEvents: 'none', transition: 'opacity 0.1s' }} />
+      )}
+      {children}
+    </div>
+  );
+}
+
 function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments, currentUserId, onDeletePost, onAddToList }: {
   posts: any[];
   onLike: (id: string) => void;
@@ -3679,6 +3778,10 @@ export default function Feed() {
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const [commentVotes, setCommentVotes] = useState<Map<string, 'up' | 'down'>>(new Map()); // Track user's comment votes
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
+  const [dismissedPostIds, setDismissedPostIds] = useState<Set<string>>(new Set()); // Session-only tinder-dismissed UGC cards
+  const handleDismissPost = useCallback((id: string) => {
+    setDismissedPostIds(prev => new Set([...prev, id]));
+  }, []);
   const [feedFilter, setFeedFilter] = useState("");
   const [mediaTypeFilter, setMediaTypeFilter] = useState("all");
   const [detailedFilters, setDetailedFilters] = useState<FeedFilters>({ audience: "everyone", mediaTypes: [], engagementTypes: [] });
@@ -4422,33 +4525,28 @@ export default function Feed() {
   const renderFeedItem = (item: any, keyPrefix: string) => {
     if (item?.type === 'ugc_group') {
       const grp = item as { id: string; user: UGCPost['user']; posts: UGCPost[]; timestamp: string };
+      const visiblePosts = grp.posts.filter((p) => !dismissedPostIds.has(p.id));
+      if (visiblePosts.length === 0) return null;
 
       return (
-        <div key={`${keyPrefix}-${grp.id}`} className="mb-4">
-          {/* Horizontally swipeable post cards — user name is inside each card */}
-          <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory touch-pan-x md:flex-col md:overflow-x-visible md:snap-none md:pb-0">
-            {grp.posts.map((p) => (
-              <UGCGroupCard
-                key={p.id}
-                post={p}
-                onLike={handleLike}
-                isLiked={likedPosts.has(p.id)}
-                session={session}
-                fetchComments={fetchComments}
-                currentUserId={currentAppUserId || undefined}
-                onDeletePost={handleDeletePost}
-                onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
-                forceNormal={true}
-              />
-            ))}
-          </div>
-          {grp.posts.length > 1 && (
-            <div className="flex justify-center gap-1.5 mt-2">
-              {grp.posts.map((_: any, i: number) => (
-                <div key={i} className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-              ))}
-            </div>
-          )}
+        <div key={`${keyPrefix}-${grp.id}`}>
+          {visiblePosts.map((p) => (
+            <TinderCard key={p.id} id={p.id} onDismiss={handleDismissPost}>
+              <div className="mb-4">
+                <UGCGroupCard
+                  post={p}
+                  onLike={handleLike}
+                  isLiked={likedPosts.has(p.id)}
+                  session={session}
+                  fetchComments={fetchComments}
+                  currentUserId={currentAppUserId || undefined}
+                  onDeletePost={handleDeletePost}
+                  onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+                  forceNormal={true}
+                />
+              </div>
+            </TinderCard>
+          ))}
         </div>
       );
     }
