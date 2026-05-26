@@ -3521,66 +3521,86 @@ function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: s
   const startY = useRef(0);
   const isHorizontal = useRef<boolean | null>(null);
   const offsetRef = useRef(0);
+  const mouseDown = useRef(false);
+
+  const handleStart = useCallback((clientX: number, clientY: number) => {
+    startX.current = clientX;
+    startY.current = clientY;
+    isHorizontal.current = null;
+    offsetRef.current = 0;
+    setIsDragging(true);
+  }, []);
+
+  const handleMove = useCallback((clientX: number, clientY: number, preventDefault?: () => void) => {
+    const dx = clientX - startX.current;
+    const dy = clientY - startY.current;
+
+    if (isHorizontal.current === null) {
+      if (Math.abs(dx) > Math.abs(dy) + 4) {
+        isHorizontal.current = true;
+      } else if (Math.abs(dy) > Math.abs(dx) + 4) {
+        isHorizontal.current = false;
+      } else {
+        return;
+      }
+    }
+
+    if (isHorizontal.current) {
+      preventDefault?.();
+      offsetRef.current = dx;
+      setOffset(dx);
+    }
+  }, []);
+
+  const handleEnd = useCallback(() => {
+    mouseDown.current = false;
+    setIsDragging(false);
+    isHorizontal.current = null;
+    const dx = offsetRef.current;
+    if (Math.abs(dx) > 80) {
+      const dir = dx > 0 ? 1 : -1;
+      offsetRef.current = dir * 500;
+      setOffset(dir * 500);
+      setTimeout(() => {
+        setDismissed(true);
+        onDismiss(id);
+      }, 280);
+    } else {
+      offsetRef.current = 0;
+      setOffset(0);
+    }
+  }, [id, onDismiss]);
 
   useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
 
-    const onStart = (e: TouchEvent) => {
-      startX.current = e.touches[0].clientX;
-      startY.current = e.touches[0].clientY;
-      isHorizontal.current = null;
-      setIsDragging(true);
-    };
+    // Touch events (mobile)
+    const onTouchStart = (e: TouchEvent) => handleStart(e.touches[0].clientX, e.touches[0].clientY);
+    const onTouchMove = (e: TouchEvent) => handleMove(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault());
+    const onTouchEnd = () => handleEnd();
 
-    const onMove = (e: TouchEvent) => {
-      const dx = e.touches[0].clientX - startX.current;
-      const dy = e.touches[0].clientY - startY.current;
+    // Mouse events (desktop / Replit preview)
+    const onMouseDown = (e: MouseEvent) => { mouseDown.current = true; handleStart(e.clientX, e.clientY); };
+    const onMouseMove = (e: MouseEvent) => { if (!mouseDown.current) return; handleMove(e.clientX, e.clientY); };
+    const onMouseUp = () => { if (!mouseDown.current) return; handleEnd(); };
 
-      if (isHorizontal.current === null) {
-        if (Math.abs(dx) > Math.abs(dy) + 6) {
-          isHorizontal.current = true;
-        } else if (Math.abs(dy) > Math.abs(dx) + 6) {
-          isHorizontal.current = false;
-        } else {
-          return;
-        }
-      }
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    el.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
 
-      if (isHorizontal.current) {
-        e.preventDefault();
-        offsetRef.current = dx;
-        setOffset(dx);
-      }
-    };
-
-    const onEnd = () => {
-      setIsDragging(false);
-      isHorizontal.current = null;
-      const dx = offsetRef.current;
-      if (Math.abs(dx) > 80) {
-        const dir = dx > 0 ? 1 : -1;
-        offsetRef.current = dir * 500;
-        setOffset(dir * 500);
-        setTimeout(() => {
-          setDismissed(true);
-          onDismiss(id);
-        }, 280);
-      } else {
-        offsetRef.current = 0;
-        setOffset(0);
-      }
-    };
-
-    el.addEventListener('touchstart', onStart, { passive: true });
-    el.addEventListener('touchmove', onMove, { passive: false });
-    el.addEventListener('touchend', onEnd, { passive: true });
     return () => {
-      el.removeEventListener('touchstart', onStart);
-      el.removeEventListener('touchmove', onMove);
-      el.removeEventListener('touchend', onEnd);
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
+      el.removeEventListener('touchend', onTouchEnd);
+      el.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
     };
-  }, [id, onDismiss]);
+  }, [handleStart, handleMove, handleEnd]);
 
   if (dismissed) return null;
 
@@ -3615,6 +3635,13 @@ function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: s
       {showLeft && (
         <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 2, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}>
           <span style={{ color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>SKIP</span>
+        </div>
+      )}
+      {/* Static swipe affordance — subtle arrows shown at rest */}
+      {!isDragging && offset === 0 && (
+        <div style={{ position: 'absolute', bottom: 10, right: 12, zIndex: 2, pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: 3, opacity: 0.25 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
       )}
       {children}
