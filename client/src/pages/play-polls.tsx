@@ -241,28 +241,22 @@ export default function PlayPollsPage() {
                 const currentIndex = categoryIndices[category] || 0;
                 return (
                   <div key={category}>
-                    <Card className="bg-white border border-gray-200 rounded-2xl p-4 pb-3 shadow-sm overflow-hidden">
-                      {/* Card header — matches trivia style */}
+                    <div className="bg-white border border-gray-100 shadow rounded-2xl p-4 overflow-hidden relative mb-4">
+                      {/* Header — matches feed polls-carousel */}
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <SquareCheckBig size={14} className="text-blue-500 shrink-0" />
-                          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 tracking-wide shrink-0">
+                          <span className="inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-full bg-blue-100 text-blue-700 text-[11px] font-bold tracking-wide">
                             {label}
                           </span>
                           <p className="text-sm font-semibold text-gray-900">Cast Your Vote</p>
                         </div>
-                        <div className="flex items-center gap-1">
-                          {currentIndex > 0 && (
-                            <button onClick={() => scrollCategoryTo(category, currentIndex - 1, categoryGames.length)} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                              <ChevronLeft className="w-4 h-4 text-gray-600" />
-                            </button>
-                          )}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-gray-400 font-medium">{currentIndex + 1}/{categoryGames.length}</span>
                           {currentIndex < categoryGames.length - 1 && (
                             <button onClick={() => scrollCategoryTo(category, currentIndex + 1, categoryGames.length)} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
                               <ChevronRight className="w-4 h-4 text-gray-600" />
                             </button>
                           )}
-                          <span className="text-xs text-gray-500 ml-1">{currentIndex + 1}/{categoryGames.length}</span>
                         </div>
                       </div>
 
@@ -277,71 +271,71 @@ export default function PlayPollsPage() {
                           const options: string[] = (game.options || []).map((o: any) =>
                             typeof o === 'string' ? o : (o.label || o.text || String(o))
                           );
+                          const isVoted = !!(allPredictions[game.id] || submissionResults[game.id] || celebratingItems[game.id] !== undefined);
+                          const result = submissionResults[game.id];
+                          const prevAnswer = allPredictions[game.id];
+                          const userAnswer = result?.userAnswer || prevAnswer;
+                          const stats = result?.stats;
+                          const isCelebrating = celebratingItems[game.id] !== undefined;
+                          const pts = game.points_reward ?? game.pointsReward ?? 2;
+
                           return (
                             <div key={game.id} className="flex-shrink-0 w-full snap-center">
-                              {/* Media tag chip */}
-                              {(game.media_title || game.tags?.[0]) && (
-                                <div className="mb-2">
-                                  <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 border border-purple-200">
-                                    <span className="text-[10px] text-purple-700 font-medium">{game.media_title || game.tags?.[0]}</span>
+                              {/* Question row + Voted badge */}
+                              <div className="flex items-start justify-between gap-2 mb-3">
+                                <h3 className="text-gray-900 font-semibold text-base leading-snug flex-1">{game.title}</h3>
+                                {isVoted && (
+                                  <span className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-green-700 text-[10px] font-bold">
+                                    <CheckCircle className="w-2.5 h-2.5" />
+                                    Voted
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Options */}
+                              {isVoted ? (
+                                <div className="space-y-2 relative">
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {options.map((opt, oi) => {
+                                      const pct = stats ? (stats[opt] || 0) : 0;
+                                      const isUserPick = opt === userAnswer;
+                                      return (
+                                        <div
+                                          key={oi}
+                                          className={`relative min-h-[72px] py-2 px-3 rounded-2xl border flex flex-col items-center justify-center text-center leading-tight ${
+                                            isUserPick
+                                              ? 'border-blue-500 bg-gradient-to-br from-slate-800 to-blue-900'
+                                              : 'border-gray-200/80 bg-gray-50'
+                                          }`}
+                                        >
+                                          {isUserPick && (
+                                            <CheckCircle className="w-3 h-3 text-white absolute top-1.5 right-1.5" />
+                                          )}
+                                          <span className={`text-[12px] ${isUserPick ? 'text-white font-medium' : 'text-gray-700'}`}>{opt}</span>
+                                          <span className={`text-[11px] font-bold mt-1 ${isUserPick ? 'text-white' : 'text-gray-400'}`}>{pct}%</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                  {gameIdx < categoryGames.length - 1 && (
+                                    <button
+                                      onClick={() => scrollCategoryTo(category, gameIdx + 1, categoryGames.length)}
+                                      className="w-full mt-1 py-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold"
+                                    >
+                                      Next question
+                                    </button>
+                                  )}
+                                  {/* Voted! celebration overlay */}
+                                  <div className={`absolute inset-0 rounded-xl flex flex-col items-center justify-center gap-3 transition-opacity duration-300 bg-black/60 ${isCelebrating ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                                    <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center shadow-lg">
+                                      <CheckCircle className="w-7 h-7 text-white" />
+                                    </div>
+                                    <p className="text-xl font-bold text-white">Voted!</p>
+                                    <div className="bg-white/20 rounded-xl px-5 py-2.5 border border-white/30">
+                                      <span className="text-2xl font-bold text-white">+{celebratingItems[game.id] ?? result?.points ?? 0} pts</span>
+                                    </div>
                                   </div>
                                 </div>
-                              )}
-
-                              <h3 className="text-gray-900 font-semibold text-base leading-snug mb-4">{game.title}</h3>
-
-                              {/* Voted / unanswered state */}
-                              {allPredictions[game.id] || submissionResults[game.id] || celebratingItems[game.id] !== undefined ? (
-                                (() => {
-                                  const result = submissionResults[game.id];
-                                  const prevAnswer = allPredictions[game.id];
-                                  const userAnswer = result?.userAnswer || prevAnswer;
-                                  const stats = result?.stats;
-                                  const isCelebrating = celebratingItems[game.id] !== undefined;
-                                  return (
-                                    <div className="relative">
-                                      <div className="grid grid-cols-2 gap-2">
-                                        {options.map((opt, oi) => {
-                                          const pct = stats ? (stats[opt] || 0) : 0;
-                                          const isUserPick = opt === userAnswer;
-                                          return (
-                                            <div
-                                              key={oi}
-                                              className={`relative min-h-[72px] py-2 px-3 rounded-2xl border flex flex-col items-center justify-center text-center leading-tight ${
-                                                isUserPick
-                                                  ? 'border-blue-500 bg-gradient-to-br from-slate-800 to-blue-900'
-                                                  : 'border-gray-200/80 bg-gray-50'
-                                              }`}
-                                            >
-                                              {isUserPick && (
-                                                <CheckCircle className="w-3 h-3 text-white absolute top-1.5 right-1.5" />
-                                              )}
-                                              <span className={`text-[12px] ${isUserPick ? 'text-white font-medium' : 'text-gray-700'}`}>{opt}</span>
-                                              <span className={`text-[11px] font-bold mt-1 ${isUserPick ? 'text-white' : 'text-gray-400'}`}>{pct}%</span>
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                      <button
-                                        onClick={() => { if (gameIdx < categoryGames.length - 1) scrollCategoryTo(category, gameIdx + 1, categoryGames.length); }}
-                                        className="w-full mt-2 py-2.5 rounded-xl font-semibold text-sm text-white transition-all bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:opacity-90"
-                                      >
-                                        Next poll
-                                      </button>
-
-                                      {/* Voted! overlay */}
-                                      <div className={`absolute inset-0 rounded-xl flex flex-col items-center justify-center gap-3 transition-opacity duration-300 bg-black/60 ${isCelebrating ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                                        <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center shadow-lg">
-                                          <CheckCircle className="w-7 h-7 text-white" />
-                                        </div>
-                                        <p className="text-xl font-bold text-white">Voted!</p>
-                                        <div className="bg-white/20 rounded-xl px-5 py-2.5 border border-white/30">
-                                          <span className="text-2xl font-bold text-white">+{celebratingItems[game.id] ?? result?.points ?? 0} pts</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })()
                               ) : (
                                 <div className="grid grid-cols-2 gap-2">
                                   {options.map((opt, idx) => (
@@ -349,18 +343,33 @@ export default function PlayPollsPage() {
                                       key={idx}
                                       onClick={() => handleTapAndVote(game, opt)}
                                       disabled={submitVote.isPending}
-                                      className="min-h-[72px] py-3 px-3 rounded-2xl text-sm font-medium transition-all text-center flex items-center justify-center leading-tight bg-gray-100 text-gray-800 hover:bg-gray-200 active:scale-[0.98]"
+                                      className="min-h-[72px] py-3 px-3 rounded-2xl border text-[14px] font-medium transition-all flex items-center justify-center text-center leading-tight bg-gray-50 border-gray-200/80 text-gray-700 hover:bg-gray-100 active:scale-[0.98]"
                                     >
                                       {opt}
                                     </button>
                                   ))}
                                 </div>
                               )}
+
+                              {/* Footer: Skip + pts */}
+                              <div className="flex items-center justify-between mt-4">
+                                {!isVoted ? (
+                                  <button
+                                    onClick={() => { if (gameIdx < categoryGames.length - 1) scrollCategoryTo(category, gameIdx + 1, categoryGames.length); }}
+                                    className="text-xs text-blue-500 hover:text-blue-600 transition-colors font-medium ml-2"
+                                  >
+                                    Skip &gt;
+                                  </button>
+                                ) : <div />}
+                                <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold">
+                                  +{pts} pts
+                                </div>
+                              </div>
                             </div>
                           );
                         })}
                       </div>
-                    </Card>
+                    </div>
                   </div>
                 );
               })}
