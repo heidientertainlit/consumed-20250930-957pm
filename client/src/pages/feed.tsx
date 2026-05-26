@@ -3601,7 +3601,7 @@ function useSwipeGesture({
       wheelAccum += e.deltaX;
       // Dismiss once the swipe crosses 60px of accumulated horizontal movement
       if (Math.abs(wheelAccum) > 60) {
-        const dir = wheelAccum > 0 ? 1 : -1 as 1 | -1;
+        const dir = wheelAccum > 0 ? -1 : 1 as 1 | -1;
         wheelAccum = 0;
         wheelCooldownUntil.current = Date.now() + 700;
         if (wheelTimer) { clearTimeout(wheelTimer); wheelTimer = null; }
