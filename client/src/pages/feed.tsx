@@ -726,6 +726,20 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [fireCount, setFireCount] = useState(post.fire_votes || 0);
   const [iceCount, setIceCount] = useState(post.ice_votes || 0);
   const [fireIceVoted, setFireIceVoted] = useState<'fire' | 'ice' | null>(null);
+  // Agree / Hot Take / Not My Take reaction state
+  const [localReaction, setLocalReaction] = useState<'flame' | 'down' | null>(null);
+  const handleReaction = (type: 'up' | 'flame' | 'down') => {
+    if (type === 'up') {
+      setLocalReaction(null);
+      onLike(post.id);
+    } else if (type === 'flame') {
+      if (isLiked) onLike(post.id); // un-like
+      setLocalReaction(prev => prev === 'flame' ? null : 'flame');
+    } else {
+      if (isLiked) onLike(post.id); // un-like
+      setLocalReaction(prev => prev === 'down' ? null : 'down');
+    }
+  };
   const hasFetched = useRef(false);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
   const starsRef = useRef<HTMLDivElement>(null);
@@ -1171,12 +1185,28 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   // Reusable action bar
   const actionBar = (
     <div className="flex items-center gap-3">
+      {/* ↑ Agree · Flame Hot Take · ↓ Not My Take */}
       <button
-        onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
-        className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+        onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
+        className={`flex items-center gap-1 text-sm transition-all active:scale-125 ${isLiked && !localReaction ? 'text-purple-400' : 'text-gray-400 hover:text-purple-400'}`}
+        title="Agree"
       >
-        <Heart size={18} fill={isLiked ? 'currentColor' : 'none'} />
+        <ArrowUp size={16} strokeWidth={isLiked && !localReaction ? 2.5 : 1.75} />
         <span className="text-xs">{post.likes || 0}</span>
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); handleReaction('flame'); }}
+        className={`flex items-center gap-1 text-sm transition-all active:scale-125 ${localReaction === 'flame' ? 'text-orange-400' : 'text-gray-400 hover:text-orange-400'}`}
+        title="Hot Take"
+      >
+        <Flame size={15} strokeWidth={localReaction === 'flame' ? 2.5 : 1.75} fill={localReaction === 'flame' ? 'currentColor' : 'none'} />
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); handleReaction('down'); }}
+        className={`flex items-center gap-1 text-sm transition-all active:scale-125 ${localReaction === 'down' ? 'text-gray-300' : 'text-gray-400 hover:text-gray-300'}`}
+        title="Not My Take"
+      >
+        <ArrowDown size={16} strokeWidth={localReaction === 'down' ? 2.5 : 1.75} />
       </button>
       <button
         onClick={handleCommentToggle}
@@ -1205,15 +1235,30 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   // Action bar variant for promoted rating cards
   const actionFirstBar = (
     <div className="flex items-center gap-3 py-2">
-      {/* ❤️ Like */}
+      {/* ↑ Agree · Flame Hot Take · ↓ Not My Take */}
       <button
-        onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
-        className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+        onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
+        className={`flex items-center gap-1 text-sm transition-all active:scale-125 ${isLiked && !localReaction ? 'text-purple-400' : 'text-gray-400 hover:text-purple-400'}`}
+        title="Agree"
       >
-        <Heart size={18} fill={isLiked ? 'currentColor' : 'none'} />
+        <ArrowUp size={16} strokeWidth={isLiked && !localReaction ? 2.5 : 1.75} />
         <span className="text-xs">{post.likes || 0}</span>
       </button>
-      {/* 💬 Comment — next to like */}
+      <button
+        onClick={(e) => { e.stopPropagation(); handleReaction('flame'); }}
+        className={`flex items-center gap-1 text-sm transition-all active:scale-125 ${localReaction === 'flame' ? 'text-orange-400' : 'text-gray-400 hover:text-orange-400'}`}
+        title="Hot Take"
+      >
+        <Flame size={15} strokeWidth={localReaction === 'flame' ? 2.5 : 1.75} fill={localReaction === 'flame' ? 'currentColor' : 'none'} />
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); handleReaction('down'); }}
+        className={`flex items-center gap-1 text-sm transition-all active:scale-125 ${localReaction === 'down' ? 'text-gray-300' : 'text-gray-400 hover:text-gray-300'}`}
+        title="Not My Take"
+      >
+        <ArrowDown size={16} strokeWidth={localReaction === 'down' ? 2.5 : 1.75} />
+      </button>
+      {/* 💬 Comment */}
       <button
         onClick={handleCommentToggle}
         className={`flex items-center gap-1.5 text-sm ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
@@ -1554,19 +1599,35 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
         {/* Action bar */}
         <div className="flex items-center gap-3 px-4 py-2.5 border-t border-gray-100">
+          {/* ↑ Agree · Flame Hot Take · ↓ Not My Take */}
+          <button
+            onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
+            className={`flex items-center gap-1 text-sm transition-all active:scale-125 ${isLiked && !localReaction ? 'text-purple-400' : 'text-gray-400 hover:text-purple-400'}`}
+            title="Agree"
+          >
+            <ArrowUp size={15} strokeWidth={isLiked && !localReaction ? 2.5 : 1.75} />
+            <span className="text-xs">{post.likes || 0}</span>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); handleReaction('flame'); }}
+            className={`flex items-center gap-1 text-sm transition-all active:scale-125 ${localReaction === 'flame' ? 'text-orange-400' : 'text-gray-400 hover:text-orange-400'}`}
+            title="Hot Take"
+          >
+            <Flame size={14} strokeWidth={localReaction === 'flame' ? 2.5 : 1.75} fill={localReaction === 'flame' ? 'currentColor' : 'none'} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); handleReaction('down'); }}
+            className={`flex items-center gap-1 text-sm transition-all active:scale-125 ${localReaction === 'down' ? 'text-gray-300' : 'text-gray-400 hover:text-gray-300'}`}
+            title="Not My Take"
+          >
+            <ArrowDown size={15} strokeWidth={localReaction === 'down' ? 2.5 : 1.75} />
+          </button>
           <button
             onClick={handleCommentToggle}
             className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${showComments ? 'text-blue-500' : 'text-gray-600 hover:text-blue-500'}`}
           >
             <MessageCircle size={15} />
             <span className="text-xs">{Math.max(post.comments || 0, comments.length) > 0 ? `${Math.max(post.comments || 0, comments.length)} replies` : 'Reply'}</span>
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
-            className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
-          >
-            <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
-            <span className="text-xs">{post.likes || 0}</span>
           </button>
           <div className="ml-auto flex items-center gap-1">
             {currentUserId !== post.user?.id && (
