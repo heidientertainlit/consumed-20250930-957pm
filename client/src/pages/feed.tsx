@@ -1215,15 +1215,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         <MessageCircle size={18} />
         <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
       </button>
-      {(post.externalId || post.mediaTitle) && onAddToList && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
-          className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
-          title="Add to list"
-        >
-          <Plus size={18} />
-        </button>
-      )}
       <div className="ml-auto flex items-center gap-1.5">
         {post.externalId?.startsWith('series-') && <span className="text-[9px] font-semibold text-purple-500 bg-purple-50 border border-purple-200 rounded-full px-1.5 py-0.5">Series</span>}
         <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
@@ -1266,16 +1257,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         <MessageCircle size={18} />
         <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
       </button>
-      {/* + add to list */}
-      {(post.externalId || post.mediaTitle) && onAddToList && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
-          className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
-          title="Add to list"
-        >
-          <Plus size={18} />
-        </button>
-      )}
       {/* ⭐ Rate — only for other users' posts */}
       {isOtherUser && (
         <button
@@ -1320,9 +1301,25 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   ) : null;
 
   const posterEl = post.mediaImage && post.mediaImage.startsWith('http') ? (
-    post.externalId && post.externalSource ? (
-      <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-        <div className="relative flex-shrink-0 w-[88px] h-[132px] rounded-xl overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
+    <div className="relative flex-shrink-0 w-[88px] h-[132px]">
+      {post.externalId && post.externalSource ? (
+        <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
+          <div className="relative w-full h-full rounded-xl overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
+            <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            {mediaTypeNorm && (
+              <div className="absolute bottom-1 left-1 bg-black/25 backdrop-blur-[2px] rounded p-[3px]">
+                {mediaTypeNorm === 'tv' && <Tv2 size={10} className="text-white/75" />}
+                {mediaTypeNorm === 'movie' && <Film size={10} className="text-white/75" />}
+                {mediaTypeNorm === 'book' && <Book size={10} className="text-white/75" />}
+                {mediaTypeNorm === 'music' && <Music size={10} className="text-white/75" />}
+                {mediaTypeNorm === 'podcast' && <Headphones size={10} className="text-white/75" />}
+                {mediaTypeNorm === 'game' && <Gamepad2 size={10} className="text-white/75" />}
+              </div>
+            )}
+          </div>
+        </Link>
+      ) : (
+        <div className="relative w-full h-full rounded-xl overflow-hidden shadow-md">
           <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           {mediaTypeNorm && (
             <div className="absolute bottom-1 left-1 bg-black/25 backdrop-blur-[2px] rounded p-[3px]">
@@ -1335,22 +1332,17 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           )}
         </div>
-      </Link>
-    ) : (
-      <div className="relative flex-shrink-0 w-[88px] h-[132px] rounded-xl overflow-hidden shadow-md">
-        <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-        {mediaTypeNorm && (
-          <div className="absolute bottom-1 left-1 bg-black/25 backdrop-blur-[2px] rounded p-[3px]">
-            {mediaTypeNorm === 'tv' && <Tv2 size={10} className="text-white/75" />}
-            {mediaTypeNorm === 'movie' && <Film size={10} className="text-white/75" />}
-            {mediaTypeNorm === 'book' && <Book size={10} className="text-white/75" />}
-            {mediaTypeNorm === 'music' && <Music size={10} className="text-white/75" />}
-            {mediaTypeNorm === 'podcast' && <Headphones size={10} className="text-white/75" />}
-            {mediaTypeNorm === 'game' && <Gamepad2 size={10} className="text-white/75" />}
-          </div>
-        )}
-      </div>
-    )
+      )}
+      {onAddToList && (post.externalId || post.mediaTitle) && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
+          className="absolute top-1.5 right-1.5 z-10 w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all"
+          title="Add to list"
+        >
+          <Plus size={13} color="white" />
+        </button>
+      )}
+    </div>
   ) : null;
 
   // ── Hot Take card ──────────────────────────────────────────────────────────
@@ -3350,21 +3342,32 @@ function CurrentlyConsumingFeedCard({
           {/* Media card in gray box - consistent design */}
           <div className="bg-white rounded-lg p-3 mb-2 border border-gray-100">
             <div className="flex gap-3">
-              <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
-                <div className="cursor-pointer flex-shrink-0">
-                  {media.imageUrl ? (
-                    <img 
-                      src={media.imageUrl} 
-                      alt={media.title || ''} 
-                      className="w-16 h-20 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="w-16 h-20 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                      <Film size={20} className="text-purple-300" />
-                    </div>
-                  )}
-                </div>
-              </Link>
+              <div className="relative flex-shrink-0">
+                <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
+                  <div className="cursor-pointer">
+                    {media.imageUrl ? (
+                      <img 
+                        src={media.imageUrl} 
+                        alt={media.title || ''} 
+                        className="w-16 h-20 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="w-16 h-20 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+                        <Film size={20} className="text-purple-300" />
+                      </div>
+                    )}
+                  </div>
+                </Link>
+                {onAddToList && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onAddToList({ title: media.title, externalId: media.externalId || '', externalSource: media.externalSource || 'tmdb', imageUrl: media.imageUrl || '', type: media.mediaType || 'movie' }); }}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all"
+                    title="Add to list"
+                  >
+                    <Plus size={11} color="white" />
+                  </button>
+                )}
+              </div>
               
               {/* Media info and actions */}
               <div className="flex-1 min-w-0">
@@ -3406,15 +3409,6 @@ function CurrentlyConsumingFeedCard({
               <MessageCircle size={15} />
               <span className="text-xs">{post.comments || 0}</span>
             </button>
-            {onAddToList && (
-              <button
-                onClick={() => onAddToList({ title: media.title, externalId: media.externalId || '', externalSource: media.externalSource || 'tmdb', imageUrl: media.imageUrl || '', type: media.mediaType || 'movie' })}
-                className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
-                title="Add to list"
-              >
-                <Plus size={15} />
-              </button>
-            )}
             {!isOwnPost && media.externalId && (
               <button
                 onClick={() => setShowRating(prev => !prev)}
