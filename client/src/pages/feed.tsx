@@ -4524,44 +4524,42 @@ export default function Feed() {
     const extraUGC = feedRatingCarousels.flatMap((c: any) => c.posts);
     let extraIdx = 0;
 
-    // Wrap a promoted rating so we keep its original `type` (needed for the
-    // "WHAT'S YOUR TAKE?" action-first UGCGroupCard layout) but still tag it
-    // so renderFeedItem can route it through the standalone branch.
-    const wrapPromoted = (idx: number) => ({
-      ...promotedRatings[idx],
-      _isPromoted: true,
-      _promotedKey: `promoted-${idx}`,
-    });
     const wrapExtra = (idx: number) => ({
       ...extraUGC[idx],
       _isPromoted: true,
       _promotedKey: `extra-${idx}`,
     });
 
-    // Lead with the first promoted rating so it's the very first item in the feed
-    if (promotedRatings.length > 0) {
-      out.push(wrapPromoted(promotedIdx));
-      promotedIdx++;
+    // Group promoted ratings into stacks of 5 so TinderCardStack shows a card deck.
+    // The first stack leads the feed (preserving the persona-first ordering rule).
+    const STACK_SIZE = 5;
+    const promotedStacks: any[] = [];
+    for (let i = 0; i < promotedRatings.length; i += STACK_SIZE) {
+      const posts = promotedRatings.slice(i, i + STACK_SIZE);
+      promotedStacks.push({ type: 'ugc_stack', id: `promo-stack-${i}`, posts });
+    }
+    let stackIdx = 0;
+
+    // Lead with the first stack so persona posts are still the very first thing in the feed
+    if (promotedStacks.length > 0) {
+      out.push(promotedStacks[stackIdx++]);
     }
 
     feedPlaySlots.forEach((item: any, i: number) => {
       out.push(item);
-      // After every play item, surface a promoted rating (UGC at least every other post)
-      if (promotedIdx < promotedRatings.length) {
-        out.push(wrapPromoted(promotedIdx));
-        promotedIdx++;
+      // After every 5 play items, insert the next stack of 5 promoted ratings
+      if ((i + 1) % 5 === 0 && stackIdx < promotedStacks.length) {
+        out.push(promotedStacks[stackIdx++]);
       }
       // Every other play item, inject an extra UGC from the carousel pool.
-      // This gives the organic "user post - play - user post - user post - play" rhythm.
       if (i % 2 === 1 && extraIdx < extraUGC.length) {
         out.push(wrapExtra(extraIdx));
         extraIdx++;
       }
     });
-    // Append any leftover promoted ratings
-    while (promotedIdx < promotedRatings.length) {
-      out.push(wrapPromoted(promotedIdx));
-      promotedIdx++;
+    // Append remaining stacks
+    while (stackIdx < promotedStacks.length) {
+      out.push(promotedStacks[stackIdx++]);
     }
     // Append remaining extra UGC after all play slots are consumed
     while (extraIdx < extraUGC.length) {
@@ -4631,6 +4629,32 @@ export default function Feed() {
 
   // Renders one feed item — either a single post or a grouped user activity carousel
   const renderFeedItem = (item: any, keyPrefix: string) => {
+    // Cross-user stack of 5 promoted ratings — shown as a swipeable Tinder deck
+    if (item?.type === 'ugc_stack') {
+      const visiblePosts = item.posts.filter((p: any) => !dismissedPostIds.has(p.id));
+      if (visiblePosts.length === 0) return null;
+      return (
+        <TinderCardStack
+          key={item.id}
+          posts={visiblePosts}
+          renderCard={(p: any) => (
+            <UGCGroupCard
+              post={p}
+              onLike={handleLike}
+              isLiked={likedPosts.has(p.id)}
+              session={session}
+              fetchComments={fetchComments}
+              currentUserId={currentAppUserId || undefined}
+              onDeletePost={handleDeletePost}
+              onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+              forceActionFirst={true}
+              forceNormal={true}
+            />
+          )}
+        />
+      );
+    }
+
     if (item?.type === 'ugc_group') {
       const grp = item as { id: string; user: UGCPost['user']; posts: UGCPost[]; timestamp: string };
       const visiblePosts = grp.posts.filter((p) => !dismissedPostIds.has(p.id));
