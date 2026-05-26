@@ -3650,15 +3650,23 @@ function TinderCardStack({ posts, renderCard }: {
   const [offset, setOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [flyingOut, setFlyingOut] = useState(false);
+  // Suppress transition during card swap so the next card snaps into place
+  // rather than sliding in from the direction the previous card flew off.
+  const [skipTransition, setSkipTransition] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
 
   const dismiss = useCallback((dir: 1 | -1) => {
     setFlyingOut(true);
     setOffset(dir * 600);
     setTimeout(() => {
+      // Kill transition BEFORE changing content so the new card never
+      // inherits the outgoing card's position and slides in.
+      setSkipTransition(true);
       setTopIndex(i => i + 1);
       setOffset(0);
       setFlyingOut(false);
+      // Re-enable transitions two frames later (after browser has painted)
+      requestAnimationFrame(() => requestAnimationFrame(() => setSkipTransition(false)));
     }, 280);
   }, []);
 
@@ -3697,7 +3705,7 @@ function TinderCardStack({ posts, renderCard }: {
           position: 'relative',
           zIndex: 10,
           transform: `translateX(${offset}px) rotate(${rotation}deg)`,
-          transition: flyingOut ? 'transform 0.28s ease-out' : isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
+          transition: flyingOut ? 'transform 0.28s ease-out' : (isDragging || skipTransition) ? 'none' : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
           transformOrigin: 'bottom center',
           willChange: 'transform',
         }}
