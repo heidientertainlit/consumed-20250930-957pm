@@ -609,9 +609,9 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           <span className="text-[10px] text-purple-500 font-medium">Rate it</span>
         </button>
 
-        {/* + — add to list */}
+        {/* + — add to list (silently queues and advances) */}
         <button
-          onClick={() => onAddToList?.({ title: activeItem.title, mediaType: activeItem.media_type || currentSet.media_type || 'movie', externalId: activeItem.external_id || activeItem.id, externalSource: activeItem.external_source || 'tmdb', imageUrl: activeItem.image_url || '' })}
+          onClick={() => handleResponse(currentSet.id, activeItem, 'want_to')}
           className="flex flex-col items-center gap-1 group"
         >
           <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
