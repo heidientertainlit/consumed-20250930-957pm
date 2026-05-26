@@ -3582,11 +3582,37 @@ function useSwipeGesture({
     const onMD = (e: MouseEvent) => doStart(e.clientX, e.clientY);
     const onMM = (e: MouseEvent) => doMove(e.clientX, e.clientY);
     const onMU = (e: MouseEvent) => doEnd(e.clientX);
+
+    // Trackpad horizontal swipe: accumulate deltaX and dismiss once threshold crossed.
+    // This makes it feel like a natural carousel swipe on laptop trackpads — no click-drag needed.
+    let wheelAccum = 0;
+    let wheelTimer: ReturnType<typeof setTimeout> | null = null;
+    const onWheel = (e: WheelEvent) => {
+      const absX = Math.abs(e.deltaX);
+      const absY = Math.abs(e.deltaY);
+      // Ignore primarily-vertical scrolls so the page still scrolls normally
+      if (absX < 5 || absX < absY * 0.5) return;
+      e.preventDefault();
+      wheelAccum += e.deltaX;
+      // Dismiss immediately once the swipe crosses 60px of accumulated horizontal movement
+      if (Math.abs(wheelAccum) > 60) {
+        const dir = wheelAccum > 0 ? 1 : -1 as 1 | -1;
+        wheelAccum = 0;
+        if (wheelTimer) { clearTimeout(wheelTimer); wheelTimer = null; }
+        onDismiss(dir);
+        return;
+      }
+      // Reset accumulator if swiping stops
+      if (wheelTimer) clearTimeout(wheelTimer);
+      wheelTimer = setTimeout(() => { wheelAccum = 0; wheelTimer = null; }, 200);
+    };
+
     el.addEventListener('touchstart', onTS, { passive: true });
     el.addEventListener('touchmove', onTM, { passive: false });
     el.addEventListener('touchend', onTE, { passive: true });
     // Use capture phase so child stopPropagation doesn't block the gesture start
     el.addEventListener('mousedown', onMD, { capture: true });
+    el.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('mousemove', onMM);
     window.addEventListener('mouseup', onMU);
     return () => {
@@ -3594,10 +3620,11 @@ function useSwipeGesture({
       el.removeEventListener('touchmove', onTM);
       el.removeEventListener('touchend', onTE);
       el.removeEventListener('mousedown', onMD, { capture: true });
+      el.removeEventListener('wheel', onWheel);
       window.removeEventListener('mousemove', onMM);
       window.removeEventListener('mouseup', onMU);
     };
-  }, [doStart, doMove, doEnd]);
+  }, [doStart, doMove, doEnd, onDismiss]);
 
   return { attachTo };
 }
