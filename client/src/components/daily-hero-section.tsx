@@ -2098,14 +2098,6 @@ export function DailyHeroSection() {
                     <span style={{ fontSize: 21, fontWeight: 600, color: '#f0ecff', lineHeight: 1.2 }}>{headline}</span>
                     <span style={{ fontSize: 12, color: '#a090c8', marginTop: 3, lineHeight: 1.5 }}>{subCopy}</span>
                   </div>
-                  {/* View button */}
-                  <button
-                    onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true)}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.35)', borderRadius: 12, padding: '8px 14px', flexShrink: 0, cursor: 'pointer' }}
-                  >
-                    <Check size={16} strokeWidth={2.5} color="#c4a0ff" />
-                    <span style={{ fontSize: 10, color: '#c4a0ff', fontWeight: 600, letterSpacing: '0.04em' }}>View</span>
-                  </button>
                 </div>
 
                 {/* Divider */}
@@ -2118,7 +2110,7 @@ export function DailyHeroSection() {
                     <span style={{ fontSize: 11, color: '#4ade80', fontWeight: 600 }}>Done</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.3)', borderRadius: 20, padding: '4px 10px' }}>
-                    <span style={{ fontSize: 13 }}>🔥</span>
+                    <Flame size={13} color="#fb923c" fill="#fb923c" />
                     <span style={{ fontSize: 11, color: '#fb923c', fontWeight: 600 }}>{streak ?? 1} day streak</span>
                   </div>
                 </div>
@@ -2127,11 +2119,7 @@ export function DailyHeroSection() {
                 <div style={{ height: '1px', background: 'rgba(160,120,255,0.12)', margin: '0 16px' }} />
 
                 {/* Bottom row */}
-                <div className="flex items-center justify-between gap-3 px-4 py-3">
-                  <span style={{ fontSize: 12, color: '#7c6aaa' }}>
-                    Your DNA is getting sharper —{' '}
-                    <span style={{ color: '#b48eff', fontWeight: 700 }}>day {streak ?? 1}</span>
-                  </span>
+                <div className="flex items-center justify-end gap-3 px-4 py-3">
                   <button
                     onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true)}
                     style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.25)', borderRadius: 20, padding: '6px 13px', color: '#c4a0ff', fontSize: 12, fontWeight: 500, flexShrink: 0, cursor: 'pointer' }}
