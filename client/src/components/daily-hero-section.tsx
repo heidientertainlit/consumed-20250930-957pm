@@ -2121,6 +2121,21 @@ export function DailyHeroSection() {
                 {/* Divider */}
                 <div style={{ height: '1px', background: 'rgba(160,120,255,0.12)', margin: '0 16px' }} />
 
+                {/* Middle: completed + streak badges */}
+                <div className="flex items-center gap-2 px-4 py-2">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 20, padding: '4px 10px' }}>
+                    <Check size={13} strokeWidth={3} color="#4ade80" />
+                    <span style={{ fontSize: 11, color: '#4ade80', fontWeight: 600 }}>Done</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.3)', borderRadius: 20, padding: '4px 10px' }}>
+                    <span style={{ fontSize: 13 }}>🔥</span>
+                    <span style={{ fontSize: 11, color: '#fb923c', fontWeight: 600 }}>{streak ?? 1} day streak</span>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div style={{ height: '1px', background: 'rgba(160,120,255,0.12)', margin: '0 16px' }} />
+
                 {/* Bottom row */}
                 <div className="flex items-center justify-between gap-3 px-4 py-3">
                   <div className="flex flex-col gap-2 flex-1 min-w-0">
