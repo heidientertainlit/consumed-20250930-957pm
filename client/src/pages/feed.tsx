@@ -3587,17 +3587,21 @@ function useSwipeGesture({
     // This makes it feel like a natural carousel swipe on laptop trackpads — no click-drag needed.
     let wheelAccum = 0;
     let wheelTimer: ReturnType<typeof setTimeout> | null = null;
+    let wheelCooldownUntil = 0; // timestamp — ignore wheel events until cooldown expires
     const onWheel = (e: WheelEvent) => {
       const absX = Math.abs(e.deltaX);
       const absY = Math.abs(e.deltaY);
       // Ignore primarily-vertical scrolls so the page still scrolls normally
       if (absX < 5 || absX < absY * 0.5) return;
       e.preventDefault();
+      // Cooldown: a trackpad swipe fires many events; ignore the tail after a dismiss
+      if (Date.now() < wheelCooldownUntil) { wheelAccum = 0; return; }
       wheelAccum += e.deltaX;
-      // Dismiss immediately once the swipe crosses 60px of accumulated horizontal movement
+      // Dismiss once the swipe crosses 60px of accumulated horizontal movement
       if (Math.abs(wheelAccum) > 60) {
         const dir = wheelAccum > 0 ? 1 : -1 as 1 | -1;
         wheelAccum = 0;
+        wheelCooldownUntil = Date.now() + 600; // 600ms cooldown — one card at a time
         if (wheelTimer) { clearTimeout(wheelTimer); wheelTimer = null; }
         onDismiss(dir);
         return;
