@@ -2055,49 +2055,86 @@ export function DailyHeroSection() {
 
   return (
     <>
-      {/* ══ POST-GAME: Mini badge pair (both done) ══ */}
+      {/* ══ POST-GAME: Celebration card (both done) ══ */}
       {bothCompleted ? (
         <div className="flex flex-col gap-2">
-          {/* TODAY'S PLAY — completed mini card */}
-          <button
-            onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true)}
-            className="w-full rounded-xl px-3 py-3 flex items-center justify-between gap-3 text-left"
-            style={{
-              background: 'linear-gradient(150deg,#312e81 0%,#1e3a8a 40%,#0369a1 100%)',
-              border: '1px solid rgba(29,78,216,0.3)',
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col">
-                <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-cyan-300/70">Today's Play</span>
-                <div className="flex items-end gap-1.5 mt-0.5">
-                  {isTriviaDay ? (
-                    (playScore?.total ?? 1) === 1 ? (
-                      <span className={`text-[22px] font-black leading-none ${playScore?.correct === 1 ? 'text-green-300' : 'text-red-300'}`}>
-                        {playScore?.correct === 1 ? '✓' : '✗'}
-                      </span>
-                    ) : (
-                      <p className="text-white text-[20px] font-black leading-none">{playScore?.correct ?? '–'}<span className="text-white/30 text-[13px] font-bold">/{playScore?.total}</span></p>
-                    )
-                  ) : (
-                    <p className="text-white/90 text-[14px] font-bold leading-snug line-clamp-1">
-                      {callAnswer === '__skip' ? 'Skipped — still counts!' : (callAnswer ?? 'Done')}
-                    </p>
-                  )}
+          {/* TODAY'S PLAY — emotional completed card */}
+          {(() => {
+            const perfect = isTriviaDay && playScore && playScore.correct === playScore.total;
+            const noneRight = isTriviaDay && playScore && playScore.correct === 0;
+            const headline = isTriviaDay
+              ? perfect
+                ? 'Perfect score! 🎉'
+                : noneRight
+                  ? 'Better luck tomorrow! 💪'
+                  : `Nice pick! 🎉`
+              : callAnswer === '__skip'
+                ? 'Streak saved! 🔥'
+                : 'Nice pick! 🎉';
+            // Confetti pieces: [color, top%, left%, rotation]
+            const confetti = [
+              ['#a855f7', 18, 48, -20],['#facc15', 12, 62, 15],
+              ['#f472b6', 22, 72, 35],['#60a5fa', 8, 78, -10],
+              ['#34d399', 28, 83, 25],['#fb923c', 10, 55, 45],
+              ['#a855f7', 6, 68, -30],['#facc15', 30, 75, 10],
+            ] as [string, number, number, number][];
+            return (
+              <button
+                onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true)}
+                className="w-full rounded-xl px-4 py-3.5 flex items-center justify-between gap-3 text-left overflow-hidden"
+                style={{
+                  background: 'linear-gradient(150deg,#312e81 0%,#1e3a8a 40%,#0369a1 100%)',
+                  border: '1px solid rgba(29,78,216,0.3)',
+                  position: 'relative',
+                  minHeight: 68,
+                }}
+              >
+                {/* Confetti decoration */}
+                {confetti.map(([color, top, left, rot], ci) => (
+                  <div key={ci} style={{
+                    position: 'absolute', top: `${top}%`, left: `${left}%`,
+                    width: 7, height: 7, borderRadius: 1,
+                    background: color as string,
+                    transform: `rotate(${rot}deg)`,
+                    opacity: 0.85,
+                    pointerEvents: 'none',
+                  }} />
+                ))}
+
+                {/* Left: label + headline + streak */}
+                <div className="flex flex-col gap-0.5 relative z-10">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-cyan-300/70">Today's Play</span>
+                  <span className="text-[18px] font-black leading-tight text-white">{headline}</span>
                   {streak && streak > 0 ? (
-                    <span className="flex items-center gap-0.5 text-orange-400 text-[11px] font-bold leading-none mb-0.5">
-                      <Flame size={11} fill="currentColor" />
-                      {streak}
+                    <span className="text-[12px] text-white/80 font-medium">
+                      You're on a{' '}
+                      <span className="text-orange-300 font-bold">{streak}</span>
+                      {' '}day streak <span className="text-orange-400">🔥</span>
                     </span>
-                  ) : null}
+                  ) : (
+                    <span className="text-[12px] text-white/60 font-medium">Streak started 🔥</span>
+                  )}
                 </div>
-              </div>
-            </div>
-            <span className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 text-white text-[11px] font-semibold border border-white/10">
-              <Share2 size={10} />
-              Share
-            </span>
-          </button>
+
+                {/* Centre: green circle checkmark */}
+                <div className="relative z-10 flex-shrink-0" style={{
+                  width: 44, height: 44,
+                  borderRadius: '50%',
+                  border: '2.5px solid #4ade80',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'rgba(74,222,128,0.08)',
+                }}>
+                  <Check size={22} strokeWidth={3} color="#4ade80" />
+                </div>
+
+                {/* Right: Share button */}
+                <span className="relative z-10 flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 text-white text-[11px] font-semibold border border-white/10 flex-shrink-0">
+                  <Share2 size={10} />
+                  Share
+                </span>
+              </button>
+            );
+          })()}
         </div>
       ) : (
         /* ══ PRE-GAME: Deck-layered cards — front + back peek, swap when one is done ══ */
