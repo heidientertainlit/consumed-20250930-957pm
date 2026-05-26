@@ -2098,25 +2098,14 @@ export function DailyHeroSection() {
                     <span style={{ fontSize: 21, fontWeight: 600, color: '#f0ecff', lineHeight: 1.2 }}>{headline}</span>
                     <span style={{ fontSize: 12, color: '#a090c8', marginTop: 3, lineHeight: 1.5 }}>{subCopy}</span>
                   </div>
-                  {/* Score ring */}
-                  <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
-                    <svg width="52" height="52" viewBox="0 0 56 56">
-                      <circle cx="28" cy="28" r="23" fill="none" stroke="rgba(160,120,255,0.15)" strokeWidth="3.5" />
-                      <circle cx="28" cy="28" r="23" fill="none" stroke="#a855f7" strokeWidth="3.5"
-                        strokeDasharray={circ} strokeDashoffset={dashOffset}
-                        strokeLinecap="round" transform="rotate(-90 28 28)" />
-                    </svg>
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                      {triviaScore !== null ? (
-                        <>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: '#f0ecff', lineHeight: 1 }}>{triviaScore}</span>
-                          <span style={{ fontSize: 8, color: '#7c60b0', letterSpacing: '0.05em', marginTop: 1 }}>score</span>
-                        </>
-                      ) : (
-                        <Check size={18} strokeWidth={2.5} color="#a855f7" />
-                      )}
-                    </div>
-                  </div>
+                  {/* View button */}
+                  <button
+                    onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true)}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.35)', borderRadius: 12, padding: '8px 14px', flexShrink: 0, cursor: 'pointer' }}
+                  >
+                    <Check size={16} strokeWidth={2.5} color="#c4a0ff" />
+                    <span style={{ fontSize: 10, color: '#c4a0ff', fontWeight: 600, letterSpacing: '0.04em' }}>View</span>
+                  </button>
                 </div>
 
                 {/* Divider */}
