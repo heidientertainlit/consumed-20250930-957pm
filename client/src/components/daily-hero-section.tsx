@@ -812,8 +812,6 @@ function TodaysPlayGame({
           console.log('[streak] update_streak response:', res.status, JSON.stringify(data));
           if (res.ok && typeof data.currentStreak === 'number') {
             localStorage.removeItem(pendingKey); // success — clear retry marker
-            console.log('[streak] seeding cache with currentStreak:', data.currentStreak);
-            queryClient.setQueryData(['play-streak-hero', session?.user?.id], data.currentStreak);
           } else {
             console.warn('[streak] update_streak non-OK response — retry marker kept:', data);
           }
@@ -1360,9 +1358,8 @@ function DailyCallOverlay({
       if (data.error && !data.error.includes('Already')) throw new Error(data.error);
       localStorage.setItem(getDailyCallKey(session?.user?.id), JSON.stringify({ completed: true, result: { userAnswer: answer }, breakdown: null }));
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-response'] });
-      if (data.run?.currentRun && typeof data.run.currentRun === 'number') {
-        console.log('[streak] Daily Call seeding cache with currentRun:', data.run.currentRun);
-        queryClient.setQueryData(['play-streak-hero', session?.user?.id], data.run.currentRun);
+      if (data.run?.currentRun) {
+        queryClient.invalidateQueries({ queryKey: ['play-streak-hero'] });
       }
 
       // Fetch vote breakdown — exclude __skip rows so poll data stays clean
@@ -2060,14 +2057,9 @@ export function DailyHeroSection() {
         <div className="flex flex-col gap-2">
           {/* TODAY'S PLAY — emotional completed card */}
           {(() => {
-            const perfect = isTriviaDay && playScore && playScore.correct === playScore.total;
             const noneRight = isTriviaDay && playScore && playScore.correct === 0;
-            const headline = isTriviaDay
-              ? perfect
-                ? 'Perfect score! 🎉'
-                : noneRight
-                  ? 'Better luck tomorrow! 💪'
-                  : `Nice pick! 🎉`
+            const headline = noneRight
+              ? 'Keep going! 💪'
               : callAnswer === '__skip'
                 ? 'Streak saved! 🔥'
                 : 'Nice pick! 🎉';
