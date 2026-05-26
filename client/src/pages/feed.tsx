@@ -728,16 +728,55 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [fireIceVoted, setFireIceVoted] = useState<'fire' | 'ice' | null>(null);
   // Agree / Hot Take / Not My Take reaction state
   const [localReaction, setLocalReaction] = useState<'flame' | 'down' | null>(null);
-  const handleReaction = (type: 'up' | 'flame' | 'down') => {
+  const [reactionLoaded, setReactionLoaded] = useState(false);
+
+  // Load existing reaction from DB on mount
+  useEffect(() => {
+    const userId = session?.user?.id;
+    if (!userId || !post.id || reactionLoaded) return;
+    setReactionLoaded(true);
+    supabase
+      .from('post_reactions')
+      .select('reaction')
+      .eq('social_post_id', post.id)
+      .eq('user_id', userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.reaction === 'hot_take') setLocalReaction('flame');
+        else if (data?.reaction === 'disagree') setLocalReaction('down');
+      });
+  }, [post.id, session?.user?.id]);
+
+  const handleReaction = async (type: 'up' | 'flame' | 'down') => {
+    const userId = session?.user?.id;
     if (type === 'up') {
       setLocalReaction(null);
       onLike(post.id);
-    } else if (type === 'flame') {
-      if (isLiked) onLike(post.id); // un-like
-      setLocalReaction(prev => prev === 'flame' ? null : 'flame');
+      // remove any existing flame/down reaction
+      if (userId) {
+        supabase.from('post_reactions').delete()
+          .eq('social_post_id', post.id).eq('user_id', userId);
+      }
+      return;
+    }
+    if (!userId) return;
+    const dbReaction = type === 'flame' ? 'hot_take' : 'disagree';
+    const isToggleOff = (type === 'flame' && localReaction === 'flame') || (type === 'down' && localReaction === 'down');
+    if (isLiked) onLike(post.id); // un-like when reacting
+    if (isToggleOff) {
+      setLocalReaction(null);
+      await supabase.from('post_reactions').delete()
+        .eq('social_post_id', post.id).eq('user_id', userId);
     } else {
-      if (isLiked) onLike(post.id); // un-like
-      setLocalReaction(prev => prev === 'down' ? null : 'down');
+      setLocalReaction(type === 'flame' ? 'flame' : 'down');
+      await supabase.from('post_reactions')
+        .upsert({ social_post_id: post.id, user_id: userId, reaction: dbReaction }, { onConflict: 'social_post_id,user_id' });
+      // Fire-and-forget DNA signal refresh
+      fetch(`${supabaseUrl}/functions/v1/extract-dna-signals`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId }),
+      }).catch(() => {});
     }
   };
   const hasFetched = useRef(false);
