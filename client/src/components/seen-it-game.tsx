@@ -76,10 +76,16 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
 
   // ── Swipe drag state ──────────────────────────────────────────────────────
   const [dragX, setDragX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
+  const gestureRef = useRef<HTMLDivElement>(null);
+  // Use refs for gesture tracking to avoid stale closures in event listeners
   const dragStartX = useRef(0);
   const dragStartY = useRef(0);
-  const isScrolling = useRef<boolean | null>(null);
+  const isDraggingRef = useRef(false);
+  const isScrollingRef = useRef<boolean | null>(null);
+  const currentDragX = useRef(0);
+  // Trackpad wheel accumulation
+  const wheelAccum = useRef(0);
+  const wheelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Data fetching (unchanged from original) ───────────────────────────────
   const { data: supabaseCompletedSets } = useQuery({
@@ -299,39 +305,113 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     setDragX(0);
   };
 
-  // ── Swipe gesture handlers ────────────────────────────────────────────────
-  const handleTouchStart = (e: React.TouchEvent) => {
-    dragStartX.current = e.touches[0].clientX;
-    dragStartY.current = e.touches[0].clientY;
-    isScrolling.current = null;
-    setIsDragging(true);
-  };
+  // ── Active item refs (kept current so event listeners aren't stale) ────────
+  const activeItemRef = useRef<SeenItItem | null>(null);
+  const activeSetIdRef = useRef<string>('');
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    const dx = e.touches[0].clientX - dragStartX.current;
-    const dy = e.touches[0].clientY - dragStartY.current;
-    if (isScrolling.current === null) {
-      isScrolling.current = Math.abs(dy) > Math.abs(dx);
-    }
-    if (isScrolling.current) { setIsDragging(false); return; }
-    e.preventDefault();
-    setDragX(dx);
-  };
+  // ── Raw DOM gesture listeners (passive:false allows preventDefault) ────────
+  useEffect(() => {
+    const el = gestureRef.current;
+    if (!el) return;
 
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-    if (!isScrolling.current) {
-      const currentSet = incompleteSets[currentSetIndex];
-      const item = unansweredItems[currentItemIndex];
-      if (dragX > SWIPE_THRESHOLD && item && currentSet) {
-        handleResponse(currentSet.id, item, true); // swipe right = seen it
-      } else if (dragX < -SWIPE_THRESHOLD && item && currentSet) {
-        handleResponse(currentSet.id, item, 'skip'); // swipe left = not interested
+    const commit = (dx: number) => {
+      const item = activeItemRef.current;
+      const setId = activeSetIdRef.current;
+      if (!item || !setId) { setDragX(0); currentDragX.current = 0; return; }
+      if (dx > SWIPE_THRESHOLD) {
+        handleResponseRef.current(setId, item, true);   // → seen it
+      } else if (dx < -SWIPE_THRESHOLD) {
+        handleResponseRef.current(setId, item, 'skip'); // → not for me
+      } else {
+        setDragX(0);
+        currentDragX.current = 0;
       }
-    }
-    setDragX(0);
-  };
+    };
+
+    // ── Touch ──────────────────────────────────────────────────────────────
+    const onTouchStart = (e: TouchEvent) => {
+      dragStartX.current = e.touches[0].clientX;
+      dragStartY.current = e.touches[0].clientY;
+      isDraggingRef.current = true;
+      isScrollingRef.current = null;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isDraggingRef.current) return;
+      const dx = e.touches[0].clientX - dragStartX.current;
+      const dy = e.touches[0].clientY - dragStartY.current;
+      if (isScrollingRef.current === null) {
+        isScrollingRef.current = Math.abs(dy) > Math.abs(dx) + 5;
+      }
+      if (isScrollingRef.current) return;
+      e.preventDefault();
+      currentDragX.current = dx;
+      setDragX(dx);
+    };
+    const onTouchEnd = () => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      if (!isScrollingRef.current) commit(currentDragX.current);
+      else { setDragX(0); currentDragX.current = 0; }
+    };
+
+    // ── Mouse drag ─────────────────────────────────────────────────────────
+    const onMouseDown = (e: MouseEvent) => {
+      if ((e.target as HTMLElement).closest('button')) return;
+      dragStartX.current = e.clientX;
+      isDraggingRef.current = true;
+      e.preventDefault();
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      const dx = e.clientX - dragStartX.current;
+      currentDragX.current = dx;
+      setDragX(dx);
+    };
+    const onMouseUp = () => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      commit(currentDragX.current);
+    };
+
+    // ── Trackpad two-finger horizontal swipe (wheel events) ───────────────
+    const onWheel = (e: WheelEvent) => {
+      // Only handle clear horizontal intent (deltaX dominant)
+      if (Math.abs(e.deltaX) < Math.abs(e.deltaY) * 0.5) return;
+      e.preventDefault();
+      wheelAccum.current += e.deltaX;
+      const clamped = Math.max(-SWIPE_THRESHOLD * 1.5, Math.min(SWIPE_THRESHOLD * 1.5, -wheelAccum.current));
+      currentDragX.current = clamped;
+      setDragX(clamped);
+      if (wheelTimer.current) clearTimeout(wheelTimer.current);
+      wheelTimer.current = setTimeout(() => {
+        commit(currentDragX.current);
+        wheelAccum.current = 0;
+      }, 180);
+    };
+
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove',  onTouchMove,  { passive: false });
+    el.addEventListener('touchend',   onTouchEnd,   { passive: true });
+    el.addEventListener('mousedown',  onMouseDown,  { passive: false });
+    el.addEventListener('wheel',      onWheel,      { passive: false });
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup',   onMouseUp);
+
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove',  onTouchMove);
+      el.removeEventListener('touchend',   onTouchEnd);
+      el.removeEventListener('mousedown',  onMouseDown);
+      el.removeEventListener('wheel',      onWheel);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup',   onMouseUp);
+      if (wheelTimer.current) clearTimeout(wheelTimer.current);
+    };
+  }, [gestureRef.current]);
+
+  // Keep a stable ref to handleResponse so event listeners don't go stale
+  const handleResponseRef = useRef(handleResponse);
+  useEffect(() => { handleResponseRef.current = handleResponse; });
 
   // ── Render ────────────────────────────────────────────────────────────────
   if (isLoading && !mediaTypeFilter) {
@@ -366,18 +446,22 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   const activeItem = unansweredItems[currentItemIndex] ?? unansweredItems[0];
   const activeIdx = unansweredItems.findIndex(i => i.id === activeItem.id);
 
+  // Keep refs current so gesture event listeners always see fresh values
+  activeItemRef.current = activeItem;
+  activeSetIdRef.current = currentSet.id;
+
   // Build the visible fan cards (indices relative to active)
   const fanCards = FAN_OFFSETS.map((offset, fanPos) => {
     const itemOffset = fanPos - 2; // center is fanPos=2
     const itemIdx = activeIdx + itemOffset;
     const item = unansweredItems[itemIdx] ?? null;
     const isCenter = fanPos === 2;
-    return { item, offset, isCenter, itemIdx };
+    return { item, offset, isCenter };
   });
 
-  const swipeProgress = dragX / SWIPE_THRESHOLD; // -1 to 1+
   const isSwipingRight = dragX > 20;
   const isSwipingLeft = dragX < -20;
+  const isActiveDrag = isDraggingRef.current || Math.abs(dragX) > 2;
 
   return (
     <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden">
@@ -398,15 +482,18 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         </div>
       </div>
 
-      {/* Fan card area */}
-      <div className="relative flex items-center justify-center" style={{ height: CARD_H + 60 }}>
-        {fanCards.map(({ item, offset, isCenter, itemIdx }, fanPos) => {
+      {/* Fan card area — gestureRef captures all touch/mouse/wheel events */}
+      <div
+        ref={gestureRef}
+        className="relative flex items-center justify-center select-none"
+        style={{ height: CARD_H + 60, cursor: isActiveDrag ? 'grabbing' : 'grab', touchAction: 'pan-y' }}
+      >
+        {fanCards.map(({ item, offset, isCenter }, fanPos) => {
           if (!item) return null;
 
-          // For center card apply drag transform
+          // Center card follows drag; background cards stay put
           const tx = isCenter ? offset.dx + dragX : offset.dx;
           const rotate = isCenter ? offset.rotate + dragX * 0.06 : offset.rotate;
-          const scale = isCenter ? offset.scale : offset.scale;
 
           // Swipe direction hint overlays on center card
           const showSeenOverlay = isCenter && dragX > 30;
@@ -419,18 +506,15 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
                 position: 'absolute',
                 width: CARD_W,
                 height: CARD_H,
-                transform: `translateX(${tx}px) translateY(${offset.dy}px) rotate(${rotate}deg) scale(${scale})`,
+                transform: `translateX(${tx}px) translateY(${offset.dy}px) rotate(${rotate}deg) scale(${offset.scale})`,
                 zIndex: offset.zIndex,
-                transition: isDragging && isCenter ? 'none' : 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                transition: isActiveDrag && isCenter ? 'none' : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 borderRadius: 16,
                 overflow: 'hidden',
                 boxShadow: isCenter ? '0 8px 32px rgba(0,0,0,0.18)' : '0 2px 12px rgba(0,0,0,0.10)',
-                cursor: isCenter ? 'grab' : 'default',
+                pointerEvents: 'none',
                 userSelect: 'none',
               }}
-              onTouchStart={isCenter ? handleTouchStart : undefined}
-              onTouchMove={isCenter ? handleTouchMove : undefined}
-              onTouchEnd={isCenter ? handleTouchEnd : undefined}
             >
               <img
                 src={item.image_url}
@@ -465,14 +549,15 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
               )}
               {/* Rating stars on center card if active */}
               {isCenter && ratingItem === item.id && (
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.75)', padding: '12px 16px', display: 'flex', justifyContent: 'center', gap: 8 }}>
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.75)', padding: '12px 16px', display: 'flex', justifyContent: 'center', gap: 8, pointerEvents: 'auto' }}>
                   {[1,2,3,4,5].map(star => (
-                    <button key={star} onClick={() => {
+                    <button key={star} onPointerDown={(e) => {
+                      e.stopPropagation();
                       const newMap = { ...ratingMap, [item.id]: star };
                       setRatingMap(newMap);
                       try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
                       handleResponse(currentSet.id, item, true);
-                    }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                    }} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', pointerEvents: 'auto' }}>
                       <Star size={28} className={star <= (ratingMap[item.id] || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'} />
                     </button>
                   ))}
