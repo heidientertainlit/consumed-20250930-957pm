@@ -3551,12 +3551,14 @@ function useSwipeGesture({
     if (isHoriz.current) { pd?.(); offsetRef.current = dx; onOffsetChange(dx); }
   }, [onOffsetChange]);
 
-  const doEnd = useCallback(() => {
+  const doEnd = useCallback((finalX?: number) => {
     if (!active.current) return;
     active.current = false;
     onDraggingChange(false);
     isHoriz.current = null;
-    const dx = offsetRef.current;
+    // If no mousemove fired (very fast flick), fall back to displacement at mouseup
+    const dx = offsetRef.current !== 0 ? offsetRef.current
+      : (finalX !== undefined ? finalX - startX.current : 0);
     const dt = Math.max(1, Date.now() - startTime.current);
     const velocity = Math.abs(dx) / dt; // px/ms
     // Dismiss: dragged far enough OR quick flick (velocity > 0.3 px/ms with at least 15px)
@@ -3574,7 +3576,7 @@ function useSwipeGesture({
     const onTE = () => doEnd();
     const onMD = (e: MouseEvent) => doStart(e.clientX, e.clientY);
     const onMM = (e: MouseEvent) => doMove(e.clientX, e.clientY);
-    const onMU = () => doEnd();
+    const onMU = (e: MouseEvent) => doEnd(e.clientX);
     el.addEventListener('touchstart', onTS, { passive: true });
     el.addEventListener('touchmove', onTM, { passive: false });
     el.addEventListener('touchend', onTE, { passive: true });
