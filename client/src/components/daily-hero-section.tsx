@@ -1913,6 +1913,23 @@ export function DailyHeroSection() {
     refetchOnWindowFocus: true,
   });
 
+  // ── DNA profile (for completed card) ──
+  const { data: dnaProfile } = useQuery<{ label: string | null; flavor_notes: string[] | null; favorite_genres: string[] | null } | null>({
+    queryKey: ['dna-profile-hero', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('dna_profiles')
+        .select('label, flavor_notes, favorite_genres')
+        .eq('user_id', user.id)
+        .single();
+      return data ?? null;
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+
   // ── Username (for the score card) ──
   const { data: username } = useQuery<string | null>({
     queryKey: ['play-username-hero', user?.id],
@@ -2052,78 +2069,78 @@ export function DailyHeroSection() {
 
   return (
     <>
-      {/* ══ POST-GAME: Celebration card (both done) ══ */}
+      {/* ══ POST-GAME: Premium DNA card (both done) ══ */}
       {bothCompleted ? (
         <div className="flex flex-col gap-2">
-          {/* TODAY'S PLAY — emotional completed card */}
           {(() => {
             const noneRight = isTriviaDay && playScore && playScore.correct === 0;
-            const headline = noneRight
-              ? 'Keep going! 💪'
-              : callAnswer === '__skip'
-                ? 'Streak saved! 🔥'
-                : 'Nice pick! 🎉';
-            // Confetti pieces: [color, top%, left%, rotation]
-            const confetti = [
-              ['#a855f7', 18, 48, -20],['#facc15', 12, 62, 15],
-              ['#f472b6', 22, 72, 35],['#60a5fa', 8, 78, -10],
-              ['#34d399', 28, 83, 25],['#fb923c', 10, 55, 45],
-              ['#a855f7', 6, 68, -30],['#facc15', 30, 75, 10],
-            ] as [string, number, number, number][];
+            const headline = noneRight ? 'Keep going.' : callAnswer === '__skip' ? 'Streak saved.' : 'Called it.';
+            // Score 0–100
+            const score = isTriviaDay && playScore
+              ? Math.round((playScore.correct / Math.max(1, playScore.total)) * 100)
+              : callAnswer === '__skip' ? 50 : 100;
+            // SVG ring: r=23, circumference≈144.5
+            const circ = 144.5;
+            const dashOffset = circ * (1 - score / 100);
+            const ringColor = score === 100 ? '#9070d0' : score >= 50 ? '#9070d0' : '#6366f1';
+            // DNA tags — up to 3 genres
+            const genres = (dnaProfile?.favorite_genres ?? []).slice(0, 3);
+            // Sub copy — use first flavor note or DNA label
+            const flavorNote = dnaProfile?.flavor_notes?.[0] ?? dnaProfile?.label ?? null;
+            const subCopy = flavorNote
+              ? `Your ${flavorNote.toLowerCase()} is showing.`
+              : 'Your taste is getting sharper.';
             return (
               <button
                 onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true)}
-                className="w-full rounded-xl px-4 py-3.5 flex items-center justify-between gap-3 text-left overflow-hidden"
-                style={{
-                  background: 'linear-gradient(150deg,#312e81 0%,#1e3a8a 40%,#0369a1 100%)',
-                  border: '1px solid rgba(29,78,216,0.3)',
-                  position: 'relative',
-                  minHeight: 68,
-                }}
+                className="w-full rounded-xl text-left overflow-hidden"
+                style={{ background: '#12151f', border: '1px solid rgba(255,255,255,0.07)' }}
               >
-                {/* Confetti decoration */}
-                {confetti.map(([color, top, left, rot], ci) => (
-                  <div key={ci} style={{
-                    position: 'absolute', top: `${top}%`, left: `${left}%`,
-                    width: 7, height: 7, borderRadius: 1,
-                    background: color as string,
-                    transform: `rotate(${rot}deg)`,
-                    opacity: 0.85,
-                    pointerEvents: 'none',
-                  }} />
-                ))}
+                {/* Top row */}
+                <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3">
+                  <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                    <span style={{ fontSize: 10, letterSpacing: '0.1em', color: '#454d6a', textTransform: 'uppercase', fontWeight: 500 }}>Today's Play</span>
+                    <span style={{ fontSize: 20, fontWeight: 500, color: '#eeeaf8', lineHeight: 1.2 }}>{headline}</span>
+                    <span style={{ fontSize: 12, color: '#5a6280', marginTop: 2, lineHeight: 1.5 }}>{subCopy}</span>
+                  </div>
+                  {/* Score ring */}
+                  <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
+                    <svg width="52" height="52" viewBox="0 0 56 56">
+                      <circle cx="28" cy="28" r="23" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3.5" />
+                      <circle cx="28" cy="28" r="23" fill="none" stroke={ringColor} strokeWidth="3.5"
+                        strokeDasharray={circ} strokeDashoffset={dashOffset}
+                        strokeLinecap="round" transform="rotate(-90 28 28)" />
+                    </svg>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: '#eeeaf8', lineHeight: 1 }}>{score}</span>
+                      <span style={{ fontSize: 8, color: '#454d6a', letterSpacing: '0.04em', marginTop: 1 }}>score</span>
+                    </div>
+                  </div>
+                </div>
 
-                {/* Left: label + headline + streak */}
-                <div className="flex flex-col gap-0.5 relative z-10">
-                  <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-cyan-300/70">Today's Play</span>
-                  <span className="text-[18px] font-black leading-tight text-white">{headline}</span>
-                  {streak && streak > 0 ? (
-                    <span className="text-[12px] text-white/80 font-medium">
-                      You're on a{' '}
-                      <span className="text-orange-300 font-bold">{streak}</span>
-                      {' '}day streak <span className="text-orange-400">🔥</span>
+                {/* Divider */}
+                <div style={{ height: '0.5px', background: 'rgba(255,255,255,0.06)', margin: '0 16px' }} />
+
+                {/* Bottom row */}
+                <div className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                    {genres.length > 0 && (
+                      <div className="flex gap-1.5 flex-wrap">
+                        {genres.map((g: string) => (
+                          <span key={g} style={{ fontSize: 11, background: 'rgba(180,160,230,0.1)', border: '0.5px solid rgba(180,160,230,0.2)', color: '#b8a8e8', borderRadius: 20, padding: '3px 9px' }}>{g}</span>
+                        ))}
+                      </div>
+                    )}
+                    <span style={{ fontSize: 11, color: '#454d6a' }}>
+                      Your DNA is getting sharper —{' '}
+                      <span style={{ color: '#7060b0', fontWeight: 600 }}>day {streak ?? 1}</span>
                     </span>
-                  ) : (
-                    <span className="text-[12px] text-white/60 font-medium">Streak started 🔥</span>
-                  )}
+                  </div>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.05)', border: '0.5px solid rgba(255,255,255,0.09)', borderRadius: 20, padding: '6px 12px', color: '#6b7394', fontSize: 12, flexShrink: 0 }}>
+                    <Share2 size={12} />
+                    Share
+                  </span>
                 </div>
-
-                {/* Centre: green circle checkmark */}
-                <div className="relative z-10 flex-shrink-0" style={{
-                  width: 44, height: 44,
-                  borderRadius: '50%',
-                  border: '2.5px solid #4ade80',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'rgba(74,222,128,0.08)',
-                }}>
-                  <Check size={22} strokeWidth={3} color="#4ade80" />
-                </div>
-
-                {/* Right: Share button */}
-                <span className="relative z-10 flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 text-white text-[11px] font-semibold border border-white/10 flex-shrink-0">
-                  <Share2 size={10} />
-                  Share
-                </span>
               </button>
             );
           })()}
