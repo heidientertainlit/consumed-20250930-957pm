@@ -14,6 +14,15 @@
  *   Genre polls (explicit)  user_predictions (show_tag=Genres)  1.3
  *   TMDB genre lookup       TMDB API (movies/TV tracked items)  1.0
  *   DNA Moments             dna_moment_responses+dna_moments    0.8
+ *   Hot Take reaction       post_reactions (reaction=hot_take)  1.0
+ *   Disagree reaction       post_reactions (reaction=disagree)  0.6
+ *
+ * Reaction semantics:
+ *   hot_take  = "wow, interesting" — strong engagement signal regardless of
+ *               agreement. Shows the user cares about this topic/media type.
+ *   disagree  = "not my take / meh" — weak signal; still shows interaction
+ *               with the topic but doesn't confirm positive taste affinity.
+ *   agree     = handled by social_post_likes (existing like system).
  *
  * Genre polls: pools tagged show_tag='Genres' are explicit genre preference
  * questions (e.g. "Your default book genre?"). The user's answer IS the genre.
@@ -79,6 +88,8 @@ interface SignalAccum {
     polls: number;
     genre_polls: number;
     moments: number;
+    reactions_hot_take: number;
+    reactions_disagree: number;
   };
 }
 
@@ -117,6 +128,7 @@ serve(async (req) => {
       { data: ratings },
       { data: rawPredictions },
       { data: momentResponses },
+      { data: rawReactions },
     ] = await Promise.all([
       svc.from('lists').select('id').eq('user_id', userId),
       svc.from('media_ratings')
@@ -128,7 +140,20 @@ serve(async (req) => {
       svc.from('dna_moment_responses')
         .select('moment_id, answer')
         .eq('user_id', userId),
+      svc.from('post_reactions')
+        .select('reaction, social_post_id')
+        .eq('user_id', userId),
     ]);
+
+    // Fetch the social posts associated with the user's reactions to get media context
+    let reactionPostMap: Record<string, { media_type?: string; category?: string; show_tag?: string }> = {};
+    if (rawReactions?.length) {
+      const postIds = [...new Set(rawReactions.map((r: any) => r.social_post_id))];
+      const { data: reactionPosts } = await svc.from('social_posts')
+        .select('id, media_type, category, show_tag')
+        .in('id', postIds);
+      (reactionPosts ?? []).forEach((p: any) => { reactionPostMap[p.id] = p; });
+    }
 
     // List items need the list IDs first
     let listItems: any[] = [];
@@ -171,7 +196,12 @@ serve(async (req) => {
           type,
           value,
           weightedCount: 0,
-          sources: { tracked: 0, rated: 0, rated_high: 0, trivia_attempts: 0, trivia_correct: 0, polls: 0, genre_polls: 0, moments: 0 }
+          sources: {
+            tracked: 0, rated: 0, rated_high: 0,
+            trivia_attempts: 0, trivia_correct: 0,
+            polls: 0, genre_polls: 0, moments: 0,
+            reactions_hot_take: 0, reactions_disagree: 0,
+          }
         });
       }
       return signals.get(key)!;
@@ -360,6 +390,36 @@ serve(async (req) => {
       }
     }
 
+    // ── Source 5: Post reactions ──────────────────────────────────────────────
+    // hot_take = 1.0 (strong engagement — user found it interesting/surprising)
+    // disagree = 0.6 (weak signal — still shows interaction with this topic)
+    for (const reaction of (rawReactions ?? [])) {
+      const post = reactionPostMap[reaction.social_post_id];
+      if (!post) continue;
+      const isHotTake = reaction.reaction === 'hot_take';
+      const weight = isHotTake ? 1.0 : 0.6;
+      // Media type signal from the post's media_type or category
+      const rawMediaType = post.media_type || post.category || '';
+      const mediaType = categoryToMediaType(rawMediaType);
+      if (mediaType) {
+        const s = touch('media_type', mediaType);
+        if (s) {
+          s.weightedCount += weight;
+          if (isHotTake) s.sources.reactions_hot_take += 1;
+          else s.sources.reactions_disagree += 1;
+        }
+      }
+      // Show/franchise signal if the post has a show_tag
+      if (post.show_tag) {
+        const s = touch('show', post.show_tag);
+        if (s) {
+          s.weightedCount += weight * 0.8;
+          if (isHotTake) s.sources.reactions_hot_take += 1;
+          else s.sources.reactions_disagree += 1;
+        }
+      }
+    }
+
     // ── Normalise strength 0.0–1.0 ───────────────────────────────────────────
     const allSignals = Array.from(signals.values());
     const maxWeight = Math.max(...allSignals.map(s => s.weightedCount), 1);
@@ -376,6 +436,9 @@ serve(async (req) => {
     const highRatings = (ratings ?? []).filter((r: any) => Number(r.rating) >= 4).length;
     const momentAnswers = (momentResponses ?? []).length;
     const trackedItems = listItems.length;
+    const hotTakeCount = (rawReactions ?? []).filter((r: any) => r.reaction === 'hot_take').length;
+    const disagreeCount = (rawReactions ?? []).filter((r: any) => r.reaction === 'disagree').length;
+    const totalReactions = hotTakeCount + disagreeCount;
 
     const engagementRows = [
       { signal_type: 'engagement', signal_value: 'trivia_attempts',   strength: Math.min(1, triviaAttempts / 50),   source_count: triviaAttempts,   sources: { trivia_attempts: triviaAttempts } },
@@ -384,6 +447,7 @@ serve(async (req) => {
       { signal_type: 'engagement', signal_value: 'ratings_given',     strength: Math.min(1, ratingsGiven / 50),     source_count: ratingsGiven,     sources: { rated: ratingsGiven, rated_high: highRatings } },
       { signal_type: 'engagement', signal_value: 'items_tracked',     strength: Math.min(1, trackedItems / 50),     source_count: trackedItems,     sources: { tracked: trackedItems } },
       { signal_type: 'engagement', signal_value: 'dna_moments',       strength: Math.min(1, momentAnswers / 20),    source_count: momentAnswers,    sources: { moments: momentAnswers } },
+      { signal_type: 'engagement', signal_value: 'post_reactions',    strength: Math.min(1, totalReactions / 30),   source_count: totalReactions,   sources: { reactions_hot_take: hotTakeCount, reactions_disagree: disagreeCount } },
     ];
 
     // ── Write to database ────────────────────────────────────────────────────
@@ -436,6 +500,8 @@ serve(async (req) => {
           trivia_correct: triviaCorrect,
           poll_votes: pollVotes,
           dna_moments: momentAnswers,
+          reactions_hot_take: hotTakeCount,
+          reactions_disagree: disagreeCount,
         }
       }
     });
