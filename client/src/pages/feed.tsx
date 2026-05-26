@@ -3580,14 +3580,15 @@ function useSwipeGesture({
     el.addEventListener('touchstart', onTS, { passive: true });
     el.addEventListener('touchmove', onTM, { passive: false });
     el.addEventListener('touchend', onTE, { passive: true });
-    el.addEventListener('mousedown', onMD);
+    // Use capture phase so child stopPropagation doesn't block the gesture start
+    el.addEventListener('mousedown', onMD, { capture: true });
     window.addEventListener('mousemove', onMM);
     window.addEventListener('mouseup', onMU);
     return () => {
       el.removeEventListener('touchstart', onTS);
       el.removeEventListener('touchmove', onTM);
       el.removeEventListener('touchend', onTE);
-      el.removeEventListener('mousedown', onMD);
+      el.removeEventListener('mousedown', onMD, { capture: true });
       window.removeEventListener('mousemove', onMM);
       window.removeEventListener('mouseup', onMU);
     };
