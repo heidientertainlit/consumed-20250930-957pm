@@ -231,20 +231,18 @@ function ScoreShareCard({
                   </p>
                 )}
 
-                {/* Answer */}
+                {/* Result — no answer spoilers */}
                 <div>
                   <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: 'rgba(168,158,224,0.8)' }}>
-                    {answers?.[0]?.picked ? 'I SAID:' : 'SCORE:'}
+                    {username ? username.toUpperCase() : 'YOU'}
                   </p>
-                  {answers?.[0]?.picked ? (
-                    <p className="text-[20px] font-black leading-tight text-white break-words" style={{ letterSpacing: '-0.02em' }}>
-                      {answers[0].picked}.
-                    </p>
-                  ) : (
-                    <p className="text-[26px] font-black leading-none text-white" style={{ letterSpacing: '-0.02em' }}>
-                      {playScore.correct}/{playScore.total}
-                    </p>
-                  )}
+                  <p className="text-[26px] font-black leading-tight text-white" style={{ letterSpacing: '-0.02em' }}>
+                    {playScore.correct === playScore.total
+                      ? 'Nailed it.'
+                      : playScore.correct > 0
+                        ? `Got ${playScore.correct}/${playScore.total}.`
+                        : 'Tough one.'}
+                  </p>
                 </div>
 
               </div>
@@ -356,13 +354,9 @@ function ScoreShareCard({
                   style={{ background: '#FFFFFF', border: '1px solid rgba(124,58,237,0.2)', boxShadow: '0 1px 8px rgba(124,58,237,0.08)' }}
                 >
                   <p className="text-[15px] font-black leading-tight" style={{ color: '#1a0040' }}>
-                    {playScore.correct === playScore.total
-                      ? `Perfect score. Think your friends can match you?`
-                      : playScore.correct === 0
-                        ? `Rough one. Can your squad do any better? 👀`
-                        : `${playScore.correct}/${playScore.total} right — think your friends can beat you?`}
+                    Think you can beat me?
                   </p>
-                  <p className="text-[11px] mt-1.5" style={{ color: '#6b21a8' }}>Share and find out. 👀</p>
+                  <p className="text-[11px] mt-1.5" style={{ color: '#6b21a8' }}>Share your score.</p>
                 </div>
               </div>
 
@@ -379,14 +373,14 @@ function ScoreShareCard({
 
                 {callAnswer && callAnswer !== '__skip' ? (
                   <>
-                    {/* Big answer + Better Than box */}
+                    {/* Called it — no answer spoilers */}
                     <div className="flex items-start gap-3 mb-4">
                       <div className="flex-1 min-w-0">
                         <p className="text-[9px] font-bold uppercase tracking-[0.2em] mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                          {username ? `${username} said:` : 'I said:'}
+                          {username ? username.toUpperCase() : 'YOU'}
                         </p>
-                        <p className="font-black leading-none text-white break-words" style={{ fontSize: '26px', letterSpacing: '-0.01em', lineHeight: 1.1, textTransform: 'uppercase' }}>
-                          {callAnswer}.
+                        <p className="font-black leading-none text-white break-words" style={{ fontSize: '26px', letterSpacing: '-0.01em', lineHeight: 1.1 }}>
+                          {username ? `${username} called it.` : 'Called it.'}
                         </p>
                       </div>
                     </div>
@@ -396,7 +390,7 @@ function ScoreShareCard({
                       const agreedPct = callVoteBreakdown && callAnswer ? (callVoteBreakdown[callAnswer] ?? null) : null;
 
                       const headline = agreedPct !== null
-                        ? `${agreedPct}% of players said \u201c${callAnswer}.\u201d Where do your friends sit?`
+                        ? `${agreedPct}% of players agree. Where do your friends sit?`
                         : `Where do your friends sit?`;
 
                       return (
