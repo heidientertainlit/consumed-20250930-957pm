@@ -1,12 +1,10 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card } from "@/components/ui/card";
-import { Eye, ChevronRight, Check, X, Plus, Star, Loader2, Sparkles, BookOpen, Headphones, Gamepad2 } from "lucide-react";
+import { Eye, ChevronRight, Check, X, Plus, Star, Loader2, Sparkles, BookOpen, Headphones, Gamepad2, Heart } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
 import { trackEvent } from "@/lib/posthog";
-import { Link } from "wouter";
 
 interface SeenItItem {
   id: string;
@@ -28,14 +26,16 @@ interface SeenItSet {
 const getMediaTypeConfig = (mediaType: string) => {
   switch (mediaType) {
     case 'book':
-      return { icon: BookOpen, pill: 'Books', subtitle: 'What have you read?', actionYes: 'Read It', actionDone: 'Read', iconColor: 'text-emerald-400', pillBg: 'bg-emerald-100 text-emerald-700' };
+      return { icon: BookOpen, pill: 'Books', actionYes: 'Read It', actionDone: 'Read', pillBg: 'bg-emerald-100 text-emerald-700' };
     case 'music':
     case 'podcast':
-      return { icon: Headphones, pill: 'Music', subtitle: 'What have you listened to?', actionYes: 'Heard It', actionDone: 'Heard', iconColor: 'text-pink-400', pillBg: 'bg-pink-100 text-pink-700' };
+      return { icon: Headphones, pill: 'Music', actionYes: 'Heard It', actionDone: 'Heard', pillBg: 'bg-pink-100 text-pink-700' };
     case 'game':
-      return { icon: Gamepad2, pill: 'Games', subtitle: 'What have you played?', actionYes: 'Played It', actionDone: 'Played', iconColor: 'text-blue-400', pillBg: 'bg-blue-100 text-blue-700' };
+      return { icon: Gamepad2, pill: 'Games', actionYes: 'Played It', actionDone: 'Played', pillBg: 'bg-blue-100 text-blue-700' };
+    case 'tv':
+      return { icon: Eye, pill: 'TV', actionYes: 'Seen It', actionDone: 'Seen', pillBg: 'bg-purple-100 text-purple-700' };
     default:
-      return { icon: Eye, pill: 'Movies', subtitle: 'What have you watched?', actionYes: 'Seen It', actionDone: 'Seen', iconColor: 'text-yellow-400', pillBg: 'bg-yellow-100 text-yellow-700' };
+      return { icon: Eye, pill: 'Movies', actionYes: 'Seen It', actionDone: 'Seen', pillBg: 'bg-yellow-100 text-yellow-700' };
   }
 };
 
@@ -44,42 +44,52 @@ interface SeenItGameProps {
   onAddToList?: (media: { title: string; mediaType: string; externalId: string; externalSource: string; imageUrl: string }) => void;
 }
 
+// ── Fan card layout constants ─────────────────────────────────────────────────
+const FAN_OFFSETS = [
+  { dx: -110, dy: 14, rotate: -12, scale: 0.78, zIndex: 1 },
+  { dx: -55,  dy: 6,  rotate: -6,  scale: 0.88, zIndex: 2 },
+  { dx: 0,    dy: 0,  rotate: 0,   scale: 1.00, zIndex: 5 }, // center/active
+  { dx: 55,   dy: 6,  rotate: 6,   scale: 0.88, zIndex: 2 },
+  { dx: 110,  dy: 14, rotate: 12,  scale: 0.78, zIndex: 1 },
+];
+
+const SWIPE_THRESHOLD = 80;
+const CARD_W = 200;
+const CARD_H = 290;
+
 export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameProps = {}) {
   const { session, user } = useAuth();
-  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // ── Persisted state ───────────────────────────────────────────────────────
   const [localResponses, setLocalResponses] = useState<Record<string, boolean | 'want_to'>>(() => {
-    try {
-      const stored = localStorage.getItem('seen_it_responses');
-      return stored ? JSON.parse(stored) : {};
-    } catch { return {}; }
+    try { return JSON.parse(localStorage.getItem('seen_it_responses') || '{}'); } catch { return {}; }
   });
   const [completedSetIds, setCompletedSetIds] = useState<Set<string>>(() => {
-    try {
-      const stored = localStorage.getItem('seen_it_completed_sets');
-      return stored ? new Set(JSON.parse(stored)) : new Set();
-    } catch { return new Set(); }
+    try { return new Set(JSON.parse(localStorage.getItem('seen_it_completed_sets') || '[]')); } catch { return new Set(); }
   });
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
+  const [currentItemIndex, setCurrentItemIndex] = useState(0);
   const [ratingItem, setRatingItem] = useState<string | null>(null);
   const [ratingMap, setRatingMap] = useState<Record<string, number>>(() => {
-    try { const s = localStorage.getItem('seen_it_ratings'); return s ? JSON.parse(s) : {}; } catch { return {}; }
+    try { return JSON.parse(localStorage.getItem('seen_it_ratings') || '{}'); } catch { return {}; }
   });
 
+  // ── Swipe drag state ──────────────────────────────────────────────────────
+  const [dragX, setDragX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartX = useRef(0);
+  const dragStartY = useRef(0);
+  const isScrolling = useRef<boolean | null>(null);
+
+  // ── Data fetching (unchanged from original) ───────────────────────────────
   const { data: supabaseCompletedSets } = useQuery({
     queryKey: ['seen-it-completions', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       try {
-        const { data, error } = await supabase
-          .from('seen_it_completions')
-          .select('set_id')
-          .eq('user_id', user.id);
-        if (error) {
-          console.warn('seen_it_completions query failed:', error);
-          return [];
-        }
+        const { data, error } = await supabase.from('seen_it_completions').select('set_id').eq('user_id', user.id);
+        if (error) { console.warn('seen_it_completions query failed:', error); return []; }
         const ids = (data || []).map((r: any) => r.set_id);
-        console.log('🎯 Supabase completed sets:', ids);
         if (ids.length > 0) {
           setCompletedSetIds(prev => {
             const next = new Set(prev);
@@ -89,10 +99,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           });
         }
         return ids;
-      } catch (e) {
-        console.warn('seen_it_completions query error:', e);
-        return [];
-      }
+      } catch { return []; }
     },
     enabled: !!user?.id
   });
@@ -101,14 +108,10 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     queryKey: ['trending-sets'],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('trending-sets', {
-          body: {},
-        });
+        const { data, error } = await supabase.functions.invoke('trending-sets', { body: {} });
         if (error) return [];
         return (data?.sets || []) as SeenItSet[];
-      } catch {
-        return [];
-      }
+      } catch { return []; }
     },
     staleTime: 1000 * 60 * 60,
     gcTime: 1000 * 60 * 60 * 2,
@@ -118,37 +121,22 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     queryKey: ['seen-it-sets'],
     queryFn: async () => {
       const { data: setsData, error } = await supabase
-        .from('seen_it_sets')
-        .select('*')
-        .eq('visibility', 'public')
-        .order('created_at', { ascending: false })
-        .limit(10);
-      
+        .from('seen_it_sets').select('*').eq('visibility', 'public')
+        .order('created_at', { ascending: false }).limit(10);
       if (error) throw error;
-      
       const setsWithItems: SeenItSet[] = [];
       for (const set of setsData || []) {
-        const { data: items } = await supabase
-          .from('seen_it_items')
-          .select('*')
-          .eq('set_id', set.id)
-          .order('position', { ascending: true });
-        
-        setsWithItems.push({
-          id: set.id,
-          title: set.title,
-          media_type: set.media_type || 'movie',
-          items: items || []
-        });
+        const { data: items } = await supabase.from('seen_it_items').select('*')
+          .eq('set_id', set.id).order('position', { ascending: true });
+        setsWithItems.push({ id: set.id, title: set.title, media_type: set.media_type || 'movie', items: items || [] });
       }
-      
       return setsWithItems;
     }
   });
 
   const sets = useMemo(() => {
     const allSets = [...(trendingSets || []), ...(staticSets || [])];
-    return mediaTypeFilter 
+    return mediaTypeFilter
       ? allSets.filter(s => {
           if (mediaTypeFilter === 'movie') return s.media_type === 'movie' || s.media_type === 'tv';
           if (mediaTypeFilter === 'book') return s.media_type === 'book';
@@ -157,6 +145,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         })
       : allSets;
   }, [trendingSets, staticSets, mediaTypeFilter]);
+
   const isLoading = sets.length === 0 && (isLoadingTrending || isLoadingStatic);
 
   const { data: existingResponses } = useQuery({
@@ -164,49 +153,25 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     queryFn: async () => {
       if (!user?.id) return { responseMap: {}, trackedExternalIds: {} };
       const responseMap: Record<string, boolean> = {};
-
       try {
-        const { data } = await supabase
-          .from('seen_it_responses')
-          .select('item_id, seen')
-          .eq('user_id', user.id);
-        (data || []).forEach(r => {
-          responseMap[r.item_id] = r.seen;
-        });
-      } catch (e) {
-        console.warn('seen_it_responses query failed:', e);
-      }
-
+        const { data } = await supabase.from('seen_it_responses').select('item_id, seen').eq('user_id', user.id);
+        (data || []).forEach((r: any) => { responseMap[r.item_id] = r.seen; });
+      } catch {}
       const trackedExternalIds: Record<string, string> = {};
       try {
-        const { data: userLists } = await supabase
-          .from('lists')
-          .select('id, title')
-          .eq('user_id', user.id);
-
-        const finishedListIds = (userLists || []).filter(l => l.title === 'Finished').map(l => l.id);
-        const queueListIds = (userLists || []).filter(l => l.title === 'Want To').map(l => l.id);
+        const { data: userLists } = await supabase.from('lists').select('id, title').eq('user_id', user.id);
+        const finishedListIds = (userLists || []).filter((l: any) => l.title === 'Finished').map((l: any) => l.id);
+        const queueListIds = (userLists || []).filter((l: any) => l.title === 'Want To').map((l: any) => l.id);
         const allListIds = [...finishedListIds, ...queueListIds];
-
         if (allListIds.length > 0) {
-          const { data: listItems } = await supabase
-            .from('list_items')
-            .select('external_id, list_id')
-            .eq('user_id', user.id)
-            .in('list_id', allListIds);
-
+          const { data: listItems } = await supabase.from('list_items')
+            .select('external_id, list_id').eq('user_id', user.id).in('list_id', allListIds);
           (listItems || []).forEach((item: any) => {
-            if (finishedListIds.includes(item.list_id)) {
-              trackedExternalIds[item.external_id] = 'finished';
-            } else if (queueListIds.includes(item.list_id) && !trackedExternalIds[item.external_id]) {
-              trackedExternalIds[item.external_id] = 'queue';
-            }
+            if (finishedListIds.includes(item.list_id)) trackedExternalIds[item.external_id] = 'finished';
+            else if (queueListIds.includes(item.list_id) && !trackedExternalIds[item.external_id]) trackedExternalIds[item.external_id] = 'queue';
           });
         }
-      } catch (e) {
-        console.warn('list_items query failed:', e);
-      }
-
+      } catch {}
       return { responseMap, trackedExternalIds };
     },
     enabled: !!user?.id
@@ -215,8 +180,8 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   const responses = useMemo(() => {
     const merged: Record<string, boolean | 'want_to'> = {};
     if (existingResponses && 'responseMap' in existingResponses) {
-      const { responseMap, trackedExternalIds } = existingResponses as { responseMap: Record<string, boolean>; trackedExternalIds: Record<string, string> };
-      Object.entries(responseMap || {}).forEach(([id, val]) => { merged[id] = val; });
+      const { responseMap, trackedExternalIds } = existingResponses as any;
+      Object.entries(responseMap || {}).forEach(([id, val]: any) => { merged[id] = val; });
       sets.forEach(set => {
         set.items.forEach(item => {
           if (merged[item.id] !== undefined) return;
@@ -235,21 +200,13 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
       set.items.forEach(item => {
         if (merged[item.id] !== undefined) return;
         const extKey = item.external_id ? `ext_${item.external_id}` : null;
-        if (extKey && localResponses[extKey] !== undefined) {
-          merged[item.id] = localResponses[extKey];
-        }
+        if (extKey && localResponses[extKey] !== undefined) merged[item.id] = localResponses[extKey];
       });
     });
     return merged;
   }, [existingResponses, sets, localResponses]);
 
-  const incompleteSets = useMemo(() => {
-    const result = sets.filter(set => {
-      if (completedSetIds.has(set.id)) return false;
-      return true;
-    });
-    return result;
-  }, [sets, completedSetIds]);
+  const incompleteSets = useMemo(() => sets.filter(set => !completedSetIds.has(set.id)), [sets, completedSetIds]);
 
   const autoDetectedRef = useRef(false);
   useEffect(() => {
@@ -266,83 +223,38 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   }, [existingResponses, sets]);
 
   useEffect(() => {
-    if (currentSetIndex >= incompleteSets.length && incompleteSets.length > 0) {
-      setCurrentSetIndex(0);
-    }
+    if (currentSetIndex >= incompleteSets.length && incompleteSets.length > 0) setCurrentSetIndex(0);
   }, [incompleteSets.length]);
+
+  // Reset item index when set changes
+  useEffect(() => { setCurrentItemIndex(0); setRatingItem(null); }, [currentSetIndex]);
 
   const responseMutation = useMutation({
     mutationFn: async ({ setId, itemId, response, item }: { setId: string; itemId: string; response: boolean | 'want_to'; item: SeenItItem }) => {
       if (!user?.id) throw new Error('Must be logged in');
-      
       const seenValue = response === true;
-      
-      const { data: existing } = await supabase
-        .from('seen_it_responses')
-        .select('id')
-        .eq('item_id', itemId)
-        .eq('user_id', user.id)
-        .single();
-      
+      const { data: existing } = await supabase.from('seen_it_responses').select('id')
+        .eq('item_id', itemId).eq('user_id', user.id).single();
       if (existing) {
-        await supabase
-          .from('seen_it_responses')
-          .update({ seen: seenValue })
-          .eq('id', existing.id);
+        await supabase.from('seen_it_responses').update({ seen: seenValue }).eq('id', (existing as any).id);
       } else {
-        await supabase.from('seen_it_responses').insert({
-          set_id: setId,
-          item_id: itemId,
-          user_id: user.id,
-          seen: seenValue
-        });
+        await supabase.from('seen_it_responses').insert({ set_id: setId, item_id: itemId, user_id: user.id, seen: seenValue });
       }
-      
       if (item.external_id && item.external_source) {
         try {
-          const { data: { session } } = await supabase.auth.getSession();
           if (response === true) {
-            await supabase.functions.invoke('track-media', {
-              body: {
-                media: {
-                  title: item.title,
-                  mediaType: item.media_type || 'movie',
-                  imageUrl: item.image_url,
-                  externalId: item.external_id,
-                  externalSource: item.external_source
-                },
-                listType: 'finished',
-                skip_social_post: true
-              }
-            });
+            await supabase.functions.invoke('track-media', { body: { media: { title: item.title, mediaType: item.media_type || 'movie', imageUrl: item.image_url, externalId: item.external_id, externalSource: item.external_source }, listType: 'finished', skip_social_post: true } });
           } else if (response === 'want_to') {
-            await supabase.functions.invoke('track-media', {
-              body: {
-                media: {
-                  title: item.title,
-                  mediaType: item.media_type || 'movie',
-                  imageUrl: item.image_url,
-                  externalId: item.external_id,
-                  externalSource: item.external_source
-                },
-                listType: 'queue',
-                skip_social_post: true
-              }
-            });
+            await supabase.functions.invoke('track-media', { body: { media: { title: item.title, mediaType: item.media_type || 'movie', imageUrl: item.image_url, externalId: item.external_id, externalSource: item.external_source }, listType: 'queue', skip_social_post: true } });
           }
-        } catch (err) {
-          console.error('Failed to add to list:', err);
-        }
+        } catch {}
       }
-      
       return { itemId, response };
     },
     onSuccess: ({ itemId, response }) => {
       trackEvent('seen_it_response', { item_id: itemId, response: String(response) });
       queryClient.invalidateQueries({ queryKey: ['seen-it-responses'] });
-      if (response === true || response === 'want_to') {
-        queryClient.invalidateQueries({ queryKey: ['/api/list-items'] });
-      }
+      if (response === true || response === 'want_to') queryClient.invalidateQueries({ queryKey: ['/api/list-items'] });
     }
   });
 
@@ -355,73 +267,129 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     });
     if (user?.id) {
       supabase.from('seen_it_completions').upsert({
-        set_id: setId,
-        user_id: user.id,
-        seen_count: seenCount,
-        total_count: totalCount,
+        set_id: setId, user_id: user.id, seen_count: seenCount, total_count: totalCount,
         percentage: totalCount > 0 ? Math.round((seenCount / totalCount) * 100) : 0,
         completed_at: new Date().toISOString()
-      }, { onConflict: 'user_id,set_id' }).then(({ error }) => {
-        if (error) console.error('❌ Failed to save set completion to Supabase:', error);
-        else {
-          console.log('✅ Set completion saved:', setId);
-          queryClient.invalidateQueries({ queryKey: ['seen-it-completions'] });
-        }
+      }, { onConflict: 'user_id,set_id' });
+    }
+  };
+
+  const handleResponse = (setId: string, item: SeenItItem, response: boolean | 'want_to' | 'skip') => {
+    if (response !== 'skip') {
+      const extKey = item.external_id ? `ext_${item.external_id}` : null;
+      setLocalResponses(prev => {
+        const next = { ...prev, [item.id]: response as boolean | 'want_to' };
+        if (extKey) next[extKey] = response as boolean | 'want_to';
+        try { localStorage.setItem('seen_it_responses', JSON.stringify(next)); } catch {}
+        return next;
       });
+      if (session) responseMutation.mutate({ setId, itemId: item.id, response: response as boolean | 'want_to', item });
     }
+    // Advance to next unanswered item
+    const currentSet = incompleteSets[currentSetIndex];
+    if (!currentSet) return;
+    const nextIndex = currentItemIndex + 1;
+    if (nextIndex >= currentSet.items.length) {
+      const seenCount = currentSet.items.filter(i => responses[i.id] === true || (response === true && i.id === item.id)).length;
+      saveSetCompletion(currentSet.id, seenCount, currentSet.items.length);
+    } else {
+      setCurrentItemIndex(nextIndex);
+    }
+    setRatingItem(null);
+    setDragX(0);
   };
 
-  const handleResponse = (setId: string, item: SeenItItem, response: boolean | 'want_to') => {
-    const extKey = item.external_id ? `ext_${item.external_id}` : null;
-    setLocalResponses(prev => {
-      const next = { ...prev, [item.id]: response };
-      if (extKey) next[extKey] = response;
-      try { localStorage.setItem('seen_it_responses', JSON.stringify(next)); } catch {}
-      return next;
-    });
-    if (session) {
-      responseMutation.mutate({ setId, itemId: item.id, response, item });
-    }
+  // ── Swipe gesture handlers ────────────────────────────────────────────────
+  const handleTouchStart = (e: React.TouchEvent) => {
+    dragStartX.current = e.touches[0].clientX;
+    dragStartY.current = e.touches[0].clientY;
+    isScrolling.current = null;
+    setIsDragging(true);
   };
 
-  const currentSet = incompleteSets?.[currentSetIndex];
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const dx = e.touches[0].clientX - dragStartX.current;
+    const dy = e.touches[0].clientY - dragStartY.current;
+    if (isScrolling.current === null) {
+      isScrolling.current = Math.abs(dy) > Math.abs(dx);
+    }
+    if (isScrolling.current) { setIsDragging(false); return; }
+    e.preventDefault();
+    setDragX(dx);
+  };
 
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    if (!isScrolling.current) {
+      const currentSet = incompleteSets[currentSetIndex];
+      const item = unansweredItems[currentItemIndex];
+      if (dragX > SWIPE_THRESHOLD && item && currentSet) {
+        handleResponse(currentSet.id, item, true); // swipe right = seen it
+      } else if (dragX < -SWIPE_THRESHOLD && item && currentSet) {
+        handleResponse(currentSet.id, item, 'skip'); // swipe left = not interested
+      }
+    }
+    setDragX(0);
+  };
+
+  // ── Render ────────────────────────────────────────────────────────────────
   if (isLoading && !mediaTypeFilter) {
     return (
-      <Card className="bg-white border border-gray-100 shadow-sm p-4 rounded-2xl">
+      <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
         </div>
-      </Card>
+      </div>
     );
   }
 
-  if (!incompleteSets || incompleteSets.length === 0 || !currentSet) {
+  if (!incompleteSets || incompleteSets.length === 0) return null;
+
+  const currentSet = incompleteSets[currentSetIndex];
+  if (!currentSet) return null;
+
+  const mediaConfig = getMediaTypeConfig(currentSet.media_type);
+  // Only show unanswered items as the swipe queue
+  const unansweredItems = currentSet.items.filter(item => responses[item.id] === undefined);
+  const totalItems = currentSet.items.length;
+  const doneCount = totalItems - unansweredItems.length;
+
+  if (unansweredItems.length === 0) {
+    // All answered — advance to next set
+    if (incompleteSets.length > 1) {
+      setCurrentSetIndex(prev => (prev + 1) % incompleteSets.length);
+    }
     return null;
   }
 
-  const seenCount = currentSet.items.filter(item => responses[item.id] === true).length;
-  const wantToCount = currentSet.items.filter(item => responses[item.id] === 'want_to').length;
-  const answeredCount = currentSet.items.filter(item => responses[item.id] !== null && responses[item.id] !== undefined).length;
-  const isComplete = answeredCount === currentSet.items.length;
-  
-  const mediaConfig = getMediaTypeConfig(currentSet.media_type);
-  const MediaIcon = mediaConfig.icon;
+  const activeItem = unansweredItems[currentItemIndex] ?? unansweredItems[0];
+  const activeIdx = unansweredItems.findIndex(i => i.id === activeItem.id);
+
+  // Build the visible fan cards (indices relative to active)
+  const fanCards = FAN_OFFSETS.map((offset, fanPos) => {
+    const itemOffset = fanPos - 2; // center is fanPos=2
+    const itemIdx = activeIdx + itemOffset;
+    const item = unansweredItems[itemIdx] ?? null;
+    const isCenter = fanPos === 2;
+    return { item, offset, isCenter, itemIdx };
+  });
+
+  const swipeProgress = dragX / SWIPE_THRESHOLD; // -1 to 1+
+  const isSwipingRight = dragX > 20;
+  const isSwipingLeft = dragX < -20;
 
   return (
-    <Card className="bg-white border border-gray-100 shadow-sm p-4 rounded-2xl">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-500" />
-            <h3 className="text-gray-900 font-semibold text-sm">Seen It?</h3>
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${mediaConfig.pillBg}`}>{mediaConfig.pill}</span>
-          </div>
+    <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-purple-500" />
+          <span className="text-gray-900 font-semibold text-sm">Seen It?</span>
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${mediaConfig.pillBg}`}>{mediaConfig.pill}</span>
         </div>
         <div className="flex items-center gap-2">
-          {answeredCount > 0 && (
-            <span className="text-purple-500 text-xs font-medium">{answeredCount} of {currentSet.items.length} done</span>
-          )}
+          <span className="text-purple-500 text-xs font-medium">{doneCount + 1} of {totalItems}</span>
           {incompleteSets.length > 1 && (
             <button onClick={() => setCurrentSetIndex(prev => (prev + 1) % incompleteSets.length)}>
               <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -430,206 +398,154 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         </div>
       </div>
 
-      <div 
-        ref={scrollRef}
-        className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {currentSet.items.map((item) => {
-          const response = responses[item.id];
-          const answered = response !== null && response !== undefined;
-          
-          const mediaDetailLink = `/media/${item.media_type || currentSet.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`;
-          return (
-            <div key={item.id} className="flex-shrink-0 w-[105px]">
-              <div className="relative">
-                <Link href={mediaDetailLink}>
-                  <img 
-                    src={item.image_url} 
-                    alt={item.title}
-                    className={`w-[105px] h-[155px] rounded-xl object-cover transition-all cursor-pointer hover:opacity-80 shadow-sm ${
-                      answered ? 'opacity-60' : ''
-                    }`}
-                  />
-                </Link>
-                <div className="absolute bottom-1.5 right-1.5 flex flex-col gap-1.5">
-                  <button 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onAddToList?.({
-                        title: item.title,
-                        mediaType: item.media_type || currentSet.media_type || 'movie',
-                        externalId: item.external_id || item.id,
-                        externalSource: item.external_source || 'tmdb',
-                        imageUrl: item.image_url || '',
-                      });
-                    }}
-                    className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all"
-                  >
-                    <Plus className="w-4 h-4 text-white" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setRatingItem(ratingItem === item.id ? null : item.id);
-                    }}
-                    className={`w-8 h-8 rounded-full backdrop-blur-sm flex items-center justify-center active:scale-90 transition-all ${ratingMap[item.id] ? 'bg-yellow-400/80 hover:bg-yellow-400' : 'bg-black/60 hover:bg-black/80'}`}
-                  >
-                    <Star className={`w-4 h-4 ${ratingMap[item.id] ? 'text-white fill-white' : 'text-white'}`} />
-                  </button>
-                </div>
-                {answered && (
-                  <div className={`absolute inset-0 flex items-center justify-center rounded-xl ${
-                    response ? 'bg-green-500/30' : 'bg-red-500/30'
-                  }`}>
-                    {response ? (
-                      <Check className="w-8 h-8 text-green-500" />
-                    ) : (
-                      <X className="w-8 h-8 text-red-400" />
-                    )}
-                  </div>
-                )}
-              </div>
-              
-              <p className="text-gray-900 text-xs font-medium mt-1.5 truncate">{item.title}</p>
+      {/* Fan card area */}
+      <div className="relative flex items-center justify-center" style={{ height: CARD_H + 60 }}>
+        {fanCards.map(({ item, offset, isCenter, itemIdx }, fanPos) => {
+          if (!item) return null;
 
-              {ratingItem === item.id ? (
-                <div className="mt-1.5 flex justify-between px-0.5">
-                  {[1,2,3,4,5].map(star => (
-                    <div key={star} className="relative w-5 h-5">
-                      <Star className={`w-5 h-5 ${(ratingMap[item.id] || 0) >= star ? 'text-yellow-400 fill-yellow-400' : (ratingMap[item.id] || 0) >= star - 0.5 ? 'text-gray-300' : 'text-gray-300'}`} />
-                      {(ratingMap[item.id] || 0) >= star - 0.5 && (ratingMap[item.id] || 0) < star && (
-                        <div className="absolute inset-0 overflow-hidden w-1/2 pointer-events-none">
-                          <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                        </div>
-                      )}
-                      <div className="absolute left-0 top-0 w-1/2 h-full z-10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const val = star - 0.5;
-                          const newMap = { ...ratingMap, [item.id]: val };
-                          setRatingMap(newMap);
-                          try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
-                          handleResponse(currentSet.id, item, true);
-                          setRatingItem(null);
-                        }}
-                      />
-                      <div className="absolute right-0 top-0 w-1/2 h-full z-10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const newMap = { ...ratingMap, [item.id]: star };
-                          setRatingMap(newMap);
-                          try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
-                          handleResponse(currentSet.id, item, true);
-                          setRatingItem(null);
-                        }}
-                      />
-                    </div>
-                  ))}
+          // For center card apply drag transform
+          const tx = isCenter ? offset.dx + dragX : offset.dx;
+          const rotate = isCenter ? offset.rotate + dragX * 0.06 : offset.rotate;
+          const scale = isCenter ? offset.scale : offset.scale;
+
+          // Swipe direction hint overlays on center card
+          const showSeenOverlay = isCenter && dragX > 30;
+          const showSkipOverlay = isCenter && dragX < -30;
+
+          return (
+            <div
+              key={item.id}
+              style={{
+                position: 'absolute',
+                width: CARD_W,
+                height: CARD_H,
+                transform: `translateX(${tx}px) translateY(${offset.dy}px) rotate(${rotate}deg) scale(${scale})`,
+                zIndex: offset.zIndex,
+                transition: isDragging && isCenter ? 'none' : 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                borderRadius: 16,
+                overflow: 'hidden',
+                boxShadow: isCenter ? '0 8px 32px rgba(0,0,0,0.18)' : '0 2px 12px rgba(0,0,0,0.10)',
+                cursor: isCenter ? 'grab' : 'default',
+                userSelect: 'none',
+              }}
+              onTouchStart={isCenter ? handleTouchStart : undefined}
+              onTouchMove={isCenter ? handleTouchMove : undefined}
+              onTouchEnd={isCenter ? handleTouchEnd : undefined}
+            >
+              <img
+                src={item.image_url}
+                alt={item.title}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none' }}
+              />
+              {/* Swipe overlay hints on center card */}
+              {showSeenOverlay && (
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(34,197,94,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 16 }}>
+                  <div style={{ border: '3px solid #22c55e', borderRadius: 8, padding: '4px 14px' }}>
+                    <span style={{ color: '#22c55e', fontWeight: 800, fontSize: 22, letterSpacing: 2 }}>SEEN</span>
+                  </div>
                 </div>
-              ) : (
-                <div className="mt-1.5">
-                  {ratingMap[item.id] ? (
-                    <div className="flex gap-0.5 h-6 items-center">
-                      {[1,2,3,4,5].map(star => (
-                        <div key={star} className="relative w-3 h-3">
-                          <Star className={`w-3 h-3 ${ratingMap[item.id] >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`} />
-                          {ratingMap[item.id] >= star - 0.5 && ratingMap[item.id] < star && (
-                            <div className="absolute inset-0 overflow-hidden w-1/2 pointer-events-none">
-                              <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : response === true ? (
-                    <span className="text-[11px] text-green-600 font-medium h-6 flex items-center">✓ {mediaConfig.actionDone}</span>
-                  ) : response === false ? (
-                    <span className="text-[11px] text-red-400 font-medium h-6 flex items-center">✗ Not yet</span>
-                  ) : (
-                    <div className="flex gap-1">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleResponse(currentSet.id, item, true);
-                        }}
-                        className="flex-1 py-1 rounded-lg bg-green-50 border border-green-200 text-[11px] font-semibold text-green-700 hover:bg-green-100 active:scale-95 transition-all flex items-center justify-center gap-0.5"
-                      >
-                        <Check className="w-3 h-3" />
-                        Seen it?
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleResponse(currentSet.id, item, 'want_to');
-                        }}
-                        className="flex-1 py-1 rounded-lg bg-purple-50 border border-purple-200 text-[11px] font-semibold text-purple-600 hover:bg-purple-100 active:scale-95 transition-all flex items-center justify-center gap-0.5"
-                      >
-                        <Plus className="w-3 h-3" />
-                        Add it
-                      </button>
-                    </div>
-                  )}
+              )}
+              {showSkipOverlay && (
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(239,68,68,0.30)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 16 }}>
+                  <div style={{ border: '3px solid #ef4444', borderRadius: 8, padding: '4px 14px' }}>
+                    <span style={{ color: '#ef4444', fontWeight: 800, fontSize: 22, letterSpacing: 2 }}>SKIP</span>
+                  </div>
+                </div>
+              )}
+              {/* Side cards: show X on left, ♥ on right */}
+              {!isCenter && fanPos < 2 && (
+                <div style={{ position: 'absolute', bottom: 10, left: 10, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <X size={16} className="text-gray-500" />
+                </div>
+              )}
+              {!isCenter && fanPos > 2 && (
+                <div style={{ position: 'absolute', bottom: 10, right: 10, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Heart size={16} className="text-gray-400" />
+                </div>
+              )}
+              {/* Rating stars on center card if active */}
+              {isCenter && ratingItem === item.id && (
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.75)', padding: '12px 16px', display: 'flex', justifyContent: 'center', gap: 8 }}>
+                  {[1,2,3,4,5].map(star => (
+                    <button key={star} onClick={() => {
+                      const newMap = { ...ratingMap, [item.id]: star };
+                      setRatingMap(newMap);
+                      try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
+                      handleResponse(currentSet.id, item, true);
+                    }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                      <Star size={28} className={star <= (ratingMap[item.id] || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'} />
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
           );
         })}
-        
-        {isComplete && (() => {
-          return (
-            <div className="flex-shrink-0 w-[105px]">
-              <div className="w-[105px] h-[155px] rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex flex-col items-center justify-center p-3 shadow-sm">
-                <Sparkles className="w-5 h-5 text-yellow-300 mb-1" />
-                <span className="text-white font-bold text-lg">{seenCount}/{currentSet.items.length}</span>
-                <span className="text-purple-100 text-[10px] text-center">{mediaConfig.actionDone}</span>
-                {wantToCount > 0 && (
-                  <span className="text-purple-200 text-[9px] mt-1.5">+{wantToCount} on your list</span>
-                )}
-              </div>
-
-              <p className="text-gray-900 text-xs font-medium mt-1.5 text-center">Complete!</p>
-
-              <div className="flex flex-col gap-1 mt-1.5">
-                {incompleteSets.length > 1 && currentSetIndex < incompleteSets.length - 1 ? (
-                  <button
-                    type="button"
-                    onClick={() => { saveSetCompletion(currentSet.id, seenCount, currentSet.items.length); setCurrentSetIndex(prev => Math.min(prev, incompleteSets.length - 2)); }}
-                    className="w-full py-1 rounded-full bg-purple-500 text-white text-[11px] font-medium hover:bg-purple-600 active:scale-95 transition-all"
-                  >
-                    Next Set →
-                  </button>
-                ) : (
-                  <Link href="/profile">
-                    <button type="button" onClick={() => saveSetCompletion(currentSet.id, seenCount, currentSet.items.length)} className="w-full py-1 rounded-full bg-purple-500 text-white text-[11px] font-medium hover:bg-purple-600 active:scale-95 transition-all">
-                      View DNA
-                    </button>
-                  </Link>
-                )}
-              </div>
-            </div>
-          );
-        })()}
       </div>
 
-      {incompleteSets.length > 1 && (
-        <div className="flex justify-center gap-1.5 mt-2">
-          {incompleteSets.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentSetIndex(idx)}
-              className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                idx === currentSetIndex ? 'bg-purple-500' : 'bg-gray-200'
-              }`}
-            />
-          ))}
-        </div>
-      )}
+      {/* Title + hint */}
+      <div className="text-center px-4 pb-1">
+        <p className="text-gray-900 font-semibold text-sm truncate">{activeItem.title}</p>
+        <p className="text-gray-400 text-xs mt-0.5">Swipe to organize, rate, or add to your lists.</p>
+      </div>
 
-    </Card>
+      {/* Action buttons */}
+      <div className="flex items-center justify-around px-4 py-3">
+        {/* X — skip / not interested */}
+        <button
+          onClick={() => handleResponse(currentSet.id, activeItem, 'skip')}
+          className="flex flex-col items-center gap-1 group"
+        >
+          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
+            <X size={20} className="text-gray-500" />
+          </div>
+          <span className="text-[10px] text-gray-400">Not for me</span>
+        </button>
+
+        {/* ♥ — maybe later / want to */}
+        <button
+          onClick={() => handleResponse(currentSet.id, activeItem, 'want_to')}
+          className="flex flex-col items-center gap-1 group"
+        >
+          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
+            <Heart size={20} className="text-gray-400" />
+          </div>
+          <span className="text-[10px] text-gray-400">Maybe later</span>
+        </button>
+
+        {/* ⭐ — rate it */}
+        <button
+          onClick={() => setRatingItem(prev => prev === activeItem.id ? null : activeItem.id)}
+          className="flex flex-col items-center gap-1 group"
+        >
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center group-active:scale-90 transition-all shadow-md ${ratingItem === activeItem.id ? 'bg-purple-500' : 'bg-purple-500'}`}>
+            <Star size={22} className="text-white" fill={ratingMap[activeItem.id] ? 'white' : 'none'} />
+          </div>
+          <span className="text-[10px] text-purple-500 font-medium">Rate it</span>
+        </button>
+
+        {/* + — add to list */}
+        <button
+          onClick={() => onAddToList?.({ title: activeItem.title, mediaType: activeItem.media_type || currentSet.media_type || 'movie', externalId: activeItem.external_id || activeItem.id, externalSource: activeItem.external_source || 'tmdb', imageUrl: activeItem.image_url || '' })}
+          className="flex flex-col items-center gap-1 group"
+        >
+          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
+            <Plus size={20} className="text-gray-500" />
+          </div>
+          <span className="text-[10px] text-gray-400">Add to list</span>
+        </button>
+
+        {/* ✓ — seen it */}
+        <button
+          onClick={() => handleResponse(currentSet.id, activeItem, true)}
+          className="flex flex-col items-center gap-1 group"
+        >
+          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
+            <Check size={20} className="text-purple-500" />
+          </div>
+          <span className="text-[10px] text-purple-500 font-medium">{mediaConfig.actionYes}</span>
+        </button>
+      </div>
+    </div>
   );
 }
