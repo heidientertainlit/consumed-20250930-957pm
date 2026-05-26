@@ -3512,139 +3512,208 @@ function CurrentlyConsumingFeedCard({
 }
 
 // ── Tinder-style swipeable wrapper for individual UGC feed cards ──────────────
+// Shared gesture hook used by both TinderCard and TinderCardStack
+function useSwipeGesture({
+  onDismiss,
+  onOffsetChange,
+  onDraggingChange,
+}: {
+  onDismiss: (dir: 1 | -1) => void;
+  onOffsetChange: (dx: number) => void;
+  onDraggingChange: (v: boolean) => void;
+}) {
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const startTime = useRef(0);
+  const isHoriz = useRef<boolean | null>(null);
+  const offsetRef = useRef(0);
+  const active = useRef(false);
+
+  const doStart = useCallback((cx: number, cy: number) => {
+    startX.current = cx;
+    startY.current = cy;
+    startTime.current = Date.now();
+    isHoriz.current = null;
+    offsetRef.current = 0;
+    active.current = true;
+    onDraggingChange(true);
+  }, [onDraggingChange]);
+
+  const doMove = useCallback((cx: number, cy: number, pd?: () => void) => {
+    if (!active.current) return;
+    const dx = cx - startX.current;
+    const dy = cy - startY.current;
+    if (isHoriz.current === null) {
+      if (Math.abs(dx) > Math.abs(dy) + 3) isHoriz.current = true;
+      else if (Math.abs(dy) > Math.abs(dx) + 3) isHoriz.current = false;
+      else return;
+    }
+    if (isHoriz.current) { pd?.(); offsetRef.current = dx; onOffsetChange(dx); }
+  }, [onOffsetChange]);
+
+  const doEnd = useCallback(() => {
+    if (!active.current) return;
+    active.current = false;
+    onDraggingChange(false);
+    isHoriz.current = null;
+    const dx = offsetRef.current;
+    const dt = Math.max(1, Date.now() - startTime.current);
+    const velocity = Math.abs(dx) / dt; // px/ms
+    // Dismiss: dragged far enough OR quick flick (velocity > 0.3 px/ms with at least 15px)
+    if (Math.abs(dx) > 80 || (velocity > 0.3 && Math.abs(dx) > 15)) {
+      onDismiss(dx > 0 ? 1 : -1);
+    } else {
+      offsetRef.current = 0;
+      onOffsetChange(0);
+    }
+  }, [onDismiss, onOffsetChange, onDraggingChange]);
+
+  const attachTo = useCallback((el: HTMLElement) => {
+    const onTS = (e: TouchEvent) => doStart(e.touches[0].clientX, e.touches[0].clientY);
+    const onTM = (e: TouchEvent) => doMove(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault());
+    const onTE = () => doEnd();
+    const onMD = (e: MouseEvent) => doStart(e.clientX, e.clientY);
+    const onMM = (e: MouseEvent) => doMove(e.clientX, e.clientY);
+    const onMU = () => doEnd();
+    el.addEventListener('touchstart', onTS, { passive: true });
+    el.addEventListener('touchmove', onTM, { passive: false });
+    el.addEventListener('touchend', onTE, { passive: true });
+    el.addEventListener('mousedown', onMD);
+    window.addEventListener('mousemove', onMM);
+    window.addEventListener('mouseup', onMU);
+    return () => {
+      el.removeEventListener('touchstart', onTS);
+      el.removeEventListener('touchmove', onTM);
+      el.removeEventListener('touchend', onTE);
+      el.removeEventListener('mousedown', onMD);
+      window.removeEventListener('mousemove', onMM);
+      window.removeEventListener('mouseup', onMU);
+    };
+  }, [doStart, doMove, doEnd]);
+
+  return { attachTo };
+}
+
+// Single-card swipeable wrapper (used for _isPromoted standalone cards)
 function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: string) => void; children: React.ReactNode }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState(0);
   const [dismissed, setDismissed] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const startX = useRef(0);
-  const startY = useRef(0);
-  const isHorizontal = useRef<boolean | null>(null);
-  const offsetRef = useRef(0);
-  const mouseDown = useRef(false);
+  const [flyingOut, setFlyingOut] = useState(false);
 
-  const handleStart = useCallback((clientX: number, clientY: number) => {
-    startX.current = clientX;
-    startY.current = clientY;
-    isHorizontal.current = null;
-    offsetRef.current = 0;
-    setIsDragging(true);
-  }, []);
-
-  const handleMove = useCallback((clientX: number, clientY: number, preventDefault?: () => void) => {
-    const dx = clientX - startX.current;
-    const dy = clientY - startY.current;
-
-    if (isHorizontal.current === null) {
-      if (Math.abs(dx) > Math.abs(dy) + 4) {
-        isHorizontal.current = true;
-      } else if (Math.abs(dy) > Math.abs(dx) + 4) {
-        isHorizontal.current = false;
-      } else {
-        return;
-      }
-    }
-
-    if (isHorizontal.current) {
-      preventDefault?.();
-      offsetRef.current = dx;
-      setOffset(dx);
-    }
-  }, []);
-
-  const handleEnd = useCallback(() => {
-    mouseDown.current = false;
-    setIsDragging(false);
-    isHorizontal.current = null;
-    const dx = offsetRef.current;
-    if (Math.abs(dx) > 80) {
-      const dir = dx > 0 ? 1 : -1;
-      offsetRef.current = dir * 500;
-      setOffset(dir * 500);
-      setTimeout(() => {
-        setDismissed(true);
-        onDismiss(id);
-      }, 280);
-    } else {
-      offsetRef.current = 0;
-      setOffset(0);
-    }
-  }, [id, onDismiss]);
+  const { attachTo } = useSwipeGesture({
+    onOffsetChange: setOffset,
+    onDraggingChange: setIsDragging,
+    onDismiss: useCallback((dir: 1 | -1) => {
+      setFlyingOut(true);
+      setOffset(dir * 600);
+      setTimeout(() => { setDismissed(true); onDismiss(id); }, 280);
+    }, [id, onDismiss]),
+  });
 
   useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-
-    // Touch events (mobile)
-    const onTouchStart = (e: TouchEvent) => handleStart(e.touches[0].clientX, e.touches[0].clientY);
-    const onTouchMove = (e: TouchEvent) => handleMove(e.touches[0].clientX, e.touches[0].clientY, () => e.preventDefault());
-    const onTouchEnd = () => handleEnd();
-
-    // Mouse events (desktop / Replit preview)
-    const onMouseDown = (e: MouseEvent) => { mouseDown.current = true; handleStart(e.clientX, e.clientY); };
-    const onMouseMove = (e: MouseEvent) => { if (!mouseDown.current) return; handleMove(e.clientX, e.clientY); };
-    const onMouseUp = () => { if (!mouseDown.current) return; handleEnd(); };
-
-    el.addEventListener('touchstart', onTouchStart, { passive: true });
-    el.addEventListener('touchmove', onTouchMove, { passive: false });
-    el.addEventListener('touchend', onTouchEnd, { passive: true });
-    el.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-
-    return () => {
-      el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchmove', onTouchMove);
-      el.removeEventListener('touchend', onTouchEnd);
-      el.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    };
-  }, [handleStart, handleMove, handleEnd]);
+    if (cardRef.current) return attachTo(cardRef.current);
+  }, [attachTo]);
 
   if (dismissed) return null;
-
-  const rotation = (offset / 220) * 10;
-  const showRight = offset > 24;
-  const showLeft = offset < -24;
+  const rotation = (offset / 200) * 8;
+  const showRight = offset > 20;
+  const showLeft = offset < -20;
 
   return (
     <div
       ref={cardRef}
       style={{
         transform: `translateX(${offset}px) rotate(${rotation}deg)`,
-        transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
+        transition: flyingOut ? 'transform 0.28s ease-out' : isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
         willChange: 'transform',
         position: 'relative',
         transformOrigin: 'bottom center',
       }}
     >
-      {/* Swipe direction tint overlays */}
-      {showRight && (
-        <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(34,197,94,0.10)', border: '2px solid rgba(34,197,94,0.35)', zIndex: 1, pointerEvents: 'none' }} />
-      )}
-      {showLeft && (
-        <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(156,163,175,0.10)', border: '2px solid rgba(156,163,175,0.30)', zIndex: 1, pointerEvents: 'none' }} />
-      )}
-      {/* Swipe hint labels — visible while dragging */}
-      {showRight && (
-        <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 2, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}>
-          <span style={{ color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>DISMISS</span>
-        </div>
-      )}
-      {showLeft && (
-        <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 2, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}>
-          <span style={{ color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>SKIP</span>
-        </div>
-      )}
-      {/* Static swipe affordance — subtle arrows shown at rest */}
-      {!isDragging && offset === 0 && (
-        <div style={{ position: 'absolute', bottom: 10, right: 12, zIndex: 2, pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: 3, opacity: 0.25 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </div>
-      )}
+      {showRight && <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(34,197,94,0.10)', border: '2px solid rgba(34,197,94,0.35)', zIndex: 1, pointerEvents: 'none' }} />}
+      {showLeft && <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(156,163,175,0.10)', border: '2px solid rgba(156,163,175,0.30)', zIndex: 1, pointerEvents: 'none' }} />}
+      {showRight && <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 2, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>DISMISS</span></div>}
+      {showLeft && <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 2, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>SKIP</span></div>}
       {children}
+    </div>
+  );
+}
+
+// Multi-card stack — shows current card with peek cards behind, Tinder-style
+function TinderCardStack({ posts, renderCard }: {
+  posts: any[];
+  renderCard: (post: any) => React.ReactNode;
+}) {
+  const [topIndex, setTopIndex] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [flyingOut, setFlyingOut] = useState(false);
+  const topRef = useRef<HTMLDivElement>(null);
+
+  const dismiss = useCallback((dir: 1 | -1) => {
+    setFlyingOut(true);
+    setOffset(dir * 600);
+    setTimeout(() => {
+      setTopIndex(i => i + 1);
+      setOffset(0);
+      setFlyingOut(false);
+    }, 280);
+  }, []);
+
+  const { attachTo } = useSwipeGesture({
+    onOffsetChange: setOffset,
+    onDraggingChange: setIsDragging,
+    onDismiss: dismiss,
+  });
+
+  useEffect(() => {
+    if (topRef.current) return attachTo(topRef.current);
+  }, [attachTo, topIndex]); // re-attach when top card changes
+
+  const remaining = posts.slice(topIndex);
+  if (remaining.length === 0) return null;
+
+  const rotation = (offset / 200) * 8;
+  const showRight = offset > 20;
+  const showLeft = offset < -20;
+  const peekCount = Math.min(2, remaining.length - 1);
+
+  return (
+    <div style={{ position: 'relative', paddingBottom: peekCount > 0 ? 18 : 0, marginBottom: 16 }}>
+      {/* Peek card stubs — white card shadows beneath the top card */}
+      {peekCount >= 2 && (
+        <div style={{ position: 'absolute', bottom: 2, left: 14, right: 14, height: 20, background: 'white', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', zIndex: 8 }} />
+      )}
+      {peekCount >= 1 && (
+        <div style={{ position: 'absolute', bottom: 9, left: 7, right: 7, height: 20, background: 'white', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.10)', zIndex: 9 }} />
+      )}
+
+      {/* Top interactive card */}
+      <div
+        ref={topRef}
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          transform: `translateX(${offset}px) rotate(${rotation}deg)`,
+          transition: flyingOut ? 'transform 0.28s ease-out' : isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
+          transformOrigin: 'bottom center',
+          willChange: 'transform',
+        }}
+      >
+        {showRight && <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(34,197,94,0.10)', border: '2px solid rgba(34,197,94,0.35)', zIndex: 1, pointerEvents: 'none' }} />}
+        {showLeft && <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(156,163,175,0.10)', border: '2px solid rgba(156,163,175,0.30)', zIndex: 1, pointerEvents: 'none' }} />}
+        {showRight && <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 2, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>DISMISS</span></div>}
+        {showLeft && <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 2, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>SKIP</span></div>}
+        {/* Card counter */}
+        {remaining.length > 1 && !showRight && !showLeft && (
+          <div style={{ position: 'absolute', bottom: 10, right: 12, zIndex: 2, pointerEvents: 'none', background: 'rgba(0,0,0,0.12)', borderRadius: 10, padding: '1px 7px' }}>
+            <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 11, fontWeight: 600 }}>{topIndex + 1}/{posts.length}</span>
+          </div>
+        )}
+        {renderCard(remaining[0])}
+      </div>
     </div>
   );
 }
@@ -4568,25 +4637,23 @@ export default function Feed() {
       if (visiblePosts.length === 0) return null;
 
       return (
-        <div key={`${keyPrefix}-${grp.id}`}>
-          {visiblePosts.map((p) => (
-            <TinderCard key={p.id} id={p.id} onDismiss={handleDismissPost}>
-              <div className="mb-4">
-                <UGCGroupCard
-                  post={p}
-                  onLike={handleLike}
-                  isLiked={likedPosts.has(p.id)}
-                  session={session}
-                  fetchComments={fetchComments}
-                  currentUserId={currentAppUserId || undefined}
-                  onDeletePost={handleDeletePost}
-                  onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
-                  forceNormal={true}
-                />
-              </div>
-            </TinderCard>
-          ))}
-        </div>
+        <TinderCardStack
+          key={`${keyPrefix}-${grp.id}`}
+          posts={visiblePosts}
+          renderCard={(p) => (
+            <UGCGroupCard
+              post={p}
+              onLike={handleLike}
+              isLiked={likedPosts.has(p.id)}
+              session={session}
+              fetchComments={fetchComments}
+              currentUserId={currentAppUserId || undefined}
+              onDeletePost={handleDeletePost}
+              onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+              forceNormal={true}
+            />
+          )}
+        />
       );
     }
     // Game moment posts — poll votes, predictions, trivia answers
