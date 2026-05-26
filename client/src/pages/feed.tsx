@@ -3599,11 +3599,23 @@ function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: s
         transformOrigin: 'bottom center',
       }}
     >
+      {/* Swipe direction tint overlays */}
       {showRight && (
-        <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(34,197,94,0.10)', border: '2px solid rgba(34,197,94,0.35)', zIndex: 1, pointerEvents: 'none', transition: 'opacity 0.1s' }} />
+        <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(34,197,94,0.10)', border: '2px solid rgba(34,197,94,0.35)', zIndex: 1, pointerEvents: 'none' }} />
       )}
       {showLeft && (
-        <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(156,163,175,0.10)', border: '2px solid rgba(156,163,175,0.30)', zIndex: 1, pointerEvents: 'none', transition: 'opacity 0.1s' }} />
+        <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(156,163,175,0.10)', border: '2px solid rgba(156,163,175,0.30)', zIndex: 1, pointerEvents: 'none' }} />
+      )}
+      {/* Swipe hint labels — visible while dragging */}
+      {showRight && (
+        <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 2, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}>
+          <span style={{ color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>DISMISS</span>
+        </div>
+      )}
+      {showLeft && (
+        <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 2, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}>
+          <span style={{ color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>SKIP</span>
+        </div>
       )}
       {children}
     </div>
@@ -4648,9 +4660,10 @@ export default function Feed() {
     // type) and renders the "WHAT'S YOUR TAKE?" action-first layout.
     if (item?._isPromoted) {
       const { _isPromoted, _promotedKey, ...originalPost } = item;
+      if (dismissedPostIds.has(item.id)) return null;
       return (
-        <div key={`${keyPrefix}-${_promotedKey || 'promoted'}-${item.id}`} className="mb-4">
-          <div className="w-full">
+        <TinderCard key={`${keyPrefix}-${_promotedKey || 'promoted'}-${item.id}`} id={item.id} onDismiss={handleDismissPost}>
+          <div className="mb-4">
             <UGCGroupCard
               post={originalPost as any}
               onLike={handleLike}
@@ -4664,7 +4677,7 @@ export default function Feed() {
               forceNormal={true}
             />
           </div>
-        </div>
+        </TinderCard>
       );
     }
 
