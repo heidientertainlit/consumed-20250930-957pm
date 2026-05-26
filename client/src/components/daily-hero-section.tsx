@@ -250,15 +250,15 @@ function ScoreShareCard({
               </div>
 
               {/* ── ZONE 2: Light — stats + DNA + CTA ── */}
-              <div className="px-5 pt-5 pb-5" style={{ background: '#EDEAF8' }}>
+              <div className="px-5 pt-5 pb-5" style={{ background: '#FFFFFF' }}>
 
                 {/* Name + rank headline */}
                 {username && (
                   <div className="mb-4">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: 'rgba(75,16,150,0.45)' }}>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: '#9ca3af' }}>
                       {username} is
                     </p>
-                    <p className="text-[22px] font-black leading-tight" style={{ letterSpacing: '-0.02em', color: '#1a0040' }}>
+                    <p className="text-[22px] font-black leading-tight" style={{ letterSpacing: '-0.02em', color: '#111827' }}>
                       {rankData?.rank != null ? `#${rankData.rank} on Consumed` : 'Playing on Consumed'}
                     </p>
                   </div>
@@ -297,12 +297,12 @@ function ScoreShareCard({
                     <div
                       key={label}
                       className="rounded-xl py-2.5 px-1 text-center"
-                      style={{ background: '#FFFFFF', border: '1px solid rgba(124,58,237,0.1)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+                      style={{ background: '#f9fafb', border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
                     >
                       <span className="text-[11px]">{icon}</span>
-                      <p className="text-[13px] font-black leading-none mt-0.5" style={{ color: '#1a0040' }}>{value}</p>
-                      <p className="text-[7px] font-bold uppercase tracking-wide mt-0.5" style={{ color: 'rgba(75,16,150,0.55)' }}>{label}</p>
-                      <p className="text-[6px] uppercase tracking-wide" style={{ color: 'rgba(75,16,150,0.35)' }}>{sub}</p>
+                      <p className="text-[13px] font-black leading-none mt-0.5" style={{ color: '#111827' }}>{value}</p>
+                      <p className="text-[7px] font-bold uppercase tracking-wide mt-0.5" style={{ color: '#6b7280' }}>{label}</p>
+                      <p className="text-[6px] uppercase tracking-wide" style={{ color: '#9ca3af' }}>{sub}</p>
                     </div>
                   ))}
                 </div>
@@ -312,7 +312,7 @@ function ScoreShareCard({
                   <div className="mb-5">
                     <div className="flex items-center gap-1.5 mb-2">
                       <Dna size={10} className="text-purple-500" />
-                      <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: 'rgba(75,16,150,0.55)' }}>
+                      <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: '#6b7280' }}>
                         {username ? `${username}'s` : 'Your'} Entertainment DNA Glimpse
                       </p>
                     </div>
