@@ -128,7 +128,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     queryFn: async () => {
       const { data: setsData, error } = await supabase
         .from('seen_it_sets').select('*').eq('visibility', 'public')
-        .order('created_at', { ascending: false }).limit(10);
+        .order('created_at', { ascending: false }).limit(50);
       if (error) throw error;
       const setsWithItems: SeenItSet[] = [];
       for (const set of setsData || []) {
@@ -142,14 +142,18 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
 
   const sets = useMemo(() => {
     const allSets = [...(trendingSets || []), ...(staticSets || [])];
+    const seen = new Set<string>();
+    const deduped = allSets.filter(s => { if (seen.has(s.id)) return false; seen.add(s.id); return true; });
     return mediaTypeFilter
-      ? allSets.filter(s => {
-          if (mediaTypeFilter === 'movie') return s.media_type === 'movie' || s.media_type === 'tv';
+      ? deduped.filter(s => {
+          if (mediaTypeFilter === 'movie') return s.media_type === 'movie';
+          if (mediaTypeFilter === 'tv') return s.media_type === 'tv';
           if (mediaTypeFilter === 'book') return s.media_type === 'book';
-          if (mediaTypeFilter === 'music') return s.media_type === 'music' || s.media_type === 'podcast';
+          if (mediaTypeFilter === 'music') return s.media_type === 'music';
+          if (mediaTypeFilter === 'podcast') return s.media_type === 'podcast';
           return s.media_type === mediaTypeFilter;
         })
-      : allSets;
+      : deduped;
   }, [trendingSets, staticSets, mediaTypeFilter]);
 
   const isLoading = sets.length === 0 && (isLoadingTrending || isLoadingStatic);

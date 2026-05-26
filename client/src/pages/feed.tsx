@@ -7439,6 +7439,11 @@ export default function Feed() {
               {/* UGC slot #1 — second user post, acts as buffer before DNA Clash */}
               {renderPostBatchByIndex(1)}
 
+              {/* Seen It? — Movies (round 1) */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
+                <SeenItGame mediaTypeFilter="movie" />
+              )}
+
               {/* DNA Clash card — rotates every 2 days, data from prediction_pools (type='clash') */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (() => {
                 // Hardcoded fallback used until DB pools are populated
@@ -7576,6 +7581,11 @@ export default function Feed() {
                 <ChallengePoolsFeedBanner />
               )}
 
+              {/* Seen It? — TV Shows (round 1) */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
+                <SeenItGame mediaTypeFilter="tv" />
+              )}
+
               {/* — Rating carousel #0 — */}
               {renderRatingCarousel(0)}
 
@@ -7611,9 +7621,9 @@ export default function Feed() {
                 <SocialProofCard card={buildLeaderboardSocialProof(playActivity[1], 1)} />
               )}
 
-              {/* Seen It? — Movies/TV */}
+              {/* Seen It? — Books (round 1) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame onAddToList={(media) => { setQuickAddMedia({ title: media.title, mediaType: media.mediaType, externalId: media.externalId, externalSource: media.externalSource, imageUrl: media.imageUrl }); setIsQuickAddOpen(true); }} />
+                <SeenItGame mediaTypeFilter="book" />
               )}
 
               {/* Music trivia */}
@@ -7623,6 +7633,11 @@ export default function Feed() {
 
               {/* UGC slot 12 — after Music trivia */}
               {renderPostBatchByIndex(12)}
+
+              {/* Seen It? — Music (round 1) */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
+                <SeenItGame mediaTypeFilter="music" />
+              )}
 
               {/* TV Polls — round 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
@@ -7652,6 +7667,11 @@ export default function Feed() {
               {/* UGC slot 13 — after Movies trivia round 2 */}
               {renderPostBatchByIndex(13)}
 
+              {/* Seen It? — Movies (round 2) */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
+                <SeenItGame mediaTypeFilter="movie" />
+              )}
+
               {/* DNA Moment #2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
                 <DnaMomentCard />
@@ -7665,6 +7685,11 @@ export default function Feed() {
               {/* UGC slot 14 — after TV trivia round 2 */}
               {renderPostBatchByIndex(14)}
 
+              {/* Seen It? — TV Shows (round 2) */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
+                <SeenItGame mediaTypeFilter="tv" />
+              )}
+
               {/* — Rating carousel #2 — */}
               {renderRatingCarousel(2)}
 
@@ -7677,6 +7702,11 @@ export default function Feed() {
               {/* UGC slot 15 — after Podcasts trivia */}
               {renderPostBatchByIndex(15)}
 
+              {/* Seen It? — Podcasts (round 1) */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
+                <SeenItGame mediaTypeFilter="podcast" />
+              )}
+
 
               {/* Play slot #3 */}
               {renderPostBatchByIndex(3)}
@@ -7686,9 +7716,9 @@ export default function Feed() {
                 <SocialProofCard card={buildLeaderboardSocialProof(playActivity[3], 3)} />
               )}
 
-              {/* Seen It? — Books */}
+              {/* Seen It? — Books (round 2) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia({ title: media.title, mediaType: media.mediaType, externalId: media.externalId, externalSource: media.externalSource, imageUrl: media.imageUrl }); setIsQuickAddOpen(true); }} />
+                <SeenItGame mediaTypeFilter="book" />
               )}
 
               {/* Games trivia */}
@@ -7732,9 +7762,9 @@ export default function Feed() {
               {/* UGC slot 18 — after Music trivia round 2 */}
               {renderPostBatchByIndex(18)}
 
-              {/* Seen It? — Music */}
+              {/* Seen It? — Music (round 2) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia({ title: media.title, mediaType: media.mediaType, externalId: media.externalId, externalSource: media.externalSource, imageUrl: media.imageUrl }); setIsQuickAddOpen(true); }} />
+                <SeenItGame mediaTypeFilter="music" />
               )}
 
               {/* Play slot #5 */}
