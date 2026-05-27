@@ -2930,7 +2930,7 @@ export default function UserProfile() {
                   {!isOwnProfile && friendshipStatus !== 'friends' ? '—' : totalItemsLogged}
                 </span>
                 <span className="text-[10px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  stories logged
+                  media logged
                 </span>
               </div>
 
