@@ -2820,140 +2820,193 @@ export default function UserProfile() {
       <div className="min-h-screen bg-gray-50 pb-20">
         <Navigation onTrackConsumption={handleTrackConsumption} />
 
-        {/* ── Purple gradient hero — extends seamlessly from the nav bar ── */}
-        <div style={{ background: 'linear-gradient(180deg, #0f0a1e 0%, #1a0535 55%, #2d1060 100%)' }}>
-          <div className="max-w-4xl mx-auto px-4 pt-5 pb-7">
-          {/* Profile Header */}
-          <div className="flex flex-col md:flex-row md:items-start md:space-x-6">
-            {/* Profile Info */}
-            <div className="flex-1">
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <h1 className="text-2xl font-semibold text-white">
-                      {userProfileData?.first_name && userProfileData?.last_name 
-                        ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
-                        : userProfileData?.first_name || userProfileData?.user_name || user?.user_metadata?.user_name || user?.user_metadata?.first_name || 'User'}
-                    </h1>
-                    <button
-                      onClick={async () => {
-                        const profileUserId = isOwnProfile ? user?.id : viewingUserId;
-                        await copyLink({ 
-                          kind: 'profile',
-                          id: profileUserId
-                        });
-                        toast({
-                          title: "Link Copied!",
-                          description: "Share this profile with your friends",
-                        });
-                      }}
-                      className="text-white/40 hover:text-white/80 transition-colors"
-                      data-testid="button-share-profile-inline"
-                    >
-                      <CornerUpRight size={20} />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                      @{userProfileData?.user_name || user?.user_metadata?.user_name || (user?.email?.split('@')[0]) || 'user'}
-                    </span>
-                    {userBadges.some((b: any) => b.slug === 'insider') && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
-                        Insider
-                      </span>
-                    )}
-                  </div>
+        {/* ── Hero — same dark gradient as the nav bar ── */}
+        <div style={{ background: 'linear-gradient(180deg, #0d0221 0%, #1a0535 60%, #2d1060 100%)' }}>
+          <div className="max-w-4xl mx-auto px-4 pt-5 pb-6">
 
-                  {/* Stats Grid */}
-                  <div className="flex flex-col gap-y-0.5">
-                    {/* Total Points */}
-                    {isLoadingPoints ? (
-                      <div className="flex items-center space-x-1.5">
-                        <Trophy className="text-amber-400" size={14} />
-                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Loading...</span>
-                      </div>
-                    ) : userPoints ? (
-                      <button
-                        onClick={() => setLocation('/points')}
-                        className="flex items-center space-x-1.5 hover:bg-white/10 -ml-1.5 px-1.5 py-0.5 rounded transition-colors group"
-                        data-testid="points-breakdown-link"
-                      >
-                        <Trophy className="text-amber-400" size={14} />
-                        <span className="text-sm font-semibold text-white">{userPoints.all_time || 0}</span>
-                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>total points →</span>
-                      </button>
-                    ) : null}
-
-                    {/* Global Rank */}
-                    {isOwnProfile && (
-                      <Link href="/leaderboard">
-                        <div className="flex items-center space-x-1.5 hover:bg-white/10 -ml-1.5 px-1.5 py-0.5 rounded transition-colors group cursor-pointer">
-                          <Medal className="text-purple-300" size={14} />
-                          {userRank ? (
-                            <>
-                              <span className="text-sm font-semibold text-white">#{userRank.global}</span>
-                              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>View Leaderboard →</span>
-                            </>
-                          ) : (
-                            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>View Leaderboard →</span>
-                          )}
-                        </div>
-                      </Link>
-                    )}
-                    {!isOwnProfile && userRank && (
-                      <div className="flex items-center space-x-1.5">
-                        <Medal className="text-purple-300" size={14} />
-                        <span className="text-sm font-semibold text-white">#{userRank.global}</span>
-                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>global rank</span>
-                      </div>
-                    )}
-
-                    {/* Items Logged */}
-                    <div className="flex items-center space-x-1.5 -ml-1.5 px-1.5 py-0.5">
-                      <TrendingUp className="text-blue-300" size={14} />
-                      <span className="text-sm font-semibold text-white">
-                        {!isOwnProfile && friendshipStatus !== 'friends' ? '—' : totalItemsLogged}
-                      </span>
-                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>items logged</span>
-                    </div>
-
-                    {/* Mostly Into */}
-                    {mostlyIntoTypes && mostlyIntoTypes.length > 0 && (
-                      <div className="flex items-center space-x-1.5 -ml-1.5 px-1.5 py-0.5">
-                        <BarChart3 className="text-green-300" size={14} />
-                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Mostly Into:</span>
-                        <span className="text-xs font-medium text-white/80">{mostlyIntoTypes.join(', ')}</span>
-                      </div>
-                    )}
-
-                  </div>
+            {/* Name + handle */}
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <h1 className="text-2xl font-semibold text-white">
+                    {userProfileData?.first_name && userProfileData?.last_name 
+                      ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
+                      : userProfileData?.first_name || userProfileData?.user_name || user?.user_metadata?.user_name || user?.user_metadata?.first_name || 'User'}
+                  </h1>
+                  <button
+                    onClick={async () => {
+                      const profileUserId = isOwnProfile ? user?.id : viewingUserId;
+                      await copyLink({ kind: 'profile', id: profileUserId });
+                      toast({ title: "Link Copied!", description: "Share this profile with your friends" });
+                    }}
+                    className="text-white/40 hover:text-white/80 transition-colors"
+                    data-testid="button-share-profile-inline"
+                  >
+                    <CornerUpRight size={18} />
+                  </button>
                 </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    @{userProfileData?.user_name || user?.user_metadata?.user_name || (user?.email?.split('@')[0]) || 'user'}
+                  </span>
+                  {userBadges.some((b: any) => b.slug === 'insider') && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
+                      Insider
+                    </span>
+                  )}
+                </div>
+              </div>
+              {/* Edit Profile */}
+              {isOwnProfile && (
+                <button
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-1.5 transition-all flex-shrink-0 mt-1"
+                  onClick={() => {
+                    setEditUsername(userProfileData?.user_name || '');
+                    setEditFirstName(userProfileData?.first_name || '');
+                    setEditLastName(userProfileData?.last_name || '');
+                    setIsEditProfileOpen(true);
+                  }}
+                  data-testid="button-edit-profile"
+                >
+                  <Settings size={14} />
+                  Edit Profile
+                </button>
+              )}
+            </div>
 
-                {/* Action Buttons */}
-                {isOwnProfile && (
-                  <div className="flex items-center gap-3 mt-4 md:mt-0">
-                    <button 
-                      className="bg-white/15 hover:bg-white/25 border border-white/25 text-white px-5 py-2.5 rounded-full font-medium flex items-center gap-2 transition-all"
-                      onClick={() => {
-                        setEditUsername(userProfileData?.user_name || '');
-                        setEditFirstName(userProfileData?.first_name || '');
-                        setEditLastName(userProfileData?.last_name || '');
-                        setIsEditProfileOpen(true);
-                      }}
-                      data-testid="button-edit-profile"
-                    >
-                      <Settings size={16} />
-                      Edit Profile
-                    </button>
+            {/* Stats — 4-column horizontal grid */}
+            <div className="grid grid-cols-4 gap-2 mb-5">
+              {/* Points */}
+              <button
+                onClick={() => setLocation('/points')}
+                className="flex flex-col items-start p-3 rounded-xl transition-all hover:bg-white/10"
+                style={{ background: 'rgba(255,255,255,0.06)' }}
+                data-testid="points-breakdown-link"
+              >
+                <div className="flex items-center gap-1 mb-1">
+                  <Trophy size={13} className="text-amber-400" />
+                </div>
+                <span className="text-base font-bold text-white leading-none">
+                  {isLoadingPoints ? '…' : (userPoints?.all_time || 0).toLocaleString()}
+                </span>
+                <span className="text-[10px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                  reputation points
+                </span>
+              </button>
+
+              {/* Rank */}
+              <Link href="/leaderboard">
+                <div
+                  className="flex flex-col items-start p-3 rounded-xl cursor-pointer transition-all hover:bg-white/10 h-full"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}
+                >
+                  <div className="flex items-center gap-1 mb-1">
+                    <Medal size={13} className="text-purple-300" />
                   </div>
-                )}
+                  <span className="text-base font-bold text-white leading-none">
+                    {userRank ? `#${userRank.global}` : '—'}
+                  </span>
+                  <span className="text-[10px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                    View Leaderboard
+                  </span>
+                </div>
+              </Link>
+
+              {/* Items logged */}
+              <div
+                className="flex flex-col items-start p-3 rounded-xl"
+                style={{ background: 'rgba(255,255,255,0.06)' }}
+              >
+                <div className="flex items-center gap-1 mb-1">
+                  <TrendingUp size={13} className="text-blue-300" />
+                </div>
+                <span className="text-base font-bold text-white leading-none">
+                  {!isOwnProfile && friendshipStatus !== 'friends' ? '—' : totalItemsLogged}
+                </span>
+                <span className="text-[10px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                  stories logged
+                </span>
+              </div>
+
+              {/* Mostly into */}
+              <div
+                className="flex flex-col items-start p-3 rounded-xl"
+                style={{ background: 'rgba(255,255,255,0.06)' }}
+              >
+                <div className="flex items-center gap-1 mb-1">
+                  <BarChart3 size={13} className="text-green-300" />
+                </div>
+                <span className="text-[11px] font-bold text-white leading-tight">
+                  {mostlyIntoTypes && mostlyIntoTypes.length > 0 ? mostlyIntoTypes.join(' • ') : '—'}
+                </span>
+                <span className="text-[10px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                  Mostly into
+                </span>
               </div>
             </div>
-          </div>
+
+            {/* NOW SHAPING YOUR DNA (Currently Consuming) */}
+            {(() => {
+              const currentlyList = userLists.find((list: any) => list.title === 'Currently');
+              const currentlyItems = currentlyList?.items?.slice(0, 10) || [];
+              if (currentlyItems.length === 0) return null;
+              return (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'rgba(196,181,253,0.7)' }}>
+                        Now Shaping Your DNA
+                      </p>
+                      <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Currently Consuming</p>
+                    </div>
+                  </div>
+                  <div
+                    className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4"
+                    style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as any}
+                    onTouchStart={(e) => e.stopPropagation()}
+                  >
+                    {currentlyItems.map((item: any) => (
+                      isOwnProfile ? (
+                        <CurrentlyConsumingCard
+                          key={item.id}
+                          item={item}
+                          onUpdateProgress={(progress, total, mode, progressDisplay) => {
+                            updateProgressMutation.mutate({ itemId: item.id, progress, total, mode, progressDisplay });
+                          }}
+                          onMoveToList={(targetList, listName) => {
+                            moveToListMutation.mutate({ itemId: item.id, targetList, listName });
+                          }}
+                          isUpdating={updateProgressMutation.isPending || moveToListMutation.isPending}
+                        />
+                      ) : (
+                        <div
+                          key={item.id}
+                          className="flex-shrink-0 w-20 cursor-pointer"
+                          onClick={() => {
+                            const mediaType = item.media_type || 'movie';
+                            const source = item.external_source || 'tmdb';
+                            const rawId = item.external_id || '';
+                            const id = rawId.startsWith('/') ? rawId.substring(1) : rawId;
+                            if (id) setLocation(`/media/${mediaType}/${source}/${id}`);
+                          }}
+                        >
+                          <div className="relative aspect-[2/3] rounded-lg overflow-hidden border border-white/20">
+                            {item.image_url
+                              ? <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                              : <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(124,58,237,0.2)' }}><Film size={20} color="#a78bfa" /></div>
+                            }
+                          </div>
+                          <p className="text-[9px] font-medium text-white/70 truncate mt-1">{item.title}</p>
+                        </div>
+                      )
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
           </div>{/* closes max-w-4xl inner */}
         </div>{/* closes gradient wrapper */}
-        {/* Gradient fade to page bg */}
-        <div style={{ height: 20, background: 'linear-gradient(to bottom, #2d1060, #f9fafb)' }} />
 
         <div className="max-w-4xl mx-auto px-4">
           {/* Bio */}
@@ -3050,76 +3103,6 @@ export default function UserProfile() {
             </div>
           )}
         </div>
-
-        {/* Currently Consuming - With Full Progress Tracking */}
-        {(() => {
-          const currentlyList = userLists.find(list => list.title === 'Currently');
-          const currentlyItems = currentlyList?.items?.slice(0, 10) || [];
-          const firstName = userProfileData?.first_name || userProfileData?.user_name || 'User';
-          
-          return currentlyItems.length > 0 ? (
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2 px-4">
-                {firstName} is currently consuming...
-              </p>
-              <div 
-                className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 px-4"
-                style={{ WebkitOverflowScrolling: 'touch' }}
-                onTouchStart={(e) => e.stopPropagation()}
-              >
-                {currentlyItems.map((item: any) => (
-                  isOwnProfile ? (
-                    <CurrentlyConsumingCard 
-                      key={item.id} 
-                      item={item}
-                      onUpdateProgress={(progress, total, mode, progressDisplay) => {
-                        updateProgressMutation.mutate({
-                          itemId: item.id,
-                          progress,
-                          total,
-                          mode,
-                          progressDisplay
-                        });
-                      }}
-                      onMoveToList={(targetList, listName) => {
-                        moveToListMutation.mutate({
-                          itemId: item.id,
-                          targetList,
-                          listName
-                        });
-                      }}
-                      isUpdating={updateProgressMutation.isPending || moveToListMutation.isPending}
-                    />
-                  ) : (
-                    <div
-                      key={item.id}
-                      className="flex-shrink-0 w-28 cursor-pointer"
-                      onClick={() => {
-                        const mediaType = item.media_type || 'movie';
-                        const source = item.external_source || 'tmdb';
-                        const rawId = item.external_id || '';
-                        const id = rawId.startsWith('/') ? rawId.substring(1) : rawId;
-                        if (id) setLocation(`/media/${mediaType}/${source}/${id}`);
-                      }}
-                      data-testid={`currently-consuming-${item.id}`}
-                    >
-                      <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-200 border border-gray-300 hover:border-purple-400 transition-colors">
-                        {item.image_url ? (
-                          <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">
-                            <Film size={24} />
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-700 truncate mt-1 px-0.5">{item.title}</p>
-                    </div>
-                  )
-                ))}
-              </div>
-            </div>
-          ) : null;
-        })()}
 
         {/* Section Navigation Pills - Tab-like behavior (only for own profile) */}
         {isOwnProfile && (
