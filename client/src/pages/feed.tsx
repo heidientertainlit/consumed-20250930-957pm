@@ -1817,15 +1817,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         </div>
 
-        {/* ── Seen It–style action row — white rounded card below the fan ── */}
-        <div className="mt-6 mx-1 bg-white rounded-2xl shadow-sm py-4" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-center gap-4 px-2">
+        {/* ── Seen It–style action row below the fan ── */}
+        <div className="flex items-start justify-center gap-4 mt-6 px-2" onClick={(e) => e.stopPropagation()}>
           {/* Agree */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
             className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
           >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isLiked && !localReaction ? 'bg-purple-100' : 'bg-gray-100'}`}>
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm ${isLiked && !localReaction ? 'bg-purple-100' : 'bg-white'}`}>
               <ArrowUp size={18} className={isLiked && !localReaction ? 'text-purple-600' : 'text-gray-500'} strokeWidth={isLiked && !localReaction ? 2.5 : 1.75} />
             </div>
             <span className={`text-[10px] font-medium ${isLiked && !localReaction ? 'text-purple-600' : 'text-gray-500'}`}>
@@ -1838,7 +1837,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             onClick={(e) => { e.stopPropagation(); handleReaction('flame'); }}
             className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
           >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${localReaction === 'flame' ? 'bg-orange-100' : 'bg-gray-100'}`}>
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm ${localReaction === 'flame' ? 'bg-orange-100' : 'bg-white'}`}>
               <Flame size={18} className={localReaction === 'flame' ? 'text-orange-500' : 'text-gray-500'} fill={localReaction === 'flame' ? 'currentColor' : 'none'} />
             </div>
             <span className={`text-[10px] font-medium ${localReaction === 'flame' ? 'text-orange-500' : 'text-gray-500'}`}>Hot Take</span>
@@ -1849,7 +1848,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             onClick={(e) => { e.stopPropagation(); handleReaction('down'); }}
             className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
           >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${localReaction === 'down' ? 'bg-gray-200' : 'bg-gray-100'}`}>
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm ${localReaction === 'down' ? 'bg-gray-200' : 'bg-white'}`}>
               <ArrowDown size={18} className={localReaction === 'down' ? 'text-gray-700' : 'text-gray-500'} strokeWidth={localReaction === 'down' ? 2.5 : 1.75} />
             </div>
             <span className={`text-[10px] font-medium ${localReaction === 'down' ? 'text-gray-700' : 'text-gray-500'}`}>Not Me</span>
@@ -1860,7 +1859,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             onClick={(e) => { e.stopPropagation(); setPosterDetailOpen(true); }}
             className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
           >
-            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center">
               <MessageCircle size={18} className="text-gray-500" />
             </div>
             <span className="text-[10px] font-medium text-gray-500">
@@ -1876,7 +1875,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               onClick={(e) => { e.stopPropagation(); setShowInlineRater(v => !v); }}
               className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
             >
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${ratingSubmitted ? 'bg-yellow-100' : showInlineRater ? 'bg-purple-100' : 'bg-gray-100'}`}>
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm ${ratingSubmitted ? 'bg-yellow-100' : showInlineRater ? 'bg-purple-100' : 'bg-white'}`}>
                 <Star size={18} className={ratingSubmitted ? 'text-yellow-500' : showInlineRater ? 'text-purple-600' : 'text-gray-500'} fill={ratingSubmitted ? 'currentColor' : 'none'} />
               </div>
               <span className={`text-[10px] font-medium ${showInlineRater ? 'text-purple-600' : ratingSubmitted ? 'text-yellow-500' : 'text-gray-500'}`}>
@@ -1891,13 +1890,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
               className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
             >
-              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center">
                 <Plus size={18} className="text-gray-500" />
               </div>
               <span className="text-[10px] font-medium text-gray-500">Add to list</span>
             </button>
           )}
-        </div>
         </div>
 
         {/* YOUR TURN — inline star rater appears below card */}
