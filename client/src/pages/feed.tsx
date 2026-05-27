@@ -1754,7 +1754,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         {/* ── Poster card ── */}
         <div
           className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
-          style={{ height: 330 }}
+          style={{ height: 330, width: 220, margin: '0 auto' }}
           onClick={() => setPosterDetailOpen(true)}
         >
           {/* Background image or gradient fallback */}
@@ -4116,7 +4116,7 @@ function TinderCardStack({ posts, renderCard }: {
   };
 
   return (
-    <div style={{ position: 'relative', height: CARD_H + 60, marginBottom: 16, overflow: 'visible' }}>
+    <div style={{ position: 'relative', marginBottom: 16, overflow: 'visible' }}>
       {/* Left peek card (remaining[2]) — rotated counter-clockwise */}
       {peekCount >= 2 && remaining[2] && (
         <div style={{
@@ -4159,14 +4159,11 @@ function TinderCardStack({ posts, renderCard }: {
         </div>
       )}
 
-      {/* Front/center interactive card */}
+      {/* Front/center card — position:relative so action row + Compare DNA flow naturally below */}
       <div
         ref={topRef}
         style={{
-          position: 'absolute',
-          left: `calc(50% - ${CARD_W / 2}px)`,
-          top: 0,
-          width: CARD_W,
+          position: 'relative',
           zIndex: 10,
           transform: `translateX(${offset}px) rotate(${rotation}deg)`,
           transition: flyingOut ? 'transform 0.28s ease-out' : (isDragging || skipTransition) ? 'none' : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
@@ -4175,12 +4172,13 @@ function TinderCardStack({ posts, renderCard }: {
           overflow: 'visible',
         }}
       >
-        {showRight && <div style={{ position: 'absolute', top: 0, left: 0, width: CARD_W, height: CARD_H, borderRadius: 18, background: 'rgba(34,197,94,0.12)', border: '2px solid rgba(34,197,94,0.4)', zIndex: 11, pointerEvents: 'none' }} />}
-        {showLeft && <div style={{ position: 'absolute', top: 0, left: 0, width: CARD_W, height: CARD_H, borderRadius: 18, background: 'rgba(156,163,175,0.12)', border: '2px solid rgba(156,163,175,0.35)', zIndex: 11, pointerEvents: 'none' }} />}
-        {showRight && <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 12, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>AGREE</span></div>}
-        {showLeft && <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 12, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>SKIP</span></div>}
+        {/* Swipe hint overlays — centered over the 220px poster */}
+        {showRight && <div style={{ position: 'absolute', top: 0, left: `calc(50% - ${CARD_W / 2}px)`, width: CARD_W, height: CARD_H, borderRadius: 18, background: 'rgba(34,197,94,0.12)', border: '2px solid rgba(34,197,94,0.4)', zIndex: 11, pointerEvents: 'none' }} />}
+        {showLeft && <div style={{ position: 'absolute', top: 0, left: `calc(50% - ${CARD_W / 2}px)`, width: CARD_W, height: CARD_H, borderRadius: 18, background: 'rgba(156,163,175,0.12)', border: '2px solid rgba(156,163,175,0.35)', zIndex: 11, pointerEvents: 'none' }} />}
+        {showRight && <div style={{ position: 'absolute', top: 14, left: `calc(50% - ${CARD_W / 2}px + 14px)`, zIndex: 12, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>AGREE</span></div>}
+        {showLeft && <div style={{ position: 'absolute', top: 14, right: `calc(50% - ${CARD_W / 2}px + 14px)`, zIndex: 12, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>SKIP</span></div>}
         {remaining.length > 1 && !showRight && !showLeft && (
-          <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 12, pointerEvents: 'none', background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)', borderRadius: 10, padding: '2px 8px' }}>
+          <div style={{ position: 'absolute', top: 12, left: `calc(50% - ${CARD_W / 2}px + 12px)`, zIndex: 12, pointerEvents: 'none', background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)', borderRadius: 10, padding: '2px 8px' }}>
             <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: 600 }}>{topIndex + 1}/{posts.length}</span>
           </div>
         )}
