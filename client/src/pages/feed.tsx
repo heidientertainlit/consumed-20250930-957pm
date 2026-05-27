@@ -1776,6 +1776,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             )}
           </div>
 
+          {/* Media title — above the fan stack */}
+          <div className="px-4 pb-1 pt-0 text-center">
+            <p className="font-semibold text-gray-900 text-base leading-tight">{post.mediaTitle || 'Untitled'}</p>
+          </div>
+
           {/* Fan stack area — all cards sit inside the white container */}
           <div className="relative flex items-center justify-center" style={{ height: 310, overflow: 'visible' }}>
 
@@ -1869,15 +1874,18 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
           </div>{/* end fan area */}
 
-          {/* Media title + subtitle */}
-          <div className="text-center px-4 pt-3 pb-1">
-            <p className="font-semibold text-gray-900 text-base leading-tight">{post.mediaTitle || 'Untitled'}</p>
-            <p className="text-sm text-gray-500 mt-1">
-              {hasContent
-                ? `"${(post.content || '').length > 55 ? post.content!.slice(0, 55) + '…' : post.content}"`
-                : 'Swipe to agree, disagree, or react.'}
-            </p>
-          </div>
+          {/* Compact rated + aligned row below the fan */}
+          {isOtherUser && (ratingSubmitted || tasteAlignment !== null) && (
+            <div className="flex items-center justify-center gap-3 px-4 py-2">
+              {ratingSubmitted && ratingValue > 0 && (
+                <span className="text-xs text-gray-500">You rated this <span className="text-yellow-500 font-semibold">{ratingValue}/5 ★</span></span>
+              )}
+              {ratingSubmitted && tasteAlignment !== null && <span className="text-gray-300 text-xs">·</span>}
+              {tasteAlignment !== null && (
+                <span className="text-xs text-gray-500">You're <span className="text-violet-600 font-semibold">{tasteAlignment}%</span> aligned</span>
+              )}
+            </div>
+          )}
 
           {/* ── Action row ── */}
           <div className="flex items-start justify-center gap-4 px-4 mt-3 pb-4" onClick={(e) => e.stopPropagation()}>
@@ -1914,21 +1922,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               <ArrowDown size={18} className={localReaction === 'down' ? 'text-gray-700' : 'text-gray-500'} strokeWidth={localReaction === 'down' ? 2.5 : 1.75} />
             </div>
             <span className={`text-[10px] font-medium ${localReaction === 'down' ? 'text-gray-700' : 'text-gray-500'}`}>Not Me</span>
-          </button>
-
-          {/* Comments */}
-          <button
-            onClick={(e) => { e.stopPropagation(); setPosterDetailOpen(true); }}
-            className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
-          >
-            <div className="w-12 h-12 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center">
-              <MessageCircle size={18} className="text-gray-500" />
-            </div>
-            <span className="text-[10px] font-medium text-gray-500">
-              {Math.max(post.comments || 0, comments.length) > 0
-                ? `${Math.max(post.comments || 0, comments.length)} Comments`
-                : 'Comments'}
-            </span>
           </button>
 
           {/* Rate it — other user's post */}
@@ -2003,49 +1996,22 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         )}
 
-        {/* After rating — styled confirmation card */}
-        {isOtherUser && ratingSubmitted && ratingValue > 0 && (
-          <div className="mt-4 mx-1 bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
-              <Star size={18} className="text-yellow-500 fill-yellow-500" />
+        {/* Facebook-style comment bar */}
+        {session?.access_token && (
+          <div className="flex items-center gap-2 px-3 pb-3 pt-1 border-t border-gray-100 mt-2" onClick={(e) => e.stopPropagation()}>
+            <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-violet-600 text-[10px] font-semibold">
+                {(session?.user?.user_metadata?.display_name || session?.user?.email || 'Y')[0]?.toUpperCase()}
+              </span>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-semibold text-gray-900">
-                  {ratingJustSaved ? '✓ Saved!' : <>You rated this <span className="text-yellow-500">{ratingValue}/5</span></>}
-                </span>
-                {!ratingJustSaved && (
-                  <>
-                    <button onClick={(e) => { e.stopPropagation(); setShowStarPicker(true); setShowInlineRater(true); }} className="text-xs text-violet-500 hover:text-violet-700 font-medium">Edit</button>
-                    <button onClick={(e) => { e.stopPropagation(); handleRemoveRating(); }} className="text-xs text-red-400 hover:text-red-600 font-medium">Remove</button>
-                  </>
-                )}
-              </div>
-              <p className="text-[11px] text-gray-400 mt-0.5">Rated just now</p>
-            </div>
-          </div>
-        )}
-
-        {/* Taste alignment — styled card */}
-        {tasteAlignment !== null && isOtherUser && (
-          <div className="mt-3 mx-1">
-            <div className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full border-2 border-dashed border-violet-400 flex items-center justify-center flex-shrink-0 bg-violet-50">
-                <Users size={16} className="text-violet-500" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900">
-                  You're <span className="text-violet-600">{tasteAlignment}%</span> aligned
-                </p>
-                <p className="text-[11px] text-gray-500">with {post.user?.displayName || post.user?.username || 'them'}'s taste</p>
-              </div>
-              <button className="flex-shrink-0 px-3 py-1.5 rounded-full border border-violet-400 text-violet-600 text-xs font-semibold flex items-center gap-1 hover:bg-violet-50 transition-colors">
-                See why <ChevronRight size={12} />
-              </button>
-            </div>
-            <p className="text-center text-[10px] text-gray-400 mt-2 flex items-center justify-center gap-1">
-              <Sparkles size={9} className="text-gray-400" /> Aligns based on your ratings and takes
-            </p>
+            <button
+              onClick={() => setPosterDetailOpen(true)}
+              className="flex-1 text-left text-sm text-gray-400 bg-gray-50 rounded-full px-4 py-2 hover:bg-gray-100 transition-colors"
+            >
+              {Math.max(post.comments || 0, comments.length) > 0
+                ? `${Math.max(post.comments || 0, comments.length)} comment${Math.max(post.comments || 0, comments.length) === 1 ? '' : 's'} · Add yours`
+                : 'Add a comment...'}
+            </button>
           </div>
         )}
 
