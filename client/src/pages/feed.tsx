@@ -1818,7 +1818,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
 
         {/* ── Seen It–style action row below the fan ── */}
-        <div className="flex items-start justify-center gap-4 mt-6 px-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-center gap-4 mt-12 px-2" onClick={(e) => e.stopPropagation()}>
           {/* Agree */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
