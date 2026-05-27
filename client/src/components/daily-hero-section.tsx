@@ -524,28 +524,6 @@ function ScoreShareCard({
                   </div>
                 )}
 
-                {/* Spicy CTA — only for non-skipped answers */}
-                {callAnswer && callAnswer !== '__skip' && (() => {
-                  const userPct = callVoteBreakdown ? (callVoteBreakdown[callAnswer] ?? null) : null;
-                  const headline = userPct !== null
-                    ? `${userPct}% of players said \u201c${callAnswer}.\u201d Where do your friends sit?`
-                    : `You made your call. Where does everyone else stand?`;
-                  return (
-                    <div
-                      className="rounded-xl px-4 py-3.5 mb-4 text-center"
-                      style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.18) 0%,rgba(56,189,248,0.08) 100%)', border: '1px solid rgba(124,58,237,0.3)' }}
-                    >
-                      <p className="text-[15px] font-black text-white leading-tight">{headline}</p>
-                      <p className="text-[11px] mt-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                        {[
-                          'Someone in your group chat definitely knew this.',
-                          'How many of your friends would\'ve known?',
-                          'Did your friends do better?',
-                        ][new Date().getDate() % 3]}
-                      </p>
-                    </div>
-                  );
-                })()}
 
                 {/* Branding footer */}
                 <div className="pt-3 text-center" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
@@ -2088,8 +2066,9 @@ export function DailyHeroSection() {
               : 'Your taste is getting sharper.';
             return (
               <div
-                className="w-full rounded-xl text-left overflow-hidden"
+                className="w-full rounded-xl text-left overflow-hidden cursor-pointer"
                 style={{ background: 'linear-gradient(160deg,#1a1230 0%,#160f2a 60%,#0f0d1e 100%)', border: '1px solid rgba(160,120,255,0.2)' }}
+                onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallOverlay(true)}
               >
                 {/* Top row: label + headline + share */}
                 <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3">
@@ -2102,7 +2081,7 @@ export function DailyHeroSection() {
                     <span style={{ fontSize: 12, color: '#a090c8', marginTop: 3, lineHeight: 1.5 }}>{subCopy}</span>
                   </div>
                   <button
-                    onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true)}
+                    onClick={(e) => { e.stopPropagation(); isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true); }}
                     style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.25)', borderRadius: 20, padding: '5px 11px', color: '#c4a0ff', fontSize: 11, fontWeight: 500, flexShrink: 0, cursor: 'pointer', marginTop: 2 }}
                   >
                     <Share2 size={11} />

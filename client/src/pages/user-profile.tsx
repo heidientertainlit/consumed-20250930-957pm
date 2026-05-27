@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity, MessageSquarePlus, Trash2, Dna, Send, Check, Flag, Ban } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { getGameAlignment } from "@/lib/identity-feedback";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { 
   DropdownMenu, 
@@ -3448,6 +3449,12 @@ export default function UserProfile() {
                           <h2 className="text-base font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{dnaProfile.label}</h2>
                           {userProfileData?.user_name && <p className="text-gray-500 text-xs mt-0.5">@{userProfileData.user_name}</p>}
                           <p className="text-gray-600 text-xs mt-0.5">{dnaProfile.tagline}</p>
+                          {dnaProfile.core_archetype && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-widest uppercase mt-1.5" style={{ background: 'rgba(124,58,237,0.1)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.2)' }}>
+                              <Sparkles size={9} />
+                              {dnaProfile.core_archetype.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                            </span>
+                          )}
                         </div>
                         {dnaProfile.profile_text && (
                           <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 mb-3">
@@ -3704,6 +3711,19 @@ export default function UserProfile() {
                     {dnaProfile.tagline && (
                       <p className="text-sm text-gray-600 italic">{dnaProfile.tagline}</p>
                     )}
+                    {dnaProfile.core_archetype && (() => {
+                      const archetypeName = dnaProfile.core_archetype.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+                      const alignmentLine = getGameAlignment(dnaProfile.core_archetype, 'trivia');
+                      return (
+                        <div className="flex flex-col gap-1 mt-2">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase self-start" style={{ background: 'rgba(124,58,237,0.1)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.25)' }}>
+                            <Sparkles size={10} />
+                            {archetypeName}
+                          </span>
+                          {alignmentLine && <p className="text-xs text-purple-500 italic">{alignmentLine}</p>}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {dnaProfile.profile_text && (
