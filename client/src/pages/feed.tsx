@@ -1751,13 +1751,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
     return (
       <>
-        {/* ── Outer container — white card matching Seen It? style ── */}
-        <div className="bg-white rounded-2xl shadow-sm px-4 pt-6 pb-5">
-
-        {/* ── Poster card ── */}
+        {/* ── Poster card — floats above the white action container ── */}
         <div
           className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
-          style={{ height: 330, width: 220, margin: '0 auto' }}
+          style={{ height: 330, width: 220, margin: '0 auto', position: 'relative', zIndex: 10 }}
           onClick={() => setPosterDetailOpen(true)}
         >
           {/* Background image or gradient fallback */}
@@ -1820,8 +1817,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         </div>
 
-        {/* ── Seen It–style action row below the fan ── */}
-        <div className="flex items-start justify-center gap-4 mt-8 px-2" onClick={(e) => e.stopPropagation()}>
+        {/* ── White action container — sits below the floating poster ── */}
+        <div className="bg-white rounded-2xl shadow-sm px-4 pb-5 -mt-4 pt-6">
+
+        {/* ── Seen It–style action row ── */}
+        <div className="flex items-start justify-center gap-4 px-2" onClick={(e) => e.stopPropagation()}>
           {/* Agree */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
