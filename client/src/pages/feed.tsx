@@ -1783,7 +1783,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
           {/* Header: section label */}
           <div className="px-4 pt-4 pb-2">
-            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Fan Takes</p>
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Takes & Ratings</p>
           </div>
 
           {/* Media title — above the fan stack */}
@@ -4215,8 +4215,8 @@ function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: s
     onDraggingChange: setIsDragging,
     onDismiss: useCallback((dir: 1 | -1) => {
       setFlyingOut(true);
-      setOffset(dir * 600);
-      setTimeout(() => { setDismissed(true); onDismiss(id); }, 280);
+      setOffset(dir * 380);
+      setTimeout(() => { setDismissed(true); onDismiss(id); }, 420);
     }, [id, onDismiss]),
   });
 
@@ -4234,7 +4234,7 @@ function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: s
       ref={cardRef}
       style={{
         transform: `translateX(${offset}px) rotate(${rotation}deg)`,
-        transition: flyingOut ? 'transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94)' : isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        transition: flyingOut ? 'transform 0.42s cubic-bezier(0.25,0.46,0.45,0.94)' : isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
         willChange: 'transform',
         position: 'relative',
         transformOrigin: 'bottom center',
@@ -4266,7 +4266,7 @@ function TinderCardStack({ posts, renderCard, hidePeekCards }: {
 
   const dismiss = useCallback((dir: 1 | -1) => {
     setFlyingOut(true);
-    setOffset(dir * 600);
+    setOffset(dir * 380);
     setTimeout(() => {
       // Kill transition BEFORE changing content so the new card never
       // inherits the outgoing card's position and slides in.
@@ -4276,7 +4276,7 @@ function TinderCardStack({ posts, renderCard, hidePeekCards }: {
       setFlyingOut(false);
       // Re-enable transitions two frames later (after browser has painted)
       requestAnimationFrame(() => requestAnimationFrame(() => setSkipTransition(false)));
-    }, 280);
+    }, 420);
   }, []);
 
   const { attachTo } = useSwipeGesture({
@@ -4383,7 +4383,7 @@ function TinderCardStack({ posts, renderCard, hidePeekCards }: {
           {renderCard(remaining[0], posts, topIndex, {
             style: {
               transform: `translateX(${offset}px) rotate(${rotation}deg)`,
-              transition: flyingOut ? 'transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94)' : (isDragging || skipTransition) ? 'none' : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              transition: flyingOut ? 'transform 0.42s cubic-bezier(0.25,0.46,0.45,0.94)' : (isDragging || skipTransition) ? 'none' : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
               transformOrigin: 'bottom center',
               willChange: 'transform',
             },
@@ -4406,7 +4406,7 @@ function TinderCardStack({ posts, renderCard, hidePeekCards }: {
             position: 'relative',
             zIndex: 10,
             transform: `translateX(${offset}px) rotate(${rotation}deg)`,
-            transition: flyingOut ? 'transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94)' : (isDragging || skipTransition) ? 'none' : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            transition: flyingOut ? 'transform 0.42s cubic-bezier(0.25,0.46,0.45,0.94)' : (isDragging || skipTransition) ? 'none' : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
             transformOrigin: 'bottom center',
             willChange: 'transform',
             overflow: 'visible',
