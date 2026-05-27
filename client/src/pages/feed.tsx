@@ -1814,74 +1814,88 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {/* Attribution */}
             <p className="text-white/65 text-xs font-medium mb-3">— {displayName}</p>
 
-            {/* Action row */}
-            <div className="flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-3.5">
-                {/* Agree */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
-                  className={`flex items-center gap-1 transition-all active:scale-125 ${isLiked && !localReaction ? 'text-purple-300' : 'text-white/60 hover:text-white'}`}
-                  title="Agree"
-                >
-                  <ArrowUp size={15} strokeWidth={isLiked && !localReaction ? 2.5 : 1.75} />
-                  {(post.likes || 0) > 0 && <span className="text-xs text-white/65">{post.likes}</span>}
-                </button>
-                {/* Hot take */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleReaction('flame'); }}
-                  className={`flex items-center gap-1 transition-all active:scale-125 ${localReaction === 'flame' ? 'text-orange-400' : 'text-white/60 hover:text-orange-400'}`}
-                  title="Hot Take"
-                >
-                  <Flame size={14} strokeWidth={localReaction === 'flame' ? 2.5 : 1.75} fill={localReaction === 'flame' ? 'currentColor' : 'none'} />
-                </button>
-                {/* Not my take */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleReaction('down'); }}
-                  className={`flex items-center gap-1 transition-all active:scale-125 ${localReaction === 'down' ? 'text-white/40' : 'text-white/60 hover:text-white/40'}`}
-                  title="Not My Take"
-                >
-                  <ArrowDown size={14} strokeWidth={localReaction === 'down' ? 2.5 : 1.75} />
-                </button>
-                {/* Comments */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); setPosterDetailOpen(true); }}
-                  className="flex items-center gap-1 text-white/60 hover:text-white transition-colors"
-                  title="Comments"
-                >
-                  <MessageCircle size={14} />
-                  {Math.max(post.comments || 0, comments.length) > 0 && (
-                    <span className="text-xs text-white/65">{Math.max(post.comments || 0, comments.length)}</span>
-                  )}
-                </button>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Taste alignment nudge */}
-                {tasteAlignment !== null && isOtherUser && (
-                  <span className="text-[10px] text-violet-300 font-semibold">{tasteAlignment}%</span>
-                )}
-                {/* Rate — other user's post only */}
-                {isOtherUser && session?.access_token && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowInlineRater(v => !v); }}
-                    className={`w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all active:scale-90 ${ratingSubmitted ? 'text-yellow-400 border-yellow-400/40' : showInlineRater ? 'text-yellow-300' : 'text-white/70 hover:text-yellow-300'}`}
-                    title={ratingSubmitted ? `Your rating: ${ratingValue}/5` : 'Rate this'}
-                  >
-                    <Star size={14} fill={ratingSubmitted ? 'currentColor' : 'none'} />
-                  </button>
-                )}
-                {/* Add to list */}
-                {onAddToList && (post.externalId || post.mediaTitle) && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
-                    className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/70 hover:text-white transition-all active:scale-90"
-                    title="Add to list"
-                  >
-                    <Plus size={14} />
-                  </button>
-                )}
-              </div>
-            </div>
           </div>
+        </div>
+
+        {/* ── Seen It–style action row below the fan card ── */}
+        <div className="flex items-start justify-center gap-4 mt-3 px-1" onClick={(e) => e.stopPropagation()}>
+          {/* Agree */}
+          <button
+            onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
+            className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+          >
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isLiked && !localReaction ? 'bg-purple-100' : 'bg-gray-100'}`}>
+              <ArrowUp size={18} className={isLiked && !localReaction ? 'text-purple-600' : 'text-gray-500'} strokeWidth={isLiked && !localReaction ? 2.5 : 1.75} />
+            </div>
+            <span className={`text-[10px] font-medium ${isLiked && !localReaction ? 'text-purple-600' : 'text-gray-500'}`}>
+              Agree{(post.likes || 0) > 0 ? ` ${post.likes}` : ''}
+            </span>
+          </button>
+
+          {/* Hot Take */}
+          <button
+            onClick={(e) => { e.stopPropagation(); handleReaction('flame'); }}
+            className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+          >
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${localReaction === 'flame' ? 'bg-orange-100' : 'bg-gray-100'}`}>
+              <Flame size={18} className={localReaction === 'flame' ? 'text-orange-500' : 'text-gray-500'} fill={localReaction === 'flame' ? 'currentColor' : 'none'} />
+            </div>
+            <span className={`text-[10px] font-medium ${localReaction === 'flame' ? 'text-orange-500' : 'text-gray-500'}`}>Hot Take</span>
+          </button>
+
+          {/* Not Me */}
+          <button
+            onClick={(e) => { e.stopPropagation(); handleReaction('down'); }}
+            className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+          >
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${localReaction === 'down' ? 'bg-gray-200' : 'bg-gray-100'}`}>
+              <ArrowDown size={18} className={localReaction === 'down' ? 'text-gray-700' : 'text-gray-500'} strokeWidth={localReaction === 'down' ? 2.5 : 1.75} />
+            </div>
+            <span className={`text-[10px] font-medium ${localReaction === 'down' ? 'text-gray-700' : 'text-gray-500'}`}>Not Me</span>
+          </button>
+
+          {/* Comments */}
+          <button
+            onClick={(e) => { e.stopPropagation(); setPosterDetailOpen(true); }}
+            className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+          >
+            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+              <MessageCircle size={18} className="text-gray-500" />
+            </div>
+            <span className="text-[10px] font-medium text-gray-500">
+              {Math.max(post.comments || 0, comments.length) > 0
+                ? `${Math.max(post.comments || 0, comments.length)} Comments`
+                : 'Comments'}
+            </span>
+          </button>
+
+          {/* Rate it — other user's post */}
+          {isOtherUser && session?.access_token && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowInlineRater(v => !v); }}
+              className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+            >
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${ratingSubmitted ? 'bg-yellow-100' : showInlineRater ? 'bg-purple-100' : 'bg-gray-100'}`}>
+                <Star size={18} className={ratingSubmitted ? 'text-yellow-500' : showInlineRater ? 'text-purple-600' : 'text-gray-500'} fill={ratingSubmitted ? 'currentColor' : 'none'} />
+              </div>
+              <span className={`text-[10px] font-medium ${showInlineRater ? 'text-purple-600' : ratingSubmitted ? 'text-yellow-500' : 'text-gray-500'}`}>
+                {ratingSubmitted ? `${ratingValue}★` : 'Rate it'}
+              </span>
+            </button>
+          )}
+
+          {/* Add to list */}
+          {onAddToList && (post.externalId || post.mediaTitle) && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
+              className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+            >
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                <Plus size={18} className="text-gray-500" />
+              </div>
+              <span className="text-[10px] font-medium text-gray-500">Add to list</span>
+            </button>
+          )}
         </div>
 
         {/* YOUR TURN — inline star rater appears below card */}
