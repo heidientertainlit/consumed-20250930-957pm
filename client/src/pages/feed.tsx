@@ -1751,6 +1751,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
     return (
       <>
+        {/* ── Outer container — white card matching Seen It? style ── */}
+        <div className="bg-white rounded-2xl shadow-sm px-4 pt-6 pb-5">
+
         {/* ── Poster card ── */}
         <div
           className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
@@ -1818,7 +1821,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
 
         {/* ── Seen It–style action row below the fan ── */}
-        <div className="flex items-start justify-center gap-4 mt-12 px-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-center gap-4 mt-8 px-2" onClick={(e) => e.stopPropagation()}>
           {/* Agree */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
@@ -1986,6 +1989,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </p>
           </div>
         )}
+
+        </div>{/* ── end outer white container ── */}
 
         {/* Post detail bottom sheet */}
         <PostDetailSheet
