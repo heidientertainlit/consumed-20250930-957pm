@@ -4067,13 +4067,45 @@ function TinderCardStack({ posts, renderCard }: {
   const peekCount = Math.min(2, remaining.length - 1);
 
   return (
-    <div style={{ position: 'relative', paddingBottom: peekCount > 0 ? 18 : 0, marginBottom: 16 }}>
-      {/* Peek card stubs — white card shadows beneath the top card */}
-      {peekCount >= 2 && (
-        <div style={{ position: 'absolute', bottom: 2, left: 14, right: 14, height: 20, background: 'white', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', zIndex: 8 }} />
+    <div style={{ position: 'relative', marginBottom: 16, overflow: 'visible' }}>
+      {/* Fan peek cards — rotated behind front card, visible to the right */}
+      {peekCount >= 2 && remaining[2] && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 8,
+          borderRadius: 18, overflow: 'hidden',
+          transform: 'rotate(10deg)',
+          transformOrigin: 'bottom center',
+          pointerEvents: 'none',
+          background: '#111827',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+        }}>
+          {remaining[2].mediaImage && remaining[2].mediaImage.startsWith('http') && (
+            <img src={remaining[2].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          )}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 30%, transparent)' }} />
+          <div style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Heart size={13} color="white" />
+          </div>
+        </div>
       )}
-      {peekCount >= 1 && (
-        <div style={{ position: 'absolute', bottom: 9, left: 7, right: 7, height: 20, background: 'white', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.10)', zIndex: 9 }} />
+      {peekCount >= 1 && remaining[1] && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 9,
+          borderRadius: 18, overflow: 'hidden',
+          transform: 'rotate(5deg)',
+          transformOrigin: 'bottom center',
+          pointerEvents: 'none',
+          background: '#111827',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+        }}>
+          {remaining[1].mediaImage && remaining[1].mediaImage.startsWith('http') && (
+            <img src={remaining[1].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          )}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 30%, transparent)' }} />
+          <div style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Heart size={13} color="white" />
+          </div>
+        </div>
       )}
 
       {/* Top interactive card */}
@@ -4088,14 +4120,14 @@ function TinderCardStack({ posts, renderCard }: {
           willChange: 'transform',
         }}
       >
-        {showRight && <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(34,197,94,0.10)', border: '2px solid rgba(34,197,94,0.35)', zIndex: 1, pointerEvents: 'none' }} />}
-        {showLeft && <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(156,163,175,0.10)', border: '2px solid rgba(156,163,175,0.30)', zIndex: 1, pointerEvents: 'none' }} />}
-        {showRight && <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 2, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>DISMISS</span></div>}
-        {showLeft && <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 2, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>SKIP</span></div>}
+        {showRight && <div style={{ position: 'absolute', inset: 0, borderRadius: 18, background: 'rgba(34,197,94,0.10)', border: '2px solid rgba(34,197,94,0.35)', zIndex: 11, pointerEvents: 'none' }} />}
+        {showLeft && <div style={{ position: 'absolute', inset: 0, borderRadius: 18, background: 'rgba(156,163,175,0.10)', border: '2px solid rgba(156,163,175,0.30)', zIndex: 11, pointerEvents: 'none' }} />}
+        {showRight && <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 12, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>AGREE</span></div>}
+        {showLeft && <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 12, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>SKIP</span></div>}
         {/* Card counter */}
         {remaining.length > 1 && !showRight && !showLeft && (
-          <div style={{ position: 'absolute', bottom: 10, right: 12, zIndex: 2, pointerEvents: 'none', background: 'rgba(0,0,0,0.12)', borderRadius: 10, padding: '1px 7px' }}>
-            <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 11, fontWeight: 600 }}>{topIndex + 1}/{posts.length}</span>
+          <div style={{ position: 'absolute', bottom: 12, right: 12, zIndex: 12, pointerEvents: 'none', background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)', borderRadius: 10, padding: '2px 8px' }}>
+            <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: 600 }}>{topIndex + 1}/{posts.length}</span>
           </div>
         )}
         {renderCard(remaining[0])}
