@@ -1,1 +1,2 @@
-- [DNA identity system](dna-identity-system.md) — archetype taxonomy, reputation titles, snapshot table, edge functions — canonical architecture for the living DNA system.
+- [Identity page architecture](identity-page.md) — /identity is the new DNA overhaul page; existing /me, /profile untouched until user swaps.
+- [core_archetype setup](core-archetype-setup.md) — core_archetype col in dna_profiles; set to 'social_watcher' for Heidi manually; proper regeneration needs live user JWT via generate-dna-profile-v2.
