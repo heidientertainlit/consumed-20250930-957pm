@@ -683,7 +683,7 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList, forceActionFirst, forceNormal, stackPosts, stackIndex }: {
+function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList, forceActionFirst, forceNormal, stackPosts, stackIndex, swipeProps }: {
   post: UGCPost;
   onLike: (id: string) => void;
   isLiked: boolean;
@@ -696,6 +696,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   forceNormal?: boolean;
   stackPosts?: any[];
   stackIndex?: number;
+  swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode };
 }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
@@ -1793,10 +1794,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
             {/* Front card */}
             <div
+              ref={swipeProps?.ref}
               className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
-              style={{ height: 282, width: 208, position: 'absolute', zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.30)' }}
+              style={{ height: 282, width: 208, position: 'absolute', zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.30)', ...(swipeProps?.style ?? {}) }}
               onClick={() => setPosterDetailOpen(true)}
             >
+              {swipeProps?.overlays}
           {/* Background image or gradient fallback */}
           {hasPoster ? (
             <img
@@ -4069,7 +4072,7 @@ function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: s
 // Multi-card stack — shows current card with peek cards behind, Tinder-style
 function TinderCardStack({ posts, renderCard, hidePeekCards }: {
   posts: any[];
-  renderCard: (post: any, allPosts: any[], currentIndex: number) => React.ReactNode;
+  renderCard: (post: any, allPosts: any[], currentIndex: number, swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode }) => React.ReactNode;
   hidePeekCards?: boolean;
 }) {
   const [topIndex, setTopIndex] = useState(0);
@@ -4193,31 +4196,49 @@ function TinderCardStack({ posts, renderCard, hidePeekCards }: {
         </div>
       )}
 
-      {/* Front/center card — position:relative so action row + Compare DNA flow naturally below */}
-      <div
-        ref={topRef}
-        style={{
-          position: 'relative',
-          zIndex: 10,
-          transform: `translateX(${offset}px) rotate(${rotation}deg)`,
-          transition: flyingOut ? 'transform 0.28s ease-out' : (isDragging || skipTransition) ? 'none' : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
-          transformOrigin: 'bottom center',
-          willChange: 'transform',
-          overflow: 'visible',
-        }}
-      >
-        {/* Swipe hint overlays — centered over the 220px poster */}
-        {showRight && <div style={{ position: 'absolute', top: 0, left: `calc(50% - ${CARD_W / 2}px)`, width: CARD_W, height: CARD_H, borderRadius: 18, background: 'rgba(34,197,94,0.12)', border: '2px solid rgba(34,197,94,0.4)', zIndex: 11, pointerEvents: 'none' }} />}
-        {showLeft && <div style={{ position: 'absolute', top: 0, left: `calc(50% - ${CARD_W / 2}px)`, width: CARD_W, height: CARD_H, borderRadius: 18, background: 'rgba(156,163,175,0.12)', border: '2px solid rgba(156,163,175,0.35)', zIndex: 11, pointerEvents: 'none' }} />}
-        {showRight && <div style={{ position: 'absolute', top: 14, left: `calc(50% - ${CARD_W / 2}px + 14px)`, zIndex: 12, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>AGREE</span></div>}
-        {showLeft && <div style={{ position: 'absolute', top: 14, right: `calc(50% - ${CARD_W / 2}px + 14px)`, zIndex: 12, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>SKIP</span></div>}
-        {remaining.length > 1 && !showRight && !showLeft && !hidePeekCards && (
-          <div style={{ position: 'absolute', top: 12, left: `calc(50% - ${CARD_W / 2}px + 12px)`, zIndex: 12, pointerEvents: 'none', background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)', borderRadius: 10, padding: '2px 8px' }}>
-            <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: 600 }}>{topIndex + 1}/{posts.length}</span>
-          </div>
-        )}
-        {renderCard(remaining[0], posts, topIndex)}
-      </div>
+      {/* Front/center card */}
+      {hidePeekCards ? (
+        // When hidePeekCards: white container stays static, only the front poster card gets the swipe transform
+        <div style={{ position: 'relative', zIndex: 10, overflow: 'visible' }}>
+          {renderCard(remaining[0], posts, topIndex, {
+            style: {
+              transform: `translateX(${offset}px) rotate(${rotation}deg)`,
+              transition: flyingOut ? 'transform 0.28s ease-out' : (isDragging || skipTransition) ? 'none' : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
+              transformOrigin: 'bottom center',
+              willChange: 'transform',
+            },
+            ref: topRef,
+            overlays: (
+              <>
+                {showRight && <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(34,197,94,0.12)', border: '2px solid rgba(34,197,94,0.4)', zIndex: 11, pointerEvents: 'none' }} />}
+                {showLeft && <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(156,163,175,0.12)', border: '2px solid rgba(156,163,175,0.35)', zIndex: 11, pointerEvents: 'none' }} />}
+                {showRight && <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 12, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>AGREE</span></div>}
+                {showLeft && <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 12, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>SKIP</span></div>}
+              </>
+            ),
+          })}
+        </div>
+      ) : (
+        // Normal peek-card mode: the whole card animates
+        <div
+          ref={topRef}
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            transform: `translateX(${offset}px) rotate(${rotation}deg)`,
+            transition: flyingOut ? 'transform 0.28s ease-out' : (isDragging || skipTransition) ? 'none' : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
+            transformOrigin: 'bottom center',
+            willChange: 'transform',
+            overflow: 'visible',
+          }}
+        >
+          {showRight && <div style={{ position: 'absolute', top: 0, left: `calc(50% - ${CARD_W / 2}px)`, width: CARD_W, height: CARD_H, borderRadius: 18, background: 'rgba(34,197,94,0.12)', border: '2px solid rgba(34,197,94,0.4)', zIndex: 11, pointerEvents: 'none' }} />}
+          {showLeft && <div style={{ position: 'absolute', top: 0, left: `calc(50% - ${CARD_W / 2}px)`, width: CARD_W, height: CARD_H, borderRadius: 18, background: 'rgba(156,163,175,0.12)', border: '2px solid rgba(156,163,175,0.35)', zIndex: 11, pointerEvents: 'none' }} />}
+          {showRight && <div style={{ position: 'absolute', top: 14, left: `calc(50% - ${CARD_W / 2}px + 14px)`, zIndex: 12, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>AGREE</span></div>}
+          {showLeft && <div style={{ position: 'absolute', top: 14, right: `calc(50% - ${CARD_W / 2}px + 14px)`, zIndex: 12, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>SKIP</span></div>}
+          {renderCard(remaining[0], posts, topIndex)}
+        </div>
+      )}
     </div>
   );
 }
@@ -5142,7 +5163,7 @@ export default function Feed() {
           key={item.id}
           posts={visiblePosts}
           hidePeekCards={true}
-          renderCard={(p: any, allPosts: any[], idx: number) => (
+          renderCard={(p: any, allPosts: any[], idx: number, swipeProps) => (
             <UGCGroupCard
               post={p}
               onLike={handleLike}
@@ -5156,6 +5177,7 @@ export default function Feed() {
               forceNormal={true}
               stackPosts={allPosts}
               stackIndex={idx}
+              swipeProps={swipeProps}
             />
           )}
         />
@@ -5172,7 +5194,7 @@ export default function Feed() {
           key={`${keyPrefix}-${grp.id}`}
           posts={visiblePosts}
           hidePeekCards={true}
-          renderCard={(p, allPosts, idx) => (
+          renderCard={(p, allPosts, idx, swipeProps) => (
             <UGCGroupCard
               post={p}
               onLike={handleLike}
@@ -5185,6 +5207,7 @@ export default function Feed() {
               forceNormal={true}
               stackPosts={allPosts}
               stackIndex={idx}
+              swipeProps={swipeProps}
             />
           )}
         />
