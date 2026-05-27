@@ -490,33 +490,26 @@ Respond with valid JSON only:
       })
       .eq('user_id', user.id);
 
-    // ── 11b. Write monthly snapshot if none exists for current month ─────────
+    // ── 11b. Write a snapshot row on every regeneration ─────────────────────
+    // Every profile generation is a data point. Multiple rows per month are
+    // intentional — they show how the identity evolved within the month.
     const snapshotMonth = new Date().toISOString().slice(0, 7); // e.g. "2026-05"
-    const { data: existingSnapshot } = await supabaseClient
-      .from('dna_snapshots')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('snapshot_month', snapshotMonth)
-      .maybeSingle();
-
-    if (!existingSnapshot) {
-      const notableShows = (showSignalsRaw || []).map((s: any) => s.signal_value);
-      await supabaseClient.from('dna_snapshots').insert({
-        user_id:             user.id,
-        snapshot_month:      snapshotMonth,
-        core_archetype:      safeCore,
-        secondary_archetypes: safeSecondary,
-        flavor_traits:       safeFlavorKeys,
-        current_era:         safeEra,
-        reputation_titles:   [],
-        top_genres:          gpt.favoriteGenres || [],
-        top_media_types:     gpt.favoriteMediaTypes || [],
-        notable_shows:       notableShows,
-        ai_summary:          gpt.profile_summary || '',
-        evolution_note:      gpt.evolution_note || null,
-        confidence_score:    profilePayload.confidence_score
-      });
-    }
+    const notableShows = (showSignalsRaw || []).map((s: any) => s.signal_value);
+    await supabaseClient.from('dna_snapshots').insert({
+      user_id:              user.id,
+      snapshot_month:       snapshotMonth,
+      core_archetype:       safeCore,
+      secondary_archetypes: safeSecondary,
+      flavor_traits:        safeFlavorKeys,
+      current_era:          safeEra,
+      reputation_titles:    [],
+      top_genres:           gpt.favoriteGenres || [],
+      top_media_types:      gpt.favoriteMediaTypes || [],
+      notable_shows:        notableShows,
+      ai_summary:           gpt.profile_summary || '',
+      evolution_note:       gpt.evolution_note || null,
+      confidence_score:     profilePayload.confidence_score
+    });
 
     // ── 12. Return response (backward-compatible + new fields) ───────────────
     return new Response(JSON.stringify({
