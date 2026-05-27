@@ -2822,29 +2822,16 @@ export default function UserProfile() {
 
         {/* ── Hero — same dark gradient as the nav bar ── */}
         <div style={{ background: 'linear-gradient(180deg, #0d0221 0%, #1a0535 60%, #2d1060 100%)' }}>
-          <div className="max-w-4xl mx-auto px-4 pt-5 pb-6">
+          <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
 
             {/* Name + handle */}
             <div className="flex items-start justify-between mb-3">
               <div>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <h1 className="text-2xl font-semibold text-white">
-                    {userProfileData?.first_name && userProfileData?.last_name 
-                      ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
-                      : userProfileData?.first_name || userProfileData?.user_name || user?.user_metadata?.user_name || user?.user_metadata?.first_name || 'User'}
-                  </h1>
-                  <button
-                    onClick={async () => {
-                      const profileUserId = isOwnProfile ? user?.id : viewingUserId;
-                      await copyLink({ kind: 'profile', id: profileUserId });
-                      toast({ title: "Link Copied!", description: "Share this profile with your friends" });
-                    }}
-                    className="text-white/40 hover:text-white/80 transition-colors"
-                    data-testid="button-share-profile-inline"
-                  >
-                    <CornerUpRight size={18} />
-                  </button>
-                </div>
+                <h1 className="text-2xl font-semibold text-white mb-0.5">
+                  {userProfileData?.first_name && userProfileData?.last_name 
+                    ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
+                    : userProfileData?.first_name || userProfileData?.user_name || user?.user_metadata?.user_name || user?.user_metadata?.first_name || 'User'}
+                </h1>
                 <div className="flex items-center gap-2">
                   <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
                     @{userProfileData?.user_name || user?.user_metadata?.user_name || (user?.email?.split('@')[0]) || 'user'}
@@ -2856,22 +2843,41 @@ export default function UserProfile() {
                   )}
                 </div>
               </div>
-              {/* Edit Profile */}
-              {isOwnProfile && (
+
+              {/* Right side: Share + Edit */}
+              <div className="flex flex-col items-end gap-2 flex-shrink-0 mt-0.5">
+                {/* Share profile */}
                 <button
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-1.5 transition-all flex-shrink-0 mt-1"
-                  onClick={() => {
-                    setEditUsername(userProfileData?.user_name || '');
-                    setEditFirstName(userProfileData?.first_name || '');
-                    setEditLastName(userProfileData?.last_name || '');
-                    setIsEditProfileOpen(true);
+                  onClick={async () => {
+                    const profileUserId = isOwnProfile ? user?.id : viewingUserId;
+                    await copyLink({ kind: 'profile', id: profileUserId });
+                    toast({ title: "Link Copied!", description: "Share this profile with your friends" });
                   }}
-                  data-testid="button-edit-profile"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all hover:bg-white/10"
+                  style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
+                  data-testid="button-share-profile-inline"
                 >
-                  <Settings size={14} />
-                  Edit Profile
+                  <Share2 size={13} className="text-white/70" />
+                  <span className="text-[11px] font-medium" style={{ color: 'rgba(255,255,255,0.6)' }}>Share</span>
                 </button>
-              )}
+                {/* Edit profile — subtle */}
+                {isOwnProfile && (
+                  <button
+                    className="flex items-center gap-1 transition-all hover:opacity-80"
+                    style={{ color: 'rgba(255,255,255,0.35)' }}
+                    onClick={() => {
+                      setEditUsername(userProfileData?.user_name || '');
+                      setEditFirstName(userProfileData?.first_name || '');
+                      setEditLastName(userProfileData?.last_name || '');
+                      setIsEditProfileOpen(true);
+                    }}
+                    data-testid="button-edit-profile"
+                  >
+                    <Settings size={11} />
+                    <span className="text-[10px]">Edit profile</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Stats — 4-column horizontal grid */}
