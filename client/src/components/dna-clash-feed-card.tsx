@@ -32,22 +32,36 @@ interface DnaClashFeedCardProps {
   poolId?: string;
 }
 
-// ─── Squiggly connector ───────────────────────────────────────────────────────
+// ─── DNA Helix connector ──────────────────────────────────────────────────────
 function Waveform() {
   return (
-    <div className="flex-1 flex items-center justify-center min-w-0 -mx-2" style={{ marginTop: 20 }}>
-      <svg width="100%" height="24" viewBox="0 0 80 24" fill="none" preserveAspectRatio="none">
+    <div className="flex-1 flex items-center justify-center min-w-0" style={{ marginTop: 18 }}>
+      <svg width="100%" height="44" viewBox="0 0 100 44" fill="none" preserveAspectRatio="none">
         <defs>
-          <linearGradient id="squiggle-grad" x1="0" y1="0" x2="1" y2="0">
+          <linearGradient id="dna-left" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#a855f7" />
-            <stop offset="50%" stopColor="#d946a8" />
+            <stop offset="100%" stopColor="#c084fc" />
+          </linearGradient>
+          <linearGradient id="dna-right" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#e879c8" />
             <stop offset="100%" stopColor="#ec4899" />
           </linearGradient>
         </defs>
-        <path
-          d="M0,12 Q10,2 20,12 Q30,22 40,12 Q50,2 60,12 Q70,22 80,12"
-          stroke="url(#squiggle-grad)" strokeWidth="2.5" strokeLinecap="round" fill="none"
-        />
+
+        {/* Left helix — purple */}
+        <path d="M0,22 Q9,8 18,22 Q27,36 36,22" stroke="url(#dna-left)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+        <path d="M0,22 Q9,36 18,22 Q27,8 36,22" stroke="url(#dna-left)" strokeWidth="1.8" strokeLinecap="round" fill="none" strokeOpacity="0.55" />
+        <line x1="9" y1="9" x2="9" y2="35" stroke="#c084fc" strokeWidth="1.2" strokeOpacity="0.6" strokeLinecap="round" />
+        <line x1="27" y1="35" x2="27" y2="9" stroke="#c084fc" strokeWidth="1.2" strokeOpacity="0.6" strokeLinecap="round" />
+
+        {/* VS label */}
+        <text x="50" y="27" textAnchor="middle" fontSize="8.5" fontWeight="800" fill="#9ca3af" letterSpacing="0.8">vs</text>
+
+        {/* Right helix — pink */}
+        <path d="M64,22 Q73,8 82,22 Q91,36 100,22" stroke="url(#dna-right)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+        <path d="M64,22 Q73,36 82,22 Q91,8 100,22" stroke="url(#dna-right)" strokeWidth="1.8" strokeLinecap="round" fill="none" strokeOpacity="0.55" />
+        <line x1="73" y1="9" x2="73" y2="35" stroke="#e879c8" strokeWidth="1.2" strokeOpacity="0.6" strokeLinecap="round" />
+        <line x1="91" y1="35" x2="91" y2="9" stroke="#e879c8" strokeWidth="1.2" strokeOpacity="0.6" strokeLinecap="round" />
       </svg>
     </div>
   );
@@ -257,9 +271,9 @@ export default function DnaClashFeedCard({
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
-        <div className="flex items-center gap-1.5">
-          <Zap size={11} className="text-purple-500 shrink-0" fill="currentColor" />
-          <span className="text-[11px] font-bold text-purple-500 uppercase tracking-widest">DNA Clash</span>
+        <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.25)' }}>
+          <Zap size={10} className="text-purple-500 shrink-0" fill="currentColor" />
+          <span className="text-[10px] font-bold text-purple-500 uppercase tracking-widest">DNA Clash</span>
         </div>
         {isInClash && !showOptOutConfirm && (
           <button onClick={() => setShowOptOutConfirm(true)} className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors">
