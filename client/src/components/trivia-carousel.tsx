@@ -7,6 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
 import { Brain, Loader2, ChevronLeft, ChevronRight, Trophy, Users, CheckCircle, XCircle, Star, Send } from 'lucide-react';
+import { useDnaArchetype } from '@/hooks/use-dna-archetype';
+import { getGameAlignment } from '@/lib/identity-feedback';
 import { incrementActivityCount } from '@/components/dna-survey-nudge';
 
 function normalizeCategory(cat: string | null | undefined): string {
@@ -78,6 +80,8 @@ const STREAK_MILESTONES = [
 export function TriviaCarousel({ expanded = false, category, challengesOnly = false }: TriviaCarouselProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
+  const { archetypeKey } = useDnaArchetype();
+  const gameAlignment = getGameAlignment(archetypeKey, 'trivia');
   const scrollRef = useRef<HTMLDivElement>(null);
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [containerHeight, setContainerHeight] = useState<number | undefined>(undefined);
@@ -758,6 +762,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{category === 'Movies' ? 'Movie' : category} {challengesOnly ? 'Challenges' : 'Trivia'}</p>
                   <p className="text-[10px] text-gray-500">{challengesOnly ? 'Multi-question challenges' : 'One question trivia'}</p>
+                  {gameAlignment && <p className="text-[10px] text-purple-500 italic mt-0.5">{gameAlignment}</p>}
                 </div>
               </>
             ) : (
@@ -768,6 +773,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{challengesOnly ? 'Trivia Challenges' : 'Quick Trivia'}</p>
                   <p className="text-[10px] text-gray-500">{challengesOnly ? 'Multi-question challenges' : 'One question trivia'}</p>
+                  {gameAlignment && <p className="text-[10px] text-purple-500 italic mt-0.5">{gameAlignment}</p>}
                 </div>
               </>
             )}
