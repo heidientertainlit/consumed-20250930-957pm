@@ -722,7 +722,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [showAllComments, setShowAllComments] = useState(false);
   const [seenItDone, setSeenItDone] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
-  const [showInlineRater, setShowInlineRater] = useState(false);
+  // Default open for other users' posts so "Your Turn" shows without needing to tap Rate it
+  const [showInlineRater, setShowInlineRater] = useState(() => {
+    const postUserId = post.user?.id || post.userId;
+    const myId = session?.user?.id;
+    return !!(myId && postUserId && postUserId !== myId);
+  });
   const [reviewText, setReviewText] = useState('');
   const [reviewPosted, setReviewPosted] = useState(false);
   const [peeked, setPeeked] = useState(false);
@@ -888,6 +893,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           if (data?.rating) {
             setRatingValue(Number(data.rating));
             setRatingSubmitted(true);
+            setShowInlineRater(false);
           }
         });
     }
