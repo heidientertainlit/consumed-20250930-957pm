@@ -11,7 +11,7 @@ interface SetConfig {
   title: string;
   category: string;
   media_type: 'movie' | 'tv' | 'book' | 'music' | 'podcast' | 'game';
-  fetch_type: 'tmdb_genre' | 'tmdb_decade' | 'spotify_podcast' | 'spotify_albums' | 'books_genre';
+  fetch_type: 'tmdb_genre' | 'tmdb_decade' | 'itunes_podcast' | 'itunes_album' | 'books_genre';
   fetch_params: Record<string, any>;
 }
 
@@ -41,19 +41,19 @@ const SET_CONFIGS: SetConfig[] = [
   { id: 'a1b2c3d4-0028-4000-8000-000000000028', title: 'Reality TV Hits', category: 'tv', media_type: 'tv', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 10764, sort_by: 'vote_count.desc', is_tv: true } },
   { id: 'a1b2c3d4-0029-4000-8000-000000000029', title: 'Mystery & Suspense TV', category: 'tv', media_type: 'tv', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 9648, sort_by: 'vote_count.desc', is_tv: true } },
   // Podcasts
-  { id: 'a1b2c3d4-0010-4000-8000-000000000010', title: 'True Crime Podcasts', category: 'podcasts', media_type: 'podcast', fetch_type: 'spotify_podcast', fetch_params: { query: 'true crime' } },
-  { id: 'a1b2c3d4-0011-4000-8000-000000000011', title: 'Comedy Podcasts', category: 'podcasts', media_type: 'podcast', fetch_type: 'spotify_podcast', fetch_params: { query: 'comedy podcast' } },
-  { id: 'a1b2c3d4-0012-4000-8000-000000000012', title: 'Interview Podcasts', category: 'podcasts', media_type: 'podcast', fetch_type: 'spotify_podcast', fetch_params: { query: 'interview podcast' } },
-  { id: 'a1b2c3d4-0030-4000-8000-000000000030', title: 'Sports Podcasts', category: 'podcasts', media_type: 'podcast', fetch_type: 'spotify_podcast', fetch_params: { query: 'sports podcast' } },
-  { id: 'a1b2c3d4-0031-4000-8000-000000000031', title: 'Business & Entrepreneurship', category: 'podcasts', media_type: 'podcast', fetch_type: 'spotify_podcast', fetch_params: { query: 'business entrepreneurship podcast' } },
-  { id: 'a1b2c3d4-0032-4000-8000-000000000032', title: 'News & Politics', category: 'podcasts', media_type: 'podcast', fetch_type: 'spotify_podcast', fetch_params: { query: 'news politics podcast' } },
+  { id: 'a1b2c3d4-0010-4000-8000-000000000010', title: 'True Crime Podcasts', category: 'podcasts', media_type: 'podcast', fetch_type: 'itunes_podcast', fetch_params: { query: 'true crime' } },
+  { id: 'a1b2c3d4-0011-4000-8000-000000000011', title: 'Comedy Podcasts', category: 'podcasts', media_type: 'podcast', fetch_type: 'itunes_podcast', fetch_params: { query: 'comedy' } },
+  { id: 'a1b2c3d4-0012-4000-8000-000000000012', title: 'Interview Podcasts', category: 'podcasts', media_type: 'podcast', fetch_type: 'itunes_podcast', fetch_params: { query: 'interview' } },
+  { id: 'a1b2c3d4-0030-4000-8000-000000000030', title: 'Sports Podcasts', category: 'podcasts', media_type: 'podcast', fetch_type: 'itunes_podcast', fetch_params: { query: 'sports' } },
+  { id: 'a1b2c3d4-0031-4000-8000-000000000031', title: 'Business & Entrepreneurship', category: 'podcasts', media_type: 'podcast', fetch_type: 'itunes_podcast', fetch_params: { query: 'business entrepreneurship' } },
+  { id: 'a1b2c3d4-0032-4000-8000-000000000032', title: 'News & Politics', category: 'podcasts', media_type: 'podcast', fetch_type: 'itunes_podcast', fetch_params: { query: 'news politics' } },
   // Music
-  { id: 'a1b2c3d4-0013-4000-8000-000000000013', title: 'Classic Rock Albums', category: 'music', media_type: 'music', fetch_type: 'spotify_albums', fetch_params: { query: 'greatest albums classic rock' } },
-  { id: 'a1b2c3d4-0014-4000-8000-000000000014', title: 'Hip-Hop Essentials', category: 'music', media_type: 'music', fetch_type: 'spotify_albums', fetch_params: { query: 'classic hip hop album' } },
-  { id: 'a1b2c3d4-0033-4000-8000-000000000033', title: 'Pop Anthems', category: 'music', media_type: 'music', fetch_type: 'spotify_albums', fetch_params: { query: 'pop hits album 2020s' } },
-  { id: 'a1b2c3d4-0034-4000-8000-000000000034', title: 'R&B Classics', category: 'music', media_type: 'music', fetch_type: 'spotify_albums', fetch_params: { query: 'classic r&b soul album' } },
-  { id: 'a1b2c3d4-0035-4000-8000-000000000035', title: 'Indie & Alternative', category: 'music', media_type: 'music', fetch_type: 'spotify_albums', fetch_params: { query: 'indie alternative album essential' } },
-  { id: 'a1b2c3d4-0036-4000-8000-000000000036', title: 'Country Hits', category: 'music', media_type: 'music', fetch_type: 'spotify_albums', fetch_params: { query: 'country hits album' } },
+  { id: 'a1b2c3d4-0013-4000-8000-000000000013', title: 'Classic Rock Albums', category: 'music', media_type: 'music', fetch_type: 'itunes_album', fetch_params: { query: 'classic rock' } },
+  { id: 'a1b2c3d4-0014-4000-8000-000000000014', title: 'Hip-Hop Essentials', category: 'music', media_type: 'music', fetch_type: 'itunes_album', fetch_params: { query: 'hip hop rap' } },
+  { id: 'a1b2c3d4-0033-4000-8000-000000000033', title: 'Pop Anthems', category: 'music', media_type: 'music', fetch_type: 'itunes_album', fetch_params: { query: 'pop hits' } },
+  { id: 'a1b2c3d4-0034-4000-8000-000000000034', title: 'R&B Classics', category: 'music', media_type: 'music', fetch_type: 'itunes_album', fetch_params: { query: 'r&b soul' } },
+  { id: 'a1b2c3d4-0035-4000-8000-000000000035', title: 'Indie & Alternative', category: 'music', media_type: 'music', fetch_type: 'itunes_album', fetch_params: { query: 'indie alternative' } },
+  { id: 'a1b2c3d4-0036-4000-8000-000000000036', title: 'Country Hits', category: 'music', media_type: 'music', fetch_type: 'itunes_album', fetch_params: { query: 'country music' } },
   // Books
   { id: 'a1b2c3d4-0015-4000-8000-000000000015', title: 'Fantasy Epics', category: 'books', media_type: 'book', fetch_type: 'books_genre', fetch_params: { query: 'fantasy epic bestseller' } },
   { id: 'a1b2c3d4-0016-4000-8000-000000000016', title: 'Mystery Thrillers', category: 'books', media_type: 'book', fetch_type: 'books_genre', fetch_params: { query: 'mystery thriller bestseller' } },
@@ -93,42 +93,44 @@ async function fetchTMDBMovies(apiKey: string, params: Record<string, any>): Pro
   }));
 }
 
-async function fetchSpotifyPodcasts(token: string, query: string): Promise<any[]> {
+async function fetchItunesPodcasts(query: string): Promise<any[]> {
   const response = await fetch(
-    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=show&limit=6`,
-    { headers: { 'Authorization': `Bearer ${token}` } }
+    `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=podcast&limit=10&country=US`
   );
   if (!response.ok) return [];
-  
   const data = await response.json();
-  return (data.shows?.items || []).map((show: any, index: number) => ({
-    title: show.name,
-    image_url: show.images?.[0]?.url || '',
-    external_id: show.id,
-    external_source: 'spotify',
-    media_type: 'podcast',
-    year: '',
-    position: index + 1
-  }));
+  return (data.results || [])
+    .filter((p: any) => p.artworkUrl600 || p.artworkUrl100)
+    .slice(0, 6)
+    .map((p: any, index: number) => ({
+      title: p.collectionName || p.trackName,
+      image_url: (p.artworkUrl600 || p.artworkUrl100 || '').replace('100x100', '600x600'),
+      external_id: String(p.collectionId || p.trackId),
+      external_source: 'apple',
+      media_type: 'podcast',
+      year: p.releaseDate?.substring(0, 4) || '',
+      position: index + 1
+    }));
 }
 
-async function fetchSpotifyAlbums(token: string, query: string): Promise<any[]> {
+async function fetchItunesAlbums(query: string): Promise<any[]> {
   const response = await fetch(
-    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=6`,
-    { headers: { 'Authorization': `Bearer ${token}` } }
+    `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=album&limit=10&country=US`
   );
   if (!response.ok) return [];
-  
   const data = await response.json();
-  return (data.albums?.items || []).map((album: any, index: number) => ({
-    title: album.name,
-    image_url: album.images?.[0]?.url || '',
-    external_id: album.id,
-    external_source: 'spotify',
-    media_type: 'music',
-    year: album.release_date?.substring(0, 4) || '',
-    position: index + 1
-  }));
+  return (data.results || [])
+    .filter((a: any) => a.artworkUrl100)
+    .slice(0, 6)
+    .map((a: any, index: number) => ({
+      title: `${a.collectionName} — ${a.artistName}`,
+      image_url: (a.artworkUrl100 || '').replace('100x100bb', '600x600bb'),
+      external_id: String(a.collectionId),
+      external_source: 'apple',
+      media_type: 'music',
+      year: a.releaseDate?.substring(0, 4) || '',
+      position: index + 1
+    }));
 }
 
 async function fetchBooks(query: string, apiKey?: string): Promise<any[]> {
@@ -193,14 +195,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const TMDB_API_KEY = Deno.env.get('TMDB_API_KEY');
-    const SPOTIFY_CLIENT_ID = Deno.env.get('SPOTIFY_CLIENT_ID');
-    const SPOTIFY_CLIENT_SECRET = Deno.env.get('SPOTIFY_CLIENT_SECRET');
     const GOOGLE_BOOKS_API_KEY = Deno.env.get('GOOGLE_BOOKS_API_KEY');
-
-    let spotifyToken: string | null = null;
-    if (SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET) {
-      spotifyToken = await getSpotifyToken(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET);
-    }
 
     const { specific_set } = await req.json().catch(() => ({}));
     const configsToProcess = specific_set 
@@ -220,15 +215,11 @@ serve(async (req) => {
               items = await fetchTMDBMovies(TMDB_API_KEY, config.fetch_params);
             }
             break;
-          case 'spotify_podcast':
-            if (spotifyToken) {
-              items = await fetchSpotifyPodcasts(spotifyToken, config.fetch_params.query);
-            }
+          case 'itunes_podcast':
+            items = await fetchItunesPodcasts(config.fetch_params.query);
             break;
-          case 'spotify_albums':
-            if (spotifyToken) {
-              items = await fetchSpotifyAlbums(spotifyToken, config.fetch_params.query);
-            }
+          case 'itunes_album':
+            items = await fetchItunesAlbums(config.fetch_params.query);
             break;
           case 'books_genre':
             items = await fetchBooks(config.fetch_params.query, GOOGLE_BOOKS_API_KEY || undefined);

@@ -123,103 +123,105 @@ async function fetchTrendingTV(apiKey: string): Promise<TrendingSet[]> {
   }
 }
 
-async function getSpotifyToken(clientId: string, clientSecret: string): Promise<string | null> {
-  try {
-    const credentials = btoa(`${clientId}:${clientSecret}`);
-    const res = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${credentials}`,
-      },
-      body: 'grant_type=client_credentials',
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.access_token;
-  } catch {
-    return null;
-  }
+function parseItunesRssEntry(entry: any, mediaType: string, prefix: string): any | null {
+  const title = entry['im:name']?.label || entry['title']?.label;
+  const artist = entry['im:artist']?.label || '';
+  const images: any[] = entry['im:image'] || [];
+  const bigImage = images.find((img: any) => parseInt(img.attributes?.height) >= 170) || images[images.length - 1];
+  const image_url = bigImage?.label || '';
+  const id = entry['id']?.attributes?.['im:id'] || entry['id']?.label?.split('/id')?.[1]?.split('?')[0] || '';
+  const year = entry['im:releaseDate']?.label?.substring(0, 4) || '';
+  if (!title || !image_url || !id) return null;
+  return {
+    id: `${prefix}-${id}`,
+    title: artist ? `${title} — ${artist}` : title,
+    image_url,
+    year,
+    external_id: id,
+    external_source: 'apple',
+    media_type: mediaType,
+    position: 0,
+  };
 }
 
-async function fetchTrendingMusic(token: string): Promise<TrendingSet[]> {
+async function fetchTrendingMusic(): Promise<TrendingSet[]> {
   try {
     const sets: TrendingSet[] = [];
 
-    const newReleasesRes = await fetch(
-      'https://api.spotify.com/v1/browse/new-releases?limit=8&country=US',
-      { headers: { 'Authorization': `Bearer ${token}` } }
-    );
+    const [topAlbumsRes, hotTracksRes] = await Promise.all([
+      fetch('https://itunes.apple.com/us/rss/topalbums/limit=10/json'),
+      fetch('https://itunes.apple.com/us/rss/topsongs/limit=10/json'),
+    ]);
 
-    if (newReleasesRes.ok) {
-      const data = await newReleasesRes.json();
-      const albums = data.albums?.items || [];
-      const items = albums.map((a: any, i: number) => ({
-        id: `trending-album-${a.id}`,
-        title: a.name,
-        image_url: a.images?.[0]?.url || '',
-        year: a.release_date?.substring(0, 4) || '',
-        external_id: a.id,
-        external_source: 'spotify',
-        media_type: 'music',
-        position: i + 1,
-      }));
+    if (topAlbumsRes.ok) {
+      const data = await topAlbumsRes.json();
+      const entries: any[] = data.feed?.entry || [];
+      const items = entries
+        .map((e, i) => { const r = parseItunesRssEntry(e, 'music', 'itunes-album'); return r ? { ...r, position: i + 1 } : null; })
+        .filter(Boolean)
+        .slice(0, 8);
       if (items.length > 0) {
-        sets.push({ id: 'new-music-releases', title: 'New Music Releases', media_type: 'music', items });
+        sets.push({ id: 'apple-top-albums', title: 'Top Albums Right Now', media_type: 'music', items });
       }
     }
 
-    const featuredRes = await fetch(
-      'https://api.spotify.com/v1/browse/featured-playlists?limit=8&country=US',
-      { headers: { 'Authorization': `Bearer ${token}` } }
-    );
-
-    if (featuredRes.ok) {
-      const data = await featuredRes.json();
-      const playlists = data.playlists?.items || [];
-
-      const topPlaylist = playlists.find((p: any) =>
-        p.name?.toLowerCase().includes('top') ||
-        p.name?.toLowerCase().includes('hits') ||
-        p.name?.toLowerCase().includes('hot')
-      ) || playlists[0];
-
-      if (topPlaylist) {
-        const tracksRes = await fetch(
-          `https://api.spotify.com/v1/playlists/${topPlaylist.id}/tracks?limit=8&market=US`,
-          { headers: { 'Authorization': `Bearer ${token}` } }
-        );
-
-        if (tracksRes.ok) {
-          const tracksData = await tracksRes.json();
-          const tracks = tracksData.items || [];
-          const items = tracks
-            .filter((t: any) => t.track?.album)
-            .map((t: any, i: number) => ({
-              id: `hot-track-${t.track.id}`,
-              title: `${t.track.name} - ${t.track.artists?.[0]?.name || ''}`,
-              image_url: t.track.album?.images?.[0]?.url || '',
-              year: t.track.album?.release_date?.substring(0, 4) || '',
-              external_id: t.track.album?.id || t.track.id,
-              external_source: 'spotify',
-              media_type: 'music',
-              position: i + 1,
-            }));
-          if (items.length > 0) {
-            sets.push({
-              id: 'hot-tracks-now',
-              title: topPlaylist.name || 'Hot Tracks',
-              media_type: 'music',
-              items,
-            });
-          }
-        }
+    if (hotTracksRes.ok) {
+      const data = await hotTracksRes.json();
+      const entries: any[] = data.feed?.entry || [];
+      const items = entries
+        .map((e, i) => { const r = parseItunesRssEntry(e, 'music', 'itunes-song'); return r ? { ...r, position: i + 1 } : null; })
+        .filter(Boolean)
+        .slice(0, 8);
+      if (items.length > 0) {
+        sets.push({ id: 'apple-hot-songs', title: 'Hot Songs Right Now', media_type: 'music', items });
       }
     }
 
     return sets;
   } catch (err) {
     console.error('Error fetching trending music:', err);
+    return [];
+  }
+}
+
+async function fetchTrendingPodcasts(): Promise<TrendingSet[]> {
+  try {
+    const sets: TrendingSet[] = [];
+
+    const topPodcastsRes = await fetch('https://itunes.apple.com/us/rss/toppodcasts/limit=10/json');
+
+    if (topPodcastsRes.ok) {
+      const data = await topPodcastsRes.json();
+      const entries: any[] = data.feed?.entry || [];
+      const items = entries
+        .map((e, i) => {
+          const title = e['im:name']?.label || e['title']?.label;
+          const images: any[] = e['im:image'] || [];
+          const bigImage = images.find((img: any) => parseInt(img.attributes?.height) >= 170) || images[images.length - 1];
+          const image_url = bigImage?.label || '';
+          const id = e['id']?.attributes?.['im:id'] || '';
+          if (!title || !image_url || !id) return null;
+          return {
+            id: `itunes-podcast-${id}`,
+            title,
+            image_url,
+            year: '',
+            external_id: id,
+            external_source: 'apple',
+            media_type: 'podcast',
+            position: i + 1,
+          };
+        })
+        .filter(Boolean)
+        .slice(0, 8);
+      if (items.length > 0) {
+        sets.push({ id: 'apple-top-podcasts', title: 'Top Podcasts Right Now', media_type: 'podcast', items });
+      }
+    }
+
+    return sets;
+  } catch (err) {
+    console.error('Error fetching trending podcasts:', err);
     return [];
   }
 }
@@ -272,8 +274,6 @@ serve(async (req) => {
 
   try {
     const TMDB_API_KEY = Deno.env.get('TMDB_API_KEY');
-    const SPOTIFY_CLIENT_ID = Deno.env.get('SPOTIFY_CLIENT_ID');
-    const SPOTIFY_CLIENT_SECRET = Deno.env.get('SPOTIFY_CLIENT_SECRET');
     const GOOGLE_BOOKS_API_KEY = Deno.env.get('GOOGLE_BOOKS_API_KEY');
 
     let mediaType: string | null = null;
@@ -296,14 +296,10 @@ serve(async (req) => {
       if (TMDB_API_KEY) fetchPromises.push(fetchTrendingTV(TMDB_API_KEY));
     }
     if (!mediaType || mediaType === 'music') {
-      if (SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET) {
-        fetchPromises.push(
-          getSpotifyToken(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET).then(token => {
-            if (!token) return [];
-            return fetchTrendingMusic(token);
-          })
-        );
-      }
+      fetchPromises.push(fetchTrendingMusic());
+    }
+    if (!mediaType || mediaType === 'podcast') {
+      fetchPromises.push(fetchTrendingPodcasts());
     }
     if (!mediaType || mediaType === 'book') {
       if (GOOGLE_BOOKS_API_KEY) fetchPromises.push(fetchTrendingBooks(GOOGLE_BOOKS_API_KEY));
