@@ -1817,8 +1817,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         </div>
 
-        {/* ── White action container — tucks up behind the card stack ── */}
-        <div className="bg-white rounded-2xl shadow-sm px-4 pb-5 -mt-16 pt-20">
+        {/* ── White action strip — full-bleed behind the card stack ── */}
+        <div
+          className="bg-white px-6 pb-6 -mt-16 pt-20 shadow-sm"
+          style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)', position: 'relative', zIndex: 1 }}
+        >
 
         {/* ── Seen It–style action row ── */}
         <div className="flex items-start justify-center gap-4 px-2" onClick={(e) => e.stopPropagation()}>
