@@ -36,6 +36,7 @@ import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
 import { UserPollsCarousel } from "@/components/user-polls-carousel";
 import { ReportSheet } from "@/components/report-sheet";
+import PostDetailSheet from "@/components/post-detail-sheet";
 import { type UGCPost } from "@/components/user-content-carousel";
 import ConversationsPanel from "@/components/conversations-panel";
 import FeedFiltersDialog, { FeedFilters } from "@/components/feed-filters-dialog";
@@ -729,6 +730,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   // Agree / Hot Take / Not My Take reaction state
   const [localReaction, setLocalReaction] = useState<'flame' | 'down' | null>(null);
   const [reactionLoaded, setReactionLoaded] = useState(false);
+  // Poster card detail sheet
+  const [posterDetailOpen, setPosterDetailOpen] = useState(false);
 
   // Load existing reaction from DB on mount
   useEffect(() => {
@@ -1736,6 +1739,252 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         )}
         <ReportSheet isOpen={reportPostOpen} onClose={() => setReportPostOpen(false)} contentType="post" contentId={post.id} reportedUserId={post.user?.id} reportedUserName={post.user?.username} />
       </div>
+    );
+  }
+
+  // ── Full-bleed poster card for rating / review / thought posts ───────────
+  if (isRatingPost) {
+    const displayName = post.user?.displayName || post.user?.username || 'Someone';
+    const hasPoster = !!(post.mediaImage && post.mediaImage.startsWith('http'));
+    const hasContent = !!(post.content && post.content.trim());
+    const hasRating = (post.rating || 0) > 0;
+
+    return (
+      <>
+        {/* ── Poster card ── */}
+        <div
+          className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
+          style={{ height: 340 }}
+          onClick={() => setPosterDetailOpen(true)}
+        >
+          {/* Background image or gradient fallback */}
+          {hasPoster ? (
+            <img
+              src={post.mediaImage!}
+              alt={post.mediaTitle || ''}
+              className="absolute inset-0 w-full h-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          ) : (
+            <div className={`absolute inset-0 bg-gradient-to-br ${posterFallbackBg[mediaTypeNorm || ''] || 'from-gray-700 to-gray-900'}`} />
+          )}
+
+          {/* Gradient overlay: transparent top → very dark bottom */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent" />
+
+          {/* Top-right: media type pill + delete / report */}
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+            {mediaTypeLabel && (
+              <span className="text-[10px] font-semibold text-white/90 bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/15">{mediaTypeLabel}</span>
+            )}
+            {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
+              <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-white/50 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
+            )}
+            {currentUserId && post.user?.id !== currentUserId && (
+              <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-white/50 hover:text-orange-400 transition-colors"><Flag size={13} /></button>
+            )}
+          </div>
+
+          {/* Bottom content overlay */}
+          <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 pt-16">
+            {/* Stars */}
+            {hasRating && (
+              <div className="flex items-center gap-0.5 mb-2">
+                {[1,2,3,4,5].map(s => {
+                  const r = post.rating!;
+                  if (s <= Math.floor(r)) return <Star key={s} size={20} className="text-yellow-400 fill-yellow-400 drop-shadow" />;
+                  if (s === Math.ceil(r) && r % 1 >= 0.5) return (
+                    <div key={s} className="relative" style={{ width: 20, height: 20 }}>
+                      <Star size={20} className="absolute text-white/20" />
+                      <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}><Star size={20} className="text-yellow-400 fill-yellow-400 drop-shadow" /></div>
+                    </div>
+                  );
+                  return <Star key={s} size={20} className="text-white/25" />;
+                })}
+              </div>
+            )}
+
+            {/* Quoted review or thought */}
+            {hasContent && (
+              <p className="text-white text-[14px] font-medium leading-snug line-clamp-2 italic mb-1 drop-shadow-sm">
+                "{post.content}"
+              </p>
+            )}
+
+            {/* Attribution */}
+            <p className="text-white/65 text-xs font-medium mb-3">— {displayName}</p>
+
+            {/* Action row */}
+            <div className="flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3.5">
+                {/* Agree */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
+                  className={`flex items-center gap-1 transition-all active:scale-125 ${isLiked && !localReaction ? 'text-purple-300' : 'text-white/60 hover:text-white'}`}
+                  title="Agree"
+                >
+                  <ArrowUp size={15} strokeWidth={isLiked && !localReaction ? 2.5 : 1.75} />
+                  {(post.likes || 0) > 0 && <span className="text-xs text-white/65">{post.likes}</span>}
+                </button>
+                {/* Hot take */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleReaction('flame'); }}
+                  className={`flex items-center gap-1 transition-all active:scale-125 ${localReaction === 'flame' ? 'text-orange-400' : 'text-white/60 hover:text-orange-400'}`}
+                  title="Hot Take"
+                >
+                  <Flame size={14} strokeWidth={localReaction === 'flame' ? 2.5 : 1.75} fill={localReaction === 'flame' ? 'currentColor' : 'none'} />
+                </button>
+                {/* Not my take */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleReaction('down'); }}
+                  className={`flex items-center gap-1 transition-all active:scale-125 ${localReaction === 'down' ? 'text-white/40' : 'text-white/60 hover:text-white/40'}`}
+                  title="Not My Take"
+                >
+                  <ArrowDown size={14} strokeWidth={localReaction === 'down' ? 2.5 : 1.75} />
+                </button>
+                {/* Comments */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setPosterDetailOpen(true); }}
+                  className="flex items-center gap-1 text-white/60 hover:text-white transition-colors"
+                  title="Comments"
+                >
+                  <MessageCircle size={14} />
+                  {Math.max(post.comments || 0, comments.length) > 0 && (
+                    <span className="text-xs text-white/65">{Math.max(post.comments || 0, comments.length)}</span>
+                  )}
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Taste alignment nudge */}
+                {tasteAlignment !== null && isOtherUser && (
+                  <span className="text-[10px] text-violet-300 font-semibold">{tasteAlignment}%</span>
+                )}
+                {/* Rate — other user's post only */}
+                {isOtherUser && session?.access_token && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowInlineRater(v => !v); }}
+                    className={`w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all active:scale-90 ${ratingSubmitted ? 'text-yellow-400 border-yellow-400/40' : showInlineRater ? 'text-yellow-300' : 'text-white/70 hover:text-yellow-300'}`}
+                    title={ratingSubmitted ? `Your rating: ${ratingValue}/5` : 'Rate this'}
+                  >
+                    <Star size={14} fill={ratingSubmitted ? 'currentColor' : 'none'} />
+                  </button>
+                )}
+                {/* Add to list */}
+                {onAddToList && (post.externalId || post.mediaTitle) && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
+                    className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/70 hover:text-white transition-all active:scale-90"
+                    title="Add to list"
+                  >
+                    <Plus size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* YOUR TURN — inline star rater appears below card */}
+        {isOtherUser && session?.access_token && showInlineRater && !ratingSubmitted && (
+          <div
+            ref={starsRef}
+            className="flex items-center gap-1.5 mt-2 py-2.5 px-3 bg-violet-50 rounded-xl touch-none select-none"
+            onMouseLeave={() => setHoverRating(0)}
+            onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
+            onTouchMove={(e) => {
+              e.stopPropagation();
+              if (!starsRef.current) return;
+              const touch = e.touches[0];
+              const rect = starsRef.current.getBoundingClientRect();
+              const x = touch.clientX - rect.left;
+              const starWidth = rect.width / 5;
+              const starIndex = Math.floor(x / starWidth);
+              const withinStar = (x % starWidth) / starWidth;
+              const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
+              setHoverRating(Math.round(val * 2) / 2);
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              if (hoverRating > 0) { handleSubmitRating(hoverRating); setShowInlineRater(false); }
+              setHoverRating(0);
+            }}
+          >
+            <span className="text-[10px] font-bold text-violet-600 tracking-widest uppercase mr-1">Your Turn</span>
+            {[1,2,3,4,5].map(star => {
+              const displayVal = hoverRating;
+              return (
+                <div key={star} className="relative" style={{ width: 28, height: 28 }}>
+                  <Star size={28} className="absolute inset-0 text-violet-200" />
+                  <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
+                    <Star size={28} className="fill-yellow-400 text-yellow-400" />
+                  </div>
+                  <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); setShowInlineRater(false); }} aria-label={`Rate ${star - 0.5}`} />
+                  <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); setShowInlineRater(false); }} aria-label={`Rate ${star}`} />
+                </div>
+              );
+            })}
+            {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
+          </div>
+        )}
+
+        {/* After rating — confirmation row */}
+        {isOtherUser && ratingSubmitted && ratingValue > 0 && (
+          <div className="flex items-center gap-2 mt-2 px-3 py-1.5 bg-yellow-50 rounded-xl">
+            <div className="flex items-center gap-0.5">
+              {[1,2,3,4,5].map(s => (
+                <Star key={s} size={12} className={s <= Math.floor(ratingValue) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
+              ))}
+            </div>
+            <span className="text-xs text-yellow-700 font-medium">{ratingJustSaved ? '✓ Saved!' : `You rated ${ratingValue}/5`}</span>
+            {!ratingJustSaved && (
+              <>
+                <button onClick={(e) => { e.stopPropagation(); setShowStarPicker(true); setShowInlineRater(true); }} className="text-[9px] text-gray-400 hover:text-gray-600 ml-1">Edit</button>
+                <button onClick={(e) => { e.stopPropagation(); handleRemoveRating(); }} className="text-[9px] text-red-300 hover:text-red-500">Remove</button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Taste alignment */}
+        {tasteAlignment !== null && isOtherUser && (
+          <div className="flex items-center gap-2 mt-2 bg-gray-100 rounded-lg px-3 py-2">
+            <Users size={13} className="text-violet-500 flex-shrink-0" />
+            <p className="text-xs text-gray-500">
+              You're <span className="font-bold text-violet-600">{tasteAlignment}%</span> aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
+            </p>
+          </div>
+        )}
+
+        {/* Post detail bottom sheet */}
+        <PostDetailSheet
+          isOpen={posterDetailOpen}
+          onClose={() => setPosterDetailOpen(false)}
+          post={{
+            id: post.id,
+            userId: post.userId || post.user?.id || '',
+            username: post.user?.username || '',
+            displayName: post.user?.displayName,
+            avatar: post.user?.avatar,
+            mediaTitle: post.mediaTitle || '',
+            mediaType: post.mediaType,
+            mediaImage: post.mediaImage,
+            mediaExternalId: post.externalId,
+            mediaExternalSource: post.externalSource,
+            rating: post.rating,
+            review: post.content,
+            timestamp: post.timestamp,
+          }}
+        />
+
+        <ReportSheet
+          isOpen={reportPostOpen}
+          onClose={() => setReportPostOpen(false)}
+          contentType="post"
+          contentId={post.id}
+          reportedUserId={post.userId}
+          reportedUserName={post.userName}
+        />
+      </>
     );
   }
 
