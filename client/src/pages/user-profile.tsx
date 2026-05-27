@@ -2820,16 +2820,17 @@ export default function UserProfile() {
       <div className="min-h-screen bg-gray-50 pb-20">
         <Navigation onTrackConsumption={handleTrackConsumption} />
 
-        <div className="max-w-4xl mx-auto">
-        {/* Profile Header */}
-        <div className="relative px-4 pb-6 pt-6">
+        {/* ── Purple gradient hero — extends seamlessly from the nav bar ── */}
+        <div style={{ background: 'linear-gradient(180deg, #0f0a1e 0%, #1a0535 55%, #2d1060 100%)' }}>
+          <div className="max-w-4xl mx-auto px-4 pt-5 pb-7">
+          {/* Profile Header */}
           <div className="flex flex-col md:flex-row md:items-start md:space-x-6">
             {/* Profile Info */}
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-0.5">
-                    <h1 className="text-2xl font-semibold text-black">
+                    <h1 className="text-2xl font-semibold text-white">
                       {userProfileData?.first_name && userProfileData?.last_name 
                         ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
                         : userProfileData?.first_name || userProfileData?.user_name || user?.user_metadata?.user_name || user?.user_metadata?.first_name || 'User'}
@@ -2846,14 +2847,14 @@ export default function UserProfile() {
                           description: "Share this profile with your friends",
                         });
                       }}
-                      className="text-gray-400 hover:text-purple-600 transition-colors"
+                      className="text-white/40 hover:text-white/80 transition-colors"
                       data-testid="button-share-profile-inline"
                     >
                       <CornerUpRight size={20} />
                     </button>
                   </div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-sm text-gray-500">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
                       @{userProfileData?.user_name || user?.user_metadata?.user_name || (user?.email?.split('@')[0]) || 'user'}
                     </span>
                     {userBadges.some((b: any) => b.slug === 'insider') && (
@@ -2863,65 +2864,65 @@ export default function UserProfile() {
                     )}
                   </div>
 
-                  {/* Stats Grid - Condensed styling */}
+                  {/* Stats Grid */}
                   <div className="flex flex-col gap-y-0.5">
-                    {/* Total Points - Clickable to see breakdown */}
+                    {/* Total Points */}
                     {isLoadingPoints ? (
                       <div className="flex items-center space-x-1.5">
-                        <Trophy className="text-amber-500" size={14} />
-                        <span className="text-xs text-gray-500">Loading...</span>
+                        <Trophy className="text-amber-400" size={14} />
+                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Loading...</span>
                       </div>
                     ) : userPoints ? (
                       <button
                         onClick={() => setLocation('/points')}
-                        className="flex items-center space-x-1.5 hover:bg-gray-100 -ml-1.5 px-1.5 py-0.5 rounded transition-colors group"
+                        className="flex items-center space-x-1.5 hover:bg-white/10 -ml-1.5 px-1.5 py-0.5 rounded transition-colors group"
                         data-testid="points-breakdown-link"
                       >
-                        <Trophy className="text-amber-500" size={14} />
-                        <span className="text-sm font-semibold text-gray-800">{userPoints.all_time || 0}</span>
-                        <span className="text-xs text-gray-500 group-hover:text-purple-600">total points →</span>
+                        <Trophy className="text-amber-400" size={14} />
+                        <span className="text-sm font-semibold text-white">{userPoints.all_time || 0}</span>
+                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>total points →</span>
                       </button>
                     ) : null}
 
-                    {/* Global Rank - Clickable to leaderboard */}
+                    {/* Global Rank */}
                     {isOwnProfile && (
                       <Link href="/leaderboard">
-                        <div className="flex items-center space-x-1.5 hover:bg-gray-100 -ml-1.5 px-1.5 py-0.5 rounded transition-colors group cursor-pointer">
-                          <Medal className="text-purple-500" size={14} />
+                        <div className="flex items-center space-x-1.5 hover:bg-white/10 -ml-1.5 px-1.5 py-0.5 rounded transition-colors group cursor-pointer">
+                          <Medal className="text-purple-300" size={14} />
                           {userRank ? (
                             <>
-                              <span className="text-sm font-semibold text-gray-800">#{userRank.global}</span>
-                              <span className="text-xs text-gray-500 group-hover:text-purple-600">View Leaderboard →</span>
+                              <span className="text-sm font-semibold text-white">#{userRank.global}</span>
+                              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>View Leaderboard →</span>
                             </>
                           ) : (
-                            <span className="text-xs text-gray-500 group-hover:text-purple-600">View Leaderboard →</span>
+                            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>View Leaderboard →</span>
                           )}
                         </div>
                       </Link>
                     )}
                     {!isOwnProfile && userRank && (
                       <div className="flex items-center space-x-1.5">
-                        <Medal className="text-purple-500" size={14} />
-                        <span className="text-sm font-semibold text-gray-800">#{userRank.global}</span>
-                        <span className="text-xs text-gray-500">global rank</span>
+                        <Medal className="text-purple-300" size={14} />
+                        <span className="text-sm font-semibold text-white">#{userRank.global}</span>
+                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>global rank</span>
                       </div>
                     )}
 
                     {/* Items Logged */}
                     <div className="flex items-center space-x-1.5 -ml-1.5 px-1.5 py-0.5">
-                      <TrendingUp className="text-blue-500" size={14} />
-                      <span className="text-sm font-semibold text-gray-800">
+                      <TrendingUp className="text-blue-300" size={14} />
+                      <span className="text-sm font-semibold text-white">
                         {!isOwnProfile && friendshipStatus !== 'friends' ? '—' : totalItemsLogged}
                       </span>
-                      <span className="text-xs text-gray-500">items logged</span>
+                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>items logged</span>
                     </div>
 
-                    {/* Mostly Into - Calculated from media type counts */}
+                    {/* Mostly Into */}
                     {mostlyIntoTypes && mostlyIntoTypes.length > 0 && (
                       <div className="flex items-center space-x-1.5 -ml-1.5 px-1.5 py-0.5">
-                        <BarChart3 className="text-green-500" size={14} />
-                        <span className="text-xs text-gray-500">Mostly Into:</span>
-                        <span className="text-xs font-medium text-gray-700">{mostlyIntoTypes.join(', ')}</span>
+                        <BarChart3 className="text-green-300" size={14} />
+                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Mostly Into:</span>
+                        <span className="text-xs font-medium text-white/80">{mostlyIntoTypes.join(', ')}</span>
                       </div>
                     )}
 
@@ -2932,7 +2933,7 @@ export default function UserProfile() {
                 {isOwnProfile && (
                   <div className="flex items-center gap-3 mt-4 md:mt-0">
                     <button 
-                      className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-5 py-2.5 rounded-full font-medium flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
+                      className="bg-white/15 hover:bg-white/25 border border-white/25 text-white px-5 py-2.5 rounded-full font-medium flex items-center gap-2 transition-all"
                       onClick={() => {
                         setEditUsername(userProfileData?.user_name || '');
                         setEditFirstName(userProfileData?.first_name || '');
@@ -2949,10 +2950,15 @@ export default function UserProfile() {
               </div>
             </div>
           </div>
+          </div>{/* closes max-w-4xl inner */}
+        </div>{/* closes gradient wrapper */}
+        {/* Gradient fade to page bg */}
+        <div style={{ height: 20, background: 'linear-gradient(to bottom, #2d1060, #f9fafb)' }} />
 
+        <div className="max-w-4xl mx-auto px-4">
           {/* Bio */}
           {userProfileData?.bio && (
-            <div className="mt-6">
+            <div className="mt-4">
               <p className="text-gray-700 leading-relaxed">{userProfileData.bio}</p>
             </div>
           )}
@@ -4178,7 +4184,6 @@ export default function UserProfile() {
           </div>
         )}
         </div>
-      </div>
 
       <ConsumptionTracker 
         isOpen={isTrackModalOpen} 
