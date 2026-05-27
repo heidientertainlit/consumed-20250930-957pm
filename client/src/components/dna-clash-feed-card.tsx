@@ -33,35 +33,53 @@ interface DnaClashFeedCardProps {
 }
 
 // ─── DNA Helix connector ──────────────────────────────────────────────────────
+// Each half-period is rendered as: back strand → rung → front strand
+// so the front strand always covers the rung end, giving true 3-D winding.
+// Quadratic bezier midpoint formula: y_actual = 0.25*y0 + 0.5*yCtrl + 0.25*y2
+// With center=22, peak ctrl=6 → y_peak≈14; trough ctrl=38 → y_trough≈30.
 function Waveform() {
+  const lc = "#c084fc";   // purple rung color
+  const rc = "#e879c8";   // pink rung color
+  const sw = 1.9;         // strand stroke-width
+  const rw = 1.4;         // rung stroke-width
   return (
-    <div className="flex-1 flex items-center justify-center min-w-0" style={{ marginTop: 18 }}>
+    <div className="flex-1 flex items-center justify-center min-w-0" style={{ marginTop: 16 }}>
       <svg width="100%" height="44" viewBox="0 0 100 44" fill="none" preserveAspectRatio="none">
         <defs>
-          <linearGradient id="dna-left" x1="0" y1="0" x2="1" y2="0">
+          <linearGradient id="dna-l" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#a855f7" />
             <stop offset="100%" stopColor="#c084fc" />
           </linearGradient>
-          <linearGradient id="dna-right" x1="0" y1="0" x2="1" y2="0">
+          <linearGradient id="dna-r" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#e879c8" />
             <stop offset="100%" stopColor="#ec4899" />
           </linearGradient>
         </defs>
 
-        {/* Left helix — purple */}
-        <path d="M0,22 Q9,8 18,22 Q27,36 36,22" stroke="url(#dna-left)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-        <path d="M0,22 Q9,36 18,22 Q27,8 36,22" stroke="url(#dna-left)" strokeWidth="1.8" strokeLinecap="round" fill="none" strokeOpacity="0.55" />
-        <line x1="9" y1="9" x2="9" y2="35" stroke="#c084fc" strokeWidth="1.2" strokeOpacity="0.6" strokeLinecap="round" />
-        <line x1="27" y1="35" x2="27" y2="9" stroke="#c084fc" strokeWidth="1.2" strokeOpacity="0.6" strokeLinecap="round" />
+        {/* ── Left helix (purple) ── */}
+        {/* Seg 1 (x 0→18): strand A peaks up → front; strand B dips down → back */}
+        <path d="M0,22 Q9,38 18,22"  stroke={lc} strokeWidth={sw} strokeLinecap="round" fill="none" opacity="0.35" />
+        <line x1="9" y1="14" x2="9" y2="30" stroke={lc} strokeWidth={rw} strokeOpacity="0.55" strokeLinecap="round" />
+        <path d="M0,22 Q9,6 18,22"   stroke="url(#dna-l)" strokeWidth={sw} strokeLinecap="round" fill="none" />
+
+        {/* Seg 2 (x 18→36): strand B peaks up → front; strand A dips down → back */}
+        <path d="M18,22 Q27,38 36,22" stroke={lc} strokeWidth={sw} strokeLinecap="round" fill="none" opacity="0.35" />
+        <line x1="27" y1="14" x2="27" y2="30" stroke={lc} strokeWidth={rw} strokeOpacity="0.55" strokeLinecap="round" />
+        <path d="M18,22 Q27,6 36,22"  stroke="url(#dna-l)" strokeWidth={sw} strokeLinecap="round" fill="none" />
 
         {/* VS label */}
         <text x="50" y="27" textAnchor="middle" fontSize="8.5" fontWeight="800" fill="#9ca3af" letterSpacing="0.8">vs</text>
 
-        {/* Right helix — pink */}
-        <path d="M64,22 Q73,8 82,22 Q91,36 100,22" stroke="url(#dna-right)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-        <path d="M64,22 Q73,36 82,22 Q91,8 100,22" stroke="url(#dna-right)" strokeWidth="1.8" strokeLinecap="round" fill="none" strokeOpacity="0.55" />
-        <line x1="73" y1="9" x2="73" y2="35" stroke="#e879c8" strokeWidth="1.2" strokeOpacity="0.6" strokeLinecap="round" />
-        <line x1="91" y1="35" x2="91" y2="9" stroke="#e879c8" strokeWidth="1.2" strokeOpacity="0.6" strokeLinecap="round" />
+        {/* ── Right helix (pink) ── */}
+        {/* Seg 1 (x 64→82) */}
+        <path d="M64,22 Q73,38 82,22"  stroke={rc} strokeWidth={sw} strokeLinecap="round" fill="none" opacity="0.35" />
+        <line x1="73" y1="14" x2="73" y2="30" stroke={rc} strokeWidth={rw} strokeOpacity="0.55" strokeLinecap="round" />
+        <path d="M64,22 Q73,6 82,22"   stroke="url(#dna-r)" strokeWidth={sw} strokeLinecap="round" fill="none" />
+
+        {/* Seg 2 (x 82→100) */}
+        <path d="M82,22 Q91,38 100,22" stroke={rc} strokeWidth={sw} strokeLinecap="round" fill="none" opacity="0.35" />
+        <line x1="91" y1="14" x2="91" y2="30" stroke={rc} strokeWidth={rw} strokeOpacity="0.55" strokeLinecap="round" />
+        <path d="M82,22 Q91,6 100,22"  stroke="url(#dna-r)" strokeWidth={sw} strokeLinecap="round" fill="none" />
       </svg>
     </div>
   );
