@@ -2005,54 +2005,58 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         )}
 
-        {/* ── Friend Ratings section ── */}
+        {/* ── Other Takes section (collapsed by default) ── */}
         {relatedRatings.length > 0 && (
-          <div className="mx-3 mb-3 rounded-xl border border-gray-100 bg-gray-50 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
-              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Other Takes</span>
-              <span className="text-[10px] font-medium text-violet-500">{relatedRatings.length} rating{relatedRatings.length !== 1 ? 's' : ''}</span>
-            </div>
-            {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 3)).map((r) => (
-              <div key={r.userId} className="flex items-center gap-2.5 px-3 py-2.5 border-b border-gray-50 last:border-0">
-                <div
-                  className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold"
-                  style={{ background: `hsl(${(r.displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
-                >
-                  {r.displayName[0]?.toUpperCase()}
-                </div>
-                <span className="text-xs font-medium text-gray-700 flex-shrink-0 w-20 truncate">{r.displayName}</span>
-                <div className="flex items-center gap-0.5 flex-shrink-0">
-                  {[1,2,3,4,5].map(s => (
-                    <Star key={s} size={11} className={s <= Math.round(r.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
-                  ))}
-                </div>
-                {r.content ? (
-                  <span className="text-[10px] text-gray-400 truncate flex-1">"{r.content}"</span>
-                ) : (
-                  <span className="text-[10px] text-gray-300 flex-1">No review yet</span>
-                )}
+          <div className="mx-3 mb-3 rounded-xl border border-gray-100 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {/* Collapsed header — always visible, tap to expand */}
+            <button
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-gray-50 active:bg-gray-100 transition-colors"
+              onClick={(e) => { e.stopPropagation(); setShowAllRelated(v => !v); }}
+            >
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex-shrink-0">Other Takes</span>
+              {/* Avatar bubble stack */}
+              <div className="flex -space-x-1.5 flex-shrink-0">
+                {relatedRatings.slice(0, 4).map((r) => (
+                  <div
+                    key={r.userId}
+                    className="w-5 h-5 rounded-full border-2 border-gray-50 flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0"
+                    style={{ background: `hsl(${(r.displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
+                  >
+                    {r.displayName[0]?.toUpperCase()}
+                  </div>
+                ))}
               </div>
-            ))}
-            {relatedRatings.length > 3 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowAllRelated(v => !v); }}
-                className="w-full flex items-center gap-2 px-3 py-2 border-t border-gray-100 bg-white"
-              >
-                <div className="flex -space-x-1.5">
-                  {relatedRatings.slice(3, Math.min(6, relatedRatings.length)).map((r) => (
+              <span className="text-[10px] font-medium text-gray-500 flex-1 text-left">
+                {relatedRatings.length} rating{relatedRatings.length !== 1 ? 's' : ''}
+              </span>
+              <ChevronDown size={14} className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${showAllRelated ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Expanded list */}
+            {showAllRelated && (
+              <div className="border-t border-gray-100 bg-white">
+                {relatedRatings.map((r) => (
+                  <div key={r.userId} className="flex items-center gap-2.5 px-3 py-2.5 border-b border-gray-50 last:border-0">
                     <div
-                      key={r.userId}
-                      className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-white text-[8px] font-bold"
+                      className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold"
                       style={{ background: `hsl(${(r.displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
                     >
                       {r.displayName[0]?.toUpperCase()}
                     </div>
-                  ))}
-                </div>
-                <span className="text-[10px] font-semibold text-gray-500">
-                  {showAllRelated ? 'Show less' : `+${relatedRatings.length - 3} more rated this`}
-                </span>
-              </button>
+                    <span className="text-xs font-medium text-gray-700 flex-shrink-0 w-20 truncate">{r.displayName}</span>
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
+                      {[1,2,3,4,5].map(s => (
+                        <Star key={s} size={11} className={s <= Math.round(r.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
+                      ))}
+                    </div>
+                    {r.content ? (
+                      <span className="text-[10px] text-gray-400 truncate flex-1">"{r.content}"</span>
+                    ) : (
+                      <span className="text-[10px] text-gray-300 flex-1 italic">No review</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
