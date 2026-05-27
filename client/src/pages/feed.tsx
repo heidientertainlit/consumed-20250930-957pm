@@ -2013,7 +2013,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-gray-50 active:bg-gray-100 transition-colors"
               onClick={(e) => { e.stopPropagation(); setShowAllRelated(v => !v); }}
             >
-              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex-shrink-0">Other Takes</span>
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex-shrink-0">More Ratings</span>
               {/* Avatar bubble stack */}
               <div className="flex -space-x-1.5 flex-shrink-0">
                 {relatedRatings.slice(0, 4).map((r) => (
