@@ -579,15 +579,15 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           <span className="text-[10px] text-green-600 font-medium">{mediaConfig.actionYes}</span>
         </button>
 
-        {/* Add to list — purple, brand CTA */}
+        {/* Add to list — gray, secondary */}
         <button
           onClick={() => handleResponse(currentSet.id, activeItem, 'want_to')}
           className="flex flex-col items-center gap-1 group"
         >
-          <div className="w-14 h-14 rounded-full bg-purple-500 flex items-center justify-center group-active:scale-90 transition-all shadow-md">
-            <Plus size={22} className="text-white" />
+          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
+            <Plus size={20} className="text-gray-500" />
           </div>
-          <span className="text-[10px] text-purple-500 font-medium">Add to list</span>
+          <span className="text-[10px] text-gray-400">Add to list</span>
         </button>
 
         {/* Rate it — gray, optional */}
