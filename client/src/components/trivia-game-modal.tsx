@@ -10,6 +10,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { trackEvent } from "@/lib/posthog";
 import CelebrationModal from './celebration-modal';
+import { useDnaArchetype } from "@/hooks/use-dna-archetype";
+import { getIdentityFeedback } from "@/lib/identity-feedback";
 
 interface TriviaQuestion {
   question: string;
@@ -33,6 +35,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
   const [userAnswers, setUserAnswers] = useState<string[]>([]);
   const [score, setScore] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const { archetypeKey } = useDnaArchetype();
   const [showCelebration, setShowCelebration] = useState<{ points: number } | null>(null);
   const [celebrationTimer, setCelebrationTimer] = useState<NodeJS.Timeout | null>(null);
   const [hasSharedToFeed, setHasSharedToFeed] = useState(false);
@@ -302,6 +305,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
           <CelebrationModal
             points={showCelebration.points}
             onClose={() => setShowCelebration(null)}
+            identityLine={getIdentityFeedback(archetypeKey, 'trivia')}
           />
         )}
       </>
@@ -368,6 +372,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
         <CelebrationModal
           points={showCelebration.points}
           onClose={() => setShowCelebration(null)}
+          identityLine={getIdentityFeedback(archetypeKey, 'trivia')}
         />
       )}
     </>

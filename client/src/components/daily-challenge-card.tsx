@@ -12,6 +12,8 @@ import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
 import { Calendar, Trophy, CheckCircle, Loader2, Send, Play, ChevronDown, ChevronUp } from 'lucide-react';
 import { incrementActivityCount } from '@/components/dna-survey-nudge';
+import { useDnaArchetype } from '@/hooks/use-dna-archetype';
+import { getIdentityFeedback } from '@/lib/identity-feedback';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
@@ -47,6 +49,7 @@ const getTodayKey = () => {
 export function DailyChallengeCard() {
   const { user, session } = useAuth();
   const { toast } = useToast();
+  const { archetypeKey } = useDnaArchetype();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [customResponse, setCustomResponse] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -378,7 +381,12 @@ export function DailyChallengeCard() {
                   +{existingResponse?.points_earned || displayChallenge.points_reward} points earned
                 </span>
               </div>
-              
+              {submittedResult?.isCorrect && (
+                <p className="text-xs text-purple-200 italic text-center mt-1">
+                  {getIdentityFeedback(archetypeKey, 'prediction')}
+                </p>
+              )}
+
               {/* Daily Run Info */}
               {(runInfo || existingResponseData?.run) && (
                 <div className="mt-3 pt-3 border-t border-white/20 text-center">

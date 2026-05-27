@@ -7,9 +7,10 @@ interface CelebrationModalProps {
   points: number;
   onClose?: () => void;
   message?: string;
+  identityLine?: string;
 }
 
-export default function CelebrationModal({ points, onClose, message = "Correct!" }: CelebrationModalProps) {
+export default function CelebrationModal({ points, onClose, message = "Correct!", identityLine }: CelebrationModalProps) {
   useEffect(() => {
     confetti({
       particleCount: 60,
@@ -40,6 +41,9 @@ export default function CelebrationModal({ points, onClose, message = "Correct!"
                 <span className="text-sm font-medium text-gray-500">pts</span>
               </div>
             </div>
+            {identityLine && (
+              <p className="text-xs text-purple-500 italic px-2">{identityLine}</p>
+            )}
           </div>
         </CardContent>
       </Card>

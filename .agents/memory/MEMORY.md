@@ -1,0 +1,1 @@
+- [DNA identity system](dna-identity-system.md) — archetype taxonomy, reputation titles, snapshot table, edge functions — canonical architecture for the living DNA system.
