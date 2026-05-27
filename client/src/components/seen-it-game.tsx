@@ -50,6 +50,7 @@ const SWIPE_THRESHOLD = 80;
 export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameProps = {}) {
   const { session, user } = useAuth();
   const [, setLocation] = useLocation();
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
   // ── Persisted state ───────────────────────────────────────────────────────
   const [localResponses, setLocalResponses] = useState<Record<string, boolean | 'want_to'>>(() => {
@@ -255,7 +256,15 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     onSuccess: ({ itemId, response }) => {
       trackEvent('seen_it_response', { item_id: itemId, response: String(response) });
       queryClient.invalidateQueries({ queryKey: ['seen-it-responses'] });
-      if (response === true || response === 'want_to') queryClient.invalidateQueries({ queryKey: ['/api/list-items'] });
+      if (response === true || response === 'want_to') {
+        queryClient.invalidateQueries({ queryKey: ['/api/list-items'] });
+        // Fire-and-forget DNA signal refresh so list_items contribution is picked up
+        fetch(`${supabaseUrl}/functions/v1/extract-dna-signals`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: user?.id }),
+        }).catch(() => {});
+      }
     }
   });
 
