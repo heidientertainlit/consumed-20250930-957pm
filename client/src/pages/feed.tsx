@@ -1941,30 +1941,48 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         )}
 
-        {/* After rating — confirmation row */}
+        {/* After rating — styled confirmation card */}
         {isOtherUser && ratingSubmitted && ratingValue > 0 && (
-          <div className="flex items-center gap-2 mt-2 px-3 py-1.5 bg-yellow-50 rounded-xl">
-            <div className="flex items-center gap-0.5">
-              {[1,2,3,4,5].map(s => (
-                <Star key={s} size={12} className={s <= Math.floor(ratingValue) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
-              ))}
+          <div className="mt-4 mx-1 bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+              <Star size={18} className="text-yellow-500 fill-yellow-500" />
             </div>
-            <span className="text-xs text-yellow-700 font-medium">{ratingJustSaved ? '✓ Saved!' : `You rated ${ratingValue}/5`}</span>
-            {!ratingJustSaved && (
-              <>
-                <button onClick={(e) => { e.stopPropagation(); setShowStarPicker(true); setShowInlineRater(true); }} className="text-[9px] text-gray-400 hover:text-gray-600 ml-1">Edit</button>
-                <button onClick={(e) => { e.stopPropagation(); handleRemoveRating(); }} className="text-[9px] text-red-300 hover:text-red-500">Remove</button>
-              </>
-            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-semibold text-gray-900">
+                  {ratingJustSaved ? '✓ Saved!' : <>You rated this <span className="text-yellow-500">{ratingValue}/5</span></>}
+                </span>
+                {!ratingJustSaved && (
+                  <>
+                    <button onClick={(e) => { e.stopPropagation(); setShowStarPicker(true); setShowInlineRater(true); }} className="text-xs text-violet-500 hover:text-violet-700 font-medium">Edit</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleRemoveRating(); }} className="text-xs text-red-400 hover:text-red-600 font-medium">Remove</button>
+                  </>
+                )}
+              </div>
+              <p className="text-[11px] text-gray-400 mt-0.5">Rated just now</p>
+            </div>
           </div>
         )}
 
-        {/* Taste alignment */}
+        {/* Taste alignment — styled card */}
         {tasteAlignment !== null && isOtherUser && (
-          <div className="flex items-center gap-2 mt-10 bg-gray-100 rounded-lg px-3 py-2">
-            <Users size={13} className="text-violet-500 flex-shrink-0" />
-            <p className="text-xs text-gray-500">
-              You're <span className="font-bold text-violet-600">{tasteAlignment}%</span> aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
+          <div className="mt-3 mx-1">
+            <div className="bg-white rounded-2xl shadow-sm px-4 py-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full border-2 border-dashed border-violet-400 flex items-center justify-center flex-shrink-0 bg-violet-50">
+                <Users size={16} className="text-violet-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900">
+                  You're <span className="text-violet-600">{tasteAlignment}%</span> aligned
+                </p>
+                <p className="text-[11px] text-gray-500">with {post.user?.displayName || post.user?.username || 'them'}'s taste</p>
+              </div>
+              <button className="flex-shrink-0 px-3 py-1.5 rounded-full border border-violet-400 text-violet-600 text-xs font-semibold flex items-center gap-1 hover:bg-violet-50 transition-colors">
+                See why <ChevronRight size={12} />
+              </button>
+            </div>
+            <p className="text-center text-[10px] text-gray-400 mt-2 flex items-center justify-center gap-1">
+              <Sparkles size={9} className="text-gray-400" /> Aligns based on your ratings and takes
             </p>
           </div>
         )}
