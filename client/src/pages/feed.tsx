@@ -716,6 +716,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [externalRating, setExternalRating] = useState<number | null>(null);
   const [externalRatingLabel, setExternalRatingLabel] = useState<string>('');
   const [tasteAlignment, setTasteAlignment] = useState<number | null>(null);
+  const [alignmentNudge, setAlignmentNudge] = useState(false);
   const [relatedRatings, setRelatedRatings] = useState<Array<{userId: string; userName: string; displayName: string; avatar?: string; rating: number; content?: string}>>([]);
   const [showAllRelated, setShowAllRelated] = useState(false);
   const [showAllComments, setShowAllComments] = useState(false);
@@ -934,6 +935,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           if (r.user_id === session.user.id) myRatings[key] = Number(r.rating);
           else theirRatings[key] = Number(r.rating);
         });
+        // Gate on 10 ratings minimum so the score is meaningful
+        if (Object.keys(myRatings).length < 10) { setAlignmentNudge(true); return; }
         const sharedKeys = Object.keys(myRatings).filter(k => k in theirRatings);
         if (sharedKeys.length < 2) return;
         const avgDiff = sharedKeys.reduce((sum, k) => sum + Math.abs(myRatings[k] - theirRatings[k]), 0) / sharedKeys.length;
@@ -1884,7 +1887,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>{/* end fan area */}
 
           {/* Compact rated + aligned row below the fan */}
-          {isOtherUser && (ratingSubmitted || tasteAlignment !== null) && (
+          {isOtherUser && (ratingSubmitted || tasteAlignment !== null || alignmentNudge) && (
             <div className="flex items-center justify-center gap-3 px-4 py-2">
               {ratingSubmitted && ratingValue > 0 && (
                 <span className="text-xs text-gray-500">You rated this <span className="text-yellow-500 font-semibold">{ratingValue}/5 ★</span></span>
@@ -1892,6 +1895,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {ratingSubmitted && tasteAlignment !== null && <span className="text-gray-300 text-xs">·</span>}
               {tasteAlignment !== null && (
                 <span className="text-xs text-gray-500">You're <span className="text-violet-600 font-semibold">{tasteAlignment}%</span> aligned</span>
+              )}
+              {tasteAlignment === null && alignmentNudge && !ratingSubmitted && (
+                <span className="text-[11px] text-gray-400 text-center">Rate 10 things to see your alignment with other fans</span>
               )}
             </div>
           )}
