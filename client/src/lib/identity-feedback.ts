@@ -243,3 +243,84 @@ export function getIdentityFeedback(
 
   return pool[Math.floor(Math.random() * pool.length)];
 }
+
+// ── Phase 6: Alignment signals ────────────────────────────────────────────────
+
+const GAME_ALIGNMENT: Record<string, Record<string, string>> = {
+  trivia: {
+    theory_crafter:     'In your wheelhouse.',
+    cultural_decoder:   'Lots to decode here.',
+    nostalgia_archivist:'Right from the archives.',
+    world_builder_fan:  'Lore knowledge incoming.',
+    franchise_loyalist: 'Franchise knowledge pays off.',
+    prestige_detective: 'Quality content you\'ve studied.',
+    genre_purist:       'Deep knowledge advantage.',
+    book_first_reader:  'Source material edge.',
+    completionist:      'Another one checked off.',
+  },
+  vote: {
+    social_watcher:     'The crowd wants your read.',
+    emotional_binger:   'Make the emotional call.',
+    chaotic_omnivore:   'Pulling from everywhere for this one.',
+    sports_crossover:   'Cross-fandom perspective ready.',
+    comfort_rewatcher:  'You\'ve thought about this.',
+    first_episode_judge:'Quick verdict incoming.',
+  },
+  predict: {
+    theory_crafter:     'The evidence is in.',
+    first_episode_judge:'First impression, locked in.',
+    discovery_engine:   'Called it early.',
+    dark_content_seeker:'You saw it coming.',
+    prestige_detective: 'Informed take inbound.',
+  },
+};
+
+const MEDIA_ALIGNMENT: Record<string, Record<string, string>> = {
+  tv: {
+    comfort_rewatcher:  'Comfort rewatch potential.',
+    emotional_binger:   'Could be a feelings situation.',
+    social_watcher:     'Everyone\'s talking about this.',
+    world_builder_fan:  'A world worth living in.',
+    franchise_loyalist: 'Franchise energy detected.',
+    completionist:      'Another series to finish.',
+    theory_crafter:     'Worth deep-analyzing.',
+  },
+  movie: {
+    prestige_detective: 'Your standards will judge this.',
+    first_episode_judge:'You\'ll know in 10 minutes.',
+    cultural_decoder:   'Layers to unpack here.',
+    dark_content_seeker:'Right in your territory.',
+    nostalgia_archivist:'A piece of the archive.',
+    genre_purist:       'Genre credentials under review.',
+  },
+  book: {
+    book_first_reader:  'You\'ve got the source material edge.',
+    theory_crafter:     'Source material acquired.',
+    prestige_detective: 'High-signal read incoming.',
+    nostalgia_archivist:'Adding to the archive.',
+    cultural_decoder:   'Layers incoming.',
+  },
+  music: {
+    music_lens:         'Your ears will have opinions.',
+    sports_crossover:   'Cross-cultural listening.',
+    chaotic_omnivore:   'Another genre conquered.',
+    emotional_binger:   'Music hits different with you.',
+  },
+};
+
+export function getGameAlignment(
+  archetypeKey: string | null | undefined,
+  gameType: string
+): string | null {
+  if (!archetypeKey) return null;
+  return GAME_ALIGNMENT[gameType]?.[archetypeKey] ?? null;
+}
+
+export function getMediaAlignment(
+  archetypeKey: string | null | undefined,
+  mediaType: string | null | undefined
+): string | null {
+  if (!archetypeKey || !mediaType) return null;
+  const key = mediaType.toLowerCase().replace(/show/, 'tv');
+  return MEDIA_ALIGNMENT[key]?.[archetypeKey] ?? null;
+}

@@ -9,6 +9,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
+import { useDnaArchetype } from "@/hooks/use-dna-archetype";
+import { getMediaAlignment } from "@/lib/identity-feedback";
 import CreateListDialog from "@/components/create-list-dialog";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
@@ -36,6 +38,7 @@ export default function MediaDetail() {
     id: `${paramsPrefixed.prefix}/${paramsPrefixed.id}`
   } : paramsStandard;
   const { session, user } = useAuth();
+  const { archetypeKey } = useDnaArchetype();
   const [showAbout, setShowAbout] = useState(false);
   const [showReviews, setShowReviews] = useState(false);
   const [showConversations, setShowConversations] = useState(false);
@@ -1085,6 +1088,12 @@ export default function MediaDetail() {
                   </div>
                 )}
               </div>
+              {(() => {
+                const mediaAlignment = getMediaAlignment(archetypeKey, mediaItem?.type || params?.type);
+                return mediaAlignment ? (
+                  <p className="text-xs text-purple-500 italic mt-2">🧬 {mediaAlignment}</p>
+                ) : null;
+              })()}
             </div>
           </div>
 

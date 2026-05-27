@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { useDnaArchetype } from '@/hooks/use-dna-archetype';
+import { getGameAlignment } from '@/lib/identity-feedback';
 
 interface TriviaQuestion {
   question: string;
@@ -50,6 +52,7 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { archetypeKey } = useDnaArchetype();
 
   const { data: games = [], isLoading } = useQuery({
     queryKey: ['play-feed-games', variant],
@@ -519,6 +522,15 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
   };
   const CurrentIcon = getCurrentIcon();
 
+  const gameAlignment = getGameAlignment(
+    archetypeKey,
+    currentGame?.type === 'vote' ? 'vote'
+      : currentGame?.type === 'trivia' ? 'trivia'
+      : currentGame?.type === 'predict' ? 'predict'
+      : variant === 'trivia' ? 'trivia'
+      : 'vote'
+  );
+
   return (
     <div className={cn(
       "bg-gradient-to-br from-[#0a0a1a] via-[#1a1a3e] to-[#2d1f5e] rounded-2xl shadow-xl border border-purple-700/30 overflow-hidden",
@@ -537,6 +549,9 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
             {currentGameIndex + 1} / {Math.min(availableGames.length, 30)}
           </span>
         </div>
+        {gameAlignment && (
+          <p className="text-purple-400/60 text-xs italic mt-1.5">{gameAlignment}</p>
+        )}
       </div>
 
       <div
