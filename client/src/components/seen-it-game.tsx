@@ -452,7 +452,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   const isActiveDrag = isDraggingRef.current || Math.abs(dragX) > 2;
 
   return (
-    <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden">
+    <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-visible">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-2">
