@@ -2037,13 +2037,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               <div className="border-t border-gray-100 bg-white">
                 {relatedRatings.map((r) => (
                   <div key={r.userId} className="flex items-center gap-2.5 px-3 py-2.5 border-b border-gray-50 last:border-0">
-                    <div
-                      className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold"
-                      style={{ background: `hsl(${(r.displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
-                    >
-                      {r.displayName[0]?.toUpperCase()}
-                    </div>
-                    <span className="text-xs font-medium text-gray-700 flex-shrink-0 w-20 truncate">{r.displayName}</span>
+                    <span className="text-xs font-medium text-gray-700 flex-shrink-0 w-24 truncate">{r.displayName}</span>
                     <div className="flex items-center gap-0.5 flex-shrink-0">
                       {[1,2,3,4,5].map(s => (
                         <Star key={s} size={11} className={s <= Math.round(r.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
