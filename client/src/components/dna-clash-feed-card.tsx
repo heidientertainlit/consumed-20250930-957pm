@@ -32,32 +32,21 @@ interface DnaClashFeedCardProps {
   poolId?: string;
 }
 
-// ─── Two-colored waveform ─────────────────────────────────────────────────────
+// ─── Squiggly connector ───────────────────────────────────────────────────────
 function Waveform() {
   return (
-    <div className="flex-1 flex items-start justify-center min-w-0 -mx-5">
-      <svg width="100%" height="56" viewBox="0 0 80 56" fill="none" preserveAspectRatio="none">
+    <div className="flex-1 flex items-center justify-center min-w-0 -mx-2" style={{ marginTop: 20 }}>
+      <svg width="100%" height="24" viewBox="0 0 80 24" fill="none" preserveAspectRatio="none">
         <defs>
-          <linearGradient id="wave-left" x1="0" y1="0" x2="1" y2="0">
+          <linearGradient id="squiggle-grad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#a855f7" />
-            <stop offset="100%" stopColor="#c084fc" />
-          </linearGradient>
-          <linearGradient id="wave-right" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#f472b6" />
+            <stop offset="50%" stopColor="#d946a8" />
             <stop offset="100%" stopColor="#ec4899" />
           </linearGradient>
         </defs>
-        {/* Left half — purple */}
         <path
-          d="M0,28 L5,28 L8,14 L11,42 L14,16 L17,40 L20,28 L23,12 L26,44 L29,22 L32,28 L35,28"
-          stroke="url(#wave-left)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-        />
-        {/* VS label */}
-        <text x="40" y="32" textAnchor="middle" fontSize="9" fontWeight="800" fill="#9ca3af" letterSpacing="0.5">VS</text>
-        {/* Right half — pink */}
-        <path
-          d="M45,28 L48,28 L51,16 L54,42 L57,18 L60,40 L63,28 L66,12 L69,44 L72,22 L75,28 L80,28"
-          stroke="url(#wave-right)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          d="M0,12 Q10,2 20,12 Q30,22 40,12 Q50,2 60,12 Q70,22 80,12"
+          stroke="url(#squiggle-grad)" strokeWidth="2.5" strokeLinecap="round" fill="none"
         />
       </svg>
     </div>
