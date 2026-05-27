@@ -683,7 +683,7 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList, forceActionFirst, forceNormal }: {
+function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList, forceActionFirst, forceNormal, stackPosts, stackIndex }: {
   post: UGCPost;
   onLike: (id: string) => void;
   isLiked: boolean;
@@ -694,6 +694,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   onAddToList?: (media: any) => void;
   forceActionFirst?: boolean;
   forceNormal?: boolean;
+  stackPosts?: any[];
+  stackIndex?: number;
 }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
@@ -1751,12 +1753,60 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
     return (
       <>
-        {/* ── Poster card — floats above the white action container ── */}
-        <div
-          className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
-          style={{ height: 330, width: 220, margin: '0 auto', position: 'relative', zIndex: 10 }}
-          onClick={() => setPosterDetailOpen(true)}
-        >
+        {/* ── Seen It?–style card: white container + internal fan stack ── */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-visible mx-2">
+
+          {/* Header: avatar + name + "X of N" counter */}
+          <div className="flex items-center justify-between px-4 pt-4 pb-2">
+            <div className="flex items-center gap-2">
+              {post.user?.avatar ? (
+                <img src={post.user.avatar} className="w-7 h-7 rounded-full object-cover" alt="" />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center">
+                  <span className="text-violet-600 text-[11px] font-semibold">{displayName[0]?.toUpperCase()}</span>
+                </div>
+              )}
+              <span className="text-sm font-semibold text-gray-900">{displayName}</span>
+            </div>
+            {stackPosts && stackPosts.length > 1 && (
+              <div className="flex items-center gap-0.5 text-sm text-gray-400">
+                <span>{(stackIndex ?? 0) + 1} of {stackPosts.length}</span>
+                <ChevronRight size={14} />
+              </div>
+            )}
+          </div>
+
+          {/* Fan stack area — all cards sit inside the white container */}
+          <div className="relative flex items-center justify-center" style={{ height: 310, overflow: 'visible' }}>
+
+            {/* Back peek card (left) */}
+            {stackPosts && (stackPosts[(stackIndex ?? 0) + 2]?.mediaImage || '').startsWith('http') && (
+              <div style={{
+                position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
+                transform: 'translateX(-72px) rotate(-10deg) scale(0.85)',
+                zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.18)', background: '#111827',
+              }}>
+                <img src={stackPosts[(stackIndex ?? 0) + 2].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            )}
+
+            {/* Middle peek card (right) */}
+            {stackPosts && (stackPosts[(stackIndex ?? 0) + 1]?.mediaImage || '').startsWith('http') && (
+              <div style={{
+                position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
+                transform: 'translateX(72px) rotate(10deg) scale(0.85)',
+                zIndex: 2, boxShadow: '0 4px 16px rgba(0,0,0,0.18)', background: '#111827',
+              }}>
+                <img src={stackPosts[(stackIndex ?? 0) + 1].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            )}
+
+            {/* Front card */}
+            <div
+              className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
+              style={{ height: 282, width: 208, position: 'absolute', zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.30)' }}
+              onClick={() => setPosterDetailOpen(true)}
+            >
           {/* Background image or gradient fallback */}
           {hasPoster ? (
             <img
@@ -1817,14 +1867,20 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         </div>
 
-        {/* ── White action strip — full-bleed behind the card stack ── */}
-        <div
-          className="bg-white px-6 pb-6 -mt-16 pt-20 shadow-sm"
-          style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)', position: 'relative', zIndex: 1 }}
-        >
+          </div>{/* end fan area */}
 
-        {/* ── Seen It–style action row ── */}
-        <div className="flex items-start justify-center gap-4 px-2" onClick={(e) => e.stopPropagation()}>
+          {/* Media title + subtitle */}
+          <div className="text-center px-4 pt-3 pb-1">
+            <p className="font-semibold text-gray-900 text-base leading-tight">{post.mediaTitle || 'Untitled'}</p>
+            <p className="text-sm text-gray-500 mt-1">
+              {hasContent
+                ? `"${(post.content || '').length > 55 ? post.content!.slice(0, 55) + '…' : post.content}"`
+                : 'Swipe to agree, disagree, or react.'}
+            </p>
+          </div>
+
+          {/* ── Action row ── */}
+          <div className="flex items-start justify-center gap-4 px-4 mt-3 pb-4" onClick={(e) => e.stopPropagation()}>
           {/* Agree */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
@@ -4060,9 +4116,10 @@ function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: s
 }
 
 // Multi-card stack — shows current card with peek cards behind, Tinder-style
-function TinderCardStack({ posts, renderCard }: {
+function TinderCardStack({ posts, renderCard, hidePeekCards }: {
   posts: any[];
-  renderCard: (post: any) => React.ReactNode;
+  renderCard: (post: any, allPosts: any[], currentIndex: number) => React.ReactNode;
+  hidePeekCards?: boolean;
 }) {
   const [topIndex, setTopIndex] = useState(0);
   const [offset, setOffset] = useState(0);
@@ -4144,7 +4201,7 @@ function TinderCardStack({ posts, renderCard }: {
   return (
     <div style={{ position: 'relative', marginBottom: 16, overflow: 'visible' }}>
       {/* Left peek card (remaining[2]) — rotated counter-clockwise */}
-      {peekCount >= 2 && remaining[2] && (
+      {!hidePeekCards && peekCount >= 2 && remaining[2] && (
         <div style={{
           position: 'absolute',
           left: `calc(50% - ${CARD_W / 2}px)`,
@@ -4165,7 +4222,7 @@ function TinderCardStack({ posts, renderCard }: {
       )}
 
       {/* Right peek card (remaining[1]) — rotated clockwise */}
-      {peekCount >= 1 && remaining[1] && (
+      {!hidePeekCards && peekCount >= 1 && remaining[1] && (
         <div style={{
           position: 'absolute',
           left: `calc(50% - ${CARD_W / 2}px)`,
@@ -4208,7 +4265,7 @@ function TinderCardStack({ posts, renderCard }: {
             <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: 600 }}>{topIndex + 1}/{posts.length}</span>
           </div>
         )}
-        {renderCard(remaining[0])}
+        {renderCard(remaining[0], posts, topIndex)}
       </div>
     </div>
   );
@@ -5133,7 +5190,8 @@ export default function Feed() {
         <TinderCardStack
           key={item.id}
           posts={visiblePosts}
-          renderCard={(p: any) => (
+          hidePeekCards={true}
+          renderCard={(p: any, allPosts: any[], idx: number) => (
             <UGCGroupCard
               post={p}
               onLike={handleLike}
@@ -5145,6 +5203,8 @@ export default function Feed() {
               onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
               forceActionFirst={true}
               forceNormal={true}
+              stackPosts={allPosts}
+              stackIndex={idx}
             />
           )}
         />
@@ -5160,7 +5220,8 @@ export default function Feed() {
         <TinderCardStack
           key={`${keyPrefix}-${grp.id}`}
           posts={visiblePosts}
-          renderCard={(p) => (
+          hidePeekCards={true}
+          renderCard={(p, allPosts, idx) => (
             <UGCGroupCard
               post={p}
               onLike={handleLike}
@@ -5171,6 +5232,8 @@ export default function Feed() {
               onDeletePost={handleDeletePost}
               onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
               forceNormal={true}
+              stackPosts={allPosts}
+              stackIndex={idx}
             />
           )}
         />
