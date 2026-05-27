@@ -1754,7 +1754,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         {/* ── Poster card ── */}
         <div
           className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
-          style={{ height: 340 }}
+          style={{ height: 400 }}
           onClick={() => setPosterDetailOpen(true)}
         >
           {/* Background image or gradient fallback */}
@@ -4066,67 +4066,107 @@ function TinderCardStack({ posts, renderCard }: {
   const showLeft = offset < -20;
   const peekCount = Math.min(2, remaining.length - 1);
 
-  return (
-    <div style={{ position: 'relative', marginBottom: 16, overflow: 'visible' }}>
-      {/* Fan peek cards — rotated behind front card, visible to the right */}
-      {peekCount >= 2 && remaining[2] && (
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 8,
-          borderRadius: 18, overflow: 'hidden',
-          transform: 'rotate(10deg)',
-          transformOrigin: 'bottom center',
-          pointerEvents: 'none',
-          background: '#111827',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
-        }}>
-          {remaining[2].mediaImage && remaining[2].mediaImage.startsWith('http') && (
-            <img src={remaining[2].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+  // ── Seen-It style fan constants ─────────────────────────────────────
+  const CARD_W = 220;
+  const CARD_H = 400;
+  // Peek card mini-content helper
+  const peekCardContent = (p: any) => {
+    const rating = p?.rating || 0;
+    const name = p?.user?.displayName || p?.user?.username || '';
+    return (
+      <>
+        {p?.mediaImage && p.mediaImage.startsWith('http') && (
+          <img src={p.mediaImage} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        )}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.95) 30%, rgba(0,0,0,0.05) 65%)' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 12px 14px' }}>
+          {rating > 0 && (
+            <div style={{ display: 'flex', gap: 2, marginBottom: 5 }}>
+              {[1,2,3,4,5].map(s => (
+                <span key={s} style={{ fontSize: 15, color: s <= Math.round(rating) ? '#facc15' : 'rgba(255,255,255,0.2)' }}>★</span>
+              ))}
+            </div>
           )}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 30%, transparent)' }} />
-          <div style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Heart size={13} color="white" />
+          {p?.content && (
+            <p style={{ color: 'white', fontSize: 11, fontStyle: 'italic', lineHeight: 1.35, margin: '0 0 3px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any }}>
+              "{p.content}"
+            </p>
+          )}
+          {name && <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 10 }}>— {name}</p>}
+          <div style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Heart size={12} color="white" />
           </div>
         </div>
-      )}
-      {peekCount >= 1 && remaining[1] && (
+      </>
+    );
+  };
+
+  return (
+    <div style={{ position: 'relative', height: CARD_H + 60, marginBottom: 16, overflow: 'visible' }}>
+      {/* Left peek card (remaining[2]) — rotated counter-clockwise */}
+      {peekCount >= 2 && remaining[2] && (
         <div style={{
-          position: 'absolute', inset: 0, zIndex: 9,
-          borderRadius: 18, overflow: 'hidden',
-          transform: 'rotate(5deg)',
-          transformOrigin: 'bottom center',
-          pointerEvents: 'none',
+          position: 'absolute',
+          left: `calc(50% - ${CARD_W / 2}px)`,
+          top: 14,
+          width: CARD_W,
+          height: CARD_H,
+          borderRadius: 18,
+          overflow: 'hidden',
           background: '#111827',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+          transform: 'translateX(-110px) rotate(-12deg) scale(0.85)',
+          transformOrigin: 'bottom center',
+          zIndex: 8,
+          pointerEvents: 'none',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.22)',
         }}>
-          {remaining[1].mediaImage && remaining[1].mediaImage.startsWith('http') && (
-            <img src={remaining[1].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          )}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 30%, transparent)' }} />
-          <div style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Heart size={13} color="white" />
-          </div>
+          {peekCardContent(remaining[2])}
         </div>
       )}
 
-      {/* Top interactive card */}
+      {/* Right peek card (remaining[1]) — rotated clockwise */}
+      {peekCount >= 1 && remaining[1] && (
+        <div style={{
+          position: 'absolute',
+          left: `calc(50% - ${CARD_W / 2}px)`,
+          top: 14,
+          width: CARD_W,
+          height: CARD_H,
+          borderRadius: 18,
+          overflow: 'hidden',
+          background: '#111827',
+          transform: 'translateX(110px) rotate(12deg) scale(0.85)',
+          transformOrigin: 'bottom center',
+          zIndex: 9,
+          pointerEvents: 'none',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.22)',
+        }}>
+          {peekCardContent(remaining[1])}
+        </div>
+      )}
+
+      {/* Front/center interactive card */}
       <div
         ref={topRef}
         style={{
-          position: 'relative',
+          position: 'absolute',
+          left: `calc(50% - ${CARD_W / 2}px)`,
+          top: 0,
+          width: CARD_W,
           zIndex: 10,
           transform: `translateX(${offset}px) rotate(${rotation}deg)`,
           transition: flyingOut ? 'transform 0.28s ease-out' : (isDragging || skipTransition) ? 'none' : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
           transformOrigin: 'bottom center',
           willChange: 'transform',
+          overflow: 'visible',
         }}
       >
-        {showRight && <div style={{ position: 'absolute', inset: 0, borderRadius: 18, background: 'rgba(34,197,94,0.10)', border: '2px solid rgba(34,197,94,0.35)', zIndex: 11, pointerEvents: 'none' }} />}
-        {showLeft && <div style={{ position: 'absolute', inset: 0, borderRadius: 18, background: 'rgba(156,163,175,0.10)', border: '2px solid rgba(156,163,175,0.30)', zIndex: 11, pointerEvents: 'none' }} />}
+        {showRight && <div style={{ position: 'absolute', top: 0, left: 0, width: CARD_W, height: CARD_H, borderRadius: 18, background: 'rgba(34,197,94,0.12)', border: '2px solid rgba(34,197,94,0.4)', zIndex: 11, pointerEvents: 'none' }} />}
+        {showLeft && <div style={{ position: 'absolute', top: 0, left: 0, width: CARD_W, height: CARD_H, borderRadius: 18, background: 'rgba(156,163,175,0.12)', border: '2px solid rgba(156,163,175,0.35)', zIndex: 11, pointerEvents: 'none' }} />}
         {showRight && <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 12, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>AGREE</span></div>}
         {showLeft && <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 12, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>SKIP</span></div>}
-        {/* Card counter */}
         {remaining.length > 1 && !showRight && !showLeft && (
-          <div style={{ position: 'absolute', bottom: 12, right: 12, zIndex: 12, pointerEvents: 'none', background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)', borderRadius: 10, padding: '2px 8px' }}>
+          <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 12, pointerEvents: 'none', background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)', borderRadius: 10, padding: '2px 8px' }}>
             <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: 600 }}>{topIndex + 1}/{posts.length}</span>
           </div>
         )}
