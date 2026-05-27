@@ -186,6 +186,12 @@ export default function FeedComposerBar() {
   const { toast } = useToast();
 
   const [isOpen, setIsOpen] = useState(false);
+  const PLACEHOLDERS = ["Your take...", "Thoughts?", "What's your next move?"];
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setPlaceholderIdx(i => (i + 1) % PLACEHOLDERS.length), 3000);
+    return () => clearInterval(t);
+  }, []);
   const [showMediaSearch, setShowMediaSearch] = useState(false);
   const [searchSlideIn, setSearchSlideIn] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("review");
@@ -530,7 +536,7 @@ export default function FeedComposerBar() {
         <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
           <Plus className="w-4 h-4 text-white" />
         </div>
-        <span className="text-gray-400 text-sm flex-1">What's your next move?</span>
+        <span key={placeholderIdx} className="text-gray-400 text-sm flex-1 animate-in fade-in duration-500">{PLACEHOLDERS[placeholderIdx]}</span>
       </button>
 
       {isOpen && createPortal(
