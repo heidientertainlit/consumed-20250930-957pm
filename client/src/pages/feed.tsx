@@ -1754,7 +1754,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         {/* ── Poster card ── */}
         <div
           className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
-          style={{ height: 400 }}
+          style={{ height: 330 }}
           onClick={() => setPosterDetailOpen(true)}
         >
           {/* Background image or gradient fallback */}
@@ -1818,7 +1818,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
 
         {/* ── Seen It–style action row below the fan card ── */}
-        <div className="flex items-start justify-center gap-4 mt-3 px-1" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-center gap-4 mt-4 mb-2 px-1" onClick={(e) => e.stopPropagation()}>
           {/* Agree */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
@@ -1961,7 +1961,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
         {/* Taste alignment */}
         {tasteAlignment !== null && isOtherUser && (
-          <div className="flex items-center gap-2 mt-2 bg-gray-100 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 mt-6 bg-gray-100 rounded-lg px-3 py-2">
             <Users size={13} className="text-violet-500 flex-shrink-0" />
             <p className="text-xs text-gray-500">
               You're <span className="font-bold text-violet-600">{tasteAlignment}%</span> aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
@@ -4082,7 +4082,7 @@ function TinderCardStack({ posts, renderCard }: {
 
   // ── Seen-It style fan constants ─────────────────────────────────────
   const CARD_W = 220;
-  const CARD_H = 400;
+  const CARD_H = 330;
   // Peek card mini-content helper
   const peekCardContent = (p: any) => {
     const rating = p?.rating || 0;
