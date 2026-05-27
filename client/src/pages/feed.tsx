@@ -716,8 +716,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [externalRating, setExternalRating] = useState<number | null>(null);
   const [externalRatingLabel, setExternalRatingLabel] = useState<string>('');
   const [tasteAlignment, setTasteAlignment] = useState<number | null>(null);
-  const [relatedRatings, setRelatedRatings] = useState<Array<{userId: string; userName: string; displayName: string; avatar?: string; rating: number}>>([]);
+  const [relatedRatings, setRelatedRatings] = useState<Array<{userId: string; userName: string; displayName: string; avatar?: string; rating: number; content?: string}>>([]);
   const [showAllRelated, setShowAllRelated] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(false);
   const [seenItDone, setSeenItDone] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
   const [showInlineRater, setShowInlineRater] = useState(false);
@@ -963,14 +964,34 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         const { data: users } = await supabase.from('users').select('id, user_name, display_name').in('id', ids);
         const userMap: Record<string, any> = {};
         (users || []).forEach((u: any) => { userMap[u.id] = u; });
+        // Also fetch review content from social_posts for these users + same media
+        const { data: posts } = await supabase
+          .from('social_posts')
+          .select('user_id, content')
+          .in('user_id', ids)
+          .eq('external_id', externalId)
+          .in('type', ['rating', 'rate-review', 'review'])
+          .not('content', 'is', null)
+          .limit(20);
+        const contentMap: Record<string, string> = {};
+        (posts || []).forEach((p: any) => { if (p.content?.trim()) contentMap[p.user_id] = p.content.trim(); });
         setRelatedRatings(filtered.map((r: any) => ({
           userId: r.user_id,
           userName: userMap[r.user_id]?.user_name || '',
           displayName: userMap[r.user_id]?.display_name || userMap[r.user_id]?.user_name || 'User',
           rating: Number(r.rating),
+          content: contentMap[r.user_id],
         })));
       });
   }, [post.externalId, post.externalSource, post.user?.id, session?.user?.id]);
+
+  // Auto-load comments for rating/review cards so they show inline without a tap
+  useEffect(() => {
+    const isRating = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought';
+    if (!isRating || !post.id || hasFetched.current) return;
+    hasFetched.current = true;
+    fetchComments(post.id).then(data => setComments(data || []));
+  }, [post.id]);
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
@@ -1984,24 +2005,179 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         )}
 
-        {/* Facebook-style comment bar */}
-        {session?.access_token && (
-          <div className="flex items-center gap-2 px-3 pb-3 pt-1 border-t border-gray-100 mt-2" onClick={(e) => e.stopPropagation()}>
-            <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-violet-600 text-[10px] font-semibold">
-                {(session?.user?.user_metadata?.display_name || session?.user?.email || 'Y')[0]?.toUpperCase()}
-              </span>
+        {/* ── Friend Ratings section ── */}
+        {relatedRatings.length > 0 && (
+          <div className="mx-3 mb-3 rounded-xl border border-gray-100 bg-gray-50 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Other Takes</span>
+              <span className="text-[10px] font-medium text-violet-500">{relatedRatings.length} rating{relatedRatings.length !== 1 ? 's' : ''}</span>
             </div>
-            <button
-              onClick={() => setPosterDetailOpen(true)}
-              className="flex-1 text-left text-sm text-gray-400 bg-gray-50 rounded-full px-4 py-2 hover:bg-gray-100 transition-colors"
-            >
-              {Math.max(post.comments || 0, comments.length) > 0
-                ? `${Math.max(post.comments || 0, comments.length)} comment${Math.max(post.comments || 0, comments.length) === 1 ? '' : 's'} · Add yours`
-                : 'Add a comment...'}
-            </button>
+            {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 3)).map((r) => (
+              <div key={r.userId} className="flex items-center gap-2.5 px-3 py-2.5 border-b border-gray-50 last:border-0">
+                <div
+                  className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold"
+                  style={{ background: `hsl(${(r.displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
+                >
+                  {r.displayName[0]?.toUpperCase()}
+                </div>
+                <span className="text-xs font-medium text-gray-700 flex-shrink-0 w-20 truncate">{r.displayName}</span>
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  {[1,2,3,4,5].map(s => (
+                    <Star key={s} size={11} className={s <= Math.round(r.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
+                  ))}
+                </div>
+                {r.content ? (
+                  <span className="text-[10px] text-gray-400 truncate flex-1">"{r.content}"</span>
+                ) : (
+                  <span className="text-[10px] text-gray-300 flex-1">No review yet</span>
+                )}
+              </div>
+            ))}
+            {relatedRatings.length > 3 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowAllRelated(v => !v); }}
+                className="w-full flex items-center gap-2 px-3 py-2 border-t border-gray-100 bg-white"
+              >
+                <div className="flex -space-x-1.5">
+                  {relatedRatings.slice(3, Math.min(6, relatedRatings.length)).map((r) => (
+                    <div
+                      key={r.userId}
+                      className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-white text-[8px] font-bold"
+                      style={{ background: `hsl(${(r.displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
+                    >
+                      {r.displayName[0]?.toUpperCase()}
+                    </div>
+                  ))}
+                </div>
+                <span className="text-[10px] font-semibold text-gray-500">
+                  {showAllRelated ? 'Show less' : `+${relatedRatings.length - 3} more rated this`}
+                </span>
+              </button>
+            )}
           </div>
         )}
+
+        {/* ── Inline Comments section ── */}
+        <div className="border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
+          {/* Header — only shown when there are comments */}
+          {(comments.length > 0 || (post.comments || 0) > 0) && (
+            <div className="flex items-center justify-between px-4 pt-3 pb-1">
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                Comments on this take{Math.max(post.comments || 0, comments.length) > 0 ? ` (${Math.max(post.comments || 0, comments.length)})` : ''}
+              </span>
+              {comments.length > 2 && (
+                <button onClick={() => setShowAllComments(v => !v)} className="flex items-center gap-0.5 text-[10px] font-medium text-violet-500">
+                  {showAllComments ? 'Less' : 'Newest'} <ChevronDown size={11} className={`transition-transform ${showAllComments ? 'rotate-180' : ''}`} />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Comment list */}
+          {comments.length > 0 && (
+            <div className="px-4 pt-1 pb-2 space-y-3">
+              {(showAllComments ? comments : comments.slice(0, 2)).map((c: any) => {
+                const cName = c.user?.displayName || c.user?.username || c.username || 'User';
+                const isReplying = replyingToId === c.id;
+                return (
+                  <div key={c.id} className="flex gap-2.5">
+                    <div className="flex flex-col items-center flex-shrink-0" style={{ width: 26 }}>
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-[10px] font-bold overflow-hidden">
+                        {c.user?.avatar ? <img src={c.user.avatar} className="w-full h-full object-cover" alt="" /> : cName[0]?.toUpperCase()}
+                      </div>
+                      {(c.replies?.length > 0 || isReplying) && <div className="w-px flex-1 bg-gray-200 mt-1 min-h-[12px]" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-gray-900">{cName}</span>
+                        <span className="text-[10px] text-gray-400">{c.created_at ? timeAgo(c.created_at) : ''}</span>
+                        <div className="ml-auto flex items-center gap-1">
+                          {currentUserId === (c.user?.id || c.userId) && (
+                            <button onClick={(e) => { e.stopPropagation(); deleteComment(c.id); }} className="text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={10} /></button>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-700 leading-snug mt-0.5">{c.content}</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <button onClick={() => { setReplyingToId(isReplying ? null : c.id); setReplyText(''); }} className="text-[10px] font-semibold text-gray-400 hover:text-violet-500 transition-colors">Reply</button>
+                        <div className="flex items-center gap-1 text-gray-400">
+                          <Heart size={10} />
+                          {(c.likes_count || 0) > 0 && <span className="text-[10px]">{c.likes_count}</span>}
+                        </div>
+                      </div>
+                      {isReplying && (
+                        <div className="mt-2 flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-violet-200">
+                          <input autoFocus type="text" value={replyText} onChange={(e) => setReplyText(e.target.value)}
+                            placeholder={`Reply to ${cName}…`} className="flex-1 text-xs bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
+                            onKeyPress={(e) => e.key === 'Enter' && submitReply(c.id)} />
+                          <button onClick={() => submitReply(c.id)} disabled={!replyText.trim() || submitting} className="text-[11px] font-semibold text-violet-600 disabled:opacity-40">Post</button>
+                          <button onClick={() => { setReplyingToId(null); setReplyText(''); }} className="text-gray-400"><X size={11} /></button>
+                        </div>
+                      )}
+                      {c.replies?.length > 0 && (
+                        <div className="mt-2 pl-3 border-l-2 border-gray-100 space-y-2">
+                          {c.replies.map((r: any) => {
+                            const rName = r.user?.displayName || r.user?.username || r.username || 'User';
+                            return (
+                              <div key={r.id} className="flex gap-2 pt-1">
+                                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-300 to-blue-300 flex items-center justify-center text-white text-[9px] font-bold overflow-hidden flex-shrink-0">
+                                  {r.user?.avatar ? <img src={r.user.avatar} className="w-full h-full object-cover" alt="" /> : rName[0]?.toUpperCase()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] font-semibold text-gray-800">{rName}</span>
+                                    <span className="text-[9px] text-gray-400">{r.created_at ? timeAgo(r.created_at) : ''}</span>
+                                  </div>
+                                  <p className="text-[11px] text-gray-600 leading-snug mt-0.5">{r.content}</p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {!showAllComments && comments.length > 2 && (
+                <button onClick={() => setShowAllComments(true)} className="text-[11px] font-semibold text-violet-500 hover:text-violet-700">
+                  View all {comments.length} comments ↓
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Comment input bar */}
+          {session?.access_token && (
+            <div className="flex items-center gap-2 px-3 pb-3 pt-2">
+              <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-violet-600 text-[10px] font-semibold">
+                  {(session?.user?.user_metadata?.display_name || session?.user?.email || 'Y')[0]?.toUpperCase()}
+                </span>
+              </div>
+              <div className="flex-1 flex items-center bg-gray-50 rounded-full px-4 py-2 gap-2 border border-gray-100">
+                <input
+                  type="text"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Add your take..."
+                  className="flex-1 text-sm bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyPress={(e) => { if (e.key === 'Enter') { e.stopPropagation(); submitComment(); }}}
+                />
+                {commentText.trim() && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); submitComment(); }}
+                    disabled={submitting}
+                    className="w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 disabled:opacity-50"
+                  >
+                    <Send size={11} className="text-white ml-0.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         </div>{/* ── end outer white container ── */}
 
