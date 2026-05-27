@@ -595,16 +595,33 @@ export default function FeedComposerBar() {
             {showRating && (
               <div className="mx-5 mb-2 flex items-center gap-2">
                 <span className="text-xs text-gray-500 font-medium">Rating:</span>
-                <div className="flex gap-0.5">
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <button key={star}
-                      onMouseEnter={() => setHoverRating(star)} onMouseLeave={() => setHoverRating(0)}
-                      onClick={() => setRatingValue(star === ratingValue ? 0 : star)}
-                      className="transition-transform active:scale-90"
-                    >
-                      <Star className={`w-6 h-6 transition-colors ${star <= (hoverRating || ratingValue) ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`} />
-                    </button>
-                  ))}
+                <div className="flex items-center gap-0.5" onMouseLeave={() => setHoverRating(0)}>
+                  {[1, 2, 3, 4, 5].map(star => {
+                    const displayVal = hoverRating || ratingValue;
+                    return (
+                      <div key={star} className="relative" style={{ width: 26, height: 26 }}>
+                        <Star size={26} className="absolute inset-0 text-gray-200" />
+                        <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
+                          <Star size={26} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
+                        </div>
+                        <button
+                          className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }}
+                          onMouseEnter={() => setHoverRating(star - 0.5)}
+                          onClick={() => setRatingValue(star - 0.5 === ratingValue ? 0 : star - 0.5)}
+                          aria-label={`Rate ${star - 0.5}`}
+                        />
+                        <button
+                          className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }}
+                          onMouseEnter={() => setHoverRating(star)}
+                          onClick={() => setRatingValue(star === ratingValue ? 0 : star)}
+                          aria-label={`Rate ${star}`}
+                        />
+                      </div>
+                    );
+                  })}
+                  {(hoverRating > 0 || ratingValue > 0) && (
+                    <span className="ml-1 text-xs text-gray-400">{hoverRating > 0 ? hoverRating : ratingValue}/5</span>
+                  )}
                 </div>
               </div>
             )}
