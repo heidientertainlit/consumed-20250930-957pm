@@ -44,18 +44,7 @@ interface SeenItGameProps {
   onAddToList?: (media: { title: string; mediaType: string; externalId: string; externalSource: string; imageUrl: string }) => void;
 }
 
-// ── Fan card layout constants ─────────────────────────────────────────────────
-const FAN_OFFSETS = [
-  { dx: -110, dy: 14, rotate: -12, scale: 0.78, zIndex: 1 },
-  { dx: -55,  dy: 6,  rotate: -6,  scale: 0.88, zIndex: 2 },
-  { dx: 0,    dy: 0,  rotate: 0,   scale: 1.00, zIndex: 5 }, // center/active
-  { dx: 55,   dy: 6,  rotate: 6,   scale: 0.88, zIndex: 2 },
-  { dx: 110,  dy: 14, rotate: 12,  scale: 0.78, zIndex: 1 },
-];
-
 const SWIPE_THRESHOLD = 80;
-const CARD_W = 200;
-const CARD_H = 290;
 
 export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameProps = {}) {
   const { session, user } = useAuth();
@@ -323,9 +312,13 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
       const setId = activeSetIdRef.current;
       if (!item || !setId) { setDragX(0); currentDragX.current = 0; return; }
       if (dx > SWIPE_THRESHOLD) {
-        handleResponseRef.current(setId, item, true);   // → seen it
+        // Fly card off-screen right, then record response
+        setDragX(380); currentDragX.current = 380;
+        setTimeout(() => { handleResponseRef.current(setId, item, true); }, 420);
       } else if (dx < -SWIPE_THRESHOLD) {
-        handleResponseRef.current(setId, item, 'skip'); // → not for me
+        // Fly card off-screen left, then record response
+        setDragX(-380); currentDragX.current = -380;
+        setTimeout(() => { handleResponseRef.current(setId, item, 'skip'); }, 420);
       } else {
         setDragX(0);
         currentDragX.current = 0;
@@ -411,7 +404,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
       window.removeEventListener('mouseup',   onMouseUp);
       if (wheelTimer.current) clearTimeout(wheelTimer.current);
     };
-  }, [gestureRef.current]);
+  }, []);
 
   // Keep a stable ref to handleResponse so event listeners don't go stale
   const handleResponseRef = useRef(handleResponse);
@@ -454,15 +447,6 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   activeItemRef.current = activeItem;
   activeSetIdRef.current = currentSet.id;
 
-  // Build the visible fan cards (indices relative to active)
-  const fanCards = FAN_OFFSETS.map((offset, fanPos) => {
-    const itemOffset = fanPos - 2; // center is fanPos=2
-    const itemIdx = activeIdx + itemOffset;
-    const item = unansweredItems[itemIdx] ?? null;
-    const isCenter = fanPos === 2;
-    return { item, offset, isCenter };
-  });
-
   const isSwipingRight = dragX > 20;
   const isSwipingLeft = dragX < -20;
   const isActiveDrag = isDraggingRef.current || Math.abs(dragX) > 2;
@@ -486,96 +470,88 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         </div>
       </div>
 
-      {/* Fan card area — gestureRef captures all touch/mouse/wheel events */}
+      {/* Card stack — gestureRef captures all touch/mouse/wheel events */}
       <div
         ref={gestureRef}
         className="relative flex items-center justify-center select-none"
-        style={{ height: CARD_H + 60, cursor: isActiveDrag ? 'grabbing' : 'grab', touchAction: 'pan-y' }}
+        style={{ height: 310, overflow: 'visible', cursor: isActiveDrag ? 'grabbing' : 'grab', touchAction: 'pan-y' }}
       >
-        {fanCards.map(({ item, offset, isCenter }, fanPos) => {
-          if (!item) return null;
+        {/* Left peek card */}
+        {unansweredItems[activeIdx + 2] && (
+          <div style={{
+            position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
+            transform: 'translateX(-52px) rotate(-8deg) scale(0.88)',
+            zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
+          }}>
+            <img src={unansweredItems[activeIdx + 2].image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          </div>
+        )}
 
-          // Center card follows drag; background cards stay put
-          const tx = isCenter ? offset.dx + dragX : offset.dx;
-          const rotate = isCenter ? offset.rotate + dragX * 0.06 : offset.rotate;
+        {/* Right peek card */}
+        {unansweredItems[activeIdx + 1] && (
+          <div style={{
+            position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
+            transform: 'translateX(52px) rotate(8deg) scale(0.88)',
+            zIndex: 2, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
+          }}>
+            <img src={unansweredItems[activeIdx + 1].image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          </div>
+        )}
 
-          // Swipe direction hint overlays on center card
-          const showSeenOverlay = isCenter && dragX > 30;
-          const showSkipOverlay = isCenter && dragX < -30;
-
-          return (
-            <div
-              key={item.id}
-              style={{
-                position: 'absolute',
-                width: CARD_W,
-                height: CARD_H,
-                transform: `translateX(${tx}px) translateY(${offset.dy}px) rotate(${rotate}deg) scale(${offset.scale})`,
-                zIndex: offset.zIndex,
-                transition: isActiveDrag && isCenter ? 'none' : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                borderRadius: 16,
-                overflow: 'hidden',
-                boxShadow: isCenter ? '0 8px 32px rgba(0,0,0,0.18)' : '0 2px 12px rgba(0,0,0,0.10)',
-                pointerEvents: 'none',
-                userSelect: 'none',
-              }}
-            >
-              <img
-                src={item.image_url}
-                alt={item.title}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none' }}
-              />
-              {/* Swipe overlay hints on center card */}
-              {showSeenOverlay && (
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(34,197,94,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 16 }}>
-                  <div style={{ border: '3px solid #22c55e', borderRadius: 8, padding: '4px 14px' }}>
-                    <span style={{ color: '#22c55e', fontWeight: 800, fontSize: 22, letterSpacing: 2 }}>SEEN</span>
-                  </div>
-                </div>
-              )}
-              {showSkipOverlay && (
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 16 }}>
-                  <div style={{ border: '2px solid rgba(255,255,255,0.7)', borderRadius: 8, padding: '4px 14px' }}>
-                    <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 800, fontSize: 22, letterSpacing: 2 }}>NEXT</span>
-                  </div>
-                </div>
-              )}
-              {/* Side cards: show chevron on left, ♥ on right */}
-              {!isCenter && fanPos < 2 && (
-                <div style={{ position: 'absolute', bottom: 10, left: 10, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <ChevronRight size={16} className="text-gray-500" />
-                </div>
-              )}
-              {!isCenter && fanPos > 2 && (
-                <div style={{ position: 'absolute', bottom: 10, right: 10, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Heart size={16} className="text-gray-400" />
-                </div>
-              )}
-              {/* Rating stars on center card if active */}
-              {isCenter && ratingItem === item.id && (
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.75)', padding: '12px 16px', display: 'flex', justifyContent: 'center', gap: 8, pointerEvents: 'auto' }}>
-                  {[1,2,3,4,5].map(star => (
-                    <button key={star} onPointerDown={(e) => {
-                      e.stopPropagation();
-                      const newMap = { ...ratingMap, [item.id]: star };
-                      setRatingMap(newMap);
-                      try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
-                      handleResponse(currentSet.id, item, true);
-                    }} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', pointerEvents: 'auto' }}>
-                      <Star size={28} className={star <= (ratingMap[item.id] || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'} />
-                    </button>
-                  ))}
-                </div>
-              )}
+        {/* Front card — follows drag */}
+        <div style={{
+          position: 'absolute', width: 208, height: 282, borderRadius: 16, overflow: 'hidden',
+          zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.28)',
+          transform: `translateX(${dragX}px) rotate(${dragX * 0.06}deg)`,
+          transition: isActiveDrag ? 'none' : Math.abs(dragX) > 300
+            ? 'transform 0.42s cubic-bezier(0.25,0.46,0.45,0.94)'
+            : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          pointerEvents: 'none',
+        }}>
+          <img
+            src={activeItem.image_url}
+            alt={activeItem.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+          {/* Gradient + title overlay */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.08) 55%, transparent 100%)' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '12px 14px' }}>
+            <p style={{ color: 'white', fontWeight: 700, fontSize: 14, lineHeight: 1.25, margin: 0 }}>{activeItem.title}</p>
+            {(activeItem as any).year && <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, margin: '2px 0 0' }}>{(activeItem as any).year}</p>}
+          </div>
+          {/* SEEN overlay */}
+          {isSwipingRight && (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(34,197,94,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ border: '3px solid #22c55e', borderRadius: 8, padding: '4px 14px' }}>
+                <span style={{ color: '#22c55e', fontWeight: 800, fontSize: 22, letterSpacing: 2 }}>SEEN</span>
+              </div>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Title + hint */}
-      <div className="text-center px-4 pb-1">
-        <p className="text-gray-900 font-semibold text-sm truncate">{activeItem.title}</p>
-        <p className="text-gray-400 text-xs mt-0.5">Swipe to organize, rate, or add to your lists.</p>
+          )}
+          {/* SKIP overlay */}
+          {isSwipingLeft && (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ border: '2px solid rgba(255,255,255,0.7)', borderRadius: 8, padding: '4px 14px' }}>
+                <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 800, fontSize: 22, letterSpacing: 2 }}>NEXT</span>
+              </div>
+            </div>
+          )}
+          {/* Rating stars overlay */}
+          {ratingItem === activeItem.id && (
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.75)', padding: '12px 16px', display: 'flex', justifyContent: 'center', gap: 8, pointerEvents: 'auto' }}>
+              {[1,2,3,4,5].map(star => (
+                <button key={star} onPointerDown={(e) => {
+                  e.stopPropagation();
+                  const newMap = { ...ratingMap, [activeItem.id]: star };
+                  setRatingMap(newMap);
+                  try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
+                  handleResponse(currentSet.id, activeItem, true);
+                }} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', pointerEvents: 'auto' }}>
+                  <Star size={28} className={star <= (ratingMap[activeItem.id] || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'} />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Action buttons */}
