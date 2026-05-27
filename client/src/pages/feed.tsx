@@ -1774,7 +1774,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {stackPosts && (stackPosts[(stackIndex ?? 0) + 2]?.mediaImage || '').startsWith('http') && (
               <div style={{
                 position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
-                transform: 'translateX(-72px) rotate(-10deg) scale(0.85)',
+                transform: 'translateX(-52px) rotate(-8deg) scale(0.85)',
                 zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.18)', background: '#111827',
               }}>
                 <img src={stackPosts[(stackIndex ?? 0) + 2].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1785,7 +1785,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {stackPosts && (stackPosts[(stackIndex ?? 0) + 1]?.mediaImage || '').startsWith('http') && (
               <div style={{
                 position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
-                transform: 'translateX(72px) rotate(10deg) scale(0.85)',
+                transform: 'translateX(52px) rotate(8deg) scale(0.85)',
                 zIndex: 2, boxShadow: '0 4px 16px rgba(0,0,0,0.18)', background: '#111827',
               }}>
                 <img src={stackPosts[(stackIndex ?? 0) + 1].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -4045,7 +4045,7 @@ function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: s
   }, [attachTo]);
 
   if (dismissed) return null;
-  const rotation = (offset / 200) * 8;
+  const rotation = offset * 0.06;
   const showRight = offset > 20;
   const showLeft = offset < -20;
 
@@ -4054,7 +4054,7 @@ function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: s
       ref={cardRef}
       style={{
         transform: `translateX(${offset}px) rotate(${rotation}deg)`,
-        transition: flyingOut ? 'transform 0.28s ease-out' : isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
+        transition: flyingOut ? 'transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94)' : isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
         willChange: 'transform',
         position: 'relative',
         transformOrigin: 'bottom center',
@@ -4112,7 +4112,7 @@ function TinderCardStack({ posts, renderCard, hidePeekCards }: {
   const remaining = posts.slice(topIndex);
   if (remaining.length === 0) return null;
 
-  const rotation = (offset / 200) * 8;
+  const rotation = offset * 0.06;
   const showRight = offset > 20;
   const showLeft = offset < -20;
   const peekCount = Math.min(2, remaining.length - 1);
@@ -4203,7 +4203,7 @@ function TinderCardStack({ posts, renderCard, hidePeekCards }: {
           {renderCard(remaining[0], posts, topIndex, {
             style: {
               transform: `translateX(${offset}px) rotate(${rotation}deg)`,
-              transition: flyingOut ? 'transform 0.28s ease-out' : (isDragging || skipTransition) ? 'none' : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
+              transition: flyingOut ? 'transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94)' : (isDragging || skipTransition) ? 'none' : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
               transformOrigin: 'bottom center',
               willChange: 'transform',
             },
@@ -4226,7 +4226,7 @@ function TinderCardStack({ posts, renderCard, hidePeekCards }: {
             position: 'relative',
             zIndex: 10,
             transform: `translateX(${offset}px) rotate(${rotation}deg)`,
-            transition: flyingOut ? 'transform 0.28s ease-out' : (isDragging || skipTransition) ? 'none' : 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
+            transition: flyingOut ? 'transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94)' : (isDragging || skipTransition) ? 'none' : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
             transformOrigin: 'bottom center',
             willChange: 'transform',
             overflow: 'visible',
