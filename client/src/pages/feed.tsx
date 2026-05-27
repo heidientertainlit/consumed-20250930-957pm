@@ -1817,8 +1817,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         </div>
 
-        {/* ── Seen It–style action row below the fan card ── */}
-        <div className="flex items-start justify-center gap-4 mt-4 mb-2 px-1" onClick={(e) => e.stopPropagation()}>
+        {/* ── Seen It–style action row — white rounded card below the fan ── */}
+        <div className="mt-6 mx-1 bg-white rounded-2xl shadow-sm py-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-center gap-4 px-2">
           {/* Agree */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
@@ -1897,6 +1898,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </button>
           )}
         </div>
+        </div>
 
         {/* YOUR TURN — inline star rater appears below card */}
         {isOtherUser && session?.access_token && showInlineRater && !ratingSubmitted && (
@@ -1961,7 +1963,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
         {/* Taste alignment */}
         {tasteAlignment !== null && isOtherUser && (
-          <div className="flex items-center gap-2 mt-6 bg-gray-100 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 mt-10 bg-gray-100 rounded-lg px-3 py-2">
             <Users size={13} className="text-violet-500 flex-shrink-0" />
             <p className="text-xs text-gray-500">
               You're <span className="font-bold text-violet-600">{tasteAlignment}%</span> aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
