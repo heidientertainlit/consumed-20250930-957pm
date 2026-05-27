@@ -1817,8 +1817,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         </div>
 
-        {/* ── White action container — sits below the floating poster ── */}
-        <div className="bg-white rounded-2xl shadow-sm px-4 pb-5 -mt-4 pt-6">
+        {/* ── White action container — tucks up behind the card stack ── */}
+        <div className="bg-white rounded-2xl shadow-sm px-4 pb-5 -mt-16 pt-20">
 
         {/* ── Seen It–style action row ── */}
         <div className="flex items-start justify-center gap-4 px-2" onClick={(e) => e.stopPropagation()}>
