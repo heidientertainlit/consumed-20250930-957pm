@@ -247,8 +247,9 @@ export default function UserProfile() {
   const friendsRef = useRef<HTMLDivElement>(null);
   const listsRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
-  const [activeSection, setActiveSection] = useState<string>('friends');
+  const [activeSection, setActiveSection] = useState<string>('dna');
   const initialSectionSet = useRef(false);
+  const [isRegeneratingDna, setIsRegeneratingDna] = useState(false);
 
   const [activitySubFilter, setActivitySubFilter] = useState<'posts' | 'history' | 'bets'>('posts');
   const [listSearch, setListSearch] = useState("");
@@ -705,6 +706,30 @@ export default function UserProfile() {
       toast({ title: "Error", description: "Could not generate image", variant: "destructive" });
     } finally {
       setDnaIsDownloading(false);
+    }
+  };
+
+  const handleRegenerateDna = async () => {
+    if (!session?.access_token) return;
+    setIsRegeneratingDna(true);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const res = await fetch(`${supabaseUrl}/functions/v1/generate-dna-profile-v2`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to regenerate');
+      await fetchDnaProfile();
+      toast({ title: 'DNA Updated!', description: 'Your Entertainment DNA has been regenerated.' });
+    } catch (err: any) {
+      toast({ title: 'Regeneration failed', description: err.message || 'Please try again.', variant: 'destructive' });
+    } finally {
+      setIsRegeneratingDna(false);
     }
   };
 
@@ -3192,17 +3217,6 @@ export default function UserProfile() {
         <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 -mx-0">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
             <button
-              onClick={() => setActiveSection('friends')}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                activeSection === 'friends'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-              }`}
-              data-testid="nav-friends"
-            >
-              Friends
-            </button>
-            <button
               onClick={() => setActiveSection('dna')}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 activeSection === 'dna'
@@ -3212,6 +3226,17 @@ export default function UserProfile() {
               data-testid="nav-dna-profile"
             >
               DNA
+            </button>
+            <button
+              onClick={() => setActiveSection('friends')}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                activeSection === 'friends'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+              data-testid="nav-friends"
+            >
+              Friends
             </button>
             <button
               onClick={() => setActiveSection('lists')}
@@ -3460,6 +3485,17 @@ export default function UserProfile() {
                       <Button onClick={() => setLocation('/entertainment-dna')} size="sm" className="flex-1 bg-white/20 text-white hover:bg-white/30 text-xs font-semibold">
                         <RefreshCw size={12} className="mr-1" />
                         Retake Quiz
+                      </Button>
+                      <Button
+                        onClick={handleRegenerateDna}
+                        disabled={isRegeneratingDna}
+                        size="sm"
+                        className="flex-1 bg-white/20 text-white hover:bg-white/30 text-xs font-semibold disabled:opacity-60"
+                      >
+                        {isRegeneratingDna
+                          ? <Loader2 size={12} className="mr-1 animate-spin" />
+                          : <Sparkles size={12} className="mr-1" />}
+                        {isRegeneratingDna ? 'Updating…' : 'Regenerate DNA'}
                       </Button>
                     </div>
                   </div>
