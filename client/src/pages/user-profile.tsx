@@ -2824,129 +2824,171 @@ export default function UserProfile() {
         <div style={{ background: 'linear-gradient(180deg, #0d0221 0%, #1a0535 60%, #2d1060 100%)' }}>
           <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
 
-            {/* Name + handle */}
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h1 className="text-2xl font-semibold text-white mb-0.5">
-                  {userProfileData?.first_name && userProfileData?.last_name 
-                    ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
-                    : userProfileData?.first_name || userProfileData?.user_name || user?.user_metadata?.user_name || user?.user_metadata?.first_name || 'User'}
-                </h1>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            {/* Avatar + Identity row */}
+            <div className="flex items-start gap-4 mb-4">
+
+              {/* Avatar circle with gradient ring */}
+              <div className="relative flex-shrink-0">
+                <div className="w-20 h-20 rounded-full p-[2.5px]" style={{ background: 'linear-gradient(135deg, #a855f7, #6366f1, #ec4899)' }}>
+                  <div className="w-full h-full rounded-full flex items-center justify-center" style={{ background: '#1a0535' }}>
+                    {userProfileData?.avatar_url ? (
+                      <img src={userProfileData.avatar_url} alt="avatar" className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                      <span className="text-2xl font-bold text-white/80">
+                        {(userProfileData?.first_name?.[0] || userProfileData?.user_name?.[0] || user?.user_metadata?.first_name?.[0] || '?').toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {/* DNA level badge */}
+                {dnaLevel > 0 && (
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2" style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', borderColor: '#1a0535' }}>
+                    {dnaLevel}
+                  </div>
+                )}
+              </div>
+
+              {/* Name / handle / DNA info */}
+              <div className="flex-1 min-w-0">
+                {/* Name + share icon */}
+                <div className="flex items-center gap-2 mb-0.5">
+                  <h1 className="text-xl font-bold text-white leading-tight">
+                    {userProfileData?.first_name && userProfileData?.last_name 
+                      ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
+                      : userProfileData?.first_name || userProfileData?.user_name || user?.user_metadata?.user_name || user?.user_metadata?.first_name || 'User'}
+                  </h1>
+                  <button
+                    onClick={async () => {
+                      const profileUserId = isOwnProfile ? user?.id : viewingUserId;
+                      await copyLink({ kind: 'profile', id: profileUserId });
+                      toast({ title: "Link Copied!", description: "Share this profile with your friends" });
+                    }}
+                    className="text-white/50 hover:text-white/90 transition-colors flex-shrink-0"
+                    data-testid="button-share-profile-inline"
+                  >
+                    <CornerUpRight size={15} />
+                  </button>
+                </div>
+
+                {/* Handle + edit profile */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
                     @{userProfileData?.user_name || user?.user_metadata?.user_name || (user?.email?.split('@')[0]) || 'user'}
                   </span>
                   {userBadges.some((b: any) => b.slug === 'insider') && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold tracking-wide bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
                       Insider
                     </span>
                   )}
+                  {isOwnProfile && (
+                    <button
+                      className="flex items-center gap-0.5 transition-all hover:opacity-80"
+                      style={{ color: 'rgba(255,255,255,0.3)' }}
+                      onClick={() => {
+                        setEditUsername(userProfileData?.user_name || '');
+                        setEditFirstName(userProfileData?.first_name || '');
+                        setEditLastName(userProfileData?.last_name || '');
+                        setIsEditProfileOpen(true);
+                      }}
+                      data-testid="button-edit-profile"
+                    >
+                      <Settings size={9} />
+                      <span className="text-[9px]">Edit profile</span>
+                    </button>
+                  )}
                 </div>
-              </div>
 
-              {/* Right side: Share + Edit */}
-              <div className="flex flex-col items-end gap-2 flex-shrink-0 mt-0.5">
-                {/* Share profile */}
-                <button
-                  onClick={async () => {
-                    const profileUserId = isOwnProfile ? user?.id : viewingUserId;
-                    await copyLink({ kind: 'profile', id: profileUserId });
-                    toast({ title: "Link Copied!", description: "Share this profile with your friends" });
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all hover:bg-white/10"
-                  style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
-                  data-testid="button-share-profile-inline"
-                >
-                  <Share2 size={13} className="text-white/70" />
-                  <span className="text-[11px] font-medium" style={{ color: 'rgba(255,255,255,0.6)' }}>Share</span>
-                </button>
-                {/* Edit profile — subtle */}
-                {isOwnProfile && (
-                  <button
-                    className="flex items-center gap-1 transition-all hover:opacity-80"
-                    style={{ color: 'rgba(255,255,255,0.35)' }}
-                    onClick={() => {
-                      setEditUsername(userProfileData?.user_name || '');
-                      setEditFirstName(userProfileData?.first_name || '');
-                      setEditLastName(userProfileData?.last_name || '');
-                      setIsEditProfileOpen(true);
-                    }}
-                    data-testid="button-edit-profile"
-                  >
-                    <Settings size={11} />
-                    <span className="text-[10px]">Edit profile</span>
-                  </button>
+                {/* DNA archetype + tagline */}
+                {dnaProfile && (
+                  <div>
+                    <p className="text-sm font-bold mb-0.5" style={{ background: 'linear-gradient(90deg, #c084fc, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                      {dnaProfile.label}
+                    </p>
+                    {dnaProfile.tagline && (
+                      <p className="text-[11px] italic mb-1.5 leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                        "{dnaProfile.tagline}"
+                      </p>
+                    )}
+                    {/* Trait pills from favorite_genres */}
+                    {Array.isArray(dnaProfile.favorite_genres) && dnaProfile.favorite_genres.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {dnaProfile.favorite_genres.slice(0, 3).map((genre: string) => (
+                          <span
+                            key={genre}
+                            className="px-2 py-0.5 rounded-full text-[9px] font-medium"
+                            style={{ background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.35)', color: 'rgba(196,181,253,0.9)' }}
+                          >
+                            {genre}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
 
             {/* Stats — 4-column horizontal grid */}
-            <div className="grid grid-cols-4 gap-2 mb-5">
+            <div className="grid grid-cols-4 gap-2 mb-4">
               {/* Points */}
               <button
                 onClick={() => setLocation('/points')}
-                className="flex flex-col items-start p-3 rounded-xl transition-all hover:bg-white/10"
+                className="flex flex-col items-start p-2.5 rounded-xl transition-all hover:bg-white/10"
                 style={{ background: 'rgba(255,255,255,0.06)' }}
                 data-testid="points-breakdown-link"
               >
-                <div className="flex items-center gap-1 mb-1">
-                  <Trophy size={13} className="text-amber-400" />
-                </div>
-                <span className="text-base font-bold text-white leading-none">
+                <Trophy size={13} className="text-amber-400 mb-1" />
+                <span className="text-sm font-bold text-white leading-none">
                   {isLoadingPoints ? '…' : (userPoints?.all_time || 0).toLocaleString()}
                 </span>
-                <span className="text-[10px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  reputation points
+                <span className="text-[9px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  reputation pts
                 </span>
               </button>
 
               {/* Rank */}
               <Link href="/leaderboard">
                 <div
-                  className="flex flex-col items-start p-3 rounded-xl cursor-pointer transition-all hover:bg-white/10 h-full"
+                  className="flex flex-col items-start p-2.5 rounded-xl cursor-pointer transition-all hover:bg-white/10 h-full"
                   style={{ background: 'rgba(255,255,255,0.06)' }}
                 >
-                  <div className="flex items-center gap-1 mb-1">
-                    <Medal size={13} className="text-purple-300" />
-                  </div>
-                  <span className="text-base font-bold text-white leading-none">
+                  <Medal size={13} className="text-purple-300 mb-1" />
+                  <span className="text-sm font-bold text-white leading-none">
                     {userRank ? `#${userRank.global}` : '—'}
                   </span>
-                  <span className="text-[10px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                    View Leaderboard
+                  <span className="text-[9px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                    leaderboard
                   </span>
                 </div>
               </Link>
 
               {/* Items logged */}
               <div
-                className="flex flex-col items-start p-3 rounded-xl"
+                className="flex flex-col items-start p-2.5 rounded-xl"
                 style={{ background: 'rgba(255,255,255,0.06)' }}
               >
-                <div className="flex items-center gap-1 mb-1">
-                  <TrendingUp size={13} className="text-blue-300" />
-                </div>
-                <span className="text-base font-bold text-white leading-none">
+                <TrendingUp size={13} className="text-blue-300 mb-1" />
+                <span className="text-sm font-bold text-white leading-none">
                   {!isOwnProfile && friendshipStatus !== 'friends' ? '—' : totalItemsLogged}
                 </span>
-                <span className="text-[10px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <span className="text-[9px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
                   media logged
                 </span>
               </div>
 
-              {/* Mostly into */}
+              {/* Mostly into — from DNA profile genres */}
               <div
-                className="flex flex-col items-start p-3 rounded-xl"
+                className="flex flex-col items-start p-2.5 rounded-xl"
                 style={{ background: 'rgba(255,255,255,0.06)' }}
               >
-                <div className="flex items-center gap-1 mb-1">
-                  <BarChart3 size={13} className="text-green-300" />
-                </div>
-                <span className="text-[11px] font-bold text-white leading-tight">
-                  {mostlyIntoTypes && mostlyIntoTypes.length > 0 ? mostlyIntoTypes.join(' • ') : '—'}
+                <BarChart3 size={13} className="text-green-300 mb-1" />
+                <span className="text-[10px] font-bold text-white leading-tight">
+                  {dnaProfile?.favorite_genres?.length > 0
+                    ? dnaProfile.favorite_genres.slice(0, 2).join(' • ')
+                    : mostlyIntoTypes?.length > 0 ? mostlyIntoTypes.join(' • ') : '—'}
                 </span>
-                <span className="text-[10px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  Mostly into
+                <span className="text-[9px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  mostly into
                 </span>
               </div>
             </div>
