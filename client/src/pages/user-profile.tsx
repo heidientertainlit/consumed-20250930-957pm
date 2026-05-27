@@ -56,6 +56,27 @@ import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
 import { ReportSheet } from "@/components/report-sheet";
 
+const DNA_ARCHETYPE_MAP: Record<string, { displayName: string; oneLiner: string }> = {
+  theory_crafter:     { displayName: 'The Theory Crafter',      oneLiner: "You don't just watch. You build cases." },
+  comfort_rewatcher:  { displayName: 'The Comfort Rewatcher',   oneLiner: "You know exactly where to go when you need something that feels like home." },
+  prestige_detective: { displayName: 'The Prestige Detective',  oneLiner: "You like your stories smart, layered, and a little morally complicated." },
+  emotional_binger:   { displayName: 'The Emotional Binger',    oneLiner: "You are here to feel something." },
+  first_episode_judge:{ displayName: 'The First Episode Judge', oneLiner: "You know fast. Usually very fast." },
+  hidden_gem_hunter:  { displayName: 'The Hidden Gem Hunter',   oneLiner: "You found it before everyone else did." },
+  dark_season_devotee:{ displayName: 'The Dark Season Devotee', oneLiner: "Your watchlist is not exactly beach reading." },
+  story_sharer:       { displayName: 'The Story Sharer',        oneLiner: "You watch so you can talk about it." },
+  slow_burn_devotee:  { displayName: 'The Slow Burn Devotee',   oneLiner: "You trust the process." },
+  genre_loyalist:     { displayName: 'The Genre Loyalist',      oneLiner: "You know your lane, and your lane knows you." },
+  era_hopper:         { displayName: 'The Era Hopper',          oneLiner: "Your taste has seasons." },
+  taste_signaler:     { displayName: 'The Taste Signaler',      oneLiner: "Your ratings mean something." },
+  chaos_watcher:      { displayName: 'The Chaos Watcher',       oneLiner: "You love when everything goes off the rails." },
+  lore_diver:         { displayName: 'The Lore Diver',          oneLiner: "You do not skim the universe. You enter it." },
+  completionist:      { displayName: 'The Completionist',       oneLiner: "If you start the journey, you want to finish it." },
+  mood_matcher:       { displayName: 'The Mood Matcher',        oneLiner: "You pick entertainment based on the feeling you need." },
+  culture_tracker:    { displayName: 'The Culture Tracker',     oneLiner: "You like knowing what everyone is talking about." },
+  nostalgia_keeper:   { displayName: 'The Nostalgia Keeper',    oneLiner: "Your past has a watchlist." },
+};
+
 export default function UserProfile() {
   const { user, session, loading, signOut } = useAuth();
   const { toast } = useToast();
@@ -2899,32 +2920,46 @@ export default function UserProfile() {
                 </div>
 
                 {/* DNA archetype + tagline */}
-                {dnaProfile && (
-                  <div>
-                    <p className="text-sm font-bold mb-0.5" style={{ background: 'linear-gradient(90deg, #c084fc, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                      {dnaProfile.label}
+                {dnaProfile && (() => {
+                  const archetypeInfo = dnaProfile.core_archetype ? DNA_ARCHETYPE_MAP[dnaProfile.core_archetype] : null;
+                  const archetypeName = archetypeInfo?.displayName || null;
+                  const archetypeTagline = archetypeInfo?.oneLiner || null;
+                  const flavorPills: string[] = Array.isArray(dnaProfile.flavor_notes) && dnaProfile.flavor_notes.length > 0
+                    ? dnaProfile.flavor_notes.slice(0, 3)
+                    : Array.isArray(dnaProfile.favorite_genres) ? dnaProfile.favorite_genres.slice(0, 3) : [];
+
+                  if (!archetypeName) return (
+                    <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                      DNA profile needs refresh
                     </p>
-                    {dnaProfile.tagline && (
-                      <p className="text-[11px] italic mb-1.5 leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                        "{dnaProfile.tagline}"
+                  );
+
+                  return (
+                    <div>
+                      <p className="text-sm font-bold mb-0.5" style={{ background: 'linear-gradient(90deg, #c084fc, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                        {archetypeName}
                       </p>
-                    )}
-                    {/* Trait pills from favorite_genres */}
-                    {Array.isArray(dnaProfile.favorite_genres) && dnaProfile.favorite_genres.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {dnaProfile.favorite_genres.slice(0, 3).map((genre: string) => (
-                          <span
-                            key={genre}
-                            className="px-2 py-0.5 rounded-full text-[9px] font-medium"
-                            style={{ background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.35)', color: 'rgba(196,181,253,0.9)' }}
-                          >
-                            {genre}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                      {archetypeTagline && (
+                        <p className="text-[11px] italic mb-1.5 leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                          "{archetypeTagline}"
+                        </p>
+                      )}
+                      {flavorPills.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {flavorPills.map((pill: string) => (
+                            <span
+                              key={pill}
+                              className="px-2 py-0.5 rounded-full text-[9px] font-medium"
+                              style={{ background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.35)', color: 'rgba(196,181,253,0.9)' }}
+                            >
+                              {pill}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
