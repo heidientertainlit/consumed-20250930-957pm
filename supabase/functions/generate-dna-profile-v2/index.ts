@@ -215,14 +215,13 @@ serve(async (req) => {
       });
     }
 
-    // ── 1. Check items logged (keep existing 15-item minimum) ────────────────
-    const { data: levelData } = await supabaseClient
-      .from('user_dna_levels')
-      .select('items_logged')
-      .eq('user_id', user.id)
-      .single();
+    // ── 1. Check items logged — count directly from list_items (source of truth) ──
+    const { count: itemsLoggedCount } = await supabaseClient
+      .from('list_items')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id);
 
-    const itemsLogged = levelData?.items_logged || 0;
+    const itemsLogged = itemsLoggedCount || 0;
     if (itemsLogged < 15) {
       return new Response(JSON.stringify({
         error: 'Not enough items logged',
