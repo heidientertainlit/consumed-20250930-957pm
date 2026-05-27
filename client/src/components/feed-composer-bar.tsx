@@ -189,7 +189,7 @@ export default function FeedComposerBar() {
   const PLACEHOLDERS = ["Your take...", "Thoughts?", "What's your next move?"];
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setPlaceholderIdx(i => (i + 1) % PLACEHOLDERS.length), 3000);
+    const t = setInterval(() => setPlaceholderIdx(i => (i + 1) % PLACEHOLDERS.length), 9000);
     return () => clearInterval(t);
   }, []);
   const [showMediaSearch, setShowMediaSearch] = useState(false);

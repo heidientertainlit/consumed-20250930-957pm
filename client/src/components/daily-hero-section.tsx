@@ -2091,42 +2091,31 @@ export function DailyHeroSection() {
                 className="w-full rounded-xl text-left overflow-hidden"
                 style={{ background: 'linear-gradient(160deg,#1a1230 0%,#160f2a 60%,#0f0d1e 100%)', border: '1px solid rgba(160,120,255,0.2)' }}
               >
-                {/* Top row */}
+                {/* Top row: label + headline + share */}
                 <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3">
                   <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                     <span style={{ fontSize: 10, letterSpacing: '0.12em', color: '#9b7fe8', textTransform: 'uppercase', fontWeight: 600 }}>Today's Play</span>
-                    <span style={{ fontSize: 21, fontWeight: 600, color: '#f0ecff', lineHeight: 1.2 }}>{headline}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span style={{ fontSize: 21, fontWeight: 600, color: '#f0ecff', lineHeight: 1.2 }}>{headline}</span>
+                      <Check size={16} strokeWidth={3} color="#4ade80" style={{ marginTop: 2, flexShrink: 0 }} />
+                    </div>
                     <span style={{ fontSize: 12, color: '#a090c8', marginTop: 3, lineHeight: 1.5 }}>{subCopy}</span>
                   </div>
-                </div>
-
-                {/* Divider */}
-                <div style={{ height: '1px', background: 'rgba(160,120,255,0.12)', margin: '0 16px' }} />
-
-                {/* Middle: completed + streak badges */}
-                <div className="flex items-center gap-2 px-4 py-2">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 20, padding: '4px 10px' }}>
-                    <Check size={13} strokeWidth={3} color="#4ade80" />
-                    <span style={{ fontSize: 11, color: '#4ade80', fontWeight: 600 }}>Done</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.3)', borderRadius: 20, padding: '4px 10px' }}>
-                    <Flame size={13} color="#fb923c" fill="#fb923c" />
-                    <span style={{ fontSize: 11, color: '#fb923c', fontWeight: 600 }}>{streak ?? 1} day streak</span>
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div style={{ height: '1px', background: 'rgba(160,120,255,0.12)', margin: '0 16px' }} />
-
-                {/* Bottom row */}
-                <div className="flex items-center justify-end gap-3 px-4 py-3">
                   <button
                     onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.25)', borderRadius: 20, padding: '6px 13px', color: '#c4a0ff', fontSize: 12, fontWeight: 500, flexShrink: 0, cursor: 'pointer' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.25)', borderRadius: 20, padding: '5px 11px', color: '#c4a0ff', fontSize: 11, fontWeight: 500, flexShrink: 0, cursor: 'pointer', marginTop: 2 }}
                   >
-                    <Share2 size={12} />
+                    <Share2 size={11} />
                     Share
                   </button>
+                </div>
+
+                {/* Streak pill */}
+                <div className="flex items-center gap-2 px-4 pb-3">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(96,165,250,0.12)', border: '1px solid rgba(96,165,250,0.3)', borderRadius: 20, padding: '4px 10px' }}>
+                    <Flame size={12} color="#60a5fa" fill="#60a5fa" />
+                    <span style={{ fontSize: 11, color: '#60a5fa', fontWeight: 600 }}>{streak ?? 1} day streak</span>
+                  </div>
                 </div>
               </div>
             );
