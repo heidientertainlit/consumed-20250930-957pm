@@ -1756,24 +1756,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         {/* ── Seen It?–style card: white container + internal fan stack ── */}
         <div className="bg-white rounded-2xl shadow-sm overflow-visible mx-2">
 
-          {/* Header: avatar + name + "X of N" counter */}
-          <div className="flex items-center justify-between px-4 pt-4 pb-2">
-            <div className="flex items-center gap-2">
-              {post.user?.avatar ? (
-                <img src={post.user.avatar} className="w-7 h-7 rounded-full object-cover" alt="" />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center">
-                  <span className="text-violet-600 text-[11px] font-semibold">{displayName[0]?.toUpperCase()}</span>
-                </div>
-              )}
-              <span className="text-sm font-semibold text-gray-900">{displayName}</span>
-            </div>
-            {stackPosts && stackPosts.length > 1 && (
-              <div className="flex items-center gap-0.5 text-sm text-gray-400">
-                <span>{(stackIndex ?? 0) + 1} of {stackPosts.length}</span>
-                <ChevronRight size={14} />
-              </div>
-            )}
+          {/* Header: section label */}
+          <div className="px-4 pt-4 pb-2">
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Fan Takes</p>
           </div>
 
           {/* Media title — above the fan stack */}
@@ -1898,7 +1883,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               <ArrowUp size={18} className={isLiked && !localReaction ? 'text-purple-600' : 'text-gray-500'} strokeWidth={isLiked && !localReaction ? 2.5 : 1.75} />
             </div>
             <span className={`text-[10px] font-medium ${isLiked && !localReaction ? 'text-purple-600' : 'text-gray-500'}`}>
-              Agree{(post.likes || 0) > 0 ? ` ${post.likes}` : ''}
+              Agree
             </span>
           </button>
 
@@ -1921,7 +1906,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md border ${localReaction === 'down' ? 'bg-gray-200 border-gray-300' : 'bg-white border-gray-200'}`}>
               <ArrowDown size={18} className={localReaction === 'down' ? 'text-gray-700' : 'text-gray-500'} strokeWidth={localReaction === 'down' ? 2.5 : 1.75} />
             </div>
-            <span className={`text-[10px] font-medium ${localReaction === 'down' ? 'text-gray-700' : 'text-gray-500'}`}>Not Me</span>
+            <span className={`text-[10px] font-medium ${localReaction === 'down' ? 'text-gray-700' : 'text-gray-500'}`}>Disagree</span>
           </button>
 
           {/* Rate it — other user's post */}
@@ -4226,7 +4211,7 @@ function TinderCardStack({ posts, renderCard, hidePeekCards }: {
         {showLeft && <div style={{ position: 'absolute', top: 0, left: `calc(50% - ${CARD_W / 2}px)`, width: CARD_W, height: CARD_H, borderRadius: 18, background: 'rgba(156,163,175,0.12)', border: '2px solid rgba(156,163,175,0.35)', zIndex: 11, pointerEvents: 'none' }} />}
         {showRight && <div style={{ position: 'absolute', top: 14, left: `calc(50% - ${CARD_W / 2}px + 14px)`, zIndex: 12, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>AGREE</span></div>}
         {showLeft && <div style={{ position: 'absolute', top: 14, right: `calc(50% - ${CARD_W / 2}px + 14px)`, zIndex: 12, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>SKIP</span></div>}
-        {remaining.length > 1 && !showRight && !showLeft && (
+        {remaining.length > 1 && !showRight && !showLeft && !hidePeekCards && (
           <div style={{ position: 'absolute', top: 12, left: `calc(50% - ${CARD_W / 2}px + 12px)`, zIndex: 12, pointerEvents: 'none', background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)', borderRadius: 10, padding: '2px 8px' }}>
             <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: 600 }}>{topIndex + 1}/{posts.length}</span>
           </div>
