@@ -720,6 +720,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [relatedRatings, setRelatedRatings] = useState<Array<{userId: string; userName: string; displayName: string; avatar?: string; rating: number; content?: string}>>([]);
   const [showAllRelated, setShowAllRelated] = useState(false);
   const [showAllComments, setShowAllComments] = useState(false);
+  const [, setLocation] = useLocation();
   const [seenItDone, setSeenItDone] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
   // Default open for other users' posts so "Your Turn" shows without needing to tap Rate it
@@ -1822,12 +1823,16 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               </div>
             )}
 
-            {/* Front card */}
+            {/* Front card — tap poster → media detail page */}
             <div
               ref={swipeProps?.ref}
               className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
               style={{ height: 282, width: 208, position: 'absolute', zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.30)', ...(swipeProps?.style ?? {}) }}
-              onClick={() => setPosterDetailOpen(true)}
+              onClick={() => {
+                if (post.externalSource && post.externalId) {
+                  setLocation(`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`);
+                }
+              }}
             >
               {swipeProps?.overlays}
           {/* Background image or gradient fallback */}
@@ -1858,8 +1863,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             )}
           </div>
 
-          {/* Bottom content overlay */}
-          <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 pt-16">
+          {/* Bottom content overlay — clicking stars/commentary expands More Ratings, not navigates */}
+          <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 pt-16" onClick={(e) => { e.stopPropagation(); setShowAllRelated(true); }}>
             {/* Stars */}
             {hasRating && (
               <div className="flex items-center gap-0.5 mb-2">

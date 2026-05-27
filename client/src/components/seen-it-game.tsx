@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Eye, ChevronRight, Check, X, Plus, Star, Loader2, Sparkles, BookOpen, Headphones, Gamepad2, Heart } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -48,6 +49,7 @@ const SWIPE_THRESHOLD = 80;
 
 export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameProps = {}) {
   const { session, user } = useAuth();
+  const [, setLocation] = useLocation();
 
   // ── Persisted state ───────────────────────────────────────────────────────
   const [localResponses, setLocalResponses] = useState<Record<string, boolean | 'want_to'>>(() => {
@@ -498,16 +500,26 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           </div>
         )}
 
-        {/* Front card — follows drag */}
-        <div style={{
-          position: 'absolute', width: 208, height: 282, borderRadius: 16, overflow: 'hidden',
-          zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.28)',
-          transform: `translateX(${dragX}px) rotate(${dragX * 0.06}deg)`,
-          transition: isActiveDrag ? 'none' : Math.abs(dragX) > 300
-            ? 'transform 0.42s cubic-bezier(0.25,0.46,0.45,0.94)'
-            : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          pointerEvents: 'none',
-        }}>
+        {/* Front card — follows drag; tap (no drag) navigates to media detail */}
+        <div
+          style={{
+            position: 'absolute', width: 208, height: 282, borderRadius: 16, overflow: 'hidden',
+            zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.28)',
+            transform: `translateX(${dragX}px) rotate(${dragX * 0.06}deg)`,
+            transition: isActiveDrag ? 'none' : Math.abs(dragX) > 300
+              ? 'transform 0.42s cubic-bezier(0.25,0.46,0.45,0.94)'
+              : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            pointerEvents: 'auto',
+            cursor: activeItem.external_id ? 'pointer' : 'grab',
+          }}
+          onClick={() => {
+            // Only navigate on a genuine tap — not after a drag gesture
+            if (Math.abs(dragX) < 10 && activeItem.external_id && activeItem.external_source) {
+              const type = (activeItem.media_type || 'movie').toLowerCase();
+              setLocation(`/media/${type}/${activeItem.external_source}/${activeItem.external_id}`);
+            }
+          }}
+        >
           <img
             src={activeItem.image_url}
             alt={activeItem.title}
