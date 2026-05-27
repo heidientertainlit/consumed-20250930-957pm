@@ -554,9 +554,10 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         </div>
       </div>
 
-      {/* Action buttons */}
+      {/* Action buttons: Next | Seen It | Add to list | Rate it */}
       <div className="flex items-center justify-around px-4 py-3">
-        {/* Next — move on without judging */}
+
+        {/* Next — skip without recording */}
         <button
           onClick={() => handleResponse(currentSet.id, activeItem, 'skip')}
           className="flex flex-col items-center gap-1 group"
@@ -567,49 +568,39 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           <span className="text-[10px] text-gray-400">Next</span>
         </button>
 
-        {/* ♥ — maybe later / want to */}
-        <button
-          onClick={() => handleResponse(currentSet.id, activeItem, 'want_to')}
-          className="flex flex-col items-center gap-1 group"
-        >
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
-            <Heart size={20} className="text-gray-400" />
-          </div>
-          <span className="text-[10px] text-gray-400">Maybe later</span>
-        </button>
-
-        {/* ⭐ — rate it */}
-        <button
-          onClick={() => setRatingItem(prev => prev === activeItem.id ? null : activeItem.id)}
-          className="flex flex-col items-center gap-1 group"
-        >
-          <div className={`w-14 h-14 rounded-full flex items-center justify-center group-active:scale-90 transition-all shadow-md ${ratingItem === activeItem.id ? 'bg-purple-500' : 'bg-purple-500'}`}>
-            <Star size={22} className="text-white" fill={ratingMap[activeItem.id] ? 'white' : 'none'} />
-          </div>
-          <span className="text-[10px] text-purple-500 font-medium">Rate it</span>
-        </button>
-
-        {/* + — add to list (silently queues and advances) */}
-        <button
-          onClick={() => handleResponse(currentSet.id, activeItem, 'want_to')}
-          className="flex flex-col items-center gap-1 group"
-        >
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
-            <Plus size={20} className="text-gray-500" />
-          </div>
-          <span className="text-[10px] text-gray-400">Add to list</span>
-        </button>
-
-        {/* ✓ — seen it */}
+        {/* Seen It — green, primary positive action */}
         <button
           onClick={() => handleResponse(currentSet.id, activeItem, true)}
           className="flex flex-col items-center gap-1 group"
         >
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
-            <Check size={20} className="text-purple-500" />
+          <div className="w-14 h-14 rounded-full bg-green-500 flex items-center justify-center group-active:scale-90 transition-all shadow-md">
+            <Check size={22} className="text-white" />
           </div>
-          <span className="text-[10px] text-purple-500 font-medium">{mediaConfig.actionYes}</span>
+          <span className="text-[10px] text-green-600 font-medium">{mediaConfig.actionYes}</span>
         </button>
+
+        {/* Add to list — purple, brand CTA */}
+        <button
+          onClick={() => handleResponse(currentSet.id, activeItem, 'want_to')}
+          className="flex flex-col items-center gap-1 group"
+        >
+          <div className="w-14 h-14 rounded-full bg-purple-500 flex items-center justify-center group-active:scale-90 transition-all shadow-md">
+            <Plus size={22} className="text-white" />
+          </div>
+          <span className="text-[10px] text-purple-500 font-medium">Add to list</span>
+        </button>
+
+        {/* Rate it — gray, optional */}
+        <button
+          onClick={() => setRatingItem(prev => prev === activeItem.id ? null : activeItem.id)}
+          className="flex flex-col items-center gap-1 group"
+        >
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center group-active:scale-90 transition-all ${ratingItem === activeItem.id ? 'bg-yellow-400' : 'bg-gray-100'}`}>
+            <Star size={20} className={ratingItem === activeItem.id ? 'text-white fill-white' : 'text-gray-500'} />
+          </div>
+          <span className={`text-[10px] font-medium ${ratingItem === activeItem.id ? 'text-yellow-500' : 'text-gray-400'}`}>Rate it</span>
+        </button>
+
       </div>
     </div>
   );
