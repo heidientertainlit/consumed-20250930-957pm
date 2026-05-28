@@ -140,7 +140,8 @@ export default function UserProfile() {
   const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
   const [isSubmittingSurvey, setIsSubmittingSurvey] = useState(false);
   const [dnaProfile, setDnaProfile] = useState<any>(null);
-  
+  const [dnaSnapshots, setDnaSnapshots] = useState<any[]>([]);
+
   // DNA Level states (0=No Survey, 1=DNA Summary (10+ items), 2=Friend Compare (30+ items))
   const [dnaLevel, setDnaLevel] = useState<0 | 1 | 2>(0);
   const [dnaItemCount, setDnaItemCount] = useState(0);
@@ -2039,6 +2040,15 @@ export default function UserProfile() {
 
       setDnaProfile(data);
       setDnaProfileStatus('has_profile');
+
+      // Also load snapshot history
+      const { data: snapData } = await supabase
+        .from('dna_snapshots')
+        .select('core_archetype, current_era, created_at, evolution_note, confidence_score')
+        .eq('user_id', viewingUserId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (snapData) setDnaSnapshots(snapData);
     } catch (error) {
       setDnaProfileStatus('no_profile');
       setDnaProfile(null);
@@ -3603,6 +3613,67 @@ export default function UserProfile() {
                     <span className={`text-[10px] font-semibold ${dnaActiveTab === 'compare' ? 'text-white' : 'text-gray-700'}`}>Compare DNA</span>
                   </button>
                 </div>
+
+                {/* DNA Journey */}
+                {dnaSnapshots.length > 0 && (() => {
+                  const ARCHETYPE_NAMES: Record<string, string> = {
+                    theory_crafter: 'The Theory Crafter', comfort_rewatcher: 'The Comfort Rewatcher',
+                    prestige_detective: 'The Prestige Detective', emotional_binger: 'The Emotional Binger',
+                    first_episode_judge: 'The First Episode Judge', hidden_gem_hunter: 'The Hidden Gem Hunter',
+                    dark_season_devotee: 'The Dark Season Devotee', story_sharer: 'The Story Sharer',
+                    slow_burn_devotee: 'The Slow Burn Devotee', genre_loyalist: 'The Genre Loyalist',
+                    era_hopper: 'The Era Hopper', taste_signaler: 'The Taste Signaler',
+                    chaos_watcher: 'The Chaos Watcher', lore_diver: 'The Lore Diver',
+                    completionist: 'The Completionist', mood_matcher: 'The Mood Matcher',
+                    culture_tracker: 'The Culture Tracker', nostalgia_keeper: 'The Nostalgia Keeper',
+                    action_seeker: 'The Action Seeker', social_watcher: 'The Social Watcher',
+                  };
+                  const fmtEra = (era: string) => era
+                    ? era.replace(/_era$/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+                    : '';
+                  const fmtDate = (iso: string) => {
+                    const d = new Date(iso);
+                    const now = new Date();
+                    const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
+                    if (diffDays === 0) return 'Today';
+                    if (diffDays === 1) return 'Yesterday';
+                    if (diffDays < 7) return `${diffDays}d ago`;
+                    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  };
+                  const shown = dnaSnapshots.slice(0, 5);
+                  return (
+                    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                      <div className="flex items-center gap-1.5 mb-3">
+                        <span className="text-sm">🧬</span>
+                        <h3 className="text-xs font-bold text-gray-900">DNA Journey</h3>
+                        <span className="ml-auto text-[10px] text-gray-400">{shown.length} snapshot{shown.length !== 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="relative">
+                        <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gray-100" />
+                        <div className="space-y-3">
+                          {shown.map((snap: any, i: number) => (
+                            <div key={snap.created_at} className="flex items-start gap-3 relative">
+                              <div className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 mt-0.5 ${i === 0 ? 'bg-purple-500 border-purple-500' : 'bg-white border-gray-300'}`} />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className={`text-xs font-semibold truncate ${i === 0 ? 'text-purple-700' : 'text-gray-700'}`}>
+                                    {ARCHETYPE_NAMES[snap.core_archetype] ?? snap.core_archetype}
+                                  </span>
+                                  <span className={`text-[10px] flex-shrink-0 font-medium ${i === 0 ? 'text-purple-500' : 'text-gray-400'}`}>
+                                    {i === 0 ? '← Now' : fmtDate(snap.created_at)}
+                                  </span>
+                                </div>
+                                {snap.current_era && (
+                                  <p className="text-[10px] text-gray-400 mt-0.5">{fmtEra(snap.current_era)}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Top Genres */}
                 {dnaProfile.favorite_genres?.length > 0 && (
