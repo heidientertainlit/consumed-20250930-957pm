@@ -3532,6 +3532,53 @@ export default function UserProfile() {
                   </div>
                 </div>
 
+                {/* DNA Evolution Progress */}
+                {(() => {
+                  const DNA_LEVELS = [
+                    { name: 'Seed', emoji: '🌱', min: 0, max: 15, unlock: 'Behavioral signals blend in' },
+                    { name: 'Growing', emoji: '🌿', min: 15, max: 30, unlock: 'Compare DNA with friends' },
+                    { name: 'Formed', emoji: '🔓', min: 30, max: 50, unlock: 'Peak DNA accuracy' },
+                    { name: 'Peak', emoji: '⚡', min: 50, max: 50, unlock: null },
+                  ];
+                  const lvlIdx = dnaItemCount >= 50 ? 3 : dnaItemCount >= 30 ? 2 : dnaItemCount >= 15 ? 1 : 0;
+                  const lvl = DNA_LEVELS[lvlIdx];
+                  const isPeak = lvlIdx === 3;
+                  const pct = isPeak ? 100 : Math.min(Math.round(((dnaItemCount - lvl.min) / (lvl.max - lvl.min)) * 100), 100);
+                  return (
+                    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                      <div className="flex items-center justify-between mb-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm">{lvl.emoji}</span>
+                          <span className="text-xs font-bold text-gray-900">DNA {lvl.name}</span>
+                        </div>
+                        <span className="text-[10px] font-semibold text-purple-500 uppercase tracking-widest">Level {lvlIdx + 1} of 4</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${pct}%`,
+                            background: isPeak
+                              ? 'linear-gradient(90deg, #7c3aed, #f59e0b)'
+                              : 'linear-gradient(90deg, #7c3aed, #6366f1)',
+                          }}
+                        />
+                      </div>
+                      {isPeak ? (
+                        <p className="text-[10px] text-amber-600 font-semibold">Your DNA is fully evolved — most accurate results ⚡</p>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-gray-400">{dnaItemCount} / {lvl.max} items</span>
+                          <span className="text-[10px] text-gray-500">
+                            {lvl.max - dnaItemCount} more to unlock{' '}
+                            <span className="text-purple-600 font-medium">{lvl.unlock}</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {/* Quick Actions */}
                 <div className="grid grid-cols-3 gap-2">
                   <button

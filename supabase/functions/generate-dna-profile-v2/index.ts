@@ -237,13 +237,6 @@ serve(async (req) => {
       .eq('user_id', userId);
 
     const itemsLogged = itemsLoggedCount || 0;
-    if (itemsLogged < 15) {
-      return new Response(JSON.stringify({
-        error: 'Not enough items logged',
-        items_logged: itemsLogged,
-        items_required: 15
-      }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
 
     const blend = getBlendWeights(itemsLogged);
 
