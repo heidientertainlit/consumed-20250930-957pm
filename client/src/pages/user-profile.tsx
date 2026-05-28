@@ -3480,20 +3480,43 @@ export default function UserProfile() {
                 {/* Archetype Profile Card */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                   <div className="p-4">
-                    <div className="flex items-start justify-between mb-2">
+                    {/* Header: DNA label + era pill side by side */}
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                          <Dna size={15} className="text-purple-600" />
+                        <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center">
+                          <Dna size={13} className="text-purple-600" />
                         </div>
                         <span className="text-[10px] font-semibold text-purple-500 uppercase tracking-widest">Entertainment DNA</span>
                       </div>
+                      {dnaProfile.current_era && (
+                        <span className="flex items-center gap-1 text-[10px] font-semibold text-purple-700 bg-purple-50 border border-purple-100 rounded-full px-2.5 py-1">
+                          <Sparkles size={9} className="text-purple-400 flex-shrink-0" />
+                          {dnaProfile.current_era.replace(/_era$/, '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                        </span>
+                      )}
                     </div>
-                    <h2 className="text-xl font-black text-gray-900 leading-tight mb-1">
-                      {DNA_ARCHETYPE_MAP[dnaProfile.core_archetype as keyof typeof DNA_ARCHETYPE_MAP]?.label || dnaProfile.label}
-                    </h2>
+
+                    {/* Blended archetype headline */}
+                    <div className="mb-2">
+                      <h2 className="text-xl font-black text-gray-900 leading-tight">
+                        {DNA_ARCHETYPE_MAP[dnaProfile.core_archetype as keyof typeof DNA_ARCHETYPE_MAP]?.label || dnaProfile.label}
+                      </h2>
+                      {dnaProfile.secondary_archetypes?.length > 0 && (() => {
+                        const secondaries = dnaProfile.secondary_archetypes as string[];
+                        const fmtArch = (k: string) => k.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+                        const phrase = secondaries.length === 1
+                          ? `with a touch of ${fmtArch(secondaries[0])}`
+                          : `with shades of ${secondaries.map(fmtArch).join(' & ')}`;
+                        return <p className="text-sm text-purple-400 font-medium italic mt-0.5">{phrase}</p>;
+                      })()}
+                    </div>
+
+                    {/* Tagline */}
                     {dnaProfile.tagline && (
-                      <p className="text-gray-500 text-sm italic mb-3 leading-snug">{dnaProfile.tagline}</p>
+                      <p className="text-gray-500 text-sm italic mb-3 leading-snug">"{dnaProfile.tagline}"</p>
                     )}
+
+                    {/* Flavor traits */}
                     {dnaProfile.flavor_notes?.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mb-3">
                         {dnaProfile.flavor_notes.map((note: string, i: number) => (
@@ -3501,33 +3524,18 @@ export default function UserProfile() {
                         ))}
                       </div>
                     )}
-                    {dnaProfile.secondary_archetypes?.length > 0 && (
-                      <div className="mb-3">
-                        <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1.5">Also in your DNA</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {dnaProfile.secondary_archetypes.map((arch: string, i: number) => (
-                            <span key={i} className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600">
-                              {arch.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                            </span>
-                          ))}
-                        </div>
+
+                    {/* Evolution callout — shows DNA shift over time */}
+                    {dnaProfile.evolution_note && (
+                      <div className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-3">
+                        <Sparkles size={11} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-amber-700 leading-snug italic">{dnaProfile.evolution_note}</p>
                       </div>
                     )}
-                    {(dnaProfile.current_era || dnaProfile.profile_text) && (
-                      <div className="pt-3 border-t border-gray-50">
-                        {dnaProfile.current_era && (
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <Sparkles size={12} className="text-purple-400 flex-shrink-0" />
-                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">Current Era</span>
-                            <span className="text-xs font-semibold text-purple-700">
-                              {dnaProfile.current_era.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                            </span>
-                          </div>
-                        )}
-                        {dnaProfile.profile_text && (
-                          <p className="text-gray-500 text-xs leading-relaxed">{dnaProfile.profile_text}</p>
-                        )}
-                      </div>
+
+                    {/* Profile text */}
+                    {dnaProfile.profile_text && (
+                      <p className="text-gray-400 text-xs leading-relaxed">{dnaProfile.profile_text}</p>
                     )}
                   </div>
                   <div className="px-4 pb-4">
