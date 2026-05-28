@@ -3477,7 +3477,6 @@ export default function UserProfile() {
                         </div>
                         <span className="text-[10px] font-semibold text-purple-500 uppercase tracking-widest">Entertainment DNA</span>
                       </div>
-                      <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">Level {dnaLevel}</span>
                     </div>
                     <h2 className="text-xl font-black text-gray-900 leading-tight mb-1">
                       {DNA_ARCHETYPE_MAP[dnaProfile.core_archetype as keyof typeof DNA_ARCHETYPE_MAP]?.label || dnaProfile.label}
@@ -3551,10 +3550,10 @@ export default function UserProfile() {
                   </button>
                   <button
                     onClick={() => setDnaActiveTab(dnaActiveTab === 'compare' ? 'dna' : 'compare')}
-                    className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
+                    className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl border shadow-sm transition-colors ${dnaActiveTab === 'compare' ? 'bg-purple-600 border-purple-600' : 'bg-white border-gray-100 hover:bg-gray-50'}`}
                   >
-                    <Users size={18} className="text-purple-500" />
-                    <span className="text-[10px] font-semibold text-gray-700">Compare DNA</span>
+                    <Users size={18} className={dnaActiveTab === 'compare' ? 'text-white' : 'text-purple-500'} />
+                    <span className={`text-[10px] font-semibold ${dnaActiveTab === 'compare' ? 'text-white' : 'text-gray-700'}`}>Compare DNA</span>
                   </button>
                 </div>
 
@@ -3687,19 +3686,9 @@ export default function UserProfile() {
             )}
 
             {/* ── Compare DNA ── */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <button
-                    onClick={() => setDnaActiveTab(dnaActiveTab === 'compare' ? 'dna' : 'compare')}
-                    className="w-full flex items-center justify-between px-4 py-3.5"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Users size={16} className="text-purple-500" />
-                      <span className="text-sm font-semibold text-gray-900">Compare DNA with a Friend</span>
-                    </div>
-                    <ChevronRight size={16} className={`text-gray-400 transition-transform ${dnaActiveTab === 'compare' ? 'rotate-90' : ''}`} />
-                  </button>
-                  {dnaActiveTab === 'compare' && (
-                    <div className="px-4 pb-4 border-t border-gray-100">
+            {dnaActiveTab === 'compare' && (
+              <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Compare DNA</h3>
                 {!dnaCanCompare ? (
                   <div className="text-center py-6">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -3892,9 +3881,8 @@ export default function UserProfile() {
                     )}
                   </div>
                 )}
-                    </div>
-                  )}
-                </div>
+              </div>
+            )}
           </div>
         )}
 
