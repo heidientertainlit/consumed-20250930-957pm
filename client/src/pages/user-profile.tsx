@@ -3538,7 +3538,7 @@ export default function UserProfile() {
                     onClick={() => setLocation('/entertainment-dna')}
                     className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
                   >
-                    <RefreshCw size={18} className="text-purple-500" />
+                    <HelpCircle size={18} className="text-purple-500" />
                     <span className="text-[10px] font-semibold text-gray-700">Retake Quiz</span>
                   </button>
                   <button
