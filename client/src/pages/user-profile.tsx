@@ -205,6 +205,7 @@ export default function UserProfile() {
   const [mediaHistoryMonth, setMediaHistoryMonth] = useState("all");
   const [mediaHistoryType, setMediaHistoryType] = useState("all");
   const [mediaHistoryRating, setMediaHistoryRating] = useState("all");
+  const [mediaHistoryList, setMediaHistoryList] = useState("all");
   const [openFilterDropdown, setOpenFilterDropdown] = useState<'year' | 'month' | 'type' | null>(null);
   const [showAllMediaHistory, setShowAllMediaHistory] = useState(false);
 
@@ -2757,6 +2758,11 @@ export default function UserProfile() {
         if (itemRating < ratingValue || itemRating >= ratingValue + 1) return false;
       }
 
+      // List filter
+      if (mediaHistoryList !== 'all') {
+        if (item.listName !== mediaHistoryList) return false;
+      }
+
       return true;
     });
   };
@@ -3277,17 +3283,6 @@ export default function UserProfile() {
               data-testid="nav-friends"
             >
               Friends
-            </button>
-            <button
-              onClick={() => setActiveSection('lists')}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                activeSection === 'lists'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-              }`}
-              data-testid="nav-lists"
-            >
-              Lists
             </button>
             <button
               onClick={() => setActiveSection('all-media')}
@@ -4332,6 +4327,33 @@ export default function UserProfile() {
                         <button key={rating} onClick={() => { setMediaHistoryRating(rating.toString()); setOpenFilter(null); }}
                           className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryRating === rating.toString() ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
                           {'⭐'.repeat(rating)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* List filter */}
+                <div className="relative">
+                  <button
+                    onClick={() => setOpenFilter(openFilter === 'list' ? null : 'list')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                      mediaHistoryList !== 'all' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                    }`}
+                  >
+                    <List size={12} />
+                    {mediaHistoryList === 'all' ? 'List' : mediaHistoryList}
+                    <ChevronRight size={12} className={`transition-transform ${openFilter === 'list' ? 'rotate-90' : ''}`} />
+                  </button>
+                  {openFilter === 'list' && (
+                    <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[130px]">
+                      <button onClick={() => { setMediaHistoryList('all'); setOpenFilter(null); }}
+                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryList === 'all' ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
+                        All Lists
+                      </button>
+                      {userLists.filter((l: any) => l.title !== 'All').map((list: any) => (
+                        <button key={list.id} onClick={() => { setMediaHistoryList(list.title); setOpenFilter(null); }}
+                          className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryList === list.title ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
+                          {list.title}
                         </button>
                       ))}
                     </div>
