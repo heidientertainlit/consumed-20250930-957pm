@@ -202,11 +202,26 @@ serve(async (req) => {
     }
 
     const jwt = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(jwt);
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    let userId: string;
+
+    if (jwt === serviceRoleKey) {
+      // Admin mode: service role key + user_id in body
+      const body = await req.json().catch(() => ({}));
+      if (!body.user_id) {
+        return new Response(JSON.stringify({ error: 'user_id required for admin calls' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      userId = body.user_id;
+    } else {
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser(jwt);
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      userId = user.id;
     }
 
     if (req.method !== 'POST') {
@@ -219,7 +234,7 @@ serve(async (req) => {
     const { count: itemsLoggedCount } = await supabaseClient
       .from('list_items')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id);
+      .eq('user_id', userId);
 
     const itemsLogged = itemsLoggedCount || 0;
     if (itemsLogged < 15) {
@@ -245,30 +260,30 @@ serve(async (req) => {
       supabaseClient
         .from('edna_responses')
         .select('question_id, answer_text, edna_questions!inner(question_text)')
-        .eq('user_id', user.id),
+        .eq('user_id', userId),
       supabaseClient
         .from('user_dna_signals')
         .select('signal_type, signal_value, strength, source_count, sources, last_signal_at')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('strength', { ascending: false })
         .limit(50),
       supabaseClient
         .from('user_dna_signals')
         .select('signal_type, signal_value, strength, source_count')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .gte('last_signal_at', thirtyDaysAgo)
         .order('strength', { ascending: false }),
       supabaseClient
         .from('user_dna_signals')
         .select('signal_value, strength, source_count')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('signal_type', 'show')
         .order('strength', { ascending: false })
         .limit(5),
       supabaseClient
         .from('dna_profiles')
         .select('id, core_archetype, label')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single()
     ]);
 
@@ -439,7 +454,7 @@ Respond with valid JSON only:
 
     // ── 9. Build profile payload (all existing + new fields) ─────────────────
     const profilePayload = {
-      user_id:              user.id,
+      user_id:              userId,
       // existing fields — unchanged
       label:                archetypeDisplayName,
       tagline:              gpt.tagline || '',
@@ -464,7 +479,7 @@ Respond with valid JSON only:
       const { data, error } = await supabaseClient
         .from('dna_profiles')
         .update(profilePayload)
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .select()
         .single();
       if (error) throw error;
@@ -487,7 +502,7 @@ Respond with valid JSON only:
         last_level_up: new Date().toISOString(),
         updated_at:    new Date().toISOString()
       })
-      .eq('user_id', user.id);
+      .eq('user_id', userId);
 
     // ── 11b. Write a snapshot row on every regeneration ─────────────────────
     // Every profile generation is a data point. Multiple rows per month are
@@ -495,7 +510,7 @@ Respond with valid JSON only:
     const snapshotMonth = new Date().toISOString().slice(0, 7); // e.g. "2026-05"
     const notableShows = (showSignalsRaw || []).map((s: any) => s.signal_value);
     await supabaseClient.from('dna_snapshots').insert({
-      user_id:              user.id,
+      user_id:              userId,
       snapshot_month:       snapshotMonth,
       core_archetype:       safeCore,
       secondary_archetypes: safeSecondary,
