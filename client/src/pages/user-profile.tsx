@@ -251,6 +251,7 @@ export default function UserProfile() {
   const initialSectionSet = useRef(false);
   const [isRegeneratingDna, setIsRegeneratingDna] = useState(false);
   const [dnaEngagement, setDnaEngagement] = useState<{[key: string]: number}>({});
+  const [dnaGenreSignals, setDnaGenreSignals] = useState<{signal_value: string, source_count: number}[]>([]);
 
   const [activitySubFilter, setActivitySubFilter] = useState<'posts' | 'history' | 'bets'>('posts');
   const [listSearch, setListSearch] = useState("");
@@ -1492,7 +1493,7 @@ export default function UserProfile() {
     setFriendshipStatus('loading');
   }, [viewingUserId]);
 
-  // Fetch DNA engagement signals when DNA tab is active
+  // Fetch DNA engagement and genre signals when DNA tab is active
   useEffect(() => {
     if (isOwnProfile && viewingUserId && activeSection === 'dna') {
       supabase
@@ -1506,6 +1507,16 @@ export default function UserProfile() {
             data.forEach((r: any) => { map[r.signal_value] = r.source_count; });
             setDnaEngagement(map);
           }
+        });
+      supabase
+        .from('user_dna_signals')
+        .select('signal_value, source_count')
+        .eq('user_id', viewingUserId)
+        .eq('signal_type', 'genre')
+        .order('source_count', { ascending: false })
+        .limit(10)
+        .then(({ data }) => {
+          if (data) setDnaGenreSignals(data);
         });
     }
   }, [isOwnProfile, viewingUserId, activeSection]);
@@ -3454,216 +3465,191 @@ export default function UserProfile() {
         {/* Full DNA Section for Own Profile */}
         {isOwnProfile && activeSection === 'dna' && (
           <div className="px-4 py-4 space-y-4">
-            <EntertainmentDNAStrip />
-              <div className="space-y-3">
+            {dnaProfileStatus === 'has_profile' && dnaProfile ? (
+              <>
+                {/* Quick Actions */}
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => setLocation('/entertainment-dna')}
+                    className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
+                  >
+                    <RefreshCw size={18} className="text-purple-500" />
+                    <span className="text-[10px] font-semibold text-gray-700">Retake DNA</span>
+                  </button>
+                  <button
+                    onClick={handleDnaShareSummary}
+                    className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
+                  >
+                    <Share2 size={18} className="text-purple-500" />
+                    <span className="text-[10px] font-semibold text-gray-700">Share DNA</span>
+                  </button>
+                  <button
+                    onClick={() => setDnaActiveTab(dnaActiveTab === 'compare' ? 'dna' : 'compare')}
+                    className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
+                  >
+                    <Users size={18} className="text-purple-500" />
+                    <span className="text-[10px] font-semibold text-gray-700">Compare DNA</span>
+                  </button>
+                </div>
 
-                {dnaProfileStatus === 'has_profile' && dnaProfile ? (
-                  <>
-                    {/* ── Archetype Hero Card ── */}
-                    <div className="rounded-2xl overflow-hidden border border-purple-100 shadow-sm">
-                      <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 p-5">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-                              <Dna size={14} className="text-white" />
-                            </div>
-                            <span className="text-white/70 text-[10px] font-semibold tracking-widest uppercase">Entertainment DNA</span>
-                          </div>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-white/20 text-white border border-white/30">
-                            Level {dnaLevel}
+                {/* Top Genres */}
+                {dnaProfile.favorite_genres?.length > 0 && (
+                  <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Top Genres</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {dnaProfile.favorite_genres.map((genre: string, i: number) => {
+                        const palettes = [
+                          'bg-purple-100 text-purple-700 border-purple-200',
+                          'bg-blue-100 text-blue-700 border-blue-200',
+                          'bg-emerald-100 text-emerald-700 border-emerald-200',
+                          'bg-amber-100 text-amber-700 border-amber-200',
+                          'bg-rose-100 text-rose-700 border-rose-200',
+                          'bg-indigo-100 text-indigo-700 border-indigo-200',
+                        ];
+                        return (
+                          <span key={i} className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${palettes[i % palettes.length]}`}>
+                            {genre}
                           </span>
-                        </div>
-                        <h2 className="text-xl font-black text-white leading-tight mb-1">
-                          {DNA_ARCHETYPE_MAP[dnaProfile.core_archetype as keyof typeof DNA_ARCHETYPE_MAP]?.label || dnaProfile.label}
-                        </h2>
-                        <p className="text-purple-200 text-sm mb-4 leading-snug">{dnaProfile.tagline}</p>
-                        {dnaProfile.flavor_notes?.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mb-3">
-                            {dnaProfile.flavor_notes.map((note: string, i: number) => (
-                              <span key={i} className="px-3 py-1 rounded-full text-xs font-medium bg-white/15 text-white border border-white/20">{note}</span>
-                            ))}
-                          </div>
-                        )}
-                        {dnaProfile.secondary_archetypes?.length > 0 && (
-                          <div className="mb-3">
-                            <p className="text-white/40 text-[9px] uppercase tracking-widest mb-1.5">Also in your DNA</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {dnaProfile.secondary_archetypes.map((arch: string, i: number) => (
-                                <span key={i} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-purple-200 border border-white/10">
-                                  {arch.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {dnaProfile.current_era && (
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-white/40 text-[9px] uppercase tracking-widest">Current Era</span>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                              ✦ {dnaProfile.current_era.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      {/* Action buttons — white section below gradient */}
-                      <div className="bg-white px-4 py-3 flex gap-2">
-                        <button
-                          onClick={handleRegenerateDna}
-                          disabled={isRegeneratingDna}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition-colors disabled:opacity-60"
-                        >
-                          {isRegeneratingDna ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                          {isRegeneratingDna ? 'Updating…' : 'Regenerate'}
-                        </button>
-                        <button
-                          onClick={handleDnaShareSummary}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition-colors"
-                        >
-                          <Share2 size={12} />
-                          Share DNA
-                        </button>
-                        <button
-                          onClick={() => setLocation('/entertainment-dna')}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition-colors"
-                        >
-                          <RefreshCw size={12} />
-                          Retake
-                        </button>
-                      </div>
+                        );
+                      })}
                     </div>
+                  </div>
+                )}
 
-                    {/* ── Content Direction ── */}
-                    {dnaProfile.profile_text && (
-                      <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                        <p className="text-[10px] uppercase tracking-widest text-purple-500 font-semibold mb-2">Content Direction</p>
-                        <p className="text-gray-700 text-sm leading-relaxed">{dnaProfile.profile_text}</p>
+                {/* Your Numbers */}
+                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Your Numbers</h3>
+                  <div className="grid grid-cols-3 gap-x-2 gap-y-3">
+                    {[
+                      { val: userStats?.moviesWatched ?? 0, label: 'Movies', color: 'text-purple-600' },
+                      { val: userStats?.tvShowsWatched ?? 0, label: 'TV Shows', color: 'text-blue-600' },
+                      { val: userStats?.booksRead ?? 0, label: 'Books', color: 'text-emerald-600' },
+                      { val: `${userStats?.musicHours ?? 0}h`, label: 'Music', color: 'text-pink-600' },
+                      { val: `${userStats?.podcastHours ?? 0}h`, label: 'Podcasts', color: 'text-orange-500' },
+                      { val: userStats?.gamesPlayed ?? 0, label: 'Games', color: 'text-red-500' },
+                    ].map(({ val, label, color }) => (
+                      <div key={label} className="text-center">
+                        <p className={`text-2xl font-black ${color}`}>{val}</p>
+                        <p className="text-gray-400 text-[10px] mt-0.5">{label}</p>
                       </div>
-                    )}
+                    ))}
+                  </div>
+                </div>
 
-                    {/* ── Top Genres ── */}
-                    {dnaProfile.favorite_genres?.length > 0 && (
-                      <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                        <p className="text-[10px] uppercase tracking-widest text-purple-500 font-semibold mb-3">Top Genres</p>
-                        <div className="flex flex-wrap gap-2">
-                          {dnaProfile.favorite_genres.map((genre: string, i: number) => {
-                            const palettes = [
-                              'bg-purple-100 text-purple-700 border-purple-200',
-                              'bg-blue-100 text-blue-700 border-blue-200',
-                              'bg-emerald-100 text-emerald-700 border-emerald-200',
-                              'bg-amber-100 text-amber-700 border-amber-200',
-                              'bg-rose-100 text-rose-700 border-rose-200',
-                              'bg-indigo-100 text-indigo-700 border-indigo-200',
-                            ];
+                {/* DNA at a Glance */}
+                {dnaGenreSignals.length > 0 && (() => {
+                  const top = dnaGenreSignals.slice(0, 5);
+                  const otherCount = dnaGenreSignals.slice(5).reduce((s: number, g: any) => s + g.source_count, 0);
+                  const allSlices = [...top, ...(otherCount > 0 ? [{ signal_value: 'other', source_count: otherCount }] : [])];
+                  const totalCount = allSlices.reduce((s: number, g: any) => s + g.source_count, 0);
+                  const colors = ['#7c3aed', '#ec4899', '#2563eb', '#f59e0b', '#10b981', '#6b7280'];
+                  let cumulative = 0;
+                  const gradient = allSlices.map((g: any, i: number) => {
+                    const pct = (g.source_count / totalCount) * 100;
+                    const seg = `${colors[i % colors.length]} ${cumulative.toFixed(1)}% ${(cumulative + pct).toFixed(1)}%`;
+                    cumulative += pct;
+                    return seg;
+                  }).join(', ');
+                  return (
+                    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">DNA at a Glance</h3>
+                      <div className="flex items-center gap-5">
+                        <div className="relative flex-shrink-0" style={{ width: 80, height: 80 }}>
+                          <div style={{ width: 80, height: 80, borderRadius: '50%', background: `conic-gradient(${gradient})` }} />
+                          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 44, height: 44, borderRadius: '50%', background: 'white' }} />
+                        </div>
+                        <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                          {allSlices.map((g: any, i: number) => {
+                            const pct = Math.round((g.source_count / totalCount) * 100);
+                            const label = g.signal_value.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
                             return (
-                              <span key={i} className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${palettes[i % palettes.length]}`}>
-                                {genre}
-                              </span>
+                              <div key={i} className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: colors[i % colors.length] }} />
+                                <span className="text-xs text-gray-700 truncate">{pct}% {label}</span>
+                              </div>
                             );
                           })}
                         </div>
                       </div>
-                    )}
-
-                    {/* ── Your Numbers ── */}
-                    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                      <p className="text-[10px] uppercase tracking-widest text-purple-500 font-semibold mb-3">Your Numbers</p>
-                      {userStats ? (
-                        <div className="space-y-2">
-                          <div className="grid grid-cols-3 gap-2">
-                            {[
-                              { val: userStats.moviesWatched || 0, label: 'Movies', color: 'text-purple-600', bg: 'bg-purple-50' },
-                              { val: userStats.tvShowsWatched || 0, label: 'TV Shows', color: 'text-blue-600', bg: 'bg-blue-50' },
-                              { val: userStats.booksRead || 0, label: 'Books', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                            ].map(({ val, label, color, bg }) => (
-                              <div key={label} className={`${bg} rounded-xl py-3 text-center`}>
-                                <p className={`text-xl font-black ${color}`}>{val}</p>
-                                <p className="text-gray-500 text-[10px] mt-0.5">{label}</p>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            {[
-                              { val: `${userStats.musicHours || 0}h`, label: 'Music', color: 'text-pink-600', bg: 'bg-pink-50' },
-                              { val: `${userStats.podcastHours || 0}h`, label: 'Podcasts', color: 'text-orange-600', bg: 'bg-orange-50' },
-                              { val: userStats.gamesPlayed || 0, label: 'Games', color: 'text-red-600', bg: 'bg-red-50' },
-                            ].map(({ val, label, color, bg }) => (
-                              <div key={label} className={`${bg} rounded-xl py-3 text-center`}>
-                                <p className={`text-xl font-black ${color}`}>{val}</p>
-                                <p className="text-gray-500 text-[10px] mt-0.5">{label}</p>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="grid grid-cols-3 gap-2 pt-1">
-                            {[
-                              { val: userStats.averageRating ? `${userStats.averageRating}★` : '—', label: 'Avg Rating' },
-                              { val: `${userStats.dayStreak || 0}d`, label: 'Streak' },
-                              {
-                                val: dnaEngagement.trivia_attempts > 0
-                                  ? `${Math.round((dnaEngagement.trivia_correct / dnaEngagement.trivia_attempts) * 100)}%`
-                                  : '—',
-                                label: 'Trivia Acc.'
-                              },
-                            ].map(({ val, label }) => (
-                              <div key={label} className="bg-gray-50 rounded-xl py-3 text-center border border-gray-100">
-                                <p className="text-base font-black text-gray-900">{val}</p>
-                                <p className="text-gray-500 text-[10px] mt-0.5">{label}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-center py-4">
-                          <BarChart3 className="mx-auto mb-2 text-gray-300" size={28} />
-                          <p className="text-gray-500 text-sm">Start tracking to see your numbers</p>
-                        </div>
-                      )}
                     </div>
+                  );
+                })()}
 
-                    {/* ── Your Platforms ── */}
-                    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                      <p className="text-[10px] uppercase tracking-widest text-purple-500 font-semibold mb-3">Your Platforms</p>
-                      <div className="grid grid-cols-4 gap-3">
-                        {[
-                          { name: 'Netflix', abbr: 'N', color: '#E50914', bg: '#fff0f0' },
-                          { name: 'Hulu', abbr: 'H', color: '#1CE783', bg: '#f0fff6' },
-                          { name: 'Max', abbr: 'M', color: '#002BE7', bg: '#f0f2ff' },
-                          { name: 'Disney+', abbr: 'D+', color: '#113CCF', bg: '#eef1ff' },
-                          { name: 'Apple TV+', abbr: '▶', color: '#555', bg: '#f5f5f5' },
-                          { name: 'Prime', abbr: 'P', color: '#00A8E1', bg: '#f0faff' },
-                          { name: 'Spotify', abbr: '♫', color: '#1DB954', bg: '#f0fff4' },
-                          { name: 'Libby', abbr: 'L', color: '#F26419', bg: '#fff5ee' },
-                          { name: 'Audible', abbr: 'Au', color: '#F8991D', bg: '#fffbf0' },
-                          { name: 'YouTube', abbr: 'YT', color: '#FF0000', bg: '#fff0f0' },
-                          { name: 'Peacock', abbr: 'Pk', color: '#6B4FBB', bg: '#f5f0ff' },
-                          { name: 'Paramount+', abbr: 'P+', color: '#0064FF', bg: '#f0f5ff' },
-                        ].map(({ name, abbr, color, bg }) => (
-                          <div key={name} className="flex flex-col items-center gap-1.5">
-                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-black shadow-sm border border-gray-100" style={{ background: bg, color }}>
-                              {abbr}
-                            </div>
-                            <span className="text-gray-500 text-[9px] text-center leading-tight">{name}</span>
-                          </div>
-                        ))}
+                {/* Current Era */}
+                {dnaProfile.current_era && (
+                  <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-2">Current Era</h3>
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
+                        <Sparkles size={18} className="text-purple-500" />
+                      </div>
+                      <div>
+                        <p className="text-purple-700 font-bold text-sm">
+                          {dnaProfile.current_era.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                        </p>
+                        {dnaProfile.profile_text && (
+                          <p className="text-gray-500 text-xs mt-0.5 leading-relaxed line-clamp-2">{dnaProfile.profile_text}</p>
+                        )}
                       </div>
                     </div>
-                  </>
-                ) : (
-                  <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-center">
-                    <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center bg-white/20">
-                      <Dna className="text-white" size={28} />
-                    </div>
-                    <h3 className="text-white font-bold mb-1">Complete Your DNA</h3>
-                    <p className="text-white/70 text-xs mb-4">Answer a few questions to unlock your Entertainment DNA profile</p>
-                    <button
-                      onClick={() => setLocation('/entertainment-dna')}
-                      className="px-5 py-2.5 rounded-full text-sm font-semibold text-purple-700 bg-white hover:bg-white/90 transition-colors"
-                    >
-                      Take the Quiz
-                    </button>
                   </div>
                 )}
 
-                {/* ── Compare DNA ── */}
+                {/* Stories That Match Your DNA */}
+                <RecommendationsGlimpse />
+
+                {/* Most Watched Platforms */}
+                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Most Watched Platforms</h3>
+                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1">
+                    {[
+                      { name: 'Netflix', abbr: 'N', color: '#E50914', bg: '#fff0f0' },
+                      { name: 'Hulu', abbr: 'H', color: '#1CE783', bg: '#f0fff6' },
+                      { name: 'Max', abbr: 'M', color: '#002BE7', bg: '#f0f2ff' },
+                      { name: 'Disney+', abbr: 'D+', color: '#113CCF', bg: '#eef1ff' },
+                      { name: 'Apple TV+', abbr: '▶', color: '#555', bg: '#f5f5f5' },
+                      { name: 'Prime', abbr: 'P', color: '#00A8E1', bg: '#f0faff' },
+                      { name: 'Spotify', abbr: '♫', color: '#1DB954', bg: '#f0fff4' },
+                      { name: 'Libby', abbr: 'L', color: '#F26419', bg: '#fff5ee' },
+                      { name: 'Audible', abbr: 'Au', color: '#F8991D', bg: '#fffbf0' },
+                    ].map(({ name, abbr, color, bg }) => (
+                      <div key={name} className="flex flex-col items-center gap-1 flex-shrink-0">
+                        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-black shadow-sm border border-gray-100" style={{ background: bg, color }}>
+                          {abbr}
+                        </div>
+                        <span className="text-gray-500 text-[9px] text-center">{name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Regenerate */}
+                <button
+                  onClick={handleRegenerateDna}
+                  disabled={isRegeneratingDna}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-60"
+                >
+                  {isRegeneratingDna ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} className="text-purple-500" />}
+                  {isRegeneratingDna ? 'Updating DNA…' : 'Regenerate DNA'}
+                </button>
+              </>
+            ) : (
+              <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-center">
+                <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center bg-white/20">
+                  <Dna className="text-white" size={28} />
+                </div>
+                <h3 className="text-white font-bold mb-1">Complete Your DNA</h3>
+                <p className="text-white/70 text-xs mb-4">Answer a few questions to unlock your Entertainment DNA profile</p>
+                <button
+                  onClick={() => setLocation('/entertainment-dna')}
+                  className="px-5 py-2.5 rounded-full text-sm font-semibold text-purple-700 bg-white hover:bg-white/90 transition-colors"
+                >
+                  Take the Quiz
+                </button>
+              </div>
+            )}
+
+            {/* ── Compare DNA ── */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                   <button
                     onClick={() => setDnaActiveTab(dnaActiveTab === 'compare' ? 'dna' : 'compare')}
@@ -3872,8 +3858,6 @@ export default function UserProfile() {
                     </div>
                   )}
                 </div>
-                <RecommendationsGlimpse />
-              </div>
           </div>
         )}
 
