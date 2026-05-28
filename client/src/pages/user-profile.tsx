@@ -3293,7 +3293,7 @@ export default function UserProfile() {
               }`}
               data-testid="nav-all-media"
             >
-              All My Media
+              My Media
             </button>
           </div>
         </div>
