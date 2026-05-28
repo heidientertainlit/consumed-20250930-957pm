@@ -727,9 +727,26 @@ export function DnaComparePostCard({ item }: { item: any }) {
     <>
       <div className="bg-gray-50 rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
         {/* Header */}
-        <div className="flex items-center gap-1.5 px-4 pt-3 pb-2">
-          <Dna size={11} className="text-purple-500 shrink-0" />
-          <span className="text-purple-500 text-[11px] font-bold uppercase tracking-widest">Compare DNA</span>
+        <div className="flex items-center justify-between px-4 pt-3 pb-2">
+          <div className="flex items-center gap-1.5">
+            <Dna size={11} className="text-purple-500 shrink-0" />
+            <span className="text-purple-500 text-[11px] font-bold uppercase tracking-widest">Compare DNA</span>
+          </div>
+          <button
+            onClick={() => {
+              const text = `${posterName.split(' ')[0]} is ${matchScore}% aligned with ${friendName} on Consumed! Check your Entertainment DNA 🧬`;
+              const url = (import.meta.env.VITE_APP_URL as string) || window.location.origin;
+              if (navigator.share) {
+                navigator.share({ title: 'Entertainment DNA Match', text, url }).catch(() => {});
+              } else {
+                window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+              }
+            }}
+            className="flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors group"
+          >
+            <Share2 size={13} className="group-hover:scale-110 transition-transform" />
+            <span className="text-[11px] font-medium">Share</span>
+          </button>
         </div>
 
         {/* Main content — two column layout, mirrors static card */}
@@ -773,24 +790,6 @@ export function DnaComparePostCard({ item }: { item: any }) {
           </button>
         </div>
 
-        {/* Action bar — identical to static card */}
-        <div className="border-t border-gray-100 px-4 py-2.5 flex items-center justify-start">
-          <button
-            onClick={() => {
-              const text = `${posterName.split(' ')[0]} is ${matchScore}% aligned with ${friendName} on Consumed! Check your Entertainment DNA 🧬`;
-              const url = (import.meta.env.VITE_APP_URL as string) || window.location.origin;
-              if (navigator.share) {
-                navigator.share({ title: 'Entertainment DNA Match', text, url }).catch(() => {});
-              } else {
-                window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`, '_blank');
-              }
-            }}
-            className="flex items-center gap-1.5 text-gray-400 hover:text-purple-500 transition-colors group"
-          >
-            <Share2 size={14} className="group-hover:scale-110 transition-transform" />
-            <span className="text-[12px] font-medium">Share</span>
-          </button>
-        </div>
       </div>
 
       {sheetOpen && session && user && (
