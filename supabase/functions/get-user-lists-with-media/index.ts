@@ -410,8 +410,8 @@ serve(async (req) => {
       is_default: true
     };
 
-    // Assemble final lists
-    const finalLists = [allList, ...listsWithItems, ...customListsWithItems];
+    // Assemble final lists — custom lists hidden from UI intentionally
+    const finalLists = [allList, ...listsWithItems];
     
     console.log("Returning final lists:", finalLists.map(l => `${l.title} (${l.items.length} items)`));
 
