@@ -3467,6 +3467,72 @@ export default function UserProfile() {
           <div className="px-4 py-4 space-y-4">
             {dnaProfileStatus === 'has_profile' && dnaProfile ? (
               <>
+                {/* Archetype Profile Card */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                          <Dna size={15} className="text-purple-600" />
+                        </div>
+                        <span className="text-[10px] font-semibold text-purple-500 uppercase tracking-widest">Entertainment DNA</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">Level {dnaLevel}</span>
+                    </div>
+                    <h2 className="text-xl font-black text-gray-900 leading-tight mb-1">
+                      {DNA_ARCHETYPE_MAP[dnaProfile.core_archetype as keyof typeof DNA_ARCHETYPE_MAP]?.label || dnaProfile.label}
+                    </h2>
+                    {dnaProfile.tagline && (
+                      <p className="text-gray-500 text-sm italic mb-3 leading-snug">{dnaProfile.tagline}</p>
+                    )}
+                    {dnaProfile.flavor_notes?.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {dnaProfile.flavor_notes.map((note: string, i: number) => (
+                          <span key={i} className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">{note}</span>
+                        ))}
+                      </div>
+                    )}
+                    {dnaProfile.secondary_archetypes?.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1.5">Also in your DNA</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {dnaProfile.secondary_archetypes.map((arch: string, i: number) => (
+                            <span key={i} className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600">
+                              {arch.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {(dnaProfile.current_era || dnaProfile.profile_text) && (
+                      <div className="pt-3 border-t border-gray-50">
+                        {dnaProfile.current_era && (
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <Sparkles size={12} className="text-purple-400 flex-shrink-0" />
+                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">Current Era</span>
+                            <span className="text-xs font-semibold text-purple-700">
+                              {dnaProfile.current_era.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                            </span>
+                          </div>
+                        )}
+                        {dnaProfile.profile_text && (
+                          <p className="text-gray-500 text-xs leading-relaxed">{dnaProfile.profile_text}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="px-4 pb-4">
+                    <button
+                      onClick={handleRegenerateDna}
+                      disabled={isRegeneratingDna}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-gray-500 border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-60"
+                    >
+                      {isRegeneratingDna ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} className="text-purple-400" />}
+                      {isRegeneratingDna ? 'Updating DNA…' : 'Regenerate DNA'}
+                    </button>
+                  </div>
+                </div>
+
                 {/* Quick Actions */}
                 <div className="grid grid-cols-3 gap-2">
                   <button
@@ -3474,7 +3540,7 @@ export default function UserProfile() {
                     className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
                   >
                     <RefreshCw size={18} className="text-purple-500" />
-                    <span className="text-[10px] font-semibold text-gray-700">Retake DNA</span>
+                    <span className="text-[10px] font-semibold text-gray-700">Retake Quiz</span>
                   </button>
                   <button
                     onClick={handleDnaShareSummary}
@@ -3575,26 +3641,6 @@ export default function UserProfile() {
                   );
                 })()}
 
-                {/* Current Era */}
-                {dnaProfile.current_era && (
-                  <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-2">Current Era</h3>
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-                        <Sparkles size={18} className="text-purple-500" />
-                      </div>
-                      <div>
-                        <p className="text-purple-700 font-bold text-sm">
-                          {dnaProfile.current_era.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                        </p>
-                        {dnaProfile.profile_text && (
-                          <p className="text-gray-500 text-xs mt-0.5 leading-relaxed line-clamp-2">{dnaProfile.profile_text}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Stories That Match Your DNA */}
                 <RecommendationsGlimpse />
 
@@ -3623,15 +3669,6 @@ export default function UserProfile() {
                   </div>
                 </div>
 
-                {/* Regenerate */}
-                <button
-                  onClick={handleRegenerateDna}
-                  disabled={isRegeneratingDna}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-60"
-                >
-                  {isRegeneratingDna ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} className="text-purple-500" />}
-                  {isRegeneratingDna ? 'Updating DNA…' : 'Regenerate DNA'}
-                </button>
               </>
             ) : (
               <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-center">
