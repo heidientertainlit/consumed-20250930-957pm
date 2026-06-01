@@ -2693,13 +2693,12 @@ export default function UserProfile() {
     const allItems: any[] = [];
     const seenItems = new Set<string>(); // Track unique items by media_id
     
-    userLists.forEach(list => {
+    // Skip the virtual "All" list — it contains duplicates of every item and would
+    // overwrite the real listName before the specific lists (Currently, Finished, etc.) run.
+    userLists.filter((list: any) => list.title !== 'All').forEach(list => {
       if (list.items) {
         list.items.forEach((item: any) => {
-          // Create a unique key based on media_id (which is unique per item)
           const uniqueKey = item.media_id || `${item.title}-${item.media_type}-${item.creator}`;
-          
-          // Only add if we haven't seen this item before
           if (!seenItems.has(uniqueKey)) {
             seenItems.add(uniqueKey);
             allItems.push({
