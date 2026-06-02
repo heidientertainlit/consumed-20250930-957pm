@@ -4286,6 +4286,17 @@ export default function UserProfile() {
         {activeSection === 'all-media' && isOwnProfile && (
           <div className="px-4 mb-8">
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              {/* Header row with Add button */}
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">My Media</span>
+                <button
+                  onClick={handleTrackConsumption}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-600 text-white text-xs font-medium hover:bg-purple-700 transition-colors"
+                >
+                  <Plus size={12} />
+                  Add Media
+                </button>
+              </div>
               {/* Filters */}
               <div className="flex flex-wrap gap-2 mb-3">
                 <div className="relative">
