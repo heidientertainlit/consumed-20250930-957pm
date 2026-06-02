@@ -4290,7 +4290,7 @@ export default function UserProfile() {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">My Media</span>
                 <button
-                  onClick={handleTrackConsumption}
+                  onClick={() => setLocation('/add')}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-600 text-white text-xs font-medium hover:bg-purple-700 transition-colors"
                 >
                   <Plus size={12} />
