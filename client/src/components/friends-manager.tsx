@@ -60,6 +60,73 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      {/* Find Friends Section — moved to top */}
+      <div className="p-6 border-b border-gray-200 bg-gray-50">
+        <h4 className="text-base font-semibold mb-3 text-gray-900">Find Friends</h4>
+
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-3 text-gray-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search by username or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent text-sm text-black placeholder-gray-500 bg-white"
+            data-testid="input-search-friends"
+          />
+        </div>
+
+        {searchQuery.length > 0 && (
+          <div className="space-y-3 max-h-64 overflow-y-auto">
+            {searchQuery.length >= 3 ? (
+              searchLoading ? (
+                <div className="text-center py-4 text-gray-500">Searching...</div>
+              ) : searchResults?.users && searchResults.users.length > 0 ? (
+                searchResults.users.map((searchUser: any) => {
+                  const displayName = searchUser.display_name ||
+                                     (searchUser.first_name && searchUser.last_name ? `${searchUser.first_name} ${searchUser.last_name}` : '') ||
+                                     searchUser.user_name ||
+                                     'Unknown User';
+                  return (
+                    <div key={searchUser.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-white bg-white">
+                      <Link
+                        href={`/user/${searchUser.id}`}
+                        className="flex items-center space-x-3 flex-1 cursor-pointer"
+                      >
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm">👤</span>
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900">{displayName}</div>
+                          <div className="text-sm text-gray-500">{searchUser.email}</div>
+                        </div>
+                      </Link>
+                      <Button
+                        onClick={() => sendRequestMutation.mutate(searchUser.id)}
+                        disabled={sendRequestMutation.isPending}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 text-sm rounded-full"
+                        data-testid={`button-add-friend-${searchUser.id}`}
+                      >
+                        <UserPlus size={14} className="mr-1" />
+                        Add
+                      </Button>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  No users found. Try a different search.
+                </div>
+              )
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                Keep typing to search...
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Header with Invite Button */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
@@ -204,73 +271,6 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
         )}
       </div>
 
-      {/* Find Friends Section */}
-      <div className="p-6 bg-gray-50">
-        <h4 className="text-base font-semibold mb-3 text-gray-900">Find Friends</h4>
-
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-3 text-gray-400" size={18} />
-          <input
-            type="text"
-            placeholder="Search by username or email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent text-sm text-black placeholder-gray-500 bg-white"
-            data-testid="input-search-friends"
-          />
-        </div>
-
-        {/* Search Results */}
-        {searchQuery.length > 0 && (
-        <div className="space-y-3 max-h-64 overflow-y-auto">
-          {searchQuery.length >= 3 ? (
-            searchLoading ? (
-              <div className="text-center py-4 text-gray-500">Searching...</div>
-            ) : searchResults?.users && searchResults.users.length > 0 ? (
-              searchResults.users.map((searchUser: any) => {
-                const displayName = searchUser.display_name || 
-                                   (searchUser.first_name && searchUser.last_name ? `${searchUser.first_name} ${searchUser.last_name}` : '') ||
-                                   searchUser.user_name || 
-                                   'Unknown User';
-                return (
-                  <div key={searchUser.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-white bg-white">
-                    <Link 
-                      href={`/user/${searchUser.id}`}
-                      className="flex items-center space-x-3 flex-1 cursor-pointer"
-                    >
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-sm">👤</span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">{displayName}</div>
-                        <div className="text-sm text-gray-500">{searchUser.email}</div>
-                      </div>
-                    </Link>
-                    <Button
-                      onClick={() => sendRequestMutation.mutate(searchUser.id)}
-                      disabled={sendRequestMutation.isPending}
-                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 text-sm rounded-full"
-                      data-testid={`button-add-friend-${searchUser.id}`}
-                    >
-                      <UserPlus size={14} className="mr-1" />
-                      Add
-                    </Button>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-4 text-gray-500">
-                No users found. Try a different search.
-              </div>
-            )
-          ) : (
-            <div className="text-center py-4 text-gray-500">
-              Keep typing to search...
-            </div>
-          )}
-        </div>
-        )}
-      </div>
     </div>
   );
 }
