@@ -4404,6 +4404,22 @@ export default function UserProfile() {
                     </div>
                   )}
                 </div>
+                {/* Reset filters — only visible when any filter is active */}
+                {(mediaHistoryType !== 'all' || mediaHistoryYear !== 'all' || mediaHistoryRating !== 'all' || mediaHistoryList !== 'all') && (
+                  <button
+                    onClick={() => {
+                      setMediaHistoryType('all');
+                      setMediaHistoryYear('all');
+                      setMediaHistoryRating('all');
+                      setMediaHistoryList('all');
+                      setOpenFilter(null);
+                    }}
+                    className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-500 border border-gray-300 hover:bg-gray-100 transition-colors flex items-center gap-1"
+                  >
+                    <X size={11} />
+                    Reset
+                  </button>
+                )}
               </div>
               {/* Search */}
               <div className="relative mb-4">
