@@ -26,6 +26,7 @@ interface DnaClashFeedCardProps {
   mediaType?: string;
   externalId?: string;
   externalSource?: string;
+  posterUrl?: string;
   currentUserId?: string;
   session?: any;
   onOptOut?: () => void;
@@ -85,10 +86,16 @@ async function sendNotification(userId: string, message: string, triggeredBy: st
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
 export default function DnaClashFeedCard({
   user1,
   user2,
   mediaTitle,
+  mediaType,
+  externalId,
+  externalSource,
+  posterUrl,
   currentUserId,
   session: sessionProp,
   onOptOut,
@@ -100,6 +107,29 @@ export default function DnaClashFeedCard({
   const activeSession = sessionProp || authSession;
 
   const [voted, setVoted] = useState<string | null>(null);
+  const [resolvedPoster, setResolvedPoster] = useState<string | null>(posterUrl || null);
+
+  // Fetch poster from media-search if not provided directly
+  useEffect(() => {
+    if (posterUrl) { setResolvedPoster(posterUrl); return; }
+    if (!mediaTitle) return;
+    async function fetchPoster() {
+      try {
+        const token = activeSession?.access_token || SUPABASE_ANON_KEY;
+        const res = await fetch(
+          `${SUPABASE_URL}/functions/v1/media-search?q=${encodeURIComponent(mediaTitle)}&type=${mediaType || 'tv'}&limit=1`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        const result = data?.results?.[0] || data?.[0];
+        if (result?.poster_url) setResolvedPoster(result.poster_url);
+        else if (result?.image) setResolvedPoster(result.image);
+        else if (result?.poster_path) setResolvedPoster(`https://image.tmdb.org/t/p/w185${result.poster_path}`);
+      } catch { /* silent */ }
+    }
+    fetchPoster();
+  }, [posterUrl, mediaTitle, mediaType, activeSession]);
   const [optingOut, setOptingOut] = useState(false);
   const [optedOut, setOptedOut] = useState(false);
   const [showOptOutConfirm, setShowOptOutConfirm] = useState(false);
@@ -274,9 +304,19 @@ export default function DnaClashFeedCard({
       )}
 
       {/* Headline */}
-      <div className="px-4 pb-3">
-        <p className="text-gray-900 font-extrabold text-[18px] leading-tight">Completely different takes.</p>
-        <p className="text-gray-400 text-[13px] font-medium mt-0.5">on {mediaTitle}</p>
+      <div className="px-4 pb-3 flex items-center gap-3">
+        {resolvedPoster && (
+          <img
+            src={resolvedPoster}
+            alt={mediaTitle}
+            className="w-12 h-[72px] rounded-lg object-cover shrink-0 shadow-sm"
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+        )}
+        <div>
+          <p className="text-gray-900 font-extrabold text-[18px] leading-tight">Completely different takes.</p>
+          <p className="text-gray-400 text-[13px] font-medium mt-0.5">on {mediaTitle}</p>
+        </div>
       </div>
 
       {/* Two sides + waveform */}

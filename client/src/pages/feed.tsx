@@ -8099,6 +8099,7 @@ export default function Feed() {
                       mediaType={pool.media_type || ''}
                       externalId={pool.media_external_id || ''}
                       externalSource={pool.media_external_source || ''}
+                      posterUrl={pool.poster_url || pool.media_poster || undefined}
                       currentUserId={effectiveUserId || undefined}
                       session={session}
                       onOptOut={() => {}}
