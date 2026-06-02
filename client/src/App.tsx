@@ -92,7 +92,7 @@ import TermsOfService from "@/pages/terms-of-service";
 import ResponsibleGaming from "@/pages/responsible-gaming";
 import ProfileByUsername from "@/pages/profile-by-username";
 import IdentityPage from "@/pages/identity";
-import AddMediaPage from "@/pages/add";
+import AddMediaPage from "@/pages/add-media-page";
 
 // Simple redirect component for wouter
 function RedirectTo({ to }: { to: string }) {

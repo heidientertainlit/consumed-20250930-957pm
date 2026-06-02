@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
+import { useLocation } from "wouter";
 
 type TabType = "take" | "review" | "poll" | "prediction";
 type MediaFilter = "all" | "tv" | "movie" | "book" | "podcast" | "music" | "game" | "youtube";
@@ -181,19 +182,20 @@ function MediaRow({
   );
 }
 
-export default function FeedComposerBar() {
+export default function FeedComposerBar({ pageMode = false }: { pageMode?: boolean }) {
   const { session } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(pageMode);
   const PLACEHOLDERS = ["Your take...", "Thoughts?", "What's your next move?"];
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setPlaceholderIdx(i => (i + 1) % PLACEHOLDERS.length), 9000);
     return () => clearInterval(t);
   }, []);
-  const [showMediaSearch, setShowMediaSearch] = useState(false);
-  const [searchSlideIn, setSearchSlideIn] = useState(false);
+  const [showMediaSearch, setShowMediaSearch] = useState(pageMode);
+  const [searchSlideIn, setSearchSlideIn] = useState(pageMode);
   const [activeTab, setActiveTab] = useState<TabType>("review");
   const [contentText, setContentText] = useState("");
   const [ratingValue, setRatingValue] = useState(0);
@@ -434,6 +436,10 @@ export default function FeedComposerBar() {
   }, [showMediaSearch, session]);
 
   const closeMediaSearch = () => {
+    if (pageMode) {
+      setLocation(-1 as any);
+      return;
+    }
     setSearchSlideIn(false);
     setTimeout(() => {
       setShowMediaSearch(false);
