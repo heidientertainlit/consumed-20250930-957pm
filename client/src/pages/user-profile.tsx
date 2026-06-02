@@ -174,6 +174,8 @@ export default function UserProfile() {
   // User lists states
   const [userLists, setUserLists] = useState<any[]>([]);
   const [isLoadingLists, setIsLoadingLists] = useState(false);
+  const [openMoveDropdown, setOpenMoveDropdown] = useState<string | null>(null);
+  const [movingItemId, setMovingItemId] = useState<string | null>(null);
   const [userRanks, setUserRanks] = useState<any[]>([]);
   const [isLoadingRanks, setIsLoadingRanks] = useState(false);
   const [showCreateRankDialog, setShowCreateRankDialog] = useState(false);
@@ -2713,6 +2715,40 @@ export default function UserProfile() {
     return allItems.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   };
 
+  const SYSTEM_LIST_TITLES = ['Currently', 'Finished', 'Did Not Finish', 'Favorites', 'Want To'];
+  const systemLists = userLists.filter((l: any) => SYSTEM_LIST_TITLES.includes(l.title));
+
+  const moveItemToList = async (itemId: string, newListId: string) => {
+    if (!session?.access_token) return;
+    setMovingItemId(itemId);
+    setOpenMoveDropdown(null);
+    try {
+      const res = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/list_items?id=eq.${itemId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify({ list_id: newListId }),
+        }
+      );
+      if (res.ok) {
+        toast({ description: 'Moved successfully' });
+        fetchUserLists(viewingUserId);
+      } else {
+        toast({ description: 'Failed to move item', variant: 'destructive' });
+      }
+    } catch {
+      toast({ description: 'Failed to move item', variant: 'destructive' });
+    } finally {
+      setMovingItemId(null);
+    }
+  };
+
   // Get currently consuming items from the "Currently" list
   const currentlyList = userLists.find(list => list.title === 'Currently');
   const currentlyConsuming = currentlyList?.items || [];
@@ -4391,23 +4427,32 @@ export default function UserProfile() {
                   {filteredMediaHistory.map((item: any, index: number) => (
                     <div
                       key={`${item.id}-${index}`}
-                      className="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:border-purple-300 transition-colors cursor-pointer"
-                      onClick={() => {
-                        if (item.external_id && item.external_source) {
-                          setLocation(`/media/${item.media_type}/${item.external_source}/${item.external_id}`);
-                        }
-                      }}
+                      className="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:border-purple-300 transition-colors"
                       data-testid={`history-item-${index}`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-14 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                        <div
+                          className="w-10 h-14 bg-gray-100 rounded overflow-hidden flex-shrink-0 cursor-pointer"
+                          onClick={() => {
+                            if (item.external_id && item.external_source) {
+                              setLocation(`/media/${item.media_type}/${item.external_source}/${item.external_id}`);
+                            }
+                          }}
+                        >
                           {item.image_url ? (
                             <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">{getMediaIcon(item.media_type)}</div>
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div
+                          className="flex-1 min-w-0 cursor-pointer"
+                          onClick={() => {
+                            if (item.external_id && item.external_source) {
+                              setLocation(`/media/${item.media_type}/${item.external_source}/${item.external_id}`);
+                            }
+                          }}
+                        >
                           <h4 className="font-medium text-sm text-gray-900 truncate">{item.title}</h4>
                           <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
                             {getMediaIcon(item.media_type)}
@@ -4417,6 +4462,43 @@ export default function UserProfile() {
                           </div>
                           <p className="text-xs text-gray-400 mt-0.5">{new Date(item.created_at).toLocaleDateString()}</p>
                         </div>
+                        {isOwnProfile && (
+                          <div className="relative flex-shrink-0">
+                            {movingItemId === item.id ? (
+                              <Loader2 size={16} className="animate-spin text-purple-400" />
+                            ) : (
+                              <button
+                                className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-400 hover:text-gray-700 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenMoveDropdown(openMoveDropdown === item.id ? null : item.id);
+                                }}
+                                title="Move to list"
+                              >
+                                <MoreHorizontal size={16} />
+                              </button>
+                            )}
+                            {openMoveDropdown === item.id && (
+                              <div className="absolute right-0 top-8 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[160px]">
+                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide px-3 pt-1.5 pb-1">Move to</p>
+                                {systemLists
+                                  .filter((l: any) => l.title !== item.listName)
+                                  .map((l: any) => (
+                                    <button
+                                      key={l.id}
+                                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        moveItemToList(item.id, l.id);
+                                      }}
+                                    >
+                                      {l.title}
+                                    </button>
+                                  ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
