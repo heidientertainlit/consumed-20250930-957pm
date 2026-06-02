@@ -589,15 +589,15 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           <span className="text-[10px] text-gray-400">Next</span>
         </button>
 
-        {/* Seen It — green, primary positive action */}
+        {/* Seen It — green only after user has responded true */}
         <button
           onClick={() => handleResponse(currentSet.id, activeItem, true)}
           className="flex flex-col items-center gap-1 group"
         >
-          <div className="w-14 h-14 rounded-full bg-green-500 flex items-center justify-center group-active:scale-90 transition-all shadow-md">
-            <Check size={22} className="text-white" />
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center group-active:scale-90 transition-all shadow-md ${responses[activeItem.id] === true ? 'bg-green-500' : 'bg-gray-100'}`}>
+            <Check size={22} className={responses[activeItem.id] === true ? 'text-white' : 'text-gray-500'} />
           </div>
-          <span className="text-[10px] text-green-600 font-medium">{mediaConfig.actionYes}</span>
+          <span className={`text-[10px] font-medium ${responses[activeItem.id] === true ? 'text-green-600' : 'text-gray-400'}`}>{mediaConfig.actionYes}</span>
         </button>
 
         {/* Add to list — gray, secondary */}
