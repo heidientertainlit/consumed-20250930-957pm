@@ -8052,12 +8052,14 @@ export default function Feed() {
                     user1: { displayName: 'Jeeppler', username: 'Jeeppler', userId: '41849796-014e-414c-ad4f-7fe99bdc69f8', dnaLabel: 'Crime Obsessive', rating: 5, initials: 'J', color: '#a855f7', votes: 0 },
                     user2: { displayName: 'Punkin Pie', username: 'punkinpie123', userId: '561f2c21-69e9-4282-bceb-51146a405ea3', dnaLabel: 'Light & Breezy Fan', rating: 1, initials: 'PP', color: '#3b82f6', votes: 0 },
                     mediaTitle: 'Breaking Bad', mediaType: 'tv', externalId: '1396', externalSource: 'tmdb',
+                    posterUrl: 'https://image.tmdb.org/t/p/w300/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg',
                   },
                   {
                     id: null,
                     user1: { displayName: 'Heidi', username: 'HeidiIsConsumed', userId: '88bfb2a0-e8ce-4081-b731-2a49567ff093', dnaLabel: 'Genre Adventurer', rating: 5, initials: 'H', color: '#a855f7', votes: 0 },
                     user2: { displayName: 'Ambiannie', username: 'Ambiannie', userId: '2510625e-8a51-4637-9eb4-4d91ba3e76af', dnaLabel: 'Emotional Sleuth', rating: 2, initials: 'A', color: '#3b82f6', votes: 0 },
                     mediaTitle: 'The Office', mediaType: 'tv', externalId: '2316', externalSource: 'tmdb',
+                    posterUrl: 'https://image.tmdb.org/t/p/w300/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg',
                   },
                 ];
 
@@ -8118,6 +8120,7 @@ export default function Feed() {
                     mediaType={clash.mediaType}
                     externalId={clash.externalId}
                     externalSource={clash.externalSource}
+                    posterUrl={(clash as any).posterUrl}
                     currentUserId={effectiveUserId || undefined}
                     session={session}
                     onOptOut={() => {}}

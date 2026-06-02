@@ -108,28 +108,28 @@ export default function DnaClashFeedCard({
 
   const [voted, setVoted] = useState<string | null>(null);
   const [resolvedPoster, setResolvedPoster] = useState<string | null>(posterUrl || null);
+  const token = activeSession?.access_token;
 
-  // Fetch poster from media-search if not provided directly
+  // Fetch poster from media-search using the user's JWT
   useEffect(() => {
     if (posterUrl) { setResolvedPoster(posterUrl); return; }
-    if (!mediaTitle) return;
-    async function fetchPoster() {
-      try {
-        const token = activeSession?.access_token || SUPABASE_ANON_KEY;
-        const res = await fetch(
-          `${SUPABASE_URL}/functions/v1/media-search?q=${encodeURIComponent(mediaTitle)}&type=${mediaType || 'tv'}&limit=1`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        const result = data?.results?.[0] || data?.[0];
+    if (!mediaTitle || !token) return;
+    let cancelled = false;
+    fetch(
+      `${SUPABASE_URL}/functions/v1/media-search?q=${encodeURIComponent(mediaTitle)}&type=${mediaType || 'tv'}&limit=1`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled || !data) return;
+        const result = data?.results?.[0];
         if (result?.poster_url) setResolvedPoster(result.poster_url);
         else if (result?.image) setResolvedPoster(result.image);
-        else if (result?.poster_path) setResolvedPoster(`https://image.tmdb.org/t/p/w185${result.poster_path}`);
-      } catch { /* silent */ }
-    }
-    fetchPoster();
-  }, [posterUrl, mediaTitle, mediaType, activeSession]);
+        else if (result?.poster_path) setResolvedPoster(`https://image.tmdb.org/t/p/w300${result.poster_path}`);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [posterUrl, mediaTitle, mediaType, token]);
   const [optingOut, setOptingOut] = useState(false);
   const [optedOut, setOptedOut] = useState(false);
   const [showOptOutConfirm, setShowOptOutConfirm] = useState(false);
