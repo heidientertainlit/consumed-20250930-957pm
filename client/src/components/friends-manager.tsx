@@ -129,19 +129,16 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
 
       {/* Header with Invite Button */}
       <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-xl font-semibold text-gray-900">Friends</h3>
-            <p className="text-sm text-gray-600 mt-1">Connect with other entertainment fans</p>
-          </div>
+        <div className="flex items-center gap-3 mb-4">
           <Button
             onClick={handleInviteFriends}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-full"
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-full shrink-0"
             data-testid="button-invite-friends"
           >
             <Share2 size={16} className="mr-2" />
             Invite Friends
           </Button>
+          <p className="text-sm text-gray-500">Connect with other entertainment fans</p>
         </div>
 
         {/* Tabs */}
