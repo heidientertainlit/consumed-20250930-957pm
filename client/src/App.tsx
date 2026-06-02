@@ -92,6 +92,7 @@ import TermsOfService from "@/pages/terms-of-service";
 import ResponsibleGaming from "@/pages/responsible-gaming";
 import ProfileByUsername from "@/pages/profile-by-username";
 import IdentityPage from "@/pages/identity";
+import AddMediaPage from "@/pages/add";
 
 // Simple redirect component for wouter
 function RedirectTo({ to }: { to: string }) {
@@ -306,7 +307,9 @@ function Router() {
           </Route>
 
           <Route path="/add">
-            <RedirectTo to="/activity" />
+            <ProtectedRoute>
+              <AddMediaPage />
+            </ProtectedRoute>
           </Route>
 
           <Route path="/search">
