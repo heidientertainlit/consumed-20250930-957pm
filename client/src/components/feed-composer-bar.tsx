@@ -437,7 +437,7 @@ export default function FeedComposerBar({ pageMode = false }: { pageMode?: boole
 
   const closeMediaSearch = () => {
     if (pageMode) {
-      setLocation(-1 as any);
+      window.history.back();
       return;
     }
     setSearchSlideIn(false);
