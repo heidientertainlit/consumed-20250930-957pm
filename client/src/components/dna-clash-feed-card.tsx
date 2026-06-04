@@ -314,65 +314,68 @@ export default function DnaClashFeedCard({
         </div>
       )}
 
-      {/* Body: tall poster left, headline + clash right */}
-      <div className="px-4 pb-3 flex gap-3 items-stretch">
-        {/* Poster */}
+      {/* Body: poster left, everything else right */}
+      <div className="px-4 pb-4 flex gap-3 items-start">
+        {/* Poster — fixed height, natural width */}
         {resolvedPoster && (
           <img
             src={resolvedPoster}
             alt={mediaTitle}
-            className="w-[68px] rounded-xl object-cover shrink-0 shadow-sm"
-            style={{ minHeight: 110, alignSelf: 'stretch' }}
+            className="rounded-xl object-cover shrink-0 shadow-md"
+            style={{ width: 80, height: 120 }}
             onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
         )}
-        {/* Right: headline on top, two sides below */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between">
-          <div className="mb-2">
+
+        {/* Right column: headline → user sides → vote/results */}
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
+          {/* Headline */}
+          <div>
             <p className="text-gray-900 font-extrabold text-[15px] leading-tight">Completely different takes.</p>
             <p className="text-gray-400 text-[12px] font-medium mt-0.5">on {mediaTitle}</p>
           </div>
+
+          {/* User sides */}
           <div className="flex items-start">
             <UserSide user={user1} side="left" />
             <Waveform />
             <UserSide user={user2} side="right" />
           </div>
+
+          {/* Vote buttons or result bars — inside the right column */}
+          {!voted ? (
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => handleVote(user1.username)}
+                className="flex-1 py-2 rounded-xl text-[12px] font-bold text-white transition-all active:scale-[0.97]"
+                style={{ background: '#a855f7' }}
+              >
+                I'm with {user1.displayName.split(' ')[0]}
+              </button>
+              <button
+                onClick={() => handleVote(user2.username)}
+                className="flex-1 py-2 rounded-xl text-[12px] font-bold text-white transition-all active:scale-[0.97]"
+                style={{ background: '#ec4899' }}
+              >
+                I'm with {user2.displayName.split(' ')[0]}
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1.5 pt-1">
+              {[{ u: user1, pct: pct1, color: '#a855f7' }, { u: user2, pct: pct2, color: '#ec4899' }].map(({ u, pct, color }) => (
+                <div key={u.username} className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold w-14 truncate shrink-0 text-gray-600">{u.displayName.split(' ')[0]}</span>
+                  <div className="flex-1 h-2 rounded-full overflow-hidden bg-gray-100">
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+                  </div>
+                  <span className="text-[11px] font-bold w-7 text-right shrink-0 text-gray-700">{pct}%</span>
+                </div>
+              ))}
+              <p className="text-gray-400 text-[10px] text-center mt-0.5">{total} {total === 1 ? 'vote' : 'votes'}</p>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Vote buttons */}
-      {!voted ? (
-        <div className="flex gap-2 px-4 pb-4">
-          <button
-            onClick={() => handleVote(user1.username)}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all active:scale-[0.97]"
-            style={{ background: '#a855f7' }}
-          >
-            I'm with {user1.displayName.split(' ')[0]}
-          </button>
-          <button
-            onClick={() => handleVote(user2.username)}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all active:scale-[0.97]"
-            style={{ background: '#ec4899' }}
-          >
-            I'm with {user2.displayName.split(' ')[0]}
-          </button>
-        </div>
-      ) : (
-        <div className="px-4 pb-4 flex flex-col gap-2">
-          {/* Result bars */}
-          {[{ u: user1, pct: pct1, color: '#a855f7' }, { u: user2, pct: pct2, color: '#ec4899' }].map(({ u, pct, color }) => (
-            <div key={u.username} className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold w-16 truncate shrink-0 text-gray-600">{u.displayName.split(' ')[0]}</span>
-              <div className="flex-1 h-2 rounded-full overflow-hidden bg-gray-100">
-                <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
-              </div>
-              <span className="text-[11px] font-bold w-7 text-right shrink-0 text-gray-700">{pct}%</span>
-            </div>
-          ))}
-          <p className="text-gray-400 text-[10px] text-center mt-0.5">{total} {total === 1 ? 'vote' : 'votes'}</p>
-        </div>
-      )}
 
       {/* Action bar */}
       <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-100">
