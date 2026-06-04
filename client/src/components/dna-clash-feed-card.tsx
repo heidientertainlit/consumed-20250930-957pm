@@ -322,7 +322,7 @@ export default function DnaClashFeedCard({
             src={resolvedPoster}
             alt={mediaTitle}
             className="rounded-xl object-cover shrink-0 shadow-md"
-            style={{ width: 80, height: 120 }}
+            style={{ width: 96, height: 168 }}
             onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
         )}
