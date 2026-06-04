@@ -1053,15 +1053,30 @@ export default function MediaDetail() {
               
               {/* Compact metadata chips */}
               <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 mb-3">
-                {((mediaItem.rating && mediaItem.rating !== '0') || avgRating) && (
+                {/* Consumed community avg */}
+                {avgRating && (
                   <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-full">
                     <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                    <span className="font-medium">
-                      {(mediaItem.rating && mediaItem.rating !== '0') ? mediaItem.rating : avgRating}
-                    </span>
-                    <span className="text-gray-500">avg</span>
+                    <span className="font-medium">{avgRating}</span>
+                    <span className="text-gray-500">Consumed</span>
                   </div>
                 )}
+                {/* TMDB score */}
+                {mediaItem.tmdb_score && (
+                  <div className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-full">
+                    <span className="font-medium text-blue-700">{Number(mediaItem.tmdb_score).toFixed(1)}</span>
+                    <span className="text-blue-500">/10 TMDB</span>
+                  </div>
+                )}
+                {/* Google Books rating */}
+                {mediaItem.google_books_rating && (
+                  <div className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full">
+                    <Star className="w-3 h-3 text-green-600 fill-current" />
+                    <span className="font-medium text-green-700">{Number(mediaItem.google_books_rating).toFixed(1)}</span>
+                    <span className="text-green-600">/5 Books</span>
+                  </div>
+                )}
+                {/* User's own rating */}
                 {(userRating?.rating || userReview?.rating) && (
                   <div className="flex items-center gap-1 bg-purple-50 px-2 py-1 rounded-full">
                     <Star className="w-3 h-3 text-purple-600 fill-current" />
