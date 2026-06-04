@@ -110,26 +110,37 @@ export default function DnaClashFeedCard({
   const [resolvedPoster, setResolvedPoster] = useState<string | null>(posterUrl || null);
   const token = activeSession?.access_token;
 
-  // Fetch poster from media-search using the user's JWT
+  // Fetch poster — prefer get-media-details (exact ID) when available, fall back to media-search by title
   useEffect(() => {
     if (posterUrl) { setResolvedPoster(posterUrl); return; }
-    if (!mediaTitle || !token) return;
+    if (!token) return;
     let cancelled = false;
-    fetch(
-      `${SUPABASE_URL}/functions/v1/media-search?q=${encodeURIComponent(mediaTitle)}&type=${mediaType || 'tv'}&limit=1`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
+
+    const tryGetMediaDetails = externalId && externalSource;
+    const url = tryGetMediaDetails
+      ? `${SUPABASE_URL}/functions/v1/get-media-details?source=${externalSource}&external_id=${externalId}&media_type=${mediaType || 'tv'}`
+      : mediaTitle
+        ? `${SUPABASE_URL}/functions/v1/media-search?q=${encodeURIComponent(mediaTitle)}&type=${mediaType || 'tv'}&limit=1`
+        : null;
+
+    if (!url) return;
+
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (cancelled || !data) return;
-        const result = data?.results?.[0];
-        if (result?.poster_url) setResolvedPoster(result.poster_url);
-        else if (result?.image) setResolvedPoster(result.image);
-        else if (result?.poster_path) setResolvedPoster(`https://image.tmdb.org/t/p/w300${result.poster_path}`);
+        if (tryGetMediaDetails) {
+          if (data.artwork) setResolvedPoster(data.artwork);
+        } else {
+          const result = data?.results?.[0];
+          if (result?.poster_url) setResolvedPoster(result.poster_url);
+          else if (result?.image) setResolvedPoster(result.image);
+          else if (result?.poster_path) setResolvedPoster(`https://image.tmdb.org/t/p/w300${result.poster_path}`);
+        }
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [posterUrl, mediaTitle, mediaType, token]);
+  }, [posterUrl, externalId, externalSource, mediaTitle, mediaType, token]);
   const [optingOut, setOptingOut] = useState(false);
   const [optedOut, setOptedOut] = useState(false);
   const [showOptOutConfirm, setShowOptOutConfirm] = useState(false);

@@ -444,13 +444,34 @@ serve(async (req) => {
           coverUrl = `https://covers.openlibrary.org/b/id/${data.covers[0]}-L.jpg`;
         }
 
+        // Try Google Books by title to get a community rating
+        let gbRating: number | null = null;
+        let gbRatingsCount = 0;
+        if (data.title) {
+          try {
+            const googleBooksKey = Deno.env.get('GOOGLE_BOOKS_API_KEY') || '';
+            const gbTitleUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(`intitle:${data.title}`)}&maxResults=5&printType=books${googleBooksKey ? `&key=${googleBooksKey}` : ''}`;
+            const gbRes = await fetch(gbTitleUrl);
+            if (gbRes.ok) {
+              const gbData = await gbRes.json();
+              const match = (gbData.items || []).find((item: any) => item.volumeInfo?.averageRating);
+              if (match) {
+                gbRating = match.volumeInfo.averageRating;
+                gbRatingsCount = match.volumeInfo.ratingsCount || 0;
+              }
+            }
+          } catch { /* silent */ }
+        }
+
         mediaDetails = {
           title: data.title,
           type: 'Book',
           creator: authorData?.name || data.by_statement || 'Unknown Author',
           artwork: coverUrl,
           description: stripHtml(typeof data.description === 'string' ? data.description : data.description?.value),
-          rating: '4.2',
+          rating: gbRating ? gbRating.toFixed(1) : '4.2',
+          google_books_rating: gbRating,
+          google_books_ratings_count: gbRatingsCount,
           releaseDate: data.first_publish_date || data.publish_date,
           category: data.subjects?.[0] || 'Fiction',
           language: 'English',
