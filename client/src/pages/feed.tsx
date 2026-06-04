@@ -65,7 +65,7 @@ import DnaClashFeedCard from "@/components/dna-clash-feed-card";
 import DnaCompareFeedCard, { DnaComparePostCard } from "@/components/dna-compare-feed-card";
 import { TodaysPlayNudge } from "@/components/todays-play-nudge";
 import { WhatsYourMove } from "@/components/whats-your-move"; // kept for reference — not currently rendered
-import FeedComposerBar from "@/components/feed-composer-bar";
+import FeedComposerBar, { FeedActionChips } from "@/components/feed-composer-bar";
 
 interface SocialPost {
   id: string;
@@ -7795,9 +7795,9 @@ export default function Feed() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-6" data-feed-content>
-        {/* Composer bar — top of white feed */}
+        {/* Action chips — top of white feed */}
         <div className="mb-4">
-          <FeedComposerBar />
+          <FeedActionChips />
         </div>
 
         {/* Pending Friend Casts - You've Been Cast! - At top of white feed area */}

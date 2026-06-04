@@ -182,12 +182,20 @@ function MediaRow({
   );
 }
 
-export default function FeedComposerBar({ pageMode = false }: { pageMode?: boolean }) {
+export default function FeedComposerBar({
+  pageMode = false,
+  startExpanded = false,
+  onExternalClose,
+}: {
+  pageMode?: boolean;
+  startExpanded?: boolean;
+  onExternalClose?: () => void;
+}) {
   const { session } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  const [isOpen, setIsOpen] = useState(pageMode);
+  const [isOpen, setIsOpen] = useState(pageMode || startExpanded);
   const PLACEHOLDERS = ["Your take...", "Thoughts?", "What's your next move?"];
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   useEffect(() => {
@@ -372,6 +380,7 @@ export default function FeedComposerBar({ pageMode = false }: { pageMode?: boole
     setShowMediaSearch(false);
     setMediaFilter("all");
     setIsOpen(false);
+    if (startExpanded) onExternalClose?.();
   };
 
   useEffect(() => {
@@ -534,16 +543,18 @@ export default function FeedComposerBar({ pageMode = false }: { pageMode?: boole
 
   return (
     <>
-      {/* Collapsed trigger */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="w-full rounded-2xl bg-white border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
-      >
-        <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
-          <Plus className="w-4 h-4 text-white" />
-        </div>
-        <span key={placeholderIdx} className="text-gray-400 text-sm flex-1 animate-in fade-in duration-500">{PLACEHOLDERS[placeholderIdx]}</span>
-      </button>
+      {/* Collapsed trigger — hidden when opened externally via startExpanded */}
+      {!startExpanded && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="w-full rounded-2xl bg-white border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
+        >
+          <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+            <Plus className="w-4 h-4 text-white" />
+          </div>
+          <span key={placeholderIdx} className="text-gray-400 text-sm flex-1 animate-in fade-in duration-500">{PLACEHOLDERS[placeholderIdx]}</span>
+        </button>
+      )}
 
       {isOpen && createPortal(
         <div className="fixed inset-0 z-[99999]">
@@ -907,6 +918,45 @@ export default function FeedComposerBar({ pageMode = false }: { pageMode?: boole
         onClose={() => { setIsQuickAddOpen(false); setQuickAddMedia(null); }}
         media={quickAddMedia}
       />
+    </>
+  );
+}
+
+// ─── Two-chip replacement for the collapsed bar ───────────────────────────────
+export function FeedActionChips() {
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [, setLocation] = useLocation();
+
+  return (
+    <>
+      <div className="flex gap-2.5">
+        {/* Bookmark chip — track/add media */}
+        <button
+          onClick={() => setLocation('/add-media')}
+          className="flex-1 flex items-center justify-center gap-2 px-3 py-3.5 rounded-2xl font-semibold text-[13px] text-white active:scale-[0.97] transition-transform"
+          style={{ background: '#7c3aed' }}
+        >
+          <Bookmark size={15} fill="white" className="shrink-0" />
+          <span>I watched / read / played…</span>
+        </button>
+
+        {/* Compose chip — rate, review, post */}
+        <button
+          onClick={() => setComposerOpen(true)}
+          className="flex-1 flex items-center justify-center gap-2 px-3 py-3.5 rounded-2xl font-semibold text-[13px] text-white active:scale-[0.97] transition-transform"
+          style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
+        >
+          <div className="relative shrink-0">
+            <MessageSquarePlus size={15} />
+            <Star size={7} className="absolute -top-1 -right-1 fill-yellow-300 text-yellow-300" />
+          </div>
+          <span>Rate, review, or post…</span>
+        </button>
+      </div>
+
+      {composerOpen && (
+        <FeedComposerBar startExpanded onExternalClose={() => setComposerOpen(false)} />
+      )}
     </>
   );
 }
