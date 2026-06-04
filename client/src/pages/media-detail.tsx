@@ -1072,8 +1072,8 @@ export default function MediaDetail() {
                 {mediaItem.google_books_rating && (
                   <div className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full">
                     <Star className="w-3 h-3 text-green-600 fill-current" />
-                    <span className="font-medium text-green-700">{Number(mediaItem.google_books_rating).toFixed(1)}</span>
-                    <span className="text-green-600">/5 Books</span>
+                    <span className="font-medium text-green-700">{Number(mediaItem.google_books_rating).toFixed(1)}/5</span>
+                    <span className="text-green-600">Google Books</span>
                   </div>
                 )}
                 {/* User's own rating */}
