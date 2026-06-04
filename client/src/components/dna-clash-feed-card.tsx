@@ -36,8 +36,8 @@ interface DnaClashFeedCardProps {
 // ─── VS divider ───────────────────────────────────────────────────────────────
 function Waveform() {
   return (
-    <div className="flex items-center justify-center px-2" style={{ marginTop: 18 }}>
-      <span style={{ fontSize: 18, fontWeight: 900, color: '#d1d5db', letterSpacing: '0.05em' }}>vs</span>
+    <div className="flex items-center justify-center px-2" style={{ marginTop: 12 }}>
+      <span style={{ fontSize: 13, fontWeight: 900, color: '#d1d5db', letterSpacing: '0.05em' }}>vs</span>
     </div>
   );
 }
@@ -47,26 +47,26 @@ function UserSide({ user, side }: { user: ClashUser; side: 'left' | 'right' }) {
   const starColor = side === 'left' ? '#a855f7' : '#ec4899';
   const align = side === 'left' ? 'items-start' : 'items-end text-right';
   return (
-    <div className={`flex-1 flex flex-col gap-1.5 ${align}`}>
+    <div className={`flex-1 flex flex-col gap-1 ${align}`}>
       {/* Avatar */}
-      <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center text-white font-bold text-base shrink-0"
+      <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-bold text-sm shrink-0"
         style={{ background: side === 'left' ? '#a855f7' : '#ec4899' }}>
         {user.avatar
           ? <img src={user.avatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           : user.initials || user.displayName[0]?.toUpperCase()}
       </div>
       {/* Name */}
-      <span className="text-gray-900 font-bold text-[16px] leading-tight">
+      <span className="text-gray-900 font-bold text-[13px] leading-tight">
         {user.displayName.split(' ')[0]}
       </span>
       {/* Stars */}
       <div className="flex items-center gap-0.5">
         {[1, 2, 3, 4, 5].map(s => (
-          <span key={s} style={{ fontSize: 13, color: s <= user.rating ? starColor : '#e2e2e8' }}>★</span>
+          <span key={s} style={{ fontSize: 11, color: s <= user.rating ? starColor : '#e2e2e8' }}>★</span>
         ))}
       </div>
       {/* DNA label */}
-      <span className="text-gray-400 text-[10px] font-medium">{user.dnaLabel}</span>
+      <span className="text-gray-400 text-[10px] font-medium leading-tight">{user.dnaLabel}</span>
     </div>
   );
 }
@@ -314,27 +314,30 @@ export default function DnaClashFeedCard({
         </div>
       )}
 
-      {/* Headline */}
-      <div className="px-4 pb-3 flex items-center gap-3">
+      {/* Body: tall poster left, headline + clash right */}
+      <div className="px-4 pb-3 flex gap-3 items-stretch">
+        {/* Poster */}
         {resolvedPoster && (
           <img
             src={resolvedPoster}
             alt={mediaTitle}
-            className="w-12 h-[72px] rounded-lg object-cover shrink-0 shadow-sm"
+            className="w-[68px] rounded-xl object-cover shrink-0 shadow-sm"
+            style={{ minHeight: 110, alignSelf: 'stretch' }}
             onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
         )}
-        <div>
-          <p className="text-gray-900 font-extrabold text-[18px] leading-tight">Completely different takes.</p>
-          <p className="text-gray-400 text-[13px] font-medium mt-0.5">on {mediaTitle}</p>
+        {/* Right: headline on top, two sides below */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between">
+          <div className="mb-2">
+            <p className="text-gray-900 font-extrabold text-[15px] leading-tight">Completely different takes.</p>
+            <p className="text-gray-400 text-[12px] font-medium mt-0.5">on {mediaTitle}</p>
+          </div>
+          <div className="flex items-start">
+            <UserSide user={user1} side="left" />
+            <Waveform />
+            <UserSide user={user2} side="right" />
+          </div>
         </div>
-      </div>
-
-      {/* Two sides + waveform */}
-      <div className="flex items-start gap-0 px-4 pb-4">
-        <UserSide user={user1} side="left" />
-        <Waveform />
-        <UserSide user={user2} side="right" />
       </div>
 
       {/* Vote buttons */}
