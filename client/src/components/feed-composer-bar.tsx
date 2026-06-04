@@ -932,7 +932,7 @@ export function FeedActionChips() {
       <div className="flex gap-2.5">
         {/* Bookmark chip — track/add media */}
         <button
-          onClick={() => setLocation('/add-media')}
+          onClick={() => setLocation('/add')}
           className="flex-1 flex flex-col items-center justify-center gap-1 px-3 py-3.5 rounded-2xl text-white active:scale-[0.97] transition-transform"
           style={{ background: '#7c3aed' }}
         >
