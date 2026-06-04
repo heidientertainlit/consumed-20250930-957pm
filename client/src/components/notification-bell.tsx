@@ -269,7 +269,8 @@ export function NotificationBell() {
     <DropdownMenu open={open} onOpenChange={handleOpenChange} modal={false}>
       <DropdownMenuTrigger asChild>
         <button 
-          className="relative text-white hover:opacity-70 transition-opacity"
+          className="relative inline-flex items-center justify-center text-white hover:opacity-70 transition-opacity"
+          style={{ width: 20, height: 20 }}
           data-testid="button-notifications"
         >
           <Bell className="h-5 w-5" />
