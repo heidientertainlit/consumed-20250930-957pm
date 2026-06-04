@@ -269,7 +269,7 @@ export function NotificationBell() {
     <DropdownMenu open={open} onOpenChange={handleOpenChange} modal={false}>
       <DropdownMenuTrigger asChild>
         <button 
-          className="relative p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+          className="relative text-white hover:opacity-70 transition-opacity"
           data-testid="button-notifications"
         >
           <Bell className="h-5 w-5" />
