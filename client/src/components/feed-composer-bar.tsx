@@ -933,24 +933,30 @@ export function FeedActionChips() {
         {/* Bookmark chip — track/add media */}
         <button
           onClick={() => setLocation('/add-media')}
-          className="flex-1 flex items-center justify-center gap-2 px-3 py-3.5 rounded-2xl font-semibold text-[13px] text-white active:scale-[0.97] transition-transform"
+          className="flex-1 flex flex-col items-center justify-center gap-1 px-3 py-3.5 rounded-2xl text-white active:scale-[0.97] transition-transform"
           style={{ background: '#7c3aed' }}
         >
-          <Bookmark size={15} fill="white" className="shrink-0" />
-          <span>I watched / read / played…</span>
+          <div className="flex items-center gap-1.5">
+            <Bookmark size={14} fill="white" className="shrink-0" />
+            <span className="font-bold text-[14px]">Add Media</span>
+          </div>
+          <span className="text-white/70 text-[10px] leading-tight text-center">Track what you watched, read, or played</span>
         </button>
 
         {/* Compose chip — rate, review, post */}
         <button
           onClick={() => setComposerOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2 px-3 py-3.5 rounded-2xl font-semibold text-[13px] text-white active:scale-[0.97] transition-transform"
+          className="flex-1 flex flex-col items-center justify-center gap-1 px-3 py-3.5 rounded-2xl text-white active:scale-[0.97] transition-transform"
           style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
         >
-          <div className="relative shrink-0">
-            <MessageSquarePlus size={15} />
-            <Star size={7} className="absolute -top-1 -right-1 fill-yellow-300 text-yellow-300" />
+          <div className="flex items-center gap-1.5">
+            <div className="relative shrink-0">
+              <MessageSquarePlus size={14} />
+              <Star size={6} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
+            </div>
+            <span className="font-bold text-[14px]">Share a Take</span>
           </div>
-          <span>Rate, review, or post…</span>
+          <span className="text-white/70 text-[10px] leading-tight text-center">Rate, review, or post your hot take</span>
         </button>
       </div>
 
