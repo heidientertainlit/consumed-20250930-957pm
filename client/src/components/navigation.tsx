@@ -506,29 +506,32 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
           background: (location.startsWith('/room/') || location === '/rooms') ? 'transparent' : 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)',
         }}
       >
-        <div className="flex justify-between items-center h-11 px-4">
-          <Link href="/" className="flex items-center space-x-2">
+        <div className="flex justify-between items-center h-11 px-4 gap-2 min-w-0">
+          <Link href="/" className="flex items-center flex-shrink-0">
             <img
               src="/consumed-logo-new.png"
               alt="consumed"
               className="h-7 w-auto"
+              style={{ aspectRatio: 'auto', display: 'block' }}
             />
           </Link>
           
-          <div className="flex items-center">
+          <div className="flex items-center gap-3 flex-shrink-0">
             {totalPoints !== null && (
-              <Link href="/points" className="flex items-center gap-1 bg-white/10 active:bg-white/20 rounded-full px-2.5 py-1 transition-colors mr-5">
+              <Link href="/points" className="flex items-center gap-1 bg-white/10 active:bg-white/20 rounded-full px-2.5 py-1 transition-colors">
                 <Star size={11} className="text-amber-400" fill="currentColor" />
-                <span className="text-white text-xs font-semibold">{totalPoints.toLocaleString()}</span>
+                <span className="text-white text-xs font-semibold">
+                  {totalPoints >= 1000 ? `${(totalPoints / 1000).toFixed(1).replace(/\.0$/, '')}k` : totalPoints}
+                </span>
                 <span className="text-white/60 text-[10px]">pts</span>
               </Link>
             )}
-            <Link href="/leaderboard" className="hover:opacity-70 transition-opacity mr-6" aria-label="Leaderboard">
+            <Link href="/leaderboard" className="hover:opacity-70 transition-opacity" aria-label="Leaderboard">
               <Trophy className="text-white/80" size={20} />
             </Link>
             <button
               onClick={handleSearchToggle}
-              className="hover:opacity-70 transition-opacity mr-3"
+              className="hover:opacity-70 transition-opacity"
               aria-label="Search"
               data-testid="nav-search-toggle"
             >
