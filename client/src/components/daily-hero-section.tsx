@@ -2088,16 +2088,14 @@ export function DailyHeroSection() {
                   <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                     <span style={{ fontSize: 10, letterSpacing: '0.12em', color: '#9b7fe8', textTransform: 'uppercase', fontWeight: 600 }}>Today's Play</span>
                     <div className="flex items-center gap-1.5">
-                      <Check size={15} strokeWidth={3} color="#4ade80" style={{ flexShrink: 0 }} />
-                      <span style={{ fontSize: 21, fontWeight: 700, color: '#f0ecff', lineHeight: 1.2 }}>{headline}</span>
+                      <Check size={13} strokeWidth={3} color="#4ade80" style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: 15, fontWeight: 700, color: '#f0ecff', lineHeight: 1.2 }}>{headline}</span>
                     </div>
-                    {/* Outpredicted stat */}
-                    {outpredictedLine && (
-                      <span style={{ fontSize: 12, color: '#a090c8', marginTop: 4, lineHeight: 1.5 }}>{outpredictedLine}</span>
-                    )}
-                    {/* Genre identity line */}
-                    {genreLine && (
-                      <span style={{ fontSize: 12, color: '#c4b5fd', marginTop: 3, lineHeight: 1.5 }}>{genreLine}</span>
+                    {/* Outpredicted + genre — single flowing sentence */}
+                    {(outpredictedLine || genreLine) && (
+                      <span style={{ fontSize: 14, color: '#c4b5fd', marginTop: 5, lineHeight: 1.5 }}>
+                        {[outpredictedLine, genreLine].filter(Boolean).join(' ')}
+                      </span>
                     )}
                   </div>
                   <button
