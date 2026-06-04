@@ -2052,18 +2052,31 @@ export function DailyHeroSection() {
         <div className="flex flex-col gap-2">
           {(() => {
             const noneRight = isTriviaDay && playScore && playScore.correct === 0;
-            const headline = noneRight ? 'Keep going.' : callAnswer === '__skip' ? 'Streak saved.' : 'Called it.';
-            // Score: trivia = correct/total %; daily call = ring full (completed indicator, no numeric score)
-            const triviaScore = isTriviaDay && playScore
-              ? Math.round((playScore.correct / Math.max(1, playScore.total)) * 100)
+            const skipped = callAnswer === '__skip';
+            const headline = noneRight ? 'Keep going.' : skipped ? 'Streak saved.' : 'Nice call.';
+            const isWin = !noneRight && !skipped;
+
+            // "Outpredicted X%" — use already-fetched rank data
+            const beatenPct = isTriviaDay ? rankData?.beatenPct : callRankData?.beatenPct;
+            const outpredictedLine = isWin && beatenPct != null && beatenPct > 0
+              ? `You outpredicted ${beatenPct}% of players on this one.`
+              : isWin ? 'Your read on this was spot on.' : null;
+
+            // Genre identity line — top genre from DNA profile
+            const topGenre = dnaProfile?.favorite_genres?.[0] ?? null;
+            const genreEmoji = (g: string) => {
+              const l = g.toLowerCase();
+              if (l.includes('thriller') || l.includes('crime') || l.includes('horror')) return '🔪';
+              if (l.includes('reality')) return '❤️';
+              if (l.includes('comedy') || l.includes('sitcom')) return '😂';
+              if (l.includes('sci') || l.includes('fantasy')) return '🚀';
+              if (l.includes('doc')) return '🎥';
+              return '🎬';
+            };
+            const genreLine = isWin && topGenre
+              ? `${genreEmoji(topGenre)} Your instincts are sharpest in ${topGenre}.`
               : null;
-            const circ = 144.5;
-            const dashOffset = triviaScore !== null ? circ * (1 - triviaScore / 100) : 0;
-            // Sub copy — use first flavor note or DNA label
-            const flavorNote = dnaProfile?.flavor_notes?.[0] ?? dnaProfile?.label ?? null;
-            const subCopy = flavorNote
-              ? `Your ${flavorNote.toLowerCase()} is showing.`
-              : 'Your taste is getting sharper.';
+
             return (
               <div
                 className="w-full rounded-xl text-left overflow-hidden cursor-pointer"
@@ -2071,14 +2084,21 @@ export function DailyHeroSection() {
                 onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallOverlay(true)}
               >
                 {/* Top row: label + headline + share */}
-                <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3">
+                <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-2">
                   <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                     <span style={{ fontSize: 10, letterSpacing: '0.12em', color: '#9b7fe8', textTransform: 'uppercase', fontWeight: 600 }}>Today's Play</span>
                     <div className="flex items-center gap-1.5">
-                      <span style={{ fontSize: 21, fontWeight: 600, color: '#f0ecff', lineHeight: 1.2 }}>{headline}</span>
-                      <Check size={16} strokeWidth={3} color="#4ade80" style={{ marginTop: 2, flexShrink: 0 }} />
+                      <Check size={15} strokeWidth={3} color="#4ade80" style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: 21, fontWeight: 700, color: '#f0ecff', lineHeight: 1.2 }}>{headline}</span>
                     </div>
-                    <span style={{ fontSize: 12, color: '#a090c8', marginTop: 3, lineHeight: 1.5 }}>{subCopy}</span>
+                    {/* Outpredicted stat */}
+                    {outpredictedLine && (
+                      <span style={{ fontSize: 12, color: '#a090c8', marginTop: 4, lineHeight: 1.5 }}>{outpredictedLine}</span>
+                    )}
+                    {/* Genre identity line */}
+                    {genreLine && (
+                      <span style={{ fontSize: 12, color: '#c4b5fd', marginTop: 3, lineHeight: 1.5 }}>{genreLine}</span>
+                    )}
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true); }}
@@ -2090,7 +2110,7 @@ export function DailyHeroSection() {
                 </div>
 
                 {/* Streak pill */}
-                <div className="flex items-center gap-2 px-4 pb-3">
+                <div className="flex items-center gap-2 px-4 pb-3 pt-1">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(96,165,250,0.12)', border: '1px solid rgba(96,165,250,0.3)', borderRadius: 20, padding: '4px 10px' }}>
                     <Flame size={12} color="#60a5fa" fill="#60a5fa" />
                     <span style={{ fontSize: 11, color: '#60a5fa', fontWeight: 600 }}>{streak ?? 1} day streak</span>
