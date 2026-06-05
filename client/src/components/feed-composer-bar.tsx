@@ -930,29 +930,27 @@ export function FeedActionChips() {
   return (
     <>
       <div className="flex gap-2.5">
-        {/* Add Media — purple gradient pill */}
+        {/* Add Media — minimal purple outlined pill */}
         <button
           onClick={() => setLocation('/add')}
-          className="flex-1 flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-2xl text-white active:scale-[0.97] transition-transform"
-          style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #5b21b6 100%)' }}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl active:scale-[0.97] transition-transform"
+          style={{ background: 'rgba(124,58,237,0.07)', border: '1.5px solid rgba(124,58,237,0.35)' }}
         >
-          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.2)' }}>
-            <Bookmark size={15} fill="white" className="text-white" />
-          </div>
-          <span className="font-bold text-[14px]">Add Media</span>
+          <Bookmark size={15} fill="#7c3aed" className="shrink-0" style={{ color: '#7c3aed' }} />
+          <span className="font-semibold text-[14px]" style={{ color: '#7c3aed' }}>Add Media</span>
         </button>
 
-        {/* Share a Take — white pill with border */}
+        {/* Share a Take — minimal orange outlined pill */}
         <button
           onClick={() => setComposerOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-2xl bg-white active:scale-[0.97] transition-transform"
-          style={{ border: '1.5px solid #e5e7eb' }}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl active:scale-[0.97] transition-transform"
+          style={{ background: 'rgba(249,115,22,0.07)', border: '1.5px solid rgba(249,115,22,0.35)' }}
         >
-          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
-            <MessageSquarePlus size={15} className="text-white" />
-            <Star size={8} className="absolute -top-1 -right-1 fill-yellow-300 text-yellow-300" />
+          <div className="relative shrink-0">
+            <MessageSquarePlus size={15} style={{ color: '#f97316' }} />
+            <Star size={7} className="absolute -top-1 -right-1 fill-yellow-400 text-yellow-400" />
           </div>
-          <span className="font-bold text-[14px] text-gray-900">Share a Take</span>
+          <span className="font-semibold text-[14px]" style={{ color: '#f97316' }}>Share a Take</span>
         </button>
       </div>
 
