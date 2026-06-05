@@ -929,28 +929,26 @@ export function FeedActionChips() {
 
   return (
     <>
-      <div className="flex gap-2.5">
-        {/* Add Media — minimal purple outlined pill */}
+      <div className="flex items-center bg-white rounded-2xl overflow-hidden" style={{ border: '1px solid #e5e7eb' }}>
+        {/* Add Media */}
         <button
           onClick={() => setLocation('/add')}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl active:scale-[0.97] transition-transform"
-          style={{ background: 'rgba(124,58,237,0.07)', border: '1.5px solid rgba(124,58,237,0.35)' }}
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 active:bg-gray-50 transition-colors"
         >
-          <Bookmark size={15} fill="#7c3aed" className="shrink-0" style={{ color: '#7c3aed' }} />
-          <span className="font-semibold text-[14px]" style={{ color: '#7c3aed' }}>Add Media</span>
+          <Plus size={15} className="text-gray-600 shrink-0" />
+          <span className="font-medium text-[14px] text-gray-700">Add Media</span>
         </button>
 
-        {/* Share a Take — minimal orange outlined pill */}
+        {/* Divider */}
+        <div className="w-px self-stretch bg-gray-200" />
+
+        {/* Share a Take */}
         <button
           onClick={() => setComposerOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl active:scale-[0.97] transition-transform"
-          style={{ background: 'rgba(249,115,22,0.07)', border: '1.5px solid rgba(249,115,22,0.35)' }}
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 active:bg-gray-50 transition-colors"
         >
-          <div className="relative shrink-0">
-            <MessageSquarePlus size={15} style={{ color: '#f97316' }} />
-            <Star size={7} className="absolute -top-1 -right-1 fill-yellow-400 text-yellow-400" />
-          </div>
-          <span className="font-semibold text-[14px]" style={{ color: '#f97316' }}>Share a Take</span>
+          <MessageSquarePlus size={15} className="text-gray-600 shrink-0" />
+          <span className="font-medium text-[14px] text-gray-700">Share a Take</span>
         </button>
       </div>
 

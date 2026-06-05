@@ -66,6 +66,7 @@ import DnaCompareFeedCard, { DnaComparePostCard } from "@/components/dna-compare
 import { TodaysPlayNudge } from "@/components/todays-play-nudge";
 import { WhatsYourMove } from "@/components/whats-your-move"; // kept for reference — not currently rendered
 import FeedComposerBar, { FeedActionChips } from "@/components/feed-composer-bar";
+import { TrendingNowSection } from "@/components/trending-now-section";
 
 interface SocialPost {
   id: string;
@@ -4829,6 +4830,29 @@ export default function Feed() {
     ? [highlightedPost, ...basePosts]
     : basePosts;
 
+  // "What's Happening" — 3 most recent posts, friends first
+  const whatHappeningPosts = useMemo(() => {
+    if (!socialPosts?.length) return [];
+    const getVerb = (type: string) => {
+      if (type === 'rating') return 'rated';
+      if (type === 'review') return 'reviewed';
+      if (type === 'rate-review') return 'rated';
+      if (type === 'predict' || type === 'prediction') return 'predicted';
+      if (type === 'hot_take') return 'shared a hot take on';
+      if (type === 'question') return 'asked about';
+      if (type === 'finished') return 'finished';
+      if (type === 'poll') return 'voted on';
+      if (type === 'game_moment') return 'played trivia on';
+      return 'shared about';
+    };
+    const valid = (socialPosts as any[]).filter((p: any) => {
+      return p.user?.id && (p.user?.displayName || p.user?.username) && (p.mediaTitle || p.content) && p.type !== 'dna_compare';
+    }).map((p: any) => ({ ...p, _verb: getVerb(p.type) }));
+    const friends = valid.filter((p: any) => friendIds.has(p.user?.id));
+    const others = valid.filter((p: any) => !friendIds.has(p.user?.id));
+    return [...friends, ...others].slice(0, 3);
+  }, [socialPosts, friendIds]);
+
   // Helper: resolve media type from various fields
   const resolveItemMediaType = (m: any): string => {
     const actionTypes = ['consuming', 'consumed', 'add-to-list', 'added_to_list', 'rate', 'review', 'rewatch', 'thought'];
@@ -7795,10 +7819,75 @@ export default function Feed() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-6" data-feed-content>
-        {/* Action chips — top of white feed */}
-        <div className="mb-4">
+
+        {/* ── What's Happening ── */}
+        {whatHappeningPosts.length > 0 && (
+          <div className="mb-4">
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">What's Happening</p>
+            <div className="space-y-0 divide-y divide-gray-100">
+              {whatHappeningPosts.map((post: any) => {
+                const name = post.user?.displayName || post.user?.username || 'Someone';
+                const avatarLetter = name[0]?.toUpperCase();
+                const mediaTitle = post.mediaTitle || post.content?.slice(0, 40) || '';
+                const isRating = post.type === 'rating' || post.type === 'rate-review';
+                const isPrediction = post.type === 'predict' || post.type === 'prediction';
+                const hasQuote = !isRating && !isPrediction && post.content && post.content.trim().length > 0;
+                return (
+                  <div key={post.id} className="flex items-center gap-3 py-3">
+                    {/* Avatar */}
+                    <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center">
+                      {post.user?.avatar
+                        ? <img src={post.user.avatar} alt={name} className="w-full h-full object-cover" />
+                        : <span className="text-white text-sm font-bold">{avatarLetter}</span>
+                      }
+                    </div>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500 leading-snug">
+                        <span className="font-semibold text-gray-800">{name}</span>{' '}
+                        <span>{post._verb}</span>
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900 truncate leading-snug mt-0.5">{mediaTitle}</p>
+                      {isRating && post.rating > 0 && (
+                        <div className="flex items-center gap-0.5 mt-0.5">
+                          {[1,2,3,4,5].map(s => (
+                            <Star key={s} size={11} className={s <= Math.round(post.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200'} />
+                          ))}
+                        </div>
+                      )}
+                      {isPrediction && post.pointsEarned != null && (
+                        <p className="text-[11px] text-violet-500 font-medium mt-0.5">{post.pointsEarned} pts</p>
+                      )}
+                      {hasQuote && (
+                        <p className="text-[11px] text-gray-400 mt-0.5 truncate">"{post.content.slice(0, 60)}"</p>
+                      )}
+                    </div>
+                    {/* Timestamp */}
+                    <span className="text-[11px] text-gray-400 flex-shrink-0 self-start pt-1">
+                      {(() => {
+                        const d = new Date(post.timestamp);
+                        const diff = Date.now() - d.getTime();
+                        const m = Math.floor(diff / 60000);
+                        if (m < 60) return `${m}m`;
+                        const h = Math.floor(m / 60);
+                        if (h < 24) return `${h}h`;
+                        return `${Math.floor(h / 24)}d`;
+                      })()}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Action chips ── */}
+        <div className="mb-5">
           <FeedActionChips />
         </div>
+
+        {/* ── Trending Now ── */}
+        <TrendingNowSection />
 
         {/* Pending Friend Casts - You've Been Cast! - At top of white feed area */}
         {pendingCasts.length > 0 && (
