@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Star, BarChart2, TrendingUp, X, Search, Loader2, Flame, ArrowLeft, Bookmark, MessageSquarePlus } from "lucide-react";
+import { Plus, Star, BarChart2, TrendingUp, X, Search, Loader2, Flame, ArrowLeft, Bookmark, MessageSquarePlus, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -929,34 +929,38 @@ export function FeedActionChips() {
 
   return (
     <>
-      <div className="flex gap-2.5">
-        {/* Bookmark chip — track/add media */}
+      <div className="flex flex-col gap-3">
+        {/* Add Media — full-width purple gradient row */}
         <button
           onClick={() => setLocation('/add')}
-          className="flex-1 flex flex-col items-center justify-center gap-1 px-3 py-3.5 rounded-2xl text-white active:scale-[0.97] transition-transform"
-          style={{ background: '#7c3aed' }}
+          className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-white active:scale-[0.98] transition-transform"
+          style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #5b21b6 100%)' }}
         >
-          <div className="flex items-center gap-1.5">
-            <Bookmark size={14} fill="white" className="shrink-0" />
-            <span className="font-bold text-[14px]">Add Media</span>
+          {/* Icon circle */}
+          <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.18)' }}>
+            <Bookmark size={20} fill="white" className="text-white" />
           </div>
-          <span className="text-white/70 text-[10px] leading-tight text-center">Track what you watched, read, or played</span>
+          {/* Label */}
+          <span className="font-bold text-[16px] flex-1 text-left">Add Media</span>
+          {/* Chevron */}
+          <ChevronRight size={20} className="text-white/70 flex-shrink-0" />
         </button>
 
-        {/* Compose chip — rate, review, post */}
+        {/* Share a Take — white card row */}
         <button
           onClick={() => setComposerOpen(true)}
-          className="flex-1 flex flex-col items-center justify-center gap-1 px-3 py-3.5 rounded-2xl text-white active:scale-[0.97] transition-transform"
-          style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
+          className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl active:scale-[0.98] transition-transform bg-white"
+          style={{ border: '1px solid #e5e7eb' }}
         >
-          <div className="flex items-center gap-1.5">
-            <div className="relative shrink-0">
-              <MessageSquarePlus size={14} />
-              <Star size={6} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
-            </div>
-            <span className="font-bold text-[14px]">Share a Take</span>
+          {/* Icon circle */}
+          <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
+            <MessageSquarePlus size={20} className="text-white" />
+            <Star size={9} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
           </div>
-          <span className="text-white/70 text-[10px] leading-tight text-center">Rate, review, or post your hot take</span>
+          {/* Label */}
+          <span className="font-bold text-[16px] flex-1 text-left text-gray-900">Share a Take</span>
+          {/* Chevron */}
+          <ChevronRight size={20} className="text-gray-400 flex-shrink-0" />
         </button>
       </div>
 
