@@ -4655,6 +4655,7 @@ export default function Feed() {
   const searchString = useSearch();
   const [highlightPostId, setHighlightPostId] = useState<string | null>(null);
   const [highlightCommentId, setHighlightCommentId] = useState<string | null>(null);
+  const [whatsHappeningOpenPost, setWhatsHappeningOpenPost] = useState<any | null>(null);
   
   useEffect(() => {
     const urlParams = new URLSearchParams(searchString);
@@ -7833,7 +7834,11 @@ export default function Feed() {
                 const isPrediction = post.type === 'predict' || post.type === 'prediction';
                 const hasQuote = !isRating && !isPrediction && post.content && post.content.trim().length > 0;
                 return (
-                  <div key={post.id} className="flex items-center gap-3 py-3">
+                  <div
+                    key={post.id}
+                    className="flex items-center gap-3 py-3 cursor-pointer active:bg-gray-50 rounded-xl -mx-2 px-2 transition-colors"
+                    onClick={() => setWhatsHappeningOpenPost(post)}
+                  >
                     {/* Avatar */}
                     <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center">
                       {post.user?.avatar
@@ -10397,6 +10402,29 @@ export default function Feed() {
             )}
           </div>
         </div>
+      )}
+
+      {/* What's Happening post detail sheet */}
+      {whatsHappeningOpenPost && (
+        <PostDetailSheet
+          isOpen={!!whatsHappeningOpenPost}
+          onClose={() => setWhatsHappeningOpenPost(null)}
+          post={{
+            id: whatsHappeningOpenPost.id,
+            userId: whatsHappeningOpenPost.userId || whatsHappeningOpenPost.user?.id || '',
+            username: whatsHappeningOpenPost.user?.username || '',
+            displayName: whatsHappeningOpenPost.user?.displayName,
+            avatar: whatsHappeningOpenPost.user?.avatar,
+            mediaTitle: whatsHappeningOpenPost.mediaTitle || '',
+            mediaType: whatsHappeningOpenPost.mediaType,
+            mediaImage: whatsHappeningOpenPost.mediaImage,
+            mediaExternalId: whatsHappeningOpenPost.externalId,
+            mediaExternalSource: whatsHappeningOpenPost.externalSource,
+            rating: whatsHappeningOpenPost.rating,
+            review: whatsHappeningOpenPost.content,
+            timestamp: whatsHappeningOpenPost.timestamp,
+          }}
+        />
       )}
 
       <QuickAddModal
