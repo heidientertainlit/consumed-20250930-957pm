@@ -249,7 +249,7 @@ export default function DnaClashFeedCard({
             onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-purple-900 via-indigo-800 to-blue-900" />
+          <div className="w-full h-full bg-gradient-to-br from-slate-700 via-slate-600 to-slate-500" />
         )}
         {/* Dark gradient overlay so text is readable */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
