@@ -933,19 +933,23 @@ export function FeedActionChips({ dark = false }: { dark?: boolean }) {
         <div className="flex gap-3">
           <button
             onClick={() => setLocation('/add')}
-            className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl transition-colors active:opacity-80"
-            style={{ border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.07)' }}
+            className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl transition-opacity active:opacity-70"
+            style={{ background: 'rgba(20,12,40,0.85)' }}
           >
-            <Plus size={15} className="text-white/80 shrink-0" />
-            <span className="font-medium text-[14px] text-white/90">Add Media</span>
+            <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
+              <Plus size={14} className="text-white" />
+            </span>
+            <span className="font-medium text-[14px] text-white">Add Media</span>
           </button>
           <button
             onClick={() => setComposerOpen(true)}
-            className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl transition-colors active:opacity-80"
-            style={{ border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.07)' }}
+            className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl transition-opacity active:opacity-70"
+            style={{ background: 'rgba(20,12,40,0.85)' }}
           >
-            <MessageSquarePlus size={15} className="text-white/80 shrink-0" />
-            <span className="font-medium text-[14px] text-white/90">Share a Take</span>
+            <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
+              <MessageSquarePlus size={14} className="text-white" />
+            </span>
+            <span className="font-medium text-[14px] text-white">Share a Take</span>
           </button>
         </div>
         {composerOpen && (
