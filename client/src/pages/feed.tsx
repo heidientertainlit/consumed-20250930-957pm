@@ -1786,7 +1786,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     return (
       <>
         {/* ── Seen It?–style card: white container + internal fan stack ── */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-visible mx-2">
+        <div className="bg-white rounded-2xl shadow-sm overflow-visible">
 
           {/* Header: section label */}
           <div className="px-4 pt-4 pb-2">
