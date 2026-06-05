@@ -42,7 +42,7 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
   const [hoverRating, setHoverRating] = useState(0);
   const [userRating, setUserRating] = useState<number | null>(null);
   const [submittingRating, setSubmittingRating] = useState(false);
-  const [fetchedPoster, setFetchedPoster] = useState<string | null>(null);
+  const [fetchedMediaMeta, setFetchedMediaMeta] = useState<{ image: string; externalId?: string; externalSource?: string; mediaType?: string } | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const starsRef = useRef<HTMLDivElement>(null);
@@ -54,24 +54,31 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
     }
   }, [isOpen, post.id]);
 
-  // Fetch poster when we don't have one but have a title
+  // Fetch poster + external ID when we don't have one but have a real media title
   useEffect(() => {
     const hasImage = post.mediaImage && (post.mediaImage.startsWith('http') || post.mediaImage.startsWith('/'));
-    if (!isOpen || hasImage) { setFetchedPoster(null); return; }
-    if (!post.mediaTitle) return;
+    if (!isOpen || hasImage) { setFetchedMediaMeta(null); return; }
+    // Only look up if we have an actual media title (not just post content)
+    if (!post.mediaTitle) { setFetchedMediaMeta(null); return; }
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    fetch(`${supabaseUrl}/functions/v1/media-search?q=${encodeURIComponent(post.mediaTitle)}&limit=1`, {
+    const typeParam = post.mediaType ? `&type=${encodeURIComponent(post.mediaType)}` : '';
+    fetch(`${supabaseUrl}/functions/v1/media-search?q=${encodeURIComponent(post.mediaTitle)}&limit=1${typeParam}`, {
       headers: { 'Authorization': `Bearer ${anonKey}` },
     })
       .then(r => r.json())
       .then(data => {
         const result = data?.results?.[0];
         const img = result?.poster_url || result?.image;
-        if (img) setFetchedPoster(img);
+        if (img) setFetchedMediaMeta({
+          image: img,
+          externalId: result?.external_id,
+          externalSource: result?.external_source,
+          mediaType: result?.type,
+        });
       })
       .catch(() => {});
-  }, [isOpen, post.mediaTitle, post.mediaImage]);
+  }, [isOpen, post.mediaTitle, post.mediaImage, post.mediaType]);
 
   useEffect(() => {
     setIsLiked(initialIsLiked || false);
@@ -200,10 +207,19 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
 
   if (!isOpen) return null;
 
-  const mediaImage = getMediaImage() || fetchedPoster;
-  const mediaDetailLink = post.mediaExternalId
-    ? `/media/${post.mediaType || 'movie'}/${post.mediaExternalSource || 'tmdb'}/${post.mediaExternalId}`
-    : `/add?q=${encodeURIComponent(post.mediaTitle || '')}`;
+  // Resolve poster — prefer stored image, then fetched search result
+  const mediaImage = getMediaImage() || fetchedMediaMeta?.image || null;
+
+  // Resolve the media detail link — prefer real externalId (post or fetched), never fall back to /add
+  const resolvedExternalId = post.mediaExternalId || fetchedMediaMeta?.externalId;
+  const resolvedExternalSource = post.mediaExternalSource || fetchedMediaMeta?.externalSource || 'tmdb';
+  const resolvedMediaType = post.mediaType || fetchedMediaMeta?.mediaType || 'movie';
+  const mediaDetailLink = resolvedExternalId
+    ? `/media/${resolvedMediaType}/${resolvedExternalSource}/${resolvedExternalId}`
+    : null;
+
+  // Only show the poster column if we have a real media title or image
+  const hasMedia = !!(post.mediaTitle || mediaImage);
 
   const currentUserInitial = (
     session?.user?.user_metadata?.display_name ||
@@ -249,20 +265,31 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
         <div className="px-4 pb-24 overflow-y-auto max-h-[calc(88vh-52px)]">
 
           {/* Post header */}
-          <div className="flex gap-4 mb-5">
-            <Link href={mediaDetailLink} onClick={onClose}>
-              {mediaImage ? (
-                <img
-                  src={mediaImage}
-                  alt={post.mediaTitle}
-                  className="w-20 h-28 rounded-xl object-cover shadow-md flex-shrink-0"
-                />
+          <div className={`flex gap-4 mb-5 ${!hasMedia ? 'flex-col' : ''}`}>
+            {/* Poster — only when we have actual media */}
+            {hasMedia && (
+              mediaDetailLink ? (
+                <Link href={mediaDetailLink} onClick={onClose} className="flex-shrink-0">
+                  {mediaImage ? (
+                    <img src={mediaImage} alt={post.mediaTitle} className="w-20 h-28 rounded-xl object-cover shadow-md" />
+                  ) : (
+                    <div className="w-20 h-28 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-md">
+                      <Star size={28} className="text-white/70" />
+                    </div>
+                  )}
+                </Link>
               ) : (
-                <div className="w-20 h-28 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-md flex-shrink-0">
-                  <Star size={28} className="text-white/70" />
+                <div className="flex-shrink-0">
+                  {mediaImage ? (
+                    <img src={mediaImage} alt={post.mediaTitle} className="w-20 h-28 rounded-xl object-cover shadow-md" />
+                  ) : (
+                    <div className="w-20 h-28 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-md">
+                      <Star size={28} className="text-white/70" />
+                    </div>
+                  )}
                 </div>
-              )}
-            </Link>
+              )
+            )}
 
             <div className="flex-1 min-w-0 pt-1">
               <Link href={`/user/${post.userId}`} onClick={onClose}>
@@ -278,9 +305,15 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
                 </div>
               </Link>
 
-              <Link href={mediaDetailLink} onClick={onClose}>
-                <h3 className="font-bold text-gray-900 text-base leading-snug mb-1.5">{post.mediaTitle}</h3>
-              </Link>
+              {post.mediaTitle && (
+                mediaDetailLink ? (
+                  <Link href={mediaDetailLink} onClick={onClose}>
+                    <h3 className="font-bold text-gray-900 text-base leading-snug mb-1.5 hover:text-violet-600">{post.mediaTitle}</h3>
+                  </Link>
+                ) : (
+                  <h3 className="font-bold text-gray-900 text-base leading-snug mb-1.5">{post.mediaTitle}</h3>
+                )
+              )}
 
               {post.rating && post.rating > 0 && (
                 <div className="mb-2">{renderStars(post.rating)}</div>
