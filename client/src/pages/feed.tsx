@@ -7867,6 +7867,18 @@ export default function Feed() {
                         <p className="text-[11px] text-gray-400 mt-0.5 truncate">"{post.content.slice(0, 70)}"</p>
                       )}
                     </div>
+                    {/* Media poster thumbnail */}
+                    {(() => {
+                      const posterImg = post.mediaItems?.[0]?.imageUrl || post.mediaItems?.[0]?.image || post.image_url;
+                      return posterImg ? (
+                        <img
+                          src={posterImg}
+                          alt={mediaTitle}
+                          className="w-10 h-14 rounded object-cover flex-shrink-0"
+                          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      ) : null;
+                    })()}
                     {/* Timestamp */}
                     <span className="text-[11px] text-gray-400 flex-shrink-0 self-start pt-1">
                       {(() => {
