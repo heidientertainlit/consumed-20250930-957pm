@@ -18,6 +18,7 @@ interface CompareUser {
   color: string;
   pct: number;
   tagline: string;
+  label?: string;
 }
 
 interface Friend {
@@ -481,6 +482,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
   const [dynOverlaps, setDynOverlaps] = useState<OverlapUser[]>([]);
   const [loadingPersonal, setLoadingPersonal] = useState(true);
   const [noFriends, setNoFriends] = useState(false);
+  const [myLabel, setMyLabel] = useState<string | null>(null);
 
   useEffect(() => {
     if (!session?.access_token || !user?.id) { setLoadingPersonal(false); return; }
@@ -498,6 +500,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         if (!myDna?.favorite_genres?.length || !Array.isArray(friendships) || friendships.length === 0) { setNoFriends(true); return; }
 
         const myGenres: string[] = myDna.favorite_genres;
+        if (myDna.label) setMyLabel(myDna.label);
         const friendIds = [...new Set(
           friendships.map((f: any) => f.user_id === user!.id ? f.friend_id : f.user_id)
         )].filter((id: string) => id !== user!.id) as string[];
@@ -519,7 +522,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
             const pct = calcOverlapPct(myGenres, genres);
             const info = Array.isArray(friendUsers) ? friendUsers.find((u: any) => u.id === fd.user_id) : null;
             const displayName = info?.display_name || info?.user_name || 'Friend';
-            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length] };
+            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null };
           })
           .sort((a: any, b: any) => b.pct - a.pct);
 
@@ -533,6 +536,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           color: top.color,
           pct: top.pct,
           tagline: buildTagline(top.pct, firstName),
+          label: top.label,
         });
         setDynOverlaps(rest.slice(0, 3).map((r: any) => ({
           displayName: r.displayName,
@@ -583,30 +587,63 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           </button>
         </div>
 
-        {/* Main content — two column layout */}
-        <div className="px-4 pb-5 flex gap-8 items-start">
-          {/* Left — hero number or no-friends fallback */}
-          <div className="flex flex-col gap-1 flex-1 min-w-0">
+        {/* Main content */}
+        <div className="px-4 pb-5 flex gap-4 items-start">
+
+          {/* Left — two circles + % + archetypes */}
+          <div className="flex flex-col items-center flex-1 min-w-0">
             {noFriends && !featuredProp ? (
-              <>
+              <div className="py-2">
                 <p className="text-gray-500 text-[14px] font-medium leading-snug">No friends to compare with yet.</p>
                 <p className="text-gray-400 text-[12px] mt-0.5">Add or invite friends to see how your DNA stacks up.</p>
-              </>
+              </div>
             ) : (
               <>
-                {/* Big number */}
-                <span className="font-extrabold leading-none block" style={{ fontSize: 52, color: '#a855f7' }}>
-                  {featured.pct}%
-                </span>
-                <p className="text-gray-400 text-[12px] font-medium mt-0.5">You're aligned with</p>
-                <p className="text-gray-700 text-[14px] font-semibold -mt-0.5">{featured.displayName}</p>
+                {/* Avatar row */}
+                <div className="flex items-center justify-center gap-2 w-full">
+                  {/* You */}
+                  <div className="flex flex-col items-center gap-1 min-w-0">
+                    <div className="rounded-full flex items-center justify-center font-bold text-white text-[13px] shrink-0"
+                      style={{ width: 44, height: 44, background: '#8b5cf6' }}>
+                      {session?.user?.user_metadata?.display_name
+                        ? initials(session.user.user_metadata.display_name)
+                        : (user?.email?.[0] ?? 'Y').toUpperCase()}
+                    </div>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide text-center leading-tight max-w-[56px] truncate">
+                      {session?.user?.user_metadata?.display_name?.split(' ')[0] ?? 'You'}
+                    </span>
+                    {myLabel && (
+                      <span className="text-[8px] text-purple-500 font-semibold text-center leading-tight max-w-[60px] line-clamp-2">{myLabel}</span>
+                    )}
+                  </div>
+
+                  {/* Center % */}
+                  <div className="flex flex-col items-center px-1">
+                    <span className="font-extrabold leading-none" style={{ fontSize: 36, color: '#a855f7' }}>{featured.pct}%</span>
+                    <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-widest">aligned</span>
+                  </div>
+
+                  {/* Friend */}
+                  <div className="flex flex-col items-center gap-1 min-w-0">
+                    <div className="rounded-full flex items-center justify-center font-bold text-white text-[13px] shrink-0"
+                      style={{ width: 44, height: 44, background: featured.color }}>
+                      {featured.initials}
+                    </div>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide text-center leading-tight max-w-[56px] truncate">
+                      {featured.displayName.split(' ')[0]}
+                    </span>
+                    {featured.label && (
+                      <span className="text-[8px] text-purple-500 font-semibold text-center leading-tight max-w-[60px] line-clamp-2">{featured.label}</span>
+                    )}
+                  </div>
+                </div>
               </>
             )}
           </div>
 
           {/* Right — other overlaps stacked */}
-          {overlaps.length > 0 && (
-            <div className="flex flex-col gap-2 pt-1 min-w-[110px]">
+          {overlaps.length > 0 && !noFriends && (
+            <div className="flex flex-col gap-2 pt-1 shrink-0" style={{ minWidth: 100 }}>
               <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Also aligned</span>
               {overlaps.map((u) => (
                 <div key={u.displayName} className="flex items-center gap-2">
