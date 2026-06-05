@@ -226,7 +226,7 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
           <X size={18} className="text-gray-600" />
         </button>
 
-        <div className="px-4 pb-4 overflow-y-auto max-h-[calc(88vh-52px)]">
+        <div className="px-4 pb-24 overflow-y-auto max-h-[calc(88vh-52px)]">
 
           {/* Post header */}
           <div className="flex gap-4 mb-5">
