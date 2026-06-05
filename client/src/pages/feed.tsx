@@ -7829,10 +7829,11 @@ export default function Feed() {
               {whatHappeningPosts.map((post: any) => {
                 const name = post.user?.displayName || post.user?.username || 'Someone';
                 const avatarLetter = name[0]?.toUpperCase();
-                const mediaTitle = post.mediaTitle || post.content?.slice(0, 40) || '';
+                // Media title lives in mediaItems[0].title — post.mediaTitle is not a field social-feed sets
+                const mediaTitle = post.mediaItems?.[0]?.title || post.mediaTitle || '';
                 const isRating = post.type === 'rating' || post.type === 'rate-review';
                 const isPrediction = post.type === 'predict' || post.type === 'prediction';
-                const hasQuote = !isRating && !isPrediction && post.content && post.content.trim().length > 0;
+                const hasContent = post.content && post.content.trim().length > 0;
                 return (
                   <div
                     key={post.id}
@@ -7848,11 +7849,13 @@ export default function Feed() {
                     </div>
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-500 leading-snug">
+                      {/* "Name verb MediaTitle" all on one line */}
+                      <p className="text-xs text-gray-500 leading-snug truncate">
                         <span className="font-semibold text-gray-800">{name}</span>{' '}
                         <span>{post._verb}</span>
+                        {mediaTitle && <span className="font-semibold text-gray-800"> {mediaTitle}</span>}
                       </p>
-                      <p className="text-sm font-semibold text-gray-900 truncate leading-snug mt-0.5">{mediaTitle}</p>
+                      {/* Stars for ratings */}
                       {isRating && post.rating > 0 && (
                         <div className="flex items-center gap-0.5 mt-0.5">
                           {[1,2,3,4,5].map(s => (
@@ -7863,8 +7866,9 @@ export default function Feed() {
                       {isPrediction && post.pointsEarned != null && (
                         <p className="text-[11px] text-violet-500 font-medium mt-0.5">{post.pointsEarned} pts</p>
                       )}
-                      {hasQuote && (
-                        <p className="text-[11px] text-gray-400 mt-0.5 truncate">"{post.content.slice(0, 60)}"</p>
+                      {/* Content preview as quote */}
+                      {hasContent && (
+                        <p className="text-[11px] text-gray-400 mt-0.5 truncate">"{post.content.slice(0, 70)}"</p>
                       )}
                     </div>
                     {/* Timestamp */}
@@ -10409,21 +10413,25 @@ export default function Feed() {
         <PostDetailSheet
           isOpen={!!whatsHappeningOpenPost}
           onClose={() => setWhatsHappeningOpenPost(null)}
-          post={{
-            id: whatsHappeningOpenPost.id,
-            userId: whatsHappeningOpenPost.userId || whatsHappeningOpenPost.user?.id || '',
-            username: whatsHappeningOpenPost.user?.username || '',
-            displayName: whatsHappeningOpenPost.user?.displayName,
-            avatar: whatsHappeningOpenPost.user?.avatar,
-            mediaTitle: whatsHappeningOpenPost.mediaTitle || '',
-            mediaType: whatsHappeningOpenPost.mediaType,
-            mediaImage: whatsHappeningOpenPost.mediaImage,
-            mediaExternalId: whatsHappeningOpenPost.externalId,
-            mediaExternalSource: whatsHappeningOpenPost.externalSource,
-            rating: whatsHappeningOpenPost.rating,
-            review: whatsHappeningOpenPost.content,
-            timestamp: whatsHappeningOpenPost.timestamp,
-          }}
+          post={(() => {
+            // media fields live in mediaItems[0] — not top-level on the post object
+            const mi = whatsHappeningOpenPost.mediaItems?.[0];
+            return {
+              id: whatsHappeningOpenPost.id,
+              userId: whatsHappeningOpenPost.userId || whatsHappeningOpenPost.user?.id || '',
+              username: whatsHappeningOpenPost.user?.username || '',
+              displayName: whatsHappeningOpenPost.user?.displayName,
+              avatar: whatsHappeningOpenPost.user?.avatar,
+              mediaTitle: mi?.title || whatsHappeningOpenPost.mediaTitle || '',
+              mediaType: mi?.mediaType || whatsHappeningOpenPost.mediaType || '',
+              mediaImage: mi?.imageUrl || whatsHappeningOpenPost.mediaImage || '',
+              mediaExternalId: mi?.externalId || whatsHappeningOpenPost.externalId || '',
+              mediaExternalSource: mi?.externalSource || whatsHappeningOpenPost.externalSource || '',
+              rating: whatsHappeningOpenPost.rating,
+              review: whatsHappeningOpenPost.content,
+              timestamp: whatsHappeningOpenPost.timestamp,
+            };
+          })()}
         />
       )}
 
