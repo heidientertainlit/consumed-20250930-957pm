@@ -1791,9 +1791,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Takes & Ratings</p>
           </div>
 
-          {/* Media title — above the fan stack */}
-          <div className="px-4 pb-1 pt-0 text-center">
+          {/* Media title + type pill — above the fan stack */}
+          <div className="px-4 pb-1 pt-0 flex items-center justify-center gap-2">
             <p className="font-semibold text-gray-900 text-base leading-tight">{post.mediaTitle || 'Untitled'}</p>
+            {mediaTypeLabel && (
+              <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full shrink-0">{mediaTypeLabel}</span>
+            )}
           </div>
 
           {/* Fan stack area — all cards sit inside the white container */}
@@ -1848,11 +1851,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {/* Gradient overlay: transparent top → very dark bottom */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent" />
 
-          {/* Top-right: media type pill + delete / report */}
+          {/* Top-right: delete / report only (media type pill moved to title row) */}
           <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-            {mediaTypeLabel && (
-              <span className="text-[10px] font-semibold text-white/90 bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/15">{mediaTypeLabel}</span>
-            )}
             {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
               <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-white/50 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
             )}
@@ -1860,6 +1860,16 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-white/50 hover:text-orange-400 transition-colors"><Flag size={13} /></button>
             )}
           </div>
+
+          {/* Top-left: Add to list button on poster */}
+          {onAddToList && (post.externalId || post.mediaTitle) && (
+            <button
+              className="absolute top-3 left-3 z-10 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
+              onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
+            >
+              <Plus size={14} className="text-white" />
+            </button>
+          )}
 
           {/* Bottom content overlay — clicking stars/commentary expands More Ratings, not navigates */}
           <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 pt-16" onClick={(e) => { e.stopPropagation(); setShowAllRelated(true); }}>
@@ -1911,8 +1921,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           )}
 
-          {/* ── Action row ── */}
-          <div className="flex items-start justify-center gap-4 px-4 mt-3 pb-4" onClick={(e) => e.stopPropagation()}>
+          {/* ── Action row: Agree · Disagree · Rate it ── */}
+          <div className="flex items-start justify-center gap-6 px-4 mt-3 pb-3" onClick={(e) => e.stopPropagation()}>
           {/* Agree */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
@@ -1921,23 +1931,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md border ${isLiked && !localReaction ? 'bg-purple-100 border-purple-200' : 'bg-white border-gray-200'}`}>
               <ArrowUp size={18} className={isLiked && !localReaction ? 'text-purple-600' : 'text-gray-500'} strokeWidth={isLiked && !localReaction ? 2.5 : 1.75} />
             </div>
-            <span className={`text-[10px] font-medium ${isLiked && !localReaction ? 'text-purple-600' : 'text-gray-500'}`}>
-              Agree
-            </span>
+            <span className={`text-[10px] font-medium ${isLiked && !localReaction ? 'text-purple-600' : 'text-gray-500'}`}>Agree</span>
           </button>
 
-          {/* Hot Take */}
-          <button
-            onClick={(e) => { e.stopPropagation(); handleReaction('flame'); }}
-            className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
-          >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md border ${localReaction === 'flame' ? 'bg-orange-100 border-orange-200' : 'bg-white border-gray-200'}`}>
-              <Flame size={18} className={localReaction === 'flame' ? 'text-orange-500' : 'text-gray-500'} fill={localReaction === 'flame' ? 'currentColor' : 'none'} />
-            </div>
-            <span className={`text-[10px] font-medium ${localReaction === 'flame' ? 'text-orange-500' : 'text-gray-500'}`}>Hot Take</span>
-          </button>
-
-          {/* Not Me */}
+          {/* Disagree */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('down'); }}
             className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
@@ -1955,40 +1952,45 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
             >
               <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md border ${ratingSubmitted ? 'bg-yellow-400 border-yellow-400' : showInlineRater ? 'bg-violet-600 border-violet-600' : 'bg-white border-gray-200'}`}>
-                <Star size={18} className={ratingSubmitted ? 'text-white' : showInlineRater ? 'text-white' : 'text-gray-500'} fill={ratingSubmitted || showInlineRater ? 'none' : 'none'} strokeWidth={showInlineRater ? 2 : 1.75} />
+                <Star size={18} className={ratingSubmitted ? 'text-white' : showInlineRater ? 'text-white' : 'text-gray-500'} strokeWidth={showInlineRater ? 2 : 1.75} />
               </div>
               <span className={`text-[10px] font-medium ${showInlineRater ? 'text-purple-600' : ratingSubmitted ? 'text-yellow-500' : 'text-gray-500'}`}>
                 {ratingSubmitted ? `${ratingValue}★` : 'Rate it'}
               </span>
             </button>
           )}
-
-          {/* Add to list */}
-          {onAddToList && (post.externalId || post.mediaTitle) && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
-              className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
-            >
-              <div className="w-12 h-12 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center">
-                <Plus size={18} className="text-gray-500" />
-              </div>
-              <span className="text-[10px] font-medium text-gray-500">Add to list</span>
-            </button>
-          )}
-
-          {/* Comment bubble — toggles the input below */}
-          {session?.access_token && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowCommentInput(v => !v); }}
-              className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
-            >
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md border ${showCommentInput ? 'bg-violet-600 border-violet-600' : 'bg-white border-gray-200'}`}>
-                <MessageCircle size={18} className={showCommentInput ? 'text-white' : 'text-gray-500'} />
-              </div>
-              <span className={`text-[10px] font-medium ${showCommentInput ? 'text-violet-600' : 'text-gray-500'}`}>Take</span>
-            </button>
-          )}
         </div>
+
+        {/* ── Take bar — always visible, inline comment strip ── */}
+        {session?.access_token && (
+          <div className="flex items-center gap-2 px-4 pb-4 pt-0" onClick={(e) => e.stopPropagation()}>
+            <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-violet-600 text-[9px] font-bold">
+                {(session?.user?.user_metadata?.display_name || session?.user?.email || 'Y')[0]?.toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1 flex items-center bg-gray-50 rounded-full px-3 py-1.5 gap-2 border border-gray-100">
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Add your take..."
+                className="flex-1 text-[13px] bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
+                onClick={(e) => e.stopPropagation()}
+                onKeyPress={(e) => { if (e.key === 'Enter') { e.stopPropagation(); submitComment(); } }}
+              />
+              {commentText.trim() && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); submitComment(); }}
+                  disabled={submitting}
+                  className="w-5 h-5 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 disabled:opacity-50"
+                >
+                  <Send size={10} className="text-white ml-px" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* YOUR TURN — inline star rater appears below card */}
         {isOtherUser && session?.access_token && showInlineRater && !ratingSubmitted && (
@@ -2173,36 +2175,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           )}
 
-          {/* Comment input bar — only when bubble is tapped */}
-          {session?.access_token && showCommentInput && (
-            <div className="flex items-center gap-2 px-3 pb-3 pt-2 mx-3">
-              <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
-                <span className="text-violet-600 text-[10px] font-semibold">
-                  {(session?.user?.user_metadata?.display_name || session?.user?.email || 'Y')[0]?.toUpperCase()}
-                </span>
-              </div>
-              <div className="flex-1 flex items-center bg-gray-50 rounded-full px-4 py-2 gap-2 border border-gray-100">
-                <input
-                  type="text"
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Add your take..."
-                  className="flex-1 text-sm bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
-                  onClick={(e) => e.stopPropagation()}
-                  onKeyPress={(e) => { if (e.key === 'Enter') { e.stopPropagation(); submitComment(); }}}
-                />
-                {commentText.trim() && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); submitComment(); }}
-                    disabled={submitting}
-                    className="w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 disabled:opacity-50"
-                  >
-                    <Send size={11} className="text-white ml-0.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
         </div>
 
         </div>{/* ── end outer white container ── */}
