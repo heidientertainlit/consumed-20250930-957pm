@@ -2083,13 +2083,22 @@ export function DailyHeroSection() {
                 style={{ background: 'linear-gradient(160deg,#1a1230 0%,#160f2a 60%,#0f0d1e 100%)', border: '1px solid rgba(160,120,255,0.2)' }}
                 onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallOverlay(true)}
               >
-                {/* Top row: label + streak */}
-                <div className="flex flex-col gap-0.5 px-4 pt-4 pb-1">
+                {/* Card content */}
+                <div className="flex flex-col gap-0.5 px-4 pt-4 pb-4">
                   <span style={{ fontSize: 10, letterSpacing: '0.12em', color: '#9b7fe8', textTransform: 'uppercase', fontWeight: 600 }}>Today's Play</span>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <Check size={13} strokeWidth={3} color="#4ade80" style={{ flexShrink: 0 }} />
-                    <Flame size={13} color="#60a5fa" fill="#60a5fa" style={{ flexShrink: 0 }} />
-                    <span style={{ fontSize: 15, fontWeight: 700, color: '#f0ecff', lineHeight: 1.2 }}>{streak ?? 1} day streak</span>
+                  {/* Streak row + Share on same line */}
+                  <div className="flex items-center justify-between mt-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <Check size={13} strokeWidth={3} color="#4ade80" style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: 15, fontWeight: 700, color: '#f0ecff', lineHeight: 1.2 }}>{streak ?? 1} day streak</span>
+                      <Flame size={13} color="#60a5fa" fill="#60a5fa" style={{ flexShrink: 0 }} />
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true); }}
+                      style={{ color: '#c4a0ff', fontSize: 13, fontWeight: 500, cursor: 'pointer', background: 'none', border: 'none', padding: 0, flexShrink: 0 }}
+                    >
+                      Share
+                    </button>
                   </div>
                   {/* Outpredicted + genre — single flowing sentence */}
                   {(outpredictedLine || genreLine) && (
@@ -2097,15 +2106,6 @@ export function DailyHeroSection() {
                       {[outpredictedLine, genreLine].filter(Boolean).join(' ')}
                     </span>
                   )}
-                </div>
-                {/* Bottom row: Share aligned right */}
-                <div className="flex justify-end px-4 pb-4 pt-2">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true); }}
-                    style={{ color: '#c4a0ff', fontSize: 13, fontWeight: 500, cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-                  >
-                    Share
-                  </button>
                 </div>
               </div>
             );
