@@ -1800,13 +1800,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
 
           {/* Fan stack area — all cards sit inside the white container */}
-          <div className="relative flex items-center justify-center" style={{ height: 248, overflow: 'visible' }}>
+          <div className="relative flex items-center justify-center" style={{ height: 272, overflow: 'visible' }}>
 
             {/* Back peek card (left) */}
             {stackPosts && (stackPosts[(stackIndex ?? 0) + 2]?.mediaImage || '').startsWith('http') && (
               <div style={{
-                position: 'absolute', width: 160, height: 228, borderRadius: 16, overflow: 'hidden',
-                transform: 'translateX(-44px) rotate(-8deg) scale(0.85)',
+                position: 'absolute', width: 178, height: 252, borderRadius: 16, overflow: 'hidden',
+                transform: 'translateX(-48px) rotate(-8deg) scale(0.85)',
                 zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.18)', background: '#111827',
               }}>
                 <img src={stackPosts[(stackIndex ?? 0) + 2].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1816,8 +1816,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {/* Middle peek card (right) */}
             {stackPosts && (stackPosts[(stackIndex ?? 0) + 1]?.mediaImage || '').startsWith('http') && (
               <div style={{
-                position: 'absolute', width: 160, height: 228, borderRadius: 16, overflow: 'hidden',
-                transform: 'translateX(44px) rotate(8deg) scale(0.85)',
+                position: 'absolute', width: 178, height: 252, borderRadius: 16, overflow: 'hidden',
+                transform: 'translateX(48px) rotate(8deg) scale(0.85)',
                 zIndex: 2, boxShadow: '0 4px 16px rgba(0,0,0,0.18)', background: '#111827',
               }}>
                 <img src={stackPosts[(stackIndex ?? 0) + 1].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1828,7 +1828,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <div
               ref={swipeProps?.ref}
               className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
-              style={{ height: 228, width: 170, position: 'absolute', zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.30)', ...(swipeProps?.style ?? {}) }}
+              style={{ height: 252, width: 190, position: 'absolute', zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.30)', ...(swipeProps?.style ?? {}) }}
               onClick={() => {
                 if (post.externalSource && post.externalId) {
                   setLocation(`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`);
