@@ -7805,10 +7805,6 @@ export default function Feed() {
           {/* Composer Trigger - dark hero zone */}
           <div>
 
-            <h1 className="text-2xl font-bold text-white mb-6 text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Your Turn
-            </h1>
-
             <DailyHeroSection />
             <div className="mt-3">
               <DnaMomentFeaturedCard />
