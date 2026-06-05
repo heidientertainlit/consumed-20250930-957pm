@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Zap, MessageCircle, Send, Trash2 } from "lucide-react";
+import { Zap, MessageCircle, Send, Trash2, MoreHorizontal, ChevronRight, Play } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const TMDB_KEY = 'a0b1c1fc498c84b988ec69d1b7437fd9';
 
 export interface ClashUser {
   displayName: string;
@@ -17,6 +19,8 @@ export interface ClashUser {
   color: string;
   votes: number;
   avatar?: string | null;
+  quote?: string;
+  tags?: string[];
 }
 
 interface DnaClashFeedCardProps {
@@ -33,44 +37,6 @@ interface DnaClashFeedCardProps {
   poolId?: string;
 }
 
-// ─── VS divider ───────────────────────────────────────────────────────────────
-function Waveform() {
-  return (
-    <div className="flex items-center justify-center px-2" style={{ marginTop: 12 }}>
-      <span style={{ fontSize: 13, fontWeight: 900, color: '#d1d5db', letterSpacing: '0.05em' }}>vs</span>
-    </div>
-  );
-}
-
-// ─── User side ────────────────────────────────────────────────────────────────
-function UserSide({ user, side }: { user: ClashUser; side: 'left' | 'right' }) {
-  const starColor = side === 'left' ? '#a855f7' : '#ec4899';
-  const align = side === 'left' ? 'items-start' : 'items-end text-right';
-  return (
-    <div className={`flex-1 flex flex-col gap-1 ${align}`}>
-      {/* Avatar */}
-      <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-bold text-sm shrink-0"
-        style={{ background: side === 'left' ? '#a855f7' : '#ec4899' }}>
-        {user.avatar
-          ? <img src={user.avatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          : user.initials || user.displayName[0]?.toUpperCase()}
-      </div>
-      {/* Name */}
-      <span className="text-gray-900 font-bold text-[13px] leading-tight">
-        {user.displayName.split(' ')[0]}
-      </span>
-      {/* Stars */}
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map(s => (
-          <span key={s} style={{ fontSize: 11, color: s <= user.rating ? starColor : '#e2e2e8' }}>★</span>
-        ))}
-      </div>
-      {/* DNA label */}
-      <span className="text-gray-400 text-[10px] font-medium leading-tight">{user.dnaLabel}</span>
-    </div>
-  );
-}
-
 async function sendNotification(userId: string, message: string, triggeredBy: string | undefined, session: any) {
   try {
     await supabase.from('notifications').insert({
@@ -84,9 +50,6 @@ async function sendNotification(userId: string, message: string, triggeredBy: st
     console.error('[clash notify error]', e);
   }
 }
-
-// ─── Main component ───────────────────────────────────────────────────────────
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export default function DnaClashFeedCard({
   user1,
@@ -105,42 +68,10 @@ export default function DnaClashFeedCard({
   const { toast } = useToast();
   const qc = useQueryClient();
   const activeSession = sessionProp || authSession;
-
-  const [voted, setVoted] = useState<string | null>(null);
-  const [resolvedPoster, setResolvedPoster] = useState<string | null>(posterUrl || null);
   const token = activeSession?.access_token;
 
-  // Fetch poster — prefer get-media-details (exact ID) when available, fall back to media-search by title
-  useEffect(() => {
-    if (posterUrl) { setResolvedPoster(posterUrl); return; }
-    if (!token) return;
-    let cancelled = false;
-
-    const tryGetMediaDetails = externalId && externalSource;
-    const url = tryGetMediaDetails
-      ? `${SUPABASE_URL}/functions/v1/get-media-details?source=${externalSource}&external_id=${externalId}&media_type=${mediaType || 'tv'}`
-      : mediaTitle
-        ? `${SUPABASE_URL}/functions/v1/media-search?q=${encodeURIComponent(mediaTitle)}&type=${mediaType || 'tv'}&limit=1`
-        : null;
-
-    if (!url) return;
-
-    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (cancelled || !data) return;
-        if (tryGetMediaDetails) {
-          if (data.artwork) setResolvedPoster(data.artwork);
-        } else {
-          const result = data?.results?.[0];
-          if (result?.poster_url) setResolvedPoster(result.poster_url);
-          else if (result?.image) setResolvedPoster(result.image);
-          else if (result?.poster_path) setResolvedPoster(`https://image.tmdb.org/t/p/w300${result.poster_path}`);
-        }
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [posterUrl, externalId, externalSource, mediaTitle, mediaType, token]);
+  const [voted, setVoted] = useState<string | null>(null);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [optingOut, setOptingOut] = useState(false);
   const [optedOut, setOptedOut] = useState(false);
   const [showOptOutConfirm, setShowOptOutConfirm] = useState(false);
@@ -150,6 +81,30 @@ export default function DnaClashFeedCard({
     [user1.username]: 0,
     [user2.username]: 0,
   });
+
+  // Fetch backdrop/banner image
+  useEffect(() => {
+    if (posterUrl) { setBannerUrl(posterUrl); return; }
+    if (!externalId) return;
+
+    const isTmdb = !externalSource || externalSource === 'tmdb';
+    if (!isTmdb) { return; }
+
+    const endpoint = mediaType === 'tv'
+      ? `https://api.themoviedb.org/3/tv/${externalId}?api_key=${TMDB_KEY}`
+      : `https://api.themoviedb.org/3/movie/${externalId}?api_key=${TMDB_KEY}`;
+
+    fetch(endpoint)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data) return;
+        const backdrop = data.backdrop_path;
+        const poster = data.poster_path;
+        if (backdrop) setBannerUrl(`https://image.tmdb.org/t/p/w780${backdrop}`);
+        else if (poster) setBannerUrl(`https://image.tmdb.org/t/p/w780${poster}`);
+      })
+      .catch(() => {});
+  }, [posterUrl, externalId, externalSource, mediaType]);
 
   const clashKey = `clash_notified_${user1.username}_${user2.username}_${mediaTitle}`;
   const isInClash = currentUserId && (currentUserId === user1.userId || currentUserId === user2.userId);
@@ -252,7 +207,7 @@ export default function DnaClashFeedCard({
     const votedAgainst = username === user1.username ? user2 : user1;
     await Promise.all([
       sendNotification(votedFor.userId, `Someone agreed with your take on "${mediaTitle}" in a DNA Clash!`, currentUserId, activeSession),
-      sendNotification(votedAgainst.userId, `Someone sided with ${votedFor.displayName} over you on "${mediaTitle}" in a DNA Clash.`, currentUserId, activeSession),
+      sendNotification(votedAgainst.userId, `Someone sided with ${votedFor.displayName} on "${mediaTitle}" in a DNA Clash.`, currentUserId, activeSession),
     ]);
   };
 
@@ -280,26 +235,57 @@ export default function DnaClashFeedCard({
   const pct2 = 100 - pct1;
   const commentCount = commentsData?.comments?.length ?? 0;
   const winnerName = pct1 >= pct2 ? user1.displayName.split(' ')[0] : user2.displayName.split(' ')[0];
+  const name1 = user1.displayName.split(' ')[0];
+  const name2 = user2.displayName.split(' ')[0];
 
   return (
-    <div className="bg-gray-50 rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 mb-4">
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-2">
-        <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.25)' }}>
-          <Zap size={10} className="text-purple-500 shrink-0" fill="currentColor" />
-          <span className="text-[10px] font-bold text-purple-500 uppercase tracking-widest">DNA Clash</span>
-        </div>
-        {isInClash && !showOptOutConfirm && (
-          <button onClick={() => setShowOptOutConfirm(true)} className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors">
-            Opt out
-          </button>
+      {/* ── Banner ── */}
+      <div className="relative w-full" style={{ height: 200 }}>
+        {bannerUrl ? (
+          <img
+            src={bannerUrl}
+            alt={mediaTitle}
+            className="w-full h-full object-cover"
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-purple-900 via-indigo-800 to-blue-900" />
         )}
+        {/* Dark gradient overlay so text is readable */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+        {/* DNA CLASH pill — top left */}
+        <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-white/15 backdrop-blur-sm border border-white/30">
+          <Zap size={11} className="text-white shrink-0" fill="currentColor" />
+          <span className="text-[11px] font-black text-white uppercase tracking-widest">DNA Clash</span>
+        </div>
+
+        {/* Opt-out / menu — top right */}
+        <div className="absolute top-3 right-3 flex items-center gap-2">
+          {isInClash && !showOptOutConfirm && (
+            <button onClick={() => setShowOptOutConfirm(true)}
+              className="text-[10px] text-white/70 hover:text-white transition-colors">
+              Opt out
+            </button>
+          )}
+          <button className="w-7 h-7 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+            <MoreHorizontal size={14} className="text-white" />
+          </button>
+        </div>
+
+        {/* Media title overlay — bottom of banner */}
+        <div className="absolute bottom-3 left-4 right-4">
+          <p className="text-white font-black text-[17px] leading-tight drop-shadow-lg uppercase tracking-wide line-clamp-2">
+            {mediaTitle}
+          </p>
+        </div>
       </div>
 
       {/* Opt-out confirm */}
       {showOptOutConfirm && (
-        <div className="mx-4 mb-2 flex items-center justify-between rounded-xl px-3 py-2.5 gap-2 bg-gray-50 border border-gray-200">
+        <div className="mx-4 mt-3 flex items-center justify-between rounded-xl px-3 py-2.5 gap-2 bg-gray-50 border border-gray-200">
           <span className="text-gray-600 text-[11px] leading-snug">Remove yourself from DNA Clash cards?</span>
           <div className="flex gap-2 shrink-0">
             <button onClick={handleOptOut} disabled={optingOut}
@@ -314,86 +300,179 @@ export default function DnaClashFeedCard({
         </div>
       )}
 
-      {/* Body: poster left, everything else right */}
-      <div className="px-4 pb-4 flex gap-3 items-start">
-        {/* Poster — fixed height, natural width */}
-        {resolvedPoster && (
-          <img
-            src={resolvedPoster}
-            alt={mediaTitle}
-            className="rounded-xl object-cover shrink-0 shadow-md"
-            style={{ width: 96, height: 168 }}
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-          />
+      {/* ── Body ── */}
+      <div className="px-4 pt-4 pb-2">
+
+        {/* Headline */}
+        <p className="text-gray-900 font-black text-[20px] leading-tight text-center">Completely different takes.</p>
+        <p className="text-gray-400 text-[13px] text-center mt-1 mb-4">Whose take do you agree with?</p>
+
+        {/* Users row */}
+        <div className="flex items-start justify-between gap-2 mb-4">
+          {/* User 1 */}
+          <div className="flex-1 flex flex-col items-center gap-1.5">
+            <div className="relative">
+              <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-purple-200 flex items-center justify-center text-white font-black text-lg"
+                style={{ background: '#a855f7' }}>
+                {user1.avatar
+                  ? <img src={user1.avatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  : user1.initials || name1[0]}
+              </div>
+              {/* Verified dot */}
+              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-purple-500 border-2 border-white flex items-center justify-center">
+                <span className="text-white text-[8px] font-black">✓</span>
+              </div>
+            </div>
+            <span className="font-bold text-gray-900 text-[14px] leading-tight">{name1}</span>
+            <span className="text-purple-500 text-[11px] font-semibold leading-tight text-center">{user1.dnaLabel}</span>
+            {/* Stars + rating */}
+            <div className="flex items-center gap-0.5">
+              {[1,2,3,4,5].map(s => (
+                <span key={s} style={{ fontSize: 11, color: s <= user1.rating ? '#a855f7' : '#e5e7eb' }}>★</span>
+              ))}
+            </div>
+          </div>
+
+          {/* VS */}
+          <div className="flex items-center justify-center pt-5">
+            <div className="rounded-full bg-gray-100 px-3 py-1">
+              <span className="text-[12px] font-black text-gray-400 tracking-wide">VS</span>
+            </div>
+          </div>
+
+          {/* User 2 */}
+          <div className="flex-1 flex flex-col items-center gap-1.5">
+            <div className="relative">
+              <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-pink-200 flex items-center justify-center text-white font-black text-lg"
+                style={{ background: '#ec4899' }}>
+                {user2.avatar
+                  ? <img src={user2.avatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  : user2.initials || name2[0]}
+              </div>
+              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-pink-500 border-2 border-white flex items-center justify-center">
+                <span className="text-white text-[8px] font-black">✓</span>
+              </div>
+            </div>
+            <span className="font-bold text-gray-900 text-[14px] leading-tight">{name2}</span>
+            <span className="text-pink-500 text-[11px] font-semibold leading-tight text-center">{user2.dnaLabel}</span>
+            <div className="flex items-center gap-0.5">
+              {[1,2,3,4,5].map(s => (
+                <span key={s} style={{ fontSize: 11, color: s <= user2.rating ? '#ec4899' : '#e5e7eb' }}>★</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Quote blocks */}
+        {(user1.quote || user2.quote) && (
+          <div className="flex gap-2 mb-3">
+            {/* Quote 1 */}
+            <div className="flex-1 rounded-2xl px-3 pt-2 pb-3" style={{ background: 'rgba(168,85,247,0.07)', border: '1px solid rgba(168,85,247,0.15)' }}>
+              <span className="text-purple-400 font-black text-[28px] leading-none block" style={{ fontFamily: 'Georgia, serif', lineHeight: '0.6' }}>"</span>
+              <p className="text-gray-800 text-[12px] leading-snug font-medium mt-1.5">
+                {user1.quote || `${name1} gave this ${user1.rating} stars.`}
+              </p>
+              {user1.tags && user1.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {user1.tags.map(tag => (
+                    <span key={tag} className="text-[10px] font-semibold text-purple-600 bg-purple-100 rounded-full px-2 py-0.5">{tag}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Quote 2 */}
+            <div className="flex-1 rounded-2xl px-3 pt-2 pb-3" style={{ background: 'rgba(236,72,153,0.07)', border: '1px solid rgba(236,72,153,0.15)' }}>
+              <span className="text-pink-400 font-black text-[28px] leading-none block" style={{ fontFamily: 'Georgia, serif', lineHeight: '0.6' }}>"</span>
+              <p className="text-gray-800 text-[12px] leading-snug font-medium mt-1.5">
+                {user2.quote || `${name2} gave this ${user2.rating} stars.`}
+              </p>
+              {user2.tags && user2.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {user2.tags.map(tag => (
+                    <span key={tag} className="text-[10px] font-semibold text-pink-600 bg-pink-100 rounded-full px-2 py-0.5">{tag}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         )}
 
-        {/* Right column: headline → user sides → vote/results */}
-        <div className="flex-1 min-w-0 flex flex-col gap-2">
-          {/* Headline */}
-          <div>
-            <p className="text-gray-900 font-extrabold text-[15px] leading-tight">Completely different takes.</p>
-            <p className="text-gray-400 text-[12px] font-medium mt-0.5">on {mediaTitle}</p>
-          </div>
-
-          {/* User sides */}
-          <div className="flex items-start">
-            <UserSide user={user1} side="left" />
-            <Waveform />
-            <UserSide user={user2} side="right" />
-          </div>
-
-          {/* Vote buttons or result bars — inside the right column */}
-          {!voted ? (
-            <div className="flex gap-2 pt-1">
-              <button
-                onClick={() => handleVote(user1.username)}
-                className="flex-1 py-2 rounded-xl text-[12px] font-bold text-white transition-all active:scale-[0.97]"
-                style={{ background: '#a855f7' }}
-              >
-                I'm with {user1.displayName.split(' ')[0]}
-              </button>
-              <button
-                onClick={() => handleVote(user2.username)}
-                className="flex-1 py-2 rounded-xl text-[12px] font-bold text-white transition-all active:scale-[0.97]"
-                style={{ background: '#ec4899' }}
-              >
-                I'm with {user2.displayName.split(' ')[0]}
-              </button>
+        {/* ── Vote section ── */}
+        {!voted ? (
+          /* Pre-vote: big percentage split + Vote now CTA */
+          <div className="mt-1 mb-2">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[28px] font-black text-purple-500">{pct1}%</span>
+              <div className="flex-1 h-2.5 rounded-full overflow-hidden bg-gray-100">
+                <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-purple-400 transition-all duration-500"
+                  style={{ width: `${pct1}%` }} />
+              </div>
+              <span className="text-[28px] font-black text-pink-500">{pct2}%</span>
             </div>
-          ) : (
-            <div className="flex flex-col gap-1.5 pt-1">
-              {[{ u: user1, pct: pct1, color: '#a855f7' }, { u: user2, pct: pct2, color: '#ec4899' }].map(({ u, pct, color }) => (
-                <div key={u.username} className="flex items-center gap-2">
-                  <span className="text-[11px] font-semibold w-14 truncate shrink-0 text-gray-600">{u.displayName.split(' ')[0]}</span>
-                  <div className="flex-1 h-2 rounded-full overflow-hidden bg-gray-100">
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
-                  </div>
-                  <span className="text-[11px] font-bold w-7 text-right shrink-0 text-gray-700">{pct}%</span>
+            {total > 0 && <p className="text-gray-400 text-[11px] text-center">{total} {total === 1 ? 'vote' : 'votes'}</p>}
+          </div>
+        ) : (
+          /* Post-vote: result bars */
+          <div className="flex flex-col gap-1.5 mb-2">
+            {[{ u: user1, pct: pct1, color: '#a855f7', voted: voted === user1.username }, { u: user2, pct: pct2, color: '#ec4899', voted: voted === user2.username }].map(({ u, pct, color, voted: isVoted }) => (
+              <div key={u.username} className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold w-14 truncate shrink-0 text-gray-600">{u.displayName.split(' ')[0]}</span>
+                <div className="flex-1 h-2 rounded-full overflow-hidden bg-gray-100">
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: color }} />
                 </div>
-              ))}
-              <p className="text-gray-400 text-[10px] text-center mt-0.5">{total} {total === 1 ? 'vote' : 'votes'}</p>
-            </div>
-          )}
-        </div>
+                <span className="text-[12px] font-bold w-8 text-right shrink-0" style={{ color: isVoted ? color : '#6b7280' }}>{pct}%</span>
+              </div>
+            ))}
+            <p className="text-gray-400 text-[10px] text-center mt-0.5">{total} {total === 1 ? 'vote' : 'votes'}</p>
+          </div>
+        )}
       </div>
 
-      {/* Action bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-100">
+      {/* ── Footer action bar ── */}
+      <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+        {/* Left: stacked avatars + vote count */}
+        <div className="flex items-center gap-2">
+          <div className="flex -space-x-1.5">
+            {[user1, user2].map((u, i) => (
+              <div key={u.username} className="w-6 h-6 rounded-full border-2 border-white overflow-hidden flex items-center justify-center text-white text-[9px] font-bold"
+                style={{ background: i === 0 ? '#a855f7' : '#ec4899', zIndex: i === 0 ? 2 : 1 }}>
+                {u.avatar
+                  ? <img src={u.avatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  : u.initials?.slice(0, 1) || u.displayName[0]}
+              </div>
+            ))}
+          </div>
+          {total > 0 && (
+            <span className="text-gray-500 text-[12px] font-medium">{total} total {total === 1 ? 'vote' : 'votes'}</span>
+          )}
+        </div>
+
+        {/* Center: comments */}
         <button
           onClick={() => setShowComments(s => !s)}
-          className={`flex items-center gap-1.5 transition-colors ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-gray-600'}`}
+          className={`flex items-center gap-1.5 transition-colors ${showComments ? 'text-purple-500' : 'text-gray-400'}`}
         >
-          <MessageCircle size={15} fill={showComments ? 'currentColor' : 'none'} />
+          <MessageCircle size={16} fill={showComments ? 'currentColor' : 'none'} />
           {commentCount > 0 && <span className="text-[12px] font-medium">{commentCount}</span>}
         </button>
-        {voted && total > 0 && (
-          <span className="text-[11px] font-semibold text-purple-500">
-            {pct1 >= pct2 ? pct1 : pct2}% sided with {winnerName}
+
+        {/* Right: vote CTA or winner result */}
+        {!voted ? (
+          <button
+            onClick={() => handleVote(pct1 >= pct2 ? user1.username : user2.username)}
+            className="flex items-center gap-1 text-purple-600 font-bold text-[13px] active:opacity-70 transition-opacity"
+          >
+            Vote now <ChevronRight size={15} />
+          </button>
+        ) : (
+          <span className="text-[12px] font-semibold text-purple-500">
+            {pct1 >= pct2 ? pct1 : pct2}% with {winnerName}
           </span>
         )}
       </div>
 
-      {/* Comments */}
+      {/* ── Comments ── */}
       {showComments && (
         <div className="flex flex-col gap-3 px-4 pt-3 pb-4 border-t border-gray-100">
           {(commentsData?.comments || []).length === 0 ? (
