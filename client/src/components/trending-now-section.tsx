@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { useLocation } from 'wouter';
 import { QuickAddListSheet } from './quick-add-list-sheet';
 
 interface TrendingItem {
@@ -31,9 +32,18 @@ const SOURCE_COLORS: Record<string, string> = {
 
 export function TrendingNowSection({ onItemClick }: { onItemClick?: (item: TrendingItem) => void }) {
   const { session } = useAuth();
+  const [, setLocation] = useLocation();
   const [items, setItems] = useState<TrendingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [addItem, setAddItem] = useState<TrendingItem | null>(null);
+
+  function navigateToMedia(item: TrendingItem) {
+    if (onItemClick) { onItemClick(item); return; }
+    const type = item.media_type || 'movie';
+    const source = item.external_source || 'tmdb';
+    const id = item.external_id || item.id;
+    setLocation(`/media/${type}/${source}/${id}`);
+  }
 
   useEffect(() => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -84,7 +94,7 @@ export function TrendingNowSection({ onItemClick }: { onItemClick?: (item: Trend
               {/* Poster */}
               <div
                 className="relative w-[88px] h-[128px] rounded-xl overflow-hidden bg-gray-100 active:scale-95 transition-transform cursor-pointer"
-                onClick={() => onItemClick?.(item)}
+                onClick={() => navigateToMedia(item)}
               >
                 <img
                   src={item.image_url}
