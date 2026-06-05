@@ -934,20 +934,21 @@ export function FeedActionChips({ dark = false }: { dark?: boolean }) {
           <button
             onClick={() => setLocation('/add')}
             className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl transition-opacity active:opacity-70"
-            style={{ background: 'rgba(20,12,40,0.85)' }}
+            style={{ background: 'rgba(255,255,255,0.05)' }}
           >
-            <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
-              <Plus size={14} className="text-white" />
+            <span className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
+              <Bookmark size={15} className="text-white" fill="white" />
             </span>
             <span className="font-medium text-[14px] text-white">Add Media</span>
           </button>
           <button
             onClick={() => setComposerOpen(true)}
             className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl transition-opacity active:opacity-70"
-            style={{ background: 'rgba(20,12,40,0.85)' }}
+            style={{ background: 'rgba(255,255,255,0.05)' }}
           >
-            <span className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
-              <MessageSquarePlus size={14} className="text-white" />
+            <span className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)' }}>
+              <MessageSquarePlus size={15} className="text-white" />
+              <span className="absolute -top-1 -right-1 text-[10px]">⭐</span>
             </span>
             <span className="font-medium text-[14px] text-white">Share a Take</span>
           </button>
