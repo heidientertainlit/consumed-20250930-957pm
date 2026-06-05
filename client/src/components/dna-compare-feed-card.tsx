@@ -786,20 +786,50 @@ export function DnaComparePostCard({ item }: { item: any }) {
           </button>
         </div>
 
-        {/* Main content — two column layout, mirrors static card */}
-        <div className="px-4 pb-5 flex gap-8 items-start">
-          {/* Left — hero number */}
-          <div className="flex flex-col gap-1 flex-1 min-w-0">
-            <span className="font-extrabold leading-none block" style={{ fontSize: 52, color: '#a855f7' }}>
-              {matchScore}%
-            </span>
-            <p className="text-gray-400 text-[12px] font-medium mt-0.5">{posterName.split(' ')[0]} is aligned with</p>
-            <p className="text-gray-700 text-[14px] font-semibold -mt-0.5">{friendName}</p>
+        {/* Main content */}
+        <div className="px-4 pb-5 flex gap-4 items-start">
+          {/* Left — two circles + % + archetypes */}
+          <div className="flex flex-col items-center flex-1 min-w-0">
+            <div className="flex items-center justify-center gap-2 w-full">
+              {/* Poster */}
+              <div className="flex flex-col items-center gap-1 min-w-0">
+                <div className="rounded-full flex items-center justify-center font-bold text-white text-[13px] shrink-0"
+                  style={{ width: 44, height: 44, background: '#8b5cf6' }}>
+                  {initials(posterName)}
+                </div>
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide text-center leading-tight max-w-[56px] truncate">
+                  {posterName.split(' ')[0]}
+                </span>
+                {cmp.your_dna_label && (
+                  <span className="text-[8px] text-purple-500 font-semibold text-center leading-tight max-w-[60px] line-clamp-2">{cmp.your_dna_label}</span>
+                )}
+              </div>
+
+              {/* Center % */}
+              <div className="flex flex-col items-center px-1">
+                <span className="font-extrabold leading-none" style={{ fontSize: 36, color: '#a855f7' }}>{matchScore}%</span>
+                <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-widest">aligned</span>
+              </div>
+
+              {/* Friend */}
+              <div className="flex flex-col items-center gap-1 min-w-0">
+                <div className="rounded-full flex items-center justify-center font-bold text-white text-[13px] shrink-0"
+                  style={{ width: 44, height: 44, background: '#a855f7' }}>
+                  {initials(friendName)}
+                </div>
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide text-center leading-tight max-w-[56px] truncate">
+                  {friendName.split(' ')[0]}
+                </span>
+                {cmp.friend_dna_label && (
+                  <span className="text-[8px] text-purple-500 font-semibold text-center leading-tight max-w-[60px] line-clamp-2">{cmp.friend_dna_label}</span>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Right — poster's other friend alignments, identical to static card */}
+          {/* Right — poster's other friend alignments */}
           {posterOverlaps.length > 0 && (
-            <div className="flex flex-col gap-2 pt-1 min-w-[110px]">
+            <div className="flex flex-col gap-2 pt-1 shrink-0" style={{ minWidth: 100 }}>
               <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Also aligned</span>
               {posterOverlaps.map((u) => (
                 <div key={u.displayName} className="flex items-center gap-2">
