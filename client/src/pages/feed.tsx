@@ -7836,13 +7836,6 @@ export default function Feed() {
                     className="flex items-center gap-3 py-3 cursor-pointer active:bg-gray-50 rounded-xl -mx-2 px-2 transition-colors"
                     onClick={() => setWhatsHappeningOpenPost(post)}
                   >
-                    {/* Avatar */}
-                    <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center">
-                      {post.user?.avatar
-                        ? <img src={post.user.avatar} alt={name} className="w-full h-full object-cover" />
-                        : <span className="text-white text-sm font-bold">{avatarLetter}</span>
-                      }
-                    </div>
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       {/* "Name verb MediaTitle" all on one line */}
