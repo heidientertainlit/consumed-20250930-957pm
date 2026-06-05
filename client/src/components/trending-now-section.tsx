@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import { Plus, Star } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { QuickAddModal } from './quick-add-modal';
+import { QuickAddListSheet } from './quick-add-list-sheet';
 import { supabase } from '@/lib/supabase';
 
 interface TrendingItem {
@@ -191,12 +191,12 @@ export function TrendingNowSection({ onItemClick }: { onItemClick?: (item: Trend
         </div>
       </div>
 
-      {/* Add to list modal */}
+      {/* Add to list sheet */}
       {addItem && (
-        <QuickAddModal
+        <QuickAddListSheet
           isOpen={!!addItem}
           onClose={() => setAddItem(null)}
-          preSelectedMedia={{
+          media={{
             title: addItem.title,
             mediaType: addItem.media_type || 'movie',
             imageUrl: addItem.image_url,
