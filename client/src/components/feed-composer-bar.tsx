@@ -929,38 +929,30 @@ export function FeedActionChips() {
 
   return (
     <>
-      <div className="flex flex-col gap-3">
-        {/* Add Media — full-width purple gradient row */}
+      <div className="flex gap-2.5">
+        {/* Add Media — purple gradient pill */}
         <button
           onClick={() => setLocation('/add')}
-          className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-white active:scale-[0.98] transition-transform"
+          className="flex-1 flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-2xl text-white active:scale-[0.97] transition-transform"
           style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #5b21b6 100%)' }}
         >
-          {/* Icon circle */}
-          <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.18)' }}>
-            <Bookmark size={20} fill="white" className="text-white" />
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.2)' }}>
+            <Bookmark size={15} fill="white" className="text-white" />
           </div>
-          {/* Label */}
-          <span className="font-bold text-[16px] flex-1 text-left">Add Media</span>
-          {/* Chevron */}
-          <ChevronRight size={20} className="text-white/70 flex-shrink-0" />
+          <span className="font-bold text-[14px]">Add Media</span>
         </button>
 
-        {/* Share a Take — white card row */}
+        {/* Share a Take — white pill with border */}
         <button
           onClick={() => setComposerOpen(true)}
-          className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl active:scale-[0.98] transition-transform bg-white"
-          style={{ border: '1px solid #e5e7eb' }}
+          className="flex-1 flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-2xl bg-white active:scale-[0.97] transition-transform"
+          style={{ border: '1.5px solid #e5e7eb' }}
         >
-          {/* Icon circle */}
-          <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
-            <MessageSquarePlus size={20} className="text-white" />
-            <Star size={9} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
+            <MessageSquarePlus size={15} className="text-white" />
+            <Star size={8} className="absolute -top-1 -right-1 fill-yellow-300 text-yellow-300" />
           </div>
-          {/* Label */}
-          <span className="font-bold text-[16px] flex-1 text-left text-gray-900">Share a Take</span>
-          {/* Chevron */}
-          <ChevronRight size={20} className="text-gray-400 flex-shrink-0" />
+          <span className="font-bold text-[14px] text-gray-900">Share a Take</span>
         </button>
       </div>
 
