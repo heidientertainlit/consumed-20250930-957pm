@@ -1983,7 +1983,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         {isOtherUser && session?.access_token && showInlineRater && !ratingSubmitted && (
           <div
             ref={starsRef}
-            className="flex items-center gap-1.5 mt-2 py-2.5 px-3 bg-violet-50 rounded-xl touch-none select-none"
+            className="flex items-center gap-1.5 mt-2 mx-3 py-2.5 px-3 bg-violet-50 rounded-xl touch-none select-none"
             onMouseLeave={() => setHoverRating(0)}
             onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
             onTouchMove={(e) => {
@@ -2164,7 +2164,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
           {/* Comment input bar */}
           {session?.access_token && (
-            <div className="flex items-center gap-2 px-3 pb-3 pt-2">
+            <div className="flex items-center gap-2 px-3 pb-3 pt-2 mx-3">
               <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
                 <span className="text-violet-600 text-[10px] font-semibold">
                   {(session?.user?.user_metadata?.display_name || session?.user?.email || 'Y')[0]?.toUpperCase()}
