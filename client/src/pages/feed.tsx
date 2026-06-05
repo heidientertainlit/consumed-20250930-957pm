@@ -8233,14 +8233,7 @@ export default function Feed() {
 
               {/* DNA Compare card */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <DnaCompareFeedCard
-                  featured={{ displayName: 'Hillary Hess', initials: 'HH', color: '#6366f1', pct: 42, tagline: 'You both love epic adventures and genre-spanning stories.' }}
-                  overlaps={[
-                    { displayName: 'Jeeppler', initials: 'J', color: '#a855f7', pct: 38 },
-                    { displayName: 'Jordan F.', initials: 'JF', color: '#ec4899', pct: 31 },
-                    { displayName: 'Ambiannie', initials: 'A', color: '#f59e0b', pct: 24 },
-                  ]}
-                />
+                <DnaCompareFeedCard />
               )}
 
               {/* Leaderboard #0 */}
