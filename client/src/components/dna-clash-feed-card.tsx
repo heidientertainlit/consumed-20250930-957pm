@@ -444,7 +444,6 @@ export default function DnaClashFeedCard({
                 <span className="text-[12px] font-bold w-8 text-right shrink-0" style={{ color: isVoted ? color : '#6b7280' }}>{pct}%</span>
               </div>
             ))}
-            <p className="text-gray-400 text-[10px] text-center mt-0.5">{total} {total === 1 ? 'vote' : 'votes'}</p>
           </div>
         )}
       </div>
