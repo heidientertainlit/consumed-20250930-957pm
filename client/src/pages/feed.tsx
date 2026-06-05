@@ -1861,10 +1861,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             )}
           </div>
 
-          {/* Top-left: Add to list button on poster */}
+          {/* Bottom-right: Add to list button on poster */}
           {onAddToList && (post.externalId || post.mediaTitle) && (
             <button
-              className="absolute top-3 left-3 z-10 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
+              className="absolute bottom-3 right-3 z-10 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
               onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
             >
               <Plus size={14} className="text-white" />
