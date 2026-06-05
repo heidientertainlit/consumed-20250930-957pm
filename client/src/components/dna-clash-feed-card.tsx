@@ -75,11 +75,13 @@ export default function DnaClashFeedCard({
   const [optedOut, setOptedOut] = useState(false);
   const [showOptOutConfirm, setShowOptOutConfirm] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showVoters, setShowVoters] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [liveCounts, setLiveCounts] = useState<Record<string, number>>({
     [user1.username]: 0,
     [user2.username]: 0,
   });
+  const [voters, setVoters] = useState<Array<{ userId: string; prediction: string; displayName: string; initials: string }>>([]);
 
   // Fetch banner image via get-media-details (same pattern used throughout the app)
   useEffect(() => {
@@ -107,6 +109,11 @@ export default function DnaClashFeedCard({
   const clashKey = `clash_notified_${user1.username}_${user2.username}_${mediaTitle}`;
   const isInClash = currentUserId && (currentUserId === user1.userId || currentUserId === user2.userId);
 
+  function mkInitials(name: string) {
+    const parts = name.trim().split(' ');
+    return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
+  }
+
   useEffect(() => {
     if (!poolId) return;
     async function loadVotes() {
@@ -123,6 +130,21 @@ export default function DnaClashFeedCard({
       });
       setLiveCounts(prev => ({ ...prev, ...counts }));
       if (myVote) setVoted(myVote);
+
+      // Fetch display names for voter breakdown
+      const voterIds = [...new Set(data.map((r: any) => r.user_id as string))];
+      if (voterIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id, display_name, user_name')
+          .in('id', voterIds);
+        const usersMap = new Map((usersData || []).map((u: any) => [u.id, u]));
+        setVoters(data.map((row: any) => {
+          const u = usersMap.get(row.user_id);
+          const name = u?.display_name || u?.user_name || 'User';
+          return { userId: row.user_id, prediction: row.prediction, displayName: name, initials: mkInitials(name) };
+        }));
+      }
     }
     loadVotes();
   }, [poolId, currentUserId]);
@@ -429,10 +451,19 @@ export default function DnaClashFeedCard({
 
       {/* ── Footer action bar ── */}
       <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-        {/* Left: stacked avatars + vote count */}
-        <div className="flex items-center gap-2">
+        {/* Left: stacked avatars + vote count — tappable to see who voted */}
+        <button
+          className="flex items-center gap-2 active:opacity-70 transition-opacity"
+          onClick={() => total > 0 && setShowVoters(s => !s)}
+        >
           <div className="flex -space-x-1.5">
-            {[user1, user2].map((u, i) => (
+            {voters.slice(0, 4).map((v, i) => (
+              <div key={v.userId} className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold"
+                style={{ background: v.prediction === user1.username ? '#a855f7' : '#ec4899', zIndex: 4 - i }}>
+                {v.initials.slice(0, 1)}
+              </div>
+            ))}
+            {voters.length === 0 && [user1, user2].map((u, i) => (
               <div key={u.username} className="w-6 h-6 rounded-full border-2 border-white overflow-hidden flex items-center justify-center text-white text-[9px] font-bold"
                 style={{ background: i === 0 ? '#a855f7' : '#ec4899', zIndex: i === 0 ? 2 : 1 }}>
                 {u.avatar
@@ -442,9 +473,11 @@ export default function DnaClashFeedCard({
             ))}
           </div>
           {total > 0 && (
-            <span className="text-gray-500 text-[12px] font-medium">{total} total {total === 1 ? 'vote' : 'votes'}</span>
+            <span className={`text-[12px] font-medium transition-colors ${showVoters ? 'text-purple-500' : 'text-gray-500'}`}>
+              {total} total {total === 1 ? 'vote' : 'votes'}
+            </span>
           )}
-        </div>
+        </button>
 
         {/* Center: comments */}
         <button
@@ -469,6 +502,40 @@ export default function DnaClashFeedCard({
           </span>
         )}
       </div>
+
+      {/* ── Voter breakdown ── */}
+      {showVoters && voters.length > 0 && (
+        <div className="px-4 pb-3 pt-3 border-t border-gray-100">
+          <div className="flex gap-4">
+            {[
+              { user: user1, color: '#a855f7', bgClass: 'bg-purple-100', textClass: 'text-purple-600' },
+              { user: user2, color: '#ec4899', bgClass: 'bg-pink-100', textClass: 'text-pink-600' },
+            ].map(({ user, color, bgClass, textClass }) => {
+              const sideVoters = voters.filter(v => v.prediction === user.username);
+              return (
+                <div key={user.username} className="flex-1">
+                  <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color }}>{user.displayName.split(' ')[0]}</p>
+                  {sideVoters.length === 0 ? (
+                    <p className="text-gray-400 text-[10px]">No votes yet</p>
+                  ) : (
+                    <div className="flex flex-col gap-1.5">
+                      {sideVoters.map(v => (
+                        <div key={v.userId} className="flex items-center gap-1.5">
+                          <div className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-white text-[8px] font-bold"
+                            style={{ background: color }}>
+                            {v.initials.slice(0, 1)}
+                          </div>
+                          <span className="text-[11px] text-gray-700 truncate">{v.displayName}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Comments ── */}
       {showComments && (
