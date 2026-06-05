@@ -930,25 +930,28 @@ export function FeedActionChips({ dark = false }: { dark?: boolean }) {
   if (dark) {
     return (
       <>
-        <div className="flex gap-3">
+        <div className="flex items-center">
           <button
             onClick={() => setLocation('/add')}
             className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 transition-opacity active:opacity-70"
           >
-            <span className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
-              <Bookmark size={15} className="text-white" fill="white" />
+            <span className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
+              <Bookmark size={16} className="text-white" fill="white" />
             </span>
-            <span className="font-medium text-[14px] text-white">Add Media</span>
+            <span className="font-medium text-[14px]" style={{ color: '#c4a0ff' }}>Add Media</span>
+            <ChevronRight size={13} style={{ color: '#c4a0ff', opacity: 0.7 }} />
           </button>
+          <div className="w-px self-stretch" style={{ background: 'rgba(255,255,255,0.1)' }} />
           <button
             onClick={() => setComposerOpen(true)}
             className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 transition-opacity active:opacity-70"
           >
-            <span className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)' }}>
-              <MessageSquarePlus size={15} className="text-white" />
+            <span className="relative w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)' }}>
+              <MessageSquarePlus size={16} className="text-white" />
               <span className="absolute -top-1 -right-1 text-[10px]">⭐</span>
             </span>
-            <span className="font-medium text-[14px] text-white">Share a Take</span>
+            <span className="font-medium text-[14px]" style={{ color: '#c4a0ff' }}>Share a Take</span>
+            <ChevronRight size={13} style={{ color: '#c4a0ff', opacity: 0.7 }} />
           </button>
         </div>
         {composerOpen && (
