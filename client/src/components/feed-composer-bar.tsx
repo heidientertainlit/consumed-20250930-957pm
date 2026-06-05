@@ -948,7 +948,6 @@ export function FeedActionChips({ dark = false }: { dark?: boolean }) {
           >
             <span className="relative w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)' }}>
               <MessageSquarePlus size={16} className="text-white" />
-              <span className="absolute -top-1 -right-1 text-[10px]">⭐</span>
             </span>
             <span className="font-medium text-[12px]" style={{ color: '#c4a0ff' }}>Share a Take</span>
             <ChevronRight size={13} style={{ color: '#c4a0ff', opacity: 0.7 }} />
