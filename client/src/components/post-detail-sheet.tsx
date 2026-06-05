@@ -43,6 +43,7 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
   const [userRating, setUserRating] = useState<number | null>(null);
   const [submittingRating, setSubmittingRating] = useState(false);
   const [fetchedMediaMeta, setFetchedMediaMeta] = useState<{ image: string; externalId?: string; externalSource?: string; mediaType?: string } | null>(null);
+  const [fullPost, setFullPost] = useState<{ mediaTitle?: string; mediaImage?: string; externalId?: string; externalSource?: string; mediaType?: string } | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const starsRef = useRef<HTMLDivElement>(null);
@@ -51,19 +52,41 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
     if (isOpen && post.id) {
       fetchComments();
       fetchLikeStatus();
+      // Fetch the full post row to pick up media fields the feed summary may have omitted
+      if (!post.mediaTitle || !post.mediaImage) {
+        supabase
+          .from('social_posts')
+          .select('media_title, media_image, external_id, external_source, media_type')
+          .eq('id', post.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (data) {
+              setFullPost({
+                mediaTitle: data.media_title || undefined,
+                mediaImage: data.media_image || undefined,
+                externalId: data.external_id || undefined,
+                externalSource: data.external_source || undefined,
+                mediaType: data.media_type || undefined,
+              });
+            }
+          });
+      }
     }
   }, [isOpen, post.id]);
 
   // Fetch poster + external ID when we don't have one but have a real media title
+  // Runs after fullPost is populated so we can use its title as fallback
   useEffect(() => {
-    const hasImage = post.mediaImage && (post.mediaImage.startsWith('http') || post.mediaImage.startsWith('/'));
+    const resolvedTitle = post.mediaTitle || fullPost?.mediaTitle;
+    const resolvedImage = post.mediaImage || fullPost?.mediaImage;
+    const hasImage = resolvedImage && (resolvedImage.startsWith('http') || resolvedImage.startsWith('/'));
     if (!isOpen || hasImage) { setFetchedMediaMeta(null); return; }
-    // Only look up if we have an actual media title (not just post content)
-    if (!post.mediaTitle) { setFetchedMediaMeta(null); return; }
+    if (!resolvedTitle) { setFetchedMediaMeta(null); return; }
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    const typeParam = post.mediaType ? `&type=${encodeURIComponent(post.mediaType)}` : '';
-    fetch(`${supabaseUrl}/functions/v1/media-search?q=${encodeURIComponent(post.mediaTitle)}&limit=1${typeParam}`, {
+    const resolvedType = post.mediaType || fullPost?.mediaType;
+    const typeParam = resolvedType ? `&type=${encodeURIComponent(resolvedType)}` : '';
+    fetch(`${supabaseUrl}/functions/v1/media-search?q=${encodeURIComponent(resolvedTitle)}&limit=1${typeParam}`, {
       headers: { 'Authorization': `Bearer ${anonKey}` },
     })
       .then(r => r.json())
@@ -78,7 +101,7 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
         });
       })
       .catch(() => {});
-  }, [isOpen, post.mediaTitle, post.mediaImage, post.mediaType]);
+  }, [isOpen, post.mediaTitle, post.mediaImage, post.mediaType, fullPost]);
 
   useEffect(() => {
     setIsLiked(initialIsLiked || false);
@@ -207,19 +230,27 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
 
   if (!isOpen) return null;
 
+  // Merge post props with fullPost DB row (fullPost fills gaps the feed summary omits)
+  const effectiveTitle = post.mediaTitle || fullPost?.mediaTitle || '';
+  const effectiveImage = post.mediaImage || fullPost?.mediaImage || '';
+  const effectiveExternalId = post.mediaExternalId || fullPost?.externalId;
+  const effectiveExternalSource = post.mediaExternalSource || fullPost?.externalSource || 'tmdb';
+  const effectiveMediaType = post.mediaType || fullPost?.mediaType || 'movie';
+
   // Resolve poster — prefer stored image, then fetched search result
-  const mediaImage = getMediaImage() || fetchedMediaMeta?.image || null;
+  const rawImage = effectiveImage && (effectiveImage.startsWith('http') ? effectiveImage : effectiveImage.startsWith('/') ? `https://image.tmdb.org/t/p/w300${effectiveImage}` : null);
+  const mediaImage = rawImage || fetchedMediaMeta?.image || null;
 
   // Resolve the media detail link — prefer real externalId (post or fetched), never fall back to /add
-  const resolvedExternalId = post.mediaExternalId || fetchedMediaMeta?.externalId;
-  const resolvedExternalSource = post.mediaExternalSource || fetchedMediaMeta?.externalSource || 'tmdb';
-  const resolvedMediaType = post.mediaType || fetchedMediaMeta?.mediaType || 'movie';
+  const resolvedExternalId = effectiveExternalId || fetchedMediaMeta?.externalId;
+  const resolvedExternalSource = effectiveExternalSource || fetchedMediaMeta?.externalSource || 'tmdb';
+  const resolvedMediaType = effectiveMediaType || fetchedMediaMeta?.mediaType || 'movie';
   const mediaDetailLink = resolvedExternalId
     ? `/media/${resolvedMediaType}/${resolvedExternalSource}/${resolvedExternalId}`
     : null;
 
   // Only show the poster column if we have a real media title or image
-  const hasMedia = !!(post.mediaTitle || mediaImage);
+  const hasMedia = !!(effectiveTitle || mediaImage);
 
   const currentUserInitial = (
     session?.user?.user_metadata?.display_name ||
@@ -305,13 +336,13 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
                 </div>
               </Link>
 
-              {post.mediaTitle && (
+              {effectiveTitle && (
                 mediaDetailLink ? (
                   <Link href={mediaDetailLink} onClick={onClose}>
-                    <h3 className="font-bold text-gray-900 text-base leading-snug mb-1.5 hover:text-violet-600">{post.mediaTitle}</h3>
+                    <h3 className="font-bold text-gray-900 text-base leading-snug mb-1.5 hover:text-violet-600">{effectiveTitle}</h3>
                   </Link>
                 ) : (
-                  <h3 className="font-bold text-gray-900 text-base leading-snug mb-1.5">{post.mediaTitle}</h3>
+                  <h3 className="font-bold text-gray-900 text-base leading-snug mb-1.5">{effectiveTitle}</h3>
                 )
               )}
 
