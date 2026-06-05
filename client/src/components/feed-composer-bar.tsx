@@ -933,8 +933,7 @@ export function FeedActionChips({ dark = false }: { dark?: boolean }) {
         <div className="flex gap-3">
           <button
             onClick={() => setLocation('/add')}
-            className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 rounded-full transition-opacity active:opacity-70"
-            style={{ background: 'rgba(255,255,255,0.05)' }}
+            className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 transition-opacity active:opacity-70"
           >
             <span className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
               <Bookmark size={15} className="text-white" fill="white" />
@@ -943,8 +942,7 @@ export function FeedActionChips({ dark = false }: { dark?: boolean }) {
           </button>
           <button
             onClick={() => setComposerOpen(true)}
-            className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 rounded-full transition-opacity active:opacity-70"
-            style={{ background: 'rgba(255,255,255,0.05)' }}
+            className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 transition-opacity active:opacity-70"
           >
             <span className="relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)' }}>
               <MessageSquarePlus size={15} className="text-white" />
