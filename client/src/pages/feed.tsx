@@ -7799,7 +7799,7 @@ export default function Feed() {
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-3 -mt-px">
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-6">
           
           {/* Composer Trigger - dark hero zone */}
@@ -7808,6 +7808,9 @@ export default function Feed() {
             <DailyHeroSection />
             <div className="mt-3">
               <DnaMomentFeaturedCard />
+            </div>
+            <div className="mt-4">
+              <FeedActionChips dark />
             </div>
 
           </div>
@@ -7890,11 +7893,6 @@ export default function Feed() {
             </div>
           </div>
         )}
-
-        {/* ── Action chips ── */}
-        <div className="mb-5">
-          <FeedActionChips />
-        </div>
 
         {/* ── Trending Now ── */}
         <TrendingNowSection />

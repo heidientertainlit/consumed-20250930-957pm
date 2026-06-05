@@ -923,9 +923,37 @@ export default function FeedComposerBar({
 }
 
 // ─── Two-chip replacement for the collapsed bar ───────────────────────────────
-export function FeedActionChips() {
+export function FeedActionChips({ dark = false }: { dark?: boolean }) {
   const [composerOpen, setComposerOpen] = useState(false);
   const [, setLocation] = useLocation();
+
+  if (dark) {
+    return (
+      <>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setLocation('/add')}
+            className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl transition-colors active:opacity-80"
+            style={{ border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.07)' }}
+          >
+            <Plus size={15} className="text-white/80 shrink-0" />
+            <span className="font-medium text-[14px] text-white/90">Add Media</span>
+          </button>
+          <button
+            onClick={() => setComposerOpen(true)}
+            className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl transition-colors active:opacity-80"
+            style={{ border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.07)' }}
+          >
+            <MessageSquarePlus size={15} className="text-white/80 shrink-0" />
+            <span className="font-medium text-[14px] text-white/90">Share a Take</span>
+          </button>
+        </div>
+        {composerOpen && (
+          <FeedComposerBar startExpanded onExternalClose={() => setComposerOpen(false)} />
+        )}
+      </>
+    );
+  }
 
   return (
     <>
