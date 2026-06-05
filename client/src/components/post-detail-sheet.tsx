@@ -42,6 +42,7 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
   const [hoverRating, setHoverRating] = useState(0);
   const [userRating, setUserRating] = useState<number | null>(null);
   const [submittingRating, setSubmittingRating] = useState(false);
+  const [fetchedPoster, setFetchedPoster] = useState<string | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const starsRef = useRef<HTMLDivElement>(null);
@@ -52,6 +53,25 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
       fetchLikeStatus();
     }
   }, [isOpen, post.id]);
+
+  // Fetch poster when we don't have one but have a title
+  useEffect(() => {
+    const hasImage = post.mediaImage && (post.mediaImage.startsWith('http') || post.mediaImage.startsWith('/'));
+    if (!isOpen || hasImage) { setFetchedPoster(null); return; }
+    if (!post.mediaTitle) return;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    fetch(`${supabaseUrl}/functions/v1/media-search?q=${encodeURIComponent(post.mediaTitle)}&limit=1`, {
+      headers: { 'Authorization': `Bearer ${anonKey}` },
+    })
+      .then(r => r.json())
+      .then(data => {
+        const result = data?.results?.[0];
+        const img = result?.poster_url || result?.image;
+        if (img) setFetchedPoster(img);
+      })
+      .catch(() => {});
+  }, [isOpen, post.mediaTitle, post.mediaImage]);
 
   useEffect(() => {
     setIsLiked(initialIsLiked || false);
@@ -180,7 +200,7 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
 
   if (!isOpen) return null;
 
-  const mediaImage = getMediaImage();
+  const mediaImage = getMediaImage() || fetchedPoster;
   const mediaDetailLink = post.mediaExternalId
     ? `/media/${post.mediaType || 'movie'}/${post.mediaExternalSource || 'tmdb'}/${post.mediaExternalId}`
     : `/add?q=${encodeURIComponent(post.mediaTitle || '')}`;
@@ -351,9 +371,7 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
               <div className="flex justify-center py-4">
                 <Loader2 className="animate-spin text-violet-500" size={20} />
               </div>
-            ) : comments.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-4">No comments yet. Be the first!</p>
-            ) : (
+            ) : comments.length === 0 ? null : (
               <div className="space-y-3">
                 {comments.map((comment) => (
                   <div key={comment.id} className="flex gap-2">
