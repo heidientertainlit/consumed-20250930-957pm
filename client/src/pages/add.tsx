@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, TrendingUp, Plus, Mic, Gamepad2, MessageSquarePlus, Star, X, Brain, ChevronRight } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, TrendingUp, Plus, Mic, Gamepad2, MessageSquarePlus, Star, X, Brain, ChevronRight, ArrowLeft } from "lucide-react";
 import InlineComposer from "@/components/inline-composer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -397,6 +397,13 @@ export default function Search() {
 
         {/* Page header */}
         <div className="mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center gap-1.5 text-white/50 hover:text-white/80 transition-colors mb-3 -ml-1"
+          >
+            <ArrowLeft size={16} />
+            <span className="text-sm">Back</span>
+          </button>
           <h1 className="text-white text-xl font-bold tracking-tight">What's happening?</h1>
           <p className="text-white/35 text-xs mt-1">React, predict, or add to your library.</p>
         </div>
