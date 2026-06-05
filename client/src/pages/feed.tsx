@@ -7833,7 +7833,7 @@ export default function Feed() {
                 return (
                   <div
                     key={post.id}
-                    className="flex items-center gap-3 py-3 cursor-pointer active:bg-gray-50 rounded-xl -mx-2 px-2 transition-colors"
+                    className="flex items-center gap-3 py-3 cursor-pointer active:bg-gray-50 rounded-xl transition-colors"
                     onClick={() => setWhatsHappeningOpenPost(post)}
                   >
                     {/* Content */}
