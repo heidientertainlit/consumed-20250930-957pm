@@ -724,12 +724,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [, setLocation] = useLocation();
   const [seenItDone, setSeenItDone] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
-  // Default open for other users' posts so "Your Turn" shows without needing to tap Rate it
-  const [showInlineRater, setShowInlineRater] = useState(() => {
-    const postUserId = post.user?.id || post.userId;
-    const myId = session?.user?.id;
-    return !!(myId && postUserId && postUserId !== myId);
-  });
+  // Hidden by default — reveals when user taps "Rate it"
+  const [showInlineRater, setShowInlineRater] = useState(false);
   const [reviewText, setReviewText] = useState('');
   const [reviewPosted, setReviewPosted] = useState(false);
   const [peeked, setPeeked] = useState(false);
@@ -2596,8 +2592,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           )}
 
-        {/* YOUR TURN / Post-rating section */}
-        {isRatingPost && isOtherUser && session?.access_token && (showStarPicker || !ratingSubmitted) && (
+        {/* YOUR TURN / Post-rating section — only after tapping "Rate it" */}
+        {isRatingPost && isOtherUser && session?.access_token && showInlineRater && (showStarPicker || !ratingSubmitted) && (
           <div className="mt-3 pt-3 border-t border-gray-100">
             <>
               <div className="flex items-center justify-between mb-2">
