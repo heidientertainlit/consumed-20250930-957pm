@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const TMDB_KEY = 'a0b1c1fc498c84b988ec69d1b7437fd9';
 
 export interface ClashUser {
   displayName: string;
@@ -82,29 +81,28 @@ export default function DnaClashFeedCard({
     [user2.username]: 0,
   });
 
-  // Fetch backdrop/banner image
+  // Fetch banner image via the existing media-search edge function (works for all media types)
   useEffect(() => {
     if (posterUrl) { setBannerUrl(posterUrl); return; }
-    if (!externalId) return;
+    if (!mediaTitle) return;
+    const anonKey = SUPABASE_ANON_KEY || token;
+    if (!anonKey) return;
 
-    const isTmdb = !externalSource || externalSource === 'tmdb';
-    if (!isTmdb) { return; }
+    const typeParam = mediaType ? `&type=${encodeURIComponent(mediaType)}` : '';
+    const url = `${SUPABASE_URL}/functions/v1/media-search?q=${encodeURIComponent(mediaTitle)}&limit=1${typeParam}`;
 
-    const endpoint = mediaType === 'tv'
-      ? `https://api.themoviedb.org/3/tv/${externalId}?api_key=${TMDB_KEY}`
-      : `https://api.themoviedb.org/3/movie/${externalId}?api_key=${TMDB_KEY}`;
-
-    fetch(endpoint)
+    fetch(url, { headers: { Authorization: `Bearer ${anonKey}` } })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (!data) return;
-        const backdrop = data.backdrop_path;
-        const poster = data.poster_path;
-        if (backdrop) setBannerUrl(`https://image.tmdb.org/t/p/w780${backdrop}`);
-        else if (poster) setBannerUrl(`https://image.tmdb.org/t/p/w780${poster}`);
+        const result = data?.results?.[0];
+        if (!result) return;
+        const img = result.poster_url || result.image || result.poster_path
+          ? result.poster_url || result.image || `https://image.tmdb.org/t/p/w780${result.poster_path}`
+          : null;
+        if (img) setBannerUrl(img);
       })
       .catch(() => {});
-  }, [posterUrl, externalId, externalSource, mediaType]);
+  }, [posterUrl, mediaTitle, mediaType, token]);
 
   const clashKey = `clash_notified_${user1.username}_${user2.username}_${mediaTitle}`;
   const isInClash = currentUserId && (currentUserId === user1.userId || currentUserId === user2.userId);
