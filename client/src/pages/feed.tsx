@@ -704,6 +704,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showCommentInput, setShowCommentInput] = useState(false);
   const [replyingToId, setReplyingToId] = useState<string | number | null>(null);
   const [replyText, setReplyText] = useState('');
   const [replyingToName, setReplyingToName] = useState<string | null>(null);
@@ -1796,13 +1797,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
 
           {/* Fan stack area — all cards sit inside the white container */}
-          <div className="relative flex items-center justify-center" style={{ height: 310, overflow: 'visible' }}>
+          <div className="relative flex items-center justify-center" style={{ height: 248, overflow: 'visible' }}>
 
             {/* Back peek card (left) */}
             {stackPosts && (stackPosts[(stackIndex ?? 0) + 2]?.mediaImage || '').startsWith('http') && (
               <div style={{
-                position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
-                transform: 'translateX(-52px) rotate(-8deg) scale(0.85)',
+                position: 'absolute', width: 160, height: 228, borderRadius: 16, overflow: 'hidden',
+                transform: 'translateX(-44px) rotate(-8deg) scale(0.85)',
                 zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.18)', background: '#111827',
               }}>
                 <img src={stackPosts[(stackIndex ?? 0) + 2].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1812,8 +1813,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {/* Middle peek card (right) */}
             {stackPosts && (stackPosts[(stackIndex ?? 0) + 1]?.mediaImage || '').startsWith('http') && (
               <div style={{
-                position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
-                transform: 'translateX(52px) rotate(8deg) scale(0.85)',
+                position: 'absolute', width: 160, height: 228, borderRadius: 16, overflow: 'hidden',
+                transform: 'translateX(44px) rotate(8deg) scale(0.85)',
                 zIndex: 2, boxShadow: '0 4px 16px rgba(0,0,0,0.18)', background: '#111827',
               }}>
                 <img src={stackPosts[(stackIndex ?? 0) + 1].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1824,7 +1825,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <div
               ref={swipeProps?.ref}
               className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
-              style={{ height: 282, width: 208, position: 'absolute', zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.30)', ...(swipeProps?.style ?? {}) }}
+              style={{ height: 228, width: 170, position: 'absolute', zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.30)', ...(swipeProps?.style ?? {}) }}
               onClick={() => {
                 if (post.externalSource && post.externalId) {
                   setLocation(`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`);
@@ -1972,6 +1973,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 <Plus size={18} className="text-gray-500" />
               </div>
               <span className="text-[10px] font-medium text-gray-500">Add to list</span>
+            </button>
+          )}
+
+          {/* Comment bubble — toggles the input below */}
+          {session?.access_token && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowCommentInput(v => !v); }}
+              className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+            >
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md border ${showCommentInput ? 'bg-violet-600 border-violet-600' : 'bg-white border-gray-200'}`}>
+                <MessageCircle size={18} className={showCommentInput ? 'text-white' : 'text-gray-500'} />
+              </div>
+              <span className={`text-[10px] font-medium ${showCommentInput ? 'text-violet-600' : 'text-gray-500'}`}>Take</span>
             </button>
           )}
         </div>
@@ -2159,8 +2173,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           )}
 
-          {/* Comment input bar */}
-          {session?.access_token && (
+          {/* Comment input bar — only when bubble is tapped */}
+          {session?.access_token && showCommentInput && (
             <div className="flex items-center gap-2 px-3 pb-3 pt-2 mx-3">
               <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
                 <span className="text-violet-600 text-[10px] font-semibold">
