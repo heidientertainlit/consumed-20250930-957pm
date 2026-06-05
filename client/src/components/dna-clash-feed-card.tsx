@@ -81,28 +81,28 @@ export default function DnaClashFeedCard({
     [user2.username]: 0,
   });
 
-  // Fetch banner image via the existing media-search edge function (works for all media types)
+  // Fetch banner image via get-media-details (same pattern used throughout the app)
   useEffect(() => {
-    if (posterUrl) { setBannerUrl(posterUrl); return; }
-    if (!mediaTitle) return;
-    const anonKey = SUPABASE_ANON_KEY || token;
-    if (!anonKey) return;
+    if (posterUrl) {
+      setBannerUrl(posterUrl);
+      return;
+    }
+    if (!externalId || !externalSource) return;
+    const anonKey = SUPABASE_ANON_KEY;
+    const authKey = token || anonKey;
+    if (!authKey) return;
 
-    const typeParam = mediaType ? `&type=${encodeURIComponent(mediaType)}` : '';
-    const url = `${SUPABASE_URL}/functions/v1/media-search?q=${encodeURIComponent(mediaTitle)}&limit=1${typeParam}`;
+    const typeParam = mediaType ? `&media_type=${encodeURIComponent(mediaType)}` : '';
+    const url = `${SUPABASE_URL}/functions/v1/get-media-details?source=${encodeURIComponent(externalSource)}&external_id=${encodeURIComponent(externalId)}${typeParam}`;
 
-    fetch(url, { headers: { Authorization: `Bearer ${anonKey}` } })
+    fetch(url, { headers: { apikey: anonKey, Authorization: `Bearer ${authKey}` } })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        const result = data?.results?.[0];
-        if (!result) return;
-        const img = result.poster_url || result.image || result.poster_path
-          ? result.poster_url || result.image || `https://image.tmdb.org/t/p/w780${result.poster_path}`
-          : null;
+        const img = data?.artwork || data?.poster_url || data?.image_url || null;
         if (img) setBannerUrl(img);
       })
       .catch(() => {});
-  }, [posterUrl, mediaTitle, mediaType, token]);
+  }, [posterUrl, externalId, externalSource, mediaType, token]);
 
   const clashKey = `clash_notified_${user1.username}_${user2.username}_${mediaTitle}`;
   const isInClash = currentUserId && (currentUserId === user1.userId || currentUserId === user2.userId);
