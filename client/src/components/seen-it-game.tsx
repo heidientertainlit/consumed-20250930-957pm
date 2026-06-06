@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Eye, Check, X, Plus, Star, Loader2, Sparkles, BookOpen, Headphones, Gamepad2, Heart } from "lucide-react";
+import { Eye, ChevronRight, Check, X, Plus, Star, Loader2, Sparkles, BookOpen, Headphones, Gamepad2, Heart } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
