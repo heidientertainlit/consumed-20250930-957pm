@@ -588,50 +588,49 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         </div>
 
         {/* Main content */}
-        <div className="px-4 pb-3 flex items-start gap-0">
+        <div className="px-4 pb-3 flex items-stretch">
 
-          {/* Left — circles + % + names */}
-          <div className="flex-1 min-w-0">
+          {/* Left — circles + % + names (fixed width) */}
+          <div style={{ width: 160 }} className="shrink-0">
             {noFriends && !featuredProp ? (
               <div className="py-2">
-                <p className="text-gray-500 text-[14px] font-medium leading-snug">No friends to compare with yet.</p>
-                <p className="text-gray-400 text-[12px] mt-0.5">Add or invite friends to see how your DNA stacks up.</p>
+                <p className="text-gray-500 text-[13px] font-medium leading-snug">No friends to compare with yet.</p>
               </div>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex items-start justify-between">
                 {/* You */}
-                <div className="flex flex-col items-center gap-1 shrink-0">
-                  <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] border-[3px] border-purple-100 shadow-sm"
-                    style={{ width: 52, height: 52, background: '#8b5cf6' }}>
+                <div className="flex flex-col items-center gap-0.5" style={{ width: 52 }}>
+                  <div className="rounded-full flex items-center justify-center font-black text-white text-[15px] shadow-sm"
+                    style={{ width: 48, height: 48, background: '#8b5cf6' }}>
                     {session?.user?.user_metadata?.display_name
                       ? initials(session.user.user_metadata.display_name)
                       : (user?.email?.[0] ?? 'Y').toUpperCase()}
                   </div>
-                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
+                  <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wide text-center w-full truncate mt-0.5">
                     {session?.user?.user_metadata?.display_name?.split(' ')[0] ?? 'You'}
                   </span>
                   {myLabel && (
-                    <span className="text-[7px] text-purple-500 font-semibold text-center leading-tight max-w-[58px] line-clamp-2">{myLabel}</span>
+                    <span className="text-[7px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{myLabel}</span>
                   )}
                 </div>
 
                 {/* Center % */}
-                <div className="flex flex-col items-center flex-1">
-                  <span className="font-black leading-none" style={{ fontSize: 38, color: '#8b5cf6' }}>{featured.pct}%</span>
-                  <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
+                <div className="flex flex-col items-center justify-center pt-1" style={{ width: 52 }}>
+                  <span className="font-black leading-none" style={{ fontSize: 26, color: '#8b5cf6' }}>{featured.pct}%</span>
+                  <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
                 </div>
 
                 {/* Friend */}
-                <div className="flex flex-col items-center gap-1 shrink-0">
-                  <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] border-[3px] border-purple-100 shadow-sm"
-                    style={{ width: 52, height: 52, background: featured.color }}>
+                <div className="flex flex-col items-center gap-0.5" style={{ width: 52 }}>
+                  <div className="rounded-full flex items-center justify-center font-black text-white text-[15px] shadow-sm"
+                    style={{ width: 48, height: 48, background: featured.color }}>
                     {featured.initials}
                   </div>
-                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
+                  <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wide text-center w-full truncate mt-0.5">
                     {featured.displayName.split(' ')[0]}
                   </span>
                   {featured.label && (
-                    <span className="text-[7px] text-purple-500 font-semibold text-center leading-tight max-w-[58px] line-clamp-2">{featured.label}</span>
+                    <span className="text-[7px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{featured.label}</span>
                   )}
                 </div>
               </div>
@@ -640,12 +639,12 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
           {/* Vertical divider */}
           {overlaps.length > 0 && !noFriends && (
-            <div className="w-px bg-gray-200 self-stretch mx-3 shrink-0" />
+            <div className="w-px bg-gray-200 mx-4 shrink-0 self-stretch" />
           )}
 
           {/* Right — Also aligned */}
           {overlaps.length > 0 && !noFriends && (
-            <div className="flex flex-col gap-2 shrink-0" style={{ minWidth: 108 }}>
+            <div className="flex flex-col gap-2 flex-1 min-w-0">
               <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Also aligned</span>
               {overlaps.map((u) => (
                 <div key={u.displayName} className="flex items-center gap-2">
@@ -786,41 +785,41 @@ export function DnaComparePostCard({ item }: { item: any }) {
         </div>
 
         {/* Main content */}
-        <div className="px-4 pb-3 flex items-start gap-0">
-          {/* Left — circles + % + names */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3">
-              {/* Poster */}
-              <div className="flex flex-col items-center gap-1 shrink-0">
-                <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] border-[3px] border-purple-100 shadow-sm"
-                  style={{ width: 52, height: 52, background: '#8b5cf6' }}>
+        <div className="px-4 pb-3 flex items-stretch">
+          {/* Left — circles + % + names (fixed 160px) */}
+          <div style={{ width: 160 }} className="shrink-0">
+            <div className="flex items-start justify-between">
+              {/* Poster circle */}
+              <div className="flex flex-col items-center gap-0.5" style={{ width: 52 }}>
+                <div className="rounded-full flex items-center justify-center font-black text-white text-[15px] shadow-sm"
+                  style={{ width: 48, height: 48, background: '#8b5cf6' }}>
                   {initials(posterName)}
                 </div>
-                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
+                <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wide text-center w-full truncate mt-0.5">
                   {posterName.split(' ')[0]}
                 </span>
                 {cmp.your_dna_label && (
-                  <span className="text-[7px] text-purple-500 font-semibold text-center leading-tight max-w-[58px] line-clamp-2">{cmp.your_dna_label}</span>
+                  <span className="text-[7px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{cmp.your_dna_label}</span>
                 )}
               </div>
 
               {/* Center % */}
-              <div className="flex flex-col items-center flex-1">
-                <span className="font-black leading-none" style={{ fontSize: 38, color: '#8b5cf6' }}>{matchScore}%</span>
-                <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
+              <div className="flex flex-col items-center justify-center pt-1" style={{ width: 52 }}>
+                <span className="font-black leading-none" style={{ fontSize: 26, color: '#8b5cf6' }}>{matchScore}%</span>
+                <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
               </div>
 
-              {/* Friend */}
-              <div className="flex flex-col items-center gap-1 shrink-0">
-                <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] border-[3px] border-purple-100 shadow-sm"
-                  style={{ width: 52, height: 52, background: '#a855f7' }}>
+              {/* Friend circle */}
+              <div className="flex flex-col items-center gap-0.5" style={{ width: 52 }}>
+                <div className="rounded-full flex items-center justify-center font-black text-white text-[15px] shadow-sm"
+                  style={{ width: 48, height: 48, background: '#a855f7' }}>
                   {initials(friendName)}
                 </div>
-                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
+                <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wide text-center w-full truncate mt-0.5">
                   {friendName.split(' ')[0]}
                 </span>
                 {cmp.friend_dna_label && (
-                  <span className="text-[7px] text-purple-500 font-semibold text-center leading-tight max-w-[58px] line-clamp-2">{cmp.friend_dna_label}</span>
+                  <span className="text-[7px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{cmp.friend_dna_label}</span>
                 )}
               </div>
             </div>
@@ -828,12 +827,12 @@ export function DnaComparePostCard({ item }: { item: any }) {
 
           {/* Vertical divider */}
           {posterOverlaps.length > 0 && (
-            <div className="w-px bg-gray-200 self-stretch mx-3 shrink-0" />
+            <div className="w-px bg-gray-200 mx-4 shrink-0 self-stretch" />
           )}
 
           {/* Right — Also aligned */}
           {posterOverlaps.length > 0 && (
-            <div className="flex flex-col gap-2 shrink-0" style={{ minWidth: 108 }}>
+            <div className="flex flex-col gap-2 flex-1 min-w-0">
               <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Also aligned</span>
               {posterOverlaps.map((u) => (
                 <div key={u.displayName} className="flex items-center gap-2">
@@ -841,8 +840,8 @@ export function DnaComparePostCard({ item }: { item: any }) {
                     style={{ width: 26, height: 26, background: u.color }}>
                     {u.initials}
                   </div>
-                  <div className="flex flex-col leading-tight">
-                    <span className="text-gray-700 text-[12px] font-medium">{u.displayName.split(' ')[0]}</span>
+                  <div className="flex flex-col leading-tight min-w-0">
+                    <span className="text-gray-700 text-[12px] font-medium truncate">{u.displayName.split(' ')[0]}</span>
                     <span className="text-purple-500 text-[11px] font-bold">{u.pct}%</span>
                   </div>
                 </div>
