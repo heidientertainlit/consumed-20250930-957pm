@@ -588,97 +588,96 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         </div>
 
         {/* Main content */}
-        <div className="px-4 pb-5 flex gap-4 items-start">
+        <div className="px-4 pb-3 flex items-start gap-0">
 
-          {/* Left — two circles + % + archetypes */}
-          <div className="flex flex-col items-center flex-1 min-w-0">
+          {/* Left — circles + % + names */}
+          <div className="flex-1 min-w-0">
             {noFriends && !featuredProp ? (
               <div className="py-2">
                 <p className="text-gray-500 text-[14px] font-medium leading-snug">No friends to compare with yet.</p>
                 <p className="text-gray-400 text-[12px] mt-0.5">Add or invite friends to see how your DNA stacks up.</p>
               </div>
             ) : (
-              <>
-                {/* Avatar row */}
-                <div className="flex items-center justify-center gap-2 w-full">
-                  {/* You */}
-                  <div className="flex flex-col items-center gap-1 min-w-0">
-                    <div className="rounded-full flex items-center justify-center font-bold text-white text-[13px] shrink-0"
-                      style={{ width: 44, height: 44, background: '#8b5cf6' }}>
-                      {session?.user?.user_metadata?.display_name
-                        ? initials(session.user.user_metadata.display_name)
-                        : (user?.email?.[0] ?? 'Y').toUpperCase()}
-                    </div>
-                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide text-center leading-tight max-w-[56px] truncate">
-                      {session?.user?.user_metadata?.display_name?.split(' ')[0] ?? 'You'}
-                    </span>
-                    {myLabel && (
-                      <span className="text-[8px] text-purple-500 font-semibold text-center leading-tight max-w-[60px] line-clamp-2">{myLabel}</span>
-                    )}
+              <div className="flex items-center gap-3">
+                {/* You */}
+                <div className="flex flex-col items-center gap-1 shrink-0">
+                  <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] border-[3px] border-purple-100 shadow-sm"
+                    style={{ width: 52, height: 52, background: '#8b5cf6' }}>
+                    {session?.user?.user_metadata?.display_name
+                      ? initials(session.user.user_metadata.display_name)
+                      : (user?.email?.[0] ?? 'Y').toUpperCase()}
                   </div>
-
-                  {/* Center % */}
-                  <div className="flex flex-col items-center px-1">
-                    <span className="font-extrabold leading-none" style={{ fontSize: 36, color: '#a855f7' }}>{featured.pct}%</span>
-                    <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-widest">aligned</span>
-                  </div>
-
-                  {/* Friend */}
-                  <div className="flex flex-col items-center gap-1 min-w-0">
-                    <div className="rounded-full flex items-center justify-center font-bold text-white text-[13px] shrink-0"
-                      style={{ width: 44, height: 44, background: featured.color }}>
-                      {featured.initials}
-                    </div>
-                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide text-center leading-tight max-w-[56px] truncate">
-                      {featured.displayName.split(' ')[0]}
-                    </span>
-                    {featured.label && (
-                      <span className="text-[8px] text-purple-500 font-semibold text-center leading-tight max-w-[60px] line-clamp-2">{featured.label}</span>
-                    )}
-                  </div>
+                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
+                    {session?.user?.user_metadata?.display_name?.split(' ')[0] ?? 'You'}
+                  </span>
+                  {myLabel && (
+                    <span className="text-[7px] text-purple-500 font-semibold text-center leading-tight max-w-[58px] line-clamp-2">{myLabel}</span>
+                  )}
                 </div>
-              </>
+
+                {/* Center % */}
+                <div className="flex flex-col items-center flex-1">
+                  <span className="font-black leading-none" style={{ fontSize: 38, color: '#8b5cf6' }}>{featured.pct}%</span>
+                  <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
+                </div>
+
+                {/* Friend */}
+                <div className="flex flex-col items-center gap-1 shrink-0">
+                  <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] border-[3px] border-purple-100 shadow-sm"
+                    style={{ width: 52, height: 52, background: featured.color }}>
+                    {featured.initials}
+                  </div>
+                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
+                    {featured.displayName.split(' ')[0]}
+                  </span>
+                  {featured.label && (
+                    <span className="text-[7px] text-purple-500 font-semibold text-center leading-tight max-w-[58px] line-clamp-2">{featured.label}</span>
+                  )}
+                </div>
+              </div>
             )}
           </div>
 
-          {/* Right — other overlaps stacked */}
+          {/* Vertical divider */}
           {overlaps.length > 0 && !noFriends && (
-            <div className="flex flex-col gap-2 pt-1 shrink-0" style={{ minWidth: 100 }}>
+            <div className="w-px bg-gray-200 self-stretch mx-3 shrink-0" />
+          )}
+
+          {/* Right — Also aligned */}
+          {overlaps.length > 0 && !noFriends && (
+            <div className="flex flex-col gap-2 shrink-0" style={{ minWidth: 108 }}>
               <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Also aligned</span>
               {overlaps.map((u) => (
                 <div key={u.displayName} className="flex items-center gap-2">
                   <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]"
-                    style={{ width: 24, height: 24, background: u.color }}>
+                    style={{ width: 26, height: 26, background: u.color }}>
                     {u.initials}
                   </div>
                   <div className="flex flex-col leading-tight">
                     <span className="text-gray-700 text-[12px] font-medium">{u.displayName.split(' ')[0]}</span>
-                    <span className="text-purple-400 text-[11px] font-bold">{u.pct}%</span>
+                    <span className="text-purple-500 text-[11px] font-bold">{u.pct}%</span>
                   </div>
                 </div>
               ))}
-              <button onClick={() => setLocation("/friends")} className="text-gray-400 text-[10px] font-semibold hover:text-gray-600 transition-colors text-left">
-                See all →
-              </button>
             </div>
           )}
         </div>
 
-        {/* Button — full width below both columns */}
-        <div className="px-4 pb-4">
+        {/* Button */}
+        <div className="px-4 pb-4 pt-2">
           {noFriends && !featuredProp ? (
             <button
               onClick={() => setLocation("/friends")}
-              className="block w-full py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
+              className="flex items-center gap-1 text-purple-600 font-semibold text-[14px] hover:text-purple-700 transition-colors"
             >
-              Add or invite friends
+              Add or invite friends →
             </button>
           ) : (
             <button
               onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
-              className="block w-full py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
+              className="flex items-center gap-1 text-purple-600 font-semibold text-[14px] hover:text-purple-700 transition-colors"
             >
-              Compare with a friend
+              Compare with a friend →
             </button>
           )}
         </div>
@@ -787,59 +786,64 @@ export function DnaComparePostCard({ item }: { item: any }) {
         </div>
 
         {/* Main content */}
-        <div className="px-4 pb-5 flex gap-4 items-start">
-          {/* Left — two circles + % + archetypes */}
-          <div className="flex flex-col items-center flex-1 min-w-0">
-            <div className="flex items-center justify-center gap-2 w-full">
+        <div className="px-4 pb-3 flex items-start gap-0">
+          {/* Left — circles + % + names */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3">
               {/* Poster */}
-              <div className="flex flex-col items-center gap-1 min-w-0">
-                <div className="rounded-full flex items-center justify-center font-bold text-white text-[13px] shrink-0"
-                  style={{ width: 44, height: 44, background: '#8b5cf6' }}>
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] border-[3px] border-purple-100 shadow-sm"
+                  style={{ width: 52, height: 52, background: '#8b5cf6' }}>
                   {initials(posterName)}
                 </div>
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide text-center leading-tight max-w-[56px] truncate">
+                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
                   {posterName.split(' ')[0]}
                 </span>
                 {cmp.your_dna_label && (
-                  <span className="text-[8px] text-purple-500 font-semibold text-center leading-tight max-w-[60px] line-clamp-2">{cmp.your_dna_label}</span>
+                  <span className="text-[7px] text-purple-500 font-semibold text-center leading-tight max-w-[58px] line-clamp-2">{cmp.your_dna_label}</span>
                 )}
               </div>
 
               {/* Center % */}
-              <div className="flex flex-col items-center px-1">
-                <span className="font-extrabold leading-none" style={{ fontSize: 36, color: '#a855f7' }}>{matchScore}%</span>
-                <span className="text-[9px] text-gray-400 font-semibold uppercase tracking-widest">aligned</span>
+              <div className="flex flex-col items-center flex-1">
+                <span className="font-black leading-none" style={{ fontSize: 38, color: '#8b5cf6' }}>{matchScore}%</span>
+                <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
               </div>
 
               {/* Friend */}
-              <div className="flex flex-col items-center gap-1 min-w-0">
-                <div className="rounded-full flex items-center justify-center font-bold text-white text-[13px] shrink-0"
-                  style={{ width: 44, height: 44, background: '#a855f7' }}>
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] border-[3px] border-purple-100 shadow-sm"
+                  style={{ width: 52, height: 52, background: '#a855f7' }}>
                   {initials(friendName)}
                 </div>
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide text-center leading-tight max-w-[56px] truncate">
+                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
                   {friendName.split(' ')[0]}
                 </span>
                 {cmp.friend_dna_label && (
-                  <span className="text-[8px] text-purple-500 font-semibold text-center leading-tight max-w-[60px] line-clamp-2">{cmp.friend_dna_label}</span>
+                  <span className="text-[7px] text-purple-500 font-semibold text-center leading-tight max-w-[58px] line-clamp-2">{cmp.friend_dna_label}</span>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Right — poster's other friend alignments */}
+          {/* Vertical divider */}
           {posterOverlaps.length > 0 && (
-            <div className="flex flex-col gap-2 pt-1 shrink-0" style={{ minWidth: 100 }}>
+            <div className="w-px bg-gray-200 self-stretch mx-3 shrink-0" />
+          )}
+
+          {/* Right — Also aligned */}
+          {posterOverlaps.length > 0 && (
+            <div className="flex flex-col gap-2 shrink-0" style={{ minWidth: 108 }}>
               <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Also aligned</span>
               {posterOverlaps.map((u) => (
                 <div key={u.displayName} className="flex items-center gap-2">
                   <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]"
-                    style={{ width: 24, height: 24, background: u.color }}>
+                    style={{ width: 26, height: 26, background: u.color }}>
                     {u.initials}
                   </div>
                   <div className="flex flex-col leading-tight">
                     <span className="text-gray-700 text-[12px] font-medium">{u.displayName.split(' ')[0]}</span>
-                    <span className="text-purple-400 text-[11px] font-bold">{u.pct}%</span>
+                    <span className="text-purple-500 text-[11px] font-bold">{u.pct}%</span>
                   </div>
                 </div>
               ))}
@@ -847,13 +851,13 @@ export function DnaComparePostCard({ item }: { item: any }) {
           )}
         </div>
 
-        {/* Button — full width below both columns */}
-        <div className="px-4 pb-4">
+        {/* Button */}
+        <div className="px-4 pb-4 pt-2">
           <button
             onClick={() => session ? setSheetOpen(true) : undefined}
-            className="block w-full py-2.5 px-4 rounded-full text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all text-center"
+            className="flex items-center gap-1 text-purple-600 font-semibold text-[14px] hover:text-purple-700 transition-colors"
           >
-            Compare with a friend
+            Compare with a friend →
           </button>
         </div>
 
