@@ -649,17 +649,11 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         {overlaps.length > 0 && !noFriends && (
           <div className="mx-4 mb-3 pt-3 border-t border-gray-100">
             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Also aligned</span>
-            <div className="flex flex-wrap gap-x-3 gap-y-2">
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
               {overlaps.map((u) => (
-                <div key={u.displayName} className="flex items-center gap-1.5">
-                  <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]"
-                    style={{ width: 26, height: 26, background: u.color }}>
-                    {u.initials}
-                  </div>
-                  <div className="flex flex-col leading-none">
-                    <span className="text-gray-700 text-[11px] font-medium">{u.displayName.split(' ')[0]}</span>
-                    <span className="text-purple-500 text-[10px] font-semibold">{u.pct}%</span>
-                  </div>
+                <div key={u.displayName} className="flex items-center gap-1">
+                  <span className="text-gray-700 text-[12px] font-semibold">{u.displayName.split(' ')[0]}</span>
+                  <span className="text-purple-500 text-[11px] font-bold">{u.pct}%</span>
                 </div>
               ))}
             </div>
@@ -671,14 +665,14 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           {noFriends && !featuredProp ? (
             <button
               onClick={() => setLocation("/friends")}
-              className="flex items-center gap-1 text-purple-600 font-semibold text-[14px] hover:text-purple-700 transition-colors"
+              className="w-full py-2.5 rounded-full bg-gray-100 text-gray-700 font-semibold text-[14px] hover:bg-gray-200 transition-colors text-center"
             >
               Add or invite friends →
             </button>
           ) : (
             <button
               onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
-              className="flex items-center gap-1 text-purple-600 font-semibold text-[14px] hover:text-purple-700 transition-colors"
+              className="w-full py-2.5 rounded-full bg-gray-100 text-gray-700 font-semibold text-[14px] hover:bg-gray-200 transition-colors text-center"
             >
               Compare with a friend →
             </button>
@@ -847,15 +841,11 @@ export function DnaComparePostCard({ item }: { item: any }) {
         {posterOverlaps.length > 0 && (
           <div className="mx-4 mb-3 pt-3 border-t border-gray-100">
             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Also aligned</span>
-            <div className="flex flex-wrap gap-x-3 gap-y-2">
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
               {posterOverlaps.map((u) => (
-                <div key={u.displayName} className="flex items-center gap-1.5">
-                  <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]"
-                    style={{ width: 24, height: 24, background: u.color }}>
-                    {u.initials}
-                  </div>
-                  <span className="text-gray-600 text-[11px] font-medium">{u.displayName.split(' ')[0]}</span>
-                  <span className="text-purple-500 text-[11px] font-semibold">{u.pct}%</span>
+                <div key={u.displayName} className="flex items-center gap-1">
+                  <span className="text-gray-700 text-[12px] font-semibold">{u.displayName.split(' ')[0]}</span>
+                  <span className="text-purple-500 text-[11px] font-bold">{u.pct}%</span>
                 </div>
               ))}
             </div>
@@ -866,7 +856,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
         <div className="px-4 pb-4">
           <button
             onClick={() => session ? setSheetOpen(true) : undefined}
-            className="flex items-center gap-1 text-purple-600 font-semibold text-[14px] hover:text-purple-700 transition-colors"
+            className="w-full py-2.5 rounded-full bg-gray-100 text-gray-700 font-semibold text-[14px] hover:bg-gray-200 transition-colors text-center"
           >
             Compare with a friend →
           </button>
