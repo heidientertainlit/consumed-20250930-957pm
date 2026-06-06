@@ -836,7 +836,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [posterOverlaps, setPosterOverlaps] = useState<OverlapUser[]>([]);
   const [postOthersExpanded, setPostOthersExpanded] = useState(false);
-  const [postSharedTitle, setPostSharedTitle] = useState<string | null>(null);
+  const [postSharedTitles, setPostSharedTitles] = useState<string[]>([]);
 
   let cmp: any = {};
   try { cmp = JSON.parse(item.content || '{}'); } catch {}
@@ -917,8 +917,11 @@ export function DnaComparePostCard({ item }: { item: any }) {
             const friendRatings: any[] = await friendRatingsRes.json();
             if (Array.isArray(posterRatings) && Array.isArray(friendRatings)) {
               const posterTitles = new Set(posterRatings.map((r: any) => (r.media_title || '').toLowerCase().trim()));
-              const shared = friendRatings.find((r: any) => posterTitles.has((r.media_title || '').toLowerCase().trim()));
-              if (shared?.media_title) setPostSharedTitle(shared.media_title);
+              const shared = friendRatings
+                .filter((r: any) => posterTitles.has((r.media_title || '').toLowerCase().trim()))
+                .map((r: any) => r.media_title as string)
+                .slice(0, 3);
+              if (shared.length > 0) setPostSharedTitles(shared);
             }
           } catch { /* silent */ }
         }
@@ -1017,12 +1020,23 @@ export function DnaComparePostCard({ item }: { item: any }) {
                 <span className="text-[11px] font-semibold text-gray-800 leading-snug">
                   {(cmp.shared_genres as string[]).slice(0, 3).join(' · ')}
                 </span>
-                {(postSharedTitle || cmp.shared_title) && (
-                  <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-purple-50 border border-purple-100">
-                    <span className="text-amber-400 text-[9px]">★</span>
-                    <span className="text-[9px] text-purple-700 font-semibold">Both loved: {postSharedTitle || cmp.shared_title}</span>
-                  </span>
-                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Both loved — shared 4★+ titles, same style as Agree most on */}
+        {postSharedTitles.length > 0 && (
+          <div className="mx-4 mb-2 pt-2 border-t border-gray-100 flex flex-col gap-2">
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-amber-400 text-[11px] leading-none">★</span>
+              </div>
+              <div>
+                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest block">Both loved</span>
+                <span className="text-[11px] font-semibold text-gray-800 leading-snug">
+                  {postSharedTitles.join(' · ')}
+                </span>
               </div>
             </div>
           </div>
