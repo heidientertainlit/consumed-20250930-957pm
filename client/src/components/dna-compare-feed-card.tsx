@@ -1000,14 +1000,14 @@ export function DnaComparePostCard({ item }: { item: any }) {
           </div>
           {/* Names row — aligned under each avatar */}
           <div className="flex w-full" style={{ width: 240, marginTop: 2 }}>
-            <div className="flex flex-col items-center gap-0.5" style={{ width: 78 }}>
+            <div className="flex flex-col items-center gap-0.5" style={{ width: 108 }}>
               <span className="text-[13px] font-bold text-gray-800 uppercase tracking-wide text-center">{posterName.split(' ')[0]}</span>
-              {cmp.your_dna_label && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{cmp.your_dna_label}</span>}
+              {cmp.your_dna_label && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight">{cmp.your_dna_label}</span>}
             </div>
             <div style={{ flex: 1 }} />
-            <div className="flex flex-col items-center gap-0.5" style={{ width: 78 }}>
+            <div className="flex flex-col items-center gap-0.5" style={{ width: 108 }}>
               <span className="text-[13px] font-bold text-gray-800 uppercase tracking-wide text-center">{friendName.split(' ')[0]}</span>
-              {cmp.friend_dna_label && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{cmp.friend_dna_label}</span>}
+              {cmp.friend_dna_label && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight">{cmp.friend_dna_label}</span>}
             </div>
           </div>
         </div>
