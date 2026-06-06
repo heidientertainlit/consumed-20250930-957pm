@@ -564,11 +564,14 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
     <>
       <div className="bg-gray-50 rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
 
-        {/* Header row */}
-        <div className="flex items-center justify-between px-4 pt-3 pb-2">
-          <div className="flex items-center gap-1.5">
-            <Dna size={11} className="text-purple-500 shrink-0" />
-            <span className="text-[11px] font-bold text-purple-500 uppercase tracking-widest">Compare DNA</span>
+        {/* Purple accent bar */}
+        <div className="h-1 bg-gradient-to-r from-violet-400 via-purple-500 to-violet-400" />
+
+        {/* Header — centered title, Share floated right */}
+        <div className="relative flex items-center justify-center px-4 pt-3 pb-2">
+          <div className="flex items-center gap-2">
+            <Dna size={13} className="text-purple-500 shrink-0" />
+            <span className="text-[12px] font-black text-purple-600 uppercase tracking-widest">Compare DNA</span>
           </div>
           <button
             onClick={() => {
@@ -580,7 +583,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                 window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`, '_blank');
               }
             }}
-            className="flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors group"
+            className="absolute right-4 flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors group"
           >
             <Share2 size={13} className="group-hover:scale-110 transition-transform" />
             <span className="text-[11px] font-medium">Share</span>
@@ -649,9 +652,9 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         {overlaps.length > 0 && !noFriends && (
           <div className="mx-4 mb-3 pt-3 border-t border-gray-100">
             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Also aligned</span>
-            <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <div className="flex flex-col gap-1">
               {overlaps.map((u) => (
-                <div key={u.displayName} className="flex items-center gap-1">
+                <div key={u.displayName} className="flex items-center gap-1.5">
                   <span className="text-gray-700 text-[12px] font-semibold">{u.displayName.split(' ')[0]}</span>
                   <span className="text-purple-500 text-[11px] font-bold">{u.pct}%</span>
                 </div>
@@ -759,11 +762,15 @@ export function DnaComparePostCard({ item }: { item: any }) {
   return (
     <>
       <div className="bg-gray-50 rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 pt-3 pb-2">
-          <div className="flex items-center gap-1.5">
-            <Dna size={11} className="text-purple-500 shrink-0" />
-            <span className="text-purple-500 text-[11px] font-bold uppercase tracking-widest">Compare DNA</span>
+
+        {/* Purple accent bar */}
+        <div className="h-1 bg-gradient-to-r from-violet-400 via-purple-500 to-violet-400" />
+
+        {/* Header — centered title, Share floated right */}
+        <div className="relative flex items-center justify-center px-4 pt-3 pb-2">
+          <div className="flex items-center gap-2">
+            <Dna size={13} className="text-purple-500 shrink-0" />
+            <span className="text-[12px] font-black text-purple-600 uppercase tracking-widest">Compare DNA</span>
           </div>
           <button
             onClick={() => {
@@ -775,7 +782,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
                 window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`, '_blank');
               }
             }}
-            className="flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors group"
+            className="absolute right-4 flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors group"
           >
             <Share2 size={13} className="group-hover:scale-110 transition-transform" />
             <span className="text-[11px] font-medium">Share</span>
@@ -841,9 +848,9 @@ export function DnaComparePostCard({ item }: { item: any }) {
         {posterOverlaps.length > 0 && (
           <div className="mx-4 mb-3 pt-3 border-t border-gray-100">
             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Also aligned</span>
-            <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <div className="flex flex-col gap-1">
               {posterOverlaps.map((u) => (
-                <div key={u.displayName} className="flex items-center gap-1">
+                <div key={u.displayName} className="flex items-center gap-1.5">
                   <span className="text-gray-700 text-[12px] font-semibold">{u.displayName.split(' ')[0]}</span>
                   <span className="text-purple-500 text-[11px] font-bold">{u.pct}%</span>
                 </div>
