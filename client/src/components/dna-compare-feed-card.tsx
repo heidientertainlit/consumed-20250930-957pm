@@ -562,17 +562,26 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
   return (
     <>
-      <div className="bg-gray-50 rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
 
-        {/* Purple accent bar */}
-        <div className="h-1 bg-gradient-to-r from-violet-400 via-purple-500 to-violet-400" />
-
-        {/* Header — centered title, Share floated right */}
-        <div className="relative flex items-center justify-center px-4 pt-3 pb-2">
-          <div className="flex items-center gap-2">
-            <Dna size={13} className="text-purple-500 shrink-0" />
-            <span className="text-[12px] font-black text-purple-600 uppercase tracking-widest">Compare DNA</span>
+        {/* Hero gradient banner */}
+        <div className="relative h-[88px] overflow-hidden" style={{ background: 'linear-gradient(135deg, #3b0764 0%, #6d28d9 55%, #a855f7 100%)' }}>
+          {/* Decorative blobs */}
+          <div className="absolute -top-6 -left-6 w-28 h-28 rounded-full bg-white/10" />
+          <div className="absolute -bottom-6 right-8 w-24 h-24 rounded-full bg-white/10" />
+          <div className="absolute top-2 right-24 w-10 h-10 rounded-full bg-white/8" />
+          {/* DNA strand lines */}
+          <svg className="absolute bottom-0 left-0 w-full opacity-20" height="36" viewBox="0 0 320 36" preserveAspectRatio="none">
+            <path d="M0 18 Q80 4 160 18 Q240 32 320 18" stroke="white" strokeWidth="1.5" fill="none"/>
+            <path d="M0 18 Q80 32 160 18 Q240 4 320 18" stroke="white" strokeWidth="1.5" fill="none"/>
+          </svg>
+          {/* Frosted pill badge */}
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+            style={{ background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.28)' }}>
+            <Dna size={10} className="text-white" />
+            <span className="text-white text-[10px] font-bold uppercase tracking-widest">Compare DNA</span>
           </div>
+          {/* Share */}
           <button
             onClick={() => {
               const text = `I'm ${featured.pct}% aligned with ${featured.displayName} on Consumed! Check your Entertainment DNA 🧬`;
@@ -583,45 +592,31 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                 window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`, '_blank');
               }
             }}
-            className="absolute right-4 flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors group"
+            className="absolute top-3 right-3 flex items-center gap-1 text-white/70 hover:text-white transition-colors"
           >
-            <Share2 size={13} className="group-hover:scale-110 transition-transform" />
+            <Share2 size={13} />
             <span className="text-[11px] font-medium">Share</span>
           </button>
         </div>
 
-        {/* Circles + arc row */}
-        <div className="px-4 pb-2">
+        {/* Triangle layout */}
+        <div className="px-5 pt-4 pb-2">
           {noFriends && !featuredProp ? (
-            <p className="text-gray-500 text-[13px] font-medium py-2">No friends to compare with yet.</p>
+            <p className="text-gray-500 text-[13px] font-medium py-2 text-center">No friends to compare with yet.</p>
           ) : (
-            <div className="flex items-start justify-center gap-2">
-              {/* You */}
-              <div className="flex flex-col items-center gap-1 flex-1">
-                <div className="rounded-full flex items-center justify-center font-black text-white text-[17px] shadow"
-                  style={{ width: 54, height: 54, background: '#8b5cf6' }}>
-                  {session?.user?.user_metadata?.display_name
-                    ? initials(session.user.user_metadata.display_name)
-                    : (user?.email?.[0] ?? 'Y').toUpperCase()}
-                </div>
-                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
-                  {(session?.user?.user_metadata?.display_name ?? 'You').split(' ')[0]}
-                </span>
-                {myLabel && <span className="text-[7px] text-purple-500 font-medium text-center leading-tight max-w-[64px] line-clamp-2">{myLabel}</span>}
-              </div>
-
-              {/* Center — arc ring with % */}
+            <>
+              {/* Arc ring — top center of triangle */}
               {(() => {
                 const pct = featured.pct;
-                const r = 32;
+                const r = 30;
                 const circ = 2 * Math.PI * r;
                 const dash = (pct / 100) * circ;
                 return (
-                  <div className="flex flex-col items-center shrink-0" style={{ width: 84 }}>
-                    <div className="relative flex items-center justify-center" style={{ width: 84, height: 84 }}>
-                      <svg className="absolute inset-0" width="84" height="84" viewBox="0 0 84 84" style={{ transform: 'rotate(-90deg)' }}>
-                        <circle cx="42" cy="42" r={r} fill="none" stroke="#ede9fe" strokeWidth="5" />
-                        <circle cx="42" cy="42" r={r} fill="none" stroke="#8b5cf6" strokeWidth="5"
+                  <div className="flex justify-center mb-3">
+                    <div className="relative flex items-center justify-center" style={{ width: 80, height: 80 }}>
+                      <svg className="absolute inset-0" width="80" height="80" viewBox="0 0 80 80" style={{ transform: 'rotate(-90deg)' }}>
+                        <circle cx="40" cy="40" r={r} fill="none" stroke="#ede9fe" strokeWidth="5" />
+                        <circle cx="40" cy="40" r={r} fill="none" stroke="#8b5cf6" strokeWidth="5"
                           strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
                       </svg>
                       <div className="flex flex-col items-center z-10">
@@ -633,25 +628,42 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                 );
               })()}
 
-              {/* Friend */}
-              <div className="flex flex-col items-center gap-1 flex-1">
-                <div className="rounded-full flex items-center justify-center font-black text-white text-[17px] shadow"
-                  style={{ width: 54, height: 54, background: featured.color }}>
-                  {featured.initials}
+              {/* Two circles — bottom of triangle, spread wide */}
+              <div className="flex justify-between items-start">
+                {/* You — left */}
+                <div className="flex flex-col items-center gap-1" style={{ width: 72 }}>
+                  <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] shadow-md"
+                    style={{ width: 52, height: 52, background: '#8b5cf6' }}>
+                    {session?.user?.user_metadata?.display_name
+                      ? initials(session.user.user_metadata.display_name)
+                      : (user?.email?.[0] ?? 'Y').toUpperCase()}
+                  </div>
+                  <span className="text-[9px] font-bold text-gray-600 uppercase tracking-wide text-center">
+                    {(session?.user?.user_metadata?.display_name ?? 'You').split(' ')[0]}
+                  </span>
+                  {myLabel && <span className="text-[7px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{myLabel}</span>}
                 </div>
-                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
-                  {featured.displayName.split(' ')[0]}
-                </span>
-                {featured.label && <span className="text-[7px] text-purple-500 font-medium text-center leading-tight max-w-[64px] line-clamp-2">{featured.label}</span>}
+
+                {/* Friend — right */}
+                <div className="flex flex-col items-center gap-1" style={{ width: 72 }}>
+                  <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] shadow-md"
+                    style={{ width: 52, height: 52, background: featured.color }}>
+                    {featured.initials}
+                  </div>
+                  <span className="text-[9px] font-bold text-gray-600 uppercase tracking-wide text-center">
+                    {featured.displayName.split(' ')[0]}
+                  </span>
+                  {featured.label && <span className="text-[7px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{featured.label}</span>}
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
 
-        {/* Also aligned — below the circles, full width */}
+        {/* Also aligned */}
         {overlaps.length > 0 && !noFriends && (
           <div className="mx-4 mb-3 pt-3 border-t border-gray-100">
-            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Also aligned</span>
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5">Also aligned</span>
             <div className="flex flex-col gap-1">
               {overlaps.map((u) => (
                 <div key={u.displayName} className="flex items-center gap-1.5">
@@ -761,16 +773,20 @@ export function DnaComparePostCard({ item }: { item: any }) {
 
   return (
     <>
-      <div className="bg-gray-50 rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
 
-        {/* Purple accent bar */}
-        <div className="h-1 bg-gradient-to-r from-violet-400 via-purple-500 to-violet-400" />
-
-        {/* Header — centered title, Share floated right */}
-        <div className="relative flex items-center justify-center px-4 pt-3 pb-2">
-          <div className="flex items-center gap-2">
-            <Dna size={13} className="text-purple-500 shrink-0" />
-            <span className="text-[12px] font-black text-purple-600 uppercase tracking-widest">Compare DNA</span>
+        {/* Hero gradient banner */}
+        <div className="relative h-[88px] overflow-hidden" style={{ background: 'linear-gradient(135deg, #3b0764 0%, #6d28d9 55%, #a855f7 100%)' }}>
+          <div className="absolute -top-6 -left-6 w-28 h-28 rounded-full bg-white/10" />
+          <div className="absolute -bottom-6 right-8 w-24 h-24 rounded-full bg-white/10" />
+          <svg className="absolute bottom-0 left-0 w-full opacity-20" height="36" viewBox="0 0 320 36" preserveAspectRatio="none">
+            <path d="M0 18 Q80 4 160 18 Q240 32 320 18" stroke="white" strokeWidth="1.5" fill="none"/>
+            <path d="M0 18 Q80 32 160 18 Q240 4 320 18" stroke="white" strokeWidth="1.5" fill="none"/>
+          </svg>
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+            style={{ background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.28)' }}>
+            <Dna size={10} className="text-white" />
+            <span className="text-white text-[10px] font-bold uppercase tracking-widest">Compare DNA</span>
           </div>
           <button
             onClick={() => {
@@ -782,72 +798,67 @@ export function DnaComparePostCard({ item }: { item: any }) {
                 window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`, '_blank');
               }
             }}
-            className="absolute right-4 flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors group"
+            className="absolute top-3 right-3 flex items-center gap-1 text-white/70 hover:text-white transition-colors"
           >
-            <Share2 size={13} className="group-hover:scale-110 transition-transform" />
+            <Share2 size={13} />
             <span className="text-[11px] font-medium">Share</span>
           </button>
         </div>
 
-        {/* Circles + arc row */}
-        <div className="px-4 pb-2">
-          <div className="flex items-start justify-center gap-2">
-            {/* Poster */}
-            <div className="flex flex-col items-center gap-1 flex-1">
-              <div className="rounded-full flex items-center justify-center font-black text-white text-[17px] shadow"
-                style={{ width: 54, height: 54, background: '#8b5cf6' }}>
-                {initials(posterName)}
-              </div>
-              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
-                {posterName.split(' ')[0]}
-              </span>
-              {cmp.your_dna_label && (
-                <span className="text-[7px] text-purple-500 font-medium text-center leading-tight max-w-[64px] line-clamp-2">{cmp.your_dna_label}</span>
-              )}
-            </div>
-
-            {/* Center — arc ring with % */}
-            {(() => {
-              const r = 32;
-              const circ = 2 * Math.PI * r;
-              const dash = (matchScore / 100) * circ;
-              return (
-                <div className="flex flex-col items-center shrink-0" style={{ width: 84 }}>
-                  <div className="relative flex items-center justify-center" style={{ width: 84, height: 84 }}>
-                    <svg className="absolute inset-0" width="84" height="84" viewBox="0 0 84 84" style={{ transform: 'rotate(-90deg)' }}>
-                      <circle cx="42" cy="42" r={r} fill="none" stroke="#ede9fe" strokeWidth="5" />
-                      <circle cx="42" cy="42" r={r} fill="none" stroke="#8b5cf6" strokeWidth="5"
-                        strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
-                    </svg>
-                    <div className="flex flex-col items-center z-10">
-                      <span className="font-black leading-none" style={{ fontSize: 22, color: '#8b5cf6' }}>{matchScore}%</span>
-                      <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
-                    </div>
+        {/* Triangle layout */}
+        <div className="px-5 pt-4 pb-2">
+          {/* Arc ring — top center */}
+          {(() => {
+            const r = 30;
+            const circ = 2 * Math.PI * r;
+            const dash = (matchScore / 100) * circ;
+            return (
+              <div className="flex justify-center mb-3">
+                <div className="relative flex items-center justify-center" style={{ width: 80, height: 80 }}>
+                  <svg className="absolute inset-0" width="80" height="80" viewBox="0 0 80 80" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="40" cy="40" r={r} fill="none" stroke="#ede9fe" strokeWidth="5" />
+                    <circle cx="40" cy="40" r={r} fill="none" stroke="#8b5cf6" strokeWidth="5"
+                      strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
+                  </svg>
+                  <div className="flex flex-col items-center z-10">
+                    <span className="font-black leading-none" style={{ fontSize: 22, color: '#8b5cf6' }}>{matchScore}%</span>
+                    <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
                   </div>
                 </div>
-              );
-            })()}
+              </div>
+            );
+          })()}
 
-            {/* Friend */}
-            <div className="flex flex-col items-center gap-1 flex-1">
-              <div className="rounded-full flex items-center justify-center font-black text-white text-[17px] shadow"
-                style={{ width: 54, height: 54, background: '#a855f7' }}>
+          {/* Two circles — bottom of triangle */}
+          <div className="flex justify-between items-start">
+            <div className="flex flex-col items-center gap-1" style={{ width: 72 }}>
+              <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] shadow-md"
+                style={{ width: 52, height: 52, background: '#8b5cf6' }}>
+                {initials(posterName)}
+              </div>
+              <span className="text-[9px] font-bold text-gray-600 uppercase tracking-wide text-center">
+                {posterName.split(' ')[0]}
+              </span>
+              {cmp.your_dna_label && <span className="text-[7px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{cmp.your_dna_label}</span>}
+            </div>
+
+            <div className="flex flex-col items-center gap-1" style={{ width: 72 }}>
+              <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] shadow-md"
+                style={{ width: 52, height: 52, background: '#a855f7' }}>
                 {initials(friendName)}
               </div>
-              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
+              <span className="text-[9px] font-bold text-gray-600 uppercase tracking-wide text-center">
                 {friendName.split(' ')[0]}
               </span>
-              {cmp.friend_dna_label && (
-                <span className="text-[7px] text-purple-500 font-medium text-center leading-tight max-w-[64px] line-clamp-2">{cmp.friend_dna_label}</span>
-              )}
+              {cmp.friend_dna_label && <span className="text-[7px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{cmp.friend_dna_label}</span>}
             </div>
           </div>
         </div>
 
-        {/* Also aligned — below circles, full width */}
+        {/* Also aligned */}
         {posterOverlaps.length > 0 && (
           <div className="mx-4 mb-3 pt-3 border-t border-gray-100">
-            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Also aligned</span>
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5">Also aligned</span>
             <div className="flex flex-col gap-1">
               {posterOverlaps.map((u) => (
                 <div key={u.displayName} className="flex items-center gap-1.5">
