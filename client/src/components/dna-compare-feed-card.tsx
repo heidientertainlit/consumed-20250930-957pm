@@ -587,83 +587,68 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           </button>
         </div>
 
-        {/* Main content */}
-        <div className="px-4 pb-3 flex items-stretch">
-
-          {/* Left — circles + % + names (fixed width) */}
-          <div style={{ width: 160 }} className="shrink-0">
-            {noFriends && !featuredProp ? (
-              <div className="py-2">
-                <p className="text-gray-500 text-[13px] font-medium leading-snug">No friends to compare with yet.</p>
+        {/* Circles row */}
+        <div className="px-4 pb-2">
+          {noFriends && !featuredProp ? (
+            <p className="text-gray-500 text-[13px] font-medium py-2">No friends to compare with yet.</p>
+          ) : (
+            <div className="flex items-center justify-center gap-3">
+              {/* You */}
+              <div className="flex flex-col items-center gap-1 flex-1">
+                <div className="rounded-full flex items-center justify-center font-black text-white text-[17px] shadow"
+                  style={{ width: 54, height: 54, background: '#8b5cf6' }}>
+                  {session?.user?.user_metadata?.display_name
+                    ? initials(session.user.user_metadata.display_name)
+                    : (user?.email?.[0] ?? 'Y').toUpperCase()}
+                </div>
+                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">
+                  {(session?.user?.user_metadata?.display_name ?? 'You').split(' ')[0]}
+                </span>
+                {myLabel && <span className="text-[7px] text-purple-500 font-medium text-center leading-tight max-w-[64px] line-clamp-2">{myLabel}</span>}
               </div>
-            ) : (
-              <div className="flex items-start justify-between">
-                {/* You */}
-                <div className="flex flex-col items-center gap-0.5" style={{ width: 52 }}>
-                  <div className="rounded-full flex items-center justify-center font-black text-white text-[15px] shadow-sm"
-                    style={{ width: 48, height: 48, background: '#8b5cf6' }}>
-                    {session?.user?.user_metadata?.display_name
-                      ? initials(session.user.user_metadata.display_name)
-                      : (user?.email?.[0] ?? 'Y').toUpperCase()}
-                  </div>
-                  <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wide text-center w-full truncate mt-0.5">
-                    {session?.user?.user_metadata?.display_name?.split(' ')[0] ?? 'You'}
-                  </span>
-                  {myLabel && (
-                    <span className="text-[7px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{myLabel}</span>
-                  )}
-                </div>
 
-                {/* Center % */}
-                <div className="flex flex-col items-center justify-center pt-1" style={{ width: 52 }}>
-                  <span className="font-black leading-none" style={{ fontSize: 26, color: '#8b5cf6' }}>{featured.pct}%</span>
-                  <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
-                </div>
-
-                {/* Friend */}
-                <div className="flex flex-col items-center gap-0.5" style={{ width: 52 }}>
-                  <div className="rounded-full flex items-center justify-center font-black text-white text-[15px] shadow-sm"
-                    style={{ width: 48, height: 48, background: featured.color }}>
-                    {featured.initials}
-                  </div>
-                  <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wide text-center w-full truncate mt-0.5">
-                    {featured.displayName.split(' ')[0]}
-                  </span>
-                  {featured.label && (
-                    <span className="text-[7px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{featured.label}</span>
-                  )}
-                </div>
+              {/* Center % */}
+              <div className="flex flex-col items-center shrink-0">
+                <span className="font-black leading-none" style={{ fontSize: 40, color: '#8b5cf6' }}>{featured.pct}%</span>
+                <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
               </div>
-            )}
-          </div>
 
-          {/* Vertical divider */}
-          {overlaps.length > 0 && !noFriends && (
-            <div className="w-px bg-gray-200 mx-4 shrink-0 self-stretch" />
-          )}
-
-          {/* Right — Also aligned */}
-          {overlaps.length > 0 && !noFriends && (
-            <div className="flex flex-col gap-2 flex-1 min-w-0">
-              <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Also aligned</span>
-              {overlaps.map((u) => (
-                <div key={u.displayName} className="flex items-center gap-2">
-                  <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]"
-                    style={{ width: 26, height: 26, background: u.color }}>
-                    {u.initials}
-                  </div>
-                  <div className="flex flex-col leading-tight">
-                    <span className="text-gray-700 text-[12px] font-medium">{u.displayName.split(' ')[0]}</span>
-                    <span className="text-purple-500 text-[11px] font-bold">{u.pct}%</span>
-                  </div>
+              {/* Friend */}
+              <div className="flex flex-col items-center gap-1 flex-1">
+                <div className="rounded-full flex items-center justify-center font-black text-white text-[17px] shadow"
+                  style={{ width: 54, height: 54, background: featured.color }}>
+                  {featured.initials}
                 </div>
-              ))}
+                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">
+                  {featured.displayName.split(' ')[0]}
+                </span>
+                {featured.label && <span className="text-[7px] text-purple-500 font-medium text-center leading-tight max-w-[64px] line-clamp-2">{featured.label}</span>}
+              </div>
             </div>
           )}
         </div>
 
+        {/* Also aligned — below the circles, full width */}
+        {overlaps.length > 0 && !noFriends && (
+          <div className="mx-4 mb-3 pt-3 border-t border-gray-100">
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Also aligned</span>
+            <div className="flex flex-wrap gap-x-3 gap-y-2">
+              {overlaps.map((u) => (
+                <div key={u.displayName} className="flex items-center gap-1.5">
+                  <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]"
+                    style={{ width: 24, height: 24, background: u.color }}>
+                    {u.initials}
+                  </div>
+                  <span className="text-gray-600 text-[11px] font-medium">{u.displayName.split(' ')[0]}</span>
+                  <span className="text-purple-500 text-[11px] font-semibold">{u.pct}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Button */}
-        <div className="px-4 pb-4 pt-2">
+        <div className="px-4 pb-4">
           {noFriends && !featuredProp ? (
             <button
               onClick={() => setLocation("/friends")}
@@ -784,74 +769,66 @@ export function DnaComparePostCard({ item }: { item: any }) {
           </button>
         </div>
 
-        {/* Main content */}
-        <div className="px-4 pb-3 flex items-stretch">
-          {/* Left — circles + % + names (fixed 160px) */}
-          <div style={{ width: 160 }} className="shrink-0">
-            <div className="flex items-start justify-between">
-              {/* Poster circle */}
-              <div className="flex flex-col items-center gap-0.5" style={{ width: 52 }}>
-                <div className="rounded-full flex items-center justify-center font-black text-white text-[15px] shadow-sm"
-                  style={{ width: 48, height: 48, background: '#8b5cf6' }}>
-                  {initials(posterName)}
-                </div>
-                <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wide text-center w-full truncate mt-0.5">
-                  {posterName.split(' ')[0]}
-                </span>
-                {cmp.your_dna_label && (
-                  <span className="text-[7px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{cmp.your_dna_label}</span>
-                )}
+        {/* Circles row */}
+        <div className="px-4 pb-2">
+          <div className="flex items-center justify-center gap-3">
+            {/* Poster */}
+            <div className="flex flex-col items-center gap-1 flex-1">
+              <div className="rounded-full flex items-center justify-center font-black text-white text-[17px] shadow"
+                style={{ width: 54, height: 54, background: '#8b5cf6' }}>
+                {initials(posterName)}
               </div>
+              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">
+                {posterName.split(' ')[0]}
+              </span>
+              {cmp.your_dna_label && (
+                <span className="text-[7px] text-purple-500 font-medium text-center leading-tight max-w-[64px] line-clamp-2">{cmp.your_dna_label}</span>
+              )}
+            </div>
 
-              {/* Center % */}
-              <div className="flex flex-col items-center justify-center pt-1" style={{ width: 52 }}>
-                <span className="font-black leading-none" style={{ fontSize: 26, color: '#8b5cf6' }}>{matchScore}%</span>
-                <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
-              </div>
+            {/* Center % */}
+            <div className="flex flex-col items-center shrink-0">
+              <span className="font-black leading-none" style={{ fontSize: 40, color: '#8b5cf6' }}>{matchScore}%</span>
+              <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
+            </div>
 
-              {/* Friend circle */}
-              <div className="flex flex-col items-center gap-0.5" style={{ width: 52 }}>
-                <div className="rounded-full flex items-center justify-center font-black text-white text-[15px] shadow-sm"
-                  style={{ width: 48, height: 48, background: '#a855f7' }}>
-                  {initials(friendName)}
-                </div>
-                <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wide text-center w-full truncate mt-0.5">
-                  {friendName.split(' ')[0]}
-                </span>
-                {cmp.friend_dna_label && (
-                  <span className="text-[7px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{cmp.friend_dna_label}</span>
-                )}
+            {/* Friend */}
+            <div className="flex flex-col items-center gap-1 flex-1">
+              <div className="rounded-full flex items-center justify-center font-black text-white text-[17px] shadow"
+                style={{ width: 54, height: 54, background: '#a855f7' }}>
+                {initials(friendName)}
               </div>
+              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">
+                {friendName.split(' ')[0]}
+              </span>
+              {cmp.friend_dna_label && (
+                <span className="text-[7px] text-purple-500 font-medium text-center leading-tight max-w-[64px] line-clamp-2">{cmp.friend_dna_label}</span>
+              )}
             </div>
           </div>
+        </div>
 
-          {/* Vertical divider */}
-          {posterOverlaps.length > 0 && (
-            <div className="w-px bg-gray-200 mx-4 shrink-0 self-stretch" />
-          )}
-
-          {/* Right — Also aligned */}
-          {posterOverlaps.length > 0 && (
-            <div className="flex flex-col gap-2 flex-1 min-w-0">
-              <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Also aligned</span>
+        {/* Also aligned — below circles, full width */}
+        {posterOverlaps.length > 0 && (
+          <div className="mx-4 mb-3 pt-3 border-t border-gray-100">
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Also aligned</span>
+            <div className="flex flex-wrap gap-x-3 gap-y-2">
               {posterOverlaps.map((u) => (
-                <div key={u.displayName} className="flex items-center gap-2">
+                <div key={u.displayName} className="flex items-center gap-1.5">
                   <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]"
-                    style={{ width: 26, height: 26, background: u.color }}>
+                    style={{ width: 24, height: 24, background: u.color }}>
                     {u.initials}
                   </div>
-                  <div className="flex flex-col leading-tight min-w-0">
-                    <span className="text-gray-700 text-[12px] font-medium truncate">{u.displayName.split(' ')[0]}</span>
-                    <span className="text-purple-500 text-[11px] font-bold">{u.pct}%</span>
-                  </div>
+                  <span className="text-gray-600 text-[11px] font-medium">{u.displayName.split(' ')[0]}</span>
+                  <span className="text-purple-500 text-[11px] font-semibold">{u.pct}%</span>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Button */}
-        <div className="px-4 pb-4 pt-2">
+        <div className="px-4 pb-4">
           <button
             onClick={() => session ? setSheetOpen(true) : undefined}
             className="flex items-center gap-1 text-purple-600 font-semibold text-[14px] hover:text-purple-700 transition-colors"
