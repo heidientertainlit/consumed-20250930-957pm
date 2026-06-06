@@ -958,52 +958,56 @@ export function DnaComparePostCard({ item }: { item: any }) {
           </button>
         </div>
 
-        {/* Triangle layout — compact, centered */}
-        <div className="pt-3 pb-2 flex flex-col items-center">
-          <div className="flex flex-col items-center" style={{ width: 220 }}>
-            {/* Arc ring — sits in front (z-index 2) */}
+        {/* Horizontal layout — avatars flank the ring on each side */}
+        <div className="pt-4 pb-1 flex flex-col items-center">
+          {/* Trio row: avatar | ring | avatar, avatars partially behind ring */}
+          <div style={{ position: 'relative', width: 240, height: 110 }}>
+            {/* Left avatar — behind ring */}
+            <div style={{ position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}>
+              <div className="rounded-full flex items-center justify-center font-black text-white border-2 border-white"
+                style={{ width: 70, height: 70, background: '#8b5cf6', fontSize: 18, boxShadow: '0 2px 8px rgba(139,92,246,0.35)' }}>
+                {initials(posterName)}
+              </div>
+            </div>
+            {/* Ring — centered, white bg covers avatar edges */}
             {(() => {
               const r = 46;
               const circ = 2 * Math.PI * r;
               const dash = (matchScore / 100) * circ;
               return (
-                <div className="relative flex items-center justify-center" style={{ width: 100, height: 100, zIndex: 2 }}>
-                  <svg className="absolute inset-0" width="100" height="100" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
-                    <circle cx="50" cy="50" r={r} fill="none" stroke="#ede9fe" strokeWidth="4" />
-                    <circle cx="50" cy="50" r={r} fill="none" stroke="#8b5cf6" strokeWidth="4"
-                      strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
-                  </svg>
-                  <div className="flex flex-col items-center z-10">
-                    <span className="font-black leading-none" style={{ fontSize: 24, color: '#8b5cf6' }}>{matchScore}%</span>
-                    <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
+                <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 2, background: 'white', borderRadius: '50%' }}>
+                  <div className="relative flex items-center justify-center" style={{ width: 106, height: 106 }}>
+                    <svg className="absolute inset-0" width="106" height="106" viewBox="0 0 106 106" style={{ transform: 'rotate(-90deg)' }}>
+                      <circle cx="53" cy="53" r={r} fill="none" stroke="#ede9fe" strokeWidth="4" />
+                      <circle cx="53" cy="53" r={r} fill="none" stroke="#8b5cf6" strokeWidth="4"
+                        strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
+                    </svg>
+                    <div className="flex flex-col items-center" style={{ zIndex: 3, position: 'relative' }}>
+                      <span className="font-black leading-none" style={{ fontSize: 26, color: '#8b5cf6' }}>{matchScore}%</span>
+                      <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
+                    </div>
                   </div>
                 </div>
               );
             })()}
-
-            {/* Two avatar circles — pulled up behind the ring */}
-            <div className="flex justify-between w-full items-start" style={{ marginTop: -22, zIndex: 1, position: 'relative' }}>
-              <div className="flex flex-col items-center gap-1" style={{ width: 100 }}>
-                <div className="rounded-full flex items-center justify-center font-black text-white shadow-md border-2 border-white"
-                  style={{ width: 58, height: 58, background: '#8b5cf6', fontSize: 16 }}>
-                  {initials(posterName)}
-                </div>
-                <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wide text-center">
-                  {posterName.split(' ')[0]}
-                </span>
-                {cmp.your_dna_label && <span className="text-[8px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{cmp.your_dna_label}</span>}
+            {/* Right avatar — behind ring */}
+            <div style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}>
+              <div className="rounded-full flex items-center justify-center font-black text-white border-2 border-white"
+                style={{ width: 70, height: 70, background: '#a855f7', fontSize: 18, boxShadow: '0 2px 8px rgba(168,85,247,0.35)' }}>
+                {initials(friendName)}
               </div>
-
-              <div className="flex flex-col items-center gap-1" style={{ width: 100 }}>
-                <div className="rounded-full flex items-center justify-center font-black text-white shadow-md border-2 border-white"
-                  style={{ width: 58, height: 58, background: '#a855f7', fontSize: 16 }}>
-                  {initials(friendName)}
-                </div>
-                <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wide text-center">
-                  {friendName.split(' ')[0]}
-                </span>
-                {cmp.friend_dna_label && <span className="text-[8px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{cmp.friend_dna_label}</span>}
-              </div>
+            </div>
+          </div>
+          {/* Names row — aligned under each avatar */}
+          <div className="flex w-full" style={{ width: 240, marginTop: 6 }}>
+            <div className="flex flex-col items-center gap-0.5" style={{ width: 78 }}>
+              <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wide text-center">{posterName.split(' ')[0]}</span>
+              {cmp.your_dna_label && <span className="text-[8px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{cmp.your_dna_label}</span>}
+            </div>
+            <div style={{ flex: 1 }} />
+            <div className="flex flex-col items-center gap-0.5" style={{ width: 78 }}>
+              <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wide text-center">{friendName.split(' ')[0]}</span>
+              {cmp.friend_dna_label && <span className="text-[8px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{cmp.friend_dna_label}</span>}
             </div>
           </div>
         </div>
