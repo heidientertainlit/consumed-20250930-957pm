@@ -587,12 +587,12 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           </button>
         </div>
 
-        {/* Circles row */}
+        {/* Circles + arc row */}
         <div className="px-4 pb-2">
           {noFriends && !featuredProp ? (
             <p className="text-gray-500 text-[13px] font-medium py-2">No friends to compare with yet.</p>
           ) : (
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-start justify-center gap-2">
               {/* You */}
               <div className="flex flex-col items-center gap-1 flex-1">
                 <div className="rounded-full flex items-center justify-center font-black text-white text-[17px] shadow"
@@ -601,17 +601,34 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                     ? initials(session.user.user_metadata.display_name)
                     : (user?.email?.[0] ?? 'Y').toUpperCase()}
                 </div>
-                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">
+                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
                   {(session?.user?.user_metadata?.display_name ?? 'You').split(' ')[0]}
                 </span>
                 {myLabel && <span className="text-[7px] text-purple-500 font-medium text-center leading-tight max-w-[64px] line-clamp-2">{myLabel}</span>}
               </div>
 
-              {/* Center % */}
-              <div className="flex flex-col items-center shrink-0">
-                <span className="font-black leading-none" style={{ fontSize: 40, color: '#8b5cf6' }}>{featured.pct}%</span>
-                <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
-              </div>
+              {/* Center — arc ring with % */}
+              {(() => {
+                const pct = featured.pct;
+                const r = 32;
+                const circ = 2 * Math.PI * r;
+                const dash = (pct / 100) * circ;
+                return (
+                  <div className="flex flex-col items-center shrink-0" style={{ width: 84 }}>
+                    <div className="relative flex items-center justify-center" style={{ width: 84, height: 84 }}>
+                      <svg className="absolute inset-0" width="84" height="84" viewBox="0 0 84 84" style={{ transform: 'rotate(-90deg)' }}>
+                        <circle cx="42" cy="42" r={r} fill="none" stroke="#ede9fe" strokeWidth="5" />
+                        <circle cx="42" cy="42" r={r} fill="none" stroke="#8b5cf6" strokeWidth="5"
+                          strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
+                      </svg>
+                      <div className="flex flex-col items-center z-10">
+                        <span className="font-black leading-none" style={{ fontSize: 22, color: '#8b5cf6' }}>{pct}%</span>
+                        <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Friend */}
               <div className="flex flex-col items-center gap-1 flex-1">
@@ -619,7 +636,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                   style={{ width: 54, height: 54, background: featured.color }}>
                   {featured.initials}
                 </div>
-                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">
+                <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
                   {featured.displayName.split(' ')[0]}
                 </span>
                 {featured.label && <span className="text-[7px] text-purple-500 font-medium text-center leading-tight max-w-[64px] line-clamp-2">{featured.label}</span>}
@@ -636,11 +653,13 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
               {overlaps.map((u) => (
                 <div key={u.displayName} className="flex items-center gap-1.5">
                   <div className="rounded-full shrink-0 flex items-center justify-center font-bold text-white text-[9px]"
-                    style={{ width: 24, height: 24, background: u.color }}>
+                    style={{ width: 26, height: 26, background: u.color }}>
                     {u.initials}
                   </div>
-                  <span className="text-gray-600 text-[11px] font-medium">{u.displayName.split(' ')[0]}</span>
-                  <span className="text-purple-500 text-[11px] font-semibold">{u.pct}%</span>
+                  <div className="flex flex-col leading-none">
+                    <span className="text-gray-700 text-[11px] font-medium">{u.displayName.split(' ')[0]}</span>
+                    <span className="text-purple-500 text-[10px] font-semibold">{u.pct}%</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -769,16 +788,16 @@ export function DnaComparePostCard({ item }: { item: any }) {
           </button>
         </div>
 
-        {/* Circles row */}
+        {/* Circles + arc row */}
         <div className="px-4 pb-2">
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-start justify-center gap-2">
             {/* Poster */}
             <div className="flex flex-col items-center gap-1 flex-1">
               <div className="rounded-full flex items-center justify-center font-black text-white text-[17px] shadow"
                 style={{ width: 54, height: 54, background: '#8b5cf6' }}>
                 {initials(posterName)}
               </div>
-              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">
+              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
                 {posterName.split(' ')[0]}
               </span>
               {cmp.your_dna_label && (
@@ -786,11 +805,27 @@ export function DnaComparePostCard({ item }: { item: any }) {
               )}
             </div>
 
-            {/* Center % */}
-            <div className="flex flex-col items-center shrink-0">
-              <span className="font-black leading-none" style={{ fontSize: 40, color: '#8b5cf6' }}>{matchScore}%</span>
-              <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
-            </div>
+            {/* Center — arc ring with % */}
+            {(() => {
+              const r = 32;
+              const circ = 2 * Math.PI * r;
+              const dash = (matchScore / 100) * circ;
+              return (
+                <div className="flex flex-col items-center shrink-0" style={{ width: 84 }}>
+                  <div className="relative flex items-center justify-center" style={{ width: 84, height: 84 }}>
+                    <svg className="absolute inset-0" width="84" height="84" viewBox="0 0 84 84" style={{ transform: 'rotate(-90deg)' }}>
+                      <circle cx="42" cy="42" r={r} fill="none" stroke="#ede9fe" strokeWidth="5" />
+                      <circle cx="42" cy="42" r={r} fill="none" stroke="#8b5cf6" strokeWidth="5"
+                        strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
+                    </svg>
+                    <div className="flex flex-col items-center z-10">
+                      <span className="font-black leading-none" style={{ fontSize: 22, color: '#8b5cf6' }}>{matchScore}%</span>
+                      <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Friend */}
             <div className="flex flex-col items-center gap-1 flex-1">
@@ -798,7 +833,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
                 style={{ width: 54, height: 54, background: '#a855f7' }}>
                 {initials(friendName)}
               </div>
-              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide">
+              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wide text-center">
                 {friendName.split(' ')[0]}
               </span>
               {cmp.friend_dna_label && (
