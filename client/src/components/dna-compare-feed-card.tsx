@@ -835,6 +835,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
   const { session, user } = useAuth();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [posterOverlaps, setPosterOverlaps] = useState<OverlapUser[]>([]);
+  const [postOthersExpanded, setPostOthersExpanded] = useState(false);
 
   let cmp: any = {};
   try { cmp = JSON.parse(item.content || '{}'); } catch {}
@@ -881,14 +882,27 @@ export function DnaComparePostCard({ item }: { item: any }) {
             const pct = calcOverlapPct(posterGenres, genres);
             const info = Array.isArray(friendUsers) ? friendUsers.find((u: any) => u.id === fd.user_id) : null;
             const displayName = info?.display_name || info?.user_name || 'Friend';
-            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length] };
+            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], userId: fd.user_id };
           })
-          .filter((u: any) => u.displayName !== friendName) // exclude the featured friend
-          .sort((a: any, b: any) => b.pct - a.pct)
-          .slice(0, 3)
-          .map((r: any) => ({ displayName: r.displayName, initials: initials(r.displayName), color: r.color, pct: r.pct }));
+          .filter((u: any) => u.displayName !== friendName)
+          .sort((a: any, b: any) => b.pct - a.pct);
 
-        setPosterOverlaps(scored);
+        const scoredIds = new Set(scored.map((s: any) => s.userId));
+        const dnaOverlaps = scored.slice(0, 5).map((r: any) => ({
+          displayName: r.displayName, initials: initials(r.displayName), color: r.color, pct: r.pct,
+        }));
+        const nonDnaOverlaps = Array.isArray(friendUsers)
+          ? friendUsers
+              .filter((u: any) => !scoredIds.has(u.id) && (u.display_name || u.user_name) !== friendName)
+              .slice(0, Math.max(0, 5 - dnaOverlaps.length))
+              .map((u: any, i: number) => ({
+                displayName: u.display_name || u.user_name || 'Friend',
+                initials: initials(u.display_name || u.user_name || 'Friend'),
+                color: AVATAR_COLORS[(scored.length + i) % AVATAR_COLORS.length],
+              }))
+          : [];
+
+        setPosterOverlaps([...dnaOverlaps, ...nonDnaOverlaps]);
       } catch { /* silent */ }
     }
     fetchPosterAlignments();
@@ -984,8 +998,61 @@ export function DnaComparePostCard({ item }: { item: any }) {
                 <span className="text-[11px] font-semibold text-gray-800 leading-snug">
                   {(cmp.shared_genres as string[]).slice(0, 3).join(' · ')}
                 </span>
+                {cmp.shared_title && (
+                  <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-purple-50 border border-purple-100">
+                    <span className="text-amber-400 text-[9px]">★</span>
+                    <span className="text-[9px] text-purple-700 font-semibold">Both loved: {cmp.shared_title}</span>
+                  </span>
+                )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Others aligned — collapsible avatar strip */}
+        {posterOverlaps.length > 0 && (
+          <div className="mx-4 mb-2 pt-2 border-t border-gray-100">
+            <button
+              className="flex items-center gap-2 w-full"
+              onClick={() => setPostOthersExpanded(e => !e)}
+            >
+              <div className="flex items-center">
+                {posterOverlaps.slice(0, 4).map((u, i) => (
+                  <div
+                    key={u.displayName}
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-white font-black border-2 border-white shadow-sm"
+                    style={{ fontSize: 8, background: u.color, marginLeft: i === 0 ? 0 : -6, zIndex: 10 - i }}
+                  >
+                    {u.initials}
+                  </div>
+                ))}
+                {posterOverlaps.length > 4 && (
+                  <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold border-2 border-white" style={{ fontSize: 8, marginLeft: -6 }}>
+                    +{posterOverlaps.length - 4}
+                  </div>
+                )}
+              </div>
+              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest flex-1 text-left">Others aligned</span>
+              <ChevronDown size={12} className={`text-gray-400 transition-transform duration-200 ${postOthersExpanded ? 'rotate-180' : ''}`} />
+            </button>
+            {postOthersExpanded && (
+              <div className="mt-2 flex flex-col gap-1.5 pl-1">
+                {posterOverlaps.map((u) => (
+                  <div key={u.displayName} className="flex items-center gap-2">
+                    <div
+                      className="w-5 h-5 rounded-full flex items-center justify-center text-white font-black flex-shrink-0"
+                      style={{ fontSize: 8, background: u.color }}
+                    >
+                      {u.initials}
+                    </div>
+                    <span className="text-[11px] font-semibold text-gray-700 flex-1">{u.displayName.split(' ')[0]}</span>
+                    {u.pct != null && u.pct > 0 && (
+                      <span className="text-purple-500 text-[10px] font-bold">{u.pct}%</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
