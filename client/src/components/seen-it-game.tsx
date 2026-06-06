@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Eye, ChevronRight, Check, X, Plus, Star, Loader2, Sparkles, BookOpen, Headphones, Gamepad2, Heart } from "lucide-react";
+import { Eye, Check, X, Plus, Star, Loader2, Sparkles, BookOpen, Headphones, Gamepad2, Heart } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
@@ -577,17 +577,6 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
 
       {/* Action buttons: Next | Seen It | Add to list | Rate it */}
       <div className="flex items-center justify-around px-4 py-3">
-
-        {/* Next — skip without recording */}
-        <button
-          onClick={() => handleResponse(currentSet.id, activeItem, 'skip')}
-          className="flex flex-col items-center gap-1 group"
-        >
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
-            <ChevronRight size={22} className="text-gray-500" />
-          </div>
-          <span className="text-[10px] text-gray-400">Next</span>
-        </button>
 
         {/* Seen It — green only after user has responded true */}
         <button

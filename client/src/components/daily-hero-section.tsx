@@ -2214,10 +2214,6 @@ export function DailyHeroSection() {
               </div>
 
               <div className={`flex items-center justify-between ${front ? 'mt-3' : 'mt-0'}`}>
-                <span className="flex items-center gap-1 bg-purple-400/20 rounded-full px-1.5 py-0.5 border border-purple-400/30">
-                  <Sparkles size={8} className="text-purple-200" />
-                  <span className="text-[8px] font-bold text-purple-100">+{isOpinionDay ? (dailyCall?.points_reward ?? 10) : readyQuestions.length * 10} pts</span>
-                </span>
                 {front ? (
                   <span className="text-white text-sm font-semibold px-5 py-2 rounded-full inline-flex items-center gap-1.5" style={{ background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.3)' }}>
                     {isTriviaDay ? (playCompleted ? 'Share' : 'Play') : (callCompleted ? 'Share' : 'Weigh In')}
@@ -2229,6 +2225,10 @@ export function DailyHeroSection() {
                     <ArrowRight size={11} strokeWidth={2} />
                   </span>
                 )}
+                <span className="flex items-center gap-1 bg-purple-400/20 rounded-full px-1.5 py-0.5 border border-purple-400/30">
+                  <Sparkles size={8} className="text-purple-200" />
+                  <span className="text-[8px] font-bold text-purple-100">+{isOpinionDay ? (dailyCall?.points_reward ?? 10) : readyQuestions.length * 10} pts</span>
+                </span>
               </div>
             </button>
           );
