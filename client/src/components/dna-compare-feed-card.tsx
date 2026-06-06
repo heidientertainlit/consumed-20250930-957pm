@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { Dna, ArrowRight, Users, X, ChevronLeft, Loader2, Share2, CheckCircle2, Heart, Zap } from "lucide-react";
+import { Dna, ArrowRight, Users, X, ChevronLeft, ChevronDown, Loader2, Share2, CheckCircle2, Heart, Zap } from "lucide-react";
 
 /* ── types ─────────────────────────────────────────── */
 interface OverlapUser {
@@ -486,6 +486,8 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
   const [myLabel, setMyLabel] = useState<string | null>(null);
   const [sharedTitles, setSharedTitles] = useState<string[]>([]);
   const [differTitles, setDifferTitles] = useState<{ myTitle: string; friendTitle: string } | null>(null);
+  const [sharedGenresFromDna, setSharedGenresFromDna] = useState<string[]>([]);
+  const [othersExpanded, setOthersExpanded] = useState(false);
 
   useEffect(() => {
     if (!session?.access_token || !user?.id) { setLoadingPersonal(false); return; }
@@ -519,13 +521,15 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         if (!Array.isArray(friendDnas) || friendDnas.length === 0) return;
 
         // 3. Score each friend by genre overlap, sort descending
+        const myGenreSet = new Set(myGenres.map((g: string) => g.toLowerCase()));
         const scored = friendDnas
           .map((fd: any, i: number) => {
             const genres: string[] = Array.isArray(fd.favorite_genres) ? fd.favorite_genres : [];
             const pct = calcOverlapPct(myGenres, genres);
             const info = Array.isArray(friendUsers) ? friendUsers.find((u: any) => u.id === fd.user_id) : null;
             const displayName = info?.display_name || info?.user_name || 'Friend';
-            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id };
+            const shared = genres.filter((g: string) => myGenreSet.has(g.toLowerCase()));
+            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id, sharedGenres: shared };
           })
           .sort((a: any, b: any) => b.pct - a.pct);
 
@@ -533,6 +537,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         const [top, ...rest] = scored;
         const firstName = top.displayName.split(' ')[0];
 
+        setSharedGenresFromDna(top.sharedGenres.slice(0, 3));
         setDynFeatured({
           displayName: top.displayName,
           initials: initials(top.displayName),
@@ -688,19 +693,30 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         </div>
 
         {/* Agree / Differ rows */}
-        {!noFriends && (sharedTitles.length > 0 || differTitles) && (
+        {!noFriends && (sharedGenresFromDna.length > 0 || sharedTitles.length > 0 || differTitles) && (
           <div className="mx-4 mb-2 pt-2 border-t border-gray-100 flex flex-col gap-2">
-            {sharedTitles.length > 0 && (
+            {/* Agree most on — genres from DNA + rated title callout */}
+            {(sharedGenresFromDna.length > 0 || sharedTitles.length > 0) && (
               <div className="flex items-start gap-2.5">
                 <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center shrink-0 mt-0.5">
                   <Heart size={11} className="text-purple-500" fill="#8b5cf6" />
                 </div>
                 <div>
                   <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest block">Agree most on</span>
-                  <span className="text-[11px] font-semibold text-gray-800 leading-snug">{sharedTitles.join(' · ')}</span>
+                  <span className="text-[11px] font-semibold text-gray-800 leading-snug">
+                    {sharedGenresFromDna.length > 0 ? sharedGenresFromDna.join(' · ') : sharedTitles.join(' · ')}
+                  </span>
+                  {/* Concrete title evidence — only shown when we also have genres */}
+                  {sharedGenresFromDna.length > 0 && sharedTitles.length > 0 && (
+                    <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-purple-50 border border-purple-100">
+                      <span className="text-amber-400 text-[9px]">★</span>
+                      <span className="text-[9px] text-purple-700 font-semibold">Both loved: {sharedTitles[0]}</span>
+                    </span>
+                  )}
                 </div>
               </div>
             )}
+            {/* Differ most on */}
             {differTitles && (differTitles.myTitle || differTitles.friendTitle) && (
               <div className="flex items-start gap-2.5">
                 <div className="w-6 h-6 rounded-full bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
@@ -716,6 +732,52 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                         : `They love ${differTitles.friendTitle}`}
                   </span>
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Others aligned — collapsible avatar strip */}
+        {overlaps.length > 0 && !noFriends && (
+          <div className="mx-4 mb-2 pt-2 border-t border-gray-100">
+            <button
+              className="flex items-center gap-2 w-full"
+              onClick={() => setOthersExpanded(e => !e)}
+            >
+              {/* Stacked avatar circles */}
+              <div className="flex items-center" style={{ marginRight: 2 }}>
+                {overlaps.slice(0, 4).map((u, i) => (
+                  <div
+                    key={u.displayName}
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-white font-black border-2 border-white shadow-sm"
+                    style={{ fontSize: 8, background: u.color, marginLeft: i === 0 ? 0 : -6, zIndex: 10 - i }}
+                  >
+                    {u.initials}
+                  </div>
+                ))}
+                {overlaps.length > 4 && (
+                  <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold border-2 border-white" style={{ fontSize: 8, marginLeft: -6 }}>
+                    +{overlaps.length - 4}
+                  </div>
+                )}
+              </div>
+              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest flex-1 text-left">Others aligned</span>
+              <ChevronDown size={12} className={`text-gray-400 transition-transform duration-200 ${othersExpanded ? 'rotate-180' : ''}`} />
+            </button>
+            {othersExpanded && (
+              <div className="mt-2 flex flex-col gap-1.5 pl-1">
+                {overlaps.map((u) => (
+                  <div key={u.displayName} className="flex items-center gap-2">
+                    <div
+                      className="w-5 h-5 rounded-full flex items-center justify-center text-white font-black flex-shrink-0"
+                      style={{ fontSize: 8, background: u.color }}
+                    >
+                      {u.initials}
+                    </div>
+                    <span className="text-[11px] font-semibold text-gray-700 flex-1">{u.displayName.split(' ')[0]}</span>
+                    <span className="text-purple-500 text-[10px] font-bold">{u.pct}%</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
