@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { Dna, ArrowRight, Users, X, ChevronLeft, Loader2, Share2, CheckCircle2 } from "lucide-react";
+import { Dna, ArrowRight, Users, X, ChevronLeft, Loader2, Share2, CheckCircle2, Heart, Zap } from "lucide-react";
 
 /* ── types ─────────────────────────────────────────── */
 interface OverlapUser {
@@ -19,6 +19,7 @@ interface CompareUser {
   pct: number;
   tagline: string;
   label?: string;
+  userId?: string;
 }
 
 interface Friend {
@@ -483,6 +484,8 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
   const [loadingPersonal, setLoadingPersonal] = useState(true);
   const [noFriends, setNoFriends] = useState(false);
   const [myLabel, setMyLabel] = useState<string | null>(null);
+  const [sharedTitles, setSharedTitles] = useState<string[]>([]);
+  const [differTitles, setDifferTitles] = useState<{ myTitle: string; friendTitle: string } | null>(null);
 
   useEffect(() => {
     if (!session?.access_token || !user?.id) { setLoadingPersonal(false); return; }
@@ -522,7 +525,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
             const pct = calcOverlapPct(myGenres, genres);
             const info = Array.isArray(friendUsers) ? friendUsers.find((u: any) => u.id === fd.user_id) : null;
             const displayName = info?.display_name || info?.user_name || 'Friend';
-            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null };
+            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id };
           })
           .sort((a: any, b: any) => b.pct - a.pct);
 
@@ -537,6 +540,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           pct: top.pct,
           tagline: buildTagline(top.pct, firstName),
           label: top.label,
+          userId: top.userId,
         });
         setDynOverlaps(rest.slice(0, 3).map((r: any) => ({
           displayName: r.displayName,
@@ -552,6 +556,44 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
     }
     fetchPersonalized();
   }, [session?.access_token, user?.id]);
+
+  // Rating-level agree/differ comparison
+  useEffect(() => {
+    const friendId = (dynFeatured ?? featuredProp)?.userId;
+    if (!user?.id || !friendId || !session?.access_token) return;
+    const headers = { Authorization: `Bearer ${session.access_token}`, apikey: ANON_KEY };
+    async function fetchRatingOverlap() {
+      try {
+        const [myRes, friendRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/media_ratings?user_id=eq.${user!.id}&select=media_external_id,media_title,rating`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/media_ratings?user_id=eq.${friendId}&select=media_external_id,media_title,rating`, { headers }),
+        ]);
+        const myRatings: any[] = await myRes.json();
+        const friendRatings: any[] = await friendRes.json();
+        if (!Array.isArray(myRatings) || !Array.isArray(friendRatings)) return;
+        const friendMap = new Map(friendRatings.map(r => [r.media_external_id, r]));
+        // Agree: both ≥4★, sorted by combined score
+        const agreed = myRatings
+          .filter(r => r.rating >= 4 && friendMap.has(r.media_external_id) && friendMap.get(r.media_external_id).rating >= 4 && r.media_title)
+          .sort((a, b) => (b.rating + friendMap.get(b.media_external_id).rating) - (a.rating + friendMap.get(a.media_external_id).rating))
+          .slice(0, 3)
+          .map(r => r.media_title as string);
+        setSharedTitles(agreed);
+        // Differ: one ≥4★, other ≤2★
+        const myDiverge = myRatings
+          .filter(r => r.rating >= 4 && friendMap.has(r.media_external_id) && friendMap.get(r.media_external_id).rating <= 2 && r.media_title)
+          .sort((a, b) => b.rating - a.rating)[0];
+        const myExtIds = new Map(myRatings.map(r => [r.media_external_id, r]));
+        const friendDiverge = friendRatings
+          .filter(r => r.rating >= 4 && myExtIds.has(r.media_external_id) && (myExtIds.get(r.media_external_id)?.rating ?? 5) <= 2 && r.media_title)
+          .sort((a: any, b: any) => b.rating - a.rating)[0];
+        if (myDiverge || friendDiverge) {
+          setDifferTitles({ myTitle: myDiverge?.media_title || '', friendTitle: friendDiverge?.media_title || '' });
+        }
+      } catch { /* silent */ }
+    }
+    fetchRatingOverlap();
+  }, [dynFeatured?.userId, featuredProp?.userId, user?.id, session?.access_token]);
 
   const featured = dynFeatured ?? featuredProp ?? { displayName: 'Heidi Peters Tagliaferri', initials: 'HP', color: '#8b5cf6', pct: 71, tagline: 'You both love genre-spanning stories and thrilling narratives.' };
   const overlaps = dynOverlaps.length > 0 ? dynOverlaps : (overlapsProp ?? [
@@ -645,18 +687,37 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           )}
         </div>
 
-        {/* Also aligned */}
-        {overlaps.length > 0 && !noFriends && (
-          <div className="mx-4 mb-2 pt-2 border-t border-gray-100">
-            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Also aligned</span>
-            <div className="flex flex-col gap-0.5">
-              {overlaps.map((u) => (
-                <div key={u.displayName} className="flex items-center gap-1.5">
-                  <span className="text-gray-700 text-[11px] font-semibold">{u.displayName.split(' ')[0]}</span>
-                  <span className="text-purple-500 text-[10px] font-bold">{u.pct}%</span>
+        {/* Agree / Differ rows */}
+        {!noFriends && (sharedTitles.length > 0 || differTitles) && (
+          <div className="mx-4 mb-2 pt-2 border-t border-gray-100 flex flex-col gap-2">
+            {sharedTitles.length > 0 && (
+              <div className="flex items-start gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <Heart size={11} className="text-purple-500" fill="#8b5cf6" />
                 </div>
-              ))}
-            </div>
+                <div>
+                  <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest block">Agree most on</span>
+                  <span className="text-[11px] font-semibold text-gray-800 leading-snug">{sharedTitles.join(' · ')}</span>
+                </div>
+              </div>
+            )}
+            {differTitles && (differTitles.myTitle || differTitles.friendTitle) && (
+              <div className="flex items-start gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
+                  <Zap size={11} className="text-amber-400" fill="#fbbf24" />
+                </div>
+                <div>
+                  <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest block">Differ most on</span>
+                  <span className="text-[11px] font-semibold text-gray-800 leading-snug">
+                    {differTitles.myTitle && differTitles.friendTitle
+                      ? `You love ${differTitles.myTitle} · They love ${differTitles.friendTitle}`
+                      : differTitles.myTitle
+                        ? `You love ${differTitles.myTitle}`
+                        : `They love ${differTitles.friendTitle}`}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -834,17 +895,19 @@ export function DnaComparePostCard({ item }: { item: any }) {
           </div>
         </div>
 
-        {/* Also aligned */}
-        {posterOverlaps.length > 0 && (
-          <div className="mx-4 mb-2 pt-2 border-t border-gray-100">
-            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Also aligned</span>
-            <div className="flex flex-col gap-0.5">
-              {posterOverlaps.map((u) => (
-                <div key={u.displayName} className="flex items-center gap-1.5">
-                  <span className="text-gray-700 text-[11px] font-semibold">{u.displayName.split(' ')[0]}</span>
-                  <span className="text-purple-500 text-[10px] font-bold">{u.pct}%</span>
-                </div>
-              ))}
+        {/* Agree most on — genres from post content */}
+        {Array.isArray(cmp.shared_genres) && cmp.shared_genres.length > 0 && (
+          <div className="mx-4 mb-2 pt-2 border-t border-gray-100 flex flex-col gap-2">
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Heart size={11} className="text-purple-500" fill="#8b5cf6" />
+              </div>
+              <div>
+                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest block">Agree most on</span>
+                <span className="text-[11px] font-semibold text-gray-800 leading-snug">
+                  {(cmp.shared_genres as string[]).slice(0, 3).join(' · ')}
+                </span>
+              </div>
             </div>
           </div>
         )}
