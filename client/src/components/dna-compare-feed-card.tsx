@@ -836,6 +836,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [posterOverlaps, setPosterOverlaps] = useState<OverlapUser[]>([]);
   const [postOthersExpanded, setPostOthersExpanded] = useState(false);
+  const [postSharedTitle, setPostSharedTitle] = useState<string | null>(null);
 
   let cmp: any = {};
   try { cmp = JSON.parse(item.content || '{}'); } catch {}
@@ -903,6 +904,29 @@ export function DnaComparePostCard({ item }: { item: any }) {
           : [];
 
         setPosterOverlaps([...dnaOverlaps, ...nonDnaOverlaps]);
+
+        // Find friend's user_id from friendUsers by matching friendName, then look up a shared 4★+ title
+        const friendUser = Array.isArray(friendUsers)
+          ? friendUsers.find((u: any) =>
+              (u.display_name || '').toLowerCase() === friendName.toLowerCase() ||
+              (u.user_name || '').toLowerCase() === friendName.toLowerCase()
+            )
+          : null;
+        if (friendUser?.id && posterId) {
+          try {
+            const [posterRatingsRes, friendRatingsRes] = await Promise.all([
+              fetch(`${SUPABASE_URL}/rest/v1/media_ratings?user_id=eq.${posterId}&rating=gte.4&select=title,rating&limit=50`, { headers }),
+              fetch(`${SUPABASE_URL}/rest/v1/media_ratings?user_id=eq.${friendUser.id}&rating=gte.4&select=title,rating&limit=50`, { headers }),
+            ]);
+            const posterRatings: any[] = await posterRatingsRes.json();
+            const friendRatings: any[] = await friendRatingsRes.json();
+            if (Array.isArray(posterRatings) && Array.isArray(friendRatings)) {
+              const posterTitles = new Set(posterRatings.map((r: any) => (r.title || '').toLowerCase().trim()));
+              const shared = friendRatings.find((r: any) => posterTitles.has((r.title || '').toLowerCase().trim()));
+              if (shared?.title) setPostSharedTitle(shared.title);
+            }
+          } catch { /* silent */ }
+        }
       } catch { /* silent */ }
     }
     fetchPosterAlignments();
@@ -998,10 +1022,10 @@ export function DnaComparePostCard({ item }: { item: any }) {
                 <span className="text-[11px] font-semibold text-gray-800 leading-snug">
                   {(cmp.shared_genres as string[]).slice(0, 3).join(' · ')}
                 </span>
-                {cmp.shared_title && (
+                {(postSharedTitle || cmp.shared_title) && (
                   <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-purple-50 border border-purple-100">
                     <span className="text-amber-400 text-[9px]">★</span>
-                    <span className="text-[9px] text-purple-700 font-semibold">Both loved: {cmp.shared_title}</span>
+                    <span className="text-[9px] text-purple-700 font-semibold">Both loved: {postSharedTitle || cmp.shared_title}</span>
                   </span>
                 )}
               </div>
@@ -1045,10 +1069,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
                     >
                       {u.initials}
                     </div>
-                    <span className="text-[11px] font-semibold text-gray-700 flex-1">{u.displayName.split(' ')[0]}</span>
-                    {u.pct != null && u.pct > 0 && (
-                      <span className="text-purple-500 text-[10px] font-bold">{u.pct}%</span>
-                    )}
+                    <span className="text-[11px] font-semibold text-gray-700 flex-1">{u.displayName}</span>
                   </div>
                 ))}
               </div>
