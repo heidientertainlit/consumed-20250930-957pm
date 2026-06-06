@@ -751,7 +751,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         )}
 
         {/* Others aligned — collapsible avatar strip */}
-        {overlaps.length > 0 && !noFriends && (
+        {overlaps.length > 0 && (
           <div className="mx-4 mb-2 pt-2 border-t border-gray-100">
             <button
               className="flex items-center gap-2 w-full"
