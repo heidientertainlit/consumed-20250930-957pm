@@ -9,7 +9,7 @@ interface OverlapUser {
   displayName: string;
   initials: string;
   color: string;
-  pct: number;
+  pct?: number;
 }
 
 interface CompareUser {
@@ -547,12 +547,25 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           label: top.label,
           userId: top.userId,
         });
-        setDynOverlaps(rest.slice(0, 3).map((r: any) => ({
+        // Build overlaps: DNA-scored friends (with %) first, then any remaining friends without profiles
+        const scoredIds = new Set(scored.map((s: any) => s.userId));
+        const dnaOverlaps = rest.slice(0, 5).map((r: any, i: number) => ({
           displayName: r.displayName,
           initials: initials(r.displayName),
           color: r.color,
           pct: r.pct,
-        })));
+        }));
+        const nonDnaOverlaps = Array.isArray(friendUsers)
+          ? friendUsers
+              .filter((u: any) => u.id !== top.userId && !scoredIds.has(u.id))
+              .slice(0, Math.max(0, 5 - dnaOverlaps.length))
+              .map((u: any, i: number) => ({
+                displayName: u.display_name || u.user_name || 'Friend',
+                initials: initials(u.display_name || u.user_name || 'Friend'),
+                color: AVATAR_COLORS[(scored.length + i) % AVATAR_COLORS.length],
+              }))
+          : [];
+        setDynOverlaps([...dnaOverlaps, ...nonDnaOverlaps]);
       } catch {
         // silent — fall through to prop defaults
       } finally {
@@ -775,7 +788,9 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                       {u.initials}
                     </div>
                     <span className="text-[11px] font-semibold text-gray-700 flex-1">{u.displayName.split(' ')[0]}</span>
-                    <span className="text-purple-500 text-[10px] font-bold">{u.pct}%</span>
+                    {u.pct != null && u.pct > 0 && (
+                      <span className="text-purple-500 text-[10px] font-bold">{u.pct}%</span>
+                    )}
                   </div>
                 ))}
               </div>
