@@ -960,14 +960,14 @@ export function DnaComparePostCard({ item }: { item: any }) {
 
         {/* Triangle layout — compact, centered */}
         <div className="pt-3 pb-2 flex flex-col items-center">
-          <div className="flex flex-col items-center" style={{ width: 210 }}>
-            {/* Arc ring — top of triangle, large */}
+          <div className="flex flex-col items-center" style={{ width: 220 }}>
+            {/* Arc ring — sits in front (z-index 2) */}
             {(() => {
               const r = 46;
               const circ = 2 * Math.PI * r;
               const dash = (matchScore / 100) * circ;
               return (
-                <div className="relative flex items-center justify-center" style={{ width: 100, height: 100 }}>
+                <div className="relative flex items-center justify-center" style={{ width: 100, height: 100, zIndex: 2 }}>
                   <svg className="absolute inset-0" width="100" height="100" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
                     <circle cx="50" cy="50" r={r} fill="none" stroke="#ede9fe" strokeWidth="4" />
                     <circle cx="50" cy="50" r={r} fill="none" stroke="#8b5cf6" strokeWidth="4"
@@ -981,11 +981,11 @@ export function DnaComparePostCard({ item }: { item: any }) {
               );
             })()}
 
-            {/* Two circles — bottom of triangle */}
-            <div className="flex justify-between w-full items-start">
-              <div className="flex flex-col items-center gap-0.5" style={{ width: 90 }}>
-                <div className="rounded-full flex items-center justify-center font-black text-white text-[13px] shadow"
-                  style={{ width: 44, height: 44, background: '#8b5cf6' }}>
+            {/* Two avatar circles — pulled up behind the ring */}
+            <div className="flex justify-between w-full items-start" style={{ marginTop: -22, zIndex: 1, position: 'relative' }}>
+              <div className="flex flex-col items-center gap-1" style={{ width: 100 }}>
+                <div className="rounded-full flex items-center justify-center font-black text-white shadow-md border-2 border-white"
+                  style={{ width: 58, height: 58, background: '#8b5cf6', fontSize: 16 }}>
                   {initials(posterName)}
                 </div>
                 <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wide text-center">
@@ -994,9 +994,9 @@ export function DnaComparePostCard({ item }: { item: any }) {
                 {cmp.your_dna_label && <span className="text-[8px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{cmp.your_dna_label}</span>}
               </div>
 
-              <div className="flex flex-col items-center gap-0.5" style={{ width: 90 }}>
-                <div className="rounded-full flex items-center justify-center font-black text-white text-[13px] shadow"
-                  style={{ width: 44, height: 44, background: '#a855f7' }}>
+              <div className="flex flex-col items-center gap-1" style={{ width: 100 }}>
+                <div className="rounded-full flex items-center justify-center font-black text-white shadow-md border-2 border-white"
+                  style={{ width: 58, height: 58, background: '#a855f7', fontSize: 16 }}>
                   {initials(friendName)}
                 </div>
                 <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wide text-center">
