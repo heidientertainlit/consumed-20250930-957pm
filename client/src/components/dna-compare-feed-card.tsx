@@ -594,21 +594,21 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
             <p className="text-gray-500 text-[13px] font-medium py-2 text-center">No friends to compare with yet.</p>
           ) : (
             <div className="flex flex-col items-center" style={{ width: 210 }}>
-              {/* Arc ring — top of triangle, bigger */}
+              {/* Arc ring — top of triangle, large */}
               {(() => {
                 const pct = featured.pct;
-                const r = 31;
+                const r = 46;
                 const circ = 2 * Math.PI * r;
                 const dash = (pct / 100) * circ;
                 return (
-                  <div className="relative flex items-center justify-center mb-1" style={{ width: 78, height: 78 }}>
-                    <svg className="absolute inset-0" width="78" height="78" viewBox="0 0 78 78" style={{ transform: 'rotate(-90deg)' }}>
-                      <circle cx="39" cy="39" r={r} fill="none" stroke="#ede9fe" strokeWidth="4" />
-                      <circle cx="39" cy="39" r={r} fill="none" stroke="#8b5cf6" strokeWidth="4"
+                  <div className="relative flex items-center justify-center" style={{ width: 100, height: 100 }}>
+                    <svg className="absolute inset-0" width="100" height="100" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+                      <circle cx="50" cy="50" r={r} fill="none" stroke="#ede9fe" strokeWidth="4" />
+                      <circle cx="50" cy="50" r={r} fill="none" stroke="#8b5cf6" strokeWidth="4"
                         strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
                     </svg>
                     <div className="flex flex-col items-center z-10">
-                      <span className="font-black leading-none" style={{ fontSize: 21, color: '#8b5cf6' }}>{pct}%</span>
+                      <span className="font-black leading-none" style={{ fontSize: 24, color: '#8b5cf6' }}>{pct}%</span>
                       <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
                     </div>
                   </div>
@@ -787,20 +787,20 @@ export function DnaComparePostCard({ item }: { item: any }) {
         {/* Triangle layout — compact, centered */}
         <div className="pt-3 pb-2 flex flex-col items-center">
           <div className="flex flex-col items-center" style={{ width: 210 }}>
-            {/* Arc ring — top of triangle, bigger */}
+            {/* Arc ring — top of triangle, large */}
             {(() => {
-              const r = 31;
+              const r = 46;
               const circ = 2 * Math.PI * r;
               const dash = (matchScore / 100) * circ;
               return (
-                <div className="relative flex items-center justify-center mb-1" style={{ width: 78, height: 78 }}>
-                  <svg className="absolute inset-0" width="78" height="78" viewBox="0 0 78 78" style={{ transform: 'rotate(-90deg)' }}>
-                    <circle cx="39" cy="39" r={r} fill="none" stroke="#ede9fe" strokeWidth="4" />
-                    <circle cx="39" cy="39" r={r} fill="none" stroke="#8b5cf6" strokeWidth="4"
+                <div className="relative flex items-center justify-center" style={{ width: 100, height: 100 }}>
+                  <svg className="absolute inset-0" width="100" height="100" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="50" cy="50" r={r} fill="none" stroke="#ede9fe" strokeWidth="4" />
+                    <circle cx="50" cy="50" r={r} fill="none" stroke="#8b5cf6" strokeWidth="4"
                       strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
                   </svg>
                   <div className="flex flex-col items-center z-10">
-                    <span className="font-black leading-none" style={{ fontSize: 21, color: '#8b5cf6' }}>{matchScore}%</span>
+                    <span className="font-black leading-none" style={{ fontSize: 24, color: '#8b5cf6' }}>{matchScore}%</span>
                     <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
                   </div>
                 </div>
