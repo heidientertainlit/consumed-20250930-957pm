@@ -905,25 +905,20 @@ export function DnaComparePostCard({ item }: { item: any }) {
 
         setPosterOverlaps([...dnaOverlaps, ...nonDnaOverlaps]);
 
-        // Find friend's user_id from friendUsers by matching friendName, then look up a shared 4★+ title
-        const friendUser = Array.isArray(friendUsers)
-          ? friendUsers.find((u: any) =>
-              (u.display_name || '').toLowerCase() === friendName.toLowerCase() ||
-              (u.user_name || '').toLowerCase() === friendName.toLowerCase()
-            )
-          : null;
-        if (friendUser?.id && posterId) {
+        // friend_id is stored directly in the post content JSON — no name matching needed
+        const friendId: string | null = cmp?.friend_id || null;
+        if (friendId && posterId) {
           try {
             const [posterRatingsRes, friendRatingsRes] = await Promise.all([
-              fetch(`${SUPABASE_URL}/rest/v1/media_ratings?user_id=eq.${posterId}&rating=gte.4&select=title,rating&limit=50`, { headers }),
-              fetch(`${SUPABASE_URL}/rest/v1/media_ratings?user_id=eq.${friendUser.id}&rating=gte.4&select=title,rating&limit=50`, { headers }),
+              fetch(`${SUPABASE_URL}/rest/v1/media_ratings?user_id=eq.${posterId}&rating=gte.4&select=media_title&limit=100`, { headers }),
+              fetch(`${SUPABASE_URL}/rest/v1/media_ratings?user_id=eq.${friendId}&rating=gte.4&select=media_title&limit=100`, { headers }),
             ]);
             const posterRatings: any[] = await posterRatingsRes.json();
             const friendRatings: any[] = await friendRatingsRes.json();
             if (Array.isArray(posterRatings) && Array.isArray(friendRatings)) {
-              const posterTitles = new Set(posterRatings.map((r: any) => (r.title || '').toLowerCase().trim()));
-              const shared = friendRatings.find((r: any) => posterTitles.has((r.title || '').toLowerCase().trim()));
-              if (shared?.title) setPostSharedTitle(shared.title);
+              const posterTitles = new Set(posterRatings.map((r: any) => (r.media_title || '').toLowerCase().trim()));
+              const shared = friendRatings.find((r: any) => posterTitles.has((r.media_title || '').toLowerCase().trim()));
+              if (shared?.media_title) setPostSharedTitle(shared.media_title);
             }
           } catch { /* silent */ }
         }
