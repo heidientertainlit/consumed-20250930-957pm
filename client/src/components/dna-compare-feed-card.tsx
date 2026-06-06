@@ -564,18 +564,8 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
     <>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
 
-        {/* Hero gradient banner — DNA helix */}
-        <div className="relative h-[68px] overflow-hidden" style={{ background: 'linear-gradient(135deg, #3b0764 0%, #6d28d9 55%, #a855f7 100%)' }}>
-          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 320 68" preserveAspectRatio="none">
-            {/* Strand 1 */}
-            <path d="M0 20 Q40 8 80 20 Q120 32 160 20 Q200 8 240 20 Q280 32 320 20" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" fill="none"/>
-            {/* Strand 2 */}
-            <path d="M0 48 Q40 60 80 48 Q120 36 160 48 Q200 60 240 48 Q280 36 320 48" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" fill="none"/>
-            {/* Rungs */}
-            {[0,40,80,120,160,200,240,280,320].map(x => (
-              <line key={x} x1={x} y1={x % 80 === 0 ? 20 : 34} x2={x} y2={x % 80 === 0 ? 48 : 34} stroke="rgba(255,255,255,0.25)" strokeWidth="1"/>
-            ))}
-          </svg>
+        {/* Hero gradient banner — blue/green */}
+        <div className="relative h-[68px] overflow-hidden" style={{ background: 'linear-gradient(135deg, #0369a1 0%, #0284c7 40%, #0d9488 100%)' }}>
           <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
             style={{ background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.28)' }}>
             <Dna size={10} className="text-white" />
@@ -770,15 +760,8 @@ export function DnaComparePostCard({ item }: { item: any }) {
     <>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
 
-        {/* Hero gradient banner — DNA helix */}
-        <div className="relative h-[68px] overflow-hidden" style={{ background: 'linear-gradient(135deg, #3b0764 0%, #6d28d9 55%, #a855f7 100%)' }}>
-          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 320 68" preserveAspectRatio="none">
-            <path d="M0 20 Q40 8 80 20 Q120 32 160 20 Q200 8 240 20 Q280 32 320 20" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" fill="none"/>
-            <path d="M0 48 Q40 60 80 48 Q120 36 160 48 Q200 60 240 48 Q280 36 320 48" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" fill="none"/>
-            {[0,40,80,120,160,200,240,280,320].map(x => (
-              <line key={x} x1={x} y1={x % 80 === 0 ? 20 : 34} x2={x} y2={x % 80 === 0 ? 48 : 34} stroke="rgba(255,255,255,0.25)" strokeWidth="1"/>
-            ))}
-          </svg>
+        {/* Hero gradient banner — blue/green */}
+        <div className="relative h-[68px] overflow-hidden" style={{ background: 'linear-gradient(135deg, #0369a1 0%, #0284c7 40%, #0d9488 100%)' }}>
           <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
             style={{ background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.28)' }}>
             <Dna size={10} className="text-white" />

@@ -2219,14 +2219,14 @@ export function DailyHeroSection() {
                   <span className="text-[8px] font-bold text-purple-100">+{isOpinionDay ? (dailyCall?.points_reward ?? 10) : readyQuestions.length * 10} pts</span>
                 </span>
                 {front ? (
-                  <span className="bg-white text-purple-950 text-sm font-bold px-6 py-2.5 rounded-full shadow-lg inline-flex items-center gap-1.5">
+                  <span className="text-white text-sm font-semibold px-5 py-2 rounded-full inline-flex items-center gap-1.5" style={{ background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.3)' }}>
                     {isTriviaDay ? (playCompleted ? 'Share' : 'Play') : (callCompleted ? 'Share' : 'Weigh In')}
-                    <ArrowRight size={14} strokeWidth={2.5} />
+                    <ArrowRight size={13} strokeWidth={2} />
                   </span>
                 ) : (
-                  <span className="bg-white/95 text-purple-900 text-[11px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
+                  <span className="text-white text-[11px] font-semibold px-3 py-1.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)' }}>
                     {isTriviaDay ? (playCompleted ? 'Share' : 'Play') : (callCompleted ? 'Share' : 'Weigh In')}
-                    <ArrowRight size={12} strokeWidth={2.5} />
+                    <ArrowRight size={11} strokeWidth={2} />
                   </span>
                 )}
               </div>
