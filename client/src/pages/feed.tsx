@@ -30,7 +30,7 @@ import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 
-import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronRight, ChevronDown, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap } from "lucide-react";
+import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronLeft, ChevronRight, ChevronDown, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
