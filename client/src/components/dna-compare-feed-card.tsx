@@ -506,48 +506,40 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
         const myGenres: string[] = myDna.favorite_genres;
         if (myDna.label) setMyLabel(myDna.label);
-
         const friendIds = [...new Set(
           friendships.map((f: any) => f.user_id === user!.id ? f.friend_id : f.user_id)
         )].filter((id: string) => id !== user!.id) as string[];
         if (friendIds.length === 0) { setNoFriends(true); return; }
 
         // 2. Fetch friends' DNA profiles + display names in parallel
-        // dna_profiles has public SELECT — so we get favorite_genres for all friends who have them
         const [friendDnaRes, friendUsersRes] = await Promise.all([
           fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=in.(${friendIds.join(',')})&select=user_id,favorite_genres,label`, { headers }),
           fetch(`${SUPABASE_URL}/rest/v1/users?id=in.(${friendIds.join(',')})&select=id,display_name,user_name`, { headers }),
         ]);
-        const friendDnasRaw = await friendDnaRes.json();
-        const friendDnas: any[] = Array.isArray(friendDnasRaw) ? friendDnasRaw : [];
-        const friendUsers: any[] = await friendUsersRes.json() || [];
+        const friendDnas = await friendDnaRes.json();
+        const friendUsers = await friendUsersRes.json();
+        if (!Array.isArray(friendDnas) || friendDnas.length === 0) return;
 
-        // Build lookup maps
-        const dnaByUser: Record<string, { label: string; genres: string[] }> = {};
-        if (Array.isArray(friendDnas)) {
-          friendDnas.forEach((d: any) => {
-            dnaByUser[d.user_id] = { label: d.label || '', genres: Array.isArray(d.favorite_genres) ? d.favorite_genres : [] };
-          });
-        }
-
-        // 3. Score every friend by Jaccard genre overlap against my favorite_genres
-        // Friends without a DNA profile get pct=0 (no percentage shown)
+        // 3. Score each friend by genre overlap — only users with a DNA profile get a pct
         const myGenreSet = new Set(myGenres.map((g: string) => g.toLowerCase()));
-        const scored = (Array.isArray(friendUsers) ? friendUsers : []).map((u: any, i: number) => {
-          const friendGenres = dnaByUser[u.id]?.genres || [];
-          const pct = calcOverlapPct(myGenres, friendGenres);
-          const displayName = u.display_name || u.user_name || 'Friend';
-          const shared = friendGenres.filter((g: string) => myGenreSet.has(g.toLowerCase()));
-          return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: dnaByUser[u.id]?.label || null, userId: u.id, sharedGenres: shared };
-        }).sort((a: any, b: any) => b.pct - a.pct);
+        const scored = friendDnas
+          .map((fd: any, i: number) => {
+            const genres: string[] = Array.isArray(fd.favorite_genres) ? fd.favorite_genres : [];
+            const pct = calcOverlapPct(myGenres, genres);
+            const info = Array.isArray(friendUsers) ? friendUsers.find((u: any) => u.id === fd.user_id) : null;
+            const displayName = info?.display_name || info?.user_name || 'Friend';
+            const shared = genres.filter((g: string) => myGenreSet.has(g.toLowerCase()));
+            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id, sharedGenres: shared };
+          })
+          .sort((a: any, b: any) => b.pct - a.pct);
 
-        if (scored.length === 0) { setNoFriends(true); return; }
+        if (scored.length === 0) return;
         const [top, ...rest] = scored;
         const firstName = top.displayName.split(' ')[0];
 
         setSharedGenresFromDna(top.sharedGenres.slice(0, 3));
 
-        // Use cached comparison score from dna_comparisons if it exists (authoritative score)
+        // Use cached comparison score from dna_comparisons if available (authoritative)
         let featuredPct = top.pct;
         try {
           const cmpRes = await fetch(
@@ -558,7 +550,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           if (Array.isArray(cmpData) && cmpData[0]?.match_score != null) {
             featuredPct = Math.round(cmpData[0].match_score);
           }
-        } catch { /* use genre overlap pct as fallback */ }
+        } catch { /* use genre Jaccard pct as fallback */ }
 
         setDynFeatured({
           displayName: top.displayName,
@@ -569,12 +561,25 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           label: top.label,
           userId: top.userId,
         });
-        setDynOverlaps(rest.slice(0, 5).map((r: any) => ({
+        // DNA-scored friends (with %) first, then remaining friends without profiles (no %)
+        const scoredIds = new Set(scored.map((s: any) => s.userId));
+        const dnaOverlaps = rest.slice(0, 5).map((r: any) => ({
           displayName: r.displayName,
           initials: initials(r.displayName),
           color: r.color,
           pct: r.pct,
-        })));
+        }));
+        const nonDnaOverlaps = Array.isArray(friendUsers)
+          ? friendUsers
+              .filter((u: any) => u.id !== top.userId && !scoredIds.has(u.id))
+              .slice(0, Math.max(0, 5 - dnaOverlaps.length))
+              .map((u: any, i: number) => ({
+                displayName: u.display_name || u.user_name || 'Friend',
+                initials: initials(u.display_name || u.user_name || 'Friend'),
+                color: AVATAR_COLORS[(scored.length + i) % AVATAR_COLORS.length],
+              }))
+          : [];
+        setDynOverlaps([...dnaOverlaps, ...nonDnaOverlaps]);
       } catch {
         // silent — fall through to prop defaults
       } finally {
