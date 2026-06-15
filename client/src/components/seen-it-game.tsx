@@ -421,7 +421,8 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
       window.removeEventListener('mouseup',   onMouseUp);
       if (wheelTimer.current) clearTimeout(wheelTimer.current);
     };
-  }, []);
+  // Re-run when data first loads so gestureRef.current is actually in the DOM
+  }, [incompleteSets.length > 0]);
 
   // Keep a stable ref to handleResponse so event listeners don't go stale
   const handleResponseRef = useRef(handleResponse);
