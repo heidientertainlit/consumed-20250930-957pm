@@ -580,7 +580,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           pct: r.pct,
         })));
       } catch {
-        // silent — fall through to prop defaults
+        // silent fallback to prop defaults
       } finally {
         setLoadingPersonal(false);
       }
