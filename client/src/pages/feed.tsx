@@ -4428,6 +4428,8 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
   onAddToList: (media: any) => void;
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [cardKey, setCardKey] = useState(0);
+  const slideDir = useRef(0); // 1 = forward (new card enters from right), -1 = back (enters from left)
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
@@ -4436,8 +4438,12 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
   currentIndexRef.current = currentIndex;
   postsLengthRef.current = posts.length;
 
-  // Native listeners: touchmove with passive:false lets us preventDefault on horizontal
-  // drags so the browser doesn't steal the gesture for page-scroll.
+  const goTo = (next: number, dir: number) => {
+    slideDir.current = dir;
+    setCurrentIndex(next);
+    setCardKey(k => k + 1);
+  };
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -4450,26 +4456,26 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
     const onMove = (e: TouchEvent) => {
       const dx = e.touches[0].clientX - touchStartX.current;
       const dy = e.touches[0].clientY - touchStartY.current;
-      // If mostly horizontal, prevent scroll so the swipe is ours
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) {
-        e.preventDefault();
-      }
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) e.preventDefault();
     };
 
     const onEnd = (e: TouchEvent) => {
       const dx = e.changedTouches[0].clientX - touchStartX.current;
       const dy = e.changedTouches[0].clientY - touchStartY.current;
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 44 && dx < 0) {
-        if (currentIndexRef.current < postsLengthRef.current - 1) {
-          setCurrentIndex(i => i + 1);
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 44) {
+        if (dx < 0 && currentIndexRef.current < postsLengthRef.current - 1) {
+          slideDir.current = 1;
+          setCurrentIndex(i => { setCardKey(k => k + 1); return i + 1; });
+        } else if (dx > 0 && currentIndexRef.current > 0) {
+          slideDir.current = -1;
+          setCurrentIndex(i => { setCardKey(k => k + 1); return i - 1; });
         }
       }
     };
 
     el.addEventListener('touchstart', onStart, { passive: true });
-    el.addEventListener('touchmove', onMove, { passive: false }); // must be non-passive to preventDefault
+    el.addEventListener('touchmove', onMove, { passive: false });
     el.addEventListener('touchend', onEnd, { passive: true });
-
     return () => {
       el.removeEventListener('touchstart', onStart);
       el.removeEventListener('touchmove', onMove);
@@ -4477,79 +4483,83 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
     };
   }, []);
 
-  const remaining = posts.length - currentIndex;
-  if (remaining === 0) return null;
-
+  if (posts.length === 0) return null;
+  const safeIndex = Math.min(currentIndex, posts.length - 1);
+  const remaining = posts.length - safeIndex;
   const peekCount = Math.min(remaining - 1, 2);
-  const { _isPromoted: _p, _promotedKey: _pk, ...frontPost } = posts[currentIndex];
+  const { _isPromoted: _p, _promotedKey: _pk, ...frontPost } = posts[safeIndex];
 
-  const advance = () => {
-    if (currentIndex < posts.length - 1) setCurrentIndex(i => i + 1);
-  };
-
-  // Each peek sliver shows as a strip below the front card
-  const PEEK_H = 14; // px visible per sliver
+  const PEEK_H = 14;
   const containerPadding = peekCount === 2 ? PEEK_H * 2 + 4 : peekCount === 1 ? PEEK_H : 0;
+  const animName = slideDir.current > 0 ? 'scs-from-right' : slideDir.current < 0 ? 'scs-from-left' : '';
 
   return (
-    <div
-      ref={containerRef}
-      style={{ position: 'relative', paddingBottom: containerPadding, marginBottom: 16, touchAction: 'pan-y' }}
-    >
-      {/* Sliver 3 — furthest back, most inset, at very bottom */}
-      {peekCount >= 2 && (
-        <div style={{
-          position: 'absolute',
-          left: 20, right: 20,
-          bottom: 0,
-          height: PEEK_H * 2 + 32,
-          backgroundColor: '#e9eaec',
-          borderRadius: 18,
-          border: '1px solid #d1d5db',
-          zIndex: 1,
-        }} />
-      )}
-      {/* Sliver 2 — middle, slightly less inset */}
-      {peekCount >= 1 && (
-        <div style={{
-          position: 'absolute',
-          left: 10, right: 10,
-          bottom: peekCount >= 2 ? PEEK_H + 2 : 0,
-          height: PEEK_H + 32,
-          backgroundColor: '#f1f2f4',
-          borderRadius: 18,
-          border: '1px solid #d1d5db',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
-          zIndex: 2,
-        }} />
-      )}
-      {/* Front card */}
-      <div style={{ position: 'relative', zIndex: 3 }}>
-        <UGCGroupCard
-          post={frontPost as any}
-          onLike={onLike}
-          isLiked={likedPosts.has(frontPost?.id)}
-          session={session}
-          fetchComments={fetchComments}
-          currentUserId={currentUserId}
-          onDeletePost={onDeletePost}
-          onAddToList={onAddToList}
-          forceActionFirst={true}
-          forceNormal={true}
-        />
-        {/* Counter + tap-to-advance */}
-        {remaining > 1 && (
-          <button
-            onClick={advance}
-            className="absolute bottom-3 right-3 flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2.5 py-1 shadow-sm z-20"
-            style={{ pointerEvents: 'auto' }}
-          >
-            <span className="text-[10px] font-medium text-gray-500">{currentIndex + 1}/{posts.length}</span>
-            <ChevronRight size={10} className="text-gray-400" />
-          </button>
+    <>
+      <style>{`
+        @keyframes scs-from-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes scs-from-left  { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+      `}</style>
+      <div
+        ref={containerRef}
+        style={{ position: 'relative', paddingBottom: containerPadding, marginBottom: 16, touchAction: 'pan-y' }}
+      >
+        {peekCount >= 2 && (
+          <div style={{
+            position: 'absolute', left: 20, right: 20, bottom: 0,
+            height: PEEK_H * 2 + 32, backgroundColor: '#e9eaec',
+            borderRadius: 18, border: '1px solid #d1d5db', zIndex: 1,
+          }} />
         )}
+        {peekCount >= 1 && (
+          <div style={{
+            position: 'absolute', left: 10, right: 10,
+            bottom: peekCount >= 2 ? PEEK_H + 2 : 0,
+            height: PEEK_H + 32, backgroundColor: '#f1f2f4',
+            borderRadius: 18, border: '1px solid #d1d5db',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.07)', zIndex: 2,
+          }} />
+        )}
+        {/* Front card — overflow hidden clips the slide-in animation */}
+        <div style={{ position: 'relative', zIndex: 3, overflow: 'hidden', borderRadius: 18 }}>
+          <div
+            key={cardKey}
+            style={{ animation: animName ? `${animName} 0.28s ease forwards` : undefined }}
+          >
+            <UGCGroupCard
+              post={frontPost as any}
+              onLike={onLike}
+              isLiked={likedPosts.has(frontPost?.id)}
+              session={session}
+              fetchComments={fetchComments}
+              currentUserId={currentUserId}
+              onDeletePost={onDeletePost}
+              onAddToList={onAddToList}
+              forceActionFirst={true}
+              forceNormal={true}
+            />
+          </div>
+          {/* Counter with back + forward buttons */}
+          {posts.length > 1 && (
+            <div
+              className="absolute bottom-3 right-3 flex items-center gap-1 bg-white border border-gray-200 rounded-full shadow-sm z-20"
+              style={{ pointerEvents: 'auto' }}
+            >
+              {safeIndex > 0 && (
+                <button onClick={() => goTo(safeIndex - 1, -1)} className="pl-2 pr-1 py-1">
+                  <ChevronLeft size={10} className="text-gray-400" />
+                </button>
+              )}
+              <span className="text-[10px] font-medium text-gray-500 px-1">{safeIndex + 1}/{posts.length}</span>
+              {safeIndex < posts.length - 1 && (
+                <button onClick={() => goTo(safeIndex + 1, 1)} className="pr-2 pl-1 py-1">
+                  <ChevronRight size={10} className="text-gray-400" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
