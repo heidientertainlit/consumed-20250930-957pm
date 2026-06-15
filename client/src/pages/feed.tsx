@@ -1390,10 +1390,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       {onAddToList && (post.externalId || post.mediaTitle) && (
         <button
           onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
-          className="absolute bottom-1.5 right-1.5 z-10 w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all"
+          className="absolute bottom-1.5 right-1.5 z-10 w-7 h-7 rounded-full bg-white shadow-md flex items-center justify-center active:scale-90 transition-all"
           title="Add to list"
         >
-          <Plus size={13} color="white" />
+          <Plus size={13} className="text-purple-600" strokeWidth={2.5} />
         </button>
       )}
     </div>
@@ -1864,10 +1864,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {/* Bottom-right: Add to list button on poster */}
           {onAddToList && (post.externalId || post.mediaTitle) && (
             <button
-              className="absolute bottom-3 right-3 z-10 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center active:scale-90 transition-transform"
+              className="absolute bottom-3 right-3 z-10 w-7 h-7 rounded-full bg-white shadow-md flex items-center justify-center active:scale-90 transition-transform"
               onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
             >
-              <Plus size={14} className="text-white" />
+              <Plus size={14} className="text-purple-600" strokeWidth={2.5} />
             </button>
           )}
 
@@ -3867,10 +3867,10 @@ function CurrentlyConsumingFeedCard({
                 {onAddToList && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onAddToList({ title: media.title, externalId: media.externalId || '', externalSource: media.externalSource || 'tmdb', imageUrl: media.imageUrl || '', type: media.mediaType || 'movie' }); }}
-                    className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all"
+                    className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-white shadow-md flex items-center justify-center active:scale-90 transition-all"
                     title="Add to list"
                   >
-                    <Plus size={11} color="white" />
+                    <Plus size={11} className="text-purple-600" strokeWidth={2.5} />
                   </button>
                 )}
               </div>
