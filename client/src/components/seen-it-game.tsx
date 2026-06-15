@@ -295,15 +295,21 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
       });
       if (session) responseMutation.mutate({ setId, itemId: item.id, response: response as boolean | 'want_to', item });
     }
-    // Advance to next unanswered item
     const currentSet = incompleteSets[currentSetIndex];
     if (!currentSet) return;
-    const nextIndex = currentItemIndex + 1;
-    if (nextIndex >= currentSet.items.length) {
-      const seenCount = currentSet.items.filter(i => responses[i.id] === true || (response === true && i.id === item.id)).length;
+    // Remaining unanswered after this response (treat item as answered if response !== 'skip')
+    const answeredId = response !== 'skip' ? item.id : null;
+    const remaining = currentSet.items.filter(i =>
+      i.id !== answeredId && responses[i.id] === undefined
+    );
+    if (remaining.length === 0) {
+      const seenCount = currentSet.items.filter(i =>
+        responses[i.id] === true || (response === true && i.id === item.id)
+      ).length;
       saveSetCompletion(currentSet.id, seenCount, currentSet.items.length);
     } else {
-      setCurrentItemIndex(nextIndex);
+      // Keep index in bounds of the NEW unanswered length
+      setCurrentItemIndex(prev => Math.min(prev + 1, remaining.length - 1));
     }
     setRatingItem(null);
     setDragX(0);
@@ -439,7 +445,6 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
 
   const mediaConfig = getMediaTypeConfig(currentSet.media_type);
   const totalItems = currentSet.items.length;
-  // unansweredItems only used for completion detection
   const unansweredItems = currentSet.items.filter(item => responses[item.id] === undefined);
   const doneCount = totalItems - unansweredItems.length;
 
@@ -451,9 +456,9 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     return null;
   }
 
-  // Navigate all items (including already-answered) so back works
-  const safeItemIndex = Math.min(currentItemIndex, totalItems - 1);
-  const activeItem = currentSet.items[safeItemIndex];
+  // Clamp index to valid unanswered range
+  const safeItemIndex = Math.min(currentItemIndex, unansweredItems.length - 1);
+  const activeItem = unansweredItems[safeItemIndex];
   const activeIdx = safeItemIndex;
 
   // Keep refs current so gesture event listeners always see fresh values
@@ -481,16 +486,16 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           >
             <ChevronLeft className="w-4 h-4 text-gray-400" />
           </button>
-          <span className="text-purple-500 text-xs font-medium">{safeItemIndex + 1} of {totalItems}</span>
+          <span className="text-purple-500 text-xs font-medium">{doneCount + 1} of {totalItems}</span>
           <button
             onClick={() => {
-              if (safeItemIndex < totalItems - 1) {
+              if (safeItemIndex < unansweredItems.length - 1) {
                 setCurrentItemIndex(prev => prev + 1);
               } else if (incompleteSets.length > 1) {
                 setCurrentSetIndex(prev => (prev + 1) % incompleteSets.length);
               }
             }}
-            disabled={safeItemIndex === totalItems - 1 && incompleteSets.length <= 1}
+            disabled={safeItemIndex === unansweredItems.length - 1 && incompleteSets.length <= 1}
             className="disabled:opacity-30"
           >
             <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -504,25 +509,25 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         className="relative flex items-center justify-center select-none"
         style={{ height: 310, overflow: 'visible', cursor: isActiveDrag ? 'grabbing' : 'grab', touchAction: 'pan-y' }}
       >
-        {/* Left peek card — previous item */}
-        {currentSet.items[activeIdx - 1] && (
+        {/* Left peek card — previous unanswered item */}
+        {unansweredItems[activeIdx - 1] && (
           <div style={{
             position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
             transform: 'translateX(-52px) rotate(-8deg) scale(0.88)',
             zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
           }}>
-            <img src={currentSet.items[activeIdx - 1].image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            <img src={unansweredItems[activeIdx - 1].image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
         )}
 
-        {/* Right peek card — next item */}
-        {currentSet.items[activeIdx + 1] && (
+        {/* Right peek card — next unanswered item */}
+        {unansweredItems[activeIdx + 1] && (
           <div style={{
             position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
             transform: 'translateX(52px) rotate(8deg) scale(0.88)',
             zIndex: 2, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
           }}>
-            <img src={currentSet.items[activeIdx + 1].image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            <img src={unansweredItems[activeIdx + 1].image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
         )}
 
@@ -606,9 +611,21 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           <span className={`text-[10px] font-medium ${responses[activeItem.id] === true ? 'text-green-600' : 'text-gray-400'}`}>{mediaConfig.actionYes}</span>
         </button>
 
-        {/* Add to list — gray, secondary */}
+        {/* Add to list — opens quick-add modal if prop available */}
         <button
-          onClick={() => handleResponse(currentSet.id, activeItem, 'want_to')}
+          onClick={() => {
+            if (onAddToList) {
+              onAddToList({
+                title: activeItem.title,
+                image_url: activeItem.image_url,
+                external_id: activeItem.external_id,
+                external_source: activeItem.external_source,
+                media_type: activeItem.media_type || currentSet.media_type,
+              });
+            } else {
+              handleResponse(currentSet.id, activeItem, 'want_to');
+            }
+          }}
           className="flex flex-col items-center gap-1 group"
         >
           <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">

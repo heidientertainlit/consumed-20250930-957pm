@@ -81,6 +81,8 @@ export default function SwipeableRatingCards({ posts, onLike, onDelete, likedPos
   const { session } = useAuth();
   const { toast } = useToast();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [cardKey, setCardKey] = useState(0);
+  const slideDir = useRef(0); // 1 = forward (in from right), -1 = back (in from left)
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -309,24 +311,32 @@ export default function SwipeableRatingCards({ posts, onLike, onDelete, likedPos
 
   const handleSwipe = () => {
     const diff = touchStartX.current - touchEndX.current;
-    const threshold = 40; // Lower threshold for easier swiping
+    const threshold = 40;
 
     if (diff > threshold && currentIndex < posts.length - 1) {
+      slideDir.current = 1;
       setCurrentIndex(prev => prev + 1);
+      setCardKey(prev => prev + 1);
     } else if (diff < -threshold && currentIndex > 0) {
+      slideDir.current = -1;
       setCurrentIndex(prev => prev - 1);
+      setCardKey(prev => prev + 1);
     }
   };
 
   const goToNext = () => {
     if (currentIndex < posts.length - 1) {
+      slideDir.current = 1;
       setCurrentIndex(currentIndex + 1);
+      setCardKey(prev => prev + 1);
     }
   };
 
   const goToPrev = () => {
     if (currentIndex > 0) {
+      slideDir.current = -1;
       setCurrentIndex(currentIndex - 1);
+      setCardKey(prev => prev + 1);
     }
   };
 
@@ -514,12 +524,22 @@ export default function SwipeableRatingCards({ posts, onLike, onDelete, likedPos
 
   const hasValidImage = media?.imageUrl && media.imageUrl.startsWith('http');
 
+  const animName = slideDir.current > 0 ? 'swrc-from-right' : slideDir.current < 0 ? 'swrc-from-left' : '';
+
   return (
     <>
-      <div className="mb-4">
-        <div 
-          className="relative bg-white rounded-2xl border border-gray-100 shadow-sm transition-transform duration-100"
-          style={{ transform: `translateX(${swipeOffset}px)` }}
+      <style>{`
+        @keyframes swrc-from-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes swrc-from-left  { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+      `}</style>
+      <div className="mb-4" style={{ overflow: 'hidden' }}>
+        <div
+          key={cardKey}
+          className="relative bg-white rounded-2xl border border-gray-100 shadow-sm"
+          style={{
+            animation: animName ? `${animName} 0.25s ease forwards` : undefined,
+            transform: animName ? undefined : `translateX(${swipeOffset}px)`,
+          }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
