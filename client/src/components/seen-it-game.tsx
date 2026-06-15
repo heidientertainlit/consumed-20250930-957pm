@@ -69,6 +69,9 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   // ── Swipe gesture detection (no drag tracking — cards stay put) ────────────
   const swipeStartXRef = useRef(0);
   const swipeStartYRef = useRef(0);
+  // Trackpad horizontal swipe (wheel events with deltaX)
+  const wheelAccumRef = useRef(0);
+  const wheelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Data fetching (unchanged from original) ───────────────────────────────
   const { data: supabaseCompletedSets } = useQuery({
@@ -401,6 +404,19 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           if (Math.abs(dx) < Math.abs(dy)) return;
           if (dx < -20 && safeItemIndex < unansweredItems.length - 1) setCurrentItemIndex(prev => prev + 1);
           else if (dx > 20 && safeItemIndex > 0) setCurrentItemIndex(prev => prev - 1);
+        }}
+        onWheel={(e) => {
+          // Trackpad two-finger horizontal swipe — deltaX dominant
+          if (Math.abs(e.deltaX) < Math.abs(e.deltaY) * 0.7) return;
+          e.stopPropagation();
+          wheelAccumRef.current += e.deltaX;
+          if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
+          wheelTimerRef.current = setTimeout(() => {
+            const total = wheelAccumRef.current;
+            wheelAccumRef.current = 0;
+            if (total > 30 && safeItemIndex < unansweredItems.length - 1) setCurrentItemIndex(prev => prev + 1);
+            else if (total < -30 && safeItemIndex > 0) setCurrentItemIndex(prev => prev - 1);
+          }, 80);
         }}
       >
         {/* Left peek card — fixed position, never moves */}
