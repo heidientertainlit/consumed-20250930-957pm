@@ -8091,7 +8091,7 @@ export default function Feed() {
 
               {/* Seen It? — Movies (round 1) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="movie" />
+                <SeenItGame mediaTypeFilter="movie" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
               {/* DNA Clash card — rotates every 2 days, data from prediction_pools (type='clash') */}
@@ -8232,7 +8232,7 @@ export default function Feed() {
 
               {/* Seen It? — TV Shows (round 1) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="tv" />
+                <SeenItGame mediaTypeFilter="tv" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
               {/* — Rating carousel #0 — */}
@@ -8272,7 +8272,7 @@ export default function Feed() {
 
               {/* Seen It? — Books (round 1) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="book" />
+                <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
               {/* Music trivia */}
@@ -8285,7 +8285,7 @@ export default function Feed() {
 
               {/* Seen It? — Music (round 1) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="music" />
+                <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
               {/* TV Polls — round 2 */}
@@ -8318,7 +8318,7 @@ export default function Feed() {
 
               {/* Seen It? — Movies (round 2) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="movie" />
+                <SeenItGame mediaTypeFilter="movie" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
               {/* DNA Moment #2 */}
@@ -8336,7 +8336,7 @@ export default function Feed() {
 
               {/* Seen It? — TV Shows (round 2) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="tv" />
+                <SeenItGame mediaTypeFilter="tv" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
               {/* — Rating carousel #2 — */}
@@ -8353,7 +8353,7 @@ export default function Feed() {
 
               {/* Seen It? — Podcasts (round 1) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="podcast" />
+                <SeenItGame mediaTypeFilter="podcast" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
 
@@ -8367,7 +8367,7 @@ export default function Feed() {
 
               {/* Seen It? — Books (round 2) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="book" />
+                <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
               {/* Games trivia */}
@@ -8413,7 +8413,7 @@ export default function Feed() {
 
               {/* Seen It? — Music (round 2) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="music" />
+                <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
               {/* Play slot #5 */}

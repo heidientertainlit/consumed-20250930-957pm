@@ -494,10 +494,10 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
               if (onAddToList) {
                 onAddToList({
                   title: activeItem.title,
-                  image_url: activeItem.image_url,
-                  external_id: activeItem.external_id,
-                  external_source: activeItem.external_source,
-                  media_type: activeItem.media_type || currentSet.media_type,
+                  imageUrl: activeItem.image_url,
+                  externalId: activeItem.external_id,
+                  externalSource: activeItem.external_source,
+                  mediaType: activeItem.media_type || currentSet.media_type,
                 });
               } else {
                 handleResponse(currentSet.id, activeItem, 'want_to');
