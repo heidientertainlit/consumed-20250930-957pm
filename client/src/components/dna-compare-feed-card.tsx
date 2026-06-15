@@ -487,7 +487,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
   const [sharedTitles, setSharedTitles] = useState<string[]>([]);
   const [differTitles, setDifferTitles] = useState<{ myTitle: string; friendTitle: string } | null>(null);
   const [sharedGenresFromDna, setSharedGenresFromDna] = useState<string[]>([]);
-  const [othersExpanded, setOthersExpanded] = useState(false);
+  const [othersExpanded, setOthersExpanded] = useState(true);
 
   useEffect(() => {
     if (!session?.access_token || !user?.id) { setLoadingPersonal(false); return; }
@@ -561,25 +561,13 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           label: top.label,
           userId: top.userId,
         });
-        // DNA-scored friends (with %) first, then remaining friends without profiles (no %)
-        const scoredIds = new Set(scored.map((s: any) => s.userId));
-        const dnaOverlaps = rest.slice(0, 5).map((r: any) => ({
+        // Only show DNA-scored friends (those with a real pct value)
+        setDynOverlaps(rest.slice(0, 5).map((r: any) => ({
           displayName: r.displayName,
           initials: initials(r.displayName),
           color: r.color,
           pct: r.pct,
-        }));
-        const nonDnaOverlaps = Array.isArray(friendUsers)
-          ? friendUsers
-              .filter((u: any) => u.id !== top.userId && !scoredIds.has(u.id))
-              .slice(0, Math.max(0, 5 - dnaOverlaps.length))
-              .map((u: any, i: number) => ({
-                displayName: u.display_name || u.user_name || 'Friend',
-                initials: initials(u.display_name || u.user_name || 'Friend'),
-                color: AVATAR_COLORS[(scored.length + i) % AVATAR_COLORS.length],
-              }))
-          : [];
-        setDynOverlaps([...dnaOverlaps, ...nonDnaOverlaps]);
+        })));
       } catch {
         // silent — fall through to prop defaults
       } finally {
