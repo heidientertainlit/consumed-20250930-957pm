@@ -495,83 +495,49 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
     async function fetchPersonalized() {
       try {
-        // 1. Fetch my DNA label, my genre signals (from user_dna_signals), and friends list in parallel
-        const [myDnaRes, mySignalsRes, fsRes] = await Promise.all([
+        // 1. Fetch my DNA profile + friends list in parallel
+        const [myDnaRes, fsRes] = await Promise.all([
           fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=eq.${user!.id}&select=favorite_genres,label`, { headers }),
-          fetch(`${SUPABASE_URL}/rest/v1/user_dna_signals?user_id=eq.${user!.id}&signal_type=eq.genre&select=signal_value,strength`, { headers }),
           fetch(`${SUPABASE_URL}/rest/v1/friendships?or=(user_id.eq.${user!.id},friend_id.eq.${user!.id})&status=eq.accepted&select=user_id,friend_id`, { headers }),
         ]);
         const [myDna] = await myDnaRes.json();
-        const mySignalsRaw: any[] = await mySignalsRes.json() || [];
         const friendships = await fsRes.json();
-        if (!Array.isArray(friendships) || friendships.length === 0) { setNoFriends(true); return; }
+        if (!myDna?.favorite_genres?.length || !Array.isArray(friendships) || friendships.length === 0) { setNoFriends(true); return; }
 
-        if (myDna?.label) setMyLabel(myDna.label);
+        const myGenres: string[] = myDna.favorite_genres;
+        if (myDna.label) setMyLabel(myDna.label);
 
         const friendIds = [...new Set(
           friendships.map((f: any) => f.user_id === user!.id ? f.friend_id : f.user_id)
         )].filter((id: string) => id !== user!.id) as string[];
         if (friendIds.length === 0) { setNoFriends(true); return; }
 
-        // Build my genre signal map — prefer user_dna_signals, fall back to dna_profiles.favorite_genres
-        const mySignalMap = new Map<string, number>();
-        if (Array.isArray(mySignalsRaw) && mySignalsRaw.length > 0) {
-          mySignalsRaw.forEach((s: any) => mySignalMap.set(s.signal_value.toLowerCase(), Number(s.strength)));
-        } else if (Array.isArray(myDna?.favorite_genres) && myDna.favorite_genres.length > 0) {
-          myDna.favorite_genres.forEach((g: string) => mySignalMap.set(g.toLowerCase(), 0.5));
-        }
-        if (mySignalMap.size === 0) { setNoFriends(true); return; }
-
-        // 2. Fetch friends' genre signals, DNA labels, and display names in parallel
-        const [friendSignalsRes, friendDnaRes, friendUsersRes] = await Promise.all([
-          fetch(`${SUPABASE_URL}/rest/v1/user_dna_signals?user_id=in.(${friendIds.join(',')})&signal_type=eq.genre&select=user_id,signal_value,strength`, { headers }),
+        // 2. Fetch friends' DNA profiles + display names in parallel
+        // dna_profiles has public SELECT — so we get favorite_genres for all friends who have them
+        const [friendDnaRes, friendUsersRes] = await Promise.all([
           fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=in.(${friendIds.join(',')})&select=user_id,favorite_genres,label`, { headers }),
           fetch(`${SUPABASE_URL}/rest/v1/users?id=in.(${friendIds.join(',')})&select=id,display_name,user_name`, { headers }),
         ]);
-        const friendSignalsRaw: any[] = await friendSignalsRes.json() || [];
         const friendDnas: any[] = await friendDnaRes.json() || [];
         const friendUsers: any[] = await friendUsersRes.json() || [];
 
-        // Group friend signals by user_id
-        const friendSignalsByUser: Record<string, Map<string, number>> = {};
-        if (Array.isArray(friendSignalsRaw)) {
-          friendSignalsRaw.forEach((s: any) => {
-            if (!friendSignalsByUser[s.user_id]) friendSignalsByUser[s.user_id] = new Map();
-            friendSignalsByUser[s.user_id].set(s.signal_value.toLowerCase(), Number(s.strength));
-          });
-        }
-
-        // DNA label + fallback genres by user_id
+        // Build lookup maps
         const dnaByUser: Record<string, { label: string; genres: string[] }> = {};
         if (Array.isArray(friendDnas)) {
           friendDnas.forEach((d: any) => {
-            dnaByUser[d.user_id] = { label: d.label || '', genres: d.favorite_genres || [] };
+            dnaByUser[d.user_id] = { label: d.label || '', genres: Array.isArray(d.favorite_genres) ? d.favorite_genres : [] };
           });
         }
 
-        // 3. Score every friend using signal overlap — same algorithm as compare-dna-friend edge function
+        // 3. Score every friend by Jaccard genre overlap against my favorite_genres
+        // Friends without a DNA profile get pct=0 (no percentage shown)
+        const myGenreSet = new Set(myGenres.map((g: string) => g.toLowerCase()));
         const scored = (Array.isArray(friendUsers) ? friendUsers : []).map((u: any, i: number) => {
-          let friendMap = friendSignalsByUser[u.id] || new Map<string, number>();
-          // Fall back to dna_profiles.favorite_genres when no signals
-          if (friendMap.size === 0 && dnaByUser[u.id]?.genres.length > 0) {
-            friendMap = new Map(dnaByUser[u.id].genres.map((g: string) => [g.toLowerCase(), 0.5]));
-          }
-          // Compute match score (same as compare-dna-friend)
-          let matchScore = 0, totalWeight = 0;
-          for (const [genre, strength] of mySignalMap) {
-            if (friendMap.has(genre)) {
-              const friendStrength = friendMap.get(genre) || 0;
-              matchScore += (1 - Math.abs(strength - friendStrength)) * strength;
-            }
-            totalWeight += strength;
-          }
-          const pct = totalWeight > 0 ? Math.round((matchScore / totalWeight) * 100) : 0;
+          const friendGenres = dnaByUser[u.id]?.genres || [];
+          const pct = calcOverlapPct(myGenres, friendGenres);
           const displayName = u.display_name || u.user_name || 'Friend';
-          const sharedGenres = [...mySignalMap.keys()]
-            .filter(g => friendMap.has(g))
-            .slice(0, 3)
-            .map(g => g.charAt(0).toUpperCase() + g.slice(1));
-          return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: dnaByUser[u.id]?.label || null, userId: u.id, sharedGenres };
+          const shared = friendGenres.filter((g: string) => myGenreSet.has(g.toLowerCase()));
+          return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: dnaByUser[u.id]?.label || null, userId: u.id, sharedGenres: shared };
         }).sort((a: any, b: any) => b.pct - a.pct);
 
         if (scored.length === 0) { setNoFriends(true); return; }
@@ -579,12 +545,26 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         const firstName = top.displayName.split(' ')[0];
 
         setSharedGenresFromDna(top.sharedGenres.slice(0, 3));
+
+        // Use cached comparison score from dna_comparisons if it exists (authoritative score)
+        let featuredPct = top.pct;
+        try {
+          const cmpRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/dna_comparisons?or=(and(user_id_1.eq.${user!.id},user_id_2.eq.${top.userId}),and(user_id_1.eq.${top.userId},user_id_2.eq.${user!.id}))&select=match_score&limit=1`,
+            { headers }
+          );
+          const cmpData = await cmpRes.json();
+          if (Array.isArray(cmpData) && cmpData[0]?.match_score != null) {
+            featuredPct = Math.round(cmpData[0].match_score);
+          }
+        } catch { /* use genre overlap pct as fallback */ }
+
         setDynFeatured({
           displayName: top.displayName,
           initials: initials(top.displayName),
           color: top.color,
-          pct: top.pct,
-          tagline: buildTagline(top.pct, firstName),
+          pct: featuredPct,
+          tagline: buildTagline(featuredPct, firstName),
           label: top.label,
           userId: top.userId,
         });
