@@ -697,7 +697,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   forceNormal?: boolean;
   stackPosts?: any[];
   stackIndex?: number;
-  swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode };
+  swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode; animKey?: number };
 }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
@@ -1825,10 +1825,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             )}
 
             {/* Front card — tap poster → media detail page */}
+            {/* Clip wrapper: keeps slide animation inside poster bounds without clipping peek cards */}
+            <div style={{ position: 'absolute', width: 190, height: 252, zIndex: 5, overflow: 'hidden', borderRadius: 16 }}>
             <div
+              key={swipeProps?.animKey ?? post.id}
               ref={swipeProps?.ref}
               className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
-              style={{ height: 252, width: 190, position: 'absolute', zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.30)', ...(swipeProps?.style ?? {}) }}
+              style={{ height: 252, width: 190, ...(swipeProps?.style ?? {}) }}
               onClick={() => {
                 if (post.externalSource && post.externalId) {
                   setLocation(`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`);
@@ -1902,6 +1905,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
           </div>
         </div>
+            </div>{/* end clip wrapper */}
 
           </div>{/* end fan area */}
 
@@ -4243,61 +4247,41 @@ function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: s
   );
 }
 
-// Multi-card stack — smooth carousel with forward + back navigation
+// Multi-card stack — carousel with forward + back swipe and tap buttons
 function TinderCardStack({ posts, renderCard, hidePeekCards }: {
   posts: any[];
-  renderCard: (post: any, allPosts: any[], currentIndex: number, swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode }) => React.ReactNode;
+  renderCard: (post: any, allPosts: any[], currentIndex: number, swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode; animKey?: number }) => React.ReactNode;
   hidePeekCards?: boolean;
 }) {
   const [topIndex, setTopIndex] = useState(0);
   const [cardKey, setCardKey] = useState(0);
-  const slideDir = useRef(0); // 1 = forward (slide from right), -1 = back (slide from left)
-  const containerRef = useRef<HTMLDivElement>(null);
-  const touchStartX = useRef(0);
-  const touchStartY = useRef(0);
-  const topIndexRef = useRef(topIndex);
+  const slideDir = useRef(0); // 1=enter from right (fwd), -1=enter from left (back)
+  const topRef = useRef<HTMLDivElement>(null);
+  const topIndexRef = useRef(0);
   const postsLengthRef = useRef(posts.length);
   topIndexRef.current = topIndex;
   postsLengthRef.current = posts.length;
 
-  const goTo = useCallback((next: number, dir: number) => {
-    slideDir.current = dir;
+  // dir: -1 = left swipe = go forward; dir: 1 = right swipe = go back
+  const navigate = useCallback((dir: 1 | -1) => {
+    const cur = topIndexRef.current;
+    const len = postsLengthRef.current;
+    const next = dir === -1 ? cur + 1 : cur - 1;
+    if (next < 0 || next >= len) return;
+    slideDir.current = dir === -1 ? 1 : -1;
     setTopIndex(next);
     setCardKey(k => k + 1);
   }, []);
 
+  const { attachTo } = useSwipeGesture({
+    onOffsetChange: () => {},
+    onDraggingChange: () => {},
+    onDismiss: navigate,
+  });
+
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const onStart = (e: TouchEvent) => {
-      touchStartX.current = e.touches[0].clientX;
-      touchStartY.current = e.touches[0].clientY;
-    };
-    const onMove = (e: TouchEvent) => {
-      const dx = e.touches[0].clientX - touchStartX.current;
-      const dy = e.touches[0].clientY - touchStartY.current;
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) e.preventDefault();
-    };
-    const onEnd = (e: TouchEvent) => {
-      const dx = e.changedTouches[0].clientX - touchStartX.current;
-      const dy = e.changedTouches[0].clientY - touchStartY.current;
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 44) {
-        if (dx < 0 && topIndexRef.current < postsLengthRef.current - 1) {
-          goTo(topIndexRef.current + 1, 1);
-        } else if (dx > 0 && topIndexRef.current > 0) {
-          goTo(topIndexRef.current - 1, -1);
-        }
-      }
-    };
-    el.addEventListener('touchstart', onStart, { passive: true });
-    el.addEventListener('touchmove', onMove, { passive: false });
-    el.addEventListener('touchend', onEnd, { passive: true });
-    return () => {
-      el.removeEventListener('touchstart', onStart);
-      el.removeEventListener('touchmove', onMove);
-      el.removeEventListener('touchend', onEnd);
-    };
-  }, [goTo]);
+    if (topRef.current) return attachTo(topRef.current);
+  }, [attachTo, topIndex]);
 
   if (posts.length === 0) return null;
   const safeIndex = Math.min(topIndex, posts.length - 1);
@@ -4309,30 +4293,28 @@ function TinderCardStack({ posts, renderCard, hidePeekCards }: {
         @keyframes tcs-from-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
         @keyframes tcs-from-left  { from { transform: translateX(-100%); } to { transform: translateX(0); } }
       `}</style>
-      <div ref={containerRef} style={{ position: 'relative', marginBottom: 16 }}>
-        {/* Clip wrapper — keeps the slide animation inside the card boundary */}
-        <div style={{ overflow: 'hidden', borderRadius: 18, position: 'relative', zIndex: 10 }}>
-          <div
-            key={cardKey}
-            style={{ animation: animName ? `${animName} 0.28s ease forwards` : undefined }}
-          >
-            {renderCard(posts[safeIndex], posts, safeIndex)}
-          </div>
+      <div style={{ position: 'relative', marginBottom: 16 }}>
+        <div style={{ position: 'relative', zIndex: 10 }}>
+          {renderCard(posts[safeIndex], posts, safeIndex, {
+            style: { animation: animName ? `${animName} 0.28s ease forwards` : undefined } as React.CSSProperties,
+            ref: topRef,
+            overlays: <></>,
+            animKey: cardKey,
+          })}
         </div>
-        {/* Counter with back + forward tap buttons */}
         {posts.length > 1 && (
           <div
             className="absolute bottom-3 right-3 flex items-center gap-1 bg-white border border-gray-200 rounded-full shadow-sm z-20"
             style={{ pointerEvents: 'auto' }}
           >
             {safeIndex > 0 && (
-              <button onClick={() => goTo(safeIndex - 1, -1)} className="pl-2 pr-1 py-1">
+              <button onClick={() => navigate(1)} className="pl-2 pr-1 py-1">
                 <ChevronLeft size={10} className="text-gray-400" />
               </button>
             )}
             <span className="text-[10px] font-medium text-gray-500 px-1">{safeIndex + 1}/{posts.length}</span>
             {safeIndex < posts.length - 1 && (
-              <button onClick={() => goTo(safeIndex + 1, 1)} className="pr-2 pl-1 py-1">
+              <button onClick={() => navigate(-1)} className="pr-2 pl-1 py-1">
                 <ChevronRight size={10} className="text-gray-400" />
               </button>
             )}
