@@ -72,6 +72,21 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   // Trackpad horizontal swipe (wheel events with deltaX)
   const wheelAccumRef = useRef(0);
   const wheelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Slide-in animation state
+  const [animKey, setAnimKey] = useState(0);
+  const [enterDir, setEnterDir] = useState<'from-right' | 'from-left'>('from-right');
+
+  const navigateCarousel = (dir: 'next' | 'prev') => {
+    if (dir === 'next' && safeItemIndex < unansweredItems.length - 1) {
+      setEnterDir('from-right');
+      setAnimKey(k => k + 1);
+      setCurrentItemIndex(prev => prev + 1);
+    } else if (dir === 'prev' && safeItemIndex > 0) {
+      setEnterDir('from-left');
+      setAnimKey(k => k + 1);
+      setCurrentItemIndex(prev => prev - 1);
+    }
+  };
 
   // ── Data fetching (unchanged from original) ───────────────────────────────
   const { data: supabaseCompletedSets } = useQuery({
@@ -355,7 +370,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         </div>
         <div className="flex items-center gap-1">
           <button
-            onClick={() => setCurrentItemIndex(prev => Math.max(0, prev - 1))}
+            onClick={() => navigateCarousel('prev')}
             disabled={safeItemIndex === 0}
             className="disabled:opacity-30"
           >
@@ -365,7 +380,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           <button
             onClick={() => {
               if (safeItemIndex < unansweredItems.length - 1) {
-                setCurrentItemIndex(prev => prev + 1);
+                navigateCarousel('next');
               } else if (incompleteSets.length > 1) {
                 setCurrentSetIndex(prev => (prev + 1) % incompleteSets.length);
               }
@@ -391,8 +406,8 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           const dx = e.clientX - swipeStartXRef.current;
           const dy = e.clientY - swipeStartYRef.current;
           if (Math.abs(dx) < Math.abs(dy)) return;
-          if (dx < -20 && safeItemIndex < unansweredItems.length - 1) setCurrentItemIndex(prev => prev + 1);
-          else if (dx > 20 && safeItemIndex > 0) setCurrentItemIndex(prev => prev - 1);
+          if (dx < -20) navigateCarousel('next');
+          else if (dx > 20) navigateCarousel('prev');
         }}
         onTouchStart={(e) => {
           swipeStartXRef.current = e.touches[0].clientX;
@@ -402,11 +417,10 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           const dx = e.changedTouches[0].clientX - swipeStartXRef.current;
           const dy = e.changedTouches[0].clientY - swipeStartYRef.current;
           if (Math.abs(dx) < Math.abs(dy)) return;
-          if (dx < -20 && safeItemIndex < unansweredItems.length - 1) setCurrentItemIndex(prev => prev + 1);
-          else if (dx > 20 && safeItemIndex > 0) setCurrentItemIndex(prev => prev - 1);
+          if (dx < -20) navigateCarousel('next');
+          else if (dx > 20) navigateCarousel('prev');
         }}
         onWheel={(e) => {
-          // Trackpad two-finger horizontal swipe — deltaX dominant
           if (Math.abs(e.deltaX) < Math.abs(e.deltaY) * 0.7) return;
           e.stopPropagation();
           wheelAccumRef.current += e.deltaX;
@@ -414,8 +428,8 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           wheelTimerRef.current = setTimeout(() => {
             const total = wheelAccumRef.current;
             wheelAccumRef.current = 0;
-            if (total > 30 && safeItemIndex < unansweredItems.length - 1) setCurrentItemIndex(prev => prev + 1);
-            else if (total < -30 && safeItemIndex > 0) setCurrentItemIndex(prev => prev - 1);
+            if (total > 30) navigateCarousel('next');
+            else if (total < -30) navigateCarousel('prev');
           }, 80);
         }}
       >
@@ -441,13 +455,15 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           </div>
         )}
 
-        {/* Front card — static; tap navigates to media detail */}
+        {/* Front card — animates in on each navigation */}
         <div
+          key={animKey}
           style={{
             position: 'absolute', width: 208, height: 282, borderRadius: 16, overflow: 'hidden',
             zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.28)',
             pointerEvents: 'auto',
             cursor: activeItem.external_id ? 'pointer' : 'default',
+            animation: `seen-it-${enterDir} 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94) both`,
           }}
           onClick={(e) => {
             // Block navigation if this click was the end of a swipe gesture
