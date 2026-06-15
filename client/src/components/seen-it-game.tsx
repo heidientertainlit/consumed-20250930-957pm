@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Eye, ChevronRight, Check, X, Plus, Star, Loader2, Sparkles, BookOpen, Headphones, Gamepad2, Heart } from "lucide-react";
+import { Eye, ChevronLeft, ChevronRight, Check, X, Plus, Star, Loader2, Sparkles, BookOpen, Headphones, Gamepad2, Heart } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
@@ -438,9 +438,9 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   if (!currentSet) return null;
 
   const mediaConfig = getMediaTypeConfig(currentSet.media_type);
-  // Only show unanswered items as the swipe queue
-  const unansweredItems = currentSet.items.filter(item => responses[item.id] === undefined);
   const totalItems = currentSet.items.length;
+  // unansweredItems only used for completion detection
+  const unansweredItems = currentSet.items.filter(item => responses[item.id] === undefined);
   const doneCount = totalItems - unansweredItems.length;
 
   if (unansweredItems.length === 0) {
@@ -451,8 +451,10 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     return null;
   }
 
-  const activeItem = unansweredItems[currentItemIndex] ?? unansweredItems[0];
-  const activeIdx = unansweredItems.findIndex(i => i.id === activeItem.id);
+  // Navigate all items (including already-answered) so back works
+  const safeItemIndex = Math.min(currentItemIndex, totalItems - 1);
+  const activeItem = currentSet.items[safeItemIndex];
+  const activeIdx = safeItemIndex;
 
   // Keep refs current so gesture event listeners always see fresh values
   activeItemRef.current = activeItem;
@@ -471,13 +473,28 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           <span className="text-gray-900 font-semibold text-sm">Seen It?</span>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${mediaConfig.pillBg}`}>{mediaConfig.pill}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-purple-500 text-xs font-medium">{doneCount + 1} of {totalItems}</span>
-          {incompleteSets.length > 1 && (
-            <button onClick={() => setCurrentSetIndex(prev => (prev + 1) % incompleteSets.length)}>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </button>
-          )}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setCurrentItemIndex(prev => Math.max(0, prev - 1))}
+            disabled={safeItemIndex === 0}
+            className="disabled:opacity-30"
+          >
+            <ChevronLeft className="w-4 h-4 text-gray-400" />
+          </button>
+          <span className="text-purple-500 text-xs font-medium">{safeItemIndex + 1} of {totalItems}</span>
+          <button
+            onClick={() => {
+              if (safeItemIndex < totalItems - 1) {
+                setCurrentItemIndex(prev => prev + 1);
+              } else if (incompleteSets.length > 1) {
+                setCurrentSetIndex(prev => (prev + 1) % incompleteSets.length);
+              }
+            }}
+            disabled={safeItemIndex === totalItems - 1 && incompleteSets.length <= 1}
+            className="disabled:opacity-30"
+          >
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+          </button>
         </div>
       </div>
 
@@ -487,25 +504,25 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         className="relative flex items-center justify-center select-none"
         style={{ height: 310, overflow: 'visible', cursor: isActiveDrag ? 'grabbing' : 'grab', touchAction: 'pan-y' }}
       >
-        {/* Left peek card */}
-        {unansweredItems[activeIdx + 2] && (
+        {/* Left peek card — previous item */}
+        {currentSet.items[activeIdx - 1] && (
           <div style={{
             position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
             transform: 'translateX(-52px) rotate(-8deg) scale(0.88)',
             zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
           }}>
-            <img src={unansweredItems[activeIdx + 2].image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            <img src={currentSet.items[activeIdx - 1].image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
         )}
 
-        {/* Right peek card */}
-        {unansweredItems[activeIdx + 1] && (
+        {/* Right peek card — next item */}
+        {currentSet.items[activeIdx + 1] && (
           <div style={{
             position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
             transform: 'translateX(52px) rotate(8deg) scale(0.88)',
             zIndex: 2, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
           }}>
-            <img src={unansweredItems[activeIdx + 1].image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            <img src={currentSet.items[activeIdx + 1].image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
         )}
 
