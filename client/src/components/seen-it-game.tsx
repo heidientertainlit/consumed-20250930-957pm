@@ -78,6 +78,8 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   // Trackpad wheel accumulation
   const wheelAccum = useRef(0);
   const wheelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Stable navigate ref so gesture listeners can call it without stale closures
+  const navigateCarouselRef = useRef<(dir: -1 | 1) => void>(() => {});
 
   // ── Data fetching (unchanged from original) ───────────────────────────────
   const { data: supabaseCompletedSets } = useQuery({
@@ -325,17 +327,10 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     if (!el) return;
 
     const commit = (dx: number) => {
-      const item = activeItemRef.current;
-      const setId = activeSetIdRef.current;
-      if (!item || !setId) { setDragX(0); currentDragX.current = 0; return; }
-      if (dx > SWIPE_THRESHOLD) {
-        // Fly card off-screen right, then record response
-        setDragX(380); currentDragX.current = 380;
-        setTimeout(() => { handleResponseRef.current(setId, item, true); }, 420);
-      } else if (dx < -SWIPE_THRESHOLD) {
-        // Fly card off-screen left, then record response
-        setDragX(-380); currentDragX.current = -380;
-        setTimeout(() => { handleResponseRef.current(setId, item, 'skip'); }, 420);
+      if (dx < -SWIPE_THRESHOLD) {
+        navigateCarouselRef.current(-1);
+      } else if (dx > SWIPE_THRESHOLD) {
+        navigateCarouselRef.current(1);
       } else {
         setDragX(0);
         currentDragX.current = 0;
@@ -465,6 +460,13 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   // Keep refs current so gesture event listeners always see fresh values
   activeItemRef.current = activeItem;
   activeSetIdRef.current = currentSet.id;
+  // Update carousel navigate ref every render so the closure in useEffect stays fresh
+  navigateCarouselRef.current = (dir: -1 | 1) => {
+    if (dir === -1) setCurrentItemIndex(prev => Math.min(prev + 1, unansweredItems.length - 1));
+    if (dir === 1) setCurrentItemIndex(prev => Math.max(0, prev - 1));
+    setDragX(0);
+    currentDragX.current = 0;
+  };
 
   const isSwipingRight = dragX > 20;
   const isSwipingLeft = dragX < -20;
@@ -537,10 +539,8 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           style={{
             position: 'absolute', width: 208, height: 282, borderRadius: 16, overflow: 'hidden',
             zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.28)',
-            transform: `translateX(${dragX}px) rotate(${dragX * 0.06}deg)`,
-            transition: isActiveDrag ? 'none' : Math.abs(dragX) > 300
-              ? 'transform 0.42s cubic-bezier(0.25,0.46,0.45,0.94)'
-              : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            transform: `translateX(${dragX}px)`,
+            transition: isActiveDrag ? 'none' : 'transform 0.3s ease-out',
             pointerEvents: 'auto',
             cursor: activeItem.external_id ? 'pointer' : 'grab',
           }}
@@ -563,22 +563,6 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
             <p style={{ color: 'white', fontWeight: 700, fontSize: 14, lineHeight: 1.25, margin: 0 }}>{activeItem.title}</p>
             {(activeItem as any).year && <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, margin: '2px 0 0' }}>{(activeItem as any).year}</p>}
           </div>
-          {/* SEEN overlay */}
-          {isSwipingRight && (
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(34,197,94,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ border: '3px solid #22c55e', borderRadius: 8, padding: '4px 14px' }}>
-                <span style={{ color: '#22c55e', fontWeight: 800, fontSize: 22, letterSpacing: 2 }}>SEEN</span>
-              </div>
-            </div>
-          )}
-          {/* SKIP overlay */}
-          {isSwipingLeft && (
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ border: '2px solid rgba(255,255,255,0.7)', borderRadius: 8, padding: '4px 14px' }}>
-                <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 800, fontSize: 22, letterSpacing: 2 }}>NEXT</span>
-              </div>
-            </div>
-          )}
           {/* Rating stars overlay */}
           {ratingItem === activeItem.id && (
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.75)', padding: '12px 16px', display: 'flex', justifyContent: 'center', gap: 8, pointerEvents: 'auto' }}>
