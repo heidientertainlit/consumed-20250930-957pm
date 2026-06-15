@@ -8094,98 +8094,45 @@ export default function Feed() {
                 <SeenItGame mediaTypeFilter="movie" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
-              {/* DNA Clash card — rotates every 2 days, data from prediction_pools (type='clash') */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (() => {
-                // Hardcoded fallback used until DB pools are populated
-                const hardcodedMatchups = [
-                  {
-                    id: null,
-                    user1: { displayName: 'Ambiannie', username: 'Ambiannie', userId: '2510625e-8a51-4637-9eb4-4d91ba3e76af', dnaLabel: 'Emotional Sleuth', rating: 5, initials: 'A', color: '#a855f7', votes: 0, quote: 'The Fellowship is the emotional heart of the trilogy. Nothing tops it.', tags: ['Emotional', 'Character-Driven', 'Epic'] },
-                    user2: { displayName: 'Kimberly Woods', username: 'KJWoodsEMH', userId: 'fa6d73af-da96-494b-b8ee-33d059bed7d5', dnaLabel: 'Mystery-Loving Escapist', rating: 1, initials: 'KW', color: '#3b82f6', votes: 0, quote: "It's the weakest film because nothing actually happens.", tags: ['Pacing', 'Plot-Driven', 'Overrated'] },
-                    mediaTitle: 'The Lord of the Rings: Fellowship of the Ring', mediaType: 'movie', externalId: '120', externalSource: 'tmdb',
-                    posterUrl: 'https://image.tmdb.org/t/p/w780/mfwq2nMBzArzQ7Y9RKE8SKeeTkg.jpg',
-                  },
-                  {
-                    id: null,
-                    user1: { displayName: 'Trey', username: 'Trey', userId: '7a7a0c3a-f2a4-47ed-b05d-1daf40d46d40', dnaLabel: 'Drama Devotee', rating: 5, initials: 'T', color: '#a855f7', votes: 0, quote: "Euphoria is cinema. The storytelling and visuals are on another level.", tags: ['Cinematic', 'Raw', 'Emotional'] },
-                    user2: { displayName: 'Jordan F.', username: 'Jrgibsongirl', userId: '188feb17-6711-43d4-bf24-b117c377591c', dnaLabel: 'Casual Binger', rating: 2, initials: 'JF', color: '#3b82f6', votes: 0, quote: "Way too dark and stylized for no real payoff. It exhausted me.", tags: ['Overhyped', 'Draining', 'Pretentious'] },
-                    mediaTitle: 'Euphoria', mediaType: 'tv', externalId: '85552', externalSource: 'tmdb',
-                    posterUrl: 'https://image.tmdb.org/t/p/w780/ggFHVNu6YYI5L9pCfOacjizRGt.jpg',
-                  },
-                  {
-                    id: null,
-                    user1: { displayName: 'Jeeppler', username: 'Jeeppler', userId: '41849796-014e-414c-ad4f-7fe99bdc69f8', dnaLabel: 'Crime Obsessive', rating: 5, initials: 'J', color: '#a855f7', votes: 0, quote: "The greatest show ever made, period. Walter White is unmatched.", tags: ['Masterpiece', 'Intense', 'Rewatchable'] },
-                    user2: { displayName: 'Punkin Pie', username: 'punkinpie123', userId: '561f2c21-69e9-4282-bceb-51146a405ea3', dnaLabel: 'Light & Breezy Fan', rating: 1, initials: 'PP', color: '#3b82f6', votes: 0, quote: "Too slow, too dark, too stressful. I gave up after season 2.", tags: ['Slow', 'Dark', 'Overrated'] },
-                    mediaTitle: 'Breaking Bad', mediaType: 'tv', externalId: '1396', externalSource: 'tmdb',
-                    posterUrl: 'https://image.tmdb.org/t/p/w780/tsRy63Mu5cu8etL1X7ZLyf7UP1M.jpg',
-                  },
-                  {
-                    id: null,
-                    user1: { displayName: 'Heidi', username: 'HeidiIsConsumed', userId: '88bfb2a0-e8ce-4081-b731-2a49567ff093', dnaLabel: 'Genre Adventurer', rating: 5, initials: 'H', color: '#a855f7', votes: 0, quote: "Comfort TV at its finest. I've rewatched it four times and still laugh.", tags: ['Comfort', 'Funny', 'Rewatchable'] },
-                    user2: { displayName: 'Ambiannie', username: 'Ambiannie', userId: '2510625e-8a51-4637-9eb4-4d91ba3e76af', dnaLabel: 'Emotional Sleuth', rating: 2, initials: 'A', color: '#3b82f6', votes: 0, quote: "The cringe humor is too much. Michael Scott makes me want to look away.", tags: ['Cringe', 'Exhausting', 'Overrated'] },
-                    mediaTitle: 'The Office', mediaType: 'tv', externalId: '2316', externalSource: 'tmdb',
-                    posterUrl: 'https://image.tmdb.org/t/p/w780/l0qVZIpXtIo7km9u5Yqh0nKPOr5.jpg',
-                  },
-                ];
-
+              {/* DNA Clash card — rotates every 2 days, always from prediction_pools (type='clash'). */}
+              {/* NEVER use hardcoded matchups here — all ratings must come from real media_ratings data in the DB. */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && clashPools.length > 0 && (() => {
                 const dayIndex = Math.floor(Date.now() / 86400000);
-
-                // Use DB pools if available; fall back to hardcoded
-                if (clashPools.length > 0) {
-                  const pool = clashPools[Math.floor(dayIndex / 2) % clashPools.length];
-                  const opts: any[] = Array.isArray(pool.options) ? pool.options : [];
-                  if (opts.length < 2) return null;
-                  const [o1, o2] = opts;
-                  const u1 = {
-                    displayName: o1.displayName || o1.label,
-                    username: o1.username || o1.label,
-                    userId: o1.userId || o1.user_id || '',
-                    dnaLabel: o1.dnaLabel || o1.archetype || '',
-                    rating: o1.rating || 0,
-                    initials: o1.initials || (o1.displayName || o1.label || '').slice(0, 2).toUpperCase(),
-                    color: o1.color || '#a855f7',
-                    votes: 0,
-                  };
-                  const u2 = {
-                    displayName: o2.displayName || o2.label,
-                    username: o2.username || o2.label,
-                    userId: o2.userId || o2.user_id || '',
-                    dnaLabel: o2.dnaLabel || o2.archetype || '',
-                    rating: o2.rating || 0,
-                    initials: o2.initials || (o2.displayName || o2.label || '').slice(0, 2).toUpperCase(),
-                    color: o2.color || '#3b82f6',
-                    votes: 0,
-                  };
-                  return (
-                    <DnaClashFeedCard
-                      key={`clash-${pool.id}`}
-                      poolId={pool.id}
-                      user1={u1}
-                      user2={u2}
-                      mediaTitle={pool.media_title || ''}
-                      mediaType={pool.media_type || ''}
-                      externalId={pool.media_external_id || ''}
-                      externalSource={pool.media_external_source || ''}
-                      posterUrl={pool.poster_url || pool.media_poster || undefined}
-                      currentUserId={effectiveUserId || undefined}
-                      session={session}
-                      onOptOut={() => {}}
-                    />
-                  );
-                }
-
-                // Fallback: hardcoded matchups (no DB pools yet)
-                const clash = hardcodedMatchups[Math.floor(dayIndex / 2) % hardcodedMatchups.length];
+                const pool = clashPools[Math.floor(dayIndex / 2) % clashPools.length];
+                const opts: any[] = Array.isArray(pool.options) ? pool.options : [];
+                if (opts.length < 2) return null;
+                const [o1, o2] = opts;
+                const u1 = {
+                  displayName: o1.displayName || o1.label,
+                  username: o1.username || o1.label,
+                  userId: o1.userId || o1.user_id || '',
+                  dnaLabel: o1.dnaLabel || o1.archetype || '',
+                  rating: o1.rating || 0,
+                  initials: o1.initials || (o1.displayName || o1.label || '').slice(0, 2).toUpperCase(),
+                  color: o1.color || '#a855f7',
+                  votes: 0,
+                };
+                const u2 = {
+                  displayName: o2.displayName || o2.label,
+                  username: o2.username || o2.label,
+                  userId: o2.userId || o2.user_id || '',
+                  dnaLabel: o2.dnaLabel || o2.archetype || '',
+                  rating: o2.rating || 0,
+                  initials: o2.initials || (o2.displayName || o2.label || '').slice(0, 2).toUpperCase(),
+                  color: o2.color || '#3b82f6',
+                  votes: 0,
+                };
                 return (
                   <DnaClashFeedCard
-                    key={`clash-${clash.mediaTitle}`}
-                    user1={clash.user1}
-                    user2={clash.user2}
-                    mediaTitle={clash.mediaTitle}
-                    mediaType={clash.mediaType}
-                    externalId={clash.externalId}
-                    externalSource={clash.externalSource}
-                    posterUrl={(clash as any).posterUrl}
+                    key={`clash-${pool.id}`}
+                    poolId={pool.id}
+                    user1={u1}
+                    user2={u2}
+                    mediaTitle={pool.media_title || ''}
+                    mediaType={pool.media_type || ''}
+                    externalId={pool.media_external_id || ''}
+                    externalSource={pool.media_external_source || ''}
+                    posterUrl={o1.posterUrl || o2.posterUrl || undefined}
                     currentUserId={effectiveUserId || undefined}
                     session={session}
                     onOptOut={() => {}}
