@@ -68,6 +68,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
 
   // ── Swipe drag state ──────────────────────────────────────────────────────
   const [dragX, setDragX] = useState(0);
+  const [skipTransition, setSkipTransition] = useState(false);
   const gestureRef = useRef<HTMLDivElement>(null);
   // Use refs for gesture tracking to avoid stale closures in event listeners
   const dragStartX = useRef(0);
@@ -462,10 +463,21 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   activeSetIdRef.current = currentSet.id;
   // Update carousel navigate ref every render so the closure in useEffect stays fresh
   navigateCarouselRef.current = (dir: -1 | 1) => {
-    if (dir === -1) setCurrentItemIndex(prev => Math.min(prev + 1, unansweredItems.length - 1));
-    if (dir === 1) setCurrentItemIndex(prev => Math.max(0, prev - 1));
-    setDragX(0);
-    currentDragX.current = 0;
+    const total = unansweredItems.length;
+    // Step 1: fly card off screen in the direction of the swipe
+    const flyTo = dir === -1 ? -420 : 420;
+    setDragX(flyTo);
+    currentDragX.current = flyTo;
+    // Step 2: after fly-out completes, cut to new card with no transition
+    setTimeout(() => {
+      setSkipTransition(true);
+      if (dir === -1) setCurrentItemIndex(prev => Math.min(prev + 1, total - 1));
+      else            setCurrentItemIndex(prev => Math.max(0, prev - 1));
+      setDragX(0);
+      currentDragX.current = 0;
+      // Step 3: re-enable transition next frame so future drags/snaps animate
+      requestAnimationFrame(() => setSkipTransition(false));
+    }, 280);
   };
 
   const isSwipingRight = dragX > 20;
@@ -540,7 +552,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
             position: 'absolute', width: 208, height: 282, borderRadius: 16, overflow: 'hidden',
             zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.28)',
             transform: `translateX(${dragX}px)`,
-            transition: isActiveDrag ? 'none' : 'transform 0.3s ease-out',
+            transition: isActiveDrag || skipTransition ? 'none' : 'transform 0.3s ease-out',
             pointerEvents: 'auto',
             cursor: activeItem.external_id ? 'pointer' : 'grab',
           }}
