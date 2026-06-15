@@ -379,22 +379,28 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
       <div
         className="relative flex items-center justify-center select-none"
         style={{ height: 310, overflow: 'visible', touchAction: 'pan-y' }}
-        onPointerDown={(e) => {
+        onMouseDown={(e) => {
           if ((e.target as HTMLElement).closest('button')) return;
           swipeStartXRef.current = e.clientX;
           swipeStartYRef.current = e.clientY;
-          e.currentTarget.setPointerCapture(e.pointerId);
         }}
-        onPointerUp={(e) => {
+        onMouseUp={(e) => {
           const dx = e.clientX - swipeStartXRef.current;
           const dy = e.clientY - swipeStartYRef.current;
-          // Only count as horizontal swipe if horizontal motion dominates
-          if (Math.abs(dx) < Math.abs(dy) * 0.8) return;
-          if (dx < -25 && safeItemIndex < unansweredItems.length - 1) {
-            setCurrentItemIndex(prev => prev + 1);
-          } else if (dx > 25 && safeItemIndex > 0) {
-            setCurrentItemIndex(prev => prev - 1);
-          }
+          if (Math.abs(dx) < Math.abs(dy)) return;
+          if (dx < -20 && safeItemIndex < unansweredItems.length - 1) setCurrentItemIndex(prev => prev + 1);
+          else if (dx > 20 && safeItemIndex > 0) setCurrentItemIndex(prev => prev - 1);
+        }}
+        onTouchStart={(e) => {
+          swipeStartXRef.current = e.touches[0].clientX;
+          swipeStartYRef.current = e.touches[0].clientY;
+        }}
+        onTouchEnd={(e) => {
+          const dx = e.changedTouches[0].clientX - swipeStartXRef.current;
+          const dy = e.changedTouches[0].clientY - swipeStartYRef.current;
+          if (Math.abs(dx) < Math.abs(dy)) return;
+          if (dx < -20 && safeItemIndex < unansweredItems.length - 1) setCurrentItemIndex(prev => prev + 1);
+          else if (dx > 20 && safeItemIndex > 0) setCurrentItemIndex(prev => prev - 1);
         }}
       >
         {/* Left peek card — fixed position, never moves */}
