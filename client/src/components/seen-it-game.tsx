@@ -487,6 +487,36 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
             <p style={{ color: 'white', fontWeight: 700, fontSize: 14, lineHeight: 1.25, margin: 0 }}>{activeItem.title}</p>
             {(activeItem as any).year && <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, margin: '2px 0 0' }}>{(activeItem as any).year}</p>}
           </div>
+          {/* Add to list — purple circle overlaid bottom-right */}
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onAddToList) {
+                onAddToList({
+                  title: activeItem.title,
+                  image_url: activeItem.image_url,
+                  external_id: activeItem.external_id,
+                  external_source: activeItem.external_source,
+                  media_type: activeItem.media_type || currentSet.media_type,
+                });
+              } else {
+                handleResponse(currentSet.id, activeItem, 'want_to');
+              }
+            }}
+            style={{
+              position: 'absolute', bottom: 12, right: 12,
+              width: 36, height: 36, borderRadius: '50%',
+              background: '#7C3AED', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', pointerEvents: 'auto',
+              boxShadow: '0 2px 8px rgba(124,58,237,0.5)',
+              zIndex: 10,
+            }}
+          >
+            <Plus size={18} color="white" />
+          </button>
+
           {/* Rating stars overlay */}
           {ratingItem === activeItem.id && (
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.75)', padding: '12px 16px', display: 'flex', justifyContent: 'center', gap: 8, pointerEvents: 'auto' }}>
@@ -518,29 +548,6 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
             <Check size={22} className={responses[activeItem.id] === true ? 'text-white' : 'text-gray-500'} />
           </div>
           <span className={`text-[10px] font-medium ${responses[activeItem.id] === true ? 'text-green-600' : 'text-gray-400'}`}>{mediaConfig.actionYes}</span>
-        </button>
-
-        {/* Add to list — opens quick-add modal if prop available */}
-        <button
-          onClick={() => {
-            if (onAddToList) {
-              onAddToList({
-                title: activeItem.title,
-                image_url: activeItem.image_url,
-                external_id: activeItem.external_id,
-                external_source: activeItem.external_source,
-                media_type: activeItem.media_type || currentSet.media_type,
-              });
-            } else {
-              handleResponse(currentSet.id, activeItem, 'want_to');
-            }
-          }}
-          className="flex flex-col items-center gap-1 group"
-        >
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
-            <Plus size={20} className="text-gray-500" />
-          </div>
-          <span className="text-[10px] text-gray-400">Add to list</span>
         </button>
 
         {/* Rate it — gray, optional */}
