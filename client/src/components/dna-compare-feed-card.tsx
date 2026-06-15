@@ -511,27 +511,50 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         )].filter((id: string) => id !== user!.id) as string[];
         if (friendIds.length === 0) { setNoFriends(true); return; }
 
-        // 2. Fetch friends' DNA profiles + display names in parallel
-        const [friendDnaRes, friendUsersRes] = await Promise.all([
+        // ⚠️ IMPORTANT: dna_comparisons.match_score is the AUTHORITATIVE source for alignment %.
+        // Do NOT replace with Jaccard genre overlap — that gives fake flat scores.
+        // If a friend has no row in dna_comparisons, Jaccard is used as a fallback ONLY.
+        // Real scores come from the compare-dna-friend edge function writing to dna_comparisons.
+        // 2. Fetch friends' DNA profiles, display names, AND all cached comparison scores in parallel
+        const [friendDnaRes, friendUsersRes, allCmpRes] = await Promise.all([
           fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=in.(${friendIds.join(',')})&select=user_id,favorite_genres,label`, { headers }),
           fetch(`${SUPABASE_URL}/rest/v1/users?id=in.(${friendIds.join(',')})&select=id,display_name,user_name`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/dna_comparisons?or=(user_id_1.eq.${user!.id},user_id_2.eq.${user!.id})&select=user_id_1,user_id_2,match_score`, { headers }),
         ]);
         const friendDnas = await friendDnaRes.json();
         const friendUsers = await friendUsersRes.json();
+        const allCmpRaw = await allCmpRes.json();
         if (!Array.isArray(friendDnas) || friendDnas.length === 0) return;
 
-        // 3. Score each friend by genre overlap — only users with a DNA profile get a pct
+        // Build a map of friendId → real match_score from dna_comparisons (authoritative)
+        const cmpMap = new Map<string, number>();
+        if (Array.isArray(allCmpRaw)) {
+          for (const row of allCmpRaw) {
+            const friendId = row.user_id_1 === user!.id ? row.user_id_2 : row.user_id_1;
+            // Keep the highest score if duplicate rows exist
+            if (!cmpMap.has(friendId) || row.match_score > cmpMap.get(friendId)!) {
+              cmpMap.set(friendId, Math.round(row.match_score));
+            }
+          }
+        }
+
+        // 3. Score each friend — use dna_comparisons score as primary, Jaccard as fallback
         const myGenreSet = new Set(myGenres.map((g: string) => g.toLowerCase()));
         const scored = friendDnas
           .map((fd: any, i: number) => {
             const genres: string[] = Array.isArray(fd.favorite_genres) ? fd.favorite_genres : [];
-            const pct = calcOverlapPct(myGenres, genres);
+            const jaccard = calcOverlapPct(myGenres, genres);
+            const realPct = cmpMap.has(fd.user_id) ? cmpMap.get(fd.user_id)! : jaccard;
             const info = Array.isArray(friendUsers) ? friendUsers.find((u: any) => u.id === fd.user_id) : null;
             const displayName = info?.display_name || info?.user_name || 'Friend';
             const shared = genres.filter((g: string) => myGenreSet.has(g.toLowerCase()));
-            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id, sharedGenres: shared };
+            return { displayName, pct: realPct, hasRealScore: cmpMap.has(fd.user_id), color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id, sharedGenres: shared };
           })
-          .sort((a: any, b: any) => b.pct - a.pct);
+          // Sort: real cached scores first (descending), then Jaccard fallbacks (descending)
+          .sort((a: any, b: any) => {
+            if (a.hasRealScore !== b.hasRealScore) return a.hasRealScore ? -1 : 1;
+            return b.pct - a.pct;
+          });
 
         if (scored.length === 0) return;
         const [top, ...rest] = scored;
@@ -539,29 +562,16 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
         setSharedGenresFromDna(top.sharedGenres.slice(0, 3));
 
-        // Use cached comparison score from dna_comparisons if available (authoritative)
-        let featuredPct = top.pct;
-        try {
-          const cmpRes = await fetch(
-            `${SUPABASE_URL}/rest/v1/dna_comparisons?or=(and(user_id_1.eq.${user!.id},user_id_2.eq.${top.userId}),and(user_id_1.eq.${top.userId},user_id_2.eq.${user!.id}))&select=match_score&limit=1`,
-            { headers }
-          );
-          const cmpData = await cmpRes.json();
-          if (Array.isArray(cmpData) && cmpData[0]?.match_score != null) {
-            featuredPct = Math.round(cmpData[0].match_score);
-          }
-        } catch { /* use genre Jaccard pct as fallback */ }
-
         setDynFeatured({
           displayName: top.displayName,
           initials: initials(top.displayName),
           color: top.color,
-          pct: featuredPct,
-          tagline: buildTagline(featuredPct, firstName),
+          pct: top.pct,
+          tagline: buildTagline(top.pct, firstName),
           label: top.label,
           userId: top.userId,
         });
-        // Only show DNA-scored friends (those with a real pct value)
+        // Others Aligned: prefer friends with real cached scores, then Jaccard fallbacks
         setDynOverlaps(rest.slice(0, 5).map((r: any) => ({
           displayName: r.displayName,
           initials: initials(r.displayName),
