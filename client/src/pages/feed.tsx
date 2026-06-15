@@ -4243,177 +4243,103 @@ function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: s
   );
 }
 
-// Multi-card stack — shows current card with peek cards behind, Tinder-style
+// Multi-card stack — smooth carousel with forward + back navigation
 function TinderCardStack({ posts, renderCard, hidePeekCards }: {
   posts: any[];
   renderCard: (post: any, allPosts: any[], currentIndex: number, swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode }) => React.ReactNode;
   hidePeekCards?: boolean;
 }) {
   const [topIndex, setTopIndex] = useState(0);
-  const [offset, setOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [flyingOut, setFlyingOut] = useState(false);
-  // Suppress transition during card swap so the next card snaps into place
-  // rather than sliding in from the direction the previous card flew off.
-  const [skipTransition, setSkipTransition] = useState(false);
-  const topRef = useRef<HTMLDivElement>(null);
+  const [cardKey, setCardKey] = useState(0);
+  const slideDir = useRef(0); // 1 = forward (slide from right), -1 = back (slide from left)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const topIndexRef = useRef(topIndex);
+  const postsLengthRef = useRef(posts.length);
+  topIndexRef.current = topIndex;
+  postsLengthRef.current = posts.length;
 
-  const dismiss = useCallback((dir: 1 | -1) => {
-    setFlyingOut(true);
-    setOffset(dir * 380);
-    setTimeout(() => {
-      // Kill transition BEFORE changing content so the new card never
-      // inherits the outgoing card's position and slides in.
-      setSkipTransition(true);
-      setTopIndex(i => i + 1);
-      setOffset(0);
-      setFlyingOut(false);
-      // Re-enable transitions two frames later (after browser has painted)
-      requestAnimationFrame(() => requestAnimationFrame(() => setSkipTransition(false)));
-    }, 420);
+  const goTo = useCallback((next: number, dir: number) => {
+    slideDir.current = dir;
+    setTopIndex(next);
+    setCardKey(k => k + 1);
   }, []);
 
-  const { attachTo } = useSwipeGesture({
-    onOffsetChange: setOffset,
-    onDraggingChange: setIsDragging,
-    onDismiss: dismiss,
-  });
-
   useEffect(() => {
-    if (topRef.current) return attachTo(topRef.current);
-  }, [attachTo, topIndex]); // re-attach when top card changes
+    const el = containerRef.current;
+    if (!el) return;
+    const onStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+    };
+    const onMove = (e: TouchEvent) => {
+      const dx = e.touches[0].clientX - touchStartX.current;
+      const dy = e.touches[0].clientY - touchStartY.current;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) e.preventDefault();
+    };
+    const onEnd = (e: TouchEvent) => {
+      const dx = e.changedTouches[0].clientX - touchStartX.current;
+      const dy = e.changedTouches[0].clientY - touchStartY.current;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 44) {
+        if (dx < 0 && topIndexRef.current < postsLengthRef.current - 1) {
+          goTo(topIndexRef.current + 1, 1);
+        } else if (dx > 0 && topIndexRef.current > 0) {
+          goTo(topIndexRef.current - 1, -1);
+        }
+      }
+    };
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+    };
+  }, [goTo]);
 
-  const remaining = posts.slice(topIndex);
-  if (remaining.length === 0) return null;
-
-  const rotation = offset * 0.06;
-  const showRight = offset > 20;
-  const showLeft = offset < -20;
-  const peekCount = Math.min(2, remaining.length - 1);
-
-  // ── Seen-It style fan constants ─────────────────────────────────────
-  const CARD_W = 220;
-  const CARD_H = 330;
-  // Peek card mini-content helper
-  const peekCardContent = (p: any) => {
-    const rating = p?.rating || 0;
-    const name = p?.user?.displayName || p?.user?.username || '';
-    return (
-      <>
-        {p?.mediaImage && p.mediaImage.startsWith('http') && (
-          <img src={p.mediaImage} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-        )}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.95) 30%, rgba(0,0,0,0.05) 65%)' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 12px 14px' }}>
-          {rating > 0 && (
-            <div style={{ display: 'flex', gap: 2, marginBottom: 5 }}>
-              {[1,2,3,4,5].map(s => (
-                <span key={s} style={{ fontSize: 15, color: s <= Math.round(rating) ? '#facc15' : 'rgba(255,255,255,0.2)' }}>★</span>
-              ))}
-            </div>
-          )}
-          {p?.content && (
-            <p style={{ color: 'white', fontSize: 11, fontStyle: 'italic', lineHeight: 1.35, margin: '0 0 3px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any }}>
-              "{p.content}"
-            </p>
-          )}
-          {name && <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 10 }}>— {name}</p>}
-          <div style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Heart size={12} color="white" />
-          </div>
-        </div>
-      </>
-    );
-  };
+  if (posts.length === 0) return null;
+  const safeIndex = Math.min(topIndex, posts.length - 1);
+  const animName = slideDir.current > 0 ? 'tcs-from-right' : slideDir.current < 0 ? 'tcs-from-left' : '';
 
   return (
-    <div style={{ position: 'relative', marginBottom: 16, overflow: 'visible' }}>
-      {/* Left peek card (remaining[2]) — rotated counter-clockwise */}
-      {!hidePeekCards && peekCount >= 2 && remaining[2] && (
-        <div style={{
-          position: 'absolute',
-          left: `calc(50% - ${CARD_W / 2}px)`,
-          top: 14,
-          width: CARD_W,
-          height: CARD_H,
-          borderRadius: 18,
-          overflow: 'hidden',
-          background: '#111827',
-          transform: 'translateX(-110px) rotate(-12deg) scale(0.85)',
-          transformOrigin: 'bottom center',
-          zIndex: 8,
-          pointerEvents: 'none',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.22)',
-        }}>
-          {peekCardContent(remaining[2])}
+    <>
+      <style>{`
+        @keyframes tcs-from-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes tcs-from-left  { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+      `}</style>
+      <div ref={containerRef} style={{ position: 'relative', marginBottom: 16 }}>
+        {/* Clip wrapper — keeps the slide animation inside the card boundary */}
+        <div style={{ overflow: 'hidden', borderRadius: 18, position: 'relative', zIndex: 10 }}>
+          <div
+            key={cardKey}
+            style={{ animation: animName ? `${animName} 0.28s ease forwards` : undefined }}
+          >
+            {renderCard(posts[safeIndex], posts, safeIndex)}
+          </div>
         </div>
-      )}
-
-      {/* Right peek card (remaining[1]) — rotated clockwise */}
-      {!hidePeekCards && peekCount >= 1 && remaining[1] && (
-        <div style={{
-          position: 'absolute',
-          left: `calc(50% - ${CARD_W / 2}px)`,
-          top: 14,
-          width: CARD_W,
-          height: CARD_H,
-          borderRadius: 18,
-          overflow: 'hidden',
-          background: '#111827',
-          transform: 'translateX(110px) rotate(12deg) scale(0.85)',
-          transformOrigin: 'bottom center',
-          zIndex: 9,
-          pointerEvents: 'none',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.22)',
-        }}>
-          {peekCardContent(remaining[1])}
-        </div>
-      )}
-
-      {/* Front/center card */}
-      {hidePeekCards ? (
-        // When hidePeekCards: white container stays static, only the front poster card gets the swipe transform
-        <div style={{ position: 'relative', zIndex: 10, overflow: 'visible' }}>
-          {renderCard(remaining[0], posts, topIndex, {
-            style: {
-              transform: `translateX(${offset}px) rotate(${rotation}deg)`,
-              transition: flyingOut ? 'transform 0.42s cubic-bezier(0.25,0.46,0.45,0.94)' : (isDragging || skipTransition) ? 'none' : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              transformOrigin: 'bottom center',
-              willChange: 'transform',
-            },
-            ref: topRef,
-            overlays: (
-              <>
-                {showRight && <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(34,197,94,0.12)', border: '2px solid rgba(34,197,94,0.4)', zIndex: 11, pointerEvents: 'none' }} />}
-                {showLeft && <div style={{ position: 'absolute', inset: 0, borderRadius: 16, background: 'rgba(156,163,175,0.12)', border: '2px solid rgba(156,163,175,0.35)', zIndex: 11, pointerEvents: 'none' }} />}
-                {showRight && <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 12, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>AGREE</span></div>}
-                {showLeft && <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 12, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>SKIP</span></div>}
-              </>
-            ),
-          })}
-        </div>
-      ) : (
-        // Normal peek-card mode: the whole card animates
-        <div
-          ref={topRef}
-          style={{
-            position: 'relative',
-            zIndex: 10,
-            transform: `translateX(${offset}px) rotate(${rotation}deg)`,
-            transition: flyingOut ? 'transform 0.42s cubic-bezier(0.25,0.46,0.45,0.94)' : (isDragging || skipTransition) ? 'none' : 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            transformOrigin: 'bottom center',
-            willChange: 'transform',
-            overflow: 'visible',
-          }}
-        >
-          {showRight && <div style={{ position: 'absolute', top: 0, left: `calc(50% - ${CARD_W / 2}px)`, width: CARD_W, height: CARD_H, borderRadius: 18, background: 'rgba(34,197,94,0.12)', border: '2px solid rgba(34,197,94,0.4)', zIndex: 11, pointerEvents: 'none' }} />}
-          {showLeft && <div style={{ position: 'absolute', top: 0, left: `calc(50% - ${CARD_W / 2}px)`, width: CARD_W, height: CARD_H, borderRadius: 18, background: 'rgba(156,163,175,0.12)', border: '2px solid rgba(156,163,175,0.35)', zIndex: 11, pointerEvents: 'none' }} />}
-          {showRight && <div style={{ position: 'absolute', top: 14, left: `calc(50% - ${CARD_W / 2}px + 14px)`, zIndex: 12, pointerEvents: 'none', background: 'rgba(34,197,94,0.9)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>AGREE</span></div>}
-          {showLeft && <div style={{ position: 'absolute', top: 14, right: `calc(50% - ${CARD_W / 2}px + 14px)`, zIndex: 12, pointerEvents: 'none', background: 'rgba(107,114,128,0.85)', borderRadius: 6, padding: '2px 8px' }}><span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>SKIP</span></div>}
-          {renderCard(remaining[0], posts, topIndex)}
-        </div>
-      )}
-    </div>
+        {/* Counter with back + forward tap buttons */}
+        {posts.length > 1 && (
+          <div
+            className="absolute bottom-3 right-3 flex items-center gap-1 bg-white border border-gray-200 rounded-full shadow-sm z-20"
+            style={{ pointerEvents: 'auto' }}
+          >
+            {safeIndex > 0 && (
+              <button onClick={() => goTo(safeIndex - 1, -1)} className="pl-2 pr-1 py-1">
+                <ChevronLeft size={10} className="text-gray-400" />
+              </button>
+            )}
+            <span className="text-[10px] font-medium text-gray-500 px-1">{safeIndex + 1}/{posts.length}</span>
+            {safeIndex < posts.length - 1 && (
+              <button onClick={() => goTo(safeIndex + 1, 1)} className="pr-2 pl-1 py-1">
+                <ChevronRight size={10} className="text-gray-400" />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
