@@ -66,11 +66,9 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     try { return JSON.parse(localStorage.getItem('seen_it_ratings') || '{}'); } catch { return {}; }
   });
 
-  // ── Swipe drag state ──────────────────────────────────────────────────────
-  const [dragX, setDragX] = useState(0);
-  const [skipTransition, setSkipTransition] = useState(false);
-  const isDraggingRef = useRef(false);   // ref so onPointerMove always sees current value
-  const dragStartXRef = useRef(0);
+  // ── Swipe gesture detection (no drag tracking — cards stay put) ────────────
+  const swipeStartXRef = useRef(0);
+  const swipeStartYRef = useRef(0);
 
   // ── Data fetching (unchanged from original) ───────────────────────────────
   const { data: supabaseCompletedSets } = useQuery({
@@ -343,22 +341,6 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   const activeItem = unansweredItems[safeItemIndex];
   const activeIdx = safeItemIndex;
 
-  const navigate = (dir: -1 | 1) => {
-    const canGo = dir === -1
-      ? safeItemIndex < unansweredItems.length - 1
-      : safeItemIndex > 0;
-    if (!canGo) { setDragX(0); return; }
-    // Slide all cards off in the swipe direction, then cut to new card at center
-    setDragX(dir === -1 ? -340 : 340);
-    setTimeout(() => {
-      setSkipTransition(true);
-      if (dir === -1) setCurrentItemIndex(prev => prev + 1);
-      else            setCurrentItemIndex(prev => prev - 1);
-      setDragX(0);
-      setTimeout(() => setSkipTransition(false), 30);
-    }, 260);
-  };
-
   return (
     <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-visible">
       {/* Header */}
@@ -393,67 +375,63 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         </div>
       </div>
 
-      {/* Card stack — pointer events on this div handle drag/swipe */}
+      {/* Card stack — swipe gesture detected on pointer up, cards never move during gesture */}
       <div
         className="relative flex items-center justify-center select-none"
-        style={{ height: 310, overflow: 'visible', cursor: isDraggingRef.current ? 'grabbing' : 'grab', touchAction: 'pan-y' }}
+        style={{ height: 310, overflow: 'visible', touchAction: 'pan-y' }}
         onPointerDown={(e) => {
           if ((e.target as HTMLElement).closest('button')) return;
-          dragStartXRef.current = e.clientX;
-          isDraggingRef.current = true;
+          swipeStartXRef.current = e.clientX;
+          swipeStartYRef.current = e.clientY;
           e.currentTarget.setPointerCapture(e.pointerId);
         }}
-        onPointerMove={(e) => {
-          if (!isDraggingRef.current) return;
-          setDragX(e.clientX - dragStartXRef.current);
-        }}
         onPointerUp={(e) => {
-          if (!isDraggingRef.current) return;
-          isDraggingRef.current = false;
-          const dx = e.clientX - dragStartXRef.current;
-          if (dx < -SWIPE_THRESHOLD) navigate(-1);
-          else if (dx > SWIPE_THRESHOLD) navigate(1);
-          else setDragX(0);
+          const dx = e.clientX - swipeStartXRef.current;
+          const dy = e.clientY - swipeStartYRef.current;
+          // Only count as horizontal swipe if horizontal motion dominates
+          if (Math.abs(dx) < Math.abs(dy) * 0.8) return;
+          if (dx < -40 && safeItemIndex < unansweredItems.length - 1) {
+            setCurrentItemIndex(prev => prev + 1);
+          } else if (dx > 40 && safeItemIndex > 0) {
+            setCurrentItemIndex(prev => prev - 1);
+          }
         }}
-        onPointerCancel={() => { isDraggingRef.current = false; setDragX(0); }}
       >
-        {/* Left peek card — shifts with dragX so all cards move as one strip */}
+        {/* Left peek card — fixed position, never moves */}
         {unansweredItems[activeIdx - 1] && (
           <div style={{
             position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
-            transform: `translateX(${-52 + dragX}px) rotate(-8deg) scale(0.88)`,
-            transition: skipTransition ? 'none' : isDraggingRef.current ? 'none' : 'transform 0.26s ease-out',
+            transform: 'translateX(-52px) rotate(-8deg) scale(0.88)',
             zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
           }}>
             <img src={unansweredItems[activeIdx - 1].image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
         )}
 
-        {/* Right peek card — shifts with dragX so all cards move as one strip */}
+        {/* Right peek card — fixed position, never moves */}
         {unansweredItems[activeIdx + 1] && (
           <div style={{
             position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
-            transform: `translateX(${52 + dragX}px) rotate(8deg) scale(0.88)`,
-            transition: skipTransition ? 'none' : isDraggingRef.current ? 'none' : 'transform 0.26s ease-out',
+            transform: 'translateX(52px) rotate(8deg) scale(0.88)',
             zIndex: 2, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
           }}>
             <img src={unansweredItems[activeIdx + 1].image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
         )}
 
-        {/* Front card — follows drag; tap (no drag) navigates to media detail */}
+        {/* Front card — static; tap navigates to media detail */}
         <div
           style={{
             position: 'absolute', width: 208, height: 282, borderRadius: 16, overflow: 'hidden',
             zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.28)',
-            transform: `translateX(${dragX}px)`,
-            transition: skipTransition ? 'none' : isDraggingRef.current ? 'none' : 'transform 0.26s ease-out',
             pointerEvents: 'auto',
-            cursor: activeItem.external_id ? 'pointer' : 'grab',
+            cursor: activeItem.external_id ? 'pointer' : 'default',
           }}
-          onClick={() => {
-            // Only navigate on a genuine tap — not after a drag gesture
-            if (Math.abs(dragX) < 10 && activeItem.external_id && activeItem.external_source) {
+          onClick={(e) => {
+            // Block navigation if this click was the end of a swipe gesture
+            const dx = Math.abs((e.nativeEvent as any).clientX - swipeStartXRef.current);
+            if (dx > 10) return;
+            if (activeItem.external_id && activeItem.external_source) {
               const type = (activeItem.media_type || 'movie').toLowerCase();
               setLocation(`/media/${type}/${activeItem.external_source}/${activeItem.external_id}`);
             }
