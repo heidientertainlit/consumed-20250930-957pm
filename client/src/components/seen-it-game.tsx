@@ -549,6 +549,17 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           <span className={`text-[10px] font-medium ${responses[activeItem.id] === true ? 'text-green-600' : 'text-gray-400'}`}>{mediaConfig.actionYes}</span>
         </button>
 
+        {/* Not Interested — lighter/smaller, dismissal action */}
+        <button
+          onClick={() => handleResponse(currentSet.id, activeItem, 'skip')}
+          className="flex flex-col items-center gap-1 group"
+        >
+          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
+            <X size={16} className="text-gray-400" />
+          </div>
+          <span className="text-[10px] text-gray-400">Not interested</span>
+        </button>
+
         {/* Rate it — gray, optional */}
         <button
           onClick={() => setRatingItem(prev => prev === activeItem.id ? null : activeItem.id)}
