@@ -538,23 +538,23 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         if (Array.isArray(cmp1)) cmp1.forEach((r: any) => addToCmpMap(r.user_id_2, r.match_score));
         if (Array.isArray(cmp2)) cmp2.forEach((r: any) => addToCmpMap(r.user_id_1, r.match_score));
 
-        // 3. Score each friend — ONLY use dna_comparisons real scores. No Jaccard fallback for pct display.
-        //    Friends with no cached comparison get pct=null (name shows, no % shown — honest data only).
+        // 3. Score each friend — real dna_comparisons score is primary; Jaccard genre overlap is fallback.
         const myGenreSet = new Set(myGenres.map((g: string) => g.toLowerCase()));
         const scored = friendDnas
           .map((fd: any, i: number) => {
             const genres: string[] = Array.isArray(fd.favorite_genres) ? fd.favorite_genres : [];
             const realPct: number | null = cmpMap.has(fd.user_id) ? cmpMap.get(fd.user_id)! : null;
+            // Use real cached score if available; fall back to Jaccard genre overlap
+            const pct: number = realPct ?? calcOverlapPct(myGenres, genres);
             const info = Array.isArray(friendUsers) ? friendUsers.find((u: any) => u.id === fd.user_id) : null;
             const displayName = info?.display_name || info?.user_name || 'Friend';
             const shared = genres.filter((g: string) => myGenreSet.has(g.toLowerCase()));
-            return { displayName, pct: realPct, hasRealScore: realPct !== null, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id, sharedGenres: shared };
+            return { displayName, pct, hasRealScore: realPct !== null, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id, sharedGenres: shared };
           })
-          // Sort: real cached scores first (highest first), then unscored friends alphabetically
+          // Sort: real cached scores first (highest first), then Jaccard fallbacks (highest first)
           .sort((a: any, b: any) => {
             if (a.hasRealScore !== b.hasRealScore) return a.hasRealScore ? -1 : 1;
-            if (a.hasRealScore && b.hasRealScore) return b.pct - a.pct;
-            return a.displayName.localeCompare(b.displayName);
+            return b.pct - a.pct;
           });
 
         if (scored.length === 0) return;
