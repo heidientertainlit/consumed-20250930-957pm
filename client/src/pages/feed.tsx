@@ -697,7 +697,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   forceNormal?: boolean;
   stackPosts?: any[];
   stackIndex?: number;
-  swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode; animKey?: number };
+  swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode; animKey?: number; dragX?: number; navigate?: (dir: 1 | -1) => void; totalPosts?: number };
 }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
@@ -1783,57 +1783,79 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
     return (
       <>
-        {/* ── Seen It?–style card: white container + internal fan stack ── */}
+        {/* ── SeenIt-style carousel card ── */}
         <div className="bg-white rounded-2xl shadow-sm overflow-visible">
 
-          {/* Header: section label */}
-          <div className="px-4 pt-4 pb-2">
-            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Takes & Ratings</p>
-          </div>
-
-          {/* Media title + type pill — above the fan stack */}
-          <div className="px-4 pb-1 pt-0 flex items-center justify-center gap-2">
-            <p className="font-semibold text-gray-900 text-base leading-tight">{post.mediaTitle || 'Untitled'}</p>
-            {mediaTypeLabel && (
-              <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full shrink-0">{mediaTypeLabel}</span>
+          {/* Header: label + type pill + ‹ N of M › nav */}
+          <div className="flex items-center justify-between px-4 pt-4 pb-2">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-purple-500" />
+              <span className="text-gray-900 font-semibold text-sm">Takes & Ratings</span>
+              {mediaTypeLabel && (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 shrink-0">{mediaTypeLabel}</span>
+              )}
+            </div>
+            {swipeProps?.navigate && swipeProps?.totalPosts && swipeProps.totalPosts > 1 && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={(e) => { e.stopPropagation(); swipeProps.navigate!(1); }}
+                  disabled={(stackIndex ?? 0) === 0}
+                  className="disabled:opacity-30"
+                >
+                  <ChevronLeft className="w-4 h-4 text-gray-400" />
+                </button>
+                <span className="text-purple-500 text-xs font-medium">{(stackIndex ?? 0) + 1} of {swipeProps.totalPosts}</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); swipeProps.navigate!(-1); }}
+                  disabled={(stackIndex ?? 0) >= swipeProps.totalPosts - 1}
+                  className="disabled:opacity-30"
+                >
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
             )}
           </div>
 
-          {/* Fan stack area — all cards sit inside the white container */}
-          <div className="relative flex items-center justify-center" style={{ height: 272, overflow: 'visible' }}>
+          {/* Card stack area — SeenIt exact layout */}
+          <div className="relative flex items-center justify-center select-none" style={{ height: 310, overflow: 'visible' }}>
 
-            {/* Back peek card (left) */}
-            {stackPosts && (stackPosts[(stackIndex ?? 0) + 2]?.mediaImage || '').startsWith('http') && (
+            {/* Left peek card — previous post */}
+            {stackPosts && (stackIndex ?? 0) > 0 && (stackPosts[(stackIndex ?? 0) - 1]?.mediaImage || '').startsWith('http') && (
               <div style={{
-                position: 'absolute', width: 178, height: 252, borderRadius: 16, overflow: 'hidden',
-                transform: 'translateX(-48px) rotate(-8deg) scale(0.85)',
-                zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.18)', background: '#111827',
+                position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
+                transform: 'translateX(-52px) rotate(-8deg) scale(0.88)',
+                zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
               }}>
-                <img src={stackPosts[(stackIndex ?? 0) + 2].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={stackPosts[(stackIndex ?? 0) - 1].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </div>
             )}
 
-            {/* Middle peek card (right) */}
+            {/* Right peek card — next post */}
             {stackPosts && (stackPosts[(stackIndex ?? 0) + 1]?.mediaImage || '').startsWith('http') && (
               <div style={{
-                position: 'absolute', width: 178, height: 252, borderRadius: 16, overflow: 'hidden',
-                transform: 'translateX(48px) rotate(8deg) scale(0.85)',
-                zIndex: 2, boxShadow: '0 4px 16px rgba(0,0,0,0.18)', background: '#111827',
+                position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
+                transform: 'translateX(52px) rotate(8deg) scale(0.88)',
+                zIndex: 2, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
               }}>
-                <img src={stackPosts[(stackIndex ?? 0) + 1].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={stackPosts[(stackIndex ?? 0) + 1].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </div>
             )}
 
-            {/* Front card — tap poster → media detail page */}
-            {/* Clip wrapper: keeps slide animation inside poster bounds without clipping peek cards */}
-            <div style={{ position: 'absolute', width: 190, height: 252, zIndex: 5, overflow: 'hidden', borderRadius: 16 }}>
+            {/* Front card — follows drag */}
+            {(() => {
+              const dx = swipeProps?.dragX ?? 0;
+              const isActive = Math.abs(dx) > 2;
+              return (
             <div
-              key={swipeProps?.animKey ?? post.id}
-              ref={swipeProps?.ref}
               className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
-              style={{ height: 252, width: 190, ...(swipeProps?.style ?? {}) }}
+              style={{
+                position: 'absolute', width: 208, height: 282, borderRadius: 16, overflow: 'hidden',
+                zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.28)',
+                transform: `translateX(${dx}px) rotate(${dx * 0.06}deg)`,
+                transition: isActive ? 'none' : Math.abs(dx) > 300 ? 'transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94)' : 'transform 0.35s cubic-bezier(0.34,1.56,0.64,1)',
+              }}
               onClick={() => {
-                if (post.externalSource && post.externalId) {
+                if (Math.abs(dx) < 10 && post.externalSource && post.externalId) {
                   setLocation(`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`);
                 }
               }}
@@ -1904,10 +1926,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <p className="text-white/65 text-xs font-medium mb-3">— {displayName}</p>
 
           </div>
-        </div>
-            </div>{/* end clip wrapper */}
+            </div>
+          );
+          })()}
 
-          </div>{/* end fan area */}
+          </div>{/* end card stack area */}
 
           {/* Compact rated + aligned row below the fan */}
           {isOtherUser && (ratingSubmitted || tasteAlignment !== null || alignmentNudge) && (
@@ -4248,80 +4271,123 @@ function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: s
 }
 
 // Multi-card stack — carousel with forward + back swipe and tap buttons
+const TCS_THRESHOLD = 80;
+
 function TinderCardStack({ posts, renderCard, hidePeekCards }: {
   posts: any[];
-  renderCard: (post: any, allPosts: any[], currentIndex: number, swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode; animKey?: number }) => React.ReactNode;
+  renderCard: (post: any, allPosts: any[], currentIndex: number, swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode; animKey?: number; dragX?: number; navigate?: (dir: 1 | -1) => void; totalPosts?: number }) => React.ReactNode;
   hidePeekCards?: boolean;
 }) {
   const [topIndex, setTopIndex] = useState(0);
-  const [cardKey, setCardKey] = useState(0);
-  const slideDir = useRef(0); // 1=enter from right (fwd), -1=enter from left (back)
-  const topRef = useRef<HTMLDivElement>(null);
+  const [dragX, setDragX] = useState(0);
+  const gestureRef = useRef<HTMLDivElement>(null);
   const topIndexRef = useRef(0);
   const postsLengthRef = useRef(posts.length);
   topIndexRef.current = topIndex;
   postsLengthRef.current = posts.length;
 
-  // dir: -1 = left swipe = go forward; dir: 1 = right swipe = go back
+  const dragStartX = useRef(0);
+  const dragStartY = useRef(0);
+  const isDraggingRef = useRef(false);
+  const isScrollingRef = useRef<boolean | null>(null);
+  const currentDragX = useRef(0);
+
   const navigate = useCallback((dir: 1 | -1) => {
-    const cur = topIndexRef.current;
-    const len = postsLengthRef.current;
-    const next = dir === -1 ? cur + 1 : cur - 1;
-    if (next < 0 || next >= len) return;
-    slideDir.current = dir === -1 ? 1 : -1;
+    const next = dir === -1 ? topIndexRef.current + 1 : topIndexRef.current - 1;
+    if (next < 0 || next >= postsLengthRef.current) { setDragX(0); currentDragX.current = 0; return; }
     setTopIndex(next);
-    setCardKey(k => k + 1);
+    setDragX(0);
+    currentDragX.current = 0;
   }, []);
 
-  const { attachTo } = useSwipeGesture({
-    onOffsetChange: () => {},
-    onDraggingChange: () => {},
-    onDismiss: navigate,
-  });
+  const navigateRef = useRef(navigate);
+  useEffect(() => { navigateRef.current = navigate; });
 
   useEffect(() => {
-    if (topRef.current) return attachTo(topRef.current);
-  }, [attachTo, topIndex]);
+    const el = gestureRef.current;
+    if (!el) return;
+
+    const commit = (dx: number) => {
+      if (dx < -TCS_THRESHOLD) {
+        setDragX(-420); currentDragX.current = -420;
+        setTimeout(() => { navigateRef.current(-1); }, 350);
+      } else if (dx > TCS_THRESHOLD) {
+        setDragX(420); currentDragX.current = 420;
+        setTimeout(() => { navigateRef.current(1); }, 350);
+      } else {
+        setDragX(0); currentDragX.current = 0;
+      }
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      dragStartX.current = e.touches[0].clientX;
+      dragStartY.current = e.touches[0].clientY;
+      isDraggingRef.current = true;
+      isScrollingRef.current = null;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isDraggingRef.current) return;
+      const dx = e.touches[0].clientX - dragStartX.current;
+      const dy = e.touches[0].clientY - dragStartY.current;
+      if (isScrollingRef.current === null) isScrollingRef.current = Math.abs(dy) > Math.abs(dx) + 5;
+      if (isScrollingRef.current) return;
+      e.preventDefault();
+      currentDragX.current = dx;
+      setDragX(dx);
+    };
+    const onTouchEnd = () => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      if (!isScrollingRef.current) commit(currentDragX.current);
+      else { setDragX(0); currentDragX.current = 0; }
+    };
+    const onMouseDown = (e: MouseEvent) => {
+      if ((e.target as HTMLElement).closest('button')) return;
+      dragStartX.current = e.clientX;
+      isDraggingRef.current = true;
+      e.preventDefault();
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      currentDragX.current = e.clientX - dragStartX.current;
+      setDragX(currentDragX.current);
+    };
+    const onMouseUp = () => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      commit(currentDragX.current);
+    };
+
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove',  onTouchMove,  { passive: false });
+    el.addEventListener('touchend',   onTouchEnd,   { passive: true });
+    el.addEventListener('mousedown',  onMouseDown,  { passive: false });
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup',   onMouseUp);
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove',  onTouchMove);
+      el.removeEventListener('touchend',   onTouchEnd);
+      el.removeEventListener('mousedown',  onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup',   onMouseUp);
+    };
+  }, []);
 
   if (posts.length === 0) return null;
   const safeIndex = Math.min(topIndex, posts.length - 1);
-  const animName = slideDir.current > 0 ? 'tcs-from-right' : slideDir.current < 0 ? 'tcs-from-left' : '';
 
   return (
-    <>
-      <style>{`
-        @keyframes tcs-from-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
-        @keyframes tcs-from-left  { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-      `}</style>
-      <div style={{ position: 'relative', marginBottom: 16 }}>
-        <div style={{ position: 'relative', zIndex: 10 }}>
-          {renderCard(posts[safeIndex], posts, safeIndex, {
-            style: { animation: animName ? `${animName} 0.28s ease forwards` : undefined } as React.CSSProperties,
-            ref: topRef,
-            overlays: <></>,
-            animKey: cardKey,
-          })}
-        </div>
-        {posts.length > 1 && (
-          <div
-            className="absolute bottom-3 right-3 flex items-center gap-1 bg-white border border-gray-200 rounded-full shadow-sm z-20"
-            style={{ pointerEvents: 'auto' }}
-          >
-            {safeIndex > 0 && (
-              <button onClick={() => navigate(1)} className="pl-2 pr-1 py-1">
-                <ChevronLeft size={10} className="text-gray-400" />
-              </button>
-            )}
-            <span className="text-[10px] font-medium text-gray-500 px-1">{safeIndex + 1}/{posts.length}</span>
-            {safeIndex < posts.length - 1 && (
-              <button onClick={() => navigate(-1)} className="pr-2 pl-1 py-1">
-                <ChevronRight size={10} className="text-gray-400" />
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    </>
+    <div ref={gestureRef} style={{ marginBottom: 16, touchAction: 'pan-y' }}>
+      {renderCard(posts[safeIndex], posts, safeIndex, {
+        style: {},
+        ref: { current: null } as React.RefObject<HTMLDivElement>,
+        overlays: <></>,
+        dragX,
+        navigate,
+        totalPosts: posts.length,
+      })}
+    </div>
   );
 }
 
