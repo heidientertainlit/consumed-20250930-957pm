@@ -68,19 +68,8 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
 
   // ── Swipe drag state ──────────────────────────────────────────────────────
   const [dragX, setDragX] = useState(0);
-  const [skipTransition, setSkipTransition] = useState(false);
-  const gestureRef = useRef<HTMLDivElement>(null);
-  // Use refs for gesture tracking to avoid stale closures in event listeners
-  const dragStartX = useRef(0);
-  const dragStartY = useRef(0);
-  const isDraggingRef = useRef(false);
-  const isScrollingRef = useRef<boolean | null>(null);
-  const currentDragX = useRef(0);
-  // Trackpad wheel accumulation
-  const wheelAccum = useRef(0);
-  const wheelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Stable navigate ref so gesture listeners can call it without stale closures
-  const navigateCarouselRef = useRef<(dir: -1 | 1) => void>(() => {});
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartXRef = useRef(0);
 
   // ── Data fetching (unchanged from original) ───────────────────────────────
   const { data: supabaseCompletedSets } = useQuery({
@@ -318,111 +307,6 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     setDragX(0);
   };
 
-  // ── Active item refs (kept current so event listeners aren't stale) ────────
-  const activeItemRef = useRef<SeenItItem | null>(null);
-  const activeSetIdRef = useRef<string>('');
-
-  // ── Raw DOM gesture listeners (passive:false allows preventDefault) ────────
-  useEffect(() => {
-    const el = gestureRef.current;
-    if (!el) return;
-
-    const commit = (dx: number) => {
-      if (dx < -SWIPE_THRESHOLD) {
-        navigateCarouselRef.current(-1);
-      } else if (dx > SWIPE_THRESHOLD) {
-        navigateCarouselRef.current(1);
-      } else {
-        setDragX(0);
-        currentDragX.current = 0;
-      }
-    };
-
-    // ── Touch ──────────────────────────────────────────────────────────────
-    const onTouchStart = (e: TouchEvent) => {
-      dragStartX.current = e.touches[0].clientX;
-      dragStartY.current = e.touches[0].clientY;
-      isDraggingRef.current = true;
-      isScrollingRef.current = null;
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      if (!isDraggingRef.current) return;
-      const dx = e.touches[0].clientX - dragStartX.current;
-      const dy = e.touches[0].clientY - dragStartY.current;
-      if (isScrollingRef.current === null) {
-        isScrollingRef.current = Math.abs(dy) > Math.abs(dx) + 5;
-      }
-      if (isScrollingRef.current) return;
-      e.preventDefault();
-      currentDragX.current = dx;
-      setDragX(dx);
-    };
-    const onTouchEnd = () => {
-      if (!isDraggingRef.current) return;
-      isDraggingRef.current = false;
-      if (!isScrollingRef.current) commit(currentDragX.current);
-      else { setDragX(0); currentDragX.current = 0; }
-    };
-
-    // ── Mouse drag ─────────────────────────────────────────────────────────
-    const onMouseDown = (e: MouseEvent) => {
-      if ((e.target as HTMLElement).closest('button')) return;
-      dragStartX.current = e.clientX;
-      isDraggingRef.current = true;
-      e.preventDefault();
-    };
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDraggingRef.current) return;
-      const dx = e.clientX - dragStartX.current;
-      currentDragX.current = dx;
-      setDragX(dx);
-    };
-    const onMouseUp = () => {
-      if (!isDraggingRef.current) return;
-      isDraggingRef.current = false;
-      commit(currentDragX.current);
-    };
-
-    // ── Trackpad two-finger horizontal swipe (wheel events) ───────────────
-    const onWheel = (e: WheelEvent) => {
-      // Only handle clear horizontal intent (deltaX dominant)
-      if (Math.abs(e.deltaX) < Math.abs(e.deltaY) * 0.5) return;
-      e.preventDefault();
-      wheelAccum.current += e.deltaX;
-      const clamped = Math.max(-SWIPE_THRESHOLD * 1.5, Math.min(SWIPE_THRESHOLD * 1.5, -wheelAccum.current));
-      currentDragX.current = clamped;
-      setDragX(clamped);
-      if (wheelTimer.current) clearTimeout(wheelTimer.current);
-      wheelTimer.current = setTimeout(() => {
-        commit(currentDragX.current);
-        wheelAccum.current = 0;
-      }, 180);
-    };
-
-    el.addEventListener('touchstart', onTouchStart, { passive: true });
-    el.addEventListener('touchmove',  onTouchMove,  { passive: false });
-    el.addEventListener('touchend',   onTouchEnd,   { passive: true });
-    el.addEventListener('mousedown',  onMouseDown,  { passive: false });
-    el.addEventListener('wheel',      onWheel,      { passive: false });
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup',   onMouseUp);
-
-    return () => {
-      el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchmove',  onTouchMove);
-      el.removeEventListener('touchend',   onTouchEnd);
-      el.removeEventListener('mousedown',  onMouseDown);
-      el.removeEventListener('wheel',      onWheel);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup',   onMouseUp);
-      if (wheelTimer.current) clearTimeout(wheelTimer.current);
-    };
-  // Re-run when data first loads so gestureRef.current is actually in the DOM
-  }, [incompleteSets.length > 0]);
-
-  // Keep a stable ref to handleResponse so event listeners don't go stale
-  const handleResponseRef = useRef(handleResponse);
-  useEffect(() => { handleResponseRef.current = handleResponse; });
 
   // ── Render ────────────────────────────────────────────────────────────────
   if (isLoading && !mediaTypeFilter) {
@@ -458,31 +342,12 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   const activeItem = unansweredItems[safeItemIndex];
   const activeIdx = safeItemIndex;
 
-  // Keep refs current so gesture event listeners always see fresh values
-  activeItemRef.current = activeItem;
-  activeSetIdRef.current = currentSet.id;
-  // Update carousel navigate ref every render so the closure in useEffect stays fresh
-  navigateCarouselRef.current = (dir: -1 | 1) => {
-    const total = unansweredItems.length;
-    // Step 1: fly card off screen in the direction of the swipe
-    const flyTo = dir === -1 ? -420 : 420;
-    setDragX(flyTo);
-    currentDragX.current = flyTo;
-    // Step 2: after fly-out completes, cut to new card with no transition
-    setTimeout(() => {
-      setSkipTransition(true);
-      if (dir === -1) setCurrentItemIndex(prev => Math.min(prev + 1, total - 1));
-      else            setCurrentItemIndex(prev => Math.max(0, prev - 1));
-      setDragX(0);
-      currentDragX.current = 0;
-      // Step 3: re-enable transition next frame so future drags/snaps animate
-      requestAnimationFrame(() => setSkipTransition(false));
-    }, 280);
+  const navigate = (dir: -1 | 1) => {
+    if (dir === -1 && safeItemIndex < unansweredItems.length - 1) setCurrentItemIndex(prev => prev + 1);
+    if (dir === 1  && safeItemIndex > 0)                          setCurrentItemIndex(prev => prev - 1);
+    setDragX(0);
+    setIsDragging(false);
   };
-
-  const isSwipingRight = dragX > 20;
-  const isSwipingLeft = dragX < -20;
-  const isActiveDrag = isDraggingRef.current || Math.abs(dragX) > 2;
 
   return (
     <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-visible">
@@ -518,11 +383,29 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         </div>
       </div>
 
-      {/* Card stack — gestureRef captures all touch/mouse/wheel events */}
+      {/* Card stack — pointer events on this div handle drag/swipe */}
       <div
-        ref={gestureRef}
         className="relative flex items-center justify-center select-none"
-        style={{ height: 310, overflow: 'visible', cursor: isActiveDrag ? 'grabbing' : 'grab', touchAction: 'pan-y' }}
+        style={{ height: 310, overflow: 'visible', cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'pan-y' }}
+        onPointerDown={(e) => {
+          if ((e.target as HTMLElement).closest('button')) return;
+          dragStartXRef.current = e.clientX;
+          setIsDragging(true);
+          e.currentTarget.setPointerCapture(e.pointerId);
+        }}
+        onPointerMove={(e) => {
+          if (!isDragging) return;
+          setDragX(e.clientX - dragStartXRef.current);
+        }}
+        onPointerUp={(e) => {
+          if (!isDragging) return;
+          const dx = e.clientX - dragStartXRef.current;
+          setIsDragging(false);
+          setDragX(0);
+          if (dx < -SWIPE_THRESHOLD) navigate(-1);
+          else if (dx > SWIPE_THRESHOLD) navigate(1);
+        }}
+        onPointerCancel={() => { setIsDragging(false); setDragX(0); }}
       >
         {/* Left peek card — previous unanswered item */}
         {unansweredItems[activeIdx - 1] && (
@@ -552,7 +435,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
             position: 'absolute', width: 208, height: 282, borderRadius: 16, overflow: 'hidden',
             zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.28)',
             transform: `translateX(${dragX}px)`,
-            transition: isActiveDrag || skipTransition ? 'none' : 'transform 0.3s ease-out',
+            transition: isDragging ? 'none' : 'transform 0.25s ease-out',
             pointerEvents: 'auto',
             cursor: activeItem.external_id ? 'pointer' : 'grab',
           }}
