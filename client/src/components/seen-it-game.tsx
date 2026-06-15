@@ -321,7 +321,6 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
       setCurrentItemIndex(prev => Math.min(prev + 1, remaining.length - 1));
     }
     setRatingItem(null);
-    setDragX(0);
   };
 
 
