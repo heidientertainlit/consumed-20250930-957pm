@@ -518,7 +518,8 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=in.(${friendIds.join(',')})&select=user_id,favorite_genres,label`, { headers }),
           fetch(`${SUPABASE_URL}/rest/v1/users?id=in.(${friendIds.join(',')})&select=id,display_name,user_name`, { headers }),
         ]);
-        const friendDnas: any[] = await friendDnaRes.json() || [];
+        const friendDnasRaw = await friendDnaRes.json();
+        const friendDnas: any[] = Array.isArray(friendDnasRaw) ? friendDnasRaw : [];
         const friendUsers: any[] = await friendUsersRes.json() || [];
 
         // Build lookup maps
