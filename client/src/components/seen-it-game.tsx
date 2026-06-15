@@ -423,14 +423,15 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         onWheel={(e) => {
           if (Math.abs(e.deltaX) < Math.abs(e.deltaY) * 0.7) return;
           e.stopPropagation();
-          wheelAccumRef.current += e.deltaX;
-          if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
-          wheelTimerRef.current = setTimeout(() => {
-            const total = wheelAccumRef.current;
-            wheelAccumRef.current = 0;
-            if (total > 30) navigateCarousel('next');
-            else if (total < -30) navigateCarousel('prev');
-          }, 80);
+          // Fire immediately when threshold crossed; cooldown prevents repeat-fire during one swipe gesture
+          if (wheelTimerRef.current) return;
+          if (e.deltaX > 20) {
+            navigateCarousel('next');
+            wheelTimerRef.current = setTimeout(() => { wheelTimerRef.current = null; }, 500);
+          } else if (e.deltaX < -20) {
+            navigateCarousel('prev');
+            wheelTimerRef.current = setTimeout(() => { wheelTimerRef.current = null; }, 500);
+          }
         }}
       >
         {/* Left peek card — fixed position, never moves */}
