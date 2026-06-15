@@ -390,9 +390,9 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           const dy = e.clientY - swipeStartYRef.current;
           // Only count as horizontal swipe if horizontal motion dominates
           if (Math.abs(dx) < Math.abs(dy) * 0.8) return;
-          if (dx < -40 && safeItemIndex < unansweredItems.length - 1) {
+          if (dx < -25 && safeItemIndex < unansweredItems.length - 1) {
             setCurrentItemIndex(prev => prev + 1);
-          } else if (dx > 40 && safeItemIndex > 0) {
+          } else if (dx > 25 && safeItemIndex > 0) {
             setCurrentItemIndex(prev => prev - 1);
           }
         }}
