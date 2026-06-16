@@ -499,27 +499,14 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
     async function fetchPersonalized() {
       try {
-        console.log('[DNA-FEED] fetching for user', user!.id);
-
         // Call edge function — uses service role, bypasses RLS entirely
         const { data, error } = await supabase.functions.invoke('get-dna-feed-data');
         if (cancelled) return;
 
         if (error) {
-          console.error('[DNA-FEED] edge function error', error);
           setLoadingPersonal(false);
           return;
         }
-
-        console.log('[DNA-FEED] raw response', {
-          myDna: data?.myDna,
-          friendDnasCount: data?.friendDnas?.length,
-          friendUsersCount: data?.friendUsers?.length,
-          cmp1Count: data?.cmp1?.length,
-          cmp2Count: data?.cmp2?.length,
-          cmp1: data?.cmp1,
-          cmp2: data?.cmp2,
-        });
 
         const myDna = data?.myDna;
         const friendDnas: any[] = data?.friendDnas ?? [];
@@ -543,8 +530,6 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         cmp1.forEach((r: any) => addToCmpMap(r.user_id_2, r.match_score));
         cmp2.forEach((r: any) => addToCmpMap(r.user_id_1, r.match_score));
 
-        console.log('[DNA-FEED] cmpMap', Object.fromEntries(cmpMap));
-
         // Only show friends with real dna_comparisons scores — no Jaccard fallback
         const myGenreSet = new Set(myGenres.map((g: string) => g.toLowerCase()));
         const scoredWithReal = friendDnas
@@ -558,8 +543,6 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
             return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id, sharedGenres: shared };
           })
           .sort((a: any, b: any) => b.pct - a.pct);
-
-        console.log('[DNA-FEED] scoredWithReal', scoredWithReal);
 
         if (scoredWithReal.length === 0) {
           setNoFriends(true);
@@ -586,10 +569,9 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           color: r.color,
           pct: r.pct,
         }));
-        console.log('[DNA-FEED] overlapItems', overlapItems);
         setDynOverlaps(overlapItems);
       } catch (err) {
-        console.error('[DNA-FEED] unexpected error', err);
+        console.error('Failed to load DNA compare data', err);
       } finally {
         if (!cancelled) setLoadingPersonal(false);
       }
@@ -901,7 +883,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
           body: { target_user_id: posterId },
         });
         if (cancelled) return;
-        if (error) { console.error('[DNA-POST] edge function error', error); return; }
+        if (error) { console.error('Failed to load DNA poster alignments', error); return; }
 
         const friendDnas: any[] = data?.friendDnas ?? [];
         const friendUsers: any[] = data?.friendUsers ?? [];
@@ -916,7 +898,6 @@ export function DnaComparePostCard({ item }: { item: any }) {
         };
         cmp1.forEach((r: any) => addToCmpMap(r.user_id_2, r.match_score));
         cmp2.forEach((r: any) => addToCmpMap(r.user_id_1, r.match_score));
-        console.log('[DNA-POST] cmpMap for poster', posterId, Object.fromEntries(cmpMap));
 
         // Only friends with a real dna_comparisons score, excluding the post's friend
         const scored = friendDnas
@@ -932,7 +913,6 @@ export function DnaComparePostCard({ item }: { item: any }) {
         const overlaps = scored.slice(0, 5).map((r: any) => ({
           displayName: r.displayName, initials: initials(r.displayName), color: r.color, pct: r.pct,
         }));
-        console.log('[DNA-POST] posterOverlaps', overlaps);
         setPosterOverlaps(overlaps);
 
         // friend_id is stored directly in the post content JSON — no name matching needed
@@ -955,7 +935,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
             }
           } catch { /* silent */ }
         }
-      } catch (err) { console.error('[DNA-POST] unexpected error', err); }
+      } catch (err) { console.error('Failed to load DNA poster alignments', err); }
     }
     fetchPosterAlignments();
     return () => { cancelled = true; };
