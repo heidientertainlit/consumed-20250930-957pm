@@ -671,6 +671,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           </div>
           <button
             onClick={() => {
+              if (!featured) return;
               const text = `I'm ${featured.pct}% aligned with ${featured.displayName} on Consumed! Check your Entertainment DNA 🧬`;
               const url = (import.meta.env.VITE_APP_URL as string) || window.location.origin;
               if (navigator.share) {
@@ -688,7 +689,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
         {/* Triangle layout — compact, centered */}
         <div className="pt-3 pb-2 flex flex-col items-center">
-          {noFriends && !featuredProp ? (
+          {!featured ? (
             <p className="text-gray-500 text-[13px] font-medium py-2 text-center">No friends to compare with yet.</p>
           ) : (
             <div className="flex flex-col items-center" style={{ width: 210 }}>
@@ -890,58 +891,49 @@ export function DnaComparePostCard({ item }: { item: any }) {
   useEffect(() => {
     if (!posterId || !session?.access_token) return;
     const headers = { Authorization: `Bearer ${session.access_token}`, apikey: ANON_KEY, 'Content-Type': 'application/json' };
+    let cancelled = false;
 
     async function fetchPosterAlignments() {
       try {
-        const [myDnaRes, fsRes] = await Promise.all([
-          fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=eq.${posterId}&select=favorite_genres`, { headers }),
-          fetch(`${SUPABASE_URL}/rest/v1/friendships?or=(user_id.eq.${posterId},friend_id.eq.${posterId})&status=eq.accepted&select=user_id,friend_id`, { headers }),
-        ]);
-        const [posterDna] = await myDnaRes.json();
-        const friendships = await fsRes.json();
-        if (!posterDna?.favorite_genres?.length || !Array.isArray(friendships) || friendships.length === 0) return;
+        // Edge function (service role) bypasses RLS and returns the poster's real
+        // dna_comparisons match scores — the AUTHORITATIVE alignment %.
+        const { data, error } = await supabase.functions.invoke('get-dna-feed-data', {
+          body: { target_user_id: posterId },
+        });
+        if (cancelled) return;
+        if (error) { console.error('[DNA-POST] edge function error', error); return; }
 
-        const posterGenres: string[] = posterDna.favorite_genres;
-        const friendIds = [...new Set(
-          friendships.map((f: any) => f.user_id === posterId ? f.friend_id : f.user_id)
-        )].filter((id: string) => id !== posterId) as string[];
-        if (friendIds.length === 0) return;
+        const friendDnas: any[] = data?.friendDnas ?? [];
+        const friendUsers: any[] = data?.friendUsers ?? [];
+        const cmp1: any[] = data?.cmp1 ?? [];
+        const cmp2: any[] = data?.cmp2 ?? [];
+        if (friendDnas.length === 0) return;
 
-        const [friendDnaRes, friendUsersRes] = await Promise.all([
-          fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=in.(${friendIds.join(',')})&select=user_id,favorite_genres`, { headers }),
-          fetch(`${SUPABASE_URL}/rest/v1/users?id=in.(${friendIds.join(',')})&select=id,display_name,user_name`, { headers }),
-        ]);
-        const friendDnas = await friendDnaRes.json();
-        const friendUsers = await friendUsersRes.json();
-        if (!Array.isArray(friendDnas) || friendDnas.length === 0) return;
+        // Build map of friendId → best real match_score from dna_comparisons
+        const cmpMap = new Map<string, number>();
+        const addToCmpMap = (fid: string, score: number) => {
+          if (!cmpMap.has(fid) || score > cmpMap.get(fid)!) cmpMap.set(fid, Math.round(score));
+        };
+        cmp1.forEach((r: any) => addToCmpMap(r.user_id_2, r.match_score));
+        cmp2.forEach((r: any) => addToCmpMap(r.user_id_1, r.match_score));
+        console.log('[DNA-POST] cmpMap for poster', posterId, Object.fromEntries(cmpMap));
 
+        // Only friends with a real dna_comparisons score, excluding the post's friend
         const scored = friendDnas
+          .filter((fd: any) => cmpMap.has(fd.user_id))
           .map((fd: any, i: number) => {
-            const genres: string[] = Array.isArray(fd.favorite_genres) ? fd.favorite_genres : [];
-            const pct = calcOverlapPct(posterGenres, genres);
             const info = Array.isArray(friendUsers) ? friendUsers.find((u: any) => u.id === fd.user_id) : null;
             const displayName = info?.display_name || info?.user_name || 'Friend';
-            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], userId: fd.user_id };
+            return { displayName, pct: cmpMap.get(fd.user_id)!, color: AVATAR_COLORS[i % AVATAR_COLORS.length], userId: fd.user_id };
           })
           .filter((u: any) => u.displayName !== friendName)
           .sort((a: any, b: any) => b.pct - a.pct);
 
-        const scoredIds = new Set(scored.map((s: any) => s.userId));
-        const dnaOverlaps = scored.slice(0, 5).map((r: any) => ({
+        const overlaps = scored.slice(0, 5).map((r: any) => ({
           displayName: r.displayName, initials: initials(r.displayName), color: r.color, pct: r.pct,
         }));
-        const nonDnaOverlaps = Array.isArray(friendUsers)
-          ? friendUsers
-              .filter((u: any) => !scoredIds.has(u.id) && (u.display_name || u.user_name) !== friendName)
-              .slice(0, Math.max(0, 5 - dnaOverlaps.length))
-              .map((u: any, i: number) => ({
-                displayName: u.display_name || u.user_name || 'Friend',
-                initials: initials(u.display_name || u.user_name || 'Friend'),
-                color: AVATAR_COLORS[(scored.length + i) % AVATAR_COLORS.length],
-              }))
-          : [];
-
-        setPosterOverlaps([...dnaOverlaps, ...nonDnaOverlaps]);
+        console.log('[DNA-POST] posterOverlaps', overlaps);
+        setPosterOverlaps(overlaps);
 
         // friend_id is stored directly in the post content JSON — no name matching needed
         const friendId: string | null = cmp?.friend_id || null;
@@ -953,7 +945,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
             ]);
             const posterRatings: any[] = await posterRatingsRes.json();
             const friendRatings: any[] = await friendRatingsRes.json();
-            if (Array.isArray(posterRatings) && Array.isArray(friendRatings)) {
+            if (!cancelled && Array.isArray(posterRatings) && Array.isArray(friendRatings)) {
               const posterTitles = new Set(posterRatings.map((r: any) => (r.media_title || '').toLowerCase().trim()));
               const shared = friendRatings
                 .filter((r: any) => posterTitles.has((r.media_title || '').toLowerCase().trim()))
@@ -963,9 +955,10 @@ export function DnaComparePostCard({ item }: { item: any }) {
             }
           } catch { /* silent */ }
         }
-      } catch { /* silent */ }
+      } catch (err) { console.error('[DNA-POST] unexpected error', err); }
     }
     fetchPosterAlignments();
+    return () => { cancelled = true; };
   }, [posterId, session?.access_token, friendName]);
 
   return (
@@ -1121,6 +1114,9 @@ export function DnaComparePostCard({ item }: { item: any }) {
                       {u.initials}
                     </div>
                     <span className="text-[11px] font-semibold text-gray-700 flex-1">{u.displayName}</span>
+                    {u.pct != null && u.pct > 0 && (
+                      <span className="text-purple-500 text-[10px] font-bold">{u.pct}%</span>
+                    )}
                   </div>
                 ))}
               </div>

@@ -18,6 +18,15 @@ Jaccard genre overlap (`calcOverlapPct`) is a FALLBACK ONLY — used when a frie
 - The featured friend (highest score) and all "Others Aligned" use this same priority order.
 - Do NOT make a separate per-friend `dna_comparisons` lookup after sorting — fetch all at once upfront.
 
+## TWO components in dna-compare-feed-card.tsx — fix the right one
+The file exports TWO near-identical-looking DNA compare cards. The feed renders the SECOND one for actual posts:
+- `DnaCompareFeedCard` (default export) — generic standalone card, rendered with NO props as a single slot. Computes its own featured + Others Aligned from the current user's data.
+- `DnaComparePostCard` (named export) — renders a `dna_compare` UGC post (`standaloneUGCPosts.filter(type==='dna_compare')`). This is what shows in the feed when a user posted a comparison. Featured circle = poster vs the post's friend (from post content JSON `cmp.match_score`); "Others Aligned" = the POSTER's other friends.
+
+**Lesson:** A user-reported "nothing changed" can mean you fixed the wrong twin. Confirm which component is actually rendered (grep feed.tsx for the import + JSX usage) before editing.
+
+**Others Aligned in DnaComparePostCard:** fetch the POSTER's real scores via `get-dna-feed-data` edge function with `body: { target_user_id: posterId }` (the function falls back to the auth user when no target given). The expanded list MUST render `u.pct` next to the name — that render line was missing the percentage entirely (only showed name+avatar), which was the actual "no percentages" bug.
+
 ## Real scores for Heidi (as of June 2026)
 - Snazzyman: 85%
 - Jeeppler: 79% (duplicate rows exist — keep highest)

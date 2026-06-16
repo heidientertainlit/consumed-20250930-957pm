@@ -31,7 +31,31 @@ serve(async (req) => {
     });
   }
 
-  const userId = user.id;
+  // Allow fetching alignments for a specific poster (DnaComparePostCard).
+  // Falls back to the authenticated user (DnaCompareFeedCard).
+  let targetUserId: string | null = null;
+  try {
+    const body = await req.json();
+    targetUserId = body?.target_user_id ?? null;
+  } catch { /* no body — use auth user */ }
+
+  // Authorization: a caller may only request another user's alignment data if
+  // that user has actually published a dna_compare post (whose feed card already
+  // exposes this same data). Otherwise restrict to the caller's own data.
+  if (targetUserId && targetUserId !== user.id) {
+    const { count } = await admin
+      .from('social_posts')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', targetUserId)
+      .eq('post_type', 'dna_compare');
+    if (!count) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
+  const userId = targetUserId || user.id;
 
   const [fsRes, myDnaRes] = await Promise.all([
     admin.from('friendships')
