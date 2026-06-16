@@ -923,9 +923,49 @@ export default function FeedComposerBar({
 }
 
 // ─── Two-chip replacement for the collapsed bar ───────────────────────────────
-export function FeedActionChips({ dark = false }: { dark?: boolean }) {
+export function FeedActionChips({ dark = false, variant }: { dark?: boolean; variant?: 'cards' }) {
   const [composerOpen, setComposerOpen] = useState(false);
   const [, setLocation] = useLocation();
+
+  if (variant === 'cards') {
+    return (
+      <>
+        <div className="grid grid-cols-2 gap-3">
+          {/* Track Something */}
+          <button
+            onClick={() => setLocation('/add')}
+            className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-200 text-left active:bg-gray-50 transition-colors"
+          >
+            <span className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
+              <Bookmark size={18} className="text-white" fill="white" />
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-[14px] text-gray-900 leading-tight">Track Something</p>
+              <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">Add a movie, book, show, or more</p>
+            </div>
+            <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
+          </button>
+          {/* Share a Take */}
+          <button
+            onClick={() => setComposerOpen(true)}
+            className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-200 text-left active:bg-gray-50 transition-colors"
+          >
+            <span className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)' }}>
+              <MessageSquarePlus size={18} className="text-white" />
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-[14px] text-gray-900 leading-tight">Share a Take</p>
+              <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">Tell the community what you think</p>
+            </div>
+            <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
+          </button>
+        </div>
+        {composerOpen && (
+          <FeedComposerBar startExpanded onExternalClose={() => setComposerOpen(false)} />
+        )}
+      </>
+    );
+  }
 
   if (dark) {
     return (

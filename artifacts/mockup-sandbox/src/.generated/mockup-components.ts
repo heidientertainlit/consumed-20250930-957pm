@@ -37,8 +37,8 @@ export const modules: ModuleMap = {
   "./components/mockups/todays-play/NeonPulse.tsx": () => import("../components/mockups/todays-play/NeonPulse.tsx"),
   "./components/mockups/todays-play/PreviewStack.tsx": () => import("../components/mockups/todays-play/PreviewStack.tsx"),
   "./components/mockups/todays-play/Wrapped.tsx": () => import("../components/mockups/todays-play/Wrapped.tsx"),
-  "./components/mockups/trivia-rating/TriviaCard.tsx": () => import("../components/mockups/trivia-rating/TriviaCard.tsx"),
   "./components/mockups/ugc-card/ConversationFirst.tsx": () => import("../components/mockups/ugc-card/ConversationFirst.tsx"),
   "./components/mockups/ugc-card/RatingHero.tsx": () => import("../components/mockups/ugc-card/RatingHero.tsx"),
-  "./components/mockups/ugc-card/SocialProofLed.tsx": () => import("../components/mockups/ugc-card/SocialProofLed.tsx")
+  "./components/mockups/ugc-card/SocialProofLed.tsx": () => import("../components/mockups/ugc-card/SocialProofLed.tsx"),
+  "./components/mockups/trivia-rating/TriviaCard.tsx": () => import("../components/mockups/trivia-rating/TriviaCard.tsx")
 };

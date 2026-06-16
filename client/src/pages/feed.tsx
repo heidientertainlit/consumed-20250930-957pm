@@ -7775,9 +7775,6 @@ export default function Feed() {
             <div className="mt-3">
               <DnaMomentFeaturedCard />
             </div>
-            <div className="mt-4">
-              <FeedActionChips dark />
-            </div>
 
           </div>
           
@@ -7859,6 +7856,11 @@ export default function Feed() {
             </div>
           </div>
         )}
+
+        {/* ── Track / Share action cards ── */}
+        <div className="mb-5">
+          <FeedActionChips variant="cards" />
+        </div>
 
         {/* ── Trending Now ── */}
         <TrendingNowSection />
