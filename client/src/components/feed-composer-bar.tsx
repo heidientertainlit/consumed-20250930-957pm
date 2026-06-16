@@ -936,28 +936,26 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
             onClick={() => setLocation('/add')}
             className="flex items-center gap-2.5 p-3 bg-gray-50 rounded-2xl text-left active:bg-gray-100 transition-colors"
           >
-            <span className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
-              <Bookmark size={16} className="text-white" fill="white" />
+            <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
+              <Bookmark size={15} className="text-white" fill="white" />
             </span>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-[13px] text-gray-900 leading-tight">Add Media</p>
-              <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Add a movie, book, show, or more</p>
+              <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Movies, shows, books &amp; more</p>
             </div>
-            <ArrowRight size={15} className="text-gray-400 flex-shrink-0" />
           </button>
           {/* Share a Take */}
           <button
             onClick={() => setComposerOpen(true)}
             className="flex items-center gap-2.5 p-3 bg-gray-50 rounded-2xl text-left active:bg-gray-100 transition-colors"
           >
-            <span className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)' }}>
-              <MessageSquarePlus size={16} className="text-white" />
+            <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)' }}>
+              <MessageSquarePlus size={15} className="text-white" />
             </span>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-[13px] text-gray-900 leading-tight">Share a Take</p>
-              <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Tell the community what you think</p>
+              <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Tell the community</p>
             </div>
-            <ArrowRight size={15} className="text-gray-400 flex-shrink-0" />
           </button>
         </div>
         {composerOpen && (
