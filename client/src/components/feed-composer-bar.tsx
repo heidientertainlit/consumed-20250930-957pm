@@ -940,7 +940,7 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
               <Bookmark size={15} className="text-white" fill="white" />
             </span>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[13px] text-gray-900 leading-tight">Add Media</p>
+              <p className="font-semibold text-[13px] text-gray-900 leading-tight">Track Something</p>
               <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Movies, shows, books &amp; more</p>
             </div>
           </button>
