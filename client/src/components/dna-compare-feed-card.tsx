@@ -491,21 +491,28 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
   const [othersExpanded, setOthersExpanded] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     async function fetchPersonalized() {
       try {
-        // Get the live session directly from the Supabase client (bypasses stale React auth state)
-        const { data: { session: liveSession } } = await supabase.auth.getSession();
-        if (!liveSession?.access_token || !liveSession?.user?.id) { setLoadingPersonal(false); return; }
-        const liveUserId = liveSession.user.id;
-        const headers = { Authorization: `Bearer ${liveSession.access_token}`, apikey: ANON_KEY, "Content-Type": "application/json" };
-        // 1. Fetch my DNA profile + friends list in parallel
+        // Use supabase.auth.getUser() — server-validates the JWT, immune to stale React state
+        const { data: { user: liveUser }, error: userErr } = await supabase.auth.getUser();
+        if (cancelled) return;
+        if (userErr || !liveUser?.id) { setLoadingPersonal(false); return; }
+        const liveUserId = liveUser.id;
+
+        // 1. Fetch my DNA profile + my accepted friendships — uses supabase client (no token headers needed)
         const [myDnaRes, fsRes] = await Promise.all([
-          fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=eq.${liveUserId}&select=favorite_genres,label`, { headers }),
-          fetch(`${SUPABASE_URL}/rest/v1/friendships?or=(user_id.eq.${liveUserId},friend_id.eq.${liveUserId})&status=eq.accepted&select=user_id,friend_id`, { headers }),
+          supabase.from('dna_profiles').select('favorite_genres,label').eq('user_id', liveUserId).single(),
+          supabase.from('friendships')
+            .select('user_id,friend_id')
+            .or(`user_id.eq.${liveUserId},friend_id.eq.${liveUserId}`)
+            .eq('status', 'accepted'),
         ]);
-        const [myDna] = await myDnaRes.json();
-        const friendships = await fsRes.json();
-        if (!myDna?.favorite_genres?.length || !Array.isArray(friendships) || friendships.length === 0) { setNoFriends(true); return; }
+        if (cancelled) return;
+
+        const myDna = myDnaRes.data;
+        const friendships: any[] = fsRes.data ?? [];
+        if (!myDna?.favorite_genres?.length || friendships.length === 0) { setNoFriends(true); return; }
 
         const myGenres: string[] = myDna.favorite_genres;
         if (myDna.label) setMyLabel(myDna.label);
@@ -516,20 +523,20 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
         // ⚠️ IMPORTANT: dna_comparisons.match_score is the AUTHORITATIVE source for alignment %.
         // Do NOT replace with Jaccard genre overlap — Jaccard produces unreliable flat scores.
-        // Real scores come from the compare-dna-friend edge function writing to dna_comparisons.
-        // 2. Fetch friends' DNA profiles, display names, AND all cached comparison scores in parallel.
-        // Use two separate queries (not a PostgREST `or` filter) to reliably get both directions.
+        // 2. Fetch friends' DNA profiles, display names, AND cached comparison scores (both directions)
         const [friendDnaRes, friendUsersRes, cmp1Res, cmp2Res] = await Promise.all([
-          fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=in.(${friendIds.join(',')})&select=user_id,favorite_genres,label`, { headers }),
-          fetch(`${SUPABASE_URL}/rest/v1/users?id=in.(${friendIds.join(',')})&select=id,display_name,user_name`, { headers }),
-          fetch(`${SUPABASE_URL}/rest/v1/dna_comparisons?user_id_1=eq.${liveUserId}&select=user_id_2,match_score`, { headers }),
-          fetch(`${SUPABASE_URL}/rest/v1/dna_comparisons?user_id_2=eq.${liveUserId}&select=user_id_1,match_score`, { headers }),
+          supabase.from('dna_profiles').select('user_id,favorite_genres,label').in('user_id', friendIds),
+          supabase.from('users').select('id,display_name,user_name').in('id', friendIds),
+          supabase.from('dna_comparisons').select('user_id_2,match_score').eq('user_id_1', liveUserId),
+          supabase.from('dna_comparisons').select('user_id_1,match_score').eq('user_id_2', liveUserId),
         ]);
-        const friendDnas = await friendDnaRes.json();
-        const friendUsers = await friendUsersRes.json();
-        const cmp1 = await cmp1Res.json();
-        const cmp2 = await cmp2Res.json();
-        if (!Array.isArray(friendDnas) || friendDnas.length === 0) return;
+        if (cancelled) return;
+
+        const friendDnas: any[] = friendDnaRes.data ?? [];
+        const friendUsers: any[] = friendUsersRes.data ?? [];
+        const cmp1: any[] = cmp1Res.data ?? [];
+        const cmp2: any[] = cmp2Res.data ?? [];
+        if (friendDnas.length === 0) return;
 
         // Build a map of friendId → real match_score from dna_comparisons (authoritative)
         const cmpMap = new Map<string, number>();
@@ -538,8 +545,8 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
             cmpMap.set(friendId, Math.round(score));
           }
         };
-        if (Array.isArray(cmp1)) cmp1.forEach((r: any) => addToCmpMap(r.user_id_2, r.match_score));
-        if (Array.isArray(cmp2)) cmp2.forEach((r: any) => addToCmpMap(r.user_id_1, r.match_score));
+        cmp1.forEach((r: any) => addToCmpMap(r.user_id_2, r.match_score));
+        cmp2.forEach((r: any) => addToCmpMap(r.user_id_1, r.match_score));
 
         // 3. Score each friend — real dna_comparisons score is primary; Jaccard genre overlap is fallback.
         const myGenreSet = new Set(myGenres.map((g: string) => g.toLowerCase()));
@@ -547,9 +554,8 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           .map((fd: any, i: number) => {
             const genres: string[] = Array.isArray(fd.favorite_genres) ? fd.favorite_genres : [];
             const realPct: number | null = cmpMap.has(fd.user_id) ? cmpMap.get(fd.user_id)! : null;
-            // Use real cached score if available; fall back to Jaccard genre overlap
             const pct: number = realPct ?? calcOverlapPct(myGenres, genres);
-            const info = Array.isArray(friendUsers) ? friendUsers.find((u: any) => u.id === fd.user_id) : null;
+            const info = friendUsers.find((u: any) => u.id === fd.user_id);
             const displayName = info?.display_name || info?.user_name || 'Friend';
             const shared = genres.filter((g: string) => myGenreSet.has(g.toLowerCase()));
             return { displayName, pct, hasRealScore: realPct !== null, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id, sharedGenres: shared };
@@ -565,7 +571,6 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         const firstName = top.displayName.split(' ')[0];
 
         setSharedGenresFromDna(top.sharedGenres.slice(0, 3));
-
         setDynFeatured({
           displayName: top.displayName,
           initials: initials(top.displayName),
@@ -575,7 +580,6 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           label: top.label,
           userId: top.userId,
         });
-        // Others Aligned: friends with real cached scores show %, unscored friends show name only
         const overlapItems = rest.slice(0, 5).map((r: any) => ({
           displayName: r.displayName,
           initials: initials(r.displayName),
@@ -586,26 +590,29 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
       } catch (err) {
         console.error('[DNA-FETCH-ERROR]', err);
       } finally {
-        setLoadingPersonal(false);
+        if (!cancelled) setLoadingPersonal(false);
       }
     }
     fetchPersonalized();
-  }, [user?.id]);
+    return () => { cancelled = true; };
+  }, []);
 
-  // Rating-level agree/differ comparison
+  // Rating-level agree/differ comparison — runs after dynFeatured is populated
   useEffect(() => {
     const friendId = (dynFeatured ?? featuredProp)?.userId;
-    if (!user?.id || !friendId || !session?.access_token) return;
-    const headers = { Authorization: `Bearer ${session.access_token}`, apikey: ANON_KEY };
+    if (!friendId) return;
+    let cancelled = false;
     async function fetchRatingOverlap() {
       try {
+        const { data: { user: liveUser } } = await supabase.auth.getUser();
+        if (cancelled || !liveUser?.id) return;
         const [myRes, friendRes] = await Promise.all([
-          fetch(`${SUPABASE_URL}/rest/v1/media_ratings?user_id=eq.${user!.id}&select=media_external_id,media_title,rating`, { headers }),
-          fetch(`${SUPABASE_URL}/rest/v1/media_ratings?user_id=eq.${friendId}&select=media_external_id,media_title,rating`, { headers }),
+          supabase.from('media_ratings').select('media_external_id,media_title,rating').eq('user_id', liveUser.id),
+          supabase.from('media_ratings').select('media_external_id,media_title,rating').eq('user_id', friendId),
         ]);
-        const myRatings: any[] = await myRes.json();
-        const friendRatings: any[] = await friendRes.json();
-        if (!Array.isArray(myRatings) || !Array.isArray(friendRatings)) return;
+        if (cancelled) return;
+        const myRatings: any[] = myRes.data ?? [];
+        const friendRatings: any[] = friendRes.data ?? [];
         const friendMap = new Map(friendRatings.map(r => [r.media_external_id, r]));
         // Agree: both ≥4★, sorted by combined score
         const agreed = myRatings
@@ -628,7 +635,8 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
       } catch { /* silent */ }
     }
     fetchRatingOverlap();
-  }, [dynFeatured?.userId, featuredProp?.userId, user?.id, session?.access_token]);
+    return () => { cancelled = true; };
+  }, [dynFeatured?.userId, featuredProp?.userId]);
 
   const featured = dynFeatured ?? featuredProp ?? { displayName: 'Heidi Peters Tagliaferri', initials: 'HP', color: '#8b5cf6', pct: 71, tagline: 'You both love genre-spanning stories and thrilling narratives.' };
   const overlaps = dynOverlaps.length > 0 ? dynOverlaps : (overlapsProp ?? [
