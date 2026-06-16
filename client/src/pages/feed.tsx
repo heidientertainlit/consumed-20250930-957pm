@@ -7783,6 +7783,11 @@ export default function Feed() {
 
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-6" data-feed-content>
 
+        {/* ── Track / Share action cards ── */}
+        <div className="mb-5">
+          <FeedActionChips variant="cards" />
+        </div>
+
         {/* ── What's Happening ── */}
         {whatHappeningPosts.length > 0 && (
           <div className="mb-4 px-4">
@@ -7856,11 +7861,6 @@ export default function Feed() {
             </div>
           </div>
         )}
-
-        {/* ── Track / Share action cards ── */}
-        <div className="mb-5">
-          <FeedActionChips variant="cards" />
-        </div>
 
         {/* ── Trending Now ── */}
         <TrendingNowSection />
