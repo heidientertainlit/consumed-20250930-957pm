@@ -492,13 +492,17 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
   useEffect(() => {
     let cancelled = false;
+    let ran = false; // only run once per mount even if auth fires multiple times
+
     async function fetchPersonalized() {
+      if (ran) return;
+      // Use supabase.auth.getUser() — server-validates the JWT, immune to stale React state
+      const { data: { user: liveUser }, error: userErr } = await supabase.auth.getUser();
+      if (cancelled) return;
+      if (userErr || !liveUser?.id) { setLoadingPersonal(false); return; }
+      ran = true;
+      const liveUserId = liveUser.id;
       try {
-        // Use supabase.auth.getUser() — server-validates the JWT, immune to stale React state
-        const { data: { user: liveUser }, error: userErr } = await supabase.auth.getUser();
-        if (cancelled) return;
-        if (userErr || !liveUser?.id) { setLoadingPersonal(false); return; }
-        const liveUserId = liveUser.id;
 
         // 1. Fetch my DNA profile + my accepted friendships — uses supabase client (no token headers needed)
         const [myDnaRes, fsRes] = await Promise.all([
@@ -593,8 +597,18 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         if (!cancelled) setLoadingPersonal(false);
       }
     }
+    // Try immediately on mount
     fetchPersonalized();
-    return () => { cancelled = true; };
+
+    // Also listen for auth state changes — session may become available after INITIAL_SESSION null
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!cancelled && session?.user?.id) fetchPersonalized();
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Rating-level agree/differ comparison — runs after dynFeatured is populated
