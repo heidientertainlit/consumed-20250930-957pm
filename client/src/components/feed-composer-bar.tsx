@@ -939,7 +939,7 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
             <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
               <Bookmark size={15} className="text-white" fill="white" />
             </span>
-            <span className="flex-1 min-w-0 font-semibold text-[13px] text-gray-900 truncate">Track Something</span>
+            <span className="flex-1 min-w-0 font-semibold text-[13px] text-gray-900 truncate">Add Media</span>
             <ChevronRight size={15} className="text-gray-300 flex-shrink-0" />
           </button>
           {/* Share a Take */}
