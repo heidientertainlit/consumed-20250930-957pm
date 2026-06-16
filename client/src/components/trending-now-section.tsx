@@ -66,7 +66,7 @@ export function TrendingNowSection({ onItemClick }: { onItemClick?: (item: Trend
   if (loading) {
     return (
       <div className="mb-5">
-        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Trending Now</p>
+        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3 px-4">Trending Now</p>
         <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-1">
           {[1, 2, 3, 4, 5].map(n => (
             <div key={n} className="flex-shrink-0 w-[88px]">
@@ -85,7 +85,7 @@ export function TrendingNowSection({ onItemClick }: { onItemClick?: (item: Trend
   return (
     <>
       <div className="mb-5">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-3 px-4">
           <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Trending Now</p>
         </div>
         <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4">
