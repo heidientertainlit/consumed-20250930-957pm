@@ -934,7 +934,7 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
           {/* Add Media */}
           <button
             onClick={() => setLocation('/add')}
-            className="flex items-center gap-2.5 px-3 py-2.5 bg-white rounded-2xl border border-gray-200 text-left active:bg-gray-50 transition-colors"
+            className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50 rounded-2xl border border-gray-200 text-left active:bg-gray-100 transition-colors"
           >
             <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
               <Bookmark size={15} className="text-white" fill="white" />
@@ -945,7 +945,7 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
           {/* Share a Take */}
           <button
             onClick={() => setComposerOpen(true)}
-            className="flex items-center gap-2.5 px-3 py-2.5 bg-white rounded-2xl border border-gray-200 text-left active:bg-gray-50 transition-colors"
+            className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50 rounded-2xl border border-gray-200 text-left active:bg-gray-100 transition-colors"
           >
             <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)' }}>
               <MessageSquarePlus size={15} className="text-white" />
