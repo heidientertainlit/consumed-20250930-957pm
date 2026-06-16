@@ -478,7 +478,7 @@ export function CompareSheet({
 /* ── Main card ──────────────────────────────────────── */
 export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: overlapsProp }: DnaCompareFeedCardProps) {
   const [, setLocation] = useLocation();
-  const { session, user } = useAuth();
+  const { session, user, loading: authLoading } = useAuth();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [dynFeatured, setDynFeatured] = useState<CompareUser | null>(null);
   const [dynOverlaps, setDynOverlaps] = useState<OverlapUser[]>([]);
@@ -491,58 +491,49 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
   const [othersExpanded, setOthersExpanded] = useState(true);
 
   useEffect(() => {
+    // Wait for auth to finish loading; skip if not logged in
+    if (authLoading) return;
+    if (!user?.id) { setLoadingPersonal(false); return; }
+
     let cancelled = false;
-    let ran = false; // only run once per mount even if auth fires multiple times
 
     async function fetchPersonalized() {
-      if (ran) return;
-      // Use supabase.auth.getUser() — server-validates the JWT, immune to stale React state
-      const { data: { user: liveUser }, error: userErr } = await supabase.auth.getUser();
-      if (cancelled) return;
-      if (userErr || !liveUser?.id) { setLoadingPersonal(false); return; }
-      ran = true;
-      const liveUserId = liveUser.id;
       try {
+        console.log('[DNA-FEED] fetching for user', user!.id);
 
-        // 1. Fetch my DNA profile + my accepted friendships — uses supabase client (no token headers needed)
-        const [myDnaRes, fsRes] = await Promise.all([
-          supabase.from('dna_profiles').select('favorite_genres,label').eq('user_id', liveUserId).single(),
-          supabase.from('friendships')
-            .select('user_id,friend_id')
-            .or(`user_id.eq.${liveUserId},friend_id.eq.${liveUserId}`)
-            .eq('status', 'accepted'),
-        ]);
+        // Call edge function — uses service role, bypasses RLS entirely
+        const { data, error } = await supabase.functions.invoke('get-dna-feed-data');
         if (cancelled) return;
 
-        const myDna = myDnaRes.data;
-        const friendships: any[] = fsRes.data ?? [];
-        if (!myDna?.favorite_genres?.length || friendships.length === 0) { setNoFriends(true); return; }
+        if (error) {
+          console.error('[DNA-FEED] edge function error', error);
+          setLoadingPersonal(false);
+          return;
+        }
+
+        console.log('[DNA-FEED] raw response', {
+          myDna: data?.myDna,
+          friendDnasCount: data?.friendDnas?.length,
+          friendUsersCount: data?.friendUsers?.length,
+          cmp1Count: data?.cmp1?.length,
+          cmp2Count: data?.cmp2?.length,
+          cmp1: data?.cmp1,
+          cmp2: data?.cmp2,
+        });
+
+        const myDna = data?.myDna;
+        const friendDnas: any[] = data?.friendDnas ?? [];
+        const friendUsers: any[] = data?.friendUsers ?? [];
+        const cmp1: any[] = data?.cmp1 ?? [];
+        const cmp2: any[] = data?.cmp2 ?? [];
+
+        if (!myDna?.favorite_genres?.length) { setNoFriends(true); setLoadingPersonal(false); return; }
+        if (friendDnas.length === 0) { setNoFriends(true); setLoadingPersonal(false); return; }
 
         const myGenres: string[] = myDna.favorite_genres;
         if (myDna.label) setMyLabel(myDna.label);
-        const friendIds = [...new Set(
-          friendships.map((f: any) => f.user_id === liveUserId ? f.friend_id : f.user_id)
-        )].filter((id: string) => id !== liveUserId) as string[];
-        if (friendIds.length === 0) { setNoFriends(true); return; }
 
-        // ⚠️ IMPORTANT: dna_comparisons.match_score is the AUTHORITATIVE source for alignment %.
-        // Do NOT replace with Jaccard genre overlap — Jaccard produces unreliable flat scores.
-        // 2. Fetch friends' DNA profiles, display names, AND cached comparison scores (both directions)
-        const [friendDnaRes, friendUsersRes, cmp1Res, cmp2Res] = await Promise.all([
-          supabase.from('dna_profiles').select('user_id,favorite_genres,label').in('user_id', friendIds),
-          supabase.from('users').select('id,display_name,user_name').in('id', friendIds),
-          supabase.from('dna_comparisons').select('user_id_2,match_score').eq('user_id_1', liveUserId),
-          supabase.from('dna_comparisons').select('user_id_1,match_score').eq('user_id_2', liveUserId),
-        ]);
-        if (cancelled) return;
-
-        const friendDnas: any[] = friendDnaRes.data ?? [];
-        const friendUsers: any[] = friendUsersRes.data ?? [];
-        const cmp1: any[] = cmp1Res.data ?? [];
-        const cmp2: any[] = cmp2Res.data ?? [];
-        if (friendDnas.length === 0) return;
-
-        // Build a map of friendId → real match_score from dna_comparisons (authoritative)
+        // Build map of friendId → best real match_score from dna_comparisons
         const cmpMap = new Map<string, number>();
         const addToCmpMap = (friendId: string, score: number) => {
           if (!cmpMap.has(friendId) || score > cmpMap.get(friendId)!) {
@@ -552,28 +543,32 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         cmp1.forEach((r: any) => addToCmpMap(r.user_id_2, r.match_score));
         cmp2.forEach((r: any) => addToCmpMap(r.user_id_1, r.match_score));
 
-        // 3. Score each friend — real dna_comparisons score is primary; Jaccard genre overlap is fallback.
+        console.log('[DNA-FEED] cmpMap', Object.fromEntries(cmpMap));
+
+        // Only show friends with real dna_comparisons scores — no Jaccard fallback
         const myGenreSet = new Set(myGenres.map((g: string) => g.toLowerCase()));
-        const scored = friendDnas
+        const scoredWithReal = friendDnas
+          .filter((fd: any) => cmpMap.has(fd.user_id))
           .map((fd: any, i: number) => {
             const genres: string[] = Array.isArray(fd.favorite_genres) ? fd.favorite_genres : [];
-            const realPct: number | null = cmpMap.has(fd.user_id) ? cmpMap.get(fd.user_id)! : null;
-            const pct: number = realPct ?? calcOverlapPct(myGenres, genres);
+            const pct = cmpMap.get(fd.user_id)!;
             const info = friendUsers.find((u: any) => u.id === fd.user_id);
             const displayName = info?.display_name || info?.user_name || 'Friend';
             const shared = genres.filter((g: string) => myGenreSet.has(g.toLowerCase()));
-            return { displayName, pct, hasRealScore: realPct !== null, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id, sharedGenres: shared };
+            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id, sharedGenres: shared };
           })
-          // Sort: real cached scores first (highest first), then Jaccard fallbacks (highest first)
-          .sort((a: any, b: any) => {
-            if (a.hasRealScore !== b.hasRealScore) return a.hasRealScore ? -1 : 1;
-            return b.pct - a.pct;
-          });
+          .sort((a: any, b: any) => b.pct - a.pct);
 
-        if (scored.length === 0) return;
-        const [top, ...rest] = scored;
+        console.log('[DNA-FEED] scoredWithReal', scoredWithReal);
+
+        if (scoredWithReal.length === 0) {
+          setNoFriends(true);
+          setLoadingPersonal(false);
+          return;
+        }
+
+        const [top, ...rest] = scoredWithReal;
         const firstName = top.displayName.split(' ')[0];
-
         setSharedGenresFromDna(top.sharedGenres.slice(0, 3));
         setDynFeatured({
           displayName: top.displayName,
@@ -584,32 +579,25 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           label: top.label,
           userId: top.userId,
         });
+
         const overlapItems = rest.slice(0, 5).map((r: any) => ({
           displayName: r.displayName,
           initials: initials(r.displayName),
           color: r.color,
           pct: r.pct,
         }));
+        console.log('[DNA-FEED] overlapItems', overlapItems);
         setDynOverlaps(overlapItems);
       } catch (err) {
-        console.error('[DNA-FETCH-ERROR]', err);
+        console.error('[DNA-FEED] unexpected error', err);
       } finally {
         if (!cancelled) setLoadingPersonal(false);
       }
     }
-    // Try immediately on mount
+
     fetchPersonalized();
-
-    // Also listen for auth state changes — session may become available after INITIAL_SESSION null
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!cancelled && session?.user?.id) fetchPersonalized();
-    });
-
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-    };
-  }, []);
+    return () => { cancelled = true; };
+  }, [user?.id, authLoading]);
 
   // Rating-level agree/differ comparison — runs after dynFeatured is populated
   useEffect(() => {
@@ -652,12 +640,23 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
     return () => { cancelled = true; };
   }, [dynFeatured?.userId, featuredProp?.userId]);
 
-  const featured = dynFeatured ?? featuredProp ?? { displayName: 'Heidi Peters Tagliaferri', initials: 'HP', color: '#8b5cf6', pct: 71, tagline: 'You both love genre-spanning stories and thrilling narratives.' };
-  const overlaps = dynOverlaps.length > 0 ? dynOverlaps : (overlapsProp ?? [
-    { displayName: 'Jeeppler', initials: 'J', color: '#a855f7', pct: 38 },
-    { displayName: 'Jordan F.', initials: 'JF', color: '#ec4899', pct: 31 },
-    { displayName: 'Ambiannie', initials: 'A', color: '#f59e0b', pct: 24 },
-  ]);
+  const featured = dynFeatured ?? featuredProp ?? null;
+  const overlaps = dynOverlaps.length > 0 ? dynOverlaps : (overlapsProp ?? []);
+
+  // Show skeleton while loading — prevents null crash on featured.pct etc.
+  if (loadingPersonal && !featured) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4 animate-pulse">
+        <div className="h-[52px]" style={{ background: 'linear-gradient(135deg, #0369a1 0%, #0284c7 40%, #0d9488 100%)' }} />
+        <div className="pt-4 pb-3 flex flex-col items-center gap-3">
+          <div className="w-24 h-24 rounded-full bg-gray-100" />
+          <div className="h-3 w-32 bg-gray-100 rounded-full" />
+          <div className="h-3 w-24 bg-gray-100 rounded-full" />
+        </div>
+        <div className="h-8 mx-4 mb-3 bg-gray-100 rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <>
