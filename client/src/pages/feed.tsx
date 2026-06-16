@@ -7784,7 +7784,8 @@ export default function Feed() {
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-6" data-feed-content>
 
         {/* ── Track / Share action cards ── */}
-        <div className="mb-5">
+        <div className="mb-4 px-4">
+          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">What are you up to?</p>
           <FeedActionChips variant="cards" />
         </div>
 
