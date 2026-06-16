@@ -941,7 +941,7 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
             </span>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-[13px] text-gray-900 leading-tight">Save It</p>
-              <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Movies, shows, books &amp; more</p>
+              <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Track movies, shows &amp; books</p>
             </div>
           </button>
           {/* Share a Take */}
@@ -954,7 +954,7 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
             </span>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-[13px] text-gray-900 leading-tight">Share a Take</p>
-              <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Tell the community</p>
+              <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Reviews, theories &amp; reactions</p>
             </div>
           </button>
         </div>
