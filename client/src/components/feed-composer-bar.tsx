@@ -940,8 +940,8 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
               <Bookmark size={18} className="text-white" fill="white" />
             </span>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[15px] leading-tight" style={{ color: '#7c3aed' }}>Add Media</p>
-              <p className="text-[13px] text-gray-500 mt-0.5">Add a movie, show, book, podcast, or more</p>
+              <p className="font-semibold text-[14px] leading-tight" style={{ color: '#7c3aed' }}>Add Media</p>
+              <p className="text-[12px] text-gray-500 mt-0.5">Add a movie, show, book, podcast, or more</p>
             </div>
             <ChevronRight size={18} className="text-gray-400 flex-shrink-0" />
           </button>
@@ -954,8 +954,8 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
               <MessageSquarePlus size={18} className="text-white" />
             </span>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[15px] leading-tight" style={{ color: '#ea580c' }}>Share a Take</p>
-              <p className="text-[13px] text-gray-500 mt-0.5">Tell the community what you think</p>
+              <p className="font-semibold text-[14px] leading-tight" style={{ color: '#ea580c' }}>Share a Take</p>
+              <p className="text-[12px] text-gray-500 mt-0.5">Tell the community what you think</p>
             </div>
             <ChevronRight size={18} className="text-gray-400 flex-shrink-0" />
           </button>
