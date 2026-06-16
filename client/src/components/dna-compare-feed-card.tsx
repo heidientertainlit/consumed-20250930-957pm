@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import { Dna, ArrowRight, Users, X, ChevronLeft, ChevronDown, Loader2, Share2, CheckCircle2, Heart, Zap } from "lucide-react";
 
 /* ── types ─────────────────────────────────────────── */
@@ -490,15 +491,17 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
   const [othersExpanded, setOthersExpanded] = useState(true);
 
   useEffect(() => {
-    if (!session?.access_token || !user?.id) { setLoadingPersonal(false); return; }
-    const headers = { Authorization: `Bearer ${session.access_token}`, apikey: ANON_KEY, "Content-Type": "application/json" };
-
     async function fetchPersonalized() {
       try {
+        // Get the live session directly from the Supabase client (bypasses stale React auth state)
+        const { data: { session: liveSession } } = await supabase.auth.getSession();
+        if (!liveSession?.access_token || !liveSession?.user?.id) { setLoadingPersonal(false); return; }
+        const liveUserId = liveSession.user.id;
+        const headers = { Authorization: `Bearer ${liveSession.access_token}`, apikey: ANON_KEY, "Content-Type": "application/json" };
         // 1. Fetch my DNA profile + friends list in parallel
         const [myDnaRes, fsRes] = await Promise.all([
-          fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=eq.${user!.id}&select=favorite_genres,label`, { headers }),
-          fetch(`${SUPABASE_URL}/rest/v1/friendships?or=(user_id.eq.${user!.id},friend_id.eq.${user!.id})&status=eq.accepted&select=user_id,friend_id`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=eq.${liveUserId}&select=favorite_genres,label`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/friendships?or=(user_id.eq.${liveUserId},friend_id.eq.${liveUserId})&status=eq.accepted&select=user_id,friend_id`, { headers }),
         ]);
         const [myDna] = await myDnaRes.json();
         const friendships = await fsRes.json();
@@ -507,8 +510,8 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         const myGenres: string[] = myDna.favorite_genres;
         if (myDna.label) setMyLabel(myDna.label);
         const friendIds = [...new Set(
-          friendships.map((f: any) => f.user_id === user!.id ? f.friend_id : f.user_id)
-        )].filter((id: string) => id !== user!.id) as string[];
+          friendships.map((f: any) => f.user_id === liveUserId ? f.friend_id : f.user_id)
+        )].filter((id: string) => id !== liveUserId) as string[];
         if (friendIds.length === 0) { setNoFriends(true); return; }
 
         // ⚠️ IMPORTANT: dna_comparisons.match_score is the AUTHORITATIVE source for alignment %.
@@ -519,8 +522,8 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         const [friendDnaRes, friendUsersRes, cmp1Res, cmp2Res] = await Promise.all([
           fetch(`${SUPABASE_URL}/rest/v1/dna_profiles?user_id=in.(${friendIds.join(',')})&select=user_id,favorite_genres,label`, { headers }),
           fetch(`${SUPABASE_URL}/rest/v1/users?id=in.(${friendIds.join(',')})&select=id,display_name,user_name`, { headers }),
-          fetch(`${SUPABASE_URL}/rest/v1/dna_comparisons?user_id_1=eq.${user!.id}&select=user_id_2,match_score`, { headers }),
-          fetch(`${SUPABASE_URL}/rest/v1/dna_comparisons?user_id_2=eq.${user!.id}&select=user_id_1,match_score`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/dna_comparisons?user_id_1=eq.${liveUserId}&select=user_id_2,match_score`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/dna_comparisons?user_id_2=eq.${liveUserId}&select=user_id_1,match_score`, { headers }),
         ]);
         const friendDnas = await friendDnaRes.json();
         const friendUsers = await friendUsersRes.json();
@@ -573,20 +576,21 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           userId: top.userId,
         });
         // Others Aligned: friends with real cached scores show %, unscored friends show name only
-        setDynOverlaps(rest.slice(0, 5).map((r: any) => ({
+        const overlapItems = rest.slice(0, 5).map((r: any) => ({
           displayName: r.displayName,
           initials: initials(r.displayName),
           color: r.color,
           pct: r.pct,
-        })));
-      } catch {
-        // silent fallback to prop defaults
+        }));
+        setDynOverlaps(overlapItems);
+      } catch (err) {
+        console.error('[DNA-FETCH-ERROR]', err);
       } finally {
         setLoadingPersonal(false);
       }
     }
     fetchPersonalized();
-  }, [session?.access_token, user?.id]);
+  }, [user?.id]);
 
   // Rating-level agree/differ comparison
   useEffect(() => {
