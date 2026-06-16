@@ -930,34 +930,28 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
   if (variant === 'cards') {
     return (
       <>
-        <div className="divide-y divide-gray-100">
+        <div className="grid grid-cols-2 gap-3">
           {/* Add Media */}
           <button
             onClick={() => setLocation('/add')}
-            className="w-full flex items-center gap-3 py-3 text-left active:opacity-70 transition-opacity"
+            className="flex items-center gap-2.5 px-3 py-2.5 bg-white rounded-2xl border border-gray-200 text-left active:bg-gray-50 transition-colors"
           >
-            <span className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
-              <Bookmark size={18} className="text-white" fill="white" />
+            <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
+              <Bookmark size={15} className="text-white" fill="white" />
             </span>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[14px] leading-tight" style={{ color: '#7c3aed' }}>Add Media</p>
-              <p className="text-[12px] text-gray-500 mt-0.5">Add a movie, show, book, podcast, or more</p>
-            </div>
-            <ChevronRight size={18} className="text-gray-400 flex-shrink-0" />
+            <span className="flex-1 min-w-0 font-semibold text-[13px] text-gray-900 truncate">Add Media</span>
+            <ChevronRight size={15} className="text-gray-300 flex-shrink-0" />
           </button>
           {/* Share a Take */}
           <button
             onClick={() => setComposerOpen(true)}
-            className="w-full flex items-center gap-3 py-3 text-left active:opacity-70 transition-opacity"
+            className="flex items-center gap-2.5 px-3 py-2.5 bg-white rounded-2xl border border-gray-200 text-left active:bg-gray-50 transition-colors"
           >
-            <span className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)' }}>
-              <MessageSquarePlus size={18} className="text-white" />
+            <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)' }}>
+              <MessageSquarePlus size={15} className="text-white" />
             </span>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[14px] leading-tight" style={{ color: '#ea580c' }}>Share a Take</p>
-              <p className="text-[12px] text-gray-500 mt-0.5">Tell the community what you think</p>
-            </div>
-            <ChevronRight size={18} className="text-gray-400 flex-shrink-0" />
+            <span className="flex-1 min-w-0 font-semibold text-[13px] text-gray-900 truncate">Share a Take</span>
+            <ChevronRight size={15} className="text-gray-300 flex-shrink-0" />
           </button>
         </div>
         {composerOpen && (
