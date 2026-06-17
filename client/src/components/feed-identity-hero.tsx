@@ -103,9 +103,9 @@ export function FeedIdentityHero() {
         {/* Headline */}
         {dna?.label ? (
           <>
-            <h1 className="text-[30px] font-extrabold leading-[1.08] text-white">{dna.label}</h1>
+            <h1 className="pl-1 text-[30px] font-extrabold leading-[1.08] text-white">{dna.label}</h1>
             {secondaries.length > 0 && (
-              <div className="mt-1.5 space-y-0.5">
+              <div className="pl-1 mt-1.5 space-y-0.5">
                 {secondaries.map((s, i) => (
                   <p
                     key={s}
@@ -120,10 +120,10 @@ export function FeedIdentityHero() {
           </>
         ) : (
           <>
-            <h1 className="text-[30px] font-extrabold leading-[1.08] text-white">
+            <h1 className="pl-1 text-[30px] font-extrabold leading-[1.08] text-white">
               {displayName ? `Welcome back, ${displayName}.` : "Welcome back."}
             </h1>
-            <p className="text-[13px] mt-1.5 leading-snug" style={{ color: "rgba(255,255,255,0.55)" }}>
+            <p className="pl-1 text-[13px] mt-1.5 leading-snug" style={{ color: "rgba(255,255,255,0.55)" }}>
               Track what you watch, read &amp; play to build your DNA.
             </p>
           </>
@@ -131,7 +131,7 @@ export function FeedIdentityHero() {
 
         {/* Stats — subtle inline row */}
         <div
-          className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-3.5 text-[12.5px]"
+          className="pl-1 flex items-center flex-wrap gap-x-2 gap-y-1 mt-3.5 text-[12.5px]"
           style={{ color: "rgba(255,255,255,0.5)" }}
         >
           {tiles.map((t, i) => (
