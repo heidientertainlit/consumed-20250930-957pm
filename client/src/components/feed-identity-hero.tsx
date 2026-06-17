@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
-import { Bookmark, MessageSquarePlus, Flame, ChevronDown } from "lucide-react";
+import { Bookmark, MessageSquarePlus, Flame } from "lucide-react";
 import FeedComposerBar from "@/components/feed-composer-bar";
 
 interface DnaBits {
@@ -29,7 +29,6 @@ export function FeedIdentityHero() {
   const [weeklyRank, setWeeklyRank] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [composerOpen, setComposerOpen] = useState(false);
-  const [pillsOpen, setPillsOpen] = useState(false);
 
   const displayName =
     user?.user_metadata?.display_name ||
@@ -86,7 +85,6 @@ export function FeedIdentityHero() {
     return () => { cancelled = true; };
   }, [user?.id]);
 
-  const pills = (dna?.flavor_notes?.length ? dna.flavor_notes : dna?.favorite_genres || []).slice(0, 4);
 
   const tiles: { value: string; label: string; flame?: boolean }[] = [
     { value: tracked.toLocaleString(), label: "Tracked" },
@@ -146,37 +144,6 @@ export function FeedIdentityHero() {
             </span>
           ))}
         </div>
-
-        {/* Taste pills — hidden by default, expand on tap */}
-        {pills.length > 0 && (
-          <div className="mt-3">
-            <button
-              onClick={() => setPillsOpen((o) => !o)}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold active:scale-95 transition-transform"
-              style={{ color: "rgba(255,255,255,0.55)" }}
-            >
-              {pillsOpen ? "Hide your vibe" : "See your vibe"}
-              <ChevronDown
-                size={13}
-                className="transition-transform"
-                style={{ transform: pillsOpen ? "rotate(180deg)" : "none" }}
-              />
-            </button>
-            {pillsOpen && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {pills.map((p) => (
-                  <span
-                    key={p}
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-white"
-                    style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)" }}
-                  >
-                    {p}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* CTAs */}
         <div className="grid grid-cols-2 gap-3 mt-4">
