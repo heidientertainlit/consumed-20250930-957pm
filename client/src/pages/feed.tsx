@@ -2887,6 +2887,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   const [externalRatingLabel, setExternalRatingLabel] = useState<string>('');
   const [tasteAlignment, setTasteAlignment] = useState<number | null>(null);
   const [hoverRating, setHoverRating] = useState(0);
+  const [ratingCount, setRatingCount] = useState(0);
   const starsRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number>(0);
   const [seenItDone, setSeenItDone] = useState(false);
@@ -2963,6 +2964,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
         if (data && data.length > 0) {
           const avg = data.reduce((sum: number, r: any) => sum + Number(r.rating), 0) / data.length;
           setCommunityRating(Math.round(avg * 10) / 10);
+          setRatingCount(data.length);
         }
       });
 
