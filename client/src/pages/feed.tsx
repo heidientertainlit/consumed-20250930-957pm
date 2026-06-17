@@ -65,7 +65,7 @@ import DnaClashFeedCard from "@/components/dna-clash-feed-card";
 import DnaCompareFeedCard, { DnaComparePostCard } from "@/components/dna-compare-feed-card";
 import { TodaysPlayNudge } from "@/components/todays-play-nudge";
 import { WhatsYourMove } from "@/components/whats-your-move"; // kept for reference — not currently rendered
-import FeedComposerBar, { FeedActionChips } from "@/components/feed-composer-bar";
+import FeedComposerBar from "@/components/feed-composer-bar";
 import { TrendingNowSection } from "@/components/trending-now-section";
 
 interface SocialPost {
@@ -7786,7 +7786,7 @@ export default function Feed() {
         {/* ── What's Happening ── */}
         {whatHappeningPosts.length > 0 && (
           <div className="mb-4 px-4">
-            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">What's Happening</p>
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">What's Happening</p>
             <div className="space-y-0 divide-y divide-gray-100">
               {whatHappeningPosts.map((post: any) => {
                 const name = post.user?.displayName || post.user?.username || 'Someone';
@@ -7799,7 +7799,7 @@ export default function Feed() {
                 return (
                   <div
                     key={post.id}
-                    className="flex items-center gap-3 py-3 cursor-pointer active:bg-gray-50 rounded-xl transition-colors"
+                    className="flex items-center gap-3 py-2 cursor-pointer active:bg-gray-50 rounded-xl transition-colors"
                     onClick={() => setWhatsHappeningOpenPost(post)}
                   >
                     {/* Media poster thumbnail */}
@@ -7856,13 +7856,6 @@ export default function Feed() {
             </div>
           </div>
         )}
-
-        {/* ── Track / Share action cards ── */}
-        <div className="px-4 mb-5">
-          <div className="border-t border-gray-100 pt-4">
-            <FeedActionChips variant="cards" />
-          </div>
-        </div>
 
         {/* ── Trending Now ── */}
         <TrendingNowSection />
