@@ -111,9 +111,17 @@ export function FeedIdentityHero() {
             </p>
             <h1 className="text-[30px] font-extrabold leading-[1.08] text-white">{dna.label}</h1>
             {secondaries.length > 0 && (
-              <p className="text-[14px] font-semibold mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>
-                + {secondaries.join(" · ")}
-              </p>
+              <div className="mt-1.5 space-y-0.5">
+                {secondaries.map((s, i) => (
+                  <p
+                    key={s}
+                    className="text-[18px] font-bold leading-tight"
+                    style={{ color: i === 0 ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.32)" }}
+                  >
+                    + {s}
+                  </p>
+                ))}
+              </div>
             )}
           </>
         ) : (
