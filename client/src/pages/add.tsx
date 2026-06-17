@@ -398,7 +398,10 @@ export default function Search() {
         {/* Page header */}
         <div className="mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <button
-            onClick={() => window.history.back()}
+            onClick={() => {
+              if (window.history.length > 1) window.history.back();
+              else setLocation('/');
+            }}
             className="flex items-center gap-1.5 text-white/50 hover:text-white/80 transition-colors mb-3 -ml-1"
           >
             <ArrowLeft size={16} />
