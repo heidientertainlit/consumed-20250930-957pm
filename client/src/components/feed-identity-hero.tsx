@@ -1,0 +1,172 @@
+import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
+import { useLocation } from "wouter";
+import { Bookmark, MessageSquarePlus, Flame } from "lucide-react";
+import FeedComposerBar from "@/components/feed-composer-bar";
+
+interface DnaBits {
+  label: string | null;
+  tagline: string | null;
+  flavor_notes: string[] | null;
+  favorite_genres: string[] | null;
+}
+
+export function FeedIdentityHero() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+
+  const [dna, setDna] = useState<DnaBits | null>(null);
+  const [streak, setStreak] = useState<number>(0);
+  const [tracked, setTracked] = useState<number>(0);
+  const [weeklyRank, setWeeklyRank] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [composerOpen, setComposerOpen] = useState(false);
+
+  const displayName =
+    user?.user_metadata?.display_name ||
+    user?.user_metadata?.first_name ||
+    user?.email?.split("@")[0] ||
+    "";
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const uid = user.id;
+    let cancelled = false;
+
+    (async () => {
+      const [dnaRes, streakRes, trackedRes] = await Promise.all([
+        supabase
+          .from("dna_profiles")
+          .select("label, tagline, flavor_notes, favorite_genres")
+          .eq("user_id", uid)
+          .single(),
+        supabase
+          .from("login_streaks")
+          .select("current_streak")
+          .eq("user_id", uid)
+          .single(),
+        supabase
+          .from("list_items")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", uid),
+      ]);
+
+      if (cancelled) return;
+      if (dnaRes.data) setDna(dnaRes.data as DnaBits);
+      if (streakRes.data) setStreak(streakRes.data.current_streak || 0);
+      if (typeof trackedRes.count === "number") setTracked(trackedRes.count);
+      setLoading(false);
+
+      // Weekly rank (best-effort — only shown if found)
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-leaderboards?category=all&scope=global&period=weekly&limit=200`,
+          { headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" } }
+        );
+        const data = await res.json();
+        const board: any[] = data?.categories?.total_consumption || data?.categories?.overall || [];
+        const mine = board.find((e: any) => e.user_id === uid);
+        if (!cancelled && mine?.rank) setWeeklyRank(mine.rank);
+      } catch {
+        /* leave weekly rank hidden */
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  const pills = (dna?.flavor_notes?.length ? dna.flavor_notes : dna?.favorite_genres || []).slice(0, 4);
+
+  const tiles: { value: string; label: string; flame?: boolean }[] = [
+    { value: tracked.toLocaleString(), label: "Tracked" },
+    { value: String(streak), label: "Day streak", flame: true },
+  ];
+  if (weeklyRank) tiles.push({ value: `#${weeklyRank}`, label: "This week" });
+
+  if (loading) {
+    return <div className="rounded-3xl animate-pulse" style={{ height: 268, background: "rgba(255,255,255,0.05)" }} />;
+  }
+
+  return (
+    <>
+      <div className="pt-1">
+        {/* Headline */}
+        {dna?.label ? (
+          <h1 className="text-[26px] font-bold leading-[1.15] text-white">
+            You're <span style={{ color: "#c4b5fd" }}>{dna.label}</span>.
+          </h1>
+        ) : (
+          <h1 className="text-[26px] font-bold leading-[1.15] text-white">
+            {displayName ? `Welcome back, ${displayName}.` : "Welcome back."}
+          </h1>
+        )}
+        {dna?.tagline ? (
+          <p className="text-[13px] mt-1.5 leading-snug" style={{ color: "rgba(255,255,255,0.55)" }}>{dna.tagline}</p>
+        ) : !dna?.label ? (
+          <p className="text-[13px] mt-1.5 leading-snug" style={{ color: "rgba(255,255,255,0.55)" }}>
+            Track what you watch, read &amp; play to build your DNA.
+          </p>
+        ) : null}
+
+        {/* Stat tiles */}
+        <div className="grid gap-2.5 mt-4" style={{ gridTemplateColumns: `repeat(${tiles.length}, minmax(0,1fr))` }}>
+          {tiles.map((t) => (
+            <div
+              key={t.label}
+              className="rounded-2xl px-3 py-2.5"
+              style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
+            >
+              <p className="text-[19px] font-bold text-white leading-none flex items-center gap-1">
+                {t.flame && <Flame size={15} color="#fb923c" fill="#fb923c" />}
+                {t.value}
+              </p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider mt-1.5" style={{ color: "rgba(255,255,255,0.45)" }}>
+                {t.label}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Taste pills */}
+        {pills.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {pills.map((p) => (
+              <span
+                key={p}
+                className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold"
+                style={{ background: "rgba(124,58,237,0.22)", border: "1px solid rgba(124,58,237,0.35)", color: "#c4b5fd" }}
+              >
+                {p}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* CTAs */}
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <button
+            onClick={() => setLocation("/add")}
+            className="flex items-center justify-center gap-2 py-3 rounded-full font-semibold text-[14px] active:scale-95 transition-transform"
+            style={{ background: "#ffffff", color: "#7c3aed" }}
+          >
+            <Bookmark size={16} fill="#7c3aed" />
+            Save it
+          </button>
+          <button
+            onClick={() => setComposerOpen(true)}
+            className="flex items-center justify-center gap-2 py-3 rounded-full font-semibold text-[14px] text-white active:scale-95 transition-transform"
+            style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)" }}
+          >
+            <MessageSquarePlus size={16} />
+            Share a take
+          </button>
+        </div>
+      </div>
+
+      {composerOpen && <FeedComposerBar startExpanded onExternalClose={() => setComposerOpen(false)} />}
+    </>
+  );
+}

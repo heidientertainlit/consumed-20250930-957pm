@@ -1,3 +1,3 @@
 - [Identity page architecture](identity-page.md) — /identity is the new DNA overhaul page; existing /me, /profile untouched until user swaps.
-- [core_archetype setup](core-archetype-setup.md) — core_archetype col in dna_profiles; set to 'social_watcher' for Heidi manually; proper regeneration needs live user JWT via generate-dna-profile-v2.
+- [core_archetype setup](core-archetype-setup.md) — core_archetype col in dna_profiles must be non-null for identity copy; regenerate via generate-dna-profile-v2 with a live user JWT (manual SQL is a stopgap only).
 - [DNA Compare card scoring](dna-compare-scoring.md) — dna_comparisons.match_score is authoritative; Jaccard genre overlap is fallback only. Never rank by Jaccard alone.

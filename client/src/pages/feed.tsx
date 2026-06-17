@@ -15,6 +15,7 @@ import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
 import { DnaMomentCard } from "@/components/dna-moment-card";
 import { DnaMomentFeaturedCard } from "@/components/dna-moment-featured-card";
+import { FeedIdentityHero } from "@/components/feed-identity-hero";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import CastApprovalCard from "@/components/cast-approval-card";
 
@@ -7770,7 +7771,10 @@ export default function Feed() {
           {/* Composer Trigger - dark hero zone */}
           <div>
 
-            <DnaMomentFeaturedCard />
+            <FeedIdentityHero />
+            <div className="mt-3">
+              <DnaMomentFeaturedCard />
+            </div>
 
           </div>
           

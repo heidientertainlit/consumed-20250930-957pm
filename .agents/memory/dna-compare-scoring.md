@@ -27,10 +27,6 @@ The file exports TWO near-identical-looking DNA compare cards. The feed renders 
 
 **Others Aligned in DnaComparePostCard:** fetch the POSTER's real scores via `get-dna-feed-data` edge function with `body: { target_user_id: posterId }` (the function falls back to the auth user when no target given). The expanded list MUST render `u.pct` next to the name — that render line was missing the percentage entirely (only showed name+avatar), which was the actual "no percentages" bug.
 
-## Real scores for Heidi (as of June 2026)
-- Snazzyman: 85%
-- Jeeppler: 79% (duplicate rows exist — keep highest)
-- kjwoodsemh: 75%
-- Hillary Hess: 57%
-- Trey: 47%
-- KChandler, ericandsarahansen, MegBassett, MoDjanie: no cached row → Jaccard fallback
+## Data quirks to expect
+- `dna_comparisons` can contain duplicate rows for the same friend pair — always keep the highest `match_score`.
+- Friends with no cached `dna_comparisons` row fall back to the Jaccard genre overlap (flat-looking scores).
