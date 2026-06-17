@@ -143,12 +143,16 @@ export function FeedIdentityHero() {
             </span>
           ))}
         </div>
+
+        <div className="mt-4">
+          <HeroCTAButtons />
+        </div>
       </div>
     </>
   );
 }
 
-// CTA buttons extracted from the hero so they can render at the top of the white feed area.
+// CTA buttons for the hero (kept as a separate component so it owns its own composer state).
 export function HeroCTAButtons() {
   const [, setLocation] = useLocation();
   const [composerOpen, setComposerOpen] = useState(false);
@@ -158,7 +162,7 @@ export function HeroCTAButtons() {
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => setLocation("/add")}
-          className="flex items-center justify-center gap-2 py-2.5 rounded-full font-semibold text-[13px] text-white active:scale-95 transition-transform"
+          className="flex items-center justify-center gap-2 py-2 rounded-full font-semibold text-[13px] text-white active:scale-95 transition-transform"
           style={{ background: "linear-gradient(135deg, #6d28d9 0%, #9333ea 45%, #d946ef 100%)" }}
         >
           <Bookmark size={15} fill="#ffffff" />
@@ -166,8 +170,8 @@ export function HeroCTAButtons() {
         </button>
         <button
           onClick={() => setComposerOpen(true)}
-          className="flex items-center justify-center gap-2 py-2.5 rounded-full font-semibold text-[13px] active:scale-95 transition-transform"
-          style={{ background: "#ffffff", color: "#7c3aed", border: "1px solid #ddd6fe" }}
+          className="flex items-center justify-center gap-2 py-2 rounded-full font-semibold text-[13px] text-white active:scale-95 transition-transform"
+          style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)" }}
         >
           <MessageSquarePlus size={15} />
           Share a take
