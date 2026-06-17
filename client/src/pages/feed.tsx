@@ -66,7 +66,6 @@ import DnaCompareFeedCard, { DnaComparePostCard } from "@/components/dna-compare
 import { TodaysPlayNudge } from "@/components/todays-play-nudge";
 import { WhatsYourMove } from "@/components/whats-your-move"; // kept for reference — not currently rendered
 import FeedComposerBar from "@/components/feed-composer-bar";
-import { TrendingNowSection } from "@/components/trending-now-section";
 
 interface SocialPost {
   id: string;
@@ -7782,9 +7781,6 @@ export default function Feed() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-6" data-feed-content>
-
-        {/* ── Trending Now ── */}
-        <TrendingNowSection />
 
         {/* ── What's Happening ── */}
         {whatHappeningPosts.length > 0 && (

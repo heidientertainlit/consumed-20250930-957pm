@@ -406,42 +406,30 @@ export default function FeedComposerBar({
         );
       });
 
-    supabase
-      .from("list_items")
-      .select("title, media_type, image_url, external_id, external_source")
-      .not("image_url", "is", null)
-      .limit(400)
-      .then(({ data }) => {
-        if (!data) return;
-        const counts: Record<string, { item: any; count: number }> = {};
-        data.forEach(r => {
-          if (!r.external_id || !r.image_url) return;
-          const key = `${r.media_type}::${r.external_id}`;
-          if (!counts[key]) counts[key] = { item: r, count: 0 };
-          counts[key].count++;
-        });
-        const perType: Record<string, { item: any; count: number }[]> = {};
-        Object.values(counts).forEach(entry => {
-          const t = entry.item.media_type || "other";
-          if (!perType[t]) perType[t] = [];
-          perType[t].push(entry);
-        });
-        Object.keys(perType).forEach(t => perType[t].sort((a, b) => b.count - a.count));
-        const mixed: any[] = [];
-        const typeOrder = ["tv", "movie", "book", "game", "podcast", "music"];
-        const maxPerType = 3;
-        for (let slot = 0; slot < maxPerType; slot++) {
-          typeOrder.forEach(t => {
-            if (perType[t] && perType[t][slot]) mixed.push(perType[t][slot].item);
-          });
-        }
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    fetch(`${supabaseUrl}/functions/v1/get-trending-content`, {
+      headers: {
+        'Authorization': `Bearer ${anonKey}`,
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(r => r.json())
+      .then(data => {
         setTrendingItems(
-          mixed.slice(0, 16).map(item => ({
-            title: item.title, type: item.media_type, image_url: item.image_url,
-            external_id: item.external_id, external_source: item.external_source,
-          }))
+          (data.items || [])
+            .filter((item: any) => item.image_url)
+            .slice(0, 25)
+            .map((item: any) => ({
+              title: item.title,
+              type: item.media_type,
+              image_url: item.image_url,
+              external_id: item.external_id || item.id,
+              external_source: item.external_source || 'tmdb',
+            }))
         );
-      });
+      })
+      .catch(() => {});
   }, [showMediaSearch, session]);
 
   const closeMediaSearch = () => {
