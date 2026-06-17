@@ -3097,7 +3097,7 @@ export default function UserProfile() {
                   {isLoadingPoints ? '…' : (userPoints?.all_time || 0).toLocaleString()}
                 </span>
                 <span className="text-[9px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  reputation pts
+                  points
                 </span>
               </button>
 
