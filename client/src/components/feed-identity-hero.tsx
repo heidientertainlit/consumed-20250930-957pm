@@ -149,10 +149,10 @@ export function FeedIdentityHero() {
           <button
             onClick={() => setLocation("/add")}
             className="flex items-center justify-center gap-2 py-2 rounded-full font-semibold text-[13px] text-white active:scale-95 transition-transform"
-            style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
+            style={{ background: "linear-gradient(135deg, #6d28d9 0%, #9333ea 45%, #d946ef 100%)" }}
           >
             <Bookmark size={15} fill="#ffffff" />
-            Save it
+            Track it
           </button>
           <button
             onClick={() => setComposerOpen(true)}
