@@ -3033,6 +3033,15 @@ export default function UserProfile() {
                   const flavorPills: string[] = Array.isArray(dnaProfile.flavor_notes) && dnaProfile.flavor_notes.length > 0
                     ? dnaProfile.flavor_notes.slice(0, 3)
                     : Array.isArray(dnaProfile.favorite_genres) ? dnaProfile.favorite_genres.slice(0, 3) : [];
+                  const secondaries: string[] = Array.isArray(dnaProfile.secondary_archetypes)
+                    ? (dnaProfile.secondary_archetypes as string[]).slice(0, 2)
+                    : [];
+                  const fmtArch = (k: string) => k.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+                  const secondaryPhrase = secondaries.length === 1
+                    ? `with a touch of ${fmtArch(secondaries[0])}`
+                    : secondaries.length > 1
+                      ? `with shades of ${secondaries.map(fmtArch).join(' & ')}`
+                      : null;
 
                   if (!archetypeName) return (
                     <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
@@ -3045,6 +3054,11 @@ export default function UserProfile() {
                       <p className="text-sm font-bold mb-0.5" style={{ background: 'linear-gradient(90deg, #c084fc, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                         {archetypeName}
                       </p>
+                      {secondaryPhrase && (
+                        <p className="text-[11px] font-medium italic mb-1" style={{ color: 'rgba(196,181,253,0.7)' }}>
+                          {secondaryPhrase}
+                        </p>
+                      )}
                       {archetypeTagline && (
                         <p className="text-[11px] italic mb-1.5 leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
                           "{archetypeTagline}"
