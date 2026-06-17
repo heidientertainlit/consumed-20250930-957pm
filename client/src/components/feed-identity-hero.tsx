@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
-import { Bookmark, MessageSquarePlus, Flame } from "lucide-react";
+import { Bookmark, MessageSquarePlus, Flame, ChevronDown } from "lucide-react";
 import FeedComposerBar from "@/components/feed-composer-bar";
 
 interface DnaBits {
@@ -10,7 +10,14 @@ interface DnaBits {
   tagline: string | null;
   flavor_notes: string[] | null;
   favorite_genres: string[] | null;
+  secondary_archetypes: string[] | null;
 }
+
+const toArchetypeName = (slug: string) =>
+  slug
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 
 export function FeedIdentityHero() {
   const { user } = useAuth();
@@ -22,6 +29,7 @@ export function FeedIdentityHero() {
   const [weeklyRank, setWeeklyRank] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [pillsOpen, setPillsOpen] = useState(false);
 
   const displayName =
     user?.user_metadata?.display_name ||
@@ -38,7 +46,7 @@ export function FeedIdentityHero() {
       const [dnaRes, streakRes, trackedRes] = await Promise.all([
         supabase
           .from("dna_profiles")
-          .select("label, tagline, flavor_notes, favorite_genres")
+          .select("label, tagline, flavor_notes, favorite_genres, secondary_archetypes")
           .eq("user_id", uid)
           .single(),
         supabase
@@ -86,6 +94,12 @@ export function FeedIdentityHero() {
   ];
   if (weeklyRank) tiles.push({ value: `#${weeklyRank}`, label: "This week" });
 
+  const secondaries = (dna?.secondary_archetypes || []).slice(0, 2).map(toArchetypeName);
+  const smidge =
+    secondaries.length === 2
+      ? `${secondaries[0]} and ${secondaries[1]}`
+      : secondaries[0] || "";
+
   if (loading) {
     return <div className="rounded-3xl animate-pulse" style={{ height: 268, background: "rgba(255,255,255,0.05)" }} />;
   }
@@ -96,7 +110,13 @@ export function FeedIdentityHero() {
         {/* Headline */}
         {dna?.label ? (
           <h1 className="text-[26px] font-bold leading-[1.15] text-white">
-            You're <span style={{ color: "#c4b5fd" }}>{dna.label}</span>.
+            You're {dna.label}
+            {smidge && (
+              <span className="font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}>
+                {" "}— with a smidge of {smidge} too
+              </span>
+            )}
+            .
           </h1>
         ) : (
           <h1 className="text-[26px] font-bold leading-[1.15] text-white">
@@ -130,18 +150,34 @@ export function FeedIdentityHero() {
           ))}
         </div>
 
-        {/* Taste pills */}
+        {/* Taste pills — hidden by default, expand on tap */}
         {pills.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {pills.map((p) => (
-              <span
-                key={p}
-                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold"
-                style={{ background: "rgba(124,58,237,0.22)", border: "1px solid rgba(124,58,237,0.35)", color: "#c4b5fd" }}
-              >
-                {p}
-              </span>
-            ))}
+          <div className="mt-3">
+            <button
+              onClick={() => setPillsOpen((o) => !o)}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold active:scale-95 transition-transform"
+              style={{ color: "rgba(255,255,255,0.55)" }}
+            >
+              {pillsOpen ? "Hide your vibe" : "See your vibe"}
+              <ChevronDown
+                size={13}
+                className="transition-transform"
+                style={{ transform: pillsOpen ? "rotate(180deg)" : "none" }}
+              />
+            </button>
+            {pillsOpen && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {pills.map((p) => (
+                  <span
+                    key={p}
+                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-white"
+                    style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)" }}
+                  >
+                    {p}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
