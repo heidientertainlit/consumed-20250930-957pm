@@ -15,7 +15,7 @@ import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
 import { DnaMomentCard } from "@/components/dna-moment-card";
 import { DnaMomentFeaturedCard } from "@/components/dna-moment-featured-card";
-import { FeedIdentityHero } from "@/components/feed-identity-hero";
+import { FeedIdentityHero, HeroCTAButtons } from "@/components/feed-identity-hero";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import CastApprovalCard from "@/components/cast-approval-card";
 
@@ -7782,6 +7782,11 @@ export default function Feed() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-6" data-feed-content>
+
+        {/* ── Track / Share CTAs ── */}
+        <div className="mb-5">
+          <HeroCTAButtons />
+        </div>
 
         {/* ── What's Happening ── */}
         {whatHappeningPosts.length > 0 && (
