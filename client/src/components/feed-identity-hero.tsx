@@ -106,9 +106,6 @@ export function FeedIdentityHero() {
         {/* Headline */}
         {dna?.label ? (
           <>
-            <p className="text-[12px] font-semibold uppercase tracking-wider mb-1" style={{ color: "rgba(196,181,253,0.85)" }}>
-              Your Entertainment DNA
-            </p>
             <h1 className="text-[30px] font-extrabold leading-[1.08] text-white">{dna.label}</h1>
             {secondaries.length > 0 && (
               <div className="mt-1.5 space-y-0.5">
