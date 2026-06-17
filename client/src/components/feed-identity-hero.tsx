@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
-import { Bookmark, MessageSquarePlus, Flame, Dna, Trophy, Library } from "lucide-react";
+import { Bookmark, MessageSquarePlus, Flame, Dna, Trophy, Library, Share2 } from "lucide-react";
 import FeedComposerBar from "@/components/feed-composer-bar";
 
 interface DnaBits {
@@ -146,12 +146,25 @@ export function FeedIdentityHero() {
               </span>
             </div>
             <button
-              onClick={() => setLocation("/identity")}
+              onClick={async () => {
+                const shareUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+                const archetype = dna?.label ? `The ${dna.label}` : "my Entertainment DNA";
+                const text = `I'm ${archetype} on Consumed — what's your Entertainment DNA?`;
+                try {
+                  if (navigator.share) {
+                    await navigator.share({ title: "My Entertainment DNA", text, url: shareUrl });
+                  } else {
+                    await navigator.clipboard.writeText(`${text} ${shareUrl}`);
+                  }
+                } catch {
+                  /* user cancelled or share unavailable */
+                }
+              }}
               className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform"
               style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
-              aria-label="View your DNA"
+              aria-label="Share your DNA"
             >
-              <Dna size={13} className="text-purple-300" />
+              <Share2 size={13} className="text-purple-300" />
             </button>
           </div>
 
