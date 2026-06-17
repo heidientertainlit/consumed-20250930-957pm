@@ -696,7 +696,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   forceNormal?: boolean;
   stackPosts?: any[];
   stackIndex?: number;
-  swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode; animKey?: number; dragX?: number; navigate?: (dir: 1 | -1) => void; totalPosts?: number };
+  swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode; animKey?: number; enterDir?: 'from-right' | 'from-left'; dragX?: number; getSwiped?: () => boolean; navigate?: (dir: 1 | -1) => void; totalPosts?: number };
 }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
@@ -1840,21 +1840,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               </div>
             )}
 
-            {/* Front card — follows drag */}
+            {/* Front card — gentle Seen It-style entrance (no drag-follow) */}
             {(() => {
-              const dx = swipeProps?.dragX ?? 0;
-              const isActive = Math.abs(dx) > 2;
+              const enterDir = swipeProps?.enterDir ?? 'from-right';
               return (
             <div
+              key={swipeProps?.animKey ?? 0}
               className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
               style={{
                 position: 'absolute', width: 208, height: 282, borderRadius: 16, overflow: 'hidden',
                 zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.28)',
-                transform: `translateX(${dx}px) rotate(${dx * 0.06}deg)`,
-                transition: isActive ? 'none' : Math.abs(dx) > 300 ? 'transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94)' : 'transform 0.35s cubic-bezier(0.34,1.56,0.64,1)',
+                animation: `seen-it-${enterDir} 0.24s cubic-bezier(0.25, 0.46, 0.45, 0.94) both`,
               }}
               onClick={() => {
-                if (Math.abs(dx) < 10 && post.externalSource && post.externalId) {
+                if (swipeProps?.getSwiped?.()) return;
+                if (post.externalSource && post.externalId) {
                   setLocation(`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`);
                 }
               }}
@@ -4269,34 +4269,34 @@ function TinderCard({ id, onDismiss, children }: { id: string; onDismiss: (id: s
   );
 }
 
-// Multi-card stack — carousel with forward + back swipe and tap buttons
-const TCS_THRESHOLD = 80;
-
+// Multi-card stack — Seen It-style index carousel (no drag-follow, no fly-off)
 function TinderCardStack({ posts, renderCard, hidePeekCards }: {
   posts: any[];
-  renderCard: (post: any, allPosts: any[], currentIndex: number, swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode; animKey?: number; dragX?: number; navigate?: (dir: 1 | -1) => void; totalPosts?: number }) => React.ReactNode;
+  renderCard: (post: any, allPosts: any[], currentIndex: number, swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode; animKey?: number; enterDir?: 'from-right' | 'from-left'; dragX?: number; getSwiped?: () => boolean; navigate?: (dir: 1 | -1) => void; totalPosts?: number }) => React.ReactNode;
   hidePeekCards?: boolean;
 }) {
   const [topIndex, setTopIndex] = useState(0);
-  const [dragX, setDragX] = useState(0);
+  const [animKey, setAnimKey] = useState(0);
+  const [enterDir, setEnterDir] = useState<'from-right' | 'from-left'>('from-right');
   const gestureRef = useRef<HTMLDivElement>(null);
   const topIndexRef = useRef(0);
   const postsLengthRef = useRef(posts.length);
   topIndexRef.current = topIndex;
   postsLengthRef.current = posts.length;
 
-  const dragStartX = useRef(0);
-  const dragStartY = useRef(0);
-  const isDraggingRef = useRef(false);
-  const isScrollingRef = useRef<boolean | null>(null);
-  const currentDragX = useRef(0);
+  const swipeStartX = useRef(0);
+  const swipeStartY = useRef(0);
+  const swipedRef = useRef(false);
+  const wheelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Index-based navigation with a gentle entrance — exactly like the "Seen It" card.
+  // The front card never follows the finger and never flies off the page.
   const navigate = useCallback((dir: 1 | -1) => {
     const next = dir === -1 ? topIndexRef.current + 1 : topIndexRef.current - 1;
-    if (next < 0 || next >= postsLengthRef.current) { setDragX(0); currentDragX.current = 0; return; }
+    if (next < 0 || next >= postsLengthRef.current) return;
+    setEnterDir(dir === -1 ? 'from-right' : 'from-left');
+    setAnimKey(k => k + 1);
     setTopIndex(next);
-    setDragX(0);
-    currentDragX.current = 0;
   }, []);
 
   const navigateRef = useRef(navigate);
@@ -4306,70 +4306,55 @@ function TinderCardStack({ posts, renderCard, hidePeekCards }: {
     const el = gestureRef.current;
     if (!el) return;
 
-    const commit = (dx: number) => {
-      if (dx < -TCS_THRESHOLD) {
-        setDragX(-420); currentDragX.current = -420;
-        setTimeout(() => { navigateRef.current(-1); }, 350);
-      } else if (dx > TCS_THRESHOLD) {
-        setDragX(420); currentDragX.current = 420;
-        setTimeout(() => { navigateRef.current(1); }, 350);
-      } else {
-        setDragX(0); currentDragX.current = 0;
-      }
-    };
-
     const onTouchStart = (e: TouchEvent) => {
-      dragStartX.current = e.touches[0].clientX;
-      dragStartY.current = e.touches[0].clientY;
-      isDraggingRef.current = true;
-      isScrollingRef.current = null;
+      swipeStartX.current = e.touches[0].clientX;
+      swipeStartY.current = e.touches[0].clientY;
+      swipedRef.current = false;
     };
-    const onTouchMove = (e: TouchEvent) => {
-      if (!isDraggingRef.current) return;
-      const dx = e.touches[0].clientX - dragStartX.current;
-      const dy = e.touches[0].clientY - dragStartY.current;
-      if (isScrollingRef.current === null) isScrollingRef.current = Math.abs(dy) > Math.abs(dx) + 5;
-      if (isScrollingRef.current) return;
-      e.preventDefault();
-      currentDragX.current = dx;
-      setDragX(dx);
-    };
-    const onTouchEnd = () => {
-      if (!isDraggingRef.current) return;
-      isDraggingRef.current = false;
-      if (!isScrollingRef.current) commit(currentDragX.current);
-      else { setDragX(0); currentDragX.current = 0; }
+    const onTouchEnd = (e: TouchEvent) => {
+      const dx = e.changedTouches[0].clientX - swipeStartX.current;
+      const dy = e.changedTouches[0].clientY - swipeStartY.current;
+      if (Math.abs(dx) < Math.abs(dy)) return;
+      if (dx < -20) { swipedRef.current = true; navigateRef.current(-1); }
+      else if (dx > 20) { swipedRef.current = true; navigateRef.current(1); }
     };
     const onMouseDown = (e: MouseEvent) => {
       if ((e.target as HTMLElement).closest('button')) return;
-      dragStartX.current = e.clientX;
-      isDraggingRef.current = true;
-      e.preventDefault();
+      swipeStartX.current = e.clientX;
+      swipeStartY.current = e.clientY;
+      swipedRef.current = false;
     };
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDraggingRef.current) return;
-      currentDragX.current = e.clientX - dragStartX.current;
-      setDragX(currentDragX.current);
+    const onMouseUp = (e: MouseEvent) => {
+      const dx = e.clientX - swipeStartX.current;
+      const dy = e.clientY - swipeStartY.current;
+      if (Math.abs(dx) < Math.abs(dy)) return;
+      if (dx < -20) { swipedRef.current = true; navigateRef.current(-1); }
+      else if (dx > 20) { swipedRef.current = true; navigateRef.current(1); }
     };
-    const onMouseUp = () => {
-      if (!isDraggingRef.current) return;
-      isDraggingRef.current = false;
-      commit(currentDragX.current);
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) < Math.abs(e.deltaY) * 0.7) return;
+      e.stopPropagation();
+      if (wheelTimer.current) return;
+      if (e.deltaX > 20) {
+        navigateRef.current(-1);
+        wheelTimer.current = setTimeout(() => { wheelTimer.current = null; }, 500);
+      } else if (e.deltaX < -20) {
+        navigateRef.current(1);
+        wheelTimer.current = setTimeout(() => { wheelTimer.current = null; }, 500);
+      }
     };
 
     el.addEventListener('touchstart', onTouchStart, { passive: true });
-    el.addEventListener('touchmove',  onTouchMove,  { passive: false });
     el.addEventListener('touchend',   onTouchEnd,   { passive: true });
-    el.addEventListener('mousedown',  onMouseDown,  { passive: false });
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup',   onMouseUp);
+    el.addEventListener('mousedown',  onMouseDown);
+    el.addEventListener('mouseup',    onMouseUp);
+    el.addEventListener('wheel',      onWheel, { passive: false });
     return () => {
       el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchmove',  onTouchMove);
       el.removeEventListener('touchend',   onTouchEnd);
       el.removeEventListener('mousedown',  onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup',   onMouseUp);
+      el.removeEventListener('mouseup',    onMouseUp);
+      el.removeEventListener('wheel',      onWheel);
     };
   }, []);
 
@@ -4382,7 +4367,10 @@ function TinderCardStack({ posts, renderCard, hidePeekCards }: {
         style: {},
         ref: { current: null } as React.RefObject<HTMLDivElement>,
         overlays: <></>,
-        dragX,
+        dragX: 0,
+        animKey,
+        enterDir,
+        getSwiped: () => swipedRef.current,
         navigate,
         totalPosts: posts.length,
       })}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
-import { Bookmark, MessageSquarePlus, Flame, Dna, Trophy, Library, Share2 } from "lucide-react";
+import { Bookmark, MessageSquarePlus, Flame, Dna, Trophy, Library, Send } from "lucide-react";
 import FeedComposerBar from "@/components/feed-composer-bar";
 
 interface DnaBits {
@@ -164,7 +164,7 @@ export function FeedIdentityHero() {
               style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
               aria-label="Share your DNA"
             >
-              <Share2 size={13} className="text-purple-300" />
+              <Send size={13} className="text-purple-300" />
             </button>
           </div>
 
