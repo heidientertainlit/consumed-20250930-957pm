@@ -4458,45 +4458,55 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
 
   if (posts.length === 0) return null;
   const safeIndex = Math.min(currentIndex, posts.length - 1);
-  const remaining = posts.length - safeIndex;
-  const peekCount = Math.min(remaining - 1, 2);
   const { _isPromoted: _p, _promotedKey: _pk, ...frontPost } = posts[safeIndex];
 
-  const PEEK_H = 14;
-  const containerPadding = peekCount === 2 ? PEEK_H * 2 + 4 : peekCount === 1 ? PEEK_H : 0;
-  const animName = slideDir.current > 0 ? 'scs-from-right' : slideDir.current < 0 ? 'scs-from-left' : '';
+  // Adjacent posters peek from the sides — fixed, never flick off the page (matches "Seen It")
+  const prevPoster = safeIndex > 0 ? posts[safeIndex - 1]?.mediaItems?.[0]?.imageUrl : null;
+  const nextPoster = safeIndex < posts.length - 1 ? posts[safeIndex + 1]?.mediaItems?.[0]?.imageUrl : null;
+  const hasPrev = !!prevPoster;
+  const hasNext = !!nextPoster;
+  const PEEK_VISIBLE = 22; // how much of a side poster sticks out beyond the card
+
+  // Gentle entrance — same motion as the "Seen It" game (no full-width slide)
+  const animName = slideDir.current > 0 ? 'seen-it-from-right' : slideDir.current < 0 ? 'seen-it-from-left' : '';
 
   return (
     <>
-      <style>{`
-        @keyframes scs-from-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
-        @keyframes scs-from-left  { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-      `}</style>
       <div
         ref={containerRef}
-        style={{ position: 'relative', paddingBottom: containerPadding, marginBottom: 16, touchAction: 'pan-y' }}
+        style={{
+          position: 'relative',
+          marginBottom: 16,
+          touchAction: 'pan-y',
+          paddingLeft: hasPrev ? PEEK_VISIBLE : 0,
+          paddingRight: hasNext ? PEEK_VISIBLE : 0,
+        }}
       >
-        {peekCount >= 2 && (
+        {hasPrev && (
           <div style={{
-            position: 'absolute', left: 20, right: 20, bottom: 0,
-            height: PEEK_H * 2 + 32, backgroundColor: '#e9eaec',
-            borderRadius: 18, border: '1px solid #d1d5db', zIndex: 1,
-          }} />
+            position: 'absolute', left: 0, top: '50%',
+            transform: 'translateY(-50%) rotate(-6deg)',
+            width: 70, height: 104, borderRadius: 14, overflow: 'hidden',
+            zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.16)', pointerEvents: 'none',
+          }}>
+            <img src={prevPoster!} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          </div>
         )}
-        {peekCount >= 1 && (
+        {hasNext && (
           <div style={{
-            position: 'absolute', left: 10, right: 10,
-            bottom: peekCount >= 2 ? PEEK_H + 2 : 0,
-            height: PEEK_H + 32, backgroundColor: '#f1f2f4',
-            borderRadius: 18, border: '1px solid #d1d5db',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.07)', zIndex: 2,
-          }} />
+            position: 'absolute', right: 0, top: '50%',
+            transform: 'translateY(-50%) rotate(6deg)',
+            width: 70, height: 104, borderRadius: 14, overflow: 'hidden',
+            zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.16)', pointerEvents: 'none',
+          }}>
+            <img src={nextPoster!} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          </div>
         )}
-        {/* Front card — overflow hidden clips the slide-in animation */}
+        {/* Front card — overflow hidden clips the gentle entrance animation */}
         <div style={{ position: 'relative', zIndex: 3, overflow: 'hidden', borderRadius: 18 }}>
           <div
             key={cardKey}
-            style={{ animation: animName ? `${animName} 0.28s ease forwards` : undefined }}
+            style={{ animation: animName ? `${animName} 0.24s cubic-bezier(0.25, 0.46, 0.45, 0.94) both` : undefined }}
           >
             <UGCGroupCard
               post={frontPost as any}
