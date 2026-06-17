@@ -26,7 +26,7 @@ export function FeedIdentityHero() {
   const [dna, setDna] = useState<DnaBits | null>(null);
   const [streak, setStreak] = useState<number>(0);
   const [tracked, setTracked] = useState<number>(0);
-  const [weeklyRank, setWeeklyRank] = useState<number | null>(null);
+  const [globalRank, setGlobalRank] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [composerOpen, setComposerOpen] = useState(false);
 
@@ -65,20 +65,19 @@ export function FeedIdentityHero() {
       if (typeof trackedRes.count === "number") setTracked(trackedRes.count);
       setLoading(false);
 
-      // Weekly rank (best-effort — only shown if found)
+      // All-time global leaderboard rank (same source as profile — best-effort)
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
         const res = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-leaderboards?category=all&scope=global&period=weekly&limit=200`,
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calculate-user-points?user_id=${uid}`,
           { headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" } }
         );
         const data = await res.json();
-        const board: any[] = data?.categories?.total_consumption || data?.categories?.overall || [];
-        const mine = board.find((e: any) => e.user_id === uid);
-        if (!cancelled && mine?.rank) setWeeklyRank(mine.rank);
+        const rank = data?.rank?.global;
+        if (!cancelled && typeof rank === "number") setGlobalRank(rank);
       } catch {
-        /* leave weekly rank hidden */
+        /* leave rank hidden */
       }
     })();
 
@@ -90,7 +89,7 @@ export function FeedIdentityHero() {
     { value: tracked.toLocaleString(), label: "Tracked" },
     { value: String(streak), label: "Day streak", flame: true },
   ];
-  if (weeklyRank) tiles.push({ value: `#${weeklyRank}`, label: "This week" });
+  if (globalRank) tiles.push({ value: `#${globalRank}`, label: "Leaderboard" });
 
   const secondaries = (dna?.secondary_archetypes || []).slice(0, 2).map(toArchetypeName);
 
