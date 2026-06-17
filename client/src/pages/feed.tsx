@@ -7784,7 +7784,7 @@ export default function Feed() {
 
         {/* ── What's Happening ── */}
         {whatHappeningPosts.length > 0 && (
-          <div className="mb-4 px-4">
+          <div className="mb-6 px-4">
             <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">What's Happening</p>
             <div className="space-y-0 divide-y divide-gray-100">
               {whatHappeningPosts.map((post: any) => {
