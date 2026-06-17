@@ -92,7 +92,7 @@ export function FeedIdentityHero() {
 
   return (
     <>
-      <div className="pt-1">
+      <div className="pt-4">
         {/* Headline */}
         {dna?.label ? (
           <h1 className="text-[26px] font-bold leading-[1.15] text-white">
@@ -112,18 +112,18 @@ export function FeedIdentityHero() {
         ) : null}
 
         {/* Stat tiles */}
-        <div className="grid gap-2.5 mt-4" style={{ gridTemplateColumns: `repeat(${tiles.length}, minmax(0,1fr))` }}>
+        <div className="grid gap-2 mt-2.5" style={{ gridTemplateColumns: `repeat(${tiles.length}, minmax(0,1fr))` }}>
           {tiles.map((t) => (
             <div
               key={t.label}
-              className="rounded-2xl px-3 py-2.5"
+              className="rounded-xl px-2.5 py-1.5"
               style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
             >
-              <p className="text-[19px] font-bold text-white leading-none flex items-center gap-1">
-                {t.flame && <Flame size={15} color="#fb923c" fill="#fb923c" />}
+              <p className="text-[17px] font-bold text-white leading-none flex items-center gap-1">
+                {t.flame && <Flame size={14} color="#fb923c" fill="#fb923c" />}
                 {t.value}
               </p>
-              <p className="text-[10px] font-semibold uppercase tracking-wider mt-1.5" style={{ color: "rgba(255,255,255,0.45)" }}>
+              <p className="text-[9px] font-semibold uppercase tracking-wider mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>
                 {t.label}
               </p>
             </div>
@@ -132,11 +132,11 @@ export function FeedIdentityHero() {
 
         {/* Taste pills */}
         {pills.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
+          <div className="flex flex-wrap gap-1.5 mt-3">
             {pills.map((p) => (
               <span
                 key={p}
-                className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold"
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold"
                 style={{ background: "rgba(124,58,237,0.22)", border: "1px solid rgba(124,58,237,0.35)", color: "#c4b5fd" }}
               >
                 {p}
@@ -149,18 +149,18 @@ export function FeedIdentityHero() {
         <div className="grid grid-cols-2 gap-3 mt-4">
           <button
             onClick={() => setLocation("/add")}
-            className="flex items-center justify-center gap-2 py-3 rounded-full font-semibold text-[14px] active:scale-95 transition-transform"
+            className="flex items-center justify-center gap-2 py-2 rounded-full font-semibold text-[13px] active:scale-95 transition-transform"
             style={{ background: "#ffffff", color: "#7c3aed" }}
           >
-            <Bookmark size={16} fill="#7c3aed" />
+            <Bookmark size={15} fill="#7c3aed" />
             Save it
           </button>
           <button
             onClick={() => setComposerOpen(true)}
-            className="flex items-center justify-center gap-2 py-3 rounded-full font-semibold text-[14px] text-white active:scale-95 transition-transform"
+            className="flex items-center justify-center gap-2 py-2 rounded-full font-semibold text-[13px] text-white active:scale-95 transition-transform"
             style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)" }}
           >
-            <MessageSquarePlus size={16} />
+            <MessageSquarePlus size={15} />
             Share a take
           </button>
         </div>
