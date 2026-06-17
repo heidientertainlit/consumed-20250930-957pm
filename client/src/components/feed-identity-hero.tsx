@@ -148,10 +148,10 @@ export function FeedIdentityHero() {
         <div className="grid grid-cols-2 gap-3 mt-4">
           <button
             onClick={() => setLocation("/add")}
-            className="flex items-center justify-center gap-2 py-2 rounded-full font-semibold text-[13px] active:scale-95 transition-transform"
-            style={{ background: "#ffffff", color: "#7c3aed" }}
+            className="flex items-center justify-center gap-2 py-2 rounded-full font-semibold text-[13px] text-white active:scale-95 transition-transform"
+            style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
           >
-            <Bookmark size={15} fill="#7c3aed" />
+            <Bookmark size={15} fill="#ffffff" />
             Save it
           </button>
           <button
