@@ -95,13 +95,9 @@ export function FeedIdentityHero() {
   if (weeklyRank) tiles.push({ value: `#${weeklyRank}`, label: "This week" });
 
   const secondaries = (dna?.secondary_archetypes || []).slice(0, 2).map(toArchetypeName);
-  const smidge =
-    secondaries.length === 2
-      ? `${secondaries[0]} and ${secondaries[1]}`
-      : secondaries[0] || "";
 
   if (loading) {
-    return <div className="rounded-3xl animate-pulse" style={{ height: 268, background: "rgba(255,255,255,0.05)" }} />;
+    return <div className="rounded-3xl animate-pulse" style={{ height: 210, background: "rgba(255,255,255,0.05)" }} />;
   }
 
   return (
@@ -109,44 +105,48 @@ export function FeedIdentityHero() {
       <div className="pt-4">
         {/* Headline */}
         {dna?.label ? (
-          <h1 className="text-[26px] font-bold leading-[1.15] text-white">
-            You're {dna.label}
-            {smidge && (
-              <span className="font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}>
-                {" "}— with a smidge of {smidge} too
-              </span>
+          <>
+            <p className="text-[12px] tracking-wide mb-1" style={{ color: "rgba(255,255,255,0.5)" }}>
+              Your taste archetype
+            </p>
+            <h1 className="text-[30px] font-extrabold leading-[1.08] text-white">{dna.label}</h1>
+            {secondaries.length > 0 && (
+              <div className="mt-1.5 space-y-0.5">
+                {secondaries.map((s, i) => (
+                  <p
+                    key={s}
+                    className="text-[18px] font-bold leading-tight"
+                    style={{ color: i === 0 ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.32)" }}
+                  >
+                    + {s}
+                  </p>
+                ))}
+              </div>
             )}
-            .
-          </h1>
+          </>
         ) : (
-          <h1 className="text-[26px] font-bold leading-[1.15] text-white">
-            {displayName ? `Welcome back, ${displayName}.` : "Welcome back."}
-          </h1>
+          <>
+            <h1 className="text-[30px] font-extrabold leading-[1.08] text-white">
+              {displayName ? `Welcome back, ${displayName}.` : "Welcome back."}
+            </h1>
+            <p className="text-[13px] mt-1.5 leading-snug" style={{ color: "rgba(255,255,255,0.55)" }}>
+              Track what you watch, read &amp; play to build your DNA.
+            </p>
+          </>
         )}
-        {dna?.tagline ? (
-          <p className="text-[13px] mt-1.5 leading-snug" style={{ color: "rgba(255,255,255,0.55)" }}>{dna.tagline}</p>
-        ) : !dna?.label ? (
-          <p className="text-[13px] mt-1.5 leading-snug" style={{ color: "rgba(255,255,255,0.55)" }}>
-            Track what you watch, read &amp; play to build your DNA.
-          </p>
-        ) : null}
 
-        {/* Stat tiles */}
-        <div className="grid gap-2 mt-2.5" style={{ gridTemplateColumns: `repeat(${tiles.length}, minmax(0,1fr))` }}>
-          {tiles.map((t) => (
-            <div
-              key={t.label}
-              className="rounded-xl px-2.5 py-1.5"
-              style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
-            >
-              <p className="text-[17px] font-bold text-white leading-none flex items-center gap-1">
-                {t.flame && <Flame size={14} color="#fb923c" fill="#fb923c" />}
-                {t.value}
-              </p>
-              <p className="text-[9px] font-semibold uppercase tracking-wider mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>
-                {t.label}
-              </p>
-            </div>
+        {/* Stats — subtle inline row */}
+        <div
+          className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-3.5 text-[12.5px]"
+          style={{ color: "rgba(255,255,255,0.5)" }}
+        >
+          {tiles.map((t, i) => (
+            <span key={t.label} className="inline-flex items-center gap-1.5">
+              {i > 0 && <span className="mr-1" style={{ color: "rgba(255,255,255,0.25)" }}>·</span>}
+              {t.flame && <Flame size={13} color="#fb923c" fill="#fb923c" />}
+              <span className="font-bold text-white">{t.value}</span>
+              <span>{t.label.toLowerCase()}</span>
+            </span>
           ))}
         </div>
 
