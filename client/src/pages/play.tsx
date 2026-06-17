@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
+import { DailyHeroSection } from "@/components/daily-hero-section";
 import { supabase } from "@/lib/supabase";
 import { Target, Brain, Vote, BarChart2, UserPlus, Trophy, ChevronRight, ArrowRight, Layers, Zap } from "lucide-react";
 
@@ -163,6 +164,9 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
         >
           Play
         </h1>
+        <div className="mt-4">
+          <DailyHeroSection />
+        </div>
         <RankWidget onNavigate={setLocation} />
       </div>
 
