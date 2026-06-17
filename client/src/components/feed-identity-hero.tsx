@@ -86,10 +86,10 @@ export function FeedIdentityHero() {
 
 
   const tiles: { value: string; label: string; flame?: boolean }[] = [
-    { value: tracked.toLocaleString(), label: "Tracked" },
     { value: String(streak), label: "Day streak", flame: true },
   ];
   if (globalRank) tiles.push({ value: `#${globalRank}`, label: "Leaderboard" });
+  tiles.push({ value: tracked.toLocaleString(), label: "Tracked" });
 
   const secondaries = (dna?.secondary_archetypes || []).slice(0, 2).map(toArchetypeName);
 
