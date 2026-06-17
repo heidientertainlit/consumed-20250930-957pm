@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
-import { Bookmark, MessageSquarePlus, Flame, Sparkles, Trophy, Library } from "lucide-react";
+import { Bookmark, MessageSquarePlus, Flame, Dna, Trophy, Library } from "lucide-react";
 import FeedComposerBar from "@/components/feed-composer-bar";
 
 interface DnaBits {
@@ -137,12 +137,12 @@ export function FeedIdentityHero() {
           {/* Header row */}
           <div className="relative flex items-center justify-between mb-4">
             <div className="flex items-center gap-1.5">
-              <Sparkles size={13} className="text-purple-400" />
+              <Dna size={13} className="text-purple-400" />
               <span
                 className="text-[11px] font-bold uppercase"
                 style={{ letterSpacing: "0.16em", color: "rgba(192,160,255,0.9)" }}
               >
-                Your Identity
+                Your Entertainment DNA
               </span>
             </div>
             <button
@@ -151,7 +151,7 @@ export function FeedIdentityHero() {
               style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
               aria-label="View your DNA"
             >
-              <Sparkles size={13} className="text-purple-300" />
+              <Dna size={13} className="text-purple-300" />
             </button>
           </div>
 
