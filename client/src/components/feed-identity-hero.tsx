@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
-import { Bookmark, MessageSquarePlus, Flame } from "lucide-react";
+import { Bookmark, MessageSquarePlus, Flame, Sparkles, Trophy, Library } from "lucide-react";
 import FeedComposerBar from "@/components/feed-composer-bar";
 
 interface DnaBits {
@@ -28,7 +28,6 @@ export function FeedIdentityHero() {
   const [tracked, setTracked] = useState<number>(0);
   const [globalRank, setGlobalRank] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [composerOpen, setComposerOpen] = useState(false);
 
   const displayName =
     user?.user_metadata?.display_name ||
@@ -85,70 +84,172 @@ export function FeedIdentityHero() {
   }, [user?.id]);
 
 
-  const tiles: { value: string; label: string; flame?: boolean }[] = [
-    { value: String(streak), label: "Day streak", flame: true },
-  ];
-  if (globalRank) tiles.push({ value: `#${globalRank}`, label: "Leaderboard" });
-  tiles.push({ value: tracked.toLocaleString(), label: "Tracked" });
-
   const secondaries = (dna?.secondary_archetypes || []).slice(0, 2).map(toArchetypeName);
 
+  // Split the archetype label into a small leading "The" and the main words,
+  // colouring the final word with the purple gradient (e.g. The / Emotional / Binger).
+  const headline = dna?.label
+    || (displayName ? `Welcome back ${displayName}` : "Welcome back");
+  const headlineWords = headline.trim().split(/\s+/);
+  const hasPrefix = headlineWords[0]?.toLowerCase() === "the" && headlineWords.length > 2;
+  const prefix = hasPrefix ? headlineWords[0] : null;
+  const mainWords = hasPrefix ? headlineWords.slice(1) : headlineWords;
+
+  const purpleText: React.CSSProperties = {
+    background: "linear-gradient(90deg, #a855f7 0%, #d946ef 100%)",
+    WebkitBackgroundClip: "text",
+    backgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+  };
+
+  const stats: { Icon: typeof Flame; color: string; value: string; label: string }[] = [
+    { Icon: Flame, color: "#fb923c", value: String(streak), label: "day streak" },
+  ];
+  if (globalRank) stats.push({ Icon: Trophy, color: "#fbbf24", value: `#${globalRank}`, label: "leaderboard" });
+  stats.push({ Icon: Library, color: "#a78bfa", value: tracked.toLocaleString(), label: "tracked" });
+
   if (loading) {
-    return <div className="rounded-3xl animate-pulse" style={{ height: 210, background: "rgba(255,255,255,0.05)" }} />;
+    return <div className="rounded-3xl animate-pulse" style={{ height: 280, background: "rgba(255,255,255,0.05)" }} />;
   }
 
   return (
     <>
-      <div className="pt-4">
-        {/* Headline */}
-        {dna?.label ? (
-          <>
-            <h1 className="pl-1 text-[26px] font-extrabold leading-[1.08] text-white">{dna.label}</h1>
-            {secondaries.length > 0 && (
-              <div className="pl-1 mt-1.5 space-y-0.5">
-                {secondaries.map((s, i) => (
-                  <p
-                    key={s}
-                    className="text-[18px] font-bold leading-tight"
-                    style={{ color: i === 0 ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.32)" }}
-                  >
-                    + {s}
-                  </p>
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <h1 className="pl-1 text-[26px] font-extrabold leading-[1.08] text-white">
-              {displayName ? `Welcome back, ${displayName}.` : "Welcome back."}
-            </h1>
-            <p className="pl-1 text-[13px] mt-1.5 leading-snug" style={{ color: "rgba(255,255,255,0.55)" }}>
-              Track what you watch, read &amp; play to build your DNA.
-            </p>
-          </>
-        )}
-
-        {/* Stats — subtle inline row */}
+      <div className="pt-3">
+        {/* ── Identity card ── */}
         <div
-          className="pl-1 flex items-center flex-wrap gap-x-2 gap-y-1 mt-3.5 text-[12.5px]"
-          style={{ color: "rgba(255,255,255,0.5)" }}
+          className="relative overflow-hidden rounded-3xl p-5"
+          style={{
+            background: "linear-gradient(155deg, rgba(48,36,82,0.65) 0%, rgba(28,22,48,0.55) 100%)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            boxShadow: "0 10px 40px rgba(124,58,237,0.18)",
+          }}
         >
-          {tiles.map((t, i) => (
-            <span key={t.label} className="inline-flex items-center gap-1.5">
-              {i > 0 && <span className="mr-1" style={{ color: "rgba(255,255,255,0.25)" }}>·</span>}
-              {t.flame && <Flame size={13} color="#fb923c" fill="#fb923c" />}
-              <span className="font-bold text-white">{t.value}</span>
-              <span>{t.label.toLowerCase()}</span>
-            </span>
-          ))}
+          {/* soft glow accents */}
+          <div
+            className="absolute -top-16 -right-12 w-48 h-48 rounded-full pointer-events-none"
+            style={{ background: "radial-gradient(circle, rgba(168,85,247,0.28), transparent 70%)" }}
+          />
+          <div
+            className="absolute -bottom-20 -left-10 w-44 h-44 rounded-full pointer-events-none"
+            style={{ background: "radial-gradient(circle, rgba(217,70,239,0.14), transparent 70%)" }}
+          />
+
+          {/* Header row */}
+          <div className="relative flex items-center justify-between mb-4">
+            <div className="flex items-center gap-1.5">
+              <Sparkles size={13} className="text-purple-400" />
+              <span
+                className="text-[11px] font-bold uppercase"
+                style={{ letterSpacing: "0.16em", color: "rgba(192,160,255,0.9)" }}
+              >
+                Your Identity
+              </span>
+            </div>
+            <button
+              onClick={() => setLocation("/identity")}
+              className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
+              aria-label="View your DNA"
+            >
+              <Sparkles size={13} className="text-purple-300" />
+            </button>
+          </div>
+
+          {/* Avatar + headline */}
+          <div className="relative flex items-center gap-4">
+            <IdentityFace />
+            <div className="flex-1 min-w-0">
+              <h1 className="font-extrabold tracking-tight leading-[1.02]">
+                {prefix && (
+                  <span className="block text-[22px]" style={{ color: "rgba(255,255,255,0.9)" }}>
+                    {prefix}
+                  </span>
+                )}
+                <span className="block text-[32px] text-white">
+                  {mainWords.map((w, i) => (
+                    <span key={i} style={i === mainWords.length - 1 ? purpleText : undefined}>
+                      {w}
+                      {i < mainWords.length - 1 ? " " : ""}
+                    </span>
+                  ))}
+                </span>
+              </h1>
+
+              {/* Secondary archetype pills */}
+              {secondaries.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {secondaries.map((s) => (
+                    <span
+                      key={s}
+                      className="text-[12px] font-semibold px-3 py-1 rounded-full"
+                      style={{
+                        color: "rgba(255,255,255,0.8)",
+                        background: "rgba(255,255,255,0.07)",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                      }}
+                    >
+                      + {s}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="relative my-4 h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
+
+          {/* Stats row */}
+          <div className="relative flex items-center justify-between">
+            {stats.map((s) => (
+              <div key={s.label} className="flex items-center gap-2">
+                <s.Icon size={18} color={s.color} {...(s.Icon === Flame ? { fill: s.color } : {})} />
+                <div className="leading-tight">
+                  <p className="text-[17px] font-bold text-white">{s.value}</p>
+                  <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
+        {/* CTAs below the card */}
         <div className="mt-4">
           <HeroCTAButtons />
         </div>
       </div>
     </>
+  );
+}
+
+// Neon DNA face avatar used in the identity card.
+function IdentityFace() {
+  return (
+    <div className="relative flex-shrink-0" style={{ width: 88, height: 88 }}>
+      <div
+        className="absolute inset-0 rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(168,85,247,0.35), transparent 72%)" }}
+      />
+      <div
+        className="absolute inset-0 rounded-full"
+        style={{
+          border: "2px solid rgba(168,85,247,0.55)",
+          boxShadow: "0 0 22px rgba(168,85,247,0.5), inset 0 0 22px rgba(168,85,247,0.22)",
+          background: "radial-gradient(circle at 50% 38%, rgba(64,44,98,0.6), rgba(20,15,35,0.85))",
+        }}
+      />
+      <svg
+        viewBox="0 0 100 100"
+        className="absolute inset-0 w-full h-full"
+        style={{ filter: "drop-shadow(0 0 4px rgba(192,132,252,0.85))" }}
+      >
+        {/* peaceful closed eyes */}
+        <path d="M28 48 q7 -8 14 0" stroke="#c084fc" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <path d="M58 48 q7 -8 14 0" stroke="#c084fc" strokeWidth="4" fill="none" strokeLinecap="round" />
+        {/* smile */}
+        <path d="M34 62 q16 14 32 0" stroke="#c084fc" strokeWidth="4" fill="none" strokeLinecap="round" />
+      </svg>
+    </div>
   );
 }
 
