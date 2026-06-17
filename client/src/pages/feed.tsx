@@ -7784,7 +7784,7 @@ export default function Feed() {
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-6" data-feed-content>
 
         {/* ── Track / Share CTAs ── */}
-        <div className="mb-5">
+        <div className="mb-5 px-6">
           <HeroCTAButtons />
         </div>
 
