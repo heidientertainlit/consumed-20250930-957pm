@@ -46,6 +46,19 @@ function inferSeries(title: string): string | null {
   return null;
 }
 
+const SOURCE_COLORS: Record<string, string> = {
+  'consumed':        'bg-purple-600',
+  'netflix':         'bg-red-600',
+  'disney-plus':     'bg-blue-600',
+  'max':             'bg-sky-600',
+  'trending-tv':     'bg-indigo-500',
+  'trending-movies': 'bg-indigo-500',
+  'nyt':             'bg-gray-700',
+  'open-library':    'bg-emerald-600',
+  'apple-music':     'bg-pink-600',
+  'apple-podcasts':  'bg-orange-500',
+};
+
 function MediaCard({ item, onTrack, onRate }: { item: any; onTrack: () => void; onRate: () => void }) {
   return (
     <div className="flex-shrink-0 w-[104px]">
@@ -78,7 +91,14 @@ function MediaCard({ item, onTrack, onRate }: { item: any; onTrack: () => void; 
         </div>
       </div>
       <p className="text-xs font-semibold text-white mt-2 leading-snug line-clamp-2">{item.title}</p>
-      <p className="text-[10px] text-white/40 mt-0.5">{typeLabel(item.type)}</p>
+      <div className="flex items-center gap-1.5 mt-0.5">
+        {item.source_label && (
+          <span className={`text-[8px] font-bold text-white px-1.5 py-0.5 rounded-full ${SOURCE_COLORS[item.source_key] || 'bg-gray-600'}`}>
+            {item.source_label}
+          </span>
+        )}
+        <span className="text-[10px] text-white/40">{typeLabel(item.type)}</span>
+      </div>
     </div>
   );
 }
@@ -426,6 +446,8 @@ export default function FeedComposerBar({
               image_url: item.image_url,
               external_id: item.external_id || item.id,
               external_source: item.external_source || 'tmdb',
+              source_label: item.source_label,
+              source_key: item.source_key,
             }))
         );
       })
