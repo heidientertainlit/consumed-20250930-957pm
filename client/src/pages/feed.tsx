@@ -5729,7 +5729,6 @@ export default function Feed() {
         session={session}
         currentUserId={currentAppUserId || undefined}
         onDeleteComment={handleDeleteComment}
-        onReportComment={handleReportComment}
         onDeletePost={handleDeletePost}
         onLikeComment={handleLikeComment}
         onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}

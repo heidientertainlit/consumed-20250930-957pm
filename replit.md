@@ -7,6 +7,15 @@ Consumed is a mobile-first platform designed to transform entertainment consumpt
 Preferred communication style: Simple, everyday language.
 - When user asks "give me the code to push to git", provide `git push origin main` command. User deploys from their own git repo.
 
+### 📁 Reference Docs (detailed notes moved out of this file — always check here)
+To keep this README scannable, the long deep-dive notes were moved into `docs/`. **Nothing was deleted — each topic now lives in its own file:**
+- **`docs/data-reference.md`** — live DB row counts, full column lists, dead tables, key joins, export map.
+- **`docs/trivia-points-architecture.md`** — trivia & points system, canonical sources for user stats / leaderboard / streak / DNA profile, room trivia media-type rule.
+- **`docs/dna-signals-architecture.md`** — behavioral signal system (`user_dna_signals`), `extract-dna-signals` weights, export queries.
+- **`docs/dna-clash-pools.md`** — DNA Clash pool rules (real ratings only).
+- **`docs/feed-architecture.md`** — social feed pipeline, promoted-card-first order, shared QuickActionSheet, cosmetic feed redesign plan.
+- **`docs/persona-content-generation.md`** — bot persona content generation.
+
 ### Database — CRITICAL
 - **The app uses the HOSTED Supabase project (`mahpgcogwpawvviapqza`) as its database — NOT the local Replit PostgreSQL.**
 - The local Replit DB (accessible via `DATABASE_URL` / `executeSql` tool) is a separate, unused database. **Never run schema changes, inserts, or queries there** — they will have no effect on the live app.
@@ -42,32 +51,13 @@ Preferred communication style: Simple, everyday language.
   Only write the fix SQL after reviewing the actual results. `supabase_rls_fix.sql` in the project root is kept as the canonical fix file.
 - **NEVER add, seed, or modify data in Supabase without explicit user approval first.** Always double-check with the user before inserting, updating, or seeding any content (trivia, polls, predictions, etc.) to the production database.
 - All content data comes from user's spreadsheets - do not create fake/placeholder content.
-- **⚠️ DNA Clash pools — REAL RATINGS ONLY, NO EXCEPTIONS.** `prediction_pools` rows with `type='clash'` MUST use ratings that are verified to exist in `media_ratings`. Before creating or updating any clash pool: (1) query `media_ratings` to confirm both users have actually rated the media title, (2) confirm the rating values match exactly what is in `media_ratings`. NEVER manually type in a star rating. NEVER invent a quote, DNA label, or display name. DNA labels come from `dna_profiles.label`. Display names come from `users.display_name`. The `options` JSON must store `posterUrl` on the first option object (no `poster_url` column exists on `prediction_pools`). The feed card reads `o1.posterUrl || o2.posterUrl`. There is NO hardcoded fallback array in `feed.tsx` — if `clashPools` is empty the card simply doesn't render.
-- **Canonical source for user stats, leaderboard, and trivia data — ALWAYS use the edge functions, never invent queries to helper tables:**
-  - **Trivia rank / percentile / leaderboard** → `GET /functions/v1/get-leaderboards?category=trivia&scope=global` (auth: `Bearer session.access_token`). Response: `{ categories: { trivia: [{ user_id, rank, score, ... }] } }`. Find the current user by `user_id`. The real source of truth is `user_predictions` JOIN `prediction_pools` WHERE type='trivia', summing `points_earned` per user. **`trivia_user_points` is an empty orphan table with zero rows and no triggers — it has never been populated and should be dropped (`DROP TABLE IF EXISTS trivia_user_points`). Never query it.**
-  - **User stats (posts, predictions, streak, consumption)** → `GET /functions/v1/get-user-stats?user_id={id}` (auth: Bearer token). Returns `{ stats: { moviesWatched, tvShowsWatched, booksRead, gamesPlayed, ... } }`.
-  - **Daily streak** → direct Supabase query: `login_streaks` table, column `current_streak`, filtered by `user_id`.
-  - **DNA profile / archetype / genres** → direct Supabase query: `dna_profiles` table, columns `label`, `tagline`, `favorite_genres` (JSON array), `flavor_notes`.
-  - **Social feed** → `GET /functions/v1/social-feed` (edge function, not a direct DB query).
-- **⚠️ Trivia & Points System — canonical architecture (DO NOT invent a new system):**
-  - **Questions live in `prediction_pools`** (`type = 'trivia'`, `status = 'open'`). Each pool is one question (or a multi-question pack via the `options` array of question objects). 51 pools exist as of May 2026.
-  - **Every answer is permanently recorded in `user_predictions`** — one row per user per pool_id, with `prediction` (what they picked) and `points_earned` (10 if correct, 0 if wrong). This is the single source of truth for: (1) deduplication — carousel filters out pools where user already has a row; (2) leaderboard — `get-leaderboards` sums `points_earned` per user for trivia pools; (3) DNA signals — category/correct-answer derivable via JOIN to `prediction_pools`.
-  - **`user_points.trivia_points`** is a running lifetime total, incremented by the `increment_trivia_points(uid uuid, pts integer)` DB function. This is used for profile/stats display. It is NOT used for leaderboard ranking (leaderboard reads `user_predictions` directly).
-  - **`increment_trivia_points`** is the ONLY correct function to call when awarding trivia points. Call it from client code and edge functions after a correct answer. Never use `increment_user_points` for trivia — that RPC updates a non-existent `total_points` column and silently fails.
-  - **`increment_user_points` RPC is broken** — it references `user_points.total_points` which does not exist as a column. It silently fails everywhere it is called. Do NOT use it for any new point-awarding code. Leaderboards for polls and predictions read directly from `user_predictions.points_earned` and `bets.points_awarded` respectively — no additional RPC is needed for those.
-  - **Dead/orphan tables — NEVER query or write to these:** `trivia_user_points` (0 rows, no triggers), `trivia_results` (0 rows), `trivia_sessions` (0 rows), `trivia_answers` (0 rows). These are remnants of an old system that was replaced. The `user_points.trivia_points` values from before April 14 2026 were seeded/manually set, not earned answer-by-answer.
-  - **Deduplication**: Trivia carousel (`trivia-carousel.tsx`) and polls carousel (`polls-carousel.tsx`) both query `user_predictions` for the user's existing pool_ids and filter them out before rendering. Every answer submitted creates a permanent record, so users never see a repeated question. This is fully automatic — no separate dedup table or flag needed.
-  - **Daily featured protection**: Both carousels filter out pools where `featured_date = today` using `.or('featured_date.is.null,featured_date.lt.YYYY-MM-DD')`. Today's featured question is exclusive to the Daily Hero section; it falls into the carousel automatically the next day for anyone who skipped it.
-  - **`user_points` columns** (for reference): `id, user_id, reviews_written, ratings_given, books_read, tv_shows_watched, movies_watched, predictions_right, trivia_points, login_streak, app_engagement, all_time, last_updated, joined_app`. There is NO `total_points` column. `all_time` is auto-calculated by the `trigger_update_all_time` trigger on every UPDATE.
-- **Room trivia/poll media type requirement**: When building or inserting trivia/polls for any room, always ensure `media_external_source`, `category`, and/or `show_tag` are set on the `prediction_pools` record so the `MediaTypePill` component (in pool-detail.tsx) can display the correct media type (TV / Movie / Music / Book). Do not insert records where all three fields are blank — the pill will fall back to "TV" as a default, which may be incorrect.
-- **⚠️ Feed promoted-card-first order — DO NOT change without explicit user permission.** The first item in `mixedFeedSlots` (in `client/src/pages/feed.tsx`, the `useMemo` at ~line 3443) is intentionally the first promoted rating card (persona/high-signal post). This puts Jordan's / persona posts at the very top of the feed right after the Daily Hero section. The pattern: prepend `wrapPromoted(0)` before `feedPlaySlots.forEach`. Never remove or reorder this without asking the user first.
-- **⚠️ QuickActionSheet is shared — changes affect BOTH the global nav "+" button AND the room "Write something..." button.** The `useEffect` at the top of `quick-action-sheet.tsx` controls which flow opens based on props (`roomId`, `preselectedMedia`). Room discussion MUST open `intent: "capture"` / `action: "track"` (Add Media flow). NEVER change this to `intent: "say"` / `action: "post"` for room mode — that breaks the room discussion and shows the wrong composer. Any edit to this file must be tested in both contexts.
+- **⚠️ DNA Clash pools — REAL RATINGS ONLY, NO EXCEPTIONS.** Clash pools (`prediction_pools` `type='clash'`) MUST use ratings verified to exist in `media_ratings`; never invent ratings, quotes, DNA labels, or display names. **Full rules → `docs/dna-clash-pools.md`.**
+- **Canonical sources for user stats, leaderboard & trivia data — ALWAYS use the documented edge functions/queries, never invent queries to helper tables.** Covers trivia rank/leaderboard, user stats, streak, DNA profile, social feed. **Full reference → `docs/trivia-points-architecture.md`.**
+- **⚠️ Trivia & Points System — canonical architecture (DO NOT invent a new system).** Questions in `prediction_pools`, answers in `user_predictions`, lifetime total via `increment_trivia_points` (NEVER the broken `increment_user_points`), dedup, dead/orphan tables, room media-type rule. **Full reference → `docs/trivia-points-architecture.md`.**
+- **⚠️ Feed promoted-card-first order & shared QuickActionSheet — DO NOT change without explicit user permission.** The first feed slot is intentionally the first promoted rating card; `quick-action-sheet.tsx` is shared between the nav "+" and room composers. **Full rules → `docs/feed-architecture.md`.**
 
-### Feed UI Redesign Plan (COSMETIC ONLY — no functional changes)
-All changes are styling/layout only. No voting logic, point systems, interaction handlers, or data pipelines may change.
-**Next steps (in order):**
-1. **Individual post cards** (reviews, ratings, thoughts) — tighten to compact card shell with type pill in top-right, subtle bottom bar with likes/comments.
-2. **Trivia/poll cards** — same card shell, keep all answer options + voting logic untouched, only tighten wrapper styling.
+### Feed UI Redesign Plan (COSMETIC ONLY)
+In-progress cosmetic-only feed redesign steps (no functional changes allowed) → **`docs/feed-architecture.md`**.
 
 ## System Architecture
 
@@ -143,43 +133,8 @@ All changes are styling/layout only. No voting logic, point systems, interaction
 - Privacy Toggle System: Controls list visibility.
 - **Media Data Requirements**: `image_url`, `external_id`, `external_source`, `title` are REQUIRED for all media.
 - **Media Search Display Requirements**: `media-search` edge function MUST return `poster_url`, `image`, `creator`, `title`, `type`, `year`, `external_id`, `external_source`.
-- **Social Feed Architecture**:
-    - Feed fetch limit: `limit = 200;`.
-    - Infinite scroll via `IntersectionObserver`.
-    - UGC post rendering pipeline: Filters `socialPosts` into `ugcSlots`, deduplicates/groups, and assigns to `slotAssignments` for interleaved rendering.
-    - `predict`, `prediction`, `poll`, and `cast_approved` types are EXEMPT from deduplication to prevent silent erasure.
-    - `rate-review` type: `social-feed` returns `type: 'rate-review'` for review posts.
-    - **Feed mix**: `feedPlaySlots` (game_moments + predictions) is interleaved with up to 4 `promoted_rating` items and 2 `binge_battle_promo` cards.
-- **⚠️ Behavioral Signal Architecture — CANONICAL (DO NOT re-invent):**
-    - **`user_dna_signals` table** is the single source of truth for aggregated per-user behavioral signals. Schema: `id, user_id, signal_type, signal_value, strength (0–1), source_count, sources (jsonb), last_signal_at, updated_at`.
-    - **`signal_type` values in use:** `media_type` (tv/movie/book/music/podcast/game), `genre` (TMDB genre names), `creator` (creator names), `show` (specific show/franchise engagement), `engagement` (aggregate participation rows).
-    - **`signal_type = 'engagement'` rows** are aggregate participation counters — NOT taste signals. `signal_value` is one of: `trivia_attempts`, `trivia_correct`, `poll_votes`, `ratings_given`, `items_tracked`, `dna_moments`. `source_count` is the raw event count. These are the export layer for partner/participation insights.
-    - **`sources` JSONB column** tracks breakdown per signal: `{ tracked: N, rated: N, rated_high: N, trivia_attempts: N, trivia_correct: N, polls: N, moments: N }`. This shows WHAT drove each signal. Example: a user's `media_type: tv` signal with `sources: { tracked: 12, rated_high: 8, trivia_correct: 15 }` means they tracked 12 TV shows, rated 8 highly, and correctly answered 15 TV trivia questions.
-    - **`extract-dna-signals` edge function** (`supabase/functions/extract-dna-signals/index.ts`) rebuilds ALL signals for a user from scratch (delete + insert). Sources and weights:
-        - `list_items` (tracked media): weight 1.0
-        - `media_ratings` ≥ 4★: weight 1.5 — strongest taste signal
-        - `user_predictions` trivia correct: weight 1.4
-        - `user_predictions` trivia attempt: weight 1.0
-        - `user_predictions` poll vote: weight 0.9
-        - `dna_moment_responses`: weight 0.8
-        - Also runs TMDB genre API lookup for first 20 tracked movies/TV items
-    - **Call `extract-dna-signals` whenever:** a user rates media, answers trivia, votes on a poll, or you want DNA signals to be fresh. Call it with `POST { user_id }` + service-role key from another edge function, or with a user JWT from the client.
-    - **`rebuild-recommendations` edge function** reads `user_dna_signals` (behavioral signals + engagement profile) alongside DNA profile, ratings, consumption history, followed creators, and social posts. It feeds all of this into GPT-4o to produce 8–10 personalized recommendations cached in `user_recommendations`.
-    - **`user_interest_signals` does NOT exist as a DB table** — it was referenced in old code but never created. All signal queries must use `user_dna_signals`.
-    - **Export / partner insight queries** — to understand cross-user behavior and participation, query `user_dna_signals` directly:
-        ```sql
-        -- Who engages with TV content most (by trivia + tracking + ratings)?
-        SELECT user_id, signal_value, strength, sources
-        FROM user_dna_signals
-        WHERE signal_type = 'media_type' AND signal_value = 'tv'
-        ORDER BY strength DESC;
-
-        -- Participation summary across all users
-        SELECT signal_value, AVG(source_count) as avg, MAX(source_count) as top
-        FROM user_dna_signals WHERE signal_type = 'engagement'
-        GROUP BY signal_value ORDER BY signal_value;
-        ```
-    - **To extend the signal system:** add new sources in `extract-dna-signals/index.ts`. Follow the existing pattern — fetch data, loop through events, call `touch(type, value)`, add weight to `weightedCount`, increment the correct `sources` sub-key. Re-deploy the function. No schema changes needed.
+- **Social Feed Architecture** — fetch limit, dedup-exempt types, feed mix (`feedPlaySlots` + promoted/binge cards). **Full reference → `docs/feed-architecture.md`.**
+- **⚠️ Behavioral Signal Architecture — CANONICAL (DO NOT re-invent).** `user_dna_signals` is the single source of truth; `extract-dna-signals` rebuilds signals with documented weights; `user_interest_signals` does NOT exist. **Full reference → `docs/dna-signals-architecture.md`.**
 
 ## External Dependencies
 
