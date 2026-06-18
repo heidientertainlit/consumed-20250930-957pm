@@ -3661,6 +3661,7 @@ function CurrentlyConsumingFeedCard({
   likedComments,
   commentVotes,
   onBet,
+  onAddToList,
 }: {
   post: SocialPost;
   carouselElements: React.ReactNode;
