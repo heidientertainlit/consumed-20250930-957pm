@@ -7783,7 +7783,7 @@ export default function Feed() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 pt-5 pb-6" data-feed-content>
+      <div className="max-w-4xl mx-auto px-4 pt-2 pb-6" data-feed-content>
 
         {/* ── What's Happening ── */}
         {whatHappeningPosts.length > 0 && (
