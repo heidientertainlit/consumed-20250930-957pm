@@ -70,6 +70,9 @@ import FeedComposerBar from "@/components/feed-composer-bar";
 interface SocialPost {
   id: string;
   type: string;
+  mediaType?: string;
+  externalId?: string;
+  externalSource?: string;
   user?: {
     id: string;
     username: string;

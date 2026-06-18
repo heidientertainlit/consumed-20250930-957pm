@@ -343,7 +343,7 @@ export default function UserProfile() {
   const [isLoadingBets, setIsLoadingBets] = useState(false);
   const [betsTab, setBetsTab] = useState<'placed' | 'received'>('placed');
   const [userBets, setUserBets] = useState<any[]>([]);
-  const [openFilter, setOpenFilter] = useState<'type' | 'year' | 'rating' | null>(null);
+  const [openFilter, setOpenFilter] = useState<'type' | 'year' | 'rating' | 'list' | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isImportHelpOpen, setIsImportHelpOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
