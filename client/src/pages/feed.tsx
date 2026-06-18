@@ -7783,11 +7783,11 @@ export default function Feed() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 pt-2 pb-6" data-feed-content>
+      <div className="max-w-4xl mx-auto px-4 pt-5 pb-6" data-feed-content>
 
         {/* ── What's Happening ── */}
         {whatHappeningPosts.length > 0 && (
-          <div className="mb-6 px-4">
+          <div className="mb-3 px-4">
             <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">What's Happening</p>
             <div className="space-y-0 divide-y divide-gray-100">
               {whatHappeningPosts.map((post: any) => {
