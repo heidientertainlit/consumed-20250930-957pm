@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { Trophy, Flame, Target, Zap, ChevronRight, Star, TrendingUp, Users } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/lib/auth";
