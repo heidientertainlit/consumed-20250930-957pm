@@ -205,15 +205,6 @@ export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'ligh
     zap: 'text-blue-500',
   };
 
-  if (variant === 'subtle') {
-    const nudge = nudges[0];
-    return (
-      <div className="flex items-center px-1 py-2 opacity-60">
-        <p className="text-[11px] text-purple-200 leading-snug">{nudge.text}</p>
-      </div>
-    );
-  }
-
   if (variant === 'light') {
     // In the white feed — show only the first nudge, styled as a clean white card
     const nudge = nudges[0];
