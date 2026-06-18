@@ -472,7 +472,7 @@ export default function PlayTriviaPage() {
                             (() => {
                               const result = submissionResults[game.id];
                               const prevAnswer = allPredictions[game.id];
-                              const userAnswer = result?.userAnswer || prevAnswer?.prediction;
+                              const userAnswer = result?.userAnswer || prevAnswer;
                               const correctAnswer = game.correct_answer || game.correctAnswer;
                               const gotItRight = result ? result.correct : (userAnswer && userAnswer === correctAnswer);
                               const stats = result?.stats;
@@ -650,7 +650,7 @@ export default function PlayTriviaPage() {
                       (() => {
                         const result = submissionResults[game.id];
                         const prevAnswer = allPredictions[game.id];
-                        const userAnswer = result?.userAnswer || prevAnswer?.prediction;
+                        const userAnswer = result?.userAnswer || prevAnswer;
                         const correctAnswer = game.correct_answer || game.correctAnswer;
                         const stats = result?.stats;
                         const isCelebrating = celebratingItems[game.id] !== undefined;
