@@ -5240,9 +5240,9 @@ export default function Feed() {
       _promotedKey: `extra-${idx}`,
     });
 
-    // Group promoted ratings into stacks of 5 so TinderCardStack shows a card deck.
+    // Group promoted ratings into stacks of 8 so TinderCardStack shows a card deck.
     // The first stack leads the feed (preserving the persona-first ordering rule).
-    const STACK_SIZE = 5;
+    const STACK_SIZE = 8;
     const promotedStacks: any[] = [];
     for (let i = 0; i < promotedRatings.length; i += STACK_SIZE) {
       const posts = promotedRatings.slice(i, i + STACK_SIZE);
@@ -5793,8 +5793,8 @@ export default function Feed() {
     const remaining = mixedFeedSlots.slice(19);
     if (remaining.length === 0) return null;
 
-    // Collect all promoted posts into up to 3 stacks of up to 5 cards each
-    const MAX_PER_STACK = 5;
+    // Collect all promoted posts into up to 3 stacks of up to 8 cards each
+    const MAX_PER_STACK = 8;
     const promoted = remaining.filter((item: any) => item?._isPromoted);
     const promotedSet = new Set(promoted.map((item: any) => item._promotedKey));
     const rawStacks: any[][] = [];
@@ -5821,17 +5821,7 @@ export default function Feed() {
       while (nextStackSlot < rawStacks.length && i >= insertAt[nextStackSlot]) {
         const stackKey = `stack-fixed-${nextStackSlot}`;
         output.push(
-          <SwipeableCardStack
-            key={stackKey}
-            posts={rawStacks[nextStackSlot]}
-            onLike={handleLike}
-            likedPosts={likedPosts}
-            session={session}
-            fetchComments={fetchComments}
-            currentUserId={currentAppUserId || undefined}
-            onDeletePost={handleDeletePost}
-            onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
-          />
+          renderFeedItem({ type: 'ugc_stack', id: stackKey, posts: rawStacks[nextStackSlot] }, stackKey)
         );
         nextStackSlot++;
       }
@@ -5845,17 +5835,7 @@ export default function Feed() {
     while (nextStackSlot < rawStacks.length) {
       const stackKey = `stack-fixed-${nextStackSlot}`;
       output.push(
-        <SwipeableCardStack
-          key={stackKey}
-          posts={rawStacks[nextStackSlot]}
-          onLike={handleLike}
-          likedPosts={likedPosts}
-          session={session}
-          fetchComments={fetchComments}
-          currentUserId={currentAppUserId || undefined}
-          onDeletePost={handleDeletePost}
-          onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
-        />
+        renderFeedItem({ type: 'ugc_stack', id: stackKey, posts: rawStacks[nextStackSlot] }, stackKey)
       );
       nextStackSlot++;
     }
