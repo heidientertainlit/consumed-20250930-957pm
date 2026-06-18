@@ -4820,7 +4820,7 @@ export default function Feed() {
     }).map((p: any) => ({ ...p, _verb: getVerb(p.type) }));
     const friends = valid.filter((p: any) => friendIds.has(p.user?.id));
     const others = valid.filter((p: any) => !friendIds.has(p.user?.id));
-    return [...friends, ...others].slice(0, 3);
+    return [...friends, ...others].slice(0, 2);
   }, [socialPosts, friendIds]);
 
   // Helper: resolve media type from various fields
