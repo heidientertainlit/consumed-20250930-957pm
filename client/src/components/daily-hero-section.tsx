@@ -722,8 +722,7 @@ function TodaysPlayGame({
           }
           // Bust the carousel cache so answered pools are filtered on next load
           queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
-        })
-        .catch(() => {});
+        }, () => {});
     }
 
     try {
