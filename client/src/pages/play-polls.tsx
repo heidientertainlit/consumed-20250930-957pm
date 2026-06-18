@@ -121,7 +121,7 @@ export default function PlayPollsPage() {
     },
   });
 
-  const handleTapAndVote = (game: any, option: string) => {
+  const handleTapAndVote = (game: any, option: any) => {
     if (allPredictions[game.id] || submissionResults[game.id]) return;
     const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
     submitVote.mutate({

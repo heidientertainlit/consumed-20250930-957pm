@@ -27,7 +27,7 @@ export default function GameFirstFeed() {
             <div className="text-right">
               <div className="flex items-center gap-2 text-yellow-500 font-bold text-xl">
                 <Zap className="fill-current" />
-                {user?.points || 0} pts
+                {(user as any)?.points || 0} pts
               </div>
               <p className="text-xs text-gray-500 uppercase tracking-wider">Current Score</p>
             </div>

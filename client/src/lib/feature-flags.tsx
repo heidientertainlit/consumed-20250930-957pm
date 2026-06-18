@@ -26,8 +26,7 @@ export function FeatureFlagsProvider({ children }: { children: React.ReactNode }
           setRoomsEnabled(flags["rooms_enabled"] === "true");
         }
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }, () => setLoading(false));
   }, []);
 
   return (

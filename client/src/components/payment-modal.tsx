@@ -71,7 +71,7 @@ export default function PaymentModal({ isOpen, onClose, pool, prediction, onSucc
         <div className="bg-dark-primary rounded-lg p-4 mb-6">
           <div className="flex justify-between items-center mb-2">
             <span className="text-gray-400">Pool:</span>
-            <span className="font-medium">{pool.title.substring(0, 20)}...</span>
+            <span className="font-medium">{pool.name.substring(0, 20)}...</span>
           </div>
           <div className="flex justify-between items-center mb-2">
             <span className="text-gray-400">Your Prediction:</span>
