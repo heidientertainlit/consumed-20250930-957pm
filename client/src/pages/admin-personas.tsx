@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { supabase, SUPABASE_URL } from "@/lib/supabase";
 import {
   Sparkles, Check, X, Clock, ChevronDown, ChevronUp,
   RefreshCw, Calendar, Star, MessageSquare, Flame,
@@ -377,7 +377,7 @@ export default function AdminPersonasPage() {
   const deletePostMutation = useMutation({
     mutationFn: async (id: string) => {
       const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(`${supabaseUrl}/functions/v1/admin-delete-post`, {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-delete-post`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${session?.access_token}`,
@@ -411,7 +411,7 @@ export default function AdminPersonasPage() {
         .limit(1);
 
       if (matches && matches.length > 0) {
-        const res = await fetch(`${supabaseUrl}/functions/v1/admin-delete-post`, {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-delete-post`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${session?.access_token}`,
@@ -449,7 +449,7 @@ export default function AdminPersonasPage() {
     setPublishing(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(`${supabaseUrl}/functions/v1/post-scheduled-content`, {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/post-scheduled-content`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${session?.access_token}`,
@@ -479,7 +479,7 @@ export default function AdminPersonasPage() {
     setGenerating(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(`${supabaseUrl}/functions/v1/generate-persona-content`, {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-persona-content`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${session?.access_token}`,

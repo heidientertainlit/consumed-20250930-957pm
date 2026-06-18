@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 import {
   ArrowLeft, Loader2, Trash2, Plus, ChevronUp, ChevronDown,
   CheckCircle, BarChart3, Sparkles, ChevronRight, RefreshCw,
@@ -208,12 +208,12 @@ export default function AdminRanksPage() {
       const { data: { session } } = await supabase.auth.getSession();
       const catLabel = CATEGORIES.find((c) => c.value === category)?.label || category;
 
-      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-challenge-pool`, {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-challenge-pool`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session?.access_token}`,
-          apikey: supabaseAnonKey,
+          apikey: SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({ action: "suggest_ranks", category: catLabel }),
       });
@@ -243,12 +243,12 @@ export default function AdminRanksPage() {
       const { data: { session } } = await supabase.auth.getSession();
       const catLabel = CATEGORIES.find((c) => c.value === category)?.label || category;
 
-      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-challenge-pool`, {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-challenge-pool`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session?.access_token}`,
-          apikey: supabaseAnonKey,
+          apikey: SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({ action: "suggest_rank_items", rankTitle: title, category: catLabel, maxItems }),
       });

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 import {
   Sparkles, ArrowLeft, Loader2, Trash2, ChevronDown, ChevronUp,
   CheckCircle, Layers, Plus, Pencil, Save, RefreshCw, ArrowRight,
@@ -259,9 +259,9 @@ export default function AdminPoolsPage() {
 
   async function callEdgeFunction(payload: object) {
     const { data: { session } } = await supabase.auth.getSession();
-    const resp = await fetch(`${supabaseUrl}/functions/v1/generate-challenge-pool`, {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-challenge-pool`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}`, "apikey": supabaseAnonKey },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}`, "apikey": SUPABASE_ANON_KEY },
       body: JSON.stringify(payload),
     });
     const result = await resp.json();
@@ -289,7 +289,7 @@ export default function AdminPoolsPage() {
       const mediaType = CATEGORY_TO_MEDIA_TYPE[cat] || "";
       const body: Record<string, string> = { query };
       if (mediaType) body.type = mediaType;
-      const resp = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/media-search`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${session.access_token}`, "Content-Type": "application/json" },
         body: JSON.stringify(body),

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 import {
   Sparkles, Check, X, Clock, ArrowLeft, Loader2, Trash2, Pencil,
   ChevronDown, ChevronUp, Calendar, Star, Zap, Brain, Vote, Dna,
@@ -245,7 +245,7 @@ export default function AdminTriviaPage() {
     if (!query.trim() || !session?.access_token) { setEditMediaResults([]); return; }
     setEditMediaSearching(true);
     try {
-      const resp = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/media-search`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${session.access_token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ query }),
@@ -383,12 +383,12 @@ export default function AdminTriviaPage() {
     setGenerating(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-trivia-polls`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session?.access_token}`,
-          "apikey": supabaseAnonKey,
+          "apikey": SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({ contentType, count, mediaType, focusTopic, partnerTag, difficulty, useTrending }),
       });
@@ -553,7 +553,7 @@ export default function AdminTriviaPage() {
           is_active: true,
           display_date: dateStr ? new Date(dateStr).toISOString() : null,
         };
-        const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-trivia-polls`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify({ action: "publish_dna", dnaData, draftId: draft.id }),
@@ -627,7 +627,7 @@ export default function AdminTriviaPage() {
           poolData.publish_at = new Date(dateStr).toISOString();
         }
 
-        const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-trivia-polls`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify({ action: "publish", poolData, draftId: draft.id }),
@@ -724,7 +724,7 @@ export default function AdminTriviaPage() {
     });
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-trivia-polls`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
         body: JSON.stringify({ action: "reschedule_featured", updates }),

@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/lib/supabase";
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase";
 import {
   ArrowLeft, Sparkles, Loader2, Check, X, CalendarDays, ChevronDown, ChevronUp, Send,
   ShieldCheck, AlertTriangle, Pencil, Plus, Minus,
@@ -99,12 +99,12 @@ export default function AdminDailyCallPage() {
     setGenerating(true);
     try {
       const { data: { session: s } } = await supabase.auth.getSession();
-      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-trivia-polls`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${s?.access_token}`,
-          "apikey": supabaseAnonKey,
+          "apikey": SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({
           contentType: "featured_play",
@@ -149,7 +149,7 @@ export default function AdminDailyCallPage() {
         icon: "⭐",
         points_reward: 10,
       };
-      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-trivia-polls`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${s?.access_token}` },
         body: JSON.stringify({ action: "publish", poolData, draftId: draft.id }),
