@@ -174,11 +174,11 @@ export function FeedIdentityHero() {
             <div className="flex-1 min-w-0">
               <h1 className="font-extrabold tracking-tight leading-[1.02]">
                 {prefix && (
-                  <span className="block text-[14px] font-medium mb-0.5" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  <span className="block text-[22px]" style={{ color: "rgba(255,255,255,0.9)" }}>
                     {prefix}
                   </span>
                 )}
-                <span className="block text-[30px] text-white">
+                <span className="block text-[32px] text-white">
                   {mainWords.map((w, i) => (
                     <span key={i} style={i === mainWords.length - 1 ? purpleText : undefined}>
                       {w}
@@ -194,11 +194,11 @@ export function FeedIdentityHero() {
                   {secondaries.map((s) => (
                     <span
                       key={s}
-                      className="text-[12px] font-semibold px-3 py-1 rounded-full"
+                      className="text-[11px] font-medium px-3 py-1 rounded-full"
                       style={{
-                        color: "rgba(255,255,255,0.8)",
-                        background: "rgba(255,255,255,0.07)",
-                        border: "1px solid rgba(255,255,255,0.12)",
+                        color: "rgba(255,255,255,0.55)",
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(255,255,255,0.08)",
                       }}
                     >
                       + {s}
