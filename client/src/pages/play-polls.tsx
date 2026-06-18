@@ -378,10 +378,10 @@ export default function PlayPollsPage() {
           <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
             <Vote className="mx-auto mb-4 text-gray-400" size={48} />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchQuery || selectedCategory ? 'No matching polls found' : 'No polls available'}
+              {selectedCategory ? 'No matching polls found' : 'No polls available'}
             </h3>
             <p className="text-gray-600 text-sm">
-              {searchQuery || selectedCategory ? 'Try a different filter' : 'Check back soon for new polls!'}
+              {selectedCategory ? 'Try a different filter' : 'Check back soon for new polls!'}
             </p>
           </div>
         )}
