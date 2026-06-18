@@ -1502,6 +1502,7 @@ function DailyCallOverlay({
 // ─────────────────────────────────────────────
 export function DailyHeroSection() {
   const { user, session } = useAuth();
+  const [, setLocation] = useLocation();
 
   // ── Today's Play state ──
   const [showPlayGame, setShowPlayGame] = useState(false);
