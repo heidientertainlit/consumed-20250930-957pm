@@ -179,33 +179,19 @@ export function FeedIdentityHero() {
                   </span>
                 )}
                 <span className="block text-[32px] text-white">
-                  {mainWords.map((w, i) => (
-                    <span key={i} style={i === mainWords.length - 1 ? purpleText : undefined}>
-                      {w}
-                      {i < mainWords.length - 1 ? " " : ""}
-                    </span>
-                  ))}
+                  {mainWords.join(" ")}
                 </span>
               </h1>
             </div>
           </div>
 
-          {/* Secondary archetype pills — compact, side by side above the stats */}
+          {/* Secondary archetypes — subtle "with shades of" subtitle */}
           {secondaries.length > 0 && (
-            <div className="relative flex flex-wrap gap-2 mt-4">
-              {secondaries.map((s) => (
-                <span
-                  key={s}
-                  className="text-[10px] font-medium px-2.5 py-0.5 rounded-full"
-                  style={{
-                    color: "rgba(255,255,255,0.55)",
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                  }}
-                >
-                  + {s}
-                </span>
-              ))}
+            <div className="relative mt-4 text-center">
+              <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.4)" }}>with shades of</p>
+              <p className="text-[13px] font-medium mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>
+                {secondaries.join("  •  ")}
+              </p>
             </div>
           )}
 
