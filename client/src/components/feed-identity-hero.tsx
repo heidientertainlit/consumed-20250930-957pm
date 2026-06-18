@@ -187,27 +187,27 @@ export function FeedIdentityHero() {
                   ))}
                 </span>
               </h1>
-
-              {/* Secondary archetype pills */}
-              {secondaries.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {secondaries.map((s) => (
-                    <span
-                      key={s}
-                      className="text-[11px] font-medium px-3 py-1 rounded-full"
-                      style={{
-                        color: "rgba(255,255,255,0.55)",
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                      }}
-                    >
-                      + {s}
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
+
+          {/* Secondary archetype pills — compact, side by side above the stats */}
+          {secondaries.length > 0 && (
+            <div className="relative flex flex-wrap gap-2 mt-4">
+              {secondaries.map((s) => (
+                <span
+                  key={s}
+                  className="text-[10px] font-medium px-2.5 py-0.5 rounded-full"
+                  style={{
+                    color: "rgba(255,255,255,0.55)",
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                >
+                  + {s}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Divider */}
           <div className="relative my-4 h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
