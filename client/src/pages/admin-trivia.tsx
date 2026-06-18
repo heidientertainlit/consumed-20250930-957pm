@@ -1112,6 +1112,7 @@ export default function AdminTriviaPage() {
                         editMediaResults={editMediaResults}
                         editMediaSearching={editMediaSearching}
                         setEditLinkedMedia={setEditLinkedMedia}
+                        setEditMediaResults={setEditMediaResults}
                         setEditMediaQuery={(q: string) => { setEditMediaQuery(q); triggerEditMediaSearch(q); }}
                         dupInfo={duplicateMap.get(draft.id)}
                       />
@@ -1288,7 +1289,7 @@ function DraftCard({
   rejectFeedback, expandedNotes,
   onEdit, onSaveEdit, onCancelEdit, onApprove, onStartReject, onConfirmReject, onCancelReject, onDelete, onToggleNotes,
   setEditTitle, setEditOptions, setEditCorrectAnswer, setEditCategory, setEditShowTag, setEditMediaTitle, setEditPointsReward, setRejectFeedback,
-  editLinkedMedia, editMediaQuery, editMediaResults, editMediaSearching, setEditLinkedMedia, setEditMediaQuery,
+  editLinkedMedia, editMediaQuery, editMediaResults, editMediaSearching, setEditLinkedMedia, setEditMediaQuery, setEditMediaResults,
 }: any) {
   return (
     <div className={`bg-gray-900 border rounded-xl p-4 ${dupInfo ? "border-orange-600/50" : "border-gray-800"}`}>
@@ -1404,7 +1405,7 @@ function DraftCard({
                       <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-600" />
                       <Input
                         value={editMediaQuery}
-                        onChange={e => { setEditMediaQuery(e.target.value); triggerEditMediaSearch(e.target.value); }}
+                        onChange={e => setEditMediaQuery(e.target.value)}
                         placeholder="Search media to link…"
                         className="pl-7 bg-gray-800 border-gray-700 text-white text-xs h-8"
                       />

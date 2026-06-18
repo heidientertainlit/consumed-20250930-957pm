@@ -3234,7 +3234,7 @@ export default function PoolDetailPage() {
           return (
             <div className="space-y-4">
 
-              {/* ── Two-button composer ── */}
+              {/* ── Conversation composer ── */}
               <div className="flex gap-2">
                 <button
                   onClick={() => setIsConvComposerOpen(true)}
@@ -3243,14 +3243,6 @@ export default function PoolDetailPage() {
                 >
                   <MessageSquare size={14} />
                   Start a conversation
-                </button>
-                <button
-                  onClick={() => setIsComposerOpen(true)}
-                  className="hidden flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full text-white text-sm font-semibold transition-opacity hover:opacity-90 active:opacity-80"
-                  style={{ background: 'linear-gradient(135deg, #f472b6, #a855f7)', border: 'none' }}
-                >
-                  <Star size={14} />
-                  Drop a take
                 </button>
               </div>
 
