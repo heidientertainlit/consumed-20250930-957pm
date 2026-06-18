@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { supabase, SUPABASE_URL } from "@/lib/supabase";
 import {
   ArrowLeft, Trash2, ToggleLeft, ToggleRight, Dna,
   CalendarDays, Loader2, Sparkles, Rss, Star, FileText, Clock, CheckCircle,
@@ -208,7 +208,7 @@ export default function AdminDnaMomentsPage() {
     setIsGenerating(true);
     setLastGenerated([]);
     try {
-      const res = await fetch(`${supabaseUrl}/functions/v1/generate-dna-moments`, {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-dna-moments`, {
         method: "POST",
         headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ count: genCount, display_type: genDisplayType }),
