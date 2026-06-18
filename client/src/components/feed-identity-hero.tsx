@@ -117,21 +117,21 @@ export function FeedIdentityHero() {
       <div className="pt-3">
         {/* ── Identity card ── */}
         <div
-          className="relative overflow-hidden rounded-3xl p-5"
+          className="relative overflow-hidden rounded-3xl p-6"
           style={{
             background: "linear-gradient(155deg, rgba(48,36,82,0.65) 0%, rgba(28,22,48,0.55) 100%)",
             border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "0 10px 40px rgba(124,58,237,0.18)",
+            boxShadow: "0 10px 40px rgba(124,58,237,0.12)",
           }}
         >
           {/* soft glow accents */}
           <div
             className="absolute -top-16 -right-12 w-48 h-48 rounded-full pointer-events-none"
-            style={{ background: "radial-gradient(circle, rgba(168,85,247,0.28), transparent 70%)" }}
+            style={{ background: "radial-gradient(circle, rgba(168,85,247,0.16), transparent 70%)" }}
           />
           <div
             className="absolute -bottom-20 -left-10 w-44 h-44 rounded-full pointer-events-none"
-            style={{ background: "radial-gradient(circle, rgba(217,70,239,0.14), transparent 70%)" }}
+            style={{ background: "radial-gradient(circle, rgba(217,70,239,0.09), transparent 70%)" }}
           />
 
           {/* Header row */}
@@ -172,7 +172,7 @@ export function FeedIdentityHero() {
           <div className="relative flex items-center gap-4">
             <IdentityFace />
             <div className="flex-1 min-w-0">
-              <h1 className="font-extrabold tracking-tight leading-[1.02]">
+              <h1 className="font-bold tracking-tight leading-[1.08]">
                 {prefix && (
                   <span className="block text-[22px]" style={{ color: "rgba(255,255,255,0.9)" }}>
                     {prefix}
@@ -210,7 +210,7 @@ export function FeedIdentityHero() {
           )}
 
           {/* Divider */}
-          <div className="relative my-4 h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
+          <div className="relative my-5 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
 
           {/* Stats row */}
           <div className="relative flex items-center justify-between">
