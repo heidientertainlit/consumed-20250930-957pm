@@ -710,13 +710,15 @@ function TodaysPlayGame({
           prediction: selected,
           points_earned: points,
         })
-        .then(({ error }) => {
+        .then(async ({ error }) => {
           // Only credit points when it's a new answer (not a duplicate)
           if (!error && points > 0) {
-            supabase.rpc('increment_trivia_points', {
-              uid: session.user.id,
-              pts: points,
-            }).catch(() => {});
+            try {
+              await supabase.rpc('increment_trivia_points', {
+                uid: session.user.id,
+                pts: points,
+              });
+            } catch {}
           }
           // Bust the carousel cache so answered pools are filtered on next load
           queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
