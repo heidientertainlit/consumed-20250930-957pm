@@ -2,3 +2,4 @@
 - [core_archetype setup](core-archetype-setup.md) — core_archetype col in dna_profiles must be non-null for identity copy; regenerate via generate-dna-profile-v2 with a live user JWT (manual SQL is a stopgap only).
 - [DNA Compare card scoring](dna-compare-scoring.md) — dna_comparisons.match_score is authoritative; Jaccard genre overlap is fallback only. Never rank by Jaccard alone.
 - [Supabase builder has no .catch](supabase-builder-catch.md) — supabase query/rpc builders define .then() but NOT .catch()/.finally(); `.rpc().catch()` throws AND the query never runs. Use `await` for side-effects.
+- [TanStack Query v5 refetchInterval](tanstack-refetchinterval-v5.md) — the callback receives the Query object, not data; read `query.state.data`, else polling silently never fires.

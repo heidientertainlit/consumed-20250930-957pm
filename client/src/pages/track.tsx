@@ -221,9 +221,9 @@ export default function Track() {
     staleTime: 5 * 60 * 1000, // Refetch after 5 minutes to check for updates
     gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
     retry: false,
-    refetchInterval: (data) => {
-      // Poll every 5 seconds while generating, stop when recommendations appear
-      return data?.isGenerating ? 5000 : false;
+    refetchInterval: (query) => {
+      // Poll every 10 seconds while generating, stop when recommendations appear
+      return query.state.data?.isGenerating ? 10000 : false;
     },
   });
 
