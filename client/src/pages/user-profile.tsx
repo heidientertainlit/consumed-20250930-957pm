@@ -84,7 +84,7 @@ function ExpandableProfileText({ text, dark = false }: { text: string; dark?: bo
   return (
     <div>
       <p
-        className={`${dark ? 'text-xs leading-relaxed text-center' : 'text-gray-400 text-xs leading-relaxed'} ${expanded ? '' : 'line-clamp-2'}`}
+        className={`${dark ? 'text-xs leading-relaxed' : 'text-gray-400 text-xs leading-relaxed'} ${expanded ? '' : 'line-clamp-2'}`}
         style={dark ? { color: 'rgba(255,255,255,0.6)' } : undefined}
       >
         {text}
@@ -94,7 +94,7 @@ function ExpandableProfileText({ text, dark = false }: { text: string; dark?: bo
           onClick={() => setExpanded((v) => !v)}
           className={
             dark
-              ? 'mt-2 mx-auto flex items-center gap-1 text-[11px] font-semibold transition-colors'
+              ? 'mt-2 flex items-center gap-1 text-[11px] font-semibold transition-colors'
               : 'mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-purple-500 hover:text-purple-600 transition-colors'
           }
           style={dark ? { color: 'rgba(196,181,253,0.9)' } : undefined}
@@ -3080,7 +3080,7 @@ export default function UserProfile() {
               const fmtArch = (k: string) => k.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
               const names = (dnaProfile.secondary_archetypes as string[]).slice(0, 2).map(fmtArch);
               return (
-                <div className="relative mt-4 text-center">
+                <div className="relative mt-4">
                   <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>with shades of</p>
                   <p className="text-[13px] font-medium mt-1" style={{ color: 'rgba(255,255,255,0.7)' }}>
                     {names.join('  •  ')}
