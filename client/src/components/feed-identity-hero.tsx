@@ -222,7 +222,7 @@ export function FeedIdentityHero() {
 }
 
 // Neon DNA face avatar used in the identity card.
-function IdentityFace() {
+export function IdentityFace() {
   return (
     <div className="relative flex-shrink-0" style={{ width: 88, height: 88 }}>
       <div

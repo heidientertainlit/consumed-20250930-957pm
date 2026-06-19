@@ -52,6 +52,7 @@ import { QuickAddModal } from "@/components/quick-add-modal";
 import { ShareImageSheet } from "@/components/share-image-sheet";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
+import { IdentityFace } from "@/components/feed-identity-hero";
 import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
 import { ReportSheet } from "@/components/report-sheet";
@@ -2944,61 +2945,33 @@ export default function UserProfile() {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="min-h-screen bg-white pb-20">
         <Navigation onTrackConsumption={handleTrackConsumption} />
 
-        {/* ── Hero — same dark gradient as the nav bar ── */}
-        <div style={{ background: 'linear-gradient(180deg, #0d0221 0%, #1a0535 60%, #2d1060 100%)' }}>
-          <div className="max-w-4xl mx-auto px-4 pt-5 pb-3">
+        {/* ── Hero — dark DNA card ── */}
+        <div style={{ background: 'linear-gradient(180deg, #0d0221 0%, #1a0535 100%)' }}>
+          <div className="max-w-4xl mx-auto px-4 pt-4 pb-5">
+            <div
+              className="relative overflow-hidden rounded-3xl p-6"
+              style={{
+                background: 'linear-gradient(155deg, #2c2150 0%, #181030 100%)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                boxShadow: '0 10px 40px rgba(124,58,237,0.18)',
+              }}
+            >
+              {/* soft glow accents */}
+              <div className="absolute -top-16 -right-12 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.16), transparent 70%)' }} />
+              <div className="absolute -bottom-20 -left-10 w-44 h-44 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(217,70,239,0.09), transparent 70%)' }} />
 
-            {/* Avatar + Identity row */}
-            <div className="flex items-start gap-4 mb-4">
-
-              {/* Avatar circle with gradient ring */}
-              <div className="relative flex-shrink-0">
-                <div className="w-20 h-20 rounded-full p-[2.5px]" style={{ background: 'linear-gradient(135deg, #a855f7, #6366f1, #ec4899)' }}>
-                  <div className="w-full h-full rounded-full flex items-center justify-center" style={{ background: '#1a0535' }}>
-                    {userProfileData?.avatar_url ? (
-                      <img src={userProfileData.avatar_url} alt="avatar" className="w-full h-full rounded-full object-cover" />
-                    ) : (
-                      <span className="text-2xl font-bold text-white/80">
-                        {(userProfileData?.first_name?.[0] || userProfileData?.user_name?.[0] || user?.user_metadata?.first_name?.[0] || '?').toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {/* DNA level badge */}
-                {dnaLevel > 0 && (
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2" style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', borderColor: '#1a0535' }}>
-                    {dnaLevel}
-                  </div>
-                )}
-              </div>
-
-              {/* Name / handle / DNA info */}
-              <div className="flex-1 min-w-0">
-                {/* Name + share icon */}
-                <div className="flex items-center gap-2 mb-0.5">
-                  <h1 className="text-xl font-bold text-white leading-tight">
-                    {userProfileData?.first_name && userProfileData?.last_name 
-                      ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
-                      : userProfileData?.first_name || userProfileData?.user_name || user?.user_metadata?.user_name || user?.user_metadata?.first_name || 'User'}
-                  </h1>
-                  <button
-                    onClick={async () => {
-                      const profileUserId = isOwnProfile ? user?.id : viewingUserId;
-                      await copyLink({ kind: 'profile', id: profileUserId });
-                      toast({ title: "Link Copied!", description: "Share this profile with your friends" });
-                    }}
-                    className="text-white/50 hover:text-white/90 transition-colors flex-shrink-0"
-                    data-testid="button-share-profile-inline"
-                  >
-                    <CornerUpRight size={15} />
-                  </button>
-                </div>
-
-                {/* Handle + edit profile */}
-                <div className="flex items-center gap-2 mb-2">
+            {/* Name + handle + share */}
+            <div className="relative flex items-start justify-between mb-5">
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold text-white leading-tight truncate">
+                  {userProfileData?.first_name && userProfileData?.last_name
+                    ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
+                    : userProfileData?.first_name || userProfileData?.user_name || user?.user_metadata?.user_name || user?.user_metadata?.first_name || 'User'}
+                </h1>
+                <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
                     @{userProfileData?.user_name || user?.user_metadata?.user_name || (user?.email?.split('@')[0]) || 'user'}
                   </span>
@@ -3024,127 +2997,105 @@ export default function UserProfile() {
                     </button>
                   )}
                 </div>
+              </div>
+              <button
+                onClick={async () => {
+                  const profileUserId = isOwnProfile ? user?.id : viewingUserId;
+                  await copyLink({ kind: 'profile', id: profileUserId });
+                  toast({ title: "Link Copied!", description: "Share this profile with your friends" });
+                }}
+                className="text-white/50 hover:text-white/90 transition-colors flex-shrink-0 mt-1"
+                data-testid="button-share-profile-inline"
+              >
+                <CornerUpRight size={16} />
+              </button>
+            </div>
 
-                {/* DNA archetype + tagline */}
-                {dnaProfile && (() => {
+            {/* Face + archetype */}
+            <div className="relative flex items-center gap-4">
+              <div className="relative flex-shrink-0">
+                <IdentityFace />
+                {dnaLevel > 0 && (
+                  <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2" style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', borderColor: '#181030' }}>
+                    {dnaLevel}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                {dnaProfile ? (() => {
                   const archetypeInfo = dnaProfile.core_archetype ? DNA_ARCHETYPE_MAP[dnaProfile.core_archetype] : null;
                   const archetypeName = archetypeInfo?.displayName || null;
-                  const archetypeTagline = archetypeInfo?.oneLiner || null;
-                  const flavorPills: string[] = Array.isArray(dnaProfile.flavor_notes) && dnaProfile.flavor_notes.length > 0
-                    ? dnaProfile.flavor_notes.slice(0, 3)
-                    : Array.isArray(dnaProfile.favorite_genres) ? dnaProfile.favorite_genres.slice(0, 3) : [];
-                  const secondaries: string[] = Array.isArray(dnaProfile.secondary_archetypes)
-                    ? (dnaProfile.secondary_archetypes as string[]).slice(0, 2)
-                    : [];
-                  const fmtArch = (k: string) => k.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
-                  const secondaryPhrase = secondaries.length === 1
-                    ? `with a touch of ${fmtArch(secondaries[0])}`
-                    : secondaries.length > 1
-                      ? `with shades of ${secondaries.map(fmtArch).join(' & ')}`
-                      : null;
-
                   if (!archetypeName) return (
-                    <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                      DNA profile needs refresh
-                    </p>
+                    <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>DNA profile needs refresh</p>
                   );
-
+                  const words = archetypeName.trim().split(/\s+/);
+                  const hasPrefix = words[0]?.toLowerCase() === 'the' && words.length > 2;
+                  const prefix = hasPrefix ? words[0] : null;
+                  const mainWords = hasPrefix ? words.slice(1) : words;
                   return (
-                    <div>
-                      <p className="text-sm font-bold mb-0.5" style={{ background: 'linear-gradient(90deg, #c084fc, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                        {archetypeName}
-                      </p>
-                      {secondaryPhrase && (
-                        <p className="text-[11px] font-medium italic mb-1" style={{ color: 'rgba(196,181,253,0.7)' }}>
-                          {secondaryPhrase}
-                        </p>
+                    <h2 className="font-bold tracking-tight leading-[1.08]">
+                      {prefix && (
+                        <span className="block text-[22px]" style={{ color: 'rgba(255,255,255,0.9)' }}>{prefix}</span>
                       )}
-                      {archetypeTagline && (
-                        <p className="text-[11px] italic mb-1.5 leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                          "{archetypeTagline}"
-                        </p>
-                      )}
-                      {flavorPills.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {flavorPills.map((pill: string) => (
-                            <span
-                              key={pill}
-                              className="px-2 py-0.5 rounded-full text-[9px] font-medium"
-                              style={{ background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.35)', color: 'rgba(196,181,253,0.9)' }}
-                            >
-                              {pill}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                      <span className="block text-[30px] text-white">{mainWords.join(' ')}</span>
+                    </h2>
                   );
-                })()}
+                })() : (
+                  <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Building your DNA…</p>
+                )}
               </div>
             </div>
 
-            {/* Stats — 4-column horizontal grid */}
-            <div className="grid grid-cols-4 gap-2 mb-4">
+            {/* Secondary archetypes — subtle "with shades of" subtitle */}
+            {dnaProfile && Array.isArray(dnaProfile.secondary_archetypes) && dnaProfile.secondary_archetypes.length > 0 && (() => {
+              const fmtArch = (k: string) => k.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+              const names = (dnaProfile.secondary_archetypes as string[]).slice(0, 2).map(fmtArch);
+              return (
+                <div className="relative mt-4 text-center">
+                  <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>with shades of</p>
+                  <p className="text-[13px] font-medium mt-1" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                    {names.join('  •  ')}
+                  </p>
+                </div>
+              );
+            })()}
+
+            {/* Divider */}
+            <div className="relative my-5 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
+
+            {/* Stats — 3-column row */}
+            <div className="relative grid grid-cols-3 gap-2 mb-5">
               {/* Points */}
               <button
                 onClick={() => setLocation('/points')}
-                className="flex flex-col items-start p-2.5 rounded-xl transition-all hover:bg-white/10"
-                style={{ background: 'rgba(255,255,255,0.06)' }}
+                className="flex flex-col items-center text-center transition-all active:scale-95"
                 data-testid="points-breakdown-link"
               >
-                <Trophy size={13} className="text-amber-400 mb-1" />
-                <span className="text-sm font-bold text-white leading-none">
+                <Trophy size={15} className="text-amber-400 mb-1" />
+                <span className="text-base font-bold text-white leading-none">
                   {isLoadingPoints ? '…' : (userPoints?.all_time || 0).toLocaleString()}
                 </span>
-                <span className="text-[9px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  points
-                </span>
+                <span className="text-[10px] leading-tight mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>pts</span>
               </button>
 
-              {/* Rank */}
+              {/* Leaderboard */}
               <Link href="/leaderboard">
-                <div
-                  className="flex flex-col items-start p-2.5 rounded-xl cursor-pointer transition-all hover:bg-white/10 h-full"
-                  style={{ background: 'rgba(255,255,255,0.06)' }}
-                >
-                  <Medal size={13} className="text-purple-300 mb-1" />
-                  <span className="text-sm font-bold text-white leading-none">
+                <div className="flex flex-col items-center text-center cursor-pointer transition-all active:scale-95">
+                  <Medal size={15} className="text-purple-300 mb-1" />
+                  <span className="text-base font-bold text-white leading-none">
                     {userRank ? `#${userRank.global}` : '—'}
                   </span>
-                  <span className="text-[9px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    leaderboard
-                  </span>
+                  <span className="text-[10px] leading-tight mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>leaderboard</span>
                 </div>
               </Link>
 
-              {/* Items logged */}
-              <div
-                className="flex flex-col items-start p-2.5 rounded-xl"
-                style={{ background: 'rgba(255,255,255,0.06)' }}
-              >
-                <TrendingUp size={13} className="text-blue-300 mb-1" />
-                <span className="text-sm font-bold text-white leading-none">
+              {/* Tracked */}
+              <div className="flex flex-col items-center text-center">
+                <BarChart3 size={15} className="text-violet-300 mb-1" />
+                <span className="text-base font-bold text-white leading-none">
                   {!isOwnProfile && friendshipStatus !== 'friends' ? '—' : totalItemsLogged}
                 </span>
-                <span className="text-[9px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  media logged
-                </span>
-              </div>
-
-              {/* Mostly into — from DNA profile genres */}
-              <div
-                className="flex flex-col items-start p-2.5 rounded-xl"
-                style={{ background: 'rgba(255,255,255,0.06)' }}
-              >
-                <BarChart3 size={13} className="text-green-300 mb-1" />
-                <span className="text-[10px] font-bold text-white leading-tight">
-                  {dnaProfile?.favorite_genres?.length > 0
-                    ? dnaProfile.favorite_genres.slice(0, 2).join(' • ')
-                    : mostlyIntoTypes?.length > 0 ? mostlyIntoTypes.join(' • ') : '—'}
-                </span>
-                <span className="text-[9px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  mostly into
-                </span>
+                <span className="text-[10px] leading-tight mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>tracked</span>
               </div>
             </div>
 
@@ -3208,8 +3159,9 @@ export default function UserProfile() {
               );
             })()}
 
+            </div>{/* closes dark DNA card */}
           </div>{/* closes max-w-4xl inner */}
-        </div>{/* closes gradient wrapper */}
+        </div>{/* closes dark hero wrapper */}
 
         <div className="max-w-4xl mx-auto px-4">
           {/* Bio */}
@@ -3309,7 +3261,7 @@ export default function UserProfile() {
 
         {/* Section Navigation Pills - Tab-like behavior (only for own profile) */}
         {isOwnProfile && (
-        <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 -mx-0">
+        <div className="bg-white border-b border-gray-100 px-4 py-3 -mx-0">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
             <button
               onClick={() => setActiveSection('dna')}
@@ -3350,7 +3302,7 @@ export default function UserProfile() {
 
         {/* Section Navigation for Friend Profiles */}
         {!isOwnProfile && friendshipStatus === 'friends' && (
-          <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 -mx-0">
+          <div className="bg-white border-b border-gray-100 px-4 py-3 -mx-0">
             <div className="flex gap-2 overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => setActiveSection('overview')}
