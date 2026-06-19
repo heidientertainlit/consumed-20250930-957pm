@@ -1431,39 +1431,69 @@ export default function MediaDetail() {
           {(socialActivity.length > 0 || showReviews) && (
           <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
 
-            {/* Activity glimpse - compact preview rows */}
+            {/* Trending Takes - real takes sorted by engagement */}
             {!showReviews && socialActivity.length > 0 && (
-              <div className="mt-2 space-y-1">
-                {socialActivity.slice(0, 3).map((post: any) => {
-                  const rawName = post.users?.display_name || post.users?.user_name || '';
-                  // Strip email-style prefixes (e.g. "thinkhp+riner1428" → "riner1428")
-                  const name = rawName.includes('+') ? (rawName.split('+').pop() || rawName) : (rawName || 'Someone');
-                  return (
-                    <div key={post.id} className="flex items-center gap-1.5 text-sm text-gray-500 py-0.5">
-                      <span className="font-medium text-gray-700">{name}</span>
-                      {post.rating ? (
-                        <span className="flex items-center gap-0.5">
-                          rated
-                          {Array.from({ length: Math.round(Number(post.rating)) }, (_, i) => (
-                            <Star key={i} size={10} className="fill-yellow-400 text-yellow-400" />
-                          ))}
-                        </span>
-                      ) : post.prediction_pool_id ? (
-                        <span>made a prediction</span>
-                      ) : (
-                        <span>shared a reaction</span>
-                      )}
-                    </div>
-                  );
-                })}
-                {socialActivity.length > 0 && (
+              <div className="mt-1">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold text-gray-900 flex items-center gap-1.5">
+                    <Flame className="w-4 h-4 text-orange-500" />
+                    Trending Takes
+                  </h3>
                   <button
                     onClick={() => setShowReviews(true)}
-                    className="text-xs text-purple-600 font-medium mt-1"
+                    className="text-xs text-purple-600 font-medium"
+                    data-testid="button-see-all-takes"
                   >
-                    See all {socialActivity.length > 3 ? `${socialActivity.length} ` : ''}reactions
+                    See all{socialActivity.length > 3 ? ` ${socialActivity.length}` : ''}
                   </button>
-                )}
+                </div>
+                <div className="space-y-2">
+                  {[...socialActivity]
+                    .sort((a: any, b: any) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0))
+                    .slice(0, 3)
+                    .map((post: any) => {
+                      const rawName = post.users?.display_name || post.users?.user_name || '';
+                      // Strip email-style prefixes (e.g. "thinkhp+riner1428" → "riner1428")
+                      const name = rawName.includes('+') ? (rawName.split('+').pop() || rawName) : (rawName || 'Someone');
+                      const initial = (name[0] || '?').toUpperCase();
+                      return (
+                        <button
+                          key={post.id}
+                          onClick={() => setShowReviews(true)}
+                          className="w-full text-left bg-gray-50 rounded-xl p-3 hover:bg-gray-100 transition-colors"
+                          data-testid={`take-card-${post.id}`}
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                                <span className="text-purple-600 text-[11px] font-semibold">{initial}</span>
+                              </div>
+                              <span className="text-sm font-medium text-gray-900 truncate">{name}</span>
+                            </div>
+                            {post.rating && (
+                              <div className="flex items-center gap-0.5 flex-shrink-0">
+                                <Star className="w-3.5 h-3.5 text-yellow-500 fill-current" />
+                                <span className="text-sm font-semibold text-gray-900">{post.rating}</span>
+                              </div>
+                            )}
+                          </div>
+                          {post.content && post.content.trim() ? (
+                            <p className="text-sm text-gray-700 leading-snug line-clamp-2">{post.content}</p>
+                          ) : post.prediction_pool_id ? (
+                            <p className="text-sm text-gray-500 italic">Made a prediction</p>
+                          ) : post.rating ? (
+                            <p className="text-sm text-gray-500 italic">Shared a rating</p>
+                          ) : (
+                            <p className="text-sm text-gray-500 italic">Shared a reaction</p>
+                          )}
+                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                            <span className="flex items-center gap-1"><Heart size={12} /> {post.likes_count || 0}</span>
+                            <span className="flex items-center gap-1"><MessageCircle size={12} /> {post.comments_count || 0}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                </div>
               </div>
             )}
 
