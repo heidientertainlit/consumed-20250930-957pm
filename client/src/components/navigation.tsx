@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation } from "wouter";
-import { Brain, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Gamepad2, MessageSquarePlus, Home, Star, DoorOpen, Bookmark, Trophy } from "lucide-react";
+import { Brain, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Gamepad2, MessageSquarePlus, Home, Star, DoorOpen, Bookmark, Trophy, Zap } from "lucide-react";
 import { FeedbackDialog } from "./feedback-dialog";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
@@ -764,26 +764,34 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
       </div>
 
       {createPortal(
-        <nav className="fixed bottom-0 left-0 right-0 z-[9999]" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden' }}>
-          <div className="flex justify-around items-center px-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 8px), 8px)', paddingTop: '8px' }}>
-            <Link href="/activity" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/activity" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-activity">
-              <div className="h-[22px] flex items-center justify-center"><Activity className="text-white" size={22} /></div>
-              <span className="text-white text-[10px] mt-0.5">Now</span>
-            </Link>
-            <Link href="/play" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location.startsWith("/play") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-play">
-              <div className="h-[22px] flex items-center justify-center"><Brain size={22} className="text-white" strokeWidth={1.4} /></div>
-              <span className="text-white text-[10px] mt-0.5">Play</span>
-            </Link>
-            <Link href="/rooms" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/rooms" || location.startsWith("/room/") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-rooms">
-              <div className="h-[22px] flex items-center justify-center"><DoorOpen className="text-white" size={22} /></div>
-              <span className="text-white text-[10px] mt-0.5">Rooms</span>
-            </Link>
-            <Link href="/profile" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/profile" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-me" aria-label="Profile">
-              <div className="h-[22px] flex items-center justify-center">
-                <Dna className="text-white" size={22} strokeWidth={1.4} />
-              </div>
-              <span className="text-white text-[10px] mt-0.5">My DNA</span>
-            </Link>
+        <nav className="fixed bottom-0 left-0 right-0 z-[9999] bg-white border-t border-gray-100" style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 -1px 8px rgba(0,0,0,0.04)' }}>
+          <div className="flex justify-around items-start px-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 8px), 8px)', paddingTop: '8px' }}>
+            {(() => {
+              const items = [
+                { href: "/activity", label: "Now", icon: Zap, fillWhenActive: true, testid: "nav-activity", active: location === "/activity" },
+                { href: "/play", label: "Play", icon: Brain, fillWhenActive: false, testid: "nav-play", active: location.startsWith("/play") },
+                { href: "/rooms", label: "Rooms", icon: MessageCircle, fillWhenActive: false, testid: "nav-rooms", active: location === "/rooms" || location.startsWith("/room/") },
+                { href: "/profile", label: "DNA", icon: Dna, fillWhenActive: false, testid: "nav-me", active: location === "/profile" },
+              ];
+              return items.map((item) => {
+                const Icon = item.icon;
+                const active = item.active;
+                return (
+                  <Link key={item.href} href={item.href} className="flex flex-col items-center justify-start flex-1 pt-0.5" data-testid={item.testid} aria-label={item.label}>
+                    <div className={`flex items-center justify-center transition-all ${active ? "w-10 h-10 rounded-full bg-purple-600 shadow-sm" : "h-10"}`}>
+                      <Icon
+                        size={active ? 20 : 24}
+                        className={active ? "text-white" : "text-gray-600"}
+                        strokeWidth={active ? 2.4 : 1.6}
+                        {...(active && item.fillWhenActive ? { fill: "currentColor" } : {})}
+                      />
+                    </div>
+                    <span className={`text-[11px] mt-1 ${active ? "text-purple-600 font-semibold" : "text-gray-500"}`}>{item.label}</span>
+                    {active && <div className="h-0.5 w-5 bg-purple-600 rounded-full mt-1" />}
+                  </Link>
+                );
+              });
+            })()}
           </div>
         </nav>,
         document.body
