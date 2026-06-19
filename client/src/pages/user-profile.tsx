@@ -78,6 +78,29 @@ const DNA_ARCHETYPE_MAP: Record<string, { displayName: string; oneLiner: string 
   nostalgia_keeper:   { displayName: 'The Nostalgia Keeper',    oneLiner: "Your past has a watchlist." },
 };
 
+function ExpandableProfileText({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const sentences = text.match(/[^.!?]+[.!?]+(\s|$)/g) ?? [text];
+  const tease = sentences.slice(0, 2).join('').trim();
+  const hasMore = tease.length < text.trim().length;
+  return (
+    <div>
+      <p className="text-gray-400 text-xs leading-relaxed">
+        {expanded || !hasMore ? text : tease}
+      </p>
+      {hasMore && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-purple-500 hover:text-purple-600 transition-colors"
+        >
+          {expanded ? 'Show less' : 'Read more'}
+          {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function UserProfile() {
   const { user, session, loading, signOut } = useAuth();
   const { toast } = useToast();
@@ -3532,7 +3555,7 @@ export default function UserProfile() {
 
                     {/* Profile text */}
                     {dnaProfile.profile_text && (
-                      <p className="text-gray-400 text-xs leading-relaxed">{dnaProfile.profile_text}</p>
+                      <ExpandableProfileText text={dnaProfile.profile_text} />
                     )}
                   </div>
                   <div className="px-4 pb-4">
