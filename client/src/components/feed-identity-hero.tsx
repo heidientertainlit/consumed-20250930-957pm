@@ -245,11 +245,8 @@ export function IdentityFace() {
         {/* peaceful closed eyes */}
         <path d="M28 48 q7 -8 14 0" stroke="#c084fc" strokeWidth="4" fill="none" strokeLinecap="round" />
         <path d="M58 48 q7 -8 14 0" stroke="#c084fc" strokeWidth="4" fill="none" strokeLinecap="round" />
-        {/* smile as a DNA double-helix */}
-        <path d="M34 63 Q42 60 50 71 Q58 74 66 63" stroke="#c084fc" strokeWidth="3" fill="none" strokeLinecap="round" />
-        <path d="M34 63 Q42 74 50 71 Q58 60 66 63" stroke="#c084fc" strokeWidth="3" fill="none" strokeLinecap="round" />
-        <path d="M42 64 L42 70" stroke="#c084fc" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-        <path d="M58 64 L58 70" stroke="#c084fc" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+        {/* smile */}
+        <path d="M34 62 q16 14 32 0" stroke="#c084fc" strokeWidth="4" fill="none" strokeLinecap="round" />
       </svg>
     </div>
   );
