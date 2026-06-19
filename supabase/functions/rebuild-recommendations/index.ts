@@ -219,7 +219,7 @@ serve(async (req) => {
       postsCount: userProfile.socialActivity.length,
       listsCount: userProfile.customListThemes.length,
       followedCreatorsCount: userProfile.followedCreators.length,
-      interestSignalsCount: userProfile.interestSignals.length,
+      behavioralSignalsCount: userProfile.behavioralSignals.length,
     });
 
     // Build AI prompt
@@ -268,7 +268,13 @@ ${Object.keys(userProfile.engagementProfile).length > 0
   : 'No engagement data yet'}
 
 TASK:
-Generate 8-10 personalized entertainment recommendations based on ALL the data above. The Behavioral DNA Signals are the strongest indicators of taste — they are derived from actual behavior (what they rated highly, which trivia categories they answer, what they track). Weight signals with higher strength scores more heavily. If they follow specific directors, musicians, or authors, PRIORITIZE recommending new/recent work from those creators or similar artists.
+Generate 14-16 personalized entertainment recommendations based on ALL the data above. The Behavioral DNA Signals are the strongest indicators of taste — they are derived from actual behavior (what they rated highly, which trivia categories they answer, what they track). Weight signals with higher strength scores more heavily. If they follow specific directors, musicians, or authors, PRIORITIZE recommending new/recent work from those creators or similar artists.
+
+CROSS-MEDIA IS THE GOAL — this is the most important instruction:
+- Do NOT just recommend more of the same media type. Deliberately BRIDGE across media types based on the user's taste in their most-consumed type.
+- If their strongest signals are movies/TV, recommend BOOKS, PODCASTS, and MUSIC that match those same themes, tones, or worlds (e.g. a true-crime fan who watches docs → a true-crime podcast; a sci-fi show lover → a sci-fi novel; someone obsessed with a director → a podcast that breaks down their films).
+- Aim for a MIX: at least 4-5 recommendations should be a DIFFERENT media type than the user's dominant type. Books, podcasts, and music are first-class — not afterthoughts.
+- In each "reason", explicitly name the show/movie/etc. that the cross-media pick is bridging FROM (e.g. "Because you loved Severance…").
 
 For each recommendation, provide:
 - title: exact title (must be real, existing media)
@@ -347,128 +353,132 @@ Return ONLY valid JSON:
 
       console.log("AI recommendations generated:", aiRecommendations.recommendations?.length || 0);
 
-      // Fetch real poster images from actual APIs
-      console.log("Fetching real poster images from APIs...");
-      const tmdbApiKey = Deno.env.get('TMDB_API_KEY');
-      
-      const enrichedRecs = await Promise.all(
-        (aiRecommendations.recommendations || []).map(async (rec: any) => {
-          try {
-            const type = rec.type.toLowerCase();
-            
-            // For movies/TV shows - use TMDB
-            if (type.includes('movie') || type.includes('tv') || type.includes('show')) {
-              if (!tmdbApiKey) {
-                console.warn('TMDB API key not configured, skipping image fetch');
-                return { ...rec, external_source: 'tmdb', external_id: '', image_url: '' };
-              }
+      // Resolve every AI pick against the REAL media-search resolver.
+      // This serves two purposes:
+      //   1. Guarantees a real poster + external_id/source (no AI-invented image URLs).
+      //   2. Acts as a hallucination filter — anything the AI made up won't resolve and gets dropped.
+      console.log("Resolving recommendations via media-search...");
+      const baseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
-              const mediaType = type.includes('tv') || type.includes('show') ? 'tv' : 'movie';
-              const searchUrl = `https://api.themoviedb.org/3/search/${mediaType}?api_key=${tmdbApiKey}&query=${encodeURIComponent(rec.title)}&year=${rec.year || ''}`;
-              
-              const tmdbRes = await fetch(searchUrl);
-              if (tmdbRes.ok) {
-                const tmdbData = await tmdbRes.json();
-                if (tmdbData.results && tmdbData.results.length > 0) {
-                  const result = tmdbData.results[0];
-                  return {
-                    ...rec,
-                    media_type: mediaType === 'tv' ? 'tv' : 'movie',
-                    image_url: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : '',
-                    external_id: result.id.toString(),
-                    external_source: 'tmdb'
-                  };
-                }
-              }
-            }
-            
-            // For books - use Google Books
-            else if (type.includes('book')) {
-              const searchUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(rec.title)}`;
-              const booksRes = await fetch(searchUrl);
-              if (booksRes.ok) {
-                const booksData = await booksRes.json();
-                if (booksData.items && booksData.items.length > 0) {
-                  const book = booksData.items[0];
-                  const imageUrl = book.volumeInfo?.imageLinks?.thumbnail || 
-                                 book.volumeInfo?.imageLinks?.smallThumbnail || '';
-                  const isbn = book.volumeInfo?.industryIdentifiers?.[0]?.identifier || book.id;
-                  
-                  return {
-                    ...rec,
-                    media_type: 'book',
-                    image_url: imageUrl.replace('http:', 'https:'),
-                    external_id: isbn,
-                    external_source: 'openlibrary'
-                  };
-                }
-              }
-            }
-            
-            // For music - use Spotify API
-            else if (type.includes('music') || type.includes('album') || type.includes('song')) {
-              const spotifyClientId = Deno.env.get('SPOTIFY_CLIENT_ID');
-              const spotifyClientSecret = Deno.env.get('SPOTIFY_CLIENT_SECRET');
-              
-              if (spotifyClientId && spotifyClientSecret) {
-                try {
-                  // Get Spotify access token
-                  const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/x-www-form-urlencoded',
-                      'Authorization': 'Basic ' + btoa(`${spotifyClientId}:${spotifyClientSecret}`)
-                    },
-                    body: 'grant_type=client_credentials'
-                  });
-                  
-                  if (tokenRes.ok) {
-                    const tokenData = await tokenRes.json();
-                    const searchQuery = rec.creator ? `${rec.title} ${rec.creator}` : rec.title;
-                    
-                    const spotifyRes = await fetch(
-                      `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=album&limit=1`,
-                      {
-                        headers: {
-                          'Authorization': `Bearer ${tokenData.access_token}`
-                        }
-                      }
-                    );
-                    
-                    if (spotifyRes.ok) {
-                      const spotifyData = await spotifyRes.json();
-                      const album = spotifyData.albums?.items?.[0];
-                      if (album) {
-                        return {
-                          ...rec,
-                          media_type: 'music',
-                          image_url: album.images?.[0]?.url || '',
-                          external_id: album.id,
-                          external_source: 'spotify'
-                        };
-                      }
-                    }
-                  }
-                } catch (spotifyError) {
-                  console.error('Spotify API error:', spotifyError);
-                }
-              }
-              return { ...rec, external_source: 'spotify', external_id: '', image_url: '' };
-            }
-            
-            // For unsupported types, return without image
-            console.warn(`No API configured for type: ${type}`);
-            return { ...rec, external_source: '', external_id: '', image_url: '' };
-            
-          } catch (error) {
-            console.error(`Error fetching metadata for ${rec.title}:`, error);
-            return { ...rec, external_source: '', external_id: '', image_url: '' };
+      // Map the AI's display type to the media-search `type` param.
+      const normalizeType = (t: string): string => {
+        const x = (t || '').toLowerCase();
+        if (x.includes('tv') || x.includes('show') || x.includes('series')) return 'tv';
+        if (x.includes('movie') || x.includes('film')) return 'movie';
+        if (x.includes('book') || x.includes('novel')) return 'book';
+        if (x.includes('podcast')) return 'podcast';
+        if (x.includes('music') || x.includes('album') || x.includes('song')) return 'music';
+        if (x.includes('game')) return 'game';
+        return 'movie';
+      };
+
+      const resolveRec = async (rec: any) => {
+        try {
+          const mediaType = normalizeType(rec.type);
+          // Disambiguate music/podcasts/books with the creator when available.
+          const query = rec.creator && (mediaType === 'music' || mediaType === 'podcast' || mediaType === 'book')
+            ? `${rec.title} ${rec.creator}`
+            : rec.title;
+
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 12000);
+          let searchRes: Response;
+          try {
+            searchRes = await fetch(`${baseUrl}/functions/v1/media-search`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${serviceKey}`,
+                'apikey': serviceKey,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ query, type: mediaType }),
+              signal: ctrl.signal
+            });
+          } finally {
+            clearTimeout(timer);
           }
-        })
-      );
+
+          if (!searchRes.ok) {
+            console.warn(`media-search ${searchRes.status} for "${rec.title}" (${mediaType})`);
+            return null;
+          }
+
+          const searchData = await searchRes.json();
+          const results: any[] = searchData.results || [];
+          // Only accept a match that has BOTH a real poster and a real external id.
+          const match = results.find((r) => (r.poster_url || r.image) && r.external_id);
+          if (!match) {
+            console.log(`No resolvable match for "${rec.title}" (${mediaType}) — dropping`);
+            return null;
+          }
+
+          const poster = match.poster_url || match.image;
+          const resolvedType = (match.type || mediaType) as string;
+          return {
+            title: match.title || rec.title,
+            type: resolvedType,
+            media_type: resolvedType,
+            creator: match.creator || rec.creator || '',
+            reason: rec.reason || '',
+            confidence: rec.confidence ?? null,
+            year: match.year || rec.year || null,
+            description: match.description || rec.reason || '',
+            image_url: poster,
+            external_id: String(match.external_id),
+            external_source: match.external_source || ''
+          };
+        } catch (error) {
+          console.error(`Error resolving "${rec.title}":`, error);
+          return null;
+        }
+      };
+
+      // Bounded concurrency — resolve in chunks so we don't fan out ~15 internal
+      // calls (each hitting several external APIs) all at once.
+      const allAiRecs = (aiRecommendations.recommendations || []) as any[];
+      const resolved: any[] = [];
+      const CHUNK_SIZE = 5;
+      for (let i = 0; i < allAiRecs.length; i += CHUNK_SIZE) {
+        const batch = allAiRecs.slice(i, i + CHUNK_SIZE);
+        const settled = await Promise.all(batch.map(resolveRec));
+        resolved.push(...settled);
+      }
+      const enrichedRecs = resolved.filter((r) => !!r && !!r.image_url && !!r.external_id);
+
+      console.log(`Resolved ${enrichedRecs.length} of ${allAiRecs.length} recommendations with real posters`);
+
+      // Minimum-quality guard: never clobber a good cache with too few/zero results.
+      // If media-search was flaky and we resolved fewer than the floor while a
+      // previous set exists, keep the old recommendations and retry sooner.
+      const MIN_RECS = 4;
+      const existingRecs = (existingCache?.recommendations?.recommendations || []) as any[];
+      if (enrichedRecs.length < MIN_RECS && existingRecs.length > enrichedRecs.length) {
+        console.warn(`Only ${enrichedRecs.length} recs resolved (floor ${MIN_RECS}); preserving previous ${existingRecs.length}`);
+        const guardNow = new Date();
+        await supabase
+          .from('user_recommendations')
+          .upsert({
+            user_id: userId,
+            status: 'ready',
+            recommendations: existingCache?.recommendations || { recommendations: [] },
+            stale_after: new Date(guardNow.getTime() + 60 * 60 * 1000).toISOString(), // retry in ~1h
+            expires_at: new Date(guardNow.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+          }, {
+            onConflict: 'user_id'
+          });
+
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Too few resolvable recommendations this run; kept previous set',
+          count: existingRecs.length
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
 
       const recommendations = { recommendations: enrichedRecs };
-      console.log("Enriched with real poster images:", enrichedRecs.filter((r: any) => r.image_url).length);
 
       // Save to cache
       const now = new Date();

@@ -3,3 +3,4 @@
 - [DNA Compare card scoring](dna-compare-scoring.md) — dna_comparisons.match_score is authoritative; Jaccard genre overlap is fallback only. Never rank by Jaccard alone.
 - [Supabase builder has no .catch](supabase-builder-catch.md) — supabase query/rpc builders define .then() but NOT .catch()/.finally(); `.rpc().catch()` throws AND the query never runs. Use `await` for side-effects.
 - [TanStack Query v5 refetchInterval](tanstack-refetchinterval-v5.md) — the callback receives the Query object, not data; read `query.state.data`, else polling silently never fires.
+- [rebuild-recommendations cache safety](recommendations-rebuild.md) — AI recs resolved via media-search (hallucination filter); never overwrite user_recommendations with too-few recs or the carousel vanishes.
