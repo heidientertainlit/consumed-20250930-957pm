@@ -2952,7 +2952,7 @@ export default function UserProfile() {
         <div style={{ background: 'linear-gradient(180deg, #0d0221 0%, #1a0535 100%)' }}>
           <div className="max-w-4xl mx-auto px-4 pt-4 pb-5">
             <div
-              className="relative overflow-hidden rounded-3xl px-6 pt-6 pb-4"
+              className="relative overflow-hidden rounded-3xl px-6 pt-6 pb-2"
               style={{
                 background: 'linear-gradient(155deg, #2c2150 0%, #181030 100%)',
                 border: '1px solid rgba(255,255,255,0.08)',
