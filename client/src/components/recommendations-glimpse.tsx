@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import { useAuth } from '@/lib/auth';
-import { Star, Check, ChevronRight } from 'lucide-react';
+import { Star, Check, ChevronRight, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
 import { QuickAddListSheet } from '@/components/quick-add-list-sheet';
@@ -28,8 +28,61 @@ function RecommendationItemCard({
 }) {
   const [currentRating, setCurrentRating] = useState<number>(0);
   const [submittedRating, setSubmittedRating] = useState<number | null>(null);
+  const [imgSrc, setImgSrc] = useState<string | undefined>(item.imageUrl);
+  const [imgFailed, setImgFailed] = useState(false);
+  const attemptsRef = useRef(0);
+  const MAX_ATTEMPTS = 2;
   const { session } = useAuth();
   const { toast } = useToast();
+
+  const fetchFallbackPoster = async () => {
+    if (attemptsRef.current >= MAX_ATTEMPTS || !item.id) {
+      setImgFailed(true);
+      return;
+    }
+    attemptsRef.current += 1;
+    try {
+      const source = item.externalSource || 'tmdb';
+      const res = await fetch(
+        `${SUPABASE_URL}/functions/v1/get-media-details?source=${source}&external_id=${item.id}&media_type=${item.type || 'movie'}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session?.access_token || ''}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (res.ok) {
+        const d = await res.json();
+        const poster = d.artwork || d.coverUrl || d.poster_url || d.poster || d.image;
+        if (poster && poster !== imgSrc) {
+          setImgSrc(poster);
+          setImgFailed(false);
+          return;
+        }
+        // No poster available from source — don't keep retrying.
+        setImgFailed(true);
+        return;
+      }
+    } catch {
+      // transient failure — fall through to a bounded retry
+    }
+    if (attemptsRef.current < MAX_ATTEMPTS) {
+      setTimeout(fetchFallbackPoster, 800);
+    } else {
+      setImgFailed(true);
+    }
+  };
+
+  useEffect(() => {
+    attemptsRef.current = 0;
+    setImgSrc(item.imageUrl);
+    setImgFailed(false);
+    if (!item.imageUrl) {
+      fetchFallbackPoster();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.id, item.imageUrl]);
 
   const rateMutation = useMutation({
     mutationFn: async (rating: number) => {
@@ -81,21 +134,35 @@ function RecommendationItemCard({
 
   return (
     <div className="flex-shrink-0 w-28">
-      <Link href={`/media/${item.type || 'movie'}/${item.externalSource || 'tmdb'}/${item.id}`}>
-        <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-100 mb-1.5 cursor-pointer">
-          {item.imageUrl ? (
-            <img
-              src={item.imageUrl}
-              alt={item.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs bg-gradient-to-br from-purple-900 to-indigo-900">
-              🎬
-            </div>
-          )}
-        </div>
-      </Link>
+      <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-100 mb-1.5">
+        <Link href={`/media/${item.type || 'movie'}/${item.externalSource || 'tmdb'}/${item.id}`}>
+          <div className="w-full h-full cursor-pointer">
+            {imgSrc && !imgFailed ? (
+              <img
+                src={imgSrc}
+                alt={item.title}
+                onError={fetchFallbackPoster}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs bg-gradient-to-br from-purple-900 to-indigo-900">
+                🎬
+              </div>
+            )}
+          </div>
+        </Link>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onAddClick({ ...item, imageUrl: imgSrc });
+          }}
+          aria-label="Add to list"
+          className="absolute bottom-1.5 right-1.5 w-7 h-7 rounded-lg bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-purple-600 transition-colors"
+        >
+          <Plus size={16} strokeWidth={2.5} />
+        </button>
+      </div>
       <Link href={`/media/${item.type || 'movie'}/${item.externalSource || 'tmdb'}/${item.id}`}>
         <p className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight cursor-pointer h-8 hover:text-purple-600">
           {item.title}
@@ -133,15 +200,6 @@ function RecommendationItemCard({
           <Check size={12} className="text-green-400 ml-1" />
         )}
       </div>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onAddClick(item);
-        }}
-        className="mt-1.5 w-full bg-purple-600 text-white text-xs py-1.5 rounded-full hover:bg-purple-700 transition-colors font-medium"
-      >
-        + Add
-      </button>
     </div>
   );
 }
