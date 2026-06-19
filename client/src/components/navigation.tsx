@@ -787,7 +787,6 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                       />
                     </div>
                     <span className={`text-[10px] mt-0.5 ${active ? "text-purple-600 font-semibold" : "text-gray-500"}`}>{item.label}</span>
-                    {active && <div className="h-0.5 w-4 bg-purple-600 rounded-full mt-0.5" />}
                   </Link>
                 );
               });
