@@ -82,7 +82,7 @@ function RecommendationItemCard({
   return (
     <div className="flex-shrink-0 w-28">
       <Link href={`/media/${item.type || 'movie'}/${item.externalSource || 'tmdb'}/${item.id}`}>
-        <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-800 mb-1.5 cursor-pointer">
+        <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-100 mb-1.5 cursor-pointer">
           {item.imageUrl ? (
             <img
               src={item.imageUrl}
@@ -97,7 +97,7 @@ function RecommendationItemCard({
         </div>
       </Link>
       <Link href={`/media/${item.type || 'movie'}/${item.externalSource || 'tmdb'}/${item.id}`}>
-        <p className="text-xs font-medium text-white line-clamp-2 leading-tight cursor-pointer h-8 hover:text-purple-300">
+        <p className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight cursor-pointer h-8 hover:text-purple-600">
           {item.title}
         </p>
       </Link>
@@ -138,7 +138,7 @@ function RecommendationItemCard({
           e.stopPropagation();
           onAddClick(item);
         }}
-        className="mt-1.5 w-full bg-white text-purple-800 text-xs py-1.5 rounded-full hover:bg-purple-100 transition-colors font-medium"
+        className="mt-1.5 w-full bg-purple-600 text-white text-xs py-1.5 rounded-full hover:bg-purple-700 transition-colors font-medium"
       >
         + Add
       </button>
@@ -192,15 +192,15 @@ export function RecommendationsGlimpse() {
   return (
     <>
       <div 
-        className="bg-gradient-to-r from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-2xl border border-purple-900/50 p-4 shadow-lg mb-4"
+        className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm mb-4"
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className="text-lg">✨</span>
-            <h3 className="font-semibold text-white">Recommended For You</h3>
+            <h3 className="font-semibold text-gray-900">Recommended For You</h3>
           </div>
           <Link href="/discover">
-            <div className="flex items-center gap-1 text-purple-300 hover:text-white cursor-pointer transition-colors">
+            <div className="flex items-center gap-1 text-purple-600 hover:text-purple-700 cursor-pointer transition-colors">
               <span className="text-sm">See All</span>
               <ChevronRight className="w-4 h-4" />
             </div>
