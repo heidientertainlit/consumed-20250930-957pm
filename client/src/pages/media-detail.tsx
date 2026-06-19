@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp, ListPlus } from "lucide-react";
+import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp, ListPlus, Flame, Lightbulb, Users, Dna } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/navigation";
@@ -468,6 +468,26 @@ export default function MediaDetail() {
   const predictions = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.type === 'predict');
   const polls = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.type === 'vote');
   const conversations = socialActivity.filter((post: any) => !post.rating && !post.prediction_pool_id && post.content && post.content.trim());
+
+  // --- Hero stats (REAL data only; no fabricated numbers) ---
+  const takes = socialActivity.filter((post: any) => post.rating || (post.content && post.content.trim() && !post.prediction_pool_id));
+  const distinctFanIds = Array.from(new Set((socialActivity as any[]).map((p: any) => p.user_id).filter(Boolean)));
+  const fansCount = distinctFanIds.length;
+  const fanAvatars = (() => {
+    const seen = new Set<string>();
+    const list: { id: string; initial: string }[] = [];
+    for (const p of socialActivity as any[]) {
+      if (!p.user_id || seen.has(p.user_id)) continue;
+      seen.add(p.user_id);
+      const nm = p.users?.display_name || p.users?.user_name || '';
+      list.push({ id: p.user_id, initial: (nm[0] || '?').toUpperCase() });
+      if (list.length >= 5) break;
+    }
+    return list;
+  })();
+  // Theories feature has no backend yet — real count is 0 until built.
+  const theoriesCount = 0;
+  const formatCount = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : `${n}`);
 
   // Fetch similar media across different types using AI
   const { data: similarMedia = [], isLoading: isSimilarLoading } = useQuery({
@@ -1013,23 +1033,23 @@ export default function MediaDetail() {
 
       <div className="max-w-6xl mx-auto px-4 pt-2 pb-8">
         {/* Compact Hero Header */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
+        <div className="bg-gradient-to-b from-gray-900 to-gray-800 text-white rounded-2xl p-4 shadow-sm mb-4 ring-1 ring-white/5">
           {/* Back button inline with content */}
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setLocation('/', { replace: true })}
-            className="mb-3 -ml-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 h-8"
+            className="mb-3 -ml-2 text-gray-300 hover:text-white hover:bg-white/10 h-8"
             data-testid="button-back"
           >
-            <ArrowLeft size={18} className="text-gray-600" />
+            <ArrowLeft size={18} className="text-gray-300" />
             <span className="ml-1 text-sm">Back</span>
           </Button>
 
           {/* Side-by-side layout on all screen sizes */}
           <div className="flex gap-4">
             {/* Poster - smaller and fixed width */}
-            <div className="w-28 h-40 md:w-36 md:h-52 rounded-xl overflow-hidden shadow-md flex-shrink-0">
+            <div className="w-28 h-40 md:w-36 md:h-52 rounded-xl overflow-hidden shadow-lg flex-shrink-0 ring-1 ring-white/10">
               <img 
                 src={resolvedImageUrl} 
                 alt={mediaItem.title}
@@ -1040,73 +1060,89 @@ export default function MediaDetail() {
             {/* Info column */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
-                <h1 className="text-lg md:text-xl font-medium text-gray-900 leading-tight mb-1">{mediaData.title}</h1>
+                <h1 className="text-lg md:text-2xl font-semibold text-white leading-tight mb-1">{mediaData.title}</h1>
                 <button
                   onClick={handleShare}
-                  className="flex-shrink-0 p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
+                  className="flex-shrink-0 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
                   data-testid="button-share"
                 >
                   <Share size={18} />
                 </button>
               </div>
-              <p className="text-sm text-gray-600 mb-2 truncate">by {mediaData.creator}</p>
+              <p className="text-sm text-gray-400 mb-2 truncate">by {mediaData.creator}</p>
               
               {/* Compact metadata chips */}
-              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 mb-3">
+              <div className="flex flex-wrap items-center gap-2 text-xs mb-3">
                 {/* Consumed community avg */}
                 {avgRating && (
-                  <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-full">
-                    <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                    <span className="font-medium">{avgRating}</span>
-                    <span className="text-gray-500">Consumed</span>
+                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full">
+                    <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                    <span className="font-medium text-white">{avgRating}</span>
+                    <span className="text-gray-400">Consumed</span>
                   </div>
                 )}
                 {/* TMDB score */}
                 {mediaItem.tmdb_score && (
-                  <div className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-full">
-                    <span className="font-medium text-blue-700">{Number(mediaItem.tmdb_score).toFixed(1)}</span>
-                    <span className="text-blue-500">/10 TMDB</span>
+                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full">
+                    <span className="font-medium text-blue-300">{Number(mediaItem.tmdb_score).toFixed(1)}</span>
+                    <span className="text-blue-300/70">/10 TMDB</span>
                   </div>
                 )}
                 {/* Google Books rating */}
                 {mediaItem.google_books_rating && (
-                  <div className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full">
-                    <Star className="w-3 h-3 text-green-600 fill-current" />
-                    <span className="font-medium text-green-700">{Number(mediaItem.google_books_rating).toFixed(1)}/5</span>
-                    <span className="text-green-600">Google Books</span>
+                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full">
+                    <Star className="w-3 h-3 text-green-400 fill-current" />
+                    <span className="font-medium text-green-300">{Number(mediaItem.google_books_rating).toFixed(1)}/5</span>
+                    <span className="text-green-300/70">Google Books</span>
                   </div>
                 )}
                 {/* User's own rating */}
                 {(userRating?.rating || userReview?.rating) && (
-                  <div className="flex items-center gap-1 bg-purple-50 px-2 py-1 rounded-full">
-                    <Star className="w-3 h-3 text-purple-600 fill-current" />
-                    <span className="font-semibold text-purple-700">{userRating?.rating || userReview?.rating}</span>
-                    <span className="text-purple-500">you</span>
+                  <div className="flex items-center gap-1 bg-purple-500/20 px-2 py-1 rounded-full">
+                    <Star className="w-3 h-3 text-purple-300 fill-current" />
+                    <span className="font-semibold text-purple-200">{userRating?.rating || userReview?.rating}</span>
+                    <span className="text-purple-300/80">you</span>
                   </div>
                 )}
                 {mediaItem.type === 'movie' && mediaItem.releaseDate && (
-                  <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
+                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full text-gray-300">
                     <Calendar className="w-3 h-3" />
                     <span>{new Date(mediaItem.releaseDate).getFullYear()}</span>
                   </div>
                 )}
                 {(mediaItem.type === 'tv' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1 && (
-                  <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
+                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full text-gray-300">
                     <Calendar className="w-3 h-3" />
                     <span>{mediaItem.totalEpisodes} eps</span>
                   </div>
                 )}
                 {mediaItem.averageLength && (
-                  <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
+                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full text-gray-300">
                     <Clock className="w-3 h-3" />
                     <span>~{mediaItem.averageLength}</span>
                   </div>
                 )}
               </div>
+
+              {/* Fans here — real engaged users */}
+              {fansCount > 0 && (
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex -space-x-2">
+                    {fanAvatars.map((f) => (
+                      <div key={f.id} className="w-6 h-6 rounded-full bg-purple-500/30 ring-2 ring-gray-900 flex items-center justify-center">
+                        <span className="text-[10px] font-semibold text-purple-100">{f.initial}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <span className="text-xs text-gray-400">
+                    {formatCount(fansCount)} {fansCount === 1 ? 'fan' : 'fans'} here
+                  </span>
+                </div>
+              )}
               {(() => {
                 const mediaAlignment = getMediaAlignment(archetypeKey, mediaItem?.type || params?.type);
                 return mediaAlignment ? (
-                  <p className="text-xs text-purple-500 italic mt-2">🧬 {mediaAlignment}</p>
+                  <p className="text-xs text-purple-300 italic mt-1 flex items-center gap-1"><Dna className="w-3 h-3" /> {mediaAlignment}</p>
                 ) : null;
               })()}
             </div>
@@ -1115,7 +1151,7 @@ export default function MediaDetail() {
           {/* Find On Platforms - above description */}
           {mediaItem.platforms && mediaItem.platforms.length > 0 && (
             <div className="mt-3">
-              <h3 className="text-xs font-medium text-gray-500 mb-2">
+              <h3 className="text-xs font-medium text-gray-400 mb-2">
                 {mediaItem.type === 'movie' || mediaItem.type === 'tv'
                   ? 'Watch On'
                   : mediaItem.type === 'Podcast' || mediaItem.type === 'Music'
@@ -1132,20 +1168,20 @@ export default function MediaDetail() {
                       href={platform.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-xs"
+                      className="flex items-center gap-1.5 px-2 py-1 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-xs"
                     >
                       {platform.logo && (
                         <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
                       )}
-                      <span className="font-medium text-gray-700">{platform.name}</span>
+                      <span className="font-medium text-gray-200">{platform.name}</span>
                       <ExternalLink className="w-2.5 h-2.5 text-gray-400" />
                     </a>
                   ) : (
-                    <div key={index} className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-lg text-xs">
+                    <div key={index} className="flex items-center gap-1.5 px-2 py-1 bg-white/10 rounded-lg text-xs">
                       {platform.logo && (
                         <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
                       )}
-                      <span className="font-medium text-gray-700">{platform.name}</span>
+                      <span className="font-medium text-gray-200">{platform.name}</span>
                     </div>
                   )
                 ))}
@@ -1156,13 +1192,13 @@ export default function MediaDetail() {
           {/* Description snippet */}
           {mediaItem.description && (
             <div className="mt-3">
-              <p className={`text-sm text-gray-600 leading-relaxed ${!showAbout ? 'line-clamp-2' : ''}`}>
+              <p className={`text-sm text-gray-300 leading-relaxed ${!showAbout ? 'line-clamp-2' : ''}`}>
                 {mediaItem.description}
               </p>
               {mediaItem.description.length > 120 && (
                 <button
                   onClick={() => setShowAbout(!showAbout)}
-                  className="text-xs text-purple-600 font-medium mt-0.5"
+                  className="text-xs text-purple-300 font-medium mt-0.5"
                 >
                   {showAbout ? 'Less' : 'More'}
                 </button>
@@ -1217,7 +1253,7 @@ export default function MediaDetail() {
                       });
                       setIsQuickAddOpen(true);
                     }}
-                    className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
+                    className="border border-white/30 bg-transparent text-white text-xs h-9 rounded-full px-5 hover:bg-white/10"
                   >
                     <Star size={14} className="mr-1" />
                     Rate
@@ -1252,7 +1288,7 @@ export default function MediaDetail() {
                       });
                       setIsQuickAddOpen(true);
                     }}
-                    className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
+                    className="border border-white/30 bg-transparent text-white text-xs h-9 rounded-full px-5 hover:bg-white/10"
                     data-testid="button-add-rating"
                   >
                     <Star size={14} className="mr-1" />
@@ -1263,11 +1299,34 @@ export default function MediaDetail() {
             </div>
           )}
 
-
+          {/* Stat row — real counts only (Theories pending backend) */}
+          <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-white/10">
+            <button onClick={() => setShowReviews(true)} className="flex flex-col items-center gap-1 py-1" data-testid="stat-hot-takes">
+              <Flame className="w-5 h-5 text-orange-400" />
+              <span className="text-base font-bold text-white">{formatCount(takes.length)}</span>
+              <span className="text-[11px] text-gray-400">Hot Takes</span>
+            </button>
+            <div className="flex flex-col items-center gap-1 py-1" data-testid="stat-theories">
+              <Lightbulb className="w-5 h-5 text-purple-300" />
+              <span className="text-base font-bold text-white">{formatCount(theoriesCount)}</span>
+              <span className="text-[11px] text-gray-400">Theories</span>
+            </div>
+            <div className="flex flex-col items-center gap-1 py-1" data-testid="stat-predictions">
+              <Target className="w-5 h-5 text-pink-400" />
+              <span className="text-base font-bold text-white">{formatCount(predictions.length)}</span>
+              <span className="text-[11px] text-gray-400">Predictions</span>
+            </div>
+            <div className="flex flex-col items-center gap-1 py-1" data-testid="stat-fans">
+              <Users className="w-5 h-5 text-blue-300" />
+              <span className="text-base font-bold text-white">{formatCount(fansCount)}</span>
+              <span className="text-[11px] text-gray-400">Fans Here</span>
+            </div>
+          </div>
+        </div>
 
           {/* Your Reaction — inline composer */}
           {session && (
-          <div ref={composeSectionRef} className="mt-4 pt-4 border-t border-gray-100">
+          <div ref={composeSectionRef} className="bg-white rounded-2xl p-4 shadow-sm mb-4">
             <p className="text-base font-semibold text-gray-900 mb-3">Your Reaction</p>
 
             {/* Tab switcher */}
@@ -1369,7 +1428,8 @@ export default function MediaDetail() {
           )}
 
           {/* Activity Section */}
-          <div className="mt-3 pt-3 border-t border-gray-100">
+          {(socialActivity.length > 0 || showReviews) && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
 
             {/* Activity glimpse - compact preview rows */}
             {!showReviews && socialActivity.length > 0 && (
@@ -1597,8 +1657,7 @@ export default function MediaDetail() {
               </>
             )}
           </div>
-
-        </div>
+          )}
 
         {/* Fan Room Banner */}
         {linkedRoom && (
