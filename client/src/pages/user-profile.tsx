@@ -78,20 +78,28 @@ const DNA_ARCHETYPE_MAP: Record<string, { displayName: string; oneLiner: string 
   nostalgia_keeper:   { displayName: 'The Nostalgia Keeper',    oneLiner: "Your past has a watchlist." },
 };
 
-function ExpandableProfileText({ text }: { text: string }) {
+function ExpandableProfileText({ text, dark = false }: { text: string; dark?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const sentences = text.match(/[^.!?]+[.!?]+(\s|$)/g) ?? [text];
   const tease = sentences.slice(0, 2).join('').trim();
   const hasMore = tease.length < text.trim().length;
   return (
     <div>
-      <p className="text-gray-400 text-xs leading-relaxed">
+      <p
+        className={dark ? 'text-xs leading-relaxed text-center' : 'text-gray-400 text-xs leading-relaxed'}
+        style={dark ? { color: 'rgba(255,255,255,0.6)' } : undefined}
+      >
         {expanded || !hasMore ? text : tease}
       </p>
       {hasMore && (
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-purple-500 hover:text-purple-600 transition-colors"
+          className={
+            dark
+              ? 'mt-2 mx-auto flex items-center gap-1 text-[11px] font-semibold transition-colors'
+              : 'mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-purple-500 hover:text-purple-600 transition-colors'
+          }
+          style={dark ? { color: 'rgba(196,181,253,0.9)' } : undefined}
         >
           {expanded ? 'Show less' : 'Read more'}
           {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -3083,6 +3091,13 @@ export default function UserProfile() {
               );
             })()}
 
+            {/* DNA profile description — tease + dropdown */}
+            {dnaProfile?.profile_text && (
+              <div className="relative mt-4">
+                <ExpandableProfileText text={dnaProfile.profile_text} dark />
+              </div>
+            )}
+
             {/* Divider */}
             <div className="relative my-5 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
 
@@ -3555,7 +3570,7 @@ export default function UserProfile() {
 
                     {/* Profile text */}
                     {dnaProfile.profile_text && (
-                      <ExpandableProfileText text={dnaProfile.profile_text} />
+                      <p className="text-gray-400 text-xs leading-relaxed">{dnaProfile.profile_text}</p>
                     )}
                   </div>
                   <div className="px-4 pb-4">
