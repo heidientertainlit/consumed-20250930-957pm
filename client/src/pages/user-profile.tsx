@@ -3485,9 +3485,10 @@ export default function UserProfile() {
                         <span className="text-[10px] font-semibold text-purple-500 uppercase tracking-widest">Entertainment DNA</span>
                       </div>
                       {dnaProfile.current_era && (
-                        <span className="flex items-center gap-1 text-[10px] font-semibold text-purple-700 bg-purple-50 border border-purple-100 rounded-full px-2.5 py-1">
+                        <span className="flex items-center gap-1.5 text-[10px] font-semibold text-purple-700 bg-purple-50 border border-purple-100 rounded-full px-2.5 py-1">
                           <Sparkles size={9} className="text-purple-400 flex-shrink-0" />
-                          {dnaProfile.current_era.replace(/_era$/, '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                          <span className="font-medium text-purple-400 uppercase tracking-wide text-[8px]">Current era</span>
+                          <span className="text-purple-700">{dnaProfile.current_era.replace(/_era$/, '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
                         </span>
                       )}
                     </div>
