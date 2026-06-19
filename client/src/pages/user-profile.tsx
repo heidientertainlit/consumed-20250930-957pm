@@ -3041,7 +3041,7 @@ export default function UserProfile() {
             </div>
 
             {/* Face + archetype */}
-            <div className="relative flex items-center gap-4">
+            <div className="relative flex flex-row-reverse items-center gap-4">
               <div className="relative flex-shrink-0">
                 <IdentityFace />
                 {dnaLevel > 0 && (
