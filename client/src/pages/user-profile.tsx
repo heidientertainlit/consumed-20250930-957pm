@@ -3509,79 +3509,219 @@ export default function UserProfile() {
           <div className="px-4 py-4 space-y-4">
             {dnaProfileStatus === 'has_profile' && dnaProfile ? (
               <>
-                {/* Archetype Profile Card */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <div className="p-4">
-                    {/* Header: DNA label + era pill side by side */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center">
-                          <Dna size={13} className="text-purple-600" />
-                        </div>
-                        <span className="text-[10px] font-semibold text-purple-500 uppercase tracking-widest">Entertainment DNA</span>
-                      </div>
-                      {dnaProfile.current_era && (
-                        <span className="flex items-center gap-1.5 text-[10px] font-semibold text-purple-700 bg-purple-50 border border-purple-100 rounded-full px-2.5 py-1">
-                          <Sparkles size={9} className="text-purple-400 flex-shrink-0" />
-                          <span className="font-medium text-purple-400 uppercase tracking-wide text-[8px]">Current era</span>
-                          <span className="text-purple-700">{dnaProfile.current_era.replace(/_era$/, '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
-                        </span>
+                {/* Mostly Into + Recently shaping your DNA */}
+                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Mostly Into */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Mostly Into</h3>
+                      {dnaGenreSignals.length > 0 ? (() => {
+                        const total = dnaGenreSignals.reduce((s: number, g: any) => s + g.source_count, 0) || 1;
+                        const top = dnaGenreSignals.slice(0, 3);
+                        const colors = ['#ec4899', '#7c3aed', '#2563eb'];
+                        return (
+                          <div className="space-y-3">
+                            {top.map((g: any, i: number) => {
+                              const pct = Math.round((g.source_count / total) * 100);
+                              const label = g.signal_value.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+                              return (
+                                <div key={i}>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-medium text-gray-700 truncate">{label}</span>
+                                    <span className="text-xs font-semibold text-gray-500 ml-2 flex-shrink-0">{pct}%</span>
+                                  </div>
+                                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: colors[i % colors.length] }} />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })() : (
+                        <p className="text-xs text-gray-400">Not enough data yet</p>
                       )}
                     </div>
-
-                    {/* Blended archetype headline */}
-                    <div className="mb-2">
-                      <h2 className="text-xl font-black text-gray-900 leading-tight">
-                        {DNA_ARCHETYPE_MAP[dnaProfile.core_archetype as keyof typeof DNA_ARCHETYPE_MAP]?.label || dnaProfile.label}
-                      </h2>
-                      {dnaProfile.secondary_archetypes?.length > 0 && (() => {
-                        const secondaries = dnaProfile.secondary_archetypes as string[];
-                        const fmtArch = (k: string) => k.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
-                        const phrase = secondaries.length === 1
-                          ? `with a touch of ${fmtArch(secondaries[0])}`
-                          : `with shades of ${secondaries.map(fmtArch).join(' & ')}`;
-                        return <p className="text-sm text-purple-400 font-medium italic mt-0.5">{phrase}</p>;
+                    {/* Recently shaping your DNA */}
+                    <div>
+                      <h3 className="text-[13px] font-semibold text-purple-600 mb-3">Recently shaping your DNA</h3>
+                      {(() => {
+                        const items = currentlyList?.items?.slice(0, 3) || [];
+                        if (items.length === 0) return <p className="text-xs text-gray-400">Nothing in progress</p>;
+                        return (
+                          <div className="space-y-2.5">
+                            {items.map((item: any) => (
+                              <div
+                                key={item.id}
+                                className="flex items-center gap-2.5 cursor-pointer"
+                                onClick={() => {
+                                  const id = (item.external_id || '').toString().replace(/^\//, '');
+                                  if (id) setLocation(`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${id}`);
+                                }}
+                              >
+                                <div className="w-9 h-12 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                                  {item.image_url
+                                    ? <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                                    : <div className="w-full h-full flex items-center justify-center"><Film size={14} className="text-gray-400" /></div>}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-medium text-gray-900 truncate">{item.title}</p>
+                                  <p className="text-[10px] text-gray-400">{item.media_type === 'tv' ? 'TV Show' : (item.media_type ? item.media_type.charAt(0).toUpperCase() + item.media_type.slice(1) : '')}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
                       })()}
                     </div>
-
-                    {/* Tagline */}
-                    {dnaProfile.tagline && (
-                      <p className="text-gray-500 text-sm italic mb-3 leading-snug">"{dnaProfile.tagline}"</p>
-                    )}
-
-                    {/* Flavor traits */}
-                    {dnaProfile.flavor_notes?.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mb-3">
-                        {dnaProfile.flavor_notes.map((note: string, i: number) => (
-                          <span key={i} className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">{note}</span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Evolution callout — shows DNA shift over time */}
-                    {dnaProfile.evolution_note && (
-                      <div className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-3">
-                        <Sparkles size={11} className="text-amber-400 flex-shrink-0 mt-0.5" />
-                        <p className="text-[11px] text-amber-700 leading-snug italic">{dnaProfile.evolution_note}</p>
-                      </div>
-                    )}
-
-                    {/* Profile text */}
-                    {dnaProfile.profile_text && (
-                      <p className="text-gray-400 text-xs leading-relaxed">{dnaProfile.profile_text}</p>
-                    )}
-                  </div>
-                  <div className="px-4 pb-4">
-                    <button
-                      onClick={handleRegenerateDna}
-                      disabled={isRegeneratingDna}
-                      className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-gray-500 border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-60"
-                    >
-                      {isRegeneratingDna ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} className="text-purple-400" />}
-                      {isRegeneratingDna ? 'Updating DNA…' : 'Regenerate DNA'}
-                    </button>
                   </div>
                 </div>
+
+                {/* Stats */}
+                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { val: totalItemsLogged, label: 'Titles Tracked', color: 'text-purple-600' },
+                      { val: userStats?.moviesWatched ?? 0, label: 'Movies', color: 'text-pink-600' },
+                      { val: userStats?.tvShowsWatched ?? 0, label: 'TV Shows', color: 'text-blue-600' },
+                      { val: userStats?.booksRead ?? 0, label: 'Books', color: 'text-emerald-600' },
+                    ].map(({ val, label, color }) => (
+                      <div key={label} className="text-center">
+                        <p className={`text-2xl font-black ${color}`}>{val}</p>
+                        <p className="text-gray-400 text-[10px] mt-0.5 leading-tight">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Your DNA Journey + Current Era */}
+                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Journey */}
+                    <div>
+                      <h3 className="text-xs font-bold text-gray-900 mb-3">Your DNA Journey</h3>
+                      {dnaSnapshots.length > 0 ? (() => {
+                        const ARCHETYPE_NAMES: Record<string, string> = {
+                          theory_crafter: 'The Theory Crafter', comfort_rewatcher: 'The Comfort Rewatcher',
+                          prestige_detective: 'The Prestige Detective', emotional_binger: 'The Emotional Binger',
+                          first_episode_judge: 'The First Episode Judge', hidden_gem_hunter: 'The Hidden Gem Hunter',
+                          dark_season_devotee: 'The Dark Season Devotee', story_sharer: 'The Story Sharer',
+                          slow_burn_devotee: 'The Slow Burn Devotee', genre_loyalist: 'The Genre Loyalist',
+                          era_hopper: 'The Era Hopper', taste_signaler: 'The Taste Signaler',
+                          chaos_watcher: 'The Chaos Watcher', lore_diver: 'The Lore Diver',
+                          completionist: 'The Completionist', mood_matcher: 'The Mood Matcher',
+                          culture_tracker: 'The Culture Tracker', nostalgia_keeper: 'The Nostalgia Keeper',
+                          action_seeker: 'The Action Seeker', social_watcher: 'The Social Watcher',
+                        };
+                        const fmtDate = (iso: string) => {
+                          const d = new Date(iso);
+                          const now = new Date();
+                          const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
+                          if (diffDays === 0) return 'Today';
+                          if (diffDays === 1) return 'Yesterday';
+                          if (diffDays < 7) return `${diffDays}d ago`;
+                          return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        };
+                        const shown = dnaSnapshots.slice(0, 4);
+                        return (
+                          <div className="relative">
+                            <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gray-100" />
+                            <div className="space-y-3">
+                              {shown.map((snap: any, i: number) => (
+                                <div key={snap.created_at} className="flex items-start gap-3 relative">
+                                  <div className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 mt-0.5 ${i === 0 ? 'bg-purple-500 border-purple-500' : 'bg-white border-gray-300'}`} />
+                                  <div className="flex-1 min-w-0">
+                                    <span className={`block text-[10px] font-medium ${i === 0 ? 'text-purple-500' : 'text-gray-400'}`}>
+                                      {i === 0 ? 'Now' : fmtDate(snap.created_at)}
+                                    </span>
+                                    <span className={`block text-xs font-semibold truncate ${i === 0 ? 'text-purple-700' : 'text-gray-700'}`}>
+                                      {(ARCHETYPE_NAMES[snap.core_archetype] ?? snap.core_archetype ?? '').replace(/^The\s+/, '')}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })() : (
+                        <p className="text-xs text-gray-400">No journey yet</p>
+                      )}
+                    </div>
+                    {/* Current Era */}
+                    <div>
+                      <h3 className="text-xs font-bold text-gray-900 mb-3">Current Era</h3>
+                      {dnaProfile.current_era && (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-purple-700 bg-purple-50 border border-purple-100 rounded-full px-3 py-1.5">
+                          <Sparkles size={11} className="text-purple-400 flex-shrink-0" />
+                          {dnaProfile.current_era.replace(/_era$/, '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                        </span>
+                      )}
+                      {(() => {
+                        const items = currentlyList?.items?.slice(0, 3) || [];
+                        if (items.length === 0) return null;
+                        return (
+                          <div className="mt-3">
+                            <p className="text-[10px] text-gray-400 mb-1.5">Influenced by</p>
+                            <div className="space-y-1.5">
+                              {items.map((item: any) => (
+                                <div
+                                  key={item.id}
+                                  className="flex items-center justify-between gap-2 cursor-pointer"
+                                  onClick={() => {
+                                    const id = (item.external_id || '').toString().replace(/^\//, '');
+                                    if (id) setLocation(`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${id}`);
+                                  }}
+                                >
+                                  <span className="text-xs text-gray-700 truncate">{item.title}</span>
+                                  <ChevronRight size={13} className="text-gray-300 flex-shrink-0" />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => setLocation('/entertainment-dna')}
+                    className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
+                  >
+                    <HelpCircle size={18} className="text-purple-500" />
+                    <span className="text-[10px] font-semibold text-gray-700">Retake Quiz</span>
+                  </button>
+                  <button
+                    onClick={handleDnaShareSummary}
+                    className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
+                  >
+                    <Share2 size={18} className="text-purple-500" />
+                    <span className="text-[10px] font-semibold text-gray-700">Share DNA</span>
+                  </button>
+                  <button
+                    onClick={() => setDnaActiveTab(dnaActiveTab === 'compare' ? 'dna' : 'compare')}
+                    className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl border shadow-sm transition-colors ${dnaActiveTab === 'compare' ? 'bg-purple-600 border-purple-600' : 'bg-white border-gray-100 hover:bg-gray-50'}`}
+                  >
+                    <Users size={18} className={dnaActiveTab === 'compare' ? 'text-white' : 'text-purple-500'} />
+                    <span className={`text-[10px] font-semibold ${dnaActiveTab === 'compare' ? 'text-white' : 'text-gray-700'}`}>Compare DNA</span>
+                  </button>
+                </div>
+
+                {/* Because you're ... (recommendations) */}
+                {(() => {
+                  const lbl = (dnaProfile.label || '').replace(/^The\s+/i, '');
+                  const article = /^[aeiou]/i.test(lbl) ? 'an' : 'a';
+                  return (
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-2 px-1">
+                        {lbl ? `Because you're ${article} ${lbl}` : 'Recommended for you'}
+                      </h3>
+                      <RecommendationsGlimpse />
+                    </div>
+                  );
+                })()}
 
                 {/* DNA Evolution Progress */}
                 {(() => {
@@ -3630,177 +3770,36 @@ export default function UserProfile() {
                   );
                 })()}
 
-                {/* Quick Actions */}
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => setLocation('/entertainment-dna')}
-                    className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
-                  >
-                    <HelpCircle size={18} className="text-purple-500" />
-                    <span className="text-[10px] font-semibold text-gray-700">Retake Quiz</span>
-                  </button>
-                  <button
-                    onClick={handleDnaShareSummary}
-                    className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
-                  >
-                    <Share2 size={18} className="text-purple-500" />
-                    <span className="text-[10px] font-semibold text-gray-700">Share DNA</span>
-                  </button>
-                  <button
-                    onClick={() => setDnaActiveTab(dnaActiveTab === 'compare' ? 'dna' : 'compare')}
-                    className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl border shadow-sm transition-colors ${dnaActiveTab === 'compare' ? 'bg-purple-600 border-purple-600' : 'bg-white border-gray-100 hover:bg-gray-50'}`}
-                  >
-                    <Users size={18} className={dnaActiveTab === 'compare' ? 'text-white' : 'text-purple-500'} />
-                    <span className={`text-[10px] font-semibold ${dnaActiveTab === 'compare' ? 'text-white' : 'text-gray-700'}`}>Compare DNA</span>
-                  </button>
-                </div>
-
-                {/* DNA Journey */}
-                {dnaSnapshots.length > 0 && (() => {
-                  const ARCHETYPE_NAMES: Record<string, string> = {
-                    theory_crafter: 'The Theory Crafter', comfort_rewatcher: 'The Comfort Rewatcher',
-                    prestige_detective: 'The Prestige Detective', emotional_binger: 'The Emotional Binger',
-                    first_episode_judge: 'The First Episode Judge', hidden_gem_hunter: 'The Hidden Gem Hunter',
-                    dark_season_devotee: 'The Dark Season Devotee', story_sharer: 'The Story Sharer',
-                    slow_burn_devotee: 'The Slow Burn Devotee', genre_loyalist: 'The Genre Loyalist',
-                    era_hopper: 'The Era Hopper', taste_signaler: 'The Taste Signaler',
-                    chaos_watcher: 'The Chaos Watcher', lore_diver: 'The Lore Diver',
-                    completionist: 'The Completionist', mood_matcher: 'The Mood Matcher',
-                    culture_tracker: 'The Culture Tracker', nostalgia_keeper: 'The Nostalgia Keeper',
-                    action_seeker: 'The Action Seeker', social_watcher: 'The Social Watcher',
-                  };
-                  const fmtEra = (era: string) => era
-                    ? era.replace(/_era$/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-                    : '';
-                  const fmtDate = (iso: string) => {
-                    const d = new Date(iso);
-                    const now = new Date();
-                    const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
-                    if (diffDays === 0) return 'Today';
-                    if (diffDays === 1) return 'Yesterday';
-                    if (diffDays < 7) return `${diffDays}d ago`;
-                    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                  };
-                  const shown = dnaSnapshots.slice(0, 5);
-                  return (
-                    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                      <div className="flex items-center gap-1.5 mb-3">
-                        <span className="text-sm">🧬</span>
-                        <h3 className="text-xs font-bold text-gray-900">DNA Journey</h3>
-                        <span className="ml-auto text-[10px] text-gray-400">{shown.length} snapshot{shown.length !== 1 ? 's' : ''}</span>
-                      </div>
-                      <div className="relative">
-                        <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gray-100" />
-                        <div className="space-y-3">
-                          {shown.map((snap: any, i: number) => (
-                            <div key={snap.created_at} className="flex items-start gap-3 relative">
-                              <div className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 mt-0.5 ${i === 0 ? 'bg-purple-500 border-purple-500' : 'bg-white border-gray-300'}`} />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className={`text-xs font-semibold truncate ${i === 0 ? 'text-purple-700' : 'text-gray-700'}`}>
-                                    {ARCHETYPE_NAMES[snap.core_archetype] ?? snap.core_archetype}
-                                  </span>
-                                  <span className={`text-[10px] flex-shrink-0 font-medium ${i === 0 ? 'text-purple-500' : 'text-gray-400'}`}>
-                                    {i === 0 ? '← Now' : fmtDate(snap.created_at)}
-                                  </span>
-                                </div>
-                                {snap.current_era && (
-                                  <p className="text-[10px] text-gray-400 mt-0.5">{fmtEra(snap.current_era)}</p>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Top Genres */}
-                {dnaProfile.favorite_genres?.length > 0 && (
+                {/* DNA traits + Regenerate */}
+                {(dnaProfile.tagline || dnaProfile.flavor_notes?.length > 0 || dnaProfile.evolution_note) && (
                   <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Top Genres</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {dnaProfile.favorite_genres.map((genre: string, i: number) => {
-                        const palettes = [
-                          'bg-purple-100 text-purple-700 border-purple-200',
-                          'bg-blue-100 text-blue-700 border-blue-200',
-                          'bg-emerald-100 text-emerald-700 border-emerald-200',
-                          'bg-amber-100 text-amber-700 border-amber-200',
-                          'bg-rose-100 text-rose-700 border-rose-200',
-                          'bg-indigo-100 text-indigo-700 border-indigo-200',
-                        ];
-                        return (
-                          <span key={i} className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${palettes[i % palettes.length]}`}>
-                            {genre}
-                          </span>
-                        );
-                      })}
-                    </div>
+                    {dnaProfile.tagline && (
+                      <p className="text-gray-500 text-sm italic mb-3 leading-snug">"{dnaProfile.tagline}"</p>
+                    )}
+                    {dnaProfile.flavor_notes?.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {dnaProfile.flavor_notes.map((note: string, i: number) => (
+                          <span key={i} className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">{note}</span>
+                        ))}
+                      </div>
+                    )}
+                    {dnaProfile.evolution_note && (
+                      <div className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+                        <Sparkles size={11} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-amber-700 leading-snug italic">{dnaProfile.evolution_note}</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Your Numbers */}
-                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Your Numbers</h3>
-                  <div className="grid grid-cols-3 gap-x-2 gap-y-3">
-                    {[
-                      { val: userStats?.moviesWatched ?? 0, label: 'Movies', color: 'text-purple-600' },
-                      { val: userStats?.tvShowsWatched ?? 0, label: 'TV Shows', color: 'text-blue-600' },
-                      { val: userStats?.booksRead ?? 0, label: 'Books', color: 'text-emerald-600' },
-                      { val: `${userStats?.musicHours ?? 0}h`, label: 'Music', color: 'text-pink-600' },
-                      { val: `${userStats?.podcastHours ?? 0}h`, label: 'Podcasts', color: 'text-orange-500' },
-                      { val: userStats?.gamesPlayed ?? 0, label: 'Games', color: 'text-red-500' },
-                    ].map(({ val, label, color }) => (
-                      <div key={label} className="text-center">
-                        <p className={`text-2xl font-black ${color}`}>{val}</p>
-                        <p className="text-gray-400 text-[10px] mt-0.5">{label}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* DNA at a Glance */}
-                {dnaGenreSignals.length > 0 && (() => {
-                  const top = dnaGenreSignals.slice(0, 5);
-                  const otherCount = dnaGenreSignals.slice(5).reduce((s: number, g: any) => s + g.source_count, 0);
-                  const allSlices = [...top, ...(otherCount > 0 ? [{ signal_value: 'other', source_count: otherCount }] : [])];
-                  const totalCount = allSlices.reduce((s: number, g: any) => s + g.source_count, 0);
-                  const colors = ['#7c3aed', '#ec4899', '#2563eb', '#f59e0b', '#10b981', '#6b7280'];
-                  let cumulative = 0;
-                  const gradient = allSlices.map((g: any, i: number) => {
-                    const pct = (g.source_count / totalCount) * 100;
-                    const seg = `${colors[i % colors.length]} ${cumulative.toFixed(1)}% ${(cumulative + pct).toFixed(1)}%`;
-                    cumulative += pct;
-                    return seg;
-                  }).join(', ');
-                  return (
-                    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3">DNA at a Glance</h3>
-                      <div className="flex items-center gap-5">
-                        <div className="relative flex-shrink-0" style={{ width: 80, height: 80 }}>
-                          <div style={{ width: 80, height: 80, borderRadius: '50%', background: `conic-gradient(${gradient})` }} />
-                          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 44, height: 44, borderRadius: '50%', background: 'white' }} />
-                        </div>
-                        <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                          {allSlices.map((g: any, i: number) => {
-                            const pct = Math.round((g.source_count / totalCount) * 100);
-                            const label = g.signal_value.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
-                            return (
-                              <div key={i} className="flex items-center gap-2">
-                                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: colors[i % colors.length] }} />
-                                <span className="text-xs text-gray-700 truncate">{pct}% {label}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Stories That Match Your DNA */}
-                <RecommendationsGlimpse />
+                <button
+                  onClick={handleRegenerateDna}
+                  disabled={isRegeneratingDna}
+                  className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-semibold text-gray-500 bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-60"
+                >
+                  {isRegeneratingDna ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} className="text-purple-400" />}
+                  {isRegeneratingDna ? 'Updating DNA…' : 'Regenerate DNA'}
+                </button>
 
               </>
             ) : (
