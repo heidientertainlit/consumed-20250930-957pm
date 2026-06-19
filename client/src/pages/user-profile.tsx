@@ -3041,7 +3041,7 @@ export default function UserProfile() {
             </div>
 
             {/* Face + archetype */}
-            <div className="relative flex flex-row-reverse items-center gap-4">
+            <div className="relative flex flex-row-reverse items-center gap-2">
               <div className="relative flex-shrink-0">
                 <IdentityFace />
                 {dnaLevel > 0 && (
@@ -3081,7 +3081,7 @@ export default function UserProfile() {
               const names = (dnaProfile.secondary_archetypes as string[]).slice(0, 2).map(fmtArch);
               return (
                 <div className="relative mt-4">
-                  <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>with shades of</p>
+                  <p className="text-[11px] italic" style={{ color: 'rgba(255,255,255,0.4)' }}>with shades of</p>
                   <p className="text-[13px] font-medium mt-1" style={{ color: 'rgba(255,255,255,0.7)' }}>
                     {names.join('  •  ')}
                   </p>
