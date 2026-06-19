@@ -764,8 +764,8 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
       </div>
 
       {createPortal(
-        <nav className="fixed bottom-0 left-0 right-0 z-[9999] bg-white border-t border-gray-100" style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 -1px 8px rgba(0,0,0,0.04)' }}>
-          <div className="flex justify-around items-start px-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 8px), 8px)', paddingTop: '8px' }}>
+        <nav className="fixed bottom-0 left-0 right-0 z-[9999] bg-gray-50 border-t border-gray-200" style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 -1px 6px rgba(0,0,0,0.04)' }}>
+          <div className="flex justify-around items-start px-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 6px), 6px)', paddingTop: '6px' }}>
             {(() => {
               const items = [
                 { href: "/activity", label: "Now", icon: Zap, fillWhenActive: true, testid: "nav-activity", active: location === "/activity" },
@@ -777,17 +777,17 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                 const Icon = item.icon;
                 const active = item.active;
                 return (
-                  <Link key={item.href} href={item.href} className="flex flex-col items-center justify-start flex-1 pt-0.5" data-testid={item.testid} aria-label={item.label}>
-                    <div className={`flex items-center justify-center transition-all ${active ? "w-10 h-10 rounded-full bg-purple-600 shadow-sm" : "h-10"}`}>
+                  <Link key={item.href} href={item.href} className="flex flex-col items-center justify-start flex-1" data-testid={item.testid} aria-label={item.label}>
+                    <div className={`flex items-center justify-center transition-all ${active ? "w-8 h-8 rounded-full bg-purple-600 shadow-sm" : "h-8"}`}>
                       <Icon
-                        size={active ? 20 : 24}
+                        size={active ? 18 : 22}
                         className={active ? "text-white" : "text-gray-600"}
                         strokeWidth={active ? 2.4 : 1.6}
                         {...(active && item.fillWhenActive ? { fill: "currentColor" } : {})}
                       />
                     </div>
-                    <span className={`text-[11px] mt-1 ${active ? "text-purple-600 font-semibold" : "text-gray-500"}`}>{item.label}</span>
-                    {active && <div className="h-0.5 w-5 bg-purple-600 rounded-full mt-1" />}
+                    <span className={`text-[10px] mt-0.5 ${active ? "text-purple-600 font-semibold" : "text-gray-500"}`}>{item.label}</span>
+                    {active && <div className="h-0.5 w-4 bg-purple-600 rounded-full mt-0.5" />}
                   </Link>
                 );
               });
