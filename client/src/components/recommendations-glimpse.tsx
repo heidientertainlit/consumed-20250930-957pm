@@ -209,6 +209,7 @@ export function RecommendationsGlimpse() {
   const { toast } = useToast();
   const [quickAddItem, setQuickAddItem] = useState<RecommendedItem | null>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: recommendations, isLoading } = useQuery({
     queryKey: ['feed-recommendations'],
@@ -257,15 +258,17 @@ export function RecommendationsGlimpse() {
             <span className="text-lg">✨</span>
             <h3 className="font-semibold text-gray-900">Recommended For You</h3>
           </div>
-          <Link href="/discover">
-            <div className="flex items-center gap-1 text-purple-600 hover:text-purple-700 cursor-pointer transition-colors">
-              <span className="text-sm">See All</span>
-              <ChevronRight className="w-4 h-4" />
-            </div>
-          </Link>
+          <button
+            type="button"
+            onClick={() => scrollRef.current?.scrollBy({ left: scrollRef.current.clientWidth * 0.8, behavior: 'smooth' })}
+            className="flex items-center gap-1 text-purple-600 hover:text-purple-700 cursor-pointer transition-colors"
+          >
+            <span className="text-sm">See More</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
         
-        <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+        <div ref={scrollRef} className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
           {recommendations.map((item, idx) => (
             <RecommendationItemCard
               key={item.id || idx}
