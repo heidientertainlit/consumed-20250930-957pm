@@ -3766,31 +3766,6 @@ export default function UserProfile() {
                 {/* Stories That Match Your DNA */}
                 <RecommendationsGlimpse />
 
-                {/* Most Watched Platforms */}
-                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Most Watched Platforms</h3>
-                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1">
-                    {[
-                      { name: 'Netflix', abbr: 'N', color: '#E50914', bg: '#fff0f0' },
-                      { name: 'Hulu', abbr: 'H', color: '#1CE783', bg: '#f0fff6' },
-                      { name: 'Max', abbr: 'M', color: '#002BE7', bg: '#f0f2ff' },
-                      { name: 'Disney+', abbr: 'D+', color: '#113CCF', bg: '#eef1ff' },
-                      { name: 'Apple TV+', abbr: '▶', color: '#555', bg: '#f5f5f5' },
-                      { name: 'Prime', abbr: 'P', color: '#00A8E1', bg: '#f0faff' },
-                      { name: 'Spotify', abbr: '♫', color: '#1DB954', bg: '#f0fff4' },
-                      { name: 'Libby', abbr: 'L', color: '#F26419', bg: '#fff5ee' },
-                      { name: 'Audible', abbr: 'Au', color: '#F8991D', bg: '#fffbf0' },
-                    ].map(({ name, abbr, color, bg }) => (
-                      <div key={name} className="flex flex-col items-center gap-1 flex-shrink-0">
-                        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-black shadow-sm border border-gray-100" style={{ background: bg, color }}>
-                          {abbr}
-                        </div>
-                        <span className="text-gray-500 text-[9px] text-center">{name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
               </>
             ) : (
               <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-center">
