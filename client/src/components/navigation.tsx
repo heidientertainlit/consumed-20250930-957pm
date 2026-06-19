@@ -764,7 +764,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
       </div>
 
       {createPortal(
-        <nav className="fixed bottom-0 left-0 right-0 z-[9999] bg-gray-50 border-t border-gray-200" style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 -1px 6px rgba(0,0,0,0.04)' }}>
+        <nav className="fixed bottom-0 left-0 right-0 z-[9999]" style={{ background: '#F4F3F8', borderTop: '1px solid #E7E4F0', WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 -1px 6px rgba(0,0,0,0.04)' }}>
           <div className="flex justify-around items-start px-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 6px), 6px)', paddingTop: '6px' }}>
             {(() => {
               const items = [
