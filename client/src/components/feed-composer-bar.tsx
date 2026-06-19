@@ -59,7 +59,7 @@ const SOURCE_COLORS: Record<string, string> = {
   'apple-podcasts':  'bg-orange-500',
 };
 
-function MediaCard({ item, onTrack, onRate }: { item: any; onTrack: () => void; onRate: () => void }) {
+function MediaCard({ item, onTrack }: { item: any; onTrack: () => void; onRate?: () => void }) {
   return (
     <div className="flex-shrink-0 w-[104px]">
       <div className="relative w-full rounded-xl overflow-hidden" style={{ height: '148px' }}>
@@ -69,26 +69,16 @@ function MediaCard({ item, onTrack, onRate }: { item: any; onTrack: () => void; 
               <Search size={24} className="text-white/20" />
             </div>
         }
-        {/* Gradient scrim so icons are readable */}
+        {/* Gradient scrim so the add button is readable */}
         <div className="absolute inset-x-0 bottom-0 h-16 pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)' }} />
-        {/* Action buttons overlaid at poster bottom */}
-        <div className="absolute bottom-2 inset-x-0 flex justify-center gap-2 px-2">
-          <button
-            onClick={onTrack}
-            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-90"
-            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
-          >
-            <Bookmark size={13} className="text-white" />
-          </button>
-          <button
-            onClick={onRate}
-            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-90 relative"
-            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
-          >
-            <MessageSquarePlus size={13} className="text-white" />
-            <Star size={6} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
-          </button>
-        </div>
+        {/* Add button overlaid at poster bottom-right */}
+        <button
+          onClick={onTrack}
+          className="absolute bottom-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 border border-white/20"
+          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+        >
+          <Plus size={16} className="text-white" />
+        </button>
       </div>
       <p className="text-xs font-semibold text-white mt-2 leading-snug line-clamp-2">{item.title}</p>
       <div className="flex items-center gap-1.5 mt-0.5">
@@ -351,6 +341,7 @@ export default function FeedComposerBar({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recommendedScrollRef = useRef<HTMLDivElement>(null);
 
   const currentTab = TABS.find(t => t.id === activeTab)!;
   const showRating = activeTab === "review";
@@ -772,9 +763,16 @@ export default function FeedComposerBar({
                     <div className="mb-6">
                       <div className="flex items-center justify-between px-5 mb-3">
                         <p className="text-sm font-bold text-white">Recommended for You</p>
-                        <span className="text-xs text-purple-400 font-medium">See all</span>
+                        <button
+                          type="button"
+                          onClick={() => recommendedScrollRef.current?.scrollBy({ left: recommendedScrollRef.current.clientWidth * 0.8, behavior: 'smooth' })}
+                          className="flex items-center gap-0.5 text-xs text-purple-400 font-medium"
+                        >
+                          See More
+                          <ChevronRight size={13} />
+                        </button>
                       </div>
-                      <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                      <div ref={recommendedScrollRef} className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                         {recommendedItems.map((r, i) => (
                           <MediaCard key={i} item={r}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
