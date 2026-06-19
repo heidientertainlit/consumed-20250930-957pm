@@ -80,16 +80,14 @@ const DNA_ARCHETYPE_MAP: Record<string, { displayName: string; oneLiner: string 
 
 function ExpandableProfileText({ text, dark = false }: { text: string; dark?: boolean }) {
   const [expanded, setExpanded] = useState(false);
-  const sentences = text.match(/[^.!?]+[.!?]+(\s|$)/g) ?? [text];
-  const tease = sentences.slice(0, 2).join('').trim();
-  const hasMore = tease.length < text.trim().length;
+  const hasMore = text.trim().length > 90;
   return (
     <div>
       <p
-        className={dark ? 'text-xs leading-relaxed text-center' : 'text-gray-400 text-xs leading-relaxed'}
+        className={`${dark ? 'text-xs leading-relaxed text-center' : 'text-gray-400 text-xs leading-relaxed'} ${expanded ? '' : 'line-clamp-2'}`}
         style={dark ? { color: 'rgba(255,255,255,0.6)' } : undefined}
       >
-        {expanded || !hasMore ? text : tease}
+        {text}
       </p>
       {hasMore && (
         <button
