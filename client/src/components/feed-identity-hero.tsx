@@ -168,9 +168,8 @@ export function FeedIdentityHero() {
             </button>
           </div>
 
-          {/* Avatar + headline */}
+          {/* Headline + avatar */}
           <div className="relative flex items-center gap-4">
-            <IdentityFace />
             <div className="flex-1 min-w-0">
               <h1 className="font-bold tracking-tight leading-[1.08]">
                 {prefix && (
@@ -183,11 +182,12 @@ export function FeedIdentityHero() {
                 </span>
               </h1>
             </div>
+            <IdentityFace />
           </div>
 
           {/* Secondary archetypes — subtle "with shades of" subtitle, aligned to the headline */}
           {secondaries.length > 0 && (
-            <div className="relative mt-4 pl-[104px]">
+            <div className="relative mt-4">
               <p className="text-[12px] italic" style={{ color: "rgba(255,255,255,0.4)" }}>with shades of</p>
               <p className="text-[14px] font-medium mt-1" style={{ color: "rgba(255,255,255,0.75)" }}>
                 {secondaries.join(" • ")}
