@@ -137,7 +137,7 @@ async function getFlixPatrolTrending(tmdbKey: string): Promise<TrendingItem[]> {
               ? `https://image.tmdb.org/t/p/w300${show.poster_path}`
               : '',
             media_type: 'tv',
-            source_label: 'Hot TV',
+            source_label: 'Top TV',
             source_key: 'trending-tv',
             external_id: String(show.id),
             external_source: 'tmdb',
