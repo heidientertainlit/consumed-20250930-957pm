@@ -189,9 +189,14 @@ export function FeedIdentityHero() {
           {secondaries.length > 0 && (
             <div className="relative mt-4 pl-[104px]">
               <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.4)" }}>with shades of</p>
-              <p className="text-[13px] font-medium mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>
-                {secondaries.join("  •  ")}
-              </p>
+              <div className="mt-1 space-y-0.5">
+                {secondaries.map((s) => (
+                  <p key={s} className="text-[13px] font-medium flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.7)" }}>
+                    <span style={{ color: "rgba(255,255,255,0.4)" }}>•</span>
+                    {s}
+                  </p>
+                ))}
+              </div>
             </div>
           )}
 
