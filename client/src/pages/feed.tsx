@@ -7778,8 +7778,9 @@ export default function Feed() {
         {/* ── What's Happening ── */}
         {whatHappeningPosts.length > 0 && (
           <div className="mb-3 px-4">
-            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">What's Happening</p>
-            <div className="space-y-0 divide-y divide-gray-100">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">What's Happening</p>
+              <div className="space-y-0.5">
               {whatHappeningPosts.map((post: any) => {
                 const name = post.user?.displayName || post.user?.username || 'Someone';
                 const avatarLetter = name[0]?.toUpperCase();
@@ -7845,6 +7846,7 @@ export default function Feed() {
                   </div>
                 );
               })}
+              </div>
             </div>
           </div>
         )}
