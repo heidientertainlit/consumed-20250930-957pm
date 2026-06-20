@@ -27,6 +27,7 @@ interface JustTrackedSheetProps {
   isLoadingRateIt?: boolean;
   onChallengeFriend?: () => void;
   showRateOption?: boolean;
+  elevated?: boolean;
 }
 
 interface DnaMoment {
@@ -122,6 +123,7 @@ export function JustTrackedSheet({
   isLoadingRateIt,
   onChallengeFriend,
   showRateOption = true,
+  elevated,
 }: JustTrackedSheetProps) {
   const { user } = useAuth();
   const [phase, setPhase] = useState<'identity' | 'actions'>('identity');
@@ -305,7 +307,7 @@ export function JustTrackedSheet({
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="bg-white rounded-t-2xl">
+      <DrawerContent className={`bg-white rounded-t-2xl ${elevated ? 'z-[100000]' : ''}`} overlayClassName={elevated ? 'z-[100000]' : undefined}>
         <DrawerHeader className="text-center pb-2 border-b border-gray-100">
           <div className="flex items-center justify-center gap-2 mb-2">
             <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">

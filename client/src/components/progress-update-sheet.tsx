@@ -33,6 +33,7 @@ interface ProgressUpdateSheetProps {
   onFinished?: () => void;
   showRemoveOption?: boolean;
   onRemove?: () => void;
+  elevated?: boolean;
 }
 
 const SUPABASE_URL = 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -45,6 +46,7 @@ export function ProgressUpdateSheet({
   onFinished,
   showRemoveOption = false,
   onRemove,
+  elevated,
 }: ProgressUpdateSheetProps) {
   const { session } = useAuth();
   const { toast } = useToast();
@@ -223,7 +225,7 @@ export function ProgressUpdateSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="bg-white rounded-t-2xl p-0">
+      <SheetContent side="bottom" className={`bg-white rounded-t-2xl p-0 ${elevated ? 'z-[100000]' : ''}`} overlayClassName={elevated ? 'z-[100000]' : undefined}>
         <div className="flex items-center justify-center px-4 py-4 border-b border-gray-100">
           <SheetTitle className="text-lg font-semibold text-gray-900">Update Progress</SheetTitle>
         </div>

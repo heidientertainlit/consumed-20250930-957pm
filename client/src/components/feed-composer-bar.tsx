@@ -932,6 +932,7 @@ export default function FeedComposerBar({
         isOpen={isQuickAddOpen}
         onClose={() => { setIsQuickAddOpen(false); setQuickAddMedia(null); }}
         media={quickAddMedia}
+        elevated={pageMode}
       />
     </>
   );

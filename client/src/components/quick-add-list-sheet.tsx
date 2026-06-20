@@ -25,6 +25,7 @@ interface QuickAddListSheetProps {
     seriesName?: string;
   } | null;
   onOpenHotTakeComposer?: (media: { title: string; mediaType: string; imageUrl?: string; externalId?: string; externalSource?: string }) => void;
+  elevated?: boolean;
 }
 
 type SheetStep = 'select-list' | 'rate' | 'recommend' | 'just-tracked' | 'trivia' | 'progress';
@@ -39,7 +40,9 @@ interface TriviaQuestion {
   media_title?: string;
 }
 
-export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeComposer }: QuickAddListSheetProps) {
+export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeComposer, elevated }: QuickAddListSheetProps) {
+  const zContent = elevated ? 'z-[100000]' : undefined;
+  const zOverlay = elevated ? 'z-[100000]' : undefined;
   const { session } = useAuth();
   const { toast } = useToast();
   const [isAdding, setIsAdding] = useState<string | null>(null);
@@ -380,7 +383,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   if (step === 'rate') {
     return (
       <Drawer open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DrawerContent className="bg-white rounded-t-2xl">
+        <DrawerContent className={`bg-white rounded-t-2xl ${zContent || ''}`} overlayClassName={zOverlay}>
           <DrawerHeader className="text-center pb-2 border-b border-gray-100">
             <div className="flex items-center justify-center gap-2 mb-2">
               <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -488,7 +491,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
 
     return (
       <Drawer open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DrawerContent className="bg-white rounded-t-2xl">
+        <DrawerContent className={`bg-white rounded-t-2xl ${zContent || ''}`} overlayClassName={zOverlay}>
           <DrawerHeader className="text-center pb-2 border-b border-gray-100">
             <div className="flex items-center justify-center gap-2 mb-2">
               <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -614,7 +617,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   if (step === 'recommend') {
     return (
       <Drawer open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DrawerContent className="bg-white rounded-t-2xl">
+        <DrawerContent className={`bg-white rounded-t-2xl ${zContent || ''}`} overlayClassName={zOverlay}>
           <DrawerHeader className="text-center pb-2 border-b border-gray-100">
             <div className="flex items-center justify-center gap-2 mb-2">
               <div className="flex gap-1">
@@ -672,7 +675,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   return (
     <>
       <Drawer open={isOpen && step === 'select-list'} onOpenChange={(open) => !open && step === 'select-list' && handleClose()}>
-        <DrawerContent className="bg-white rounded-t-2xl">
+        <DrawerContent className={`bg-white rounded-t-2xl ${zContent || ''}`} overlayClassName={zOverlay}>
           <DrawerHeader className="pb-2 border-b border-gray-100">
             <DrawerTitle className="text-lg font-semibold text-gray-900 text-center">
               Add to List
@@ -784,6 +787,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
 
       <JustTrackedSheet
         isOpen={step === 'just-tracked' && isOpen}
+        elevated={elevated}
         onClose={handleClose}
         media={media ? {
           title: media.title,
@@ -828,6 +832,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
       {media && (
         <ProgressUpdateSheet
           isOpen={step === 'progress' && isOpen}
+          elevated={elevated}
           onOpenChange={(open) => { if (!open) handleClose(); }}
           item={{
             id: addedItemId || undefined,
