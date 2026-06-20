@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
+import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
 
 type TabType = "take" | "review" | "poll" | "prediction";
@@ -59,7 +60,7 @@ const SOURCE_COLORS: Record<string, string> = {
   'apple-podcasts':  'bg-orange-500',
 };
 
-function MediaCard({ item, onTrack }: { item: any; onTrack: () => void; onRate?: () => void }) {
+function MediaCard({ item, onTrack, light }: { item: any; onTrack: () => void; onRate?: () => void; light?: boolean }) {
   return (
     <div className="flex-shrink-0 w-[104px]">
       <div className="relative w-full rounded-xl overflow-hidden" style={{ height: '148px' }}>
@@ -80,27 +81,28 @@ function MediaCard({ item, onTrack }: { item: any; onTrack: () => void; onRate?:
           <Plus size={16} className="text-white" />
         </button>
       </div>
-      <p className="text-xs font-semibold text-white mt-2 leading-snug line-clamp-2">{item.title}</p>
+      <p className={`text-xs font-semibold mt-2 leading-snug line-clamp-2 ${light ? 'text-gray-900' : 'text-white'}`}>{item.title}</p>
       <div className="flex items-center gap-1.5 mt-0.5">
         {item.source_label && (
           <span className={`text-[8px] font-bold text-white px-1.5 py-0.5 rounded-full ${SOURCE_COLORS[item.source_key] || 'bg-gray-600'}`}>
             {item.source_label}
           </span>
         )}
-        <span className="text-[10px] text-white/40">{typeLabel(item.type)}</span>
+        <span className={`text-[10px] ${light ? 'text-gray-500' : 'text-white/40'}`}>{typeLabel(item.type)}</span>
       </div>
     </div>
   );
 }
 
 function MediaRow({
-  item, onTrack, onRate,
+  item, onTrack, onRate, light,
   seriesExpanded, seriesBooks, seriesLoading, onToggleSeries,
   onTrackBook, onRateBook,
 }: {
   item: any;
   onTrack: () => void;
   onRate: () => void;
+  light?: boolean;
   seriesExpanded?: boolean;
   seriesBooks?: any[];
   seriesLoading?: boolean;
@@ -120,18 +122,18 @@ function MediaRow({
           : <div className="rounded-lg flex-shrink-0" style={{ width: 52, height: 72, background: 'rgba(255,255,255,0.1)' }} />
         }
         <div className="flex-1 min-w-0" onClick={isSeries ? onToggleSeries : undefined} style={isSeries ? { cursor: 'pointer' } : {}}>
-          <p className="text-sm font-semibold text-white leading-snug line-clamp-2">{item.title}</p>
-          <p className="text-xs text-white/40 mt-1">
+          <p className={`text-sm font-semibold leading-snug line-clamp-2 ${light ? 'text-gray-900' : 'text-white'}`}>{item.title}</p>
+          <p className={`text-xs mt-1 ${light ? 'text-gray-500' : 'text-white/40'}`}>
             {typeLabel(item.type)}{item.year ? ` • ${item.year}` : ""}
             {item.creator && item.creator !== "Unknown Author" ? ` • ${item.creator}` : ""}
           </p>
           {isSeries && seriesCount > 0 && (
-            <span className="inline-block text-[10px] font-medium bg-purple-500/30 text-purple-200 border border-purple-400/40 px-1.5 py-0.5 rounded-full mt-1.5">
+            <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full mt-1.5 ${light ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-purple-500/30 text-purple-200 border border-purple-400/40'}`}>
               📚 {seriesCount} books {seriesExpanded ? "▲" : "▼"}
             </span>
           )}
           {seriesLabel && (
-            <span className="inline-block text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded-full mt-1.5 max-w-[140px] truncate">
+            <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full mt-1.5 max-w-[140px] truncate ${light ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'}`}>
               📚 {seriesLabel}
             </span>
           )}
@@ -151,15 +153,15 @@ function MediaRow({
       {isSeries && seriesExpanded && (
         <div className="mx-4 mb-3 rounded-xl overflow-hidden border border-purple-500/20" style={{ background: 'rgba(109,40,217,0.08)' }}>
           <div className="px-3 py-1.5 border-b border-purple-500/15">
-            <span className="text-[10px] font-semibold text-purple-300 uppercase tracking-wider">Books in this series</span>
+            <span className={`text-[10px] font-semibold uppercase tracking-wider ${light ? 'text-purple-700' : 'text-purple-300'}`}>Books in this series</span>
           </div>
           {seriesLoading ? (
             <div className="px-4 py-3 flex items-center gap-2">
               <Loader2 size={12} className="text-purple-400 animate-spin" />
-              <span className="text-xs text-white/40">Loading books…</span>
+              <span className={`text-xs ${light ? 'text-gray-400' : 'text-white/40'}`}>Loading books…</span>
             </div>
           ) : !seriesBooks || seriesBooks.length === 0 ? (
-            <p className="px-4 py-3 text-xs text-white/30">No individual books found.</p>
+            <p className={`px-4 py-3 text-xs ${light ? 'text-gray-400' : 'text-white/30'}`}>No individual books found.</p>
           ) : (
             seriesBooks.map((book: any, bIdx: number) => {
               const bPoster = book.poster_url || book.image_url || "";
@@ -170,8 +172,8 @@ function MediaRow({
                     : <div className="w-8 h-11 rounded flex-shrink-0 flex items-center justify-center text-sm" style={{ background: 'rgba(255,255,255,0.06)' }}>📖</div>
                   }
                   <div className="flex-1 min-w-0">
-                    <p className="text-white/90 text-xs font-medium line-clamp-2 leading-snug">{book.title}</p>
-                    {book.year && <p className="text-white/30 text-[10px] mt-0.5">{book.year}</p>}
+                    <p className={`text-xs font-medium line-clamp-2 leading-snug ${light ? 'text-gray-900' : 'text-white/90'}`}>{book.title}</p>
+                    {book.year && <p className={`text-[10px] mt-0.5 ${light ? 'text-gray-400' : 'text-white/30'}`}>{book.year}</p>}
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     <button onClick={() => onTrackBook?.(book)} className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center active:scale-90 transition-all">
@@ -739,18 +741,21 @@ export default function FeedComposerBar({
                 ))}
               </div>
 
+              {/* ── Content area (white sheet in pageMode) ── */}
+              <div className={pageMode ? 'bg-white rounded-t-3xl min-h-screen pt-5 pb-24' : ''}>
+
               {/* ── Pre-search: poster grid sections ── */}
               {!searchQuery && (
                 <div className="pb-10">
                   {trendingItems.length > 0 && (
                     <div className="mb-6">
                       <div className="flex items-center justify-between px-5 mb-3">
-                        <p className="text-sm font-bold text-white">Trending Now</p>
-                        <span className="text-xs text-purple-400 font-medium">See all</span>
+                        <p className={`text-sm font-bold ${pageMode ? 'text-gray-900' : 'text-white'}`}>Trending Now</p>
+                        <span className={`text-xs font-medium ${pageMode ? 'text-purple-600' : 'text-purple-400'}`}>See all</span>
                       </div>
                       <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                         {trendingItems.map((r, i) => (
-                          <MediaCard key={i} item={r}
+                          <MediaCard key={i} item={r} light={pageMode}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source }); setIsQuickAddOpen(true); }}
                             onRate={() => { setActiveTab("review"); selectMedia(r); }}
                           />
@@ -762,11 +767,11 @@ export default function FeedComposerBar({
                   {recommendedItems.length > 0 && (
                     <div className="mb-6">
                       <div className="flex items-center justify-between px-5 mb-3">
-                        <p className="text-sm font-bold text-white">Recommended for You</p>
+                        <p className={`text-sm font-bold ${pageMode ? 'text-gray-900' : 'text-white'}`}>Recommended for You</p>
                         <button
                           type="button"
                           onClick={() => recommendedScrollRef.current?.scrollBy({ left: recommendedScrollRef.current.clientWidth * 0.8, behavior: 'smooth' })}
-                          className="flex items-center gap-0.5 text-xs text-purple-400 font-medium"
+                          className={`flex items-center gap-0.5 text-xs font-medium ${pageMode ? 'text-purple-600' : 'text-purple-400'}`}
                         >
                           See More
                           <ChevronRight size={13} />
@@ -774,7 +779,7 @@ export default function FeedComposerBar({
                       </div>
                       <div ref={recommendedScrollRef} className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                         {recommendedItems.map((r, i) => (
-                          <MediaCard key={i} item={r}
+                          <MediaCard key={i} item={r} light={pageMode}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
                             onRate={() => { setActiveTab("review"); selectMedia(r); }}
                           />
@@ -785,8 +790,8 @@ export default function FeedComposerBar({
 
                   {recommendedItems.length === 0 && trendingItems.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-40 gap-3 text-center px-8">
-                      <Loader2 size={24} className="text-white/20 animate-spin" />
-                      <p className="text-sm text-white/40">Loading suggestions…</p>
+                      <Loader2 size={24} className={`animate-spin ${pageMode ? 'text-gray-300' : 'text-white/20'}`} />
+                      <p className={`text-sm ${pageMode ? 'text-gray-400' : 'text-white/40'}`}>Loading suggestions…</p>
                     </div>
                   )}
                 </div>
@@ -802,19 +807,19 @@ export default function FeedComposerBar({
               {/* No results */}
               {searchQuery && !isSearching && searchResults.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-40 text-center px-8">
-                  <p className="text-sm text-white/40">No results for "<span className="text-white/60">{searchQuery}</span>"</p>
+                  <p className={`text-sm ${pageMode ? 'text-gray-400' : 'text-white/40'}`}>No results for "<span className={pageMode ? 'text-gray-700' : 'text-white/60'}>{searchQuery}</span>"</p>
                 </div>
               )}
 
               {/* Search results */}
               {searchResults.length > 0 && (
                 <div className="pt-2 pb-10">
-                  <p className="px-5 text-xs font-bold text-white/40 uppercase tracking-widest mb-2">Results</p>
+                  <p className={`px-5 text-xs font-bold uppercase tracking-widest mb-2 ${pageMode ? 'text-gray-500' : 'text-white/40'}`}>Results</p>
                   {searchResults.map((r, i) => {
                     const mediaType = r.type === 'book_series' ? 'book' : r.type;
                     const externalSource = r.external_source === 'openai' ? 'openlibrary' : (r.external_source || 'tmdb');
                     return (
-                      <MediaRow key={i} item={r}
+                      <MediaRow key={i} item={r} light={pageMode}
                         onTrack={() => {
                           if (r.type === 'book_series') { openSeriesBulkAdd(r); }
                           else { setQuickAddMedia({ title: r.title, mediaType, imageUrl: r.image_url, externalId: r.external_id, externalSource: externalSource, creator: r.creator }); setIsQuickAddOpen(true); }
@@ -829,12 +834,13 @@ export default function FeedComposerBar({
                       />
                     );
                   })}
-                  <p className="text-center text-xs text-white/25 mt-6 px-8">
+                  <p className={`text-center text-xs mt-6 px-8 ${pageMode ? 'text-gray-400' : 'text-white/25'}`}>
                     Can't find what you're looking for?{" "}
-                    <span className="text-purple-400 font-medium">Search more specifically →</span>
+                    <span className={`font-medium ${pageMode ? 'text-purple-600' : 'text-purple-400'}`}>Search more specifically →</span>
                   </p>
                 </div>
               )}
+              </div>
             </div>
           )}
         {/* ── Series bulk-add sheet ── */}
@@ -917,6 +923,7 @@ export default function FeedComposerBar({
             </div>
           </div>
         )}
+        {pageMode && <Navigation hideTopBar inline />}
         </div>,
         document.body
       )}

@@ -26,6 +26,7 @@ import { SaveMediaSheet } from "./save-media-sheet";
 interface NavigationProps {
   onTrackConsumption?: () => void;
   hideTopBar?: boolean;
+  inline?: boolean;
 }
 
 interface MediaResult {
@@ -46,7 +47,7 @@ interface UserResult {
   email?: string;
 }
 
-export default function Navigation({ onTrackConsumption, hideTopBar }: NavigationProps) {
+export default function Navigation({ onTrackConsumption, hideTopBar, inline }: NavigationProps) {
   const [location, setLocation] = useLocation();
   const { user, session } = useAuth();
   const { roomsEnabled } = useFeatureFlags();
@@ -763,8 +764,8 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
         )}
       </div>
 
-      {createPortal(
-        <nav className="fixed bottom-0 left-0 right-0 z-[9999]" style={{ background: '#F4F3F8', borderTop: '1px solid #E7E4F0', WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 -1px 6px rgba(0,0,0,0.04)' }}>
+      {((navEl) => (inline ? navEl : createPortal(navEl, document.body)))(
+        <nav className={`fixed bottom-0 left-0 right-0 ${inline ? 'z-[10]' : 'z-[9999]'}`} style={{ background: '#F4F3F8', borderTop: '1px solid #E7E4F0', WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 -1px 6px rgba(0,0,0,0.04)' }}>
           <div className="flex justify-around items-start px-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 12px), 12px)', paddingTop: '6px' }}>
             {(() => {
               const items = [
@@ -792,8 +793,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               });
             })()}
           </div>
-        </nav>,
-        document.body
+        </nav>
       )}
 
       {/* Add Media Composer (opened from search results) */}
