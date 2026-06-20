@@ -1447,10 +1447,10 @@ export default function MediaDetail() {
                     See all{socialActivity.length > 3 ? ` ${socialActivity.length}` : ''}
                   </button>
                 </div>
-                <div className="space-y-2">
+                <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4 snap-x snap-mandatory">
                   {[...socialActivity]
                     .sort((a: any, b: any) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0))
-                    .slice(0, 3)
+                    .slice(0, 20)
                     .map((post: any) => {
                       const rawName = post.users?.display_name || post.users?.user_name || '';
                       // Strip email-style prefixes (e.g. "thinkhp+riner1428" → "riner1428")
@@ -1460,7 +1460,7 @@ export default function MediaDetail() {
                         <button
                           key={post.id}
                           onClick={() => setShowReviews(true)}
-                          className="w-full text-left bg-gray-50 rounded-xl p-3 hover:bg-gray-100 transition-colors"
+                          className="snap-start flex-shrink-0 w-[260px] text-left bg-gray-50 rounded-xl p-3 hover:bg-gray-100 transition-colors"
                           data-testid={`take-card-${post.id}`}
                         >
                           <div className="flex items-center justify-between mb-1.5">
