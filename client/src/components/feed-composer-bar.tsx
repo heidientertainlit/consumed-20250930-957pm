@@ -49,15 +49,15 @@ function inferSeries(title: string): string | null {
 
 const SOURCE_COLORS: Record<string, string> = {
   'consumed':        'bg-purple-600',
-  'netflix':         'bg-red-600',
-  'disney-plus':     'bg-blue-600',
-  'max':             'bg-sky-600',
-  'trending-tv':     'bg-indigo-500',
-  'trending-movies': 'bg-indigo-500',
-  'nyt':             'bg-gray-700',
-  'open-library':    'bg-emerald-600',
-  'apple-music':     'bg-pink-600',
-  'apple-podcasts':  'bg-orange-500',
+  'netflix':         'bg-purple-600',
+  'disney-plus':     'bg-purple-600',
+  'max':             'bg-purple-600',
+  'trending-tv':     'bg-purple-600',
+  'trending-movies': 'bg-purple-600',
+  'nyt':             'bg-purple-600',
+  'open-library':    'bg-purple-600',
+  'apple-music':     'bg-purple-600',
+  'apple-podcasts':  'bg-purple-600',
 };
 
 function MediaCard({ item, onTrack, light }: { item: any; onTrack: () => void; onRate?: () => void; light?: boolean }) {
