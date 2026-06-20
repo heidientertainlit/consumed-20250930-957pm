@@ -780,6 +780,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
               ];
               return items.map((item) => {
                 if (item.type === "add") {
+                  const active = location === "/add";
                   return (
                     <button
                       key="nav-add"
@@ -788,10 +789,14 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
                       data-testid="nav-add"
                       aria-label="Add"
                     >
-                      <div className="flex items-center justify-center w-11 h-11 -mt-3 rounded-full bg-purple-600 shadow-lg shadow-purple-600/30 active:scale-95 transition-transform">
-                        <Plus size={24} className="text-white" strokeWidth={2.6} />
+                      <div className={`flex items-center justify-center transition-all ${active ? "w-8 h-8 rounded-full bg-purple-600 shadow-sm" : "h-8"}`}>
+                        <Plus
+                          size={active ? 18 : 22}
+                          className={active ? "text-white" : "text-gray-600"}
+                          strokeWidth={active ? 2.4 : 1.6}
+                        />
                       </div>
-                      <span className="text-[10px] mt-0.5 text-gray-500">Add</span>
+                      <span className={`text-[10px] mt-0.5 ${active ? "text-purple-600 font-semibold" : "text-gray-500"}`}>Add</span>
                     </button>
                   );
                 }
