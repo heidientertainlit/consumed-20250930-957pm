@@ -742,7 +742,7 @@ export default function FeedComposerBar({
               </div>
 
               {/* ── Content area (white sheet in pageMode) ── */}
-              <div className={pageMode ? 'bg-white rounded-t-3xl min-h-screen pt-5 pb-24' : ''}>
+              <div className={pageMode ? 'bg-white min-h-screen pt-5 pb-24' : ''}>
 
               {/* ── Pre-search: poster grid sections ── */}
               {!searchQuery && (
