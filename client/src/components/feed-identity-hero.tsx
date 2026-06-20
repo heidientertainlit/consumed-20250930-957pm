@@ -137,13 +137,13 @@ export function FeedIdentityHero() {
           {/* Header row */}
           <div className="relative flex items-center justify-between mb-4">
             <div className="flex items-center gap-1.5">
-              <Dna size={13} className="text-purple-400" />
               <span
                 className="text-[11px] font-bold uppercase"
                 style={{ letterSpacing: "0.16em", color: "rgba(192,160,255,0.9)" }}
               >
                 Your Entertainment DNA
               </span>
+              <Dna size={13} className="text-purple-400" />
             </div>
             <button
               onClick={async () => {
