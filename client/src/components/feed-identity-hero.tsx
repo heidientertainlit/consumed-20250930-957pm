@@ -185,9 +185,9 @@ export function FeedIdentityHero() {
             </div>
           </div>
 
-          {/* Secondary archetypes — subtle "with shades of" subtitle */}
+          {/* Secondary archetypes — subtle "with shades of" subtitle, aligned to the headline */}
           {secondaries.length > 0 && (
-            <div className="relative mt-4 text-center">
+            <div className="relative mt-4 pl-[104px]">
               <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.4)" }}>with shades of</p>
               <p className="text-[13px] font-medium mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>
                 {secondaries.join("  •  ")}
