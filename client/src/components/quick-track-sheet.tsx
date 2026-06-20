@@ -4,6 +4,8 @@ import { Search, Loader2, Star, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { supabase } from "@/lib/supabase";
+import { trackEvent } from "@/lib/posthog";
 
 export interface TrackDetailsMedia {
   title: string;
@@ -17,7 +19,6 @@ export interface TrackDetailsMedia {
 interface QuickTrackSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddDetails: (media: TrackDetailsMedia, listType: string) => void;
 }
 
 const LISTS = [
@@ -40,26 +41,36 @@ const TYPE_PILLS: { value: string | null; label: string }[] = [
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
-export function QuickTrackSheet({ isOpen, onClose, onAddDetails }: QuickTrackSheetProps) {
+type Step = "search" | "compose";
+
+export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
   const { session } = useAuth();
   const { toast } = useToast();
 
+  const [step, setStep] = useState<Step>("search");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [mediaTypeFilter, setMediaTypeFilter] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
-  const [selectedList, setSelectedList] = useState<string | null>(null);
+  const [selectedList, setSelectedList] = useState<string>("currently");
   const [isTracking, setIsTracking] = useState(false);
 
+  // compose
+  const [rating, setRating] = useState(0);
+  const [takeText, setTakeText] = useState("");
+
   const reset = () => {
+    setStep("search");
     setSearchQuery("");
     setSearchResults([]);
     setIsSearching(false);
     setMediaTypeFilter(null);
     setSelectedMedia(null);
-    setSelectedList(null);
+    setSelectedList("currently");
     setIsTracking(false);
+    setRating(0);
+    setTakeText("");
   };
 
   const handleClose = () => {
@@ -106,9 +117,11 @@ export function QuickTrackSheet({ isOpen, onClose, onAddDetails }: QuickTrackShe
     creator: r.creator,
   });
 
-  // "Just add" — track quietly to the chosen list, no rating/take.
+  const listLabel = LISTS.find((l) => l.id === selectedList)?.label ?? "list";
+
+  // "Just add" — track to the chosen list, no rating/take.
   const justAdd = async () => {
-    if (!session?.access_token || !selectedMedia || !selectedList) return;
+    if (!session?.access_token || !selectedMedia) return;
     setIsTracking(true);
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/track-media`, {
@@ -118,8 +131,9 @@ export function QuickTrackSheet({ isOpen, onClose, onAddDetails }: QuickTrackShe
       });
       if (!res.ok) throw new Error("track failed");
       window.dispatchEvent(new CustomEvent("consumed:media-tracked"));
+      trackEvent("media_tracked", { media_type: selectedMedia.type, list_type: selectedList, has_rating: false });
       queryClient.invalidateQueries({ queryKey: ["user-lists-with-media"] });
-      toast({ title: `Added to ${LISTS.find((l) => l.id === selectedList)?.label}` });
+      toast({ title: `Added to ${listLabel}` });
       handleClose();
     } catch (e) {
       toast({ title: "Couldn't add that", variant: "destructive" });
@@ -128,14 +142,60 @@ export function QuickTrackSheet({ isOpen, onClose, onAddDetails }: QuickTrackShe
     }
   };
 
-  // "Rate or write a take" — hand off to the full composer, which does the single
-  // track + rating/review into the same list. We do NOT track here (avoids double-add).
-  const goToDetails = () => {
-    if (!selectedMedia || !selectedList) return;
-    const m = mapMedia(selectedMedia);
-    const list = selectedList;
-    reset();
-    onAddDetails(m, list);
+  // Inline compose: a single track-media call carries the rating + take into the
+  // same chosen list. A text-only take (no rating) also creates a 'thought' feed
+  // post (track-media's add-to-list card is filtered from the feed without a rating).
+  const postCompose = async () => {
+    if (!session?.access_token || !selectedMedia) return;
+    if (rating === 0 && !takeText.trim()) return;
+    setIsTracking(true);
+    try {
+      const hasRating = rating > 0;
+      const trackRes = await fetch(`${SUPABASE_URL}/functions/v1/track-media`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          media: mapMedia(selectedMedia),
+          listType: selectedList,
+          rating: hasRating ? rating : undefined,
+          review: hasRating && takeText.trim() ? takeText.trim() : undefined,
+          skip_social_post: !hasRating, // text-only take posts as a 'thought' below instead
+        }),
+      });
+      if (!trackRes.ok) throw new Error("track failed");
+
+      // Text-only take → create a feed-visible thought post.
+      if (!hasRating && takeText.trim()) {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) throw new Error("Not authenticated");
+        const { error: postErr } = await supabase.from("social_posts").insert({
+          user_id: authUser.id,
+          content: takeText.trim(),
+          post_type: "thought",
+          visibility: "public",
+          media_title: selectedMedia.title || null,
+          media_type: selectedMedia.type?.toLowerCase() || null,
+          media_external_id: selectedMedia.external_id || null,
+          media_external_source: selectedMedia.external_source || "tmdb",
+          image_url: selectedMedia.image || selectedMedia.image_url || "",
+          fire_votes: 0,
+          ice_votes: 0,
+        });
+        if (postErr) throw postErr;
+      }
+
+      window.dispatchEvent(new CustomEvent("consumed:media-tracked"));
+      trackEvent("media_tracked", { media_type: selectedMedia.type, list_type: selectedList, has_rating: hasRating });
+      queryClient.invalidateQueries({ queryKey: ["user-lists-with-media"] });
+      queryClient.invalidateQueries({ queryKey: ["social-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+      toast({ title: hasRating ? "Rating posted" : "Take posted" });
+      handleClose();
+    } catch (e) {
+      toast({ title: "Couldn't post that", variant: "destructive" });
+    } finally {
+      setIsTracking(false);
+    }
   };
 
   const filteredResults = mediaTypeFilter
@@ -147,20 +207,20 @@ export function QuickTrackSheet({ isOpen, onClose, onAddDetails }: QuickTrackShe
       <SheetContent
         side="bottom"
         className="rounded-t-3xl !bg-white flex flex-col overflow-hidden p-0 !shadow-none !border-0 !outline-none"
-        style={{ backgroundColor: "white", height: "92svh" }}
+        style={{ backgroundColor: "white", maxHeight: "88svh" }}
       >
         {/* Drag handle */}
         <div className="flex-shrink-0 pt-3 pb-1 flex items-center justify-center">
           <div className="w-10 h-1 rounded-full bg-gray-200" />
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-safe pt-2">
+        <div className="flex-1 overflow-y-auto px-4 pb-6 pt-1">
           {/* ── Search step ── */}
-          {!selectedMedia && (
-            <div className="space-y-4">
+          {step === "search" && (
+            <div className="space-y-3">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Track something</h2>
-                <p className="text-sm text-gray-500 mt-0.5">Find a movie, show, or book and add it to your library.</p>
+                <h2 className="text-lg font-bold text-gray-900">Track something</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Find a movie, show, or book and add it to your library.</p>
               </div>
 
               <div className="relative">
@@ -171,17 +231,18 @@ export function QuickTrackSheet({ isOpen, onClose, onAddDetails }: QuickTrackShe
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search movies, shows, books…"
                   autoFocus
-                  className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-2xl bg-gray-50 text-base text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-2xl bg-gray-50 text-base text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   data-testid="quick-track-search"
                 />
               </div>
 
-              <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                <span className="flex-shrink-0 text-xs font-semibold text-gray-400 uppercase tracking-wide pr-0.5">Filter</span>
                 {TYPE_PILLS.map(({ value, label }) => (
                   <button
                     key={label}
                     onClick={() => setMediaTypeFilter(value)}
-                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                       mediaTypeFilter === value ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >
@@ -191,20 +252,17 @@ export function QuickTrackSheet({ isOpen, onClose, onAddDetails }: QuickTrackShe
               </div>
 
               {isSearching && (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="animate-spin text-purple-500" size={26} />
+                <div className="flex justify-center py-6">
+                  <Loader2 className="animate-spin text-purple-500" size={24} />
                 </div>
               )}
 
               {!isSearching && searchQuery.trim() && filteredResults.length === 0 && (
-                <p className="text-center text-sm text-gray-400 py-8">No results for "{searchQuery}".</p>
+                <p className="text-center text-sm text-gray-400 py-6">No results for "{searchQuery}".</p>
               )}
 
               {!isSearching && !searchQuery.trim() && (
-                <div className="text-center py-12 text-gray-300">
-                  <Search size={40} className="mx-auto mb-3" />
-                  <p className="text-sm text-gray-400">Start typing to find something to track.</p>
-                </div>
+                <p className="text-center text-sm text-gray-400 py-4">Start typing to find something to track.</p>
               )}
 
               {filteredResults.length > 0 && (
@@ -212,7 +270,10 @@ export function QuickTrackSheet({ isOpen, onClose, onAddDetails }: QuickTrackShe
                   {filteredResults.slice(0, 12).map((r, idx) => (
                     <button
                       key={`${r.external_id}-${idx}`}
-                      onClick={() => setSelectedMedia(r)}
+                      onClick={() => {
+                        setSelectedMedia(r);
+                        setStep("compose");
+                      }}
                       className="w-full flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl text-left"
                       data-testid={`quick-track-result-${r.external_id}`}
                     >
@@ -232,13 +293,15 @@ export function QuickTrackSheet({ isOpen, onClose, onAddDetails }: QuickTrackShe
             </div>
           )}
 
-          {/* ── Pick list + choose depth step ── */}
-          {selectedMedia && (
-            <div className="space-y-5">
+          {/* ── Compose step: pick list + optional rating/take, all inline ── */}
+          {step === "compose" && selectedMedia && (
+            <div className="space-y-4">
               <button
                 onClick={() => {
+                  setStep("search");
                   setSelectedMedia(null);
-                  setSelectedList(null);
+                  setRating(0);
+                  setTakeText("");
                 }}
                 className="flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-700"
               >
@@ -265,7 +328,7 @@ export function QuickTrackSheet({ isOpen, onClose, onAddDetails }: QuickTrackShe
                     <button
                       key={l.id}
                       onClick={() => setSelectedList(l.id)}
-                      className={`px-4 py-2.5 rounded-full border text-sm font-semibold transition-colors ${
+                      className={`px-3.5 py-2 rounded-full border text-sm font-semibold transition-colors ${
                         selectedList === l.id
                           ? "border-purple-600 bg-purple-600 text-white"
                           : "border-gray-200 text-gray-700 hover:border-purple-300 hover:bg-purple-50"
@@ -278,8 +341,53 @@ export function QuickTrackSheet({ isOpen, onClose, onAddDetails }: QuickTrackShe
                 </div>
               </div>
 
-              {selectedList && (
-                <div className="space-y-3 pt-1">
+              {/* Optional rating + take — composer lives right here, no jump */}
+              <div className="rounded-2xl border border-gray-100 bg-gray-50/60 p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-gray-700">Add a rating or a take</p>
+                  <span className="text-xs text-gray-400">optional</span>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => setRating(rating === star ? 0 : star)}
+                      data-testid={`quick-track-star-${star}`}
+                      className="p-0.5"
+                    >
+                      <Star
+                        size={26}
+                        className={rating >= star ? "text-yellow-400" : "text-gray-300"}
+                        fill={rating >= star ? "currentColor" : "none"}
+                      />
+                    </button>
+                  ))}
+                  {rating > 0 && <span className="ml-1 text-sm font-semibold text-gray-600">{rating}/5</span>}
+                </div>
+
+                <textarea
+                  value={takeText}
+                  onChange={(e) => setTakeText(e.target.value)}
+                  placeholder="Share a take… (optional)"
+                  rows={3}
+                  className="w-full p-3 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  data-testid="quick-track-take"
+                />
+              </div>
+
+              <div className="space-y-2 pt-1">
+                {rating > 0 || takeText.trim() ? (
+                  <button
+                    disabled={isTracking}
+                    onClick={postCompose}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold disabled:opacity-60 transition-colors"
+                    data-testid="quick-track-post"
+                  >
+                    {isTracking ? <Loader2 className="animate-spin" size={16} /> : null}
+                    Post to {listLabel}
+                  </button>
+                ) : (
                   <button
                     disabled={isTracking}
                     onClick={justAdd}
@@ -287,24 +395,13 @@ export function QuickTrackSheet({ isOpen, onClose, onAddDetails }: QuickTrackShe
                     data-testid="quick-track-just-add"
                   >
                     {isTracking ? <Loader2 className="animate-spin" size={16} /> : null}
-                    Add to {LISTS.find((l) => l.id === selectedList)?.label}
+                    Add to {listLabel}
                   </button>
-
-                  <button
-                    disabled={isTracking}
-                    onClick={goToDetails}
-                    className="w-full flex items-center justify-center gap-1.5 py-3 rounded-full border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 disabled:opacity-60 transition-colors"
-                    data-testid="quick-track-add-details"
-                  >
-                    <Star size={15} className="text-purple-600" /> Add a rating or a take
-                  </button>
-
-                  <p className="text-xs text-gray-400 text-center px-2">
-                    Just logging it? Tap "Add to {LISTS.find((l) => l.id === selectedList)?.label}". Want to share your thoughts?
-                    Add a rating or take and it'll post to your feed.
-                  </p>
-                </div>
-              )}
+                )}
+                <p className="text-xs text-gray-400 text-center px-2">
+                  Just logging it? Tap “Add to {listLabel}”. Add a rating or take and it'll post to your feed.
+                </p>
+              </div>
             </div>
           )}
         </div>

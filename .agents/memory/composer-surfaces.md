@@ -5,8 +5,8 @@ description: The composer components for adding/tracking media, plus the search-
 
 There are three surfaces for adding/tracking media on the Now-page DNA hero.
 
-- **QuickTrackSheet** (`quick-track-sheet.tsx`) — the hero "Track it" button. Bottom Sheet, **search-first**: leads with a prominent media search (its own `media-search` call), then pick a result → select a list. Two paths: "Add to [List]" = single quiet `track-media` call (the just-add); "Add a rating or a take" = hands off to QuickActionSheet (no track here).
-- **QuickActionSheet** (`quick-action-sheet.tsx`) — shared bottom Sheet composer. Its "Add media" opens an **in-dialog** search modal (`isMediaModalOpen`). Accepts `preselectedMedia` and `preselectedListType` (additive, default-off) so the Track handoff lands rating/take into the chosen list.
+- **QuickTrackSheet** (`quick-track-sheet.tsx`) — the hero "Track it" button. Bottom Sheet, **search-first**, fully **self-contained** (no handoff). Step 1: media search → pick result. Step 2 (inline compose): pick a list chip + optional star rating + optional take textarea, all in the same sheet. Posting: no rating & no text → one plain `track-media` (just-add); rating>0 → one `track-media` with rating+review; text-only take → one `track-media` with `skip_social_post:true` PLUS a `thought` social_post (add-to-list card is feed-filtered without a rating, so the thought is what shows).
+- **QuickActionSheet** (`quick-action-sheet.tsx`) — shared bottom Sheet composer. Its "Add media" opens an **in-dialog** search modal (`isMediaModalOpen`). Has an additive `preselectedListType` prop (default-off); other callers unaffected. (No longer used by the Track flow — compose is inline in QuickTrackSheet now.)
 - **FeedComposerBar** (`feed-composer-bar.tsx`) — hero "Share a take". Text-first; its "Add media" is a **full-screen** `/add`-style overlay.
 
 **Why differentiated:** "Track it" = "I consumed this, log it" (media is the point → search-first, rating/take optional). "Share a take" = "I have something to say" (text is the point). Opening the same composer for both felt wrong to the user.
