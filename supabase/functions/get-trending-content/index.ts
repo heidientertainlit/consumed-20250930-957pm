@@ -317,6 +317,31 @@ serve(async (req) => {
     );
     const tmdbKey = Deno.env.get('TMDB_API_KEY') || '';
 
+    // Serve from cache if it was refreshed within the TTL. Trending lists barely
+    // change hour-to-hour, so this avoids fanning out to ~5 external APIs on
+    // every /add open.
+    const CACHE_KEY = 'global';
+    const CACHE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
+    let stalePayload: any = null;
+    try {
+      const { data: cached } = await supabaseAdmin
+        .from('trending_content_cache')
+        .select('payload, updated_at')
+        .eq('cache_key', CACHE_KEY)
+        .single();
+      if (cached?.updated_at) {
+        if ((Date.now() - new Date(cached.updated_at).getTime()) < CACHE_TTL_MS) {
+          return new Response(JSON.stringify(cached.payload), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Cache': 'HIT' },
+          });
+        }
+        // Expired — keep it around to fall back on if the live fetch comes up empty.
+        stalePayload = cached.payload;
+      }
+    } catch (_) {
+      // cache miss / table unavailable — fall through to a live fetch
+    }
+
     const [appWide, streaming, nyt, openLib, apple] = await Promise.allSettled([
       getAppWideTrending(supabaseAdmin),
       getFlixPatrolTrending(tmdbKey),
@@ -343,8 +368,30 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ items: allItems }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Live fetch came up empty (likely an upstream outage). Serve the last good
+    // cached payload rather than handing the user an empty trending strip.
+    if (allItems.length === 0 && stalePayload) {
+      return new Response(JSON.stringify(stalePayload), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Cache': 'STALE' },
+      });
+    }
+
+    const payload = { items: allItems };
+
+    // Refresh the cache (only when we actually got results, so a transient
+    // outage doesn't overwrite good data with an empty list).
+    if (allItems.length > 0) {
+      try {
+        await supabaseAdmin
+          .from('trending_content_cache')
+          .upsert({ cache_key: CACHE_KEY, payload, updated_at: new Date().toISOString() });
+      } catch (_) {
+        // non-fatal — still return fresh results to the caller
+      }
+    }
+
+    return new Response(JSON.stringify(payload), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Cache': 'MISS' },
     });
   } catch (error) {
     console.error('get-trending-content error:', error);
