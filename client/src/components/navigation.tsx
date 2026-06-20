@@ -768,13 +768,33 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
         <nav className={`fixed bottom-0 left-0 right-0 ${inline ? 'z-[10]' : 'z-[9999]'}`} style={{ background: '#F4F3F8', borderTop: '1px solid #E7E4F0', WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 -1px 6px rgba(0,0,0,0.04)' }}>
           <div className="flex justify-around items-start px-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 12px), 12px)', paddingTop: '6px' }}>
             {(() => {
-              const items = [
-                { href: "/activity", label: "Now", icon: Zap, fillWhenActive: true, testid: "nav-activity", active: location === "/activity" },
-                { href: "/play", label: "Play", icon: Brain, fillWhenActive: false, testid: "nav-play", active: location.startsWith("/play") },
-                { href: "/rooms", label: "Rooms", icon: MessageCircle, fillWhenActive: false, testid: "nav-rooms", active: location === "/rooms" || location.startsWith("/room/") },
-                { href: "/profile", label: "DNA", icon: Dna, fillWhenActive: false, testid: "nav-me", active: location === "/profile" },
+              type NavItem =
+                | { type: "link"; href: string; label: string; icon: typeof Zap; fillWhenActive: boolean; testid: string; active: boolean }
+                | { type: "add" };
+              const items: NavItem[] = [
+                { type: "link", href: "/activity", label: "Now", icon: Zap, fillWhenActive: true, testid: "nav-activity", active: location === "/activity" },
+                { type: "link", href: "/play", label: "Play", icon: Brain, fillWhenActive: false, testid: "nav-play", active: location.startsWith("/play") },
+                { type: "add" },
+                { type: "link", href: "/rooms", label: "Rooms", icon: MessageCircle, fillWhenActive: false, testid: "nav-rooms", active: location === "/rooms" || location.startsWith("/room/") },
+                { type: "link", href: "/profile", label: "DNA", icon: Dna, fillWhenActive: false, testid: "nav-me", active: location === "/profile" },
               ];
               return items.map((item) => {
+                if (item.type === "add") {
+                  return (
+                    <button
+                      key="nav-add"
+                      onClick={() => setLocation('/add')}
+                      className="flex flex-col items-center justify-start flex-1"
+                      data-testid="nav-add"
+                      aria-label="Add"
+                    >
+                      <div className="flex items-center justify-center w-11 h-11 -mt-3 rounded-full bg-purple-600 shadow-lg shadow-purple-600/30 active:scale-95 transition-transform">
+                        <Plus size={24} className="text-white" strokeWidth={2.6} />
+                      </div>
+                      <span className="text-[10px] mt-0.5 text-gray-500">Add</span>
+                    </button>
+                  );
+                }
                 const Icon = item.icon;
                 const active = item.active;
                 return (
