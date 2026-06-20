@@ -7779,8 +7779,8 @@ export default function Feed() {
         {whatHappeningPosts.length > 0 && (
           <div className="mb-3">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">What's Happening</p>
-              <div className="space-y-0.5">
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">What's Happening</p>
+              <div className="space-y-1.5">
               {whatHappeningPosts.map((post: any) => {
                 const name = post.user?.displayName || post.user?.username || 'Someone';
                 const avatarLetter = name[0]?.toUpperCase();
@@ -7828,7 +7828,7 @@ export default function Feed() {
                       )}
                       {/* Content preview as quote */}
                       {hasContent && (
-                        <p className="text-[11px] text-gray-400 mt-0.5 truncate">"{post.content.slice(0, 70)}"</p>
+                        <p className="text-[11px] text-gray-600 mt-0.5 truncate">"{post.content.slice(0, 70)}"</p>
                       )}
                     </div>
                     {/* Timestamp */}
