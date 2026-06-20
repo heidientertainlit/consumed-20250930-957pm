@@ -463,7 +463,15 @@ export default function FeedComposerBar({
 
   const selectMedia = (media: any) => {
     setSelectedMedia(media);
-    closeMediaSearch();
+    // In pageMode the search layer covers the composer card. Slide it away to
+    // reveal the composer instead of navigating back off the /add page.
+    setSearchSlideIn(false);
+    setTimeout(() => {
+      setShowMediaSearch(false);
+      setSearchQuery("");
+      setSearchResults([]);
+      setMediaFilter("all");
+    }, 260);
   };
 
   const canPost = () => {
