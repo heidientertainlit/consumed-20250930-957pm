@@ -5176,23 +5176,33 @@ export default function Feed() {
     }
 
     // Fill remaining slots with the most-recent real (non-persona) users' posts.
-    // Deduplicate by both author AND media (title or externalId) — same book/show must not appear twice.
+    // Deduplicate by media (title or externalId) — same book/show must not appear twice.
+    // Authors may repeat up to MAX_PER_AUTHOR times (different titles) so decks fill out.
     const recencySorted = [...finalOrder].sort((a: any, b: any) =>
       new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
     );
     const promotedIds = new Set(promoted.map((p: any) => p.id));
+    // Allow the same author to appear a few times (different titles only) so the
+    // swipe decks fill out instead of being throttled to one card per person.
+    const MAX_PER_AUTHOR = 3;
+    const authorCounts = new Map<string, number>();
+    for (const p of promoted) {
+      const aId = p.user?.id || p._rawPost?.user?.id;
+      if (aId) authorCounts.set(aId, (authorCounts.get(aId) || 0) + 1);
+    }
     for (const item of recencySorted) {
       if (promoted.length >= MAX_PROMOTED) break;
       const authorId = item.user?.id || item._rawPost?.user?.id;
       if (!authorId) continue;
       if (promotedIds.has(item.id)) continue;
-      if (seenAuthors.has(authorId)) continue;
+      if ((authorCounts.get(authorId) || 0) >= MAX_PER_AUTHOR) continue;
       // Use mediaTitle first, fall back to externalId so blank-title items are still deduped
       const mediaKey = (item.mediaTitle || item.externalId || '').toLowerCase().trim();
       if (mediaKey && seenMediaTitles.has(mediaKey)) continue;
-      seenAuthors.add(authorId);
+      authorCounts.set(authorId, (authorCounts.get(authorId) || 0) + 1);
       if (mediaKey) seenMediaTitles.add(mediaKey);
       promoted.push(item);
+      promotedIds.add(item.id);
     }
     const promotedIdSet = new Set(promoted.map((p: any) => p.id));
     // Deduplicate the carousel by media title so the same show/movie doesn't
