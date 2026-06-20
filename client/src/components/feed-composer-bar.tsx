@@ -734,7 +734,7 @@ export default function FeedComposerBar({
                     className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                       mediaFilter === f.id ? "text-white" : "text-white/60"
                     }`}
-                    style={mediaFilter === f.id ? { background: 'rgba(20,20,28,0.92)', border: '1.5px solid rgba(255,255,255,0.45)', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' } : { background: 'rgba(255,255,255,0.08)' }}
+                    style={mediaFilter === f.id ? { background: 'rgba(25,25,33,0.75)', border: '1px solid rgba(255,255,255,0.28)' } : { background: 'rgba(255,255,255,0.08)' }}
                   >
                     {f.label}
                   </button>
