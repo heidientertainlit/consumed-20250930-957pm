@@ -137,13 +137,13 @@ export function FeedIdentityHero() {
           {/* Header row */}
           <div className="relative flex items-center justify-between mb-4">
             <div className="flex items-center gap-1.5">
-              <Dna size={13} className="text-purple-400" />
               <span
                 className="text-[11px] font-bold uppercase"
                 style={{ letterSpacing: "0.16em", color: "rgba(192,160,255,0.9)" }}
               >
                 Your Entertainment DNA
               </span>
+              <Dna size={13} className="text-purple-400" />
             </div>
             <button
               onClick={async () => {
@@ -182,7 +182,7 @@ export function FeedIdentityHero() {
                 </span>
               </h1>
             </div>
-            <IdentityFace />
+            <IdentityFace size={108} className="mr-2" />
           </div>
 
           {/* Secondary archetypes — subtle "with shades of" subtitle, aligned to the headline */}
@@ -222,9 +222,9 @@ export function FeedIdentityHero() {
 }
 
 // Neon DNA face avatar used in the identity card.
-export function IdentityFace() {
+export function IdentityFace({ size = 88, className = "" }: { size?: number; className?: string }) {
   return (
-    <div className="relative flex-shrink-0" style={{ width: 88, height: 88 }}>
+    <div className={`relative flex-shrink-0 ${className}`} style={{ width: size, height: size }}>
       <div
         className="absolute inset-0 rounded-full"
         style={{ background: "radial-gradient(circle, rgba(168,85,247,0.35), transparent 72%)" }}
