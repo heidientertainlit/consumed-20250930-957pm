@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
 import { Bookmark, MessageSquarePlus, Flame, Dna, Trophy, Library, Forward } from "lucide-react";
 import FeedComposerBar from "@/components/feed-composer-bar";
+import { QuickActionSheet } from "@/components/quick-action-sheet";
 
 interface DnaBits {
   label: string | null;
@@ -254,14 +255,14 @@ export function IdentityFace({ size = 88, className = "" }: { size?: number; cla
 
 // CTA buttons for the hero (kept as a separate component so it owns its own composer state).
 export function HeroCTAButtons() {
-  const [, setLocation] = useLocation();
   const [composerOpen, setComposerOpen] = useState(false);
+  const [trackOpen, setTrackOpen] = useState(false);
 
   return (
     <>
       <div className="grid grid-cols-2 gap-3">
         <button
-          onClick={() => setLocation("/add")}
+          onClick={() => setTrackOpen(true)}
           className="flex items-center justify-center gap-2 py-2 rounded-full font-semibold text-[13px] text-white active:scale-95 transition-transform"
           style={{ background: "linear-gradient(135deg, #6d28d9 0%, #9333ea 45%, #d946ef 100%)" }}
         >
@@ -277,6 +278,12 @@ export function HeroCTAButtons() {
           Share a take
         </button>
       </div>
+
+      <QuickActionSheet
+        isOpen={trackOpen}
+        onClose={() => setTrackOpen(false)}
+        preselectedIntent="capture"
+      />
 
       {composerOpen && <FeedComposerBar startExpanded onExternalClose={() => setComposerOpen(false)} />}
     </>
