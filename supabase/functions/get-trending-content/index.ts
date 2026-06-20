@@ -54,7 +54,7 @@ async function getAppWideTrending(supabaseAdmin: any): Promise<TrendingItem[]> {
           ? `https://image.tmdb.org/t/p/w300${item.image_url}`
           : (item.image_url || ''),
         media_type: item.media_type || 'movie',
-        source_label: 'On Consumed',
+        source_label: 'Consumed',
         source_key: 'consumed',
         external_id: item.external_id,
         external_source: item.external_source,
@@ -137,7 +137,7 @@ async function getFlixPatrolTrending(tmdbKey: string): Promise<TrendingItem[]> {
               ? `https://image.tmdb.org/t/p/w300${show.poster_path}`
               : '',
             media_type: 'tv',
-            source_label: 'Trending TV',
+            source_label: 'Hot TV',
             source_key: 'trending-tv',
             external_id: String(show.id),
             external_source: 'tmdb',
