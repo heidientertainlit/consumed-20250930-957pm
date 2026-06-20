@@ -48,16 +48,16 @@ function inferSeries(title: string): string | null {
 }
 
 const SOURCE_COLORS: Record<string, string> = {
-  'consumed':        'bg-purple-600',
-  'netflix':         'bg-purple-600',
-  'disney-plus':     'bg-purple-600',
-  'max':             'bg-purple-600',
-  'trending-tv':     'bg-purple-600',
-  'trending-movies': 'bg-purple-600',
-  'nyt':             'bg-purple-600',
-  'open-library':    'bg-purple-600',
-  'apple-music':     'bg-purple-600',
-  'apple-podcasts':  'bg-purple-600',
+  'consumed':        'bg-purple-100 text-purple-700',
+  'netflix':         'bg-violet-100 text-violet-700',
+  'disney-plus':     'bg-indigo-100 text-indigo-700',
+  'max':             'bg-blue-100 text-blue-700',
+  'trending-tv':     'bg-violet-100 text-violet-700',
+  'trending-movies': 'bg-indigo-100 text-indigo-700',
+  'nyt':             'bg-fuchsia-100 text-fuchsia-700',
+  'open-library':    'bg-purple-100 text-purple-700',
+  'apple-music':     'bg-fuchsia-100 text-fuchsia-700',
+  'apple-podcasts':  'bg-blue-100 text-blue-700',
 };
 
 function MediaCard({ item, onTrack, light }: { item: any; onTrack: () => void; onRate?: () => void; light?: boolean }) {
@@ -84,7 +84,7 @@ function MediaCard({ item, onTrack, light }: { item: any; onTrack: () => void; o
       <p className={`text-xs font-semibold mt-2 leading-snug line-clamp-2 ${light ? 'text-gray-900' : 'text-white'}`}>{item.title}</p>
       <div className="flex items-center gap-1.5 mt-0.5">
         {item.source_label && (
-          <span className={`text-[8px] font-bold text-white px-1.5 py-0.5 rounded-full ${SOURCE_COLORS[item.source_key] || 'bg-gray-600'}`}>
+          <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded-full ${SOURCE_COLORS[item.source_key] || 'bg-purple-100 text-purple-700'}`}>
             {item.source_label}
           </span>
         )}
