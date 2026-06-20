@@ -690,7 +690,7 @@ export default function FeedComposerBar({
               className="absolute inset-0 overflow-y-auto"
               style={{
                 zIndex: 1,
-                background: 'linear-gradient(160deg, #0a0a0f 0%, #12121f 50%, #2d1f4e 100%)',
+                background: 'linear-gradient(to right, #0a0a0f 0%, #12121f 50%, #2d1f4e 100%)',
                 transform: searchSlideIn ? 'translateY(0)' : 'translateY(100%)',
                 transition: 'transform 260ms cubic-bezier(0.32, 0.72, 0, 1)',
               }}
