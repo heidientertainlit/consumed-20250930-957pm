@@ -44,9 +44,10 @@ interface QuickActionSheetProps {
   onPosted?: () => void;
   preselectedIntent?: "capture" | null;
   preselectedTab?: "hot_take" | "review" | "prediction" | "poll" | null;
+  preselectedListType?: string | null;
 }
 
-export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, roomDefaultMedia, onPosted, preselectedIntent, preselectedTab }: QuickActionSheetProps) {
+export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, roomDefaultMedia, onPosted, preselectedIntent, preselectedTab, preselectedListType }: QuickActionSheetProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   
@@ -74,6 +75,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
       setSelectedIntent("capture");
       setSelectedAction("track");
       setAddToList(true);
+      if (preselectedListType) setSelectedListId(preselectedListType);
     } else if (isOpen && roomId && !preselectedMedia) {
       // Room discussion: open Add Media flow so users can search + post media to the room
       setSelectedIntent("capture");
@@ -106,7 +108,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
     if (isOpen && !roomId) {
       setShareToFeed(true);
     }
-  }, [isOpen, preselectedMedia, roomId, roomDefaultMedia, preselectedIntent]);
+  }, [isOpen, preselectedMedia, roomId, roomDefaultMedia, preselectedIntent, preselectedListType]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);

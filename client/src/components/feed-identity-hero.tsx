@@ -5,6 +5,7 @@ import { useLocation } from "wouter";
 import { Bookmark, MessageSquarePlus, Flame, Dna, Trophy, Library, Forward } from "lucide-react";
 import FeedComposerBar from "@/components/feed-composer-bar";
 import { QuickActionSheet } from "@/components/quick-action-sheet";
+import { QuickTrackSheet, type TrackDetailsMedia } from "@/components/quick-track-sheet";
 
 interface DnaBits {
   label: string | null;
@@ -257,6 +258,8 @@ export function IdentityFace({ size = 88, className = "" }: { size?: number; cla
 export function HeroCTAButtons() {
   const [composerOpen, setComposerOpen] = useState(false);
   const [trackOpen, setTrackOpen] = useState(false);
+  const [detailsMedia, setDetailsMedia] = useState<TrackDetailsMedia | null>(null);
+  const [detailsList, setDetailsList] = useState<string | null>(null);
 
   return (
     <>
@@ -279,10 +282,24 @@ export function HeroCTAButtons() {
         </button>
       </div>
 
-      <QuickActionSheet
+      <QuickTrackSheet
         isOpen={trackOpen}
         onClose={() => setTrackOpen(false)}
-        preselectedIntent="capture"
+        onAddDetails={(media, listType) => {
+          setTrackOpen(false);
+          setDetailsMedia(media);
+          setDetailsList(listType);
+        }}
+      />
+
+      <QuickActionSheet
+        isOpen={!!detailsMedia}
+        onClose={() => {
+          setDetailsMedia(null);
+          setDetailsList(null);
+        }}
+        preselectedMedia={detailsMedia ?? undefined}
+        preselectedListType={detailsList ?? undefined}
       />
 
       {composerOpen && <FeedComposerBar startExpanded onExternalClose={() => setComposerOpen(false)} />}
