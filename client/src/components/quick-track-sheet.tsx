@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Search, Loader2, Star, ArrowLeft } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Search, Loader2, Star, ArrowLeft, X, ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -57,6 +57,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
   const [isTracking, setIsTracking] = useState(false);
 
   // compose
+  const [composerOpen, setComposerOpen] = useState(false);
   const [rating, setRating] = useState(0);
   const [takeText, setTakeText] = useState("");
 
@@ -69,6 +70,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     setSelectedMedia(null);
     setSelectedList("currently");
     setIsTracking(false);
+    setComposerOpen(false);
     setRating(0);
     setTakeText("");
   };
@@ -118,6 +120,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
   });
 
   const listLabel = LISTS.find((l) => l.id === selectedList)?.label ?? "list";
+  const hasComposerContent = rating > 0 || takeText.trim().length > 0;
 
   // "Just add" — track to the chosen list, no rating/take.
   const justAdd = async () => {
@@ -147,7 +150,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
   // post (track-media's add-to-list card is filtered from the feed without a rating).
   const postCompose = async () => {
     if (!session?.access_token || !selectedMedia) return;
-    if (rating === 0 && !takeText.trim()) return;
+    if (!hasComposerContent) return;
     setIsTracking(true);
     try {
       const hasRating = rating > 0;
@@ -202,27 +205,32 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     ? searchResults.filter((r) => r.type === mediaTypeFilter || (mediaTypeFilter === "book" && r.type === "book_series"))
     : searchResults;
 
-  return (
-    <Sheet open={isOpen} onOpenChange={(o) => !o && handleClose()}>
-      <SheetContent
-        side="bottom"
-        className="rounded-t-3xl !bg-white flex flex-col overflow-hidden p-0 !shadow-none !border-0 !outline-none"
-        style={{ backgroundColor: "white", maxHeight: "88svh" }}
-      >
-        {/* Drag handle */}
-        <div className="flex-shrink-0 pt-3 pb-1 flex items-center justify-center">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
-        </div>
+  if (!isOpen) return null;
 
-        <div className="flex-1 overflow-y-auto px-4 pb-6 pt-1">
-          {/* ── Search step ── */}
-          {step === "search" && (
-            <div className="space-y-3">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999]">
+      {/* Dim backdrop */}
+      <div className="absolute inset-0 bg-black/65" onClick={handleClose} />
+
+      {/* Floating card near the top */}
+      <div
+        className="absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+        style={{ top: "9%", maxHeight: "78vh" }}
+      >
+        {/* ── Search step ── */}
+        {step === "search" && (
+          <>
+            <div className="flex items-start justify-between px-5 pt-4 pb-2">
               <div>
                 <h2 className="text-lg font-bold text-gray-900">Track something</h2>
                 <p className="text-xs text-gray-500 mt-0.5">Find a movie, show, or book and add it to your library.</p>
               </div>
+              <button onClick={handleClose} className="p-1.5 -mr-1 rounded-full hover:bg-gray-100 text-gray-400">
+                <X size={18} />
+              </button>
+            </div>
 
+            <div className="px-5 pb-2 space-y-3">
               <div className="relative">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
@@ -250,7 +258,9 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                   </button>
                 ))}
               </div>
+            </div>
 
+            <div className="flex-1 overflow-y-auto px-5 pb-4 min-h-0">
               {isSearching && (
                 <div className="flex justify-center py-6">
                   <Loader2 className="animate-spin text-purple-500" size={24} />
@@ -291,15 +301,18 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                 </div>
               )}
             </div>
-          )}
+          </>
+        )}
 
-          {/* ── Compose step: pick list + optional rating/take, all inline ── */}
-          {step === "compose" && selectedMedia && (
-            <div className="space-y-4">
+        {/* ── Compose step: pick list, optional rating/take under a dropdown ── */}
+        {step === "compose" && selectedMedia && (
+          <>
+            <div className="flex items-center justify-between px-5 pt-4 pb-2">
               <button
                 onClick={() => {
                   setStep("search");
                   setSelectedMedia(null);
+                  setComposerOpen(false);
                   setRating(0);
                   setTakeText("");
                 }}
@@ -307,7 +320,12 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
               >
                 <ArrowLeft size={16} /> Back to search
               </button>
+              <button onClick={handleClose} className="p-1.5 -mr-1 rounded-full hover:bg-gray-100 text-gray-400">
+                <X size={18} />
+              </button>
+            </div>
 
+            <div className="flex-1 overflow-y-auto px-5 pb-4 min-h-0 space-y-4">
               <div className="flex items-center gap-3">
                 {selectedMedia.image && (
                   <img src={selectedMedia.image} alt={selectedMedia.title} className="w-14 h-20 object-cover rounded-lg flex-shrink-0" />
@@ -341,71 +359,83 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                 </div>
               </div>
 
-              {/* Optional rating + take — composer lives right here, no jump */}
-              <div className="rounded-2xl border border-gray-100 bg-gray-50/60 p-3 space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-gray-700">Add a rating or a take</p>
-                  <span className="text-xs text-gray-400">optional</span>
-                </div>
+              {/* Composer tucked under a dropdown — search/add stays the focus */}
+              <div className="rounded-2xl border border-gray-100 overflow-hidden">
+                <button
+                  onClick={() => setComposerOpen((v) => !v)}
+                  className="w-full flex items-center justify-between px-3.5 py-3 bg-gray-50/60 hover:bg-gray-100/70 transition-colors"
+                  data-testid="quick-track-composer-toggle"
+                >
+                  <span className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                    <Star size={15} className="text-purple-600" />
+                    Add a rating or a take
+                    {!composerOpen && hasComposerContent && (
+                      <span className="text-xs font-medium text-purple-600">• added</span>
+                    )}
+                  </span>
+                  <ChevronDown size={18} className={`text-gray-400 transition-transform ${composerOpen ? "rotate-180" : ""}`} />
+                </button>
 
-                <div className="flex items-center gap-1.5">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => setRating(rating === star ? 0 : star)}
-                      data-testid={`quick-track-star-${star}`}
-                      className="p-0.5"
-                    >
-                      <Star
-                        size={26}
-                        className={rating >= star ? "text-yellow-400" : "text-gray-300"}
-                        fill={rating >= star ? "currentColor" : "none"}
-                      />
-                    </button>
-                  ))}
-                  {rating > 0 && <span className="ml-1 text-sm font-semibold text-gray-600">{rating}/5</span>}
-                </div>
+                {composerOpen && (
+                  <div className="px-3.5 pt-3 pb-3.5 space-y-3 border-t border-gray-100">
+                    <div className="flex items-center gap-1.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => setRating(rating === star ? 0 : star)}
+                          data-testid={`quick-track-star-${star}`}
+                          className="p-0.5"
+                        >
+                          <Star
+                            size={26}
+                            className={rating >= star ? "text-yellow-400" : "text-gray-300"}
+                            fill={rating >= star ? "currentColor" : "none"}
+                          />
+                        </button>
+                      ))}
+                      {rating > 0 && <span className="ml-1 text-sm font-semibold text-gray-600">{rating}/5</span>}
+                    </div>
 
-                <textarea
-                  value={takeText}
-                  onChange={(e) => setTakeText(e.target.value)}
-                  placeholder="Share a take… (optional)"
-                  rows={3}
-                  className="w-full p-3 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  data-testid="quick-track-take"
-                />
-              </div>
-
-              <div className="space-y-2 pt-1">
-                {rating > 0 || takeText.trim() ? (
-                  <button
-                    disabled={isTracking}
-                    onClick={postCompose}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold disabled:opacity-60 transition-colors"
-                    data-testid="quick-track-post"
-                  >
-                    {isTracking ? <Loader2 className="animate-spin" size={16} /> : null}
-                    Post to {listLabel}
-                  </button>
-                ) : (
-                  <button
-                    disabled={isTracking}
-                    onClick={justAdd}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold disabled:opacity-60 transition-colors"
-                    data-testid="quick-track-just-add"
-                  >
-                    {isTracking ? <Loader2 className="animate-spin" size={16} /> : null}
-                    Add to {listLabel}
-                  </button>
+                    <textarea
+                      value={takeText}
+                      onChange={(e) => setTakeText(e.target.value)}
+                      placeholder="Share a take… (optional)"
+                      rows={3}
+                      className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      data-testid="quick-track-take"
+                    />
+                  </div>
                 )}
-                <p className="text-xs text-gray-400 text-center px-2">
-                  Just logging it? Tap “Add to {listLabel}”. Add a rating or take and it'll post to your feed.
-                </p>
               </div>
             </div>
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
+
+            <div className="px-5 pb-5 pt-1 border-t border-gray-100">
+              {hasComposerContent ? (
+                <button
+                  disabled={isTracking}
+                  onClick={postCompose}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold disabled:opacity-60 transition-colors"
+                  data-testid="quick-track-post"
+                >
+                  {isTracking ? <Loader2 className="animate-spin" size={16} /> : null}
+                  Post to {listLabel}
+                </button>
+              ) : (
+                <button
+                  disabled={isTracking}
+                  onClick={justAdd}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold disabled:opacity-60 transition-colors"
+                  data-testid="quick-track-just-add"
+                >
+                  {isTracking ? <Loader2 className="animate-spin" size={16} /> : null}
+                  Add to {listLabel}
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body
   );
 }
