@@ -741,7 +741,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
             )}
           </DrawerHeader>
           
-          <div className="px-4 py-4 max-h-[60vh] overflow-y-auto space-y-2">
+          <div className="px-4 pt-4 max-h-[60vh] overflow-y-auto space-y-2" style={{ paddingBottom: 'calc(5.5rem + env(safe-area-inset-bottom))' }}>
             {isLoadingLists ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="animate-spin text-purple-500" size={24} />

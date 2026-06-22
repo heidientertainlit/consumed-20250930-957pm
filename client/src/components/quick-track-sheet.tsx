@@ -4,6 +4,7 @@ import {
   Search, Loader2, Star, X, ChevronUp, Plus, Sparkles,
   Tv, Film, BookOpen, Music, Mic,
   MessageSquare, TrendingUp, BarChart3,
+  Clock, Play, Check, Ban, Heart,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -37,20 +38,14 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawv
 
 type Step = "search" | "compose";
 
-// Contextual status options per media type → list id mapping.
-function statusOptions(type?: string): { id: string; label: string }[] {
-  const t = (type || "").toLowerCase();
-  if (t.includes("book")) {
-    return [{ id: "currently", label: "Reading" }, { id: "finished", label: "Finished" }, { id: "queue", label: "Want to read" }];
-  }
-  if (t === "music" || t === "podcast") {
-    return [{ id: "currently", label: "Listening" }, { id: "finished", label: "Finished" }, { id: "queue", label: "Want to listen" }];
-  }
-  if (t === "game") {
-    return [{ id: "currently", label: "Playing" }, { id: "finished", label: "Finished" }, { id: "queue", label: "Want to play" }];
-  }
-  return [{ id: "currently", label: "Watching" }, { id: "finished", label: "Finished" }, { id: "queue", label: "Want to watch" }];
-}
+// Full set of system lists (slugs map to track-media's listType).
+const LIST_CHOICES: { id: string; label: string; desc: string; bg: string; icon: JSX.Element }[] = [
+  { id: "queue", label: "Want To", desc: "Watch, read, listen later", bg: "bg-blue-100", icon: <Clock className="text-blue-600" size={20} /> },
+  { id: "currently", label: "Currently", desc: "Currently consuming", bg: "bg-purple-100", icon: <Play className="text-purple-600" size={20} /> },
+  { id: "finished", label: "Finished", desc: "Completed media", bg: "bg-green-100", icon: <Check className="text-green-600" size={20} /> },
+  { id: "dnf", label: "Did Not Finish", desc: "Stopped before the end", bg: "bg-red-100", icon: <Ban className="text-red-600" size={20} /> },
+  { id: "favorites", label: "Favorites", desc: "Your favorites", bg: "bg-yellow-100", icon: <Heart className="text-yellow-600" size={20} /> },
+];
 
 function typeLabel(type?: string): string {
   const t = (type || "").toLowerCase();
@@ -138,8 +133,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     creator: r.creator,
   });
 
-  const statuses = statusOptions(selectedMedia?.type);
-  const statusLabel = statuses.find((s) => s.id === selectedList)?.label ?? "list";
+  const statusLabel = LIST_CHOICES.find((s) => s.id === selectedList)?.label ?? "list";
 
   const filteredResults = mediaTypeFilter
     ? searchResults.filter((r) => r.type === mediaTypeFilter || (mediaTypeFilter === "book" && r.type === "book_series"))
@@ -421,22 +415,32 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                 </div>
               </div>
 
-              {/* status */}
+              {/* status / list — the primary "where does this go?" step */}
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-2">What are you doing?</p>
-                <div className="flex flex-wrap gap-2">
-                  {statuses.map((s) => (
-                    <button
-                      key={s.id}
-                      onClick={() => setSelectedList(s.id)}
-                      className={`px-3.5 py-2 rounded-full border text-sm font-semibold transition-colors ${
-                        selectedList === s.id ? "border-purple-600 text-purple-600 bg-purple-50" : "border-gray-200 text-gray-600 hover:border-purple-300"
-                      }`}
-                      data-testid={`quick-track-status-${s.id}`}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
+                <p className="text-sm font-semibold text-gray-700 mb-2">Add to a list</p>
+                <div className="space-y-2">
+                  {LIST_CHOICES.map((s) => {
+                    const active = selectedList === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => setSelectedList(s.id)}
+                        className={`w-full flex items-center gap-3 py-3 px-3 rounded-2xl border text-left transition-colors ${
+                          active ? "border-purple-500 bg-purple-50" : "border-gray-100 hover:border-purple-200"
+                        }`}
+                        data-testid={`quick-track-status-${s.id}`}
+                      >
+                        <div className={`w-10 h-10 rounded-full ${s.bg} flex items-center justify-center flex-shrink-0`}>
+                          {s.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 text-sm">{s.label}</p>
+                          <p className="text-xs text-gray-400">{s.desc}</p>
+                        </div>
+                        {active && <Check size={18} className="text-purple-600 flex-shrink-0" />}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
