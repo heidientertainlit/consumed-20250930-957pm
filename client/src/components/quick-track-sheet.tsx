@@ -271,7 +271,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
 
       <div
         className="absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"
-        style={{ top: "7%", maxHeight: "82vh" }}
+        style={{ top: "12%", maxHeight: "82vh" }}
       >
         {/* grab handle */}
         <div className="flex justify-center pt-2.5 pb-1">
