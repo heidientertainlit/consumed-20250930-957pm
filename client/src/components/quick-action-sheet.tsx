@@ -246,7 +246,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query, include_book_series: true, ...(mediaTypeFilter ? { media_type: mediaTypeFilter } : {}) })
+        body: JSON.stringify({ query, include_book_series: true, ...(mediaTypeFilter ? { type: mediaTypeFilter } : {}) })
       });
       if (response.ok) {
         const data = await response.json();

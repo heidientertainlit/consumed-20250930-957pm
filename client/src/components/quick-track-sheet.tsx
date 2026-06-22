@@ -116,7 +116,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/media-search`, {
         method: "POST",
         headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ query, include_book_series: true, ...(mediaTypeFilter ? { media_type: mediaTypeFilter } : {}) }),
+        body: JSON.stringify({ query, include_book_series: true, ...(mediaTypeFilter ? { type: mediaTypeFilter } : {}) }),
       });
       if (res.ok) {
         const data = await res.json();
