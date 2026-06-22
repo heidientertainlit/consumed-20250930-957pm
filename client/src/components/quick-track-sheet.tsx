@@ -310,6 +310,14 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
               <div>
                 <p className="text-xs font-semibold text-gray-500 mb-2">Filter by media type</p>
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                  <button
+                    onClick={() => setMediaTypeFilter(null)}
+                    className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                      mediaTypeFilter === null ? "bg-gray-700 border-gray-700 text-white" : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    All
+                  </button>
                   {TYPE_PILLS.map(({ value, label, Icon }) => {
                     const active = mediaTypeFilter === value;
                     return (
@@ -317,7 +325,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                         key={value}
                         onClick={() => setMediaTypeFilter(active ? null : value)}
                         className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                          active ? "bg-purple-600 border-purple-600 text-white" : "bg-white border-gray-200 text-gray-600 hover:border-purple-300"
+                          active ? "bg-gray-700 border-gray-700 text-white" : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
                         }`}
                       >
                         <Icon size={14} />

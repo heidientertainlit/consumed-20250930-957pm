@@ -3,6 +3,7 @@
 - [DNA Compare card scoring](dna-compare-scoring.md) — dna_comparisons.match_score is authoritative; Jaccard genre overlap is fallback only. Never rank by Jaccard alone.
 - [Supabase builder has no .catch](supabase-builder-catch.md) — supabase query/rpc builders define .then() but NOT .catch()/.finally(); `.rpc().catch()` throws AND the query never runs. Use `await` for side-effects.
 - [TanStack Query v5 refetchInterval](tanstack-refetchinterval-v5.md) — the callback receives the Query object, not data; read `query.state.data`, else polling silently never fires.
+- [media-search type param](media-search-type-param.md) — edge fn reads `type` not `media_type`; callers sending `media_type` (Track/quick-action sheets) get no server filter. No `game` source exists.
 - [Composer surfaces](composer-surfaces.md) — QuickActionSheet = in-dialog media search; FeedComposerBar = full-screen /add-style overlay. Reuse QuickActionSheet for "search without leaving the dialog".
 - [/add nav & composer layering](add-page-nav-layering.md) — composer is a z-99999 body portal; bottom nav must render INSIDE it (Navigation `inline` prop) to interleave above browse, below sheets.
 - [rebuild-recommendations cache safety](recommendations-rebuild.md) — AI recs resolved via media-search (hallucination filter); never overwrite user_recommendations with too-few recs or the carousel vanishes.
