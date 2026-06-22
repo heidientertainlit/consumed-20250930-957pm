@@ -89,17 +89,21 @@ serve(async (req) => {
     let type: string | null = null;
     
     let includeBookSeries = false;
+    // Guard so the typo-correction fallback (below) only ever retries ONCE.
+    let alreadyCorrected = false;
 
     if (req.method === 'GET') {
       const url = new URL(req.url);
       query = url.searchParams.get('query');
       type = url.searchParams.get('type');
       includeBookSeries = url.searchParams.get('include_book_series') === 'true';
+      alreadyCorrected = url.searchParams.get('_corrected') === 'true';
     } else {
       const body = await req.json();
       query = body.query;
       type = body.type;
       includeBookSeries = body.include_book_series === true;
+      alreadyCorrected = body._corrected === true;
     }
     
     if (!query || query.trim().length === 0) {
@@ -1269,6 +1273,78 @@ serve(async (req) => {
 
     // Log final results
     console.log('Final results:', results.length, 'items');
+
+    // ── Additive typo-correction fallback (covers ALL media types) ──────────
+    // Fires ONLY when the search returned nothing AND we haven't already retried.
+    // Steps: ask OpenAI for the corrected spelling of the ORIGINAL query, then
+    // re-run THIS function with the corrected query (guarded by _corrected so it
+    // can never loop). Only real catalog results (TMDB, Google Books, Spotify,
+    // etc.) are ever returned — we correct the QUERY, never invent the RESULT.
+    if (results.length === 0 && !alreadyCorrected && query) {
+      const openaiKey = Deno.env.get('OPENAI_API_KEY');
+      if (openaiKey) {
+        try {
+          const correctionResp = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openaiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o',
+              messages: [{
+                role: 'system',
+                content: 'You correct misspelled entertainment search queries (movies, TV shows, books, music albums/artists, podcasts, YouTube channels). Given a possibly-misspelled query, reply with ONLY the most likely correctly-spelled real title or name as plain text — no quotes, no punctuation, no explanation. Only correct clear spelling mistakes; preserve the user\'s intended title. If it is already correct or you cannot confidently identify the intended real title, reply with the query unchanged.'
+              }, {
+                role: 'user',
+                content: query
+              }],
+              temperature: 0,
+              max_tokens: 30
+            })
+          }, 8000);
+
+          if (correctionResp.ok) {
+            const correctionData = await correctionResp.json();
+            const corrected = (correctionData.choices?.[0]?.message?.content || '').trim();
+            if (corrected && corrected.toLowerCase() !== query.toLowerCase()) {
+              console.log('Typo-correction fallback:', query, '→', corrected);
+              const baseUrl = Deno.env.get('SUPABASE_URL') || new URL(req.url).origin;
+              const selfEndpoint = `${baseUrl}/functions/v1/media-search`;
+              const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+              const retryResp = await fetchWithTimeout(selfEndpoint, {
+                method: 'POST',
+                headers: {
+                  'Authorization': req.headers.get('Authorization') || (anonKey ? `Bearer ${anonKey}` : ''),
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  query: corrected,
+                  type: type ?? undefined,
+                  include_book_series: includeBookSeries,
+                  _corrected: true
+                })
+              }, 12000);
+              if (retryResp.ok) {
+                const retryData = await retryResp.json();
+                if (Array.isArray(retryData.results) && retryData.results.length > 0) {
+                  return new Response(JSON.stringify({
+                    ...retryData,
+                    corrected_from: query,
+                    corrected_to: corrected
+                  }), {
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                  });
+                }
+              }
+            }
+          }
+        } catch (corrErr) {
+          console.error('Typo-correction fallback error:', corrErr);
+          // Fall through and return the original (empty) results — never worse than before.
+        }
+      }
+    }
 
     return new Response(JSON.stringify({ 
       results,
