@@ -267,7 +267,7 @@ export function HeroCTAButtons() {
           style={{ background: "linear-gradient(135deg, #6d28d9 0%, #9333ea 45%, #d946ef 100%)" }}
         >
           <Bookmark size={15} fill="#ffffff" />
-          Track it
+          Add media
         </button>
         <button
           onClick={() => setComposerOpen(true)}
