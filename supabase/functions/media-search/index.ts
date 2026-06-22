@@ -193,19 +193,17 @@ serve(async (req) => {
 
     console.log('Original query:', query, '| Cleaned query:', searchQuery, '| TMDB query:', tmdbSearchQuery, '| Episode query:', tmdbEpisodeQuery, '| Type hints:', { queryHasBook, queryHasMovie, queryHasMusic, queryHasTv, queryHasPodcast });
 
-    // If caller didn't pass an explicit type but query has an unambiguous type hint,
-    // narrow the search so we only call the relevant API and avoid category collisions.
-    if (!type) {
-      const hintCount = [queryHasBook, queryHasMovie, queryHasMusic, queryHasTv, queryHasPodcast, queryHasYoutube].filter(Boolean).length;
-      if (hintCount === 1) {
-        if (queryHasTv)        type = 'tv';
-        else if (queryHasMovie)   type = 'movie';
-        else if (queryHasBook)    type = 'book';
-        else if (queryHasMusic)   type = 'music';
-        else if (queryHasPodcast) type = 'podcast';
-        else if (queryHasYoutube) type = 'youtube';
-      }
-    }
+    // NOTE: When the caller passes no explicit type ("All" filter) we intentionally do
+    // NOT collapse the search to a single source based on query keywords. Words like
+    // "song", "book", or "movie" are frequently part of a real title (e.g. "Song Sung
+    // Blue", "The Book Thief", "A Quiet Place") rather than a genuine category hint, and
+    // hard-narrowing would skip every other source — hiding the correct result entirely
+    // (e.g. searching "song sung blues" returned only unrelated music and never the movie).
+    // Instead we search ALL sources and let the relevance scoring below apply a +40 boost
+    // to the hinted type (see the `queryHas*` boosts in the scoring step), so the right
+    // category still floats to the top without excluding anything.
+    // Explicit type filters passed by the caller (Movie / TV / Book / Music / ...) are
+    // unaffected — this only governs the "All" path.
 
     // Collect results by type first, then merge in desired order
     const bookResults: any[] = [];
