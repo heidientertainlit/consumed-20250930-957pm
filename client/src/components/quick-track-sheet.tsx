@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
-  Search, Loader2, Star, X, ChevronUp, Plus, Sparkles,
+  Search, Loader2, Star, X, Sparkles,
   Tv, Film, BookOpen, Music, Mic,
-  MessageSquare, TrendingUp, BarChart3,
+  Flame, Eye, BarChart3,
   Clock, Play, Check, Ban, Heart,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -47,6 +47,15 @@ const LIST_CHOICES: { id: string; label: string; desc: string; bg: string; icon:
   { id: "favorites", label: "Favorites", desc: "Your favorites", bg: "bg-yellow-100", icon: <Heart className="text-yellow-600" size={20} /> },
 ];
 
+type ComposerMode = "take" | "rate" | "predict" | "poll";
+
+const COMPOSER_MODES: { id: ComposerMode; label: string; Icon: typeof Star }[] = [
+  { id: "take", label: "Take", Icon: Flame },
+  { id: "rate", label: "Rate", Icon: Star },
+  { id: "predict", label: "Predict", Icon: Eye },
+  { id: "poll", label: "Poll", Icon: BarChart3 },
+];
+
 function typeLabel(type?: string): string {
   const t = (type || "").toLowerCase();
   if (t === "tv") return "TV Series";
@@ -68,11 +77,8 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
   const [selectedList, setSelectedList] = useState<string>("currently");
   const [isSaving, setIsSaving] = useState(false);
 
-  // "Add more (optional)" sections
-  const [rateOpen, setRateOpen] = useState(false);
-  const [takeOpen, setTakeOpen] = useState(false);
-  const [predOpen, setPredOpen] = useState(false);
-  const [pollOpen, setPollOpen] = useState(false);
+  // "React to this title (optional)" composer
+  const [composerMode, setComposerMode] = useState<ComposerMode>("rate");
   const [rating, setRating] = useState(0);
   const [takeText, setTakeText] = useState("");
   const [predQuestion, setPredQuestion] = useState("");
@@ -89,7 +95,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     setSelectedMedia(null);
     setSelectedList("currently");
     setIsSaving(false);
-    setRateOpen(false); setTakeOpen(false); setPredOpen(false); setPollOpen(false);
+    setComposerMode("rate");
     setRating(0); setTakeText("");
     setPredQuestion(""); setPredOptions(["", ""]);
     setPollQuestion(""); setPollOptions(["", ""]);
@@ -444,83 +450,86 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                 </div>
               </div>
 
-              {/* Add more (optional) */}
+              {/* React to this title (optional) — all-at-once composer */}
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-2">Add more <span className="text-gray-400 font-normal">(optional)</span></p>
-                <div className="space-y-2">
-                  {/* Rate it */}
-                  <AddMoreRow
-                    icon={<Star size={16} className="text-purple-500" />}
-                    label="Rate it"
-                    open={rateOpen}
-                    onToggle={() => setRateOpen((v) => !v)}
-                    filled={rating > 0}
-                    summary={rating > 0 ? `${rating}/5` : undefined}
-                    testId="quick-track-rate"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button key={star} onClick={() => setRating(rating === star ? 0 : star)} className="p-0.5" data-testid={`quick-track-star-${star}`}>
-                          <Star size={28} className={rating >= star ? "text-purple-500" : "text-gray-300"} fill={rating >= star ? "currentColor" : "none"} />
+                <p className="text-sm font-semibold text-gray-700 mb-2">React to this title <span className="text-gray-400 font-normal">(optional)</span></p>
+                <div className="rounded-2xl border border-gray-200 overflow-hidden">
+                  {/* Mode switcher */}
+                  <div className="grid grid-cols-4 gap-1 p-2">
+                    {COMPOSER_MODES.map(({ id, label, Icon }) => {
+                      const active = composerMode === id;
+                      const filled =
+                        id === "rate" ? rating > 0
+                        : id === "take" ? takeText.trim().length > 0
+                        : id === "predict" ? (predQuestion.trim().length > 0 || predOptions.some((o) => o.trim()))
+                        : (pollQuestion.trim().length > 0 || pollOptions.some((o) => o.trim()));
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => setComposerMode(id)}
+                          className="flex flex-col items-center gap-1 py-1.5 rounded-xl"
+                          data-testid={`quick-track-mode-${id}`}
+                        >
+                          <span className={`relative w-11 h-11 rounded-full flex items-center justify-center transition-colors ${active ? "bg-purple-600" : "bg-gray-100"}`}>
+                            <Icon size={20} className={active ? "text-white" : "text-gray-500"} />
+                            {filled && <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-purple-500 border-2 border-white" />}
+                          </span>
+                          <span className={`text-xs font-medium ${active ? "text-purple-700" : "text-gray-500"}`}>{label}</span>
                         </button>
-                      ))}
-                    </div>
-                  </AddMoreRow>
+                      );
+                    })}
+                  </div>
 
-                  {/* Add a take */}
-                  <AddMoreRow
-                    icon={<MessageSquare size={16} className="text-purple-500" />}
-                    label="Add a take"
-                    open={takeOpen}
-                    onToggle={() => setTakeOpen((v) => !v)}
-                    filled={takeText.trim().length > 0}
-                    testId="quick-track-take-row"
-                  >
-                    <textarea
-                      value={takeText}
-                      onChange={(e) => setTakeText(e.target.value)}
-                      placeholder="Share a take…"
-                      rows={3}
-                      className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      data-testid="quick-track-take"
-                    />
-                  </AddMoreRow>
-
-                  {/* Make a prediction */}
-                  <AddMoreRow
-                    icon={<TrendingUp size={16} className="text-purple-500" />}
-                    label="Make a prediction"
-                    open={predOpen}
-                    onToggle={() => setPredOpen((v) => !v)}
-                    filled={predQuestion.trim().length > 0}
-                    testId="quick-track-prediction"
-                  >
-                    <QuestionOptions
-                      question={predQuestion}
-                      setQuestion={setPredQuestion}
-                      options={predOptions}
-                      setOptions={setPredOptions}
-                      placeholder="What do you predict?"
-                    />
-                  </AddMoreRow>
-
-                  {/* Create a poll */}
-                  <AddMoreRow
-                    icon={<BarChart3 size={16} className="text-purple-500" />}
-                    label="Create a poll"
-                    open={pollOpen}
-                    onToggle={() => setPollOpen((v) => !v)}
-                    filled={pollQuestion.trim().length > 0}
-                    testId="quick-track-poll"
-                  >
-                    <QuestionOptions
-                      question={pollQuestion}
-                      setQuestion={setPollQuestion}
-                      options={pollOptions}
-                      setOptions={setPollOptions}
-                      placeholder="Ask a question…"
-                    />
-                  </AddMoreRow>
+                  {/* Active mode body */}
+                  <div className="px-3.5 pb-3.5 pt-2 border-t border-gray-100">
+                    {composerMode === "rate" && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-1.5">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button key={star} onClick={() => setRating(rating === star ? 0 : star)} className="p-0.5" data-testid={`quick-track-star-${star}`}>
+                              <Star size={30} className={rating >= star ? "text-purple-500" : "text-gray-300"} fill={rating >= star ? "currentColor" : "none"} />
+                            </button>
+                          ))}
+                        </div>
+                        <textarea
+                          value={takeText}
+                          onChange={(e) => setTakeText(e.target.value)}
+                          placeholder="Write your review… (optional)"
+                          rows={3}
+                          className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          data-testid="quick-track-take"
+                        />
+                      </div>
+                    )}
+                    {composerMode === "take" && (
+                      <textarea
+                        value={takeText}
+                        onChange={(e) => setTakeText(e.target.value)}
+                        placeholder="Share a take…"
+                        rows={3}
+                        className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        data-testid="quick-track-take"
+                      />
+                    )}
+                    {composerMode === "predict" && (
+                      <QuestionOptions
+                        question={predQuestion}
+                        setQuestion={setPredQuestion}
+                        options={predOptions}
+                        setOptions={setPredOptions}
+                        placeholder="What do you predict?"
+                      />
+                    )}
+                    {composerMode === "poll" && (
+                      <QuestionOptions
+                        question={pollQuestion}
+                        setQuestion={setPollQuestion}
+                        options={pollOptions}
+                        setOptions={setPollOptions}
+                        placeholder="Ask a question…"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -529,33 +538,6 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
       </div>
     </div>,
     document.body
-  );
-}
-
-function AddMoreRow({
-  icon, label, open, onToggle, filled, summary, testId, children,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  open: boolean;
-  onToggle: () => void;
-  filled?: boolean;
-  summary?: string;
-  testId?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl border border-gray-100 overflow-hidden">
-      <button onClick={onToggle} className="w-full flex items-center justify-between px-3.5 py-3" data-testid={testId}>
-        <span className="flex items-center gap-2.5 text-sm font-medium text-gray-700">
-          {icon}
-          {label}
-          {!open && filled && <span className="text-xs font-semibold text-purple-600">{summary ?? "• added"}</span>}
-        </span>
-        {open ? <ChevronUp size={18} className="text-gray-400" /> : <Plus size={18} className="text-gray-400" />}
-      </button>
-      {open && <div className="px-3.5 pb-3.5 pt-1 border-t border-gray-100">{children}</div>}
-    </div>
   );
 }
 
