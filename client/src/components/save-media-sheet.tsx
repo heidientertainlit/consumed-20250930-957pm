@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
-import { Search, X, Clock, Play, Check, Ban, Loader2, ArrowLeft, Bookmark } from "lucide-react";
+import { Search, X, Clock, Play, Check, Ban, Loader2, ArrowLeft, Plus } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -214,7 +214,7 @@ export function SaveMediaSheet({ isOpen, onClose }: SaveMediaSheetProps) {
 
               {!query.trim() && (
                 <div className="flex flex-col items-center gap-2 py-10 text-gray-400">
-                  <Bookmark size={32} className="text-gray-300" />
+                  <Plus size={32} className="text-gray-300" />
                   <p className="text-sm">Search for something to save</p>
                 </div>
               )}
@@ -238,7 +238,7 @@ export function SaveMediaSheet({ isOpen, onClose }: SaveMediaSheetProps) {
                       {item.creator && <p className="text-xs text-gray-400 truncate">{item.creator}</p>}
                     </div>
                     <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                      <Bookmark size={13} className="text-purple-600" fill="#9333ea" />
+                      <Plus size={13} className="text-purple-600" />
                     </div>
                   </button>
                 );

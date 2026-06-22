@@ -4,7 +4,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords, Folder, Check, Play, Clock, Ban, Heart, BarChart2, TrendingUp, ListOrdered, Globe, Lock, Bookmark, Paperclip, Eye } from "lucide-react";
+import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords, Folder, Check, Play, Clock, Ban, Heart, BarChart2, TrendingUp, ListOrdered, Globe, Lock, Paperclip, Eye } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -1004,7 +1004,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                       data-testid="add-to-list-btn"
                     >
                       <div className="w-8 h-8 rounded-lg bg-gray-100 group-hover:bg-purple-100 flex items-center justify-center transition-colors flex-shrink-0">
-                        <Bookmark size={16} className="text-gray-400 group-hover:text-purple-500 transition-colors" />
+                        <Plus size={16} className="text-gray-400 group-hover:text-purple-500 transition-colors" />
                       </div>
                       <div className="text-left">
                         <p className="text-sm font-semibold text-gray-600 group-hover:text-purple-700 transition-colors">Save to a list</p>
@@ -1015,7 +1015,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                   ) : (
                     <div className="flex items-center gap-2 px-4 py-3 rounded-xl border-2 border-purple-200 bg-purple-50">
                       <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                        <Bookmark size={16} className="text-purple-600 fill-purple-200" />
+                        <Plus size={16} className="text-purple-600" />
                       </div>
                       <select
                         value={selectedListId}

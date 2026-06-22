@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
-import { Bookmark, MessageSquarePlus, Flame, Dna, Trophy, Library, Forward } from "lucide-react";
+import { Plus, MessageSquarePlus, Flame, Dna, Trophy, Library, Forward } from "lucide-react";
 import FeedComposerBar from "@/components/feed-composer-bar";
 import { QuickTrackSheet } from "@/components/quick-track-sheet";
 
@@ -266,7 +266,7 @@ export function HeroCTAButtons() {
           className="flex items-center justify-center gap-2 py-2 rounded-full font-semibold text-[13px] text-white active:scale-95 transition-transform"
           style={{ background: "linear-gradient(135deg, #6d28d9 0%, #9333ea 45%, #d946ef 100%)" }}
         >
-          <Bookmark size={15} fill="#ffffff" />
+          <Plus size={15} />
           Add media
         </button>
         <button

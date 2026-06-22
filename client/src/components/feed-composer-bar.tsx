@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Star, BarChart2, TrendingUp, X, Search, Loader2, Flame, ArrowLeft, ArrowRight, Bookmark, MessageSquarePlus, ChevronRight } from "lucide-react";
+import { Plus, Star, BarChart2, TrendingUp, X, Search, Loader2, Flame, ArrowLeft, ArrowRight, MessageSquarePlus, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -140,7 +140,7 @@ function MediaRow({
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button onClick={onTrack} className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center transition-all active:scale-90">
-            <Bookmark size={16} className="text-white" fill="white" />
+            <Plus size={16} className="text-white" />
           </button>
           <button onClick={onRate} className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90 relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
             <MessageSquarePlus size={15} className="text-white" />
@@ -177,7 +177,7 @@ function MediaRow({
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     <button onClick={() => onTrackBook?.(book)} className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center active:scale-90 transition-all">
-                      <Bookmark size={12} className="text-white" fill="white" />
+                      <Plus size={12} className="text-white" />
                     </button>
                     <button onClick={() => onRateBook?.(book)} className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-all relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
                       <MessageSquarePlus size={11} className="text-white" />
@@ -961,7 +961,7 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
             className="flex items-center gap-2.5 p-3 bg-gray-50 rounded-2xl text-left active:bg-gray-100 transition-colors"
           >
             <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
-              <Bookmark size={15} className="text-white" fill="white" />
+              <Plus size={15} className="text-white" />
             </span>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-[13px] text-gray-900 leading-tight">Save It</p>
@@ -998,7 +998,7 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
             className="flex-1 flex items-center justify-center gap-2.5 py-3 px-4 transition-opacity active:opacity-70"
           >
             <span className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#7c3aed' }}>
-              <Bookmark size={16} className="text-white" fill="white" />
+              <Plus size={16} className="text-white" />
             </span>
             <span className="font-medium text-[12px]" style={{ color: '#c4a0ff' }}>Add Media</span>
             <ChevronRight size={12} style={{ color: '#c4a0ff', opacity: 0.7 }} />

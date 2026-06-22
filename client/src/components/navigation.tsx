@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation } from "wouter";
-import { Brain, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Gamepad2, MessageSquarePlus, Home, Star, DoorOpen, Bookmark, Trophy, Zap } from "lucide-react";
+import { Brain, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Gamepad2, MessageSquarePlus, Home, Star, DoorOpen, Trophy, Zap } from "lucide-react";
 import { FeedbackDialog } from "./feedback-dialog";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
@@ -667,7 +667,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
                                 onClick={(e) => { e.stopPropagation(); setQuickAddMedia(mediaObj); setIsQuickAddOpen(true); }}
                                 className="w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors"
                               >
-                                <Bookmark size={15} className="text-white" fill="white" />
+                                <Plus size={15} className="text-white" />
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setActionSheetMedia(mediaObj); setIsQuickActionOpen(true); }}
@@ -717,7 +717,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
                                         onClick={(e) => { e.stopPropagation(); setQuickAddMedia(bObj); setIsQuickAddOpen(true); }}
                                         className="w-7 h-7 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors flex-shrink-0"
                                       >
-                                        <Bookmark size={13} className="text-white" fill="white" />
+                                        <Plus size={13} className="text-white" />
                                       </button>
                                     </div>
                                   );
