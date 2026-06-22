@@ -267,7 +267,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
 
   return createPortal(
     <div className="fixed inset-0 z-[99999]">
-      <div className="absolute inset-0 bg-black/65" onClick={handleClose} />
+      <div className="absolute inset-0 bg-black/80" onClick={handleClose} />
 
       <div
         className="absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"
