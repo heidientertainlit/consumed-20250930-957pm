@@ -1602,7 +1602,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
             { value: 'book',    label: 'Book' },
             { value: 'music',   label: 'Music' },
             { value: 'podcast', label: 'Podcast' },
-            { value: 'game',    label: 'Game' },
           ] as const).map(({ value, label }) => (
             <button
               key={label}

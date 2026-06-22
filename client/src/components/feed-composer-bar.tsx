@@ -26,7 +26,6 @@ const MEDIA_FILTERS: { id: MediaFilter; label: string }[] = [
   { id: "book",    label: "Books" },
   { id: "podcast", label: "Podcasts" },
   { id: "music",   label: "Music" },
-  { id: "game",    label: "Games" },
   { id: "youtube", label: "YouTube" },
 ];
 
