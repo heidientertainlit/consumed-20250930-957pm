@@ -1898,68 +1898,57 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </button>
           )}
 
-          {/* Bottom content overlay — clicking stars/commentary expands More Ratings, not navigates */}
-          <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 pt-16" onClick={(e) => { e.stopPropagation(); setShowAllRelated(true); }}>
-            {/* Stars */}
-            {hasRating && (
-              <div className="flex items-center gap-0.5 mb-2">
-                {[1,2,3,4,5].map(s => {
-                  const r = post.rating!;
-                  if (s <= Math.floor(r)) return <Star key={s} size={20} className="text-yellow-400 fill-yellow-400 drop-shadow" />;
-                  if (s === Math.ceil(r) && r % 1 >= 0.5) return (
-                    <div key={s} className="relative" style={{ width: 20, height: 20 }}>
-                      <Star size={20} className="absolute text-white/20" />
-                      <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}><Star size={20} className="text-yellow-400 fill-yellow-400 drop-shadow" /></div>
-                    </div>
-                  );
-                  return <Star key={s} size={20} className="text-white/25" />;
-                })}
-              </div>
-            )}
-
-            {/* Attribution (review text moved to white block below the poster) */}
-            <p className="text-white/65 text-xs font-medium mb-3">— {displayName}</p>
-
-          </div>
+          {/* Rating, reviewer name & review moved to the white context block below the poster */}
             </div>
           );
           })()}
 
           </div>{/* end card stack area */}
 
-          {/* Reviewer's take — on white, opens the discussion (updates as you swipe) */}
-          {hasContent && (
-            <div className="px-4 pt-3 pb-1" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-start gap-2.5">
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-0.5"
-                  style={{ background: `hsl(${(displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
-                >
-                  {displayName[0]?.toUpperCase()}
-                </div>
-                <p className="flex-1 min-w-0 text-[13px] text-gray-800 leading-relaxed">
-                  <span className="font-semibold text-gray-900">{displayName}</span>{' '}
-                  {post.content}
-                </p>
+          {/* Reviewer context — avatar, name, alignment + stars; review below (updates as you swipe) */}
+          <div className="px-4 pt-3 pb-1" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                style={{ background: `hsl(${(displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
+              >
+                {displayName[0]?.toUpperCase()}
               </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[15px] font-semibold text-gray-900 leading-tight truncate">{displayName}</p>
+                {isOtherUser && tasteAlignment !== null ? (
+                  <p className="text-[13px] text-violet-600 font-medium leading-tight"><span className="font-semibold">{tasteAlignment}%</span> aligned with you</p>
+                ) : isOtherUser && alignmentNudge && !ratingSubmitted ? (
+                  <p className="text-[11px] text-gray-400 leading-tight">Rate 10 things to see your alignment</p>
+                ) : null}
+              </div>
+              {hasRating && (
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  {[1,2,3,4,5].map(s => {
+                    const r = post.rating!;
+                    if (s <= Math.floor(r)) return <Star key={s} size={16} className="text-yellow-400 fill-yellow-400" />;
+                    if (s === Math.ceil(r) && r % 1 >= 0.5) return (
+                      <div key={s} className="relative" style={{ width: 16, height: 16 }}>
+                        <Star size={16} className="absolute text-gray-300" />
+                        <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}><Star size={16} className="text-yellow-400 fill-yellow-400" /></div>
+                      </div>
+                    );
+                    return <Star key={s} size={16} className="text-gray-300" />;
+                  })}
+                </div>
+              )}
             </div>
-          )}
 
-          {/* Compact rated + aligned row below the fan */}
-          {isOtherUser && (ratingSubmitted || tasteAlignment !== null || alignmentNudge) && (
-            <div className="flex items-center justify-center gap-3 px-4 py-2">
-              {ratingSubmitted && ratingValue > 0 && (
-                <span className="text-xs text-gray-500">You rated this <span className="text-yellow-500 font-semibold">{ratingValue}/5 ★</span></span>
-              )}
-              {ratingSubmitted && tasteAlignment !== null && <span className="text-gray-300 text-xs">·</span>}
-              {tasteAlignment !== null && (
-                <span className="text-xs text-gray-500">You're <span className="text-violet-600 font-semibold">{tasteAlignment}%</span> aligned</span>
-              )}
-              {tasteAlignment === null && alignmentNudge && !ratingSubmitted && (
-                <span className="text-[11px] text-gray-400 text-center">Rate 10 things to see your alignment with other fans</span>
-              )}
-            </div>
-          )}
+            {/* Review text — opens the discussion */}
+            {hasContent && (
+              <p className="text-[15px] text-gray-800 leading-relaxed mt-3">{post.content}</p>
+            )}
+
+            {/* Your own rating, once submitted */}
+            {isOtherUser && ratingSubmitted && ratingValue > 0 && (
+              <p className="text-xs text-gray-500 mt-2">You rated this <span className="text-yellow-500 font-semibold">{ratingValue}/5 ★</span></p>
+            )}
+          </div>
 
           {/* ── Action row: Agree · Disagree · Rate it ── */}
           <div className="flex items-start justify-center gap-6 px-4 mt-3 pb-3" onClick={(e) => e.stopPropagation()}>
