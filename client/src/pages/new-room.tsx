@@ -324,10 +324,9 @@ export default function NewRoom() {
                 </button>
               ) : (
                 <>
-                  {/* header bar — no title; selected icon names the mode */}
-                  <div className="flex items-center justify-between px-5 py-3.5">
+                  {/* header bar — Cancel only; Post moved to bottom */}
+                  <div className="flex items-center px-5 py-3.5">
                     <button onClick={() => setComposerOpen(false)} className="text-[15px] font-medium text-gray-400 active:opacity-70">Cancel</button>
-                    <button className="rounded-full px-5 py-2 text-[14px] font-semibold text-white active:scale-95 transition-transform" style={{ background: "rgba(124,58,237,0.45)" }}>Post</button>
                   </div>
                   <div className="border-t border-gray-100" />
 
@@ -371,6 +370,11 @@ export default function NewRoom() {
                         </button>
                       );
                     })}
+                  </div>
+
+                  {/* full-width Post button */}
+                  <div className="px-4 pb-4">
+                    <button className="w-full rounded-full py-3 text-[15px] font-semibold text-white active:scale-[0.99] transition-transform" style={{ background: ACCENT }}>Post</button>
                   </div>
                 </>
               )}
