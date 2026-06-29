@@ -389,8 +389,15 @@ export default function FeedComposerBar({
     setSearchQuery("");
     setSearchResults([]);
     setPollOptions(["", ""]);
-    setShowMediaSearch(false);
     setMediaFilter("all");
+    if (pageMode) {
+      // In pageMode the composer IS the page; Cancel/backdrop returns to the
+      // media browse instead of unmounting the portal to a blank /add page.
+      setShowMediaSearch(true);
+      setSearchSlideIn(true);
+      return;
+    }
+    setShowMediaSearch(false);
     setIsOpen(false);
     if (startExpanded) onExternalClose?.();
   };
@@ -553,8 +560,9 @@ export default function FeedComposerBar({
 
   return (
     <>
-      {/* Collapsed trigger — hidden when opened externally via startExpanded */}
-      {!startExpanded && (
+      {/* Collapsed trigger — hidden when opened externally via startExpanded, and in
+          pageMode where the composer IS the full page (no stray bar behind it) */}
+      {!startExpanded && !pageMode && (
         <button
           onClick={() => setIsOpen(true)}
           className="w-full rounded-2xl bg-white border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
