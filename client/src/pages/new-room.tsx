@@ -377,7 +377,7 @@ export default function NewRoom() {
 
                   {/* full-width Post button */}
                   <div className="px-4 pb-4">
-                    <button className="w-full rounded-full py-3 text-[15px] font-semibold text-white active:scale-[0.99] transition-transform" style={{ background: ACCENT }}>Post</button>
+                    <button className="w-full rounded-full py-3 text-[15px] font-semibold bg-purple-50 text-purple-600 active:bg-purple-100 transition-colors">Post</button>
                   </div>
                 </>
               )}
