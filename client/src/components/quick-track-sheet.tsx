@@ -74,7 +74,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [mediaTypeFilter, setMediaTypeFilter] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
-  const [selectedList, setSelectedList] = useState<string>("currently");
+  const [selectedList, setSelectedList] = useState<string>("queue");
   const [isSaving, setIsSaving] = useState(false);
 
   // "React to this title (optional)" composer
@@ -93,7 +93,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     setIsSearching(false);
     setMediaTypeFilter(null);
     setSelectedMedia(null);
-    setSelectedList("currently");
+    setSelectedList("queue");
     setIsSaving(false);
     setComposerMode("rate");
     setRating(0); setTakeText("");
@@ -147,7 +147,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
 
   const pickMedia = (r: any) => {
     setSelectedMedia(r);
-    setSelectedList("currently");
+    setSelectedList("queue");
     setStep("compose");
   };
 
