@@ -695,15 +695,6 @@ export default function FeedComposerBar({
                   );
                 })}
               </div>
-              <div>
-                <button
-                  onClick={() => setShowMediaSearch(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100 transition-all"
-                >
-                  <Plus size={13} strokeWidth={2.5} />
-                  Add media
-                </button>
-              </div>
             </div>
           </div>
 
