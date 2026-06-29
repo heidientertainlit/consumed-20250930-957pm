@@ -1908,7 +1908,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {/* Reviewer context — title, avatar, name, alignment + stars; review below (updates as you swipe) */}
           <div className="px-4 pt-3 pb-1" onClick={(e) => e.stopPropagation()}>
             {post.mediaTitle && (
-              <p className="text-[19px] font-bold text-gray-900 leading-snug mb-3">{post.mediaTitle}</p>
+              <p className="text-[16px] font-bold text-gray-900 leading-snug mb-3">{post.mediaTitle}</p>
             )}
             <div className="flex items-center gap-2.5">
               <div
@@ -1957,7 +1957,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           <div className="border-t border-gray-100 mx-4 mt-4 mb-3" />
 
           {/* ── Action row: Agree · Disagree · Rate (compact inline, minimal gray) ── */}
-          <div className="flex items-center gap-7 px-4 pb-4" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-center gap-7 px-4 pb-4" onClick={(e) => e.stopPropagation()}>
           {/* Agree */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
