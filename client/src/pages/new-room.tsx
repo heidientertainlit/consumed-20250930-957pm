@@ -61,8 +61,12 @@ function SectionHeader({ title, action = "See all" }: { title: string; action?: 
   );
 }
 
+const TABS = ["Discuss", "Play", "Explore"] as const;
+type Tab = (typeof TABS)[number];
+
 export default function NewRoom() {
   const [following, setFollowing] = useState(false);
+  const [tab, setTab] = useState<Tab>("Discuss");
   const matchPct = 92;
 
   return (
@@ -149,6 +153,30 @@ export default function NewRoom() {
           </div>
         </div>
 
+        {/* ── Tabs ── */}
+        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-100">
+          <div className="flex px-4">
+            {TABS.map((t) => {
+              const active = tab === t;
+              return (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`relative flex-1 py-3.5 text-[14px] font-semibold transition-colors ${active ? "text-gray-900" : "text-gray-400"}`}
+                >
+                  {t}
+                  {active && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] w-10 rounded-full" style={{ background: ACCENT }} />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ════════ DISCUSS ════════ */}
+        {tab === "Discuss" && (<>
+
         {/* ── This Week's Spotlight ── */}
         <div className="px-4 pt-6">
           <p className="text-[13px] font-bold uppercase tracking-wider text-gray-500 mb-3 px-1">This Week's Spotlight</p>
@@ -165,8 +193,10 @@ export default function NewRoom() {
             </div>
           </div>
         </div>
+        </>)}
 
-        {/* ── Play (games) ── NEW */}
+        {/* ════════ PLAY ════════ */}
+        {tab === "Play" && (
         <div className="pt-7">
           <SectionHeader title="Play" />
           <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
@@ -192,6 +222,10 @@ export default function NewRoom() {
             })}
           </div>
         </div>
+        )}
+
+        {/* ════════ EXPLORE ════════ */}
+        {tab === "Explore" && (<>
 
         {/* ── Explore ── */}
         <div className="pt-7">
@@ -223,8 +257,10 @@ export default function NewRoom() {
             ))}
           </div>
         </div>
+        </>)}
 
-        {/* ── Join the conversation (composer + takes) ── */}
+        {/* ════════ DISCUSS · composer + takes ════════ */}
+        {tab === "Discuss" && (
         <div className="pt-7">
           <SectionHeader title="Join the conversation" action="" />
 
@@ -275,6 +311,7 @@ export default function NewRoom() {
             ))}
           </div>
         </div>
+        )}
 
       </div>
       <Navigation />
