@@ -1,8 +1,8 @@
 import { useState } from "react";
 import {
-  ChevronLeft, MoreHorizontal, Check, Plus, Star, Trophy, Search, Globe, Copy,
+  ChevronLeft, ChevronRight, MoreHorizontal, Check, Plus, Globe, Copy,
   TrendingUp, Sparkle, MessageCircle, ArrowUpRight, BarChart3, Image as ImageIcon,
-  Brain, Vote, Zap, Flame, Bookmark, Bell, Users,
+  Brain, Vote, Tv, Flame, Bookmark, Bell, Users,
 } from "lucide-react";
 import Navigation from "@/components/navigation";
 
@@ -23,12 +23,23 @@ const EXPLORE = [
   { label: "Predictions\nRising", icon: ArrowUpRight, bg: "#fff6e8", fg: "#e08a14" },
 ];
 
-// ── Play (games) strip ────────────────────────────────────────────────
-const GAMES = [
-  { kind: "Trivia", title: "Who really did it?", meta: "3 questions", pts: 30, icon: Brain, from: "#7c3aed", to: "#a855f7" },
-  { kind: "Daily Poll", title: "Best true-crime doc of all time?", meta: "1.2K voted", pts: 10, icon: Vote, from: "#2563eb", to: "#3b82f6" },
-  { kind: "Prediction", title: "Will the verdict come back guilty?", meta: "Closes in 2d", pts: 25, icon: Zap, from: "#db2777", to: "#f43f5e" },
+// ── Play quick-launch round icons ─────────────────────────────────────
+const PLAY_ICONS = [
+  { label: "Trivia", icon: Brain, bg: "#f3effe", fg: "#7c3aed" },
+  { label: "Cast Vote", icon: Vote, bg: "#eaf1ff", fg: "#2563eb" },
+  { label: "Predictions", icon: TrendingUp, bg: "#e7f9f0", fg: "#10b981" },
 ];
+
+// ── Play cards (static design placeholders) ───────────────────────────
+const VOTE_CARD = {
+  question: "How would you describe the vibe of Paradise?",
+  options: ["Political thriller first", "Murder mystery first", "Sci-fi first", "Equal parts all three"],
+};
+const TRIVIA_CARD = {
+  tag: "PARADISE",
+  question: "What is the name of Sterling K. Brown's character in Paradise?",
+  options: ["Xavier", "Marcus", "Sterling", "Dele"],
+};
 
 // ── Popular titles (gradient poster placeholders for the template) ────
 const TITLES = [
@@ -73,24 +84,15 @@ export default function NewRoom() {
     <div className="min-h-screen bg-white">
       <div className="max-w-md mx-auto pb-28">
 
-        {/* ── Purple gradient hero header ── */}
-        <div className="relative px-4 pt-3 pb-5" style={{ background: "linear-gradient(165deg, #14101f 0%, #1d1638 55%, #2d1f6e 100%)" }}>
+        {/* ── Purple gradient hero header (nav + hero = one surface) ── */}
+        <div className="relative pb-5" style={{ background: "linear-gradient(165deg, #14101f 0%, #1d1638 55%, #2d1f6e 100%)" }}>
           {/* glow */}
           <div className="absolute inset-0 pointer-events-none opacity-40" style={{ background: "radial-gradient(circle at 85% 10%, rgba(168,85,247,0.45), transparent 55%)" }} />
 
           <div className="relative">
-            {/* Top utility bar */}
-            <div className="flex items-center justify-end gap-3 mb-4">
-              <div className="flex items-center gap-1.5 rounded-full px-3 py-1.5" style={{ background: "rgba(255,255,255,0.1)" }}>
-                <Star size={14} className="fill-amber-400 text-amber-400" />
-                <span className="text-[13px] font-bold text-white">16.4k</span>
-                <span className="text-[12px] text-white/50">pts</span>
-              </div>
-              <button className="active:scale-90 transition-transform"><Trophy size={20} className="text-white/85" /></button>
-              <button className="active:scale-90 transition-transform"><Search size={20} className="text-white/85" /></button>
-              <button className="active:scale-90 transition-transform"><Bell size={20} className="text-white/85" /></button>
-            </div>
+            <Navigation />
 
+            <div className="px-4 pt-2">
             {/* Back + Following / Invite */}
             <div className="flex items-center justify-between mb-5">
               <button onClick={() => window.history.back()} className="p-1 -ml-1 active:scale-90 transition-transform">
@@ -150,6 +152,7 @@ export default function NewRoom() {
                 <span className="text-[13px] font-extrabold text-white">{matchPct}%</span>
               </div>
             </div>
+            </div>
           </div>
         </div>
 
@@ -176,29 +179,85 @@ export default function NewRoom() {
 
         {/* ════════ PLAY ════════ */}
         {tab === "Play" && (
-        <div className="pt-7">
-          <SectionHeader title="Play" />
-          <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-            {GAMES.map((g, i) => {
-              const Icon = g.icon;
+        <div className="pt-5 pb-2">
+          {/* round quick-launch icons */}
+          <div className="grid grid-cols-3 gap-2 px-6 mb-5">
+            {PLAY_ICONS.map((p, i) => {
+              const Icon = p.icon;
               return (
-                <button
-                  key={i}
-                  className="flex-shrink-0 w-[200px] rounded-2xl p-4 text-left active:scale-[0.98] transition-transform"
-                  style={{ background: `linear-gradient(135deg,${g.from},${g.to})` }}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-                      <Icon size={18} className="text-white" />
-                    </div>
-                    <span className="text-[11px] font-bold text-white bg-black/20 px-2 py-0.5 rounded-full">+{g.pts} pts</span>
+                <button key={i} className="flex flex-col items-center gap-1.5 py-1 active:scale-95 transition-transform">
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: p.bg }}>
+                    <Icon size={22} style={{ color: p.fg }} />
                   </div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-white/70">{g.kind}</p>
-                  <p className="text-[14px] font-bold text-white leading-snug mt-0.5">{g.title}</p>
-                  <p className="text-[12px] text-white/60 mt-2">{g.meta}</p>
+                  <span className="text-[12px] font-semibold text-gray-700">{p.label}</span>
                 </button>
               );
             })}
+          </div>
+
+          {/* Cast Your Vote card */}
+          <div className="px-4">
+            <div className="rounded-3xl bg-white border border-gray-100 shadow-sm p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#eaf1ff" }}>
+                    <Tv size={18} style={{ color: "#2563eb" }} />
+                  </div>
+                  <span className="text-[16px] font-bold text-gray-900">Cast Your Vote</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] text-gray-400">1/3</span>
+                  <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
+                    <ChevronRight size={16} className="text-gray-500" />
+                  </div>
+                </div>
+              </div>
+              <p className="text-[19px] font-extrabold text-gray-900 leading-snug mb-4">{VOTE_CARD.question}</p>
+              <div className="grid grid-cols-2 gap-2.5">
+                {VOTE_CARD.options.map((o, i) => (
+                  <button key={i} className="rounded-2xl bg-gray-50 border border-gray-100 px-3 py-4 text-[14px] font-medium text-gray-700 text-center active:scale-[0.98] transition-transform">
+                    {o}
+                  </button>
+                ))}
+              </div>
+              <p className="text-right text-[13px] font-bold text-emerald-500 mt-3">+10 pts</p>
+            </div>
+          </div>
+
+          {/* Paradise Trivia card */}
+          <div className="px-4 mt-4">
+            <div className="rounded-3xl bg-white border border-gray-100 shadow-sm p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#f3effe" }}>
+                    <Brain size={18} style={{ color: "#7c3aed" }} />
+                  </div>
+                  <div>
+                    <p className="text-[16px] font-bold text-gray-900 leading-tight">Paradise Trivia</p>
+                    <p className="text-[12px] text-gray-400">2 questions</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
+                    <ChevronRight size={16} className="text-gray-500" />
+                  </div>
+                  <span className="text-[13px] text-gray-400">1/2</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <Tv size={13} style={{ color: "#7c3aed" }} />
+                <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: "#7c3aed" }}>{TRIVIA_CARD.tag}</span>
+              </div>
+              <p className="text-[19px] font-extrabold text-gray-900 leading-snug mb-4">{TRIVIA_CARD.question}</p>
+              <div className="grid grid-cols-2 gap-2.5">
+                {TRIVIA_CARD.options.map((o, i) => (
+                  <button key={i} className="rounded-2xl bg-gray-50 border border-gray-100 px-3 py-4 text-[14px] font-medium text-gray-700 text-center active:scale-[0.98] transition-transform">
+                    {o}
+                  </button>
+                ))}
+              </div>
+              <p className="text-right text-[13px] font-bold text-emerald-500 mt-3">+30 pts</p>
+            </div>
           </div>
         </div>
         )}
@@ -293,7 +352,6 @@ export default function NewRoom() {
         )}
 
       </div>
-      <Navigation hideTopBar />
     </div>
   );
 }
