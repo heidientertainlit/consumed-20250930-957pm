@@ -1906,9 +1906,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>{/* end card stack area */}
 
           {/* Reviewer context — title, avatar, name, alignment + stars; review below (updates as you swipe) */}
-          <div className="px-4 pt-2 pb-1" onClick={(e) => e.stopPropagation()}>
+          <div className="px-4 pt-3 pb-1" onClick={(e) => e.stopPropagation()}>
             {post.mediaTitle && (
-              <p className="text-[15px] font-bold text-gray-900 leading-snug mb-2">{post.mediaTitle}</p>
+              <p className="text-[19px] font-bold text-gray-900 leading-snug mb-3">{post.mediaTitle}</p>
             )}
             <div className="flex items-center gap-2.5">
               <div
@@ -1918,7 +1918,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {displayName[0]?.toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[15px] font-semibold text-gray-900 leading-tight truncate">{displayName}</p>
+                <p className="text-[15px] font-medium text-gray-800 leading-tight truncate">{displayName}</p>
                 {isOtherUser && tasteAlignment !== null ? (
                   <p className="text-[13px] text-violet-600 font-medium leading-tight"><span className="font-semibold">{tasteAlignment}%</span> aligned with you</p>
                 ) : isOtherUser && alignmentNudge && !ratingSubmitted ? (
@@ -1944,7 +1944,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
             {/* Review text — opens the discussion */}
             {hasContent && (
-              <p className="text-[15px] text-gray-800 leading-relaxed mt-3">{post.content}</p>
+              <p className="text-[15px] text-gray-800 leading-relaxed mt-3.5">{post.content}</p>
             )}
 
             {/* Your own rating, once submitted */}
@@ -1954,17 +1954,17 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
 
           {/* light divider between review and actions */}
-          <div className="border-t border-gray-100 mx-4 mt-2.5 mb-2" />
+          <div className="border-t border-gray-100 mx-4 mt-4 mb-3" />
 
           {/* ── Action row: Agree · Disagree · Rate (compact inline, minimal gray) ── */}
-          <div className="flex items-center gap-6 px-4 pb-3" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-7 px-4 pb-4" onClick={(e) => e.stopPropagation()}>
           {/* Agree */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
             className="flex items-center gap-1.5 active:scale-95 transition-transform"
           >
-            <ArrowUp size={16} className={isLiked && !localReaction ? 'text-gray-700' : 'text-gray-500'} strokeWidth={isLiked && !localReaction ? 2.75 : 2} />
-            <span className={`text-[13px] ${isLiked && !localReaction ? 'text-gray-900 font-bold' : 'text-gray-600 font-semibold'}`}>Agree</span>
+            <ArrowUp size={15} className={isLiked && !localReaction ? 'text-gray-700' : 'text-gray-400'} strokeWidth={isLiked && !localReaction ? 2.5 : 2} />
+            <span className={`text-[12px] ${isLiked && !localReaction ? 'text-gray-800 font-semibold' : 'text-gray-500 font-medium'}`}>Agree</span>
           </button>
 
           {/* Disagree */}
@@ -1972,8 +1972,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             onClick={(e) => { e.stopPropagation(); handleReaction('down'); }}
             className="flex items-center gap-1.5 active:scale-95 transition-transform"
           >
-            <ArrowDown size={16} className={localReaction === 'down' ? 'text-gray-700' : 'text-gray-500'} strokeWidth={localReaction === 'down' ? 2.75 : 2} />
-            <span className={`text-[13px] ${localReaction === 'down' ? 'text-gray-900 font-bold' : 'text-gray-600 font-semibold'}`}>Disagree</span>
+            <ArrowDown size={15} className={localReaction === 'down' ? 'text-gray-700' : 'text-gray-400'} strokeWidth={localReaction === 'down' ? 2.5 : 2} />
+            <span className={`text-[12px] ${localReaction === 'down' ? 'text-gray-800 font-semibold' : 'text-gray-500 font-medium'}`}>Disagree</span>
           </button>
 
           {/* Rate it — other user's post */}
@@ -1982,8 +1982,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               onClick={(e) => { e.stopPropagation(); setShowInlineRater(v => !v); }}
               className="flex items-center gap-1.5 active:scale-95 transition-transform"
             >
-              <Star size={16} className={ratingSubmitted ? 'text-gray-700 fill-gray-300' : showInlineRater ? 'text-gray-700' : 'text-gray-500'} strokeWidth={2} />
-              <span className={`text-[13px] font-semibold ${ratingSubmitted ? 'text-gray-800' : showInlineRater ? 'text-gray-900' : 'text-gray-600'}`}>
+              <Star size={15} className={ratingSubmitted ? 'text-gray-700 fill-gray-300' : showInlineRater ? 'text-gray-700' : 'text-gray-400'} strokeWidth={2} />
+              <span className={`text-[12px] ${ratingSubmitted ? 'text-gray-700 font-semibold' : showInlineRater ? 'text-gray-800 font-semibold' : 'text-gray-500 font-medium'}`}>
                 {ratingSubmitted ? `${ratingValue}★` : 'Rate'}
               </span>
             </button>
