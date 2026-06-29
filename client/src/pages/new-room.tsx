@@ -349,12 +349,14 @@ export default function NewRoom() {
                     <button
                       key={i}
                       onClick={() => setComposerMode(s.label)}
-                      className="flex flex-col items-center gap-1.5 py-1 active:scale-95 transition-transform"
+                      className="flex flex-col items-center gap-1 py-1 active:scale-95 transition-transform"
                     >
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center transition-all" style={{ background: active ? ACCENT : "#f3f4f6" }}>
-                        <Icon size={20} style={{ color: active ? "#fff" : "#9ca3af" }} />
+                      <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
+                        active ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-500"
+                      }`}>
+                        <Icon size={20} />
                       </div>
-                      <span className="text-[12px] font-semibold" style={{ color: active ? ACCENT : "#9ca3af" }}>{s.label}</span>
+                      <span className={`text-[12px] font-semibold ${active ? "text-purple-700" : "text-gray-500"}`}>{s.label}</span>
                     </button>
                   );
                 })}
