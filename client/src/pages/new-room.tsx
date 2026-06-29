@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   ChevronLeft, MoreHorizontal, Check, Plus, Star, Trophy, Search, Globe, Copy,
-  TrendingUp, Sparkle, MessageCircle, ArrowUpRight,
+  TrendingUp, Sparkle, MessageCircle, ArrowUpRight, BarChart3, Image as ImageIcon,
   Brain, Vote, Zap, Flame, Bookmark, Bell, Users,
 } from "lucide-react";
 import Navigation from "@/components/navigation";
@@ -36,6 +36,14 @@ const TITLES = [
   { name: "Dateline", from: "#1f2937", to: "#0b1220" },
   { name: "Making a Murderer", from: "#4a2f2f", to: "#1f1414" },
   { name: "On Patrol Live", from: "#1e3a34", to: "#0c1a17" },
+];
+
+// ── Conversation composer options ─────────────────────────────────────
+const SHARE = [
+  { label: "Take", icon: Flame, bg: "#fff1e8", fg: "#f97316" },
+  { label: "Discussion", icon: MessageCircle, bg: "#f3effe", fg: "#7c3aed" },
+  { label: "Poll", icon: BarChart3, bg: "#eaf1ff", fg: "#2563eb" },
+  { label: "Prediction", icon: TrendingUp, bg: "#e7f9f0", fg: "#10b981" },
 ];
 
 // ── Hot takes ─────────────────────────────────────────────────────────
@@ -216,10 +224,32 @@ export default function NewRoom() {
           </div>
         </div>
 
-        {/* ── Hot Takes ── */}
+        {/* ── Join the conversation (composer + takes) ── */}
         <div className="pt-7">
-          <SectionHeader title="Hot Takes" action="" />
-          <div className="px-4 space-y-3">
+          <SectionHeader title="Join the conversation" action="" />
+
+          {/* share options */}
+          <div className="px-4">
+            <div className="grid grid-cols-4 gap-2">
+              {SHARE.map((s, i) => {
+                const Icon = s.icon;
+                return (
+                  <button key={i} className="flex flex-col items-center gap-1.5 py-2 active:scale-95 transition-transform">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: s.bg }}>
+                      <Icon size={20} style={{ color: s.fg }} />
+                    </div>
+                    <span className="text-[12px] font-semibold text-gray-700">{s.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <button className="mt-3 w-full flex items-center justify-center gap-2 rounded-2xl border border-gray-200 py-3 text-[14px] font-semibold text-gray-700 active:scale-[0.99] transition-transform">
+              <ImageIcon size={17} className="text-pink-500" /> Add Media
+            </button>
+          </div>
+
+          {/* takes below */}
+          <div className="px-4 space-y-3 mt-5">
             {TAKES.map((t, i) => (
               <div key={i} className="rounded-2xl border border-gray-100 p-4">
                 <div className="flex items-center justify-between mb-2">
