@@ -174,27 +174,6 @@ export default function NewRoom() {
           </div>
         </div>
 
-        {/* ════════ DISCUSS ════════ */}
-        {tab === "Discuss" && (<>
-
-        {/* ── This Week's Spotlight ── */}
-        <div className="px-4 pt-6">
-          <p className="text-[13px] font-bold uppercase tracking-wider text-gray-500 mb-3 px-1">This Week's Spotlight</p>
-          <div className="relative rounded-3xl overflow-hidden h-44" style={{ background: "linear-gradient(120deg,#1a1530 0%,#2d1f4e 55%,#4a2f5e 100%)" }}>
-            <div className="absolute inset-0 opacity-30" style={{ background: "radial-gradient(circle at 80% 30%, rgba(168,85,247,0.6), transparent 60%)" }} />
-            <div className="absolute inset-0 p-5 flex flex-col justify-between">
-              <div>
-                <h2 className="text-white text-2xl font-extrabold leading-tight">Paradise Finale</h2>
-                <p className="text-white/70 text-[14px] mt-1 max-w-[200px]">Everyone is debating the ending.</p>
-              </div>
-              <button className="self-start bg-white text-gray-900 text-[13px] font-bold px-4 py-2.5 rounded-full active:scale-95 transition-transform">
-                Join the conversation
-              </button>
-            </div>
-          </div>
-        </div>
-        </>)}
-
         {/* ════════ PLAY ════════ */}
         {tab === "Play" && (
         <div className="pt-7">
