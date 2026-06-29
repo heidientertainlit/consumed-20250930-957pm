@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   ChevronLeft, ChevronRight, MoreHorizontal, Check, Plus, Globe, Copy,
-  TrendingUp, Sparkle, MessageCircle, ArrowUpRight, BarChart3, Image as ImageIcon,
+  TrendingUp, Sparkle, MessageCircle, ArrowUpRight, BarChart3,
   Brain, Vote, Tv, Flame, Bookmark, Bell, Users,
 } from "lucide-react";
 import Navigation from "@/components/navigation";
@@ -317,9 +317,6 @@ export default function NewRoom() {
                 );
               })}
             </div>
-            <button className="mt-3 w-full flex items-center justify-center gap-2 rounded-2xl border border-gray-200 py-3 text-[14px] font-semibold text-gray-700 active:scale-[0.99] transition-transform">
-              <ImageIcon size={17} className="text-pink-500" /> Add Media
-            </button>
           </div>
 
           {/* takes below */}
