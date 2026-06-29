@@ -85,7 +85,7 @@ const COMPOSER_PLACEHOLDERS: Record<string, string> = {
 export default function NewRoom() {
   const [following, setFollowing] = useState(false);
   const [tab, setTab] = useState<Tab>("Discuss");
-  const [composerMode, setComposerMode] = useState("Take");
+  const [composerMode, setComposerMode] = useState("Discussion");
   const matchPct = 92;
 
   return (
@@ -343,20 +343,17 @@ export default function NewRoom() {
                       onClick={() => setComposerMode(s.label)}
                       className="flex flex-col items-center gap-1.5 py-1 active:scale-95 transition-transform"
                     >
-                      <div className="w-11 h-11 rounded-full flex items-center justify-center transition-all" style={{ background: active ? s.fg : s.bg }}>
-                        <Icon size={19} style={{ color: active ? "#fff" : s.fg }} />
+                      <div className="w-11 h-11 rounded-full flex items-center justify-center transition-all" style={{ background: active ? ACCENT : "#f3f4f6" }}>
+                        <Icon size={19} style={{ color: active ? "#fff" : "#9ca3af" }} />
                       </div>
-                      <span className="text-[12px] font-semibold" style={{ color: active ? s.fg : "#6b7280" }}>{s.label}</span>
+                      <span className="text-[12px] font-semibold" style={{ color: active ? ACCENT : "#9ca3af" }}>{s.label}</span>
                     </button>
                   );
                 })}
               </div>
 
               {/* footer actions */}
-              <div className="mt-3 flex items-center justify-between">
-                <button className="flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 text-[13px] font-semibold text-purple-600 active:scale-95 transition-transform">
-                  <Plus size={14} strokeWidth={2.5} /> Add media
-                </button>
+              <div className="mt-3 flex items-center justify-end">
                 <button className="rounded-full px-6 py-2 text-[14px] font-semibold text-white active:scale-95 transition-transform" style={{ background: ACCENT }}>Post</button>
               </div>
             </div>
