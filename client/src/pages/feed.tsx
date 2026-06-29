@@ -1917,14 +1917,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               </div>
             )}
 
-            {/* Quoted review or thought */}
-            {hasContent && (
-              <p className="text-white text-[14px] font-medium leading-snug line-clamp-2 italic mb-1 drop-shadow-sm">
-                "{post.content}"
-              </p>
-            )}
-
-            {/* Attribution */}
+            {/* Attribution (review text moved to white block below the poster) */}
             <p className="text-white/65 text-xs font-medium mb-3">— {displayName}</p>
 
           </div>
@@ -1933,6 +1926,24 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           })()}
 
           </div>{/* end card stack area */}
+
+          {/* Reviewer's take — on white, opens the discussion (updates as you swipe) */}
+          {hasContent && (
+            <div className="px-4 pt-3 pb-1" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-start gap-2.5">
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-0.5"
+                  style={{ background: `hsl(${(displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
+                >
+                  {displayName[0]?.toUpperCase()}
+                </div>
+                <p className="flex-1 min-w-0 text-[13px] text-gray-800 leading-relaxed">
+                  <span className="font-semibold text-gray-900">{displayName}</span>{' '}
+                  {post.content}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Compact rated + aligned row below the fan */}
           {isOtherUser && (ratingSubmitted || tasteAlignment !== null || alignmentNudge) && (
