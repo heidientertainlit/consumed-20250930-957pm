@@ -1950,41 +1950,35 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             )}
           </div>
 
-          {/* ── Action row: Agree · Disagree · Rate it ── */}
-          <div className="flex items-start justify-center gap-6 px-4 mt-3 pb-3" onClick={(e) => e.stopPropagation()}>
+          {/* ── Action row: Agree · Disagree · Rate (compact inline) ── */}
+          <div className="flex items-center gap-6 px-4 mt-2 pb-3" onClick={(e) => e.stopPropagation()}>
           {/* Agree */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
-            className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+            className="flex items-center gap-1.5 active:scale-95 transition-transform"
           >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md border ${isLiked && !localReaction ? 'bg-purple-100 border-purple-200' : 'bg-white border-gray-200'}`}>
-              <ArrowUp size={18} className={isLiked && !localReaction ? 'text-purple-600' : 'text-gray-500'} strokeWidth={isLiked && !localReaction ? 2.5 : 1.75} />
-            </div>
-            <span className={`text-[10px] font-medium ${isLiked && !localReaction ? 'text-purple-600' : 'text-gray-500'}`}>Agree</span>
+            <ArrowUp size={16} className="text-green-600" strokeWidth={isLiked && !localReaction ? 2.75 : 2} />
+            <span className={`text-[13px] text-green-600 ${isLiked && !localReaction ? 'font-bold' : 'font-semibold'}`}>Agree</span>
           </button>
 
           {/* Disagree */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('down'); }}
-            className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+            className="flex items-center gap-1.5 active:scale-95 transition-transform"
           >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md border ${localReaction === 'down' ? 'bg-gray-200 border-gray-300' : 'bg-white border-gray-200'}`}>
-              <ArrowDown size={18} className={localReaction === 'down' ? 'text-gray-700' : 'text-gray-500'} strokeWidth={localReaction === 'down' ? 2.5 : 1.75} />
-            </div>
-            <span className={`text-[10px] font-medium ${localReaction === 'down' ? 'text-gray-700' : 'text-gray-500'}`}>Disagree</span>
+            <ArrowDown size={16} className="text-red-500" strokeWidth={localReaction === 'down' ? 2.75 : 2} />
+            <span className={`text-[13px] text-red-500 ${localReaction === 'down' ? 'font-bold' : 'font-semibold'}`}>Disagree</span>
           </button>
 
           {/* Rate it — other user's post */}
           {isOtherUser && session?.access_token && (
             <button
               onClick={(e) => { e.stopPropagation(); setShowInlineRater(v => !v); }}
-              className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+              className="flex items-center gap-1.5 active:scale-95 transition-transform"
             >
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md border ${ratingSubmitted ? 'bg-yellow-400 border-yellow-400' : showInlineRater ? 'bg-violet-600 border-violet-600' : 'bg-white border-gray-200'}`}>
-                <Star size={18} className={ratingSubmitted ? 'text-white' : showInlineRater ? 'text-white' : 'text-gray-500'} strokeWidth={showInlineRater ? 2 : 1.75} />
-              </div>
-              <span className={`text-[10px] font-medium ${showInlineRater ? 'text-purple-600' : ratingSubmitted ? 'text-yellow-500' : 'text-gray-500'}`}>
-                {ratingSubmitted ? `${ratingValue}★` : 'Rate it'}
+              <Star size={16} className={ratingSubmitted ? 'text-yellow-500 fill-yellow-400' : showInlineRater ? 'text-violet-600' : 'text-gray-500'} strokeWidth={2} />
+              <span className={`text-[13px] font-semibold ${ratingSubmitted ? 'text-yellow-500' : showInlineRater ? 'text-violet-600' : 'text-gray-600'}`}>
+                {ratingSubmitted ? `${ratingValue}★` : 'Rate'}
               </span>
             </button>
           )}
