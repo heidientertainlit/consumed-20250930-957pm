@@ -1819,7 +1819,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
 
           {/* Card stack area — SeenIt exact layout */}
-          <div className="relative flex items-center justify-center select-none" style={{ height: 290, overflow: 'visible' }}>
+          <div className="relative flex items-center justify-center select-none" style={{ height: 296, overflow: 'visible' }}>
 
             {/* Left peek card — previous post */}
             {stackPosts && (stackIndex ?? 0) > 0 && (stackPosts[(stackIndex ?? 0) - 1]?.mediaImage || '').startsWith('http') && (
@@ -1906,7 +1906,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>{/* end card stack area */}
 
           {/* Reviewer context — avatar, name, alignment + stars; review below (updates as you swipe) */}
-          <div className="px-4 pt-1 pb-1" onClick={(e) => e.stopPropagation()}>
+          <div className="px-4 pt-2 pb-1" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2.5">
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
