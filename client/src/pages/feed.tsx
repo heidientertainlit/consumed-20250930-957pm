@@ -1910,7 +1910,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           <div className="px-4 pt-3 pb-1" onClick={(e) => e.stopPropagation()}>
             {post.mediaTitle && (
               <div className="mb-3">
-                <p className="text-[16px] font-medium text-gray-900 leading-snug text-center">{post.mediaTitle}</p>
+                <p className="text-[14px] font-medium text-gray-900 leading-snug text-center">{post.mediaTitle}</p>
                 {mediaCreator && (
                   <p className="text-[13px] text-gray-500 leading-snug text-center mt-0.5">by {mediaCreator}</p>
                 )}
