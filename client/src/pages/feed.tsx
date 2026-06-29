@@ -1825,7 +1825,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {/* Left peek card — previous post */}
             {stackPosts && (stackIndex ?? 0) > 0 && (stackPosts[(stackIndex ?? 0) - 1]?.mediaImage || '').startsWith('http') && (
               <div style={{
-                position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
+                position: 'absolute', width: 188, height: 282, borderRadius: 16, overflow: 'hidden',
                 transform: 'translateX(-52px) rotate(-8deg) scale(0.88)',
                 zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
               }}>
@@ -1836,7 +1836,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {/* Right peek card — next post */}
             {stackPosts && (stackPosts[(stackIndex ?? 0) + 1]?.mediaImage || '').startsWith('http') && (
               <div style={{
-                position: 'absolute', width: 195, height: 282, borderRadius: 16, overflow: 'hidden',
+                position: 'absolute', width: 188, height: 282, borderRadius: 16, overflow: 'hidden',
                 transform: 'translateX(52px) rotate(8deg) scale(0.88)',
                 zIndex: 2, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
               }}>
@@ -1852,7 +1852,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               key={swipeProps?.animKey ?? 0}
               className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
               style={{
-                position: 'absolute', width: 208, height: 282, borderRadius: 16, overflow: 'hidden',
+                position: 'absolute', width: 188, height: 282, borderRadius: 16, overflow: 'hidden',
                 zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.28)',
                 animation: `seen-it-${enterDir} 0.24s cubic-bezier(0.25, 0.46, 0.45, 0.94) both`,
               }}
