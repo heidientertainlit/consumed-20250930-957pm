@@ -13,10 +13,10 @@ type TabType = "take" | "review" | "poll" | "prediction";
 type MediaFilter = "all" | "tv" | "movie" | "book" | "podcast" | "music" | "game" | "youtube";
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode; placeholder: string }[] = [
-  { id: "take",       label: "Take",       icon: <Flame className="w-3.5 h-3.5" />,       placeholder: "What's your hot take?" },
-  { id: "review",     label: "Rate",       icon: <Star className="w-3.5 h-3.5" />,         placeholder: "Write your review..." },
-  { id: "poll",       label: "Poll",       icon: <BarChart2 className="w-3.5 h-3.5" />,    placeholder: "Ask a question..." },
-  { id: "prediction", label: "Prediction", icon: <TrendingUp className="w-3.5 h-3.5" />,   placeholder: "Make a prediction..." },
+  { id: "take",       label: "Take",       icon: <Flame className="w-5 h-5" />,       placeholder: "What's your hot take?" },
+  { id: "review",     label: "Rate",       icon: <Star className="w-5 h-5" />,         placeholder: "Write your review..." },
+  { id: "poll",       label: "Poll",       icon: <BarChart2 className="w-5 h-5" />,    placeholder: "Ask a question..." },
+  { id: "prediction", label: "Prediction", icon: <TrendingUp className="w-5 h-5" />,   placeholder: "Make a prediction..." },
 ];
 
 const MEDIA_FILTERS: { id: MediaFilter; label: string }[] = [
@@ -677,15 +677,23 @@ export default function FeedComposerBar({
             {/* Bottom toolbar */}
             <div className="px-5 pb-4 pt-2 border-t border-gray-100 space-y-2">
               <div className="flex gap-1.5">
-                {TABS.map(tab => (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-all ${
-                      activeTab === tab.id ? "bg-purple-100 text-purple-700" : "text-gray-400 hover:bg-gray-100"
-                    }`}
-                  >
-                    {tab.icon}{tab.label}
-                  </button>
-                ))}
+                {TABS.map(tab => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                      className="flex flex-col items-center gap-1 flex-1 py-1 active:scale-95 transition-transform"
+                    >
+                      <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
+                        isActive ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-500"
+                      }`}>
+                        {tab.icon}
+                      </div>
+                      <span className={`text-[11px] font-semibold ${isActive ? "text-purple-700" : "text-gray-500"}`}>
+                        {tab.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
               <div>
                 <button
