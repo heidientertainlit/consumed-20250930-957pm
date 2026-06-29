@@ -86,6 +86,7 @@ export default function NewRoom() {
   const [following, setFollowing] = useState(false);
   const [tab, setTab] = useState<Tab>("Discuss");
   const [composerMode, setComposerMode] = useState("Discussion");
+  const [composerOpen, setComposerOpen] = useState(false);
   const matchPct = 92;
 
   return (
@@ -310,57 +311,69 @@ export default function NewRoom() {
         <div className="pt-7">
           <SectionHeader title="Join the conversation" action="" />
 
-          {/* inline composer (always visible) — modal-style */}
+          {/* inline composer — collapses to a calm prompt, expands on tap */}
           <div className="px-4">
             <div className="rounded-3xl border border-gray-100 shadow-sm bg-white overflow-hidden">
-              {/* header bar */}
-              <div className="flex items-center justify-between px-5 py-3.5">
-                <button className="text-[15px] font-medium text-gray-400 active:opacity-70">Cancel</button>
-                <span className="text-[16px] font-bold text-gray-900">{composerMode}</span>
-                <button className="rounded-full px-5 py-2 text-[14px] font-semibold text-white active:scale-95 transition-transform" style={{ background: "rgba(124,58,237,0.45)" }}>Post</button>
-              </div>
-              <div className="border-t border-gray-100" />
-
-              {/* textarea */}
-              <div className="px-5 pt-4 pb-5">
-                <textarea
-                  rows={3}
-                  placeholder={COMPOSER_PLACEHOLDERS[composerMode]}
-                  className="w-full resize-none border-0 outline-none bg-transparent text-[16px] text-gray-900 placeholder:text-gray-400"
-                />
-
-                {/* poll / prediction option stubs */}
-                {(composerMode === "Poll" || composerMode === "Prediction") && (
-                  <div className="mt-2 space-y-2">
-                    {["Option 1", "Option 2"].map((o, i) => (
-                      <div key={i} className="rounded-xl border border-gray-200 px-3 py-2.5 text-[14px] text-gray-400">{o}</div>
-                    ))}
+              {!composerOpen ? (
+                /* collapsed: single-line prompt */
+                <button
+                  onClick={() => setComposerOpen(true)}
+                  className="w-full text-left px-5 py-4 text-[16px] text-gray-400 active:bg-gray-50 transition-colors"
+                >
+                  {COMPOSER_PLACEHOLDERS[composerMode]}
+                </button>
+              ) : (
+                <>
+                  {/* header bar — no title; selected icon names the mode */}
+                  <div className="flex items-center justify-between px-5 py-3.5">
+                    <button onClick={() => setComposerOpen(false)} className="text-[15px] font-medium text-gray-400 active:opacity-70">Cancel</button>
+                    <button className="rounded-full px-5 py-2 text-[14px] font-semibold text-white active:scale-95 transition-transform" style={{ background: "rgba(124,58,237,0.45)" }}>Post</button>
                   </div>
-                )}
-              </div>
-              <div className="border-t border-gray-100" />
+                  <div className="border-t border-gray-100" />
 
-              {/* mode selector */}
-              <div className="px-4 py-4 grid grid-cols-4 gap-2">
-                {SHARE.map((s, i) => {
-                  const Icon = s.icon;
-                  const active = composerMode === s.label;
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => setComposerMode(s.label)}
-                      className="flex flex-col items-center gap-1 py-1 active:scale-95 transition-transform"
-                    >
-                      <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
-                        active ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-500"
-                      }`}>
-                        <Icon size={20} />
+                  {/* textarea */}
+                  <div className="px-5 pt-4 pb-5">
+                    <textarea
+                      autoFocus
+                      rows={3}
+                      placeholder={COMPOSER_PLACEHOLDERS[composerMode]}
+                      className="w-full resize-none border-0 outline-none bg-transparent text-[16px] text-gray-900 placeholder:text-gray-400"
+                    />
+
+                    {/* poll / prediction option stubs */}
+                    {(composerMode === "Poll" || composerMode === "Prediction") && (
+                      <div className="mt-2 space-y-2">
+                        {["Option 1", "Option 2"].map((o, i) => (
+                          <div key={i} className="rounded-xl border border-gray-200 px-3 py-2.5 text-[14px] text-gray-400">{o}</div>
+                        ))}
                       </div>
-                      <span className={`text-[12px] font-semibold ${active ? "text-purple-700" : "text-gray-500"}`}>{s.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+                    )}
+                  </div>
+                  <div className="border-t border-gray-100" />
+
+                  {/* mode selector */}
+                  <div className="px-4 py-4 grid grid-cols-4 gap-2">
+                    {SHARE.map((s, i) => {
+                      const Icon = s.icon;
+                      const active = composerMode === s.label;
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => setComposerMode(s.label)}
+                          className="flex flex-col items-center gap-1 py-1 active:scale-95 transition-transform"
+                        >
+                          <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
+                            active ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-500"
+                          }`}>
+                            <Icon size={20} />
+                          </div>
+                          <span className={`text-[12px] font-semibold ${active ? "text-purple-700" : "text-gray-500"}`}>{s.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
