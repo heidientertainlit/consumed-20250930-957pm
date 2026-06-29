@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   ChevronLeft, ChevronRight, MoreHorizontal, Check, Plus, Globe, Copy,
   TrendingUp, Sparkle, MessageCircle, ArrowUpRight, BarChart3,
-  Brain, Vote, Tv, Flame, Bookmark, Bell, Users,
+  Brain, Vote, Tv, Flame, Bookmark, Bell, Users, X,
 } from "lucide-react";
 import Navigation from "@/components/navigation";
 
@@ -313,7 +313,7 @@ export default function NewRoom() {
 
           {/* inline composer — collapses to a calm prompt, expands on tap */}
           <div className="px-4">
-            <div className="rounded-3xl border border-gray-100 shadow-sm bg-white overflow-hidden">
+            <div className="relative rounded-3xl border border-gray-100 shadow-sm bg-white overflow-hidden">
               {!composerOpen ? (
                 /* collapsed: single-line prompt */
                 <button
@@ -324,14 +324,17 @@ export default function NewRoom() {
                 </button>
               ) : (
                 <>
-                  {/* header bar — Cancel only; Post moved to bottom */}
-                  <div className="flex items-center px-5 py-3.5">
-                    <button onClick={() => setComposerOpen(false)} className="text-[15px] font-medium text-gray-400 active:opacity-70">Cancel</button>
-                  </div>
-                  <div className="border-t border-gray-100" />
+                  {/* close button */}
+                  <button
+                    onClick={() => setComposerOpen(false)}
+                    className="absolute top-3 right-3 p-1.5 rounded-full text-gray-400 active:bg-gray-100 transition-colors z-10"
+                    aria-label="Close composer"
+                  >
+                    <X size={20} />
+                  </button>
 
                   {/* textarea */}
-                  <div className="px-5 pt-4 pb-5">
+                  <div className="px-5 pt-5 pb-5 pr-12">
                     <textarea
                       autoFocus
                       rows={3}
