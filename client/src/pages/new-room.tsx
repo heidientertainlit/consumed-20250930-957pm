@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  ChevronLeft, Share2, MoreHorizontal, Sparkles, Check, Plus,
+  ChevronLeft, MoreHorizontal, Check, Plus, Star, Trophy, Search, Globe, Copy,
   TrendingUp, Sparkle, MessageCircle, ArrowUpRight,
   Brain, Vote, Zap, Flame, Bookmark, Bell, Users,
 } from "lucide-react";
@@ -61,53 +61,82 @@ export default function NewRoom() {
     <div className="min-h-screen bg-white">
       <div className="max-w-md mx-auto pb-28">
 
-        {/* ── Header ── */}
-        <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-100">
-          <div className="flex items-center justify-between px-3 py-3">
-            <button onClick={() => window.history.back()} className="p-1.5 rounded-full active:bg-gray-100">
-              <ChevronLeft size={24} className="text-gray-900" />
-            </button>
-            <div className="text-center">
-              <h1 className="text-[17px] font-bold text-gray-900 leading-tight">True Crime</h1>
-              <p className="text-[12px] text-gray-500">
-                124K members <span className="text-emerald-500">•</span> 2.1K online
-              </p>
-            </div>
-            <div className="flex items-center gap-1">
-              <button className="p-1.5 rounded-full active:bg-gray-100"><Share2 size={19} className="text-gray-700" /></button>
-              <button className="p-1.5 rounded-full active:bg-gray-100"><MoreHorizontal size={20} className="text-gray-700" /></button>
-            </div>
-          </div>
-        </div>
+        {/* ── Purple gradient hero header ── */}
+        <div className="relative px-4 pt-3 pb-5" style={{ background: "linear-gradient(165deg, #14101f 0%, #1d1638 55%, #2d1f6e 100%)" }}>
+          {/* glow */}
+          <div className="absolute inset-0 pointer-events-none opacity-40" style={{ background: "radial-gradient(circle at 85% 10%, rgba(168,85,247,0.45), transparent 55%)" }} />
 
-        {/* ── Match + Follow (room vibe) ── */}
-        <div className="px-4 pt-4">
-          <div className="rounded-2xl border border-gray-100 p-3.5" style={{ background: "linear-gradient(135deg,#faf7ff,#f3effe)" }}>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: ACCENT }}>
-                  <Sparkles size={18} className="text-white" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[14px] font-bold text-gray-900 leading-tight">
-                    {matchPct}% your vibe
-                  </p>
-                  <p className="text-[12px] text-gray-500 leading-tight">Matches your Entertainment DNA</p>
-                </div>
+          <div className="relative">
+            {/* Top utility bar */}
+            <div className="flex items-center justify-end gap-3 mb-4">
+              <div className="flex items-center gap-1.5 rounded-full px-3 py-1.5" style={{ background: "rgba(255,255,255,0.1)" }}>
+                <Star size={14} className="fill-amber-400 text-amber-400" />
+                <span className="text-[13px] font-bold text-white">16.4k</span>
+                <span className="text-[12px] text-white/50">pts</span>
               </div>
-              <button
-                onClick={() => setFollowing(f => !f)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-semibold flex-shrink-0 transition-all active:scale-95 ${
-                  following ? "bg-gray-100 text-gray-700" : "text-white"
-                }`}
-                style={following ? undefined : { background: ACCENT }}
-              >
-                {following ? <><Check size={15} /> Following</> : <><Plus size={15} /> Follow</>}
-              </button>
+              <button className="active:scale-90 transition-transform"><Trophy size={20} className="text-white/85" /></button>
+              <button className="active:scale-90 transition-transform"><Search size={20} className="text-white/85" /></button>
+              <button className="active:scale-90 transition-transform"><Bell size={20} className="text-white/85" /></button>
             </div>
-            {/* match bar */}
-            <div className="mt-3 h-1.5 rounded-full bg-white overflow-hidden">
-              <div className="h-full rounded-full" style={{ width: `${matchPct}%`, background: `linear-gradient(90deg,${ACCENT},#a855f7)` }} />
+
+            {/* Back + Following / Invite */}
+            <div className="flex items-center justify-between mb-5">
+              <button onClick={() => window.history.back()} className="p-1 -ml-1 active:scale-90 transition-transform">
+                <ChevronLeft size={26} className="text-white" />
+              </button>
+              <div className="flex items-center gap-2.5">
+                <button
+                  onClick={() => setFollowing(f => !f)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-semibold active:scale-95 transition-all"
+                  style={following
+                    ? { background: "rgba(124,58,237,0.35)", border: "1px solid rgba(168,85,247,0.6)", color: "#e9d5ff" }
+                    : { background: ACCENT, color: "#fff" }}
+                >
+                  {following ? <><Check size={15} /> Following</> : <><Plus size={15} /> Follow</>}
+                </button>
+                <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-semibold text-white/90 active:scale-95 transition-all" style={{ border: "1px solid rgba(255,255,255,0.2)" }}>
+                  <Copy size={14} /> Invite
+                </button>
+              </div>
+            </div>
+
+            {/* Title block (no poster) */}
+            <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-purple-300/80 mb-1">Room</p>
+            <h1 className="text-[30px] font-extrabold text-white leading-tight">True Crime</h1>
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <Globe size={14} className="text-emerald-400" />
+              <span className="text-[14px] font-semibold text-emerald-400">Public</span>
+            </div>
+
+            {/* Member avatars */}
+            <div className="flex items-center mt-3">
+              {[
+                { i: "J", c: "#f59e0b" },
+                { i: "J", c: "#a855f7" },
+                { i: "H", c: "#22d3ee" },
+              ].map((a, idx) => (
+                <div
+                  key={idx}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white ring-2"
+                  style={{ background: a.c, marginLeft: idx === 0 ? 0 : -8, ['--tw-ring-color' as any]: "#1d1638" }}
+                >
+                  {a.i}
+                </div>
+              ))}
+              <span className="ml-3 text-[13px] text-white/50">124K members</span>
+            </div>
+
+            {/* Room vibe bar (carries MATCH %) */}
+            <div className="mt-5 flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-white/40">Room Vibe</span>
+              <div className="flex items-center gap-1.5">
+                <MessageCircle size={15} className="text-purple-300" />
+                <span className="text-[14px] font-semibold text-white">Discussion crew</span>
+              </div>
+              <div className="ml-auto flex items-center gap-1.5 rounded-full px-3 py-1.5" style={{ background: "linear-gradient(90deg,#7c3aed,#a855f7)" }}>
+                <span className="text-[11px] font-bold uppercase tracking-wide text-white/80">Match</span>
+                <span className="text-[13px] font-extrabold text-white">{matchPct}%</span>
+              </div>
             </div>
           </div>
         </div>
