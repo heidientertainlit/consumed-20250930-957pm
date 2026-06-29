@@ -75,9 +75,17 @@ function SectionHeader({ title, action = "See all" }: { title: string; action?: 
 const TABS = ["Discuss", "Play", "Explore"] as const;
 type Tab = (typeof TABS)[number];
 
+const COMPOSER_PLACEHOLDERS: Record<string, string> = {
+  Take: "What's your hot take on True Crime?",
+  Discussion: "Start a discussion…",
+  Poll: "Ask the community a question…",
+  Prediction: "What do you think will happen?",
+};
+
 export default function NewRoom() {
   const [following, setFollowing] = useState(false);
   const [tab, setTab] = useState<Tab>("Discuss");
+  const [composerMode, setComposerMode] = useState("Take");
   const matchPct = 92;
 
   return (
@@ -302,20 +310,55 @@ export default function NewRoom() {
         <div className="pt-7">
           <SectionHeader title="Join the conversation" action="" />
 
-          {/* share options */}
+          {/* inline composer (always visible) */}
           <div className="px-4">
-            <div className="grid grid-cols-4 gap-2">
-              {SHARE.map((s, i) => {
-                const Icon = s.icon;
-                return (
-                  <button key={i} className="flex flex-col items-center gap-1.5 py-2 active:scale-95 transition-transform">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: s.bg }}>
-                      <Icon size={20} style={{ color: s.fg }} />
-                    </div>
-                    <span className="text-[12px] font-semibold text-gray-700">{s.label}</span>
-                  </button>
-                );
-              })}
+            <div className="rounded-3xl border border-gray-100 shadow-sm bg-white p-4">
+              {/* input row */}
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-[13px] font-bold text-white" style={{ background: ACCENT }}>H</div>
+                <textarea
+                  rows={2}
+                  placeholder={COMPOSER_PLACEHOLDERS[composerMode]}
+                  className="flex-1 resize-none border-0 outline-none bg-transparent text-[15px] text-gray-900 placeholder:text-gray-400 pt-1.5"
+                />
+              </div>
+
+              {/* poll / prediction option stubs */}
+              {(composerMode === "Poll" || composerMode === "Prediction") && (
+                <div className="mt-2 space-y-2">
+                  {["Option 1", "Option 2"].map((o, i) => (
+                    <div key={i} className="rounded-xl border border-gray-200 px-3 py-2.5 text-[14px] text-gray-400">{o}</div>
+                  ))}
+                </div>
+              )}
+
+              {/* mode selector */}
+              <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-4 gap-2">
+                {SHARE.map((s, i) => {
+                  const Icon = s.icon;
+                  const active = composerMode === s.label;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setComposerMode(s.label)}
+                      className="flex flex-col items-center gap-1.5 py-1 active:scale-95 transition-transform"
+                    >
+                      <div className="w-11 h-11 rounded-full flex items-center justify-center transition-all" style={{ background: active ? s.fg : s.bg }}>
+                        <Icon size={19} style={{ color: active ? "#fff" : s.fg }} />
+                      </div>
+                      <span className="text-[12px] font-semibold" style={{ color: active ? s.fg : "#6b7280" }}>{s.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* footer actions */}
+              <div className="mt-3 flex items-center justify-between">
+                <button className="flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 text-[13px] font-semibold text-purple-600 active:scale-95 transition-transform">
+                  <Plus size={14} strokeWidth={2.5} /> Add media
+                </button>
+                <button className="rounded-full px-6 py-2 text-[14px] font-semibold text-white active:scale-95 transition-transform" style={{ background: ACCENT }}>Post</button>
+              </div>
             </div>
           </div>
 
