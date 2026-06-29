@@ -1782,6 +1782,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     const hasPoster = !!(post.mediaImage && post.mediaImage.startsWith('http'));
     const hasContent = !!(post.content && post.content.trim());
     const hasRating = (post.rating || 0) > 0;
+    const mediaCreator = (post as any)._rawPost?.mediaItems?.[0]?.creator || (post as any).mediaCreator || '';
 
     return (
       <>
@@ -1908,7 +1909,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {/* Reviewer context — title, avatar, name, alignment + stars; review below (updates as you swipe) */}
           <div className="px-4 pt-3 pb-1" onClick={(e) => e.stopPropagation()}>
             {post.mediaTitle && (
-              <p className="text-[16px] font-medium text-gray-900 leading-snug mb-3 text-center">{post.mediaTitle}</p>
+              <div className="mb-3">
+                <p className="text-[16px] font-medium text-gray-900 leading-snug text-center">{post.mediaTitle}</p>
+                {mediaCreator && (
+                  <p className="text-[13px] text-gray-500 leading-snug text-center mt-0.5">by {mediaCreator}</p>
+                )}
+                <div className="border-t border-gray-100 mt-3" />
+              </div>
             )}
             <div className="flex items-center gap-2.5">
               <div
