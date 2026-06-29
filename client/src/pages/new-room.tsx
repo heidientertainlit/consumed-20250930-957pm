@@ -293,7 +293,7 @@ export default function NewRoom() {
         )}
 
       </div>
-      <Navigation />
+      <Navigation hideTopBar />
     </div>
   );
 }
