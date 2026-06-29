@@ -3,6 +3,7 @@ import {
   ChevronLeft, ChevronRight, MoreHorizontal, Check, Plus, Globe, Copy,
   TrendingUp, Sparkle, MessageCircle, ArrowUpRight, BarChart3,
   Brain, Vote, Tv, Flame, Bookmark, Bell, Users, X,
+  Flag, EyeOff, BellOff,
 } from "lucide-react";
 import Navigation from "@/components/navigation";
 
@@ -87,6 +88,8 @@ export default function NewRoom() {
   const [tab, setTab] = useState<Tab>("Discuss");
   const [composerMode, setComposerMode] = useState("Discussion");
   const [composerOpen, setComposerOpen] = useState(false);
+  const [menuFor, setMenuFor] = useState<number | null>(null);
+  const [flagged, setFlagged] = useState<number[]>([]);
   const matchPct = 92;
 
   return (
@@ -388,13 +391,50 @@ export default function NewRoom() {
           <div className="px-4 space-y-3 mt-5">
             {TAKES.map((t, i) => (
               <div key={i} className="rounded-2xl border border-gray-100 p-4">
+                {flagged.includes(i) ? (
+                  <div className="flex items-center gap-2 py-2 text-[13px] text-gray-500">
+                    <Flag size={15} className="text-gray-400" />
+                    <span>Thanks — this take has been reported for review.</span>
+                  </div>
+                ) : (
+                <>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5">
                     <Flame size={14} className="text-orange-500" />
                     <span className="text-[11px] font-bold uppercase tracking-wide text-orange-500">Hot Take</span>
                     <span className="text-[12px] text-gray-400">· {t.time}</span>
                   </div>
-                  <button><MoreHorizontal size={18} className="text-gray-400" /></button>
+                  <div className="relative">
+                    <button onClick={() => setMenuFor(menuFor === i ? null : i)} aria-label="More options">
+                      <MoreHorizontal size={18} className="text-gray-400" />
+                    </button>
+                    {menuFor === i && (
+                      <>
+                        {/* tap-away backdrop */}
+                        <div className="fixed inset-0 z-10" onClick={() => setMenuFor(null)} />
+                        <div className="absolute right-0 top-7 z-20 w-52 rounded-2xl border border-gray-100 bg-white shadow-lg overflow-hidden py-1">
+                          <button
+                            onClick={() => { setFlagged((f) => [...f, i]); setMenuFor(null); }}
+                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-red-600 active:bg-gray-50"
+                          >
+                            <Flag size={16} /> Flag as inappropriate
+                          </button>
+                          <button
+                            onClick={() => setMenuFor(null)}
+                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-gray-700 active:bg-gray-50"
+                          >
+                            <EyeOff size={16} className="text-gray-400" /> Not interested
+                          </button>
+                          <button
+                            onClick={() => setMenuFor(null)}
+                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-gray-700 active:bg-gray-50"
+                          >
+                            <BellOff size={16} className="text-gray-400" /> Mute {t.author}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <p className="text-[15px] font-semibold text-gray-900 mb-3">{t.text}</p>
                 <div className="flex items-center justify-between">
@@ -407,6 +447,8 @@ export default function NewRoom() {
                     <button className="active:text-gray-700"><Bell size={16} /></button>
                   </div>
                 </div>
+                </>
+                )}
               </div>
             ))}
           </div>
