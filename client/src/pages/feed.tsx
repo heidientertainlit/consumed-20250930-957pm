@@ -1908,7 +1908,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {/* Reviewer context — title, avatar, name, alignment + stars; review below (updates as you swipe) */}
           <div className="px-4 pt-3 pb-1" onClick={(e) => e.stopPropagation()}>
             {post.mediaTitle && (
-              <p className="text-[16px] font-bold text-gray-900 leading-snug mb-3 text-center">{post.mediaTitle}</p>
+              <p className="text-[16px] font-medium text-gray-900 leading-snug mb-3 text-center">{post.mediaTitle}</p>
             )}
             <div className="flex items-center gap-2.5">
               <div
