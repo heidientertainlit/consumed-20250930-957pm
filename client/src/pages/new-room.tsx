@@ -310,30 +310,38 @@ export default function NewRoom() {
         <div className="pt-7">
           <SectionHeader title="Join the conversation" action="" />
 
-          {/* inline composer (always visible) */}
+          {/* inline composer (always visible) — modal-style */}
           <div className="px-4">
-            <div className="rounded-3xl border border-gray-100 shadow-sm bg-white p-4">
-              {/* input row */}
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-[13px] font-bold text-white" style={{ background: ACCENT }}>H</div>
-                <textarea
-                  rows={2}
-                  placeholder={COMPOSER_PLACEHOLDERS[composerMode]}
-                  className="flex-1 resize-none border-0 outline-none bg-transparent text-[15px] text-gray-900 placeholder:text-gray-400 pt-1.5"
-                />
+            <div className="rounded-3xl border border-gray-100 shadow-sm bg-white overflow-hidden">
+              {/* header bar */}
+              <div className="flex items-center justify-between px-5 py-3.5">
+                <button className="text-[15px] font-medium text-gray-400 active:opacity-70">Cancel</button>
+                <span className="text-[16px] font-bold text-gray-900">{composerMode}</span>
+                <button className="rounded-full px-5 py-2 text-[14px] font-semibold text-white active:scale-95 transition-transform" style={{ background: "rgba(124,58,237,0.45)" }}>Post</button>
               </div>
+              <div className="border-t border-gray-100" />
 
-              {/* poll / prediction option stubs */}
-              {(composerMode === "Poll" || composerMode === "Prediction") && (
-                <div className="mt-2 space-y-2">
-                  {["Option 1", "Option 2"].map((o, i) => (
-                    <div key={i} className="rounded-xl border border-gray-200 px-3 py-2.5 text-[14px] text-gray-400">{o}</div>
-                  ))}
-                </div>
-              )}
+              {/* textarea */}
+              <div className="px-5 pt-4 pb-5">
+                <textarea
+                  rows={3}
+                  placeholder={COMPOSER_PLACEHOLDERS[composerMode]}
+                  className="w-full resize-none border-0 outline-none bg-transparent text-[16px] text-gray-900 placeholder:text-gray-400"
+                />
+
+                {/* poll / prediction option stubs */}
+                {(composerMode === "Poll" || composerMode === "Prediction") && (
+                  <div className="mt-2 space-y-2">
+                    {["Option 1", "Option 2"].map((o, i) => (
+                      <div key={i} className="rounded-xl border border-gray-200 px-3 py-2.5 text-[14px] text-gray-400">{o}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="border-t border-gray-100" />
 
               {/* mode selector */}
-              <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-4 gap-2">
+              <div className="px-4 py-4 grid grid-cols-4 gap-2">
                 {SHARE.map((s, i) => {
                   const Icon = s.icon;
                   const active = composerMode === s.label;
@@ -343,18 +351,13 @@ export default function NewRoom() {
                       onClick={() => setComposerMode(s.label)}
                       className="flex flex-col items-center gap-1.5 py-1 active:scale-95 transition-transform"
                     >
-                      <div className="w-11 h-11 rounded-full flex items-center justify-center transition-all" style={{ background: active ? ACCENT : "#f3f4f6" }}>
-                        <Icon size={19} style={{ color: active ? "#fff" : "#9ca3af" }} />
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center transition-all" style={{ background: active ? ACCENT : "#f3f4f6" }}>
+                        <Icon size={20} style={{ color: active ? "#fff" : "#9ca3af" }} />
                       </div>
                       <span className="text-[12px] font-semibold" style={{ color: active ? ACCENT : "#9ca3af" }}>{s.label}</span>
                     </button>
                   );
                 })}
-              </div>
-
-              {/* footer actions */}
-              <div className="mt-3 flex items-center justify-end">
-                <button className="rounded-full px-6 py-2 text-[14px] font-semibold text-white active:scale-95 transition-transform" style={{ background: ACCENT }}>Post</button>
               </div>
             </div>
           </div>
