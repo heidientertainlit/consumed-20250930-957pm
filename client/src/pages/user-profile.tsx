@@ -1849,106 +1849,54 @@ export default function UserProfile() {
     }
   };
 
-  // Fetch tracked genres from media items (analyzes movie/TV genres from TMDB)
+  // Tracked genres now read from the shared media_genres cache (populated by
+  // backfill-genres + extract-dna-signals). Covers every tracked item with an
+  // external id across all media types — no live per-item API calls.
   const fetchTrackedGenres = async () => {
-    if (!session?.access_token || trackedGenresLoaded || isLoadingTrackedGenres) return;
+    if (trackedGenresLoaded || isLoadingTrackedGenres) return;
     if (userLists.length === 0) return;
-    
+
     setIsLoadingTrackedGenres(true);
     try {
-      // Get unique movie/TV items with TMDB external IDs
-      const allItems: any[] = [];
-      const seenIds = new Set<string>();
-      
+      // Collect every tracked item that has an external id (deduped by source+id)
+      const itemsByKey = new Map<string, { source: string; id: string }>();
       userLists.forEach(list => {
-        if (list.items) {
-          list.items.forEach((item: any) => {
-            const key = item.external_id || item.media_id;
-            if (!seenIds.has(key) && (item.media_type === 'movie' || item.media_type === 'tv') && item.external_id) {
-              seenIds.add(key);
-              allItems.push(item);
-            }
-          });
-        }
+        (list.items || []).forEach((item: any) => {
+          if (!item.external_id) return;
+          const source = item.external_source || 'tmdb';
+          itemsByKey.set(`${source}::${item.external_id}`, { source, id: item.external_id });
+        });
       });
-      
-      // Limit to top 30 items to avoid too many API calls
-      const itemsToFetch = allItems.slice(0, 30);
-      
-      if (itemsToFetch.length === 0) {
+
+      if (itemsByKey.size === 0) {
         setTrackedGenresLoaded(true);
         setIsLoadingTrackedGenres(false);
         return;
       }
-      
+
+      const ids = [...itemsByKey.values()].map(v => v.id);
+      const validKeys = new Set(itemsByKey.keys());
       const genreCounts: Record<string, number> = {};
-      
-      // Fetch genres in parallel batches of 5
-      const batchSize = 5;
-      for (let i = 0; i < itemsToFetch.length; i += batchSize) {
-        const batch = itemsToFetch.slice(i, i + batchSize);
-        
-        const results = await Promise.allSettled(
-          batch.map(async (item) => {
-            try {
-              const source = item.external_source || 'tmdb';
-              const response = await fetch(
-                `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${source}&external_id=${item.external_id}&media_type=${item.media_type}`,
-                {
-                  headers: {
-                    'Authorization': `Bearer ${session.access_token}`,
-                    'Content-Type': 'application/json',
-                  },
-                }
-              );
-              
-              if (response.ok) {
-                const data = await response.json();
-                return data.genres || [];
-              }
-              return [];
-            } catch {
-              return [];
-            }
-          })
-        );
-        
-        results.forEach((result, idx) => {
-          if (result.status === 'fulfilled') {
-            const value = result.value;
-            // Verify we have an array before iterating
-            if (!Array.isArray(value)) {
-              console.warn('Unexpected genre response (not array):', value);
-              return;
-            }
-            value.forEach((genre: any) => {
-              // Handle both string genres and object genres with multiple possible keys
-              let genreName: string | null = null;
-              if (typeof genre === 'string') {
-                genreName = genre;
-              } else if (genre && typeof genre === 'object') {
-                // Try multiple common keys for genre name
-                genreName = genre.name ?? genre.genre ?? genre.label ?? null;
-                if (!genreName) {
-                  console.warn('Unknown genre object shape:', genre);
-                }
-              }
-              if (genreName && typeof genreName === 'string' && genreName !== '[object Object]') {
-                genreCounts[genreName] = (genreCounts[genreName] || 0) + 1;
-              }
-            });
-          }
+
+      // Read canonical genres from the cache, chunked to keep the IN list small
+      const chunkSize = 200;
+      for (let i = 0; i < ids.length; i += chunkSize) {
+        const chunk = ids.slice(i, i + chunkSize);
+        const { data } = await supabase
+          .from('media_genres')
+          .select('external_source, external_id, canonical_genres')
+          .in('external_id', chunk);
+        (data || []).forEach((row: any) => {
+          // external_id is not globally unique across sources — match the full key
+          if (!validKeys.has(`${row.external_source}::${row.external_id}`)) return;
+          (row.canonical_genres || []).forEach((g: string) => {
+            if (g) genreCounts[g] = (genreCounts[g] || 0) + 1;
+          });
         });
-        
-        // Small delay between batches to avoid rate limiting
-        if (i + batchSize < itemsToFetch.length) {
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
       }
-      
+
       setTrackedGenres(genreCounts);
       setTrackedGenresLoaded(true);
-      console.log('Tracked genres loaded:', genreCounts);
     } catch (error) {
       console.error('Error fetching tracked genres:', error);
     } finally {

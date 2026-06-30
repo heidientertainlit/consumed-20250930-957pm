@@ -7,4 +7,5 @@
 - [media-search type param](media-search-type-param.md) — edge fn reads `type` not `media_type`; callers sending `media_type` (Track/quick-action sheets) get no server filter. No `game` source exists.
 - [Composer surfaces](composer-surfaces.md) — QuickActionSheet = in-dialog media search; FeedComposerBar = full-screen /add-style overlay. Reuse QuickActionSheet for "search without leaving the dialog".
 - [/add nav & composer layering](add-page-nav-layering.md) — composer is a z-99999 body portal; bottom nav must render INSIDE it (Navigation `inline` prop) to interleave above browse, below sheets.
+- [Genre cache architecture](genre-cache.md) — genre cached per-title in media_genres keyed by (external_source,external_id); no media catalog exists; canonicalized; cache-first+write-back; backfill-genres edge fn.
 - [rebuild-recommendations cache safety](recommendations-rebuild.md) — AI recs resolved via media-search (hallucination filter); never overwrite user_recommendations with too-few recs or the carousel vanishes.

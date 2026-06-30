@@ -39,6 +39,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { getOrResolveGenres, SUPPORTED_GENRE_SOURCES } from '../_shared/genre-cache.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -220,96 +221,22 @@ serve(async (req) => {
       }
     }
 
-    // TMDB genre lookup for movies/tv in list_items (first 20)
-    const tmdbApiKey = Deno.env.get('TMDB_API_KEY');
-    const tmdbItems = listItems
-      .filter((item: any) => {
-        const mt = item.media_type || item.type;
-        return (mt === 'movie' || mt === 'tv') && item.external_source === 'tmdb' && item.external_id;
-      })
-      .slice(0, 20);
+    // ── Genre signals via the shared media_genres cache (cache-first + write-back)
+    // Covers movies/TV (tmdb), books (googlebooks/openlibrary) and music/podcasts
+    // (itunes). Cached lookups make repeat runs cheap; a miss hits the source API
+    // once and is stored for everyone. Generic/noise genres are filtered by the
+    // shared taxonomy. The dedicated backfill-genres function warms this cache for
+    // the whole library; here we only need to read it (with on-miss write-back).
+    const genreItems = listItems
+      .filter((item: any) => item.external_id && SUPPORTED_GENRE_SOURCES.includes(item.external_source))
+      .slice(0, 60);
 
-    if (tmdbApiKey && tmdbItems.length > 0) {
-      for (const item of tmdbItems) {
-        try {
-          const mt = item.media_type || item.type;
-          const res = await fetch(`https://api.themoviedb.org/3/${mt}/${item.external_id}?api_key=${tmdbApiKey}`);
-          if (res.ok) {
-            const tmdb = await res.json();
-            for (const genre of (tmdb.genres ?? [])) {
-              const s = touch('genre', genre.name);
-              if (s) { s.weightedCount += 1.0; s.sources.tracked += 1; }
-            }
-          }
-          await new Promise(r => setTimeout(r, 80));
-        } catch (_) { /* skip */ }
-      }
-    }
-
-    // Google Books genre lookup for tracked books (first 20 with googlebooks source)
-    const googleBooksApiKey = Deno.env.get('GOOGLE_BOOKS_API_KEY');
-    // Too broad/generic to be meaningful as taste signals
-    const skipBookCategories = new Set([
-      'fiction', 'nonfiction', 'non-fiction', 'general', 'juvenile fiction',
-      'juvenile nonfiction', 'young adult fiction', 'young adult nonfiction',
-      'comics & graphic novels', 'literary collections', 'literary criticism'
-    ]);
-    const bookItems = listItems
-      .filter((item: any) => {
-        const mt = item.media_type || item.type;
-        return mt === 'book' && item.external_source === 'googlebooks' && item.external_id;
-      })
-      .slice(0, 20);
-
-    if (googleBooksApiKey && bookItems.length > 0) {
-      for (const item of bookItems) {
-        try {
-          const res = await fetch(
-            `https://www.googleapis.com/books/v1/volumes/${item.external_id}?key=${googleBooksApiKey}&fields=volumeInfo/categories`
-          );
-          if (res.ok) {
-            const book = await res.json();
-            // Categories look like "Fiction / Thriller" — split and use each meaningful part
-            for (const cat of (book.volumeInfo?.categories ?? [])) {
-              const parts = cat.split('/').map((p: string) => p.trim().toLowerCase())
-                .filter((p: string) => p.length > 2 && !skipBookCategories.has(p));
-              for (const part of parts) {
-                const s = touch('genre', part);
-                if (s) { s.weightedCount += 1.0; s.sources.tracked += 1; }
-              }
-            }
-          }
-          await new Promise(r => setTimeout(r, 100));
-        } catch (_) { /* skip */ }
-      }
-    }
-
-    // iTunes genre lookup for tracked music + podcasts with itunes source
-    const skipPodcastGenres = new Set(['podcasts', 'arts', 'podcast']);
-    const podcastItems = listItems
-      .filter((item: any) => {
-        const mt = item.media_type || item.type;
-        return (mt === 'podcast' || mt === 'music') && item.external_source === 'itunes' && item.external_id;
-      })
-      .slice(0, 20);
-
-    if (podcastItems.length > 0) {
-      for (const item of podcastItems) {
-        try {
-          const res = await fetch(`https://itunes.apple.com/lookup?id=${item.external_id}`);
-          if (res.ok) {
-            const data = await res.json();
-            const result = data.results?.[0];
-            for (const genre of (result?.genres ?? [])) {
-              const normalized = genre.trim().toLowerCase();
-              if (!skipPodcastGenres.has(normalized) && normalized.length > 2) {
-                const s = touch('genre', normalized);
-                if (s) { s.weightedCount += 1.0; s.sources.tracked += 1; }
-              }
-            }
-          }
-          await new Promise(r => setTimeout(r, 100));
-        } catch (_) { /* skip */ }
+    for (const item of genreItems) {
+      const mt = item.media_type || item.type || null;
+      const canonical = await getOrResolveGenres(svc, item.external_source, item.external_id, mt);
+      for (const genre of canonical) {
+        const s = touch('genre', genre);
+        if (s) { s.weightedCount += 1.0; s.sources.tracked += 1; }
       }
     }
 
