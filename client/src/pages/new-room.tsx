@@ -3,7 +3,7 @@ import {
   ChevronLeft, ChevronRight, MoreHorizontal, Check, Plus, Globe, Copy,
   TrendingUp, Sparkle, MessageCircle, ArrowUpRight,
   Brain, Vote, Tv, Flame, Bell, Users, X,
-  Flag, EyeOff, BellOff, ChevronDown, HelpCircle,
+  Flag, EyeOff, BellOff, ChevronDown, CircleHelp,
 } from "lucide-react";
 import Navigation from "@/components/navigation";
 
@@ -55,7 +55,7 @@ const TAGS = [
   { label: "Take", icon: Flame, bg: "#fff1e8", fg: "#f97316" },
   { label: "Theory", icon: Brain, bg: "#f3effe", fg: "#7c3aed" },
   { label: "Prediction", icon: TrendingUp, bg: "#e7f9f0", fg: "#10b981" },
-  { label: "Question", icon: HelpCircle, bg: "#eaf1ff", fg: "#2563eb" },
+  { label: "Question", icon: CircleHelp, bg: "#eaf1ff", fg: "#2563eb" },
 ];
 const tagDef = (label: string | null) => TAGS.find((g) => g.label === label);
 
