@@ -358,7 +358,7 @@ function Router() {
           <Route path="/room/:id">
             <RoomsGuard>
               <ProtectedRoute>
-                <PoolDetailPage />
+                <NewRoom />
               </ProtectedRoute>
             </RoomsGuard>
           </Route>
