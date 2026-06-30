@@ -1,9 +1,9 @@
 import { useState } from "react";
 import {
   ChevronLeft, ChevronRight, MoreHorizontal, Check, Plus, Globe, Copy,
-  TrendingUp, Sparkle, MessageCircle, ArrowUpRight, BarChart3,
+  TrendingUp, Sparkle, MessageCircle, ArrowUpRight,
   Brain, Vote, Tv, Flame, Bell, Users, X,
-  Flag, EyeOff, BellOff, Target, ChevronDown,
+  Flag, EyeOff, BellOff, ChevronDown, HelpCircle,
 } from "lucide-react";
 import Navigation from "@/components/navigation";
 
@@ -50,13 +50,14 @@ const TITLES = [
   { name: "On Patrol Live", from: "#1e3a34", to: "#0c1a17" },
 ];
 
-// ── Conversation composer options ─────────────────────────────────────
-const SHARE = [
+// ── Optional conversation tags (everything is a discussion; tag is optional) ──
+const TAGS = [
   { label: "Take", icon: Flame, bg: "#fff1e8", fg: "#f97316" },
-  { label: "Discussion", icon: MessageCircle, bg: "#f3effe", fg: "#7c3aed" },
-  { label: "Poll", icon: BarChart3, bg: "#eaf1ff", fg: "#2563eb" },
+  { label: "Theory", icon: Brain, bg: "#f3effe", fg: "#7c3aed" },
   { label: "Prediction", icon: TrendingUp, bg: "#e7f9f0", fg: "#10b981" },
+  { label: "Question", icon: HelpCircle, bg: "#eaf1ff", fg: "#2563eb" },
 ];
+const tagDef = (label: string | null) => TAGS.find((g) => g.label === label);
 
 // ── Trending discussions (horizontal cards) ───────────────────────────
 const TRENDING = [
@@ -65,11 +66,13 @@ const TRENDING = [
   { title: "New doc on Netflix", replies: 112, bg: "#fdeeee" },
 ];
 
-// ── Conversations (unified Reddit-style posts, flair = type) ───────────
+// ── Conversations (all discussions; tag is optional) ──────────────────
 const CONVERSATIONS = [
-  { author: "Maya R.", icon: Flame, fg: "#f97316", title: "The sheriff absolutely knew.", body: "Episode 6 makes it pretty clear once you rewatch the scene.", tag: "HOT TAKE", stat: 237, statLabel: "agree", replies: 89 },
-  { author: "Devon K.", icon: Brain, fg: "#7c3aed", title: "Episode 7 changes everything.", body: "There's a clue most people missed in the background.", tag: "THEORY", stat: 154, statLabel: "agree", replies: 41 },
-  { author: "Priya S.", icon: Target, fg: "#10b981", title: "Who do you think did it?", body: "Let's lock in our predictions before the finale drops.", tag: "PREDICTION", stat: 128, statLabel: "predictions", replies: 72 },
+  { author: "Maya R.", tag: "Theory", title: "The sheriff was working with him", body: "Rewatch episode 3 — the way he dodges every question gives it away.", stat: 237, statLabel: "agree", replies: 89 },
+  { author: "Devon K.", tag: "Take", title: "This finale was overrated", body: "Great buildup, but the payoff just didn't land for me.", stat: 154, statLabel: "agree", replies: 41 },
+  { author: "Priya S.", tag: "Prediction", title: "She's definitely dying next episode", body: "All the foreshadowing this season is pointing right at her.", stat: 128, statLabel: "agree", replies: 72 },
+  { author: "Sam T.", tag: "Question", title: "Why did he leave the key behind?", body: "Was it intentional, or just a continuity slip?", stat: 64, statLabel: "agree", replies: 33 },
+  { author: "Jordan L.", tag: null, title: "Anyone else rewatching from the start?", body: "Doing a full rewatch before the finale — so many details I missed first time.", stat: 51, statLabel: "agree", replies: 19 },
 ];
 
 function SectionHeader({ title, action = "See all" }: { title: string; action?: string }) {
@@ -84,17 +87,10 @@ function SectionHeader({ title, action = "See all" }: { title: string; action?: 
 const TABS = ["Discuss", "Play", "Explore"] as const;
 type Tab = (typeof TABS)[number];
 
-const COMPOSER_PLACEHOLDERS: Record<string, string> = {
-  Take: "What's your hot take on True Crime?",
-  Discussion: "Start a discussion…",
-  Poll: "Ask the community a question…",
-  Prediction: "What do you think will happen?",
-};
-
 export default function NewRoom() {
   const [following, setFollowing] = useState(false);
   const [tab, setTab] = useState<Tab>("Discuss");
-  const [composerMode, setComposerMode] = useState("Discussion");
+  const [composerTag, setComposerTag] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [menuFor, setMenuFor] = useState<number | null>(null);
   const [flagged, setFlagged] = useState<number[]>([]);
@@ -367,41 +363,33 @@ export default function NewRoom() {
                 />
                 <textarea
                   rows={3}
-                  placeholder={COMPOSER_PLACEHOLDERS[composerMode]}
+                  placeholder="Start a discussion…"
                   className="w-full resize-none border-0 outline-none bg-transparent text-[15px] text-gray-900 placeholder:text-gray-400"
                 />
-
-                {/* poll / prediction option stubs */}
-                {(composerMode === "Poll" || composerMode === "Prediction") && (
-                  <div className="mt-2 space-y-2">
-                    {["Option 1", "Option 2"].map((o, i) => (
-                      <div key={i} className="rounded-xl border border-gray-200 px-3 py-2.5 text-[14px] text-gray-400">{o}</div>
-                    ))}
-                  </div>
-                )}
               </div>
               <div className="border-t border-gray-100" />
 
-              {/* flair selector */}
-              <div className="px-4 py-4 grid grid-cols-4 gap-2">
-                {SHARE.map((s, i) => {
-                  const Icon = s.icon;
-                  const active = composerMode === s.label;
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => setComposerMode(s.label)}
-                      className="flex flex-col items-center gap-1 py-1 active:scale-95 transition-transform"
-                    >
-                      <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
-                        active ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-500"
-                      }`}>
-                        <Icon size={20} />
-                      </div>
-                      <span className={`text-[12px] font-semibold ${active ? "text-purple-700" : "text-gray-500"}`}>{s.label}</span>
-                    </button>
-                  );
-                })}
+              {/* optional tag picker — pills */}
+              <div className="px-5 py-4">
+                <p className="text-[12px] font-semibold text-gray-400 mb-2.5">Add a tag (optional)</p>
+                <div className="flex flex-wrap gap-2">
+                  {TAGS.map((s, i) => {
+                    const Icon = s.icon;
+                    const active = composerTag === s.label;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => setComposerTag(active ? null : s.label)}
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold border transition-all active:scale-95"
+                        style={active
+                          ? { background: s.bg, color: s.fg, borderColor: s.fg }
+                          : { background: "#fff", color: "#6b7280", borderColor: "#e5e7eb" }}
+                      >
+                        <Icon size={14} style={active ? { color: s.fg } : undefined} /> {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* full-width Post button */}
@@ -422,7 +410,8 @@ export default function NewRoom() {
 
           <div className="px-4 space-y-3">
             {CONVERSATIONS.map((t, i) => {
-              const Icon = t.icon;
+              const g = tagDef(t.tag);
+              const TagIcon = g?.icon;
               return (
               <div key={i} className="rounded-2xl border border-gray-100 p-4">
                 {flagged.includes(i) ? (
@@ -432,53 +421,50 @@ export default function NewRoom() {
                   </div>
                 ) : (
                 <>
-                <div className="flex items-start gap-2.5">
-                  <Icon size={18} className="mt-0.5 flex-shrink-0" style={{ color: t.fg }} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-[16px] font-bold text-gray-900 leading-snug">{t.title}</p>
-                      <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide" style={{ background: "#f3effe", color: ACCENT }}>{t.tag}</span>
-                    </div>
-                    <p className="text-[14px] text-gray-500 leading-snug mt-1">{t.body}</p>
+                {g && TagIcon && (
+                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold mb-2" style={{ background: g.bg, color: g.fg }}>
+                    <TagIcon size={12} /> {g.label}
+                  </span>
+                )}
+                <p className="text-[16px] font-bold text-gray-900 leading-snug">{t.title}</p>
+                <p className="text-[14px] text-gray-500 leading-snug mt-1">{t.body}</p>
 
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center gap-3 text-[13px] text-gray-500">
-                        <span className="flex items-center gap-1"><Users size={14} /> {t.stat} {t.statLabel}</span>
-                        <span className="flex items-center gap-1"><MessageCircle size={14} /> {t.replies} replies</span>
-                      </div>
-                      <div className="relative flex items-center gap-3 text-gray-400">
-                        <button className="active:text-gray-700"><Bell size={16} /></button>
-                        <button onClick={() => setMenuFor(menuFor === i ? null : i)} aria-label="More options">
-                          <MoreHorizontal size={18} />
-                        </button>
-                        {menuFor === i && (
-                          <>
-                            {/* tap-away backdrop */}
-                            <div className="fixed inset-0 z-10" onClick={() => setMenuFor(null)} />
-                            <div className="absolute right-0 top-7 z-20 w-52 rounded-2xl border border-gray-100 bg-white shadow-lg overflow-hidden py-1">
-                              <button
-                                onClick={() => { setFlagged((f) => [...f, i]); setMenuFor(null); }}
-                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-red-600 active:bg-gray-50"
-                              >
-                                <Flag size={16} /> Flag as inappropriate
-                              </button>
-                              <button
-                                onClick={() => setMenuFor(null)}
-                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-gray-700 active:bg-gray-50"
-                              >
-                                <EyeOff size={16} className="text-gray-400" /> Not interested
-                              </button>
-                              <button
-                                onClick={() => setMenuFor(null)}
-                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-gray-700 active:bg-gray-50"
-                              >
-                                <BellOff size={16} className="text-gray-400" /> Mute {t.author}
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
+                <div className="flex items-center justify-between mt-3">
+                  <div className="flex items-center gap-3 text-[13px] text-gray-500">
+                    <span className="flex items-center gap-1"><Users size={14} /> {t.stat} {t.statLabel}</span>
+                    <span className="flex items-center gap-1"><MessageCircle size={14} /> {t.replies} replies</span>
+                  </div>
+                  <div className="relative flex items-center gap-3 text-gray-400">
+                    <button className="active:text-gray-700"><Bell size={16} /></button>
+                    <button onClick={() => setMenuFor(menuFor === i ? null : i)} aria-label="More options">
+                      <MoreHorizontal size={18} />
+                    </button>
+                    {menuFor === i && (
+                      <>
+                        {/* tap-away backdrop */}
+                        <div className="fixed inset-0 z-10" onClick={() => setMenuFor(null)} />
+                        <div className="absolute right-0 top-7 z-20 w-52 rounded-2xl border border-gray-100 bg-white shadow-lg overflow-hidden py-1">
+                          <button
+                            onClick={() => { setFlagged((f) => [...f, i]); setMenuFor(null); }}
+                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-red-600 active:bg-gray-50"
+                          >
+                            <Flag size={16} /> Flag as inappropriate
+                          </button>
+                          <button
+                            onClick={() => setMenuFor(null)}
+                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-gray-700 active:bg-gray-50"
+                          >
+                            <EyeOff size={16} className="text-gray-400" /> Not interested
+                          </button>
+                          <button
+                            onClick={() => setMenuFor(null)}
+                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-gray-700 active:bg-gray-50"
+                          >
+                            <BellOff size={16} className="text-gray-400" /> Mute {t.author}
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
                 </>
