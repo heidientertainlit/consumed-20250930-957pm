@@ -12,7 +12,7 @@ const json = (data: unknown, status = 200) =>
 const FULL_POOL_SELECT = 'id, name, description, host_id, invite_code, status, is_public, is_official, partner_name, partner_logo_url, accent_color, media_image, room_category, series_tag, media_type, series_volumes, created_at, pool_type';
 const FULL_MEMBERSHIP_SELECT = `pool_id, role, total_points, joined_at, pools:pool_id(${FULL_POOL_SELECT})`;
 
-const BASE_POOL_SELECT = 'id, name, description, host_id, invite_code, status, is_public, created_at, pool_type';
+const BASE_POOL_SELECT = 'id, name, description, host_id, invite_code, status, is_public, created_at, pool_type, room_category';
 const BASE_MEMBERSHIP_SELECT = `pool_id, role, total_points, joined_at, pools:pool_id(${BASE_POOL_SELECT})`;
 
 async function enrichPool(svc: any, pool: any, _userId: string, isHost: boolean, userPoints: number) {
@@ -82,7 +82,7 @@ serve(async (req) => {
 
     const myRooms = await Promise.all((memberships || []).map(async (m: any) => {
       const pool = m.pools as any;
-      if (!pool || pool.pool_type !== 'room') return null;
+      if (!pool || (pool.pool_type !== 'room' && pool.room_category !== 'genre')) return null;
       return enrichPool(svc, pool, appUser.id, pool.host_id === appUser.id, m.total_points);
     }));
 
@@ -93,7 +93,7 @@ serve(async (req) => {
     const { data: publicFullData, error: publicFullError } = await svc
       .from('pools')
       .select(FULL_POOL_SELECT)
-      .eq('pool_type', 'room')
+      .or('pool_type.eq.room,room_category.eq.genre')
       .eq('is_public', true)
       .neq('status', 'completed')
       .order('created_at', { ascending: false })
@@ -103,7 +103,7 @@ serve(async (req) => {
       const { data: publicBaseData } = await svc
         .from('pools')
         .select(BASE_POOL_SELECT)
-        .eq('pool_type', 'room')
+        .or('pool_type.eq.room,room_category.eq.genre')
         .eq('is_public', true)
         .neq('status', 'completed')
         .order('created_at', { ascending: false })

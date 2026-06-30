@@ -26,3 +26,9 @@ description: How rooms are modeled and which page renders them; the single-templ
 ## Explore tab
 - "Popular Titles" has **no stored genre→media taxonomy** (`media_items` has no genre; `media_tags` are personal). It is populated live from the `media-search` edge fn (GET `?q=<room name>&limit=`), tapping → `/media/:type/:source/:external_id`.
 - Play tab is still a static placeholder (trivia/vote cards) — next wiring pass.
+
+## Genre rooms have pool_type = NULL (visibility gotcha)
+- Genre rooms (room_category='genre', e.g. "True Crime" eb529882-...) were created with `pool_type = NULL`, unlike media/platform rooms which have `pool_type='room'`.
+- `get-user-pools` originally filtered strictly on `pool_type='room'`, so genre rooms NEVER appeared in My Rooms or Discover. Fix: also accept `room_category='genre'` in both membership mapping and the public-rooms `.or('pool_type.eq.room,room_category.eq.genre')` query (incl. the base/fallback path; BASE_POOL_SELECT now carries room_category).
+- **Rooms list now shows ONLY genre rooms** (`pools.tsx` filters `room_category==='genre'`) — media/platform rooms (Emma M. Lion, Paradise, Reelz) intentionally hidden "for now" per user. To re-show them, remove that filter.
+- **Why:** user wanted only the accurate genre room visible; media/platform rooms are stale.

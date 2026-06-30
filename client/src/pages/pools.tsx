@@ -145,8 +145,9 @@ export default function PoolsPage() {
     enabled: !!session?.access_token
   });
 
-  const myRooms: any[] = data?.myRooms || data?.pools || [];
-  const publicRooms: any[] = data?.publicRooms || [];
+  // Only genre rooms (e.g. True Crime) are shown for now — media/platform rooms are hidden.
+  const myRooms: any[] = (data?.myRooms || data?.pools || []).filter((r: any) => r.room_category === 'genre');
+  const publicRooms: any[] = (data?.publicRooms || []).filter((r: any) => r.room_category === 'genre');
   const myRoomIds = new Set(myRooms.map((r: any) => r.id));
   const discoverRooms = publicRooms.filter((r: any) => !myRoomIds.has(r.id));
 
