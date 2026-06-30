@@ -288,6 +288,33 @@ async function buildMasterExport() {
     userListBreakdown[uid][lname] = (userListBreakdown[uid][lname] || 0) + 1;
   });
 
+  // Library genres — actual genres of the titles each user tracks, from the
+  // shared media_genres cache. This is the genre breakdown of what they really
+  // consume (complements behavioral_genres, which is signal-derived).
+  const { data: genreRows } = await supabase
+    .from("media_genres")
+    .select("external_source, external_id, canonical_genres");
+  const genreMap: Record<string, string[]> = {};
+  (genreRows || []).forEach((g: any) => {
+    genreMap[`${g.external_source}::${g.external_id}`] = g.canonical_genres || [];
+  });
+
+  const userLibraryGenres: Record<string, Record<string, number>> = {};
+  const libGenreSeen: Record<string, Set<string>> = {};
+  (listItems || []).forEach((item: any) => {
+    const uid = item.user_id;
+    if (!uid || !item.external_id || !item.external_source) return;
+    const gkey = `${item.external_source}::${item.external_id}`;
+    const genres = genreMap[gkey];
+    if (!genres || genres.length === 0) return;
+    // Count each title once per user, even if it sits on several lists
+    if (!libGenreSeen[uid]) libGenreSeen[uid] = new Set();
+    if (libGenreSeen[uid].has(gkey)) return;
+    libGenreSeen[uid].add(gkey);
+    if (!userLibraryGenres[uid]) userLibraryGenres[uid] = {};
+    genres.forEach((g) => { userLibraryGenres[uid][g] = (userLibraryGenres[uid][g] || 0) + 1; });
+  });
+
   // Build rows
   const rows = userIds.map((uid: string) => {
     const u = userMap[uid];
@@ -367,6 +394,12 @@ async function buildMasterExport() {
       claimed_genres: claimedStr,
       behavioral_genres: behavioralStr,
       genre_signal_count: genres.length,
+      // Library genres — genres of the actual titles they track (from media_genres)
+      library_genres: Object.entries(userLibraryGenres[uid] || {})
+        .sort((a, b) => b[1] - a[1]).slice(0, 15)
+        .map(([g, c]) => `${g}: ${c}`).join("; "),
+      top_library_genre: Object.entries(userLibraryGenres[uid] || {})
+        .sort((a, b) => b[1] - a[1])[0]?.[0] || "",
       // Media type
       top_media_type: mts[0]?.signal_value || "",
       media_type_breakdown: mtStr,
@@ -429,6 +462,7 @@ async function buildMasterExport() {
     "anon_id", "joined_at", "is_admin",
     "dna_archetype", "dna_tagline", "dna_flavor_notes", "dna_favorite_genres",
     "claimed_genres", "behavioral_genres", "genre_signal_count",
+    "library_genres", "top_library_genre",
     "top_media_type", "media_type_breakdown",
     "top_shows_engaged", "top_creators_engaged",
     "total_items_tracked", "lists_used",
@@ -477,6 +511,15 @@ async function buildMediaDetailExport() {
     ratingMap[`${r.user_id}|${r.media_external_id}|${r.media_external_source}`] = flt(r.rating);
   });
 
+  // Genres per title from the shared media_genres cache (keyed by source+id)
+  const { data: genreRows } = await supabase
+    .from("media_genres")
+    .select("external_source, external_id, canonical_genres");
+  const genreMap: Record<string, string[]> = {};
+  (genreRows || []).forEach((g: any) => {
+    genreMap[`${g.external_source}::${g.external_id}`] = g.canonical_genres || [];
+  });
+
   // One row per user × item, collecting all lists for that item
   const userItems: Record<string, Record<string, {
     lists: string[];
@@ -514,6 +557,8 @@ async function buildMediaDetailExport() {
   Object.entries(userItems).sort(([a], [b]) => a.localeCompare(b)).forEach(([uid, items]) => {
     Object.entries(items).sort(([a], [b]) => a.localeCompare(b)).forEach(([key, entry]) => {
       const title = key.split("|||")[0];
+      const externalId = key.split("|||")[1];
+      const genres = (genreMap[`${entry.external_source}::${externalId}`] || []).join("; ");
       const rating = entry.rating;
       const sentiment = rating === null ? "unrated"
         : rating >= 4 ? "liked"
@@ -534,6 +579,7 @@ async function buildMediaDetailExport() {
         media_title: title,
         creator: entry.creator,
         media_type: entry.media_type,
+        genres,
         external_source: entry.external_source,
         rating: rating ?? "",
         sentiment,
@@ -545,7 +591,7 @@ async function buildMediaDetailExport() {
   });
 
   const fields = [
-    "anon_id", "media_title", "creator", "media_type", "external_source",
+    "anon_id", "media_title", "creator", "media_type", "genres", "external_source",
     "rating", "sentiment", "lists", "engagement_types", "added_at",
   ];
   const today = new Date().toISOString().slice(0, 10);
@@ -951,6 +997,7 @@ export default function AdminExportsPage() {
                 <ul className="text-xs text-gray-500 space-y-0.5 mb-4 list-disc list-inside">
                   <li>DNA archetype, tagline, flavor notes</li>
                   <li>Claimed genres (from polls) + behavioral genre signals with strength scores</li>
+                  <li>Library genres — the actual genres of the titles they track, ranked by count</li>
                   <li>Media type breakdown (TV / movie / book / music / podcast)</li>
                   <li>Top shows + creators they engage with most</li>
                   <li>Tracking counts per list type (Watched, Want to Watch, DNF, Favorites, etc.)</li>
@@ -987,6 +1034,7 @@ export default function AdminExportsPage() {
                 </p>
                 <ul className="text-xs text-gray-500 space-y-0.5 mb-4 list-disc list-inside">
                   <li>Every tracked item with title + creator</li>
+                  <li>The item's genres (from the media_genres cache)</li>
                   <li>Which list(s) it's on (Watched, Want to Watch, Did Not Finish, Favorites, etc.)</li>
                   <li>Rating + sentiment label (liked / neutral / disliked / unrated)</li>
                   <li>Engagement type flags (tracked, rated, rated_high, rated_low, did_not_finish, favorited)</li>

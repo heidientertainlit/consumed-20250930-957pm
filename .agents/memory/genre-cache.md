@@ -35,7 +35,15 @@ public SELECT, writes via service role only. GIN index on `canonical_genres`.
 - `extract-dna-signals` now reads genres via the shared cache (warms it too).
 
 **Consumers read the cache:** profile "Tracked Genres" (`user-profile.tsx`) reads
-`media_genres` directly (public read) instead of live per-item API calls.
+`media_genres` directly (public read) instead of live per-item API calls. Admin
+Data Exports (`admin-exports.tsx`) also read it directly — Master export adds
+`library_genres`/`top_library_genre` (per-user genre frequency of tracked titles,
+deduped per title), Media Detail adds a per-row `genres` column.
+
+**Coverage caveat:** only titles from supported sources get genres. As of the
+backfill, ~62% of distinct tracked titles (≈445/714) have cached genres; the rest
+are youtube/spotify/etc. (unsupported) or added after the last backfill → blank
+genre cells in exports (not an error). Re-run `backfill-genres` to catch new titles.
 
 **How to apply:** never re-add live per-title genre lookups; route through
 `getOrResolveGenres` or read `media_genres`. Match the full `source::id` key —
