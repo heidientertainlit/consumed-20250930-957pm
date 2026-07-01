@@ -4827,7 +4827,15 @@ export default function Feed() {
     }).map((p: any) => ({ ...p, _verb: getVerb(p.type) }));
     const friends = valid.filter((p: any) => friendIds.has(p.user?.id));
     const others = valid.filter((p: any) => !friendIds.has(p.user?.id));
-    return [...friends, ...others].slice(0, 4);
+    // Mix of DIFFERENT people (one post per user, friends first) — not just the most recent posts
+    const seenUsers = new Set<string>();
+    const distinct = [...friends, ...others].filter((p: any) => {
+      const uid = p.user?.id;
+      if (!uid || seenUsers.has(uid)) return false;
+      seenUsers.add(uid);
+      return true;
+    });
+    return distinct.slice(0, 4);
   }, [socialPosts, friendIds]);
 
   // Helper: resolve media type from various fields
@@ -7790,30 +7798,15 @@ export default function Feed() {
               <div className="space-y-0.5">
               {whatHappeningPosts.map((post: any) => {
                 const name = post.user?.displayName || post.user?.username || 'Someone';
-                const avatarLetter = name[0]?.toUpperCase();
                 // Media title lives in mediaItems[0].title — post.mediaTitle is not a field social-feed sets
                 const mediaTitle = post.mediaItems?.[0]?.title || post.mediaTitle || '';
-                const avatarUrl = post.user?.avatar || post.user?.avatarUrl;
                 return (
                   <div
                     key={post.id}
-                    className="flex items-center gap-2.5 py-1.5 cursor-pointer active:bg-gray-50 rounded-xl transition-colors"
+                    className="flex items-center gap-3 py-1.5 cursor-pointer active:bg-gray-50 rounded-xl transition-colors"
                     onClick={() => setWhatsHappeningOpenPost(post)}
                   >
-                    {/* Person avatar (not the poster) */}
-                    {avatarUrl ? (
-                      <img
-                        src={avatarUrl}
-                        alt={name}
-                        className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                      />
-                    ) : (
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center flex-shrink-0">
-                        <span className="text-white text-[11px] font-semibold">{avatarLetter}</span>
-                      </div>
-                    )}
-                    {/* "Name verb MediaTitle" — single compact line */}
+                    {/* "Name verb MediaTitle" — single compact text line */}
                     <p className="flex-1 min-w-0 text-xs text-gray-500 leading-snug truncate">
                       <span className="font-semibold text-gray-800">{name}</span>{' '}
                       <span>{post._verb}</span>
