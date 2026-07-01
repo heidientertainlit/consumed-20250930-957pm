@@ -18,7 +18,7 @@ import { formatDistanceToNow } from "date-fns";
  * ROOM — the single room template for ALL rooms (genre / topic).
  * Wired to the real backend: pools (room), room_takes (discussions),
  * room_take_replies, room_take_votes, room_follows, user_activity (tracking),
- * user_dna_signals (real % match), media-search (Explore popular titles).
+ * user_dna_signals (real % match), room-explore (genre-based Explore discovery).
  */
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
@@ -108,8 +108,10 @@ export default function NewRoom() {
   const [flagged, setFlagged] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
   const [optimisticFollowing, setOptimisticFollowing] = useState<boolean | null>(null);
-  const [titleSort, setTitleSort] = useState<"pop" | "new">("pop");
   const [activeTake, setActiveTake] = useState<any | null>(null);
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const scrollToSection = (key: string) =>
+    sectionRefs.current[key]?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   // Redirect if no room id (e.g. visiting /new-room directly)
   useEffect(() => {
@@ -249,26 +251,26 @@ export default function NewRoom() {
     return arr;
   }, [takes, sort]);
 
-  // ── Explore: popular titles via media-search ─────────────────────────
-  const genreQuery = pool?.name || "";
-  const { data: popularTitlesData, isLoading: loadingTitles } = useQuery({
-    queryKey: ["room-popular-titles", genreQuery],
+  // ── Explore: genre-based discovery via room-explore ──────────────────
+  const exploreTag = pool?.series_tag || pool?.name || "";
+  const { data: exploreData, isLoading: loadingExplore, isError: exploreError } = useQuery({
+    queryKey: ["room-explore", exploreTag, pool?.media_type ?? "all"],
     queryFn: async () => {
+      const qs = new URLSearchParams();
+      if (pool?.series_tag) qs.set("series_tag", pool.series_tag);
+      if (pool?.name) qs.set("name", pool.name);
+      if (pool?.media_type) qs.set("media_type", pool.media_type);
       const res = await fetch(
-        `${SUPABASE_URL}/functions/v1/media-search?q=${encodeURIComponent(genreQuery)}&limit=12`,
+        `${SUPABASE_URL}/functions/v1/room-explore?${qs.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      const json = await res.json();
-      const arr = Array.isArray(json) ? json : json.results || json.data || [];
-      return arr;
+      if (!res.ok) throw new Error(`room-explore failed: ${res.status}`);
+      return res.json();
     },
-    enabled: !!token && !!genreQuery && tab === "Explore",
+    enabled: !!token && !!exploreTag && tab === "Explore",
   });
-  const popularTitles: any[] = useMemo(() => {
-    const arr = [...(popularTitlesData || [])];
-    if (titleSort === "new") arr.sort((a, b) => (b.year || 0) - (a.year || 0));
-    return arr;
-  }, [popularTitlesData, titleSort]);
+  const exploreSections: { key: string; title: string; items: any[] }[] =
+    exploreData?.sections || [];
 
   // ── Handlers ─────────────────────────────────────────────────────────
   const handleFollow = async () => {
@@ -554,13 +556,13 @@ export default function NewRoom() {
                   <button
                     key={i}
                     onClick={() => {
-                      if (e.key === "trending") { setSort("hot"); setTab("Discuss"); }
+                      if (e.key === "trending") scrollToSection("trending");
+                      else if (e.key === "new") scrollToSection("new");
                       else if (e.key === "discussed") { setSort("replies"); setTab("Discuss"); }
                       else if (e.key === "predictions") { setTab("Play"); }
-                      else if (e.key === "new") { setTitleSort((s) => (s === "new" ? "pop" : "new")); }
                     }}
                     className="rounded-2xl p-3 text-left active:scale-95 transition-transform"
-                    style={{ background: e.bg, ...(e.key === "new" && titleSort === "new" ? { outline: `2px solid ${e.fg}` } : {}) }}
+                    style={{ background: e.bg }}
                   >
                     <p className="text-[11px] font-bold text-gray-800 leading-tight whitespace-pre-line mb-3">{e.label}</p>
                     <Icon size={16} style={{ color: e.fg }} />
@@ -570,37 +572,45 @@ export default function NewRoom() {
             </div>
           </div>
 
-          <div className="pt-7">
-            <SectionHeader title={titleSort === "new" ? "New Releases" : "Popular Titles"} />
-            {loadingTitles ? (
-              <div className="flex justify-center py-8"><Loader2 className="animate-spin text-purple-400" size={22} /></div>
-            ) : popularTitles.length === 0 ? (
-              <p className="px-5 text-[14px] text-gray-400">No titles found for this room yet.</p>
-            ) : (
-              <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-                {popularTitles.map((t: any, i: number) => {
-                  const img = t.poster_url || t.image;
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        const type = t.type || "movie";
-                        const source = t.external_source || t.source;
-                        if (source && t.external_id) setLocation(`/media/${type}/${source}/${t.external_id}`);
-                      }}
-                      className="flex-shrink-0 w-[110px] text-left active:scale-95 transition-transform"
-                    >
-                      <div className="relative w-[110px] h-[160px] rounded-xl overflow-hidden flex items-end p-2.5" style={{ background: img ? "#1a1530" : "linear-gradient(160deg,#3a2f5e,#1a1530)" }}>
-                        {img && <img src={img} alt={t.title} className="absolute inset-0 w-full h-full object-cover" />}
-                        {!img && <span className="relative text-white text-[13px] font-extrabold leading-tight drop-shadow">{t.title}</span>}
-                      </div>
-                      <p className="text-[12px] font-medium text-gray-700 mt-1.5 text-center leading-tight line-clamp-2">{t.title}{t.year ? ` (${t.year})` : ""}</p>
-                    </button>
-                  );
-                })}
+          {loadingExplore ? (
+            <div className="flex justify-center py-14"><Loader2 className="animate-spin text-purple-400" size={24} /></div>
+          ) : exploreError ? (
+            <p className="px-5 py-14 text-center text-[14px] text-gray-400">Couldn't load titles right now. Pull to refresh or try again in a moment.</p>
+          ) : exploreSections.length === 0 ? (
+            <p className="px-5 py-14 text-center text-[14px] text-gray-400">No titles to explore for this room yet.</p>
+          ) : (
+            exploreSections.map((section) => (
+              <div
+                key={section.key}
+                ref={(el) => { sectionRefs.current[section.key] = el; }}
+                className="pt-7 scroll-mt-16"
+              >
+                <SectionHeader title={section.title} />
+                <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+                  {section.items.map((t: any, i: number) => {
+                    const img = t.poster_url || t.image;
+                    return (
+                      <button
+                        key={`${t.external_source}-${t.external_id}-${i}`}
+                        onClick={() => {
+                          const type = t.type || "movie";
+                          const source = t.external_source || t.source;
+                          if (source && t.external_id) setLocation(`/media/${type}/${source}/${t.external_id}`);
+                        }}
+                        className="flex-shrink-0 w-[110px] text-left active:scale-95 transition-transform"
+                      >
+                        <div className="relative w-[110px] h-[160px] rounded-xl overflow-hidden flex items-end p-2.5" style={{ background: img ? "#1a1530" : "linear-gradient(160deg,#3a2f5e,#1a1530)" }}>
+                          {img && <img src={img} alt={t.title} className="absolute inset-0 w-full h-full object-cover" />}
+                          {!img && <span className="relative text-white text-[13px] font-extrabold leading-tight drop-shadow">{t.title}</span>}
+                        </div>
+                        <p className="text-[12px] font-medium text-gray-700 mt-1.5 text-center leading-tight line-clamp-2">{t.title}{t.year ? ` (${t.year})` : ""}</p>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            )}
-          </div>
+            ))
+          )}
         </>)}
 
         {/* ════════ DISCUSS ════════ */}
