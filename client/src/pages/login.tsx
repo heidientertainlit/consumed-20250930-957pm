@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock, User, AtSign } from "lucide-react";
+import { SiApple, SiGoogle } from "react-icons/si";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
@@ -199,6 +200,45 @@ export default function LoginPage() {
   const inputClasses = "w-full h-12 bg-gray-100/80 border-0 rounded-full px-12 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:bg-white transition-all";
   const labelClasses = "text-sm font-medium text-gray-600 ml-1";
 
+  // UI-only for now — real OAuth gets wired in after Apple/Google provider config is done.
+  const handleOAuth = (provider: 'apple' | 'google') => {
+    toast({
+      title: "Almost there",
+      description: `${provider === 'apple' ? 'Apple' : 'Google'} sign-in isn't connected yet — coming soon.`,
+    });
+  };
+
+  const renderSocialButtons = (context: 'signin' | 'signup') => (
+    <div className="space-y-3 mb-5">
+      <button
+        type="button"
+        onClick={() => handleOAuth('apple')}
+        className="w-full h-12 flex items-center justify-center gap-2 bg-black text-white rounded-full text-sm font-semibold hover:bg-black/90 transition-all"
+        data-testid={`button-${context}-apple`}
+      >
+        <SiApple className="h-4 w-4" />
+        Continue with Apple
+      </button>
+      <button
+        type="button"
+        onClick={() => handleOAuth('google')}
+        className="w-full h-12 flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 rounded-full text-sm font-semibold hover:bg-gray-50 transition-all"
+        data-testid={`button-${context}-google`}
+      >
+        <SiGoogle className="h-4 w-4 text-[#4285F4]" />
+        Continue with Google
+      </button>
+      <div className="relative py-1">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-gray-200" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-white px-3 text-gray-400">or continue with email</span>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] overflow-y-auto p-4 flex flex-col justify-center">
       <div className="max-w-md w-full mx-auto">
@@ -211,7 +251,7 @@ export default function LoginPage() {
             />
           </div>
           <h1 className="text-white text-lg font-medium mb-2">
-            Where entertainment gets played.
+            Entertainment is better, together.
           </h1>
           <p className="text-gray-400 text-[10px] tracking-widest font-medium pl-3">
             PLAY. CONNECT. DISCOVER.
@@ -238,6 +278,7 @@ export default function LoginPage() {
             </TabsList>
             
             <TabsContent value="signin">
+              {renderSocialButtons('signin')}
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-1.5">
                   <div className="relative">
@@ -300,6 +341,7 @@ export default function LoginPage() {
             </TabsContent>
             
             <TabsContent value="signup">
+              {renderSocialButtons('signup')}
               <form onSubmit={handleSignUp} className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="relative">
