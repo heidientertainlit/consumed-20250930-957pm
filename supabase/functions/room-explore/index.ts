@@ -1,5 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -54,7 +52,67 @@ function interleave(a: any[], b: any[]) {
   return out;
 }
 
-serve(async (req) => {
+// Books via Google Books (genre browse by subject). external_source 'googlebooks'
+// is handled by get-media-details so cards open correctly.
+async function fetchBooks(term: string): Promise<any[]> {
+  const key = Deno.env.get('GOOGLE_BOOKS_API_KEY');
+  const q = `subject:"${term}"`;
+  const base = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=20&printType=books&orderBy=relevance`;
+  const u = key ? `${base}&key=${key}` : base;
+  try {
+    const r = await fetch(u);
+    if (!r.ok) return [];
+    const d = await r.json();
+    return (d.items || [])
+      .map((item: any) => {
+        const v = item.volumeInfo || {};
+        let img = v.imageLinks?.thumbnail || v.imageLinks?.smallThumbnail || '';
+        if (img.startsWith('http://')) img = img.replace('http://', 'https://');
+        return {
+          title: v.title,
+          type: 'book',
+          year: v.publishedDate ? Number(String(v.publishedDate).slice(0, 4)) || null : null,
+          poster_url: img,
+          external_id: item.id,
+          external_source: 'googlebooks',
+          creator: v.authors?.[0] || null,
+          rating: v.averageRating ? Math.round(v.averageRating * 10) / 10 : null,
+        };
+      })
+      .filter((b: any) => b.title && b.poster_url)
+      .slice(0, 15);
+  } catch (_) {
+    return [];
+  }
+}
+
+// Podcasts via the free iTunes Search API. external_source 'itunes' is handled by
+// get-media-details so cards open correctly.
+async function fetchPodcasts(term: string): Promise<any[]> {
+  const u = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=podcast&entity=podcast&limit=20&country=US`;
+  try {
+    const r = await fetch(u);
+    if (!r.ok) return [];
+    const d = await r.json();
+    return (d.results || [])
+      .map((p: any) => ({
+        title: p.collectionName || p.trackName,
+        type: 'podcast',
+        year: p.releaseDate ? Number(String(p.releaseDate).slice(0, 4)) || null : null,
+        poster_url: p.artworkUrl600 || p.artworkUrl100 || p.artworkUrl60 || '',
+        external_id: String(p.collectionId || p.trackId),
+        external_source: 'itunes',
+        creator: p.artistName || null,
+        rating: null,
+      }))
+      .filter((p: any) => p.title && p.poster_url && p.external_id)
+      .slice(0, 15);
+  } catch (_) {
+    return [];
+  }
+}
+
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   const json = (body: any, status = 200) =>
@@ -99,14 +157,13 @@ serve(async (req) => {
     } catch (_) { /* keyword resolution is best-effort */ }
 
     const genreIds = GENRE_MAP[term.toLowerCase()] || null;
-    if (!keywordId && !genreIds) {
-      // Nothing to discover with — return empty so the client shows an empty state.
-      return json({ keyword: term, keyword_id: null, sections: [] });
-    }
 
     const today = new Date().toISOString().split('T')[0];
     const wantMovie = !mediaType || mediaType === 'movie';
     const wantTv = !mediaType || mediaType === 'tv';
+    const wantPodcast = !mediaType || mediaType === 'podcast';
+    const wantBook = !mediaType || mediaType === 'book';
+    const canTmdb = !!keywordId || !!genreIds;
 
     async function discover(kind: 'movie' | 'tv', sortBy: string, extra: Record<string, string>) {
       const p = new URLSearchParams({
@@ -139,19 +196,27 @@ serve(async (req) => {
       trendMovie, trendTv,
       newMovie, newTv,
       topMovie, topTv,
+      podcasts, books,
     ] = await Promise.all([
-      wantMovie ? discover('movie', 'popularity.desc', { 'vote_count.gte': '50' }) : Promise.resolve([]),
-      wantTv ? discover('tv', 'popularity.desc', { 'vote_count.gte': '50' }) : Promise.resolve([]),
-      wantMovie ? discover('movie', 'primary_release_date.desc', { 'primary_release_date.lte': today, 'vote_count.gte': '15' }) : Promise.resolve([]),
-      wantTv ? discover('tv', 'first_air_date.desc', { 'first_air_date.lte': today, 'vote_count.gte': '15' }) : Promise.resolve([]),
-      wantMovie ? discover('movie', 'vote_average.desc', { 'vote_count.gte': '200' }) : Promise.resolve([]),
-      wantTv ? discover('tv', 'vote_average.desc', { 'vote_count.gte': '200' }) : Promise.resolve([]),
+      wantMovie && canTmdb ? discover('movie', 'popularity.desc', { 'vote_count.gte': '50' }) : Promise.resolve([]),
+      wantTv && canTmdb ? discover('tv', 'popularity.desc', { 'vote_count.gte': '50' }) : Promise.resolve([]),
+      wantMovie && canTmdb ? discover('movie', 'primary_release_date.desc', { 'primary_release_date.lte': today, 'vote_count.gte': '15' }) : Promise.resolve([]),
+      wantTv && canTmdb ? discover('tv', 'first_air_date.desc', { 'first_air_date.lte': today, 'vote_count.gte': '15' }) : Promise.resolve([]),
+      wantMovie && canTmdb ? discover('movie', 'vote_average.desc', { 'vote_count.gte': '200' }) : Promise.resolve([]),
+      wantTv && canTmdb ? discover('tv', 'vote_average.desc', { 'vote_count.gte': '200' }) : Promise.resolve([]),
+      wantPodcast ? fetchPodcasts(term) : Promise.resolve([]),
+      wantBook ? fetchBooks(term) : Promise.resolve([]),
     ]);
 
+    // Vibe sections (mixed movie + tv) first, then browse-by-media-type sections.
     const sections = [
       { key: 'trending', title: 'Trending This Week', items: interleave(trendMovie, trendTv).slice(0, 15) },
       { key: 'new', title: 'New Releases', items: interleave(newMovie, newTv).slice(0, 15) },
       { key: 'top', title: 'Fan Favorites', items: interleave(topMovie, topTv).slice(0, 15) },
+      { key: 'movies', title: 'Movies', items: topMovie.length ? topMovie.slice(0, 15) : trendMovie.slice(0, 15) },
+      { key: 'tv', title: 'TV Shows', items: topTv.length ? topTv.slice(0, 15) : trendTv.slice(0, 15) },
+      { key: 'podcasts', title: 'Podcasts', items: podcasts },
+      { key: 'books', title: 'Books', items: books },
     ].filter((s) => s.items.length > 0);
 
     return json({ keyword: term, keyword_id: keywordId, sections });

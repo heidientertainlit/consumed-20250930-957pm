@@ -6,6 +6,7 @@ import {
   TrendingUp, Sparkle, MessageCircle, ArrowUpRight,
   Brain, Vote, Tv, Flame, Bell, Users, X,
   Flag, EyeOff, BellOff, ChevronDown, CircleHelp, Send, Loader2,
+  Film, BookOpen, Mic,
 } from "lucide-react";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
@@ -13,6 +14,13 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { APP_BASE } from "@/lib/share";
 import { formatDistanceToNow } from "date-fns";
+
+const MEDIA_TYPE_META: Record<string, { label: string; Icon: any }> = {
+  movie: { label: "Movie", Icon: Film },
+  tv: { label: "TV", Icon: Tv },
+  book: { label: "Book", Icon: BookOpen },
+  podcast: { label: "Podcast", Icon: Mic },
+};
 
 /**
  * ROOM — the single room template for ALL rooms (genre / topic).
@@ -589,6 +597,7 @@ export default function NewRoom() {
                 <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
                   {section.items.map((t: any, i: number) => {
                     const img = t.poster_url || t.image;
+                    const meta = MEDIA_TYPE_META[t.type];
                     return (
                       <button
                         key={`${t.external_source}-${t.external_id}-${i}`}
@@ -602,6 +611,12 @@ export default function NewRoom() {
                         <div className="relative w-[110px] h-[160px] rounded-xl overflow-hidden flex items-end p-2.5" style={{ background: img ? "#1a1530" : "linear-gradient(160deg,#3a2f5e,#1a1530)" }}>
                           {img && <img src={img} alt={t.title} className="absolute inset-0 w-full h-full object-cover" />}
                           {!img && <span className="relative text-white text-[13px] font-extrabold leading-tight drop-shadow">{t.title}</span>}
+                          {meta && (
+                            <span className="absolute top-1.5 left-1.5 flex items-center gap-0.5 rounded-full bg-black/65 backdrop-blur-sm px-1.5 py-0.5 text-[9px] font-semibold text-white">
+                              <meta.Icon size={9} />
+                              {meta.label}
+                            </span>
+                          )}
                         </div>
                         <p className="text-[12px] font-medium text-gray-700 mt-1.5 text-center leading-tight line-clamp-2">{t.title}{t.year ? ` (${t.year})` : ""}</p>
                       </button>

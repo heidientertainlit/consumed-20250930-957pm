@@ -18,3 +18,19 @@ a genre room is `room_category='genre'` with `series_tag` set (e.g. True Crime =
 for both movie and tv; detail route is `/media/{type}/{source}/{external_id}`.
 Edge fns rely on the user session access_token (verify_jwt on) — the legacy anon key is
 rejected at the gateway, so curl-with-anon-key is NOT a valid verifier; test in-app.
+
+## Multi-media-type sections
+room-explore returns vibe sections (Trending/New Releases/Fan Favorites, mixed
+movie+tv) plus browse-by-type sections: Movies, TV Shows, Podcasts, Books — each
+gated by the room's `media_type` (null = show all).
+- Books: Google Books `subject:"<term>"` → external_source `googlebooks`.
+- Podcasts: free iTunes Search API (no key) → external_source `itunes`.
+- get-media-details must have a matching source branch or cards 404. `itunes` was
+  added (iTunes lookup); `googlebooks` already existed.
+- FlixPatrol was considered for real streaming "trending" charts but the account's
+  subscription lapsed (key returns "API key not valid"), so TV/movie stays on TMDB.
+
+## Edge fn boilerplate
+Deploy bundling intermittently fails fetching `deno.land/std .../http/server.ts`
+(10s timeout, server-side). Prefer the native global `Deno.serve` — no external
+import, no bundling fetch. esm.sh imports (e.g. supabase-js) are reliable.

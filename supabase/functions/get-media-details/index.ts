@@ -1,5 +1,4 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 function stripHtml(raw: string | undefined | null): string | null {
@@ -21,7 +20,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -323,6 +322,39 @@ serve(async (req) => {
             }
           ]
         };
+      }
+    } else if (source === 'itunes') {
+      // Podcasts surfaced via the iTunes Search API (room Explore / search).
+      const response = await fetch(`https://itunes.apple.com/lookup?id=${externalId}&entity=podcast`);
+      if (response.ok) {
+        const d = await response.json();
+        const p = (d.results || [])[0];
+        if (p) {
+          let art = p.artworkUrl600 || p.artworkUrl100 || p.artworkUrl60 || '';
+          if (art.startsWith('http://')) art = art.replace('http://', 'https://');
+          mediaDetails = {
+            title: p.collectionName || p.trackName,
+            type: 'Podcast',
+            creator: p.artistName || 'Unknown',
+            artwork: art,
+            description: p.primaryGenreName ? `${p.primaryGenreName} podcast` : '',
+            rating: '0',
+            releaseDate: p.releaseDate || null,
+            category: p.primaryGenreName || 'Podcast',
+            language: p.country || 'US',
+            totalEpisodes: p.trackCount || 0,
+            subscribers: '0',
+            averageLength: 'N/A',
+            genres: p.genres || [],
+            platforms: [
+              {
+                name: 'Apple Podcasts',
+                logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Podcasts_%28iOS%29.svg/240px-Podcasts_%28iOS%29.svg.png',
+                url: p.collectionViewUrl || p.trackViewUrl || `https://podcasts.apple.com/search?term=${encodeURIComponent(p.collectionName || '')}`
+              }
+            ]
+          };
+        }
       }
     } else if (source === 'openlibrary' || source === 'open_library') {
       let response;
