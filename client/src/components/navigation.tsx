@@ -504,7 +504,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
         style={{
           paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)',
           display: hideTopBar ? 'none' : undefined,
-          background: (location.startsWith('/room/') || location === '/rooms' || location === '/new-room') ? 'transparent' : 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)',
+          background: (location.startsWith('/room/') || location === '/new-room') ? 'transparent' : 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)',
         }}
       >
         <div className="flex justify-between items-center h-11 px-4 gap-2 min-w-0">
