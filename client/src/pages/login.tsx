@@ -209,7 +209,15 @@ export default function LoginPage() {
   };
 
   const renderSocialButtons = (context: 'signin' | 'signup') => (
-    <div className="space-y-3 mb-5">
+    <div className="space-y-3 mt-5">
+      <div className="relative py-1">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-gray-200" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-white px-3 text-gray-400">or continue with</span>
+        </div>
+      </div>
       <button
         type="button"
         onClick={() => handleOAuth('apple')}
@@ -228,14 +236,6 @@ export default function LoginPage() {
         <SiGoogle className="h-4 w-4 text-[#4285F4]" />
         Continue with Google
       </button>
-      <div className="relative py-1">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-gray-200" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-white px-3 text-gray-400">or continue with email</span>
-        </div>
-      </div>
     </div>
   );
 
@@ -278,7 +278,6 @@ export default function LoginPage() {
             </TabsList>
             
             <TabsContent value="signin">
-              {renderSocialButtons('signin')}
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-1.5">
                   <div className="relative">
@@ -338,10 +337,10 @@ export default function LoginPage() {
                   {submitting ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
+              {renderSocialButtons('signin')}
             </TabsContent>
             
             <TabsContent value="signup">
-              {renderSocialButtons('signup')}
               <form onSubmit={handleSignUp} className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="relative">
@@ -429,6 +428,7 @@ export default function LoginPage() {
                   {submitting ? "Creating account..." : "Sign Up"}
                 </Button>
               </form>
+              {renderSocialButtons('signup')}
             </TabsContent>
           </Tabs>
         </div>
