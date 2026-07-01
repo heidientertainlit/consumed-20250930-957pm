@@ -1791,9 +1791,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
           {/* Header: label + type pill + ‹ N of M › nav */}
           <div className="flex items-center justify-between px-4 pt-4 pb-2">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-purple-500" />
-              <span className="text-gray-900 font-semibold text-sm">Takes & Ratings</span>
+            <div className="flex items-center flex-wrap gap-2 gap-y-1">
+              <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />
+              <span className="text-gray-900 font-semibold text-sm">See what everyone thinks</span>
               {mediaTypeLabel && (
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 shrink-0">{mediaTypeLabel}</span>
               )}
@@ -4807,7 +4807,7 @@ export default function Feed() {
     ? [highlightedPost, ...basePosts]
     : basePosts;
 
-  // "What's Happening" — 3 most recent posts, friends first
+  // "What's Happening" — up to 4 most recent posts, friends first
   const whatHappeningPosts = useMemo(() => {
     if (!socialPosts?.length) return [];
     const getVerb = (type: string) => {
@@ -4827,7 +4827,7 @@ export default function Feed() {
     }).map((p: any) => ({ ...p, _verb: getVerb(p.type) }));
     const friends = valid.filter((p: any) => friendIds.has(p.user?.id));
     const others = valid.filter((p: any) => !friendIds.has(p.user?.id));
-    return [...friends, ...others].slice(0, 2);
+    return [...friends, ...others].slice(0, 4);
   }, [socialPosts, friendIds]);
 
   // Helper: resolve media type from various fields
@@ -7787,59 +7787,40 @@ export default function Feed() {
           <div className="mb-3">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">What's Happening</p>
-              <div className="space-y-1.5">
+              <div className="space-y-0.5">
               {whatHappeningPosts.map((post: any) => {
                 const name = post.user?.displayName || post.user?.username || 'Someone';
                 const avatarLetter = name[0]?.toUpperCase();
                 // Media title lives in mediaItems[0].title — post.mediaTitle is not a field social-feed sets
                 const mediaTitle = post.mediaItems?.[0]?.title || post.mediaTitle || '';
-                const isRating = post.type === 'rating' || post.type === 'rate-review';
-                const isPrediction = post.type === 'predict' || post.type === 'prediction';
-                const hasContent = post.content && post.content.trim().length > 0;
+                const avatarUrl = post.user?.avatar || post.user?.avatarUrl;
                 return (
                   <div
                     key={post.id}
-                    className="flex items-center gap-3 py-2 cursor-pointer active:bg-gray-50 rounded-xl transition-colors"
+                    className="flex items-center gap-2.5 py-1.5 cursor-pointer active:bg-gray-50 rounded-xl transition-colors"
                     onClick={() => setWhatsHappeningOpenPost(post)}
                   >
-                    {/* Media poster thumbnail */}
-                    {(() => {
-                      const posterImg = post.mediaItems?.[0]?.imageUrl || post.mediaItems?.[0]?.image || post.image_url;
-                      return posterImg ? (
-                        <img
-                          src={posterImg}
-                          alt={mediaTitle}
-                          className="w-10 h-14 rounded object-cover flex-shrink-0"
-                          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      ) : null;
-                    })()}
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      {/* "Name verb MediaTitle" all on one line */}
-                      <p className="text-xs text-gray-500 leading-snug truncate">
-                        <span className="font-semibold text-gray-800">{name}</span>{' '}
-                        <span>{post._verb}</span>
-                        {mediaTitle && <span className="font-semibold text-gray-800"> {mediaTitle}</span>}
-                      </p>
-                      {/* Stars for ratings */}
-                      {isRating && post.rating > 0 && (
-                        <div className="flex items-center gap-0.5 mt-0.5">
-                          {[1,2,3,4,5].map(s => (
-                            <Star key={s} size={11} className={s <= Math.round(post.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200'} />
-                          ))}
-                        </div>
-                      )}
-                      {isPrediction && post.pointsEarned != null && (
-                        <p className="text-[11px] text-violet-500 font-medium mt-0.5">{post.pointsEarned} pts</p>
-                      )}
-                      {/* Content preview as quote */}
-                      {hasContent && (
-                        <p className="text-[11px] text-gray-600 mt-0.5 truncate">"{post.content.slice(0, 70)}"</p>
-                      )}
-                    </div>
+                    {/* Person avatar (not the poster) */}
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={name}
+                        className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-[11px] font-semibold">{avatarLetter}</span>
+                      </div>
+                    )}
+                    {/* "Name verb MediaTitle" — single compact line */}
+                    <p className="flex-1 min-w-0 text-xs text-gray-500 leading-snug truncate">
+                      <span className="font-semibold text-gray-800">{name}</span>{' '}
+                      <span>{post._verb}</span>
+                      {mediaTitle && <span className="font-semibold text-gray-800"> {mediaTitle}</span>}
+                    </p>
                     {/* Timestamp */}
-                    <span className="text-[11px] text-gray-400 flex-shrink-0 self-start pt-1">
+                    <span className="text-[11px] text-gray-400 flex-shrink-0">
                       {(() => {
                         const d = new Date(post.timestamp);
                         const diff = Date.now() - d.getTime();
