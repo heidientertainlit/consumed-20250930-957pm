@@ -422,6 +422,16 @@ export default function NewRoom() {
               <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-purple-300/80 mb-1">Room</p>
               <h1 className="text-[30px] font-extrabold text-white leading-tight">{pool.name}</h1>
 
+              {pool.description && (
+                <p className="text-[14px] text-white/75 leading-relaxed mt-2.5">{pool.description}</p>
+              )}
+              {pool.examples && (
+                <div className="mt-3">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-purple-300/70 mb-1">Examples</p>
+                  <p className="text-[13px] text-white/60 leading-relaxed whitespace-pre-line">{pool.examples}</p>
+                </div>
+              )}
+
               {/* Member avatars */}
               <div className="flex items-center mt-3">
                 {avatarUsers.length > 0 ? avatarUsers.map((u: any, idx: number) => (
