@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, Tv, BookOpen, Film, Music, Gamepad2, ChevronRight, Mic2, Fingerprint, Ghost, Rocket, Heart, Laugh, Drama, Trophy, BadgeCheck } from "lucide-react";
+import { Search, X, Tv, BookOpen, Film, Music, Gamepad2, ChevronRight, Mic2, Fingerprint, Ghost, Rocket, Heart, Laugh, Drama, Trophy, BadgeCheck, Zap, Mountain, Castle, Coffee } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
 import { createPortal } from "react-dom";
@@ -242,22 +242,30 @@ function RoomCard({ pool, onPress }: { pool: any; onPress: () => void }) {
   const roomImage = pool.media_image || pool.partner_logo_url;
   const initials = (pool.name || '?').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
   const genreKey = `${pool.series_tag || ''} ${pool.name || ''}`.toLowerCase();
-  const GENRE_ICONS: { match: RegExp; Icon: any }[] = [
-    { match: /true.?crime|crime|murder|detective|mystery/, Icon: Fingerprint },
-    { match: /horror|scary|thriller/, Icon: Ghost },
-    { match: /sci.?fi|science.?fiction|space/, Icon: Rocket },
-    { match: /roman/, Icon: Heart },
-    { match: /comed|funny/, Icon: Laugh },
-    { match: /drama/, Icon: Drama },
-    { match: /sport/, Icon: Trophy },
-    { match: /music/, Icon: Music },
-    { match: /book|read|literat/, Icon: BookOpen },
-    { match: /game|gaming/, Icon: Gamepad2 },
-    { match: /podcast/, Icon: Mic2 },
-    { match: /movie|film|cinema/, Icon: Film },
-    { match: /\btv\b|show|series|stream/, Icon: Tv },
+  const GENRE_THEMES: { match: RegExp; color: string; Icon: any }[] = [
+    { match: /true.?crime/, color: '#7c3aed', Icon: Fingerprint },
+    { match: /myster|whodunit|detective/, color: '#8b5cf6', Icon: Search },
+    { match: /rom.?com|roman/, color: '#ec4899', Icon: Heart },
+    { match: /action|thriller/, color: '#f97316', Icon: Zap },
+    { match: /fantasy/, color: '#14b8a6', Icon: Mountain },
+    { match: /period|historical/, color: '#3b82f6', Icon: Castle },
+    { match: /heartwarming|feel.?good|cozy|comfort|hallmark/, color: '#f59e0b', Icon: Coffee },
+    { match: /reality|competition/, color: '#f43f5e', Icon: Trophy },
+    { match: /horror|scary|supernatural|slasher/, color: '#6d28d9', Icon: Ghost },
+    { match: /sci.?fi|science.?fiction|space/, color: '#6366f1', Icon: Rocket },
+    { match: /comed|funny/, color: '#eab308', Icon: Laugh },
+    { match: /drama/, color: '#3b82f6', Icon: Drama },
+    { match: /sport/, color: '#0ea5e9', Icon: Trophy },
+    { match: /music/, color: '#a855f7', Icon: Music },
+    { match: /book|read|literat/, color: '#0d9488', Icon: BookOpen },
+    { match: /game|gaming/, color: '#8b5cf6', Icon: Gamepad2 },
+    { match: /podcast/, color: '#7c3aed', Icon: Mic2 },
+    { match: /movie|film|cinema/, color: '#7c3aed', Icon: Film },
+    { match: /\btv\b|show|series|stream/, color: '#7c3aed', Icon: Tv },
   ];
-  const GenreIcon = GENRE_ICONS.find((g) => g.match.test(genreKey))?.Icon || null;
+  const theme = GENRE_THEMES.find((g) => g.match.test(genreKey));
+  const GenreIcon = theme?.Icon || null;
+  const tileColor = theme?.color || accent;
 
   const mt = (pool.media_type || '').toLowerCase();
   const mediaConfig: Record<string, { label: string; Icon: any }> = {
@@ -284,17 +292,17 @@ function RoomCard({ pool, onPress }: { pool: any; onPress: () => void }) {
               <img src={roomImage} alt={pool.name} className="w-full h-full object-cover" />
             </div>
           ) : (
-            <div className="w-12 h-16 rounded-xl flex items-center justify-center text-white shadow-sm"
-              style={{ background: `linear-gradient(135deg, ${accent}, ${accent}99)` }}>
-              {GenreIcon ? <GenreIcon size={22} strokeWidth={1.8} /> : <span className="font-bold text-sm">{initials}</span>}
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+              style={{ background: `${tileColor}1f`, border: `1px solid ${tileColor}33` }}>
+              {GenreIcon ? <GenreIcon size={24} strokeWidth={1.9} style={{ color: tileColor }} /> : <span className="font-bold text-sm" style={{ color: tileColor }}>{initials}</span>}
             </div>
           )}
         </div>
 
         <button onClick={onPress} className="flex-1 min-w-0 text-left">
           <div className="flex items-center gap-1 mb-0.5">
-            <h3 className="text-gray-900 font-semibold text-base truncate flex-1 min-w-0">{pool.name}</h3>
-            {pool.is_official && <BadgeCheck size={15} className="text-purple-600 shrink-0" aria-label="Consumed Official" />}
+            <h3 className="text-gray-900 font-semibold text-base truncate min-w-0">{pool.name}</h3>
+            {pool.is_official && <BadgeCheck size={15} className="text-blue-500 shrink-0" aria-label="Consumed Official" />}
           </div>
           {mediaLabel && (
             <div className="flex items-center gap-1.5 mb-1 flex-wrap">

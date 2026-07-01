@@ -422,7 +422,7 @@ export default function NewRoom() {
               <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-purple-300/80 mb-1">Room</p>
               <div className="flex items-center gap-2">
                 <h1 className="text-[30px] font-extrabold text-white leading-tight">{pool.name}</h1>
-                {pool.is_official && <BadgeCheck size={24} className="text-purple-300 shrink-0" aria-label="Consumed Official" />}
+                {pool.is_official && <BadgeCheck size={24} className="text-blue-400 shrink-0" aria-label="Consumed Official" />}
               </div>
 
               {pool.description && (
