@@ -44,15 +44,16 @@ const gameModes = [
     iconColor: "text-rose-500",
     href: "/play/predictions",
   },
-  {
-    id: "pools",
-    label: "Pools",
-    description: "Play and compete with friends or the world.",
-    icon: Layers,
-    color: "bg-purple-50 border-purple-100",
-    iconColor: "text-purple-600",
-    href: "/play/pools",
-  },
+  // HIDDEN: friend-vs-friend trivia Pools (Harry Potter / Friends) — soft-hidden, route still works. Re-enable by uncommenting.
+  // {
+  //   id: "pools",
+  //   label: "Pools",
+  //   description: "Play and compete with friends or the world.",
+  //   icon: Layers,
+  //   color: "bg-purple-50 border-purple-100",
+  //   iconColor: "text-purple-600",
+  //   href: "/play/pools",
+  // },
   {
     id: "binge-battle",
     label: "Binge Battle",

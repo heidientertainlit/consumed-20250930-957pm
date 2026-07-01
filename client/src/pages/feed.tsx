@@ -8167,10 +8167,10 @@ export default function Feed() {
                 <SocialProofCard card={buildLeaderboardSocialProof(playActivity[0], 0)} />
               )}
 
-              {/* Challenge Pools banner #1 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+              {/* HIDDEN: Challenge Pools banner #1 (friend-vs-friend trivia Pools) — soft-hidden. Re-enable by uncommenting. */}
+              {/* {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <ChallengePoolsFeedBanner />
-              )}
+              )} */}
 
               {/* Seen It? — TV Shows (round 1) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
@@ -8325,10 +8325,10 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Movies" />
               )}
 
-              {/* Challenge Pools banner #2 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+              {/* HIDDEN: Challenge Pools banner #2 (friend-vs-friend trivia Pools) — soft-hidden. Re-enable by uncommenting. */}
+              {/* {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <ChallengePoolsFeedBanner />
-              )}
+              )} */}
 
               {/* — Rating carousel #3 — */}
               {renderRatingCarousel(3)}
@@ -8361,10 +8361,10 @@ export default function Feed() {
               {/* Play slot #5 */}
               {renderPostBatchByIndex(5)}
 
-              {/* Challenge Pools banner #3 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+              {/* HIDDEN: Challenge Pools banner #3 (friend-vs-friend trivia Pools) — soft-hidden. Re-enable by uncommenting. */}
+              {/* {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <ChallengePoolsFeedBanner />
-              )}
+              )} */}
 
               {/* Podcasts trivia — round 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
