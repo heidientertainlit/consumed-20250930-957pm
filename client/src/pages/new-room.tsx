@@ -594,7 +594,7 @@ export default function NewRoom() {
                 className="pt-7 scroll-mt-16"
               >
                 <SectionHeader title={section.title} />
-                <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+                <div className="flex items-start gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
                   {section.items.map((t: any, i: number) => {
                     const img = t.poster_url || t.image;
                     const meta = MEDIA_TYPE_META[t.type];
@@ -618,7 +618,7 @@ export default function NewRoom() {
                             </span>
                           )}
                         </div>
-                        <p className="text-[12px] font-medium text-gray-700 mt-1.5 text-center leading-tight line-clamp-2">{t.title}{t.year ? ` (${t.year})` : ""}</p>
+                        <p className="text-[12px] font-medium text-gray-700 mt-1.5 text-center leading-tight">{t.title}{t.year ? ` (${t.year})` : ""}</p>
                       </button>
                     );
                   })}
