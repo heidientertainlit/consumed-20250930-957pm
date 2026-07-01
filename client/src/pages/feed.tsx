@@ -7791,7 +7791,8 @@ export default function Feed() {
       <div className="max-w-4xl mx-auto px-4 pt-5 pb-6" data-feed-content>
 
         {/* ── What's Happening ── */}
-        {whatHappeningPosts.length > 0 && (
+        {/* HIDDEN for now — soft-hidden via `false &&`. Change `false` back to remove the flag and restore. */}
+        {false && whatHappeningPosts.length > 0 && (
           <div className="mb-3">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">What's Happening</p>
