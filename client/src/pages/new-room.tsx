@@ -5,7 +5,7 @@ import {
   ChevronLeft, ChevronRight, MoreHorizontal, Check, Plus, Copy,
   TrendingUp, MessageCircle,
   Brain, Vote, Tv, Flame, Bell, Users, X,
-  Flag, EyeOff, BellOff, ChevronDown, CircleHelp, Send, Loader2,
+  Flag, EyeOff, BellOff, CircleHelp, Send, Loader2,
   Film, BookOpen, Mic,
 } from "lucide-react";
 import Navigation from "@/components/navigation";
@@ -104,8 +104,7 @@ export default function NewRoom() {
   const [composerBody, setComposerBody] = useState("");
   const [composerTag, setComposerTag] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
-  const [sort, setSort] = useState<"hot" | "new" | "replies">("hot");
-  const [sortOpen, setSortOpen] = useState(false);
+  const [sort] = useState<"hot" | "new" | "replies">("hot");
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [flagged, setFlagged] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
@@ -695,20 +694,6 @@ export default function NewRoom() {
           {/* All conversations */}
           <div className="flex items-center justify-between px-5 mt-7 mb-3">
             <p className="text-[13px] font-bold uppercase tracking-wider text-gray-500">All conversations</p>
-            <div className="relative">
-              <button onClick={() => setSortOpen((o) => !o)} className="flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1.5 text-[13px] font-semibold text-gray-700 active:bg-gray-50 transition-colors">
-                {sort === "hot" ? <><Flame size={14} className="text-orange-500" /> Hot</> : sort === "new" ? <>New</> : <>Most replies</>}
-                <ChevronDown size={15} className="text-gray-400" />
-              </button>
-              {sortOpen && (<>
-                <div className="fixed inset-0 z-10" onClick={() => setSortOpen(false)} />
-                <div className="absolute right-0 top-9 z-20 w-40 rounded-2xl border border-gray-100 bg-white shadow-lg overflow-hidden py-1">
-                  {([["hot", "Hot"], ["new", "New"], ["replies", "Most replies"]] as const).map(([k, label]) => (
-                    <button key={k} onClick={() => { setSort(k); setSortOpen(false); }} className="w-full text-left px-4 py-2.5 text-[14px] text-gray-700 active:bg-gray-50">{label}</button>
-                  ))}
-                </div>
-              </>)}
-            </div>
           </div>
 
           <div className="px-4 space-y-3">
