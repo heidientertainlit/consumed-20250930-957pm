@@ -3,12 +3,13 @@ import { useParams, useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft, ChevronRight, MoreHorizontal, Check, Plus, Copy,
-  TrendingUp, Sparkle, MessageCircle, ArrowUpRight,
+  TrendingUp, MessageCircle,
   Brain, Vote, Tv, Flame, Bell, Users, X,
   Flag, EyeOff, BellOff, ChevronDown, CircleHelp, Send, Loader2,
   Film, BookOpen, Mic,
 } from "lucide-react";
 import Navigation from "@/components/navigation";
+import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -31,14 +32,6 @@ const MEDIA_TYPE_META: Record<string, { label: string; Icon: any }> = {
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 const ACCENT = "#7c3aed";
-
-// ── Explore quick-filters ─────────────────────────────────────────────
-const EXPLORE = [
-  { key: "trending", label: "Trending\nThis Week", icon: TrendingUp, bg: "#f3effe", fg: "#7c3aed" },
-  { key: "new", label: "New\nReleases", icon: Sparkle, bg: "#eef4ff", fg: "#3b6df6" },
-  { key: "discussed", label: "Most\nDiscussed", icon: MessageCircle, bg: "#ffeef0", fg: "#ef4d65" },
-  { key: "predictions", label: "Predictions\nRising", icon: ArrowUpRight, bg: "#fff6e8", fg: "#e08a14" },
-];
 
 // ── Play quick-launch round icons (placeholders — wired in a later pass) ──
 const PLAY_ICONS = [
@@ -105,6 +98,7 @@ export default function NewRoom() {
   const queryClient = useQueryClient();
 
   const [tab, setTab] = useState<Tab>("Discuss");
+  const [addMedia, setAddMedia] = useState<{ title: string; mediaType: string; imageUrl?: string; externalId?: string; externalSource?: string; creator?: string } | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerTitle, setComposerTitle] = useState("");
   const [composerBody, setComposerBody] = useState("");
@@ -117,9 +111,6 @@ export default function NewRoom() {
   const [copied, setCopied] = useState(false);
   const [optimisticFollowing, setOptimisticFollowing] = useState<boolean | null>(null);
   const [activeTake, setActiveTake] = useState<any | null>(null);
-  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const scrollToSection = (key: string) =>
-    sectionRefs.current[key]?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   // Redirect if no room id (e.g. visiting /new-room directly)
   useEffect(() => {
@@ -448,20 +439,6 @@ export default function NewRoom() {
                 <span className="ml-3 text-[13px] text-white/50">{memberLabel}</span>
               </div>
 
-              {/* Room vibe bar (carries real MATCH %) */}
-              <div className="mt-5 flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-white/40">Room Vibe</span>
-                <div className="flex items-center gap-1.5">
-                  <MessageCircle size={15} className="text-purple-300" />
-                  <span className="text-[14px] font-semibold text-white">Discussion crew</span>
-                </div>
-                {matchPct !== null && (
-                  <div className="ml-auto flex items-center gap-1.5 rounded-full px-3 py-1.5" style={{ background: "linear-gradient(90deg,#7c3aed,#a855f7)" }}>
-                    <span className="text-[11px] font-bold uppercase tracking-wide text-white/80">Match</span>
-                    <span className="text-[13px] font-extrabold text-white">{matchPct}%</span>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </div>
@@ -555,31 +532,6 @@ export default function NewRoom() {
 
         {/* ════════ EXPLORE ════════ */}
         {tab === "Explore" && (<>
-          <div className="pt-7">
-            <SectionHeader title="Explore" />
-            <div className="grid grid-cols-4 gap-2.5 px-4">
-              {EXPLORE.map((e, i) => {
-                const Icon = e.icon;
-                return (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      if (e.key === "trending") scrollToSection("trending");
-                      else if (e.key === "new") scrollToSection("new");
-                      else if (e.key === "discussed") { setSort("replies"); setTab("Discuss"); }
-                      else if (e.key === "predictions") { setTab("Play"); }
-                    }}
-                    className="rounded-2xl p-3 text-left active:scale-95 transition-transform"
-                    style={{ background: e.bg }}
-                  >
-                    <p className="text-[11px] font-bold text-gray-800 leading-tight whitespace-pre-line mb-3">{e.label}</p>
-                    <Icon size={16} style={{ color: e.fg }} />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {loadingExplore ? (
             <div className="flex justify-center py-14"><Loader2 className="animate-spin text-purple-400" size={24} /></div>
           ) : exploreError ? (
@@ -590,8 +542,7 @@ export default function NewRoom() {
             exploreSections.map((section) => (
               <div
                 key={section.key}
-                ref={(el) => { sectionRefs.current[section.key] = el; }}
-                className="pt-7 scroll-mt-16"
+                className="pt-7"
               >
                 <SectionHeader title={section.title} />
                 <div className="flex items-start gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
@@ -599,14 +550,24 @@ export default function NewRoom() {
                     const img = t.poster_url || t.image;
                     const meta = MEDIA_TYPE_META[t.type];
                     return (
-                      <button
+                      <div
                         key={`${t.external_source}-${t.external_id}-${i}`}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => {
                           const type = t.type || "movie";
                           const source = t.external_source || t.source;
                           if (source && t.external_id) setLocation(`/media/${type}/${source}/${t.external_id}`);
                         }}
-                        className="flex-shrink-0 w-[110px] text-left active:scale-95 transition-transform"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            const type = t.type || "movie";
+                            const source = t.external_source || t.source;
+                            if (source && t.external_id) setLocation(`/media/${type}/${source}/${t.external_id}`);
+                          }
+                        }}
+                        className="flex-shrink-0 w-[110px] text-left active:scale-95 transition-transform cursor-pointer"
                       >
                         <div className="relative w-[110px] h-[160px] rounded-xl overflow-hidden flex items-end p-2.5" style={{ background: img ? "#1a1530" : "linear-gradient(160deg,#3a2f5e,#1a1530)" }}>
                           {img && <img src={img} alt={t.title} className="absolute inset-0 w-full h-full object-cover" />}
@@ -617,9 +578,26 @@ export default function NewRoom() {
                               {meta.label}
                             </span>
                           )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAddMedia({
+                                title: t.title,
+                                mediaType: t.type || "movie",
+                                imageUrl: img,
+                                externalId: t.external_id,
+                                externalSource: t.external_source || t.source,
+                                creator: t.creator,
+                              });
+                            }}
+                            aria-label={`Add ${t.title} to a list`}
+                            className="absolute bottom-1.5 right-1.5 flex items-center justify-center w-7 h-7 rounded-full bg-white/95 text-purple-700 shadow-md active:scale-90 transition-transform"
+                          >
+                            <Plus size={16} strokeWidth={2.5} />
+                          </button>
                         </div>
                         <p className="text-[12px] font-medium text-gray-700 mt-1.5 text-center leading-tight">{t.title}{t.year ? ` (${t.year})` : ""}</p>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -811,6 +789,13 @@ export default function NewRoom() {
           logRoomEvent={logRoomEvent}
         />
       )}
+
+      <QuickAddListSheet
+        isOpen={!!addMedia}
+        onClose={() => setAddMedia(null)}
+        media={addMedia}
+        elevated
+      />
     </div>
   );
 }
