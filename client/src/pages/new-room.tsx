@@ -6,7 +6,7 @@ import {
   TrendingUp, MessageCircle,
   Brain, Vote, Tv, Flame, Bell, Users, X,
   Flag, EyeOff, BellOff, CircleHelp, Send, Loader2,
-  Film, BookOpen, Mic,
+  Film, BookOpen, Mic, BadgeCheck,
 } from "lucide-react";
 import Navigation from "@/components/navigation";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
@@ -420,7 +420,10 @@ export default function NewRoom() {
               </div>
 
               <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-purple-300/80 mb-1">Room</p>
-              <h1 className="text-[30px] font-extrabold text-white leading-tight">{pool.name}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-[30px] font-extrabold text-white leading-tight">{pool.name}</h1>
+                {pool.is_official && <BadgeCheck size={24} className="text-purple-300 shrink-0" aria-label="Consumed Official" />}
+              </div>
 
               {pool.description && (
                 <p className="text-[14px] text-white/75 leading-relaxed mt-2.5">{pool.description}</p>

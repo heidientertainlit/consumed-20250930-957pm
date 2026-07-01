@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, Tv, BookOpen, Film, Music, Gamepad2, ChevronRight, Mic2, Fingerprint, Ghost, Rocket, Heart, Laugh, Drama, Trophy } from "lucide-react";
+import { Search, X, Tv, BookOpen, Film, Music, Gamepad2, ChevronRight, Mic2, Fingerprint, Ghost, Rocket, Heart, Laugh, Drama, Trophy, BadgeCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
 import { createPortal } from "react-dom";
@@ -292,7 +292,10 @@ function RoomCard({ pool, onPress }: { pool: any; onPress: () => void }) {
         </div>
 
         <button onClick={onPress} className="flex-1 min-w-0 text-left">
-          <h3 className="text-gray-900 font-semibold text-base truncate mb-0.5">{pool.name}</h3>
+          <div className="flex items-center gap-1 mb-0.5">
+            <h3 className="text-gray-900 font-semibold text-base truncate flex-1 min-w-0">{pool.name}</h3>
+            {pool.is_official && <BadgeCheck size={15} className="text-purple-600 shrink-0" aria-label="Consumed Official" />}
+          </div>
           {mediaLabel && (
             <div className="flex items-center gap-1.5 mb-1 flex-wrap">
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide shrink-0"
