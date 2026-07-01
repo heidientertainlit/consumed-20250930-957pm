@@ -23,6 +23,33 @@ const MEDIA_TYPE_META: Record<string, { label: string; Icon: any }> = {
   podcast: { label: "Podcast", Icon: Mic },
 };
 
+// Parse a room's `examples` text ("Movies: A, B\nShows: C, D") into labeled
+// groups. Splits each line on the FIRST colon so titles containing a colon
+// (e.g. "Mission: Impossible") stay intact.
+const EXAMPLE_GROUP_ICON: Record<string, any> = {
+  movies: Film, movie: Film,
+  shows: Tv, show: Tv, tv: Tv, series: Tv,
+  books: BookOpen, book: BookOpen,
+  podcasts: Mic, podcast: Mic,
+};
+function parseExamples(raw?: string | null): { label: string; Icon: any; items: string[] }[] {
+  if (!raw) return [];
+  return raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const ci = line.indexOf(":");
+      const hasLabel = ci > 0 && ci < 20;
+      const rawLabel = hasLabel ? line.slice(0, ci).trim() : "Examples";
+      const body = hasLabel ? line.slice(ci + 1) : line;
+      const items = body.split(",").map((s) => s.trim()).filter(Boolean);
+      const Icon = EXAMPLE_GROUP_ICON[rawLabel.toLowerCase()] || Film;
+      return { label: rawLabel, Icon, items };
+    })
+    .filter((g) => g.items.length > 0);
+}
+
 /**
  * ROOM — the single room template for ALL rooms (genre / topic).
  * Wired to the real backend: pools (room), room_takes (discussions),
@@ -251,13 +278,20 @@ export default function NewRoom() {
 
   // ── Explore: genre-based discovery via room-explore ──────────────────
   const exploreTag = pool?.series_tag || pool?.name || "";
+  const parsedExamples = useMemo(() => parseExamples(pool?.examples), [pool?.examples]);
+  // Flat list of example titles used to seed TMDB recommendations in Explore.
+  const exploreSeeds = useMemo(
+    () => parsedExamples.flatMap((g) => g.items).slice(0, 8).join("|"),
+    [parsedExamples]
+  );
   const { data: exploreData, isLoading: loadingExplore, isError: exploreError } = useQuery({
-    queryKey: ["room-explore", exploreTag, pool?.media_type ?? "all"],
+    queryKey: ["room-explore", exploreTag, pool?.media_type ?? "all", exploreSeeds],
     queryFn: async () => {
       const qs = new URLSearchParams();
       if (pool?.series_tag) qs.set("series_tag", pool.series_tag);
       if (pool?.name) qs.set("name", pool.name);
       if (pool?.media_type) qs.set("media_type", pool.media_type);
+      if (exploreSeeds) qs.set("seeds", exploreSeeds);
       const res = await fetch(
         `${SUPABASE_URL}/functions/v1/room-explore?${qs.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -428,10 +462,26 @@ export default function NewRoom() {
               {pool.description && (
                 <p className="text-[14px] text-white/75 leading-relaxed mt-2.5">{pool.description}</p>
               )}
-              {pool.examples && (
-                <div className="mt-3">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-purple-300/70 mb-1">Examples</p>
-                  <p className="text-[13px] text-white/60 leading-relaxed whitespace-pre-line">{pool.examples}</p>
+              {parsedExamples.length > 0 && (
+                <div className="mt-4 space-y-2.5">
+                  {parsedExamples.map((g, gi) => (
+                    <div key={gi} className="flex items-start gap-2.5">
+                      <div className="flex items-center gap-1.5 shrink-0 pt-1.5">
+                        <g.Icon size={13} className="text-purple-300/80" />
+                        <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-purple-300/70 w-[52px]">{g.label}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {g.items.map((item, ii) => (
+                          <span
+                            key={ii}
+                            className="text-[12px] text-white/85 bg-white/10 border border-white/10 rounded-full px-2.5 py-1 leading-none"
+                          >
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
 

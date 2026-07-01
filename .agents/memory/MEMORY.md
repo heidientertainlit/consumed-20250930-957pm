@@ -9,4 +9,4 @@
 - [/add nav & composer layering](add-page-nav-layering.md) — composer is a z-99999 body portal; bottom nav must render INSIDE it (Navigation `inline` prop) to interleave above browse, below sheets.
 - [Genre cache architecture](genre-cache.md) — genre cached per-title in media_genres keyed by (external_source,external_id); no media catalog exists; canonicalized; cache-first+write-back; backfill-genres edge fn.
 - [rebuild-recommendations cache safety](recommendations-rebuild.md) — AI recs resolved via media-search (hallucination filter); never overwrite user_recommendations with too-few recs or the carousel vanishes.
-- [Room Explore genre discovery](room-explore-genre-discovery.md) — genre rooms need TMDB /discover (keyword→genre fallback), NOT media-search (a title matcher); room-explore edge fn is the source.
+- [Room Explore genre discovery](room-explore-genre-discovery.md) — room-explore uses explicit per-tag genre config + example-seed recommendations (NOT fuzzy keyword, which pulled cartoons); never media-search (title matcher).

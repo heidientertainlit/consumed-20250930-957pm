@@ -4,12 +4,23 @@ description: Why genre rooms must use TMDB discover, not media-search, and how r
 ---
 The room "Explore" tab needs genre-based discovery, not title search.
 
-**Rule:** For genre rooms, do discovery via TMDB `/discover/{movie,tv}` (resolve a TMDB
-keyword id from the room's `series_tag`; fall back to a genre-name→TMDB-genre-id map).
-Never use `media-search` for this — `media-search` is a TITLE matcher and returns junk
-when handed a genre/room name as the query.
+**Rule:** For genre rooms, do discovery via TMDB `/discover/{movie,tv}` driven by an
+explicit per-`series_tag` `ROOM_CONFIG` (TMDB genre ids + a `without` exclusion list),
+NOT a fuzzy TMDB keyword lookup. A room's `examples` titles are also passed as `seeds`,
+resolved on TMDB, and their `/recommendations` power a "More Like Your Favorites" rail
+(seed rail must respect the room's `without` exclusions and is movie/tv only). Keyword is
+kept only for rooms a keyword genuinely models (e.g. `true-crime`). Never use
+`media-search` for any of this — it is a TITLE matcher and returns junk for a room name.
 
-**Why:** media-search matches titles; passing "True Crime" as `q` yields unrelated shows.
+**Why:** A fuzzy keyword on the room tag pulled wrong content — the "heartwarming"
+keyword is heavily tagged on kids/animation (Bluey, Kronk), so the cozy/Hallmark room
+filled with cartoons. Explicit genres + exclusions + seed recommendations fixed it.
+media-search matches titles; passing "True Crime" as `q` yields unrelated shows.
+
+**Caveat:** genre discovery can't fully isolate a niche vibe like "Hallmark" — TMDB's
+Romance/Drama genres are broad and its recommendation graph occasionally leaks off-tone
+titles (e.g. erotic romance tagged only Drama/Romance). The seed rail carries the
+specificity; broad rails always have some noise.
 
 **How to apply:** The `room-explore` edge function is the canonical source (sections:
 Trending This Week / New Releases / Fan Favorites). Rooms live in the `pools` table;

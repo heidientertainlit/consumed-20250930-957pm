@@ -4,9 +4,29 @@ const corsHeaders = {
   'Cache-Control': 'no-store',
 };
 
-// Fallback map: genre-name → TMDB genre IDs, used only when TMDB has no matching
-// keyword for the room's tag. Keyword discovery is preferred (better for niche
-// topics like "true crime", which is a keyword, not a base TMDB genre).
+// Per-room explore config keyed by series_tag. This is the source of truth for
+// what a room's Explore surfaces. Using explicit TMDB genre ids (plus a
+// `without` exclusion list) is far more reliable than TMDB keyword search, which
+// tags kids/animation titles as "heartwarming" and pollutes cozy rooms with
+// cartoons. `keyword` is only used where a keyword genuinely models the room
+// better than a base genre (e.g. "true crime").
+//   Genre ids: 80 Crime, 99 Documentary, 27 Horror, 35 Comedy, 18 Drama,
+//   878 Sci-Fi, 14 Fantasy, 10749 Romance, 53 Thriller, 28 Action, 16 Animation,
+//   9648 Mystery, 10751 Family, 36 History, 10759 Action&Adventure(tv),
+//   10765 Sci-Fi&Fantasy(tv), 10764 Reality(tv).
+const ROOM_CONFIG: Record<string, { movie: number[]; tv: number[]; without?: number[]; keyword?: string }> = {
+  'true-crime':      { movie: [80, 99], tv: [80, 99], keyword: 'true crime', without: [16] },
+  'mystery':         { movie: [9648], tv: [9648], without: [16] },
+  'reality':         { movie: [], tv: [10764], without: [16] },
+  'horror':          { movie: [27], tv: [9648, 18] },
+  'action-thriller': { movie: [28, 53], tv: [10759, 80], without: [16] },
+  'fantasy':         { movie: [14], tv: [10765] },
+  'period-drama':    { movie: [18, 36], tv: [18], without: [16] },
+  'heartwarming':    { movie: [10749], tv: [18], without: [16, 10751, 27, 878, 80, 53, 9648, 10765, 10768, 10752] },
+  'rom-com':         { movie: [10749, 35], tv: [35], without: [16] },
+};
+
+// Legacy fallback for rooms without an explicit config entry.
 const GENRE_MAP: Record<string, { movie: number[]; tv: number[] }> = {
   'true crime': { movie: [80, 99], tv: [80, 99] },
   'crime': { movie: [80], tv: [80] },
@@ -52,8 +72,19 @@ function interleave(a: any[], b: any[]) {
   return out;
 }
 
-// Books via Google Books (genre browse by subject). external_source 'googlebooks'
-// is handled by get-media-details so cards open correctly.
+function dedupe(items: any[]) {
+  const seen = new Set<string>();
+  const out: any[] = [];
+  for (const it of items) {
+    const k = `${it.type}:${it.external_id}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(it);
+  }
+  return out;
+}
+
+// Books via Google Books (genre browse by subject).
 async function fetchBooks(term: string): Promise<any[]> {
   const key = Deno.env.get('GOOGLE_BOOKS_API_KEY');
   const q = `subject:"${term}"`;
@@ -86,8 +117,7 @@ async function fetchBooks(term: string): Promise<any[]> {
   }
 }
 
-// Podcasts via the free iTunes Search API. external_source 'itunes' is handled by
-// get-media-details so cards open correctly.
+// Podcasts via the free iTunes Search API.
 async function fetchPodcasts(term: string): Promise<any[]> {
   const u = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=podcast&entity=podcast&limit=20&country=US`;
   try {
@@ -126,37 +156,46 @@ Deno.serve(async (req) => {
     let seriesTag = url.searchParams.get('series_tag') || '';
     let name = url.searchParams.get('name') || '';
     let mediaType = url.searchParams.get('media_type') || '';
+    let seedsRaw = url.searchParams.get('seeds') || '';
     if (req.method === 'POST') {
       try {
         const b = await req.json();
         seriesTag = b.series_tag || seriesTag;
         name = b.name || name;
         mediaType = b.media_type || mediaType;
+        seedsRaw = b.seeds || seedsRaw;
       } catch (_) { /* no body */ }
     }
 
-    // The search term: prefer the room's genre tag ("true-crime" → "true crime"),
-    // fall back to the room name.
+    const tagKey = seriesTag.trim().toLowerCase();
+    // The search term (for books / podcasts / keyword fallback).
     const term = (seriesTag.replace(/-/g, ' ') || name).trim();
     const tmdbKey = Deno.env.get('TMDB_API_KEY');
     if (!tmdbKey) return json({ sections: [], error: 'TMDB not configured' }, 500);
-    if (!term) return json({ sections: [] });
+    if (!term && !seedsRaw) return json({ sections: [] });
 
-    // Resolve a TMDB keyword id for the term (best signal for genre discovery).
+    const cfg = ROOM_CONFIG[tagKey] || null;
+
+    // Resolve a TMDB keyword id: prefer the config keyword, else fall back to
+    // the term itself only when there is no explicit genre config for the room.
     let keywordId: string | null = null;
-    try {
-      const kr = await fetch(
-        `https://api.themoviedb.org/3/search/keyword?api_key=${tmdbKey}&query=${encodeURIComponent(term)}`
-      );
-      if (kr.ok) {
-        const kd = await kr.json();
-        const lc = term.toLowerCase();
-        const exact = (kd.results || []).find((k: any) => (k.name || '').toLowerCase() === lc);
-        keywordId = exact ? String(exact.id) : (kd.results?.[0] ? String(kd.results[0].id) : null);
-      }
-    } catch (_) { /* keyword resolution is best-effort */ }
+    const keywordQuery = cfg?.keyword || (cfg ? '' : term);
+    if (keywordQuery) {
+      try {
+        const kr = await fetch(
+          `https://api.themoviedb.org/3/search/keyword?api_key=${tmdbKey}&query=${encodeURIComponent(keywordQuery)}`
+        );
+        if (kr.ok) {
+          const kd = await kr.json();
+          const lc = keywordQuery.toLowerCase();
+          const exact = (kd.results || []).find((k: any) => (k.name || '').toLowerCase() === lc);
+          keywordId = exact ? String(exact.id) : (kd.results?.[0] ? String(kd.results[0].id) : null);
+        }
+      } catch (_) { /* best-effort */ }
+    }
 
-    const genreIds = GENRE_MAP[term.toLowerCase()] || null;
+    const genreIds = cfg || GENRE_MAP[term.toLowerCase()] || null;
+    const withoutGenres = cfg?.without || [];
 
     const today = new Date().toISOString().split('T')[0];
     const wantMovie = !mediaType || mediaType === 'movie';
@@ -173,13 +212,20 @@ Deno.serve(async (req) => {
         page: '1',
         ...extra,
       });
-      if (keywordId) {
+      const g = genreIds ? genreIds[kind] : [];
+      let hasFilter = false;
+      // When the room has an explicit config we drive by genre; keyword is only
+      // layered on for keyword-modelled rooms (e.g. true crime).
+      if (keywordId && (!cfg || cfg.keyword)) {
         p.set('with_keywords', keywordId);
-      } else if (genreIds && genreIds[kind].length > 0) {
-        p.set('with_genres', genreIds[kind].join(','));
-      } else {
-        return [];
+        hasFilter = true;
       }
+      if (g && g.length > 0) {
+        p.set('with_genres', g.join(','));
+        hasFilter = true;
+      }
+      if (withoutGenres.length > 0) p.set('without_genres', withoutGenres.join(','));
+      if (!hasFilter) return [];
       try {
         const r = await fetch(`https://api.themoviedb.org/3/discover/${kind}?${p.toString()}`);
         if (!r.ok) return [];
@@ -192,12 +238,73 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── Seed-guided recommendations ──────────────────────────────────────
+    // Resolve the room's example titles to TMDB and pull "recommendations" so
+    // Explore is anchored to the real titles that define the room's vibe.
+    const seeds = seedsRaw
+      .split(/[|,]/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 1)
+      .slice(0, 5);
+
+    async function seedRecommendations(): Promise<any[]> {
+      // Seed recs are movie/tv only — skip for rooms scoped to podcasts/books.
+      if (seeds.length === 0 || (!wantMovie && !wantTv)) return [];
+      const matched: { id: number; kind: 'movie' | 'tv' }[] = [];
+      await Promise.all(seeds.map(async (title) => {
+        try {
+          const r = await fetch(
+            `https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&include_adult=false&query=${encodeURIComponent(title)}`
+          );
+          if (!r.ok) return;
+          const d = await r.json();
+          const hit = (d.results || []).find(
+            (x: any) => (x.media_type === 'movie' || x.media_type === 'tv') && x.poster_path
+          );
+          if (hit) matched.push({ id: hit.id, kind: hit.media_type });
+        } catch (_) { /* skip */ }
+      }));
+
+      const seedKeys = new Set(matched.map((m) => `${m.kind}:${m.id}`));
+      const withoutSet = new Set(withoutGenres);
+      const recLists = await Promise.all(matched.slice(0, 4).map(async (m) => {
+        try {
+          const r = await fetch(
+            `https://api.themoviedb.org/3/${m.kind}/${m.id}/recommendations?api_key=${tmdbKey}&page=1`
+          );
+          if (!r.ok) return [];
+          const d = await r.json();
+          return (d.results || [])
+            .filter((i: any) => i.poster_path)
+            // Respect the room's genre exclusions so the seed rail can't
+            // reintroduce off-vibe content (e.g. cartoons) that the discover
+            // rails filter out.
+            .filter((i: any) => !(i.genre_ids || []).some((g: number) => withoutSet.has(g)))
+            .map((i: any) => mapItem(i, m.kind));
+        } catch (_) {
+          return [];
+        }
+      }));
+
+      // Round-robin across seeds so no single title dominates.
+      const out: any[] = [];
+      const maxLen = Math.max(0, ...recLists.map((l) => l.length));
+      for (let i = 0; i < maxLen; i++) {
+        for (const list of recLists) {
+          if (i < list.length) out.push(list[i]);
+        }
+      }
+      return dedupe(out).filter((it) => !seedKeys.has(`${it.type}:${it.external_id}`)).slice(0, 15);
+    }
+
     const [
+      seedRecs,
       trendMovie, trendTv,
       newMovie, newTv,
       topMovie, topTv,
       podcasts, books,
     ] = await Promise.all([
+      seedRecommendations(),
       wantMovie && canTmdb ? discover('movie', 'popularity.desc', { 'vote_count.gte': '50' }) : Promise.resolve([]),
       wantTv && canTmdb ? discover('tv', 'popularity.desc', { 'vote_count.gte': '50' }) : Promise.resolve([]),
       wantMovie && canTmdb ? discover('movie', 'primary_release_date.desc', { 'primary_release_date.lte': today, 'vote_count.gte': '15' }) : Promise.resolve([]),
@@ -208,8 +315,8 @@ Deno.serve(async (req) => {
       wantBook ? fetchBooks(term) : Promise.resolve([]),
     ]);
 
-    // Vibe sections (mixed movie + tv) first, then browse-by-media-type sections.
     const sections = [
+      { key: 'seeds', title: 'More Like Your Favorites', items: seedRecs },
       { key: 'trending', title: 'Trending This Week', items: interleave(trendMovie, trendTv).slice(0, 15) },
       { key: 'new', title: 'New Releases', items: interleave(newMovie, newTv).slice(0, 15) },
       { key: 'top', title: 'Fan Favorites', items: interleave(topMovie, topTv).slice(0, 15) },
@@ -219,7 +326,7 @@ Deno.serve(async (req) => {
       { key: 'books', title: 'Books', items: books },
     ].filter((s) => s.items.length > 0);
 
-    return json({ keyword: term, keyword_id: keywordId, sections });
+    return json({ keyword: term, keyword_id: keywordId, seeds, sections });
   } catch (e) {
     return json({ sections: [], error: String((e as any)?.message || e) }, 500);
   }
