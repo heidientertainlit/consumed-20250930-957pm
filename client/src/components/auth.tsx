@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import { Eye, EyeOff } from 'lucide-react'
+import { SiApple, SiGoogle } from 'react-icons/si'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -100,6 +101,47 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
     }
   }
 
+  // UI-only for now — real OAuth gets wired in after Apple/Google provider config is done.
+  const handleOAuth = (provider: 'apple' | 'google') => {
+    toast({
+      title: "Almost there",
+      description: `${provider === 'apple' ? 'Apple' : 'Google'} sign-in isn't connected yet — coming soon.`,
+    })
+  }
+
+  const renderSocialButtons = (context: 'signin' | 'signup') => (
+    <div className="space-y-3">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => handleOAuth('apple')}
+        className="w-full bg-black text-white hover:bg-black/90 hover:text-white border-black"
+        data-testid={`button-${context}-apple`}
+      >
+        <SiApple className="h-4 w-4 mr-2" />
+        Continue with Apple
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => handleOAuth('google')}
+        className="w-full bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 border-gray-300"
+        data-testid={`button-${context}-google`}
+      >
+        <SiGoogle className="h-4 w-4 mr-2 text-[#4285F4]" />
+        Continue with Google
+      </Button>
+      <div className="relative py-1">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-gray-200" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-card px-2 text-muted-foreground">or continue with email</span>
+        </div>
+      </div>
+    </div>
+  )
+
   const resetForm = () => {
     setEmail('')
     setPassword('')
@@ -132,7 +174,8 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
                   Enter your credentials to access your Entertainment DNA
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {renderSocialButtons('signin')}
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signin-email">Email</Label>
@@ -193,7 +236,8 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
                   Join consumed to discover your Entertainment DNA
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {renderSocialButtons('signup')}
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
