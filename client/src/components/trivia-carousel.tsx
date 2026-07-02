@@ -511,7 +511,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
             // Get friend user info
             const { data: friendUsers } = await supabase
               .from('users')
-              .select('id, display_name, first_name, last_name, avatar_url')
+              .select('id, display_name, first_name, last_name, avatar')
               .in('id', friendPredictions.map(p => p.user_id));
             
             friendAnswers = friendPredictions.map(p => {
@@ -522,7 +522,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
               return {
                 userId: p.user_id,
                 displayName,
-                avatarUrl: friendUser?.avatar_url,
+                avatarUrl: friendUser?.avatar,
                 answer: p.prediction,
                 isCorrect: p.prediction === correctAnswer
               };
