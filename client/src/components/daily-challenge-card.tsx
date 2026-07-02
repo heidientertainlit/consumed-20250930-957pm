@@ -251,7 +251,7 @@ export function DailyChallengeCard() {
       // Get total responses and correct count
       const { data: responses, error } = await supabase
         .from('daily_challenge_responses')
-        .select('response, user_id, users!inner(username, display_name, avatar_url)')
+        .select('response, user_id, users!inner(username:user_name, display_name, avatar_url:avatar)')
         .eq('challenge_id', challenge.id)
         .limit(100);
       
