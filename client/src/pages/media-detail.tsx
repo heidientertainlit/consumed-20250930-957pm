@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowUp, ArrowDown, Share, Star, Calendar, Clock, ExternalLi
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/navigation";
-import RoomComposer, { DISCUSSION_TAGS } from "@/components/room-composer";
+import RoomComposer, { DISCUSSION_TAGS, dbTagToDisplay } from "@/components/room-composer";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -250,7 +250,7 @@ export default function MediaDetail() {
           <div className="min-w-0 flex-1">
             <span className="text-xs font-medium text-gray-900">{cName}</span>
             <p className="text-sm text-gray-700 leading-snug">{comment.content}</p>
-            <div className="flex items-center gap-3 mt-0.5">
+            <div className="flex items-center justify-between mt-0.5">
               <button
                 onClick={() => { setReplyingToComment(isReplying ? null : comment.id); setCommentReplyContent(''); }}
                 className={`text-xs font-medium transition-colors ${isReplying ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'}`}
@@ -258,7 +258,7 @@ export default function MediaDetail() {
               >
                 Reply
               </button>
-              <ReportButton contentType="comment" contentId={String(comment.id)} iconOnly={false} className="text-xs text-gray-400 hover:text-red-500" />
+              <ReportButton contentType="comment" contentId={String(comment.id)} className="text-gray-200 hover:text-red-500 [&_svg]:w-3 [&_svg]:h-3" />
             </div>
             {isReplying && (
               <div className="flex items-center gap-2 mt-1.5">
@@ -285,7 +285,7 @@ export default function MediaDetail() {
           </div>
         </div>
         {comment.replies?.length > 0 && (
-          <div className="mt-2 space-y-2 border-l-2 border-gray-100 pl-3 ml-2.5">
+          <div className="mt-2 space-y-2 border-l-2 border-purple-200 pl-3 ml-2.5">
             {comment.replies.map((reply: any) => renderComment(reply, postId, depth + 1))}
           </div>
         )}
@@ -1207,11 +1207,25 @@ export default function MediaDetail() {
                 </>
               )}
               <span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                <ReportButton contentType="post" contentId={String(post.id)} className="text-gray-300 hover:text-red-500" />
+                <ReportButton contentType="post" contentId={String(post.id)} className="text-gray-200 hover:text-red-500 [&_svg]:w-3 [&_svg]:h-3" />
               </span>
             </div>
           </div>
           <p className={`text-sm leading-snug ${hasText ? 'text-gray-700' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-2'}`}>{hasText ? post.content : 'Shared a rating'}</p>
+          {(() => {
+            const tag = dbTagToDisplay(post.post_type);
+            if (!tag) return null;
+            const TagIcon = tag.icon;
+            return (
+              <span
+                className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium"
+                style={{ backgroundColor: tag.bg, color: tag.fg }}
+                data-testid={`take-tag-${post.id}`}
+              >
+                <TagIcon size={11} /> {tag.label}
+              </span>
+            );
+          })()}
         </div>
 
         {/* Response options */}
@@ -1288,7 +1302,7 @@ export default function MediaDetail() {
 
         {/* Comments — preview a couple when collapsed, all when expanded */}
         {expandedComments[post.id]?.length > 0 && (
-          <div className="mt-3 space-y-2">
+          <div className="mt-3 space-y-3 bg-gray-50 rounded-lg p-3">
             {(isExpanded ? expandedComments[post.id] : expandedComments[post.id].slice(0, 2))
               .map((comment: any) => renderComment(comment, post.id))}
             {!isExpanded && expandedComments[post.id].length > 2 && (
