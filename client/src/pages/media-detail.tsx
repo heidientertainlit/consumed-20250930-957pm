@@ -469,6 +469,8 @@ export default function MediaDetail() {
 
   // Separate reviews from other activity
   const reviews = socialActivity.filter((post: any) => post.rating);
+  // Posts shown in the expanded list — rated reviews AND text takes (so text takes are respondable)
+  const discussionPosts = socialActivity.filter((post: any) => post.rating || (post.content && post.content.trim()));
   const avgRating = reviews.length > 0
     ? (reviews.reduce((sum: number, r: any) => sum + Number(r.rating), 0) / reviews.length).toFixed(1)
     : null;
@@ -1090,35 +1092,45 @@ export default function MediaDetail() {
               
               {/* Compact metadata chips */}
               <div className="flex flex-wrap items-center gap-2 text-xs mb-3">
-                {/* Consumed community avg */}
-                {avgRating && (
-                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full">
-                    <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                    <span className="font-medium text-white">{avgRating}</span>
-                    <span className="text-gray-400">Consumed</span>
-                  </div>
-                )}
-                {/* TMDB score */}
-                {mediaItem.tmdb_score && (
-                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full">
-                    <span className="font-medium text-blue-300">{Number(mediaItem.tmdb_score).toFixed(1)}</span>
-                    <span className="text-blue-300/70">/10 TMDB</span>
-                  </div>
-                )}
-                {/* Google Books rating */}
-                {mediaItem.google_books_rating && (
-                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full">
-                    <Star className="w-3 h-3 text-green-400 fill-current" />
-                    <span className="font-medium text-green-300">{Number(mediaItem.google_books_rating).toFixed(1)}/5</span>
-                    <span className="text-green-300/70">Google Books</span>
-                  </div>
-                )}
-                {/* User's own rating */}
-                {(userRating?.rating || userReview?.rating) && (
-                  <div className="flex items-center gap-1 bg-purple-500/20 px-2 py-1 rounded-full">
-                    <Star className="w-3 h-3 text-purple-300 fill-current" />
-                    <span className="font-semibold text-purple-200">{userRating?.rating || userReview?.rating}</span>
-                    <span className="text-purple-300/80">you</span>
+                {/* Ratings — combined into one compact pill to save space */}
+                {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating || userRating?.rating || userReview?.rating) && (
+                  <div className="flex items-center gap-2 bg-white/10 px-2.5 py-1 rounded-full">
+                    {avgRating && (
+                      <span className="flex items-center gap-1">
+                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                        <span className="font-medium text-white">{avgRating}</span>
+                        <span className="text-gray-400">Consumed</span>
+                      </span>
+                    )}
+                    {mediaItem.tmdb_score && (
+                      <>
+                        {avgRating && <span className="w-px h-3 bg-white/20" />}
+                        <span className="flex items-center gap-1">
+                          <span className="font-medium text-blue-300">{Number(mediaItem.tmdb_score).toFixed(1)}</span>
+                          <span className="text-blue-300/70">TMDB</span>
+                        </span>
+                      </>
+                    )}
+                    {mediaItem.google_books_rating && (
+                      <>
+                        {(avgRating || mediaItem.tmdb_score) && <span className="w-px h-3 bg-white/20" />}
+                        <span className="flex items-center gap-1">
+                          <Star className="w-3 h-3 text-green-400 fill-current" />
+                          <span className="font-medium text-green-300">{Number(mediaItem.google_books_rating).toFixed(1)}</span>
+                          <span className="text-green-300/70">Books</span>
+                        </span>
+                      </>
+                    )}
+                    {(userRating?.rating || userReview?.rating) && (
+                      <>
+                        {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating) && <span className="w-px h-3 bg-white/20" />}
+                        <span className="flex items-center gap-1">
+                          <Star className="w-3 h-3 text-purple-300 fill-current" />
+                          <span className="font-semibold text-purple-200">{userRating?.rating || userReview?.rating}</span>
+                          <span className="text-purple-300/80">you</span>
+                        </span>
+                      </>
+                    )}
                   </div>
                 )}
                 {mediaItem.type === 'movie' && mediaItem.releaseDate && (
@@ -1268,6 +1280,67 @@ export default function MediaDetail() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 pt-6 pb-8">
+          {/* Trending Takes — top text takes, tap to respond */}
+          {!showReviews && (() => {
+            const textTakes = (socialActivity as any[])
+              .filter((p) => p.content && p.content.trim())
+              .sort((a, b) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0))
+              .slice(0, 2);
+            if (textTakes.length === 0) return null;
+            return (
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-base font-semibold text-gray-900 flex items-center gap-1.5">
+                    <Flame className="w-4 h-4 text-orange-500" />
+                    Trending Takes
+                  </h3>
+                  <button
+                    onClick={() => setShowReviews(true)}
+                    className="text-xs text-purple-600 font-medium"
+                    data-testid="button-see-all-takes"
+                  >
+                    See all{discussionPosts.length > 2 ? ` ${discussionPosts.length}` : ''}
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {textTakes.map((post: any) => {
+                    const rawName = post.users?.display_name || post.users?.user_name || '';
+                    const name = rawName.includes('+') ? (rawName.split('+').pop() || rawName) : (rawName || 'Someone');
+                    const initial = (name[0] || '?').toUpperCase();
+                    return (
+                      <button
+                        key={post.id}
+                        onClick={() => { setShowReviews(true); fetchComments(post.id); }}
+                        className="w-full text-left bg-white rounded-xl p-3 shadow-sm hover:bg-gray-50 transition-colors"
+                        data-testid={`take-card-${post.id}`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                              <span className="text-purple-600 text-[11px] font-semibold">{initial}</span>
+                            </div>
+                            <span className="text-sm font-medium text-gray-900 truncate">{name}</span>
+                          </div>
+                          {post.rating && (
+                            <div className="flex items-center gap-0.5 flex-shrink-0">
+                              <Star className="w-3.5 h-3.5 text-yellow-500 fill-current" />
+                              <span className="text-sm font-semibold text-gray-900">{post.rating}</span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-700 leading-snug line-clamp-2">{post.content}</p>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                          <span className="flex items-center gap-1"><Heart size={12} /> {post.likes_count || 0}</span>
+                          <span className="flex items-center gap-1 text-purple-500 font-medium"><MessageCircle size={12} /> Respond</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Your Reaction — inline composer */}
           {session && (
           <div ref={composeSectionRef} className="mb-4">
@@ -1346,75 +1419,9 @@ export default function MediaDetail() {
           </div>
           )}
 
-          {/* Activity Section */}
-          {(socialActivity.length > 0 || showReviews) && (
+          {/* Activity Section — full reviews list (opened via "See all" on Trending Takes) */}
+          {showReviews && (
           <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
-
-            {/* Trending Takes - real takes sorted by engagement */}
-            {!showReviews && socialActivity.length > 0 && (
-              <div className="mt-1">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-semibold text-gray-900 flex items-center gap-1.5">
-                    <Flame className="w-4 h-4 text-orange-500" />
-                    Trending Takes
-                  </h3>
-                  <button
-                    onClick={() => setShowReviews(true)}
-                    className="text-xs text-purple-600 font-medium"
-                    data-testid="button-see-all-takes"
-                  >
-                    See all{socialActivity.length > 3 ? ` ${socialActivity.length}` : ''}
-                  </button>
-                </div>
-                <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4 snap-x snap-mandatory">
-                  {[...socialActivity]
-                    .sort((a: any, b: any) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0))
-                    .slice(0, 20)
-                    .map((post: any) => {
-                      const rawName = post.users?.display_name || post.users?.user_name || '';
-                      // Strip email-style prefixes (e.g. "thinkhp+riner1428" → "riner1428")
-                      const name = rawName.includes('+') ? (rawName.split('+').pop() || rawName) : (rawName || 'Someone');
-                      const initial = (name[0] || '?').toUpperCase();
-                      return (
-                        <button
-                          key={post.id}
-                          onClick={() => setShowReviews(true)}
-                          className="snap-start flex-shrink-0 w-[260px] text-left bg-gray-50 rounded-xl p-3 hover:bg-gray-100 transition-colors"
-                          data-testid={`take-card-${post.id}`}
-                        >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                                <span className="text-purple-600 text-[11px] font-semibold">{initial}</span>
-                              </div>
-                              <span className="text-sm font-medium text-gray-900 truncate">{name}</span>
-                            </div>
-                            {post.rating && (
-                              <div className="flex items-center gap-0.5 flex-shrink-0">
-                                <Star className="w-3.5 h-3.5 text-yellow-500 fill-current" />
-                                <span className="text-sm font-semibold text-gray-900">{post.rating}</span>
-                              </div>
-                            )}
-                          </div>
-                          {post.content && post.content.trim() ? (
-                            <p className="text-sm text-gray-700 leading-snug line-clamp-2">{post.content}</p>
-                          ) : post.prediction_pool_id ? (
-                            <p className="text-sm text-gray-500 italic">Made a prediction</p>
-                          ) : post.rating ? (
-                            <p className="text-sm text-gray-500 italic">Shared a rating</p>
-                          ) : (
-                            <p className="text-sm text-gray-500 italic">Shared a reaction</p>
-                          )}
-                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
-                            <span className="flex items-center gap-1"><Heart size={12} /> {post.likes_count || 0}</span>
-                            <span className="flex items-center gap-1"><MessageCircle size={12} /> {post.comments_count || 0}</span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
 
             {showReviews && (
               <>
@@ -1465,9 +1472,9 @@ export default function MediaDetail() {
                 )}
 
                 {/* Other Reviews */}
-                {reviews.filter((r: any) => r.user_id !== user?.id).length > 0 ? (
+                {discussionPosts.filter((r: any) => r.user_id !== user?.id).length > 0 ? (
               <div className="space-y-4 mt-3">
-                  {reviews.filter((r: any) => r.user_id !== user?.id).map((review: any) => (
+                  {discussionPosts.filter((r: any) => r.user_id !== user?.id).map((review: any) => (
                     <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2 flex-1">
