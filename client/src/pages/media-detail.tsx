@@ -1039,6 +1039,137 @@ export default function MediaDetail() {
   // Find user's own rating
   const userReview = reviews.find((review: any) => review.user_id === user?.id);
 
+  // Reusable take card (used by both Trending Takes and Join the Conversation).
+  // sectionKey scopes which card is expanded so the same post shown in two
+  // sections doesn't expand in both at once.
+  const renderTakeCard = (post: any, sectionKey: string) => {
+    const cardId = `${sectionKey}:${post.id}`;
+    const rawName = post.users?.display_name || post.users?.user_name || '';
+    const name = rawName.includes('+') ? (rawName.split('+').pop() || rawName) : (rawName || 'Someone');
+    const initial = (name[0] || '?').toUpperCase();
+    const isExpanded = expandedTake === cardId;
+    const isLiked = likedPosts.has(post.id);
+    const isDisagreed = disagreedTakes.has(post.id);
+    const hasText = !!(post.content && post.content.trim());
+    return (
+      <div
+        key={cardId}
+        className="bg-white rounded-xl p-3 shadow-sm"
+        data-testid={`take-card-${post.id}`}
+      >
+        <button
+          onClick={() => {
+            const next = isExpanded ? null : cardId;
+            setExpandedTake(next);
+            setReplyContent('');
+            if (next) { setReplyingTo(post.id); fetchComments(post.id); }
+            else { setReplyingTo(null); }
+          }}
+          className="w-full text-left"
+          data-testid={`take-toggle-${post.id}`}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-purple-600 text-[11px] font-semibold">{initial}</span>
+              </div>
+              <span className="text-sm font-medium text-gray-900 truncate">{name}</span>
+            </div>
+            {post.rating && (
+              <div className="flex items-center gap-0.5 flex-shrink-0">
+                <Star className="w-3.5 h-3.5 text-yellow-500 fill-current" />
+                <span className="text-sm font-semibold text-gray-900">{post.rating}</span>
+              </div>
+            )}
+          </div>
+          <p className={`text-sm leading-snug ${hasText ? 'text-gray-700' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-2'}`}>{hasText ? post.content : 'Shared a rating'}</p>
+        </button>
+
+        {!isExpanded && (
+          <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
+            <span className="flex items-center gap-1"><Heart size={12} /> {post.likes_count || 0}</span>
+            <span className="flex items-center gap-1 text-purple-500 font-medium"><MessageCircle size={12} /> Respond</span>
+          </div>
+        )}
+
+        {isExpanded && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            {/* Response options */}
+            <div className="flex items-center justify-around">
+              <button
+                onClick={() => handleLike(post.id)}
+                className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${isLiked ? 'text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}
+                data-testid={`take-agree-${post.id}`}
+              >
+                <ArrowUp size={16} /> Agree
+              </button>
+              <button
+                onClick={() => setDisagreedTakes(prev => {
+                  const next = new Set(prev);
+                  next.has(post.id) ? next.delete(post.id) : next.add(post.id);
+                  return next;
+                })}
+                className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${isDisagreed ? 'text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}
+                data-testid={`take-disagree-${post.id}`}
+              >
+                <ArrowDown size={16} /> Disagree
+              </button>
+              <button
+                onClick={() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-purple-600 transition-colors"
+                data-testid={`take-rate-${post.id}`}
+              >
+                <Star size={16} /> Rate
+              </button>
+            </div>
+
+            {/* Add your take */}
+            <div className="flex items-center gap-2 mt-3">
+              <input
+                type="text"
+                value={replyingTo === post.id ? replyContent : ''}
+                onChange={(e) => { setReplyingTo(post.id); setReplyContent(e.target.value); }}
+                onKeyDown={(e) => e.key === 'Enter' && handleReply(post.id)}
+                placeholder="Add your take..."
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                data-testid={`take-input-${post.id}`}
+              />
+              <button
+                onClick={() => handleReply(post.id)}
+                disabled={!replyContent.trim() || replyMutation.isPending}
+                className="text-sm font-semibold text-purple-600 disabled:text-gray-300"
+                data-testid={`take-send-${post.id}`}
+              >
+                Post
+              </button>
+            </div>
+
+            {/* Existing replies */}
+            {expandedComments[post.id]?.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {expandedComments[post.id].map((comment: any) => {
+                  const cRaw = comment.users?.display_name || comment.users?.user_name || '';
+                  const cName = cRaw.includes('+') ? (cRaw.split('+').pop() || cRaw) : (cRaw || 'Someone');
+                  return (
+                    <div key={comment.id} className="flex items-start gap-2">
+                      <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-purple-600 text-[10px] font-semibold">{(cName[0] || '?').toUpperCase()}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-xs font-medium text-gray-900">{cName}</span>
+                        <p className="text-sm text-gray-700 leading-snug">{comment.content}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
@@ -1286,6 +1417,27 @@ export default function MediaDetail() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 pt-6 pb-8">
+          {/* Trending Takes — top takes by likes, click to respond */}
+          {!showReviews && (() => {
+            const trendingTakes = (takes as any[])
+              .slice()
+              .sort((a, b) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0))
+              .slice(0, 2);
+            if (trendingTakes.length === 0) return null;
+            return (
+              <div className="mb-4">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <TrendingUp className="w-4 h-4 text-purple-500" />
+                  <h3 className="text-base font-semibold text-gray-900">Trending Takes</h3>
+                </div>
+                <p className="text-xs text-gray-500 mb-3">The hottest reactions right now</p>
+                <div className="space-y-2">
+                  {trendingTakes.map((post: any) => renderTakeCard(post, 'trending'))}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Your Reaction — inline composer */}
           {session && (
           <div ref={composeSectionRef} className="mb-4">
@@ -1305,29 +1457,48 @@ export default function MediaDetail() {
               }}
               renderExtra={(tag) => {
                 if (tag === 'rate') {
+                  const activeRating = composeHoverRating || composeRating;
                   return (
                     <div className="flex items-center gap-3 mt-3">
                       <span className="text-sm text-gray-500">Rating:</span>
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => setComposeRating(composeRating === star ? 0 : star)}
-                            onMouseEnter={() => setComposeHoverRating(star)}
-                            onMouseLeave={() => setComposeHoverRating(0)}
-                          >
-                            <Star
-                              size={22}
-                              className={
-                                star <= (composeHoverRating || composeRating)
-                                  ? 'fill-yellow-400 text-yellow-400'
-                                  : 'text-gray-300'
-                              }
-                            />
-                          </button>
-                        ))}
+                      <div className="flex gap-1.5">
+                        {[1, 2, 3, 4, 5].map((star) => {
+                          const isFull = activeRating >= star;
+                          const isHalf = !isFull && activeRating >= star - 0.5;
+                          return (
+                            <div key={star} className="relative w-9 h-9">
+                              <Star size={36} className="absolute inset-0 text-gray-300" />
+                              {(isFull || isHalf) && (
+                                <div
+                                  className="absolute inset-0 overflow-hidden"
+                                  style={{ width: isFull ? '100%' : '50%' }}
+                                >
+                                  <Star size={36} className="fill-yellow-400 text-yellow-400" />
+                                </div>
+                              )}
+                              <button
+                                type="button"
+                                aria-label={`Rate ${star - 0.5} stars`}
+                                className="absolute inset-y-0 left-0 w-1/2 z-10"
+                                onClick={() => setComposeRating(composeRating === star - 0.5 ? 0 : star - 0.5)}
+                                onMouseEnter={() => setComposeHoverRating(star - 0.5)}
+                                onMouseLeave={() => setComposeHoverRating(0)}
+                              />
+                              <button
+                                type="button"
+                                aria-label={`Rate ${star} stars`}
+                                className="absolute inset-y-0 right-0 w-1/2 z-10"
+                                onClick={() => setComposeRating(composeRating === star ? 0 : star)}
+                                onMouseEnter={() => setComposeHoverRating(star)}
+                                onMouseLeave={() => setComposeHoverRating(0)}
+                              />
+                            </div>
+                          );
+                        })}
                       </div>
+                      {activeRating > 0 && (
+                        <span className="text-sm font-semibold text-gray-700">{activeRating.toFixed(1)}</span>
+                      )}
                     </div>
                   );
                 }
@@ -1378,132 +1549,7 @@ export default function MediaDetail() {
                 </div>
                 <p className="text-xs text-gray-500 mb-3">See what others think</p>
                 <div className="space-y-2">
-                  {convoTakes.map((post: any) => {
-                    const rawName = post.users?.display_name || post.users?.user_name || '';
-                    const name = rawName.includes('+') ? (rawName.split('+').pop() || rawName) : (rawName || 'Someone');
-                    const initial = (name[0] || '?').toUpperCase();
-                    const isExpanded = expandedTake === post.id;
-                    const isLiked = likedPosts.has(post.id);
-                    const isDisagreed = disagreedTakes.has(post.id);
-                    const hasText = !!(post.content && post.content.trim());
-                    return (
-                      <div
-                        key={post.id}
-                        className="bg-white rounded-xl p-3 shadow-sm"
-                        data-testid={`take-card-${post.id}`}
-                      >
-                        <button
-                          onClick={() => {
-                            const next = isExpanded ? null : post.id;
-                            setExpandedTake(next);
-                            setReplyContent('');
-                            if (next) { setReplyingTo(post.id); fetchComments(post.id); }
-                            else { setReplyingTo(null); }
-                          }}
-                          className="w-full text-left"
-                          data-testid={`take-toggle-${post.id}`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                                <span className="text-purple-600 text-[11px] font-semibold">{initial}</span>
-                              </div>
-                              <span className="text-sm font-medium text-gray-900 truncate">{name}</span>
-                            </div>
-                            {post.rating && (
-                              <div className="flex items-center gap-0.5 flex-shrink-0">
-                                <Star className="w-3.5 h-3.5 text-yellow-500 fill-current" />
-                                <span className="text-sm font-semibold text-gray-900">{post.rating}</span>
-                              </div>
-                            )}
-                          </div>
-                          <p className={`text-sm leading-snug ${hasText ? 'text-gray-700' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-2'}`}>{hasText ? post.content : 'Shared a rating'}</p>
-                        </button>
-
-                        {!isExpanded && (
-                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
-                            <span className="flex items-center gap-1"><Heart size={12} /> {post.likes_count || 0}</span>
-                            <span className="flex items-center gap-1 text-purple-500 font-medium"><MessageCircle size={12} /> Respond</span>
-                          </div>
-                        )}
-
-                        {isExpanded && (
-                          <div className="mt-3 pt-3 border-t border-gray-100">
-                            {/* Response options */}
-                            <div className="flex items-center justify-around">
-                              <button
-                                onClick={() => handleLike(post.id)}
-                                className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${isLiked ? 'text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}
-                                data-testid={`take-agree-${post.id}`}
-                              >
-                                <ArrowUp size={16} /> Agree
-                              </button>
-                              <button
-                                onClick={() => setDisagreedTakes(prev => {
-                                  const next = new Set(prev);
-                                  next.has(post.id) ? next.delete(post.id) : next.add(post.id);
-                                  return next;
-                                })}
-                                className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${isDisagreed ? 'text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}
-                                data-testid={`take-disagree-${post.id}`}
-                              >
-                                <ArrowDown size={16} /> Disagree
-                              </button>
-                              <button
-                                onClick={() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                                className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-purple-600 transition-colors"
-                                data-testid={`take-rate-${post.id}`}
-                              >
-                                <Star size={16} /> Rate
-                              </button>
-                            </div>
-
-                            {/* Add your take */}
-                            <div className="flex items-center gap-2 mt-3">
-                              <input
-                                type="text"
-                                value={replyingTo === post.id ? replyContent : ''}
-                                onChange={(e) => { setReplyingTo(post.id); setReplyContent(e.target.value); }}
-                                onKeyDown={(e) => e.key === 'Enter' && handleReply(post.id)}
-                                placeholder="Add your take..."
-                                className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                data-testid={`take-input-${post.id}`}
-                              />
-                              <button
-                                onClick={() => handleReply(post.id)}
-                                disabled={!replyContent.trim() || replyMutation.isPending}
-                                className="text-sm font-semibold text-purple-600 disabled:text-gray-300"
-                                data-testid={`take-send-${post.id}`}
-                              >
-                                Post
-                              </button>
-                            </div>
-
-                            {/* Existing replies */}
-                            {expandedComments[post.id]?.length > 0 && (
-                              <div className="mt-3 space-y-2">
-                                {expandedComments[post.id].map((comment: any) => {
-                                  const cRaw = comment.users?.display_name || comment.users?.user_name || '';
-                                  const cName = cRaw.includes('+') ? (cRaw.split('+').pop() || cRaw) : (cRaw || 'Someone');
-                                  return (
-                                    <div key={comment.id} className="flex items-start gap-2">
-                                      <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                        <span className="text-purple-600 text-[10px] font-semibold">{(cName[0] || '?').toUpperCase()}</span>
-                                      </div>
-                                      <div className="min-w-0">
-                                        <span className="text-xs font-medium text-gray-900">{cName}</span>
-                                        <p className="text-sm text-gray-700 leading-snug">{comment.content}</p>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                  {convoTakes.map((post: any) => renderTakeCard(post, 'convo'))}
                 </div>
               </div>
             );
