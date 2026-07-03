@@ -1082,8 +1082,8 @@ export default function MediaDetail() {
     const isLiked = likedPosts.has(post.id);
     const isDisagreed = disagreedTakes.has(post.id);
     const hasText = !!(post.content && post.content.trim());
-    // Trending cards stay compact — hide the action row until the card is tapped.
-    const compact = sectionKey === 'trending';
+    // Action row (Agree / Disagree / Rate / Comment) is always visible — no tap needed.
+    const compact = false;
     const ratingVal = Number(post.rating) || 0;
     return (
       <div
