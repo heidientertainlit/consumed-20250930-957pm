@@ -1,14 +1,17 @@
 import { useState } from "react";
+import type { ReactNode, ComponentType } from "react";
 import { MessageCircle, Flame, Brain, CircleHelp, Loader2 } from "lucide-react";
+
+export type ComposerTag = { label: string; db: string; icon: ComponentType<any>; bg: string; fg: string };
 
 // ── Conversation tags (Discussion is the default). Shared between rooms and
 // media-detail so the composer + tag pills stay identical everywhere. ──
-export const DISCUSSION_TAGS = [
+export const DISCUSSION_TAGS: ComposerTag[] = [
   { label: "Discussion", db: "discussion", icon: MessageCircle, bg: "#f3effe", fg: "#7c3aed" },
   { label: "Take", db: "take", icon: Flame, bg: "#fff1e8", fg: "#f97316" },
   { label: "Theory", db: "theory", icon: Brain, bg: "#f3effe", fg: "#7c3aed" },
   { label: "Question", db: "question", icon: CircleHelp, bg: "#eaf1ff", fg: "#2563eb" },
-] as const;
+];
 
 export const DEFAULT_TAG_DB = "discussion";
 
@@ -27,6 +30,13 @@ interface RoomComposerProps {
   posting?: boolean;
   titlePlaceholder?: string;
   bodyPlaceholder?: string;
+  tags?: ComposerTag[];
+  defaultTag?: string;
+  // Extra fields rendered under the body, driven by the active tag (e.g. a star
+  // rating for "rate", option inputs for "predict"). Parent owns that state.
+  renderExtra?: (activeTag: string) => ReactNode;
+  // Custom rule for whether Post is enabled. Defaults to "requires a title".
+  canSubmit?: (data: { title: string; body: string; tag: string }) => boolean;
 }
 
 export default function RoomComposer({
@@ -34,20 +44,30 @@ export default function RoomComposer({
   posting = false,
   titlePlaceholder = "Add a title…",
   bodyPlaceholder = "What's on your mind?",
+  tags = DISCUSSION_TAGS,
+  defaultTag = DEFAULT_TAG_DB,
+  renderExtra,
+  canSubmit,
 }: RoomComposerProps) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [tag, setTag] = useState<string>(DEFAULT_TAG_DB);
+  const [tag, setTag] = useState<string>(defaultTag);
+
+  const allowSubmit = (data: { title: string; body: string; tag: string }) =>
+    canSubmit ? canSubmit(data) : !!data.title;
 
   const submit = async () => {
-    if (!title.trim() || posting) return;
-    const ok = await onSubmit({ title: title.trim(), body: body.trim(), tag });
+    const data = { title: title.trim(), body: body.trim(), tag };
+    if (posting || !allowSubmit(data)) return;
+    const ok = await onSubmit(data);
     if (ok !== false) {
       setTitle("");
       setBody("");
-      setTag(DEFAULT_TAG_DB);
+      setTag(defaultTag);
     }
   };
+
+  const disabled = posting || !allowSubmit({ title: title.trim(), body: body.trim(), tag });
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
@@ -65,11 +85,12 @@ export default function RoomComposer({
           placeholder={bodyPlaceholder}
           className="w-full resize-none border-0 outline-none bg-transparent text-[15px] text-gray-700 placeholder:text-gray-400"
         />
+        {renderExtra && <div>{renderExtra(tag)}</div>}
       </div>
       <div className="border-t border-gray-100 px-4 py-3">
         <p className="text-[12px] font-semibold text-gray-400 mb-2.5">Tag your post</p>
         <div className="flex flex-wrap items-center gap-2">
-          {DISCUSSION_TAGS.map((s) => {
+          {tags.map((s) => {
             const Icon = s.icon;
             const active = tag === s.db;
             return (
@@ -87,7 +108,7 @@ export default function RoomComposer({
           <button
             type="button"
             onClick={submit}
-            disabled={posting || !title.trim()}
+            disabled={disabled}
             className="ml-auto inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-2 text-[14px] font-semibold text-white active:scale-95 transition-all disabled:opacity-40"
             style={{ background: "#7c3aed" }}
           >

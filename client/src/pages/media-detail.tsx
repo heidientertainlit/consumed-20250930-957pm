@@ -4,6 +4,7 @@ import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, Ch
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/navigation";
+import RoomComposer, { DISCUSSION_TAGS } from "@/components/room-composer";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -25,6 +26,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+
+// Media-detail composer tags: "Rate" (default here) + shared conversation tags,
+// plus "Predict". Rooms keep "Discussion" as their default.
+const MEDIA_TAGS = [
+  { label: "Rate", db: "rate", icon: Star, bg: "#fef9c3", fg: "#ca8a04" },
+  ...DISCUSSION_TAGS,
+  { label: "Predict", db: "predict", icon: TrendingUp, bg: "#eaf1ff", fg: "#2563eb" },
+];
 
 export default function MediaDetail() {
   const [matchStandard, paramsStandard] = useRoute("/media/:type/:source/:id");
@@ -52,8 +61,6 @@ export default function MediaDetail() {
   const [quickAddPostType, setQuickAddPostType] = useState<"predict" | "review">("review");
   const [expandedComments, setExpandedComments] = useState<Record<string, any[]>>({});
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
-  const [composeType, setComposeType] = useState<'predict' | 'review'>('review');
-  const [composeText, setComposeText] = useState('');
   const [composeRating, setComposeRating] = useState(0);
   const [composeHoverRating, setComposeHoverRating] = useState(0);
   const [composeSelectedList, setComposeSelectedList] = useState<{ name: string; isCustom: boolean; id?: string } | null>(null);
@@ -829,9 +836,9 @@ export default function MediaDetail() {
     },
   });
 
-  const handleComposePost = async () => {
-    if (!session?.access_token || !mediaItem) return;
-    if (!composeText.trim() && !composeRating && !composeSelectedList) return;
+  const handleComposePost = async ({ title, body, tag }: { title: string; body: string; tag: string }): Promise<boolean> => {
+    if (!session?.access_token || !mediaItem) return false;
+    const text = [title, body].map((s) => s.trim()).filter(Boolean).join("\n\n");
     setIsComposePosting(true);
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -839,33 +846,42 @@ export default function MediaDetail() {
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
-      if (composeType === 'predict') {
+      if (tag === 'predict') {
         const filledOptions = composePredictionOptions.filter(opt => opt.trim());
-        if (composeText.trim() && filledOptions.length >= 2) {
-          const predResponse = await fetch(`${supabaseUrl}/functions/v1/create-prediction`, {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${session.access_token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              question: composeText.trim(),
-              options: filledOptions,
-              type: "predict",
-              media_external_id: params?.id || null,
-              media_external_source: params?.source || null,
-              media_title: mediaItem?.title || null,
-              media_type: (mediaItem?.type || params?.type || null),
-            }),
-          });
-          if (!predResponse.ok) throw new Error("Failed to create prediction");
+        const question = title.trim() || body.trim();
+        if (!question || filledOptions.length < 2) {
+          toast({ title: "Add a question and at least 2 options", variant: "destructive" });
+          setIsComposePosting(false);
+          return false;
         }
-      } else if (composeText.trim() || composeRating > 0) {
+        const predResponse = await fetch(`${supabaseUrl}/functions/v1/create-prediction`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            question,
+            options: filledOptions,
+            type: "predict",
+            media_external_id: params?.id || null,
+            media_external_source: params?.source || null,
+            media_title: mediaItem?.title || null,
+            media_type: (mediaItem?.type || params?.type || null),
+          }),
+        });
+        if (!predResponse.ok) throw new Error("Failed to create prediction");
+      } else {
+        const rating = tag === 'rate' && composeRating > 0 ? composeRating : null;
+        if (!text && !rating) {
+          setIsComposePosting(false);
+          return false;
+        }
         await supabase.from('social_posts').insert({
           user_id: authUser.id,
-          content: composeText || null,
-          post_type: composeRating > 0 ? 'rate-review' : 'thought',
-          rating: composeRating > 0 ? composeRating : null,
+          content: text || null,
+          post_type: rating ? 'rate-review' : 'thought',
+          rating,
           visibility: 'public',
           media_title: mediaItem.title,
           media_type: (mediaItem.type || params?.type || 'movie').toLowerCase(),
@@ -875,12 +891,12 @@ export default function MediaDetail() {
           fire_votes: 0,
           ice_votes: 0,
         });
-        if (composeRating > 0) {
+        if (rating) {
           await supabase.from('media_ratings').upsert({
             user_id: authUser.id,
             media_external_id: params?.id,
             media_external_source: params?.source || 'tmdb',
-            rating: composeRating,
+            rating,
           }, { onConflict: 'user_id,media_external_id,media_external_source' });
         }
       }
@@ -893,7 +909,6 @@ export default function MediaDetail() {
         });
       }
 
-      setComposeText('');
       setComposeRating(0);
       setComposeHoverRating(0);
       setComposeSelectedList(null);
@@ -904,11 +919,14 @@ export default function MediaDetail() {
       queryClient.invalidateQueries({ queryKey: ['user-media-rating', params?.source, params?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       toast({ title: "Posted!", description: "Your post has been shared." });
+      setIsComposePosting(false);
+      return true;
     } catch (error) {
       console.error('Compose post error:', error);
       toast({ title: "Couldn't post", description: "Please try again.", variant: "destructive" });
+      setIsComposePosting(false);
+      return false;
     }
-    setIsComposePosting(false);
   };
 
   const handleAddMediaToList = (listType: string, isCustom: boolean = false) => {
@@ -1328,104 +1346,79 @@ export default function MediaDetail() {
       <div className="max-w-6xl mx-auto px-4 pt-6 pb-8">
           {/* Your Reaction — inline composer */}
           {session && (
-          <div ref={composeSectionRef} className="bg-white rounded-2xl p-4 shadow-sm mb-4">
+          <div ref={composeSectionRef} className="mb-4">
             <p className="text-base font-semibold text-gray-900 mb-3">Your Reaction</p>
-
-            {/* Tab switcher */}
-            <div className="flex gap-2 mb-3">
-              <button
-                onClick={() => setComposeType('review')}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  composeType === 'review'
-                    ? 'bg-gray-900 text-white'
-                    : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                Rate / Review
-              </button>
-              <button
-                onClick={() => setComposeType('predict')}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  composeType === 'predict'
-                    ? 'bg-gray-900 text-white'
-                    : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                Predict
-              </button>
-            </div>
-
-            {/* Text area */}
-            <textarea
-              value={composeText}
-              onChange={(e) => setComposeText(e.target.value)}
-              placeholder={composeType === 'review' ? "Write your review..." : "Make a prediction..."}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
-              rows={3}
-            />
-
-            {composeType === 'review' && (
-              <>
-                {/* Star rating */}
-                <div className="flex items-center gap-3 mt-3">
-                  <span className="text-sm text-gray-500">Rating:</span>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => setComposeRating(composeRating === star ? 0 : star)}
-                        onMouseEnter={() => setComposeHoverRating(star)}
-                        onMouseLeave={() => setComposeHoverRating(0)}
-                      >
-                        <Star
-                          size={22}
-                          className={
-                            star <= (composeHoverRating || composeRating)
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'text-gray-300'
-                          }
+            <RoomComposer
+              tags={MEDIA_TAGS}
+              defaultTag="rate"
+              posting={isComposePosting}
+              titlePlaceholder="Add a title…"
+              bodyPlaceholder="What's on your mind?"
+              onSubmit={handleComposePost}
+              canSubmit={({ title, body, tag }) => {
+                const hasText = !!(title.trim() || body.trim());
+                if (tag === 'rate') return hasText || composeRating > 0;
+                if (tag === 'predict') return hasText && composePredictionOptions.filter((o) => o.trim()).length >= 2;
+                return hasText;
+              }}
+              renderExtra={(tag) => {
+                if (tag === 'rate') {
+                  return (
+                    <div className="flex items-center gap-3 mt-3">
+                      <span className="text-sm text-gray-500">Rating:</span>
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setComposeRating(composeRating === star ? 0 : star)}
+                            onMouseEnter={() => setComposeHoverRating(star)}
+                            onMouseLeave={() => setComposeHoverRating(0)}
+                          >
+                            <Star
+                              size={22}
+                              className={
+                                star <= (composeHoverRating || composeRating)
+                                  ? 'fill-yellow-400 text-yellow-400'
+                                  : 'text-gray-300'
+                              }
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                if (tag === 'predict') {
+                  return (
+                    <div className="mt-3 space-y-2">
+                      {composePredictionOptions.map((opt, idx) => (
+                        <input
+                          key={idx}
+                          type="text"
+                          value={opt}
+                          onChange={(e) => {
+                            const updated = [...composePredictionOptions];
+                            updated[idx] = e.target.value;
+                            setComposePredictionOptions(updated);
+                          }}
+                          placeholder={`Option ${idx + 1}`}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                         />
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setComposePredictionOptions([...composePredictionOptions, ''])}
+                        className="text-xs text-purple-600 font-medium"
+                      >
+                        + Add option
                       </button>
-                    ))}
-                  </div>
-                </div>
-
-              </>
-            )}
-
-            {composeType === 'predict' && (
-              <div className="mt-3 space-y-2">
-                {composePredictionOptions.map((opt, idx) => (
-                  <input
-                    key={idx}
-                    type="text"
-                    value={opt}
-                    onChange={(e) => {
-                      const updated = [...composePredictionOptions];
-                      updated[idx] = e.target.value;
-                      setComposePredictionOptions(updated);
-                    }}
-                    placeholder={`Option ${idx + 1}`}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
-                ))}
-                <button
-                  onClick={() => setComposePredictionOptions([...composePredictionOptions, ''])}
-                  className="text-xs text-purple-600 font-medium"
-                >
-                  + Add option
-                </button>
-              </div>
-            )}
-
-            {/* Post button */}
-            <button
-              onClick={handleComposePost}
-              disabled={isComposePosting || (!composeText.trim() && !composeRating && !composeSelectedList)}
-              className="w-full mt-4 py-3 rounded-xl bg-purple-500 text-white font-medium text-sm hover:bg-purple-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              {isComposePosting ? 'Posting...' : 'Post'}
-            </button>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
           </div>
           )}
 
