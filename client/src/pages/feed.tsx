@@ -1947,6 +1947,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   })}
                 </div>
               )}
+              {currentUserId && post.user?.id !== currentUserId && (
+                <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-500 transition-colors flex-shrink-0 p-1" title="Report review"><Flag size={13} /></button>
+              )}
             </div>
 
             {/* Review text — opens the discussion */}
@@ -2156,9 +2159,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                         <span className="text-xs font-semibold text-gray-900">{cName}</span>
                         <span className="text-[10px] text-gray-400">{c.created_at ? timeAgo(c.created_at) : ''}</span>
                         <div className="ml-auto flex items-center gap-1">
-                          {currentUserId === (c.user?.id || c.userId) && (
+                          {currentUserId === (c.user?.id || c.userId) ? (
                             <button onClick={(e) => { e.stopPropagation(); deleteComment(c.id); }} className="text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={10} /></button>
-                          )}
+                          ) : currentUserId ? (
+                            <button onClick={(e) => { e.stopPropagation(); setReportCommentTarget({ id: c.id, userId: c.user?.id || c.userId || '', userName: cName }); }} className="text-gray-300 hover:text-orange-500 transition-colors" title="Report comment"><Flag size={10} /></button>
+                          ) : null}
                         </div>
                       </div>
                       <p className="text-xs text-gray-700 leading-snug mt-0.5">{c.content}</p>
@@ -2243,6 +2248,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           contentId={post.id}
           reportedUserId={post.userId}
           reportedUserName={post.userName}
+        />
+        <ReportSheet
+          isOpen={!!reportCommentTarget}
+          onClose={() => setReportCommentTarget(null)}
+          contentType="comment"
+          contentId={reportCommentTarget?.id || ''}
+          reportedUserId={reportCommentTarget?.userId}
+          reportedUserName={reportCommentTarget?.userName}
         />
       </>
     );
