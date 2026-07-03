@@ -70,6 +70,7 @@ export default function MediaDetail() {
   const [composeSelectedList, setComposeSelectedList] = useState<{ name: string; isCustom: boolean; id?: string } | null>(null);
   const [isComposePosting, setIsComposePosting] = useState(false);
   const [composePredictionOptions, setComposePredictionOptions] = useState<string[]>(["", ""]);
+  const [composerOpen, setComposerOpen] = useState(false);
   const composeSectionRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -946,6 +947,7 @@ export default function MediaDetail() {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       toast({ title: "Posted!", description: "Your post has been shared." });
       setIsComposePosting(false);
+      setComposerOpen(false);
       return true;
     } catch (error) {
       console.error('Compose post error:', error);
@@ -1157,7 +1159,10 @@ export default function MediaDetail() {
             <ArrowDown size={16} /> Disagree
           </button>
           <button
-            onClick={() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+            onClick={() => {
+              setComposerOpen(true);
+              requestAnimationFrame(() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+            }}
             className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-purple-600 transition-colors"
             data-testid={`take-rate-${post.id}`}
           >
@@ -1475,27 +1480,20 @@ export default function MediaDetail() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 pt-6 pb-8">
-          {/* What People Are Saying — all takes by likes, click a card to respond */}
-          {!showReviews && (() => {
-            const communityTakes = (mergedTakes as any[])
-              .slice()
-              .sort((a, b) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0));
-            if (communityTakes.length === 0) return null;
-            return (
-              <div className="mb-4">
-                <h3 className="text-base font-semibold text-gray-900 mb-0.5">What People Are Saying</h3>
-                <p className="text-xs text-gray-500 mb-3">Real reactions from the community</p>
-                <div className="space-y-2">
-                  {communityTakes.map((post: any) => renderTakeCard(post, 'trending'))}
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Your Reaction — inline composer */}
+          {/* Your Reaction — dark purple pill button that expands the composer inline */}
           {session && (
           <div ref={composeSectionRef} className="mb-4">
-            <p className="text-base font-semibold text-gray-900 mb-3">Your Reaction</p>
+            {!composerOpen && (
+              <button
+                type="button"
+                onClick={() => setComposerOpen(true)}
+                className="w-full flex items-center justify-center gap-2 rounded-full bg-purple-900 hover:bg-purple-800 text-white text-[15px] font-semibold py-3 shadow-sm transition-colors active:scale-[0.99]"
+                data-testid="button-open-composer"
+              >
+                <Sparkles size={16} /> Add your reaction
+              </button>
+            )}
+            {composerOpen && (
             <RoomComposer
               tags={MEDIA_TAGS}
               defaultTag="rate"
@@ -1587,8 +1585,26 @@ export default function MediaDetail() {
                 return null;
               }}
             />
+            )}
           </div>
           )}
+
+          {/* What People Are Saying — all takes by likes, click a card to respond */}
+          {!showReviews && (() => {
+            const communityTakes = (mergedTakes as any[])
+              .slice()
+              .sort((a, b) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0));
+            if (communityTakes.length === 0) return null;
+            return (
+              <div className="mb-4">
+                <h3 className="text-base font-semibold text-gray-900 mb-0.5">What People Are Saying</h3>
+                <p className="text-xs text-gray-500 mb-3">Real reactions from the community</p>
+                <div className="space-y-2">
+                  {communityTakes.map((post: any) => renderTakeCard(post, 'trending'))}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Activity Section — full reviews list (opened via the Hot Takes stat) */}
           {showReviews && (
