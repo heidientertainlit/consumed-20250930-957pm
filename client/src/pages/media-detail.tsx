@@ -484,6 +484,38 @@ export default function MediaDetail() {
 
   // --- Hero stats (REAL data only; no fabricated numbers) ---
   const takes = socialActivity.filter((post: any) => post.rating || (post.content && post.content.trim() && !post.prediction_pool_id));
+  // Fold a user's standalone "shared a rating" post into their content post
+  // (e.g. "added to <list>") so the pair shows as one card (content + rating)
+  // instead of two rows. Only the redundant rating-only card is removed — every
+  // distinct content take by the same user is preserved as its own card.
+  const mergedTakes = (() => {
+    const groups = new Map<string, any[]>();
+    const order: string[] = [];
+    for (const post of takes as any[]) {
+      const uid = post.user_id || post.id;
+      if (!groups.has(uid)) { groups.set(uid, []); order.push(uid); }
+      groups.get(uid)!.push(post);
+    }
+    const result: any[] = [];
+    for (const uid of order) {
+      const posts = groups.get(uid)!;
+      const contentPosts = posts.filter((p) => p.content && p.content.trim());
+      let ratingOnly = posts.filter((p) => !(p.content && p.content.trim()));
+      if (contentPosts.length === 0) {
+        result.push(...ratingOnly);
+        continue;
+      }
+      // Surface a standalone rating on the newest content post that lacks one,
+      // then drop only that one folded rating card. Any remaining rating-only
+      // posts stay as their own cards so no activity is lost.
+      if (ratingOnly.length > 0 && contentPosts[0].rating == null) {
+        contentPosts[0] = { ...contentPosts[0], rating: ratingOnly[0].rating };
+        ratingOnly = ratingOnly.slice(1);
+      }
+      result.push(...contentPosts, ...ratingOnly);
+    }
+    return result;
+  })();
   const distinctFanIds = Array.from(new Set((socialActivity as any[]).map((p: any) => p.user_id).filter(Boolean)));
   const fansCount = distinctFanIds.length;
   // Theories feature has no backend yet — real count is 0 until built.
@@ -1121,11 +1153,22 @@ export default function MediaDetail() {
               >
                 <Star size={16} /> Rate
               </button>
+              <button
+                onClick={() => {
+                  setReplyingTo(post.id);
+                  requestAnimationFrame(() => document.getElementById(`take-input-${cardId}`)?.focus());
+                }}
+                className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-purple-600 transition-colors"
+                data-testid={`take-comment-${post.id}`}
+              >
+                <MessageCircle size={16} /> Comment
+              </button>
             </div>
 
             {/* Add your take */}
             <div className="flex items-center gap-2 mt-3">
               <input
+                id={`take-input-${cardId}`}
                 type="text"
                 value={replyingTo === post.id ? replyContent : ''}
                 onChange={(e) => { setReplyingTo(post.id); setReplyContent(e.target.value); }}
@@ -1419,7 +1462,7 @@ export default function MediaDetail() {
       <div className="max-w-6xl mx-auto px-4 pt-6 pb-8">
           {/* Trending Takes — top takes by likes, click to respond */}
           {!showReviews && (() => {
-            const trendingTakes = (takes as any[])
+            const trendingTakes = (mergedTakes as any[])
               .slice()
               .sort((a, b) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0))
               .slice(0, 2);
@@ -1446,7 +1489,7 @@ export default function MediaDetail() {
               tags={MEDIA_TAGS}
               defaultTag="rate"
               posting={isComposePosting}
-              titlePlaceholder="Add a title…"
+              titlePlaceholder="Add a title (optional)…"
               bodyPlaceholder="What's on your mind?"
               onSubmit={handleComposePost}
               canSubmit={({ title, body, tag }) => {
@@ -1537,7 +1580,7 @@ export default function MediaDetail() {
 
           {/* Join the Conversation — all takes, click a card to respond inline */}
           {!showReviews && (() => {
-            const convoTakes = (takes as any[])
+            const convoTakes = (mergedTakes as any[])
               .slice()
               .sort((a, b) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0));
             if (convoTakes.length === 0) return null;
