@@ -1145,8 +1145,6 @@ export default function MediaDetail() {
     const isLiked = likedPosts.has(post.id);
     const isDisagreed = disagreedTakes.has(post.id);
     const hasText = !!(post.content && post.content.trim());
-    // Action row (Agree / Disagree / Rate / Comment) is always visible — no tap needed.
-    const compact = false;
     const ratingVal = Number(post.rating) || 0;
     return (
       <div
@@ -1228,15 +1226,16 @@ export default function MediaDetail() {
           })()}
         </div>
 
-        {/* Response options */}
-        {(!compact || isExpanded) && (
-        <div className="flex items-center justify-around mt-2 pt-2 border-t border-gray-100">
+        {/* Reactions — icons only, minimal */}
+        <div className="flex items-center gap-6 mt-2 pt-2 border-t border-gray-100">
           <button
             onClick={() => handleLike(post.id)}
-            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${isLiked ? 'text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}
+            title="Agree"
+            aria-label="Agree"
+            className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'}`}
             data-testid={`take-agree-${post.id}`}
           >
-            <ArrowUp size={16} /> Agree{post.likes_count ? ` ${post.likes_count}` : ''}
+            <ArrowUp size={18} />{post.likes_count ? <span className="text-xs font-medium">{post.likes_count}</span> : null}
           </button>
           <button
             onClick={() => setDisagreedTakes(prev => {
@@ -1244,61 +1243,51 @@ export default function MediaDetail() {
               next.has(post.id) ? next.delete(post.id) : next.add(post.id);
               return next;
             })}
-            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${isDisagreed ? 'text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}
+            title="Disagree"
+            aria-label="Disagree"
+            className={`flex items-center transition-colors ${isDisagreed ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'}`}
             data-testid={`take-disagree-${post.id}`}
           >
-            <ArrowDown size={16} /> Disagree
+            <ArrowDown size={18} />
           </button>
           <button
             onClick={() => {
               setComposerOpen(true);
               requestAnimationFrame(() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
             }}
-            className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-purple-600 transition-colors"
+            title="Rate"
+            aria-label="Rate"
+            className="flex items-center text-gray-400 hover:text-purple-600 transition-colors"
             data-testid={`take-rate-${post.id}`}
           >
-            <Star size={16} /> Rate
-          </button>
-          <button
-            onClick={() => {
-              setExpandedTake(cardId);
-              setReplyingTo(post.id);
-              fetchComments(post.id);
-              requestAnimationFrame(() => document.getElementById(`take-input-${cardId}`)?.focus());
-            }}
-            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${isExpanded ? 'text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}
-            data-testid={`take-comment-${post.id}`}
-          >
-            <MessageCircle size={16} /> Comment
+            <Star size={18} />
           </button>
         </div>
-        )}
 
-        {isExpanded && (
-          <div className="mt-3">
-            {/* Add your take */}
-            <div className="flex items-center gap-2">
-              <input
-                id={`take-input-${cardId}`}
-                type="text"
-                value={replyingTo === post.id ? replyContent : ''}
-                onChange={(e) => { setReplyingTo(post.id); setReplyContent(e.target.value); }}
-                onKeyDown={(e) => e.key === 'Enter' && handleReply(post.id)}
-                placeholder="Add your take..."
-                className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                data-testid={`take-input-${post.id}`}
-              />
-              <button
-                onClick={() => handleReply(post.id)}
-                disabled={!replyContent.trim() || replyMutation.isPending}
-                className="text-sm font-semibold text-purple-600 disabled:text-gray-300"
-                data-testid={`take-send-${post.id}`}
-              >
-                Post
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Persistent comment bar */}
+        <div className="flex items-center gap-2 mt-2">
+          <input
+            id={`take-input-${cardId}`}
+            type="text"
+            value={replyingTo === post.id ? replyContent : ''}
+            onChange={(e) => { setReplyingTo(post.id); setReplyContent(e.target.value); }}
+            onFocus={() => { setReplyingTo(post.id); fetchComments(post.id); }}
+            onKeyDown={(e) => e.key === 'Enter' && handleReply(post.id)}
+            placeholder="Write a comment…"
+            className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            data-testid={`take-input-${post.id}`}
+          />
+          {replyingTo === post.id && !!replyContent.trim() && (
+            <button
+              onClick={() => handleReply(post.id)}
+              disabled={replyMutation.isPending}
+              className="text-sm font-semibold text-purple-600 disabled:text-gray-300"
+              data-testid={`take-send-${post.id}`}
+            >
+              Post
+            </button>
+          )}
+        </div>
 
         {/* Comments — preview a couple when collapsed, all when expanded */}
         {expandedComments[post.id]?.length > 0 && (
