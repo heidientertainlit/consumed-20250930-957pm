@@ -58,6 +58,8 @@ export default function MediaDetail() {
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
+  const [replyingToComment, setReplyingToComment] = useState<number | null>(null);
+  const [commentReplyContent, setCommentReplyContent] = useState("");
   const [expandedTake, setExpandedTake] = useState<string | null>(null);
   const [disagreedTakes, setDisagreedTakes] = useState<Set<string>>(new Set());
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
@@ -88,8 +90,8 @@ export default function MediaDetail() {
   }, [params?.id, params?.type, params?.source]);
 
   // Fetch comments for a post
-  const fetchComments = async (postId: string) => {
-    if (expandedComments[postId]) {
+  const fetchComments = async (postId: string, force = false) => {
+    if (!force && expandedComments[postId]) {
       // Already loaded, just toggle visibility
       return;
     }
@@ -187,7 +189,7 @@ export default function MediaDetail() {
 
   // Reply mutation - uses social-feed-comments edge function
   const replyMutation = useMutation({
-    mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
+    mutationFn: async ({ postId, content, parentCommentId }: { postId: string; content: string; parentCommentId?: number }) => {
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments`,
         {
@@ -196,7 +198,7 @@ export default function MediaDetail() {
             'Authorization': `Bearer ${session?.access_token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ post_id: postId, content })
+          body: JSON.stringify({ post_id: postId, content, parent_comment_id: parentCommentId })
         }
       );
       if (!response.ok) {
@@ -207,15 +209,11 @@ export default function MediaDetail() {
     },
     onSuccess: (_, variables) => {
       setReplyContent("");
-      // Refetch comments for this post
-      setExpandedComments(prev => {
-        const newState = { ...prev };
-        delete newState[variables.postId];
-        return newState;
-      });
-      fetchComments(variables.postId);
+      setCommentReplyContent("");
+      setReplyingToComment(null);
+      // Force a fresh fetch so the new comment/reply shows without a page refresh.
+      fetchComments(variables.postId, true);
       queryClient.invalidateQueries({ queryKey: ['media-detail'] });
-      toast({ title: "Reply posted!" });
     }
   });
 
@@ -230,6 +228,65 @@ export default function MediaDetail() {
   const handleReply = (postId: string) => {
     if (!replyContent.trim()) return;
     replyMutation.mutate({ postId, content: replyContent });
+  };
+
+  const handleCommentReply = (postId: string, parentCommentId: number) => {
+    if (!commentReplyContent.trim()) return;
+    replyMutation.mutate({ postId, content: commentReplyContent, parentCommentId });
+  };
+
+  // Recursive renderer for a comment and its nested reply thread.
+  const renderComment = (comment: any, postId: string, depth = 0): JSX.Element => {
+    const cRaw = comment.users?.display_name || comment.users?.user_name || comment.username || '';
+    const cName = cRaw.includes('+') ? (cRaw.split('+').pop() || cRaw) : (cRaw || 'Someone');
+    const isReplying = replyingToComment === comment.id;
+    return (
+      <div key={comment.id}>
+        <div className="flex items-start gap-2">
+          <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span className="text-purple-600 text-[10px] font-semibold">{(cName[0] || '?').toUpperCase()}</span>
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="text-xs font-medium text-gray-900">{cName}</span>
+            <p className="text-sm text-gray-700 leading-snug">{comment.content}</p>
+            <button
+              onClick={() => { setReplyingToComment(isReplying ? null : comment.id); setCommentReplyContent(''); }}
+              className={`text-xs font-medium transition-colors mt-0.5 ${isReplying ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'}`}
+              data-testid={`comment-reply-${comment.id}`}
+            >
+              Reply
+            </button>
+            {isReplying && (
+              <div className="flex items-center gap-2 mt-1.5">
+                <input
+                  type="text"
+                  autoFocus
+                  value={commentReplyContent}
+                  onChange={(e) => setCommentReplyContent(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCommentReply(postId, comment.id)}
+                  placeholder={`Reply to ${cName}...`}
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  data-testid={`comment-reply-input-${comment.id}`}
+                />
+                <button
+                  onClick={() => handleCommentReply(postId, comment.id)}
+                  disabled={!commentReplyContent.trim() || replyMutation.isPending}
+                  className="text-sm font-semibold text-purple-600 disabled:text-gray-300"
+                  data-testid={`comment-reply-send-${comment.id}`}
+                >
+                  Post
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        {comment.replies?.length > 0 && (
+          <div className="mt-2 space-y-2 border-l-2 border-gray-100 pl-3 ml-2.5">
+            {comment.replies.map((reply: any) => renderComment(reply, postId, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Delete comment mutation
@@ -253,13 +310,8 @@ export default function MediaDetail() {
       return { postId };
     },
     onSuccess: (data) => {
-      // Refetch comments for this post
-      setExpandedComments(prev => {
-        const newState = { ...prev };
-        delete newState[data.postId];
-        return newState;
-      });
-      fetchComments(data.postId);
+      // Force a fresh fetch so the deletion is reflected without a page refresh.
+      fetchComments(data.postId, true);
       toast({ title: "Comment deleted" });
     }
   });
@@ -1207,21 +1259,7 @@ export default function MediaDetail() {
             {/* Existing replies */}
             {expandedComments[post.id]?.length > 0 && (
               <div className="mt-3 space-y-2">
-                {expandedComments[post.id].map((comment: any) => {
-                  const cRaw = comment.users?.display_name || comment.users?.user_name || '';
-                  const cName = cRaw.includes('+') ? (cRaw.split('+').pop() || cRaw) : (cRaw || 'Someone');
-                  return (
-                    <div key={comment.id} className="flex items-start gap-2">
-                      <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-purple-600 text-[10px] font-semibold">{(cName[0] || '?').toUpperCase()}</span>
-                      </div>
-                      <div className="min-w-0">
-                        <span className="text-xs font-medium text-gray-900">{cName}</span>
-                        <p className="text-sm text-gray-700 leading-snug">{comment.content}</p>
-                      </div>
-                    </div>
-                  );
-                })}
+                {expandedComments[post.id].map((comment: any) => renderComment(comment, post.id))}
               </div>
             )}
           </div>
