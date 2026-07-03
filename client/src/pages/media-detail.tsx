@@ -967,7 +967,7 @@ export default function MediaDetail() {
         await supabase.from('social_posts').insert({
           user_id: authUser.id,
           content: text || null,
-          post_type: rating ? 'rate-review' : 'thought',
+          post_type: rating ? 'rate-review' : (tag && tag !== 'rate' ? tag : 'thought'),
           rating,
           visibility: 'public',
           media_title: mediaItem.title,

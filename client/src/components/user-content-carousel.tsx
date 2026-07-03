@@ -37,6 +37,7 @@ export interface UGCPost {
   pollId?: string;
   userHasVoted?: boolean;
   userVotedOption?: string;
+  postType?: string;
 }
 
 interface UserContentCarouselProps {

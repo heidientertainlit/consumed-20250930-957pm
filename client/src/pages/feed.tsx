@@ -37,6 +37,7 @@ import CollaborativePredictionCard from "@/components/collaborative-prediction-c
 import { UserPollsCarousel } from "@/components/user-polls-carousel";
 import { ReportSheet } from "@/components/report-sheet";
 import PostDetailSheet from "@/components/post-detail-sheet";
+import { dbTagToDisplay } from "@/components/room-composer";
 import { type UGCPost } from "@/components/user-content-carousel";
 import ConversationsPanel from "@/components/conversations-panel";
 import FeedFiltersDialog, { FeedFilters } from "@/components/feed-filters-dialog";
@@ -1951,6 +1952,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-500 transition-colors flex-shrink-0 p-1" title="Report review"><Flag size={13} /></button>
               )}
             </div>
+
+            {/* Tag badge (Discussion / Take / Theory / Question) */}
+            {(() => {
+              const tg = dbTagToDisplay((post as any).postType);
+              if (!tg) return null;
+              const TagIcon = tg.icon;
+              return (
+                <span
+                  className="inline-flex items-center gap-1 mt-3 px-2 py-0.5 rounded-full text-[11px] font-medium"
+                  style={{ backgroundColor: tg.bg, color: tg.fg }}
+                >
+                  <TagIcon size={11} /> {tg.label}
+                </span>
+              );
+            })()}
 
             {/* Review text — opens the discussion */}
             {hasContent && (
@@ -4921,6 +4937,7 @@ export default function Feed() {
         if (p.type === 'rank' || p.type === 'shared_rank' || p.type === 'rank_share') return true;
         if (p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review' || p.type === 'rate_review' || p.post_type === 'rate_review') return true;
         if (p.type === 'thought' || p.post_type === 'thought') return true;
+        if (['take', 'theory', 'discussion'].includes(p.post_type) || ['take', 'theory', 'discussion'].includes(p.type)) return true;
         if (p.type === 'hot_take' || p.post_type === 'hot_take') return true;
         if (p.type === 'question' || p.post_type === 'question') return true;
         if (p.type === 'dna_compare' || p.post_type === 'dna_compare') return true;
@@ -4969,6 +4986,7 @@ export default function Feed() {
           userHasVoted: (p as any).userHasAnswered || false,
           userVotedOption: (p as any).userVotes?.[0]?.vote || undefined,
           origin_type: (p as any).origin_type,
+          postType: p.post_type || p.type,
           _rawPost: p,
         };
       });

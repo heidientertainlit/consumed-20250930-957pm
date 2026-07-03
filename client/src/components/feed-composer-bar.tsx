@@ -501,11 +501,12 @@ export default function FeedComposerBar({
         toast({ title: "Review posted!" });
       } else {
         // Conversation tags (discussion / take / theory / question) — a text post.
+        // Store the chosen tag as the post_type so it can be shown on the card.
         if (!text) { setIsPosting(false); return false; }
         const res = await fetch(`${supabaseUrl}/functions/v1/inline-post`, {
           method: "POST",
           headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ content: text, type: "thought", visibility: "public", ...buildMediaFields() }),
+          body: JSON.stringify({ content: text, type: tag || "thought", visibility: "public", ...buildMediaFields() }),
         });
         if (!res.ok) throw new Error("Failed to post");
         toast({ title: "Posted!" });
