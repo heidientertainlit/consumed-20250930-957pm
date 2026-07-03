@@ -1949,7 +1949,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 </div>
               )}
               {currentUserId && post.user?.id !== currentUserId && hasContent && (
-                <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-500 transition-colors flex-shrink-0 p-1" title="Report review"><Flag size={13} /></button>
+                <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-400 hover:text-orange-500 transition-colors flex-shrink-0 p-1.5 rounded-full hover:bg-orange-50" title="Report review"><Flag size={15} /></button>
+              )}
+              {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
+                <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this post?')) onDeletePost(post.id); }} className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 p-1.5 rounded-full hover:bg-red-50" title="Delete post"><Trash2 size={15} /></button>
               )}
             </div>
 
