@@ -1031,9 +1031,9 @@ export default function MediaDetail() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
-      <div className="max-w-6xl mx-auto px-4 pt-2 pb-8">
-        {/* Compact Hero Header */}
-        <div className="bg-gradient-to-b from-gray-900 to-gray-800 text-white rounded-2xl p-4 shadow-sm mb-4 ring-1 ring-white/5">
+      {/* Full-bleed purple hero */}
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] text-white">
+        <div className="max-w-6xl mx-auto px-4 pt-3 pb-6">
           {/* Back button inline with content */}
           <Button
             variant="ghost"
@@ -1323,7 +1323,9 @@ export default function MediaDetail() {
             </div>
           </div>
         </div>
+      </div>
 
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-8">
           {/* Your Reaction — inline composer */}
           {session && (
           <div ref={composeSectionRef} className="bg-white rounded-2xl p-4 shadow-sm mb-4">
