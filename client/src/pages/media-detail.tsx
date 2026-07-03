@@ -1475,19 +1475,18 @@ export default function MediaDetail() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 pt-6 pb-8">
-          {/* Trending Takes — top takes by likes, click to respond */}
+          {/* What People Are Saying — all takes by likes, click a card to respond */}
           {!showReviews && (() => {
-            const trendingTakes = (mergedTakes as any[])
+            const communityTakes = (mergedTakes as any[])
               .slice()
-              .sort((a, b) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0))
-              .slice(0, 2);
-            if (trendingTakes.length === 0) return null;
+              .sort((a, b) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0));
+            if (communityTakes.length === 0) return null;
             return (
               <div className="mb-4">
                 <h3 className="text-base font-semibold text-gray-900 mb-0.5">What People Are Saying</h3>
                 <p className="text-xs text-gray-500 mb-3">Real reactions from the community</p>
                 <div className="space-y-2">
-                  {trendingTakes.map((post: any) => renderTakeCard(post, 'trending'))}
+                  {communityTakes.map((post: any) => renderTakeCard(post, 'trending'))}
                 </div>
               </div>
             );
@@ -1500,6 +1499,7 @@ export default function MediaDetail() {
             <RoomComposer
               tags={MEDIA_TAGS}
               defaultTag="rate"
+              compactTags
               posting={isComposePosting}
               titlePlaceholder="Add a title (optional)…"
               bodyPlaceholder="What's on your mind?"
@@ -1589,26 +1589,6 @@ export default function MediaDetail() {
             />
           </div>
           )}
-
-          {/* Join the Conversation — all takes, click a card to respond inline */}
-          {!showReviews && (() => {
-            const convoTakes = (mergedTakes as any[])
-              .slice()
-              .sort((a, b) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0));
-            if (convoTakes.length === 0) return null;
-            return (
-              <div className="mb-4">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <MessageCircle className="w-4 h-4 text-purple-500" />
-                  <h3 className="text-base font-semibold text-gray-900">Join the Conversation</h3>
-                </div>
-                <p className="text-xs text-gray-500 mb-3">See what others think</p>
-                <div className="space-y-2">
-                  {convoTakes.map((post: any) => renderTakeCard(post, 'convo'))}
-                </div>
-              </div>
-            );
-          })()}
 
           {/* Activity Section — full reviews list (opened via the Hot Takes stat) */}
           {showReviews && (

@@ -37,6 +37,9 @@ interface RoomComposerProps {
   renderExtra?: (activeTag: string) => ReactNode;
   // Custom rule for whether Post is enabled. Defaults to "requires a title".
   canSubmit?: (data: { title: string; body: string; tag: string }) => boolean;
+  // Render the tag pills in a lighter, more compact style (smaller pills,
+  // tighter spacing). Opt-in so other surfaces keep the default look.
+  compactTags?: boolean;
 }
 
 export default function RoomComposer({
@@ -48,6 +51,7 @@ export default function RoomComposer({
   defaultTag = DEFAULT_TAG_DB,
   renderExtra,
   canSubmit,
+  compactTags = false,
 }: RoomComposerProps) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -87,9 +91,9 @@ export default function RoomComposer({
         />
         {renderExtra && <div>{renderExtra(tag)}</div>}
       </div>
-      <div className="border-t border-gray-100 px-4 py-3">
-        <p className="text-[12px] font-semibold text-gray-400 mb-2.5">Tag your post</p>
-        <div className="flex flex-wrap items-center gap-2">
+      <div className={`border-t border-gray-100 px-4 ${compactTags ? "py-2.5" : "py-3"}`}>
+        <p className={`text-[12px] font-semibold text-gray-400 ${compactTags ? "mb-1.5" : "mb-2.5"}`}>Tag your post</p>
+        <div className={`flex flex-wrap items-center ${compactTags ? "gap-1.5" : "gap-2"}`}>
           {tags.map((s) => {
             const Icon = s.icon;
             const active = tag === s.db;
@@ -98,10 +102,10 @@ export default function RoomComposer({
                 key={s.db}
                 type="button"
                 onClick={() => setTag(s.db)}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold border transition-all active:scale-95"
+                className={`inline-flex items-center rounded-full font-semibold border transition-all active:scale-95 ${compactTags ? "gap-1 px-2.5 py-1 text-[12px]" : "gap-1.5 px-3 py-1.5 text-[13px]"}`}
                 style={active ? { background: s.bg, color: s.fg, borderColor: s.fg } : { background: "#fff", color: "#6b7280", borderColor: "#e5e7eb" }}
               >
-                <Icon size={14} style={active ? { color: s.fg } : undefined} /> {s.label}
+                <Icon size={compactTags ? 12 : 14} style={active ? { color: s.fg } : undefined} /> {s.label}
               </button>
             );
           })}
