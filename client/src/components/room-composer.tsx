@@ -40,6 +40,9 @@ interface RoomComposerProps {
   // Render the tag pills in a lighter, more compact style (smaller pills,
   // tighter spacing). Opt-in so other surfaces keep the default look.
   compactTags?: boolean;
+  // Number of rows for the body textarea. Defaults to 2 so existing surfaces
+  // are unchanged; surfaces that want a taller composer can raise it.
+  bodyRows?: number;
 }
 
 export default function RoomComposer({
@@ -52,6 +55,7 @@ export default function RoomComposer({
   renderExtra,
   canSubmit,
   compactTags = false,
+  bodyRows = 2,
 }: RoomComposerProps) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -83,7 +87,7 @@ export default function RoomComposer({
           className="w-full border-0 outline-none bg-transparent text-[17px] font-semibold text-gray-900 placeholder:text-gray-400 mb-2"
         />
         <textarea
-          rows={2}
+          rows={bodyRows}
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder={bodyPlaceholder}
