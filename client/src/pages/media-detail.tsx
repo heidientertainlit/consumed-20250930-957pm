@@ -1232,7 +1232,7 @@ export default function MediaDetail() {
             onClick={() => handleLike(post.id)}
             title="Agree"
             aria-label="Agree"
-            className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'}`}
+            className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-green-600' : 'text-gray-400 hover:text-green-600'}`}
             data-testid={`take-agree-${post.id}`}
           >
             <ArrowUp size={18} />{post.likes_count ? <span className="text-xs font-medium">{post.likes_count}</span> : null}
@@ -1245,7 +1245,7 @@ export default function MediaDetail() {
             })}
             title="Disagree"
             aria-label="Disagree"
-            className={`flex items-center transition-colors ${isDisagreed ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'}`}
+            className={`flex items-center transition-colors ${isDisagreed ? 'text-red-600' : 'text-gray-400 hover:text-red-600'}`}
             data-testid={`take-disagree-${post.id}`}
           >
             <ArrowDown size={18} />
