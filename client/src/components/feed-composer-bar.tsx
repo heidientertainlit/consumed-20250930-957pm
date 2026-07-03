@@ -215,6 +215,7 @@ export default function FeedComposerBar({
   }, []);
   const [showMediaSearch, setShowMediaSearch] = useState(pageMode);
   const [searchSlideIn, setSearchSlideIn] = useState(pageMode);
+  const [inlineSearchOpen, setInlineSearchOpen] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
@@ -378,6 +379,7 @@ export default function FeedComposerBar({
     setSearchQuery("");
     setSearchResults([]);
     setMediaFilter("all");
+    setInlineSearchOpen(false);
     if (pageMode) {
       // In pageMode the composer IS the page; Cancel/backdrop returns to the
       // media browse instead of unmounting the portal to a blank /add page.
@@ -543,17 +545,15 @@ export default function FeedComposerBar({
           <div className="absolute inset-0 bg-black/65" onClick={resetForm} />
 
           {/* ── Composer card (matches the media-detail composer) ── */}
-          <div className="absolute left-4 right-4" style={{ top: '22%' }}>
-            <div className="flex items-center justify-between mb-2 px-1">
-              <button onClick={resetForm} className="text-[13px] font-semibold text-white/80 hover:text-white">Cancel</button>
-              {!selectedMedia && (
-                <button
-                  onClick={() => { setShowMediaSearch(true); requestAnimationFrame(() => setSearchSlideIn(true)); }}
-                  className="inline-flex items-center gap-1 text-[13px] font-semibold text-purple-300 hover:text-purple-200"
-                >
-                  <Plus size={14} /> Add media
-                </button>
-              )}
+          <div className="absolute left-4 right-4" style={{ top: '16%' }}>
+            <div className="flex items-center justify-end mb-2 px-1">
+              <button
+                onClick={resetForm}
+                aria-label="Close"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              >
+                <X size={18} className="text-white" />
+              </button>
             </div>
 
             {/* Selected media chip */}
@@ -577,7 +577,7 @@ export default function FeedComposerBar({
               tags={MEDIA_TAGS}
               defaultTag={selectedMedia ? 'rate' : 'take'}
               compactTags
-              bodyRows={4}
+              bodyRows={7}
               posting={isPosting}
               titlePlaceholder="Add a title (optional)…"
               bodyPlaceholder="What's on your mind?"
@@ -630,6 +630,70 @@ export default function FeedComposerBar({
                 );
               }}
             />
+
+            {/* ── Add media (inline search, at the bottom) ── */}
+            {!selectedMedia && (
+              <div className="mt-2">
+                {!inlineSearchOpen ? (
+                  <button
+                    onClick={() => setInlineSearchOpen(true)}
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-[13px] font-semibold text-white/90 transition-colors"
+                  >
+                    <Plus size={15} /> Add media
+                  </button>
+                ) : (
+                  <div className="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100">
+                      <Search size={15} className="text-gray-400 flex-shrink-0" />
+                      <input
+                        autoFocus
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search movies, shows, books…"
+                        className="flex-1 text-sm text-gray-800 placeholder:text-gray-400 bg-transparent outline-none"
+                      />
+                      {isSearching ? (
+                        <Loader2 size={14} className="text-gray-400 animate-spin flex-shrink-0" />
+                      ) : (
+                        <button
+                          onClick={() => { setInlineSearchOpen(false); setSearchQuery(""); setSearchResults([]); }}
+                          aria-label="Close search"
+                        >
+                          <X size={15} className="text-gray-400" />
+                        </button>
+                      )}
+                    </div>
+                    {searchQuery && (
+                      <div className="max-h-64 overflow-y-auto">
+                        {!isSearching && searchResults.length === 0 && (
+                          <p className="text-center text-xs text-gray-400 py-6">No results for "{searchQuery}"</p>
+                        )}
+                        {searchResults.map((r, i) => {
+                          const mediaType = r.type === 'book_series' ? 'book' : r.type;
+                          const externalSource = r.external_source === 'openai' ? 'openlibrary' : (r.external_source || 'tmdb');
+                          const img = r.image_url || r.poster_url || r.image;
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => { selectMedia({ ...r, type: r.type, external_source: externalSource }); setInlineSearchOpen(false); }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 text-left"
+                            >
+                              {img && <img src={img} alt="" className="w-8 h-11 object-cover rounded flex-shrink-0" />}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-800 truncate">{r.title}</p>
+                                <p className="text-[11px] text-gray-400 truncate">
+                                  {typeLabel(mediaType)}{r.year ? ` · ${r.year}` : ""}{r.creator ? ` · ${r.creator}` : ""}
+                                </p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* ── Full-screen media search layer (slides up) ── */}
