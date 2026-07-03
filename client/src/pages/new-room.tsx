@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Navigation from "@/components/navigation";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
+import RoomComposer, { dbTagToDisplay } from "@/components/room-composer";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -76,21 +77,8 @@ const TRIVIA_CARD = {
   options: ["Xavier", "Marcus", "Sterling", "Dele"],
 };
 
-// ── Optional conversation tags (everything is a discussion; tag is optional) ──
-const TAGS = [
-  { label: "Take", db: "take", icon: Flame, bg: "#fff1e8", fg: "#f97316" },
-  { label: "Theory", db: "theory", icon: Brain, bg: "#f3effe", fg: "#7c3aed" },
-  { label: "Question", db: "question", icon: CircleHelp, bg: "#eaf1ff", fg: "#2563eb" },
-];
-// Map a stored DB tag value (incl. legacy values) to a display tag, or null for no pill.
-const dbToDisplay = (dbTag: string | null | undefined) => {
-  if (!dbTag) return null;
-  const t = String(dbTag).toLowerCase();
-  if (t === "take" || t === "hot_take") return TAGS[0];
-  if (t === "theory") return TAGS[1];
-  if (t === "question") return TAGS[2];
-  return null; // discussion / debate / unknown -> no pill
-};
+// Conversation tags + display mapping live in the shared RoomComposer component.
+const dbToDisplay = dbTagToDisplay;
 
 const AVATAR_COLORS = ["#f59e0b", "#a855f7", "#22d3ee", "#10b981", "#ef4d65", "#3b6df6"];
 const initialOf = (u: any) =>
@@ -126,10 +114,6 @@ export default function NewRoom() {
 
   const [tab, setTab] = useState<Tab>("Discuss");
   const [addMedia, setAddMedia] = useState<{ title: string; mediaType: string; imageUrl?: string; externalId?: string; externalSource?: string; creator?: string } | null>(null);
-  const [composerOpen, setComposerOpen] = useState(false);
-  const [composerTitle, setComposerTitle] = useState("");
-  const [composerBody, setComposerBody] = useState("");
-  const [composerTag, setComposerTag] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
   const [sort] = useState<"hot" | "new" | "replies">("hot");
   const [menuFor, setMenuFor] = useState<string | null>(null);
@@ -284,6 +268,56 @@ export default function NewRoom() {
     () => parsedExamples.flatMap((g) => g.items).slice(0, 8).join("|"),
     [parsedExamples]
   );
+
+  // ── Featured titles: resolve the room's example titles to real posters ──
+  const labelToType = (label: string): string => {
+    const l = label.toLowerCase();
+    if (l.startsWith("movie")) return "movie";
+    if (l.startsWith("show") || l === "tv" || l.startsWith("series")) return "tv";
+    if (l.startsWith("book")) return "book";
+    if (l.startsWith("podcast")) return "podcast";
+    return "";
+  };
+  const exampleItems = useMemo(
+    () => parsedExamples.flatMap((g) => g.items.map((title) => ({ title, type: labelToType(g.label) }))).slice(0, 12),
+    [parsedExamples]
+  );
+  const { data: featuredTitles = [] } = useQuery({
+    queryKey: ["room-featured", roomId, exampleItems.map((e) => e.title).join("|")],
+    queryFn: async () => {
+      const results = await Promise.all(
+        exampleItems.map(async ({ title, type }) => {
+          try {
+            const qs = new URLSearchParams({ query: title });
+            if (type) qs.set("type", type);
+            const res = await fetch(`${SUPABASE_URL}/functions/v1/media-search?${qs.toString()}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok) return null;
+            const data = await res.json();
+            const hit = (data.results || [])[0];
+            if (!hit) return null;
+            const img = hit.poster_url || hit.image;
+            if (!img) return null;
+            return {
+              title: hit.title || title,
+              poster_url: img,
+              type: hit.type || type || "movie",
+              year: hit.year,
+              external_id: hit.external_id,
+              external_source: hit.external_source,
+              creator: hit.creator,
+            };
+          } catch {
+            return null;
+          }
+        })
+      );
+      return results.filter(Boolean) as any[];
+    },
+    enabled: !!token && exampleItems.length > 0,
+    staleTime: 1000 * 60 * 60,
+  });
   const { data: exploreData, isLoading: loadingExplore, isError: exploreError } = useQuery({
     queryKey: ["room-explore", exploreTag, pool?.media_type ?? "all", exploreSeeds],
     queryFn: async () => {
@@ -328,25 +362,26 @@ export default function NewRoom() {
     toast({ title: "Invite link copied!" });
   };
 
-  const handlePost = async () => {
-    if (!composerTitle.trim() || !currentUserId) return;
+  const handlePost = async ({ title, body, tag }: { title: string; body: string; tag: string }) => {
+    if (!currentUserId) { toast({ title: "Sign in to post" }); return false; }
+    if (!title.trim()) return false;
     setPosting(true);
-    const dbTag = TAGS.find((t) => t.label === composerTag)?.db ?? null;
+    try {
+    const dbTag = tag || "discussion";
     const { data: newTake, error } = await supabase
       .from("room_takes")
       .insert({
         room_id: roomId,
         user_id: currentUserId,
-        title: composerTitle.trim(),
-        body: composerBody.trim() || null,
+        title: title.trim(),
+        body: body.trim() || null,
         tag: dbTag,
       })
       .select("*, users:user_id(id, display_name, user_name)")
       .single();
     if (error) {
       toast({ title: "Could not post", description: error.message, variant: "destructive" });
-      setPosting(false);
-      return;
+      return false;
     }
     // Notify followers (excluding poster)
     try {
@@ -370,13 +405,12 @@ export default function NewRoom() {
       console.error("[room notify]", e);
     }
     logRoomEvent("room_post", { take_id: newTake?.id, tag: dbTag });
-    setComposerTitle("");
-    setComposerBody("");
-    setComposerTag(null);
-    setComposerOpen(false);
     await refetchTakes();
-    setPosting(false);
     toast({ title: "Posted!" });
+    return true;
+    } finally {
+      setPosting(false);
+    }
   };
 
   const hasAgreed = (takeId: string) =>
@@ -462,7 +496,30 @@ export default function NewRoom() {
               {pool.description && (
                 <p className="text-[14px] text-white/75 leading-relaxed mt-2.5">{pool.description}</p>
               )}
-              {parsedExamples.length > 0 && (
+              {featuredTitles.length > 0 ? (
+                <div className="mt-4">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <p className="text-[13px] font-bold text-white">Featured titles</p>
+                    <button onClick={() => setTab("Explore")} className="text-[12px] font-semibold text-purple-300 active:opacity-70">View all</button>
+                  </div>
+                  <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+                    {featuredTitles.map((t: any, i: number) => (
+                      <button
+                        key={`${t.external_source}-${t.external_id}-${i}`}
+                        onClick={() => {
+                          if (t.external_source && t.external_id) setLocation(`/media/${t.type}/${t.external_source}/${t.external_id}`);
+                        }}
+                        className="flex-shrink-0 w-[84px] active:scale-95 transition-transform"
+                        title={t.title}
+                      >
+                        <div className="w-[84px] h-[120px] rounded-xl overflow-hidden bg-white/10 border border-white/10">
+                          <img src={t.poster_url} alt={t.title} className="w-full h-full object-cover" loading="lazy" onError={(e) => { const btn = e.currentTarget.closest("button"); if (btn) (btn as HTMLElement).style.display = "none"; }} />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : parsedExamples.length > 0 ? (
                 <div className="mt-4 space-y-2.5">
                   {parsedExamples.map((g, gi) => (
                     <div key={gi} className="flex items-start gap-2.5">
@@ -483,7 +540,7 @@ export default function NewRoom() {
                     </div>
                   ))}
                 </div>
-              )}
+              ) : null}
 
               {/* Member avatars */}
               <div className="flex items-center mt-3">
@@ -687,72 +744,10 @@ export default function NewRoom() {
             </div>
           </>)}
 
-          {/* Start a Conversation */}
+          {/* Composer — always open */}
           <div className="px-4">
-            <button
-              onClick={() => setComposerOpen(true)}
-              className="w-full flex items-center justify-center gap-2 rounded-full border-2 py-3.5 text-[16px] font-bold active:scale-[0.99] transition-transform"
-              style={{ borderColor: "rgba(124,58,237,0.4)", color: ACCENT }}
-            >
-              <Plus size={20} /> Start a Conversation
-            </button>
+            <RoomComposer onSubmit={handlePost} posting={posting} />
           </div>
-
-          {/* Composer */}
-          {composerOpen && (
-          <div className="px-4 mt-3">
-            <div className="relative rounded-3xl border border-gray-100 shadow-sm bg-white overflow-hidden">
-              <button onClick={() => setComposerOpen(false)} className="absolute top-3 right-3 p-1.5 rounded-full text-gray-400 active:bg-gray-100 transition-colors z-10" aria-label="Close composer">
-                <X size={20} />
-              </button>
-              <div className="px-5 pt-5 pb-4 pr-12">
-                <input
-                  autoFocus
-                  value={composerTitle}
-                  onChange={(e) => setComposerTitle(e.target.value)}
-                  placeholder="Add a title…"
-                  className="w-full border-0 outline-none bg-transparent text-[17px] font-bold text-gray-900 placeholder:text-gray-300 mb-2"
-                />
-                <textarea
-                  rows={3}
-                  value={composerBody}
-                  onChange={(e) => setComposerBody(e.target.value)}
-                  placeholder="Start a discussion…"
-                  className="w-full resize-none border-0 outline-none bg-transparent text-[15px] text-gray-900 placeholder:text-gray-400"
-                />
-              </div>
-              <div className="border-t border-gray-100" />
-              <div className="px-5 py-4">
-                <p className="text-[12px] font-semibold text-gray-400 mb-2.5">Add a tag (optional)</p>
-                <div className="flex flex-wrap gap-2">
-                  {TAGS.map((s, i) => {
-                    const Icon = s.icon;
-                    const active = composerTag === s.label;
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => setComposerTag(active ? null : s.label)}
-                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold border transition-all active:scale-95"
-                        style={active ? { background: s.bg, color: s.fg, borderColor: s.fg } : { background: "#fff", color: "#6b7280", borderColor: "#e5e7eb" }}
-                      >
-                        <Icon size={14} style={active ? { color: s.fg } : undefined} /> {s.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="px-4 pb-4">
-                <button
-                  onClick={handlePost}
-                  disabled={posting || !composerTitle.trim()}
-                  className="w-full rounded-full py-3 text-[15px] font-semibold bg-purple-50 text-purple-600 active:bg-purple-100 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {posting && <Loader2 size={16} className="animate-spin" />} Post
-                </button>
-              </div>
-            </div>
-          </div>
-          )}
 
           {/* All conversations */}
           <div className="flex items-center justify-between px-5 mt-7 mb-3">
