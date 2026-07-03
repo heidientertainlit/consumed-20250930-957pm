@@ -485,10 +485,12 @@ export default function MediaDetail() {
 
   // --- Hero stats (REAL data only; no fabricated numbers) ---
   const takes = socialActivity.filter((post: any) => post.rating || (post.content && post.content.trim() && !post.prediction_pool_id));
-  // Fold a user's standalone "shared a rating" post into their content post
-  // (e.g. "added to <list>") so the pair shows as one card (content + rating)
-  // instead of two rows. Only the redundant rating-only card is removed — every
-  // distinct content take by the same user is preserved as its own card.
+  // Collapse ALL of a user's activity for this title into ONE card. The app
+  // inserts a new "rate-review" post every time someone rates, so a single user
+  // can have several rating posts plus an "added to <list>" post. We pick one
+  // representative card per user (a written take first, then the "added to"
+  // post, then a bare rating) and fold in that user's most recent rating, so
+  // the rating is never shown as its own separate row.
   const mergedTakes = (() => {
     const groups = new Map<string, any[]>();
     const order: string[] = [];
@@ -499,21 +501,16 @@ export default function MediaDetail() {
     }
     const result: any[] = [];
     for (const uid of order) {
+      // posts are newest-first (socialActivity is ordered created_at desc)
       const posts = groups.get(uid)!;
-      const contentPosts = posts.filter((p) => p.content && p.content.trim());
-      let ratingOnly = posts.filter((p) => !(p.content && p.content.trim()));
-      if (contentPosts.length === 0) {
-        result.push(...ratingOnly);
-        continue;
-      }
-      // Surface a standalone rating on the newest content post that lacks one,
-      // then drop only that one folded rating card. Any remaining rating-only
-      // posts stay as their own cards so no activity is lost.
-      if (ratingOnly.length > 0 && contentPosts[0].rating == null) {
-        contentPosts[0] = { ...contentPosts[0], rating: ratingOnly[0].rating };
-        ratingOnly = ratingOnly.slice(1);
-      }
-      result.push(...contentPosts, ...ratingOnly);
+      const freeform = posts.filter((p) => p.content && p.content.trim() && p.post_type !== 'added_to_list');
+      const listAdds = posts.filter((p) => p.content && p.content.trim() && p.post_type === 'added_to_list');
+      const ratingOnly = posts.filter((p) => !(p.content && p.content.trim()));
+      const base = freeform[0] || listAdds[0] || ratingOnly[0];
+      if (!base) continue;
+      // posts are newest-first, so the first rated post is the user's latest rating.
+      const latestRating = posts.find((p) => p.rating != null)?.rating ?? null;
+      result.push({ ...base, rating: latestRating ?? base.rating });
     }
     return result;
   })();
