@@ -539,17 +539,17 @@ export default function FeedComposerBar({
 
       {isOpen && createPortal(
         <div className="fixed inset-0 z-[99999]">
-          {/* Dim backdrop */}
-          <div className="absolute inset-0 bg-black/65" onClick={resetForm} />
+          {/* Light backdrop (matches the media-detail composer surface) */}
+          <div className="absolute inset-0 bg-[#f6f7f9]" onClick={resetForm} />
 
           {/* ── Composer card (matches the media-detail composer) ── */}
           <div className="absolute left-4 right-4" style={{ top: '14%' }}>
             <div className="flex items-center justify-between mb-2 px-1">
-              <button onClick={resetForm} className="text-[13px] font-semibold text-white/80 hover:text-white">Cancel</button>
+              <button onClick={resetForm} className="text-[13px] font-semibold text-gray-500 hover:text-gray-800">Cancel</button>
               {!selectedMedia && (
                 <button
                   onClick={() => { setShowMediaSearch(true); requestAnimationFrame(() => setSearchSlideIn(true)); }}
-                  className="inline-flex items-center gap-1 text-[13px] font-semibold text-white/90 hover:text-white"
+                  className="inline-flex items-center gap-1 text-[13px] font-semibold text-purple-600 hover:text-purple-700"
                 >
                   <Plus size={14} /> Add media
                 </button>
