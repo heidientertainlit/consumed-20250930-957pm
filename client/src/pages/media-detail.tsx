@@ -1086,12 +1086,6 @@ export default function MediaDetail() {
     // Trending cards stay compact — hide the action row until the card is tapped.
     const compact = sectionKey === 'trending';
     const ratingVal = Number(post.rating) || 0;
-    const openCard = () => {
-      setExpandedTake(cardId);
-      setReplyContent('');
-      setReplyingTo(post.id);
-      fetchComments(post.id);
-    };
     return (
       <div
         key={cardId}
@@ -1140,17 +1134,6 @@ export default function MediaDetail() {
           </div>
           <p className={`text-sm leading-snug ${hasText ? 'text-gray-700' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-2'}`}>{hasText ? post.content : 'Shared a rating'}</p>
         </button>
-
-        {/* Compact (trending) cards hide actions until tapped */}
-        {compact && !isExpanded && (
-          <button
-            onClick={openCard}
-            className="flex items-center gap-1 mt-2 pt-2 border-t border-gray-100 w-full text-xs text-gray-400 hover:text-purple-600 transition-colors"
-            data-testid={`take-tap-${post.id}`}
-          >
-            <MessageCircle size={12} /> Tap to respond
-          </button>
-        )}
 
         {/* Response options */}
         {(!compact || isExpanded) && (
@@ -1501,11 +1484,8 @@ export default function MediaDetail() {
             if (trendingTakes.length === 0) return null;
             return (
               <div className="mb-4">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <TrendingUp className="w-4 h-4 text-purple-500" />
-                  <h3 className="text-base font-semibold text-gray-900">Trending Takes</h3>
-                </div>
-                <p className="text-xs text-gray-500 mb-3">The hottest reactions right now</p>
+                <h3 className="text-base font-semibold text-gray-900 mb-0.5">What People Are Saying</h3>
+                <p className="text-xs text-gray-500 mb-3">Real reactions from the community</p>
                 <div className="space-y-2">
                   {trendingTakes.map((post: any) => renderTakeCard(post, 'trending'))}
                 </div>
