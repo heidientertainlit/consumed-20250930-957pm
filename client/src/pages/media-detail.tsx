@@ -480,18 +480,6 @@ export default function MediaDetail() {
   const takes = socialActivity.filter((post: any) => post.rating || (post.content && post.content.trim() && !post.prediction_pool_id));
   const distinctFanIds = Array.from(new Set((socialActivity as any[]).map((p: any) => p.user_id).filter(Boolean)));
   const fansCount = distinctFanIds.length;
-  const fanAvatars = (() => {
-    const seen = new Set<string>();
-    const list: { id: string; initial: string }[] = [];
-    for (const p of socialActivity as any[]) {
-      if (!p.user_id || seen.has(p.user_id)) continue;
-      seen.add(p.user_id);
-      const nm = p.users?.display_name || p.users?.user_name || '';
-      list.push({ id: p.user_id, initial: (nm[0] || '?').toUpperCase() });
-      if (list.length >= 5) break;
-    }
-    return list;
-  })();
   // Theories feature has no backend yet — real count is 0 until built.
   const theoriesCount = 0;
   const formatCount = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : `${n}`);
@@ -1067,12 +1055,23 @@ export default function MediaDetail() {
           {/* Side-by-side layout on all screen sizes */}
           <div className="flex gap-4">
             {/* Poster - smaller and fixed width */}
-            <div className="w-28 h-40 md:w-36 md:h-52 rounded-xl overflow-hidden shadow-lg flex-shrink-0 ring-1 ring-white/10">
-              <img 
-                src={resolvedImageUrl} 
-                alt={mediaItem.title}
-                className="w-full h-full object-cover"
-              />
+            <div className="relative flex-shrink-0">
+              <div className="w-28 h-40 md:w-36 md:h-52 rounded-xl overflow-hidden shadow-lg ring-1 ring-white/10">
+                <img 
+                  src={resolvedImageUrl} 
+                  alt={mediaItem.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              {session && (
+                <button
+                  onClick={() => setIsListSheetOpen(true)}
+                  className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white shadow-lg flex items-center justify-center ring-2 ring-[#12121f] transition-colors"
+                  data-testid="button-quick-add"
+                >
+                  <Plus size={20} />
+                </button>
+              )}
             </div>
             
             {/* Info column */}
@@ -1142,20 +1141,16 @@ export default function MediaDetail() {
                 )}
               </div>
 
-              {/* Fans here — real engaged users */}
-              {fansCount > 0 && (
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex -space-x-2">
-                    {fanAvatars.map((f) => (
-                      <div key={f.id} className="w-6 h-6 rounded-full bg-purple-500/30 ring-2 ring-gray-900 flex items-center justify-center">
-                        <span className="text-[10px] font-semibold text-purple-100">{f.initial}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <span className="text-xs text-gray-400">
-                    {formatCount(fansCount)} {fansCount === 1 ? 'fan' : 'fans'} here
-                  </span>
-                </div>
+              {/* Description dropdown toggle (replaces fans-here) */}
+              {mediaItem.description && (
+                <button
+                  onClick={() => setShowAbout(!showAbout)}
+                  className="flex items-center gap-1 text-xs text-gray-300 hover:text-white transition-colors mb-2"
+                  data-testid="button-toggle-description"
+                >
+                  <span>Description</span>
+                  <ChevronDown size={14} className={`transition-transform ${showAbout ? 'rotate-180' : ''}`} />
+                </button>
               )}
               {(() => {
                 const mediaAlignment = getMediaAlignment(archetypeKey, mediaItem?.type || params?.type);
@@ -1207,113 +1202,42 @@ export default function MediaDetail() {
             </div>
           )}
 
-          {/* Description snippet */}
-          {mediaItem.description && (
+          {/* Description — revealed via dropdown toggle above */}
+          {mediaItem.description && showAbout && (
             <div className="mt-3">
-              <p className={`text-sm text-gray-300 leading-relaxed ${!showAbout ? 'line-clamp-2' : ''}`}>
+              <p className="text-sm text-gray-300 leading-relaxed">
                 {mediaItem.description}
               </p>
-              {mediaItem.description.length > 120 && (
-                <button
-                  onClick={() => setShowAbout(!showAbout)}
-                  className="text-xs text-purple-300 font-medium mt-0.5"
-                >
-                  {showAbout ? 'Less' : 'More'}
-                </button>
-              )}
             </div>
           )}
 
-          {/* Action buttons - below poster, full width row */}
-          {session && (
+          {/* Progress button — only for items already in a list (Add moved to poster +, Rate handled by reactions below) */}
+          {session && currentlyItem && (
             <div className="flex gap-2 mt-4">
-              {currentlyItem ? (
-                <>
-                  {/* Split Progress button: left=update progress, right=move list */}
-                  <div className="flex items-center bg-purple-600 rounded-full h-9 shadow-md overflow-hidden">
-                    <button
-                      onClick={() => setIsProgressSheetOpen(true)}
-                      className="flex items-center gap-1.5 pl-3 pr-2 h-full text-white text-xs hover:bg-purple-700 transition-colors"
-                    >
-                      <TrendingUp size={13} />
-                      <span className="font-medium">Progress</span>
-                      <span className="text-purple-200 font-normal">
-                        {editMode === 'page'
-                          ? `${editProgress}${editTotal > 0 ? `/${editTotal} pg` : ' pg'}`
-                          : editMode === 'percent'
-                            ? `${editProgress}%`
-                            : `${editProgress}${editTotal > 0 ? `/${editTotal}` : ''}`}
-                      </span>
-                    </button>
-                    <div className="w-px h-5 bg-white/30 flex-shrink-0" />
-                    <button
-                      onClick={() => setIsListSheetOpen(true)}
-                      className="px-2 h-full text-white hover:bg-purple-700 transition-colors flex items-center"
-                    >
-                      <ChevronDown size={14} />
-                    </button>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setQuickAddMedia({
-                        title: mediaItem?.title || mediaData.title,
-                        mediaType: (() => {
-                          const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
-                          if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
-                          if (raw.includes('podcast')) return 'podcast';
-                          if (raw === 'movie') return 'movie';
-                          return raw;
-                        })(),
-                        imageUrl: resolvedImageUrl || mediaData.artwork,
-                        externalId: params?.id,
-                        externalSource: params?.source,
-                      });
-                      setIsQuickAddOpen(true);
-                    }}
-                    className="border border-white/30 bg-transparent text-white text-xs h-9 rounded-full px-5 hover:bg-white/10"
-                  >
-                    <Star size={14} className="mr-1" />
-                    Rate
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    size="sm"
-                    onClick={() => setIsListSheetOpen(true)}
-                    className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
-                    data-testid="button-quick-add"
-                  >
-                    <Plus size={14} className="mr-1" />
-                    Add
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setQuickAddMedia({
-                        title: mediaItem?.title || mediaData.title,
-                        mediaType: (() => {
-                          const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
-                          if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
-                          if (raw.includes('podcast')) return 'podcast';
-                          if (raw === 'movie') return 'movie';
-                          return raw;
-                        })(),
-                        imageUrl: resolvedImageUrl || mediaData.artwork,
-                        externalId: params?.id,
-                        externalSource: params?.source,
-                      });
-                      setIsQuickAddOpen(true);
-                    }}
-                    className="border border-white/30 bg-transparent text-white text-xs h-9 rounded-full px-5 hover:bg-white/10"
-                    data-testid="button-add-rating"
-                  >
-                    <Star size={14} className="mr-1" />
-                    Rate
-                  </Button>
-                </>
-              )}
+              {/* Split Progress button: left=update progress, right=move list */}
+              <div className="flex items-center bg-purple-600 rounded-full h-9 shadow-md overflow-hidden">
+                <button
+                  onClick={() => setIsProgressSheetOpen(true)}
+                  className="flex items-center gap-1.5 pl-3 pr-2 h-full text-white text-xs hover:bg-purple-700 transition-colors"
+                >
+                  <TrendingUp size={13} />
+                  <span className="font-medium">Progress</span>
+                  <span className="text-purple-200 font-normal">
+                    {editMode === 'page'
+                      ? `${editProgress}${editTotal > 0 ? `/${editTotal} pg` : ' pg'}`
+                      : editMode === 'percent'
+                        ? `${editProgress}%`
+                        : `${editProgress}${editTotal > 0 ? `/${editTotal}` : ''}`}
+                  </span>
+                </button>
+                <div className="w-px h-5 bg-white/30 flex-shrink-0" />
+                <button
+                  onClick={() => setIsListSheetOpen(true)}
+                  className="px-2 h-full text-white hover:bg-purple-700 transition-colors flex items-center"
+                >
+                  <ChevronDown size={14} />
+                </button>
+              </div>
             </div>
           )}
 
@@ -1676,7 +1600,7 @@ export default function MediaDetail() {
                 <div className="text-center py-6 mt-4 border border-dashed border-gray-200 rounded-xl">
                   <Star className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                   <p className="text-gray-500 text-sm mb-1">No reviews yet</p>
-                  <p className="text-gray-400 text-xs">Rate this title using the Quick Add button above</p>
+                  <p className="text-gray-400 text-xs">Add your rating using the reaction composer above</p>
                 </div>
               )}
               </>
