@@ -499,7 +499,7 @@ export default function NewRoom() {
               {featuredTitles.length > 0 ? (
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-2.5">
-                    <p className="text-[13px] font-bold text-white">Featured titles</p>
+                    <p className="text-[13px] font-bold text-white">Example content for this room</p>
                     <button onClick={() => setTab("Explore")} className="text-[12px] font-semibold text-purple-300 active:opacity-70">View all</button>
                   </div>
                   <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">

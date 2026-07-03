@@ -32,8 +32,8 @@ interface RoomComposerProps {
 export default function RoomComposer({
   onSubmit,
   posting = false,
-  titlePlaceholder = "What's on your mind?",
-  bodyPlaceholder = "Start a conversation...",
+  titlePlaceholder = "Add a title…",
+  bodyPlaceholder = "What's on your mind?",
 }: RoomComposerProps) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
