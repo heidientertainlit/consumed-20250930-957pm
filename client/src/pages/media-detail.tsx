@@ -1083,6 +1083,15 @@ export default function MediaDetail() {
     const isLiked = likedPosts.has(post.id);
     const isDisagreed = disagreedTakes.has(post.id);
     const hasText = !!(post.content && post.content.trim());
+    // Trending cards stay compact — hide the action row until the card is tapped.
+    const compact = sectionKey === 'trending';
+    const ratingVal = Number(post.rating) || 0;
+    const openCard = () => {
+      setExpandedTake(cardId);
+      setReplyContent('');
+      setReplyingTo(post.id);
+      fetchComments(post.id);
+    };
     return (
       <div
         key={cardId}
@@ -1107,17 +1116,44 @@ export default function MediaDetail() {
               </div>
               <span className="text-sm font-medium text-gray-900 truncate">{name}</span>
             </div>
-            {post.rating && (
-              <div className="flex items-center gap-0.5 flex-shrink-0">
-                <Star className="w-3.5 h-3.5 text-yellow-500 fill-current" />
-                <span className="text-sm font-semibold text-gray-900">{post.rating}</span>
+            {ratingVal > 0 && (
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map((s) => {
+                    const full = ratingVal >= s;
+                    const half = !full && ratingVal >= s - 0.5;
+                    return (
+                      <div key={s} className="relative w-5 h-5">
+                        <Star className="absolute inset-0 w-5 h-5 text-gray-300" />
+                        {(full || half) && (
+                          <div className="absolute inset-0 overflow-hidden" style={{ width: full ? '100%' : '50%' }}>
+                            <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <span className="text-sm font-semibold text-gray-900">{ratingVal}</span>
               </div>
             )}
           </div>
           <p className={`text-sm leading-snug ${hasText ? 'text-gray-700' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-2'}`}>{hasText ? post.content : 'Shared a rating'}</p>
         </button>
 
-        {/* Response options — always visible */}
+        {/* Compact (trending) cards hide actions until tapped */}
+        {compact && !isExpanded && (
+          <button
+            onClick={openCard}
+            className="flex items-center gap-1 mt-2 pt-2 border-t border-gray-100 w-full text-xs text-gray-400 hover:text-purple-600 transition-colors"
+            data-testid={`take-tap-${post.id}`}
+          >
+            <MessageCircle size={12} /> Tap to respond
+          </button>
+        )}
+
+        {/* Response options */}
+        {(!compact || isExpanded) && (
         <div className="flex items-center justify-around mt-2 pt-2 border-t border-gray-100">
           <button
             onClick={() => handleLike(post.id)}
@@ -1157,6 +1193,7 @@ export default function MediaDetail() {
             <MessageCircle size={16} /> Comment
           </button>
         </div>
+        )}
 
         {isExpanded && (
           <div className="mt-3">
