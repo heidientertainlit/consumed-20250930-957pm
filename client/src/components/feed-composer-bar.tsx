@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Star, BarChart2, TrendingUp, X, Search, Loader2, Flame, ArrowLeft, ArrowRight, MessageSquarePlus, ChevronRight } from "lucide-react";
+import { Plus, Star, X, Search, Loader2, ArrowLeft, ArrowRight, MessageSquarePlus, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -8,15 +8,15 @@ import { queryClient } from "@/lib/queryClient";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
+import RoomComposer, { DISCUSSION_TAGS } from "@/components/room-composer";
 
-type TabType = "take" | "review" | "poll" | "prediction";
 type MediaFilter = "all" | "tv" | "movie" | "book" | "podcast" | "music" | "game" | "youtube";
 
-const TABS: { id: TabType; label: string; icon: React.ReactNode; placeholder: string }[] = [
-  { id: "take",       label: "Take",       icon: <Flame className="w-5 h-5" />,       placeholder: "What's your hot take?" },
-  { id: "review",     label: "Rate",       icon: <Star className="w-5 h-5" />,         placeholder: "Write your review..." },
-  { id: "poll",       label: "Poll",       icon: <BarChart2 className="w-5 h-5" />,    placeholder: "Ask a question..." },
-  { id: "prediction", label: "Prediction", icon: <TrendingUp className="w-5 h-5" />,   placeholder: "Make a prediction..." },
+// Composer tags — identical to the media-detail page composer: "Rate" (default
+// when media is attached) plus the shared conversation tags.
+const MEDIA_TAGS = [
+  { label: "Rate", db: "rate", icon: Star, bg: "#fef9c3", fg: "#ca8a04" },
+  ...DISCUSSION_TAGS,
 ];
 
 const MEDIA_FILTERS: { id: MediaFilter; label: string }[] = [
@@ -215,8 +215,6 @@ export default function FeedComposerBar({
   }, []);
   const [showMediaSearch, setShowMediaSearch] = useState(pageMode);
   const [searchSlideIn, setSearchSlideIn] = useState(pageMode);
-  const [activeTab, setActiveTab] = useState<TabType>("review");
-  const [contentText, setContentText] = useState("");
   const [ratingValue, setRatingValue] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
@@ -224,7 +222,6 @@ export default function FeedComposerBar({
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
-  const [pollOptions, setPollOptions] = useState(["", ""]);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [recommendedItems, setRecommendedItems] = useState<any[]>([]);
   const [trendingItems, setTrendingItems] = useState<any[]>([]);
@@ -339,19 +336,12 @@ export default function FeedComposerBar({
     }
   };
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recommendedScrollRef = useRef<HTMLDivElement>(null);
 
-  const currentTab = TABS.find(t => t.id === activeTab)!;
-  const showRating = activeTab === "review";
-  const showPollOptions = activeTab === "poll" || activeTab === "prediction";
 
   useEffect(() => {
-    if (isOpen && !showMediaSearch && textareaRef.current) {
-      setTimeout(() => textareaRef.current?.focus(), 50);
-    }
     if (showMediaSearch && searchInputRef.current) {
       setTimeout(() => searchInputRef.current?.focus(), 50);
     }
@@ -382,13 +372,11 @@ export default function FeedComposerBar({
   }, [searchQuery, mediaFilter, session]);
 
   const resetForm = () => {
-    setContentText("");
     setRatingValue(0);
     setHoverRating(0);
     setSelectedMedia(null);
     setSearchQuery("");
     setSearchResults([]);
-    setPollOptions(["", ""]);
     setMediaFilter("all");
     if (pageMode) {
       // In pageMode the composer IS the page; Cancel/backdrop returns to the
@@ -480,79 +468,54 @@ export default function FeedComposerBar({
     }, 260);
   };
 
-  const canPost = () => {
-    if (activeTab === "take") return contentText.trim().length > 0;
-    if (activeTab === "review") return !!selectedMedia && (ratingValue > 0 || contentText.trim().length > 0);
-    if (activeTab === "poll") return pollOptions[0].trim().length > 0 && pollOptions[1].trim().length > 0;
-    if (activeTab === "prediction") return contentText.trim().length > 0 && pollOptions[0].trim() && pollOptions[1].trim();
-    return false;
-  };
+  const buildMediaFields = () => selectedMedia ? {
+    media_title: selectedMedia.title,
+    media_type: (selectedMedia.type || selectedMedia.mediaType) === 'book_series' ? 'book' : (selectedMedia.type || selectedMedia.mediaType),
+    media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
+    media_image_url: selectedMedia.image_url || selectedMedia.poster_url || selectedMedia.image,
+    media_external_id: selectedMedia.external_id || selectedMedia.id,
+    media_external_source: selectedMedia.external_source || selectedMedia.source || "tmdb",
+  } : {};
 
-  const handlePost = async () => {
-    if (!session?.access_token || isPosting) return;
+  const handleComposeSubmit = async ({ title, body, tag }: { title: string; body: string; tag: string }): Promise<boolean> => {
+    if (!session?.access_token || isPosting) return false;
+    const text = [title, body].map((s) => s.trim()).filter(Boolean).join("\n\n");
     setIsPosting(true);
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
     try {
-      if (activeTab === "take") {
+      if (tag === "rate") {
+        if (!selectedMedia) {
+          toast({ title: "Pick something to rate first", variant: "destructive" });
+          setIsPosting(false);
+          return false;
+        }
+        const content = text || (ratingValue > 0 ? `Rated ${selectedMedia.title}` : `Reviewed ${selectedMedia.title}`);
         const res = await fetch(`${supabaseUrl}/functions/v1/inline-post`, {
           method: "POST",
           headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            content: contentText.trim(), type: "thought", post_type: "hot_take", visibility: "public",
-            media_title: selectedMedia?.title, media_type: (selectedMedia?.type || selectedMedia?.mediaType) === 'book_series' ? 'book' : (selectedMedia?.type || selectedMedia?.mediaType),
-            media_creator: selectedMedia?.creator || selectedMedia?.author || selectedMedia?.artist,
-            media_image_url: selectedMedia?.image_url || selectedMedia?.poster_url || selectedMedia?.image,
-            media_external_id: selectedMedia?.external_id || selectedMedia?.id,
-            media_external_source: selectedMedia?.external_source || selectedMedia?.source || "tmdb",
-          }),
-        });
-        if (!res.ok) throw new Error("Failed to post take");
-        toast({ title: "Hot take posted!" });
-      } else if (activeTab === "review") {
-        const content = contentText.trim() || (ratingValue > 0 ? `Rated ${selectedMedia.title}` : `Reviewed ${selectedMedia.title}`);
-        const res = await fetch(`${supabaseUrl}/functions/v1/inline-post`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            content, type: "rate-review", rating: ratingValue > 0 ? ratingValue : undefined, visibility: "public",
-            media_title: selectedMedia.title, media_type: (selectedMedia.type || selectedMedia.mediaType) === 'book_series' ? 'book' : (selectedMedia.type || selectedMedia.mediaType),
-            media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
-            media_image_url: selectedMedia.image_url || selectedMedia.poster_url || selectedMedia.image,
-            media_external_id: selectedMedia.external_id || selectedMedia.id,
-            media_external_source: selectedMedia.external_source || selectedMedia.source || "tmdb",
-          }),
+          body: JSON.stringify({ content, type: "rate-review", rating: ratingValue > 0 ? ratingValue : undefined, visibility: "public", ...buildMediaFields() }),
         });
         if (!res.ok) throw new Error("Failed to post review");
         toast({ title: "Review posted!" });
-      } else if (activeTab === "poll") {
-        const filled = pollOptions.filter(o => o.trim());
-        const res = await fetch(`${supabaseUrl}/functions/v1/create-prediction`, {
+      } else {
+        // Conversation tags (discussion / take / theory / question) — a text post.
+        if (!text) { setIsPosting(false); return false; }
+        const res = await fetch(`${supabaseUrl}/functions/v1/inline-post`, {
           method: "POST",
           headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ question: contentText.trim() || "What do you think?", options: filled, type: "poll" }),
+          body: JSON.stringify({ content: text, type: "thought", visibility: "public", ...buildMediaFields() }),
         });
-        if (!res.ok) throw new Error("Failed to create poll");
-        toast({ title: "Poll created!" });
-      } else if (activeTab === "prediction") {
-        const filled = pollOptions.filter(o => o.trim());
-        const res = await fetch(`${supabaseUrl}/functions/v1/create-prediction`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            question: contentText.trim(), options: filled, type: "predict",
-            media_title: selectedMedia?.title || null, media_type: selectedMedia?.type === 'book_series' ? 'book' : (selectedMedia?.type || null),
-            media_image_url: selectedMedia?.image_url || selectedMedia?.poster_url || null,
-            media_external_id: selectedMedia?.external_id || null,
-            media_external_source: selectedMedia?.external_source || null,
-          }),
-        });
-        if (!res.ok) throw new Error("Failed to create prediction");
-        toast({ title: "Prediction posted!" });
+        if (!res.ok) throw new Error("Failed to post");
+        toast({ title: "Posted!" });
       }
       setTimeout(() => queryClient.refetchQueries({ queryKey: ["social-feed"] }), 800);
+      setRatingValue(0);
+      setHoverRating(0);
       resetForm();
+      return true;
     } catch (err: any) {
       toast({ title: "Something went wrong", description: err.message || "Please try again.", variant: "destructive" });
+      return false;
     } finally {
       setIsPosting(false);
     }
@@ -579,40 +542,23 @@ export default function FeedComposerBar({
           {/* Dim backdrop */}
           <div className="absolute inset-0 bg-black/65" onClick={resetForm} />
 
-          {/* ── Composer card ── */}
-          <div
-            className="absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden"
-            style={{ top: '20%' }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
-              <button onClick={resetForm} className="text-sm font-medium text-gray-400 hover:text-gray-700">Cancel</button>
-              <span className="text-sm font-semibold text-gray-700">{currentTab.label}</span>
-              <button
-                onClick={handlePost}
-                disabled={!canPost() || isPosting}
-                className="bg-purple-600 disabled:opacity-40 text-white text-sm font-semibold px-4 py-1.5 rounded-full flex items-center gap-1.5 active:scale-95 transition-all"
-              >
-                {isPosting && <Loader2 className="w-3 h-3 animate-spin" />}
-                Post
-              </button>
-            </div>
-
-            {/* Textarea */}
-            <div className="px-5 pt-3 pb-2">
-              <textarea
-                ref={textareaRef}
-                value={contentText}
-                onChange={e => setContentText(e.target.value)}
-                placeholder={currentTab.placeholder}
-                rows={3}
-                className="w-full text-base text-gray-800 placeholder:text-gray-400 resize-none border-0 outline-none focus:outline-none bg-transparent"
-              />
+          {/* ── Composer card (matches the media-detail composer) ── */}
+          <div className="absolute left-4 right-4" style={{ top: '14%' }}>
+            <div className="flex items-center justify-between mb-2 px-1">
+              <button onClick={resetForm} className="text-[13px] font-semibold text-white/80 hover:text-white">Cancel</button>
+              {!selectedMedia && (
+                <button
+                  onClick={() => { setShowMediaSearch(true); requestAnimationFrame(() => setSearchSlideIn(true)); }}
+                  className="inline-flex items-center gap-1 text-[13px] font-semibold text-white/90 hover:text-white"
+                >
+                  <Plus size={14} /> Add media
+                </button>
+              )}
             </div>
 
             {/* Selected media chip */}
             {selectedMedia && (
-              <div className="mx-5 mb-2 flex items-center gap-2 bg-gray-50 rounded-xl p-2 border border-gray-100">
+              <div className="mb-2 flex items-center gap-2 bg-white rounded-2xl p-2 border border-gray-200 shadow-sm">
                 {selectedMedia.image_url && (
                   <img src={selectedMedia.image_url} alt="" className="w-8 h-11 object-cover rounded flex-shrink-0" />
                 )}
@@ -626,76 +572,63 @@ export default function FeedComposerBar({
               </div>
             )}
 
-            {/* Rating */}
-            {showRating && (
-              <div className="mx-5 mb-2 flex items-center gap-2">
-                <span className="text-xs text-gray-500 font-medium">Rating:</span>
-                <div className="flex items-center gap-0.5" onMouseLeave={() => setHoverRating(0)}>
-                  {[1, 2, 3, 4, 5].map(star => {
-                    const displayVal = hoverRating || ratingValue;
-                    return (
-                      <div key={star} className="relative" style={{ width: 26, height: 26 }}>
-                        <Star size={26} className="absolute inset-0 text-gray-200" />
-                        <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
-                          <Star size={26} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
-                        </div>
-                        <button
-                          className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }}
-                          onMouseEnter={() => setHoverRating(star - 0.5)}
-                          onClick={() => setRatingValue(star - 0.5 === ratingValue ? 0 : star - 0.5)}
-                          aria-label={`Rate ${star - 0.5}`}
-                        />
-                        <button
-                          className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }}
-                          onMouseEnter={() => setHoverRating(star)}
-                          onClick={() => setRatingValue(star === ratingValue ? 0 : star)}
-                          aria-label={`Rate ${star}`}
-                        />
-                      </div>
-                    );
-                  })}
-                  {(hoverRating > 0 || ratingValue > 0) && (
-                    <span className="ml-1 text-xs text-gray-400">{hoverRating > 0 ? hoverRating : ratingValue}/5</span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Poll/Prediction options */}
-            {showPollOptions && (
-              <div className="mx-5 mb-2 space-y-1.5">
-                {pollOptions.map((opt, i) => (
-                  <input key={i} value={opt}
-                    onChange={e => { const next = [...pollOptions]; next[i] = e.target.value; setPollOptions(next); }}
-                    placeholder={`Option ${i + 1}`}
-                    className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-purple-400 text-gray-800 placeholder:text-gray-400 bg-gray-50"
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Bottom toolbar */}
-            <div className="px-5 pb-4 pt-2 border-t border-gray-100 space-y-2">
-              <div className="flex gap-1.5">
-                {TABS.map(tab => {
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                      className="flex flex-col items-center gap-1 flex-1 py-1 active:scale-95 transition-transform"
-                    >
-                      <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
-                        isActive ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-500"
-                      }`}>
-                        {tab.icon}
-                      </div>
-                      <span className={`text-[11px] font-semibold ${isActive ? "text-purple-700" : "text-gray-500"}`}>
-                        {tab.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <RoomComposer
+              key={selectedMedia ? (selectedMedia.external_id || selectedMedia.id || 'media') : 'none'}
+              tags={MEDIA_TAGS}
+              defaultTag={selectedMedia ? 'rate' : 'take'}
+              compactTags
+              posting={isPosting}
+              titlePlaceholder="Add a title (optional)…"
+              bodyPlaceholder="What's on your mind?"
+              onSubmit={handleComposeSubmit}
+              canSubmit={({ title, body, tag }) => {
+                const hasText = !!(title.trim() || body.trim());
+                if (tag === 'rate') return !!selectedMedia && (hasText || ratingValue > 0);
+                return hasText;
+              }}
+              renderExtra={(tag) => {
+                if (tag !== 'rate') return null;
+                const activeRating = hoverRating || ratingValue;
+                return (
+                  <div className="flex items-center gap-3 mt-3">
+                    <span className="text-sm text-gray-500">Rating:</span>
+                    <div className="flex gap-1.5" onMouseLeave={() => setHoverRating(0)}>
+                      {[1, 2, 3, 4, 5].map((star) => {
+                        const isFull = activeRating >= star;
+                        const isHalf = !isFull && activeRating >= star - 0.5;
+                        return (
+                          <div key={star} className="relative w-9 h-9">
+                            <Star size={36} className="absolute inset-0 text-gray-300" />
+                            {(isFull || isHalf) && (
+                              <div className="absolute inset-0 overflow-hidden" style={{ width: isFull ? '100%' : '50%' }}>
+                                <Star size={36} className="fill-yellow-400 text-yellow-400" />
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              aria-label={`Rate ${star - 0.5} stars`}
+                              className="absolute inset-y-0 left-0 w-1/2 z-10"
+                              onClick={() => setRatingValue(ratingValue === star - 0.5 ? 0 : star - 0.5)}
+                              onMouseEnter={() => setHoverRating(star - 0.5)}
+                            />
+                            <button
+                              type="button"
+                              aria-label={`Rate ${star} stars`}
+                              className="absolute inset-y-0 right-0 w-1/2 z-10"
+                              onClick={() => setRatingValue(ratingValue === star ? 0 : star)}
+                              onMouseEnter={() => setHoverRating(star)}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {activeRating > 0 && (
+                      <span className="text-sm font-semibold text-gray-700">{activeRating.toFixed(1)}</span>
+                    )}
+                  </div>
+                );
+              }}
+            />
           </div>
 
           {/* ── Full-screen media search layer (slides up) ── */}
@@ -771,7 +704,7 @@ export default function FeedComposerBar({
                         {trendingItems.map((r, i) => (
                           <MediaCard key={i} item={r} light={pageMode}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source }); setIsQuickAddOpen(true); }}
-                            onRate={() => { setActiveTab("review"); selectMedia(r); }}
+                            onRate={() => { selectMedia(r); }}
                           />
                         ))}
                       </div>
@@ -795,7 +728,7 @@ export default function FeedComposerBar({
                         {recommendedItems.map((r, i) => (
                           <MediaCard key={i} item={r} light={pageMode}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
-                            onRate={() => { setActiveTab("review"); selectMedia(r); }}
+                            onRate={() => { selectMedia(r); }}
                           />
                         ))}
                       </div>
@@ -838,13 +771,13 @@ export default function FeedComposerBar({
                           if (r.type === 'book_series') { openSeriesBulkAdd(r); }
                           else { setQuickAddMedia({ title: r.title, mediaType, imageUrl: r.image_url, externalId: r.external_id, externalSource: externalSource, creator: r.creator }); setIsQuickAddOpen(true); }
                         }}
-                        onRate={() => { setActiveTab("review"); selectMedia({ ...r, type: r.type, external_source: externalSource }); }}
+                        onRate={() => { selectMedia({ ...r, type: r.type, external_source: externalSource }); }}
                         seriesExpanded={expandedSeriesId === r.external_id}
                         seriesBooks={seriesBooksMap[r.external_id]}
                         seriesLoading={loadingSeriesId === r.external_id}
                         onToggleSeries={() => toggleSeries(r)}
                         onTrackBook={(book) => { setQuickAddMedia({ title: book.title, mediaType: 'book', imageUrl: book.poster_url, externalId: book.external_id, externalSource: book.external_source || 'openlibrary', creator: book.creator, seriesName: r.type === 'book_series' ? r.title : undefined }); setIsQuickAddOpen(true); }}
-                        onRateBook={(book) => { setActiveTab("review"); selectMedia({ ...book, image_url: book.poster_url }); }}
+                        onRateBook={(book) => { selectMedia({ ...book, image_url: book.poster_url }); }}
                       />
                     );
                   })}
