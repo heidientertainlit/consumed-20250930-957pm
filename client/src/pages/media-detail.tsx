@@ -1117,56 +1117,51 @@ export default function MediaDetail() {
           <p className={`text-sm leading-snug ${hasText ? 'text-gray-700' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-2'}`}>{hasText ? post.content : 'Shared a rating'}</p>
         </button>
 
-        {!isExpanded && (
-          <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
-            <span className="flex items-center gap-1"><Heart size={12} /> {post.likes_count || 0}</span>
-            <span className="flex items-center gap-1 text-purple-500 font-medium"><MessageCircle size={12} /> Respond</span>
-          </div>
-        )}
+        {/* Response options — always visible */}
+        <div className="flex items-center justify-around mt-2 pt-2 border-t border-gray-100">
+          <button
+            onClick={() => handleLike(post.id)}
+            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${isLiked ? 'text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}
+            data-testid={`take-agree-${post.id}`}
+          >
+            <ArrowUp size={16} /> Agree{post.likes_count ? ` ${post.likes_count}` : ''}
+          </button>
+          <button
+            onClick={() => setDisagreedTakes(prev => {
+              const next = new Set(prev);
+              next.has(post.id) ? next.delete(post.id) : next.add(post.id);
+              return next;
+            })}
+            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${isDisagreed ? 'text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}
+            data-testid={`take-disagree-${post.id}`}
+          >
+            <ArrowDown size={16} /> Disagree
+          </button>
+          <button
+            onClick={() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+            className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-purple-600 transition-colors"
+            data-testid={`take-rate-${post.id}`}
+          >
+            <Star size={16} /> Rate
+          </button>
+          <button
+            onClick={() => {
+              setExpandedTake(cardId);
+              setReplyingTo(post.id);
+              fetchComments(post.id);
+              requestAnimationFrame(() => document.getElementById(`take-input-${cardId}`)?.focus());
+            }}
+            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${isExpanded ? 'text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}
+            data-testid={`take-comment-${post.id}`}
+          >
+            <MessageCircle size={16} /> Comment
+          </button>
+        </div>
 
         {isExpanded && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            {/* Response options */}
-            <div className="flex items-center justify-around">
-              <button
-                onClick={() => handleLike(post.id)}
-                className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${isLiked ? 'text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}
-                data-testid={`take-agree-${post.id}`}
-              >
-                <ArrowUp size={16} /> Agree
-              </button>
-              <button
-                onClick={() => setDisagreedTakes(prev => {
-                  const next = new Set(prev);
-                  next.has(post.id) ? next.delete(post.id) : next.add(post.id);
-                  return next;
-                })}
-                className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${isDisagreed ? 'text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}
-                data-testid={`take-disagree-${post.id}`}
-              >
-                <ArrowDown size={16} /> Disagree
-              </button>
-              <button
-                onClick={() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-purple-600 transition-colors"
-                data-testid={`take-rate-${post.id}`}
-              >
-                <Star size={16} /> Rate
-              </button>
-              <button
-                onClick={() => {
-                  setReplyingTo(post.id);
-                  requestAnimationFrame(() => document.getElementById(`take-input-${cardId}`)?.focus());
-                }}
-                className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-purple-600 transition-colors"
-                data-testid={`take-comment-${post.id}`}
-              >
-                <MessageCircle size={16} /> Comment
-              </button>
-            </div>
-
+          <div className="mt-3">
             {/* Add your take */}
-            <div className="flex items-center gap-2 mt-3">
+            <div className="flex items-center gap-2">
               <input
                 id={`take-input-${cardId}`}
                 type="text"
