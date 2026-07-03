@@ -15,6 +15,7 @@ import { getMediaAlignment } from "@/lib/identity-feedback";
 import CreateListDialog from "@/components/create-list-dialog";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
+import { ReportButton } from "@/components/report-button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 import { supabase } from "@/lib/supabase";
@@ -249,13 +250,16 @@ export default function MediaDetail() {
           <div className="min-w-0 flex-1">
             <span className="text-xs font-medium text-gray-900">{cName}</span>
             <p className="text-sm text-gray-700 leading-snug">{comment.content}</p>
-            <button
-              onClick={() => { setReplyingToComment(isReplying ? null : comment.id); setCommentReplyContent(''); }}
-              className={`text-xs font-medium transition-colors mt-0.5 ${isReplying ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'}`}
-              data-testid={`comment-reply-${comment.id}`}
-            >
-              Reply
-            </button>
+            <div className="flex items-center gap-3 mt-0.5">
+              <button
+                onClick={() => { setReplyingToComment(isReplying ? null : comment.id); setCommentReplyContent(''); }}
+                className={`text-xs font-medium transition-colors ${isReplying ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'}`}
+                data-testid={`comment-reply-${comment.id}`}
+              >
+                Reply
+              </button>
+              <ReportButton contentType="comment" contentId={String(comment.id)} iconOnly={false} className="text-xs text-gray-400 hover:text-red-500" />
+            </div>
             {isReplying && (
               <div className="flex items-center gap-2 mt-1.5">
                 <input
@@ -566,6 +570,13 @@ export default function MediaDetail() {
     }
     return result;
   })();
+  // Preload comments for each take so a couple show at a glance without tapping "Comment".
+  const takeIdsKey = (mergedTakes as any[]).map((t) => t.id).join(',');
+  useEffect(() => {
+    if (!session?.access_token) return;
+    (mergedTakes as any[]).forEach((t) => { if (t?.id) fetchComments(String(t.id)); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [takeIdsKey, session?.access_token]);
   const distinctFanIds = Array.from(new Set((socialActivity as any[]).map((p: any) => p.user_id).filter(Boolean)));
   const fansCount = distinctFanIds.length;
   // Theories feature has no backend yet — real count is 0 until built.
@@ -1143,7 +1154,9 @@ export default function MediaDetail() {
         className="bg-white rounded-xl p-3 shadow-sm"
         data-testid={`take-card-${post.id}`}
       >
-        <button
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => {
             const next = isExpanded ? null : cardId;
             setExpandedTake(next);
@@ -1151,7 +1164,17 @@ export default function MediaDetail() {
             if (next) { setReplyingTo(post.id); fetchComments(post.id); }
             else { setReplyingTo(null); }
           }}
-          className="w-full text-left"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              const next = isExpanded ? null : cardId;
+              setExpandedTake(next);
+              setReplyContent('');
+              if (next) { setReplyingTo(post.id); fetchComments(post.id); }
+              else { setReplyingTo(null); }
+            }
+          }}
+          className="w-full text-left cursor-pointer"
           data-testid={`take-toggle-${post.id}`}
         >
           <div className="flex items-center justify-between mb-1">
@@ -1161,30 +1184,35 @@ export default function MediaDetail() {
               </div>
               <span className="text-sm font-medium text-gray-900 truncate">{name}</span>
             </div>
-            {ratingVal > 0 && (
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <div className="flex gap-0.5">
-                  {[1, 2, 3, 4, 5].map((s) => {
-                    const full = ratingVal >= s;
-                    const half = !full && ratingVal >= s - 0.5;
-                    return (
-                      <div key={s} className="relative w-5 h-5">
-                        <Star className="absolute inset-0 w-5 h-5 text-gray-300" />
-                        {(full || half) && (
-                          <div className="absolute inset-0 overflow-hidden" style={{ width: full ? '100%' : '50%' }}>
-                            <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                <span className="text-sm font-semibold text-gray-900">{ratingVal}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {ratingVal > 0 && (
+                <>
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((s) => {
+                      const full = ratingVal >= s;
+                      const half = !full && ratingVal >= s - 0.5;
+                      return (
+                        <div key={s} className="relative w-5 h-5">
+                          <Star className="absolute inset-0 w-5 h-5 text-gray-300" />
+                          {(full || half) && (
+                            <div className="absolute inset-0 overflow-hidden" style={{ width: full ? '100%' : '50%' }}>
+                              <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <span className="text-sm font-semibold text-gray-900">{ratingVal}</span>
+                </>
+              )}
+              <span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                <ReportButton contentType="post" contentId={String(post.id)} className="text-gray-300 hover:text-red-500" />
+              </span>
+            </div>
           </div>
           <p className={`text-sm leading-snug ${hasText ? 'text-gray-700' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-2'}`}>{hasText ? post.content : 'Shared a rating'}</p>
-        </button>
+        </div>
 
         {/* Response options */}
         {(!compact || isExpanded) && (
@@ -1255,12 +1283,22 @@ export default function MediaDetail() {
                 Post
               </button>
             </div>
+          </div>
+        )}
 
-            {/* Existing replies */}
-            {expandedComments[post.id]?.length > 0 && (
-              <div className="mt-3 space-y-2">
-                {expandedComments[post.id].map((comment: any) => renderComment(comment, post.id))}
-              </div>
+        {/* Comments — preview a couple when collapsed, all when expanded */}
+        {expandedComments[post.id]?.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {(isExpanded ? expandedComments[post.id] : expandedComments[post.id].slice(0, 2))
+              .map((comment: any) => renderComment(comment, post.id))}
+            {!isExpanded && expandedComments[post.id].length > 2 && (
+              <button
+                onClick={() => { setExpandedTake(cardId); setReplyingTo(post.id); fetchComments(post.id); }}
+                className="text-xs font-semibold text-purple-600 hover:text-purple-700"
+                data-testid={`take-view-all-${post.id}`}
+              >
+                View all {expandedComments[post.id].length} comments
+              </button>
             )}
           </div>
         )}
