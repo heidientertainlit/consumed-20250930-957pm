@@ -92,7 +92,7 @@ export default function RoomComposer({
         {renderExtra && <div>{renderExtra(tag)}</div>}
       </div>
       <div className={`border-t border-gray-100 px-4 ${compactTags ? "py-2.5" : "py-3"}`}>
-        <p className={`text-[12px] font-semibold text-gray-400 ${compactTags ? "mb-1.5" : "mb-2.5"}`}>Tag your post</p>
+        <p className={`text-[12px] font-semibold text-gray-400 ${compactTags ? "mb-1.5" : "mb-2.5"}`}>Add a tag</p>
         <div className={`flex flex-wrap items-center ${compactTags ? "gap-1.5" : "gap-2"}`}>
           {tags.map((s) => {
             const Icon = s.icon;

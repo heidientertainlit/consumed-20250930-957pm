@@ -1884,7 +1884,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
               <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-white/50 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
             )}
-            {currentUserId && post.user?.id !== currentUserId && (
+            {currentUserId && post.user?.id !== currentUserId && hasContent && (
               <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-white/50 hover:text-orange-400 transition-colors"><Flag size={13} /></button>
             )}
           </div>
@@ -1947,7 +1947,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   })}
                 </div>
               )}
-              {currentUserId && post.user?.id !== currentUserId && (
+              {currentUserId && post.user?.id !== currentUserId && hasContent && (
                 <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-500 transition-colors flex-shrink-0 p-1" title="Report review"><Flag size={13} /></button>
               )}
             </div>
