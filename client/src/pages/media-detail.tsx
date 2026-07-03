@@ -1056,7 +1056,7 @@ export default function MediaDetail() {
           <div className="flex gap-4">
             {/* Poster - smaller and fixed width */}
             <div className="relative flex-shrink-0">
-              <div className="w-28 h-40 md:w-36 md:h-52 rounded-xl overflow-hidden shadow-lg ring-1 ring-white/10">
+              <div className="w-32 h-48 md:w-40 md:h-60 rounded-xl overflow-hidden shadow-lg ring-1 ring-white/10">
                 <img 
                   src={resolvedImageUrl} 
                   alt={mediaItem.title}
@@ -1066,7 +1066,7 @@ export default function MediaDetail() {
               {session && (
                 <button
                   onClick={() => setIsListSheetOpen(true)}
-                  className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white shadow-lg flex items-center justify-center ring-2 ring-[#12121f] transition-colors"
+                  className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white shadow-lg flex items-center justify-center ring-2 ring-white/40 transition-colors"
                   data-testid="button-quick-add"
                 >
                   <Plus size={20} />
