@@ -27,12 +27,11 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
-// Media-detail composer tags: "Rate" (default here) + shared conversation tags,
-// plus "Predict". Rooms keep "Discussion" as their default.
+// Media-detail composer tags: "Rate" (default here) + shared conversation tags
+// (Discussion, Take, Theory, Question). Rooms keep "Discussion" as their default.
 const MEDIA_TAGS = [
   { label: "Rate", db: "rate", icon: Star, bg: "#fef9c3", fg: "#ca8a04" },
   ...DISCUSSION_TAGS,
-  { label: "Predict", db: "predict", icon: TrendingUp, bg: "#eaf1ff", fg: "#2563eb" },
 ];
 
 export default function MediaDetail() {
@@ -49,6 +48,9 @@ export default function MediaDetail() {
   const { session, user } = useAuth();
   const { archetypeKey } = useDnaArchetype();
   const [showAbout, setShowAbout] = useState(false);
+  // Dormant: the full reviews list (Activity Section) is gated on showReviews, whose only
+  // trigger was the hero "Hot Takes" stat. That stat row is hidden for now, so this stays
+  // false. Kept in place (not removed) so it can be re-enabled with the stat row later.
   const [showReviews, setShowReviews] = useState(false);
   const [showConversations, setShowConversations] = useState(false);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
@@ -1255,7 +1257,8 @@ export default function MediaDetail() {
             </div>
           )}
 
-          {/* Stat row — real counts only (Theories pending backend) */}
+          {/* Stat row — hidden for now until there's more engagement (flip false → true to restore) */}
+          {false && (
           <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-white/10">
             <button onClick={() => setShowReviews(true)} className="flex flex-col items-center gap-1 py-1" data-testid="stat-hot-takes">
               <Flame className="w-5 h-5 text-orange-400" />
@@ -1278,31 +1281,111 @@ export default function MediaDetail() {
               <span className="text-[11px] text-gray-400">Fans Here</span>
             </div>
           </div>
+          )}
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 pt-6 pb-8">
-          {/* Trending Takes — top text takes, click a card to respond inline */}
+          {/* Your Reaction — inline composer */}
+          {session && (
+          <div ref={composeSectionRef} className="mb-4">
+            <p className="text-base font-semibold text-gray-900 mb-3">Your Reaction</p>
+            <RoomComposer
+              tags={MEDIA_TAGS}
+              defaultTag="rate"
+              posting={isComposePosting}
+              titlePlaceholder="Add a title…"
+              bodyPlaceholder="What's on your mind?"
+              onSubmit={handleComposePost}
+              canSubmit={({ title, body, tag }) => {
+                const hasText = !!(title.trim() || body.trim());
+                if (tag === 'rate') return hasText || composeRating > 0;
+                if (tag === 'predict') return hasText && composePredictionOptions.filter((o) => o.trim()).length >= 2;
+                return hasText;
+              }}
+              renderExtra={(tag) => {
+                if (tag === 'rate') {
+                  return (
+                    <div className="flex items-center gap-3 mt-3">
+                      <span className="text-sm text-gray-500">Rating:</span>
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setComposeRating(composeRating === star ? 0 : star)}
+                            onMouseEnter={() => setComposeHoverRating(star)}
+                            onMouseLeave={() => setComposeHoverRating(0)}
+                          >
+                            <Star
+                              size={22}
+                              className={
+                                star <= (composeHoverRating || composeRating)
+                                  ? 'fill-yellow-400 text-yellow-400'
+                                  : 'text-gray-300'
+                              }
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                if (tag === 'predict') {
+                  return (
+                    <div className="mt-3 space-y-2">
+                      {composePredictionOptions.map((opt, idx) => (
+                        <input
+                          key={idx}
+                          type="text"
+                          value={opt}
+                          onChange={(e) => {
+                            const updated = [...composePredictionOptions];
+                            updated[idx] = e.target.value;
+                            setComposePredictionOptions(updated);
+                          }}
+                          placeholder={`Option ${idx + 1}`}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setComposePredictionOptions([...composePredictionOptions, ''])}
+                        className="text-xs text-purple-600 font-medium"
+                      >
+                        + Add option
+                      </button>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+          </div>
+          )}
+
+          {/* Join the Conversation — all takes, click a card to respond inline */}
           {!showReviews && (() => {
-            const textTakes = (socialActivity as any[])
-              .filter((p) => p.content && p.content.trim())
-              .sort((a, b) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0))
-              .slice(0, 2);
-            if (textTakes.length === 0) return null;
+            const convoTakes = (takes as any[])
+              .slice()
+              .sort((a, b) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0));
+            if (convoTakes.length === 0) return null;
             return (
               <div className="mb-4">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Flame className="w-4 h-4 text-orange-500" />
-                  <h3 className="text-base font-semibold text-gray-900">Trending Takes</h3>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <MessageCircle className="w-4 h-4 text-purple-500" />
+                  <h3 className="text-base font-semibold text-gray-900">Join the Conversation</h3>
                 </div>
+                <p className="text-xs text-gray-500 mb-3">See what others think</p>
                 <div className="space-y-2">
-                  {textTakes.map((post: any) => {
+                  {convoTakes.map((post: any) => {
                     const rawName = post.users?.display_name || post.users?.user_name || '';
                     const name = rawName.includes('+') ? (rawName.split('+').pop() || rawName) : (rawName || 'Someone');
                     const initial = (name[0] || '?').toUpperCase();
                     const isExpanded = expandedTake === post.id;
                     const isLiked = likedPosts.has(post.id);
                     const isDisagreed = disagreedTakes.has(post.id);
+                    const hasText = !!(post.content && post.content.trim());
                     return (
                       <div
                         key={post.id}
@@ -1313,6 +1396,7 @@ export default function MediaDetail() {
                           onClick={() => {
                             const next = isExpanded ? null : post.id;
                             setExpandedTake(next);
+                            setReplyContent('');
                             if (next) { setReplyingTo(post.id); fetchComments(post.id); }
                             else { setReplyingTo(null); }
                           }}
@@ -1333,7 +1417,7 @@ export default function MediaDetail() {
                               </div>
                             )}
                           </div>
-                          <p className={`text-sm text-gray-700 leading-snug ${isExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
+                          <p className={`text-sm leading-snug ${hasText ? 'text-gray-700' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-2'}`}>{hasText ? post.content : 'Shared a rating'}</p>
                         </button>
 
                         {!isExpanded && (
@@ -1424,84 +1508,6 @@ export default function MediaDetail() {
               </div>
             );
           })()}
-
-          {/* Your Reaction — inline composer */}
-          {session && (
-          <div ref={composeSectionRef} className="mb-4">
-            <p className="text-base font-semibold text-gray-900 mb-3">Your Reaction</p>
-            <RoomComposer
-              tags={MEDIA_TAGS}
-              defaultTag="rate"
-              posting={isComposePosting}
-              titlePlaceholder="Add a title…"
-              bodyPlaceholder="What's on your mind?"
-              onSubmit={handleComposePost}
-              canSubmit={({ title, body, tag }) => {
-                const hasText = !!(title.trim() || body.trim());
-                if (tag === 'rate') return hasText || composeRating > 0;
-                if (tag === 'predict') return hasText && composePredictionOptions.filter((o) => o.trim()).length >= 2;
-                return hasText;
-              }}
-              renderExtra={(tag) => {
-                if (tag === 'rate') {
-                  return (
-                    <div className="flex items-center gap-3 mt-3">
-                      <span className="text-sm text-gray-500">Rating:</span>
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => setComposeRating(composeRating === star ? 0 : star)}
-                            onMouseEnter={() => setComposeHoverRating(star)}
-                            onMouseLeave={() => setComposeHoverRating(0)}
-                          >
-                            <Star
-                              size={22}
-                              className={
-                                star <= (composeHoverRating || composeRating)
-                                  ? 'fill-yellow-400 text-yellow-400'
-                                  : 'text-gray-300'
-                              }
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                }
-                if (tag === 'predict') {
-                  return (
-                    <div className="mt-3 space-y-2">
-                      {composePredictionOptions.map((opt, idx) => (
-                        <input
-                          key={idx}
-                          type="text"
-                          value={opt}
-                          onChange={(e) => {
-                            const updated = [...composePredictionOptions];
-                            updated[idx] = e.target.value;
-                            setComposePredictionOptions(updated);
-                          }}
-                          placeholder={`Option ${idx + 1}`}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => setComposePredictionOptions([...composePredictionOptions, ''])}
-                        className="text-xs text-purple-600 font-medium"
-                      >
-                        + Add option
-                      </button>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-          </div>
-          )}
 
           {/* Activity Section — full reviews list (opened via the Hot Takes stat) */}
           {showReviews && (
