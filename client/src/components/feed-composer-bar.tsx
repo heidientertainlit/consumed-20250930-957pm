@@ -895,23 +895,6 @@ export default function FeedComposerBar({
               {/* ── Pre-search: poster grid sections ── */}
               {!searchQuery && (
                 <div className="pb-10">
-                  {trendingItems.length > 0 && (
-                    <div className="mb-6">
-                      <div className="flex items-center justify-between px-5 mb-3">
-                        <p className={`text-sm font-bold ${pageMode ? 'text-gray-900' : 'text-white'}`}>Trending Now</p>
-                        <span className={`text-xs font-medium ${pageMode ? 'text-purple-600' : 'text-purple-400'}`}>See all</span>
-                      </div>
-                      <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-                        {trendingItems.map((r, i) => (
-                          <MediaCard key={i} item={r} light={pageMode}
-                            onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source }); setIsQuickAddOpen(true); }}
-                            onRate={() => { selectMedia(r); }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   {friendsConsumingItems.length > 0 && (
                     <div className="mb-6">
                       <div className="flex items-center justify-between px-5 mb-3">
@@ -931,12 +914,29 @@ export default function FeedComposerBar({
                   {wantToItems.length > 0 && (
                     <div className="mb-6">
                       <div className="flex items-center justify-between px-5 mb-3">
-                        <p className={`text-sm font-bold ${pageMode ? 'text-gray-900' : 'text-white'}`}>On Your Want To List</p>
+                        <p className={`text-sm font-bold ${pageMode ? 'text-gray-900' : 'text-white'}`}>Don't Forget — You Wanted to Consume This</p>
                       </div>
                       <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                         {wantToItems.map((r, i) => (
                           <MediaCard key={i} item={r} light={pageMode}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
+                            onRate={() => { selectMedia(r); }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {trendingItems.length > 0 && (
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between px-5 mb-3">
+                        <p className={`text-sm font-bold ${pageMode ? 'text-gray-900' : 'text-white'}`}>Trending Now</p>
+                        <span className={`text-xs font-medium ${pageMode ? 'text-purple-600' : 'text-purple-400'}`}>See all</span>
+                      </div>
+                      <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                        {trendingItems.map((r, i) => (
+                          <MediaCard key={i} item={r} light={pageMode}
+                            onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source }); setIsQuickAddOpen(true); }}
                             onRate={() => { selectMedia(r); }}
                           />
                         ))}
