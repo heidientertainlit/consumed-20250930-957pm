@@ -8243,24 +8243,24 @@ export default function Feed() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                     </div>
 
-                    {/* Right side: header, title, talking count, avatars */}
+                    {/* Right side: header, title, talking count, take glimpses */}
                     <div className="flex-1 min-w-0 flex flex-col">
                       <div className="flex items-center gap-1.5">
                         <Flame size={15} className="text-orange-500 fill-orange-500 shrink-0" />
                         <span className="text-[13px] font-semibold text-violet-600">Everyone's Talking</span>
                       </div>
-                      <p className="text-[18px] font-bold text-gray-900 leading-tight mt-1.5">{everyonesTalking.title}</p>
-                      <p className="text-[13px] text-gray-500 font-medium mt-1">
-                        {everyonesTalking.talkingCount} {everyonesTalking.talkingCount === 1 ? 'person' : 'people'} talking
-                      </p>
-                      <div className="flex items-center gap-2 mt-2.5">
-                        <div className="flex -space-x-1.5">
-                          {everyonesTalking.users.slice(0, 4).map((u: any, i: number) => {
+                      <p className="text-[17px] font-bold text-gray-900 leading-tight mt-1 truncate">{everyonesTalking.title}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <p className="text-[12px] text-gray-500 font-medium">
+                          {everyonesTalking.talkingCount} {everyonesTalking.talkingCount === 1 ? 'person' : 'people'} talking
+                        </p>
+                        <div className="flex -space-x-1">
+                          {everyonesTalking.users.slice(0, 3).map((u: any, i: number) => {
                             const n = u?.displayName || u?.username || '?';
                             return (
                               <div
                                 key={i}
-                                className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold"
+                                className="w-4 h-4 rounded-full border border-white flex items-center justify-center text-white text-[7px] font-bold"
                                 style={{ background: `hsl(${(n.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
                               >
                                 {n[0]?.toUpperCase()}
@@ -8268,40 +8268,36 @@ export default function Feed() {
                             );
                           })}
                         </div>
-                        {everyonesTalking.talkingCount > 4 && (
-                          <span className="text-[12px] text-gray-400 font-medium">+{everyonesTalking.talkingCount - 4} more</span>
-                        )}
                       </div>
+
+                      {/* Take glimpses — right of the poster, cut off, tap to read + comment */}
+                      {everyonesTalking.topTakes.length > 0 && (
+                        <div className="mt-2 flex flex-col gap-1">
+                          {everyonesTalking.topTakes.map((t: any, i: number) => {
+                            const TakeIcon = i === 0 ? Flame : i === 1 ? Brain : MessageCircle;
+                            const iconCls = i === 0 ? 'text-orange-500' : i === 1 ? 'text-pink-500' : 'text-violet-500';
+                            const n = t.user?.displayName || t.user?.username || '?';
+                            return (
+                              <button
+                                key={t.id || i}
+                                onClick={() => setTalkingOpenTake(t)}
+                                className="w-full flex items-start gap-1.5 text-left rounded-lg px-2 py-1.5 bg-gray-50 active:bg-gray-100 transition-colors"
+                              >
+                                <TakeIcon size={12} className={`${iconCls} shrink-0 mt-0.5`} />
+                                <p className="text-[12px] text-gray-700 leading-snug flex-1 line-clamp-2">"{t.content}"</p>
+                                <div
+                                  className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[7px] font-bold shrink-0 mt-0.5"
+                                  style={{ background: `hsl(${(n.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
+                                >
+                                  {n[0]?.toUpperCase()}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
-
-                  {/* Top takes */}
-                  {everyonesTalking.topTakes.length > 0 && (
-                    <div className="border-t border-gray-100 divide-y divide-gray-50">
-                      {everyonesTalking.topTakes.map((t: any, i: number) => {
-                        const TakeIcon = i === 0 ? Flame : i === 1 ? Brain : MessageCircle;
-                        const iconCls = i === 0 ? 'text-orange-500' : i === 1 ? 'text-pink-500' : 'text-violet-500';
-                        const n = t.user?.displayName || t.user?.username || '?';
-                        return (
-                          <button
-                            key={t.id || i}
-                            onClick={() => setTalkingOpenTake(t)}
-                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left active:bg-gray-50 transition-colors"
-                          >
-                            <TakeIcon size={14} className={`${iconCls} shrink-0`} />
-                            <p className="text-[13px] text-gray-700 leading-snug flex-1 line-clamp-2">"{t.content}"</p>
-                            <div
-                              className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold shrink-0"
-                              style={{ background: `hsl(${(n.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
-                            >
-                              {n[0]?.toUpperCase()}
-                            </div>
-                            <MessageCircle size={13} className="text-gray-300 shrink-0" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
                 </div>
               )}
 
