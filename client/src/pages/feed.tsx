@@ -30,7 +30,7 @@ import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 
-import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronLeft, ChevronRight, ChevronDown, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap } from "lucide-react";
+import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronLeft, ChevronRight, ChevronDown, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, ArrowRight, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -744,6 +744,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [reactionLoaded, setReactionLoaded] = useState(false);
   // Poster card detail sheet
   const [posterDetailOpen, setPosterDetailOpen] = useState(false);
+  // "Tell a friend" share — brief copied confirmation
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Load existing reaction from DB on mount
   useEffect(() => {
@@ -1868,77 +1870,85 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
 
             {/* Take (right) */}
-            <div className="flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
+            <div className="flex-1 min-w-0 flex flex-col" style={{ minHeight: 180 }} onClick={(e) => e.stopPropagation()}>
+              {/* Title + tag pill */}
               {post.mediaTitle && (
-                <div className="mb-2">
-                  <p className="text-[14px] font-semibold text-gray-900 leading-snug">{post.mediaTitle}</p>
-                  {mediaCreator && (
-                    <p className="text-[12px] text-gray-500 leading-snug mt-0.5">by {mediaCreator}</p>
-                  )}
+                <div className="mb-1.5 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[14px] font-semibold text-gray-900 leading-snug">{post.mediaTitle}</p>
+                    {mediaCreator && (
+                      <p className="text-[12px] text-gray-500 leading-snug mt-0.5">by {mediaCreator}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    {currentUserId && post.user?.id !== currentUserId && hasContent && (
+                      <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-500 transition-colors p-1 rounded-full hover:bg-orange-50" title="Report review"><Flag size={13} /></button>
+                    )}
+                    {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
+                      <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this post?')) onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50" title="Delete post"><Trash2 size={13} /></button>
+                    )}
+                  </div>
                 </div>
               )}
-            <div className="flex items-center gap-2.5">
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                style={{ background: `hsl(${(displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
-              >
-                {displayName[0]?.toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[15px] font-medium text-gray-800 leading-tight truncate">{displayName}</p>
-                {isOtherUser && tasteAlignment !== null ? (
-                  <p className="text-[13px] text-violet-600 font-medium leading-tight"><span className="font-semibold">{tasteAlignment}%</span> aligned with you</p>
-                ) : isOtherUser && alignmentNudge && !ratingSubmitted ? (
-                  <p className="text-[11px] text-gray-400 leading-tight">Rate 10 things to see your alignment</p>
-                ) : null}
-              </div>
-              {hasRating && (
-                <div className="flex items-center gap-0.5 flex-shrink-0">
-                  {[1,2,3,4,5].map(s => {
-                    const r = post.rating!;
-                    if (s <= Math.floor(r)) return <Star key={s} size={16} className="text-yellow-400 fill-yellow-400" />;
-                    if (s === Math.ceil(r) && r % 1 >= 0.5) return (
-                      <div key={s} className="relative" style={{ width: 16, height: 16 }}>
-                        <Star size={16} className="absolute text-gray-300" />
-                        <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}><Star size={16} className="text-yellow-400 fill-yellow-400" /></div>
-                      </div>
-                    );
-                    return <Star key={s} size={16} className="text-gray-300" />;
-                  })}
+
+              {/* Tag badge (Discussion / Take / Theory / Question) */}
+              {(() => {
+                const tg = dbTagToDisplay((post as any).postType);
+                if (!tg) return null;
+                const TagIcon = tg.icon;
+                return (
+                  <span
+                    className="self-start inline-flex items-center gap-1 mb-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium"
+                    style={{ backgroundColor: tg.bg, color: tg.fg }}
+                  >
+                    <TagIcon size={11} /> {tg.label}
+                  </span>
+                );
+              })()}
+
+              {/* Review text — bold quote, opens the discussion */}
+              {hasContent && (
+                <p className="text-[15px] font-semibold text-gray-900 leading-snug mt-1">"{post.content}"</p>
+              )}
+
+              {/* Bottom block — reviewer + stars, anchored just above Agree / Disagree / Rate */}
+              <div className="mt-auto pt-3">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0"
+                    style={{ background: `hsl(${(displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
+                  >
+                    {displayName[0]?.toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-semibold text-gray-800 leading-tight truncate">{displayName}</p>
+                    {isOtherUser && tasteAlignment !== null ? (
+                      <p className="text-[12px] text-violet-600 font-medium leading-tight"><span className="font-semibold">{tasteAlignment}%</span> aligned with you</p>
+                    ) : isOtherUser && alignmentNudge && !ratingSubmitted ? (
+                      <p className="text-[11px] text-gray-400 leading-tight">Rate 10 things to see your alignment</p>
+                    ) : null}
+                  </div>
                 </div>
-              )}
-              {currentUserId && post.user?.id !== currentUserId && hasContent && (
-                <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-400 hover:text-orange-500 transition-colors flex-shrink-0 p-1.5 rounded-full hover:bg-orange-50" title="Report review"><Flag size={15} /></button>
-              )}
-              {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
-                <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this post?')) onDeletePost(post.id); }} className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 p-1.5 rounded-full hover:bg-red-50" title="Delete post"><Trash2 size={15} /></button>
-              )}
-            </div>
-
-            {/* Tag badge (Discussion / Take / Theory / Question) */}
-            {(() => {
-              const tg = dbTagToDisplay((post as any).postType);
-              if (!tg) return null;
-              const TagIcon = tg.icon;
-              return (
-                <span
-                  className="inline-flex items-center gap-1 mt-3 px-2 py-0.5 rounded-full text-[11px] font-medium"
-                  style={{ backgroundColor: tg.bg, color: tg.fg }}
-                >
-                  <TagIcon size={11} /> {tg.label}
-                </span>
-              );
-            })()}
-
-            {/* Review text — opens the discussion */}
-            {hasContent && (
-              <p className="text-[15px] text-gray-800 leading-relaxed mt-3.5">{post.content}</p>
-            )}
-
-            {/* Your own rating, once submitted */}
-            {isOtherUser && ratingSubmitted && ratingValue > 0 && (
-              <p className="text-xs text-gray-500 mt-2">You rated this <span className="text-yellow-500 font-semibold">{ratingValue}/5 ★</span></p>
-            )}
+                {hasRating && (
+                  <div className="flex items-center gap-0.5 mt-1.5">
+                    {[1,2,3,4,5].map(s => {
+                      const r = post.rating!;
+                      if (s <= Math.floor(r)) return <Star key={s} size={16} className="text-yellow-400 fill-yellow-400" />;
+                      if (s === Math.ceil(r) && r % 1 >= 0.5) return (
+                        <div key={s} className="relative" style={{ width: 16, height: 16 }}>
+                          <Star size={16} className="absolute text-gray-300" />
+                          <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}><Star size={16} className="text-yellow-400 fill-yellow-400" /></div>
+                        </div>
+                      );
+                      return <Star key={s} size={16} className="text-gray-300" />;
+                    })}
+                  </div>
+                )}
+                {/* Your own rating, once submitted */}
+                {isOtherUser && ratingSubmitted && ratingValue > 0 && (
+                  <p className="text-xs text-gray-500 mt-1.5">You rated this <span className="text-yellow-500 font-semibold">{ratingValue}/5 ★</span></p>
+                )}
+              </div>
             </div>{/* end take (right) */}
           </div>
             );
@@ -1979,6 +1989,50 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               </span>
             </button>
           )}
+        </div>
+
+        {/* ── Tell a friend / Share row ── */}
+        <div className="flex items-center justify-between px-4 pb-3" onClick={(e) => e.stopPropagation()}>
+          <button
+            className="flex items-center gap-1.5 text-[13px] font-medium text-gray-700 active:scale-95 transition-transform"
+            onClick={async (e) => {
+              e.stopPropagation();
+              try {
+                await copyLink({
+                  kind: 'media',
+                  obj: {
+                    type: normalizeMediaType(post.mediaType),
+                    source: post.externalSource,
+                    id: post.externalId,
+                  },
+                });
+                setLinkCopied(true);
+                setTimeout(() => setLinkCopied(false), 2000);
+              } catch { /* clipboard unavailable */ }
+            }}
+          >
+            Tell a friend <ArrowRight size={13} className="text-gray-400" />
+          </button>
+          <button
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 bg-white text-[12px] font-semibold text-gray-700 active:scale-95 transition-transform"
+            onClick={async (e) => {
+              e.stopPropagation();
+              try {
+                await copyLink({
+                  kind: 'media',
+                  obj: {
+                    type: normalizeMediaType(post.mediaType),
+                    source: post.externalSource,
+                    id: post.externalId,
+                  },
+                });
+                setLinkCopied(true);
+                setTimeout(() => setLinkCopied(false), 2000);
+              } catch { /* clipboard unavailable */ }
+            }}
+          >
+            <Share size={12} /> {linkCopied ? 'Copied!' : 'Share'}
+          </button>
         </div>
 
         {/* ── Take bar — always visible, inline comment strip ── */}
