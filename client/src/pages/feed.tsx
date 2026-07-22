@@ -207,7 +207,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
   session: any;
   onOpenMedia: (g: any) => void;
 }) {
-  const [expandedKey, setExpandedKey] = useState<string | null>(groups[0]?.key ?? null);
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [activeTakeId, setActiveTakeId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -274,7 +274,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-2 p-3 border border-violet-100">
       <div className="flex items-center gap-1.5 mb-1 px-1">
         <Flame size={15} className="text-orange-500 fill-orange-500 shrink-0" />
-        <span className="text-[13px] font-semibold text-violet-600">Everyone's Talking</span>
+        <span className="text-[13px] font-semibold text-violet-600">Popular Conversations</span>
         <span className="text-[11px] text-gray-400 font-medium ml-auto">Trending now</span>
       </div>
 
@@ -284,52 +284,28 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
           const myRating = ratings[g.key] || 0;
           const topGlimpse = g.topTakes.find((t: any) => t.content?.trim());
 
-          if (!isOpen) {
-            // Compact trending row
-            return (
+          return (
+            <div key={g.key}>
+              {/* Compact trending row — same look expanded or not */}
               <button
-                key={g.key}
-                onClick={() => { setExpandedKey(g.key); setActiveTakeId(null); setCommentText(''); }}
+                onClick={() => { setExpandedKey(isOpen ? null : g.key); setActiveTakeId(null); setCommentText(''); }}
                 className="w-full flex items-center gap-2.5 text-left py-2 px-1 active:bg-gray-50"
               >
                 <Poster g={g} />
                 <div className="flex-1 min-w-0">
                   <p className="text-[14px] font-bold text-gray-900 truncate">{g.title}</p>
                   <p className="text-[11.5px] text-gray-500">{g.talkingCount} people talking</p>
-                  {topGlimpse && (
+                  {!isOpen && topGlimpse && (
                     <p className="text-[11.5px] text-gray-600 truncate">"{topGlimpse.content}"</p>
                   )}
                 </div>
-                <ChevronDown size={16} className="text-gray-400 shrink-0" />
+                <ChevronDown size={16} className={`text-gray-400 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
               </button>
-            );
-          }
 
-          // Expanded title — takes visible with comment boxes
-          return (
-            <div key={g.key} className="py-2">
-              <div className="flex gap-2.5">
-                <Poster g={g} big />
-                <div className="flex-1 min-w-0 flex flex-col">
-                  <button className="text-left" onClick={() => setExpandedKey(null)}>
-                    <p className="text-[15.5px] font-bold text-gray-900 leading-tight truncate">{g.title}</p>
-                  </button>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <p className="text-[11.5px] text-gray-500 font-medium">{g.talkingCount} people talking</p>
-                    <div className="flex -space-x-1">
-                      {g.users.slice(0, 3).map((u: any, i: number) => {
-                        const n = u?.displayName || u?.username || '?';
-                        return (
-                          <div key={i} className="w-4 h-4 rounded-full border border-white flex items-center justify-center text-white text-[7px] font-bold" style={{ background: avatarBg(n) }}>
-                            {n[0]?.toUpperCase()}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
+              {isOpen && (
+                <div className="pb-2 pl-1 pr-1">
                   {/* Inline rating */}
-                  <div className="flex items-center gap-0.5 mt-1">
+                  <div className="flex items-center gap-0.5">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button key={star} onClick={() => submitRating(g, star)} className="p-0.5">
                         <Star size={14} className={myRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
@@ -395,7 +371,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
                     })}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           );
         })}
@@ -5597,7 +5573,7 @@ export default function Feed() {
       .map((g: any) => ({ ...g, takes: g.posts.filter((p: any) => p.content && p.content.trim()) }))
       .filter((g: any) => g.users.size >= 2 && g.takes.length >= 1)
       .sort((a: any, b: any) => (b.users.size - a.users.size) || (b.posts.length - a.posts.length))
-      .slice(0, 3);
+      .slice(0, 5);
     if (qualified.length === 0) return null;
 
     return qualified.map((g: any) => {
