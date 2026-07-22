@@ -215,12 +215,12 @@ export function FeedIdentityHero() {
                 <button
                   key={s.label}
                   onClick={() => setLocation(s.href!)}
-                  className="flex flex-col items-start text-left active:scale-95 transition-transform"
+                  className="flex flex-col items-center text-center active:scale-95 transition-transform"
                 >
                   {inner}
                 </button>
               ) : (
-                <div key={s.label} className="flex flex-col items-start text-left">
+                <div key={s.label} className="flex flex-col items-center text-center">
                   {inner}
                 </div>
               );
