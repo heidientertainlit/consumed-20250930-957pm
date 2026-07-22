@@ -1820,43 +1820,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             )}
           </div>
 
-          {/* Card stack area — SeenIt exact layout */}
-          <div className="relative flex items-center justify-center select-none" style={{ height: 296, overflow: 'visible' }}>
-
-            {/* Left peek card — previous post */}
-            {stackPosts && (stackIndex ?? 0) > 0 && (stackPosts[(stackIndex ?? 0) - 1]?.mediaImage || '').startsWith('http') && (
-              <div style={{
-                position: 'absolute', width: 188, height: 282, borderRadius: 16, overflow: 'hidden',
-                transform: 'translateX(-52px) rotate(-8deg) scale(0.88)',
-                zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
-              }}>
-                <img src={stackPosts[(stackIndex ?? 0) - 1].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              </div>
-            )}
-
-            {/* Right peek card — next post */}
-            {stackPosts && (stackPosts[(stackIndex ?? 0) + 1]?.mediaImage || '').startsWith('http') && (
-              <div style={{
-                position: 'absolute', width: 188, height: 282, borderRadius: 16, overflow: 'hidden',
-                transform: 'translateX(52px) rotate(8deg) scale(0.88)',
-                zIndex: 2, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
-              }}>
-                <img src={stackPosts[(stackIndex ?? 0) + 1].mediaImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              </div>
-            )}
-
-            {/* Front card — gentle Seen It-style entrance (no drag-follow) */}
-            {(() => {
-              const enterDir = swipeProps?.enterDir ?? 'from-right';
-              return (
+          {/* Content row — poster anchored left, take on the right (updates as you swipe) */}
+          {(() => {
+            const enterDir = swipeProps?.enterDir ?? 'from-right';
+            return (
+          <div
+            key={swipeProps?.animKey ?? 0}
+            className="flex px-4 pt-2 pb-1 gap-3 select-none"
+            style={{ animation: `seen-it-${enterDir} 0.24s cubic-bezier(0.25, 0.46, 0.45, 0.94) both` }}
+          >
+            {/* Poster anchor (left) */}
             <div
-              key={swipeProps?.animKey ?? 0}
-              className="relative rounded-2xl overflow-hidden bg-gray-900 cursor-pointer"
-              style={{
-                position: 'absolute', width: 188, height: 282, borderRadius: 16, overflow: 'hidden',
-                zIndex: 5, boxShadow: '0 8px 28px rgba(0,0,0,0.28)',
-                animation: `seen-it-${enterDir} 0.24s cubic-bezier(0.25, 0.46, 0.45, 0.94) both`,
-              }}
+              className="relative w-[120px] shrink-0 rounded-xl overflow-hidden bg-gray-900 cursor-pointer self-start"
+              style={{ height: 180, boxShadow: '0 6px 20px rgba(0,0,0,0.22)' }}
               onClick={() => {
                 if (swipeProps?.getSwiped?.()) return;
                 if (post.externalSource && post.externalId) {
@@ -1865,59 +1841,42 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               }}
             >
               {swipeProps?.overlays}
-          {/* Background image or gradient fallback */}
-          {hasPoster ? (
-            <img
-              src={post.mediaImage!}
-              alt={post.mediaTitle || ''}
-              className="absolute inset-0 w-full h-full object-cover"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          ) : (
-            <div className={`absolute inset-0 bg-gradient-to-br ${posterFallbackBg[mediaTypeNorm || ''] || 'from-gray-700 to-gray-900'}`} />
-          )}
+              {/* Background image or gradient fallback */}
+              {hasPoster ? (
+                <img
+                  src={post.mediaImage!}
+                  alt={post.mediaTitle || ''}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              ) : (
+                <div className={`absolute inset-0 bg-gradient-to-br ${posterFallbackBg[mediaTypeNorm || ''] || 'from-gray-700 to-gray-900'}`} />
+              )}
 
-          {/* Gradient overlay: transparent top → very dark bottom */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent" />
+              {/* Subtle bottom gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
-          {/* Top-right: delete / report only (media type pill moved to title row) */}
-          <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-            {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
-              <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-white/50 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
-            )}
-            {currentUserId && post.user?.id !== currentUserId && hasContent && (
-              <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-white/50 hover:text-orange-400 transition-colors"><Flag size={13} /></button>
-            )}
-          </div>
-
-          {/* Bottom-right: Add to list button on poster */}
-          {onAddToList && (post.externalId || post.mediaTitle) && (
-            <button
-              className="absolute bottom-3 right-3 z-10 w-7 h-7 rounded-full bg-purple-500/40 backdrop-blur-sm border border-purple-300/40 flex items-center justify-center active:scale-90 transition-transform"
-              onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
-            >
-              <Plus size={14} className="text-white" strokeWidth={2.5} />
-            </button>
-          )}
-
-          {/* Rating, reviewer name & review moved to the white context block below the poster */}
+              {/* Bottom-right: Add to list button on poster */}
+              {onAddToList && (post.externalId || post.mediaTitle) && (
+                <button
+                  className="absolute bottom-2 right-2 z-10 w-7 h-7 rounded-full bg-purple-500/40 backdrop-blur-sm border border-purple-300/40 flex items-center justify-center active:scale-90 transition-transform"
+                  onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
+                >
+                  <Plus size={14} className="text-white" strokeWidth={2.5} />
+                </button>
+              )}
             </div>
-          );
-          })()}
 
-          </div>{/* end card stack area */}
-
-          {/* Reviewer context — title, avatar, name, alignment + stars; review below (updates as you swipe) */}
-          <div className="px-4 pt-3 pb-1" onClick={(e) => e.stopPropagation()}>
-            {post.mediaTitle && (
-              <div className="mb-3">
-                <p className="text-[14px] font-medium text-gray-900 leading-snug text-center">{post.mediaTitle}</p>
-                {mediaCreator && (
-                  <p className="text-[13px] text-gray-500 leading-snug text-center mt-0.5">by {mediaCreator}</p>
-                )}
-                <div className="border-t border-gray-100 mt-3" />
-              </div>
-            )}
+            {/* Take (right) */}
+            <div className="flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
+              {post.mediaTitle && (
+                <div className="mb-2">
+                  <p className="text-[14px] font-semibold text-gray-900 leading-snug">{post.mediaTitle}</p>
+                  {mediaCreator && (
+                    <p className="text-[12px] text-gray-500 leading-snug mt-0.5">by {mediaCreator}</p>
+                  )}
+                </div>
+              )}
             <div className="flex items-center gap-2.5">
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
@@ -1980,7 +1939,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {isOtherUser && ratingSubmitted && ratingValue > 0 && (
               <p className="text-xs text-gray-500 mt-2">You rated this <span className="text-yellow-500 font-semibold">{ratingValue}/5 ★</span></p>
             )}
+            </div>{/* end take (right) */}
           </div>
+            );
+          })()}
 
           {/* light divider between review and actions */}
           <div className="border-t border-gray-100 mx-4 mt-4 mb-3" />
