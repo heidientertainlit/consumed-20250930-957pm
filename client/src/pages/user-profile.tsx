@@ -6,7 +6,6 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
 import FriendsManager from "@/components/friends-manager";
 import CreateRankDialog from "@/components/create-rank-dialog";
-import MediaRecInput from "@/components/media-rec-input";
 import CreateListDialog from "@/components/create-list-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -183,6 +182,10 @@ export default function UserProfile() {
   const [friendCompareSearch, setFriendCompareSearch] = useState('');
   const [recommendFriend, setRecommendFriend] = useState<any>(null);
   const [isSendingRec, setIsSendingRec] = useState(false);
+  const [recSearchQuery, setRecSearchQuery] = useState('');
+  const [recSearchResults, setRecSearchResults] = useState<any[]>([]);
+  const [recIsSearching, setRecIsSearching] = useState(false);
+  const [recTypeFilter, setRecTypeFilter] = useState<string | null>(null);
   const [dnaSelectedFriendId, setDnaSelectedFriendId] = useState<string | null>(null);
   const [dnaIsComparing, setDnaIsComparing] = useState(false);
   const [dnaComparisonResult, setDnaComparisonResult] = useState<any>(null);
@@ -847,6 +850,46 @@ export default function UserProfile() {
     }
   };
 
+  useEffect(() => {
+    if (!recommendFriend) return;
+    if (recSearchQuery.trim().length < 2) {
+      setRecSearchResults([]);
+      return;
+    }
+    const debounce = setTimeout(async () => {
+      setRecIsSearching(true);
+      try {
+        const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            query: recSearchQuery.trim(),
+            ...(recTypeFilter ? { type: recTypeFilter } : {}),
+          }),
+        });
+        if (!response.ok) throw new Error("Search failed");
+        const data = await response.json();
+        setRecSearchResults(data.results || []);
+      } catch (err) {
+        console.error("Recommend media search error:", err);
+        setRecSearchResults([]);
+      } finally {
+        setRecIsSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(debounce);
+  }, [recSearchQuery, recTypeFilter, recommendFriend]);
+
+  const closeRecommendDialog = () => {
+    setRecommendFriend(null);
+    setRecSearchQuery('');
+    setRecSearchResults([]);
+    setRecTypeFilter(null);
+  };
+
   const handleSendRecommendation = async (media: any) => {
     if (!user?.id || !recommendFriend) return;
     setIsSendingRec(true);
@@ -861,7 +904,7 @@ export default function UserProfile() {
       });
       if (error) throw error;
       toast({ title: "Recommendation sent!", description: `${recommendFriend.user_name} will see "${media.title}" in their notifications.` });
-      setRecommendFriend(null);
+      closeRecommendDialog();
     } catch (err) {
       console.error('Send recommendation failed:', err);
       toast({ title: "Error", description: "Could not send recommendation", variant: "destructive" });
@@ -4169,19 +4212,93 @@ export default function UserProfile() {
             <FriendsManager userId={user.id} />
 
             {/* Recommend media to a friend */}
-            <Dialog open={!!recommendFriend} onOpenChange={(open) => { if (!open) setRecommendFriend(null); }}>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Recommend something to @{recommendFriend?.user_name}</DialogTitle>
-                  <DialogDescription>
-                    Search for a movie, show, book, or anything else — they'll get it as a notification.
+            <Dialog open={!!recommendFriend} onOpenChange={(open) => { if (!open) closeRecommendDialog(); }}>
+              <DialogContent className="rounded-2xl !bg-white w-[calc(100vw-2rem)] max-w-md flex flex-col gap-3" style={{ backgroundColor: 'white', maxHeight: '80vh' }}>
+                <DialogHeader className="pb-0">
+                  <DialogTitle className="text-base font-semibold text-gray-900">Recommend something to @{recommendFriend?.user_name}</DialogTitle>
+                  <DialogDescription className="text-sm text-gray-500">
+                    They'll get it as a notification.
                   </DialogDescription>
                 </DialogHeader>
-                <MediaRecInput
-                  placeholder="Search for something to recommend..."
-                  onSubmit={handleSendRecommendation}
-                  isSubmitting={isSendingRec}
-                />
+
+                {/* Type filter pills */}
+                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 flex-shrink-0">
+                  {([
+                    { value: null,      label: 'All' },
+                    { value: 'tv',      label: 'TV' },
+                    { value: 'movie',   label: 'Movie' },
+                    { value: 'book',    label: 'Book' },
+                    { value: 'music',   label: 'Music' },
+                    { value: 'podcast', label: 'Podcast' },
+                  ] as const).map(({ value, label }) => (
+                    <button
+                      key={label}
+                      onClick={() => setRecTypeFilter(value)}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                        recTypeFilter === value
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      data-testid={`rec-filter-${label.toLowerCase()}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Search input */}
+                <div className="relative flex-shrink-0">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input
+                    type="text"
+                    value={recSearchQuery}
+                    onChange={(e) => setRecSearchQuery(e.target.value)}
+                    placeholder={recTypeFilter ? `Search ${recTypeFilter}s…` : 'Search movies, shows, books…'}
+                    className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    autoFocus
+                    data-testid="input-recommend-search"
+                  />
+                </div>
+
+                {/* Results */}
+                {recIsSearching && (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="animate-spin text-purple-500" size={20} />
+                  </div>
+                )}
+                {!recIsSearching && recSearchResults.length > 0 && (
+                  <div className="overflow-y-auto border border-gray-100 rounded-xl flex-1 min-h-0">
+                    {(recTypeFilter
+                      ? recSearchResults.filter((r: any) => r.type === recTypeFilter || (recTypeFilter === 'book' && r.type === 'book_series'))
+                      : recSearchResults
+                    ).slice(0, 8).map((result: any, idx: number) => (
+                      <button
+                        key={`${result.external_id || result.title}-${idx}`}
+                        onClick={() => handleSendRecommendation(result)}
+                        disabled={isSendingRec}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 text-left border-b border-gray-50 last:border-0 disabled:opacity-60"
+                        data-testid={`rec-result-${idx}`}
+                      >
+                        {(result.poster_url || result.image) && (
+                          <img src={result.poster_url || result.image} alt={result.title} className="w-8 h-11 object-cover rounded flex-shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 text-sm line-clamp-1">{result.title}</p>
+                          <p className="text-xs text-gray-500 capitalize">{result.type}{result.year && ` • ${result.year}`}</p>
+                          {result.creator && result.creator !== 'Unknown Author' && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
+                        </div>
+                        {isSendingRec ? (
+                          <Loader2 size={16} className="animate-spin text-purple-500 shrink-0" />
+                        ) : (
+                          <Send size={16} className="text-purple-500 shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {!recIsSearching && recSearchQuery.trim().length >= 2 && recSearchResults.length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-3">No results found for "{recSearchQuery.trim()}"</p>
+                )}
               </DialogContent>
             </Dialog>
           </div>
