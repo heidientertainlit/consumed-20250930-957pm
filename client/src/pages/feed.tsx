@@ -197,23 +197,23 @@ const normalizeMediaType = (type: string | undefined | null): string => {
   return 'movie';
 };
 
-// ── Everyone's Talking — featured trending conversation card ──
-// Poster left; take glimpses right of the poster (avatar left, text clamped).
-// Tapping a take expands it inline with a comment box — no popup.
-// Star row lets the user rate the featured title right on the card.
-function EveryonesTalkingCard({ data, currentUserId, session, onOpenMedia }: {
-  data: any;
+// ── Everyone's Talking — trending topics list (multiple titles) ──
+// Top trending titles by distinct people talking. The hottest title is auto-expanded
+// showing its takes with an always-available comment box; other titles are compact
+// rows that expand on tap. Star row lets the user rate the expanded title inline.
+function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
+  groups: any[];
   currentUserId: string | null;
   session: any;
-  onOpenMedia: () => void;
+  onOpenMedia: (g: any) => void;
 }) {
-  const [expandedTakeId, setExpandedTakeId] = useState<string | null>(null);
+  const [expandedKey, setExpandedKey] = useState<string | null>(groups[0]?.key ?? null);
+  const [activeTakeId, setActiveTakeId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [commentedIds, setCommentedIds] = useState<Set<string>>(new Set());
-  const [myRating, setMyRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [ratingSaved, setRatingSaved] = useState(false);
+  const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set());
 
   const avatarBg = (n: string) => `hsl(${(n.charCodeAt(0) * 47) % 360}, 50%, 48%)`;
 
@@ -233,140 +233,172 @@ function EveryonesTalkingCard({ data, currentUserId, session, onOpenMedia }: {
     setSubmitting(false);
   };
 
-  const submitRating = async (rating: number) => {
+  const submitRating = async (g: any, rating: number) => {
     if (!currentUserId || !session) return;
-    setMyRating(rating);
+    setRatings(prev => ({ ...prev, [g.key]: rating }));
     try {
       await supabase.functions.invoke('rate-media', {
         body: {
           userId: currentUserId,
-          mediaExternalId: data.externalId || '',
-          mediaExternalSource: data.externalSource || 'tmdb',
-          mediaType: data.mediaType || 'movie',
-          mediaTitle: data.title,
-          imageUrl: data.mediaImage?.startsWith?.('http') ? data.mediaImage : '',
+          mediaExternalId: g.externalId || '',
+          mediaExternalSource: g.externalSource || 'tmdb',
+          mediaType: g.mediaType || 'movie',
+          mediaTitle: g.title,
+          imageUrl: g.mediaImage?.startsWith?.('http') ? g.mediaImage : '',
           rating,
         }
       });
-      setRatingSaved(true);
+      setSavedKeys(prev => new Set(prev).add(g.key));
     } catch (err) {
       console.error('Failed to rate:', err);
     }
   };
 
+  const Poster = ({ g, big }: { g: any; big?: boolean }) => (
+    <div
+      className={`relative shrink-0 rounded-lg overflow-hidden bg-gray-900 ${big ? 'w-[88px] self-stretch' : 'w-[44px]'} ${g.externalSource && g.externalId ? 'cursor-pointer' : ''}`}
+      style={big ? { minHeight: 130, boxShadow: '0 4px 14px rgba(0,0,0,0.2)' } : { height: 62 }}
+      onClick={(e) => { e.stopPropagation(); onOpenMedia(g); }}
+    >
+      {g.mediaImage?.startsWith?.('http') ? (
+        <img src={g.mediaImage} alt={g.title} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900 flex items-end p-1">
+          <p className="text-white text-[9px] font-bold leading-tight line-clamp-3">{g.title}</p>
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-2 p-3">
-      <div className="flex items-center gap-1.5 mb-2 px-1">
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-2 p-3 border border-violet-100">
+      <div className="flex items-center gap-1.5 mb-1 px-1">
         <Flame size={15} className="text-orange-500 fill-orange-500 shrink-0" />
         <span className="text-[13px] font-semibold text-violet-600">Everyone's Talking</span>
+        <span className="text-[11px] text-gray-400 font-medium ml-auto">Trending now</span>
       </div>
-      <div className="flex gap-3">
-        {/* Poster — stretches with the takes column */}
-        <div
-          className={`relative w-[96px] shrink-0 rounded-xl overflow-hidden bg-gray-900 self-stretch ${data.externalSource && data.externalId ? 'cursor-pointer' : ''}`}
-          style={{ minHeight: 150, boxShadow: '0 6px 20px rgba(0,0,0,0.22)' }}
-          onClick={onOpenMedia}
-        >
-          {data.mediaImage?.startsWith?.('http') ? (
-            <img src={data.mediaImage} alt={data.title} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900 flex items-end p-2">
-              <p className="text-white text-[12px] font-bold leading-tight line-clamp-4">{data.title}</p>
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-        </div>
 
-        {/* Right side */}
-        <div className="flex-1 min-w-0 flex flex-col">
-          <p className="text-[17px] font-bold text-gray-900 leading-tight truncate">{data.title}</p>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <p className="text-[12px] text-gray-500 font-medium">
-              {data.talkingCount} {data.talkingCount === 1 ? 'person' : 'people'} talking
-            </p>
-            <div className="flex -space-x-1">
-              {data.users.slice(0, 3).map((u: any, i: number) => {
-                const n = u?.displayName || u?.username || '?';
-                return (
-                  <div key={i} className="w-4 h-4 rounded-full border border-white flex items-center justify-center text-white text-[7px] font-bold" style={{ background: avatarBg(n) }}>
-                    {n[0]?.toUpperCase()}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+      <div className="divide-y divide-gray-100">
+        {groups.map((g: any) => {
+          const isOpen = expandedKey === g.key;
+          const myRating = ratings[g.key] || 0;
+          const topGlimpse = g.topTakes.find((t: any) => t.content?.trim());
 
-          {/* Inline rating */}
-          <div className="flex items-center gap-1 mt-1" onMouseLeave={() => setHoverRating(0)}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button key={star} onClick={() => submitRating(star)} onMouseEnter={() => setHoverRating(star)} className="p-0.5">
-                <Star
-                  size={15}
-                  className={(hoverRating || myRating) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}
-                />
+          if (!isOpen) {
+            // Compact trending row
+            return (
+              <button
+                key={g.key}
+                onClick={() => { setExpandedKey(g.key); setActiveTakeId(null); setCommentText(''); }}
+                className="w-full flex items-center gap-2.5 text-left py-2 px-1 active:bg-gray-50"
+              >
+                <Poster g={g} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-bold text-gray-900 truncate">{g.title}</p>
+                  <p className="text-[11.5px] text-gray-500">{g.talkingCount} people talking</p>
+                  {topGlimpse && (
+                    <p className="text-[11.5px] text-gray-600 truncate">"{topGlimpse.content}"</p>
+                  )}
+                </div>
+                <ChevronDown size={16} className="text-gray-400 shrink-0" />
               </button>
-            ))}
-            {ratingSaved && <span className="text-[11px] text-green-600 font-medium ml-1">Saved</span>}
-          </div>
+            );
+          }
 
-          {/* Take items — one per talking person, divider-separated like the mockup */}
-          {data.topTakes.length > 0 && (
-            <div className="mt-1.5 divide-y divide-gray-100">
-              {data.topTakes.map((t: any, i: number) => {
-                const n = t.user?.displayName || t.user?.username || '?';
-                const takeId = t.id || `take-${i}`;
-                const isExpanded = expandedTakeId === takeId;
-                const hasText = !!(t.content && t.content.trim());
-                return (
-                  <div key={takeId} className={isExpanded ? 'bg-violet-50 rounded-lg' : ''}>
-                    <button
-                      onClick={() => { setExpandedTakeId(isExpanded ? null : takeId); setCommentText(''); }}
-                      className="w-full flex items-start gap-2 text-left px-1 py-2"
-                    >
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold shrink-0 mt-0.5" style={{ background: avatarBg(n) }}>
-                        {n[0]?.toUpperCase()}
-                      </div>
-                      {hasText ? (
-                        <p className={`text-[12.5px] text-gray-700 leading-snug flex-1 ${isExpanded ? '' : 'line-clamp-2'}`}>"{t.content}"</p>
-                      ) : (
-                        <p className="text-[12.5px] text-gray-600 leading-snug flex-1 flex items-center gap-1">
-                          Rated it <Star size={12} className="text-yellow-400 fill-yellow-400 inline" /> {t.rating}/5
-                        </p>
-                      )}
-                    </button>
-                    {isExpanded && (
-                      <div className="px-1 pb-2">
-                        <p className="text-[10px] text-gray-400 font-medium mb-1 pl-7">{n}</p>
-                        {commentedIds.has(t.id) ? (
-                          <p className="text-[11px] text-green-600 font-medium flex items-center gap-1 pl-7">
-                            <Check size={12} /> Comment added
-                          </p>
-                        ) : (
-                          <div className="flex items-center gap-1.5">
-                            <input
-                              value={commentText}
-                              onChange={(e) => setCommentText(e.target.value)}
-                              onKeyDown={(e) => { if (e.key === 'Enter') submitComment(t.id); }}
-                              placeholder="Add your take..."
-                              className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-full border border-violet-200 bg-white focus:outline-none focus:border-violet-400"
-                            />
-                            <button
-                              onClick={() => submitComment(t.id)}
-                              disabled={submitting || !commentText.trim()}
-                              className="w-7 h-7 rounded-full bg-violet-600 disabled:bg-violet-300 flex items-center justify-center shrink-0"
-                            >
-                              <Send size={12} className="text-white" />
-                            </button>
+          // Expanded title — takes visible with comment boxes
+          return (
+            <div key={g.key} className="py-2">
+              <div className="flex gap-2.5">
+                <Poster g={g} big />
+                <div className="flex-1 min-w-0 flex flex-col">
+                  <button className="text-left" onClick={() => setExpandedKey(null)}>
+                    <p className="text-[15.5px] font-bold text-gray-900 leading-tight truncate">{g.title}</p>
+                  </button>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <p className="text-[11.5px] text-gray-500 font-medium">{g.talkingCount} people talking</p>
+                    <div className="flex -space-x-1">
+                      {g.users.slice(0, 3).map((u: any, i: number) => {
+                        const n = u?.displayName || u?.username || '?';
+                        return (
+                          <div key={i} className="w-4 h-4 rounded-full border border-white flex items-center justify-center text-white text-[7px] font-bold" style={{ background: avatarBg(n) }}>
+                            {n[0]?.toUpperCase()}
                           </div>
-                        )}
-                      </div>
-                    )}
+                        );
+                      })}
+                    </div>
                   </div>
-                );
-              })}
+
+                  {/* Inline rating */}
+                  <div className="flex items-center gap-0.5 mt-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button key={star} onClick={() => submitRating(g, star)} className="p-0.5">
+                        <Star size={14} className={myRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+                      </button>
+                    ))}
+                    {savedKeys.has(g.key) && <span className="text-[10.5px] text-green-600 font-medium ml-1">Saved</span>}
+                  </div>
+
+                  {/* Takes — visible, tap a take to reply to it */}
+                  <div className="mt-1 divide-y divide-gray-100">
+                    {g.topTakes.map((t: any, i: number) => {
+                      const n = t.user?.displayName || t.user?.username || '?';
+                      const takeId = t.id || `take-${i}`;
+                      const isActive = activeTakeId === takeId;
+                      const hasText = !!(t.content && t.content.trim());
+                      return (
+                        <div key={takeId} className={isActive ? 'bg-violet-50 rounded-lg' : ''}>
+                          <button
+                            onClick={() => { setActiveTakeId(isActive ? null : takeId); setCommentText(''); }}
+                            className="w-full flex items-start gap-2 text-left px-1 py-1.5"
+                          >
+                            <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold shrink-0 mt-0.5" style={{ background: avatarBg(n) }}>
+                              {n[0]?.toUpperCase()}
+                            </div>
+                            {hasText ? (
+                              <p className={`text-[12px] text-gray-700 leading-snug flex-1 ${isActive ? '' : 'line-clamp-2'}`}>"{t.content}"</p>
+                            ) : (
+                              <p className="text-[12px] text-gray-600 leading-snug flex-1 flex items-center gap-1">
+                                Rated it <Star size={11} className="text-yellow-400 fill-yellow-400 inline" /> {t.rating}/5
+                              </p>
+                            )}
+                          </button>
+                          {isActive && (
+                            <div className="px-1 pb-2">
+                              <p className="text-[10px] text-gray-400 font-medium mb-1 pl-7">{n}</p>
+                              {commentedIds.has(t.id) ? (
+                                <p className="text-[11px] text-green-600 font-medium flex items-center gap-1 pl-7">
+                                  <Check size={12} /> Comment added
+                                </p>
+                              ) : (
+                                <div className="flex items-center gap-1.5">
+                                  <input
+                                    value={commentText}
+                                    onChange={(e) => setCommentText(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') submitComment(t.id); }}
+                                    placeholder="Add your take..."
+                                    autoFocus
+                                    className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-full border border-violet-200 bg-white focus:outline-none focus:border-violet-400"
+                                  />
+                                  <button
+                                    onClick={() => submitComment(t.id)}
+                                    disabled={submitting || !commentText.trim()}
+                                    className="w-7 h-7 rounded-full bg-violet-600 disabled:bg-violet-300 flex items-center justify-center shrink-0"
+                                  >
+                                    <Send size={12} className="text-white" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -5559,42 +5591,42 @@ export default function Feed() {
       if (!g.imgFallback && m.image?.startsWith?.('http')) g.imgFallback = { ...p, _media: m };
     }
 
-    let best: any = null;
-    Array.from(groups.values()).forEach((g: any) => {
-      const takes = g.posts.filter((p: any) => p.content && p.content.trim());
-      if (g.users.size < 2 || takes.length < 1) return;
-      if (!best || g.users.size > best.users.size ||
-          (g.users.size === best.users.size && g.posts.length > best.posts.length)) {
-        best = { ...g, takes };
+    // Qualify groups: >=2 distinct people talking, >=1 written take.
+    // Sort by most people talking, then most posts. Take top 3 trending titles.
+    const qualified = Array.from(groups.values())
+      .map((g: any) => ({ ...g, takes: g.posts.filter((p: any) => p.content && p.content.trim()) }))
+      .filter((g: any) => g.users.size >= 2 && g.takes.length >= 1)
+      .sort((a: any, b: any) => (b.users.size - a.users.size) || (b.posts.length - a.posts.length))
+      .slice(0, 3);
+    if (qualified.length === 0) return null;
+
+    return qualified.map((g: any) => {
+      const anchorPost = g.anchor || g.imgFallback || g.posts[0];
+      const anchor = anchorPost._media;
+      // Top takes: one item per talking person (up to 3). Written takes first,
+      // then rating-only posts so every talker gets a row.
+      const seenTakeUsers = new Set<string>();
+      const topTakes: any[] = [];
+      const ordered = [...g.takes, ...g.posts.filter((p: any) => !(p.content && p.content.trim()) && p.rating)];
+      for (const t of ordered) {
+        const uid = t.user?.id || t.user?.username || 'anon';
+        if (seenTakeUsers.has(uid)) continue;
+        seenTakeUsers.add(uid);
+        topTakes.push(t);
+        if (topTakes.length >= 3) break;
       }
+      return {
+        key: g.key,
+        title: g.title,
+        mediaImage: anchor.image,
+        mediaType: anchor.type,
+        externalId: anchor.externalId,
+        externalSource: anchor.externalSource,
+        talkingCount: g.users.size,
+        users: Array.from(g.users.values()).slice(0, 4),
+        topTakes,
+      };
     });
-    if (!best) return null;
-
-    const anchorPost = best.anchor || best.imgFallback || best.posts[0];
-    const anchor = anchorPost._media;
-    // Top takes: one item per talking person (up to 3). Written takes first,
-    // then rating-only posts so every talker gets a row.
-    const seenTakeUsers = new Set<string>();
-    const topTakes: any[] = [];
-    const ordered = [...best.takes, ...best.posts.filter((p: any) => !(p.content && p.content.trim()) && p.rating)];
-    for (const t of ordered) {
-      const uid = t.user?.id || t.user?.username || 'anon';
-      if (seenTakeUsers.has(uid)) continue;
-      seenTakeUsers.add(uid);
-      topTakes.push(t);
-      if (topTakes.length >= 3) break;
-    }
-
-    return {
-      title: best.title,
-      mediaImage: anchor.image,
-      mediaType: anchor.type,
-      externalId: anchor.externalId,
-      externalSource: anchor.externalSource,
-      talkingCount: best.users.size,
-      users: Array.from(best.users.values()).slice(0, 4),
-      topTakes,
-    };
   }, [standaloneUGCPosts]);
 
   // Interleave play slots with promoted standalone ratings and binge battle promo cards.
@@ -8409,15 +8441,16 @@ export default function Feed() {
               )}
 
               {/* ── Everyone's Talking — featured trending conversation, above the take carousel ── */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && everyonesTalking && (
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && everyonesTalking && everyonesTalking.length > 0 && (
                 <EveryonesTalkingCard
-                  data={everyonesTalking}
+                  key={everyonesTalking[0].key}
+                  groups={everyonesTalking}
                   currentUserId={currentAppUserId}
                   session={session}
-                  onOpenMedia={() => {
-                    if (everyonesTalking.externalSource && everyonesTalking.externalId) {
-                      const mt = everyonesTalking.mediaType?.toLowerCase() || 'movie';
-                      setLocation(`/media/${mt}/${everyonesTalking.externalSource}/${everyonesTalking.externalId}`);
+                  onOpenMedia={(g: any) => {
+                    if (g.externalSource && g.externalId) {
+                      const mt = g.mediaType?.toLowerCase() || 'movie';
+                      setLocation(`/media/${mt}/${g.externalSource}/${g.externalId}`);
                     }
                   }}
                 />
