@@ -2009,8 +2009,58 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           )}
 
+          {/* ── Other ratings: slim avatar-stack line above actions ── */}
+          {relatedRatings.length > 0 && (
+            <div className="px-4 mt-3" onClick={(e) => e.stopPropagation()}>
+              <button
+                className="w-full flex items-center gap-2 py-1.5 active:opacity-70 transition-opacity"
+                onClick={(e) => { e.stopPropagation(); setShowAllRelated(v => !v); }}
+              >
+                <div className="flex -space-x-1.5 flex-shrink-0">
+                  {relatedRatings.slice(0, 3).map((r) => (
+                    <div
+                      key={r.userId}
+                      className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0"
+                      style={{ background: `hsl(${(r.displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
+                    >
+                      {r.displayName[0]?.toUpperCase()}
+                    </div>
+                  ))}
+                  {relatedRatings.length > 3 && (
+                    <div className="w-5 h-5 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-gray-500 text-[8px] font-bold flex-shrink-0">+{relatedRatings.length - 3}</div>
+                  )}
+                </div>
+                <span className="text-[11px] font-medium text-gray-500 flex-1 text-left">
+                  {relatedRatings.length} more rating{relatedRatings.length !== 1 ? 's' : ''}
+                  <span className="text-gray-400"> · </span>
+                  <Star size={10} className="inline text-yellow-400 fill-yellow-400 -mt-px" /> {(relatedRatings.reduce((s, r) => s + r.rating, 0) / relatedRatings.length).toFixed(1)} avg
+                </span>
+                <ChevronDown size={14} className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${showAllRelated ? 'rotate-180' : ''}`} />
+              </button>
+              {showAllRelated && (
+                <div className="rounded-xl border border-gray-100 bg-white overflow-hidden mb-1">
+                  {relatedRatings.map((r) => (
+                    <div key={r.userId} className="flex items-center gap-2.5 px-3 py-2.5 border-b border-gray-50 last:border-0">
+                      <span className="text-xs font-medium text-gray-700 flex-shrink-0 w-24 truncate">{r.displayName}</span>
+                      <div className="flex items-center gap-0.5 flex-shrink-0">
+                        {[1,2,3,4,5].map(s => (
+                          <Star key={s} size={11} className={s <= Math.round(r.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
+                        ))}
+                      </div>
+                      {r.content ? (
+                        <span className="text-[10px] text-gray-400 truncate flex-1">"{r.content}"</span>
+                      ) : (
+                        <span className="text-[10px] text-gray-300 flex-1 italic">No review</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* light divider between review and actions */}
-          <div className="border-t border-gray-100 mx-4 mt-4 mb-3" />
+          <div className={`border-t border-gray-100 mx-4 mb-3 ${relatedRatings.length > 0 ? 'mt-1.5' : 'mt-4'}`} />
 
           {/* ── Action row: Agree · Disagree · Rate · Tell a friend (left-aligned) ── */}
           <div className="flex items-center justify-start gap-6 px-4 pb-4" onClick={(e) => e.stopPropagation()}>
@@ -2145,56 +2195,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               );
             })}
             {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
-          </div>
-        )}
-
-        {/* ── Other Takes section (collapsed by default) ── */}
-        {relatedRatings.length > 0 && (
-          <div className="mx-3 mb-3 rounded-xl border border-gray-100 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            {/* Collapsed header — always visible, tap to expand */}
-            <button
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-gray-50 active:bg-gray-100 transition-colors"
-              onClick={(e) => { e.stopPropagation(); setShowAllRelated(v => !v); }}
-            >
-              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex-shrink-0">More Ratings</span>
-              {/* Avatar bubble stack */}
-              <div className="flex -space-x-1.5 flex-shrink-0">
-                {relatedRatings.slice(0, 4).map((r) => (
-                  <div
-                    key={r.userId}
-                    className="w-5 h-5 rounded-full border-2 border-gray-50 flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0"
-                    style={{ background: `hsl(${(r.displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
-                  >
-                    {r.displayName[0]?.toUpperCase()}
-                  </div>
-                ))}
-              </div>
-              <span className="text-[10px] font-medium text-gray-500 flex-1 text-left">
-                {relatedRatings.length} rating{relatedRatings.length !== 1 ? 's' : ''}
-              </span>
-              <ChevronDown size={14} className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${showAllRelated ? 'rotate-180' : ''}`} />
-            </button>
-
-            {/* Expanded list */}
-            {showAllRelated && (
-              <div className="border-t border-gray-100 bg-white">
-                {relatedRatings.map((r) => (
-                  <div key={r.userId} className="flex items-center gap-2.5 px-3 py-2.5 border-b border-gray-50 last:border-0">
-                    <span className="text-xs font-medium text-gray-700 flex-shrink-0 w-24 truncate">{r.displayName}</span>
-                    <div className="flex items-center gap-0.5 flex-shrink-0">
-                      {[1,2,3,4,5].map(s => (
-                        <Star key={s} size={11} className={s <= Math.round(r.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
-                      ))}
-                    </div>
-                    {r.content ? (
-                      <span className="text-[10px] text-gray-400 truncate flex-1">"{r.content}"</span>
-                    ) : (
-                      <span className="text-[10px] text-gray-300 flex-1 italic">No review</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
