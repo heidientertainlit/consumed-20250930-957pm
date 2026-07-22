@@ -5353,11 +5353,18 @@ export default function Feed() {
     const extraUGC = feedRatingCarousels.flatMap((c: any) => c.posts);
     let extraIdx = 0;
 
-    const wrapExtra = (idx: number) => ({
-      ...extraUGC[idx],
-      _isPromoted: true,
-      _promotedKey: `extra-${idx}`,
-    });
+    // Wrap extra UGC in small stacks (decks) so rating cards are ALWAYS a carousel,
+    // never a standalone card. Takes up to EXTRA_STACK_SIZE posts per injection.
+    const EXTRA_STACK_SIZE = 4;
+    const takeExtraStack = () => {
+      const posts = extraUGC.slice(extraIdx, extraIdx + EXTRA_STACK_SIZE).map((p: any, j: number) => ({
+        ...p,
+        _isPromoted: true,
+        _promotedKey: `extra-${extraIdx + j}`,
+      }));
+      extraIdx += posts.length;
+      return { type: 'ugc_stack', id: `extra-stack-${extraIdx - posts.length}`, posts };
+    };
 
     // Group promoted ratings into stacks of 8 so TinderCardStack shows a card deck.
     // The first stack leads the feed (preserving the persona-first ordering rule).
@@ -5380,20 +5387,18 @@ export default function Feed() {
       if ((i + 1) % 5 === 0 && stackIdx < promotedStacks.length) {
         out.push(promotedStacks[stackIdx++]);
       }
-      // Every other play item, inject an extra UGC from the carousel pool.
+      // Every other play item, inject a small deck of extra UGC from the carousel pool.
       if (i % 2 === 1 && extraIdx < extraUGC.length) {
-        out.push(wrapExtra(extraIdx));
-        extraIdx++;
+        out.push(takeExtraStack());
       }
     });
     // Append remaining stacks
     while (stackIdx < promotedStacks.length) {
       out.push(promotedStacks[stackIdx++]);
     }
-    // Append remaining extra UGC after all play slots are consumed
+    // Append remaining extra UGC (as decks) after all play slots are consumed
     while (extraIdx < extraUGC.length) {
-      out.push(wrapExtra(extraIdx));
-      extraIdx++;
+      out.push(takeExtraStack());
     }
     return out;
   }, [feedPlaySlots, promotedRatings, feedRatingCarousels]);
