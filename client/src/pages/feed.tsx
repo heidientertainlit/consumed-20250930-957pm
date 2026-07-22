@@ -1872,20 +1872,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {/* Subtle bottom gradient */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
-              {/* Bottom-left: media type pill on poster */}
-              {mediaTypeLabel && (
-                <span className={`absolute bottom-2 left-2 z-10 text-[9px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm ${
-                  mediaTypeNorm === 'tv' ? 'bg-blue-500/80 text-white' :
-                  mediaTypeNorm === 'movie' ? 'bg-indigo-500/80 text-white' :
-                  mediaTypeNorm === 'book' ? 'bg-amber-500/80 text-white' :
-                  mediaTypeNorm === 'music' ? 'bg-pink-500/80 text-white' :
-                  mediaTypeNorm === 'podcast' ? 'bg-emerald-500/80 text-white' :
-                  mediaTypeNorm === 'game' ? 'bg-cyan-500/80 text-white' :
-                  mediaTypeNorm === 'youtube' ? 'bg-red-500/80 text-white' :
-                  'bg-gray-500/80 text-white'
-                }`}>{mediaTypeLabel}</span>
-              )}
-
               {/* Bottom-right: Add to list button on poster */}
               {onAddToList && (post.externalId || post.mediaTitle) && (
                 <button
@@ -1929,9 +1915,23 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {post.mediaTitle && (
                 <div className="mt-2 min-w-0">
                   <p className="text-[14px] font-semibold text-gray-900 leading-snug">{post.mediaTitle}</p>
-                  {mediaCreator && (
-                    <p className="text-[12px] text-gray-500 leading-snug mt-0.5">by {mediaCreator}</p>
-                  )}
+                  <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                    {mediaTypeLabel && (
+                      <span className={`text-[9px] font-bold px-1.5 py-px rounded-full shrink-0 ${
+                        mediaTypeNorm === 'tv' ? 'bg-blue-100 text-blue-700' :
+                        mediaTypeNorm === 'movie' ? 'bg-indigo-100 text-indigo-700' :
+                        mediaTypeNorm === 'book' ? 'bg-amber-100 text-amber-700' :
+                        mediaTypeNorm === 'music' ? 'bg-pink-100 text-pink-700' :
+                        mediaTypeNorm === 'podcast' ? 'bg-emerald-100 text-emerald-700' :
+                        mediaTypeNorm === 'game' ? 'bg-cyan-100 text-cyan-700' :
+                        mediaTypeNorm === 'youtube' ? 'bg-red-100 text-red-700' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>{mediaTypeLabel}</span>
+                    )}
+                    {mediaCreator && (
+                      <p className="text-[12px] text-gray-500 leading-snug truncate">by {mediaCreator}</p>
+                    )}
+                  </div>
                 </div>
               )}
 
