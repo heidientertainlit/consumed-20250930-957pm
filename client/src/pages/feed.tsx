@@ -1204,7 +1204,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     if (t === 'tv show') return 'tv';
     return t;
   })();
-  const mediaTypeLabel = mediaTypeNorm === 'tv' ? 'TV' : mediaTypeNorm === 'movie' ? 'Movie' : mediaTypeNorm === 'book' ? 'Book' : mediaTypeNorm === 'music' ? 'Music' : mediaTypeNorm === 'podcast' ? 'Podcast' : mediaTypeNorm === 'game' ? 'Game' : null;
+  const mediaTypeLabel = mediaTypeNorm === 'tv' ? 'TV' : mediaTypeNorm === 'movie' ? 'Movie' : mediaTypeNorm === 'book' ? 'Book' : mediaTypeNorm === 'music' ? 'Music' : mediaTypeNorm === 'podcast' ? 'Podcast' : mediaTypeNorm === 'game' ? 'Game' : mediaTypeNorm === 'youtube' ? 'YouTube' : null;
   const seenItLabel = (() => {
     if (mediaTypeNorm === 'music') return { idle: 'Heard it', done: 'Heard!' };
     if (mediaTypeNorm === 'podcast') return { idle: 'Listened', done: 'Listened!' };
