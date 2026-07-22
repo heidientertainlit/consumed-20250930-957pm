@@ -42,6 +42,7 @@ export const modules: ModuleMap = {
   "./components/mockups/room-composer-btns/GhostPills.tsx": () => import("../components/mockups/room-composer-btns/GhostPills.tsx"),
   "./components/mockups/room-composer-btns/TintedPills.tsx": () => import("../components/mockups/room-composer-btns/TintedPills.tsx"),
   "./components/mockups/room-feed/RoomFeedSection.tsx": () => import("../components/mockups/room-feed/RoomFeedSection.tsx"),
+  "./components/mockups/takes-card/CondensedTalk.tsx": () => import("../components/mockups/takes-card/CondensedTalk.tsx"),
   "./components/mockups/takes-card/Hybrid.tsx": () => import("../components/mockups/takes-card/Hybrid.tsx"),
   "./components/mockups/takes-card/PosterAnchor.tsx": () => import("../components/mockups/takes-card/PosterAnchor.tsx"),
   "./components/mockups/takes-card/TakeHeadline.tsx": () => import("../components/mockups/takes-card/TakeHeadline.tsx"),
