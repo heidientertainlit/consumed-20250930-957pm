@@ -469,7 +469,7 @@ serve(async (req) => {
             console.log('Google Books (primary) items:', data.items?.length ?? 0);
             return (data.items || []).slice(0, 15).filter((item: any) => item.volumeInfo && isContentAppropriate(item.volumeInfo, 'book')).map((item: any) => {
               const v = item.volumeInfo;
-              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`, external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [] };
+              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: v.imageLinks ? `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api` : '', external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [] };
             });
           } catch (e) { console.error('Google Books primary error:', e); return []; }
         })() : Promise.resolve([]);
@@ -483,7 +483,7 @@ serve(async (req) => {
             console.log('Google Books (intitle) items:', data.items?.length ?? 0);
             return (data.items || []).slice(0, 10).filter((item: any) => item.volumeInfo && isContentAppropriate(item.volumeInfo, 'book')).map((item: any) => {
               const v = item.volumeInfo;
-              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`, external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [], _title_match: true };
+              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: v.imageLinks ? `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api` : '', external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [], _title_match: true };
             });
           } catch (e) { console.error('Google Books intitle error:', e); return []; }
         })() : Promise.resolve([]);
@@ -543,7 +543,7 @@ serve(async (req) => {
             console.log('Google Books (base/no-num intitle) items:', data.items?.length ?? 0);
             return (data.items || []).slice(0, 10).filter((item: any) => item.volumeInfo && isContentAppropriate(item.volumeInfo, 'book')).map((item: any) => {
               const v = item.volumeInfo;
-              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`, external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [] };
+              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: v.imageLinks ? `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api` : '', external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [] };
             });
           } catch (e) { console.error('Google Books base error:', e); return []; }
         })() : Promise.resolve([]);
@@ -911,7 +911,7 @@ serve(async (req) => {
               if (gbResp.ok) {
                 const gbData = await gbResp.json();
                 const firstItem = gbData.items?.[0];
-                if (firstItem) {
+                if (firstItem?.volumeInfo?.imageLinks) {
                   coverUrl = `https://books.google.com/books/content?id=${firstItem.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`;
                 }
               }
