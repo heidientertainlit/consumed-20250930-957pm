@@ -231,6 +231,7 @@ export default function FeedComposerBar({
   const [trendingItems, setTrendingItems] = useState<any[]>([]);
   const [friendsConsumingItems, setFriendsConsumingItems] = useState<any[]>([]);
   const [friendRecItems, setFriendRecItems] = useState<any[]>([]);
+  const [wantToItems, setWantToItems] = useState<any[]>([]);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
@@ -496,6 +497,34 @@ export default function FeedComposerBar({
               external_id: r.external_id, external_source: r.external_source, creator: r.creator,
               friend_label: `@${nameMap[listToUser[r.list_id]] || 'friend'}`,
             }))
+        );
+      } catch (_) {}
+    })();
+
+    // From your Want To list(s) — a reminder of what you said you wanted
+    (async () => {
+      try {
+        const { data: wantLists } = await supabase
+          .from('lists')
+          .select('id')
+          .eq('user_id', userId)
+          .ilike('title', 'Want%');
+        if (!wantLists?.length) return;
+
+        const { data: items } = await supabase
+          .from('list_items')
+          .select('title, media_type, image_url, external_id, external_source, creator')
+          .in('list_id', wantLists.map((l: any) => l.id))
+          .not('image_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(15);
+        if (!items?.length) return;
+
+        setWantToItems(
+          items.filter((r: any) => r.image_url).map((r: any) => ({
+            title: r.title, type: r.media_type, image_url: r.image_url,
+            external_id: r.external_id, external_source: r.external_source, creator: r.creator,
+          }))
         );
       } catch (_) {}
     })();
@@ -890,6 +919,22 @@ export default function FeedComposerBar({
                       </div>
                       <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                         {friendsConsumingItems.map((r, i) => (
+                          <MediaCard key={i} item={r} light={pageMode}
+                            onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
+                            onRate={() => { selectMedia(r); }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {wantToItems.length > 0 && (
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between px-5 mb-3">
+                        <p className={`text-sm font-bold ${pageMode ? 'text-gray-900' : 'text-white'}`}>On Your Want To List</p>
+                      </div>
+                      <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                        {wantToItems.map((r, i) => (
                           <MediaCard key={i} item={r} light={pageMode}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
                             onRate={() => { selectMedia(r); }}
