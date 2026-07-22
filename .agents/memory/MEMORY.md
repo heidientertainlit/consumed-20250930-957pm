@@ -1,4 +1,4 @@
-- [Identity page architecture](identity-page.md) — /identity is the new DNA overhaul page; existing /me, /profile untouched until user swaps.
+- [DNA compare gate](dna-compare-gate.md) — friend comparison unlocks at survey + 10 items (frontend + compare-dna-friend fn must agree); <30 items shows "early match" tag. /identity page deleted; /profile (user-profile.tsx) is the live DNA page.
 - [Room page architecture](room-page.md) — /room/:id renders new-room.tsx (single template for ALL rooms); rooms=pools; discussions=room_takes; real %match from user_dna_signals; pool-detail.tsx retired but kept.
 - [core_archetype setup](core-archetype-setup.md) — core_archetype col in dna_profiles must be non-null for identity copy; regenerate via generate-dna-profile-v2 with a live user JWT (manual SQL is a stopgap only).
 - [DNA Compare card scoring](dna-compare-scoring.md) — dna_comparisons.match_score is authoritative; Jaccard genre overlap is fallback only. Never rank by Jaccard alone.

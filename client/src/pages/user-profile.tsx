@@ -179,6 +179,7 @@ export default function UserProfile() {
 
   // DNA tab (own profile) sub-tab and comparison state
   const [dnaActiveTab, setDnaActiveTab] = useState<'dna' | 'compare'>('dna');
+  const [friendCompareSearch, setFriendCompareSearch] = useState('');
   const [dnaSelectedFriendId, setDnaSelectedFriendId] = useState<string | null>(null);
   const [dnaIsComparing, setDnaIsComparing] = useState(false);
   const [dnaComparisonResult, setDnaComparisonResult] = useState<any>(null);
@@ -484,9 +485,8 @@ export default function UserProfile() {
     
     if (!hasSurvey) return { level: 0 as const, itemCount: totalItems };
     
-    let level: 0 | 1 | 2 = 0;
-    if (totalItems >= 30) level = 2;
-    else if (totalItems >= 10) level = 1;
+    let level: 0 | 1 | 2 = 1;
+    if (totalItems >= 10) level = 2;
     
     return { level, itemCount: totalItems };
   };
@@ -516,8 +516,8 @@ export default function UserProfile() {
         const hasSurvey = dnaProfileStatus === 'has_profile';
         const itemsLogged = data.items_logged || 0;
         let newLevel: 0 | 1 | 2 = 0;
-        if (hasSurvey && itemsLogged >= 30) newLevel = 2;
-        else if (hasSurvey && itemsLogged >= 10) newLevel = 1;
+        if (hasSurvey && itemsLogged >= 10) newLevel = 2;
+        else if (hasSurvey) newLevel = 1;
         setDnaLevel(newLevel);
         setDnaItemCount(itemsLogged);
       } else {
@@ -687,7 +687,7 @@ export default function UserProfile() {
         avatar_url: u.avatar,
         itemCount: statsMap[u.id] || 0,
         hasSurvey: hasSurveyMap[u.id] || false,
-        isEligible: (statsMap[u.id] || 0) >= 30 && (hasSurveyMap[u.id] || false),
+        isEligible: (statsMap[u.id] || 0) >= 10 && (hasSurveyMap[u.id] || false),
       }));
     },
     enabled: !!session?.access_token && !!user?.id && isOwnProfile && dnaLevel >= 2,
@@ -831,10 +831,10 @@ export default function UserProfile() {
   };
 
   const handleDnaNudgeFriend = async (friend: any) => {
-    const itemsNeeded = Math.max(0, 30 - friend.itemCount);
+    const itemsNeeded = Math.max(0, 10 - friend.itemCount);
     const message = friend.hasSurvey
       ? `Hey ${friend.user_name}! I want to compare our Entertainment DNA on Consumed, but you need to log ${itemsNeeded} more items first. ${APP_BASE}`
-      : `Hey ${friend.user_name}! I want to compare our Entertainment DNA on Consumed! Complete the DNA survey and log 30 items so we can see how compatible our taste is! ${APP_BASE}`;
+      : `Hey ${friend.user_name}! I want to compare our Entertainment DNA on Consumed! Complete the DNA survey and log 10 items so we can see how compatible our taste is! ${APP_BASE}`;
     if (navigator.share) {
       try { await navigator.share({ title: 'Compare our Entertainment DNA!', text: message }); }
       catch { await navigator.clipboard.writeText(message); toast({ title: "Copied!", description: "Share message copied to clipboard" }); }
@@ -3710,7 +3710,7 @@ export default function UserProfile() {
                     <p className="text-gray-500 text-xs mb-3">
                       {dnaProfileStatus !== 'has_profile'
                         ? "Complete the DNA survey to unlock comparisons"
-                        : `Log ${Math.max(0, 30 - dnaItemCount)} more items to unlock`}
+                        : `Log ${Math.max(0, 10 - dnaItemCount)} more items to unlock`}
                     </p>
                     {dnaProfileStatus !== 'has_profile' && (
                       <Button onClick={() => setLocation('/entertainment-dna')} size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs">
@@ -3869,7 +3869,7 @@ export default function UserProfile() {
                         <p className="text-xs font-medium text-amber-800 mb-2">Almost ready to compare:</p>
                         <div className="space-y-2">
                           {dnaAlmostEligibleFriends.slice(0, 3).map((friend: any) => {
-                            const itemsNeeded = Math.max(0, 30 - friend.itemCount);
+                            const itemsNeeded = Math.max(0, 10 - friend.itemCount);
                             return (
                               <div key={friend.id} className="flex items-center justify-between bg-white/80 rounded-lg p-2">
                                 <div className="flex items-center gap-2">
@@ -4056,6 +4056,89 @@ export default function UserProfile() {
         {/* Friends Manager - Only show on own profile */}
         {activeSection === 'friends' && isOwnProfile && user?.id && (
           <div ref={friendsRef} className="px-4 mb-8 space-y-4">
+            {/* Compare DNA — full friends list with search */}
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-900">Compare DNA</h3>
+                {dnaCompareFriends.length > 0 && (
+                  <span className="text-xs text-gray-400">{dnaCompareFriends.length} friends</span>
+                )}
+              </div>
+              {!dnaCanCompare ? (
+                <p className="text-xs text-gray-500">
+                  {dnaProfileStatus !== 'has_profile'
+                    ? 'Complete the DNA survey to unlock friend comparisons.'
+                    : `Log ${Math.max(0, 10 - dnaItemCount)} more items to unlock friend comparisons.`}
+                </p>
+              ) : isLoadingDnaFriends ? (
+                <div className="flex justify-center py-4"><Loader2 className="animate-spin text-purple-600" size={20} /></div>
+              ) : dnaCompareFriends.length === 0 ? (
+                <p className="text-xs text-gray-500">Add friends below to compare your entertainment DNA.</p>
+              ) : (
+                <>
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                    <input
+                      type="text"
+                      placeholder="Search friends..."
+                      value={friendCompareSearch}
+                      onChange={(e) => setFriendCompareSearch(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    {dnaCompareFriends
+                      .filter((f: any) => !friendCompareSearch.trim() || (f.user_name || '').toLowerCase().includes(friendCompareSearch.trim().toLowerCase()))
+                      .map((friend: any) => (
+                        <div key={friend.id} className="flex items-center gap-3 p-2.5 rounded-lg border border-gray-100 bg-gray-50/60">
+                          <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 text-sm font-semibold overflow-hidden flex-shrink-0">
+                            {friend.avatar_url
+                              ? <img src={friend.avatar_url} alt={friend.user_name} className="w-9 h-9 rounded-full object-cover" />
+                              : (friend.user_name || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-800 truncate">@{friend.user_name}</p>
+                            <p className="text-xs text-gray-500">
+                              {friend.isEligible
+                                ? 'Ready to compare'
+                                : !friend.hasSurvey
+                                  ? 'Needs DNA survey'
+                                  : `${Math.max(0, 10 - friend.itemCount)} more items needed`}
+                            </p>
+                          </div>
+                          {friend.isEligible ? (
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setActiveSection('dna');
+                                setDnaActiveTab('compare');
+                                if (dnaSelectedFriendId !== friend.id) handleDnaSelectFriend(friend.id);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-8 px-3"
+                            >
+                              Compare
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDnaNudgeFriend(friend)}
+                              className="border-amber-300 hover:bg-amber-100 text-amber-700 text-xs h-8 px-2"
+                            >
+                              <Send size={10} className="mr-1" />
+                              Nudge
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    {friendCompareSearch.trim() && dnaCompareFriends.filter((f: any) => (f.user_name || '').toLowerCase().includes(friendCompareSearch.trim().toLowerCase())).length === 0 && (
+                      <p className="text-xs text-gray-500 text-center py-3">No friends match "{friendCompareSearch.trim()}"</p>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
             <FriendsManager userId={user.id} />
           </div>
         )}

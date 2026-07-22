@@ -91,7 +91,6 @@ import PrivacyPolicy from "@/pages/privacy-policy";
 import TermsOfService from "@/pages/terms-of-service";
 import ResponsibleGaming from "@/pages/responsible-gaming";
 import ProfileByUsername from "@/pages/profile-by-username";
-import IdentityPage from "@/pages/identity";
 import AddMediaPage from "@/pages/add-media-page";
 import NewRoom from "@/pages/new-room";
 
@@ -537,12 +536,6 @@ function Router() {
           <Route path="/creator-profile">
             <ProtectedRoute>
               <CreatorProfile />
-            </ProtectedRoute>
-          </Route>
-
-          <Route path="/identity">
-            <ProtectedRoute>
-              <IdentityPage />
             </ProtectedRoute>
           </Route>
 

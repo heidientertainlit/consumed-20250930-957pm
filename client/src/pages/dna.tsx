@@ -84,7 +84,7 @@ export default function DnaPage() {
     (userStats.moviesWatched || 0) + (userStats.tvShowsWatched || 0) + (userStats.booksRead || 0) + (userStats.gamesPlayed || 0) : 0;
   const hasSurvey = !!dnaProfile;
   const MIN_COMPARE_ITEMS = 10;
-  const dnaLevel = hasSurvey && itemCount >= MIN_COMPARE_ITEMS ? 2 : hasSurvey || itemCount >= 10 ? 1 : 0;
+  const dnaLevel = !hasSurvey ? 0 : itemCount >= MIN_COMPARE_ITEMS ? 2 : 1;
   const isEarlyMatch = itemCount < 30;
   const canCompare = hasSurvey && dnaLevel >= 2;
 
