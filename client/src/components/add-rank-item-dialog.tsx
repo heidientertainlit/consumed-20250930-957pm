@@ -23,10 +23,20 @@ interface MediaResult {
   type: string;
   creator: string;
   image: string;
+  year?: string | number;
   external_id?: string;
   external_source?: string;
   description?: string;
 }
+
+const TYPE_FILTERS = [
+  { value: null, label: "All" },
+  { value: "tv", label: "TV" },
+  { value: "movie", label: "Movie" },
+  { value: "book", label: "Book" },
+  { value: "music", label: "Music" },
+  { value: "podcast", label: "Podcast" },
+] as const;
 
 export default function AddRankItemDialog({ 
   open, 
@@ -40,6 +50,7 @@ export default function AddRankItemDialog({
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<MediaResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<string | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -49,6 +60,7 @@ export default function AddRankItemDialog({
     setSearchQuery("");
     setSearchResults([]);
     setSelectedMedia([]);
+    setMediaTypeFilter(null);
   };
 
   const searchMedia = async (query: string) => {
@@ -67,7 +79,7 @@ export default function AddRankItemDialog({
           "Content-Type": "application/json",
           "Authorization": `Bearer ${apiKey}`,
         },
-        body: JSON.stringify({ query: query.trim() }),
+        body: JSON.stringify({ query: query.trim(), ...(mediaTypeFilter ? { type: mediaTypeFilter } : {}) }),
       });
 
       if (!response.ok) throw new Error("Search failed");
@@ -91,7 +103,7 @@ export default function AddRankItemDialog({
     }, 300);
 
     return () => clearTimeout(debounce);
-  }, [searchQuery]);
+  }, [searchQuery, mediaTypeFilter]);
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -191,7 +203,7 @@ export default function AddRankItemDialog({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetForm(); onOpenChange(isOpen); }}>
-      <DialogContent className="max-w-md bg-white text-black max-h-[85vh] overflow-y-auto" data-testid="dialog-add-rank-item">
+      <DialogContent className="rounded-2xl w-[calc(100vw-2rem)] max-w-md bg-white text-black flex flex-col gap-3 p-4 sm:p-6" style={{ maxHeight: '80vh' }} data-testid="dialog-add-rank-item">
         <DialogHeader>
           <DialogTitle className="text-black flex items-center gap-2">
             <Trophy size={20} className="text-purple-600" />
@@ -200,17 +212,35 @@ export default function AddRankItemDialog({
           <p className="text-sm text-gray-500">Adding to "{rankTitle}" ({remainingSlots} slots remaining)</p>
         </DialogHeader>
         
-        <div className="space-y-4 mt-2">
+        <div className="flex flex-col gap-3 mt-1 flex-1 min-h-0 overflow-y-auto">
           {/* Media Search */}
           <div className="space-y-2">
-            <Label className="text-black font-medium text-sm">Search for Media</Label>
+            {/* Type filter pills */}
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 flex-shrink-0">
+              {TYPE_FILTERS.map(({ value, label }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setMediaTypeFilter(value)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    mediaTypeFilter === value
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid={`filter-${label.toLowerCase()}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search movies, shows, books..."
-                className="pl-9 bg-white text-black border-gray-300 focus:border-purple-400 placeholder:text-gray-400"
+                placeholder={mediaTypeFilter ? `Search ${mediaTypeFilter}s…` : 'Search movies, shows, books…'}
+                className="pl-9 pr-9 bg-white text-black border-gray-200 rounded-xl focus:border-purple-400 placeholder:text-gray-400"
                 data-testid="input-add-rank-media-search"
                 autoFocus
               />
@@ -221,27 +251,32 @@ export default function AddRankItemDialog({
 
             {/* Search Results */}
             {searchResults.length > 0 && (
-              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
-                {searchResults.map((result, index) => (
-                  <div
-                    key={index}
+              <div className="max-h-56 overflow-y-auto border border-gray-100 rounded-xl">
+                {(mediaTypeFilter
+                  ? searchResults.filter(r => r.type === mediaTypeFilter || (mediaTypeFilter === 'book' && r.type === 'book_series'))
+                  : searchResults
+                ).slice(0, 8).map((result, index) => (
+                  <button
+                    key={`${result.external_id}-${index}`}
+                    type="button"
                     onClick={() => handleSelectMedia(result)}
-                    className="flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 text-left border-b border-gray-50 last:border-0"
                     data-testid={`search-result-${index}`}
                   >
                     {result.image ? (
-                      <img src={result.image} alt={result.title} className="w-10 h-10 object-cover rounded" />
+                      <img src={result.image} alt={result.title} className="w-8 h-11 object-cover rounded flex-shrink-0" />
                     ) : (
-                      <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
-                        <Search className="text-gray-400" size={16} />
+                      <div className="w-8 h-11 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                        <Search className="text-gray-400" size={14} />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-black text-sm truncate">{result.title}</p>
-                      <p className="text-xs text-gray-500 truncate">{result.creator} · {result.type}</p>
+                      <p className="font-medium text-gray-900 text-sm line-clamp-1">{result.title}</p>
+                      <p className="text-xs text-gray-500">{result.type}{result.year ? ` • ${result.year}` : ''}</p>
+                      {result.creator && result.creator !== 'Unknown Author' && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
                     </div>
-                    <Plus className="text-purple-600 flex-shrink-0" size={18} />
-                  </div>
+                    <Plus size={16} className="text-purple-500 shrink-0" />
+                  </button>
                 ))}
               </div>
             )}
