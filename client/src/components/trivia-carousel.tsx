@@ -649,20 +649,20 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
     } catch { /* silent */ }
   };
 
+  const scrollToIndex = (idx: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const cardWidth = el.children[0]?.clientWidth || 280;
+    el.scrollTo({ left: idx * (cardWidth + 12), behavior: 'smooth' });
+    setCurrentIndex(idx);
+  };
+
   const scrollToNext = () => {
-    if (scrollRef.current && data && currentIndex < data.length - 1) {
-      const cardWidth = scrollRef.current.children[0]?.clientWidth || 280;
-      scrollRef.current.scrollBy({ left: cardWidth + 12, behavior: 'smooth' });
-      setCurrentIndex(prev => Math.min(prev + 1, data.length - 1));
-    }
+    if (data && currentIndex < data.length - 1) scrollToIndex(currentIndex + 1);
   };
 
   const scrollToPrev = () => {
-    if (scrollRef.current && currentIndex > 0) {
-      const cardWidth = scrollRef.current.children[0]?.clientWidth || 280;
-      scrollRef.current.scrollBy({ left: -(cardWidth + 12), behavior: 'smooth' });
-      setCurrentIndex(prev => Math.max(prev - 1, 0));
-    }
+    if (currentIndex > 0) scrollToIndex(currentIndex - 1);
   };
 
   const handleScroll = () => {
