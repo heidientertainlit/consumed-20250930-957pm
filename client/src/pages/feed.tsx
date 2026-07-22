@@ -744,8 +744,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [reactionLoaded, setReactionLoaded] = useState(false);
   // Poster card detail sheet
   const [posterDetailOpen, setPosterDetailOpen] = useState(false);
-  // "Tell a friend" — focuses the take bar ready for an @mention
+  // "Tell a friend" — copies a share link, brief confirmation
   const takeInputRef = useRef<HTMLInputElement>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Load existing reaction from DB on mount
   useEffect(() => {
@@ -2005,20 +2006,28 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </button>
           )}
 
-          {/* Tell a friend — opens the take bar ready to @tag a friend */}
-          {session?.access_token && (
-            <button
-              className="flex items-center gap-1.5 active:scale-95 transition-transform"
-              onClick={(e) => {
-                e.stopPropagation();
-                setCommentText((t) => (t.trim() ? t : '@'));
-                takeInputRef.current?.focus();
-              }}
-            >
-              <span className="text-[12px] text-gray-500 font-medium">Tell a friend</span>
-              <ArrowRight size={13} className="text-gray-400" />
-            </button>
-          )}
+          {/* Tell a friend — copies a share link to this media */}
+          <button
+            className="flex items-center gap-1.5 active:scale-95 transition-transform"
+            onClick={async (e) => {
+              e.stopPropagation();
+              try {
+                await copyLink({
+                  kind: 'media',
+                  obj: {
+                    type: normalizeMediaType(post.mediaType),
+                    source: post.externalSource,
+                    id: post.externalId,
+                  },
+                });
+                setLinkCopied(true);
+                setTimeout(() => setLinkCopied(false), 2000);
+              } catch { /* clipboard unavailable */ }
+            }}
+          >
+            <span className={`text-[12px] font-medium ${linkCopied ? 'text-violet-600 font-semibold' : 'text-gray-500'}`}>{linkCopied ? 'Link copied!' : 'Tell a friend'}</span>
+            {!linkCopied && <ArrowRight size={13} className="text-gray-400" />}
+          </button>
         </div>
 
         {/* ── Take bar — always visible, inline comment strip ── */}
