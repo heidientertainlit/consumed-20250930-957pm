@@ -204,23 +204,23 @@ export function FeedIdentityHero() {
             {stats.map((s) => {
               const inner = (
                 <>
-                  <s.Icon size={18} color={s.color} {...(s.Icon === Flame ? { fill: s.color } : {})} />
-                  <div className="leading-tight text-left">
+                  <div className="flex items-center gap-1.5">
+                    <s.Icon size={16} color={s.color} {...(s.Icon === Flame ? { fill: s.color } : {})} />
                     <p className="text-[17px] font-bold text-white">{s.value}</p>
-                    <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</p>
                   </div>
+                  <p className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</p>
                 </>
               );
               return s.href ? (
                 <button
                   key={s.label}
                   onClick={() => setLocation(s.href!)}
-                  className="flex items-center gap-2 active:scale-95 transition-transform"
+                  className="flex flex-col items-center active:scale-95 transition-transform"
                 >
                   {inner}
                 </button>
               ) : (
-                <div key={s.label} className="flex items-center gap-2">
+                <div key={s.label} className="flex flex-col items-center">
                   {inner}
                 </div>
               );
