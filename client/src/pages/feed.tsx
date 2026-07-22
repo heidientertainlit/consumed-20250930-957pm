@@ -57,7 +57,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { apiRequest, queryClient as globalQueryClient } from "@/lib/queryClient";
 import { renderMentions } from "@/lib/mentions";
-import { copyLink } from "@/lib/share";
+import { copyLink, shareLink } from "@/lib/share";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { GameMomentCard } from "@/components/game-moment-card";
 import { SocialProofCard, buildGameMomentSocialProof, buildLeaderboardSocialProof } from "@/components/social-proof-card";
@@ -2012,17 +2012,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             onClick={async (e) => {
               e.stopPropagation();
               try {
-                await copyLink({
+                const result = await shareLink({
                   kind: 'media',
                   obj: {
                     type: normalizeMediaType(post.mediaType),
                     source: post.externalSource,
                     id: post.externalId,
                   },
+                  title: post.mediaTitle || undefined,
+                  text: post.mediaTitle ? `Check out ${post.mediaTitle} on Consumed` : undefined,
                 });
-                setLinkCopied(true);
-                setTimeout(() => setLinkCopied(false), 2000);
-              } catch { /* clipboard unavailable */ }
+                if (result === 'copied') {
+                  setLinkCopied(true);
+                  setTimeout(() => setLinkCopied(false), 2000);
+                }
+              } catch { /* share/clipboard unavailable */ }
             }}
           >
             <span className={`text-[12px] font-medium ${linkCopied ? 'text-violet-600 font-semibold' : 'text-gray-500'}`}>{linkCopied ? 'Link copied!' : 'Tell a friend'}</span>

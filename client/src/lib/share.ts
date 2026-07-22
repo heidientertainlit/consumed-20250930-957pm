@@ -44,6 +44,28 @@ export function urlFor(kind: ShareKind, arg: any) {
   return `${BASE}/${kind}/${id}`;
 }
 
+// Opens the native share sheet (iOS/Android — Messages, WhatsApp, etc.) when
+// available; falls back to copying the link on desktop browsers.
+// Returns 'shared' | 'copied' so callers can show the right feedback.
+export async function shareLink(opts: { kind: ShareKind; id?: string; obj?: any; title?: string; text?: string }): Promise<'shared' | 'copied'> {
+  const url = (opts.kind === 'list' || opts.kind === 'edna' || opts.kind === 'media')
+    ? urlFor(opts.kind, opts.obj ?? { id: opts.id })
+    : urlFor(opts.kind, opts.id!);
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ url, ...(opts.title ? { title: opts.title } : {}), ...(opts.text ? { text: opts.text } : {}) });
+      return 'shared';
+    } catch (err: any) {
+      // User dismissed the sheet — do nothing further
+      if (err?.name === 'AbortError') return 'shared';
+      // Share failed for another reason — fall through to clipboard
+    }
+  }
+  await navigator.clipboard.writeText(url);
+  return 'copied';
+}
+
 export async function copyLink(opts: { kind: ShareKind; id?: string; obj?: any }) {
   const url = (opts.kind === 'list' || opts.kind === 'edna' || opts.kind === 'media')
     ? urlFor(opts.kind, opts.obj ?? { id: opts.id })
