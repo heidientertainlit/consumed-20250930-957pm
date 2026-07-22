@@ -66,6 +66,28 @@ export async function shareLink(opts: { kind: ShareKind; id?: string; obj?: any;
   return 'copied';
 }
 
+// Share a trivia question via the native share sheet (Messages/SMS, WhatsApp, etc.).
+// Links to /play/trivia#<poolId> — that page already scrolls to the game from the hash.
+// Falls back to copying the link on desktop. Returns 'shared' | 'copied'.
+export async function shareTrivia(opts: { poolId: string; question?: string }): Promise<'shared' | 'copied'> {
+  const url = `${BASE}/play/trivia#${opts.poolId}`;
+  const text = opts.question
+    ? `Think you know this one? "${opts.question}" Play it on Consumed:`
+    : 'Try this trivia question on Consumed:';
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ url, text, title: 'Consumed Trivia' });
+      return 'shared';
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return 'shared';
+      // fall through to clipboard
+    }
+  }
+  await navigator.clipboard.writeText(`${text} ${url}`);
+  return 'copied';
+}
+
 export async function copyLink(opts: { kind: ShareKind; id?: string; obj?: any }) {
   const url = (opts.kind === 'list' || opts.kind === 'edna' || opts.kind === 'media')
     ? urlFor(opts.kind, opts.obj ?? { id: opts.id })

@@ -6,7 +6,8 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
-import { Brain, Loader2, ChevronLeft, ChevronRight, Trophy, Users, CheckCircle, XCircle, Star, Send } from 'lucide-react';
+import { Brain, Loader2, ChevronLeft, ChevronRight, Trophy, Users, CheckCircle, XCircle, Star, Send, Share2 } from 'lucide-react';
+import { shareTrivia } from '@/lib/share';
 import { useDnaArchetype } from '@/hooks/use-dna-archetype';
 import { getGameAlignment } from '@/lib/identity-feedback';
 import { incrementActivityCount } from '@/components/dna-survey-nudge';
@@ -1074,7 +1075,20 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                     )}
                   </>)}
                 
-                <div className="flex items-center justify-end mt-4 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      const result = await shareTrivia({ poolId: item.poolId || item.id, question: item.question });
+                      if (result === 'copied') {
+                        toast({ title: 'Link copied', description: 'Paste it into a text to challenge a friend.' });
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-purple-600 hover:text-purple-800 transition-colors"
+                  >
+                    <Share2 size={12} />
+                    Share
+                  </button>
                   <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold">
                     +{item.pointsReward} pts
                   </div>

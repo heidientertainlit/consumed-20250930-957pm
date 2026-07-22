@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { X, Copy, Check, Facebook, Twitter, MessageCircle } from "lucide-react";
 import { urlFor } from "@/lib/share";
 
+const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
+
 interface GameShareModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -62,6 +64,20 @@ export default function GameShareModal({ isOpen, onClose, gameId, gameTitle, gam
     }
   };
 
+  const handleNativeShare = async () => {
+    const text = `Join me in playing "${gameTitle}" on Consumed!`;
+    if (canNativeShare) {
+      try {
+        await navigator.share({ url: shareUrl, text, title: 'Consumed' });
+        return;
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
+      }
+    }
+    // Fallback — open the SMS composer directly
+    window.location.href = `sms:?&body=${encodeURIComponent(`${text} ${shareUrl}`)}`;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -104,6 +120,13 @@ export default function GameShareModal({ isOpen, onClose, gameId, gameTitle, gam
           <label className="block text-sm font-medium text-gray-700 mb-3">
             Share to Social Media
           </label>
+          <Button
+            onClick={handleNativeShare}
+            className="w-full flex items-center justify-center gap-2 p-4 h-auto mb-3 bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            <MessageCircle size={20} />
+            <span className="text-sm font-medium">Share via Text</span>
+          </Button>
           <div className="grid grid-cols-2 gap-3">
             <Button
               onClick={() => handleSocialShare('twitter')}
