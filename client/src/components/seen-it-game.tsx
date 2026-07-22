@@ -61,7 +61,9 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   });
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
   const [currentItemIndex, setCurrentItemIndex] = useState(0);
-  const [ratingItem, setRatingItem] = useState<string | null>(null);
+  const [ratePrompt, setRatePrompt] = useState<{ item: SeenItItem; setId: string; answered: boolean } | null>(null);
+  const [takeText, setTakeText] = useState('');
+  const [savingRate, setSavingRate] = useState(false);
   const [ratingMap, setRatingMap] = useState<Record<string, number>>(() => {
     try { return JSON.parse(localStorage.getItem('seen_it_ratings') || '{}'); } catch { return {}; }
   });
@@ -238,7 +240,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   }, [incompleteSets.length]);
 
   // Reset item index when set changes
-  useEffect(() => { setCurrentItemIndex(0); setRatingItem(null); }, [currentSetIndex]);
+  useEffect(() => { setCurrentItemIndex(0); setRatePrompt(null); setTakeText(''); }, [currentSetIndex]);
 
   const responseMutation = useMutation({
     mutationFn: async ({ setId, itemId, response, item }: { setId: string; itemId: string; response: boolean | 'want_to'; item: SeenItItem }) => {
@@ -293,7 +295,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     }
   };
 
-  const handleResponse = (setId: string, item: SeenItItem, response: boolean | 'want_to' | 'skip') => {
+  const handleResponse = (setId: string, item: SeenItItem, response: boolean | 'want_to' | 'skip', skipRatePrompt = false) => {
     if (response !== 'skip') {
       const extKey = item.external_id ? `ext_${item.external_id}` : null;
       setLocalResponses(prev => {
@@ -320,7 +322,39 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
       // Keep index in bounds of the NEW unanswered length
       setCurrentItemIndex(prev => Math.min(prev + 1, remaining.length - 1));
     }
-    setRatingItem(null);
+    if (!skipRatePrompt && (response === true || response === 'want_to')) {
+      setRatePrompt({ item, setId, answered: true });
+      setTakeText('');
+    } else {
+      setRatePrompt(null);
+      setTakeText('');
+    }
+  };
+
+  const saveRating = async () => {
+    if (!ratePrompt) return;
+    const { item, setId, answered } = ratePrompt;
+    const stars = ratingMap[item.id] || 0;
+    if (stars === 0) { setRatePrompt(null); setTakeText(''); return; }
+    setSavingRate(true);
+    try {
+      if (!answered) handleResponse(setId, item, true, true);
+      if (item.external_id && item.external_source && session) {
+        await supabase.functions.invoke('track-media', {
+          body: {
+            media: { title: item.title, mediaType: item.media_type || 'movie', imageUrl: item.image_url, externalId: item.external_id, externalSource: item.external_source },
+            listType: 'finished',
+            rating: stars,
+            review: takeText.trim() || undefined,
+          },
+        });
+        queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+      }
+      trackEvent('seen_it_rating', { item_id: item.id, stars, has_take: takeText.trim().length > 0 });
+    } catch {}
+    setSavingRate(false);
+    setRatePrompt(null);
+    setTakeText('');
   };
 
 
@@ -498,8 +532,8 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
                 onAddToList({
                   title: activeItem.title,
                   imageUrl: activeItem.image_url,
-                  externalId: activeItem.external_id,
-                  externalSource: activeItem.external_source,
+                  externalId: activeItem.external_id || '',
+                  externalSource: activeItem.external_source || '',
                   mediaType: activeItem.media_type || currentSet.media_type,
                 });
               } else {
@@ -522,20 +556,45 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         </div>
       </div>
 
-      {/* Rating stars row — below the card */}
-      {ratingItem === activeItem.id && (
-        <div className="flex justify-center gap-2 px-4 pt-2">
-          {[1,2,3,4,5].map(star => (
-            <button key={star} onPointerDown={(e) => {
-              e.stopPropagation();
-              const newMap = { ...ratingMap, [activeItem.id]: star };
-              setRatingMap(newMap);
-              try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
-              handleResponse(currentSet.id, activeItem, true);
-            }} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer' }}>
-              <Star size={28} className={star <= (ratingMap[activeItem.id] || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+      {/* Rating prompt — below the card */}
+      {ratePrompt && (
+        <div className="px-4 pt-2">
+          <p className="text-center text-sm font-semibold text-gray-800">What did you think of {ratePrompt.item.title}?</p>
+          <div className="flex justify-center gap-2 pt-1">
+            {[1,2,3,4,5].map(star => (
+              <button key={star} onPointerDown={(e) => {
+                e.stopPropagation();
+                const newMap = { ...ratingMap, [ratePrompt.item.id]: star };
+                setRatingMap(newMap);
+                try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
+              }} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer' }}>
+                <Star size={28} className={star <= (ratingMap[ratePrompt.item.id] || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+              </button>
+            ))}
+          </div>
+          <textarea
+            value={takeText}
+            onChange={(e) => setTakeText(e.target.value)}
+            placeholder="Share your take... (optional)"
+            rows={2}
+            className="mt-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none"
+          />
+          <div className="flex justify-center gap-3 pt-2">
+            <button
+              onClick={() => { setRatePrompt(null); setTakeText(''); }}
+              className="px-4 py-1.5 rounded-full text-xs font-medium text-gray-500 bg-gray-100"
+              disabled={savingRate}
+            >
+              Skip
             </button>
-          ))}
+            <button
+              onClick={saveRating}
+              disabled={savingRate || !(ratingMap[ratePrompt.item.id] > 0)}
+              className={`px-5 py-1.5 rounded-full text-xs font-semibold text-white ${ratingMap[ratePrompt.item.id] > 0 ? 'bg-purple-600' : 'bg-gray-300'}`}
+            >
+              {savingRate ? 'Saving...' : 'Save rating'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -566,13 +625,16 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
 
         {/* Rate it — gray, optional */}
         <button
-          onClick={() => setRatingItem(prev => prev === activeItem.id ? null : activeItem.id)}
+          onClick={() => {
+            setTakeText('');
+            setRatePrompt(prev => prev?.item.id === activeItem.id ? null : { item: activeItem, setId: currentSet.id, answered: responses[activeItem.id] !== undefined });
+          }}
           className="flex flex-col items-center gap-1 group"
         >
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center group-active:scale-90 transition-all ${ratingItem === activeItem.id ? 'bg-yellow-400' : 'bg-gray-100'}`}>
-            <Star size={20} className={ratingItem === activeItem.id ? 'text-white fill-white' : 'text-gray-500'} />
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center group-active:scale-90 transition-all ${ratePrompt?.item.id === activeItem.id ? 'bg-yellow-400' : 'bg-gray-100'}`}>
+            <Star size={20} className={ratePrompt?.item.id === activeItem.id ? 'text-white fill-white' : 'text-gray-500'} />
           </div>
-          <span className={`text-[10px] font-medium ${ratingItem === activeItem.id ? 'text-yellow-500' : 'text-gray-400'}`}>Rate it</span>
+          <span className={`text-[10px] font-medium ${ratePrompt?.item.id === activeItem.id ? 'text-yellow-500' : 'text-gray-400'}`}>Rate it</span>
         </button>
 
       </div>
