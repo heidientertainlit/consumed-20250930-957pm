@@ -258,6 +258,8 @@ export function NotificationBell() {
         return <BookOpen className={`${iconClass} text-green-400`} />;
       case 'dna_recommendation':
         return <Dna className={`${iconClass} text-indigo-400`} />;
+      case 'recommendation':
+        return <Star className={`${iconClass} text-purple-400`} />;
       case 'poll_nudge':
         return <Vote className={`${iconClass} text-blue-400`} />;
       default:

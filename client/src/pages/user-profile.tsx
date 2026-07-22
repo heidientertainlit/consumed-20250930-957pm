@@ -6,6 +6,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
 import FriendsManager from "@/components/friends-manager";
 import CreateRankDialog from "@/components/create-rank-dialog";
+import MediaRecInput from "@/components/media-rec-input";
 import CreateListDialog from "@/components/create-list-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -180,6 +181,8 @@ export default function UserProfile() {
   // DNA tab (own profile) sub-tab and comparison state
   const [dnaActiveTab, setDnaActiveTab] = useState<'dna' | 'compare'>('dna');
   const [friendCompareSearch, setFriendCompareSearch] = useState('');
+  const [recommendFriend, setRecommendFriend] = useState<any>(null);
+  const [isSendingRec, setIsSendingRec] = useState(false);
   const [dnaSelectedFriendId, setDnaSelectedFriendId] = useState<string | null>(null);
   const [dnaIsComparing, setDnaIsComparing] = useState(false);
   const [dnaComparisonResult, setDnaComparisonResult] = useState<any>(null);
@@ -841,6 +844,29 @@ export default function UserProfile() {
     } else {
       await navigator.clipboard.writeText(message);
       toast({ title: "Copied!", description: "Share message copied to clipboard" });
+    }
+  };
+
+  const handleSendRecommendation = async (media: any) => {
+    if (!user?.id || !recommendFriend) return;
+    setIsSendingRec(true);
+    try {
+      const senderName = user.user_metadata?.display_name || user.email?.split('@')[0] || 'A friend';
+      const { error } = await supabase.from('notifications').insert({
+        user_id: recommendFriend.id,
+        type: 'recommendation',
+        triggered_by_user_id: user.id,
+        message: `${senderName} recommends "${media.title}"${media.type ? ` (${media.type})` : ''}${media.creator ? ` by ${media.creator}` : ''}`,
+        read: false,
+      });
+      if (error) throw error;
+      toast({ title: "Recommendation sent!", description: `${recommendFriend.user_name} will see "${media.title}" in their notifications.` });
+      setRecommendFriend(null);
+    } catch (err) {
+      console.error('Send recommendation failed:', err);
+      toast({ title: "Error", description: "Could not send recommendation", variant: "destructive" });
+    } finally {
+      setIsSendingRec(false);
     }
   };
 
@@ -4123,11 +4149,12 @@ export default function UserProfile() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleDnaNudgeFriend(friend)}
-                              className="border-amber-300 hover:bg-amber-100 text-amber-700 text-xs h-8 px-2"
+                              onClick={() => setRecommendFriend(friend)}
+                              className="border-purple-300 hover:bg-purple-50 text-purple-700 text-xs h-8 px-2"
+                              data-testid={`button-recommend-${friend.id}`}
                             >
-                              <Send size={10} className="mr-1" />
-                              Nudge
+                              <Sparkles size={10} className="mr-1" />
+                              Recommend
                             </Button>
                           )}
                         </div>
@@ -4140,6 +4167,23 @@ export default function UserProfile() {
               )}
             </div>
             <FriendsManager userId={user.id} />
+
+            {/* Recommend media to a friend */}
+            <Dialog open={!!recommendFriend} onOpenChange={(open) => { if (!open) setRecommendFriend(null); }}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Recommend something to @{recommendFriend?.user_name}</DialogTitle>
+                  <DialogDescription>
+                    Search for a movie, show, book, or anything else — they'll get it as a notification.
+                  </DialogDescription>
+                </DialogHeader>
+                <MediaRecInput
+                  placeholder="Search for something to recommend..."
+                  onSubmit={handleSendRecommendation}
+                  isSubmitting={isSendingRec}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         )}
 
