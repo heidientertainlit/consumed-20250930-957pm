@@ -762,7 +762,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{category === 'Movies' ? 'Movie' : category} {challengesOnly ? 'Challenges' : 'Trivia'}</p>
                   <p className="text-[10px] text-gray-500">{challengesOnly ? 'Multi-question challenges' : 'One question trivia'}</p>
-                  {gameAlignment && <p className="text-[10px] text-purple-500 italic mt-0.5">{gameAlignment}</p>}
                 </div>
               </>
             ) : (
@@ -773,7 +772,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{challengesOnly ? 'Trivia Challenges' : 'Quick Trivia'}</p>
                   <p className="text-[10px] text-gray-500">{challengesOnly ? 'Multi-question challenges' : 'One question trivia'}</p>
-                  {gameAlignment && <p className="text-[10px] text-purple-500 italic mt-0.5">{gameAlignment}</p>}
                 </div>
               </>
             )}
@@ -846,7 +844,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                     {/* Social proof — most popular pick so far */}
                     {socialProofMap[item.poolId] && (
                       <p className="text-[11px] text-gray-400 text-center pt-1">
-                        {socialProofMap[item.poolId].userName} picked &ldquo;{socialProofMap[item.poolId].option}&rdquo; &middot; {socialProofMap[item.poolId].pct}% of players agree &middot; {socialProofMap[item.poolId].total} {socialProofMap[item.poolId].total === 1 ? 'vote' : 'votes'}
+                        {socialProofMap[item.poolId].total} {socialProofMap[item.poolId].total === 1 ? 'player has' : 'players have'} already answered — your turn
                       </p>
                     )}
                   </div>
