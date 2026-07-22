@@ -103,8 +103,8 @@ export function FeedIdentityHero() {
     WebkitTextFillColor: "transparent",
   };
 
-  const stats: { Icon: typeof Flame; color: string; value: string; label: string }[] = [
-    { Icon: Flame, color: "#fb923c", value: String(streak), label: "day streak" },
+  const stats: { Icon: typeof Flame; color: string; value: string; label: string; href?: string }[] = [
+    { Icon: Flame, color: "#fb923c", value: String(streak), label: "daily play streak", href: "/play" },
   ];
   if (globalRank) stats.push({ Icon: Trophy, color: "#fbbf24", value: `#${globalRank}`, label: "leaderboard" });
   stats.push({ Icon: Library, color: "#a78bfa", value: tracked.toLocaleString(), label: "tracked" });
@@ -201,15 +201,30 @@ export function FeedIdentityHero() {
 
           {/* Stats row */}
           <div className="relative flex items-center justify-between">
-            {stats.map((s) => (
-              <div key={s.label} className="flex items-center gap-2">
-                <s.Icon size={18} color={s.color} {...(s.Icon === Flame ? { fill: s.color } : {})} />
-                <div className="leading-tight">
-                  <p className="text-[17px] font-bold text-white">{s.value}</p>
-                  <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</p>
+            {stats.map((s) => {
+              const inner = (
+                <>
+                  <s.Icon size={18} color={s.color} {...(s.Icon === Flame ? { fill: s.color } : {})} />
+                  <div className="leading-tight text-left">
+                    <p className="text-[17px] font-bold text-white">{s.value}</p>
+                    <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</p>
+                  </div>
+                </>
+              );
+              return s.href ? (
+                <button
+                  key={s.label}
+                  onClick={() => setLocation(s.href!)}
+                  className="flex items-center gap-2 active:scale-95 transition-transform"
+                >
+                  {inner}
+                </button>
+              ) : (
+                <div key={s.label} className="flex items-center gap-2">
+                  {inner}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
