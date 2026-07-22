@@ -5137,12 +5137,11 @@ export default function Feed() {
   // Split standaloneUGCPosts into two streams:
   // 1. feedPlaySlots — game_moments + user predictions (shown standalone, interleaved with play carousels)
   // 2. feedRatingCarousels — rate/review posts, grouped into cross-user batches of 4 for compact carousels
+  // TEMP HIDDEN: predictions ('predict'/'prediction') and 'binge_battle' are excluded from
+  // the feed for now — will return after rework. Re-enable by adding them back below.
   const feedPlaySlots: any[] = standaloneUGCPosts.filter((item: any) =>
     item.type === 'game_moment' ||
-    item.type === 'predict' ||
-    item.type === 'prediction' ||
     item.type === 'rank' ||
-    item.type === 'binge_battle' ||
     item.type === 'hot_take' ||
     item.type === 'question'
     // dna_compare intentionally excluded — injected directly in JSX at slot 2
@@ -5647,8 +5646,10 @@ export default function Feed() {
       return <DnaComparePostCard key={item.id} item={item} />;
     }
 
-    // Binge Battle posts — render dedicated card
+    // Binge Battle posts — TEMP HIDDEN from feed (feature paused; remove this return to restore)
     if (item?.type === 'binge_battle') {
+      return null;
+      // @ts-ignore — unreachable while hidden
       const raw = item._rawPost || item;
       const postUserId = raw.user?.id || item.user?.id;
       return (
@@ -5669,6 +5670,8 @@ export default function Feed() {
     }
 
     // Prediction posts — render as interactive voting card
+    // TEMP HIDDEN: 'predict' type paused; only polls render here for now. Restore by removing the predict guard.
+    if (item?.type === 'predict') return null;
     if ((item?.type === 'predict' || item?.type === 'poll') && (item._rawPost || item.options?.length > 0)) {
       const raw = item._rawPost || item;
       // Skip prediction_pools carousel polls — they live in the TriviaCarousel, not the feed
@@ -8606,6 +8609,9 @@ export default function Feed() {
                 // Predictions are rendered inline via renderPostBatchByIndex in the main feed.
                 // Only fall through to render here when the Predictions filter is active (renderPostBatchByIndex is off).
                 if ((post.type === 'prediction' || post.type === 'predict') && (post as any).question) {
+                  // TEMP HIDDEN: predictions paused — hidden even under the Predictions filter.
+                  return null;
+                  // @ts-ignore — unreachable while hidden
                   if (selectedFilter !== 'predictions') return null;
                   const predPost = post as any;
                   const predictionCardData = {
@@ -8641,6 +8647,8 @@ export default function Feed() {
                 }
 
                 if (post.type === 'binge_battle') {
+                  // TEMP HIDDEN: Binge Battle paused — remove this return to restore the card.
+                  return null;
                   return (
                     <div key={`binge-battle-${post.id}`} id={`post-${post.id}`}>
                       <BingeBattleFeedCard

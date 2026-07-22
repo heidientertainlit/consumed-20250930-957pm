@@ -35,15 +35,16 @@ const gameModes = [
   },
   // HIDDEN: Cast a Friend — temporarily hidden while redesigning
   // { id: "cast", label: "Cast a Friend", description: "Who would play who?", icon: UserPlus, color: "bg-teal-50 border-teal-100", iconColor: "text-teal-500", href: "/play/cast" },
-  {
-    id: "predictions",
-    label: "Predictions",
-    description: "Call it. Are you right?",
-    icon: Target,
-    color: "bg-rose-50 border-rose-100",
-    iconColor: "text-rose-500",
-    href: "/play/predictions",
-  },
+  // HIDDEN: Predictions — temporarily hidden, will return after rework. Re-enable by uncommenting.
+  // {
+  //   id: "predictions",
+  //   label: "Predictions",
+  //   description: "Call it. Are you right?",
+  //   icon: Target,
+  //   color: "bg-rose-50 border-rose-100",
+  //   iconColor: "text-rose-500",
+  //   href: "/play/predictions",
+  // },
   // HIDDEN: friend-vs-friend trivia Pools (Harry Potter / Friends) — soft-hidden, route still works. Re-enable by uncommenting.
   // {
   //   id: "pools",
@@ -54,15 +55,16 @@ const gameModes = [
   //   iconColor: "text-purple-600",
   //   href: "/play/pools",
   // },
-  {
-    id: "binge-battle",
-    label: "Binge Battle",
-    description: "Finish it first? Race to beat your friends.",
-    icon: Zap,
-    color: "bg-green-50 border-green-100",
-    iconColor: "text-green-600",
-    href: "/play/binge-battle",
-  },
+  // HIDDEN: Binge Battle — temporarily hidden, will return after rework. Re-enable by uncommenting.
+  // {
+  //   id: "binge-battle",
+  //   label: "Binge Battle",
+  //   description: "Finish it first? Race to beat your friends.",
+  //   icon: Zap,
+  //   color: "bg-green-50 border-green-100",
+  //   iconColor: "text-green-600",
+  //   href: "/play/binge-battle",
+  // },
 ];
 
 interface RankEntry {
