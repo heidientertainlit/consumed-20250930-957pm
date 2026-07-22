@@ -83,7 +83,9 @@ export default function DnaPage() {
   const itemCount = userStats ? 
     (userStats.moviesWatched || 0) + (userStats.tvShowsWatched || 0) + (userStats.booksRead || 0) + (userStats.gamesPlayed || 0) : 0;
   const hasSurvey = !!dnaProfile;
-  const dnaLevel = hasSurvey && itemCount >= 30 ? 2 : hasSurvey || itemCount >= 10 ? 1 : 0;
+  const MIN_COMPARE_ITEMS = 10;
+  const dnaLevel = hasSurvey && itemCount >= MIN_COMPARE_ITEMS ? 2 : hasSurvey || itemCount >= 10 ? 1 : 0;
+  const isEarlyMatch = itemCount < 30;
   const canCompare = hasSurvey && dnaLevel >= 2;
 
   const { data: friends = [], isLoading: isLoadingFriends } = useQuery({
@@ -149,7 +151,7 @@ export default function DnaPage() {
           avatar_url: u.avatar,
           itemCount: count,
           hasSurvey: friendHasSurvey,
-          isEligible: count >= 30 && friendHasSurvey,
+          isEligible: count >= 10 && friendHasSurvey,
         };
       });
     },
@@ -367,10 +369,10 @@ export default function DnaPage() {
   };
 
   const handleNudgeFriend = async (friend: any) => {
-    const itemsNeeded = Math.max(0, 30 - friend.itemCount);
+    const itemsNeeded = Math.max(0, 10 - friend.itemCount);
     const message = friend.hasSurvey 
       ? `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on Consumed, but you need to log ${itemsNeeded} more items first. Let's see how compatible our taste is! ${APP_BASE}`
-      : `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on Consumed! Complete the DNA survey and log 30 items so we can see how compatible our taste is! ${APP_BASE}`;
+      : `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on Consumed! Complete the DNA survey and log 10 items so we can see how compatible our taste is! ${APP_BASE}`;
     
     if (navigator.share) {
       try {
@@ -680,7 +682,7 @@ export default function DnaPage() {
                   <p className="text-gray-500 text-xs mb-3">
                     {!hasSurvey 
                       ? "Complete the DNA survey to unlock comparisons" 
-                      : `Log ${Math.max(0, 30 - itemCount)} more items to unlock`
+                      : `Log ${Math.max(0, 10 - itemCount)} more items to unlock`
                     }
                   </p>
                   {!hasSurvey && (
@@ -772,6 +774,11 @@ export default function DnaPage() {
                                 {comparisonResult.match_score}%
                               </div>
                               <p className="text-gray-600 text-xs mt-1">Entertainment DNA Match</p>
+                              {(isEarlyMatch || (selectedFriend?.itemCount ?? 30) < 30) && (
+                                <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-medium text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full">
+                                  <Clock size={10} /> Early match — based on limited history. Log more to sharpen it.
+                                </span>
+                              )}
                             </div>
 
                             <div className="flex items-center justify-center gap-4 mb-4">
@@ -901,7 +908,7 @@ export default function DnaPage() {
                       <p className="text-xs font-medium text-amber-800 mb-2">Almost ready to compare:</p>
                       <div className="space-y-2">
                         {almostEligibleFriends.slice(0, 3).map((friend: any) => {
-                          const itemsNeeded = Math.max(0, 30 - friend.itemCount);
+                          const itemsNeeded = Math.max(0, 10 - friend.itemCount);
                           return (
                             <div key={friend.id} className="flex items-center justify-between bg-white/80 rounded-lg p-2">
                               <div className="flex items-center gap-2">

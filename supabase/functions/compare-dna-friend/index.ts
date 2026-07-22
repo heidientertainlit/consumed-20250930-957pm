@@ -75,12 +75,12 @@ serve(async (req) => {
 
       // DNA Level system (2 levels):
       // Level 0: No survey completed
-      // Level 1: Survey completed, less than 30 items
-      // Level 2: Survey completed + 30 items = Friend comparisons unlocked
-      const currentLevel = !hasSurvey ? 0 : itemCount >= 30 ? 2 : 1;
+      // Level 1: Survey completed, less than 10 items
+      // Level 2: Survey completed + 10 items = Friend comparisons unlocked
+      const currentLevel = !hasSurvey ? 0 : itemCount >= 10 ? 2 : 1;
 
       if (currentLevel < 2) {
-        const itemsNeeded = Math.max(0, 30 - itemCount);
+        const itemsNeeded = Math.max(0, 10 - itemCount);
         return new Response(JSON.stringify({ 
           error: !hasSurvey 
             ? 'Complete the DNA survey first to unlock friend comparisons'
