@@ -229,8 +229,8 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-400">
-              <p className="text-sm">No pending requests</p>
+            <div className="text-center py-2 text-gray-400">
+              <p className="text-xs">No pending requests</p>
             </div>
           )
         ) : (

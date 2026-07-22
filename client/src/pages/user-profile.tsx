@@ -4177,15 +4177,14 @@ export default function UserProfile() {
                                   : `${Math.max(0, 10 - friend.itemCount)} more items needed`}
                             </p>
                           </div>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <div className="flex flex-col items-stretch gap-1 flex-shrink-0 w-24">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => setRecommendFriend(friend)}
-                              className="border-purple-300 hover:bg-purple-50 text-purple-700 text-xs h-8 px-2"
+                              className="border-purple-300 hover:bg-purple-50 text-purple-700 text-[11px] h-6 px-2.5 rounded-full"
                               data-testid={`button-recommend-${friend.id}`}
                             >
-                              <Sparkles size={10} className="mr-1" />
                               Recommend
                             </Button>
                             <Button
@@ -4197,7 +4196,7 @@ export default function UserProfile() {
                                 if (dnaSelectedFriendId !== friend.id) handleDnaSelectFriend(friend.id);
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                               }}
-                              className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-8 px-3 disabled:bg-gray-200 disabled:text-gray-400"
+                              className="bg-purple-600 hover:bg-purple-700 text-white text-[11px] h-6 px-2.5 rounded-full disabled:bg-gray-200 disabled:text-gray-400"
                               data-testid={`button-compare-${friend.id}`}
                             >
                               Compare
