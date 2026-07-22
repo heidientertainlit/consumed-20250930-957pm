@@ -5355,7 +5355,7 @@ export default function Feed() {
 
     // Wrap extra UGC in small stacks (decks) so rating cards are ALWAYS a carousel,
     // never a standalone card. Takes up to EXTRA_STACK_SIZE posts per injection.
-    const EXTRA_STACK_SIZE = 4;
+    const EXTRA_STACK_SIZE = 8;
     const takeExtraStack = () => {
       const posts = extraUGC.slice(extraIdx, extraIdx + EXTRA_STACK_SIZE).map((p: any, j: number) => ({
         ...p,
