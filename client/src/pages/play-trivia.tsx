@@ -6,13 +6,13 @@ import { Link, useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Star, Users, UserPlus, ChevronLeft, ChevronRight, ChevronDown, Trophy, CheckCircle, XCircle } from 'lucide-react';
+import { Brain, Star, Users, UserPlus, ChevronLeft, ChevronRight, ChevronDown, Trophy, CheckCircle, XCircle, Share2 } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { TriviaGameModal } from '@/components/trivia-game-modal';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { copyLink } from "@/lib/share";
+import { copyLink, shareTrivia } from "@/lib/share";
 import GameShareModal from "@/components/game-share-modal";
 import CelebrationModal from '@/components/celebration-modal';
 import { useFirstSessionHooks } from '@/components/first-session-hooks';
@@ -586,7 +586,20 @@ export default function PlayTriviaPage() {
                           )}
 
                           {/* Footer */}
-                          <div className="flex items-center justify-end mt-3 pt-2 border-t border-gray-100">
+                          <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const shareResult = await shareTrivia({ poolId: game.id, question: game.title });
+                                if (shareResult === 'copied') {
+                                  toast({ title: 'Link copied', description: 'Paste it into a text to challenge a friend.' });
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 text-[11px] font-medium text-purple-600 hover:text-purple-800 transition-colors"
+                            >
+                              <Share2 size={12} />
+                              Share
+                            </button>
                             <span className="text-green-600 text-xs font-medium">+{game.points || 10} pts</span>
                           </div>
                         </div>

@@ -7,7 +7,7 @@ import {
   Sparkles, Flame, Star, Brain, Trophy, ChevronRight, RefreshCw,
   Users, Film, Tv, BookOpen, Music, Mic, Gamepad2, ChevronLeft,
   Share2, Edit2, Dna, Zap, Clock, Heart, CheckCircle2, Lock,
-  TrendingUp, MessageCircle, UserPlus, Globe, BarChart3
+  TrendingUp, MessageCircle, UserPlus, Globe, BarChart3, Search
 } from 'lucide-react';
 import { getGameAlignment } from '@/lib/identity-feedback';
 
@@ -111,6 +111,7 @@ export default function IdentityPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [friendsLoaded, setFriendsLoaded] = useState(false);
+  const [friendSearch, setFriendSearch] = useState('');
   const [mediaLoaded, setMediaLoaded] = useState(false);
 
   // ── Load core data ──────────────────────────────────────────────────────────
@@ -144,12 +145,12 @@ export default function IdentityPage() {
     const uid = user.id;
     supabase.from('friendships').select('user_id, friend_id').eq('status', 'accepted')
       .or(`user_id.eq.${uid},friend_id.eq.${uid}`)
-      .limit(20)
       .then(async ({ data }) => {
         if (!data?.length) { setFriendsLoaded(true); return; }
-        const friendIds = data.map(f => f.user_id === uid ? f.friend_id : f.user_id);
+        const friendIds = [...new Set(data.map(f => f.user_id === uid ? f.friend_id : f.user_id))];
         const { data: users } = await supabase.from('users').select('id, user_name, avatar').in('id', friendIds);
-        setFriends((users || []) as Friend[]);
+        const sorted = ((users || []) as Friend[]).sort((a, b) => (a.user_name || '').localeCompare(b.user_name || ''));
+        setFriends(sorted);
         setFriendsLoaded(true);
       });
   }, [activeTab, friendsLoaded, user?.id]);
@@ -553,7 +554,7 @@ export default function IdentityPage() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[13px] font-bold text-gray-900">Compare DNA</h3>
-                <button className="text-[11px] font-medium text-purple-600 flex items-center gap-0.5">View all <ChevronRight size={12} /></button>
+                <button onClick={() => setLocation('/dna?tab=compare')} className="text-[11px] font-medium text-purple-600 flex items-center gap-0.5">View all <ChevronRight size={12} /></button>
               </div>
               {!friendsLoaded ? (
                 <div className="flex items-center justify-center py-8"><div className="w-6 h-6 rounded-full border-2 border-purple-400 border-t-transparent animate-spin" /></div>
@@ -567,25 +568,48 @@ export default function IdentityPage() {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {friends.map(friend => (
-                    <div key={friend.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#f8f5ff', border: '1px solid #e9d5ff' }}>
-                      <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0" style={{ background: 'rgba(124,58,237,0.2)' }}>
-                        {friend.avatar
-                          ? <img src={friend.avatar} alt={friend.user_name} className="w-full h-full object-cover" />
-                          : <div className="w-full h-full flex items-center justify-center text-purple-600 font-bold text-sm">{(friend.user_name || '?')[0].toUpperCase()}</div>
-                        }
+                <>
+                  {/* Search friends */}
+                  <div className="relative mb-2">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      value={friendSearch}
+                      onChange={(e) => setFriendSearch(e.target.value)}
+                      placeholder="Search friends…"
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl text-[12px] text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-purple-300"
+                      style={{ background: '#f8f5ff', border: '1px solid #e9d5ff' }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    {friends
+                      .filter(f => !friendSearch.trim() || (f.user_name || '').toLowerCase().includes(friendSearch.trim().toLowerCase()))
+                      .map(friend => (
+                      <div key={friend.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: '#f8f5ff', border: '1px solid #e9d5ff' }}>
+                        <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0" style={{ background: 'rgba(124,58,237,0.2)' }}>
+                          {friend.avatar
+                            ? <img src={friend.avatar} alt={friend.user_name} className="w-full h-full object-cover" />
+                            : <div className="w-full h-full flex items-center justify-center text-purple-600 font-bold text-sm">{(friend.user_name || '?')[0].toUpperCase()}</div>
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-bold text-gray-800">@{friend.user_name}</p>
+                          <p className="text-[10px] text-gray-500">Tap to compare DNA</p>
+                        </div>
+                        <button
+                          onClick={() => setLocation(`/dna?tab=compare&friend=${friend.id}`)}
+                          className="px-3 py-1.5 rounded-full text-[10px] font-bold"
+                          style={{ background: 'rgba(124,58,237,0.12)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.25)' }}
+                        >
+                          Compare
+                        </button>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-bold text-gray-800">@{friend.user_name}</p>
-                        <p className="text-[10px] text-gray-500">Tap to compare DNA</p>
-                      </div>
-                      <button className="px-3 py-1.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(124,58,237,0.12)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.25)' }}>
-                        Compare
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                    {friendSearch.trim() && friends.filter(f => (f.user_name || '').toLowerCase().includes(friendSearch.trim().toLowerCase())).length === 0 && (
+                      <p className="text-[11px] text-gray-500 text-center py-4">No friends match "{friendSearch.trim()}"</p>
+                    )}
+                  </div>
+                </>
               )}
             </div>
 

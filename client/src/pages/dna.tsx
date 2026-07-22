@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { APP_BASE } from "@/lib/share";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Film, Tv, Users, Share2, Dna, Sparkles, Clock, BarChart3, Send, Lock, Heart, X, RefreshCw, Check, DoorOpen, ChevronRight } from "lucide-react";
@@ -239,6 +239,23 @@ export default function DnaPage() {
       setIsComparing(false);
     }
   };
+
+  // Deep link: /dna?tab=compare&friend=<id> — open Compare tab and auto-start the comparison
+  const deepLinkHandled = useRef(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'compare' && activeTab !== 'compare' && !deepLinkHandled.current) {
+      setActiveTab('compare');
+    }
+    const friendId = params.get('friend');
+    if (!friendId || deepLinkHandled.current) return;
+    // Wait until friends are loaded and comparison is unlocked before auto-selecting
+    if (isLoadingFriends || !canCompare) return;
+    deepLinkHandled.current = true;
+    if (friends.some((f: any) => f.id === friendId && f.isEligible)) {
+      handleSelectFriend(friendId);
+    }
+  }, [isLoadingFriends, canCompare, friends]);
 
   const handleDownloadSummary = async () => {
     if (!summaryCardRef.current) return;
