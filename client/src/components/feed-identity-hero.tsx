@@ -104,7 +104,7 @@ export function FeedIdentityHero() {
   };
 
   const stats: { Icon: typeof Flame; color: string; value: string; label: string; href?: string }[] = [
-    { Icon: Flame, color: "#fb923c", value: String(streak), label: "daily play streak", href: "/play" },
+    { Icon: Flame, color: "#fb923c", value: String(streak), label: "play streak", href: "/play" },
   ];
   if (globalRank) stats.push({ Icon: Trophy, color: "#fbbf24", value: `#${globalRank}`, label: "leaderboard" });
   stats.push({ Icon: Library, color: "#a78bfa", value: tracked.toLocaleString(), label: "tracked" });
@@ -200,7 +200,7 @@ export function FeedIdentityHero() {
           <div className="relative my-5 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
 
           {/* Stats row */}
-          <div className="relative flex items-center justify-between">
+          <div className="relative grid grid-cols-3">
             {stats.map((s) => {
               const inner = (
                 <>
