@@ -1852,7 +1852,23 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
               ) : (
-                <div className={`absolute inset-0 bg-gradient-to-br ${posterFallbackBg[mediaTypeNorm || ''] || 'from-gray-700 to-gray-900'}`} />
+                <div className={`absolute inset-0 bg-gradient-to-br ${posterFallbackBg[mediaTypeNorm || ''] || 'from-gray-700 to-gray-900'} flex flex-col`}>
+                  {/* Oversized faint icon watermark */}
+                  <div className="absolute -right-3 -top-3 opacity-[0.14]">
+                    {mediaTypeNorm === 'podcast' && <Headphones size={80} className="text-white" />}
+                    {mediaTypeNorm === 'music' && <Music size={80} className="text-white" />}
+                    {mediaTypeNorm === 'book' && <Book size={80} className="text-white" />}
+                    {mediaTypeNorm === 'game' && <Gamepad2 size={80} className="text-white" />}
+                    {mediaTypeNorm === 'tv' && <Tv2 size={80} className="text-white" />}
+                    {(!mediaTypeNorm || mediaTypeNorm === 'movie' || !['podcast','music','book','game','tv'].includes(mediaTypeNorm)) && <Film size={80} className="text-white" />}
+                  </div>
+                  {/* Title lockup at bottom */}
+                  <div className="mt-auto p-2.5 relative z-[1]">
+                    <div className="w-5 h-0.5 rounded-full bg-white/50 mb-1.5" />
+                    <p className="text-white text-[12px] font-bold leading-tight line-clamp-4 drop-shadow">{post.mediaTitle}</p>
+                    {mediaCreator && <p className="text-white/60 text-[10px] font-medium leading-tight mt-0.5 line-clamp-1">{mediaCreator}</p>}
+                  </div>
+                </div>
               )}
 
               {/* Subtle bottom gradient */}

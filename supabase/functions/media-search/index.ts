@@ -596,6 +596,27 @@ serve(async (req) => {
         for (const b of gbBase) addBook(b);
         for (const b of olBase) addBook(b);
 
+        // Cover backfill — if a chosen edition has no cover art, borrow one from a
+        // sister edition (same title + author) in ANY of the raw result sets.
+        // Google's catalog has many cover-less ISBN-only entries; another edition of
+        // the same book almost always has real art.
+        const allRaw = [...gbIntitle, ...gbPrimary, ...olResults, ...gbBase, ...olBase];
+        const normCreator = (c: string) => (c || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+        for (const book of bookResults) {
+          if (book.poster_url) continue;
+          const nt = normTitle(book.title || '');
+          const nc = normCreator(book.creator || '');
+          const donor = allRaw.find((d: any) =>
+            d.poster_url &&
+            normTitle(d.title || '') === nt &&
+            (nc === '' || nc === 'unknown author' || normCreator(d.creator || '') === nc)
+          );
+          if (donor) {
+            book.poster_url = donor.poster_url;
+            console.log('Cover backfill: borrowed sister-edition cover for', book.title);
+          }
+        }
+
         console.log('Total book results after merge:', bookResults.length, '(GB intitle:', gbIntitle.length, 'GB primary:', gbPrimary.length, 'OL:', olResults.length, 'GB base:', gbBase.length, 'OL base:', olBase.length, ')');
       })());
     }
