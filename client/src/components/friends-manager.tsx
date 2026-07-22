@@ -61,23 +61,23 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       {/* Find Friends Section — moved to top */}
-      <div className="p-6 border-b border-gray-200 bg-gray-50">
-        <h4 className="text-base font-semibold mb-3 text-gray-900">Find Friends</h4>
+      <div className="p-4 border-b border-gray-200 bg-gray-50">
+        <h4 className="text-sm font-semibold mb-2 text-gray-900">Find Friends</h4>
 
-        <div className="relative mb-4">
+        <div className="relative">
           <Search className="absolute left-3 top-3 text-gray-400" size={18} />
           <input
             type="text"
             placeholder="Search by username or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent text-sm text-black placeholder-gray-500 bg-white"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent text-sm text-black placeholder-gray-500 bg-white"
             data-testid="input-search-friends"
           />
         </div>
 
         {searchQuery.length > 0 && (
-          <div className="space-y-3 max-h-64 overflow-y-auto">
+          <div className="space-y-3 max-h-64 overflow-y-auto mt-3">
             {searchQuery.length >= 3 ? (
               searchLoading ? (
                 <div className="text-center py-4 text-gray-500">Searching...</div>
@@ -128,24 +128,25 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
       </div>
 
       {/* Header with Invite Button */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center gap-3 mb-4">
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex items-center gap-3 mb-3">
           <Button
             onClick={handleInviteFriends}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-full shrink-0"
+            size="sm"
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 rounded-full shrink-0"
             data-testid="button-invite-friends"
           >
-            <Share2 size={16} className="mr-2" />
+            <Share2 size={14} className="mr-1.5" />
             Invite Friends
           </Button>
-          <p className="text-sm text-gray-500">Connect with other entertainment fans</p>
+          <p className="text-xs text-gray-500">Connect with other entertainment fans</p>
         </div>
 
         {/* Tabs */}
         <div className="flex gap-2">
           <button
             onClick={() => setActiveTab('requests')}
-            className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all text-sm ${
+            className={`flex-1 py-2 px-3 rounded-lg font-medium transition-all text-sm ${
               activeTab === 'requests'
                 ? 'bg-purple-50 text-purple-700 border border-purple-200'
                 : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-transparent'
@@ -163,7 +164,7 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
           </button>
           <button
             onClick={() => setActiveTab('friends')}
-            className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all text-sm ${
+            className={`flex-1 py-2 px-3 rounded-lg font-medium transition-all text-sm ${
               activeTab === 'friends'
                 ? 'bg-purple-50 text-purple-700 border border-purple-200'
                 : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-transparent'
@@ -183,7 +184,7 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
       </div>
 
       {/* Tab Content */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200">
         {activeTab === 'requests' ? (
           /* Pending Requests Content */
           pendingData?.requests && pendingData.requests.length > 0 ? (

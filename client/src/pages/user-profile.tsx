@@ -4125,6 +4125,8 @@ export default function UserProfile() {
         {/* Friends Manager - Only show on own profile */}
         {activeSection === 'friends' && isOwnProfile && user?.id && (
           <div ref={friendsRef} className="px-4 mb-8 space-y-4">
+            <FriendsManager userId={user.id} />
+
             {/* Compare DNA — full friends list with search */}
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between mb-3">
@@ -4175,20 +4177,7 @@ export default function UserProfile() {
                                   : `${Math.max(0, 10 - friend.itemCount)} more items needed`}
                             </p>
                           </div>
-                          {friend.isEligible ? (
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                setActiveSection('dna');
-                                setDnaActiveTab('compare');
-                                if (dnaSelectedFriendId !== friend.id) handleDnaSelectFriend(friend.id);
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                              }}
-                              className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-8 px-3"
-                            >
-                              Compare
-                            </Button>
-                          ) : (
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
                             <Button
                               variant="outline"
                               size="sm"
@@ -4199,7 +4188,21 @@ export default function UserProfile() {
                               <Sparkles size={10} className="mr-1" />
                               Recommend
                             </Button>
-                          )}
+                            <Button
+                              size="sm"
+                              disabled={!friend.isEligible}
+                              onClick={() => {
+                                setActiveSection('dna');
+                                setDnaActiveTab('compare');
+                                if (dnaSelectedFriendId !== friend.id) handleDnaSelectFriend(friend.id);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-8 px-3 disabled:bg-gray-200 disabled:text-gray-400"
+                              data-testid={`button-compare-${friend.id}`}
+                            >
+                              Compare
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     {friendCompareSearch.trim() && dnaCompareFriends.filter((f: any) => (f.user_name || '').toLowerCase().includes(friendCompareSearch.trim().toLowerCase())).length === 0 && (
@@ -4209,8 +4212,6 @@ export default function UserProfile() {
                 </>
               )}
             </div>
-            <FriendsManager userId={user.id} />
-
             {/* Recommend media to a friend */}
             <Dialog open={!!recommendFriend} onOpenChange={(open) => { if (!open) closeRecommendDialog(); }}>
               <DialogContent className="rounded-2xl !bg-white w-[calc(100vw-2rem)] max-w-md flex flex-col gap-3" style={{ backgroundColor: 'white', maxHeight: '80vh' }}>
