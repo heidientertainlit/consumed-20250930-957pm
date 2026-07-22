@@ -440,7 +440,8 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
             transform: 'translateX(-52px) rotate(-8deg) scale(0.88)',
             zIndex: 1, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
           }}>
-            <img src={unansweredItems[activeIdx - 1].image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${unansweredItems[activeIdx - 1].image_url})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(18px) brightness(0.75)', transform: 'scale(1.2)' }} />
+            <img src={unansweredItems[activeIdx - 1].image_url} alt="" style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
           </div>
         )}
 
@@ -451,7 +452,8 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
             transform: 'translateX(52px) rotate(8deg) scale(0.88)',
             zIndex: 2, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', pointerEvents: 'none',
           }}>
-            <img src={unansweredItems[activeIdx + 1].image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${unansweredItems[activeIdx + 1].image_url})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(18px) brightness(0.75)', transform: 'scale(1.2)' }} />
+            <img src={unansweredItems[activeIdx + 1].image_url} alt="" style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
           </div>
         )}
 
@@ -475,10 +477,11 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
             }
           }}
         >
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${activeItem.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(18px) brightness(0.75)', transform: 'scale(1.2)' }} />
           <img
             src={activeItem.image_url}
             alt={activeItem.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
           />
           {/* Gradient + title overlay */}
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.08) 55%, transparent 100%)' }} />
