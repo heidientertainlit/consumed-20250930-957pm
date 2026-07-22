@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
   Search, Loader2, Star, X, Sparkles,
-  Tv, Film, BookOpen, Music, Mic,
+  Tv, Film, BookOpen, Music, Mic, Youtube,
   Flame, Eye, BarChart3,
   Clock, Play, Check, Ban, Heart,
 } from "lucide-react";
@@ -32,6 +32,7 @@ const TYPE_PILLS: { value: string; label: string; Icon: typeof Tv }[] = [
   { value: "book", label: "Book", Icon: BookOpen },
   { value: "music", label: "Music", Icon: Music },
   { value: "podcast", label: "Podcast", Icon: Mic },
+  { value: "youtube", label: "YouTube", Icon: Youtube },
 ];
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
