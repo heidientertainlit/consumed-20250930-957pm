@@ -1913,6 +1913,16 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 </div>
               </div>
 
+              {/* Title + creator */}
+              {post.mediaTitle && (
+                <div className="mt-2 min-w-0">
+                  <p className="text-[14px] font-semibold text-violet-700 leading-snug">{post.mediaTitle}</p>
+                  {mediaCreator && (
+                    <p className="text-[12px] text-gray-500 leading-snug mt-0.5">by {mediaCreator}</p>
+                  )}
+                </div>
+              )}
+
               {/* Rating stars */}
               {hasRating && (
                 <div className="flex items-center gap-0.5 mt-1.5">
@@ -1927,16 +1937,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     );
                     return <Star key={s} size={16} className="text-gray-300" />;
                   })}
-                </div>
-              )}
-
-              {/* Title + creator */}
-              {post.mediaTitle && (
-                <div className="mt-2 min-w-0">
-                  <p className="text-[14px] font-semibold text-gray-900 leading-snug">{post.mediaTitle}</p>
-                  {mediaCreator && (
-                    <p className="text-[12px] text-gray-500 leading-snug mt-0.5">by {mediaCreator}</p>
-                  )}
                 </div>
               )}
 
