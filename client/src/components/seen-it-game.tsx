@@ -519,24 +519,25 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
             <Plus size={18} color="white" />
           </button>
 
-          {/* Rating stars overlay */}
-          {ratingItem === activeItem.id && (
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.75)', padding: '12px 16px', display: 'flex', justifyContent: 'center', gap: 8, pointerEvents: 'auto' }}>
-              {[1,2,3,4,5].map(star => (
-                <button key={star} onPointerDown={(e) => {
-                  e.stopPropagation();
-                  const newMap = { ...ratingMap, [activeItem.id]: star };
-                  setRatingMap(newMap);
-                  try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
-                  handleResponse(currentSet.id, activeItem, true);
-                }} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', pointerEvents: 'auto' }}>
-                  <Star size={28} className={star <= (ratingMap[activeItem.id] || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'} />
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Rating stars row — below the card */}
+      {ratingItem === activeItem.id && (
+        <div className="flex justify-center gap-2 px-4 pt-2">
+          {[1,2,3,4,5].map(star => (
+            <button key={star} onPointerDown={(e) => {
+              e.stopPropagation();
+              const newMap = { ...ratingMap, [activeItem.id]: star };
+              setRatingMap(newMap);
+              try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
+              handleResponse(currentSet.id, activeItem, true);
+            }} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer' }}>
+              <Star size={28} className={star <= (ratingMap[activeItem.id] || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Action buttons: Next | Seen It | Add to list | Rate it */}
       <div className="flex items-center justify-around px-4 py-3">
