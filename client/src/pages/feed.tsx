@@ -1916,7 +1916,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {/* Title + creator */}
               {post.mediaTitle && (
                 <div className="mt-2 min-w-0">
-                  <p className="text-[14px] font-semibold text-violet-700 leading-snug">{post.mediaTitle}</p>
+                  <p className="text-[14px] font-semibold text-gray-900 leading-snug">{post.mediaTitle}</p>
                   {mediaCreator && (
                     <p className="text-[12px] text-gray-500 leading-snug mt-0.5">by {mediaCreator}</p>
                   )}
@@ -1955,9 +1955,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 );
               })()}
 
-              {/* Review text — bold quote, under the reviewer block */}
+              {/* Review text — quote, under the reviewer block */}
               {hasContent && (
-                <p className="text-[15px] font-semibold text-gray-900 leading-snug mt-1.5">"{post.content}"</p>
+                <p className="text-[15px] font-normal text-gray-700 leading-snug mt-1.5">"{post.content}"</p>
               )}
 
               {/* Your own rating, once submitted */}
