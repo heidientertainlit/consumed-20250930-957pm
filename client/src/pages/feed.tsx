@@ -5339,6 +5339,73 @@ export default function Feed() {
     return { feedRatingCarousels: batches, promotedRatings: promoted };
   })();
 
+  // ── Everyone's Talking — the single media title with the most distinct people posting about it ──
+  const everyonesTalking = useMemo(() => {
+    // Flatten all UGC posts (including grouped ones) into one pool
+    const pool: any[] = [];
+    standaloneUGCPosts.forEach((item: any) => {
+      if (item.type === 'ugc_group') {
+        item.posts.forEach((p: any) => pool.push(p));
+      } else if (item.type !== 'game_moment' && item.type !== 'dna_compare') {
+        pool.push(item);
+      }
+    });
+
+    const groups = new Map<string, any>();
+    for (const p of pool) {
+      const title = p.mediaTitle || p.mediaItems?.[0]?.title;
+      if (!title) continue;
+      const key = (p.externalSource && p.externalId)
+        ? `${p.externalSource}:${p.externalId}`
+        : `title:${(p.mediaType || 'unknown').toLowerCase()}:${String(title).toLowerCase()}`;
+      let g = groups.get(key);
+      if (!g) {
+        g = { key, title, posts: [], users: new Map<string, any>() };
+        groups.set(key, g);
+      }
+      g.posts.push(p);
+      const uid = p.user?.id || p.user?.username || 'anon';
+      if (!g.users.has(uid)) g.users.set(uid, p.user);
+      // Prefer a post that has a real poster + external ids for navigation
+      if (!g.anchor && p.mediaImage?.startsWith?.('http') && p.externalSource && p.externalId) g.anchor = p;
+      if (!g.imgFallback && p.mediaImage?.startsWith?.('http')) g.imgFallback = p;
+    }
+
+    let best: any = null;
+    Array.from(groups.values()).forEach((g: any) => {
+      const takes = g.posts.filter((p: any) => p.content && p.content.trim());
+      if (g.users.size < 2 || takes.length < 1) return;
+      if (!best || g.users.size > best.users.size ||
+          (g.users.size === best.users.size && g.posts.length > best.posts.length)) {
+        best = { ...g, takes };
+      }
+    });
+    if (!best) return null;
+
+    const anchor = best.anchor || best.imgFallback || best.posts[0];
+    // Top takes: longest-engaged first — just take up to 3 distinct-user takes
+    const seenTakeUsers = new Set<string>();
+    const topTakes: any[] = [];
+    for (const t of best.takes) {
+      const uid = t.user?.id || t.user?.username || 'anon';
+      if (seenTakeUsers.has(uid)) continue;
+      seenTakeUsers.add(uid);
+      topTakes.push(t);
+      if (topTakes.length >= 3) break;
+    }
+
+    return {
+      title: best.title,
+      mediaImage: anchor.mediaImage,
+      mediaType: anchor.mediaType,
+      externalId: anchor.externalId,
+      externalSource: anchor.externalSource,
+      talkingCount: best.users.size,
+      users: Array.from(best.users.values()).slice(0, 4),
+      topTakes,
+    };
+  }, [standaloneUGCPosts]);
+
   // Interleave play slots with promoted standalone ratings and binge battle promo cards.
   // Pattern (1-indexed): every 3 play items inserts one promoted rating; positions 5 and 11
   // insert binge-battle promo cards (max 2). Play stays the dominant rhythm of the feed.
@@ -8148,6 +8215,88 @@ export default function Feed() {
               )}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'games' && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Gaming" />
+              )}
+
+              {/* ── Everyone's Talking — featured trending conversation, above the take carousel ── */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && everyonesTalking && (
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-2">
+                  <div className="flex gap-3 p-4">
+                    {/* Poster */}
+                    <div
+                      className="relative w-[104px] shrink-0 rounded-xl overflow-hidden bg-gray-900 cursor-pointer self-start"
+                      style={{ height: 156, boxShadow: '0 6px 20px rgba(0,0,0,0.22)' }}
+                      onClick={() => {
+                        if (everyonesTalking.externalSource && everyonesTalking.externalId) {
+                          const mt = everyonesTalking.mediaType?.toLowerCase() || 'movie';
+                          setLocation(`/media/${mt}/${everyonesTalking.externalSource}/${everyonesTalking.externalId}`);
+                        }
+                      }}
+                    >
+                      {everyonesTalking.mediaImage?.startsWith?.('http') ? (
+                        <img src={everyonesTalking.mediaImage} alt={everyonesTalking.title} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900 flex items-end p-2">
+                          <p className="text-white text-[12px] font-bold leading-tight line-clamp-4">{everyonesTalking.title}</p>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                    </div>
+
+                    {/* Right side: header, title, talking count, avatars */}
+                    <div className="flex-1 min-w-0 flex flex-col">
+                      <div className="flex items-center gap-1.5">
+                        <Flame size={15} className="text-orange-500 fill-orange-500 shrink-0" />
+                        <span className="text-[13px] font-semibold text-violet-600">Everyone's Talking</span>
+                      </div>
+                      <p className="text-[18px] font-bold text-gray-900 leading-tight mt-1.5">{everyonesTalking.title}</p>
+                      <p className="text-[13px] text-gray-500 font-medium mt-1">
+                        {everyonesTalking.talkingCount} {everyonesTalking.talkingCount === 1 ? 'person' : 'people'} talking
+                      </p>
+                      <div className="flex items-center gap-2 mt-2.5">
+                        <div className="flex -space-x-1.5">
+                          {everyonesTalking.users.slice(0, 4).map((u: any, i: number) => {
+                            const n = u?.displayName || u?.username || '?';
+                            return (
+                              <div
+                                key={i}
+                                className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold"
+                                style={{ background: `hsl(${(n.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
+                              >
+                                {n[0]?.toUpperCase()}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {everyonesTalking.talkingCount > 4 && (
+                          <span className="text-[12px] text-gray-400 font-medium">+{everyonesTalking.talkingCount - 4} more</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Top takes */}
+                  {everyonesTalking.topTakes.length > 0 && (
+                    <div className="border-t border-gray-100 divide-y divide-gray-50">
+                      {everyonesTalking.topTakes.map((t: any, i: number) => {
+                        const TakeIcon = i === 0 ? Flame : i === 1 ? Brain : MessageCircle;
+                        const iconCls = i === 0 ? 'text-orange-500' : i === 1 ? 'text-pink-500' : 'text-violet-500';
+                        const n = t.user?.displayName || t.user?.username || '?';
+                        return (
+                          <div key={t.id || i} className="flex items-center gap-2.5 px-4 py-2.5">
+                            <TakeIcon size={14} className={`${iconCls} shrink-0`} />
+                            <p className="text-[13px] text-gray-700 leading-snug flex-1 line-clamp-2">"{t.content}"</p>
+                            <div
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold shrink-0"
+                              style={{ background: `hsl(${(n.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
+                            >
+                              {n[0]?.toUpperCase()}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* — BLOCK 1 — */}
