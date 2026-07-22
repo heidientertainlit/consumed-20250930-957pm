@@ -28,16 +28,14 @@ interface QuickAddListSheetProps {
   elevated?: boolean;
 }
 
-type SheetStep = 'select-list' | 'rate' | 'recommend' | 'just-tracked' | 'trivia' | 'progress';
+type SheetStep = 'select-list' | 'rate' | 'recommend' | 'just-tracked' | 'similar' | 'progress';
 
-interface TriviaQuestion {
+interface SimilarRec {
   id: string;
   title: string;
-  options: string[];
-  correct_answer: string;
-  category: string;
-  points_reward: number;
-  media_title?: string;
+  imageUrl?: string;
+  type: string;
+  externalSource?: string;
 }
 
 export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeComposer, elevated }: QuickAddListSheetProps) {
@@ -50,15 +48,16 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   const [addedListName, setAddedListName] = useState<string>('');
   const [addedItemId, setAddedItemId] = useState<string | null>(null);
   const [inlineQuery, setInlineQuery] = useState('');
-  const [inlineSelectedMedia, setInlineSelectedMedia] = useState<{ title: string; mediaType: string; imageUrl?: string; externalId?: string; externalSource?: string; creator?: string } | null>(null);
+  const [inlineSelectedMedia, setInlineSelectedMedia] = useState<{ title: string; mediaType: string; imageUrl?: string; externalId?: string; externalSource?: string; creator?: string; seriesName?: string } | null>(null);
   const [showInlineResults, setShowInlineResults] = useState(false);
   const inlineSearchRef = useRef<HTMLInputElement>(null);
   const [selectedRating, setSelectedRating] = useState<number>(0);
   const [hoveredRating, setHoveredRating] = useState<number>(0);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
-  const [triviaQuestion, setTriviaQuestion] = useState<TriviaQuestion | null>(null);
-  const [triviaAnswer, setTriviaAnswer] = useState<string | null>(null);
-  const [triviaRevealed, setTriviaRevealed] = useState(false);
+  const [similarRecs, setSimilarRecs] = useState<SimilarRec[]>([]);
+  const [addedListId, setAddedListId] = useState<string | null>(null);
+  const [addingRecId, setAddingRecId] = useState<string | null>(null);
+  const [addedRecIds, setAddedRecIds] = useState<Set<string>>(new Set());
   const [progressMode, setProgressMode] = useState<'percent' | 'episode' | 'page' | 'minutes'>('percent');
   const [progressValue, setProgressValue] = useState<number>(0);
   const [progressTotal, setProgressTotal] = useState<number>(0);
@@ -124,9 +123,10 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     setAddedItemId(null);
     setSelectedRating(0);
     setHoveredRating(0);
-    setTriviaQuestion(null);
-    setTriviaAnswer(null);
-    setTriviaRevealed(false);
+    setSimilarRecs([]);
+    setAddedListId(null);
+    setAddingRecId(null);
+    setAddedRecIds(new Set());
     setProgressLibraryId(null);
     setIsLoadingProgress(false);
     setInlineQuery('');
@@ -142,43 +142,61 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     return lower.includes('want') || lower.includes('queue');
   };
 
-  const fetchTriviaForMediaType = async (mediaType: string) => {
+  const fetchSimilarRecs = async (mediaType: string, excludeExternalId?: string) => {
     try {
-      const categoryMap: Record<string, string[]> = {
-        'movie': ['Movies', 'movies', 'Movie', 'movie'],
-        'tv': ['TV', 'tv', 'Television', 'television'],
-        'music': ['Music', 'music'],
-        'book': ['Books', 'books', 'Book', 'book'],
-        'podcast': ['Podcasts', 'podcasts', 'Podcast', 'podcast'],
-      };
-      const categories = categoryMap[mediaType?.toLowerCase()] || [mediaType];
-      
-      const { data: triviaItems } = await supabase
-        .from('prediction_pools')
-        .select('id, title, options, correct_answer, category, points_reward, media_title')
-        .eq('type', 'trivia')
-        .eq('status', 'open')
-        .in('category', categories)
-        .limit(10);
-      
-      if (triviaItems && triviaItems.length > 0) {
-        const randomIndex = Math.floor(Math.random() * triviaItems.length);
-        const item = triviaItems[randomIndex];
-        setTriviaQuestion({
-          id: item.id,
-          title: item.title,
-          options: Array.isArray(item.options) ? item.options : JSON.parse(item.options || '[]'),
-          correct_answer: item.correct_answer || '',
-          category: item.category || mediaType,
-          points_reward: item.points_reward || 10,
-          media_title: item.media_title,
-        });
-        return true;
-      }
-      return false;
+      if (!session?.access_token) return false;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const response = await fetch(`${supabaseUrl}/functions/v1/get-recommendations`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 12 }),
+      });
+      if (!response.ok) return false;
+      const data = await response.json();
+      const recs = (data.recommendations || data.items || []).map((item: any) => ({
+        id: item.id || item.external_id,
+        title: item.title,
+        imageUrl: item.imageUrl || item.image_url || item.poster_url,
+        type: (item.type || item.media_type || 'movie').toLowerCase(),
+        externalSource: item.external_source || 'tmdb',
+      })) as SimilarRec[];
+      const typeLower = (mediaType || '').toLowerCase();
+      const sameType = recs.filter(r => r.title && r.id && r.id !== excludeExternalId && r.type === typeLower);
+      const pool = sameType.length >= 3 ? sameType : recs.filter(r => r.title && r.id && r.id !== excludeExternalId);
+      if (pool.length === 0) return false;
+      setSimilarRecs(pool.slice(0, 4));
+      return true;
     } catch (err) {
-      console.warn('Failed to fetch trivia:', err);
+      console.warn('Failed to fetch recommendations:', err);
       return false;
+    }
+  };
+
+  const handleAddRecToList = async (rec: SimilarRec) => {
+    if (!session?.access_token || !addedListId || addedListId.startsWith('__placeholder_')) return;
+    setAddingRecId(rec.id);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const response = await fetch(`${supabaseUrl}/functions/v1/add-media-to-list`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          list_id: addedListId,
+          media_title: rec.title,
+          media_type: rec.type,
+          media_creator: '',
+          media_image_url: rec.imageUrl || '',
+          media_external_id: rec.id,
+          media_external_source: rec.externalSource || 'tmdb',
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to add');
+      setAddedRecIds(prev => new Set(prev).add(rec.id));
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+    } catch (error: any) {
+      toast({ title: error.message || 'Failed to add', variant: 'destructive' });
+    } finally {
+      setAddingRecId(null);
     }
   };
 
@@ -297,10 +315,11 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       
       setAddedListName(listName);
+      setAddedListId(actualListId);
       if (isWantToList(listName) && effectiveMedia?.mediaType) {
-        const hasTrivia = await fetchTriviaForMediaType(effectiveMedia.mediaType);
-        if (hasTrivia) {
-          setStep('trivia');
+        const hasRecs = await fetchSimilarRecs(effectiveMedia.mediaType, effectiveMedia.externalId);
+        if (hasRecs) {
+          setStep('similar');
         } else {
           setStep('just-tracked');
         }
@@ -481,14 +500,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     );
   }
 
-  if (step === 'trivia' && triviaQuestion) {
-    const handleTriviaAnswer = (answer: string) => {
-      setTriviaAnswer(answer);
-      setTriviaRevealed(true);
-    };
-
-    const isCorrect = triviaAnswer === triviaQuestion.correct_answer;
-
+  if (step === 'similar' && similarRecs.length > 0) {
     return (
       <Drawer open={isOpen} onOpenChange={(open) => !open && handleClose()}>
         <DrawerContent className={`bg-white rounded-t-2xl ${zContent || ''}`} overlayClassName={zOverlay}>
@@ -501,81 +513,59 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
                 Added!
               </DrawerTitle>
             </div>
-            {media && (
+            {effectiveMedia && (
               <p className="text-sm text-gray-500">
-                <span className="font-medium text-gray-700">{media.title}</span> added to {addedListName}
+                <span className="font-medium text-gray-700">{effectiveMedia.title}</span> added to {addedListName}
               </p>
             )}
           </DrawerHeader>
-          
+
           <div className="px-4 py-4 space-y-4">
             <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4 border border-purple-100">
               <div className="flex items-center gap-2 mb-3">
-                <HelpCircle size={16} className="text-purple-500" />
-                <span className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Quick Trivia</span>
-                {triviaQuestion.media_title && (
-                  <span className="text-xs text-gray-500">- {triviaQuestion.media_title}</span>
-                )}
+                <Sparkles size={16} className="text-purple-500" />
+                <span className="text-xs font-semibold text-purple-600 uppercase tracking-wide">You might also like</span>
               </div>
-              
-              <p className="text-gray-900 font-semibold text-sm mb-3">{triviaQuestion.title}</p>
-              
+
               <div className="space-y-2">
-                {triviaQuestion.options.map((option, idx) => {
-                  const isSelected = triviaAnswer === option;
-                  const isCorrectOption = option === triviaQuestion.correct_answer;
-                  
-                  let buttonClass = 'w-full py-2.5 px-4 rounded-xl border text-sm font-medium text-left transition-all duration-200 ';
-                  
-                  if (triviaRevealed) {
-                    if (isCorrectOption) {
-                      buttonClass += 'bg-green-100 border-green-400 text-green-900';
-                    } else if (isSelected && !isCorrectOption) {
-                      buttonClass += 'bg-red-100 border-red-400 text-red-900';
-                    } else {
-                      buttonClass += 'bg-gray-50 border-gray-200 text-gray-400';
-                    }
-                  } else {
-                    buttonClass += 'bg-white border-gray-200 text-gray-900 hover:bg-purple-50 hover:border-purple-300';
-                  }
-                  
+                {similarRecs.map((rec) => {
+                  const isAdded = addedRecIds.has(rec.id);
+                  const isBusy = addingRecId === rec.id;
                   return (
-                    <button
-                      key={idx}
-                      className={buttonClass}
-                      onClick={() => !triviaRevealed && handleTriviaAnswer(option)}
-                      disabled={triviaRevealed}
-                    >
-                      {option}
-                      {triviaRevealed && isCorrectOption && <span className="ml-2">✓</span>}
-                    </button>
+                    <div key={rec.id} className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-2">
+                      {rec.imageUrl ? (
+                        <img src={rec.imageUrl} alt={rec.title} className="w-10 h-14 rounded-lg object-cover flex-shrink-0 bg-gray-100" />
+                      ) : (
+                        <div className="w-10 h-14 rounded-lg bg-gray-100 flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{rec.title}</p>
+                        <p className="text-[11px] text-gray-400 capitalize">{rec.type}</p>
+                      </div>
+                      <button
+                        onClick={() => !isAdded && !isBusy && handleAddRecToList(rec)}
+                        disabled={isAdded || isBusy}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${isAdded ? 'bg-green-100' : 'bg-purple-600'}`}
+                      >
+                        {isBusy ? (
+                          <Loader2 size={14} className="animate-spin text-white" />
+                        ) : isAdded ? (
+                          <Check size={14} className="text-green-600" />
+                        ) : (
+                          <Plus size={14} className="text-white" />
+                        )}
+                      </button>
+                    </div>
                   );
                 })}
               </div>
-              
-              {triviaRevealed && (
-                <div className={`mt-3 p-2 rounded-lg text-center text-sm font-medium ${
-                  isCorrect 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'bg-orange-100 text-orange-700'
-                }`}>
-                  {isCorrect 
-                    ? `Nice! +${triviaQuestion.points_reward} points` 
-                    : `The answer was: ${triviaQuestion.correct_answer}`
-                  }
-                </div>
-              )}
             </div>
 
             <button
               onClick={handleClose}
-              className={`w-full py-3 rounded-xl text-sm font-medium transition-colors ${
-                triviaRevealed 
-                  ? 'bg-purple-600 text-white hover:bg-purple-700' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className="w-full py-3 rounded-xl text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors"
             >
-              {triviaRevealed ? 'Done' : 'Skip'}
+              Done
             </button>
           </div>
         </DrawerContent>
