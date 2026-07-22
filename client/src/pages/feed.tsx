@@ -197,6 +197,174 @@ const normalizeMediaType = (type: string | undefined | null): string => {
   return 'movie';
 };
 
+// ── Everyone's Talking — featured trending conversation card ──
+// Poster left; take glimpses right of the poster (avatar left, text clamped).
+// Tapping a take expands it inline with a comment box — no popup.
+// Star row lets the user rate the featured title right on the card.
+function EveryonesTalkingCard({ data, currentUserId, session, onOpenMedia }: {
+  data: any;
+  currentUserId: string | null;
+  session: any;
+  onOpenMedia: () => void;
+}) {
+  const [expandedTakeId, setExpandedTakeId] = useState<string | null>(null);
+  const [commentText, setCommentText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [commentedIds, setCommentedIds] = useState<Set<string>>(new Set());
+  const [myRating, setMyRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [ratingSaved, setRatingSaved] = useState(false);
+
+  const avatarBg = (n: string) => `hsl(${(n.charCodeAt(0) * 47) % 360}, 50%, 48%)`;
+
+  const submitComment = async (postId: string) => {
+    if (!commentText.trim() || !currentUserId || !session) return;
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.functions.invoke('social-feed-comments', {
+        body: { action: 'add', postId, content: commentText.trim(), userId: currentUserId }
+      });
+      if (error) throw error;
+      setCommentText('');
+      setCommentedIds(prev => new Set(prev).add(postId));
+    } catch (err) {
+      console.error('Failed to add comment:', err);
+    }
+    setSubmitting(false);
+  };
+
+  const submitRating = async (rating: number) => {
+    if (!currentUserId || !session) return;
+    setMyRating(rating);
+    try {
+      await supabase.functions.invoke('rate-media', {
+        body: {
+          userId: currentUserId,
+          mediaExternalId: data.externalId || '',
+          mediaExternalSource: data.externalSource || 'tmdb',
+          mediaType: data.mediaType || 'movie',
+          mediaTitle: data.title,
+          imageUrl: data.mediaImage?.startsWith?.('http') ? data.mediaImage : '',
+          rating,
+        }
+      });
+      setRatingSaved(true);
+    } catch (err) {
+      console.error('Failed to rate:', err);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-2">
+      <div className="flex gap-3 p-4">
+        {/* Poster */}
+        <div
+          className={`relative w-[104px] shrink-0 rounded-xl overflow-hidden bg-gray-900 self-start ${data.externalSource && data.externalId ? 'cursor-pointer' : ''}`}
+          style={{ height: 156, boxShadow: '0 6px 20px rgba(0,0,0,0.22)' }}
+          onClick={onOpenMedia}
+        >
+          {data.mediaImage?.startsWith?.('http') ? (
+            <img src={data.mediaImage} alt={data.title} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900 flex items-end p-2">
+              <p className="text-white text-[12px] font-bold leading-tight line-clamp-4">{data.title}</p>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        </div>
+
+        {/* Right side */}
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="flex items-center gap-1.5">
+            <Flame size={15} className="text-orange-500 fill-orange-500 shrink-0" />
+            <span className="text-[13px] font-semibold text-violet-600">Everyone's Talking</span>
+          </div>
+          <p className="text-[17px] font-bold text-gray-900 leading-tight mt-1 truncate">{data.title}</p>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <p className="text-[12px] text-gray-500 font-medium">
+              {data.talkingCount} {data.talkingCount === 1 ? 'person' : 'people'} talking
+            </p>
+            <div className="flex -space-x-1">
+              {data.users.slice(0, 3).map((u: any, i: number) => {
+                const n = u?.displayName || u?.username || '?';
+                return (
+                  <div key={i} className="w-4 h-4 rounded-full border border-white flex items-center justify-center text-white text-[7px] font-bold" style={{ background: avatarBg(n) }}>
+                    {n[0]?.toUpperCase()}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Inline rating */}
+          <div className="flex items-center gap-1 mt-1.5" onMouseLeave={() => setHoverRating(0)}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button key={star} onClick={() => submitRating(star)} onMouseEnter={() => setHoverRating(star)} className="p-0.5">
+                <Star
+                  size={16}
+                  className={(hoverRating || myRating) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}
+                />
+              </button>
+            ))}
+            {ratingSaved && <span className="text-[11px] text-green-600 font-medium ml-1">Saved</span>}
+          </div>
+
+          {/* Take glimpses — avatar left, cut off, tap to expand + comment inline */}
+          {data.topTakes.length > 0 && (
+            <div className="mt-2 flex flex-col gap-1">
+              {data.topTakes.map((t: any, i: number) => {
+                const n = t.user?.displayName || t.user?.username || '?';
+                const takeId = t.id || `take-${i}`;
+                const isExpanded = expandedTakeId === takeId;
+                return (
+                  <div key={takeId} className={`rounded-lg ${isExpanded ? 'bg-violet-50' : 'bg-gray-50 active:bg-gray-100'} transition-colors`}>
+                    <button
+                      onClick={() => { setExpandedTakeId(isExpanded ? null : takeId); setCommentText(''); }}
+                      className="w-full flex items-start gap-1.5 text-left px-2 py-1.5"
+                    >
+                      <div className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[7px] font-bold shrink-0 mt-0.5" style={{ background: avatarBg(n) }}>
+                        {n[0]?.toUpperCase()}
+                      </div>
+                      <p className={`text-[12px] text-gray-700 leading-snug flex-1 ${isExpanded ? '' : 'line-clamp-2'}`}>"{t.content}"</p>
+                    </button>
+                    {isExpanded && (
+                      <div className="px-2 pb-2">
+                        <p className="text-[10px] text-gray-400 font-medium mb-1">{n}</p>
+                        {commentedIds.has(t.id) ? (
+                          <p className="text-[11px] text-green-600 font-medium flex items-center gap-1">
+                            <Check size={12} /> Comment added
+                          </p>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              value={commentText}
+                              onChange={(e) => setCommentText(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === 'Enter') submitComment(t.id); }}
+                              placeholder="Add your take..."
+                              className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-full border border-violet-200 bg-white focus:outline-none focus:border-violet-400"
+                            />
+                            <button
+                              onClick={() => submitComment(t.id)}
+                              disabled={submitting || !commentText.trim()}
+                              className="w-7 h-7 rounded-full bg-violet-600 disabled:bg-violet-300 flex items-center justify-center shrink-0"
+                            >
+                              <Send size={12} className="text-white" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number; session: any }): Promise<SocialPost[]> => {
   if (!session?.access_token) {
     throw new Error('No authentication token available');
@@ -4724,7 +4892,6 @@ export default function Feed() {
   const [highlightPostId, setHighlightPostId] = useState<string | null>(null);
   const [highlightCommentId, setHighlightCommentId] = useState<string | null>(null);
   const [whatsHappeningOpenPost, setWhatsHappeningOpenPost] = useState<any | null>(null);
-  const [talkingOpenTake, setTalkingOpenTake] = useState<any | null>(null);
   
   useEffect(() => {
     const urlParams = new URLSearchParams(searchString);
@@ -5352,24 +5519,37 @@ export default function Feed() {
       }
     });
 
+    // Each post's real media lives in mediaItems[0] for grouped posts — prefer it over
+    // top-level fields so takes never get attached to the wrong title.
+    const mediaOf = (p: any) => {
+      const mi = p.mediaItems?.[0];
+      return {
+        title: mi?.title || p.mediaTitle || '',
+        image: mi?.imageUrl || p.mediaImage || '',
+        type: mi?.mediaType || p.mediaType || '',
+        externalId: mi?.externalId || p.externalId || '',
+        externalSource: mi?.externalSource || p.externalSource || '',
+      };
+    };
+
     const groups = new Map<string, any>();
     for (const p of pool) {
-      const title = p.mediaTitle || p.mediaItems?.[0]?.title;
-      if (!title) continue;
-      const key = (p.externalSource && p.externalId)
-        ? `${p.externalSource}:${p.externalId}`
-        : `title:${(p.mediaType || 'unknown').toLowerCase()}:${String(title).toLowerCase()}`;
+      const m = mediaOf(p);
+      if (!m.title) continue;
+      const key = (m.externalSource && m.externalId)
+        ? `${m.externalSource}:${m.externalId}`
+        : `title:${(m.type || 'unknown').toLowerCase()}:${m.title.toLowerCase()}`;
       let g = groups.get(key);
       if (!g) {
-        g = { key, title, posts: [], users: new Map<string, any>() };
+        g = { key, title: m.title, posts: [], users: new Map<string, any>() };
         groups.set(key, g);
       }
-      g.posts.push(p);
+      g.posts.push({ ...p, _media: m });
       const uid = p.user?.id || p.user?.username || 'anon';
       if (!g.users.has(uid)) g.users.set(uid, p.user);
       // Prefer a post that has a real poster + external ids for navigation
-      if (!g.anchor && p.mediaImage?.startsWith?.('http') && p.externalSource && p.externalId) g.anchor = p;
-      if (!g.imgFallback && p.mediaImage?.startsWith?.('http')) g.imgFallback = p;
+      if (!g.anchor && m.image?.startsWith?.('http') && m.externalSource && m.externalId) g.anchor = { ...p, _media: m };
+      if (!g.imgFallback && m.image?.startsWith?.('http')) g.imgFallback = { ...p, _media: m };
     }
 
     let best: any = null;
@@ -5383,7 +5563,8 @@ export default function Feed() {
     });
     if (!best) return null;
 
-    const anchor = best.anchor || best.imgFallback || best.posts[0];
+    const anchorPost = best.anchor || best.imgFallback || best.posts[0];
+    const anchor = anchorPost._media;
     // Top takes: longest-engaged first — just take up to 3 distinct-user takes
     const seenTakeUsers = new Set<string>();
     const topTakes: any[] = [];
@@ -5397,8 +5578,8 @@ export default function Feed() {
 
     return {
       title: best.title,
-      mediaImage: anchor.mediaImage,
-      mediaType: anchor.mediaType,
+      mediaImage: anchor.image,
+      mediaType: anchor.type,
       externalId: anchor.externalId,
       externalSource: anchor.externalSource,
       talkingCount: best.users.size,
@@ -8220,85 +8401,17 @@ export default function Feed() {
 
               {/* ── Everyone's Talking — featured trending conversation, above the take carousel ── */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && everyonesTalking && (
-                <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-2">
-                  <div className="flex gap-3 p-4">
-                    {/* Poster */}
-                    <div
-                      className="relative w-[104px] shrink-0 rounded-xl overflow-hidden bg-gray-900 cursor-pointer self-start"
-                      style={{ height: 156, boxShadow: '0 6px 20px rgba(0,0,0,0.22)' }}
-                      onClick={() => {
-                        if (everyonesTalking.externalSource && everyonesTalking.externalId) {
-                          const mt = everyonesTalking.mediaType?.toLowerCase() || 'movie';
-                          setLocation(`/media/${mt}/${everyonesTalking.externalSource}/${everyonesTalking.externalId}`);
-                        }
-                      }}
-                    >
-                      {everyonesTalking.mediaImage?.startsWith?.('http') ? (
-                        <img src={everyonesTalking.mediaImage} alt={everyonesTalking.title} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                      ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900 flex items-end p-2">
-                          <p className="text-white text-[12px] font-bold leading-tight line-clamp-4">{everyonesTalking.title}</p>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                    </div>
-
-                    {/* Right side: header, title, talking count, take glimpses */}
-                    <div className="flex-1 min-w-0 flex flex-col">
-                      <div className="flex items-center gap-1.5">
-                        <Flame size={15} className="text-orange-500 fill-orange-500 shrink-0" />
-                        <span className="text-[13px] font-semibold text-violet-600">Everyone's Talking</span>
-                      </div>
-                      <p className="text-[17px] font-bold text-gray-900 leading-tight mt-1 truncate">{everyonesTalking.title}</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <p className="text-[12px] text-gray-500 font-medium">
-                          {everyonesTalking.talkingCount} {everyonesTalking.talkingCount === 1 ? 'person' : 'people'} talking
-                        </p>
-                        <div className="flex -space-x-1">
-                          {everyonesTalking.users.slice(0, 3).map((u: any, i: number) => {
-                            const n = u?.displayName || u?.username || '?';
-                            return (
-                              <div
-                                key={i}
-                                className="w-4 h-4 rounded-full border border-white flex items-center justify-center text-white text-[7px] font-bold"
-                                style={{ background: `hsl(${(n.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
-                              >
-                                {n[0]?.toUpperCase()}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Take glimpses — right of the poster, cut off, tap to read + comment */}
-                      {everyonesTalking.topTakes.length > 0 && (
-                        <div className="mt-2 flex flex-col gap-1">
-                          {everyonesTalking.topTakes.map((t: any, i: number) => {
-                            const TakeIcon = i === 0 ? Flame : i === 1 ? Brain : MessageCircle;
-                            const iconCls = i === 0 ? 'text-orange-500' : i === 1 ? 'text-pink-500' : 'text-violet-500';
-                            const n = t.user?.displayName || t.user?.username || '?';
-                            return (
-                              <button
-                                key={t.id || i}
-                                onClick={() => setTalkingOpenTake(t)}
-                                className="w-full flex items-start gap-1.5 text-left rounded-lg px-2 py-1.5 bg-gray-50 active:bg-gray-100 transition-colors"
-                              >
-                                <TakeIcon size={12} className={`${iconCls} shrink-0 mt-0.5`} />
-                                <p className="text-[12px] text-gray-700 leading-snug flex-1 line-clamp-2">"{t.content}"</p>
-                                <div
-                                  className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[7px] font-bold shrink-0 mt-0.5"
-                                  style={{ background: `hsl(${(n.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
-                                >
-                                  {n[0]?.toUpperCase()}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <EveryonesTalkingCard
+                  data={everyonesTalking}
+                  currentUserId={currentAppUserId}
+                  session={session}
+                  onOpenMedia={() => {
+                    if (everyonesTalking.externalSource && everyonesTalking.externalId) {
+                      const mt = everyonesTalking.mediaType?.toLowerCase() || 'movie';
+                      setLocation(`/media/${mt}/${everyonesTalking.externalSource}/${everyonesTalking.externalId}`);
+                    }
+                  }}
+                />
               )}
 
               {/* — BLOCK 1 — */}
@@ -10541,32 +10654,6 @@ export default function Feed() {
             )}
           </div>
         </div>
-      )}
-
-      {/* Everyone's Talking take detail sheet — opens full take with comments */}
-      {talkingOpenTake && (
-        <PostDetailSheet
-          isOpen={!!talkingOpenTake}
-          onClose={() => setTalkingOpenTake(null)}
-          post={(() => {
-            const mi = talkingOpenTake.mediaItems?.[0];
-            return {
-              id: talkingOpenTake.id,
-              userId: talkingOpenTake.userId || talkingOpenTake.user?.id || '',
-              username: talkingOpenTake.user?.username || '',
-              displayName: talkingOpenTake.user?.displayName,
-              avatar: talkingOpenTake.user?.avatar,
-              mediaTitle: talkingOpenTake.mediaTitle || mi?.title || '',
-              mediaType: talkingOpenTake.mediaType || mi?.mediaType || '',
-              mediaImage: talkingOpenTake.mediaImage || mi?.imageUrl || '',
-              mediaExternalId: talkingOpenTake.externalId || mi?.externalId || '',
-              mediaExternalSource: talkingOpenTake.externalSource || mi?.externalSource || '',
-              rating: talkingOpenTake.rating,
-              review: talkingOpenTake.content,
-              timestamp: talkingOpenTake.timestamp,
-            };
-          })()}
-        />
       )}
 
       {/* What's Happening post detail sheet */}
