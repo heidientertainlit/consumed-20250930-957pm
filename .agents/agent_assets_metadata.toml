@@ -1,5 +1,10 @@
 uploads = []
-generated = []
+
+[[generated]]
+id = "POpJMbBkoKgBH8Ro1LRem"
+uri = "file://artifacts/mockup-sandbox/public/images/death-by-lightning-poster.png"
+type = "image"
+title = "Moody period drama poster"
 
 [[outputs]]
 id = "ZiSC4-fLSv4-TaWXUeSzo"
