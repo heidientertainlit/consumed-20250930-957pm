@@ -89,6 +89,9 @@ function MediaCard({ item, onTrack, light }: { item: any; onTrack: () => void; o
         )}
         <span className={`text-[10px] ${light ? 'text-gray-500' : 'text-white/40'}`}>{typeLabel(item.type)}</span>
       </div>
+      {item.friend_label && (
+        <p className={`text-[10px] font-medium mt-0.5 truncate ${light ? 'text-purple-600' : 'text-purple-300'}`}>{item.friend_label}</p>
+      )}
     </div>
   );
 }
@@ -226,6 +229,7 @@ export default function FeedComposerBar({
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [recommendedItems, setRecommendedItems] = useState<any[]>([]);
   const [trendingItems, setTrendingItems] = useState<any[]>([]);
+  const [friendsConsumingItems, setFriendsConsumingItems] = useState<any[]>([]);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
@@ -441,6 +445,59 @@ export default function FeedComposerBar({
         );
       })
       .catch(() => {});
+
+    // Friends are consuming — recent items from friends' "Currently" lists
+    (async () => {
+      try {
+        const { data: friendships } = await supabase
+          .from('friendships')
+          .select('user_id, friend_id')
+          .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
+          .eq('status', 'accepted');
+        if (!friendships?.length) return;
+        const friendIds = [...new Set(friendships.map((f: any) =>
+          f.user_id === userId ? f.friend_id : f.user_id
+        ).filter((id: string) => id !== userId))];
+        if (!friendIds.length) return;
+
+        const [{ data: usersData }, { data: listsData }] = await Promise.all([
+          supabase.from('users').select('id, user_name').in('id', friendIds),
+          supabase.from('lists').select('id, user_id').in('user_id', friendIds).ilike('title', 'Currently%'),
+        ]);
+        if (!listsData?.length) return;
+        const nameMap: Record<string, string> = {};
+        usersData?.forEach((u: any) => { nameMap[u.id] = u.user_name || 'A friend'; });
+        const listToUser: Record<string, string> = {};
+        listsData.forEach((l: any) => { listToUser[l.id] = l.user_id; });
+
+        const { data: items } = await supabase
+          .from('list_items')
+          .select('title, media_type, image_url, external_id, external_source, creator, list_id, created_at')
+          .in('list_id', listsData.map((l: any) => l.id))
+          .not('image_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(25);
+        if (!items?.length) return;
+
+        const seen = new Set<string>();
+        setFriendsConsumingItems(
+          items
+            .filter((r: any) => r.image_url)
+            .filter((r: any) => {
+              const key = `${r.external_source}:${r.external_id}:${r.title}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            })
+            .slice(0, 15)
+            .map((r: any) => ({
+              title: r.title, type: r.media_type, image_url: r.image_url,
+              external_id: r.external_id, external_source: r.external_source, creator: r.creator,
+              friend_label: `@${nameMap[listToUser[r.list_id]] || 'friend'}`,
+            }))
+        );
+      } catch (_) {}
+    })();
   }, [showMediaSearch, session]);
 
   const closeMediaSearch = () => {
@@ -776,6 +833,22 @@ export default function FeedComposerBar({
                         {trendingItems.map((r, i) => (
                           <MediaCard key={i} item={r} light={pageMode}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source }); setIsQuickAddOpen(true); }}
+                            onRate={() => { selectMedia(r); }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {friendsConsumingItems.length > 0 && (
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between px-5 mb-3">
+                        <p className={`text-sm font-bold ${pageMode ? 'text-gray-900' : 'text-white'}`}>Friends Are Consuming</p>
+                      </div>
+                      <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                        {friendsConsumingItems.map((r, i) => (
+                          <MediaCard key={i} item={r} light={pageMode}
+                            onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
                             onRate={() => { selectMedia(r); }}
                           />
                         ))}
