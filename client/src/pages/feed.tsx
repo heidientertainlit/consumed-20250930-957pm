@@ -282,7 +282,7 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
           mediaItems: post.mediaItems.map((m: any) => {
             const src = m.externalSource || m.external_source || '';
             const eid = m.externalId || m.external_id || '';
-            if (src === 'googlebooks' && eid) {
+            if (src === 'googlebooks' && eid && !(m.imageUrl || m.image_url)) {
               return { ...m, imageUrl: `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`, image_url: `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1` };
             }
             if ((src === 'open_library' || src === 'openlibrary') && eid) {
@@ -3760,7 +3760,7 @@ function CurrentlyConsumingFeedCard({
   const media = (() => {
     const src = rawMedia.externalSource;
     const eid = rawMedia.externalId;
-    if (src === 'googlebooks' && eid) {
+    if (src === 'googlebooks' && eid && !rawMedia.imageUrl) {
       return { ...rawMedia, imageUrl: `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1` };
     }
     if ((src === 'open_library' || src === 'openlibrary') && eid) {
@@ -4995,8 +4995,8 @@ export default function Feed() {
         let mediaImg = media?.imageUrl || media?.image_url || media?.poster_url || (p as any).image_url || '';
         const src = media?.externalSource || media?.external_source || (p as any).media_external_source || 'tmdb';
         const eid = media?.externalId || media?.external_id || (p as any).media_external_id || (p as any).externalId;
-        if (src === 'googlebooks' && eid) mediaImg = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`;
-        else if (src === 'open_library' && eid) mediaImg = `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`;
+        if (src === 'googlebooks' && eid && !mediaImg) mediaImg = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`;
+        else if (src === 'open_library' && eid && !mediaImg) mediaImg = `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`;
 
         const userObj = p.user || p.creator;
         return {
