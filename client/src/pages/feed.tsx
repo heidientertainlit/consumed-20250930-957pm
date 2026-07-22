@@ -4375,13 +4375,18 @@ function TinderCardStack({ posts, renderCard, hidePeekCards }: {
       if (dx < -20) { swipedRef.current = true; navigateRef.current(-1); }
       else if (dx > 20) { swipedRef.current = true; navigateRef.current(1); }
     };
+    let mouseDragActive = false;
     const onMouseDown = (e: MouseEvent) => {
-      if ((e.target as HTMLElement).closest('button')) return;
+      if ((e.target as HTMLElement).closest('button, a, input')) { mouseDragActive = false; return; }
       swipeStartX.current = e.clientX;
       swipeStartY.current = e.clientY;
       swipedRef.current = false;
+      mouseDragActive = true;
     };
     const onMouseUp = (e: MouseEvent) => {
+      if (!mouseDragActive) return;
+      mouseDragActive = false;
+      if ((e.target as HTMLElement).closest('button, a, input')) return;
       const dx = e.clientX - swipeStartX.current;
       const dy = e.clientY - swipeStartY.current;
       if (Math.abs(dx) < Math.abs(dy)) return;
