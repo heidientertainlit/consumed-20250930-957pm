@@ -201,26 +201,28 @@ export function FeedIdentityHero() {
 
           {/* Stats row */}
           <div className="relative grid grid-cols-3">
-            {stats.map((s) => {
+            {stats.map((s, idx) => {
               const inner = (
-                <>
+                <div className="flex flex-col items-start text-left">
                   <div className="flex items-center gap-1.5">
-                    <s.Icon size={16} color={s.color} {...(s.Icon === Flame ? { fill: s.color } : {})} />
+                    <s.Icon size={15} color={s.color} {...(s.Icon === Flame ? { fill: s.color } : {})} />
                     <p className="text-[17px] font-bold text-white">{s.value}</p>
                   </div>
-                  <p className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</p>
-                </>
+                  <p className="text-[11px] mt-0.5 whitespace-nowrap" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</p>
+                </div>
               );
+              const borderStyle = idx > 0 ? { borderLeft: "1px solid rgba(255,255,255,0.08)" } : {};
               return s.href ? (
                 <button
                   key={s.label}
                   onClick={() => setLocation(s.href!)}
-                  className="flex flex-col items-center text-center active:scale-95 transition-transform"
+                  className="flex justify-center active:scale-95 transition-transform"
+                  style={borderStyle}
                 >
                   {inner}
                 </button>
               ) : (
-                <div key={s.label} className="flex flex-col items-center text-center">
+                <div key={s.label} className="flex justify-center" style={borderStyle}>
                   {inner}
                 </div>
               );
