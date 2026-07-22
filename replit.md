@@ -5,6 +5,7 @@ Consumed is a mobile-first platform designed to transform entertainment consumpt
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+- **No emojis in UI design.** Never use emojis as design elements anywhere in the app — use icons (lucide-react) instead. Only exception: user expressly asks for an emoji.
 - When user asks "give me the code to push to git", provide `git push origin main` command. User deploys from their own git repo.
 
 ### 📁 Reference Docs (detailed notes moved out of this file — always check here)

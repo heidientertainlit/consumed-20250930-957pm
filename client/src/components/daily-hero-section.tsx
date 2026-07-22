@@ -2064,19 +2064,10 @@ export function DailyHeroSection() {
               ? `You outpredicted ${beatenPct}% of players on this one.`
               : isWin ? 'Your read on this was spot on.' : null;
 
-            // Genre identity line — top genre from DNA profile
+            // Genre identity line — top genre from DNA profile (no emojis — design rule)
             const topGenre = dnaProfile?.favorite_genres?.[0] ?? null;
-            const genreEmoji = (g: string) => {
-              const l = g.toLowerCase();
-              if (l.includes('thriller') || l.includes('crime') || l.includes('horror')) return '🔪';
-              if (l.includes('reality')) return '❤️';
-              if (l.includes('comedy') || l.includes('sitcom')) return '😂';
-              if (l.includes('sci') || l.includes('fantasy')) return '🚀';
-              if (l.includes('doc')) return '🎥';
-              return '🎬';
-            };
             const genreLine = isWin && topGenre
-              ? `${genreEmoji(topGenre)} Your instincts are sharpest in ${topGenre}.`
+              ? `Your instincts are sharpest in ${topGenre}.`
               : null;
 
             return (
