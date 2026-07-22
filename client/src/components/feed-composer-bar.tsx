@@ -230,6 +230,7 @@ export default function FeedComposerBar({
   const [recommendedItems, setRecommendedItems] = useState<any[]>([]);
   const [trendingItems, setTrendingItems] = useState<any[]>([]);
   const [friendsConsumingItems, setFriendsConsumingItems] = useState<any[]>([]);
+  const [friendRecItems, setFriendRecItems] = useState<any[]>([]);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
@@ -494,6 +495,48 @@ export default function FeedComposerBar({
               title: r.title, type: r.media_type, image_url: r.image_url,
               external_id: r.external_id, external_source: r.external_source, creator: r.creator,
               friend_label: `@${nameMap[listToUser[r.list_id]] || 'friend'}`,
+            }))
+        );
+      } catch (_) {}
+    })();
+
+    // Recommended by Friends — recommendation notifications with media metadata
+    (async () => {
+      try {
+        const { data: recs } = await supabase
+          .from('notifications')
+          .select('metadata, triggered_by_user_id, created_at')
+          .eq('user_id', userId)
+          .eq('type', 'recommendation')
+          .not('metadata', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(25);
+        if (!recs?.length) return;
+
+        const senderIds = [...new Set(recs.map((r: any) => r.triggered_by_user_id).filter(Boolean))];
+        const nameMap: Record<string, string> = {};
+        if (senderIds.length) {
+          const { data: senders } = await supabase.from('users').select('id, user_name').in('id', senderIds);
+          senders?.forEach((u: any) => { nameMap[u.id] = u.user_name || 'A friend'; });
+        }
+
+        const seen = new Set<string>();
+        setFriendRecItems(
+          recs
+            .filter((r: any) => r.metadata?.image_url && r.metadata?.title)
+            .filter((r: any) => {
+              const m = r.metadata;
+              const key = `${m.external_source}:${m.external_id}:${m.title}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            })
+            .slice(0, 15)
+            .map((r: any) => ({
+              title: r.metadata.title, type: r.metadata.type, image_url: r.metadata.image_url,
+              external_id: r.metadata.external_id, external_source: r.metadata.external_source,
+              creator: r.metadata.creator,
+              friend_label: `@${nameMap[r.triggered_by_user_id] || 'friend'}`,
             }))
         );
       } catch (_) {}
@@ -871,6 +914,22 @@ export default function FeedComposerBar({
                       </div>
                       <div ref={recommendedScrollRef} className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                         {recommendedItems.map((r, i) => (
+                          <MediaCard key={i} item={r} light={pageMode}
+                            onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
+                            onRate={() => { selectMedia(r); }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {friendRecItems.length > 0 && (
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between px-5 mb-3">
+                        <p className={`text-sm font-bold ${pageMode ? 'text-gray-900' : 'text-white'}`}>Recommended by Friends</p>
+                      </div>
+                      <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                        {friendRecItems.map((r, i) => (
                           <MediaCard key={i} item={r} light={pageMode}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
                             onRate={() => { selectMedia(r); }}

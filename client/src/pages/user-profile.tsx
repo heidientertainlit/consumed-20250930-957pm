@@ -901,6 +901,14 @@ export default function UserProfile() {
         triggered_by_user_id: user.id,
         message: `${senderName} recommends "${media.title}"${media.type ? ` (${media.type})` : ''}${media.creator ? ` by ${media.creator}` : ''}`,
         read: false,
+        metadata: {
+          title: media.title,
+          type: media.type || null,
+          creator: media.creator || null,
+          image_url: media.poster_url || media.image || null,
+          external_id: media.external_id || null,
+          external_source: media.external_source || null,
+        },
       });
       if (error) throw error;
       toast({ title: "Recommendation sent!", description: `${recommendFriend.user_name} will see "${media.title}" in their notifications.` });
