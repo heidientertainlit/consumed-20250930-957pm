@@ -4724,6 +4724,7 @@ export default function Feed() {
   const [highlightPostId, setHighlightPostId] = useState<string | null>(null);
   const [highlightCommentId, setHighlightCommentId] = useState<string | null>(null);
   const [whatsHappeningOpenPost, setWhatsHappeningOpenPost] = useState<any | null>(null);
+  const [talkingOpenTake, setTalkingOpenTake] = useState<any | null>(null);
   
   useEffect(() => {
     const urlParams = new URLSearchParams(searchString);
@@ -8282,7 +8283,11 @@ export default function Feed() {
                         const iconCls = i === 0 ? 'text-orange-500' : i === 1 ? 'text-pink-500' : 'text-violet-500';
                         const n = t.user?.displayName || t.user?.username || '?';
                         return (
-                          <div key={t.id || i} className="flex items-center gap-2.5 px-4 py-2.5">
+                          <button
+                            key={t.id || i}
+                            onClick={() => setTalkingOpenTake(t)}
+                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left active:bg-gray-50 transition-colors"
+                          >
                             <TakeIcon size={14} className={`${iconCls} shrink-0`} />
                             <p className="text-[13px] text-gray-700 leading-snug flex-1 line-clamp-2">"{t.content}"</p>
                             <div
@@ -8291,7 +8296,8 @@ export default function Feed() {
                             >
                               {n[0]?.toUpperCase()}
                             </div>
-                          </div>
+                            <MessageCircle size={13} className="text-gray-300 shrink-0" />
+                          </button>
                         );
                       })}
                     </div>
@@ -10539,6 +10545,32 @@ export default function Feed() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Everyone's Talking take detail sheet — opens full take with comments */}
+      {talkingOpenTake && (
+        <PostDetailSheet
+          isOpen={!!talkingOpenTake}
+          onClose={() => setTalkingOpenTake(null)}
+          post={(() => {
+            const mi = talkingOpenTake.mediaItems?.[0];
+            return {
+              id: talkingOpenTake.id,
+              userId: talkingOpenTake.userId || talkingOpenTake.user?.id || '',
+              username: talkingOpenTake.user?.username || '',
+              displayName: talkingOpenTake.user?.displayName,
+              avatar: talkingOpenTake.user?.avatar,
+              mediaTitle: talkingOpenTake.mediaTitle || mi?.title || '',
+              mediaType: talkingOpenTake.mediaType || mi?.mediaType || '',
+              mediaImage: talkingOpenTake.mediaImage || mi?.imageUrl || '',
+              mediaExternalId: talkingOpenTake.externalId || mi?.externalId || '',
+              mediaExternalSource: talkingOpenTake.externalSource || mi?.externalSource || '',
+              rating: talkingOpenTake.rating,
+              review: talkingOpenTake.content,
+              timestamp: talkingOpenTake.timestamp,
+            };
+          })()}
+        />
       )}
 
       {/* What's Happening post detail sheet */}
