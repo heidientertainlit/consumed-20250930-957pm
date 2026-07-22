@@ -1798,9 +1798,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <div className="flex items-center flex-wrap gap-2 gap-y-1">
               <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />
               <span className="text-gray-900 font-semibold text-sm">See what everyone thinks</span>
-              {mediaTypeLabel && (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 shrink-0">{mediaTypeLabel}</span>
-              )}
             </div>
             {swipeProps?.navigate && swipeProps?.totalPosts && swipeProps.totalPosts > 1 && (
               <div className="flex items-center gap-1">
@@ -1874,6 +1871,20 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
               {/* Subtle bottom gradient */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
+              {/* Bottom-left: media type pill on poster */}
+              {mediaTypeLabel && (
+                <span className={`absolute bottom-2 left-2 z-10 text-[9px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm ${
+                  mediaTypeNorm === 'tv' ? 'bg-blue-500/80 text-white' :
+                  mediaTypeNorm === 'movie' ? 'bg-indigo-500/80 text-white' :
+                  mediaTypeNorm === 'book' ? 'bg-amber-500/80 text-white' :
+                  mediaTypeNorm === 'music' ? 'bg-pink-500/80 text-white' :
+                  mediaTypeNorm === 'podcast' ? 'bg-emerald-500/80 text-white' :
+                  mediaTypeNorm === 'game' ? 'bg-cyan-500/80 text-white' :
+                  mediaTypeNorm === 'youtube' ? 'bg-red-500/80 text-white' :
+                  'bg-gray-500/80 text-white'
+                }`}>{mediaTypeLabel}</span>
+              )}
 
               {/* Bottom-right: Add to list button on poster */}
               {onAddToList && (post.externalId || post.mediaTitle) && (
