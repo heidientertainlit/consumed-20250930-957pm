@@ -50,3 +50,10 @@ genre cells in exports (not an error). Re-run `backfill-genres` to catch new tit
 `external_id` is NOT globally unique across sources. Canonical genres are lowercase.
 openlibrary returns noisy "subjects" (e.g. "new york times bestseller") — a known,
 minority noise source.
+
+**Keeping the cache updated:** a pg_cron job (`nightly-genre-backfill`, 3:30am UTC)
+calls the `backfill-genres` edge fn nightly via `net.http_post` with the service-role
+key (same pattern as the other cron jobs in `cron.job`). The fn accepts either the
+service-role key or an admin user JWT. There is no admin UI button — it was removed
+in favor of the cron job. To trigger manually, run the same `net.http_post` SQL via
+the Management API, reusing the Bearer token from an existing cron.job command.

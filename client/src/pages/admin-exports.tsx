@@ -882,8 +882,6 @@ export default function AdminExportsPage() {
   const [pollCount, setPollCount] = useState<number | null>(null);
   const [roomCount, setRoomCount] = useState<number | null>(null);
   const [todaysPlayCount, setTodaysPlayCount] = useState<number | null>(null);
-  const [backfillLoading, setBackfillLoading] = useState(false);
-  const [backfillStatus, setBackfillStatus] = useState<string | null>(null);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["admin-profile-check", user?.id],
@@ -963,40 +961,6 @@ export default function AdminExportsPage() {
       setTodaysPlayCount(count);
     } finally {
       setTodaysPlayLoading(false);
-    }
-  };
-
-  const handleBackfillGenres = async () => {
-    setBackfillLoading(true);
-    setBackfillStatus("Starting…");
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) { setBackfillStatus("Not signed in"); return; }
-      let totalResolved = 0;
-      for (let i = 0; i < 20; i++) {
-        const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/backfill-genres`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ limit: 250 }),
-        });
-        const result = await resp.json();
-        if (!resp.ok) { setBackfillStatus(`Error: ${result.error || resp.status}`); return; }
-        totalResolved += (result.resolved_with_genres || 0) + (result.resolved_empty || 0);
-        if (!result.remaining || result.remaining <= 0) {
-          setBackfillStatus(`Done — ${totalResolved} titles resolved this run, nothing left to backfill.`);
-          return;
-        }
-        setBackfillStatus(`${totalResolved} resolved so far, ${result.remaining} remaining…`);
-      }
-      setBackfillStatus(`Paused after 20 batches (${totalResolved} resolved). Click again to continue.`);
-    } catch (e: any) {
-      setBackfillStatus(`Error: ${e.message}`);
-    } finally {
-      setBackfillLoading(false);
     }
   };
 
@@ -1190,32 +1154,6 @@ export default function AdminExportsPage() {
                 </button>
                 {todaysPlayCount !== null && (
                   <p className="text-xs text-green-400 mt-2">✓ Downloaded {todaysPlayCount} responses</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Genre Backfill utility */}
-          <div className="bg-gradient-to-br from-indigo-900/40 to-indigo-800/20 border border-indigo-700/40 rounded-2xl p-6">
-            <div className="flex items-start gap-5">
-              <div className="bg-indigo-900/50 rounded-xl p-3 flex-shrink-0">
-                <BarChart2 size={24} className="text-indigo-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-semibold text-white mb-1">Backfill Genre Cache</p>
-                <p className="text-sm text-gray-400 leading-snug mb-4">
-                  Resolves and caches genres for every tracked title and every play item's linked media. Run this so genre rooms (Horror, Mystery, Fantasy, etc.) can automatically pick up trivia and votes about matching titles. Safe to re-run anytime.
-                </p>
-                <button
-                  onClick={handleBackfillGenres}
-                  disabled={backfillLoading}
-                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-                >
-                  {backfillLoading ? <Loader2 size={14} className="animate-spin" /> : <BarChart2 size={14} />}
-                  {backfillLoading ? "Backfilling…" : "Run genre backfill"}
-                </button>
-                {backfillStatus && (
-                  <p className="text-xs text-indigo-300 mt-2">{backfillStatus}</p>
                 )}
               </div>
             </div>

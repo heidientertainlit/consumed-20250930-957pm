@@ -40,18 +40,22 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } },
     );
 
-    // ── Admin-only: this endpoint runs with service-role and triggers external
-    //    API work + DB writes, so it must never be publicly callable. ──────────
+    // ── Restricted: this endpoint runs with service-role and triggers external
+    //    API work + DB writes, so it must never be publicly callable.
+    //    Allowed callers: the pg_cron scheduler (service-role key) or an admin user JWT.
     const token = (req.headers.get('Authorization') ?? '').replace('Bearer ', '').trim();
     if (!token) return err('Missing authorization header', 401);
-    const { data: { user }, error: authErr } = await svc.auth.getUser(token);
-    if (authErr || !user) return err('Unauthorized', 401);
-    const { data: profile } = await svc
-      .from('users')
-      .select('is_admin')
-      .eq('id', user.id)
-      .maybeSingle();
-    if (!profile?.is_admin) return err('Forbidden: admin only', 403);
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    if (!(serviceKey && token === serviceKey)) {
+      const { data: { user }, error: authErr } = await svc.auth.getUser(token);
+      if (authErr || !user) return err('Unauthorized', 401);
+      const { data: profile } = await svc
+        .from('users')
+        .select('is_admin')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (!profile?.is_admin) return err('Forbidden: admin only', 403);
+    }
 
     let limit = 250;
     const bodyText = await req.text().catch(() => '');
