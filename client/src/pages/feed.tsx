@@ -202,13 +202,14 @@ const normalizeMediaType = (type: string | undefined | null): string => {
 // Top trending titles by distinct people talking. The hottest title is auto-expanded
 // showing its takes with an always-available comment box; other titles are compact
 // rows that expand on tap. Star row lets the user rate the expanded title inline.
-function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
+function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, single }: {
   groups: any[];
   currentUserId: string | null;
   session: any;
   onOpenMedia: (g: any) => void;
+  single?: boolean;
 }) {
-  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const [expandedKey, setExpandedKey] = useState<string | null>(single && groups[0] ? groups[0].key : null);
   const [activeTakeId, setActiveTakeId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -225,13 +226,16 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
   const [disagreeCounts, setDisagreeCounts] = useState<Record<string, number>>({});
   const [loadedKeys, setLoadedKeys] = useState<Set<string>>(new Set());
 
-  // Load disagree counts for ALL takes up-front so collapsed rows can show them
-  const reactionsLoadedRef = useRef(false);
+  // Load disagree counts for ALL takes up-front so collapsed rows can show them.
+  // Keyed on take ids + user so counts refetch if groups or the signed-in user change.
+  const reactionsKeyRef = useRef('');
   useEffect(() => {
-    if (reactionsLoadedRef.current || !groups?.length) return;
-    reactionsLoadedRef.current = true;
+    if (!groups?.length) return;
     const allIds = groups.flatMap((g: any) => g.topTakes.map((t: any) => t.id)).filter(Boolean);
     if (allIds.length === 0) return;
+    const loadKey = `${currentUserId || ''}:${allIds.join(',')}`;
+    if (reactionsKeyRef.current === loadKey) return;
+    reactionsKeyRef.current = loadKey;
     supabase
       .from('post_reactions')
       .select('social_post_id, reaction, user_id')
@@ -239,6 +243,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
       .then(({ data }) => {
         if (!data) return;
         const counts: Record<string, number> = {};
+        allIds.forEach((id: string) => { counts[id] = 0; });
         const mine: Record<string, 'up' | 'down'> = {};
         for (const r of data) {
           if (r.reaction === 'disagree') {
@@ -253,6 +258,15 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
         if (Object.keys(mine).length) setTakeReactions(prev => ({ ...mine, ...prev }));
       });
   }, [groups, currentUserId]);
+
+  // Single-conversation cards start expanded — load the thread immediately
+  const singleLoadedRef = useRef(false);
+  useEffect(() => {
+    if (single && groups[0] && !singleLoadedRef.current) {
+      singleLoadedRef.current = true;
+      loadThread(groups[0]);
+    }
+  }, [single, groups]);
 
   const loadThread = async (g: any) => {
     if (loadedKeys.has(g.key)) return;
@@ -428,8 +442,8 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-2 p-3 border border-violet-100">
       <div className="flex items-center gap-1.5 mb-1 px-1">
         <Flame size={15} className="text-orange-500 fill-orange-500 shrink-0" />
-        <span className="text-[13px] font-semibold text-violet-600">Popular Conversations</span>
-        <span className="text-[11px] text-gray-400 font-medium ml-auto">Trending now</span>
+        <span className="text-[13px] font-semibold text-violet-600">{single ? 'The Conversation' : 'Popular Conversations'}</span>
+        <span className="text-[11px] text-gray-400 font-medium ml-auto">{single ? 'Join in' : 'Trending now'}</span>
       </div>
 
       <div className="divide-y divide-gray-100">
@@ -5839,7 +5853,7 @@ export default function Feed() {
       .map((g: any) => ({ ...g, takes: g.posts.filter((p: any) => p.content && p.content.trim()) }))
       .filter((g: any) => g.users.size >= 2 && g.takes.length >= 1)
       .sort((a: any, b: any) => (b.users.size - a.users.size) || (b.posts.length - a.posts.length))
-      .slice(0, 5);
+      .slice(0, 8);
     if (qualified.length === 0) return null;
 
     return qualified.map((g: any) => {
@@ -5871,6 +5885,32 @@ export default function Feed() {
       };
     });
   }, [standaloneUGCPosts]);
+
+  // Single-conversation cards sprinkled deeper in the feed. Uses trending titles
+  // beyond the top-card digest (6th+); if there aren't any, reuses #2 onward so
+  // the deeper cards never duplicate the auto-featured top conversation.
+  const renderConvoSprinkle = (i: number) => {
+    if (!(selectedFilter === 'All' || selectedFilter === 'all') || selectedCategory || !everyonesTalking) return null;
+    const digest = everyonesTalking.slice(0, 5);
+    const list = everyonesTalking.length > 5 ? everyonesTalking.slice(5) : digest.slice(1);
+    const g = list[i];
+    if (!g) return null;
+    return (
+      <EveryonesTalkingCard
+        key={`convo-sprinkle-${g.key}`}
+        groups={[g]}
+        single
+        currentUserId={currentAppUserId}
+        session={session}
+        onOpenMedia={(gg: any) => {
+          if (gg.externalSource && gg.externalId) {
+            const mt = gg.mediaType?.toLowerCase() || 'movie';
+            setLocation(`/media/${mt}/${gg.externalSource}/${gg.externalId}`);
+          }
+        }}
+      />
+    );
+  };
 
   // Interleave play slots with promoted standalone ratings and binge battle promo cards.
   // Pattern (1-indexed): every 3 play items inserts one promoted rating; positions 5 and 11
@@ -8687,7 +8727,7 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && everyonesTalking && everyonesTalking.length > 0 && (
                 <EveryonesTalkingCard
                   key={everyonesTalking[0].key}
-                  groups={everyonesTalking}
+                  groups={everyonesTalking.slice(0, 5)}
                   currentUserId={currentAppUserId}
                   session={session}
                   onOpenMedia={(g: any) => {
@@ -8777,6 +8817,9 @@ export default function Feed() {
 
               {/* UGC slot 8 — after TV Polls */}
               {renderPostBatchByIndex(8)}
+
+              {/* Sprinkled single-conversation card #1 */}
+              {renderConvoSprinkle(0)}
 
               {/* DNA Moment #1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
@@ -8884,6 +8927,9 @@ export default function Feed() {
               {/* UGC slot 13 — after Movies trivia round 2 */}
               {renderPostBatchByIndex(13)}
 
+              {/* Sprinkled single-conversation card #2 */}
+              {renderConvoSprinkle(1)}
+
               {/* Seen It? — Movies (round 2) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
                 <SeenItGame mediaTypeFilter="movie" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
@@ -8945,6 +8991,9 @@ export default function Feed() {
 
               {/* UGC slot 16 — after Games trivia */}
               {renderPostBatchByIndex(16)}
+
+              {/* Sprinkled single-conversation card #3 */}
+              {renderConvoSprinkle(2)}
 
               {/* Movies Polls — round 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
