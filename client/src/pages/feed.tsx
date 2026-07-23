@@ -461,8 +461,8 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
               >
                 <div className="flex-1 min-w-0">
                   {/* Take is the headline */}
-                  {topGlimpse ? (
-                    <p className={`text-[13px] font-normal text-gray-700 leading-snug ${isOpen ? '' : 'line-clamp-2'}`}>
+                  {topGlimpse && !isOpen ? (
+                    <p className="text-[13px] font-normal text-gray-700 leading-snug line-clamp-2">
                       "{topGlimpse.content}"
                     </p>
                   ) : (
@@ -539,10 +539,8 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                                   </span>
                                 )}
                               </p>
-                              {hasText ? (
+                              {hasText && (
                                 <p className={`text-[12.5px] text-gray-800 leading-snug ${isActive ? '' : 'line-clamp-3'}`}>{t.content}</p>
-                              ) : (
-                                <p className="text-[12px] text-gray-500 italic leading-snug">No written take yet — reply and ask what they thought</p>
                               )}
                               {/* Action row: Agree · Disagree · Comment */}
                               <div className="flex items-center gap-4 mt-1.5">
