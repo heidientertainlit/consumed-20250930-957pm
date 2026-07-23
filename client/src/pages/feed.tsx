@@ -2437,31 +2437,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             );
           })()}
 
-          {/* ── Rate-back hook — only for rating-only posts (no commentary) ── */}
-          {!hasContent && hasRating && isOtherUser && session?.access_token && !ratingSubmitted && (
-            <div className="mx-4 mt-3 rounded-xl bg-violet-50/70 border border-violet-100 px-3 py-2" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-2 flex-wrap" onMouseLeave={() => setHoverRating(0)}>
-                <span className="text-[13px] font-medium text-gray-700">Your call:</span>
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map(star => {
-                    const displayVal = hoverRating;
-                    return (
-                      <div key={star} className="relative" style={{ width: 22, height: 22 }}>
-                        <Star size={22} className="absolute inset-0 text-gray-300" />
-                        <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
-                          <Star size={22} className="fill-yellow-400 text-yellow-400" />
-                        </div>
-                        <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
-                        <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
-                      </div>
-                    );
-                  })}
-                </div>
-                {hoverRating > 0 && <span className="text-[11px] text-gray-400">{hoverRating}/5</span>}
-              </div>
-            </div>
-          )}
-
           {/* ── Other ratings: slim avatar-stack line above actions ── */}
           {relatedRatings.length > 0 && (
             <div className="px-4 mt-3" onClick={(e) => e.stopPropagation()}>
