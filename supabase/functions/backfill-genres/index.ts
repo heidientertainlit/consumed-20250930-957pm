@@ -60,10 +60,11 @@ serve(async (req) => {
     }
 
     // ── Gather candidate titles from the three live media stores ──────────────
-    const [{ data: ratings }, { data: items }, { data: engagements }] = await Promise.all([
+    const [{ data: ratings }, { data: items }, { data: engagements }, { data: poolMedia }] = await Promise.all([
       svc.from('media_ratings').select('media_external_source, media_external_id, media_type'),
       svc.from('list_items').select('external_source, external_id, media_type, type'),
       svc.from('media_engagements').select('media_external_source, media_external_id, media_type'),
+      svc.from('prediction_pools').select('media_external_source, media_external_id, media_type').not('media_external_id', 'is', null),
     ]);
 
     const candidates = new Map<string, Candidate>();
@@ -76,6 +77,7 @@ serve(async (req) => {
     for (const r of ratings ?? []) add(r.media_external_source, r.media_external_id, r.media_type);
     for (const it of items ?? []) add(it.external_source, it.external_id, it.media_type || it.type);
     for (const e of engagements ?? []) add(e.media_external_source, e.media_external_id, e.media_type);
+    for (const p of poolMedia ?? []) add(p.media_external_source, p.media_external_id, p.media_type);
 
     // ── Drop the ones already cached ──────────────────────────────────────────
     const { data: cached } = await svc.from('media_genres').select('external_source, external_id');

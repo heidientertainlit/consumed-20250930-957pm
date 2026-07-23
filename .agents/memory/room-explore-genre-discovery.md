@@ -17,6 +17,13 @@ keyword is heavily tagged on kids/animation (Bluey, Kronk), so the cozy/Hallmark
 filled with cartoons. Explicit genres + exclusions + seed recommendations fixed it.
 media-search matches titles; passing "True Crime" as `q` yields unrelated shows.
 
+**Play tab uses the same philosophy:** room Play matches `prediction_pools` to genre
+rooms via an explicit per-`series_tag` config over `media_genres.canonical_genres`
+(anyOf/allOf/none — e.g. heartwarming = romance/family life/friendship MINUS all dark
+genres; rom-com = romance AND comedy). Tag match (partner_tag = series_tag, or
+show_tag/media_tags = room name/examples) is the primary layer; genre match is the
+second layer. Never add a random category fallback — empty state instead.
+
 **Caveat:** genre discovery can't fully isolate a niche vibe like "Hallmark" — TMDB's
 Romance/Drama genres are broad and its recommendation graph occasionally leaks off-tone
 titles (e.g. erotic romance tagged only Drama/Romance). The seed rail carries the

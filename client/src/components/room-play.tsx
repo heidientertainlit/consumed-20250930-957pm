@@ -9,6 +9,32 @@ const ACCENT = "#7c3aed";
 
 const norm = (s: any) => String(s || "").toLowerCase().trim();
 
+// Per-room genre definitions over canonical genres in the media_genres cache.
+// Mirrors the intent of the room-explore ROOM_CONFIG (explicit include/exclude,
+// never fuzzy keywords). `anyOf` = at least one must match, `allOf` = all must
+// match (rom-com = romance AND comedy), `none` = disqualifiers.
+// "Heartwarming" is a vibe, not a real genre — defined as romance/family/
+// friendship stories with all dark genres excluded.
+const ROOM_GENRE_CONFIG: Record<string, { anyOf?: string[]; allOf?: string[]; none?: string[] }> = {
+  "true-crime":      { anyOf: ["true crime"], none: ["animation"] },
+  "mystery":         { anyOf: ["mystery", "detective", "women sleuths"], none: ["animation"] },
+  "reality":         { anyOf: ["reality"] },
+  "horror":          { anyOf: ["horror"] },
+  "action-thriller": { anyOf: ["action", "thriller"], none: ["animation"] },
+  "fantasy":         { anyOf: ["fantasy"] },
+  "period-drama":    { anyOf: ["history", "historical"], none: ["animation"] },
+  "heartwarming":    { anyOf: ["romance", "family life", "friendship"], none: ["horror", "crime", "true crime", "thriller", "mystery", "science fiction", "animation", "war"] },
+  "rom-com":         { allOf: ["romance", "comedy"], none: ["animation", "horror"] },
+};
+
+function genresMatchRoom(genres: string[], cfg: { anyOf?: string[]; allOf?: string[]; none?: string[] }): boolean {
+  const set = new Set(genres.map(norm));
+  if (cfg.none && cfg.none.some((g) => set.has(g))) return false;
+  if (cfg.allOf) return cfg.allOf.every((g) => set.has(g));
+  if (cfg.anyOf) return cfg.anyOf.some((g) => set.has(g));
+  return false;
+}
+
 // One playable item = one prediction_pools row (first question for trivia packs).
 type PlayItem = {
   poolId: string;
@@ -87,14 +113,38 @@ export default function RoomPlay({ roomName, seriesTag, exampleTitles, logRoomEv
 
       const roomNameN = norm(roomName);
       const seriesN = norm(seriesTag);
-      const matches = (pools || []).filter((p: any) => {
+      const tagMatch = (p: any) => {
         const partner = norm(p.partner_tag);
         if (partner && (roomNameN.includes(partner) || seriesN === partner)) return true;
         const show = norm(p.show_tag);
         if (show && keywords.has(show)) return true;
         if (Array.isArray(p.media_tags) && p.media_tags.some((t: any) => keywords.has(norm(t)))) return true;
         return false;
-      });
+      };
+      let matches = (pools || []).filter(tagMatch);
+
+      // Second layer: genre matching for genre rooms. Pools linked to a media
+      // title whose cached canonical genres fit this room's genre definition.
+      const genreCfg = ROOM_GENRE_CONFIG[seriesN];
+      if (genreCfg) {
+        const matchedIds = new Set(matches.map((p: any) => p.id));
+        const withMedia = (pools || []).filter(
+          (p: any) => !matchedIds.has(p.id) && p.media_external_id && p.media_external_source,
+        );
+        if (withMedia.length > 0) {
+          const { data: genreRows } = await supabase
+            .from("media_genres")
+            .select("external_source, external_id, canonical_genres")
+            .in("external_id", [...new Set(withMedia.map((p: any) => p.media_external_id))]);
+          const genreMap: Record<string, string[]> = {};
+          for (const g of genreRows || []) genreMap[`${g.external_source}::${g.external_id}`] = g.canonical_genres || [];
+          const genreMatches = withMedia.filter((p: any) => {
+            const genres = genreMap[`${p.media_external_source}::${p.media_external_id}`];
+            return genres && genres.length > 0 && genresMatchRoom(genres, genreCfg);
+          });
+          matches = [...matches, ...genreMatches];
+        }
+      }
 
       // My existing answers (dedup + answered display)
       let myAnswers: any[] = [];
