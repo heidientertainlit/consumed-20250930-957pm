@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock, User, AtSign, Flame, Tv, Users } from "lucide-react";
-import loginArt from "@assets/Screenshot_2026-07-23_at_3.53.08_PM_1784843591090.png";
+import loginArt from "@assets/login-art-crop.png";
 import { SiApple, SiGoogle } from "react-icons/si";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -456,11 +456,17 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="relative w-full h-56 sm:h-72 md:h-80 overflow-hidden mt-10">
+      <div className="w-full mt-8 pb-4">
         <img
           src={loginArt}
           alt="People enjoying movies, books, music, and podcasts together"
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1100px] md:w-[1400px] max-w-none"
+          className="w-full max-w-md sm:max-w-lg mx-auto block h-auto"
+          style={{
+            WebkitMaskImage: "linear-gradient(to right, transparent, black 14%, black 86%, transparent), linear-gradient(to bottom, transparent, black 12%, black 100%)",
+            WebkitMaskComposite: "source-in",
+            maskImage: "linear-gradient(to right, transparent, black 14%, black 86%, transparent), linear-gradient(to bottom, transparent, black 12%, black 100%)",
+            maskComposite: "intersect",
+          }}
         />
       </div>
 
