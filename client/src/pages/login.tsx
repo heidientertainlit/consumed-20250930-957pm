@@ -323,7 +323,7 @@ export default function LoginPage() {
             })}
           </div>
           <p className="text-center text-sm text-purple-400 font-medium mt-3">
-            +4,238 more conversations
+            Hundreds more conversations
           </p>
         </div>
 
