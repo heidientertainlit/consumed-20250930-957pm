@@ -60,6 +60,14 @@ export default function LoginPage() {
       ? trendingData.items
       : FALLBACK_TRENDING;
 
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCarouselIndex((prev) => prev + 1);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     if (!loading && user) {
       if (justSignedUp) {
@@ -287,41 +295,50 @@ export default function LoginPage() {
           </h1>
         </div>
 
-        <div className="mb-6">
-          <div>
-            {trendingItems.map((item, i) => {
-              const style = TYPE_STYLES[item.type] ?? TYPE_STYLES.movie;
-              const Badge = style.badge;
-              const StatIcon = style.statIcon;
-              return (
-                <div key={item.title}>
-                  {i > 0 && <div className="border-t border-white/10 mx-1" />}
-                  <div className="flex items-center gap-3 py-2.5">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-14 h-11 object-cover rounded-lg flex-shrink-0"
-                      loading="lazy"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white leading-snug">{item.title}</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <StatIcon className="h-3 w-3 text-purple-400" />
-                        <p className="text-xs text-gray-400">{item.stat}</p>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 flex items-center gap-1 border border-white/15 rounded-full px-2 py-0.5">
-                      <Badge className="h-3 w-3 text-purple-300" />
-                      <span className="text-[10px] font-medium text-gray-300 capitalize">{item.type}</span>
-                    </div>
+        <div className="mb-5">
+          {(() => {
+            const item = trendingItems[carouselIndex % trendingItems.length];
+            const style = TYPE_STYLES[item.type] ?? TYPE_STYLES.movie;
+            const Badge = style.badge;
+            const StatIcon = style.statIcon;
+            return (
+              <div
+                key={item.title}
+                className="flex items-center gap-3 py-2 px-3 bg-white/[0.05] border border-white/10 rounded-2xl animate-in fade-in slide-in-from-right-4 duration-500"
+              >
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-14 h-11 object-cover rounded-lg flex-shrink-0"
+                  loading="lazy"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white leading-snug truncate">{item.title}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <StatIcon className="h-3 w-3 text-purple-400 flex-shrink-0" />
+                    <p className="text-xs text-gray-400 truncate">{item.stat}</p>
                   </div>
                 </div>
-              );
-            })}
+                <div className="flex-shrink-0 flex items-center gap-1 border border-white/15 rounded-full px-2 py-0.5">
+                  <Badge className="h-3 w-3 text-purple-300" />
+                  <span className="text-[10px] font-medium text-gray-300 capitalize">{item.type}</span>
+                </div>
+              </div>
+            );
+          })()}
+          <div className="flex items-center justify-center gap-3 mt-2.5">
+            <div className="flex items-center gap-1.5">
+              {trendingItems.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i === carouselIndex % trendingItems.length ? "w-4 bg-purple-400" : "w-1.5 bg-white/20"
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="text-xs text-purple-400 font-medium">439 more conversations</p>
           </div>
-          <p className="text-center text-sm text-purple-400 font-medium mt-3">
-            439 more conversations
-          </p>
         </div>
 
         <div className="bg-white rounded-3xl p-8 shadow-2xl">
