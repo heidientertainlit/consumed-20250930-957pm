@@ -462,11 +462,11 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                 <div className="flex-1 min-w-0">
                   {/* Take is the headline */}
                   {topGlimpse ? (
-                    <p className={`text-[13.5px] font-semibold text-gray-900 leading-snug ${isOpen ? '' : 'line-clamp-2'}`}>
+                    <p className={`text-[13px] font-normal text-gray-700 leading-snug ${isOpen ? '' : 'line-clamp-2'}`}>
                       "{topGlimpse.content}"
                     </p>
                   ) : (
-                    <p className="text-[13.5px] font-semibold text-gray-900 leading-snug">{g.title}</p>
+                    <p className="text-[13px] font-medium text-gray-800 leading-snug">{g.title}</p>
                   )}
                   {/* Media context line under the take */}
                   <div className="flex items-center gap-1.5 mt-1">
