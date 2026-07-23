@@ -5,7 +5,42 @@ import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Mail, Lock, User, AtSign, Flame, Tv } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, AtSign, Flame, Tv, Zap, Headphones, BookOpen, BarChart3, TrendingUp, ChevronRight } from "lucide-react";
+
+const TRENDING_ITEMS = [
+  {
+    title: "Superman",
+    image: "https://image.tmdb.org/t/p/w300/ldyfo0BKmz5rWtJJKCvwaNS4cJT.jpg",
+    badge: Flame,
+    badgeBg: "bg-orange-500",
+    stat: "2.3k reactions",
+    statIcon: BarChart3,
+  },
+  {
+    title: "The Bear",
+    image: "https://image.tmdb.org/t/p/w300/eKfVzzEazSIjJMrw9ADa2x8ksLz.jpg",
+    badge: Tv,
+    badgeBg: "bg-purple-600",
+    stat: "Trending",
+    statIcon: TrendingUp,
+  },
+  {
+    title: "Lorde",
+    image: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/72/3c/07/723c07a7-4ff6-b052-927d-6997fff13676/25UMGIM60545.rgb.jpg/300x300bb.jpg",
+    badge: Headphones,
+    badgeBg: "bg-purple-600",
+    stat: "1.3k reactions",
+    statIcon: BarChart3,
+  },
+  {
+    title: "Sunrise on the Reaping",
+    image: "https://books.google.com/books/content?id=_vIMEQAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
+    badge: BookOpen,
+    badgeBg: "bg-purple-600",
+    stat: "897 reactions",
+    statIcon: BarChart3,
+  },
+];
 import { SiApple, SiGoogle } from "react-icons/si";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -259,27 +294,45 @@ export default function LoginPage() {
         </div>
 
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3 px-1">
-            <Flame className="h-4 w-4 text-purple-400" />
-            <p className="text-sm font-semibold text-gray-200">Trending now</p>
+          <div className="flex items-center gap-2 mb-4 px-1">
+            <Zap className="h-4 w-4 text-purple-400" />
+            <p className="text-base font-semibold text-white">Trending now</p>
           </div>
-          <div className="space-y-2.5">
-            <div className="bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3">
-              <div className="flex items-center gap-2 mb-0.5">
-                <Flame className="h-4 w-4 text-orange-400 flex-shrink-0" />
-                <p className="text-sm font-semibold text-white">Superman</p>
-              </div>
-              <p className="text-sm text-gray-300 italic">"I did NOT see that ending coming."</p>
-              <p className="text-xs text-purple-300 font-medium mt-1">2.3k reactions</p>
-            </div>
-            <div className="bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3">
-              <div className="flex items-center gap-2 mb-0.5">
-                <Tv className="h-4 w-4 text-purple-400 flex-shrink-0" />
-                <p className="text-sm font-semibold text-white">The Bear</p>
-              </div>
-              <p className="text-sm text-gray-300">Sydney's decision has fans divided.</p>
-            </div>
+          <div>
+            {TRENDING_ITEMS.map((item, i) => {
+              const Badge = item.badge;
+              const StatIcon = item.statIcon;
+              return (
+                <div key={item.title}>
+                  {i > 0 && <div className="border-t border-white/10 mx-1" />}
+                  <div className="flex items-center gap-4 py-3">
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-20 h-16 object-cover rounded-xl"
+                        loading="lazy"
+                      />
+                      <div className={`absolute -top-1.5 -left-1.5 ${item.badgeBg} rounded-lg p-1`}>
+                        <Badge className="h-3 w-3 text-white" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-semibold text-white leading-snug">{item.title}</p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <StatIcon className="h-3.5 w-3.5 text-purple-400" />
+                        <p className="text-sm text-gray-400">{item.stat}</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                  </div>
+                </div>
+              );
+            })}
           </div>
+          <p className="text-center text-sm text-purple-400 font-medium mt-3">
+            +4,238 more conversations
+          </p>
         </div>
 
         <div className="bg-white rounded-3xl p-8 shadow-2xl">
