@@ -7,33 +7,21 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock, User, AtSign, Flame, Tv, Zap, Headphones, BookOpen, BarChart3, TrendingUp, ChevronRight } from "lucide-react";
 
-const TRENDING_ITEMS = [
-  {
-    title: "The Odyssey",
-    image: "https://image.tmdb.org/t/p/w300/5rhTDKUhPYvpdQIijFIs5VoWsON.jpg",
-    badge: Flame,
-    badgeBg: "bg-orange-500",
-    stat: "#1 movie on IMDb",
-    statIcon: TrendingUp,
-  },
-  {
-    title: "A Knight of the Seven Kingdoms",
-    image: "https://image.tmdb.org/t/p/w300/k8yARbD9iYn2nRX2HvsopfKDN2r.jpg",
-    badge: Tv,
-    badgeBg: "bg-purple-600",
-    stat: "Trending on IMDb",
-    statIcon: TrendingUp,
-  },
-  {
-    title: "Stolen in Death",
-    image: "https://books.google.com/books/content?id=ECFYEQAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
-    badge: BookOpen,
-    badgeBg: "bg-purple-600",
-    stat: "NYT #1 bestseller",
-    statIcon: BarChart3,
-  },
+const TYPE_STYLES: Record<string, { badge: typeof Flame; badgeBg: string; statIcon: typeof Flame }> = {
+  movie: { badge: Flame, badgeBg: "bg-orange-500", statIcon: TrendingUp },
+  tv: { badge: Tv, badgeBg: "bg-purple-600", statIcon: TrendingUp },
+  book: { badge: BookOpen, badgeBg: "bg-purple-600", statIcon: BarChart3 },
+  podcast: { badge: Headphones, badgeBg: "bg-purple-600", statIcon: BarChart3 },
+};
+
+const FALLBACK_TRENDING = [
+  { title: "The Odyssey", image: "https://image.tmdb.org/t/p/w300/5rhTDKUhPYvpdQIijFIs5VoWsON.jpg", type: "movie", stat: "#1 trending movie" },
+  { title: "A Knight of the Seven Kingdoms", image: "https://image.tmdb.org/t/p/w300/k8yARbD9iYn2nRX2HvsopfKDN2r.jpg", type: "tv", stat: "#1 trending show" },
+  { title: "Stolen in Death", image: "https://books.google.com/books/content?id=ECFYEQAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api", type: "book", stat: "#1 bestselling book" },
+  { title: "The Daily", image: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts221/v4/ab/64/66/ab6466a9-9a7d-e20e-7a3d-bc5be37d29ce/mza_15084852813176276273.jpg/300x300bb.png", type: "podcast", stat: "#1 podcast" },
 ];
 import { SiApple, SiGoogle } from "react-icons/si";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
@@ -54,6 +42,23 @@ export default function LoginPage() {
   const { user, session, loading, signIn, signUp, resetPassword } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  const { data: trendingData } = useQuery({
+    queryKey: ["trending-content"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("trending-content");
+      if (error) throw error;
+      return data as { items: { title: string; image: string; type: string; stat: string }[] };
+    },
+    staleTime: 60 * 60 * 1000,
+    retry: 1,
+  });
+  const trendingItems =
+    trendingData?.items &&
+    trendingData.items.length >= 4 &&
+    trendingData.items.some((i) => i.type === "podcast")
+      ? trendingData.items
+      : FALLBACK_TRENDING;
 
   useEffect(() => {
     if (!loading && user) {
@@ -280,9 +285,6 @@ export default function LoginPage() {
           <h1 className="text-white text-3xl font-serif mb-2 leading-tight">
             Entertainment is better, shared.
           </h1>
-          <p className="text-purple-300 text-sm font-medium">
-            See what everyone's consuming.
-          </p>
         </div>
 
         <div className="mb-6">
@@ -291,9 +293,10 @@ export default function LoginPage() {
             <p className="text-base font-semibold text-white">See what everyone's consuming</p>
           </div>
           <div>
-            {TRENDING_ITEMS.map((item, i) => {
-              const Badge = item.badge;
-              const StatIcon = item.statIcon;
+            {trendingItems.map((item, i) => {
+              const style = TYPE_STYLES[item.type] ?? TYPE_STYLES.movie;
+              const Badge = style.badge;
+              const StatIcon = style.statIcon;
               return (
                 <div key={item.title}>
                   {i > 0 && <div className="border-t border-white/10 mx-1" />}
@@ -305,7 +308,7 @@ export default function LoginPage() {
                         className="w-14 h-11 object-cover rounded-lg"
                         loading="lazy"
                       />
-                      <div className={`absolute -top-1 -left-1 ${item.badgeBg} rounded-md p-0.5`}>
+                      <div className={`absolute -top-1 -left-1 ${style.badgeBg} rounded-md p-0.5`}>
                         <Badge className="h-2.5 w-2.5 text-white" />
                       </div>
                     </div>
@@ -323,7 +326,7 @@ export default function LoginPage() {
             })}
           </div>
           <p className="text-center text-sm text-purple-400 font-medium mt-3">
-            Hundreds more conversations
+            439 more conversations
           </p>
         </div>
 
