@@ -296,36 +296,41 @@ export default function LoginPage() {
         </div>
 
         <div className="mb-5">
-          {(() => {
-            const item = trendingItems[carouselIndex % trendingItems.length];
-            const style = TYPE_STYLES[item.type] ?? TYPE_STYLES.movie;
-            const Badge = style.badge;
-            const StatIcon = style.statIcon;
-            return (
-              <div
-                key={item.title}
-                className="flex items-center gap-3 py-2 px-3 bg-white/[0.05] border border-white/10 rounded-2xl animate-in fade-in slide-in-from-right-4 duration-500"
-              >
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="w-14 h-11 object-cover rounded-lg flex-shrink-0"
-                  loading="lazy"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white leading-snug truncate">{item.title}</p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <StatIcon className="h-3 w-3 text-purple-400 flex-shrink-0" />
-                    <p className="text-xs text-gray-400 truncate">{item.stat}</p>
+          <div className="space-y-2">
+            {[0, 1].map((offset) => {
+              const idx = (carouselIndex + offset) % trendingItems.length;
+              const item = trendingItems[idx];
+              const style = TYPE_STYLES[item.type] ?? TYPE_STYLES.movie;
+              const Badge = style.badge;
+              const StatIcon = style.statIcon;
+              return (
+                <div
+                  key={item.title}
+                  className="flex items-center gap-3 py-2 px-3 bg-white/[0.05] border border-white/10 rounded-2xl animate-in fade-in slide-in-from-right-4 duration-500"
+                >
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-14 h-11 object-cover rounded-lg flex-shrink-0"
+                    loading="lazy"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white leading-snug truncate">{item.title}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <StatIcon className="h-3 w-3 text-purple-400 flex-shrink-0" />
+                      <p className="text-xs text-gray-400 truncate">{item.stat}</p>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 flex items-center gap-1 border border-white/15 rounded-full px-2 py-0.5">
+                    <Badge className="h-3 w-3 text-purple-300" />
+                    <span className="text-[10px] font-medium text-gray-300">
+                      {item.type === "tv" ? "TV" : item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                    </span>
                   </div>
                 </div>
-                <div className="flex-shrink-0 flex items-center gap-1 border border-white/15 rounded-full px-2 py-0.5">
-                  <Badge className="h-3 w-3 text-purple-300" />
-                  <span className="text-[10px] font-medium text-gray-300 capitalize">{item.type}</span>
-                </div>
-              </div>
-            );
-          })()}
+              );
+            })}
+          </div>
           <div className="flex items-center justify-center gap-3 mt-2.5">
             <div className="flex items-center gap-1.5">
               {trendingItems.map((_, i) => (
