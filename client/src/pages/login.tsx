@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Mail, Lock, User, AtSign, Flame, Tv, Zap, Headphones, BookOpen, BarChart3, TrendingUp } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, AtSign, Flame, Tv, Headphones, BookOpen, BarChart3, TrendingUp } from "lucide-react";
 
 const TYPE_STYLES: Record<string, { badge: typeof Flame; badgeBg: string; statIcon: typeof Flame }> = {
   movie: { badge: Flame, badgeBg: "bg-orange-500", statIcon: TrendingUp },
@@ -282,16 +282,12 @@ export default function LoginPage() {
               className="h-14 w-auto"
             />
           </div>
-          <h1 className="text-white text-[22px] sm:text-2xl font-serif mb-2 leading-tight whitespace-nowrap">
+          <h1 className="text-white text-lg font-serif mb-2 leading-tight whitespace-nowrap">
             Entertainment is better, shared.
           </h1>
         </div>
 
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4 px-1">
-            <Zap className="h-4 w-4 text-purple-400" />
-            <p className="text-base font-semibold text-white">See what everyone's consuming</p>
-          </div>
           <div>
             {trendingItems.map((item, i) => {
               const style = TYPE_STYLES[item.type] ?? TYPE_STYLES.movie;
