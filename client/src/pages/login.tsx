@@ -5,7 +5,8 @@ import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Mail, Lock, User, AtSign } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, AtSign, Flame, Tv, Users } from "lucide-react";
+import loginArt from "@assets/Screenshot_2026-07-23_at_3.53.08_PM_1784843591090.png";
 import { SiApple, SiGoogle } from "react-icons/si";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -177,10 +178,10 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] flex items-center justify-center">
+      <div className="min-h-screen bg-[#faf6f0] flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <div className="text-white text-sm mt-4">Loading...</div>
+          <div className="text-gray-600 text-sm mt-4">Loading...</div>
         </div>
       </div>
     );
@@ -188,10 +189,10 @@ export default function LoginPage() {
 
   if (user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] flex items-center justify-center">
+      <div className="min-h-screen bg-[#faf6f0] flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <div className="text-white text-xl mt-4">Redirecting to Feed...</div>
+          <div className="text-gray-700 text-xl mt-4">Redirecting to Feed...</div>
         </div>
       </div>
     );
@@ -240,25 +241,49 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] overflow-y-auto p-4 flex flex-col justify-center">
-      <div className="max-w-md w-full mx-auto">
-        <div className="text-center mb-8 mt-24">
-          <div className="flex justify-center mb-0">
-            <img 
-              src="/consumed-logo-new.png" 
-              alt="Consumed" 
-              className="h-14 w-auto"
+    <div className="min-h-screen bg-[#faf6f0] overflow-y-auto flex flex-col">
+      <div className="max-w-md w-full mx-auto px-4 flex-1">
+        <div className="text-center mb-6 mt-12">
+          <div className="flex justify-center mb-1">
+            <img
+              src="/consumed-logo-new.png"
+              alt="Consumed"
+              className="h-14 w-auto brightness-0"
             />
           </div>
-          <h1 className="text-white text-lg font-medium mb-2">
-            Entertainment is better, together.
+          <h1 className="text-gray-900 text-lg font-semibold mb-1">
+            Entertainment is better, shared.
           </h1>
-          <p className="text-gray-400 text-[10px] tracking-widest font-medium pl-3">
+          <p className="text-gray-500 text-[10px] tracking-widest font-medium pl-3">
             PLAY. CONNECT. DISCOVER.
           </p>
         </div>
-        
-        <div className="bg-white rounded-3xl p-8 shadow-2xl">
+
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3 px-1">
+            <Users className="h-4 w-4 text-purple-600" />
+            <p className="text-sm font-semibold text-gray-700">Everyone's consuming...</p>
+          </div>
+          <div className="space-y-2.5">
+            <div className="bg-white/80 border border-purple-100 rounded-2xl px-4 py-3 shadow-sm">
+              <div className="flex items-center gap-2 mb-0.5">
+                <Flame className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                <p className="text-sm font-semibold text-gray-900">Superman</p>
+              </div>
+              <p className="text-sm text-gray-600 italic">"I did NOT see that ending coming."</p>
+              <p className="text-xs text-purple-500 font-medium mt-1">2.3k reactions</p>
+            </div>
+            <div className="bg-white/80 border border-purple-100 rounded-2xl px-4 py-3 shadow-sm">
+              <div className="flex items-center gap-2 mb-0.5">
+                <Tv className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                <p className="text-sm font-semibold text-gray-900">The Bear</p>
+              </div>
+              <p className="text-sm text-gray-600">Sydney's decision has fans divided.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-3xl p-8 shadow-2xl border border-purple-100/60">
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-100 rounded-full p-1 h-12">
               <TabsTrigger 
@@ -432,8 +457,14 @@ export default function LoginPage() {
             </TabsContent>
           </Tabs>
         </div>
+      </div>
 
-        
+      <div className="w-full mt-10">
+        <img
+          src={loginArt}
+          alt="People enjoying movies, books, music, and podcasts together"
+          className="w-full max-w-4xl mx-auto block"
+        />
       </div>
 
       <Dialog open={isForgotPasswordOpen} onOpenChange={(open) => {
