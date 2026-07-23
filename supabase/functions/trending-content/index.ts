@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
         title: m.title,
         image: `https://image.tmdb.org/t/p/w300${m.poster_path}`,
         type: 'movie',
-        stat: '#1 trending movie',
+        stat: 'Users are talking about',
       });
     }
   }
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
         title: t.name,
         image: `https://image.tmdb.org/t/p/w300${t.poster_path}`,
         type: 'tv',
-        stat: '#1 trending show',
+        stat: 'Friends are watching',
       });
     }
   }
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
         title: b.name,
         image: b.artworkUrl100.replace('100x151bb', '300x453bb').replace('100x152bb', '300x456bb').replace('100x100bb', '300x300bb'),
         type: 'book',
-        stat: '#1 bestselling book',
+        stat: 'Readers recommend',
       });
     }
   }

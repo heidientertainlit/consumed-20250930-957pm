@@ -15,9 +15,9 @@ const TYPE_STYLES: Record<string, { badge: typeof Flame; badgeBg: string; statIc
 };
 
 const FALLBACK_TRENDING = [
-  { title: "The Odyssey", image: "https://image.tmdb.org/t/p/w300/5rhTDKUhPYvpdQIijFIs5VoWsON.jpg", type: "movie", stat: "#1 trending movie" },
-  { title: "A Knight of the Seven Kingdoms", image: "https://image.tmdb.org/t/p/w300/k8yARbD9iYn2nRX2HvsopfKDN2r.jpg", type: "tv", stat: "#1 trending show" },
-  { title: "Stolen in Death", image: "https://books.google.com/books/content?id=ECFYEQAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api", type: "book", stat: "#1 bestselling book" },
+  { title: "The Odyssey", image: "https://image.tmdb.org/t/p/w300/5rhTDKUhPYvpdQIijFIs5VoWsON.jpg", type: "movie", stat: "Users are talking about" },
+  { title: "A Knight of the Seven Kingdoms", image: "https://image.tmdb.org/t/p/w300/k8yARbD9iYn2nRX2HvsopfKDN2r.jpg", type: "tv", stat: "Friends are watching" },
+  { title: "Stolen in Death", image: "https://books.google.com/books/content?id=ECFYEQAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api", type: "book", stat: "Readers recommend" },
   { title: "The Daily", image: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts221/v4/ab/64/66/ab6466a9-9a7d-e20e-7a3d-bc5be37d29ce/mza_15084852813176276273.jpg/300x300bb.png", type: "podcast", stat: "#1 podcast" },
 ];
 import { SiApple, SiGoogle } from "react-icons/si";
