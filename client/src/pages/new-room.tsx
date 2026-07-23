@@ -3,14 +3,15 @@ import { useParams, useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft, ChevronRight, ChevronDown, MoreHorizontal, Check, Plus, Copy,
-  TrendingUp, MessageCircle, ArrowUp, ArrowDown,
-  Brain, Vote, Tv, Flame, Bell, Users, X,
+  MessageCircle, ArrowUp, ArrowDown,
+  Tv, Flame, Bell, Users, X,
   Flag, EyeOff, BellOff, CircleHelp, Send, Loader2,
   Film, BookOpen, Mic, BadgeCheck,
 } from "lucide-react";
 import Navigation from "@/components/navigation";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import RoomComposer, { dbTagToDisplay } from "@/components/room-composer";
+import RoomPlay from "@/components/room-play";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -60,22 +61,6 @@ function parseExamples(raw?: string | null): { label: string; Icon: any; items: 
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 const ACCENT = "#7c3aed";
-
-// ── Play quick-launch round icons (placeholders — wired in a later pass) ──
-const PLAY_ICONS = [
-  { label: "Trivia", icon: Brain, bg: "#f3effe", fg: "#7c3aed" },
-  { label: "Cast Vote", icon: Vote, bg: "#eaf1ff", fg: "#2563eb" },
-  { label: "Predictions", icon: TrendingUp, bg: "#e7f9f0", fg: "#10b981" },
-];
-const VOTE_CARD = {
-  question: "How would you describe the vibe of Paradise?",
-  options: ["Political thriller first", "Murder mystery first", "Sci-fi first", "Equal parts all three"],
-};
-const TRIVIA_CARD = {
-  tag: "PARADISE",
-  question: "What is the name of Sterling K. Brown's character in Paradise?",
-  options: ["Xavier", "Marcus", "Sterling", "Dele"],
-};
 
 // Conversation tags + display mapping live in the shared RoomComposer component.
 const dbToDisplay = dbTagToDisplay;
@@ -562,76 +547,16 @@ export default function NewRoom() {
           </div>
         </div>
 
-        {/* ════════ PLAY (placeholder — wired next pass) ════════ */}
+        {/* ════════ PLAY — real room-scoped trivia & votes ════════ */}
         {tab === "Play" && (
-        <div className="pt-5 pb-2">
-          <div className="grid grid-cols-3 gap-2 px-6 mb-5">
-            {PLAY_ICONS.map((p, i) => {
-              const Icon = p.icon;
-              return (
-                <button key={i} className="flex flex-col items-center gap-1.5 py-1 active:scale-95 transition-transform">
-                  <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: p.bg }}>
-                    <Icon size={22} style={{ color: p.fg }} />
-                  </div>
-                  <span className="text-[12px] font-semibold text-gray-700">{p.label}</span>
-                </button>
-              );
-            })}
+          <div className="pb-2">
+            <RoomPlay
+              roomName={pool?.name || ""}
+              seriesTag={pool?.series_tag}
+              exampleTitles={exampleItems.map((e: any) => e.title)}
+              logRoomEvent={logRoomEvent}
+            />
           </div>
-          <div className="px-4">
-            <div className="rounded-3xl bg-white border border-gray-100 shadow-sm p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#eaf1ff" }}>
-                    <Tv size={18} style={{ color: "#2563eb" }} />
-                  </div>
-                  <span className="text-[16px] font-bold text-gray-900">Cast Your Vote</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] text-gray-400">1/3</span>
-                  <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"><ChevronRight size={16} className="text-gray-500" /></div>
-                </div>
-              </div>
-              <p className="text-[19px] font-extrabold text-gray-900 leading-snug mb-4">{VOTE_CARD.question}</p>
-              <div className="grid grid-cols-2 gap-2.5">
-                {VOTE_CARD.options.map((o, i) => (
-                  <button key={i} className="rounded-2xl bg-gray-50 border border-gray-100 px-3 py-4 text-[14px] font-medium text-gray-700 text-center active:scale-[0.98] transition-transform">{o}</button>
-                ))}
-              </div>
-              <p className="text-right text-[13px] font-bold text-emerald-500 mt-3">+10 pts</p>
-            </div>
-          </div>
-          <div className="px-4 mt-4">
-            <div className="rounded-3xl bg-white border border-gray-100 shadow-sm p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#f3effe" }}>
-                    <Brain size={18} style={{ color: "#7c3aed" }} />
-                  </div>
-                  <div>
-                    <p className="text-[16px] font-bold text-gray-900 leading-tight">Paradise Trivia</p>
-                    <p className="text-[12px] text-gray-400">2 questions</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"><ChevronRight size={16} className="text-gray-500" /></div>
-                  <span className="text-[13px] text-gray-400">1/2</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 mb-2">
-                <Tv size={13} style={{ color: "#7c3aed" }} />
-                <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: "#7c3aed" }}>{TRIVIA_CARD.tag}</span>
-              </div>
-              <p className="text-[19px] font-extrabold text-gray-900 leading-snug mb-4">{TRIVIA_CARD.question}</p>
-              <div className="grid grid-cols-2 gap-2.5">
-                {TRIVIA_CARD.options.map((o, i) => (
-                  <button key={i} className="rounded-2xl bg-gray-50 border border-gray-100 px-3 py-4 text-[14px] font-medium text-gray-700 text-center active:scale-[0.98] transition-transform">{o}</button>
-                ))}
-              </div>
-              <p className="text-right text-[13px] font-bold text-emerald-500 mt-3">+30 pts</p>
-            </div>
-          </div>
-        </div>
         )}
 
         {/* ════════ EXPLORE ════════ */}
