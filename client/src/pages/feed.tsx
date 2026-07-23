@@ -2439,12 +2439,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
           {/* ── Rate-back hook — only for rating-only posts (no commentary) ── */}
           {!hasContent && hasRating && isOtherUser && session?.access_token && !ratingSubmitted && (
-            <div className="mx-4 mt-3 rounded-xl bg-violet-50/70 border border-violet-100 px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
-              <p className="text-[13px] text-gray-700 leading-snug">
-                {displayName.split(' ')[0]} didn't say why. <span className="font-semibold text-gray-900">Do you agree with {post.rating! % 1 === 0 ? post.rating : post.rating!.toFixed(1)} stars?</span>
-              </p>
-              <div className="flex items-center gap-2 mt-1.5" onMouseLeave={() => setHoverRating(0)}>
-                <span className="text-[11px] font-medium text-gray-500">Your call:</span>
+            <div className="mx-4 mt-3 rounded-xl bg-violet-50/70 border border-violet-100 px-3 py-2" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-2 flex-wrap" onMouseLeave={() => setHoverRating(0)}>
+                <span className="text-[13px] font-medium text-gray-700">Your call:</span>
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map(star => {
                     const displayVal = hoverRating;
