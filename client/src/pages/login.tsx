@@ -5,8 +5,7 @@ import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Mail, Lock, User, AtSign, Flame, Tv, Users } from "lucide-react";
-import loginArt from "@assets/login-art-crop.png";
+import { Eye, EyeOff, Mail, Lock, User, AtSign, Flame, Tv } from "lucide-react";
 import { SiApple, SiGoogle } from "react-icons/si";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -178,10 +177,10 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fbf8f5] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#171028] to-[#241740] flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <div className="text-gray-600 text-sm mt-4">Loading...</div>
+          <div className="text-gray-300 text-sm mt-4">Loading...</div>
         </div>
       </div>
     );
@@ -189,10 +188,10 @@ export default function LoginPage() {
 
   if (user) {
     return (
-      <div className="min-h-screen bg-[#fbf8f5] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#171028] to-[#241740] flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <div className="text-gray-700 text-xl mt-4">Redirecting to Feed...</div>
+          <div className="text-gray-200 text-xl mt-4">Redirecting to Feed...</div>
         </div>
       </div>
     );
@@ -241,46 +240,49 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#fbf8f5] overflow-y-auto flex flex-col">
-      <div className="max-w-md w-full mx-auto px-4 flex-1">
+    <div className="min-h-screen bg-gradient-to-b from-[#171028] to-[#241740] overflow-y-auto flex flex-col">
+      <div className="max-w-md w-full mx-auto px-4 flex-1 pb-10">
         <div className="text-center mb-6 mt-12">
-          <div className="flex justify-center mb-1">
+          <div className="flex justify-center mb-2">
             <img
               src="/consumed-logo-new.png"
               alt="Consumed"
-              className="h-14 w-auto brightness-0"
+              className="h-14 w-auto"
             />
           </div>
-          <h1 className="text-gray-900 text-lg font-semibold">
+          <h1 className="text-white text-3xl font-serif mb-2 leading-tight">
             Entertainment is better, shared.
           </h1>
+          <p className="text-purple-300 text-sm font-medium">
+            See what everyone's consuming.
+          </p>
         </div>
 
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3 px-1">
-            <Users className="h-4 w-4 text-purple-600" />
-            <p className="text-sm font-semibold text-gray-700">Everyone's consuming...</p>
+            <Flame className="h-4 w-4 text-purple-400" />
+            <p className="text-sm font-semibold text-gray-200">Trending now</p>
           </div>
           <div className="space-y-2.5">
-            <div className="bg-white/80 border border-purple-100 rounded-2xl px-4 py-3 shadow-sm">
+            <div className="bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3">
               <div className="flex items-center gap-2 mb-0.5">
-                <Flame className="h-4 w-4 text-orange-500 flex-shrink-0" />
-                <p className="text-sm font-semibold text-gray-900">Superman</p>
+                <Flame className="h-4 w-4 text-orange-400 flex-shrink-0" />
+                <p className="text-sm font-semibold text-white">Superman</p>
               </div>
-              <p className="text-sm text-gray-600 italic">"I did NOT see that ending coming."</p>
-              <p className="text-xs text-purple-500 font-medium mt-1">2.3k reactions</p>
+              <p className="text-sm text-gray-300 italic">"I did NOT see that ending coming."</p>
+              <p className="text-xs text-purple-300 font-medium mt-1">2.3k reactions</p>
             </div>
-            <div className="bg-white/80 border border-purple-100 rounded-2xl px-4 py-3 shadow-sm">
+            <div className="bg-white/[0.06] border border-white/10 rounded-2xl px-4 py-3">
               <div className="flex items-center gap-2 mb-0.5">
-                <Tv className="h-4 w-4 text-purple-600 flex-shrink-0" />
-                <p className="text-sm font-semibold text-gray-900">The Bear</p>
+                <Tv className="h-4 w-4 text-purple-400 flex-shrink-0" />
+                <p className="text-sm font-semibold text-white">The Bear</p>
               </div>
-              <p className="text-sm text-gray-600">Sydney's decision has fans divided.</p>
+              <p className="text-sm text-gray-300">Sydney's decision has fans divided.</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-8 shadow-2xl border border-purple-100/60">
+        <div className="bg-white rounded-3xl p-8 shadow-2xl">
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-100 rounded-full p-1 h-12">
               <TabsTrigger 
@@ -456,19 +458,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="w-full mt-8 pb-4">
-        <img
-          src={loginArt}
-          alt="People enjoying movies, books, music, and podcasts together"
-          className="w-full max-w-md sm:max-w-lg mx-auto block h-auto"
-          style={{
-            WebkitMaskImage: "linear-gradient(to right, transparent, black 14%, black 86%, transparent), linear-gradient(to bottom, transparent, black 12%, black 100%)",
-            WebkitMaskComposite: "source-in",
-            maskImage: "linear-gradient(to right, transparent, black 14%, black 86%, transparent), linear-gradient(to bottom, transparent, black 12%, black 100%)",
-            maskComposite: "intersect",
-          }}
-        />
-      </div>
 
       <Dialog open={isForgotPasswordOpen} onOpenChange={(open) => {
         setIsForgotPasswordOpen(open);
