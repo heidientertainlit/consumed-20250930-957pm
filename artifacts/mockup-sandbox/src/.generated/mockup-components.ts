@@ -42,6 +42,7 @@ export const modules: ModuleMap = {
   "./components/mockups/room-composer-btns/GhostPills.tsx": () => import("../components/mockups/room-composer-btns/GhostPills.tsx"),
   "./components/mockups/room-composer-btns/TintedPills.tsx": () => import("../components/mockups/room-composer-btns/TintedPills.tsx"),
   "./components/mockups/room-feed/RoomFeedSection.tsx": () => import("../components/mockups/room-feed/RoomFeedSection.tsx"),
+  "./components/mockups/room-redesign/Combined.tsx": () => import("../components/mockups/room-redesign/Combined.tsx"),
   "./components/mockups/room-redesign/DiscussFeed.tsx": () => import("../components/mockups/room-redesign/DiscussFeed.tsx"),
   "./components/mockups/room-redesign/LighterHeader.tsx": () => import("../components/mockups/room-redesign/LighterHeader.tsx"),
   "./components/mockups/room-redesign/ThreadView.tsx": () => import("../components/mockups/room-redesign/ThreadView.tsx"),
