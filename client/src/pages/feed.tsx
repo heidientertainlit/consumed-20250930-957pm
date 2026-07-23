@@ -214,6 +214,76 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
   const [commentedIds, setCommentedIds] = useState<Set<string>>(new Set());
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set());
+  // Per-take agree/disagree reactions (postId -> 'up' | 'down')
+  const [takeReactions, setTakeReactions] = useState<Record<string, 'up' | 'down'>>({});
+  // Group-level general comment box ("join the conversation")
+  const [groupCommentText, setGroupCommentText] = useState('');
+  const [groupCommentedKeys, setGroupCommentedKeys] = useState<Set<string>>(new Set());
+
+  const reactToTake = async (postId: string, dir: 'up' | 'down') => {
+    if (!currentUserId || !session || !postId) return;
+    const prev = takeReactions[postId];
+    const toggleOff = prev === dir;
+    setTakeReactions(p => {
+      const next = { ...p };
+      if (toggleOff) delete next[postId]; else next[postId] = dir;
+      return next;
+    });
+    try {
+      if (dir === 'up') {
+        // Agree = like the post via the standard like endpoint
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-like`, {
+          method: toggleOff ? 'DELETE' : 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ post_id: postId }),
+        });
+        if (!toggleOff && prev === 'down') {
+          await supabase.from('post_reactions').delete().eq('social_post_id', postId).eq('user_id', currentUserId);
+        }
+      } else {
+        // Disagree = post_reactions 'disagree' (same as feed cards)
+        if (toggleOff) {
+          await supabase.from('post_reactions').delete().eq('social_post_id', postId).eq('user_id', currentUserId);
+        } else {
+          await supabase.from('post_reactions')
+            .upsert({ social_post_id: postId, user_id: currentUserId, reaction: 'disagree' }, { onConflict: 'social_post_id,user_id' });
+          if (prev === 'up') {
+            await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-like`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              },
+              body: JSON.stringify({ post_id: postId }),
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to react to take:', err);
+    }
+  };
+
+  const submitGroupComment = async (g: any) => {
+    if (!groupCommentText.trim() || !currentUserId || !session || !g.anchorPostId) return;
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.functions.invoke('social-feed-comments', {
+        body: { action: 'add', postId: g.anchorPostId, content: groupCommentText.trim(), userId: currentUserId }
+      });
+      if (error) throw error;
+      setGroupCommentText('');
+      setGroupCommentedKeys(prev => new Set(prev).add(g.key));
+    } catch (err) {
+      console.error('Failed to add comment:', err);
+    }
+    setSubmitting(false);
+  };
 
   const avatarBg = (n: string) => `hsl(${(n.charCodeAt(0) * 47) % 360}, 50%, 48%)`;
 
@@ -364,16 +434,25 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
                               ) : (
                                 <p className="text-[12px] text-gray-500 italic leading-snug">No written take yet — reply and ask what they thought</p>
                               )}
-                              {/* Action row */}
+                              {/* Action row: Agree · Disagree · Comment */}
                               <div className="flex items-center gap-4 mt-1.5">
-                                <span className="flex items-center gap-1 text-gray-400 text-[11px]">
-                                  <Heart size={12} /> {likeCount > 0 ? likeCount : ''}
-                                </span>
+                                <button
+                                  onClick={() => reactToTake(t.id, 'up')}
+                                  className={`flex items-center gap-1 text-[11px] ${takeReactions[t.id] === 'up' ? 'text-gray-800 font-semibold' : 'text-gray-500 font-medium'}`}
+                                >
+                                  <ArrowUp size={13} strokeWidth={takeReactions[t.id] === 'up' ? 2.5 : 2} /> Agree{likeCount > 0 ? ` (${likeCount + (takeReactions[t.id] === 'up' ? 1 : 0)})` : takeReactions[t.id] === 'up' ? ' (1)' : ''}
+                                </button>
+                                <button
+                                  onClick={() => reactToTake(t.id, 'down')}
+                                  className={`flex items-center gap-1 text-[11px] ${takeReactions[t.id] === 'down' ? 'text-gray-800 font-semibold' : 'text-gray-500 font-medium'}`}
+                                >
+                                  <ArrowDown size={13} strokeWidth={takeReactions[t.id] === 'down' ? 2.5 : 2} /> Disagree
+                                </button>
                                 <button
                                   onClick={() => { setActiveTakeId(isActive ? null : takeId); setCommentText(''); }}
                                   className={`flex items-center gap-1 text-[11px] font-semibold ${isActive ? 'text-violet-600' : 'text-gray-500'}`}
                                 >
-                                  <MessageCircle size={12} /> Reply{replyCount > 0 ? ` (${replyCount})` : ''}
+                                  <MessageCircle size={12} /> Comment{replyCount > 0 ? ` (${replyCount})` : ''}
                                 </button>
                               </div>
                               {isActive && (
@@ -408,6 +487,32 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
                         </div>
                       );
                     })}
+                  </div>
+
+                  {/* Group-level comment — join the conversation without replying to anyone */}
+                  <div className="mt-2 pt-2 border-t border-gray-100">
+                    {groupCommentedKeys.has(g.key) ? (
+                      <p className="text-[11px] text-green-600 font-medium flex items-center gap-1">
+                        <Check size={12} /> Added to the conversation
+                      </p>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          value={groupCommentText}
+                          onChange={(e) => setGroupCommentText(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') submitGroupComment(g); }}
+                          placeholder="Join the conversation..."
+                          className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-full border border-gray-200 bg-gray-50 focus:outline-none focus:border-violet-400 focus:bg-white"
+                        />
+                        <button
+                          onClick={() => submitGroupComment(g)}
+                          disabled={submitting || !groupCommentText.trim()}
+                          className="w-7 h-7 rounded-full bg-violet-600 disabled:bg-violet-300 flex items-center justify-center shrink-0"
+                        >
+                          <Send size={12} className="text-white" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -5640,6 +5745,7 @@ export default function Feed() {
         talkingCount: g.users.size,
         users: Array.from(g.users.values()).slice(0, 4),
         topTakes,
+        anchorPostId: anchorPost.id,
       };
     });
   }, [standaloneUGCPosts]);
