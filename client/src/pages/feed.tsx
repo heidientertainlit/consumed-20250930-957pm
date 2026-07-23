@@ -2408,6 +2408,37 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 </div>
               )}
 
+              {/* Other ratings — tight under the stars */}
+              {relatedRatings.length > 0 && (
+                <div onClick={(e) => e.stopPropagation()}>
+                  <button
+                    className="w-full flex items-center gap-2 py-1 mt-1 active:opacity-70 transition-opacity"
+                    onClick={(e) => { e.stopPropagation(); setShowAllRelated(v => !v); }}
+                  >
+                    <div className="flex -space-x-1.5 flex-shrink-0">
+                      {relatedRatings.slice(0, 3).map((r) => (
+                        <div
+                          key={r.userId}
+                          className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0"
+                          style={{ background: `hsl(${(r.displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
+                        >
+                          {r.displayName[0]?.toUpperCase()}
+                        </div>
+                      ))}
+                      {relatedRatings.length > 3 && (
+                        <div className="w-5 h-5 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-gray-500 text-[8px] font-bold flex-shrink-0">+{relatedRatings.length - 3}</div>
+                      )}
+                    </div>
+                    <span className="text-[11px] font-medium text-gray-500 flex-1 text-left">
+                      {relatedRatings.length} more rating{relatedRatings.length !== 1 ? 's' : ''}
+                      <span className="text-gray-400"> · </span>
+                      <Star size={10} className="inline text-yellow-400 fill-yellow-400 -mt-px" /> {(relatedRatings.reduce((s, r) => s + r.rating, 0) / relatedRatings.length).toFixed(1)} avg
+                    </span>
+                    <ChevronDown size={14} className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${showAllRelated ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+              )}
+
               {/* Tag badge (Discussion / Take / Theory / Question) */}
               {(() => {
                 const tg = dbTagToDisplay((post as any).postType);
@@ -2437,34 +2468,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             );
           })()}
 
-          {/* ── Other ratings: slim avatar-stack line above actions ── */}
-          {relatedRatings.length > 0 && (
-            <div className="px-4 mt-3" onClick={(e) => e.stopPropagation()}>
-              <button
-                className="w-full flex items-center gap-2 py-1.5 active:opacity-70 transition-opacity"
-                onClick={(e) => { e.stopPropagation(); setShowAllRelated(v => !v); }}
-              >
-                <div className="flex -space-x-1.5 flex-shrink-0">
-                  {relatedRatings.slice(0, 3).map((r) => (
-                    <div
-                      key={r.userId}
-                      className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0"
-                      style={{ background: `hsl(${(r.displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
-                    >
-                      {r.displayName[0]?.toUpperCase()}
-                    </div>
-                  ))}
-                  {relatedRatings.length > 3 && (
-                    <div className="w-5 h-5 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-gray-500 text-[8px] font-bold flex-shrink-0">+{relatedRatings.length - 3}</div>
-                  )}
-                </div>
-                <span className="text-[11px] font-medium text-gray-500 flex-1 text-left">
-                  {relatedRatings.length} more rating{relatedRatings.length !== 1 ? 's' : ''}
-                  <span className="text-gray-400"> · </span>
-                  <Star size={10} className="inline text-yellow-400 fill-yellow-400 -mt-px" /> {(relatedRatings.reduce((s, r) => s + r.rating, 0) / relatedRatings.length).toFixed(1)} avg
-                </span>
-                <ChevronDown size={14} className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${showAllRelated ? 'rotate-180' : ''}`} />
-              </button>
+          {/* ── Other ratings: expanded list (toggle lives up by the stars) ── */}
+          {relatedRatings.length > 0 && showAllRelated && (
+            <div className="px-4 mt-1" onClick={(e) => e.stopPropagation()}>
               {showAllRelated && (
                 <div className="rounded-xl border border-gray-100 bg-white overflow-hidden mb-1">
                   {relatedRatings.map((r) => (
