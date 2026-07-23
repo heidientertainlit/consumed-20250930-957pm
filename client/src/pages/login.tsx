@@ -288,7 +288,7 @@ export default function LoginPage() {
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-4 px-1">
             <Zap className="h-4 w-4 text-purple-400" />
-            <p className="text-base font-semibold text-white">Trending now</p>
+            <p className="text-base font-semibold text-white">See what everyone's consuming</p>
           </div>
           <div>
             {TRENDING_ITEMS.map((item, i) => {
