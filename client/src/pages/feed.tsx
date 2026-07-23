@@ -2335,6 +2335,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {/* Subtle bottom gradient */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
+              {/* Media type — quiet tag on the poster corner */}
+              {mediaTypeLabel && (
+                <span className="absolute top-1.5 left-1.5 z-10 text-[8px] font-bold uppercase tracking-wide px-1.5 py-px rounded-full bg-black/45 text-white/85 backdrop-blur-sm">
+                  {mediaTypeLabel}
+                </span>
+              )}
+
               {/* Bottom-right: Add to list button on poster */}
               {onAddToList && (post.externalId || post.mediaTitle) && (
                 <button
@@ -2378,23 +2385,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {post.mediaTitle && (
                 <div className="mt-2 min-w-0">
                   <p className="text-[14px] font-semibold text-gray-900 leading-snug">{post.mediaTitle}</p>
-                  <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-                    {mediaTypeLabel && (
-                      <span className={`text-[9px] font-bold px-1.5 py-px rounded-full shrink-0 ${
-                        mediaTypeNorm === 'tv' ? 'bg-blue-100 text-blue-700' :
-                        mediaTypeNorm === 'movie' ? 'bg-indigo-100 text-indigo-700' :
-                        mediaTypeNorm === 'book' ? 'bg-amber-100 text-amber-700' :
-                        mediaTypeNorm === 'music' ? 'bg-pink-100 text-pink-700' :
-                        mediaTypeNorm === 'podcast' ? 'bg-emerald-100 text-emerald-700' :
-                        mediaTypeNorm === 'game' ? 'bg-cyan-100 text-cyan-700' :
-                        mediaTypeNorm === 'youtube' ? 'bg-red-100 text-red-700' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>{mediaTypeLabel}</span>
-                    )}
-                    {mediaCreator && (
-                      <p className="text-[12px] text-gray-500 leading-snug truncate">by {mediaCreator}</p>
-                    )}
-                  </div>
+                  {mediaCreator && (
+                    <p className="text-[12px] text-gray-500 leading-snug truncate mt-0.5">by {mediaCreator}</p>
+                  )}
                 </div>
               )}
 
