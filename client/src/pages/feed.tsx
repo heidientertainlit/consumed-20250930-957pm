@@ -219,6 +219,55 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
   // Group-level general comment box ("join the conversation")
   const [groupCommentText, setGroupCommentText] = useState('');
   const [groupCommentedKeys, setGroupCommentedKeys] = useState<Set<string>>(new Set());
+  // Thread data fetched on expand: replies + disagree counts per take post id
+  const [threadReplies, setThreadReplies] = useState<Record<string, any[]>>({});
+  const [disagreeCounts, setDisagreeCounts] = useState<Record<string, number>>({});
+  const [loadedKeys, setLoadedKeys] = useState<Set<string>>(new Set());
+
+  const loadThread = async (g: any) => {
+    if (loadedKeys.has(g.key)) return;
+    setLoadedKeys(prev => new Set(prev).add(g.key));
+    const ids = g.topTakes.map((t: any) => t.id).filter(Boolean);
+    if (ids.length === 0) return;
+    try {
+      const [commentsRes, reactionsRes] = await Promise.all([
+        supabase
+          .from('comments')
+          .select('id, content, created_at, post_id, users:user_id (id, user_name, display_name, avatar)')
+          .in('post_id', ids)
+          .order('created_at', { ascending: true })
+          .limit(60),
+        supabase
+          .from('post_reactions')
+          .select('social_post_id, reaction, user_id')
+          .in('social_post_id', ids),
+      ]);
+      if (commentsRes.data) {
+        const byPost: Record<string, any[]> = {};
+        for (const c of commentsRes.data) {
+          (byPost[c.post_id] = byPost[c.post_id] || []).push(c);
+        }
+        setThreadReplies(prev => ({ ...prev, ...byPost }));
+      }
+      if (reactionsRes.data) {
+        const counts: Record<string, number> = {};
+        const mine: Record<string, 'up' | 'down'> = {};
+        for (const r of reactionsRes.data) {
+          if (r.reaction === 'disagree') {
+            if (r.user_id === currentUserId) {
+              mine[r.social_post_id] = 'down';
+            } else {
+              counts[r.social_post_id] = (counts[r.social_post_id] || 0) + 1;
+            }
+          }
+        }
+        setDisagreeCounts(prev => ({ ...prev, ...counts }));
+        if (Object.keys(mine).length) setTakeReactions(prev => ({ ...mine, ...prev }));
+      }
+    } catch (err) {
+      console.error('Failed to load thread:', err);
+    }
+  };
 
   const reactToTake = async (postId: string, dir: 'up' | 'down') => {
     if (!currentUserId || !session || !postId) return;
@@ -309,7 +358,19 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
         body: { action: 'add', postId, content: commentText.trim(), userId: currentUserId }
       });
       if (error) throw error;
+      // Show the new reply in the visible thread immediately
+      setThreadReplies(prev => ({
+        ...prev,
+        [postId]: [...(prev[postId] || []), {
+          id: `local-${Date.now()}`,
+          content: commentText.trim(),
+          created_at: new Date().toISOString(),
+          post_id: postId,
+          users: { display_name: 'You' },
+        }],
+      }));
       setCommentText('');
+      setActiveTakeId(null);
       setCommentedIds(prev => new Set(prev).add(postId));
     } catch (err) {
       console.error('Failed to add comment:', err);
@@ -372,16 +433,32 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
             <div key={g.key}>
               {/* Compact trending row — same look expanded or not */}
               <button
-                onClick={() => { setExpandedKey(isOpen ? null : g.key); setActiveTakeId(null); setCommentText(''); }}
+                onClick={() => { setExpandedKey(isOpen ? null : g.key); setActiveTakeId(null); setCommentText(''); if (!isOpen) loadThread(g); }}
                 className="w-full flex items-center gap-2.5 text-left py-2 px-1 active:bg-gray-50"
               >
-                <Poster g={g} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-bold text-gray-900 truncate">{g.title}</p>
-                  <p className="text-[11.5px] text-gray-500">{g.talkingCount} people talking</p>
-                  {!isOpen && topGlimpse && (
-                    <p className="text-[11.5px] text-gray-600 truncate">"{topGlimpse.content}"</p>
+                  {/* Take is the headline */}
+                  {topGlimpse ? (
+                    <p className={`text-[13.5px] font-semibold text-gray-900 leading-snug ${isOpen ? '' : 'line-clamp-2'}`}>
+                      "{topGlimpse.content}"
+                    </p>
+                  ) : (
+                    <p className="text-[13.5px] font-semibold text-gray-900 leading-snug">{g.title}</p>
                   )}
+                  {/* Media context line under the take */}
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <div
+                      className="relative shrink-0 w-[18px] h-[24px] rounded overflow-hidden bg-gray-900 cursor-pointer"
+                      onClick={(e) => { e.stopPropagation(); onOpenMedia(g); }}
+                    >
+                      {g.mediaImage?.startsWith?.('http') && (
+                        <img src={g.mediaImage} alt={g.title} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      )}
+                    </div>
+                    <span className="text-[11.5px] text-gray-500 truncate">
+                      <span className="font-medium text-gray-700">{g.title}</span> · {g.talkingCount} people talking
+                    </span>
+                  </div>
                 </div>
                 <ChevronDown size={16} className={`text-gray-400 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -446,40 +523,62 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
                                   onClick={() => reactToTake(t.id, 'down')}
                                   className={`flex items-center gap-1 text-[11px] ${takeReactions[t.id] === 'down' ? 'text-gray-800 font-semibold' : 'text-gray-500 font-medium'}`}
                                 >
-                                  <ArrowDown size={13} strokeWidth={takeReactions[t.id] === 'down' ? 2.5 : 2} /> Disagree
+                                  <ArrowDown size={13} strokeWidth={takeReactions[t.id] === 'down' ? 2.5 : 2} /> Disagree{(() => {
+                                    const shown = (disagreeCounts[t.id] || 0) + (takeReactions[t.id] === 'down' ? 1 : 0);
+                                    return shown > 0 ? ` (${shown})` : '';
+                                  })()}
                                 </button>
                                 <button
                                   onClick={() => { setActiveTakeId(isActive ? null : takeId); setCommentText(''); }}
                                   className={`flex items-center gap-1 text-[11px] font-semibold ${isActive ? 'text-violet-600' : 'text-gray-500'}`}
                                 >
-                                  <MessageCircle size={12} /> Comment{replyCount > 0 ? ` (${replyCount})` : ''}
+                                  <MessageCircle size={12} /> Comment{(() => {
+                                    const shown = Math.max(replyCount, (threadReplies[t.id] || []).length);
+                                    return shown > 0 ? ` (${shown})` : '';
+                                  })()}
                                 </button>
                               </div>
+
+                              {/* Visible replies — the thread grows under each take */}
+                              {(threadReplies[t.id] || []).length > 0 && (
+                                <div className="mt-2 space-y-2 border-l-2 border-gray-100 pl-2.5">
+                                  {(threadReplies[t.id] || []).map((c: any) => {
+                                    const cn = c.users?.display_name || c.users?.user_name || '?';
+                                    const cWhen = takeTimeAgo(c.created_at);
+                                    return (
+                                      <div key={c.id} className="flex gap-1.5">
+                                        <div className="w-4.5 h-4.5 min-w-[18px] min-h-[18px] rounded-full flex items-center justify-center text-white text-[7.5px] font-bold mt-0.5" style={{ background: avatarBg(cn) }}>
+                                          {cn[0]?.toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0">
+                                          <p className="text-[10.5px] text-gray-500 leading-none mb-0.5">
+                                            <span className="font-semibold text-gray-700">{cn}</span>
+                                            {cWhen && <span> · {cWhen}</span>}
+                                          </p>
+                                          <p className="text-[12px] text-gray-700 leading-snug">{c.content}</p>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
                               {isActive && (
-                                <div className="mt-2">
-                                  {commentedIds.has(t.id) ? (
-                                    <p className="text-[11px] text-green-600 font-medium flex items-center gap-1">
-                                      <Check size={12} /> Reply posted
-                                    </p>
-                                  ) : (
-                                    <div className="flex items-center gap-1.5">
-                                      <input
-                                        value={commentText}
-                                        onChange={(e) => setCommentText(e.target.value)}
-                                        onKeyDown={(e) => { if (e.key === 'Enter') submitComment(t.id); }}
-                                        placeholder={`Reply to ${n}...`}
-                                        autoFocus
-                                        className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-full border border-violet-200 bg-white focus:outline-none focus:border-violet-400"
-                                      />
-                                      <button
-                                        onClick={() => submitComment(t.id)}
-                                        disabled={submitting || !commentText.trim()}
-                                        className="w-7 h-7 rounded-full bg-violet-600 disabled:bg-violet-300 flex items-center justify-center shrink-0"
-                                      >
-                                        <Send size={12} className="text-white" />
-                                      </button>
-                                    </div>
-                                  )}
+                                <div className="mt-2 flex items-center gap-1.5">
+                                  <input
+                                    value={commentText}
+                                    onChange={(e) => setCommentText(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') submitComment(t.id); }}
+                                    placeholder={`Reply to ${n}...`}
+                                    autoFocus
+                                    className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-full border border-violet-200 bg-white focus:outline-none focus:border-violet-400"
+                                  />
+                                  <button
+                                    onClick={() => submitComment(t.id)}
+                                    disabled={submitting || !commentText.trim()}
+                                    className="w-7 h-7 rounded-full bg-violet-600 disabled:bg-violet-300 flex items-center justify-center shrink-0"
+                                  >
+                                    <Send size={12} className="text-white" />
+                                  </button>
                                 </div>
                               )}
                             </div>
