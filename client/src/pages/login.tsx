@@ -251,12 +251,9 @@ export default function LoginPage() {
               className="h-14 w-auto brightness-0"
             />
           </div>
-          <h1 className="text-gray-900 text-lg font-semibold mb-1">
+          <h1 className="text-gray-900 text-lg font-semibold">
             Entertainment is better, shared.
           </h1>
-          <p className="text-gray-500 text-[10px] tracking-widest font-medium pl-3">
-            PLAY. CONNECT. DISCOVER.
-          </p>
         </div>
 
         <div className="mb-6">
