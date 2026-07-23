@@ -717,7 +717,7 @@ export default function NewRoom() {
           {featuredTitles.length > 0 && (
             <div className="px-4 pt-4 pb-3 border-b border-gray-100">
               <div className="flex items-center justify-between mb-2.5">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Room Media</p>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider truncate pr-2">Media similar to {pool.name}</p>
                 <button onClick={() => setTab("Explore")} className="text-[12px] font-semibold active:opacity-70" style={{ color: ACCENT }}>View all</button>
               </div>
               <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
@@ -727,16 +727,17 @@ export default function NewRoom() {
                     onClick={() => {
                       if (t.external_source && t.external_id) setLocation(`/media/${t.type}/${t.external_source}/${t.external_id}`);
                     }}
-                    className="flex-shrink-0 active:scale-95 transition-transform"
+                    className="flex-shrink-0 w-14 active:scale-95 transition-transform"
                     title={t.title}
                   >
                     <img
                       src={t.poster_url}
                       alt={t.title}
-                      className="w-12 h-[72px] rounded object-cover shadow-sm border border-gray-200"
+                      className="w-14 h-[84px] rounded object-cover shadow-sm border border-gray-200"
                       loading="lazy"
                       onError={(e) => { const btn = e.currentTarget.closest("button"); if (btn) (btn as HTMLElement).style.display = "none"; }}
                     />
+                    <p className="text-[10px] text-gray-500 leading-tight mt-1 text-center line-clamp-2">{t.title}</p>
                   </button>
                 ))}
               </div>
