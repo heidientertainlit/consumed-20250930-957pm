@@ -546,26 +546,29 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                               <div className="flex items-center gap-4 mt-1.5">
                                 <button
                                   onClick={() => reactToTake(t.id, 'up')}
-                                  className={`flex items-center gap-1 text-[11px] ${takeReactions[t.id] === 'up' ? 'text-gray-800 font-semibold' : 'text-gray-500 font-medium'}`}
+                                  className={`flex items-center gap-0.5 text-[11px] p-0.5 ${takeReactions[t.id] === 'up' ? 'text-gray-800 font-semibold' : 'text-gray-400 font-medium'}`}
                                 >
-                                  <ArrowUp size={13} strokeWidth={takeReactions[t.id] === 'up' ? 2.5 : 2} /> Agree{likeCount > 0 ? ` (${likeCount + (takeReactions[t.id] === 'up' ? 1 : 0)})` : takeReactions[t.id] === 'up' ? ' (1)' : ''}
+                                  <ArrowUp size={13} strokeWidth={takeReactions[t.id] === 'up' ? 2.5 : 2} />{(() => {
+                                    const shown = likeCount + (takeReactions[t.id] === 'up' ? 1 : 0);
+                                    return shown > 0 ? ` ${shown}` : '';
+                                  })()}
                                 </button>
                                 <button
                                   onClick={() => reactToTake(t.id, 'down')}
-                                  className={`flex items-center gap-1 text-[11px] ${takeReactions[t.id] === 'down' ? 'text-gray-800 font-semibold' : 'text-gray-500 font-medium'}`}
+                                  className={`flex items-center gap-0.5 text-[11px] p-0.5 ${takeReactions[t.id] === 'down' ? 'text-gray-800 font-semibold' : 'text-gray-400 font-medium'}`}
                                 >
-                                  <ArrowDown size={13} strokeWidth={takeReactions[t.id] === 'down' ? 2.5 : 2} /> Disagree{(() => {
+                                  <ArrowDown size={13} strokeWidth={takeReactions[t.id] === 'down' ? 2.5 : 2} />{(() => {
                                     const shown = (disagreeCounts[t.id] || 0) + (takeReactions[t.id] === 'down' ? 1 : 0);
-                                    return shown > 0 ? ` (${shown})` : '';
+                                    return shown > 0 ? ` ${shown}` : '';
                                   })()}
                                 </button>
                                 <button
                                   onClick={() => { setActiveTakeId(isActive ? null : takeId); setCommentText(''); }}
-                                  className={`flex items-center gap-1 text-[11px] font-semibold ${isActive ? 'text-violet-600' : 'text-gray-500'}`}
+                                  className={`flex items-center gap-1 text-[11px] p-0.5 font-medium ${isActive ? 'text-violet-600' : 'text-gray-400'}`}
                                 >
-                                  <MessageCircle size={12} /> Comment{(() => {
+                                  <MessageCircle size={12} /> Reply{(() => {
                                     const shown = Math.max(replyCount, (threadReplies[t.id] || []).length);
-                                    return shown > 0 ? ` (${shown})` : '';
+                                    return shown > 0 ? ` ${shown}` : '';
                                   })()}
                                 </button>
                               </div>
