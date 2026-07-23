@@ -224,35 +224,22 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
   const [disagreeCounts, setDisagreeCounts] = useState<Record<string, number>>({});
   const [loadedKeys, setLoadedKeys] = useState<Set<string>>(new Set());
 
-  const loadThread = async (g: any) => {
-    if (loadedKeys.has(g.key)) return;
-    setLoadedKeys(prev => new Set(prev).add(g.key));
-    const ids = g.topTakes.map((t: any) => t.id).filter(Boolean);
-    if (ids.length === 0) return;
-    try {
-      const [commentsRes, reactionsRes] = await Promise.all([
-        supabase
-          .from('comments')
-          .select('id, content, created_at, post_id, users:user_id (id, user_name, display_name, avatar)')
-          .in('post_id', ids)
-          .order('created_at', { ascending: true })
-          .limit(60),
-        supabase
-          .from('post_reactions')
-          .select('social_post_id, reaction, user_id')
-          .in('social_post_id', ids),
-      ]);
-      if (commentsRes.data) {
-        const byPost: Record<string, any[]> = {};
-        for (const c of commentsRes.data) {
-          (byPost[c.post_id] = byPost[c.post_id] || []).push(c);
-        }
-        setThreadReplies(prev => ({ ...prev, ...byPost }));
-      }
-      if (reactionsRes.data) {
+  // Load disagree counts for ALL takes up-front so collapsed rows can show them
+  const reactionsLoadedRef = useRef(false);
+  useEffect(() => {
+    if (reactionsLoadedRef.current || !groups?.length) return;
+    reactionsLoadedRef.current = true;
+    const allIds = groups.flatMap((g: any) => g.topTakes.map((t: any) => t.id)).filter(Boolean);
+    if (allIds.length === 0) return;
+    supabase
+      .from('post_reactions')
+      .select('social_post_id, reaction, user_id')
+      .in('social_post_id', allIds)
+      .then(({ data }) => {
+        if (!data) return;
         const counts: Record<string, number> = {};
         const mine: Record<string, 'up' | 'down'> = {};
-        for (const r of reactionsRes.data) {
+        for (const r of data) {
           if (r.reaction === 'disagree') {
             if (r.user_id === currentUserId) {
               mine[r.social_post_id] = 'down';
@@ -263,6 +250,27 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
         }
         setDisagreeCounts(prev => ({ ...prev, ...counts }));
         if (Object.keys(mine).length) setTakeReactions(prev => ({ ...mine, ...prev }));
+      });
+  }, [groups, currentUserId]);
+
+  const loadThread = async (g: any) => {
+    if (loadedKeys.has(g.key)) return;
+    setLoadedKeys(prev => new Set(prev).add(g.key));
+    const ids = g.topTakes.map((t: any) => t.id).filter(Boolean);
+    if (ids.length === 0) return;
+    try {
+      const { data } = await supabase
+        .from('comments')
+        .select('id, content, created_at, post_id, users:user_id (id, user_name, display_name, avatar)')
+        .in('post_id', ids)
+        .order('created_at', { ascending: true })
+        .limit(60);
+      if (data) {
+        const byPost: Record<string, any[]> = {};
+        for (const c of data) {
+          (byPost[c.post_id] = byPost[c.post_id] || []).push(c);
+        }
+        setThreadReplies(prev => ({ ...prev, ...byPost }));
       }
     } catch (err) {
       console.error('Failed to load thread:', err);
@@ -458,6 +466,17 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
                     <span className="text-[11.5px] text-gray-500 truncate">
                       <span className="font-medium text-gray-700">{g.title}</span> · {g.talkingCount} people talking
                     </span>
+                    {topGlimpse && (() => {
+                      const agree = (topGlimpse.likes || topGlimpse.likes_count || 0) + (takeReactions[topGlimpse.id] === 'up' ? 1 : 0);
+                      const disagree = (disagreeCounts[topGlimpse.id] || 0) + (takeReactions[topGlimpse.id] === 'down' ? 1 : 0);
+                      if (!agree && !disagree) return null;
+                      return (
+                        <span className="flex items-center gap-2 shrink-0 ml-auto text-[11px] text-gray-500">
+                          {agree > 0 && <span className="flex items-center gap-0.5"><ArrowUp size={12} /> {agree}</span>}
+                          {disagree > 0 && <span className="flex items-center gap-0.5"><ArrowDown size={12} /> {disagree}</span>}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
                 <ChevronDown size={16} className={`text-gray-400 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
