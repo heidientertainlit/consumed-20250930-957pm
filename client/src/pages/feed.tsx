@@ -32,6 +32,7 @@ import { QuickReactCard } from "@/components/quick-react-card";
 
 import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronLeft, ChevronRight, ChevronDown, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, ArrowRight, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
+import MentionInput from "@/components/mention-input";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
 import { UserPollsCarousel } from "@/components/user-polls-carousel";
@@ -582,14 +583,16 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
                               )}
                               {isActive && (
                                 <div className="mt-2 flex items-center gap-1.5">
-                                  <input
-                                    value={commentText}
-                                    onChange={(e) => setCommentText(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') submitComment(t.id); }}
-                                    placeholder={`Reply to ${n}...`}
-                                    autoFocus
-                                    className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-full border border-violet-200 bg-white focus:outline-none focus:border-violet-400"
-                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <MentionInput
+                                      value={commentText}
+                                      onChange={setCommentText}
+                                      placeholder={`Reply to ${n}...`}
+                                      session={session}
+                                      autoFocus
+                                      className="w-full text-[12px] px-2.5 py-1.5 h-auto rounded-full border border-violet-200 bg-white focus:outline-none focus:border-violet-400"
+                                    />
+                                  </div>
                                   <button
                                     onClick={() => submitComment(t.id)}
                                     disabled={submitting || !commentText.trim()}
@@ -614,13 +617,15 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
                       </p>
                     ) : (
                       <div className="flex items-center gap-1.5">
-                        <input
-                          value={groupCommentText}
-                          onChange={(e) => setGroupCommentText(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') submitGroupComment(g); }}
-                          placeholder="Join the conversation..."
-                          className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-full border border-gray-200 bg-gray-50 focus:outline-none focus:border-violet-400 focus:bg-white"
-                        />
+                        <div className="flex-1 min-w-0">
+                          <MentionInput
+                            value={groupCommentText}
+                            onChange={setGroupCommentText}
+                            placeholder="Join the conversation..."
+                            session={session}
+                            className="w-full text-[12px] px-2.5 py-1.5 h-auto rounded-full border border-gray-200 bg-gray-50 focus:outline-none focus:border-violet-400 focus:bg-white"
+                          />
+                        </div>
                         <button
                           onClick={() => submitGroupComment(g)}
                           disabled={submitting || !groupCommentText.trim()}
@@ -2241,7 +2246,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           <div className="flex items-center justify-between px-4 pt-4 pb-2">
             <div className="flex items-center flex-wrap gap-2 gap-y-1">
               <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />
-              <span className="text-gray-900 font-semibold text-sm">See what everyone thinks</span>
+              <span className="text-gray-900 font-semibold text-sm">Rate &amp; Review</span>
             </div>
             {swipeProps?.navigate && swipeProps?.totalPosts && swipeProps.totalPosts > 1 && (
               <div className="flex items-center gap-1">
