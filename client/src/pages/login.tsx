@@ -178,7 +178,7 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#faf6f0] flex items-center justify-center">
+      <div className="min-h-screen bg-[#fbf8f5] flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <div className="text-gray-600 text-sm mt-4">Loading...</div>
@@ -189,7 +189,7 @@ export default function LoginPage() {
 
   if (user) {
     return (
-      <div className="min-h-screen bg-[#faf6f0] flex items-center justify-center">
+      <div className="min-h-screen bg-[#fbf8f5] flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <div className="text-gray-700 text-xl mt-4">Redirecting to Feed...</div>
@@ -241,7 +241,7 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#faf6f0] overflow-y-auto flex flex-col">
+    <div className="min-h-screen bg-[#fbf8f5] overflow-y-auto flex flex-col">
       <div className="max-w-md w-full mx-auto px-4 flex-1">
         <div className="text-center mb-6 mt-12">
           <div className="flex justify-center mb-1">
@@ -459,11 +459,11 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="w-full mt-10">
+      <div className="relative w-full h-56 sm:h-72 md:h-80 overflow-hidden mt-10">
         <img
           src={loginArt}
           alt="People enjoying movies, books, music, and podcasts together"
-          className="w-full max-w-4xl mx-auto block"
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1100px] md:w-[1400px] max-w-none"
         />
       </div>
 
