@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Mail, Lock, User, AtSign, Flame, Tv, Zap, Headphones, BookOpen, BarChart3, TrendingUp, ChevronRight } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, AtSign, Flame, Tv, Zap, Headphones, BookOpen, BarChart3, TrendingUp } from "lucide-react";
 
 const TYPE_STYLES: Record<string, { badge: typeof Flame; badgeBg: string; statIcon: typeof Flame }> = {
   movie: { badge: Flame, badgeBg: "bg-orange-500", statIcon: TrendingUp },
@@ -301,17 +301,12 @@ export default function LoginPage() {
                 <div key={item.title}>
                   {i > 0 && <div className="border-t border-white/10 mx-1" />}
                   <div className="flex items-center gap-3 py-2.5">
-                    <div className="relative flex-shrink-0">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-14 h-11 object-cover rounded-lg"
-                        loading="lazy"
-                      />
-                      <div className={`absolute -top-1 -left-1 ${style.badgeBg} rounded-md p-0.5`}>
-                        <Badge className="h-2.5 w-2.5 text-white" />
-                      </div>
-                    </div>
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-14 h-11 object-cover rounded-lg flex-shrink-0"
+                      loading="lazy"
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white leading-snug">{item.title}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
@@ -319,7 +314,10 @@ export default function LoginPage() {
                         <p className="text-xs text-gray-400">{item.stat}</p>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <div className="flex-shrink-0 flex items-center gap-1 border border-white/15 rounded-full px-2 py-0.5">
+                      <Badge className="h-3 w-3 text-purple-300" />
+                      <span className="text-[10px] font-medium text-gray-300 capitalize">{item.type}</span>
+                    </div>
                   </div>
                 </div>
               );
