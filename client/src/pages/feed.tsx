@@ -217,6 +217,20 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
 
   const avatarBg = (n: string) => `hsl(${(n.charCodeAt(0) * 47) % 360}, 50%, 48%)`;
 
+  const takeTimeAgo = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    if (isNaN(diff) || diff < 0) return '';
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'now';
+    if (mins < 60) return `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days}d`;
+    return `${Math.floor(days / 7)}w`;
+  };
+
   const submitComment = async (postId: string) => {
     if (!commentText.trim() || !currentUserId || !session) return;
     setSubmitting(true);
@@ -321,51 +335,76 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
                       const takeId = t.id || `take-${i}`;
                       const isActive = activeTakeId === takeId;
                       const hasText = !!(t.content && t.content.trim());
+                      const likeCount = t.likes || t.likes_count || 0;
+                      const replyCount = t.comments || t.comments_count || 0;
+                      const when = takeTimeAgo(t.timestamp || t.created_at);
                       return (
-                        <div key={takeId} className={isActive ? 'bg-violet-50 rounded-lg' : ''}>
-                          <button
-                            onClick={() => { setActiveTakeId(isActive ? null : takeId); setCommentText(''); }}
-                            className="w-full flex items-start gap-2 text-left px-1 py-1.5"
-                          >
-                            <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold shrink-0 mt-0.5" style={{ background: avatarBg(n) }}>
-                              {n[0]?.toUpperCase()}
+                        <div key={takeId} className="px-1 py-2">
+                          <div className="flex gap-2">
+                            {/* Avatar + thread line */}
+                            <div className="flex flex-col items-center shrink-0">
+                              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ background: avatarBg(n) }}>
+                                {n[0]?.toUpperCase()}
+                              </div>
+                              {isActive && <div className="w-px flex-1 bg-gray-200 mt-1" />}
                             </div>
-                            {hasText ? (
-                              <p className={`text-[12px] text-gray-700 leading-snug flex-1 ${isActive ? '' : 'line-clamp-2'}`}>"{t.content}"</p>
-                            ) : (
-                              <p className="text-[12px] text-gray-600 leading-snug flex-1 flex items-center gap-1">
-                                Rated it <Star size={11} className="text-yellow-400 fill-yellow-400 inline" /> {t.rating}/5
+                            <div className="flex-1 min-w-0">
+                              {/* username · time */}
+                              <p className="text-[11px] text-gray-500 leading-none mb-1">
+                                <span className="font-semibold text-gray-800">{n}</span>
+                                {when && <span> · {when}</span>}
+                                {!hasText && t.rating && (
+                                  <span className="inline-flex items-center gap-0.5 ml-1.5 text-gray-600">
+                                    rated <Star size={10} className="text-yellow-400 fill-yellow-400 inline" /> {t.rating}/5
+                                  </span>
+                                )}
                               </p>
-                            )}
-                          </button>
-                          {isActive && (
-                            <div className="px-1 pb-2">
-                              <p className="text-[10px] text-gray-400 font-medium mb-1 pl-7">{n}</p>
-                              {commentedIds.has(t.id) ? (
-                                <p className="text-[11px] text-green-600 font-medium flex items-center gap-1 pl-7">
-                                  <Check size={12} /> Comment added
-                                </p>
+                              {hasText ? (
+                                <p className={`text-[12.5px] text-gray-800 leading-snug ${isActive ? '' : 'line-clamp-3'}`}>{t.content}</p>
                               ) : (
-                                <div className="flex items-center gap-1.5">
-                                  <input
-                                    value={commentText}
-                                    onChange={(e) => setCommentText(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') submitComment(t.id); }}
-                                    placeholder="Add your take..."
-                                    autoFocus
-                                    className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-full border border-violet-200 bg-white focus:outline-none focus:border-violet-400"
-                                  />
-                                  <button
-                                    onClick={() => submitComment(t.id)}
-                                    disabled={submitting || !commentText.trim()}
-                                    className="w-7 h-7 rounded-full bg-violet-600 disabled:bg-violet-300 flex items-center justify-center shrink-0"
-                                  >
-                                    <Send size={12} className="text-white" />
-                                  </button>
+                                <p className="text-[12px] text-gray-500 italic leading-snug">No written take yet — reply and ask what they thought</p>
+                              )}
+                              {/* Action row */}
+                              <div className="flex items-center gap-4 mt-1.5">
+                                <span className="flex items-center gap-1 text-gray-400 text-[11px]">
+                                  <Heart size={12} /> {likeCount > 0 ? likeCount : ''}
+                                </span>
+                                <button
+                                  onClick={() => { setActiveTakeId(isActive ? null : takeId); setCommentText(''); }}
+                                  className={`flex items-center gap-1 text-[11px] font-semibold ${isActive ? 'text-violet-600' : 'text-gray-500'}`}
+                                >
+                                  <MessageCircle size={12} /> Reply{replyCount > 0 ? ` (${replyCount})` : ''}
+                                </button>
+                              </div>
+                              {isActive && (
+                                <div className="mt-2">
+                                  {commentedIds.has(t.id) ? (
+                                    <p className="text-[11px] text-green-600 font-medium flex items-center gap-1">
+                                      <Check size={12} /> Reply posted
+                                    </p>
+                                  ) : (
+                                    <div className="flex items-center gap-1.5">
+                                      <input
+                                        value={commentText}
+                                        onChange={(e) => setCommentText(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') submitComment(t.id); }}
+                                        placeholder={`Reply to ${n}...`}
+                                        autoFocus
+                                        className="flex-1 min-w-0 text-[12px] px-2.5 py-1.5 rounded-full border border-violet-200 bg-white focus:outline-none focus:border-violet-400"
+                                      />
+                                      <button
+                                        onClick={() => submitComment(t.id)}
+                                        disabled={submitting || !commentText.trim()}
+                                        className="w-7 h-7 rounded-full bg-violet-600 disabled:bg-violet-300 flex items-center justify-center shrink-0"
+                                      >
+                                        <Send size={12} className="text-white" />
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>
-                          )}
+                          </div>
                         </div>
                       );
                     })}
