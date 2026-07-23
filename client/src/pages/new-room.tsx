@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ChevronLeft, ChevronRight, MoreHorizontal, Check, Plus, Copy,
-  TrendingUp, MessageCircle,
+  ChevronLeft, ChevronRight, ChevronDown, MoreHorizontal, Check, Plus, Copy,
+  TrendingUp, MessageCircle, ArrowUp, ArrowDown,
   Brain, Vote, Tv, Flame, Bell, Users, X,
   Flag, EyeOff, BellOff, CircleHelp, Send, Loader2,
   Film, BookOpen, Mic, BadgeCheck,
@@ -121,6 +121,8 @@ export default function NewRoom() {
   const [copied, setCopied] = useState(false);
   const [optimisticFollowing, setOptimisticFollowing] = useState<boolean | null>(null);
   const [activeTake, setActiveTake] = useState<any | null>(null);
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [showComposer, setShowComposer] = useState(false);
 
   // Redirect if no room id (e.g. visiting /new-room directly)
   useEffect(() => {
@@ -494,32 +496,15 @@ export default function NewRoom() {
               </div>
 
               {pool.description && (
-                <p className="text-[14px] text-white/75 leading-relaxed mt-2.5">{pool.description}</p>
+                <button
+                  onClick={() => setDescExpanded((v) => !v)}
+                  className="w-full flex items-end justify-between gap-2 text-left mt-2.5"
+                >
+                  <p className={`text-[14px] text-white/75 leading-relaxed flex-1 ${descExpanded ? "" : "line-clamp-1"}`}>{pool.description}</p>
+                  <ChevronDown size={15} className={`text-white/50 shrink-0 mb-0.5 transition-transform ${descExpanded ? "rotate-180" : ""}`} />
+                </button>
               )}
-              {featuredTitles.length > 0 ? (
-                <div className="mt-4">
-                  <div className="flex items-center justify-between mb-2.5">
-                    <p className="text-[13px] font-bold text-white">Example content for this room</p>
-                    <button onClick={() => setTab("Explore")} className="text-[12px] font-semibold text-purple-300 active:opacity-70">View all</button>
-                  </div>
-                  <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-                    {featuredTitles.map((t: any, i: number) => (
-                      <button
-                        key={`${t.external_source}-${t.external_id}-${i}`}
-                        onClick={() => {
-                          if (t.external_source && t.external_id) setLocation(`/media/${t.type}/${t.external_source}/${t.external_id}`);
-                        }}
-                        className="flex-shrink-0 w-[84px] active:scale-95 transition-transform"
-                        title={t.title}
-                      >
-                        <div className="w-[84px] h-[120px] rounded-xl overflow-hidden bg-white/10 border border-white/10">
-                          <img src={t.poster_url} alt={t.title} className="w-full h-full object-cover" loading="lazy" onError={(e) => { const btn = e.currentTarget.closest("button"); if (btn) (btn as HTMLElement).style.display = "none"; }} />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : parsedExamples.length > 0 ? (
+              {featuredTitles.length === 0 && parsedExamples.length > 0 && descExpanded ? (
                 <div className="mt-4 space-y-2.5">
                   {parsedExamples.map((g, gi) => (
                     <div key={gi} className="flex items-start gap-2.5">
@@ -727,90 +712,167 @@ export default function NewRoom() {
 
         {/* ════════ DISCUSS ════════ */}
         {tab === "Discuss" && (
-        <div className="pt-7">
-          {/* Trending this week */}
-          {trending.length > 0 && (<>
-            <SectionHeader title="Trending this week" />
-            <div className="flex gap-3 overflow-x-auto px-4 pb-1 -mt-1 mb-6 scrollbar-hide">
-              {trending.map((t: any) => (
-                <button key={t.id} onClick={() => setActiveTake(t)} className="flex-shrink-0 w-[150px] rounded-2xl p-3.5 flex flex-col justify-between text-left" style={{ background: "#f3effe", minHeight: 96 }}>
-                  <p className="text-[14px] font-bold text-gray-900 leading-snug line-clamp-2">{t.title}</p>
+        <div>
+          {/* Room Media */}
+          {featuredTitles.length > 0 && (
+            <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-2.5">
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Room Media</p>
+                <button onClick={() => setTab("Explore")} className="text-[12px] font-semibold active:opacity-70" style={{ color: ACCENT }}>View all</button>
+              </div>
+              <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
+                {featuredTitles.map((t: any, i: number) => (
+                  <button
+                    key={`${t.external_source}-${t.external_id}-${i}`}
+                    onClick={() => {
+                      if (t.external_source && t.external_id) setLocation(`/media/${t.type}/${t.external_source}/${t.external_id}`);
+                    }}
+                    className="flex-shrink-0 active:scale-95 transition-transform"
+                    title={t.title}
+                  >
+                    <img
+                      src={t.poster_url}
+                      alt={t.title}
+                      className="w-12 h-[72px] rounded object-cover shadow-sm border border-gray-200"
+                      loading="lazy"
+                      onError={(e) => { const btn = e.currentTarget.closest("button"); if (btn) (btn as HTMLElement).style.display = "none"; }}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Start a conversation */}
+          <div className="px-3 py-3 border-b border-gray-100">
+            {showComposer ? (
+              <div>
+                <RoomComposer
+                  onSubmit={async (data) => {
+                    const ok = await handlePost(data);
+                    if (ok) setShowComposer(false);
+                    return ok;
+                  }}
+                  posting={posting}
+                />
+                <button onClick={() => setShowComposer(false)} className="mt-2 text-[13px] font-medium text-gray-400 px-2 active:text-gray-600">Cancel</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowComposer(true)}
+                className="w-full bg-gray-50 border border-gray-200 text-gray-500 rounded-full py-2 px-3 flex items-center gap-3 text-[14px] font-medium active:bg-gray-100 transition-colors"
+              >
+                <span className="rounded-full p-1.5" style={{ background: "#f3effe", color: ACCENT }}>
+                  <Plus size={14} strokeWidth={3} />
+                </span>
+                Start a conversation...
+              </button>
+            )}
+          </div>
+
+          <div className="px-4 pt-4">
+            {/* Hot conversation */}
+            {trending.length > 0 && (() => {
+              const hot = trending[0];
+              const hg = dbToDisplay(hot.tag);
+              return (
+                <button
+                  onClick={() => setActiveTake(hot)}
+                  className="w-full text-left bg-purple-50/60 border border-purple-200/60 rounded-2xl p-4 mb-4 shadow-sm active:bg-purple-50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    {hg && (
+                      <span className="px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase rounded-full" style={{ background: hg.bg, color: hg.fg }}>{hg.label}</span>
+                    )}
+                    <span className="text-[11px] font-bold tracking-wider uppercase flex items-center gap-1" style={{ color: ACCENT }}>
+                      <Flame size={13} className="text-orange-500" />
+                      Hot Conversation
+                    </span>
+                  </div>
+                  <p className="text-[15px] font-semibold text-gray-900 leading-snug">{hot.title}</p>
+                  {hot.body && (
+                    <div className="bg-white/70 rounded-xl p-3 mt-2.5 text-[13px] leading-relaxed text-gray-600 border border-purple-100/50 line-clamp-2">
+                      <span className="font-semibold text-gray-900">{nameOf(hot.users)}:</span> {hot.body}
+                    </div>
+                  )}
                   <div className="flex items-center justify-between mt-3">
-                    <span className="text-[12px] text-gray-500">{t.reply_count || 0} replies</span>
-                    <Flame size={15} className="text-orange-500" />
+                    <span className="text-[11px] font-medium text-purple-700/80">{hot.reply_count || 0} {(hot.reply_count || 0) === 1 ? "reply" : "replies"} · {hot.upvotes || 0} agree</span>
+                    <span className="text-[11px] font-semibold text-purple-700 bg-purple-100/80 px-3 py-1.5 rounded-full">Tap to join</span>
                   </div>
                 </button>
-              ))}
-            </div>
-          </>)}
+              );
+            })()}
 
-          {/* Composer — always open */}
-          <div className="px-4">
-            <RoomComposer onSubmit={handlePost} posting={posting} />
-          </div>
-
-          {/* All conversations */}
-          <div className="flex items-center justify-between px-5 mt-7 mb-3">
-            <p className="text-[13px] font-bold uppercase tracking-wider text-gray-500">All conversations</p>
-          </div>
-
-          <div className="px-4 space-y-3">
+            {/* Conversations — minimal threaded rows */}
             {sortedTakes.length === 0 && (
               <p className="text-center text-[14px] text-gray-400 py-8">No conversations yet — start one above.</p>
             )}
-            {sortedTakes.map((t: any) => {
+            {sortedTakes.map((t: any, ti: number) => {
               const g = dbToDisplay(t.tag);
-              const TagIcon = g?.icon;
               const agreed = hasAgreed(t.id);
               return (
-              <div key={t.id} className="rounded-2xl border border-gray-100 p-4">
+              <div key={t.id}>
+                {ti > 0 && <div className="w-full h-[1px] bg-gray-100" />}
                 {flagged.includes(t.id) ? (
-                  <div className="flex items-center gap-2 py-2 text-[13px] text-gray-500">
+                  <div className="flex items-center gap-2 py-4 text-[13px] text-gray-500">
                     <Flag size={15} className="text-gray-400" />
                     <span>Thanks — this conversation has been reported for review.</span>
                   </div>
                 ) : (
-                <>
-                {g && TagIcon && (
-                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold mb-2" style={{ background: g.bg, color: g.fg }}>
-                    <TagIcon size={12} /> {g.label}
-                  </span>
-                )}
-                <button onClick={() => setActiveTake(t)} className="block w-full text-left">
-                  <p className="text-[16px] font-bold text-gray-900 leading-snug">{t.title}</p>
-                  {t.body && <p className="text-[14px] text-gray-500 leading-snug mt-1 line-clamp-3">{t.body}</p>}
-                </button>
-                <p className="text-[12px] text-gray-400 mt-2">{nameOf(t.users)} · {timeAgo(t.created_at)}</p>
-
-                <div className="flex items-center justify-between mt-3">
-                  <div className="flex items-center gap-3 text-[13px] text-gray-500">
-                    <button onClick={() => handleAgree(t)} className="flex items-center gap-1 active:scale-95 transition-transform" style={agreed ? { color: ACCENT } : undefined}>
-                      <Users size={14} /> {t.upvotes || 0} agree
-                    </button>
-                    <button onClick={() => setActiveTake(t)} className="flex items-center gap-1">
-                      <MessageCircle size={14} /> {t.reply_count || 0} replies
-                    </button>
+                <div className="flex gap-3 py-4">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
+                    style={{ background: AVATAR_COLORS[nameOf(t.users).charCodeAt(0) % AVATAR_COLORS.length] }}
+                  >
+                    {initialOf(t.users)}
                   </div>
-                  <div className="relative flex items-center gap-3 text-gray-400">
-                    <button className="active:text-gray-700"><Bell size={16} /></button>
-                    <button onClick={() => setMenuFor(menuFor === t.id ? null : t.id)} aria-label="More options"><MoreHorizontal size={18} /></button>
-                    {menuFor === t.id && (<>
-                      <div className="fixed inset-0 z-10" onClick={() => setMenuFor(null)} />
-                      <div className="absolute right-0 top-7 z-20 w-52 rounded-2xl border border-gray-100 bg-white shadow-lg overflow-hidden py-1">
-                        <button onClick={() => { setFlagged((f) => [...f, t.id]); setMenuFor(null); }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-red-600 active:bg-gray-50">
-                          <Flag size={16} /> Flag as inappropriate
-                        </button>
-                        <button onClick={() => setMenuFor(null)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-gray-700 active:bg-gray-50">
-                          <EyeOff size={16} className="text-gray-400" /> Not interested
-                        </button>
-                        <button onClick={() => setMenuFor(null)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-gray-700 active:bg-gray-50">
-                          <BellOff size={16} className="text-gray-400" /> Mute {nameOf(t.users)}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-bold text-[14px] text-gray-900 truncate">{nameOf(t.users)}</span>
+                      <span className="text-gray-400 text-[12px] shrink-0">· {timeAgo(t.created_at)}</span>
+                      {g && (
+                        <span className="ml-1 px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase rounded-sm shrink-0" style={{ background: g.bg, color: g.fg }}>{g.label}</span>
+                      )}
+                    </div>
+                    <button onClick={() => setActiveTake(t)} className="block w-full text-left">
+                      <p className="text-gray-800 text-[14px] leading-relaxed mt-0.5">{t.title}</p>
+                      {t.body && <p className="text-gray-500 text-[13px] leading-relaxed mt-0.5 line-clamp-2">{t.body}</p>}
+                    </button>
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center gap-4 text-gray-400">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => handleAgree(t)} className="active:scale-90 transition-transform" style={agreed ? { color: ACCENT } : undefined} aria-label="Agree">
+                            <ArrowUp size={15} strokeWidth={2.5} />
+                          </button>
+                          {(t.upvotes || 0) > 0 && <span className="text-[12px] font-medium text-gray-500">{t.upvotes}</span>}
+                          <button onClick={() => { if (agreed) handleAgree(t); }} className="active:scale-90 transition-transform" aria-label="Remove agree">
+                            <ArrowDown size={15} strokeWidth={2.5} />
+                          </button>
+                        </div>
+                        <button onClick={() => setActiveTake(t)} className="text-[12px] font-medium active:text-purple-600">
+                          Reply{(t.reply_count || 0) > 0 ? ` · ${t.reply_count}` : ""}
                         </button>
                       </div>
-                    </>)}
+                      <div className="relative flex items-center gap-3 text-gray-300">
+                        <button onClick={() => setMenuFor(menuFor === t.id ? null : t.id)} aria-label="More options"><MoreHorizontal size={17} /></button>
+                        {menuFor === t.id && (<>
+                          <div className="fixed inset-0 z-10" onClick={() => setMenuFor(null)} />
+                          <div className="absolute right-0 top-7 z-20 w-52 rounded-2xl border border-gray-100 bg-white shadow-lg overflow-hidden py-1">
+                            <button onClick={() => { setFlagged((f) => [...f, t.id]); setMenuFor(null); }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-red-600 active:bg-gray-50">
+                              <Flag size={16} /> Flag as inappropriate
+                            </button>
+                            <button onClick={() => setMenuFor(null)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-gray-700 active:bg-gray-50">
+                              <EyeOff size={16} className="text-gray-400" /> Not interested
+                            </button>
+                            <button onClick={() => setMenuFor(null)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-gray-700 active:bg-gray-50">
+                              <BellOff size={16} className="text-gray-400" /> Mute {nameOf(t.users)}
+                            </button>
+                          </div>
+                        </>)}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                </>
                 )}
               </div>
               );
@@ -939,15 +1001,25 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
           {replies.length === 0 ? (
             <p className="text-[14px] text-gray-400 py-4">No replies yet — be the first.</p>
           ) : (
-            <div className="space-y-3">
-              {replies.map((r: any) => {
+            <div>
+              {replies.map((r: any, ri: number) => {
                 const voted = myReplyVote(r.id)?.vote === 1;
                 return (
-                  <div key={r.id} className="rounded-2xl bg-gray-50 p-3.5">
-                    <p className="text-[12px] font-semibold text-gray-700 mb-1">{nameOf(r.users)} · {timeAgo(r.created_at)}</p>
-                    <p className="text-[14px] text-gray-800 leading-snug">{r.content}</p>
-                    <button onClick={() => handleReplyUpvote(r)} className="flex items-center gap-1 text-[13px] mt-2 active:scale-95 transition-transform" style={voted ? { color: ACCENT } : { color: "#6b7280" }}>
-                      <Users size={13} /> {r.upvotes || 0}
+                  <div key={r.id} className="relative pl-8 pb-4">
+                    {ri < replies.length - 1 && <div className="absolute left-3 top-8 bottom-0 w-[2px] bg-gray-100" />}
+                    <div
+                      className="absolute left-0 top-0.5 w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
+                      style={{ background: AVATAR_COLORS[nameOf(r.users).charCodeAt(0) % AVATAR_COLORS.length] }}
+                    >
+                      {initialOf(r.users)}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-[13px] text-gray-900">{nameOf(r.users)}</span>
+                      <span className="text-gray-400 text-[12px]">· {timeAgo(r.created_at)}</span>
+                    </div>
+                    <p className="text-[14px] text-gray-800 leading-relaxed mt-0.5">{r.content}</p>
+                    <button onClick={() => handleReplyUpvote(r)} className="flex items-center gap-1.5 text-[12px] font-medium mt-1.5 active:scale-95 transition-transform" style={voted ? { color: ACCENT } : { color: "#9ca3af" }}>
+                      <ArrowUp size={14} strokeWidth={2.5} /> {(r.upvotes || 0) > 0 ? r.upvotes : ""}
                     </button>
                   </div>
                 );
