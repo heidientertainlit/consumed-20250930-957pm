@@ -469,11 +469,10 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia }: {
                     {topGlimpse && (() => {
                       const agree = (topGlimpse.likes || topGlimpse.likes_count || 0) + (takeReactions[topGlimpse.id] === 'up' ? 1 : 0);
                       const disagree = (disagreeCounts[topGlimpse.id] || 0) + (takeReactions[topGlimpse.id] === 'down' ? 1 : 0);
-                      if (!agree && !disagree) return null;
                       return (
-                        <span className="flex items-center gap-2 shrink-0 ml-auto text-[11px] text-gray-500">
-                          {agree > 0 && <span className="flex items-center gap-0.5"><ArrowUp size={12} /> {agree}</span>}
-                          {disagree > 0 && <span className="flex items-center gap-0.5"><ArrowDown size={12} /> {disagree}</span>}
+                        <span className="flex items-center gap-2 shrink-0 ml-auto text-[11px] text-gray-500 font-medium">
+                          <span className="flex items-center gap-0.5"><ArrowUp size={12} /> {agree}</span>
+                          <span className="flex items-center gap-0.5"><ArrowDown size={12} /> {disagree}</span>
                         </span>
                       );
                     })()}
