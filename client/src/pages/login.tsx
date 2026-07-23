@@ -297,26 +297,26 @@ export default function LoginPage() {
               return (
                 <div key={item.title}>
                   {i > 0 && <div className="border-t border-white/10 mx-1" />}
-                  <div className="flex items-center gap-4 py-3">
+                  <div className="flex items-center gap-3 py-2.5">
                     <div className="relative flex-shrink-0">
                       <img
                         src={item.image}
                         alt={item.title}
-                        className="w-20 h-16 object-cover rounded-xl"
+                        className="w-14 h-11 object-cover rounded-lg"
                         loading="lazy"
                       />
-                      <div className={`absolute -top-1.5 -left-1.5 ${item.badgeBg} rounded-lg p-1`}>
-                        <Badge className="h-3 w-3 text-white" />
+                      <div className={`absolute -top-1 -left-1 ${item.badgeBg} rounded-md p-0.5`}>
+                        <Badge className="h-2.5 w-2.5 text-white" />
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-base font-semibold text-white leading-snug">{item.title}</p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <StatIcon className="h-3.5 w-3.5 text-purple-400" />
-                        <p className="text-sm text-gray-400">{item.stat}</p>
+                      <p className="text-sm font-semibold text-white leading-snug">{item.title}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <StatIcon className="h-3 w-3 text-purple-400" />
+                        <p className="text-xs text-gray-400">{item.stat}</p>
                       </div>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                    <ChevronRight className="h-4 w-4 text-gray-500 flex-shrink-0" />
                   </div>
                 </div>
               );
