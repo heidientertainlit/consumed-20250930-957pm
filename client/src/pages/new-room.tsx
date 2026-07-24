@@ -759,7 +759,7 @@ export default function NewRoom() {
                 <RoomComposer
                   hideTags
                   hideTitle
-                  bodyRows={6}
+                  bodyRows={4}
                   bodyPlaceholder="What do you think?"
                   canSubmit={({ title, body }) => {
                     const hasText = !!(title.trim() || body.trim());
