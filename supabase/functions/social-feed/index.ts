@@ -129,22 +129,8 @@ serve(async (req) => {
         ];
       }
 
-      // GUEST MODE: guests only see guest-safe content — posts authored by
-      // Consumed persona accounts (is_persona = true). No real-user posts leak out.
-      let guestSafeUserIds: string[] | null = null;
-      if (isGuest) {
-        const { data: personaUsers } = await supabaseAdmin
-          .from('users')
-          .select('id')
-          .eq('is_persona', true);
-        guestSafeUserIds = personaUsers?.map((u: any) => u.id) || [];
-        if (guestSafeUserIds.length === 0) {
-          // No persona accounts — return an empty feed rather than leaking user content
-          return new Response(JSON.stringify({ posts: [], currentUserId: null }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        }
-      }
+      // GUEST MODE: guests see the same public feed as logged-in users
+      // (all posts — persona and real users). Per user decision 2026-07-24.
 
       // Build the base query — use admin client to bypass RLS so ALL posts appear
       // chronologically regardless of follow relationships (small user base, no friend filtering)
@@ -189,10 +175,6 @@ serve(async (req) => {
         query = query.not('user_id', 'in', `(${blockedUserIds.join(',')})`);
       }
 
-      // GUEST MODE: restrict to persona-authored posts only
-      if (guestSafeUserIds) {
-        query = query.in('user_id', guestSafeUserIds);
-      }
 
       // === PLAY-FIRST FEED FILTER ===
       // Only surface meaningful participatory content. Exclude low-value tracking
