@@ -53,13 +53,16 @@ interface RoomComposerProps {
   // Hide the "Add a tag" row — the composer posts with defaultTag. Used since
   // post types were simplified to a single "say something" post.
   hideTags?: boolean;
+  // Rendered in the footer where the tag row used to be (e.g. a compact
+  // optional star-rating row). Shown above the Post button row.
+  footerExtra?: React.ReactNode;
 }
 
 export default function RoomComposer({
   onSubmit,
   posting = false,
   titlePlaceholder = "Add a title…",
-  bodyPlaceholder = "What's on your mind?",
+  bodyPlaceholder = "What do you think?",
   tags = DISCUSSION_TAGS,
   defaultTag = DEFAULT_TAG_DB,
   renderExtra,
@@ -68,6 +71,7 @@ export default function RoomComposer({
   bodyRows = 2,
   hideTitle = false,
   hideTags = false,
+  footerExtra,
 }: RoomComposerProps) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -113,6 +117,7 @@ export default function RoomComposer({
         {!hideTags && (
           <p className={`text-[12px] font-semibold text-gray-400 ${compactTags ? "mb-1.5" : "mb-2.5"}`}>Add a tag</p>
         )}
+        {footerExtra}
         <div className={`flex flex-wrap items-center ${compactTags ? "gap-1.5" : "gap-2"}`}>
           {!hideTags && tags.map((s) => {
             const Icon = s.icon;

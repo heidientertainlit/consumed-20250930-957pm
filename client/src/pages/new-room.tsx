@@ -679,7 +679,7 @@ export default function NewRoom() {
                 <RoomComposer
                   hideTags
                   hideTitle
-                  bodyPlaceholder="What's on your mind?"
+                  bodyPlaceholder="What do you think?"
                   canSubmit={({ title, body }) => !!(title.trim() || body.trim())}
                   onSubmit={async (data) => {
                     const ok = await handlePost(data);

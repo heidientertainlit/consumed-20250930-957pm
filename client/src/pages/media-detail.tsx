@@ -1617,31 +1617,33 @@ export default function MediaDetail() {
               hideTitle
               hideTags
               posting={isComposePosting}
-              bodyPlaceholder="What's on your mind?"
+              bodyPlaceholder="What do you think?"
               onSubmit={handleComposePost}
               canSubmit={({ title, body }) => {
                 const hasText = !!(title.trim() || body.trim());
                 return hasText || composeRating > 0;
               }}
-              renderExtra={() => {
-                {
-                  const activeRating = composeHoverRating || composeRating;
-                  return (
-                    <div className="flex items-center gap-3 mt-3">
-                      <span className="text-sm text-gray-500">Rating:</span>
-                      <div className="flex gap-1.5">
+              footerExtra={(() => {
+                const activeRating = composeHoverRating || composeRating;
+                return (
+                  <div className="mb-2">
+                    <p className="text-[12px] font-semibold text-gray-400 mb-1.5">
+                      Add Rating <span className="font-normal">(optional)</span>
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
                         {[1, 2, 3, 4, 5].map((star) => {
                           const isFull = activeRating >= star;
                           const isHalf = !isFull && activeRating >= star - 0.5;
                           return (
-                            <div key={star} className="relative w-9 h-9">
-                              <Star size={36} className="absolute inset-0 text-gray-300" />
+                            <div key={star} className="relative w-6 h-6">
+                              <Star size={24} className="absolute inset-0 text-gray-300" />
                               {(isFull || isHalf) && (
                                 <div
                                   className="absolute inset-0 overflow-hidden"
                                   style={{ width: isFull ? '100%' : '50%' }}
                                 >
-                                  <Star size={36} className="fill-yellow-400 text-yellow-400" />
+                                  <Star size={24} className="fill-yellow-400 text-yellow-400" />
                                 </div>
                               )}
                               <button
@@ -1665,12 +1667,12 @@ export default function MediaDetail() {
                         })}
                       </div>
                       {activeRating > 0 && (
-                        <span className="text-sm font-semibold text-gray-700">{activeRating.toFixed(1)}</span>
+                        <span className="text-[13px] font-semibold text-gray-700">{activeRating.toFixed(1)}</span>
                       )}
                     </div>
-                  );
-                }
-              }}
+                  </div>
+                );
+              })()}
             />
             )}
           </div>
