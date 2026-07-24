@@ -351,7 +351,10 @@ export default function NewRoom() {
 
   const handlePost = async ({ title, body, tag }: { title: string; body: string; tag: string }) => {
     if (!currentUserId) { toast({ title: "Sign in to post" }); return false; }
-    if (!title.trim()) return false;
+    // Title field removed from the composer — the post text lives in `body`.
+    // room_takes.title is the headline shown in lists, so store the text there.
+    const text = (title.trim() || body.trim());
+    if (!text) return false;
     setPosting(true);
     try {
     const dbTag = tag || "discussion";
@@ -360,8 +363,8 @@ export default function NewRoom() {
       .insert({
         room_id: roomId,
         user_id: currentUserId,
-        title: title.trim(),
-        body: body.trim() || null,
+        title: text,
+        body: title.trim() ? (body.trim() || null) : null,
         tag: dbTag,
       })
       .select("*, users:user_id(id, display_name, user_name)")
@@ -674,6 +677,9 @@ export default function NewRoom() {
             {showComposer ? (
               <div>
                 <RoomComposer
+                  hideTitle
+                  bodyPlaceholder="What's on your mind?"
+                  canSubmit={({ title, body }) => !!(title.trim() || body.trim())}
                   onSubmit={async (data) => {
                     const ok = await handlePost(data);
                     if (ok) setShowComposer(false);

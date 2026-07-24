@@ -707,9 +707,9 @@ export default function FeedComposerBar({
               tags={MEDIA_TAGS}
               defaultTag={selectedMedia ? 'rate' : 'take'}
               compactTags
+              hideTitle
               bodyRows={7}
               posting={isPosting}
-              titlePlaceholder="Add a title (optional)…"
               bodyPlaceholder="What's on your mind?"
               onSubmit={handleComposeSubmit}
               canSubmit={({ title, body, tag }) => {
