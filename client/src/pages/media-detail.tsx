@@ -1209,6 +1209,11 @@ export default function MediaDetail() {
     const ratingVal = Number(post.rating) || 0;
     const avatarBg = TAKE_AVATAR_COLORS[(name.charCodeAt(0) || 0) % TAKE_AVATAR_COLORS.length];
     const commentCount = expandedComments[post.id]?.length ?? Number(post.comments_count) ?? 0;
+    // "Just a rating" rows: synthetic media_ratings rows, or posts whose only
+    // content is the auto "Added X to <list>" text. Render them as one compact
+    // line (name + star left, agree/disagree right) instead of a full card.
+    const isAutoListText = hasText && /^added .+ to .+/i.test(post.content.trim());
+    const isCompactRating = ratingVal > 0 && (post._ratingOnly || !hasText || isAutoListText);
     const toggleExpand = () => {
       if (post._ratingOnly) return;
       const next = isExpanded ? null : cardId;
@@ -1217,6 +1222,51 @@ export default function MediaDetail() {
       if (next) { setReplyingTo(post.id); fetchComments(post.id); }
       else { setReplyingTo(null); }
     };
+    if (isCompactRating) {
+      return (
+        <div key={cardId} className="flex items-center gap-3 py-3" data-testid={`take-card-${post.id}`}>
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
+            style={{ background: avatarBg }}
+          >
+            {initial}
+          </div>
+          <div className="flex-1 min-w-0 flex items-center gap-1.5">
+            <span className="font-bold text-[14px] text-gray-900 truncate">{name}</span>
+            {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">· {takeTimeAgo(post.created_at)}</span>}
+            <span className="ml-1 flex items-center gap-0.5 shrink-0 text-[12px] font-semibold text-gray-700">
+              <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+              {ratingVal}
+            </span>
+          </div>
+          {!post._ratingOnly && (
+            <div className="flex items-center gap-2 text-gray-400 shrink-0">
+              <button
+                onClick={() => handleLike(post.id)}
+                className={`active:scale-90 transition-transform ${isLiked ? 'text-purple-600' : ''}`}
+                aria-label="Agree"
+                data-testid={`take-agree-${post.id}`}
+              >
+                <ArrowUp size={15} strokeWidth={2.5} />
+              </button>
+              {(Number(post.likes_count) || 0) > 0 && <span className="text-[12px] font-medium text-gray-500">{post.likes_count}</span>}
+              <button
+                onClick={() => setDisagreedTakes(prev => {
+                  const next = new Set(prev);
+                  next.has(post.id) ? next.delete(post.id) : next.add(post.id);
+                  return next;
+                })}
+                className={`active:scale-90 transition-transform ${isDisagreed ? 'text-red-500' : ''}`}
+                aria-label="Disagree"
+                data-testid={`take-disagree-${post.id}`}
+              >
+                <ArrowDown size={15} strokeWidth={2.5} />
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
     return (
       <div key={cardId} className="flex gap-3 py-4" data-testid={`take-card-${post.id}`}>
         <div
