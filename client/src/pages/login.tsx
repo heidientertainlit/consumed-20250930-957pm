@@ -37,11 +37,21 @@ const TYPE_HOOKS: Record<string, string[]> = {
   ],
 };
 
-function hookFor(type: string, title: string): string {
-  const hooks = TYPE_HOOKS[type] ?? TYPE_HOOKS.movie;
-  let hash = 0;
-  for (let i = 0; i < title.length; i++) hash = (hash * 31 + title.charCodeAt(i)) >>> 0;
-  return hooks[hash % hooks.length];
+function assignHooks(items: { title: string; type: string }[]): Record<string, string> {
+  const used = new Set<string>();
+  const result: Record<string, string> = {};
+  for (const item of items) {
+    const hooks = TYPE_HOOKS[item.type] ?? TYPE_HOOKS.movie;
+    let hash = 0;
+    for (let i = 0; i < item.title.length; i++) hash = (hash * 31 + item.title.charCodeAt(i)) >>> 0;
+    let pick = hooks[hash % hooks.length];
+    for (let step = 0; used.has(pick) && step < hooks.length; step++) {
+      pick = hooks[(hash + step + 1) % hooks.length];
+    }
+    used.add(pick);
+    result[item.title] = pick;
+  }
+  return result;
 }
 
 const FALLBACK_TRENDING = [
@@ -89,6 +99,8 @@ export default function LoginPage() {
     trendingData.items.some((i) => i.type === "podcast")
       ? trendingData.items
       : FALLBACK_TRENDING;
+
+  const itemHooks = assignHooks(trendingItems);
 
   const [carouselIndex, setCarouselIndex] = useState(0);
   useEffect(() => {
@@ -348,7 +360,7 @@ export default function LoginPage() {
                     <p className="text-sm font-semibold text-white leading-snug truncate">{item.title}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <StatIcon className="h-3 w-3 text-purple-400 flex-shrink-0" />
-                      <p className="text-xs text-gray-400 truncate">{hookFor(item.type, item.title)}</p>
+                      <p className="text-xs text-gray-400 truncate">{itemHooks[item.title]}</p>
                     </div>
                   </div>
                   <div className="flex-shrink-0 flex items-center gap-1 border border-white/15 rounded-full px-2 py-0.5">
