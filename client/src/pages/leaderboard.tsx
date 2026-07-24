@@ -644,31 +644,34 @@ export default function Leaderboard() {
                 'from-orange-500 to-red-500'
               )}
 
-              {renderCategoryCard(
-                'Conversation Starters',
-                MessageCircle,
-                leaderboardData?.categories?.conversation_starters,
-                'Conversation Starters',
-                'Start conversations people join to appear here!',
-                'from-violet-600 to-indigo-500'
-              )}
-
-              {renderCategoryCard(
-                'Top Commenters',
-                MessagesSquare,
-                leaderboardData?.categories?.top_commenters,
-                'Top Commenters',
-                'Jump into conversations to appear here!',
-                'from-blue-500 to-cyan-500'
-              )}
-
-              {renderCategoryCard(
-                'Room Regulars',
-                Users,
-                leaderboardData?.categories?.room_regulars,
-                'Room Regulars',
-                'Post and reply in rooms to appear here!',
-                'from-fuchsia-600 to-pink-500'
+              {/* ── Conversation Starters / Top Commenters / Room Regulars — hidden for now (same people on every board) ── */}
+              {false && (
+                <>
+                  {renderCategoryCard(
+                    'Conversation Starters',
+                    MessageCircle,
+                    leaderboardData?.categories?.conversation_starters,
+                    'Conversation Starters',
+                    'Start conversations people join to appear here!',
+                    'from-violet-600 to-indigo-500'
+                  )}
+                  {renderCategoryCard(
+                    'Top Commenters',
+                    MessagesSquare,
+                    leaderboardData?.categories?.top_commenters,
+                    'Top Commenters',
+                    'Jump into conversations to appear here!',
+                    'from-blue-500 to-cyan-500'
+                  )}
+                  {renderCategoryCard(
+                    'Room Regulars',
+                    Users,
+                    leaderboardData?.categories?.room_regulars,
+                    'Room Regulars',
+                    'Post and reply in rooms to appear here!',
+                    'from-fuchsia-600 to-pink-500'
+                  )}
+                </>
               )}
 
               {renderCategoryCard(
