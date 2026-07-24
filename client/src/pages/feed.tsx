@@ -8427,6 +8427,40 @@ export default function Feed() {
         </div>
       )}
 
+      {/* Guest DNA teaser — entice signup with Entertainment DNA (guest hero zone) */}
+      {isGuestMode && (
+        <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-4 -mt-px">
+          <div className="max-w-4xl mx-auto px-4 pt-4">
+            <div className="rounded-2xl border border-purple-500/30 bg-white/5 p-4" data-testid="guest-dna-teaser">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center">
+                  <Dna className="w-5 h-5 text-purple-300" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-white font-semibold text-sm leading-snug">
+                    What's your Entertainment DNA?
+                  </p>
+                  <p className="text-purple-200/80 text-xs mt-1 leading-snug">
+                    Every rating, take, and trivia answer builds your unique fan profile. Are you a...
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {["Emotional Binger", "Theory Crafter", "Prestige Detective", "Comfort Rewatcher"].map((a) => (
+                  <span key={a} className="text-[11px] font-medium text-purple-100 bg-purple-600/25 border border-purple-500/30 rounded-full px-2.5 py-1">
+                    {a}
+                  </span>
+                ))}
+              </div>
+              <button className="mt-3 w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-full py-2.5 transition-colors flex items-center justify-center gap-2" data-testid="button-guest-dna-cta">
+                <Sparkles className="w-4 h-4" />
+                Sign up free to discover yours
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Section — identity hero + DNA moment need a logged-in user, hidden for guests */}
       {!isGuestMode && (
         <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-3 -mt-px">
