@@ -2504,10 +2504,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               onClick={(e) => { e.stopPropagation(); setShowInlineRater(v => !v); }}
               className="flex items-center gap-1.5 active:scale-95 transition-transform"
             >
-              <Star size={15} className={ratingSubmitted ? 'text-gray-700 fill-gray-300' : showInlineRater ? 'text-gray-700' : 'text-gray-400'} strokeWidth={2} />
-              <span className={`text-[12px] ${ratingSubmitted ? 'text-gray-700 font-semibold' : showInlineRater ? 'text-gray-800 font-semibold' : 'text-gray-500 font-medium'}`}>
-                {ratingSubmitted ? `${ratingValue}★` : 'Rate'}
-              </span>
+              <Star size={15} className={ratingSubmitted ? 'text-yellow-400 fill-yellow-400' : showInlineRater ? 'text-yellow-500' : 'text-yellow-500'} strokeWidth={2} />
+              {!ratingSubmitted && (
+                <span className={`text-[12px] ${showInlineRater ? 'text-gray-800 font-semibold' : 'text-gray-500 font-medium'}`}>
+                  Rate
+                </span>
+              )}
             </button>
           )}
 
