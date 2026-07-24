@@ -1615,17 +1615,16 @@ export default function MediaDetail() {
               defaultTag="rate"
               compactTags
               hideTitle
+              hideTags
               posting={isComposePosting}
               bodyPlaceholder="What's on your mind?"
               onSubmit={handleComposePost}
-              canSubmit={({ title, body, tag }) => {
+              canSubmit={({ title, body }) => {
                 const hasText = !!(title.trim() || body.trim());
-                if (tag === 'rate') return hasText || composeRating > 0;
-                if (tag === 'predict') return hasText && composePredictionOptions.filter((o) => o.trim()).length >= 2;
-                return hasText;
+                return hasText || composeRating > 0;
               }}
-              renderExtra={(tag) => {
-                if (tag === 'rate') {
+              renderExtra={() => {
+                {
                   const activeRating = composeHoverRating || composeRating;
                   return (
                     <div className="flex items-center gap-3 mt-3">
@@ -1671,34 +1670,6 @@ export default function MediaDetail() {
                     </div>
                   );
                 }
-                if (tag === 'predict') {
-                  return (
-                    <div className="mt-3 space-y-2">
-                      {composePredictionOptions.map((opt, idx) => (
-                        <input
-                          key={idx}
-                          type="text"
-                          value={opt}
-                          onChange={(e) => {
-                            const updated = [...composePredictionOptions];
-                            updated[idx] = e.target.value;
-                            setComposePredictionOptions(updated);
-                          }}
-                          placeholder={`Option ${idx + 1}`}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => setComposePredictionOptions([...composePredictionOptions, ''])}
-                        className="text-xs text-purple-600 font-medium"
-                      >
-                        + Add option
-                      </button>
-                    </div>
-                  );
-                }
-                return null;
               }}
             />
             )}

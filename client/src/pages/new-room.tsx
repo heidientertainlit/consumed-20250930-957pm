@@ -677,6 +677,7 @@ export default function NewRoom() {
             {showComposer ? (
               <div>
                 <RoomComposer
+                  hideTags
                   hideTitle
                   bodyPlaceholder="What's on your mind?"
                   canSubmit={({ title, body }) => !!(title.trim() || body.trim())}

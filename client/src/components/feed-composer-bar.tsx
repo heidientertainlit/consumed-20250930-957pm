@@ -705,23 +705,24 @@ export default function FeedComposerBar({
             <RoomComposer
               key={selectedMedia ? (selectedMedia.external_id || selectedMedia.id || 'media') : 'none'}
               tags={MEDIA_TAGS}
-              defaultTag={selectedMedia ? 'rate' : 'take'}
+              defaultTag={selectedMedia ? 'rate' : 'discussion'}
               compactTags
               hideTitle
+              hideTags
               bodyRows={7}
               posting={isPosting}
               bodyPlaceholder="What's on your mind?"
               onSubmit={handleComposeSubmit}
-              canSubmit={({ title, body, tag }) => {
+              canSubmit={({ title, body }) => {
                 const hasText = !!(title.trim() || body.trim());
-                if (tag === 'rate') return !!selectedMedia && (hasText || ratingValue > 0);
+                if (selectedMedia) return hasText || ratingValue > 0;
                 return hasText;
               }}
-              renderExtra={(tag) => {
+              renderExtra={() => {
                 const activeRating = hoverRating || ratingValue;
                 return (
                   <>
-                    {tag === 'rate' && (
+                    {!!selectedMedia && (
                       <div className="flex items-center gap-3 mt-3">
                         <span className="text-sm text-gray-500">Rating:</span>
                         <div className="flex gap-1.5" onMouseLeave={() => setHoverRating(0)}>

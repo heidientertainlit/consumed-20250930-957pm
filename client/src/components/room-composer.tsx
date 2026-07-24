@@ -16,13 +16,17 @@ export const DISCUSSION_TAGS: ComposerTag[] = [
 export const DEFAULT_TAG_DB = "discussion";
 
 // Map a stored DB tag value (incl. legacy values) to a display tag.
-export function dbTagToDisplay(dbTag: string | null | undefined) {
-  const t = String(dbTag || "").toLowerCase();
-  if (t === "take" || t === "hot_take") return DISCUSSION_TAGS[1];
-  if (t === "theory") return DISCUSSION_TAGS[2];
-  if (t === "question") return DISCUSSION_TAGS[3];
-  if (t === "discussion" || t === "debate") return DISCUSSION_TAGS[0];
-  return null;
+// Post-type tags were retired from the UI (one post type + optional rating);
+// returning null hides all tag badges while keeping the stored data intact.
+// To bring badges back, restore the mapping below.
+export function dbTagToDisplay(_dbTag: string | null | undefined) {
+  return null as ComposerTag | null;
+  // const t = String(_dbTag || "").toLowerCase();
+  // if (t === "take" || t === "hot_take") return DISCUSSION_TAGS[1];
+  // if (t === "theory") return DISCUSSION_TAGS[2];
+  // if (t === "question") return DISCUSSION_TAGS[3];
+  // if (t === "discussion" || t === "debate") return DISCUSSION_TAGS[0];
+  // return null;
 }
 
 interface RoomComposerProps {
@@ -46,6 +50,9 @@ interface RoomComposerProps {
   // Hide the title input entirely (e.g. media pages where posts are simple
   // conversational takes). Submitted title is always "" when hidden.
   hideTitle?: boolean;
+  // Hide the "Add a tag" row — the composer posts with defaultTag. Used since
+  // post types were simplified to a single "say something" post.
+  hideTags?: boolean;
 }
 
 export default function RoomComposer({
@@ -60,6 +67,7 @@ export default function RoomComposer({
   compactTags = false,
   bodyRows = 2,
   hideTitle = false,
+  hideTags = false,
 }: RoomComposerProps) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -102,9 +110,11 @@ export default function RoomComposer({
         {renderExtra && <div>{renderExtra(tag)}</div>}
       </div>
       <div className={`border-t border-gray-100 px-4 ${compactTags ? "py-2.5" : "py-3"}`}>
-        <p className={`text-[12px] font-semibold text-gray-400 ${compactTags ? "mb-1.5" : "mb-2.5"}`}>Add a tag</p>
+        {!hideTags && (
+          <p className={`text-[12px] font-semibold text-gray-400 ${compactTags ? "mb-1.5" : "mb-2.5"}`}>Add a tag</p>
+        )}
         <div className={`flex flex-wrap items-center ${compactTags ? "gap-1.5" : "gap-2"}`}>
-          {tags.map((s) => {
+          {!hideTags && tags.map((s) => {
             const Icon = s.icon;
             const active = tag === s.db;
             return (
