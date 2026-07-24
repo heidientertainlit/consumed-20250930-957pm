@@ -43,6 +43,9 @@ interface RoomComposerProps {
   // Number of rows for the body textarea. Defaults to 2 so existing surfaces
   // are unchanged; surfaces that want a taller composer can raise it.
   bodyRows?: number;
+  // Hide the title input entirely (e.g. media pages where posts are simple
+  // conversational takes). Submitted title is always "" when hidden.
+  hideTitle?: boolean;
 }
 
 export default function RoomComposer({
@@ -56,6 +59,7 @@ export default function RoomComposer({
   canSubmit,
   compactTags = false,
   bodyRows = 2,
+  hideTitle = false,
 }: RoomComposerProps) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -80,12 +84,14 @@ export default function RoomComposer({
   return (
     <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
       <div className="px-4 pt-4 pb-3">
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={titlePlaceholder}
-          className="w-full border-0 outline-none bg-transparent text-[17px] font-semibold text-gray-900 placeholder:text-gray-400 mb-2"
-        />
+        {!hideTitle && (
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={titlePlaceholder}
+            className="w-full border-0 outline-none bg-transparent text-[17px] font-semibold text-gray-900 placeholder:text-gray-400 mb-2"
+          />
+        )}
         <textarea
           rows={bodyRows}
           value={body}

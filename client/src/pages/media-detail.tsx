@@ -1584,8 +1584,8 @@ export default function MediaDetail() {
               tags={MEDIA_TAGS}
               defaultTag="rate"
               compactTags
+              hideTitle
               posting={isComposePosting}
-              titlePlaceholder="Add a title (optional)…"
               bodyPlaceholder="What's on your mind?"
               onSubmit={handleComposePost}
               canSubmit={({ title, body, tag }) => {
