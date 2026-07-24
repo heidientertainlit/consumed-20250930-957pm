@@ -4139,7 +4139,7 @@ export default function UserProfile() {
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="mb-3">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-gray-900">Your Friends</h3>
+                  <h3 className="text-base font-bold text-gray-900">Your Friends</h3>
                   {dnaCompareFriends.length > 0 && (
                     <span className="bg-gray-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">{dnaCompareFriends.length}</span>
                   )}

@@ -789,7 +789,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
                       data-testid="nav-add"
                       aria-label="Add"
                     >
-                      <div className={`flex items-center justify-center transition-all ${active ? "w-8 h-8 rounded-full bg-gradient-to-br from-purple-700 to-purple-900 shadow-sm" : "h-8"}`}>
+                      <div className={`flex items-center justify-center transition-all ${active ? "w-8 h-8 rounded-full bg-gradient-to-br from-purple-800 to-purple-950 shadow-sm" : "h-8"}`}>
                         <Plus
                           size={active ? 18 : 22}
                           className={active ? "text-white" : "text-gray-600"}
@@ -804,7 +804,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
                 const active = item.active;
                 return (
                   <Link key={item.href} href={item.href} className="flex flex-col items-center justify-start flex-1" data-testid={item.testid} aria-label={item.label}>
-                    <div className={`flex items-center justify-center transition-all ${active ? "w-8 h-8 rounded-full bg-gradient-to-br from-purple-700 to-purple-900 shadow-sm" : "h-8"}`}>
+                    <div className={`flex items-center justify-center transition-all ${active ? "w-8 h-8 rounded-full bg-gradient-to-br from-purple-800 to-purple-950 shadow-sm" : "h-8"}`}>
                       <Icon
                         size={active ? 18 : 22}
                         className={active ? "text-white" : "text-gray-600"}

@@ -60,10 +60,10 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 overflow-hidden" style={{ background: "linear-gradient(165deg, #f9fafb 0%, #f3f4f6 100%)" }}>
+    <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(165deg, #2a2140 0%, #221a35 55%, #1a1428 100%)", border: "1px solid rgba(160,120,255,0.18)" }}>
       {/* Find Friends — title + search */}
       <div className="p-4 pb-1">
-        <h4 className="text-base font-bold text-gray-900 mb-3">Find Friends</h4>
+        <h4 className="text-base font-bold text-white mb-3">Find Friends</h4>
 
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
@@ -72,7 +72,8 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
             placeholder="Search people"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-sm text-black placeholder-gray-400 bg-white"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm text-white placeholder-gray-400"
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}
             data-testid="input-search-friends"
           />
         </div>
@@ -81,7 +82,7 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
           <div className="space-y-2 max-h-64 overflow-y-auto mt-3">
             {searchQuery.length >= 3 ? (
               searchLoading ? (
-                <div className="text-center py-4 text-sm text-gray-500">Searching...</div>
+                <div className="text-center py-4 text-sm text-gray-400">Searching...</div>
               ) : searchResults?.users && searchResults.users.length > 0 ? (
                 searchResults.users.map((searchUser: any) => {
                   const displayName = searchUser.display_name ||
@@ -89,17 +90,17 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
                                      searchUser.user_name ||
                                      'Unknown User';
                   return (
-                    <div key={searchUser.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-xl bg-gray-50/60">
+                    <div key={searchUser.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
                       <Link
                         href={`/user/${searchUser.id}`}
                         className="flex items-center space-x-3 flex-1 min-w-0 cursor-pointer"
                       >
-                        <div className="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center shrink-0">
-                          <User size={16} className="text-purple-600" />
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(168,85,247,0.2)" }}>
+                          <User size={16} className="text-purple-300" />
                         </div>
                         <div className="min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">{displayName}</div>
-                          <div className="text-xs text-gray-500 truncate">{searchUser.email}</div>
+                          <div className="text-sm font-medium text-white truncate">{displayName}</div>
+                          <div className="text-xs text-gray-400 truncate">{searchUser.email}</div>
                         </div>
                       </Link>
                       <Button
@@ -115,12 +116,12 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
                   );
                 })
               ) : (
-                <div className="text-center py-4 text-sm text-gray-500">
+                <div className="text-center py-4 text-sm text-gray-400">
                   No users found. Try a different search.
                 </div>
               )
             ) : (
-              <div className="text-center py-4 text-sm text-gray-500">
+              <div className="text-center py-4 text-sm text-gray-400">
                 Keep typing to search...
               </div>
             )}
@@ -132,13 +133,14 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
       <button
         type="button"
         onClick={() => setRequestsOpen((o) => !o)}
-        className="w-full flex items-center gap-3 px-4 py-4 border-t border-gray-200 text-left"
+        className="w-full flex items-center gap-3 px-4 py-4 text-left"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
         data-testid="row-friend-requests"
       >
-        <Users size={20} className="text-purple-600 shrink-0" />
+        <Users size={20} className="text-purple-300 shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-[15px] font-semibold text-gray-900">Friend Requests</p>
-          <p className="text-[13px] text-gray-500">Review and approve</p>
+          <p className="text-[15px] font-semibold text-white">Friend Requests</p>
+          <p className="text-[13px] text-gray-400">Review and approve</p>
         </div>
         {pendingCount > 0 && (
           <span className="bg-purple-600 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0">
@@ -155,18 +157,18 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
           {pendingCount > 0 ? (
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {pendingData.requests.map((request: any) => (
-                <div key={request.id} className="flex items-center justify-between p-3 bg-gray-50/60 border border-gray-100 rounded-xl">
+                <div key={request.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <div className="flex items-center space-x-3 min-w-0">
-                    <div className="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center shrink-0">
-                      <User size={16} className="text-purple-600" />
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(168,85,247,0.2)" }}>
+                      <User size={16} className="text-purple-300" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-gray-900 truncate">
+                      <div className="text-sm font-medium text-white truncate">
                         {request.users?.first_name && request.users?.last_name
                           ? `${request.users.first_name} ${request.users.last_name}`
                           : request.users?.user_name || 'Unknown User'}
                       </div>
-                      <div className="text-xs text-gray-500 truncate">@{request.users?.user_name}</div>
+                      <div className="text-xs text-gray-400 truncate">@{request.users?.user_name}</div>
                     </div>
                   </div>
                   <div className="flex gap-1.5 shrink-0">
@@ -183,7 +185,7 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
                       onClick={() => rejectRequestMutation.mutate(request.user_id)}
                       disabled={acceptRequestMutation.isPending || rejectRequestMutation.isPending}
                       variant="outline"
-                      className="border-gray-200 text-gray-500 hover:bg-gray-50 px-2.5 py-1.5 text-xs rounded-full"
+                      className="border-white/15 bg-transparent text-gray-300 hover:bg-white/10 px-2.5 py-1.5 text-xs rounded-full"
                       data-testid={`button-reject-request-${request.id}`}
                     >
                       <X size={13} />
@@ -202,15 +204,16 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
       <button
         type="button"
         onClick={handleInviteFriends}
-        className="w-full flex items-center gap-3 px-4 py-4 border-t border-gray-200 text-left"
+        className="w-full flex items-center gap-3 px-4 py-4 text-left"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
         data-testid="button-invite-friends"
       >
-        <div className="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center shrink-0">
-          <Plus size={17} className="text-purple-600" />
+        <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(168,85,247,0.2)" }}>
+          <Plus size={17} className="text-purple-300" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[15px] font-semibold text-gray-900">Invite Friends</p>
-          <p className="text-[13px] text-gray-500">Invite people you know to join Consumed.</p>
+          <p className="text-[15px] font-semibold text-white">Invite Friends</p>
+          <p className="text-[13px] text-gray-400">Invite people you know to join Consumed.</p>
         </div>
         <ChevronRight size={18} className="text-gray-400 shrink-0" />
       </button>
