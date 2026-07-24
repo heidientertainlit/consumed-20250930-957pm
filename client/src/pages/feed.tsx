@@ -442,7 +442,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-2 p-3 border border-violet-100">
       <div className="flex items-center gap-1.5 mb-1 px-1">
         <Flame size={15} className="text-orange-500 fill-orange-500 shrink-0" />
-        <span className="text-[13px] font-semibold text-violet-600">{single ? 'The Conversation' : 'Popular Conversations'}</span>
+        <span className="text-[13px] font-semibold text-violet-600">{single ? 'The Conversation' : 'Trending Takes'}</span>
         <span className="text-[11px] text-gray-400 font-medium ml-auto">{single ? 'Join in' : 'Trending now'}</span>
       </div>
 
