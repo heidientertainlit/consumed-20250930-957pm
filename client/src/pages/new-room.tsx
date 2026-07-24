@@ -5,7 +5,7 @@ import {
   ChevronLeft, ChevronRight, ChevronDown, MoreHorizontal, Check, Plus, Copy,
   MessageCircle, ArrowUp, ArrowDown,
   Tv, Flame, Bell, Users, X,
-  Flag, EyeOff, BellOff, CircleHelp, Send, Loader2,
+  Flag, EyeOff, BellOff, CircleHelp, Send, Loader2, Search, Star,
   Film, BookOpen, Mic, BadgeCheck,
 } from "lucide-react";
 import Navigation from "@/components/navigation";
@@ -108,6 +108,42 @@ export default function NewRoom() {
   const [activeTake, setActiveTake] = useState<any | null>(null);
   const [descExpanded, setDescExpanded] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
+
+  // ── Composer media + rating (same composer experience as feed/media pages) ──
+  const [composerMedia, setComposerMedia] = useState<any | null>(null);
+  const [inlineSearchOpen, setInlineSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [ratingValue, setRatingValue] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) { setSearchResults([]); return; }
+    const t = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/media-search`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ query: searchQuery, include_book_series: true }),
+        });
+        const data = await res.json();
+        setSearchResults(data?.results || []);
+      } catch (_) { setSearchResults([]); }
+      finally { setIsSearching(false); }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchQuery, token]);
+
+  const resetComposerExtras = () => {
+    setComposerMedia(null);
+    setInlineSearchOpen(false);
+    setSearchQuery("");
+    setSearchResults([]);
+    setRatingValue(0);
+    setHoverRating(0);
+  };
 
   // Redirect if no room id (e.g. visiting /new-room directly)
   useEffect(() => {
@@ -354,18 +390,33 @@ export default function NewRoom() {
     // Title field removed from the composer — the post text lives in `body`.
     // room_takes.title is the headline shown in lists, so store the text there.
     const text = (title.trim() || body.trim());
-    if (!text) return false;
+    if (!text && !(composerMedia && ratingValue > 0)) return false;
+    if (ratingValue > 0 && !composerMedia) {
+      toast({ title: "Add media to attach your rating", description: "Tap Add media to pick what you're rating.", variant: "destructive" });
+      return false;
+    }
     setPosting(true);
     try {
     const dbTag = tag || "discussion";
+    const rating = composerMedia && ratingValue > 0 ? ratingValue : null;
+    const mediaFields = composerMedia ? {
+      media_title: composerMedia.title,
+      media_type: (composerMedia.type || composerMedia.mediaType) === "book_series" ? "book" : (composerMedia.type || composerMedia.mediaType || null),
+      media_creator: composerMedia.creator || composerMedia.author || composerMedia.artist || null,
+      media_image_url: composerMedia.image_url || composerMedia.poster_url || composerMedia.image || null,
+      media_external_id: composerMedia.external_id || composerMedia.id || null,
+      media_external_source: composerMedia.external_source || composerMedia.source || "tmdb",
+    } : {};
     const { data: newTake, error } = await supabase
       .from("room_takes")
       .insert({
         room_id: roomId,
         user_id: currentUserId,
-        title: text,
+        title: text || `Rated ${composerMedia?.title}`,
         body: title.trim() ? (body.trim() || null) : null,
         tag: dbTag,
+        rating,
+        ...mediaFields,
       })
       .select("*, users:user_id(id, display_name, user_name)")
       .single();
@@ -394,8 +445,22 @@ export default function NewRoom() {
     } catch (e) {
       console.error("[room notify]", e);
     }
+    // Rating also counts as a real rating (DNA, stats) — same as feed/media pages.
+    if (rating && mediaFields.media_external_id) {
+      try {
+        await supabase.from("media_ratings").upsert({
+          user_id: currentUserId,
+          media_external_id: mediaFields.media_external_id,
+          media_external_source: mediaFields.media_external_source || "tmdb",
+          rating,
+        }, { onConflict: "user_id,media_external_id,media_external_source" });
+      } catch (e) {
+        console.error("[room rating]", e);
+      }
+    }
     logRoomEvent("room_post", { take_id: newTake?.id, tag: dbTag });
     await refetchTakes();
+    resetComposerExtras();
     toast({ title: "Posted!" });
     return true;
     } finally {
@@ -676,19 +741,157 @@ export default function NewRoom() {
           <div className="px-3 py-3 border-b border-gray-100">
             {showComposer ? (
               <div>
+                {/* Selected media chip */}
+                {composerMedia && (
+                  <div className="mb-2 flex items-center gap-2 bg-white rounded-2xl p-2 border border-gray-200 shadow-sm">
+                    {(composerMedia.image_url || composerMedia.poster_url || composerMedia.image) && (
+                      <img src={composerMedia.image_url || composerMedia.poster_url || composerMedia.image} alt="" className="w-8 h-11 object-cover rounded flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-gray-800 truncate">{composerMedia.title}</p>
+                      {composerMedia.creator && <p className="text-[10px] text-gray-400 truncate">{composerMedia.creator}</p>}
+                    </div>
+                    <button onClick={() => { setComposerMedia(null); setRatingValue(0); setHoverRating(0); }} className="text-gray-300 hover:text-red-400 p-1">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
                 <RoomComposer
                   hideTags
                   hideTitle
+                  bodyRows={6}
                   bodyPlaceholder="What do you think?"
-                  canSubmit={({ title, body }) => !!(title.trim() || body.trim())}
+                  canSubmit={({ title, body }) => {
+                    const hasText = !!(title.trim() || body.trim());
+                    if (composerMedia) return hasText || ratingValue > 0;
+                    if (ratingValue > 0) return false;
+                    return hasText;
+                  }}
                   onSubmit={async (data) => {
                     const ok = await handlePost(data);
                     if (ok) setShowComposer(false);
                     return ok;
                   }}
                   posting={posting}
+                  footerExtra={(() => {
+                    const activeRating = hoverRating || ratingValue;
+                    return (
+                      <div>
+                        <p className="text-[12px] font-semibold text-gray-400 mb-1">
+                          Add Rating <span className="font-normal">(optional)</span>
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-1" onMouseLeave={() => setHoverRating(0)}>
+                            {[1, 2, 3, 4, 5].map((star) => {
+                              const isFull = activeRating >= star;
+                              const isHalf = !isFull && activeRating >= star - 0.5;
+                              return (
+                                <div key={star} className="relative w-6 h-6">
+                                  <Star size={24} className="absolute inset-0 text-gray-300" />
+                                  {(isFull || isHalf) && (
+                                    <div className="absolute inset-0 overflow-hidden" style={{ width: isFull ? '100%' : '50%' }}>
+                                      <Star size={24} className="fill-yellow-400 text-yellow-400" />
+                                    </div>
+                                  )}
+                                  <button
+                                    type="button"
+                                    aria-label={`Rate ${star - 0.5} stars`}
+                                    className="absolute inset-y-0 left-0 w-1/2 z-10"
+                                    onClick={() => setRatingValue(ratingValue === star - 0.5 ? 0 : star - 0.5)}
+                                    onMouseEnter={() => setHoverRating(star - 0.5)}
+                                  />
+                                  <button
+                                    type="button"
+                                    aria-label={`Rate ${star} stars`}
+                                    className="absolute inset-y-0 right-0 w-1/2 z-10"
+                                    onClick={() => setRatingValue(ratingValue === star ? 0 : star)}
+                                    onMouseEnter={() => setHoverRating(star)}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {activeRating > 0 && (
+                            <span className="text-[13px] font-semibold text-gray-700">{activeRating.toFixed(1)}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  renderExtra={() => (
+                    <>
+                      {!composerMedia && (
+                        <div className="mt-3">
+                          {!inlineSearchOpen ? (
+                            <button
+                              type="button"
+                              onClick={() => setInlineSearchOpen(true)}
+                              className="inline-flex items-center gap-1.5 py-1.5 text-[13px] font-semibold text-purple-600 hover:text-purple-700"
+                            >
+                              <Plus size={15} /> Add media
+                            </button>
+                          ) : (
+                            <div className="rounded-xl border border-gray-200 overflow-hidden">
+                              <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-gray-50">
+                                <Search size={15} className="text-gray-400 flex-shrink-0" />
+                                <input
+                                  autoFocus
+                                  value={searchQuery}
+                                  onChange={(e) => setSearchQuery(e.target.value)}
+                                  placeholder="Search movies, shows, books…"
+                                  className="flex-1 text-sm text-gray-800 placeholder:text-gray-400 bg-transparent outline-none"
+                                />
+                                {isSearching ? (
+                                  <Loader2 size={14} className="text-gray-400 animate-spin flex-shrink-0" />
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => { setInlineSearchOpen(false); setSearchQuery(""); setSearchResults([]); }}
+                                    aria-label="Close search"
+                                  >
+                                    <X size={15} className="text-gray-400" />
+                                  </button>
+                                )}
+                              </div>
+                              {searchQuery && (
+                                <div className="max-h-56 overflow-y-auto">
+                                  {!isSearching && searchResults.length === 0 && (
+                                    <p className="text-center text-xs text-gray-400 py-6">No results for "{searchQuery}"</p>
+                                  )}
+                                  {searchResults.map((r: any, i: number) => {
+                                    const img = r.image_url || r.poster_url || r.image;
+                                    return (
+                                      <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => {
+                                          setComposerMedia({ ...r, external_source: r.external_source === 'openai' ? 'openlibrary' : (r.external_source || 'tmdb') });
+                                          setInlineSearchOpen(false);
+                                          setSearchQuery("");
+                                          setSearchResults([]);
+                                        }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 text-left"
+                                      >
+                                        {img && <img src={img} alt="" className="w-8 h-11 object-cover rounded flex-shrink-0" />}
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-semibold text-gray-800 truncate">{r.title}</p>
+                                          <p className="text-[11px] text-gray-400 truncate">
+                                            {r.type || ""}{r.year ? ` · ${r.year}` : ""}{r.creator ? ` · ${r.creator}` : ""}
+                                          </p>
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
                 />
-                <button onClick={() => setShowComposer(false)} className="mt-2 text-[13px] font-medium text-gray-400 px-2 active:text-gray-600">Cancel</button>
+                <button onClick={() => { setShowComposer(false); resetComposerExtras(); }} className="mt-2 text-[13px] font-medium text-gray-400 px-2 active:text-gray-600">Cancel</button>
               </div>
             ) : (
               <button
@@ -770,6 +973,19 @@ export default function NewRoom() {
                     <button onClick={() => setActiveTake(t)} className="block w-full text-left">
                       <p className="text-gray-800 text-[14px] leading-relaxed mt-0.5">{t.title}</p>
                       {t.body && <p className="text-gray-500 text-[13px] leading-relaxed mt-0.5 line-clamp-2">{t.body}</p>}
+                      {t.media_title && (
+                        <div className="mt-2 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl p-1.5">
+                          {t.media_image_url && <img src={t.media_image_url} alt="" className="w-7 h-10 object-cover rounded flex-shrink-0" />}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-semibold text-gray-800 truncate">{t.media_title}</p>
+                            {t.rating > 0 && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-600">
+                                <Star size={11} className="fill-yellow-400 text-yellow-400" /> {Number(t.rating).toFixed(1)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </button>
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-4 text-gray-400">
@@ -922,6 +1138,20 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
           )}
           <p className="text-[19px] font-extrabold text-gray-900 leading-snug">{take.title}</p>
           {take.body && <p className="text-[15px] text-gray-600 leading-relaxed mt-2">{take.body}</p>}
+          {take.media_title && (
+            <div className="mt-3 flex items-center gap-2.5 bg-gray-50 border border-gray-200 rounded-xl p-2">
+              {take.media_image_url && <img src={take.media_image_url} alt="" className="w-9 h-12 object-cover rounded flex-shrink-0" />}
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-gray-800 truncate">{take.media_title}</p>
+                {take.media_creator && <p className="text-[11px] text-gray-400 truncate">{take.media_creator}</p>}
+                {take.rating > 0 && (
+                  <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600">
+                    <Star size={12} className="fill-yellow-400 text-yellow-400" /> {Number(take.rating).toFixed(1)}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
           <p className="text-[12px] text-gray-400 mt-2">{nameOf(take.users)} · {timeAgo(take.created_at)}</p>
           <div className="flex items-center gap-4 text-[13px] text-gray-500 mt-3">
             <span className="flex items-center gap-1"><Users size={14} /> {take.upvotes || 0} agree</span>

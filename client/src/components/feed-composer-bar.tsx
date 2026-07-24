@@ -721,6 +721,7 @@ export default function FeedComposerBar({
               canSubmit={({ title, body }) => {
                 const hasText = !!(title.trim() || body.trim());
                 if (selectedMedia) return hasText || ratingValue > 0;
+                if (ratingValue > 0) return false;
                 return hasText;
               }}
               footerExtra={(() => {
