@@ -8,6 +8,7 @@ import RoomComposer, { DISCUSSION_TAGS, dbTagToDisplay } from "@/components/room
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
+import MentionInput from "@/components/mention-input";
 import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 import { useDnaArchetype } from "@/hooks/use-dna-archetype";
@@ -262,15 +263,15 @@ export default function MediaDetail() {
             </div>
             {isReplying && (
               <div className="flex items-center gap-2 mt-1.5">
-                <input
-                  type="text"
+                <MentionInput
                   autoFocus
                   value={commentReplyContent}
-                  onChange={(e) => setCommentReplyContent(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleCommentReply(postId, comment.id)}
+                  onChange={setCommentReplyContent}
+                  session={session}
+                  onSubmit={() => handleCommentReply(postId, comment.id)}
                   placeholder={`Reply to ${cName}...`}
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  data-testid={`comment-reply-input-${comment.id}`}
+                  className="flex-1 h-auto bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-0"
+                  testId={`comment-reply-input-${comment.id}`}
                 />
                 <button
                   onClick={() => handleCommentReply(postId, comment.id)}
@@ -1329,17 +1330,20 @@ export default function MediaDetail() {
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <input
-                  id={`take-input-${cardId}`}
-                  type="text"
-                  value={replyingTo === post.id ? replyContent : ''}
-                  onChange={(e) => { setReplyingTo(post.id); setReplyContent(e.target.value); }}
+                <div
+                  className="flex-1 min-w-0"
                   onFocus={() => { setReplyingTo(post.id); fetchComments(post.id); }}
-                  onKeyDown={(e) => e.key === 'Enter' && handleReply(post.id)}
-                  placeholder="Write a reply…"
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  data-testid={`take-input-${post.id}`}
-                />
+                >
+                  <MentionInput
+                    value={replyingTo === post.id ? replyContent : ''}
+                    onChange={(v) => { setReplyingTo(post.id); setReplyContent(v); }}
+                    session={session}
+                    onSubmit={() => handleReply(post.id)}
+                    placeholder="Write a reply…"
+                    className="flex-1 h-auto bg-gray-50 border border-gray-200 rounded-full px-4 py-1.5 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-0"
+                    testId={`take-input-${post.id}`}
+                  />
+                </div>
                 {replyingTo === post.id && !!replyContent.trim() && (
                   <button
                     onClick={() => handleReply(post.id)}
