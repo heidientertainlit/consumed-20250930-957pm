@@ -7,7 +7,7 @@ export type ComposerTag = { label: string; db: string; icon: ComponentType<any>;
 // ── Conversation tags (Discussion is the default). Shared between rooms and
 // media-detail so the composer + tag pills stay identical everywhere. ──
 export const DISCUSSION_TAGS: ComposerTag[] = [
-  { label: "Discussion", db: "discussion", icon: MessageCircle, bg: "#f3effe", fg: "#7c3aed" },
+  { label: "Say Something", db: "discussion", icon: MessageCircle, bg: "#f3effe", fg: "#7c3aed" },
   { label: "Take", db: "take", icon: Flame, bg: "#fff1e8", fg: "#f97316" },
   { label: "Theory", db: "theory", icon: Brain, bg: "#f3effe", fg: "#7c3aed" },
   { label: "Question", db: "question", icon: CircleHelp, bg: "#eaf1ff", fg: "#2563eb" },
