@@ -14,6 +14,36 @@ const TYPE_STYLES: Record<string, { badge: typeof Flame; badgeBg: string; statIc
   podcast: { badge: Headphones, badgeBg: "bg-purple-600", statIcon: BarChart3 },
 };
 
+const TYPE_HOOKS: Record<string, string[]> = {
+  movie: [
+    "Is the ending brilliant or a cop-out?",
+    "Overrated or a masterpiece? Fans are split",
+    "The final scene has everyone talking",
+  ],
+  tv: [
+    "Everyone's debating the latest episode",
+    "Worth the binge? Opinions are heated",
+    "That twist has group chats blowing up",
+  ],
+  book: [
+    "Readers can't agree on this one",
+    "Book clubs are arguing about the ending",
+    "Is the hype real? Readers are split",
+  ],
+  podcast: [
+    "This week's episode sparked a debate",
+    "Listeners have strong opinions on this one",
+    "The take everyone's reacting to",
+  ],
+};
+
+function hookFor(type: string, title: string): string {
+  const hooks = TYPE_HOOKS[type] ?? TYPE_HOOKS.movie;
+  let hash = 0;
+  for (let i = 0; i < title.length; i++) hash = (hash * 31 + title.charCodeAt(i)) >>> 0;
+  return hooks[hash % hooks.length];
+}
+
 const FALLBACK_TRENDING = [
   { title: "The Odyssey", image: "https://image.tmdb.org/t/p/w300/5rhTDKUhPYvpdQIijFIs5VoWsON.jpg", type: "movie", stat: "Users are talking about" },
   { title: "A Knight of the Seven Kingdoms", image: "https://image.tmdb.org/t/p/w300/k8yARbD9iYn2nRX2HvsopfKDN2r.jpg", type: "tv", stat: "Friends are watching" },
@@ -318,7 +348,7 @@ export default function LoginPage() {
                     <p className="text-sm font-semibold text-white leading-snug truncate">{item.title}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <StatIcon className="h-3 w-3 text-purple-400 flex-shrink-0" />
-                      <p className="text-xs text-gray-400 truncate">{item.stat}</p>
+                      <p className="text-xs text-gray-400 truncate">{hookFor(item.type, item.title)}</p>
                     </div>
                   </div>
                   <div className="flex-shrink-0 flex items-center gap-1 border border-white/15 rounded-full px-2 py-0.5">
