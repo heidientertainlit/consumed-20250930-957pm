@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient, useMutation, useInfiniteQuery } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
 import Navigation from "@/components/navigation";
+import { GuestGate } from "@/components/guest-signup-gate";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 
@@ -651,19 +652,22 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
 }
 
 const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number; session: any }): Promise<SocialPost[]> => {
-  if (!session?.access_token) {
+  // GUEST MODE: no session → call with the anon key; the edge function returns
+  // guest-safe content only (Consumed persona posts).
+  const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+  if (!authToken) {
     throw new Error('No authentication token available');
   }
 
   const limit = 200; // Posts per page — higher limit pulls in more diverse users' posts
   const offset = pageParam * limit;
 
-  console.log('🔄 FETCHING FEED - page:', pageParam, 'offset:', offset);
+  console.log('🔄 FETCHING FEED - page:', pageParam, 'offset:', offset, 'guest:', !session?.access_token);
 
   const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed?limit=${limit}&offset=${offset}`, {
     method: 'GET',
     headers: {
-      'Authorization': `Bearer ${session.access_token}`,
+      'Authorization': `Bearer ${authToken}`,
       'Content-Type': 'application/json',
     },
   });
@@ -5108,7 +5112,9 @@ export default function Feed() {
   } | null>(null); // Bet modal state
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
-  const { session, user } = useAuth();
+  const { session, user, loading: authLoading } = useAuth();
+  // GUEST MODE: auth finished loading and there's no session → browsing as guest
+  const isGuestMode = !authLoading && !session;
   // Stable user ID that never resets to null once resolved. currentAppUserId (module-level)
   // resets on HMR reloads; session.user.id / user.id may be null on the very first render
   // before Supabase restores the session. Using a ref ensures the value is locked in as soon
@@ -5274,9 +5280,9 @@ export default function Feed() {
     hasNextPage = false,
     isFetchingNextPage = false
   } = useInfiniteQuery({
-    queryKey: ["social-feed"],
+    queryKey: ["social-feed", isGuestMode ? 'guest' : 'auth'],
     queryFn: ({ pageParam = 0 }) => fetchSocialFeed({ pageParam, session }),
-    enabled: !!session?.access_token,
+    enabled: !!session?.access_token || isGuestMode,
     retry: false,
     getNextPageParam: (lastPage, allPages) => {
       // Only stop if we get zero posts - filtering may cause partial pages
@@ -7900,7 +7906,8 @@ export default function Feed() {
 
   // Fetch comments query with recursive transformation for nested replies
   const fetchComments = async (postId: string) => {
-    if (!session?.access_token) throw new Error('Not authenticated');
+    // Guests can't fetch comments — return empty instead of throwing
+    if (!session?.access_token) return [];
 
     const isPrediction = isPredictionPost(postId);
     console.log('🔍 Fetching comments for post:', postId, 'isPrediction:', isPrediction);
@@ -8401,26 +8408,43 @@ export default function Feed() {
 
 
   return (
+    <GuestGate enabled={isGuestMode}>
     <div className="min-h-screen bg-gray-100 pb-32">
       <div id="feed-page">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
-      {/* Header Section */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-3 -mt-px">
-        <div className="max-w-4xl mx-auto px-4 pt-3">
-          
-          {/* Composer Trigger - dark hero zone */}
-          <div>
-
-            <FeedIdentityHero />
-            <div className="mt-3">
-              <DnaMomentFeaturedCard />
-            </div>
-
+      {/* Guest banner — visible only when browsing logged-out */}
+      {isGuestMode && (
+        <div className="bg-purple-950 border-b border-purple-500/30" data-testid="guest-banner">
+          <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+            <p className="text-purple-200 text-xs leading-snug">
+              You're browsing Consumed as a guest.
+            </p>
+            <button className="flex-shrink-0 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-full px-4 py-1.5 transition-colors" data-testid="button-guest-banner-join">
+              Join free
+            </button>
           </div>
-          
         </div>
-      </div>
+      )}
+
+      {/* Header Section — identity hero + DNA moment need a logged-in user, hidden for guests */}
+      {!isGuestMode && (
+        <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-3 -mt-px">
+          <div className="max-w-4xl mx-auto px-4 pt-3">
+            
+            {/* Composer Trigger - dark hero zone */}
+            <div>
+
+              <FeedIdentityHero />
+              <div className="mt-3">
+                <DnaMomentFeaturedCard />
+              </div>
+
+            </div>
+            
+          </div>
+        </div>
+      )}
 
       <div className="max-w-4xl mx-auto px-4 pt-5 pb-6" data-feed-content>
 
@@ -8522,7 +8546,7 @@ export default function Feed() {
                 </div>
               ))}
             </div>
-          ) : !session ? (
+          ) : !session && !isGuestMode ? (
             <div className="text-center py-8">
               <p className="text-gray-600">Please sign in to view your social feed.</p>
             </div>
@@ -11067,5 +11091,6 @@ export default function Feed() {
 
       </div>
     </div>
+    </GuestGate>
   );
 }

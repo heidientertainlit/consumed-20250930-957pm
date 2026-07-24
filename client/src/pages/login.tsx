@@ -389,7 +389,7 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white rounded-3xl p-8 shadow-2xl">
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs defaultValue={new URLSearchParams(window.location.search).get('tab') === 'signup' ? 'signup' : 'signin'} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-100 rounded-full p-1 h-12">
               <TabsTrigger 
                 value="signin" 

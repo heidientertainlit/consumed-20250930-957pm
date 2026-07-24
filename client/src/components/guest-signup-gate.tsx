@@ -1,0 +1,100 @@
+import { useState, useCallback, createContext, useContext } from "react";
+import { useLocation } from "wouter";
+import { Sparkles, X } from "lucide-react";
+
+/**
+ * Guest signup gate — reusable across guest-accessible pages.
+ *
+ * Wrap guest-visible content in <GuestGate>. Any click on an interactive
+ * element (button, link, input) inside the wrapper is intercepted and the
+ * signup sheet is shown instead. Elements marked with data-guest-allowed
+ * (or inside such an element) are let through.
+ *
+ * The current path is saved as returnUrl so after signup/login the user
+ * lands right back where they were.
+ */
+
+const GuestGateContext = createContext<{ openSheet: () => void } | null>(null);
+
+export function useGuestGate() {
+  return useContext(GuestGateContext);
+}
+
+export function GuestSignupSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [, setLocation] = useLocation();
+
+  const go = (tab: 'signup' | 'signin') => {
+    const fullPath = window.location.pathname + window.location.search + window.location.hash;
+    sessionStorage.setItem('returnUrl', fullPath === '/login' ? '/' : fullPath);
+    onClose();
+    setLocation(tab === 'signup' ? '/login?tab=signup' : '/login');
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[99999] flex items-end justify-center" data-testid="guest-signup-sheet">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md mx-auto bg-gradient-to-b from-slate-900 to-purple-950 border-t border-purple-500/30 rounded-t-3xl p-6 pb-10 animate-in slide-in-from-bottom duration-300">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-white p-1"
+          data-testid="button-close-guest-sheet"
+          aria-label="Close"
+        >
+          <X size={20} />
+        </button>
+        <div className="w-10 h-10 rounded-full bg-purple-600/30 border border-purple-500/40 flex items-center justify-center mb-4">
+          <Sparkles size={20} className="text-purple-300" />
+        </div>
+        <h2 className="text-white text-xl font-bold mb-1.5">Join the conversation</h2>
+        <p className="text-gray-300 text-sm mb-6 leading-relaxed">
+          Create a free account to react, comment, play trivia, and build your Entertainment DNA.
+        </p>
+        <button
+          onClick={() => go('signup')}
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-full py-3.5 text-sm mb-3 transition-colors"
+          data-testid="button-guest-signup"
+        >
+          Create free account
+        </button>
+        <button
+          onClick={() => go('signin')}
+          className="w-full bg-transparent border border-purple-500/50 text-purple-200 hover:bg-purple-500/10 font-semibold rounded-full py-3.5 text-sm transition-colors"
+          data-testid="button-guest-login"
+        >
+          I already have an account
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function GuestGate({ children, enabled = true }: { children: React.ReactNode; enabled?: boolean }) {
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const handleClickCapture = useCallback((e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    // Explicitly allowed elements pass through (e.g. spoiler reveal, expanders)
+    if (target.closest('[data-guest-allowed]')) return;
+    const interactive = target.closest('button, a[href], input, textarea, select, [role="button"]');
+    if (interactive) {
+      e.preventDefault();
+      e.stopPropagation();
+      setSheetOpen(true);
+    }
+  }, []);
+
+  const openSheet = useCallback(() => setSheetOpen(true), []);
+
+  if (!enabled) return <>{children}</>;
+
+  return (
+    <GuestGateContext.Provider value={{ openSheet }}>
+      <div onClickCapture={handleClickCapture}>
+        {children}
+      </div>
+      <GuestSignupSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+    </GuestGateContext.Provider>
+  );
+}

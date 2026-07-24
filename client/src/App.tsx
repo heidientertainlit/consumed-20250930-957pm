@@ -262,10 +262,9 @@ function Router() {
             </ProtectedRoute>
           </Route>
 
+          {/* Home feed is guest-accessible — Feed handles logged-out (guest) mode itself */}
           <Route path="/">
-            <ProtectedRoute>
-              <Feed />
-            </ProtectedRoute>
+            <Feed />
           </Route>
 
           <Route path="/quick-log">
@@ -290,10 +289,9 @@ function Router() {
             </ProtectedRoute>
           </Route>
 
+          {/* Guest-accessible like "/" */}
           <Route path="/activity">
-            <ProtectedRoute>
-              <Feed />
-            </ProtectedRoute>
+            <Feed />
           </Route>
 
           <Route path="/notifications">

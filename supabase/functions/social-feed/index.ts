@@ -31,21 +31,31 @@ serve(async (req) => {
     );
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
+    // GUEST MODE: if there's no authenticated user, GET requests still work
+    // in a read-only "guest" mode (guest-safe content only). POST still requires auth.
+    const isGuest = !user || !!userError;
+
+    if (isGuest && req.method !== 'GET') {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log('Auth user:', user.email);
+    console.log(isGuest ? 'Guest request (no auth user)' : `Auth user: ${user!.email}`);
 
-    // Get or create app user
-    let { data: appUser, error: appUserError } = await supabase
-      .from('users')
-      .select('id, email, user_name')
-      .eq('email', user.email)
-      .single();
+    // Get or create app user (skipped entirely for guests)
+    let appUser: { id: string; email: string; user_name: string } | null = null;
+    let appUserError: any = null;
+    if (!isGuest) {
+      const result = await supabase
+        .from('users')
+        .select('id, email, user_name')
+        .eq('email', user!.email)
+        .single();
+      appUser = result.data;
+      appUserError = result.error;
+    }
 
     if (appUserError && appUserError.code === 'PGRST116') {
       // User doesn't exist, create them using service role client (bypass RLS)
@@ -106,15 +116,35 @@ serve(async (req) => {
       console.log('Pagination:', { limit, offset, specificPostId });
       console.log('🔥 EDGE FUNCTION VERSION: 2026-01-28-v3 - specific post support');
       
-      // Fetch blocked user IDs (both directions) to exclude from feed
-      const [{ data: blockedByMe }, { data: blockedMe }] = await Promise.all([
-        supabaseAdmin.from('user_blocks').select('blocked_id').eq('blocker_id', appUser.id),
-        supabaseAdmin.from('user_blocks').select('blocker_id').eq('blocked_id', appUser.id),
-      ]);
-      const blockedUserIds = [
-        ...(blockedByMe?.map((r: any) => r.blocked_id) || []),
-        ...(blockedMe?.map((r: any) => r.blocker_id) || []),
-      ];
+      // Fetch blocked user IDs (both directions) to exclude from feed (skip for guests)
+      let blockedUserIds: string[] = [];
+      if (appUser) {
+        const [{ data: blockedByMe }, { data: blockedMe }] = await Promise.all([
+          supabaseAdmin.from('user_blocks').select('blocked_id').eq('blocker_id', appUser.id),
+          supabaseAdmin.from('user_blocks').select('blocker_id').eq('blocked_id', appUser.id),
+        ]);
+        blockedUserIds = [
+          ...(blockedByMe?.map((r: any) => r.blocked_id) || []),
+          ...(blockedMe?.map((r: any) => r.blocker_id) || []),
+        ];
+      }
+
+      // GUEST MODE: guests only see guest-safe content — posts authored by
+      // Consumed persona accounts (is_persona = true). No real-user posts leak out.
+      let guestSafeUserIds: string[] | null = null;
+      if (isGuest) {
+        const { data: personaUsers } = await supabaseAdmin
+          .from('users')
+          .select('id')
+          .eq('is_persona', true);
+        guestSafeUserIds = personaUsers?.map((u: any) => u.id) || [];
+        if (guestSafeUserIds.length === 0) {
+          // No persona accounts — return an empty feed rather than leaking user content
+          return new Response(JSON.stringify({ posts: [], currentUserId: null }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+      }
 
       // Build the base query — use admin client to bypass RLS so ALL posts appear
       // chronologically regardless of follow relationships (small user base, no friend filtering)
@@ -157,6 +187,11 @@ serve(async (req) => {
       // Exclude posts from blocked users (both directions)
       if (blockedUserIds.length > 0) {
         query = query.not('user_id', 'in', `(${blockedUserIds.join(',')})`);
+      }
+
+      // GUEST MODE: restrict to persona-authored posts only
+      if (guestSafeUserIds) {
+        query = query.in('user_id', guestSafeUserIds);
       }
 
       // === PLAY-FIRST FEED FILTER ===
@@ -546,14 +581,17 @@ serve(async (req) => {
         votes = votesData || [];
       }
 
-      // Check if current user has voted on any predictions
-      const { data: userVotes, error: userVotesError } = await supabase
-        .from('user_predictions')
-        .select('pool_id')
-        .eq('user_id', appUser.id);
-
-      if (userVotesError) {
-        console.error('DEBUG: Error fetching user votes:', userVotesError);
+      // Check if current user has voted on any predictions (guests: none)
+      let userVotes: any[] | null = null;
+      if (appUser) {
+        const { data: userVotesData, error: userVotesError } = await supabase
+          .from('user_predictions')
+          .select('pool_id')
+          .eq('user_id', appUser.id);
+        if (userVotesError) {
+          console.error('DEBUG: Error fetching user votes:', userVotesError);
+        }
+        userVotes = userVotesData;
       }
 
       const userVotedPoolIds = new Set(userVotes?.map(v => v.pool_id) || []);
@@ -630,15 +668,18 @@ serve(async (req) => {
         sampleUsersReturned: users?.slice(0, 3).map(u => ({ id: u.id, user_name: u.user_name, display_name: u.display_name }))
       });
 
-      // Get posts that the current user has liked
+      // Get posts that the current user has liked (guests: none)
       const postIds = posts?.map(post => post.id) || [];
-      const { data: userLikes, error: likesError } = await supabase
-        .from('social_post_likes')
-        .select('social_post_id')
-        .eq('user_id', appUser.id)
-        .in('social_post_id', postIds);
-
-      console.log('User likes lookup:', { likes: userLikes?.length, likesError });
+      let userLikes: any[] | null = null;
+      if (appUser) {
+        const { data: userLikesData, error: likesError } = await supabase
+          .from('social_post_likes')
+          .select('social_post_id')
+          .eq('user_id', appUser.id)
+          .in('social_post_id', postIds);
+        console.log('User likes lookup:', { likes: userLikesData?.length, likesError });
+        userLikes = userLikesData;
+      }
 
       const likedPostIds = new Set(userLikes?.map(like => like.social_post_id) || []);
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
@@ -886,7 +927,7 @@ serve(async (req) => {
       // Get predictions that the current user has liked
       const predictionIds = predictions?.map(pred => pred.id) || [];
       let likedPredictionIds = new Set<string>();
-      if (predictionIds.length > 0) {
+      if (predictionIds.length > 0 && appUser) {
         const { data: predictionLikes, error: predLikesError } = await supabaseAdmin
           .from('prediction_likes')
           .select('pool_id')
@@ -1370,7 +1411,7 @@ serve(async (req) => {
       // Return response with current user's app user ID for delete button matching
       return new Response(JSON.stringify({ 
         posts: allItems, 
-        currentUserId: appUser.id,
+        currentUserId: appUser?.id ?? null,
         _debug: {
           userIdsQueried: validUserIds.length,
           usersFound: users?.length,
