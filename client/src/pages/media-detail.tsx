@@ -1182,6 +1182,20 @@ export default function MediaDetail() {
   const userReview = reviews.find((review: any) => review.user_id === user?.id);
 
   // Reusable take card (used by both Trending Takes and Join the Conversation).
+  // Room-style helpers for the threaded conversation look
+  const TAKE_AVATAR_COLORS = ['#7c3aed', '#db2777', '#0891b2', '#ca8a04', '#16a34a', '#dc2626', '#2563eb', '#9333ea'];
+  const takeTimeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'now';
+    if (mins < 60) return `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days}d`;
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
   // sectionKey scopes which card is expanded so the same post shown in two
   // sections doesn't expand in both at once.
   const renderTakeCard = (post: any, sectionKey: string) => {
@@ -1194,174 +1208,127 @@ export default function MediaDetail() {
     const isDisagreed = disagreedTakes.has(post.id);
     const hasText = !!(post.content && post.content.trim());
     const ratingVal = Number(post.rating) || 0;
+    const avatarBg = TAKE_AVATAR_COLORS[(name.charCodeAt(0) || 0) % TAKE_AVATAR_COLORS.length];
+    const commentCount = expandedComments[post.id]?.length ?? Number(post.comments_count) ?? 0;
+    const toggleExpand = () => {
+      if (post._ratingOnly) return;
+      const next = isExpanded ? null : cardId;
+      setExpandedTake(next);
+      setReplyContent('');
+      if (next) { setReplyingTo(post.id); fetchComments(post.id); }
+      else { setReplyingTo(null); }
+    };
     return (
-      <div
-        key={cardId}
-        className="bg-white rounded-xl p-3 shadow-sm"
-        data-testid={`take-card-${post.id}`}
-      >
+      <div key={cardId} className="flex gap-3 py-4" data-testid={`take-card-${post.id}`}>
         <div
-          role="button"
-          tabIndex={0}
-          onClick={() => {
-            if (post._ratingOnly) return;
-            const next = isExpanded ? null : cardId;
-            setExpandedTake(next);
-            setReplyContent('');
-            if (next) { setReplyingTo(post.id); fetchComments(post.id); }
-            else { setReplyingTo(null); }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              if (post._ratingOnly) return;
-              const next = isExpanded ? null : cardId;
-              setExpandedTake(next);
-              setReplyContent('');
-              if (next) { setReplyingTo(post.id); fetchComments(post.id); }
-              else { setReplyingTo(null); }
-            }
-          }}
-          className="w-full text-left cursor-pointer"
-          data-testid={`take-toggle-${post.id}`}
+          className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
+          style={{ background: avatarBg }}
         >
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                <span className="text-purple-600 text-[11px] font-semibold">{initial}</span>
-              </div>
-              <span className="text-sm font-medium text-gray-900 truncate">{name}</span>
-            </div>
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              {ratingVal > 0 && (
-                <>
-                  <div className="flex gap-0.5">
-                    {[1, 2, 3, 4, 5].map((s) => {
-                      const full = ratingVal >= s;
-                      const half = !full && ratingVal >= s - 0.5;
-                      return (
-                        <div key={s} className="relative w-5 h-5">
-                          <Star className="absolute inset-0 w-5 h-5 text-gray-300" />
-                          {(full || half) && (
-                            <div className="absolute inset-0 overflow-hidden" style={{ width: full ? '100%' : '50%' }}>
-                              <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <span className="text-sm font-semibold text-gray-900">{ratingVal}</span>
-                </>
-              )}
-              {!post._ratingOnly && (
-                <span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                  <ReportButton contentType="post" contentId={String(post.id)} className="text-gray-200 hover:text-red-500 [&_svg]:w-3 [&_svg]:h-3" />
-                </span>
-              )}
-            </div>
-          </div>
-          <p className={`text-sm leading-snug ${hasText ? 'text-gray-700' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-2'}`}>{hasText ? post.content : 'Rated it — no take yet'}</p>
-          {(() => {
-            const tag = dbTagToDisplay(post.post_type);
-            if (!tag) return null;
-            const TagIcon = tag.icon;
-            return (
-              <span
-                className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium"
-                style={{ backgroundColor: tag.bg, color: tag.fg }}
-                data-testid={`take-tag-${post.id}`}
-              >
-                <TagIcon size={11} /> {tag.label}
+          {initial}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="font-bold text-[14px] text-gray-900 truncate">{name}</span>
+            {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">· {takeTimeAgo(post.created_at)}</span>}
+            {ratingVal > 0 && (
+              <span className="ml-1 flex items-center gap-0.5 shrink-0 text-[12px] font-semibold text-gray-700">
+                <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+                {ratingVal}
               </span>
-            );
-          })()}
-        </div>
+            )}
+            {(() => {
+              const tag = dbTagToDisplay(post.post_type);
+              if (!tag) return null;
+              return (
+                <span
+                  className="ml-1 px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase rounded-sm shrink-0"
+                  style={{ backgroundColor: tag.bg, color: tag.fg }}
+                  data-testid={`take-tag-${post.id}`}
+                >
+                  {tag.label}
+                </span>
+              );
+            })()}
+          </div>
+          <button onClick={toggleExpand} className="block w-full text-left" data-testid={`take-toggle-${post.id}`}>
+            <p className={`text-[14px] leading-relaxed mt-0.5 ${hasText ? 'text-gray-800' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-3'}`}>
+              {hasText ? post.content : 'Rated it — no take yet'}
+            </p>
+          </button>
 
-        {/* Reactions — icons only, minimal. Hidden for synthetic rating-only cards
-            (they have no social post behind them, so likes/comments can't attach). */}
-        {!post._ratingOnly && (
-        <div className="flex items-center gap-6 mt-2 pt-2 border-t border-gray-100">
-          <button
-            onClick={() => handleLike(post.id)}
-            title="Agree"
-            aria-label="Agree"
-            className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-green-600' : 'text-gray-400 hover:text-green-600'}`}
-            data-testid={`take-agree-${post.id}`}
-          >
-            <ArrowUp size={18} />{post.likes_count ? <span className="text-xs font-medium">{post.likes_count}</span> : null}
-          </button>
-          <button
-            onClick={() => setDisagreedTakes(prev => {
-              const next = new Set(prev);
-              next.has(post.id) ? next.delete(post.id) : next.add(post.id);
-              return next;
-            })}
-            title="Disagree"
-            aria-label="Disagree"
-            className={`flex items-center transition-colors ${isDisagreed ? 'text-red-600' : 'text-gray-400 hover:text-red-600'}`}
-            data-testid={`take-disagree-${post.id}`}
-          >
-            <ArrowDown size={18} />
-          </button>
-          <button
-            onClick={() => {
-              setComposerOpen(true);
-              requestAnimationFrame(() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-            }}
-            title="Rate"
-            aria-label="Rate"
-            className="flex items-center text-gray-400 hover:text-purple-600 transition-colors"
-            data-testid={`take-rate-${post.id}`}
-          >
-            <Star size={18} />
-          </button>
-        </div>
-        )}
+          {/* Actions — hidden for synthetic rating-only rows (no social post behind them) */}
+          {!post._ratingOnly && (
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center gap-4 text-gray-400">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleLike(post.id)}
+                    className={`active:scale-90 transition-transform ${isLiked ? 'text-purple-600' : ''}`}
+                    aria-label="Agree"
+                    data-testid={`take-agree-${post.id}`}
+                  >
+                    <ArrowUp size={15} strokeWidth={2.5} />
+                  </button>
+                  {(Number(post.likes_count) || 0) > 0 && <span className="text-[12px] font-medium text-gray-500">{post.likes_count}</span>}
+                  <button
+                    onClick={() => setDisagreedTakes(prev => {
+                      const next = new Set(prev);
+                      next.has(post.id) ? next.delete(post.id) : next.add(post.id);
+                      return next;
+                    })}
+                    className={`active:scale-90 transition-transform ${isDisagreed ? 'text-red-500' : ''}`}
+                    aria-label="Disagree"
+                    data-testid={`take-disagree-${post.id}`}
+                  >
+                    <ArrowDown size={15} strokeWidth={2.5} />
+                  </button>
+                </div>
+                <button
+                  onClick={toggleExpand}
+                  className="text-[12px] font-medium active:text-purple-600"
+                  data-testid={`take-reply-${post.id}`}
+                >
+                  Reply{commentCount > 0 ? ` · ${commentCount}` : ''}
+                </button>
+              </div>
+              <ReportButton contentType="post" contentId={String(post.id)} className="text-gray-300 hover:text-red-500 [&_svg]:w-3.5 [&_svg]:h-3.5" />
+            </div>
+          )}
 
-        {/* Persistent comment bar */}
-        {!post._ratingOnly && (
-        <div className="flex items-center gap-2 mt-2">
-          <input
-            id={`take-input-${cardId}`}
-            type="text"
-            value={replyingTo === post.id ? replyContent : ''}
-            onChange={(e) => { setReplyingTo(post.id); setReplyContent(e.target.value); }}
-            onFocus={() => { setReplyingTo(post.id); fetchComments(post.id); }}
-            onKeyDown={(e) => e.key === 'Enter' && handleReply(post.id)}
-            placeholder="Write a comment…"
-            className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-            data-testid={`take-input-${post.id}`}
-          />
-          {replyingTo === post.id && !!replyContent.trim() && (
-            <button
-              onClick={() => handleReply(post.id)}
-              disabled={replyMutation.isPending}
-              className="text-sm font-semibold text-purple-600 disabled:text-gray-300"
-              data-testid={`take-send-${post.id}`}
-            >
-              Post
-            </button>
+          {/* Expanded thread — comments + reply input */}
+          {!post._ratingOnly && isExpanded && (
+            <div className="mt-3">
+              {expandedComments[post.id]?.length > 0 && (
+                <div className="space-y-3 border-l-2 border-gray-100 pl-3 mb-3">
+                  {expandedComments[post.id].map((comment: any) => renderComment(comment, post.id))}
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <input
+                  id={`take-input-${cardId}`}
+                  type="text"
+                  value={replyingTo === post.id ? replyContent : ''}
+                  onChange={(e) => { setReplyingTo(post.id); setReplyContent(e.target.value); }}
+                  onFocus={() => { setReplyingTo(post.id); fetchComments(post.id); }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleReply(post.id)}
+                  placeholder="Write a reply…"
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  data-testid={`take-input-${post.id}`}
+                />
+                {replyingTo === post.id && !!replyContent.trim() && (
+                  <button
+                    onClick={() => handleReply(post.id)}
+                    disabled={replyMutation.isPending}
+                    className="text-sm font-semibold text-purple-600 disabled:text-gray-300"
+                    data-testid={`take-send-${post.id}`}
+                  >
+                    Post
+                  </button>
+                )}
+              </div>
+            </div>
           )}
         </div>
-        )}
-
-        {/* Comments — preview a couple when collapsed, all when expanded */}
-        {!post._ratingOnly && expandedComments[post.id]?.length > 0 && (
-          <div className="mt-3 space-y-3 bg-gray-50 rounded-lg p-3">
-            {(isExpanded ? expandedComments[post.id] : expandedComments[post.id].slice(0, 2))
-              .map((comment: any) => renderComment(comment, post.id))}
-            {!isExpanded && expandedComments[post.id].length > 2 && (
-              <button
-                onClick={() => { setExpandedTake(cardId); setReplyingTo(post.id); fetchComments(post.id); }}
-                className="text-xs font-semibold text-purple-600 hover:text-purple-700"
-                data-testid={`take-view-all-${post.id}`}
-              >
-                View all {expandedComments[post.id].length} comments
-              </button>
-            )}
-          </div>
-        )}
       </div>
     );
   };
@@ -1758,8 +1725,8 @@ export default function MediaDetail() {
                     ))}
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mb-3">Real reactions from the community</p>
-                <div className="space-y-2">
+                <p className="text-xs text-gray-500 mb-2">Real reactions from the community</p>
+                <div className="bg-white rounded-2xl px-4 divide-y divide-gray-100">
                   {communityTakes.map((post: any) => renderTakeCard(post, 'trending'))}
                 </div>
               </div>
