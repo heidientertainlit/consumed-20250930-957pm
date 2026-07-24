@@ -62,6 +62,7 @@ export default function MediaDetail() {
   const [replyingToComment, setReplyingToComment] = useState<number | null>(null);
   const [commentReplyContent, setCommentReplyContent] = useState("");
   const [expandedTake, setExpandedTake] = useState<string | null>(null);
+  const [takeSort, setTakeSort] = useState<'top' | 'new'>('top');
   const [disagreedTakes, setDisagreedTakes] = useState<Set<string>>(new Set());
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
@@ -498,6 +499,34 @@ export default function MediaDetail() {
     enabled: !!params?.source && !!params?.id
   });
 
+  // Fetch ALL ratings for this media so every rater shows up in the conversation,
+  // even users whose rating never produced a social post.
+  const { data: allRatings = [] } = useQuery({
+    queryKey: ['media-all-ratings', params?.source, params?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('media_ratings')
+        .select('id, user_id, rating, created_at')
+        .eq('media_external_source', params?.source)
+        .eq('media_external_id', params?.id)
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.error('Failed to fetch media ratings:', error);
+        return [];
+      }
+      const rows = data || [];
+      const userIds = Array.from(new Set(rows.map((r: any) => r.user_id).filter(Boolean)));
+      if (userIds.length === 0) return rows.map((r: any) => ({ ...r, users: null }));
+      const { data: userRows } = await supabase
+        .from('users')
+        .select('id, display_name, user_name')
+        .in('id', userIds);
+      const userMap = new Map((userRows || []).map((u: any) => [u.id, u]));
+      return rows.map((r: any) => ({ ...r, users: userMap.get(r.user_id) || null }));
+    },
+    enabled: !!params?.source && !!params?.id
+  });
+
   // Look up any public room linked to this media by series_tag or name match
   const { data: linkedRoom } = useQuery({
     queryKey: ['media-room', mediaItem?.title],
@@ -568,13 +597,32 @@ export default function MediaDetail() {
       const latestRating = posts.find((p) => p.rating != null)?.rating ?? null;
       result.push({ ...base, rating: latestRating ?? base.rating });
     }
+    // Fold in users from media_ratings who have NO social post for this title —
+    // their rating still deserves a card in the conversation.
+    const seenUsers = new Set(result.map((p) => p.user_id).filter(Boolean));
+    for (const r of allRatings as any[]) {
+      if (!r.user_id || seenUsers.has(r.user_id)) continue;
+      seenUsers.add(r.user_id);
+      result.push({
+        id: `rating-${r.id}`,
+        user_id: r.user_id,
+        users: r.users,
+        rating: r.rating,
+        content: '',
+        created_at: r.created_at,
+        likes_count: 0,
+        comments_count: 0,
+        post_type: 'rate-review',
+        _ratingOnly: true,
+      });
+    }
     return result;
   })();
   // Preload comments for each take so a couple show at a glance without tapping "Comment".
   const takeIdsKey = (mergedTakes as any[]).map((t) => t.id).join(',');
   useEffect(() => {
     if (!session?.access_token) return;
-    (mergedTakes as any[]).forEach((t) => { if (t?.id) fetchComments(String(t.id)); });
+    (mergedTakes as any[]).forEach((t) => { if (t?.id && !t._ratingOnly) fetchComments(String(t.id)); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [takeIdsKey, session?.access_token]);
   const distinctFanIds = Array.from(new Set((socialActivity as any[]).map((p: any) => p.user_id).filter(Boolean)));
@@ -1156,6 +1204,7 @@ export default function MediaDetail() {
           role="button"
           tabIndex={0}
           onClick={() => {
+            if (post._ratingOnly) return;
             const next = isExpanded ? null : cardId;
             setExpandedTake(next);
             setReplyContent('');
@@ -1165,6 +1214,7 @@ export default function MediaDetail() {
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
+              if (post._ratingOnly) return;
               const next = isExpanded ? null : cardId;
               setExpandedTake(next);
               setReplyContent('');
@@ -1204,12 +1254,14 @@ export default function MediaDetail() {
                   <span className="text-sm font-semibold text-gray-900">{ratingVal}</span>
                 </>
               )}
-              <span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                <ReportButton contentType="post" contentId={String(post.id)} className="text-gray-200 hover:text-red-500 [&_svg]:w-3 [&_svg]:h-3" />
-              </span>
+              {!post._ratingOnly && (
+                <span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                  <ReportButton contentType="post" contentId={String(post.id)} className="text-gray-200 hover:text-red-500 [&_svg]:w-3 [&_svg]:h-3" />
+                </span>
+              )}
             </div>
           </div>
-          <p className={`text-sm leading-snug ${hasText ? 'text-gray-700' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-2'}`}>{hasText ? post.content : 'Shared a rating'}</p>
+          <p className={`text-sm leading-snug ${hasText ? 'text-gray-700' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-2'}`}>{hasText ? post.content : 'Rated it — no take yet'}</p>
           {(() => {
             const tag = dbTagToDisplay(post.post_type);
             if (!tag) return null;
@@ -1226,7 +1278,9 @@ export default function MediaDetail() {
           })()}
         </div>
 
-        {/* Reactions — icons only, minimal */}
+        {/* Reactions — icons only, minimal. Hidden for synthetic rating-only cards
+            (they have no social post behind them, so likes/comments can't attach). */}
+        {!post._ratingOnly && (
         <div className="flex items-center gap-6 mt-2 pt-2 border-t border-gray-100">
           <button
             onClick={() => handleLike(post.id)}
@@ -1263,8 +1317,10 @@ export default function MediaDetail() {
             <Star size={18} />
           </button>
         </div>
+        )}
 
         {/* Persistent comment bar */}
+        {!post._ratingOnly && (
         <div className="flex items-center gap-2 mt-2">
           <input
             id={`take-input-${cardId}`}
@@ -1288,9 +1344,10 @@ export default function MediaDetail() {
             </button>
           )}
         </div>
+        )}
 
         {/* Comments — preview a couple when collapsed, all when expanded */}
-        {expandedComments[post.id]?.length > 0 && (
+        {!post._ratingOnly && expandedComments[post.id]?.length > 0 && (
           <div className="mt-3 space-y-3 bg-gray-50 rounded-lg p-3">
             {(isExpanded ? expandedComments[post.id] : expandedComments[post.id].slice(0, 2))
               .map((comment: any) => renderComment(comment, post.id))}
@@ -1669,11 +1726,38 @@ export default function MediaDetail() {
           {!showReviews && (() => {
             const communityTakes = (mergedTakes as any[])
               .slice()
-              .sort((a, b) => (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0));
+              .sort((a, b) => {
+                if (takeSort === 'new') {
+                  return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+                }
+                // Top: likes first, written takes above rating-only cards, then newest
+                const likeDiff = (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0);
+                if (likeDiff !== 0) return likeDiff;
+                const aText = a.content && a.content.trim() ? 1 : 0;
+                const bText = b.content && b.content.trim() ? 1 : 0;
+                if (bText !== aText) return bText - aText;
+                return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+              });
             if (communityTakes.length === 0) return null;
             return (
               <div className="mb-4">
-                <h3 className="text-base font-semibold text-gray-900 mb-0.5">What People Are Saying</h3>
+                <div className="flex items-center justify-between mb-0.5">
+                  <h3 className="text-base font-semibold text-gray-900">What People Are Saying</h3>
+                  <div className="flex items-center gap-1">
+                    {(['top', 'new'] as const).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setTakeSort(s)}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
+                          takeSort === s ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        }`}
+                        data-testid={`takes-sort-${s}`}
+                      >
+                        {s === 'top' ? 'Hot' : 'New'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <p className="text-xs text-gray-500 mb-3">Real reactions from the community</p>
                 <div className="space-y-2">
                   {communityTakes.map((post: any) => renderTakeCard(post, 'trending'))}

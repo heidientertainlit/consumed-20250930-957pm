@@ -134,6 +134,36 @@ export default function PoolsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showRequest, setShowRequest] = useState(false);
 
+  // Recent title conversations — surfaces that every media page has its own room-like conversation
+  const { data: titleConvos = [] } = useQuery({
+    queryKey: ['rooms-title-conversations'],
+    queryFn: async () => {
+      const { data: posts, error } = await supabase
+        .from('social_posts')
+        .select('media_title, media_type, image_url, media_external_id, media_external_source, content, rating, created_at')
+        .not('media_external_id', 'is', null)
+        .not('media_external_source', 'is', null)
+        .not('media_title', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(60);
+      if (error || !posts) return [];
+      const seen = new Set<string>();
+      const result: any[] = [];
+      for (const p of posts) {
+        const key = `${p.media_external_source}:${p.media_external_id}`;
+        if (seen.has(key)) continue;
+        // prefer titles with a written take so the strip shows real conversation
+        if (!(p.content && p.content.trim()) && !p.rating) continue;
+        seen.add(key);
+        result.push(p);
+        if (result.length >= 3) break;
+      }
+      return result;
+    },
+    enabled: !!session?.access_token,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data, isLoading } = useQuery({
     queryKey: ['user-pools'],
     queryFn: async () => {
@@ -210,6 +240,39 @@ export default function PoolsPage() {
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Discover</p>
             <div className="space-y-3">
               {filterRooms(discoverRooms).map((pool: any) => <RoomCard key={pool.id} pool={pool} onPress={() => setLocation(`/room/${pool.id}`)} />)}
+            </div>
+          </div>
+        )}
+
+        {/* Title conversations — every media page is its own conversation */}
+        {titleConvos.length > 0 && (
+          <div>
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Title Conversations</p>
+            <p className="text-xs text-gray-400 mb-2">Every title has its own conversation — jump in from any media page.</p>
+            <div className="space-y-2">
+              {titleConvos.map((c: any) => (
+                <button
+                  key={`${c.media_external_source}:${c.media_external_id}`}
+                  onClick={() => setLocation(`/media/${(c.media_type || 'movie').toLowerCase()}/${c.media_external_source}/${c.media_external_id}`)}
+                  className="w-full flex items-center gap-3 bg-white rounded-2xl p-3 border border-gray-200 text-left hover:border-purple-300 transition-colors"
+                  data-testid={`title-convo-${c.media_external_id}`}
+                >
+                  {c.image_url ? (
+                    <img src={c.image_url} alt={c.media_title} className="w-10 h-14 rounded-lg object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-14 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                      <Tv size={16} className="text-purple-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{c.media_title}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {c.content && c.content.trim() ? `"${c.content.trim()}"` : 'Recently rated'}
+                    </p>
+                  </div>
+                  <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
+                </button>
+              ))}
             </div>
           </div>
         )}
