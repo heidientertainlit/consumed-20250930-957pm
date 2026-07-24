@@ -31,7 +31,7 @@ import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 
-import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronLeft, ChevronRight, ChevronDown, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, ArrowRight, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap } from "lucide-react";
+import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronLeft, ChevronRight, ChevronDown, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, ArrowRight, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap, Smile } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import MentionInput from "@/components/mention-input";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -8448,7 +8448,7 @@ export default function Feed() {
                   </p>
                 </div>
                 <div className="flex-shrink-0 w-20 h-20 rounded-full border-2 border-purple-400/70 shadow-[0_0_24px_rgba(168,85,247,0.35)] flex items-center justify-center">
-                  <Dna className="w-9 h-9 text-purple-300" />
+                  <Smile className="w-11 h-11 text-purple-300" />
                 </div>
               </div>
               <button className="mt-4 w-full bg-gradient-to-r from-purple-600 to-purple-400 hover:from-purple-700 hover:to-purple-500 text-white text-sm font-semibold rounded-full py-2.5 transition-colors flex items-center justify-center gap-2" data-testid="button-guest-dna-cta">
