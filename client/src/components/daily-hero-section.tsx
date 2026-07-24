@@ -2034,6 +2034,28 @@ export function DailyHeroSection() {
   const hasTodaysPlay = readyQuestions.length >= 1 || isOpinionDay;
   const hasDailyCall = !!dailyCall && (dailyCall.options?.length ?? 0) > 0;
 
+  // Open Today's Play when arriving via "/play?open=todays-play" (identity hero "play streak" stat)
+  const autoOpenHandled = useRef(false);
+  useEffect(() => {
+    if (autoOpenHandled.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('open') !== 'todays-play') return;
+    // Wait until content has loaded enough to know what to open
+    if (!hasTodaysPlay && !hasDailyCall && !playCompleted && !callCompleted) return;
+    autoOpenHandled.current = true;
+    // Strip the param so refresh/back doesn't re-trigger
+    params.delete('open');
+    const qs = params.toString();
+    window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
+    if (isTriviaDay) {
+      if (playCompleted) setShowPlayShare(true);
+      else if (hasTodaysPlay) setShowPlayGame(true);
+    } else {
+      if (callCompleted) setShowCallShare(true);
+      else if (hasDailyCall) setShowCallOverlay(true);
+    }
+  }, [isTriviaDay, playCompleted, hasTodaysPlay, callCompleted, hasDailyCall]);
+
   // First question preview (truncated)
   const firstQPreview = readyQuestions[0]?.title
     ? truncateWords(readyQuestions[0].title, 30)

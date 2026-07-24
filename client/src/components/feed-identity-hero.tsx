@@ -103,8 +103,8 @@ export function FeedIdentityHero() {
     WebkitTextFillColor: "transparent",
   };
 
-  const stats: { Icon: typeof Flame; color: string; value: string; label: string; href?: string }[] = [
-    { Icon: Flame, color: "#fb923c", value: String(streak), label: "play streak", href: "/play" },
+  const stats: { Icon: typeof Flame; color: string; value: string; label: string; href?: string; onClick?: () => void }[] = [
+    { Icon: Flame, color: "#fb923c", value: String(streak), label: "play streak", href: "/play?open=todays-play" },
   ];
   if (globalRank) stats.push({ Icon: Trophy, color: "#fbbf24", value: `#${globalRank}`, label: "leaderboard", href: "/leaderboard" });
   stats.push({ Icon: Library, color: "#a78bfa", value: tracked.toLocaleString(), label: "tracked" });
@@ -212,10 +212,10 @@ export function FeedIdentityHero() {
                 </div>
               );
               const borderStyle = idx > 0 ? { borderLeft: "1px solid rgba(255,255,255,0.08)" } : {};
-              return s.href ? (
+              return (s.href || s.onClick) ? (
                 <button
                   key={s.label}
-                  onClick={() => setLocation(s.href!)}
+                  onClick={() => (s.onClick ? s.onClick() : setLocation(s.href!))}
                   className="flex justify-center active:scale-95 transition-transform"
                   style={borderStyle}
                 >
