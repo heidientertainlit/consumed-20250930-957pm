@@ -117,8 +117,8 @@ export default function RoomComposer({
         {!hideTags && (
           <p className={`text-[12px] font-semibold text-gray-400 ${compactTags ? "mb-1.5" : "mb-2.5"}`}>Add a tag</p>
         )}
-        {footerExtra}
         <div className={`flex flex-wrap items-center ${compactTags ? "gap-1.5" : "gap-2"}`}>
+          {footerExtra}
           {!hideTags && tags.map((s) => {
             const Icon = s.icon;
             const active = tag === s.db;

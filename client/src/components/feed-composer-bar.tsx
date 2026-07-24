@@ -721,8 +721,8 @@ export default function FeedComposerBar({
               footerExtra={selectedMedia ? (() => {
                 const activeRating = hoverRating || ratingValue;
                 return (
-                  <div className="mb-2">
-                    <p className="text-[12px] font-semibold text-gray-400 mb-1.5">
+                  <div>
+                    <p className="text-[12px] font-semibold text-gray-400 mb-1">
                       Add Rating <span className="font-normal">(optional)</span>
                     </p>
                     <div className="flex items-center gap-2">

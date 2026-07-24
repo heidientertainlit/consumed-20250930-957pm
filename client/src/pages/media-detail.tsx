@@ -1616,6 +1616,7 @@ export default function MediaDetail() {
               compactTags
               hideTitle
               hideTags
+              bodyRows={6}
               posting={isComposePosting}
               bodyPlaceholder="What do you think?"
               onSubmit={handleComposePost}
@@ -1626,8 +1627,8 @@ export default function MediaDetail() {
               footerExtra={(() => {
                 const activeRating = composeHoverRating || composeRating;
                 return (
-                  <div className="mb-2">
-                    <p className="text-[12px] font-semibold text-gray-400 mb-1.5">
+                  <div>
+                    <p className="text-[12px] font-semibold text-gray-400 mb-1">
                       Add Rating <span className="font-normal">(optional)</span>
                     </p>
                     <div className="flex items-center gap-2">
