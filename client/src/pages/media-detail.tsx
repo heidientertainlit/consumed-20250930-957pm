@@ -1249,7 +1249,7 @@ export default function MediaDetail() {
               >
                 <Flame size={16} strokeWidth={2.5} className={isLiked ? 'fill-orange-500' : ''} />
               </button>
-              {(Number(post.likes_count) || 0) > 0 && <span className="text-[12px] font-medium text-gray-500">{post.likes_count}</span>}
+              <span className="text-[12px] font-medium text-gray-500">{Number(post.likes_count) || 0}</span>
             </div>
           )}
         </div>
@@ -1306,7 +1306,7 @@ export default function MediaDetail() {
                   >
                     <Flame size={16} strokeWidth={2.5} className={isLiked ? 'fill-orange-500' : ''} />
                   </button>
-                  {(Number(post.likes_count) || 0) > 0 && <span className="text-[12px] font-medium text-gray-500">{post.likes_count}</span>}
+                  <span className="text-[12px] font-medium text-gray-500">{Number(post.likes_count) || 0}</span>
                 </div>
                 <button
                   onClick={toggleExpand}
