@@ -195,6 +195,27 @@ serve(async (req) => {
         engagementMap[pred.user_id] = (engagementMap[pred.user_id] || 0) + 5;
       });
 
+      // Room takes posted (10 points each + bonus for agrees/replies received)
+      const { data: roomTakes } = await supabase
+        .from('room_takes')
+        .select('user_id, upvotes, reply_count, created_at')
+        .gte('created_at', dateFilter || '1970-01-01');
+
+      (roomTakes || []).forEach((t: any) => {
+        const score = 10 + (t.upvotes || 0) * 2 + (t.reply_count || 0) * 3;
+        engagementMap[t.user_id] = (engagementMap[t.user_id] || 0) + score;
+      });
+
+      // Room replies made (5 points each)
+      const { data: roomReplies } = await supabase
+        .from('room_take_replies')
+        .select('user_id, created_at')
+        .gte('created_at', dateFilter || '1970-01-01');
+
+      (roomReplies || []).forEach((r: any) => {
+        engagementMap[r.user_id] = (engagementMap[r.user_id] || 0) + 5;
+      });
+
       // Rank creation (10 points each)
       const { data: ranks } = await supabase
         .from('ranks')

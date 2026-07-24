@@ -51,7 +51,7 @@ export default function Leaderboard() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<string>(
     tabParam === 'games' || tabParam === 'consumption' || tabParam === 'predictions' ? 
-      (tabParam === 'predictions' ? 'games' : tabParam) : 'games'
+      (tabParam === 'predictions' ? 'games' : tabParam) : 'engagement'
   );
 
   const toggleExpanded = (categoryName: string) => {
@@ -613,20 +613,20 @@ export default function Leaderboard() {
                 Engagers
               </TabsTrigger>
               <TabsTrigger 
-                value="games" 
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
-                data-testid="tab-games"
-              >
-                <Target size={14} className="mr-1" />
-                Games
-              </TabsTrigger>
-              <TabsTrigger 
                 value="consumption" 
                 className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
                 data-testid="tab-consumption"
               >
                 <Star size={14} className="mr-1" />
                 Media
+              </TabsTrigger>
+              <TabsTrigger 
+                value="games" 
+                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
+                data-testid="tab-games"
+              >
+                <Target size={14} className="mr-1" />
+                Games
               </TabsTrigger>
             </TabsList>
 
@@ -640,7 +640,8 @@ export default function Leaderboard() {
                 'from-purple-600 to-pink-600'
               )}
 
-              {/* ── Top of Taste ── */}
+              {/* ── Top of Taste — removed ── */}
+              {false && (
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
                 <div className="bg-gradient-to-r from-violet-600 to-indigo-500 p-4">
                   <div className="flex items-center gap-2">
@@ -696,6 +697,7 @@ export default function Leaderboard() {
                   })}
                 </div>
               </div>
+              )}
             </TabsContent>
 
             <TabsContent value="games">
@@ -727,7 +729,8 @@ export default function Leaderboard() {
                 true
               )}
               
-              {/* Prediction Pros Section with Awards inside */}
+              {/* Prediction Pros Section with Awards inside — hidden for now, will bring back later */}
+              {false && (
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
                 <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-4">
                   <div className="flex items-center justify-between">
@@ -911,6 +914,7 @@ export default function Leaderboard() {
                   </div>
                 )}
               </div>
+              )}
               
             </TabsContent>
 
@@ -972,7 +976,8 @@ export default function Leaderboard() {
                   'from-violet-500 to-purple-500'
                 )}
                 
-                {renderCategoryCard(
+                {/* Gamers — hidden for now, will bring back later */}
+                {false && renderCategoryCard(
                   'Gamers',
                   Gamepad2,
                   leaderboardData?.categories?.games,
