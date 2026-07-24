@@ -22,6 +22,9 @@ interface MentionInputProps {
   disabled?: boolean;
   testId?: string;
   autoFocus?: boolean;
+  // Called when the user presses Enter while the mention dropdown is closed
+  // (when it's open, Enter selects the highlighted friend instead).
+  onSubmit?: () => void;
 }
 
 export default function MentionInput({
@@ -33,6 +36,7 @@ export default function MentionInput({
   disabled,
   testId,
   autoFocus,
+  onSubmit,
 }: MentionInputProps) {
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
@@ -120,7 +124,13 @@ export default function MentionInput({
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showMentions || filteredFriends.length === 0) return;
+    if (!showMentions || filteredFriends.length === 0) {
+      if (e.key === "Enter" && onSubmit) {
+        e.preventDefault();
+        onSubmit();
+      }
+      return;
+    }
 
     if (e.key === "ArrowDown") {
       e.preventDefault();

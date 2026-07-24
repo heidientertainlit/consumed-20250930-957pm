@@ -2547,16 +2547,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {(session?.user?.user_metadata?.display_name || session?.user?.email || 'Y')[0]?.toUpperCase()}
               </span>
             </div>
-            <div className="flex-1 flex items-center bg-gray-50 rounded-full px-3 py-1.5 gap-2 border border-gray-100">
-              <input
-                ref={takeInputRef}
-                type="text"
+            <div className="flex-1 flex items-center bg-gray-50 rounded-full px-3 py-1.5 gap-2 border border-gray-100" onClick={(e) => e.stopPropagation()}>
+              <MentionInput
                 value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
+                onChange={setCommentText}
                 placeholder="Add your take or @tag a friend..."
-                className="flex-1 text-[13px] bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
-                onClick={(e) => e.stopPropagation()}
-                onKeyPress={(e) => { if (e.key === 'Enter') { e.stopPropagation(); submitComment(); } }}
+                session={session}
+                onSubmit={submitComment}
+                className="flex-1 text-[13px] h-auto px-0 py-0 border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none text-gray-700 placeholder:text-gray-400"
               />
               {commentText.trim() && (
                 <button
