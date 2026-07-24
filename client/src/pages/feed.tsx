@@ -5467,7 +5467,13 @@ export default function Feed() {
 
         const media = p.mediaItems?.[0];
         let mediaImg = media?.imageUrl || media?.image_url || media?.poster_url || (p as any).image_url || '';
-        const src = media?.externalSource || media?.external_source || (p as any).media_external_source || 'tmdb';
+        // Only fall back to 'tmdb' for movie/TV — books, podcasts, music etc. are NOT on
+        // TMDB, and a fake tmdb source sends clicks to the wrong media page entirely.
+        const mtRaw = (media?.mediaType || media?.type || (p as any).media_type || '').toLowerCase();
+        let storedSrc = media?.externalSource || media?.external_source || (p as any).media_external_source || '';
+        // Discard impossible combos (e.g. a book stamped 'tmdb' by old bad data).
+        if (storedSrc === 'tmdb' && mtRaw && mtRaw !== 'movie' && mtRaw !== 'tv') storedSrc = '';
+        const src = storedSrc || ((mtRaw === 'movie' || mtRaw === 'tv') ? 'tmdb' : '');
         const eid = media?.externalId || media?.external_id || (p as any).media_external_id || (p as any).externalId;
         if (src === 'googlebooks' && eid && !mediaImg) mediaImg = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`;
         else if (src === 'open_library' && eid && !mediaImg) mediaImg = `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`;
