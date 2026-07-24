@@ -23,11 +23,12 @@ interface TrendingSet {
   items: TrendingItem[];
 }
 
-async function fetchTrendingMovies(apiKey: string): Promise<TrendingSet[]> {
+async function fetchTrendingMovies(apiKey: string, page = 1): Promise<TrendingSet[]> {
+  const pageSuffix = page > 1 ? `-p${page}` : '';
   try {
     const [trendingRes, nowPlayingRes] = await Promise.all([
-      fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${apiKey}`),
-      fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${apiKey}&region=US`),
+      fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${apiKey}&page=${page}`),
+      fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${apiKey}&region=US&page=${page}`),
     ]);
 
     const sets: TrendingSet[] = [];
@@ -45,7 +46,7 @@ async function fetchTrendingMovies(apiKey: string): Promise<TrendingSet[]> {
         position: i + 1,
       }));
       if (items.length > 0) {
-        sets.push({ id: 'trending-movies-week', title: 'Trending Movies', media_type: 'movie', items });
+        sets.push({ id: `trending-movies-week${pageSuffix}`, title: 'Trending Movies', media_type: 'movie', items });
       }
     }
 
@@ -62,7 +63,7 @@ async function fetchTrendingMovies(apiKey: string): Promise<TrendingSet[]> {
         position: i + 1,
       }));
       if (items.length > 0) {
-        sets.push({ id: 'now-playing-movies', title: 'In Theaters Now', media_type: 'movie', items });
+        sets.push({ id: `now-playing-movies${pageSuffix}`, title: 'In Theaters Now', media_type: 'movie', items });
       }
     }
 
@@ -73,11 +74,12 @@ async function fetchTrendingMovies(apiKey: string): Promise<TrendingSet[]> {
   }
 }
 
-async function fetchTrendingTV(apiKey: string): Promise<TrendingSet[]> {
+async function fetchTrendingTV(apiKey: string, page = 1): Promise<TrendingSet[]> {
+  const pageSuffix = page > 1 ? `-p${page}` : '';
   try {
     const [trendingRes, topRatedRes] = await Promise.all([
-      fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${apiKey}`),
-      fetch(`https://api.themoviedb.org/3/tv/on_the_air?api_key=${apiKey}&region=US`),
+      fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${apiKey}&page=${page}`),
+      fetch(`https://api.themoviedb.org/3/tv/on_the_air?api_key=${apiKey}&region=US&page=${page}`),
     ]);
 
     const sets: TrendingSet[] = [];
@@ -95,7 +97,7 @@ async function fetchTrendingTV(apiKey: string): Promise<TrendingSet[]> {
         position: i + 1,
       }));
       if (items.length > 0) {
-        sets.push({ id: 'trending-tv-week', title: 'Trending TV Shows', media_type: 'tv', items });
+        sets.push({ id: `trending-tv-week${pageSuffix}`, title: 'Trending TV Shows', media_type: 'tv', items });
       }
     }
 
@@ -112,7 +114,7 @@ async function fetchTrendingTV(apiKey: string): Promise<TrendingSet[]> {
         position: i + 1,
       }));
       if (items.length > 0) {
-        sets.push({ id: 'on-air-tv', title: 'On The Air', media_type: 'tv', items });
+        sets.push({ id: `on-air-tv${pageSuffix}`, title: 'On The Air', media_type: 'tv', items });
       }
     }
 
@@ -144,13 +146,16 @@ function parseItunesRssEntry(entry: any, mediaType: string, prefix: string): any
   };
 }
 
-async function fetchTrendingMusic(): Promise<TrendingSet[]> {
+async function fetchTrendingMusic(page = 1): Promise<TrendingSet[]> {
+  const pageSuffix = page > 1 ? `-p${page}` : '';
+  const offset = (page - 1) * 8;
+  const rssLimit = Math.min(page * 10, 100);
   try {
     const sets: TrendingSet[] = [];
 
     const [topAlbumsRes, hotTracksRes] = await Promise.all([
-      fetch('https://itunes.apple.com/us/rss/topalbums/limit=10/json'),
-      fetch('https://itunes.apple.com/us/rss/topsongs/limit=10/json'),
+      fetch(`https://itunes.apple.com/us/rss/topalbums/limit=${rssLimit}/json`),
+      fetch(`https://itunes.apple.com/us/rss/topsongs/limit=${rssLimit}/json`),
     ]);
 
     if (topAlbumsRes.ok) {
@@ -159,9 +164,9 @@ async function fetchTrendingMusic(): Promise<TrendingSet[]> {
       const items = entries
         .map((e, i) => { const r = parseItunesRssEntry(e, 'music', 'itunes-album'); return r ? { ...r, position: i + 1 } : null; })
         .filter(Boolean)
-        .slice(0, 8);
+        .slice(offset, offset + 8);
       if (items.length > 0) {
-        sets.push({ id: 'apple-top-albums', title: 'Top Albums Right Now', media_type: 'music', items });
+        sets.push({ id: `apple-top-albums${pageSuffix}`, title: 'Top Albums Right Now', media_type: 'music', items });
       }
     }
 
@@ -171,9 +176,9 @@ async function fetchTrendingMusic(): Promise<TrendingSet[]> {
       const items = entries
         .map((e, i) => { const r = parseItunesRssEntry(e, 'music', 'itunes-song'); return r ? { ...r, position: i + 1 } : null; })
         .filter(Boolean)
-        .slice(0, 8);
+        .slice(offset, offset + 8);
       if (items.length > 0) {
-        sets.push({ id: 'apple-hot-songs', title: 'Hot Songs Right Now', media_type: 'music', items });
+        sets.push({ id: `apple-hot-songs${pageSuffix}`, title: 'Hot Songs Right Now', media_type: 'music', items });
       }
     }
 
@@ -184,11 +189,14 @@ async function fetchTrendingMusic(): Promise<TrendingSet[]> {
   }
 }
 
-async function fetchTrendingPodcasts(): Promise<TrendingSet[]> {
+async function fetchTrendingPodcasts(page = 1): Promise<TrendingSet[]> {
+  const pageSuffix = page > 1 ? `-p${page}` : '';
+  const offset = (page - 1) * 8;
+  const rssLimit = Math.min(page * 10, 100);
   try {
     const sets: TrendingSet[] = [];
 
-    const topPodcastsRes = await fetch('https://itunes.apple.com/us/rss/toppodcasts/limit=10/json');
+    const topPodcastsRes = await fetch(`https://itunes.apple.com/us/rss/toppodcasts/limit=${rssLimit}/json`);
 
     if (topPodcastsRes.ok) {
       const data = await topPodcastsRes.json();
@@ -213,9 +221,9 @@ async function fetchTrendingPodcasts(): Promise<TrendingSet[]> {
           };
         })
         .filter(Boolean)
-        .slice(0, 8);
+        .slice(offset, offset + 8);
       if (items.length > 0) {
-        sets.push({ id: 'apple-top-podcasts', title: 'Top Podcasts Right Now', media_type: 'podcast', items });
+        sets.push({ id: `apple-top-podcasts${pageSuffix}`, title: 'Top Podcasts Right Now', media_type: 'podcast', items });
       }
     }
 
@@ -226,7 +234,9 @@ async function fetchTrendingPodcasts(): Promise<TrendingSet[]> {
   }
 }
 
-async function fetchTrendingBooks(apiKey: string): Promise<TrendingSet[]> {
+async function fetchTrendingBooks(apiKey: string, page = 1): Promise<TrendingSet[]> {
+  const pageSuffix = page > 1 ? `-p${page}` : '';
+  const startIndex = (page - 1) * 8;
   try {
     const sets: TrendingSet[] = [];
 
@@ -237,7 +247,7 @@ async function fetchTrendingBooks(apiKey: string): Promise<TrendingSet[]> {
 
     for (const query of queries) {
       const res = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query.q)}&maxResults=8&printType=books&langRestrict=en&key=${apiKey}`
+        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query.q)}&maxResults=8&startIndex=${startIndex}&printType=books&langRestrict=en&key=${apiKey}`
       );
 
       if (res.ok) {
@@ -255,7 +265,7 @@ async function fetchTrendingBooks(apiKey: string): Promise<TrendingSet[]> {
             position: i + 1,
           }));
         if (items.length > 0) {
-          sets.push({ id: query.setId, title: query.title, media_type: 'book', items });
+          sets.push({ id: `${query.setId}${pageSuffix}`, title: query.title, media_type: 'book', items });
         }
       }
     }
@@ -277,12 +287,15 @@ serve(async (req) => {
     const GOOGLE_BOOKS_API_KEY = Deno.env.get('GOOGLE_BOOKS_API_KEY');
 
     let mediaType: string | null = null;
+    let page = 1;
     try {
       const body = await req.json();
       mediaType = body.media_type || null;
+      page = Math.max(1, parseInt(body.page) || 1);
     } catch {
       const url = new URL(req.url);
       mediaType = url.searchParams.get('media_type');
+      page = Math.max(1, parseInt(url.searchParams.get('page') || '1') || 1);
     }
 
     const allSets: TrendingSet[] = [];
@@ -290,19 +303,19 @@ serve(async (req) => {
     const fetchPromises: Promise<TrendingSet[]>[] = [];
 
     if (!mediaType || mediaType === 'movie') {
-      if (TMDB_API_KEY) fetchPromises.push(fetchTrendingMovies(TMDB_API_KEY));
+      if (TMDB_API_KEY) fetchPromises.push(fetchTrendingMovies(TMDB_API_KEY, page));
     }
     if (!mediaType || mediaType === 'tv') {
-      if (TMDB_API_KEY) fetchPromises.push(fetchTrendingTV(TMDB_API_KEY));
+      if (TMDB_API_KEY) fetchPromises.push(fetchTrendingTV(TMDB_API_KEY, page));
     }
     if (!mediaType || mediaType === 'music') {
-      fetchPromises.push(fetchTrendingMusic());
+      fetchPromises.push(fetchTrendingMusic(page));
     }
     if (!mediaType || mediaType === 'podcast') {
-      fetchPromises.push(fetchTrendingPodcasts());
+      fetchPromises.push(fetchTrendingPodcasts(page));
     }
     if (!mediaType || mediaType === 'book') {
-      if (GOOGLE_BOOKS_API_KEY) fetchPromises.push(fetchTrendingBooks(GOOGLE_BOOKS_API_KEY));
+      if (GOOGLE_BOOKS_API_KEY) fetchPromises.push(fetchTrendingBooks(GOOGLE_BOOKS_API_KEY, page));
     }
 
     const results = await Promise.all(fetchPromises);

@@ -68,6 +68,51 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     try { return JSON.parse(localStorage.getItem('seen_it_ratings') || '{}'); } catch { return {}; }
   });
 
+  // ── "Show me more" — extra batches fetched on demand ─────────────────────
+  const [extraSets, setExtraSets] = useState<SeenItSet[]>([]);
+  const [morePage, setMorePage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [noMoreAvailable, setNoMoreAvailable] = useState(false);
+
+  const loadMoreSets = async (knownExternalIds: Set<string>) => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = morePage + 1;
+      const { data, error } = await supabase.functions.invoke('trending-sets', {
+        body: { page: nextPage, ...(mediaTypeFilter ? { media_type: mediaTypeFilter } : {}) },
+      });
+      const rawSets = (data?.sets || []) as SeenItSet[];
+      // Drop items already present in earlier batches (live charts can drift between requests)
+      const newSets = rawSets
+        .map(s => ({
+          ...s,
+          items: s.items.filter(it => {
+            const key = it.external_id ? `${it.external_source || ''}:${it.external_id}` : it.id;
+            if (knownExternalIds.has(key)) return false;
+            knownExternalIds.add(key);
+            return true;
+          }),
+        }))
+        .filter(s => s.items.length > 0);
+      if (error || newSets.length === 0) {
+        setNoMoreAvailable(true);
+      } else {
+        setNoMoreAvailable(false);
+        setExtraSets(prev => {
+          const seen = new Set(prev.map(s => s.id));
+          return [...prev, ...newSets.filter(s => !seen.has(s.id))];
+        });
+      }
+      // Always advance so "Try again" fetches the next page instead of re-fetching the same one
+      setMorePage(nextPage);
+    } catch {
+      setNoMoreAvailable(true);
+      setMorePage(p => p + 1);
+    }
+    setLoadingMore(false);
+  };
+
   // ── Swipe gesture detection (no drag tracking — cards stay put) ────────────
   const swipeStartXRef = useRef(0);
   const swipeStartYRef = useRef(0);
@@ -144,7 +189,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   });
 
   const sets = useMemo(() => {
-    const allSets = [...(trendingSets || []), ...(staticSets || [])];
+    const allSets = [...(trendingSets || []), ...(staticSets || []), ...extraSets];
     const seen = new Set<string>();
     const deduped = allSets.filter(s => { if (seen.has(s.id)) return false; seen.add(s.id); return true; });
     return mediaTypeFilter
@@ -157,7 +202,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           return s.media_type === mediaTypeFilter;
         })
       : deduped;
-  }, [trendingSets, staticSets, mediaTypeFilter]);
+  }, [trendingSets, staticSets, extraSets, mediaTypeFilter]);
 
   const isLoading = sets.length === 0 && (isLoadingTrending || isLoadingStatic);
 
@@ -221,11 +266,12 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
 
   const incompleteSets = useMemo(() => sets.filter(set => !completedSetIds.has(set.id)), [sets, completedSetIds]);
 
-  const autoDetectedRef = useRef(false);
+  const autoDetectedSetIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (autoDetectedRef.current || !existingResponses || sets.length === 0) return;
-    autoDetectedRef.current = true;
+    if (!existingResponses || sets.length === 0) return;
     sets.forEach(set => {
+      if (autoDetectedSetIdsRef.current.has(set.id)) return;
+      autoDetectedSetIdsRef.current.add(set.id);
       if (completedSetIds.has(set.id)) return;
       const answeredCount = set.items.filter(item => responses[item.id] !== undefined).length;
       if (answeredCount >= set.items.length && set.items.length > 0) {
@@ -369,7 +415,35 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     );
   }
 
-  if (!incompleteSets || incompleteSets.length === 0) return null;
+  // All caught up — offer to fetch a fresh batch instead of disappearing
+  if (!incompleteSets || incompleteSets.length === 0) {
+    if (isLoading || sets.length === 0) return null;
+    const endConfig = getMediaTypeConfig(mediaTypeFilter || 'movie');
+    const knownExternalIds = new Set<string>();
+    sets.forEach(s => s.items.forEach(it => {
+      knownExternalIds.add(it.external_id ? `${it.external_source || ''}:${it.external_id}` : it.id);
+    }));
+    return (
+      <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles className="w-4 h-4 text-purple-500" />
+          <span className="text-gray-900 font-semibold text-sm">Seen It?</span>
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${endConfig.pillBg}`}>{endConfig.pill}</span>
+        </div>
+        <p className="text-gray-500 text-sm mb-3">
+          {noMoreAvailable ? "Couldn't find new titles right now." : "You're all caught up on this batch."}
+        </p>
+        <button
+          onClick={() => loadMoreSets(knownExternalIds)}
+          disabled={loadingMore}
+          className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl py-2.5 transition-colors"
+        >
+          {loadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+          {loadingMore ? 'Loading more...' : noMoreAvailable ? 'Try again' : 'Show me more'}
+        </button>
+      </div>
+    );
+  }
 
   const currentSet = incompleteSets[currentSetIndex];
   if (!currentSet) return null;
