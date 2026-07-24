@@ -286,7 +286,7 @@ const MEDIA_ALIGNMENT: Record<string, Record<string, string>> = {
     theory_crafter:     'Worth deep-analyzing.',
   },
   movie: {
-    prestige_detective: 'Your standards will judge this.',
+    prestige_detective: 'We think you\'ll appreciate this one.',
     first_episode_judge:'You\'ll know in 10 minutes.',
     cultural_decoder:   'Layers to unpack here.',
     dark_content_seeker:'Right in your territory.',

@@ -62,7 +62,6 @@ export default function MediaDetail() {
   const [replyingToComment, setReplyingToComment] = useState<number | null>(null);
   const [commentReplyContent, setCommentReplyContent] = useState("");
   const [expandedTake, setExpandedTake] = useState<string | null>(null);
-  const [takeSort, setTakeSort] = useState<'top' | 'new'>('top');
   const [disagreedTakes, setDisagreedTakes] = useState<Set<string>>(new Set());
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
@@ -1694,10 +1693,7 @@ export default function MediaDetail() {
             const communityTakes = (mergedTakes as any[])
               .slice()
               .sort((a, b) => {
-                if (takeSort === 'new') {
-                  return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-                }
-                // Top: likes first, written takes above rating-only cards, then newest
+                // Likes first, written takes above rating-only cards, then newest
                 const likeDiff = (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0);
                 if (likeDiff !== 0) return likeDiff;
                 const aText = a.content && a.content.trim() ? 1 : 0;
@@ -1708,23 +1704,7 @@ export default function MediaDetail() {
             if (communityTakes.length === 0) return null;
             return (
               <div className="mb-4">
-                <div className="flex items-center justify-between mb-0.5">
-                  <h3 className="text-base font-semibold text-gray-900">What People Are Saying</h3>
-                  <div className="flex items-center gap-1">
-                    {(['top', 'new'] as const).map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setTakeSort(s)}
-                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
-                          takeSort === s ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                        }`}
-                        data-testid={`takes-sort-${s}`}
-                      >
-                        {s === 'top' ? 'Hot' : 'New'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <h3 className="text-base font-semibold text-gray-900 mb-0.5">What People Are Saying</h3>
                 <p className="text-xs text-gray-500 mb-2">Real reactions from the community</p>
                 <div className="bg-white rounded-2xl px-4 divide-y divide-gray-100">
                   {communityTakes.map((post: any) => renderTakeCard(post, 'trending'))}
