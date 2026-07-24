@@ -60,7 +60,7 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
   };
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(165deg, #1e2a4a 0%, #18213c 55%, #121a30 100%)", border: "1px solid rgba(120,160,255,0.18)" }}>
+    <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(165deg, #4c2a85 0%, #3b3f9e 50%, #2f6bc4 100%)", border: "1px solid rgba(140,170,255,0.25)" }}>
       {/* Find Friends — title + search */}
       <div className="p-4 pb-1">
         <h4 className="text-base font-bold text-white mb-3">Find Friends</h4>
