@@ -901,7 +901,7 @@ export default function NewRoom() {
                 <span className="rounded-full p-1.5" style={{ background: "#f3effe", color: ACCENT }}>
                   <Plus size={14} strokeWidth={3} />
                 </span>
-                Start a conversation...
+                Say something...
               </button>
             )}
           </div>
