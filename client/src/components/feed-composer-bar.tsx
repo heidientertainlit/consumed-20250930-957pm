@@ -631,6 +631,11 @@ export default function FeedComposerBar({
       } else {
         // Conversation tags (discussion / take / theory / question) — a text post.
         // Store the chosen tag as the post_type so it can be shown on the card.
+        if (ratingValue > 0 && !selectedMedia) {
+          toast({ title: "Add media to attach your rating", description: "Tap Add media to pick what you're rating.", variant: "destructive" });
+          setIsPosting(false);
+          return false;
+        }
         if (!text) { setIsPosting(false); return false; }
         const res = await fetch(`${supabaseUrl}/functions/v1/inline-post`, {
           method: "POST",
@@ -718,7 +723,7 @@ export default function FeedComposerBar({
                 if (selectedMedia) return hasText || ratingValue > 0;
                 return hasText;
               }}
-              footerExtra={selectedMedia ? (() => {
+              footerExtra={(() => {
                 const activeRating = hoverRating || ratingValue;
                 return (
                   <div>
@@ -762,7 +767,7 @@ export default function FeedComposerBar({
                     </div>
                   </div>
                 );
-              })() : undefined}
+              })()}
               renderExtra={() => {
                 return (
                   <>
