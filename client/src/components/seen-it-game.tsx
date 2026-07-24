@@ -27,16 +27,17 @@ interface SeenItSet {
 const getMediaTypeConfig = (mediaType: string) => {
   switch (mediaType) {
     case 'book':
-      return { icon: BookOpen, pill: 'Books', actionYes: 'Read It', actionDone: 'Read', pillBg: 'bg-emerald-100 text-emerald-700' };
+      return { icon: BookOpen, pill: 'Books', question: 'Read It?', actionYes: 'Read It', actionDone: 'Read', pillBg: 'bg-emerald-100 text-emerald-700' };
     case 'music':
+      return { icon: Headphones, pill: 'Music', question: 'Listened to this?', actionYes: 'Heard It', actionDone: 'Heard', pillBg: 'bg-pink-100 text-pink-700' };
     case 'podcast':
-      return { icon: Headphones, pill: 'Music', actionYes: 'Heard It', actionDone: 'Heard', pillBg: 'bg-pink-100 text-pink-700' };
+      return { icon: Headphones, pill: 'Podcasts', question: 'Listened to this?', actionYes: 'Heard It', actionDone: 'Heard', pillBg: 'bg-pink-100 text-pink-700' };
     case 'game':
-      return { icon: Gamepad2, pill: 'Games', actionYes: 'Played It', actionDone: 'Played', pillBg: 'bg-blue-100 text-blue-700' };
+      return { icon: Gamepad2, pill: 'Games', question: 'Played It?', actionYes: 'Played It', actionDone: 'Played', pillBg: 'bg-blue-100 text-blue-700' };
     case 'tv':
-      return { icon: Eye, pill: 'TV', actionYes: 'Seen It', actionDone: 'Seen', pillBg: 'bg-purple-100 text-purple-700' };
+      return { icon: Eye, pill: 'TV', question: 'Seen It?', actionYes: 'Seen It', actionDone: 'Seen', pillBg: 'bg-purple-100 text-purple-700' };
     default:
-      return { icon: Eye, pill: 'Movies', actionYes: 'Seen It', actionDone: 'Seen', pillBg: 'bg-yellow-100 text-yellow-700' };
+      return { icon: Eye, pill: 'Movies', question: 'Seen It?', actionYes: 'Seen It', actionDone: 'Seen', pillBg: 'bg-yellow-100 text-yellow-700' };
   }
 };
 
@@ -427,7 +428,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
       <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
         <div className="flex items-center gap-2 mb-1">
           <Sparkles className="w-4 h-4 text-purple-500" />
-          <span className="text-gray-900 font-semibold text-sm">Seen It?</span>
+          <span className="text-gray-900 font-semibold text-sm">{endConfig.question}</span>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${endConfig.pillBg}`}>{endConfig.pill}</span>
         </div>
         <p className="text-gray-500 text-sm mb-3">
@@ -472,7 +473,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-purple-500" />
-          <span className="text-gray-900 font-semibold text-sm">Seen It?</span>
+          <span className="text-gray-900 font-semibold text-sm">{mediaConfig.question}</span>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${mediaConfig.pillBg}`}>{mediaConfig.pill}</span>
         </div>
         <div className="flex items-center gap-1">
