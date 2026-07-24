@@ -39,8 +39,9 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
           text: shareText,
           url: inviteUrl,
         });
-        return;
       } catch (err) {}
+      // Native share sheet handled it (or user cancelled) — no toast fallback
+      return;
     }
 
     try {
