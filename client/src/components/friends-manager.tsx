@@ -60,7 +60,7 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className="rounded-xl border border-purple-200 overflow-hidden" style={{ background: "linear-gradient(165deg, #faf5ff 0%, #f3e8ff 100%)" }}>
       {/* Find Friends — title + search */}
       <div className="p-4 pb-1">
         <h4 className="text-base font-bold text-gray-900 mb-3">Find Friends</h4>
@@ -132,7 +132,7 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
       <button
         type="button"
         onClick={() => setRequestsOpen((o) => !o)}
-        className="w-full flex items-center gap-3 px-4 py-4 border-t border-gray-100 text-left"
+        className="w-full flex items-center gap-3 px-4 py-4 border-t border-purple-100 text-left"
         data-testid="row-friend-requests"
       >
         <Users size={20} className="text-purple-600 shrink-0" />
@@ -202,7 +202,7 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
       <button
         type="button"
         onClick={handleInviteFriends}
-        className="w-full flex items-center gap-3 px-4 py-4 border-t border-gray-100 text-left"
+        className="w-full flex items-center gap-3 px-4 py-4 border-t border-purple-100 text-left"
         data-testid="button-invite-friends"
       >
         <div className="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center shrink-0">
