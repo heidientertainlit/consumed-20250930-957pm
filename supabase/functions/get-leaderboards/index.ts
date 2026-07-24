@@ -152,6 +152,11 @@ serve(async (req) => {
     // 1. OVERALL ENGAGEMENT - posts + likes received + comments received + likes given + comments given
     if (category === 'all' || category === 'overall') {
       const engagementMap: Record<string, number> = {};
+      // Conversation-focused sub-boards (feed + rooms)
+      const topTakesMap: Record<string, number> = {};        // likes/agrees received on posts
+      const convoStartersMap: Record<string, number> = {};   // replies received on posts
+      const commentersMap: Record<string, number> = {};      // comments/replies given
+      const roomRegularsMap: Record<string, number> = {};    // room takes + room replies
       
       // Posts created (10 points each + bonus for engagement received)
       const { data: posts } = await supabase
@@ -163,6 +168,8 @@ serve(async (req) => {
         const userId = p.user_id;
         const score = 10 + (p.likes_count || 0) * 2 + (p.comments_count || 0) * 3;
         engagementMap[userId] = (engagementMap[userId] || 0) + score;
+        if (p.likes_count) topTakesMap[userId] = (topTakesMap[userId] || 0) + p.likes_count;
+        if (p.comments_count) convoStartersMap[userId] = (convoStartersMap[userId] || 0) + p.comments_count;
       });
 
       // Likes given (2 points each)
@@ -183,6 +190,7 @@ serve(async (req) => {
       
       (commentsMade || []).forEach((comment: any) => {
         engagementMap[comment.user_id] = (engagementMap[comment.user_id] || 0) + 5;
+        commentersMap[comment.user_id] = (commentersMap[comment.user_id] || 0) + 1;
       });
 
       // Prediction pool participation (from user_predictions)
@@ -204,6 +212,9 @@ serve(async (req) => {
       (roomTakes || []).forEach((t: any) => {
         const score = 10 + (t.upvotes || 0) * 2 + (t.reply_count || 0) * 3;
         engagementMap[t.user_id] = (engagementMap[t.user_id] || 0) + score;
+        if (t.upvotes) topTakesMap[t.user_id] = (topTakesMap[t.user_id] || 0) + t.upvotes;
+        if (t.reply_count) convoStartersMap[t.user_id] = (convoStartersMap[t.user_id] || 0) + t.reply_count;
+        roomRegularsMap[t.user_id] = (roomRegularsMap[t.user_id] || 0) + 1;
       });
 
       // Room replies made (5 points each)
@@ -214,6 +225,8 @@ serve(async (req) => {
 
       (roomReplies || []).forEach((r: any) => {
         engagementMap[r.user_id] = (engagementMap[r.user_id] || 0) + 5;
+        commentersMap[r.user_id] = (commentersMap[r.user_id] || 0) + 1;
+        roomRegularsMap[r.user_id] = (roomRegularsMap[r.user_id] || 0) + 1;
       });
 
       // Rank creation (10 points each)
@@ -228,6 +241,18 @@ serve(async (req) => {
 
       results.overall = formatEntries(
         Object.entries(engagementMap).map(([user_id, score]) => ({ user_id, score }))
+      );
+      results.top_takes = formatEntries(
+        Object.entries(topTakesMap).map(([user_id, score]) => ({ user_id, score }))
+      );
+      results.conversation_starters = formatEntries(
+        Object.entries(convoStartersMap).map(([user_id, score]) => ({ user_id, score }))
+      );
+      results.top_commenters = formatEntries(
+        Object.entries(commentersMap).map(([user_id, score]) => ({ user_id, score }))
+      );
+      results.room_regulars = formatEntries(
+        Object.entries(roomRegularsMap).map(([user_id, score]) => ({ user_id, score }))
       );
     }
 

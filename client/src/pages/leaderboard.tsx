@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
-import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp, Award, Dices, Flame } from "lucide-react";
+import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp, Award, Dices, Flame, MessageCircle, MessagesSquare } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
@@ -21,6 +21,10 @@ interface LeaderboardEntry {
 interface LeaderboardData {
   categories: {
     overall?: LeaderboardEntry[];
+    top_takes?: LeaderboardEntry[];
+    conversation_starters?: LeaderboardEntry[];
+    top_commenters?: LeaderboardEntry[];
+    room_regulars?: LeaderboardEntry[];
     trivia?: LeaderboardEntry[];
     polls?: LeaderboardEntry[];
     bets?: LeaderboardEntry[];
@@ -632,7 +636,43 @@ export default function Leaderboard() {
 
             <TabsContent value="engagement">
               {renderCategoryCard(
-                'Top Engagers',
+                'Top Takes',
+                Flame,
+                leaderboardData?.categories?.top_takes,
+                'Top Takes',
+                'Post takes and earn agrees to appear here!',
+                'from-orange-500 to-red-500'
+              )}
+
+              {renderCategoryCard(
+                'Conversation Starters',
+                MessageCircle,
+                leaderboardData?.categories?.conversation_starters,
+                'Conversation Starters',
+                'Start conversations people join to appear here!',
+                'from-violet-600 to-indigo-500'
+              )}
+
+              {renderCategoryCard(
+                'Top Commenters',
+                MessagesSquare,
+                leaderboardData?.categories?.top_commenters,
+                'Top Commenters',
+                'Jump into conversations to appear here!',
+                'from-blue-500 to-cyan-500'
+              )}
+
+              {renderCategoryCard(
+                'Room Regulars',
+                Users,
+                leaderboardData?.categories?.room_regulars,
+                'Room Regulars',
+                'Post and reply in rooms to appear here!',
+                'from-fuchsia-600 to-pink-500'
+              )}
+
+              {renderCategoryCard(
+                'Overall Top Engagers',
                 TrendingUp,
                 leaderboardData?.categories?.overall,
                 'Top Engagers',
