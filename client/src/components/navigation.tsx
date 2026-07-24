@@ -765,7 +765,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
       </div>
 
       {((navEl) => (inline ? navEl : createPortal(navEl, document.body)))(
-        <nav className={`fixed bottom-0 left-0 right-0 ${inline ? 'z-[10]' : 'z-[9999]'}`} style={{ background: '#F4F3F8', borderTop: '1px solid #E7E4F0', WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 -1px 6px rgba(0,0,0,0.04)' }}>
+        <nav className={`fixed bottom-0 left-0 right-0 ${inline ? 'z-[10]' : 'z-[9999]'}`} style={{ background: '#F6F6F7', borderTop: '1px solid #E5E5E8', WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 -1px 6px rgba(0,0,0,0.04)' }}>
           <div className="flex justify-around items-start px-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 12px), 12px)', paddingTop: '6px' }}>
             {(() => {
               type NavItem =
@@ -789,14 +789,14 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
                       data-testid="nav-add"
                       aria-label="Add"
                     >
-                      <div className={`flex items-center justify-center transition-all ${active ? "w-8 h-8 rounded-full bg-purple-600 shadow-sm" : "h-8"}`}>
+                      <div className={`flex items-center justify-center transition-all ${active ? "w-8 h-8 rounded-full bg-gradient-to-br from-purple-700 to-purple-900 shadow-sm" : "h-8"}`}>
                         <Plus
                           size={active ? 18 : 22}
                           className={active ? "text-white" : "text-gray-600"}
                           strokeWidth={active ? 2.4 : 1.6}
                         />
                       </div>
-                      <span className={`text-[10px] mt-0.5 ${active ? "text-purple-600 font-semibold" : "text-gray-500"}`}>Add</span>
+                      <span className={`text-[10px] mt-0.5 ${active ? "text-purple-800 font-semibold" : "text-gray-500"}`}>Add</span>
                     </button>
                   );
                 }
@@ -804,7 +804,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
                 const active = item.active;
                 return (
                   <Link key={item.href} href={item.href} className="flex flex-col items-center justify-start flex-1" data-testid={item.testid} aria-label={item.label}>
-                    <div className={`flex items-center justify-center transition-all ${active ? "w-8 h-8 rounded-full bg-purple-600 shadow-sm" : "h-8"}`}>
+                    <div className={`flex items-center justify-center transition-all ${active ? "w-8 h-8 rounded-full bg-gradient-to-br from-purple-700 to-purple-900 shadow-sm" : "h-8"}`}>
                       <Icon
                         size={active ? 18 : 22}
                         className={active ? "text-white" : "text-gray-600"}
@@ -812,7 +812,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
                         {...(active && item.fillWhenActive ? { fill: "currentColor" } : {})}
                       />
                     </div>
-                    <span className={`text-[10px] mt-0.5 ${active ? "text-purple-600 font-semibold" : "text-gray-500"}`}>{item.label}</span>
+                    <span className={`text-[10px] mt-0.5 ${active ? "text-purple-800 font-semibold" : "text-gray-500"}`}>{item.label}</span>
                   </Link>
                 );
               });
