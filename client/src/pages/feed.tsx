@@ -486,8 +486,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                       const disagree = (disagreeCounts[topGlimpse.id] || 0) + (takeReactions[topGlimpse.id] === 'down' ? 1 : 0);
                       return (
                         <span className="flex items-center gap-2 shrink-0 ml-auto text-[11px] text-gray-500 font-medium">
-                          <span className="flex items-center gap-0.5"><ArrowUp size={12} /> {agree}</span>
-                          <span className="flex items-center gap-0.5"><ArrowDown size={12} /> {disagree}</span>
+                          <span className="flex items-center gap-0.5"><Flame size={12} className={takeReactions[topGlimpse.id] === 'up' ? 'text-orange-500 fill-orange-500' : ''} /> {agree}</span>
                         </span>
                       );
                     })()}
@@ -546,21 +545,11 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                               <div className="flex items-center gap-4 mt-1.5">
                                 <button
                                   onClick={() => reactToTake(t.id, 'up')}
-                                  className={`flex items-center gap-0.5 text-[11px] p-0.5 ${takeReactions[t.id] === 'up' ? 'text-gray-800 font-semibold' : 'text-gray-400 font-medium'}`}
+                                  className={`flex items-center gap-1 text-[11px] p-0.5 ${takeReactions[t.id] === 'up' ? 'text-orange-500 font-semibold' : 'text-gray-400 font-medium'}`}
+                                  aria-label="Hot take"
                                 >
-                                  <ArrowUp size={13} strokeWidth={takeReactions[t.id] === 'up' ? 2.5 : 2} />{(() => {
-                                    const shown = likeCount + (takeReactions[t.id] === 'up' ? 1 : 0);
-                                    return shown > 0 ? ` ${shown}` : '';
-                                  })()}
-                                </button>
-                                <button
-                                  onClick={() => reactToTake(t.id, 'down')}
-                                  className={`flex items-center gap-0.5 text-[11px] p-0.5 ${takeReactions[t.id] === 'down' ? 'text-gray-800 font-semibold' : 'text-gray-400 font-medium'}`}
-                                >
-                                  <ArrowDown size={13} strokeWidth={takeReactions[t.id] === 'down' ? 2.5 : 2} />{(() => {
-                                    const shown = (disagreeCounts[t.id] || 0) + (takeReactions[t.id] === 'down' ? 1 : 0);
-                                    return shown > 0 ? ` ${shown}` : '';
-                                  })()}
+                                  <Flame size={13} strokeWidth={takeReactions[t.id] === 'up' ? 2.5 : 2} className={takeReactions[t.id] === 'up' ? 'fill-orange-500' : ''} />
+                                  {likeCount + (takeReactions[t.id] === 'up' ? 1 : 0)}
                                 </button>
                                 <button
                                   onClick={() => { setActiveTakeId(isActive ? null : takeId); setCommentText(''); }}
@@ -2497,24 +2486,16 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {/* light divider between review and actions */}
           <div className={`border-t border-gray-100 mx-4 mb-3 ${relatedRatings.length > 0 ? 'mt-1.5' : 'mt-4'}`} />
 
-          {/* ── Action row: Agree · Disagree · Rate · Tell a friend (left-aligned) ── */}
+          {/* ── Action row: Hot take · Rate · Tell a friend (left-aligned) ── */}
           <div className="flex items-center justify-start gap-6 px-4 pb-4" onClick={(e) => e.stopPropagation()}>
-          {/* Agree */}
+          {/* Hot take */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
             className="flex items-center gap-1.5 active:scale-95 transition-transform"
+            aria-label="Hot take"
           >
-            <ArrowUp size={15} className={isLiked && !localReaction ? 'text-gray-700' : 'text-gray-400'} strokeWidth={isLiked && !localReaction ? 2.5 : 2} />
-            <span className={`text-[12px] ${isLiked && !localReaction ? 'text-gray-800 font-semibold' : 'text-gray-500 font-medium'}`}>Agree</span>
-          </button>
-
-          {/* Disagree */}
-          <button
-            onClick={(e) => { e.stopPropagation(); handleReaction('down'); }}
-            className="flex items-center gap-1.5 active:scale-95 transition-transform"
-          >
-            <ArrowDown size={15} className={localReaction === 'down' ? 'text-gray-700' : 'text-gray-400'} strokeWidth={localReaction === 'down' ? 2.5 : 2} />
-            <span className={`text-[12px] ${localReaction === 'down' ? 'text-gray-800 font-semibold' : 'text-gray-500 font-medium'}`}>Disagree</span>
+            <Flame size={15} className={isLiked && !localReaction ? 'text-orange-500 fill-orange-500' : 'text-gray-400'} strokeWidth={isLiked && !localReaction ? 2.5 : 2} />
+            <span className={`text-[12px] ${isLiked && !localReaction ? 'text-orange-600 font-semibold' : 'text-gray-500 font-medium'}`}>{post.likes || 0}</span>
           </button>
 
           {/* Rate it — other user's post */}
