@@ -8431,31 +8431,53 @@ export default function Feed() {
       {isGuestMode && (
         <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-4 -mt-px">
           <div className="max-w-4xl mx-auto px-4 pt-4">
-            <div className="rounded-2xl border border-purple-500/30 bg-white/5 p-4" data-testid="guest-dna-teaser">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center">
-                  <Dna className="w-5 h-5 text-purple-300" />
-                </div>
+            <div className="rounded-2xl border border-purple-500/25 bg-white/[0.04] p-5" data-testid="guest-dna-teaser">
+              <div className="flex items-center gap-1.5">
+                <p className="text-purple-300 text-[11px] font-semibold uppercase tracking-[0.18em]">
+                  Your Entertainment DNA
+                </p>
+                <Dna className="w-3.5 h-3.5 text-purple-300" />
+              </div>
+              <div className="flex items-center justify-between gap-4 mt-3">
                 <div className="min-w-0">
-                  <p className="text-white font-semibold text-sm leading-snug">
-                    What's your Entertainment DNA?
-                  </p>
-                  <p className="text-purple-200/80 text-xs mt-1 leading-snug">
-                    Every rating, take, and trivia answer builds your unique fan profile. Are you a...
+                  <p className="text-white/90 text-2xl font-medium leading-none">The</p>
+                  <p className="text-white text-3xl font-bold leading-tight mt-0.5">Emotional Binger</p>
+                  <p className="text-purple-300/90 text-sm italic mt-2.5">with shades of</p>
+                  <p className="text-purple-100 text-sm font-medium mt-0.5">
+                    Comfort Rewatcher <span className="text-purple-400">•</span> Prestige Detective
                   </p>
                 </div>
+                <div className="flex-shrink-0 w-20 h-20 rounded-full border-2 border-purple-400/70 shadow-[0_0_24px_rgba(168,85,247,0.35)] flex items-center justify-center">
+                  <Dna className="w-9 h-9 text-purple-300" />
+                </div>
               </div>
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {["Emotional Binger", "Theory Crafter", "Prestige Detective", "Comfort Rewatcher"].map((a) => (
-                  <span key={a} className="text-[11px] font-medium text-purple-100 bg-purple-600/25 border border-purple-500/30 rounded-full px-2.5 py-1">
-                    {a}
-                  </span>
-                ))}
-              </div>
-              <button className="mt-3 w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-full py-2.5 transition-colors flex items-center justify-center gap-2" data-testid="button-guest-dna-cta">
+              <button className="mt-4 w-full bg-gradient-to-r from-purple-600 to-purple-400 hover:from-purple-700 hover:to-purple-500 text-white text-sm font-semibold rounded-full py-2.5 transition-colors flex items-center justify-center gap-2" data-testid="button-guest-dna-cta">
                 <Sparkles className="w-4 h-4" />
-                Sign up free to discover yours
+                Learn yours
               </button>
+              <div className="grid grid-cols-3 divide-x divide-white/10 border-t border-white/10 mt-4 pt-4">
+                <div className="flex flex-col items-center gap-1.5 px-1 text-center">
+                  <div className="w-8 h-8 rounded-full border border-purple-400/50 flex items-center justify-center">
+                    <Flame className="w-4 h-4 text-purple-300" />
+                  </div>
+                  <p className="text-purple-200 text-xs font-semibold leading-tight">Play daily</p>
+                  <p className="text-purple-300/70 text-[11px] leading-tight">build a streak</p>
+                </div>
+                <div className="flex flex-col items-center gap-1.5 px-1 text-center">
+                  <div className="w-8 h-8 rounded-full border border-purple-400/50 flex items-center justify-center">
+                    <Trophy className="w-4 h-4 text-purple-300" />
+                  </div>
+                  <p className="text-purple-200 text-xs font-semibold leading-tight">See your rank</p>
+                  <p className="text-purple-300/70 text-[11px] leading-tight">leaderboard</p>
+                </div>
+                <div className="flex flex-col items-center gap-1.5 px-1 text-center">
+                  <div className="w-8 h-8 rounded-full border border-purple-400/50 flex items-center justify-center">
+                    <Activity className="w-4 h-4 text-purple-300" />
+                  </div>
+                  <p className="text-purple-200 text-xs font-semibold leading-tight">Track your taste</p>
+                  <p className="text-purple-300/70 text-[11px] leading-tight">every rating counts</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
