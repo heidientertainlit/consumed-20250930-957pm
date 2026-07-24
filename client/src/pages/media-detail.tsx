@@ -1240,28 +1240,16 @@ export default function MediaDetail() {
             </span>
           </div>
           {!post._ratingOnly && (
-            <div className="flex items-center gap-2 text-gray-400 shrink-0">
+            <div className="flex items-center gap-1.5 text-gray-400 shrink-0">
               <button
                 onClick={() => handleLike(post.id)}
-                className={`active:scale-90 transition-transform ${isLiked ? 'text-purple-600' : ''}`}
-                aria-label="Agree"
+                className={`active:scale-90 transition-transform ${isLiked ? 'text-orange-500' : ''}`}
+                aria-label="Hot take"
                 data-testid={`take-agree-${post.id}`}
               >
-                <ArrowUp size={15} strokeWidth={2.5} />
+                <Flame size={16} strokeWidth={2.5} className={isLiked ? 'fill-orange-500' : ''} />
               </button>
               {(Number(post.likes_count) || 0) > 0 && <span className="text-[12px] font-medium text-gray-500">{post.likes_count}</span>}
-              <button
-                onClick={() => setDisagreedTakes(prev => {
-                  const next = new Set(prev);
-                  next.has(post.id) ? next.delete(post.id) : next.add(post.id);
-                  return next;
-                })}
-                className={`active:scale-90 transition-transform ${isDisagreed ? 'text-red-500' : ''}`}
-                aria-label="Disagree"
-                data-testid={`take-disagree-${post.id}`}
-              >
-                <ArrowDown size={15} strokeWidth={2.5} />
-              </button>
             </div>
           )}
         </div>
@@ -1309,28 +1297,16 @@ export default function MediaDetail() {
           {!post._ratingOnly && (
             <div className="flex items-center justify-between mt-2">
               <div className="flex items-center gap-4 text-gray-400">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => handleLike(post.id)}
-                    className={`active:scale-90 transition-transform ${isLiked ? 'text-purple-600' : ''}`}
-                    aria-label="Agree"
+                    className={`active:scale-90 transition-transform ${isLiked ? 'text-orange-500' : ''}`}
+                    aria-label="Hot take"
                     data-testid={`take-agree-${post.id}`}
                   >
-                    <ArrowUp size={15} strokeWidth={2.5} />
+                    <Flame size={16} strokeWidth={2.5} className={isLiked ? 'fill-orange-500' : ''} />
                   </button>
                   {(Number(post.likes_count) || 0) > 0 && <span className="text-[12px] font-medium text-gray-500">{post.likes_count}</span>}
-                  <button
-                    onClick={() => setDisagreedTakes(prev => {
-                      const next = new Set(prev);
-                      next.has(post.id) ? next.delete(post.id) : next.add(post.id);
-                      return next;
-                    })}
-                    className={`active:scale-90 transition-transform ${isDisagreed ? 'text-red-500' : ''}`}
-                    aria-label="Disagree"
-                    data-testid={`take-disagree-${post.id}`}
-                  >
-                    <ArrowDown size={15} strokeWidth={2.5} />
-                  </button>
                 </div>
                 <button
                   onClick={toggleExpand}
