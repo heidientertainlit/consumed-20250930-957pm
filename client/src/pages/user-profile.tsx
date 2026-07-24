@@ -4137,11 +4137,14 @@ export default function UserProfile() {
 
             {/* Compare DNA — full friends list with search */}
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900">Compare DNA</h3>
-                {dnaCompareFriends.length > 0 && (
-                  <span className="text-xs text-gray-400">{dnaCompareFriends.length} friends</span>
-                )}
+              <div className="mb-3">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-gray-900">Your Friends</h3>
+                  {dnaCompareFriends.length > 0 && (
+                    <span className="bg-gray-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">{dnaCompareFriends.length}</span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">Compare DNA or recommend something</p>
               </div>
               {!dnaCanCompare ? (
                 <p className="text-xs text-gray-500">

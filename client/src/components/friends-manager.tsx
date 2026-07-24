@@ -11,7 +11,6 @@ interface FriendsManagerProps {
 }
 
 export default function FriendsManager({ userId }: FriendsManagerProps) {
-  const [activeTab, setActiveTab] = useState<'requests' | 'friends'>('requests');
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
@@ -142,52 +141,22 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
           <p className="text-xs text-gray-500">Connect with other entertainment fans</p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setActiveTab('requests')}
-            className={`flex-1 py-2 px-3 rounded-lg font-medium transition-all text-sm ${
-              activeTab === 'requests'
-                ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-transparent'
-            }`}
-            data-testid="tab-requests"
-          >
-            <div className="flex items-center justify-center gap-2">
-              Requests to Approve
-              {(pendingData?.requests?.length || 0) > 0 && (
-                <span className="bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                  {pendingData.requests.length}
-                </span>
-              )}
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('friends')}
-            className={`flex-1 py-2 px-3 rounded-lg font-medium transition-all text-sm ${
-              activeTab === 'friends'
-                ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-transparent'
-            }`}
-            data-testid="tab-friends"
-          >
-            <div className="flex items-center justify-center gap-2">
-              Your Friends
-              {(friendsData?.friends?.length || 0) > 0 && (
-                <span className="bg-gray-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                  {friendsData.friends.length}
-                </span>
-              )}
-            </div>
-          </button>
+        {/* Requests header */}
+        <div className="py-2 px-3 rounded-lg font-medium text-sm bg-purple-50 text-purple-700 border border-purple-200" data-testid="tab-requests">
+          <div className="flex items-center justify-center gap-2">
+            Requests to Approve
+            {(pendingData?.requests?.length || 0) > 0 && (
+              <span className="bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {pendingData.requests.length}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Tab Content */}
       <div className="p-4 border-b border-gray-200">
-        {activeTab === 'requests' ? (
-          /* Pending Requests Content */
-          pendingData?.requests && pendingData.requests.length > 0 ? (
+        {pendingData?.requests && pendingData.requests.length > 0 ? (
             <div className="space-y-3 max-h-80 overflow-y-auto">
               {pendingData.requests.map((request: any) => (
                 <div key={request.id} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
@@ -228,44 +197,10 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-2 text-gray-400">
-              <p className="text-xs">No pending requests</p>
-            </div>
-          )
         ) : (
-          /* Your Friends Content */
-          friendsData?.friends && friendsData.friends.length > 0 ? (
-            <div className="space-y-3 max-h-80 overflow-y-auto">
-              {friendsData.friends.map((friendship: any) => (
-                <Link 
-                  key={friendship.id} 
-                  href={`/user/${friendship.friend?.id}`}
-                  className="block"
-                >
-                  <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-sm">👤</span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">{friendship.friend?.user_name || 'Unknown User'}</div>
-                        <div className="text-sm text-gray-500">{friendship.friend?.email}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-1 text-green-600 font-medium text-sm">
-                      <Check size={14} />
-                      <span>Friends</span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-400">
-              <p className="text-sm">No friends yet</p>
-            </div>
-          )
+          <div className="text-center py-2 text-gray-400">
+            <p className="text-xs">No pending requests</p>
+          </div>
         )}
       </div>
 
