@@ -1389,45 +1389,32 @@ export default function MediaDetail() {
               
               {/* Compact metadata chips */}
               <div className="flex flex-wrap items-center gap-2 text-xs mb-3">
-                {/* Ratings — combined into one compact pill to save space */}
-                {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating || userRating?.rating || userReview?.rating) && (
-                  <div className="flex items-center gap-2 bg-white/10 px-2.5 py-1 rounded-full">
-                    {avgRating && (
-                      <span className="flex items-center gap-1">
-                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                        <span className="font-medium text-white">{avgRating}</span>
-                        <span className="text-gray-400">Consumed</span>
-                      </span>
-                    )}
-                    {mediaItem.tmdb_score && (
-                      <>
-                        {avgRating && <span className="w-px h-3 bg-white/20" />}
-                        <span className="flex items-center gap-1">
-                          <span className="font-medium text-blue-300">{Number(mediaItem.tmdb_score).toFixed(1)}</span>
-                          <span className="text-blue-300/70">TMDB</span>
-                        </span>
-                      </>
-                    )}
-                    {mediaItem.google_books_rating && (
-                      <>
-                        {(avgRating || mediaItem.tmdb_score) && <span className="w-px h-3 bg-white/20" />}
-                        <span className="flex items-center gap-1">
-                          <Star className="w-3 h-3 text-green-400 fill-current" />
-                          <span className="font-medium text-green-300">{Number(mediaItem.google_books_rating).toFixed(1)}</span>
-                          <span className="text-green-300/70">Books</span>
-                        </span>
-                      </>
-                    )}
-                    {(userRating?.rating || userReview?.rating) && (
-                      <>
-                        {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating) && <span className="w-px h-3 bg-white/20" />}
-                        <span className="flex items-center gap-1">
-                          <Star className="w-3 h-3 text-purple-300 fill-current" />
-                          <span className="font-semibold text-purple-200">{userRating?.rating || userReview?.rating}</span>
-                          <span className="text-purple-300/80">you</span>
-                        </span>
-                      </>
-                    )}
+                {/* Ratings — separate pills so they wrap instead of overflowing on mobile */}
+                {avgRating && (
+                  <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-full">
+                    <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                    <span className="font-medium text-white">{avgRating}</span>
+                    <span className="text-gray-400">Consumed</span>
+                  </div>
+                )}
+                {mediaItem.tmdb_score && (
+                  <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-full">
+                    <span className="font-medium text-blue-300">{Number(mediaItem.tmdb_score).toFixed(1)}</span>
+                    <span className="text-blue-300/70">TMDB</span>
+                  </div>
+                )}
+                {mediaItem.google_books_rating && (
+                  <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-full">
+                    <Star className="w-3 h-3 text-green-400 fill-current" />
+                    <span className="font-medium text-green-300">{Number(mediaItem.google_books_rating).toFixed(1)}</span>
+                    <span className="text-green-300/70">Books</span>
+                  </div>
+                )}
+                {(userRating?.rating || userReview?.rating) && (
+                  <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-full">
+                    <Star className="w-3 h-3 text-purple-300 fill-current" />
+                    <span className="font-semibold text-purple-200">{userRating?.rating || userReview?.rating}</span>
+                    <span className="text-purple-300/80">you</span>
                   </div>
                 )}
                 {mediaItem.type === 'movie' && mediaItem.releaseDate && (
