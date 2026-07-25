@@ -1387,6 +1387,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   // Taste alignment between current user and post author
   useEffect(() => {
+    setTasteAlignment(null);
+    setAlignmentNudge(false);
     const postUserId = post.user?.id;
     if (!postUserId || !session?.user?.id || postUserId === session?.user?.id) return;
     const isRatingPost2 = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review';
@@ -2876,7 +2878,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     {!contentExpanded && post.content.length > 120 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
                   </div>
                 ) : null}
-                {tasteAlignment !== null && (
+                {tasteAlignment !== null && isOtherUser && (
                   <p className="text-sm font-semibold text-violet-600 mt-1.5">
                     You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
                   </p>
@@ -3539,6 +3541,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   }, [post.externalId, post.externalSource, post.type]);
 
   useEffect(() => {
+    setTasteAlignment(null);
     const postUserId = post.user?.id;
     if (!postUserId || !currentUserId || postUserId === currentUserId) return;
     const isRating = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review' || post.type === 'thought';
@@ -3882,7 +3885,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                 )}
               </div>
             </div>
-            {tasteAlignment !== null && (
+            {tasteAlignment !== null && post.user?.id !== currentUserId && (
               <p className="text-[11px] text-violet-600 italic mb-1">
                 You're {tasteAlignment}% aligned with {displayName}'s taste overall
               </p>
