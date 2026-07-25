@@ -105,24 +105,9 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
     ]);
   } catch { /* fall back to system fonts */ }
 
-  // Background — purple gradient frame behind the white card
-  const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-  bgGrad.addColorStop(0, "#7c3aed");
-  bgGrad.addColorStop(0.5, "#8b5cf6");
-  bgGrad.addColorStop(1, "#4c1d95");
-  ctx.fillStyle = bgGrad;
-  ctx.fillRect(0, 0, W, H);
-
-  // White rounded card
-  const M = 56;
-  ctx.save();
-  roundRect(ctx, M, M, W - M * 2, H - M * 2, 48);
-  ctx.shadowColor = "rgba(0,0,0,0.35)";
-  ctx.shadowBlur = 80;
-  ctx.shadowOffsetY = 30;
+  // Background — clean white
   ctx.fillStyle = "#ffffff";
-  ctx.fill();
-  ctx.restore();
+  ctx.fillRect(0, 0, W, H);
 
   // Header — "Name shared on @consumed"
   const namePart = props.displayName;
@@ -307,11 +292,30 @@ export function ShareRatingCard(props: ShareRatingCardProps) {
     setPreviewUrl(null);
     setNotice(null);
     blobRef.current = null;
-    renderCard(props).then((blob) => {
+    renderCard(props).then(async (blob) => {
       if (cancelled) return;
       if (!blob) { setNotice("Couldn't generate the image — please try again"); return; }
       blobRef.current = blob;
-      setPreviewUrl(URL.createObjectURL(blob));
+      // Downscale for the preview so browsers don't blur a huge image
+      try {
+        const bmp = await createImageBitmap(blob);
+        const pw = 720;
+        const ph = Math.round(pw * (bmp.height / bmp.width));
+        const pc = document.createElement("canvas");
+        pc.width = pw;
+        pc.height = ph;
+        const pctx = pc.getContext("2d");
+        if (pctx) {
+          pctx.imageSmoothingEnabled = true;
+          pctx.imageSmoothingQuality = "high";
+          pctx.drawImage(bmp, 0, 0, pw, ph);
+          bmp.close();
+          if (!cancelled) setPreviewUrl(pc.toDataURL("image/png"));
+          return;
+        }
+        bmp.close();
+      } catch { /* fall back to full-size preview */ }
+      if (!cancelled) setPreviewUrl(URL.createObjectURL(blob));
     });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
