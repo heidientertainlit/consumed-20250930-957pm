@@ -2574,41 +2574,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </button>
           )}
 
-          {/* Tell a friend — copies a share link to this media */}
-          <button
-            className="flex items-center gap-1.5 active:scale-95 transition-transform"
-            onClick={async (e) => {
-              e.stopPropagation();
-              try {
-                const result = await shareLink({
-                  kind: 'media',
-                  obj: {
-                    type: normalizeMediaType(post.mediaType),
-                    source: post.externalSource,
-                    id: post.externalId,
-                  },
-                  title: post.mediaTitle || undefined,
-                  text: post.mediaTitle ? `Check out ${post.mediaTitle} on Consumed` : undefined,
-                });
-                if (result === 'copied') {
-                  setLinkCopied(true);
-                  setTimeout(() => setLinkCopied(false), 2000);
-                }
-              } catch { /* share/clipboard unavailable */ }
-            }}
-          >
-            <span className={`text-[12px] font-medium ${linkCopied ? 'text-violet-600 font-semibold' : 'text-gray-500'}`}>{linkCopied ? 'Link copied!' : 'Tell a friend'}</span>
-            {!linkCopied && <ArrowRight size={13} className="text-gray-400" />}
-          </button>
-
-          {/* Share card — image card for Instagram/social */}
+          {/* Share — image card for Instagram/social */}
           {post.rating != null && Number(post.rating) > 0 && (
             <button
               className="flex items-center gap-1.5 active:scale-95 transition-transform"
               onClick={(e) => { e.stopPropagation(); setShareCardOpen(true); }}
             >
-              <Share2 size={14} className="text-gray-400" />
               <span className="text-[12px] font-medium text-gray-500">Share</span>
+              <ArrowRight size={13} className="text-gray-400" />
             </button>
           )}
         </div>
