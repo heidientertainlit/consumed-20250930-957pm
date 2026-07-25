@@ -1457,8 +1457,17 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       });
   }, [post.externalId, post.externalSource, post.user?.id, session?.user?.id]);
 
-  // Auto-load comments for rating/review cards so they show inline without a tap
+  // Auto-load comments for rating/review cards so they show inline without a tap.
+  // The same component instance can be handed a DIFFERENT post (promoted card slots
+  // reshuffle on feed refetch) — reset stale comment state whenever post.id changes,
+  // otherwise the previous post's comments display under the new post.
+  const lastCommentsPostId = useRef(post.id);
   useEffect(() => {
+    if (lastCommentsPostId.current !== post.id) {
+      lastCommentsPostId.current = post.id;
+      hasFetched.current = false;
+      setComments([]);
+    }
     const isRating = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought';
     if (!isRating || !post.id || hasFetched.current) return;
     hasFetched.current = true;
