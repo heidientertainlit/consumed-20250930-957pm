@@ -2500,6 +2500,49 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {/* light divider between review and actions */}
           <div className={`border-t border-gray-100 mx-4 mb-3 ${relatedRatings.length > 0 ? 'mt-1.5' : 'mt-4'}`} />
 
+          {/* YOUR TURN — inline star rater appears above the action row */}
+          {isOtherUser && session?.access_token && showInlineRater && !ratingSubmitted && (
+            <div
+              ref={starsRef}
+              className="flex items-center gap-2 mb-3 mx-3 py-3 px-3 bg-violet-50 rounded-xl touch-none select-none"
+              onMouseLeave={() => setHoverRating(0)}
+              onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
+              onTouchMove={(e) => {
+                e.stopPropagation();
+                if (!starsRef.current) return;
+                const touch = e.touches[0];
+                const rect = starsRef.current.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const starWidth = rect.width / 5;
+                const starIndex = Math.floor(x / starWidth);
+                const withinStar = (x % starWidth) / starWidth;
+                const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
+                setHoverRating(Math.round(val * 2) / 2);
+              }}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                if (hoverRating > 0) { handleSubmitRating(hoverRating); setShowInlineRater(false); }
+                setHoverRating(0);
+              }}
+            >
+              <span className="text-[10px] font-bold text-violet-600 tracking-widest uppercase mr-1">Your Turn</span>
+              {[1,2,3,4,5].map(star => {
+                const displayVal = hoverRating;
+                return (
+                  <div key={star} className="relative" style={{ width: 36, height: 36 }}>
+                    <Star size={36} className="absolute inset-0 text-violet-200" />
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
+                      <Star size={36} className="fill-yellow-400 text-yellow-400" />
+                    </div>
+                    <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); setShowInlineRater(false); }} aria-label={`Rate ${star - 0.5}`} />
+                    <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); setShowInlineRater(false); }} aria-label={`Rate ${star}`} />
+                  </div>
+                );
+              })}
+              {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
+            </div>
+          )}
+
           {/* ── Action row: Hot take · Rate · Tell a friend (left-aligned) ── */}
           <div className="flex items-center justify-start gap-6 px-4 pb-4" onClick={(e) => e.stopPropagation()}>
           {/* Hot take */}
@@ -2582,49 +2625,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 </button>
               )}
             </div>
-          </div>
-        )}
-
-        {/* YOUR TURN — inline star rater appears below card */}
-        {isOtherUser && session?.access_token && showInlineRater && !ratingSubmitted && (
-          <div
-            ref={starsRef}
-            className="flex items-center gap-1.5 mt-2 mx-3 py-2.5 px-3 bg-violet-50 rounded-xl touch-none select-none"
-            onMouseLeave={() => setHoverRating(0)}
-            onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
-            onTouchMove={(e) => {
-              e.stopPropagation();
-              if (!starsRef.current) return;
-              const touch = e.touches[0];
-              const rect = starsRef.current.getBoundingClientRect();
-              const x = touch.clientX - rect.left;
-              const starWidth = rect.width / 5;
-              const starIndex = Math.floor(x / starWidth);
-              const withinStar = (x % starWidth) / starWidth;
-              const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
-              setHoverRating(Math.round(val * 2) / 2);
-            }}
-            onTouchEnd={(e) => {
-              e.stopPropagation();
-              if (hoverRating > 0) { handleSubmitRating(hoverRating); setShowInlineRater(false); }
-              setHoverRating(0);
-            }}
-          >
-            <span className="text-[10px] font-bold text-violet-600 tracking-widest uppercase mr-1">Your Turn</span>
-            {[1,2,3,4,5].map(star => {
-              const displayVal = hoverRating;
-              return (
-                <div key={star} className="relative" style={{ width: 28, height: 28 }}>
-                  <Star size={28} className="absolute inset-0 text-violet-200" />
-                  <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
-                    <Star size={28} className="fill-yellow-400 text-yellow-400" />
-                  </div>
-                  <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); setShowInlineRater(false); }} aria-label={`Rate ${star - 0.5}`} />
-                  <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); setShowInlineRater(false); }} aria-label={`Rate ${star}`} />
-                </div>
-              );
-            })}
-            {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
           </div>
         )}
 
@@ -2819,10 +2819,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {[1,2,3,4,5].map(star => {
                   const displayVal = hoverRating;
                   return (
-                    <div key={star} className="relative" style={{ width: 28, height: 28 }}>
-                      <Star size={28} className="absolute inset-0 text-violet-200" />
+                    <div key={star} className="relative" style={{ width: 36, height: 36 }}>
+                      <Star size={36} className="absolute inset-0 text-violet-200" />
                       <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
-                        <Star size={28} className="fill-yellow-400 text-yellow-400" />
+                        <Star size={36} className="fill-yellow-400 text-yellow-400" />
                       </div>
                       <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); setShowInlineRater(false); }} aria-label={`Rate ${star - 0.5}`} />
                       <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); setShowInlineRater(false); }} aria-label={`Rate ${star}`} />
