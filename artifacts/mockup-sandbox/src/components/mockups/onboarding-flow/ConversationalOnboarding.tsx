@@ -33,11 +33,33 @@ const mediaTabs = [
   { label: "Podcasts", icon: Mic },
 ];
 
-const discoverItems = [
-  { title: "The Dark Knight", sub: "2008 · Movie", color: "#1f2937" },
-  { title: "Pride & Prejudice", sub: "Novel · Jane Austen", color: "#7c5c3e" },
-  { title: "Hamilton", sub: "Musical · 2015", color: "#8a6d1f" },
-];
+const trendingByTab: Record<string, { title: string; sub: string; color: string }[]> = {
+  Movies: [
+    { title: "Dune: Part Two", sub: "2024 · Sci-Fi Epic", color: "#92400e" },
+    { title: "Inside Out 2", sub: "2024 · Animation", color: "#166534" },
+    { title: "Wicked", sub: "2024 · Musical", color: "#14532d" },
+  ],
+  "TV Shows": [
+    { title: "The Bear", sub: "FX · Drama", color: "#7f1d1d" },
+    { title: "Severance", sub: "Apple TV+ · Thriller", color: "#1e3a5f" },
+    { title: "Bridgerton", sub: "Netflix · Romance", color: "#4c1d95" },
+  ],
+  Books: [
+    { title: "Fourth Wing", sub: "Rebecca Yarros · Fantasy", color: "#3f2d1e" },
+    { title: "Atomic Habits", sub: "James Clear · Self-help", color: "#374151" },
+    { title: "It Ends With Us", sub: "Colleen Hoover · Romance", color: "#831843" },
+  ],
+  Music: [
+    { title: "Taylor Swift", sub: "The Tortured Poets Department", color: "#57534e" },
+    { title: "Sabrina Carpenter", sub: "Short n' Sweet", color: "#155e75" },
+    { title: "Kendrick Lamar", sub: "GNX", color: "#18181b" },
+  ],
+  Podcasts: [
+    { title: "SmartLess", sub: "Comedy · Interviews", color: "#1d4ed8" },
+    { title: "Crime Junkie", sub: "True Crime", color: "#111827" },
+    { title: "Huberman Lab", sub: "Science · Health", color: "#0f766e" },
+  ],
+};
 
 function Phone({ children }: { children: React.ReactNode }) {
   return (
@@ -81,6 +103,7 @@ export function ConversationalOnboarding() {
   const [step, setStep] = useState<Step>("debate");
   const [vote, setVote] = useState<string | null>(null);
   const [seen, setSeen] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState("Movies");
   const [gender, setGender] = useState<string | null>(null);
 
   if (step === "debate")
@@ -170,31 +193,32 @@ export function ConversationalOnboarding() {
       <Phone>
         <ProgressDots step={2} />
         <div className="flex-1 flex flex-col px-5 pt-6 pb-8">
-          <h2 className="text-center text-xl font-black">Based on that...</h2>
+          <h2 className="text-center text-xl font-black">Trending right now</h2>
           <p className="text-center text-sm text-white/60 mt-1">
-            Which of these have you seen, read, or listened to?
+            Tap what you know — every tap builds your DNA.
           </p>
 
           <div className="flex gap-1.5 mt-5 overflow-x-auto pb-1">
-            {mediaTabs.map((t, i) => (
-              <span
+            {mediaTabs.map((t) => (
+              <button
                 key={t.label}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${i === 0 ? "bg-purple-600 text-white" : "bg-white/8 text-white/60 border border-white/10"}`}
+                onClick={() => setActiveTab(t.label)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${activeTab === t.label ? "bg-purple-600 text-white" : "bg-white/8 text-white/60 border border-white/10"}`}
               >
                 <t.icon size={12} /> {t.label}
-              </span>
+              </button>
             ))}
           </div>
 
           <div className="space-y-3 mt-4">
-            {discoverItems.map((item) => (
+            {(trendingByTab[activeTab] ?? []).map((item) => (
               <div key={item.title} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/8">
                 <div className="w-11 h-16 rounded-lg shrink-0" style={{ background: `linear-gradient(160deg, ${item.color}, #0f0c18)` }} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold truncate">{item.title}</p>
                   <p className="text-[11px] text-white/50">{item.sub}</p>
                   <div className="flex gap-1.5 mt-2">
-                    {["Seen", "Want to", "Skip"].map((opt) => (
+                    {["Seen it", "Loved it", "Skip"].map((opt) => (
                       <button
                         key={opt}
                         onClick={() => setSeen((s) => ({ ...s, [item.title]: opt }))}
