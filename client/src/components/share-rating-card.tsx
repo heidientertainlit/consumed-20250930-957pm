@@ -366,7 +366,6 @@ export function ShareRatingCard(props: ShareRatingCardProps) {
             <Download size={16} />
           </button>
         </div>
-        <p className="text-[11px] text-white/40 text-center mt-3">Perfect for Instagram Stories, texts, and more</p>
       </div>
     </div>,
     document.body
