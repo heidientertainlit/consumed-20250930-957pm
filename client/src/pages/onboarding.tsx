@@ -145,10 +145,7 @@ export default function OnboardingPage() {
       <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
           {/* Gradient hero header */}
-          <div
-            className="relative text-white px-6 pb-8 rounded-b-3xl"
-            style={{ background: "linear-gradient(135deg, #6d28d9 0%, #9333ea 45%, #d946ef 100%)" }}
-          >
+          <div className="relative text-white px-6 pb-8 bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800">
             <button
               onClick={() => finish("/activity")}
               className="absolute top-5 right-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
@@ -176,9 +173,8 @@ export default function OnboardingPage() {
               Settle the debate.
             </h2>
             <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-purple-500" />
-            <p className="text-center text-xs text-gray-500 mt-3 font-medium">Tap to choose</p>
 
-            <div className="flex items-center justify-center gap-3 mt-6 relative">
+            <div className="flex items-center justify-center gap-3 mt-7 relative">
               {[debate.left, debate.right].map((side) => (
                 <button
                   key={side.name}
