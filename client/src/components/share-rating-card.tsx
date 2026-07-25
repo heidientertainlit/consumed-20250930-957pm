@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X, Share2, Download, Loader2 } from "lucide-react";
 import { createPortal } from "react-dom";
+import logoPath from "@assets/consumed_logo_purple_crop_1769629036769-BANdXMia_1785021090448.png";
 
 interface ShareRatingCardProps {
   isOpen: boolean;
@@ -100,6 +101,23 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 
+  // Header — "Name shared on @consumed"
+  const namePart = props.displayName;
+  const restPart = " shared on @consumed";
+  ctx.textAlign = "left";
+  ctx.font = "700 38px -apple-system, 'Segoe UI', sans-serif";
+  const nameW = ctx.measureText(namePart).width;
+  ctx.font = "500 38px -apple-system, 'Segoe UI', sans-serif";
+  const restW = ctx.measureText(restPart).width;
+  let hx = (W - (nameW + restW)) / 2;
+  ctx.font = "700 38px -apple-system, 'Segoe UI', sans-serif";
+  ctx.fillStyle = "#1f1b2e";
+  ctx.fillText(namePart, hx, 160);
+  hx += nameW;
+  ctx.font = "500 38px -apple-system, 'Segoe UI', sans-serif";
+  ctx.fillStyle = "#8b84a0";
+  ctx.fillText(restPart, hx, 160);
+
   // Poster
   const posterW = 560;
   const posterH = 840;
@@ -185,13 +203,21 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   ctx.font = "600 36px -apple-system, 'Segoe UI', sans-serif";
   ctx.fillText(`— ${props.displayName}`, W / 2, Math.min(y + 20, H - 220));
 
-  // Branding footer
-  ctx.fillStyle = "#7c3aed";
-  ctx.font = "800 52px -apple-system, 'Segoe UI', sans-serif";
-  ctx.fillText("consumed", W / 2, H - 110);
+  // Branding footer — logo image + tagline
+  const logo = await loadImageOnce(logoPath);
+  if (logo) {
+    const logoW = 380;
+    const logoH = logoW * (logo.height / logo.width);
+    ctx.drawImage(logo, (W - logoW) / 2, H - 130 - logoH, logoW, logoH);
+  } else {
+    ctx.fillStyle = "#7c3aed";
+    ctx.font = "800 52px -apple-system, 'Segoe UI', sans-serif";
+    ctx.fillText("consumed", W / 2, H - 130);
+  }
+  ctx.textAlign = "center";
   ctx.fillStyle = "#9a93ad";
-  ctx.font = "500 30px -apple-system, 'Segoe UI', sans-serif";
-  ctx.fillText("where fans come to play", W / 2, H - 62);
+  ctx.font = "500 32px -apple-system, 'Segoe UI', sans-serif";
+  ctx.fillText("entertainment is better, together.", W / 2, H - 72);
 
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
 }
@@ -299,10 +325,10 @@ export function ShareRatingCard(props: ShareRatingCardProps) {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[100000] flex items-end sm:items-center justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center px-3" onClick={onClose}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative w-full sm:max-w-sm bg-gray-950 rounded-t-3xl sm:rounded-3xl p-4 pb-6 max-h-[92vh] overflow-y-auto"
+        className="relative w-full sm:max-w-sm bg-gray-950 rounded-3xl p-4 pb-6 max-h-[86vh] overflow-y-auto -mt-8"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-3 px-1">
