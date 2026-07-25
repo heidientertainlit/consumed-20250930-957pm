@@ -142,55 +142,77 @@ export default function OnboardingPage() {
 
   if (step === "debate")
     return (
-      <Shell>
-        <ProgressBar current={0} />
-        <div className="flex-1 flex flex-col px-6 pt-7 pb-10">
-          <p className="text-center text-sm text-white/60">
-            Help us start to determine your entertainment DNA
-          </p>
-          <p className="text-center text-[13px] text-white/40 mt-2">
-            No wrong answers. Just your take.
-          </p>
-          <h1 className="text-center text-[30px] leading-[1.1] font-black mt-5" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Settle the debate.
-          </h1>
-          <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-purple-500" />
-          <p className="text-center text-xs text-white/50 mt-3 font-medium">Tap to choose</p>
-
-          <div className="flex items-center justify-center gap-3 mt-6 relative">
-            {[debate.left, debate.right].map((side) => (
-              <button
-                key={side.name}
-                onClick={() => submitVote(side.name)}
-                className="w-[42%] rounded-2xl overflow-hidden border border-white/10 active:scale-95 transition-transform"
-                style={{ aspectRatio: "2/3", boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}
-              >
-                <img src={side.poster} alt={side.name} className="w-full h-full object-cover" />
-              </button>
-            ))}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-slate-900 border border-white/20 flex items-center justify-center text-sm font-black">
-              VS
-            </div>
+      <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
+        <div className="w-full max-w-[430px] flex flex-col relative bg-white">
+          {/* Gradient hero header */}
+          <div
+            className="relative text-white px-6 pb-8 rounded-b-3xl"
+            style={{ background: "linear-gradient(135deg, #6d28d9 0%, #9333ea 45%, #d946ef 100%)" }}
+          >
+            <button
+              onClick={() => finish("/activity")}
+              className="absolute top-5 right-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
+            >
+              Skip
+            </button>
+            <ProgressBar current={0} />
+            <h1
+              className="text-center text-[26px] leading-[1.2] font-black mt-6"
+              style={{ fontFamily: "Poppins, sans-serif" }}
+            >
+              Help us start to determine your entertainment DNA
+            </h1>
+            <p className="text-center text-[13px] text-white/70 mt-3">
+              No wrong answers. Just your take.
+            </p>
           </div>
 
-          <button
-            onClick={() => {
-              setVote("both");
-              setStep("loved");
-            }}
-            className="mx-auto mt-7 text-sm text-white/45 font-medium hover:text-white/70 transition-colors"
-          >
-            But how could I choose!?
-          </button>
-          <button
-            onClick={() => submitVote(null)}
-            className="mx-auto mt-4 text-sm text-white/45 font-medium hover:text-white/70 transition-colors"
-          >
-            Neither / Haven't seen
-          </button>
-          <div className="flex-1" />
+          {/* White body */}
+          <div className="flex-1 flex flex-col px-6 pt-7 pb-10">
+            <h2
+              className="text-center text-[28px] leading-[1.1] font-black text-gray-900"
+              style={{ fontFamily: "Poppins, sans-serif" }}
+            >
+              Settle the debate.
+            </h2>
+            <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-purple-500" />
+            <p className="text-center text-xs text-gray-500 mt-3 font-medium">Tap to choose</p>
+
+            <div className="flex items-center justify-center gap-3 mt-6 relative">
+              {[debate.left, debate.right].map((side) => (
+                <button
+                  key={side.name}
+                  onClick={() => submitVote(side.name)}
+                  className="w-[42%] rounded-2xl overflow-hidden border border-gray-200 active:scale-95 transition-transform"
+                  style={{ aspectRatio: "2/3", boxShadow: "0 10px 30px rgba(0,0,0,0.18)" }}
+                >
+                  <img src={side.poster} alt={side.name} className="w-full h-full object-cover" />
+                </button>
+              ))}
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-purple-700 text-white border-4 border-white flex items-center justify-center text-sm font-black shadow-lg">
+                VS
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setVote("both");
+                setStep("loved");
+              }}
+              className="mx-auto mt-7 text-sm text-purple-700 font-semibold hover:text-purple-900 transition-colors"
+            >
+              But how could I choose!?
+            </button>
+            <button
+              onClick={() => submitVote(null)}
+              className="mx-auto mt-4 text-sm text-gray-400 font-medium hover:text-gray-600 transition-colors"
+            >
+              Neither / Haven't seen
+            </button>
+            <div className="flex-1" />
+          </div>
         </div>
-      </Shell>
+      </div>
     );
 
   if (step === "loved")
