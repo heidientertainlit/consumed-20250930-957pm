@@ -25,11 +25,8 @@ const lovedGrid = [
 
 function Phone({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen w-full flex items-stretch justify-center bg-[#0b0812]">
-      <div
-        className="w-full max-w-[430px] flex flex-col text-white"
-        style={{ background: "linear-gradient(180deg, #14101f 0%, #0b0812 100%)" }}
-      >
+    <div className="min-h-screen w-full flex items-stretch justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900">
+      <div className="w-full max-w-[430px] flex flex-col text-white bg-gradient-to-b from-slate-900/60 via-purple-950/40 to-purple-900/50">
         {children}
       </div>
     </div>
@@ -96,12 +93,22 @@ export function ConversationalOnboarding() {
                 <img src={side.poster} alt={side.name} className="w-full h-full object-cover" />
               </button>
             ))}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-[#0b0812] border border-white/20 flex items-center justify-center text-sm font-black">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-slate-900 border border-white/20 flex items-center justify-center text-sm font-black">
               VS
             </div>
           </div>
 
           <p className="text-center text-xs text-white/50 mt-5 font-medium">Tap one to choose</p>
+
+          <button
+            onClick={() => {
+              setVote("both");
+              setStep("loved");
+            }}
+            className="mx-auto mt-6 px-6 py-2.5 rounded-full bg-white text-purple-800 text-sm font-bold shadow-lg active:scale-95 transition-transform"
+          >
+            But how could I choose!?
+          </button>
 
           <div className="flex-1" />
           <button
@@ -186,7 +193,16 @@ export function ConversationalOnboarding() {
           >
             Continue
           </button>
-          <p className="text-center text-[12px] text-white/40 mt-3">
+          <button
+            onClick={() => {
+              setLoved([]);
+              setStep("reveal");
+            }}
+            className="mx-auto text-sm text-white/45 font-medium mt-4"
+          >
+            None of these
+          </button>
+          <p className="text-center text-[12px] text-white/40 mt-2">
             You can always update this later.
           </p>
         </div>
@@ -208,7 +224,7 @@ export function ConversationalOnboarding() {
         </div>
         <h2 className="text-2xl font-black mt-7">Your starter DNA is ready.</h2>
         <p className="text-sm text-white/60 mt-2 text-center leading-relaxed">
-          {vote ? `Team ${vote}. ` : ""}
+          {vote === "both" ? "Team Both — respect. " : vote ? `Team ${vote}. ` : ""}
           {loved.length > 0 ? `Fan of ${loved.join(", ")}.` : ""}
         </p>
         <div className="flex flex-wrap gap-2 justify-center mt-5">

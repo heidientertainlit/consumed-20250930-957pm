@@ -120,14 +120,8 @@ export default function OnboardingPage() {
   );
 
   const Shell = ({ children }: { children: React.ReactNode }) => (
-    <div
-      className="min-h-screen w-full flex items-stretch justify-center"
-      style={{ background: "#0b0812" }}
-    >
-      <div
-        className="w-full max-w-[430px] flex flex-col text-white relative"
-        style={{ background: "linear-gradient(180deg, #14101f 0%, #0b0812 100%)" }}
-      >
+    <div className="min-h-screen w-full flex items-stretch justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900">
+      <div className="w-full max-w-[430px] flex flex-col text-white relative bg-gradient-to-b from-slate-900/60 via-purple-950/40 to-purple-900/50">
         <button
           onClick={() => finish("/activity")}
           className="absolute top-5 right-5 z-10 text-sm text-white/40 hover:text-white/70 transition-colors"
@@ -141,7 +135,7 @@ export default function OnboardingPage() {
 
   if (authLoading)
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0b0812" }}>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900">
         <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -170,12 +164,22 @@ export default function OnboardingPage() {
                 <img src={side.poster} alt={side.name} className="w-full h-full object-cover" />
               </button>
             ))}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-[#0b0812] border border-white/20 flex items-center justify-center text-sm font-black">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-slate-900 border border-white/20 flex items-center justify-center text-sm font-black">
               VS
             </div>
           </div>
 
           <p className="text-center text-xs text-white/50 mt-5 font-medium">Tap one to choose</p>
+
+          <button
+            onClick={() => {
+              setVote("both");
+              setStep("loved");
+            }}
+            className="mx-auto mt-6 px-6 py-2.5 rounded-full bg-white text-purple-800 text-sm font-bold shadow-lg active:scale-95 transition-transform"
+          >
+            But how could I choose!?
+          </button>
 
           <div className="flex-1" />
           <button onClick={() => submitVote(null)} className="mx-auto text-sm text-white/45 font-medium">
@@ -260,7 +264,16 @@ export default function OnboardingPage() {
           >
             {saving ? "Saving..." : "Continue"}
           </button>
-          <p className="text-center text-[12px] text-white/40 mt-3">
+          <button
+            onClick={() => {
+              setLoved([]);
+              setStep("reveal");
+            }}
+            className="mx-auto text-sm text-white/45 font-medium mt-4"
+          >
+            None of these
+          </button>
+          <p className="text-center text-[12px] text-white/40 mt-2">
             You can always update this later.
           </p>
         </div>
@@ -284,7 +297,7 @@ export default function OnboardingPage() {
           Your starter DNA is ready.
         </h2>
         <p className="text-sm text-white/60 mt-2 text-center leading-relaxed">
-          {vote ? `Team ${vote}. ` : ""}
+          {vote === "both" ? "Team Both — respect. " : vote ? `Team ${vote}. ` : ""}
           {loved.length > 0 ? `Fan of ${loved.join(", ")}.` : ""}
         </p>
         <p className="text-[12px] text-white/40 mt-4 flex items-center gap-1.5">
