@@ -96,26 +96,50 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
 
-  // Background — clean white
-  ctx.fillStyle = "#ffffff";
+  // Make sure Poppins is ready before drawing text
+  try {
+    await Promise.all([
+      document.fonts.load("700 60px Poppins"),
+      document.fonts.load("600 38px Poppins"),
+      document.fonts.load("500 38px Poppins"),
+    ]);
+  } catch { /* fall back to system fonts */ }
+
+  // Background — purple gradient frame behind the white card
+  const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+  bgGrad.addColorStop(0, "#7c3aed");
+  bgGrad.addColorStop(0.5, "#8b5cf6");
+  bgGrad.addColorStop(1, "#4c1d95");
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, W, H);
+
+  // White rounded card
+  const M = 56;
+  ctx.save();
+  roundRect(ctx, M, M, W - M * 2, H - M * 2, 48);
+  ctx.shadowColor = "rgba(0,0,0,0.35)";
+  ctx.shadowBlur = 80;
+  ctx.shadowOffsetY = 30;
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
+  ctx.restore();
 
   // Header — "Name shared on @consumed"
   const namePart = props.displayName;
   const restPart = " shared on @consumed";
   ctx.textAlign = "left";
-  ctx.font = "700 38px -apple-system, 'Segoe UI', sans-serif";
+  ctx.font = "600 38px Poppins, -apple-system, 'Segoe UI', sans-serif";
   const nameW = ctx.measureText(namePart).width;
-  ctx.font = "500 38px -apple-system, 'Segoe UI', sans-serif";
+  ctx.font = "500 38px Poppins, -apple-system, 'Segoe UI', sans-serif";
   const restW = ctx.measureText(restPart).width;
   let hx = (W - (nameW + restW)) / 2;
-  ctx.font = "700 38px -apple-system, 'Segoe UI', sans-serif";
+  ctx.font = "600 38px Poppins, -apple-system, 'Segoe UI', sans-serif";
   ctx.fillStyle = "#1f1b2e";
-  ctx.fillText(namePart, hx, 160);
+  ctx.fillText(namePart, hx, 172);
   hx += nameW;
-  ctx.font = "500 38px -apple-system, 'Segoe UI', sans-serif";
+  ctx.font = "500 38px Poppins, -apple-system, 'Segoe UI', sans-serif";
   ctx.fillStyle = "#8b84a0";
-  ctx.fillText(restPart, hx, 160);
+  ctx.fillText(restPart, hx, 172);
 
   // Poster
   const posterW = 560;
@@ -155,7 +179,7 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   // Title
   ctx.textAlign = "center";
   ctx.fillStyle = "#1f1b2e";
-  ctx.font = "700 60px -apple-system, 'Segoe UI', sans-serif";
+  ctx.font = "700 60px Poppins, -apple-system, 'Segoe UI', sans-serif";
   const tLines = wrapText(ctx, props.mediaTitle, W - 160, 2);
   tLines.forEach((l) => { ctx.fillText(l, W / 2, y); y += 72; });
   y += 16;
