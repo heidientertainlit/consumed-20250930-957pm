@@ -120,7 +120,8 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
 
   // Media type pill — upper right
   if (props.mediaType) {
-    const label = props.mediaType.charAt(0).toUpperCase() + props.mediaType.slice(1).toLowerCase();
+    const raw = props.mediaType.toLowerCase();
+    const label = raw === "tv" ? "TV" : props.mediaType.charAt(0).toUpperCase() + raw.slice(1);
     ctx.font = "600 28px Poppins, -apple-system, 'Segoe UI', sans-serif";
     const tw = ctx.measureText(label).width;
     const padX = 28;
