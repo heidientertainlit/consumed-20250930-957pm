@@ -16,7 +16,7 @@ import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
 import { DnaMomentCard } from "@/components/dna-moment-card";
 import { DnaMomentFeaturedCard } from "@/components/dna-moment-featured-card";
-import { FeedIdentityHero } from "@/components/feed-identity-hero";
+import { FeedIdentityHero, IdentityFace } from "@/components/feed-identity-hero";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import CastApprovalCard from "@/components/cast-approval-card";
 
@@ -8447,9 +8447,7 @@ export default function Feed() {
                     Comfort Rewatcher <span className="text-purple-400">•</span> Prestige Detective
                   </p>
                 </div>
-                <div className="flex-shrink-0 w-20 h-20 rounded-full border-2 border-purple-400/70 shadow-[0_0_24px_rgba(168,85,247,0.35)] flex items-center justify-center">
-                  <Smile className="w-11 h-11 text-purple-300" />
-                </div>
+                <IdentityFace size={80} />
               </div>
               <button className="mt-4 w-full bg-gradient-to-r from-purple-600 to-purple-400 hover:from-purple-700 hover:to-purple-500 text-white text-sm font-semibold rounded-full py-2.5 transition-colors flex items-center justify-center gap-2" data-testid="button-guest-dna-cta">
                 <Sparkles className="w-4 h-4" />
