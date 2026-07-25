@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
+import { StarRater } from "@/components/star-rater";
 import { ArrowLeft, ArrowUp, ArrowDown, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp, ListPlus, Flame, Lightbulb, Users, Dna } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1624,56 +1625,7 @@ export default function MediaDetail() {
                 const hasText = !!(title.trim() || body.trim());
                 return hasText || composeRating > 0;
               }}
-              footerExtra={(() => {
-                const activeRating = composeHoverRating || composeRating;
-                return (
-                  <div>
-                    <p className="text-[12px] font-semibold text-gray-400 mb-1">
-                      Add Rating <span className="font-normal">(optional)</span>
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => {
-                          const isFull = activeRating >= star;
-                          const isHalf = !isFull && activeRating >= star - 0.5;
-                          return (
-                            <div key={star} className="relative w-6 h-6">
-                              <Star size={24} className="absolute inset-0 text-gray-300" />
-                              {(isFull || isHalf) && (
-                                <div
-                                  className="absolute inset-0 overflow-hidden"
-                                  style={{ width: isFull ? '100%' : '50%' }}
-                                >
-                                  <Star size={24} className="fill-yellow-400 text-yellow-400" />
-                                </div>
-                              )}
-                              <button
-                                type="button"
-                                aria-label={`Rate ${star - 0.5} stars`}
-                                className="absolute inset-y-0 left-0 w-1/2 z-10"
-                                onClick={() => setComposeRating(composeRating === star - 0.5 ? 0 : star - 0.5)}
-                                onMouseEnter={() => setComposeHoverRating(star - 0.5)}
-                                onMouseLeave={() => setComposeHoverRating(0)}
-                              />
-                              <button
-                                type="button"
-                                aria-label={`Rate ${star} stars`}
-                                className="absolute inset-y-0 right-0 w-1/2 z-10"
-                                onClick={() => setComposeRating(composeRating === star ? 0 : star)}
-                                onMouseEnter={() => setComposeHoverRating(star)}
-                                onMouseLeave={() => setComposeHoverRating(0)}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {activeRating > 0 && (
-                        <span className="text-[13px] font-semibold text-gray-700">{activeRating.toFixed(1)}</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
+              footerExtra={<StarRater value={composeRating} onChange={setComposeRating} />}
             />
             )}
           </div>
