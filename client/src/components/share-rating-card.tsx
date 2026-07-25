@@ -109,22 +109,14 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, W, H);
 
-  // Header — "Name shared on @consumed"
-  const namePart = props.displayName;
-  const restPart = " shared on @consumed";
-  ctx.textAlign = "left";
-  ctx.font = "600 38px Poppins, -apple-system, 'Segoe UI', sans-serif";
-  const nameW = ctx.measureText(namePart).width;
-  ctx.font = "500 38px Poppins, -apple-system, 'Segoe UI', sans-serif";
-  const restW = ctx.measureText(restPart).width;
-  let hx = (W - (nameW + restW)) / 2;
-  ctx.font = "600 38px Poppins, -apple-system, 'Segoe UI', sans-serif";
+  // Header — name on one row, "shared on @consumed" below it
+  ctx.textAlign = "center";
+  ctx.font = "600 40px Poppins, -apple-system, 'Segoe UI', sans-serif";
   ctx.fillStyle = "#1f1b2e";
-  ctx.fillText(namePart, hx, 172);
-  hx += nameW;
-  ctx.font = "500 38px Poppins, -apple-system, 'Segoe UI', sans-serif";
+  ctx.fillText(props.displayName, W / 2, 140);
+  ctx.font = "500 32px Poppins, -apple-system, 'Segoe UI', sans-serif";
   ctx.fillStyle = "#8b84a0";
-  ctx.fillText(restPart, hx, 172);
+  ctx.fillText("shared on @consumed", W / 2, 190);
 
   // Poster
   const posterW = 560;
@@ -164,7 +156,7 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   // Title
   ctx.textAlign = "center";
   ctx.fillStyle = "#1f1b2e";
-  ctx.font = "700 60px Poppins, -apple-system, 'Segoe UI', sans-serif";
+  ctx.font = "500 60px Poppins, -apple-system, 'Segoe UI', sans-serif";
   const tLines = wrapText(ctx, props.mediaTitle, W - 160, 2);
   tLines.forEach((l) => { ctx.fillText(l, W / 2, y); y += 72; });
   y += 16;
@@ -216,16 +208,13 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   if (logo) {
     const logoW = 380;
     const logoH = logoW * (logo.height / logo.width);
-    ctx.drawImage(logo, (W - logoW) / 2, H - 118 - logoH, logoW, logoH);
+    ctx.drawImage(logo, (W - logoW) / 2, H - 90 - logoH, logoW, logoH);
   } else {
     ctx.fillStyle = "#7c3aed";
     ctx.font = "800 52px -apple-system, 'Segoe UI', sans-serif";
-    ctx.fillText("consumed", W / 2, H - 130);
+    ctx.textAlign = "center";
+    ctx.fillText("consumed", W / 2, H - 100);
   }
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#9a93ad";
-  ctx.font = "500 32px -apple-system, 'Segoe UI', sans-serif";
-  ctx.fillText("Entertainment is better, together.", W / 2, H - 72);
 
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
 }
