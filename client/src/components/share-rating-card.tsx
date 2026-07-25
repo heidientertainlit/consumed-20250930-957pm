@@ -62,7 +62,7 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number,
   return lines;
 }
 
-function loadImage(src: string): Promise<HTMLImageElement | null> {
+function loadImageOnce(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -72,6 +72,18 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
+async function loadImage(src: string): Promise<HTMLImageElement | null> {
+  const direct = await loadImageOnce(src);
+  if (direct) return direct;
+  // Retry through a CORS-friendly image proxy for hosts that block cross-origin canvas use
+  try {
+    const proxied = `https://images.weserv.nl/?url=${encodeURIComponent(src.replace(/^https?:\/\//, ""))}`;
+    return await loadImageOnce(proxied);
+  } catch {
+    return null;
+  }
+}
+
 async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   const canvas = document.createElement("canvas");
   canvas.width = W;
@@ -79,19 +91,13 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  // Background gradient — app theme
-  const grad = ctx.createLinearGradient(0, 0, W, H);
-  grad.addColorStop(0, "#0b0b12");
-  grad.addColorStop(0.5, "#1e1b34");
-  grad.addColorStop(1, "#4c1d95");
-  ctx.fillStyle = grad;
+  // Background — clean white with a whisper of violet at the bottom
+  ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, W, H);
-
-  // Soft glow behind poster
-  const glow = ctx.createRadialGradient(W / 2, 700, 100, W / 2, 700, 700);
-  glow.addColorStop(0, "rgba(139, 92, 246, 0.35)");
-  glow.addColorStop(1, "rgba(139, 92, 246, 0)");
-  ctx.fillStyle = glow;
+  const grad = ctx.createLinearGradient(0, H * 0.55, 0, H);
+  grad.addColorStop(0, "rgba(139, 92, 246, 0)");
+  grad.addColorStop(1, "rgba(139, 92, 246, 0.10)");
+  ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 
   // Poster
@@ -102,10 +108,10 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   const img = props.mediaImage ? await loadImage(props.mediaImage) : null;
   ctx.save();
   roundRect(ctx, posterX, posterY, posterW, posterH, 32);
-  ctx.shadowColor = "rgba(0,0,0,0.55)";
-  ctx.shadowBlur = 60;
-  ctx.shadowOffsetY = 24;
-  ctx.fillStyle = "#2a2640";
+  ctx.shadowColor = "rgba(76, 29, 149, 0.25)";
+  ctx.shadowBlur = 70;
+  ctx.shadowOffsetY = 28;
+  ctx.fillStyle = "#f3f0fa";
   ctx.fill();
   ctx.restore();
   ctx.save();
@@ -117,9 +123,9 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
     const dh = img.height * scale;
     ctx.drawImage(img, posterX + (posterW - dw) / 2, posterY + (posterH - dh) / 2, dw, dh);
   } else {
-    ctx.fillStyle = "#2a2640";
+    ctx.fillStyle = "#ede9f8";
     ctx.fillRect(posterX, posterY, posterW, posterH);
-    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.fillStyle = "#7c6bb0";
     ctx.font = "600 44px -apple-system, 'Segoe UI', sans-serif";
     ctx.textAlign = "center";
     const titleLines = wrapText(ctx, props.mediaTitle, posterW - 80, 4);
@@ -131,7 +137,7 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
 
   // Title
   ctx.textAlign = "center";
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = "#1f1b2e";
   ctx.font = "700 60px -apple-system, 'Segoe UI', sans-serif";
   const tLines = wrapText(ctx, props.mediaTitle, W - 160, 2);
   tLines.forEach((l) => { ctx.fillText(l, W / 2, y); y += 72; });
@@ -145,7 +151,7 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
     for (let i = 1; i <= 5; i++) {
       const cx = startX + (i - 1) * gap;
       drawStar(ctx, cx, y, starR);
-      ctx.fillStyle = "rgba(255,255,255,0.18)";
+      ctx.fillStyle = "#e5e1f0";
       ctx.fill();
       const fillPct = Math.max(0, Math.min(1, props.rating - (i - 1)));
       if (fillPct > 0) {
@@ -159,7 +165,7 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
         ctx.restore();
       }
     }
-    ctx.fillStyle = "#facc15";
+    ctx.fillStyle = "#b45309";
     ctx.font = "700 44px -apple-system, 'Segoe UI', sans-serif";
     ctx.fillText(`${props.rating % 1 === 0 ? props.rating : props.rating.toFixed(1)} / 5`, W / 2, y + 110);
     y += 190;
@@ -167,7 +173,7 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
 
   // Review quote
   if (props.review?.trim()) {
-    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.fillStyle = "#3f3a52";
     ctx.font = "italic 400 42px Georgia, serif";
     const qLines = wrapText(ctx, `\u201C${props.review.trim()}\u201D`, W - 240, 4);
     qLines.forEach((l) => { ctx.fillText(l, W / 2, y); y += 58; });
@@ -175,15 +181,15 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   }
 
   // Attribution
-  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.fillStyle = "#6b6580";
   ctx.font = "600 36px -apple-system, 'Segoe UI', sans-serif";
   ctx.fillText(`— ${props.displayName}`, W / 2, Math.min(y + 20, H - 220));
 
   // Branding footer
-  ctx.fillStyle = "#a78bfa";
+  ctx.fillStyle = "#7c3aed";
   ctx.font = "800 52px -apple-system, 'Segoe UI', sans-serif";
   ctx.fillText("consumed", W / 2, H - 110);
-  ctx.fillStyle = "rgba(255,255,255,0.45)";
+  ctx.fillStyle = "#9a93ad";
   ctx.font = "500 30px -apple-system, 'Segoe UI', sans-serif";
   ctx.fillText("where fans come to play", W / 2, H - 62);
 
