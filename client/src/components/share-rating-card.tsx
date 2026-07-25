@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X, Share2, Download, Loader2 } from "lucide-react";
 import { createPortal } from "react-dom";
-import logoPath from "@assets/consumed_logo_purple_crop_1769629036769-BANdXMia_1785021090448.png";
+import logoPath from "@assets/consumed_logo_purple_trimmed.png";
 
 interface ShareRatingCardProps {
   isOpen: boolean;
@@ -92,13 +92,8 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  // Background — clean white with a whisper of violet at the bottom
+  // Background — clean white
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, W, H);
-  const grad = ctx.createLinearGradient(0, H * 0.55, 0, H);
-  grad.addColorStop(0, "rgba(139, 92, 246, 0)");
-  grad.addColorStop(1, "rgba(139, 92, 246, 0.10)");
-  ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 
   // Header — "Name shared on @consumed"
@@ -208,7 +203,7 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   if (logo) {
     const logoW = 380;
     const logoH = logoW * (logo.height / logo.width);
-    ctx.drawImage(logo, (W - logoW) / 2, H - 130 - logoH, logoW, logoH);
+    ctx.drawImage(logo, (W - logoW) / 2, H - 118 - logoH, logoW, logoH);
   } else {
     ctx.fillStyle = "#7c3aed";
     ctx.font = "800 52px -apple-system, 'Segoe UI', sans-serif";
@@ -217,7 +212,7 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   ctx.textAlign = "center";
   ctx.fillStyle = "#9a93ad";
   ctx.font = "500 32px -apple-system, 'Segoe UI', sans-serif";
-  ctx.fillText("entertainment is better, together.", W / 2, H - 72);
+  ctx.fillText("Entertainment is better, together.", W / 2, H - 72);
 
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
 }
