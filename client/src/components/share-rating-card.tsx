@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X, Share2, Download, Loader2 } from "lucide-react";
 import { createPortal } from "react-dom";
-import logoPath from "@assets/consumed_logo_purple_trimmed.png";
+import logoPath from "@/assets/consumed_logo_purple_trimmed.png";
 
 interface ShareRatingCardProps {
   isOpen: boolean;
