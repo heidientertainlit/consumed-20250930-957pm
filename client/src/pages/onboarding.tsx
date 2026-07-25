@@ -145,15 +145,19 @@ export default function OnboardingPage() {
       <Shell>
         <ProgressBar current={0} />
         <div className="flex-1 flex flex-col px-6 pt-7 pb-10">
-          <h1 className="text-center text-[32px] leading-[1.1] font-black" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Settle
-            <br />
-            the debate.
+          <p className="text-center text-sm text-white/60">
+            Help us start to determine your entertainment DNA
+          </p>
+          <p className="text-center text-[13px] text-white/40 mt-2">
+            No wrong answers. Just your take.
+          </p>
+          <h1 className="text-center text-[30px] leading-[1.1] font-black mt-5" style={{ fontFamily: "Poppins, sans-serif" }}>
+            Settle the debate.
           </h1>
           <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-purple-500" />
-          <p className="text-center text-sm text-white/60 mt-4">What do you think?</p>
+          <p className="text-center text-xs text-white/50 mt-3 font-medium">Tap to choose</p>
 
-          <div className="flex items-center justify-center gap-3 mt-7 relative">
+          <div className="flex items-center justify-center gap-3 mt-6 relative">
             {[debate.left, debate.right].map((side) => (
               <button
                 key={side.name}
@@ -169,25 +173,22 @@ export default function OnboardingPage() {
             </div>
           </div>
 
-          <p className="text-center text-xs text-white/50 mt-5 font-medium">Tap one to choose</p>
-
           <button
             onClick={() => {
               setVote("both");
               setStep("loved");
             }}
-            className="mx-auto mt-6 px-6 py-2.5 rounded-full bg-white text-purple-800 text-sm font-bold shadow-lg active:scale-95 transition-transform"
+            className="mx-auto mt-7 text-sm text-white/45 font-medium hover:text-white/70 transition-colors"
           >
             But how could I choose!?
           </button>
-
-          <div className="flex-1" />
-          <button onClick={() => submitVote(null)} className="mx-auto text-sm text-white/45 font-medium">
+          <button
+            onClick={() => submitVote(null)}
+            className="mx-auto mt-4 text-sm text-white/45 font-medium hover:text-white/70 transition-colors"
+          >
             Neither / Haven't seen
           </button>
-          <p className="text-center text-[13px] text-white/40 mt-6">
-            No wrong answers. Just your take.
-          </p>
+          <div className="flex-1" />
         </div>
       </Shell>
     );
