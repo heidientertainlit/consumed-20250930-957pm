@@ -17,6 +17,7 @@ import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
 import { DnaMomentCard } from "@/components/dna-moment-card";
 import { DnaMomentFeaturedCard } from "@/components/dna-moment-featured-card";
 import { FeedIdentityHero, IdentityFace } from "@/components/feed-identity-hero";
+import { isOnboardingComplete, markOnboardingComplete } from "@/components/route-guards";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import CastApprovalCard from "@/components/cast-approval-card";
 
@@ -5115,6 +5116,19 @@ export default function Feed() {
   const { session, user, loading: authLoading } = useAuth();
   // GUEST MODE: auth finished loading and there's no session → browsing as guest
   const isGuestMode = !authLoading && !session;
+  // Safety net: the feed is no longer wrapped in ProtectedRoute (guests allowed),
+  // so replicate its new-user onboarding redirect here for logged-in users.
+  useEffect(() => {
+    if (!authLoading && user && !isOnboardingComplete()) {
+      const createdAt = new Date(user.created_at).getTime();
+      const isNewUser = Date.now() - createdAt < 10 * 60 * 1000;
+      if (isNewUser) {
+        setLocation('/onboarding');
+      } else {
+        markOnboardingComplete();
+      }
+    }
+  }, [authLoading, user]);
   // Stable user ID that never resets to null once resolved. currentAppUserId (module-level)
   // resets on HMR reloads; session.user.id / user.id may be null on the very first render
   // before Supabase restores the session. Using a ref ensures the value is locked in as soon

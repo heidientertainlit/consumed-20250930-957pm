@@ -63,6 +63,7 @@ const FALLBACK_TRENDING = [
 import { SiApple, SiGoogle } from "react-icons/si";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { isOnboardingComplete } from "@/components/route-guards";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export default function LoginPage() {
@@ -112,7 +113,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      if (justSignedUp) {
+      // Detect brand-new accounts by creation time, not just local state —
+      // the auth event can fire before setJustSignedUp lands, which used to
+      // race past onboarding straight to the saved returnUrl.
+      const createdAt = new Date(user.created_at).getTime();
+      const isNewUser = Date.now() - createdAt < 10 * 60 * 1000;
+      if (justSignedUp || (isNewUser && !isOnboardingComplete())) {
+        sessionStorage.removeItem('returnUrl');
         setLocation('/onboarding');
         return;
       }
