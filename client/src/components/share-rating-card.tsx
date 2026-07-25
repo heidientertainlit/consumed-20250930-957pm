@@ -118,6 +118,24 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   ctx.fillStyle = "#8b84a0";
   ctx.fillText("shared on @consumed", W / 2, 190);
 
+  // Media type pill — upper right
+  if (props.mediaType) {
+    const label = props.mediaType.charAt(0).toUpperCase() + props.mediaType.slice(1).toLowerCase();
+    ctx.font = "600 28px Poppins, -apple-system, 'Segoe UI', sans-serif";
+    const tw = ctx.measureText(label).width;
+    const padX = 28;
+    const pillH = 60;
+    const pillW = tw + padX * 2;
+    const pillX = W - 70 - pillW;
+    const pillY = 84;
+    roundRect(ctx, pillX, pillY, pillW, pillH, pillH / 2);
+    ctx.fillStyle = "#f3effc";
+    ctx.fill();
+    ctx.fillStyle = "#7c3aed";
+    ctx.textAlign = "center";
+    ctx.fillText(label, pillX + pillW / 2, pillY + pillH / 2 + 10);
+  }
+
   // Poster
   const posterW = 560;
   const posterH = 840;
@@ -368,7 +386,8 @@ export function ShareRatingCard(props: ShareRatingCardProps) {
           <button
             onClick={() => handleShare(false)}
             disabled={!previewUrl || sharing}
-            className="flex-1 flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-semibold text-[14px] py-3 rounded-xl"
+            className="flex-1 flex items-center justify-center gap-2 disabled:opacity-50 text-white font-semibold text-[14px] py-3 rounded-full active:scale-95 transition-transform"
+            style={{ background: "linear-gradient(135deg, #6d28d9 0%, #9333ea 45%, #d946ef 100%)" }}
           >
             {sharing ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
             Share with a friend
