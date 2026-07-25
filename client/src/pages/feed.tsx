@@ -32,7 +32,7 @@ import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 
-import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronLeft, ChevronRight, ChevronDown, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, ArrowRight, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap, Smile } from "lucide-react";
+import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronLeft, ChevronRight, ChevronDown, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, ArrowRight, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap, Smile, Share2 } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import MentionInput from "@/components/mention-input";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -40,6 +40,7 @@ import CollaborativePredictionCard from "@/components/collaborative-prediction-c
 import { UserPollsCarousel } from "@/components/user-polls-carousel";
 import { ReportSheet } from "@/components/report-sheet";
 import PostDetailSheet from "@/components/post-detail-sheet";
+import { ShareRatingCard } from "@/components/share-rating-card";
 import { dbTagToDisplay } from "@/components/room-composer";
 import { type UGCPost } from "@/components/user-content-carousel";
 import ConversationsPanel from "@/components/conversations-panel";
@@ -1263,6 +1264,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [resolvedExternalSource, setResolvedExternalSource] = useState(post.externalSource || 'tmdb');
   const [isSearchingMedia, setIsSearchingMedia] = useState(false);
   const [reportPostOpen, setReportPostOpen] = useState(false);
+  const [shareCardOpen, setShareCardOpen] = useState(false);
   const [reportCommentTarget, setReportCommentTarget] = useState<{id: string; userId: string; userName: string} | null>(null);
 
   const handleStarClick = (e: React.MouseEvent) => {
@@ -2598,6 +2600,17 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <span className={`text-[12px] font-medium ${linkCopied ? 'text-violet-600 font-semibold' : 'text-gray-500'}`}>{linkCopied ? 'Link copied!' : 'Tell a friend'}</span>
             {!linkCopied && <ArrowRight size={13} className="text-gray-400" />}
           </button>
+
+          {/* Share card — image card for Instagram/social */}
+          {post.rating != null && Number(post.rating) > 0 && (
+            <button
+              className="flex items-center gap-1.5 active:scale-95 transition-transform"
+              onClick={(e) => { e.stopPropagation(); setShareCardOpen(true); }}
+            >
+              <Share2 size={14} className="text-gray-400" />
+              <span className="text-[12px] font-medium text-gray-500">Share card</span>
+            </button>
+          )}
         </div>
 
         {/* ── Take bar — always visible, inline comment strip ── */}
@@ -2762,6 +2775,16 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           contentId={reportCommentTarget?.id || ''}
           reportedUserId={reportCommentTarget?.userId}
           reportedUserName={reportCommentTarget?.userName}
+        />
+        <ShareRatingCard
+          isOpen={shareCardOpen}
+          onClose={() => setShareCardOpen(false)}
+          mediaTitle={post.mediaTitle || ''}
+          mediaImage={post.mediaImage}
+          mediaType={post.mediaType}
+          rating={post.rating != null ? Number(post.rating) : null}
+          review={post.content}
+          displayName={post.user?.displayName || post.user?.username || 'A Consumed fan'}
         />
       </>
     );
