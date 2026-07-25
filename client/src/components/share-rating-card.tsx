@@ -86,11 +86,15 @@ async function loadImage(src: string): Promise<HTMLImageElement | null> {
 }
 
 async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
+  const SCALE = 2;
   const canvas = document.createElement("canvas");
-  canvas.width = W;
-  canvas.height = H;
+  canvas.width = W * SCALE;
+  canvas.height = H * SCALE;
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
+  ctx.scale(SCALE, SCALE);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
 
   // Background — clean white
   ctx.fillStyle = "#ffffff";

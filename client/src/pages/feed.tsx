@@ -2608,7 +2608,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               onClick={(e) => { e.stopPropagation(); setShareCardOpen(true); }}
             >
               <Share2 size={14} className="text-gray-400" />
-              <span className="text-[12px] font-medium text-gray-500">Share card</span>
+              <span className="text-[12px] font-medium text-gray-500">Share</span>
             </button>
           )}
         </div>
