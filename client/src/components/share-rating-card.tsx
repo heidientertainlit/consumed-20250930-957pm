@@ -355,7 +355,7 @@ export function ShareRatingCard(props: ShareRatingCardProps) {
             className="flex-1 flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-semibold text-[14px] py-3 rounded-xl"
           >
             {sharing ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
-            Share
+            Share with a friend
           </button>
           <button
             onClick={() => handleShare(true)}
