@@ -496,7 +496,7 @@ export default function EntertainmentDNAPage() {
     );
   }
 
-  // ── Stepped survey (dark, matches onboarding aesthetics) ──────────────
+  // ── Stepped survey: dark purple gradient header, white body (app vibe) ──
   const typesQ = qByOrder(2);
   const driversQ = qByOrder(5);
   const loveQ = qByOrder(4);
@@ -505,8 +505,8 @@ export default function EntertainmentDNAPage() {
   const pill = (selected: boolean) =>
     `px-4 py-2.5 rounded-full text-sm flex items-center gap-2 text-left transition-all border ${
       selected
-        ? "border-purple-400 text-white font-medium shadow-md shadow-purple-500/30"
-        : "border-white/15 bg-white/5 text-white/80 hover:bg-white/10"
+        ? "border-purple-500 text-white font-medium shadow-md shadow-purple-500/25"
+        : "border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50"
     }`;
   const pillStyle = (selected: boolean) =>
     selected ? { background: "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)" } : undefined;
@@ -570,14 +570,17 @@ export default function EntertainmentDNAPage() {
   const totalSteps = 3;
 
   return (
-    <div className="min-h-screen w-full flex items-stretch justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900">
-      <div className="w-full max-w-[430px] flex flex-col text-white relative bg-gradient-to-b from-slate-900/60 via-purple-950/40 to-purple-900/50 px-5 pb-10">
-        {/* Header */}
-        <div className="pt-5">
+    <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
+      <div className="w-full max-w-[430px] flex flex-col relative bg-white">
+        {/* Dark purple gradient header */}
+        <div
+          className="px-5 pt-5 pb-6 text-white"
+          style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #4c1d95 55%, #6d28d9 100%)" }}
+        >
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => (step > 0 ? setStep(step - 1) : setLocation("/"))}
-              className="flex items-center gap-2 text-white/50 hover:text-white/80 transition-colors"
+              className="flex items-center gap-2 text-white/60 hover:text-white transition-colors"
               data-testid="dna-back-button"
             >
               <ArrowLeft size={18} />
@@ -585,53 +588,55 @@ export default function EntertainmentDNAPage() {
             </button>
             <button
               onClick={() => setLocation("/activity")}
-              className="text-xs text-purple-400 hover:text-purple-300"
+              className="text-xs text-white/70 hover:text-white"
             >
               Skip for now
             </button>
           </div>
 
           {/* DNA progress */}
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-9 h-9 bg-purple-600/30 border border-purple-500/40 rounded-xl flex items-center justify-center shrink-0">
-              <Dna className="text-purple-300" size={18} />
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-white/10 border border-white/25 rounded-xl flex items-center justify-center shrink-0">
+              <Dna className="text-purple-200" size={18} />
             </div>
             <div className="flex-1">
-              <div className="flex justify-between text-[11px] text-white/50 mb-1">
+              <div className="flex justify-between text-[11px] text-white/60 mb-1">
                 <span>Your DNA</span>
                 <span>{dnaPct}% complete</span>
               </div>
-              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-2 rounded-full bg-white/15 overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${dnaPct}%`, background: "linear-gradient(90deg, #7c3aed, #d946ef)" }}
+                  style={{ width: `${dnaPct}%`, background: "linear-gradient(90deg, #a78bfa, #e879f9)" }}
                 />
               </div>
             </div>
           </div>
-          <p className="text-white/40 text-xs mt-2 mb-1">
+          <p className="text-white/50 text-xs mt-3">
             Step {step + 1} of {totalSteps} — {stepTitles[step]}
           </p>
         </div>
 
-        {/* Step content */}
-        <div className="flex-1 pt-4 space-y-6">
+        {/* White step content */}
+        <div className="flex-1 px-5 pt-6 pb-4 space-y-7 bg-white">
           {step === 0 && (
             <>
               {typesQ && (
                 <div>
-                  <h2 className="text-lg font-bold leading-snug mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                  <p className="text-purple-600 text-[11px] font-semibold tracking-widest uppercase mb-1">Step one</p>
+                  <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                     What do you like to consume?
                   </h2>
-                  <p className="text-white/50 text-sm mb-3">Select all that apply.</p>
+                  <p className="text-gray-500 text-sm mb-3">Select all that apply.</p>
                   {renderMulti(typesQ, true)}
                 </div>
               )}
               <div>
-                <h2 className="text-lg font-bold leading-snug mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                <p className="text-purple-600 text-[11px] font-semibold tracking-widest uppercase mb-1">Step two</p>
+                <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                   Pick your rooms
                 </h2>
-                <p className="text-white/50 text-sm mb-3">
+                <p className="text-gray-500 text-sm mb-3">
                   Join the conversations you'd actually hang out in. These shape your DNA too.
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -661,37 +666,39 @@ export default function EntertainmentDNAPage() {
             <>
               {driversQ && (
                 <div>
-                  <h2 className="text-lg font-bold leading-snug mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                  <p className="text-purple-600 text-[11px] font-semibold tracking-widest uppercase mb-1">Step one</p>
+                  <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                     What drives your choices?
                   </h2>
-                  <p className="text-white/50 text-sm mb-3">Pick up to 3.</p>
+                  <p className="text-gray-500 text-sm mb-3">Pick up to 3.</p>
                   {renderMulti(driversQ)}
                 </div>
               )}
               {loveQ && (
                 <div>
-                  <h2 className="text-lg font-bold leading-snug mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                  <p className="text-purple-600 text-[11px] font-semibold tracking-widest uppercase mb-1">Step two</p>
+                  <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                     What do you love?
                   </h2>
-                  <p className="text-white/50 text-sm mb-3">
+                  <p className="text-gray-500 text-sm mb-3">
                     What else are you into that we haven't asked about? Teams, athletes, musicians,
-                    authors, comfort rewatches — anything. <span className="text-white/30">(optional)</span>
+                    authors, comfort rewatches — anything. <span className="text-gray-400">(optional)</span>
                   </p>
                   <textarea
                     value={(getAnswer(loveQ.id) as string) || ""}
                     onChange={(e) => handleAnswer(loveQ.id, e.target.value)}
                     placeholder="Type freely — one thing per line or however it comes out."
-                    className="w-full p-3 bg-white/5 border border-white/15 rounded-xl focus:border-purple-400 focus:outline-none min-h-[110px] resize-vertical text-white placeholder:text-white/30 text-sm"
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-purple-400 focus:outline-none min-h-[110px] resize-vertical text-gray-900 placeholder:text-gray-400 text-sm"
                     data-testid={`text-input-${loveQ.id}`}
                   />
                   {alreadyAdded.length > 0 && (
                     <div className="mt-3">
-                      <p className="text-white/40 text-xs mb-2">Already added to your DNA</p>
+                      <p className="text-gray-400 text-xs mb-2">Already added to your DNA</p>
                       <div className="flex flex-wrap gap-1.5">
                         {alreadyAdded.map((t) => (
                           <span
                             key={t}
-                            className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/40 text-xs"
+                            className="px-2.5 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-400 text-xs"
                           >
                             {t}
                           </span>
@@ -706,12 +713,13 @@ export default function EntertainmentDNAPage() {
 
           {step === 2 && genderQ && (
             <div>
-              <h2 className="text-lg font-bold leading-snug mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+              <p className="text-purple-600 text-[11px] font-semibold tracking-widest uppercase mb-1">Last step</p>
+              <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                 One quick detail
               </h2>
-              <p className="text-white/50 text-sm mb-3">{genderQ.question_text}</p>
+              <p className="text-gray-500 text-sm mb-3">{genderQ.question_text}</p>
               {renderSelect(genderQ)}
-              <p className="text-white/30 text-xs mt-6">
+              <p className="text-gray-400 text-xs mt-6">
                 That's everything — hit the button below to generate your Entertainment DNA.
               </p>
             </div>
@@ -719,12 +727,12 @@ export default function EntertainmentDNAPage() {
         </div>
 
         {/* Footer button */}
-        <div className="pt-6">
+        <div className="px-5 pb-10 bg-white">
           {step < totalSteps - 1 ? (
             <button
               onClick={() => setStep(step + 1)}
               disabled={!stepComplete(step)}
-              className="w-full text-white font-semibold rounded-full py-3.5 text-base shadow-lg shadow-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full text-white font-semibold rounded-full py-3.5 text-base shadow-lg shadow-purple-500/25 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
               data-testid="dna-continue-button"
             >
@@ -735,7 +743,7 @@ export default function EntertainmentDNAPage() {
             <Button
               onClick={generateDNA}
               disabled={!stepComplete(2)}
-              className="w-full bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600 text-white font-semibold rounded-full py-4 text-base shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600 text-white font-semibold rounded-full py-4 text-base shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="get-dna-button"
             >
               Discover Your DNA
