@@ -623,7 +623,6 @@ export default function EntertainmentDNAPage() {
             <>
               {typesQ && (
                 <div>
-                  <p className="text-purple-600 text-[11px] font-semibold tracking-widest uppercase mb-1">Step one</p>
                   <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                     What do you like to consume?
                   </h2>
@@ -632,7 +631,6 @@ export default function EntertainmentDNAPage() {
                 </div>
               )}
               <div>
-                <p className="text-purple-600 text-[11px] font-semibold tracking-widest uppercase mb-1">Step two</p>
                 <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                   Pick your rooms
                 </h2>
@@ -640,7 +638,9 @@ export default function EntertainmentDNAPage() {
                   Join the conversations you'd actually hang out in. These shape your DNA too.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {GENRE_ROOMS.map((room) => {
+                  {[...GENRE_ROOMS]
+                    .sort((a, b) => Number(initialFollows.has(a.id)) - Number(initialFollows.has(b.id)))
+                    .map((room) => {
                     const on = selectedRooms.includes(room.id);
                     const Icon = room.Icon;
                     return (
@@ -664,19 +664,8 @@ export default function EntertainmentDNAPage() {
 
           {step === 1 && (
             <>
-              {driversQ && (
-                <div>
-                  <p className="text-purple-600 text-[11px] font-semibold tracking-widest uppercase mb-1">Step one</p>
-                  <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
-                    What drives your choices?
-                  </h2>
-                  <p className="text-gray-500 text-sm mb-3">Pick up to 3.</p>
-                  {renderMulti(driversQ)}
-                </div>
-              )}
               {loveQ && (
                 <div>
-                  <p className="text-purple-600 text-[11px] font-semibold tracking-widest uppercase mb-1">Step two</p>
                   <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                     What do you love?
                   </h2>
@@ -708,12 +697,21 @@ export default function EntertainmentDNAPage() {
                   )}
                 </div>
               )}
+              {driversQ && (
+                <div>
+                  <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                    What drives your choices?
+                  </h2>
+                  <p className="text-gray-500 text-sm mb-3">Pick up to 3.</p>
+                  {renderMulti(driversQ)}
+                </div>
+              )}
+
             </>
           )}
 
           {step === 2 && genderQ && (
             <div>
-              <p className="text-purple-600 text-[11px] font-semibold tracking-widest uppercase mb-1">Last step</p>
               <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                 One quick detail
               </h2>
