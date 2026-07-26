@@ -128,6 +128,78 @@ const roomOptions = [
   { id: "3e0a4b3d-e211-44c7-9633-4a6a5a9206de", name: "Sports", Icon: Trophy },
 ];
 
+
+// Genre tags for each curated title — used to show "forming" genres on the reveal screen.
+const TITLE_GENRES: Record<string, string[]> = {
+  "Harry Potter": ["Fantasy"],
+  "Wicked": ["Fantasy", "Musicals"],
+  "The Eras Tour": ["Pop", "Pop Culture"],
+  "Dune: Part Two": ["Sci-Fi"],
+  "Inside Out 2": ["Animation", "Feel-Good"],
+  "Top Gun: Maverick": ["Action"],
+  "Everything Everywhere All at Once": ["Sci-Fi", "Comedy"],
+  "Deadpool & Wolverine": ["Action", "Comedy"],
+  "Moana 2": ["Animation", "Feel-Good"],
+  "A Minecraft Movie": ["Adventure", "Comedy"],
+  "The Super Mario Bros. Movie": ["Animation", "Adventure"],
+  "Spider-Man: Across the Spider-Verse": ["Animation", "Action"],
+  "Twisters": ["Action", "Thrillers"],
+  "The Notebook": ["Romance"],
+  "Interstellar": ["Sci-Fi", "Drama"],
+  "Stranger Things": ["Sci-Fi", "Horror"],
+  "The Bear": ["Drama", "Comedy"],
+  "The Last of Us": ["Drama", "Thrillers"],
+  "The Office": ["Comedy"],
+  "Ted Lasso": ["Comedy", "Feel-Good"],
+  "The White Lotus": ["Drama", "Comedy"],
+  "Severance": ["Sci-Fi", "Thrillers"],
+  "Friends": ["Comedy"],
+  "Yellowstone": ["Drama"],
+  "Bridgerton": ["Romance", "Drama"],
+  "Wednesday": ["Fantasy", "Comedy"],
+  "Game of Thrones": ["Fantasy", "Drama"],
+  "Love Island USA": ["Reality"],
+  "Abbott Elementary": ["Comedy"],
+  "Grey's Anatomy": ["Drama", "Romance"],
+  "Squid Game": ["Thrillers", "Drama"],
+  "Only Murders in the Building": ["Mystery", "Comedy"],
+  "Atomic Habits": ["Self-Improvement"],
+  "The Hobbit": ["Fantasy"],
+  "Fourth Wing": ["Fantasy", "Romance"],
+  "It Ends with Us": ["Romance", "Drama"],
+  "The Silent Patient": ["Thrillers", "Mystery"],
+  "A Court of Thorns and Roses": ["Fantasy", "Romance"],
+  "The Midnight Library": ["Feel-Good", "Drama"],
+  "Onyx Storm": ["Fantasy", "Romance"],
+  "Lessons in Chemistry": ["Drama", "Feel-Good"],
+  "Where the Crawdads Sing": ["Mystery", "Drama"],
+  "Verity": ["Thrillers", "Romance"],
+  "The Great Gatsby": ["Classics", "Drama"],
+  "Serial": ["True Crime"],
+  "Crime Junkie": ["True Crime"],
+  "SmartLess": ["Comedy"],
+  "The Daily": ["News"],
+  "Call Her Daddy": ["Pop Culture", "Comedy"],
+  "New Heights with Jason & Travis Kelce": ["Sports", "Comedy"],
+  "The Joe Rogan Experience": ["Pop Culture"],
+  "Dateline NBC": ["True Crime"],
+  "Armchair Expert": ["Comedy", "Pop Culture"],
+  "Stuff You Should Know": ["Pop Culture"],
+  "Morbid": ["True Crime"],
+  "HIT ME HARD AND SOFT": ["Pop"],
+  "Short n' Sweet": ["Pop"],
+  "The Tortured Poets Department": ["Pop"],
+  "GUTS": ["Pop"],
+  "SOS": ["R&B"],
+  "Midnights": ["Pop"],
+  "1989 (Taylor's Version)": ["Pop"],
+  "COWBOY CARTER": ["Country", "Pop"],
+  "One Thing At A Time": ["Country"],
+  "Harry's House": ["Pop"],
+  "Un Verano Sin Ti": ["Latin"],
+  "eternal sunshine": ["Pop", "R&B"],
+};
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
 type Step = "debate" | "loved" | "reveal";
@@ -600,35 +672,80 @@ export default function OnboardingPage() {
             : "Your profile is ready to grow."}
         </p>
 
-        <div
-          className="w-full mt-7 rounded-2xl px-5 py-4 text-left"
-          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
-        >
-          <p className="text-[11px] font-bold tracking-[0.15em] uppercase text-white/40">Level it up</p>
-          <ul className="mt-2.5 space-y-2">
-            {[
-              "Add more titles you love (and skip the ones you don't)",
-              "Rate what you're watching, reading, and listening to",
-              "Play daily trivia and cast your takes",
-            ].map((tip) => (
-              <li key={tip} className="flex items-start gap-2.5 text-[13px] text-white/75 leading-snug">
-                <Check size={15} className="text-purple-300 mt-0.5 shrink-0" />
-                {tip}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {(() => {
+          const counts: Record<string, number> = {};
+          for (const t of loved) for (const g of TITLE_GENRES[t] || []) counts[g] = (counts[g] || 0) + 1;
+          const topGenres = Object.entries(counts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 4)
+            .map(([g]) => g);
+          const shownTitles = loved.slice(0, 3);
+          const extra = loved.length - shownTitles.length;
+          if (topGenres.length === 0) return null;
+          return (
+            <div
+              className="w-full mt-7 rounded-2xl px-5 py-4 text-left"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+            >
+              <p className="text-[11px] font-bold tracking-[0.15em] uppercase text-white/40">
+                Forming from your picks
+              </p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {topGenres.map((g) => (
+                  <span
+                    key={g}
+                    className="px-3 py-1 rounded-full text-[12px] font-semibold"
+                    style={{
+                      background: "rgba(168,85,247,0.16)",
+                      border: "1px solid rgba(168,85,247,0.45)",
+                      color: "#e9d5ff",
+                    }}
+                  >
+                    {g}
+                  </span>
+                ))}
+              </div>
+              <p className="text-[12px] text-white/50 mt-3 leading-snug">
+                Built from {shownTitles.join(", ")}
+                {extra > 0 ? ` and ${extra} more` : ""}.
+              </p>
+            </div>
+          );
+        })()}
 
-        <p className="text-[12px] text-white/40 mt-4 flex items-center gap-1.5">
-          <Sparkles size={12} /> The more you add, the sharper your DNA gets
-        </p>
+        <div className="w-full mt-4">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-white/45">
+            <span>Level 1</span>
+            <span>Full DNA profile</span>
+          </div>
+          <div className="mt-1.5 h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${Math.min(20 + loved.length * 2.5, 55)}%`,
+                background: "linear-gradient(90deg, #7c3aed, #d946ef)",
+                boxShadow: "0 0 10px rgba(168,85,247,0.6)",
+              }}
+            />
+          </div>
+          <p className="text-[12px] text-white/50 mt-2 text-center leading-snug">
+            Take the DNA quiz or add ~15 more titles to unlock your full archetype.
+          </p>
+        </div>
 
         <button
           onClick={() => finish("/activity")}
-          className="w-full py-3.5 rounded-full font-bold text-[15px] mt-7 active:scale-95 transition-transform"
+          className="w-full py-3.5 rounded-full font-bold text-[15px] mt-6 active:scale-95 transition-transform"
           style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
         >
           View feed
+        </button>
+        <button
+          onClick={() => finish("/entertainment-dna")}
+          className="w-full py-3 rounded-full font-bold text-[14px] mt-2.5 text-purple-200 active:scale-95 transition-transform"
+          style={{ border: "1px solid rgba(168,85,247,0.5)", background: "rgba(168,85,247,0.08)" }}
+        >
+          Take the DNA quiz
         </button>
       </div>
     </Shell>

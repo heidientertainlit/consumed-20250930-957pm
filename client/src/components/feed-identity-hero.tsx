@@ -196,6 +196,26 @@ export function FeedIdentityHero() {
             </div>
           )}
 
+          {/* DNA survey nudge — finishing the quiz always generates a profile, so
+              "no profile label yet" is the reliable "hasn't completed the survey" signal */}
+          {!dna?.label && (
+            <button
+              onClick={() => setLocation("/entertainment-dna")}
+              className="relative w-full mt-4 flex items-center gap-2.5 rounded-2xl px-4 py-3 text-left active:scale-[0.98] transition-transform"
+              style={{
+                background: "rgba(168,85,247,0.12)",
+                border: "1px solid rgba(168,85,247,0.4)",
+              }}
+            >
+              <Dna size={16} className="text-purple-300 shrink-0" />
+              <span className="flex-1 text-[12.5px] leading-snug" style={{ color: "rgba(255,255,255,0.85)" }}>
+                <span className="font-bold">Take the 2-minute DNA quiz</span>
+                <span style={{ color: "rgba(255,255,255,0.55)" }}> to unlock your full Entertainment DNA</span>
+              </span>
+              <span className="text-purple-300 text-xs font-bold shrink-0">Start →</span>
+            </button>
+          )}
+
           {/* Divider */}
           <div className="relative my-5 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
 
