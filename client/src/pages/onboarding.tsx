@@ -18,20 +18,74 @@ const debate = {
   },
 };
 
-const lovedGrid = [
-  { title: "Harry Potter", type: "Movie", externalId: "671", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg" },
-  { title: "Stranger Things", type: "TV", externalId: "66732", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/uOOtwVbSr4QDjAGIifLDwpb2Pdl.jpg" },
-  { title: "The Bear", type: "TV", externalId: "136315", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/eKfVzzEazSIjJMrw9ADa2x8ksLz.jpg" },
-  { title: "Wicked", type: "Movie", externalId: "402431", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/xDGbZ0JJ3mYaGKy4Nzd9Kph6M9L.jpg" },
-  { title: "The Last of Us", type: "TV", externalId: "100088", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg" },
-  { title: "The Eras Tour", type: "Movie", externalId: "1160164", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/jf3YO8hOqGHCupsREf5qymYq1n.jpg" },
-  { title: "The Office", type: "TV", externalId: "2316", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg" },
-  { title: "Atomic Habits", type: "Book", externalId: "fFCjDQAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=fFCjDQAAQBAJ&printsec=frontcover&img=1&zoom=2" },
-  { title: "Serial", type: "Podcast", externalId: "917918570", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts221/v4/9a/fb/87/9afb8760-0e05-2b3e-24a2-7e14cce74570/mza_14816055607064169808.jpg/600x600bb.jpg" },
-  { title: "Dune: Part Two", type: "Movie", externalId: "693134", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg" },
-  { title: "HIT ME HARD AND SOFT", type: "Music", externalId: "1739659134", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg" },
-  { title: "The Hobbit", type: "Book", externalId: "OlCHcjX0RT4C", source: "googlebooks", poster: "https://books.google.com/books/content?id=OlCHcjX0RT4C&printsec=frontcover&img=1&zoom=2" },
+// All titles below were verified via the media-search edge function (real ids + posters).
+const lovedRows: { label: string; items: { title: string; externalId: string; source: string; poster: string }[] }[] = [
+  {
+    label: "Movies",
+    items: [
+      { title: "Harry Potter", externalId: "671", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg" },
+      { title: "Wicked", externalId: "402431", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/xDGbZ0JJ3mYaGKy4Nzd9Kph6M9L.jpg" },
+      { title: "The Eras Tour", externalId: "1160164", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/jf3YO8hOqGHCupsREf5qymYq1n.jpg" },
+      { title: "Dune: Part Two", externalId: "693134", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg" },
+      { title: "Barbie", externalId: "346698", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg" },
+      { title: "Oppenheimer", externalId: "872585", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg" },
+      { title: "Inside Out 2", externalId: "1022789", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg" },
+      { title: "Top Gun: Maverick", externalId: "361743", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/n0YuM4f5lvGAP6MAW2kBIzugXnc.jpg" },
+      { title: "Everything Everywhere All at Once", externalId: "545611", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/u68AjlvlutfEIcpmbYpKcdi09ut.jpg" },
+    ],
+  },
+  {
+    label: "TV Shows",
+    items: [
+      { title: "Stranger Things", externalId: "66732", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/uOOtwVbSr4QDjAGIifLDwpb2Pdl.jpg" },
+      { title: "The Bear", externalId: "136315", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/eKfVzzEazSIjJMrw9ADa2x8ksLz.jpg" },
+      { title: "The Last of Us", externalId: "100088", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg" },
+      { title: "The Office", externalId: "2316", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg" },
+      { title: "Ted Lasso", externalId: "97546", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/5fhZdwP1DVJ0FyVH6vrFdHwpXIn.jpg" },
+      { title: "The White Lotus", externalId: "111803", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/gbSaK9v1CbcYH1ISgbM7XObD2dW.jpg" },
+      { title: "Severance", externalId: "95396", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg" },
+      { title: "Friends", externalId: "1668", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/2koX1xLkpTQM4IZebYvKysFW1Nh.jpg" },
+      { title: "Yellowstone", externalId: "73586", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/vOYfRZ0NpUK5hG2CB2dJFnYJlGe.jpg" },
+    ],
+  },
+  {
+    label: "Books",
+    items: [
+      { title: "Atomic Habits", externalId: "fFCjDQAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=fFCjDQAAQBAJ&printsec=frontcover&img=1&zoom=2" },
+      { title: "The Hobbit", externalId: "OlCHcjX0RT4C", source: "googlebooks", poster: "https://books.google.com/books/content?id=OlCHcjX0RT4C&printsec=frontcover&img=1&zoom=2" },
+      { title: "Fourth Wing", externalId: "E-OLEAAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=E-OLEAAAQBAJ&printsec=frontcover&img=1&zoom=2" },
+      { title: "It Ends with Us", externalId: "UnIQEQAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=UnIQEQAAQBAJ&printsec=frontcover&img=1&zoom=2" },
+      { title: "The Housemaid", externalId: "rVIm0AEACAAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=rVIm0AEACAAJ&printsec=frontcover&img=1&zoom=2" },
+      { title: "A Court of Thorns and Roses", externalId: "E-kdBQAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=E-kdBQAAQBAJ&printsec=frontcover&img=1&zoom=2" },
+      { title: "The Midnight Library", externalId: "63fYDwAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=63fYDwAAQBAJ&printsec=frontcover&img=1&zoom=2" },
+      { title: "Onyx Storm", externalId: "Vuv4EAAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=Vuv4EAAAQBAJ&printsec=frontcover&img=1&zoom=2" },
+    ],
+  },
+  {
+    label: "Music",
+    items: [
+      { title: "HIT ME HARD AND SOFT", externalId: "1739659134", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg" },
+      { title: "Short n' Sweet", externalId: "1752214909", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a1/1c/ca/a11ccab6-7d4c-e041-d028-998bcebeb709/24UMGIM61704.rgb.jpg/600x600bb.jpg" },
+      { title: "The Tortured Poets Department", externalId: "1736268219", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/6b/7d/61/6b7d61e4-e6f1-83bc-d645-463aa06b33c4/24UMGIM29563.rgb.jpg/600x600bb.jpg" },
+      { title: "GUTS", externalId: "1694767605", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/9e/0d/17/9e0d17e0-c068-fbd9-fd85-610cc87c86aa/23UMGIM71511.rgb.jpg/600x600bb.jpg" },
+      { title: "SOS", externalId: "1658650487", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/62/93/13/6293132e-20ff-67ab-3d1f-96bb6797a6ba/196589564955.jpg/600x600bb.jpg" },
+      { title: "Midnights", externalId: "1649434996", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/67/b5/01/67b501d5-362e-797e-7dbd-942b9e273084/22UM1IM24801.rgb.jpg/600x600bb.jpg" },
+    ],
+  },
+  {
+    label: "Podcasts",
+    items: [
+      { title: "Serial", externalId: "917918570", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts221/v4/9a/fb/87/9afb8760-0e05-2b3e-24a2-7e14cce74570/mza_14816055607064169808.jpg/600x600bb.jpg" },
+      { title: "Crime Junkie", externalId: "1322200189", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts126/v4/8c/35/04/8c350430-2fbf-98d0-0a25-00b76550ffeb/mza_13445204151221888086.jpg/600x600bb.jpg" },
+      { title: "SmartLess", externalId: "1521578868", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts211/v4/b1/93/5f/b1935f9f-35be-9144-e813-626bd8dabfb4/mza_4132654708551836825.jpg/600x600bb.jpg" },
+      { title: "The Daily", externalId: "1200361736", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts221/v4/ab/64/66/ab6466a9-9a7d-e20e-7a3d-bc5be37d29ce/mza_15084852813176276273.jpg/600x600bb.jpg" },
+      { title: "Call Her Daddy", externalId: "1418960261", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts211/v4/05/10/91/05109145-8c22-5464-1f20-aaedeab769f8/mza_10276081716633787086.jpg/600x600bb.jpg" },
+      { title: "New Heights with Jason & Travis Kelce", externalId: "1643745036", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts221/v4/3a/7b/24/3a7b2444-814b-2ad4-1398-6406514a78a3/mza_6923137187248425375.jpeg/600x600bb.jpg" },
+    ],
+  },
 ];
+
+const allLovedItems = lovedRows.flatMap((r) => r.items);
 
 // Real rooms from the pools table — tapping a pill follows the room (room_follows)
 const roomOptions = [
@@ -56,6 +110,7 @@ export default function OnboardingPage() {
   const [vote, setVote] = useState<string | null | undefined>(undefined);
   const [rooms, setRooms] = useState<string[]>([]);
   const [loved, setLoved] = useState<string[]>([]);
+  const [fadingOut, setFadingOut] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const finish = (route: string) => {
@@ -90,15 +145,20 @@ export default function OnboardingPage() {
     }
   };
 
-  const toggleLoved = (title: string) =>
-    setLoved((l) => (l.includes(title) ? l.filter((t) => t !== title) : [...l, title]));
+  const addLoved = (title: string) => {
+    if (loved.includes(title)) return;
+    setLoved((l) => [...l, title]);
+    setFadingOut((f) => [...f, title]);
+    // Show "Added" briefly, then the card leaves the row and the next title slides in.
+    setTimeout(() => setFadingOut((f) => f.filter((t) => t !== title)), 800);
+  };
 
   const submitLoved = async () => {
     if (saving) return;
     setSaving(true);
     try {
       if (user?.id && loved.length > 0) {
-        const picks = lovedGrid.filter((i) => loved.includes(i.title));
+        const picks = allLovedItems.filter((i) => loved.includes(i.title));
         for (const p of picks) {
           const { error } = await supabase.from("media_ratings").upsert(
             {
@@ -352,37 +412,54 @@ export default function OnboardingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-2.5 mt-5">
-            {lovedGrid.map((item) => {
-              const selected = loved.includes(item.title);
+          <div className="mt-5 space-y-4">
+            {lovedRows.map((row) => {
+              const visible = row.items.filter(
+                (item) => !loved.includes(item.title) || fadingOut.includes(item.title),
+              );
               return (
-                <button
-                  key={item.title}
-                  onClick={() => toggleLoved(item.title)}
-                  className="relative rounded-xl overflow-hidden border transition-all active:scale-95"
-                  style={{
-                    aspectRatio: "2/3",
-                    borderColor: selected ? "#a855f7" : "rgba(255,255,255,0.1)",
-                    boxShadow: selected ? "0 0 16px rgba(168,85,247,0.45)" : "none",
-                  }}
-                >
-                  <img src={item.poster} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
-                  <span
-                    className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold"
-                    style={{ background: "rgba(0,0,0,0.65)", color: "#d8b4fe", backdropFilter: "blur(4px)" }}
-                  >
-                    {item.type}
-                  </span>
+                <div key={row.label}>
+                  <p className="text-[12px] font-bold tracking-wide text-white/70 uppercase mb-2">
+                    {row.label}
+                  </p>
                   <div
-                    className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center"
-                    style={{
-                      borderColor: selected ? "#a855f7" : "rgba(255,255,255,0.6)",
-                      background: selected ? "#a855f7" : "rgba(0,0,0,0.4)",
-                    }}
+                    className="flex gap-2.5 overflow-x-auto pb-1 -mx-5 px-5"
+                    style={{ scrollbarWidth: "none" }}
                   >
-                    {selected && <Check size={13} className="text-white" />}
+                    {visible.map((item) => {
+                      const added = fadingOut.includes(item.title);
+                      return (
+                        <button
+                          key={item.title}
+                          onClick={() => !added && addLoved(item.title)}
+                          className="relative rounded-xl overflow-hidden border transition-all active:scale-95 flex-shrink-0"
+                          style={{
+                            width: 104,
+                            aspectRatio: "2/3",
+                            borderColor: added ? "#a855f7" : "rgba(255,255,255,0.1)",
+                            boxShadow: added ? "0 0 16px rgba(168,85,247,0.45)" : "none",
+                            opacity: added ? 0.85 : 1,
+                          }}
+                        >
+                          <img src={item.poster} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+                          {added && (
+                            <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.55)" }}>
+                              <span
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold text-white"
+                                style={{ background: "#a855f7" }}
+                              >
+                                <Check size={12} /> Added
+                              </span>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                    {visible.length === 0 && (
+                      <p className="text-[12px] text-white/40 py-4">All added — nice taste.</p>
+                    )}
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
