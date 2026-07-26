@@ -196,7 +196,7 @@ export default function OnboardingPage() {
               className="text-center text-[26px] leading-[1.2] font-black mt-6"
               style={{ fontFamily: "Poppins, sans-serif" }}
             >
-              Help us start to determine your entertainment DNA
+              Help us determine your entertainment DNA by answering two quick questions
             </h1>
             <p className="text-center text-[13px] text-white/70 mt-3">
               No wrong answers. Just your take.
