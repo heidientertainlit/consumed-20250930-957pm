@@ -264,11 +264,11 @@ export default function OnboardingPage() {
                 className="text-center text-[22px] leading-[1.15] font-black text-gray-900"
                 style={{ fontFamily: "Poppins, sans-serif" }}
               >
-                Which conversations do you want to follow?
+                What do you love talking about?
               </h2>
               <div className="mx-auto mt-2.5 h-1 w-14 rounded-full bg-purple-500" />
               <p className="text-center text-[12px] text-gray-400 mt-3">
-                Pick as many as you like — we'll add them to your Rooms.
+                Follow the conversations for your favorite genres — pick as many as you like.
               </p>
               <div className="flex flex-wrap justify-center gap-2 mt-4">
                 {roomOptions.map((room) => {
