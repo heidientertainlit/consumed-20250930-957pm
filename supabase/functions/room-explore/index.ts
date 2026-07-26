@@ -24,6 +24,16 @@ const ROOM_CONFIG: Record<string, { movie: number[]; tv: number[]; without?: num
   'period-drama':    { movie: [18, 36], tv: [18], without: [16] },
   'heartwarming':    { movie: [10749], tv: [18], without: [16, 10751, 27, 878, 80, 53, 9648, 10765, 10768, 10752] },
   'rom-com':         { movie: [10749, 35], tv: [35], without: [16] },
+  'sci-fi':          { movie: [878], tv: [10765], without: [16] },
+  'documentaries':   { movie: [99], tv: [99] },
+  'animation':       { movie: [16], tv: [16] },
+  'drama':           { movie: [18], tv: [18], without: [16, 35] },
+  'romance':         { movie: [10749], tv: [18], without: [16, 35] },
+  'lifestyle':       { movie: [], tv: [10764], keyword: 'cooking' },
+  'nonfiction':      { movie: [99], tv: [99] },
+  // Self Help is book/podcast-centric — no TMDB genres; books+podcasts rails
+  // come from the term ("self help") so leave movie/tv empty.
+  'self-help':       { movie: [], tv: [] },
 };
 
 // Legacy fallback for rooms without an explicit config entry.

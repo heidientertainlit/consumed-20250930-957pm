@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Check, Sparkles, Dna, Search, Tv, Heart, Zap, Clapperboard, Wand2, Smile, Trophy } from "lucide-react";
+import { Check, Sparkles, Dna, Search, Tv, Heart, Zap, Clapperboard, Wand2, Smile, Trophy, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, BookOpen, Leaf } from "lucide-react";
 import { markOnboardingComplete } from "@/components/route-guards";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
@@ -126,6 +126,17 @@ const roomOptions = [
   { id: "58841101-ce10-46d7-9241-f7d52a11f630", name: "Fantasy", Icon: Wand2 },
   { id: "b32722af-0a76-4df3-9fa2-a94a7e3046fb", name: "Comedy", Icon: Smile },
   { id: "3e0a4b3d-e211-44c7-9633-4a6a5a9206de", name: "Sports", Icon: Trophy },
+  { id: "6ce32c55-b1ab-42ce-8e5c-6cf530e3e58b", name: "Horror", Icon: Skull },
+  { id: "0ab28a57-065e-4d7a-8bd2-09af8c3be7d9", name: "Mystery", Icon: HelpCircle },
+  { id: "cdd6dffe-70d2-45af-80b1-55e1f30ae6a5", name: "Period Drama", Icon: Crown },
+  { id: "58db44eb-d82d-4173-85d9-c4c4e288d77b", name: "Sci-Fi", Icon: Rocket },
+  { id: "41c7f7bb-faeb-4780-956e-f77f7f4adf64", name: "Documentaries", Icon: Video },
+  { id: "d7db8196-b5df-4354-944f-44c0b9857780", name: "Animation", Icon: Palette },
+  { id: "f7f22b7c-2e3b-470e-ac60-d4ee9601b16b", name: "Drama", Icon: Drama },
+  { id: "51432489-35b9-468a-a0fb-7648a7d588e3", name: "Romance", Icon: HeartHandshake },
+  { id: "dd89be31-9f46-47b9-848d-7519be038176", name: "Lifestyle", Icon: Home },
+  { id: "4792cc12-15c9-4ea3-bf50-19abfbab49de", name: "Nonfiction", Icon: BookOpen },
+  { id: "e227edc9-bcb1-4828-8360-374a9792a636", name: "Self Help", Icon: Leaf },
 ];
 
 

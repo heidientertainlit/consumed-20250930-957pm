@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Dna, Loader2, Download, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy, Sparkles, Check, ArrowLeft } from "lucide-react";
+import { Dna, Loader2, Download, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy, Sparkles, Check, ArrowLeft, ArrowRight, Search, Heart, Zap, Clapperboard, Wand2, Smile, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, Leaf } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import html2canvas from "html2canvas";
@@ -16,6 +16,41 @@ const ENTERTAINMENT_ICONS: Record<string, typeof Tv> = {
   'Gaming': Gamepad2,
   'Sports': Trophy,
 };
+
+// Official genre rooms (pools table, room_category='genre'). Tapping one both
+// follows the room AND counts as the genre answer for the DNA generator.
+// `genre` maps to the option wording on the survey's genre question.
+const GENRE_ROOMS: { id: string; name: string; genre: string | null; Icon: typeof Tv }[] = [
+  { id: "eb529882-4a66-496d-97f2-bf9981692968", name: "True Crime", genre: "Crime", Icon: Search },
+  { id: "c73774e0-c54c-44ed-8b14-ae0e3b076ddc", name: "Reality", genre: "Reality", Icon: Tv },
+  { id: "a776d7dd-8206-4381-b847-17ff6f1e0d67", name: "Heartwarming", genre: "Romance", Icon: Heart },
+  { id: "9e424f35-cd99-43ff-b695-d0ae89747b5a", name: "Action & Thriller", genre: "Action", Icon: Zap },
+  { id: "47182919-da7a-41bb-9688-50ec11561e53", name: "Rom-Com", genre: "Rom-com/chick-lit", Icon: Clapperboard },
+  { id: "58841101-ce10-46d7-9241-f7d52a11f630", name: "Fantasy", genre: "Fantasy", Icon: Wand2 },
+  { id: "b32722af-0a76-4df3-9fa2-a94a7e3046fb", name: "Comedy", genre: "Comedy", Icon: Smile },
+  { id: "3e0a4b3d-e211-44c7-9633-4a6a5a9206de", name: "Sports", genre: null, Icon: Trophy },
+  { id: "6ce32c55-b1ab-42ce-8e5c-6cf530e3e58b", name: "Horror", genre: "Horror", Icon: Skull },
+  { id: "0ab28a57-065e-4d7a-8bd2-09af8c3be7d9", name: "Mystery", genre: "Mystery/Thriller", Icon: HelpCircle },
+  { id: "cdd6dffe-70d2-45af-80b1-55e1f30ae6a5", name: "Period Drama", genre: "Historical", Icon: Crown },
+  { id: "58db44eb-d82d-4173-85d9-c4c4e288d77b", name: "Sci-Fi", genre: "Science Fiction", Icon: Rocket },
+  { id: "41c7f7bb-faeb-4780-956e-f77f7f4adf64", name: "Documentaries", genre: "Documentaries", Icon: Video },
+  { id: "d7db8196-b5df-4354-944f-44c0b9857780", name: "Animation", genre: "Animation", Icon: Palette },
+  { id: "f7f22b7c-2e3b-470e-ac60-d4ee9601b16b", name: "Drama", genre: "Drama", Icon: Drama },
+  { id: "51432489-35b9-468a-a0fb-7648a7d588e3", name: "Romance", genre: "Romance", Icon: HeartHandshake },
+  { id: "dd89be31-9f46-47b9-848d-7519be038176", name: "Lifestyle", genre: "Lifestyle (Home Reno, Food, Travel)", Icon: Home },
+  { id: "4792cc12-15c9-4ea3-bf50-19abfbab49de", name: "Nonfiction", genre: "Nonfiction", Icon: BookOpen },
+  { id: "e227edc9-bcb1-4828-8360-374a9792a636", name: "Self Help", genre: "Self Help", Icon: Leaf },
+];
+
+const TYPE_FROM_MEDIA: Record<string, string> = {
+  movie: "Movies",
+  tv: "TV Shows",
+  book: "Books",
+  podcast: "Podcasts",
+  music: "Music",
+};
+
+const SUPABASE_URL = "https://mahpgcogwpawvviapqza.supabase.co";
 
 interface SurveyAnswer {
   questionId: string;
@@ -52,6 +87,13 @@ export default function EntertainmentDNAPage() {
   const [loadingMessage, setLoadingMessage] = useState("Analyzing your responses...");
   const [isDownloading, setIsDownloading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Stepped flow state + pre-fill from onboarding activity.
+  const [step, setStep] = useState(0);
+  const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
+  const [initialFollows, setInitialFollows] = useState<Set<string>>(new Set());
+  const [alreadyAdded, setAlreadyAdded] = useState<string[]>([]);
+  const [prefilled, setPrefilled] = useState(false);
 
   const getAnswer = (questionId: string) => {
     return answers.find(a => a.questionId === questionId)?.answer;
@@ -98,6 +140,58 @@ export default function EntertainmentDNAPage() {
     fetchSurveyQuestions();
   }, [session?.access_token]);
 
+  // Pre-fill: rooms they already follow (checked pills) and titles they've
+  // already rated (shown as "already in your DNA" chips + media-type prefill).
+  useEffect(() => {
+    if (!session?.access_token || !session?.user?.id || surveyQuestions.length === 0 || prefilled) return;
+    const headers = {
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+    };
+    const load = async () => {
+      try {
+        const [followsRes, ratingsRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/room_follows?select=room_id&user_id=eq.${session.user.id}`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/media_ratings?select=title,media_type&user_id=eq.${session.user.id}&order=created_at.desc&limit=30`, { headers }),
+        ]);
+        const follows = followsRes.ok ? await followsRes.json() : [];
+        const ratings = ratingsRes.ok ? await ratingsRes.json() : [];
+
+        const genreRoomIds = new Set(GENRE_ROOMS.map((r) => r.id));
+        const followed = (follows as { room_id: string }[])
+          .map((f) => f.room_id)
+          .filter((id) => genreRoomIds.has(id));
+        setInitialFollows(new Set(followed));
+        setSelectedRooms(followed);
+
+        const titles: string[] = [];
+        const types = new Set<string>();
+        for (const r of ratings as { title: string; media_type: string }[]) {
+          if (r.title && !titles.includes(r.title)) titles.push(r.title);
+          const t = TYPE_FROM_MEDIA[(r.media_type || '').toLowerCase()];
+          if (t) types.add(t);
+        }
+        setAlreadyAdded(titles.slice(0, 12));
+
+        // Pre-check media types from what they've actually added.
+        const typesQ = surveyQuestions.find((q) => q.display_order === 2);
+        if (typesQ && types.size > 0) {
+          setAnswers((prev) => prev.some((a) => a.questionId === typesQ.id)
+            ? prev
+            : [...prev, { questionId: typesQ.id, answer: Array.from(types) }]);
+        }
+      } catch (e) {
+        console.error('[dna prefill]', e);
+      } finally {
+        setPrefilled(true);
+      }
+    };
+    load();
+  }, [session?.access_token, session?.user?.id, surveyQuestions, prefilled]);
+
+  const toggleRoom = (id: string) =>
+    setSelectedRooms((r) => (r.includes(id) ? r.filter((x) => x !== id) : [...r, id]));
+
   const handleAnswer = (questionId: string, value: string | string[]) => {
     const newAnswers = answers.filter(a => a.questionId !== questionId);
     newAnswers.push({ questionId, answer: value });
@@ -122,7 +216,41 @@ export default function EntertainmentDNAPage() {
     }, 6000);
     
     try {
-      for (const answer of answers) {
+      const authHeaders = {
+        'Authorization': `Bearer ${session?.access_token}`,
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json',
+      };
+
+      // Sync room follows: add newly tapped rooms, remove explicitly untapped ones.
+      const toAdd = selectedRooms.filter((id) => !initialFollows.has(id));
+      const toRemove = Array.from(initialFollows).filter((id) => !selectedRooms.includes(id));
+      await Promise.all([
+        ...toAdd.map((room_id) =>
+          fetch(`${SUPABASE_URL}/rest/v1/room_follows`, {
+            method: 'POST',
+            headers: { ...authHeaders, 'Prefer': 'resolution=ignore-duplicates,return=minimal' },
+            body: JSON.stringify({ user_id: session?.user?.id, room_id }),
+          }).then((res) => { if (!res.ok) console.error('[dna room follow] failed', room_id, res.status); })
+            .catch((e) => console.error('[dna room follow]', e))),
+        ...toRemove.map((room_id) =>
+          fetch(`${SUPABASE_URL}/rest/v1/room_follows?user_id=eq.${session?.user?.id}&room_id=eq.${room_id}`, {
+            method: 'DELETE',
+            headers: authHeaders,
+          }).then((res) => { if (!res.ok) console.error('[dna room unfollow] failed', room_id, res.status); })
+            .catch((e) => console.error('[dna room unfollow]', e))),
+      ]);
+
+      // The rooms they picked double as the genre answer for the DNA generator.
+      const genresQ = surveyQuestions.find((q) => q.display_order === 3);
+      const roomGenres = Array.from(new Set(
+        GENRE_ROOMS.filter((r) => selectedRooms.includes(r.id) && r.genre).map((r) => r.genre as string)
+      ));
+      const allAnswers: SurveyAnswer[] = genresQ && roomGenres.length > 0
+        ? [...answers.filter((a) => a.questionId !== genresQ.id), { questionId: genresQ.id, answer: roomGenres }]
+        : answers;
+
+      for (const answer of allAnswers) {
         await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/edna_responses', {
           method: 'POST',
           headers: {
@@ -186,15 +314,30 @@ export default function EntertainmentDNAPage() {
     }
   };
 
-  const isComplete = () => {
-    const requiredQuestions = questions.filter(q => q.is_required);
-    return requiredQuestions.every(q => {
-      const answer = getAnswer(q.id);
-      if (!answer) return false;
-      if (Array.isArray(answer)) return answer.length > 0;
-      return answer.trim().length > 0;
-    });
+  const qByOrder = (n: number) => questions.find((q) => q.display_order === n);
+
+  const hasAnswer = (q?: SurveyQuestion) => {
+    if (!q) return false;
+    const a = getAnswer(q.id);
+    if (!a) return false;
+    return Array.isArray(a) ? a.length > 0 : a.trim().length > 0;
   };
+
+  // At least one selected room must map to a survey genre (Sports maps to none),
+  // so the required genres answer is always written on submit.
+  const hasMappableRoom = GENRE_ROOMS.some((r) => selectedRooms.includes(r.id) && r.genre);
+
+  // Step gating: 0 = types + rooms, 1 = drivers + open-ended, 2 = gender.
+  const stepComplete = (s: number) => {
+    if (s === 0) return hasAnswer(qByOrder(2)) && hasMappableRoom;
+    if (s === 1) return hasAnswer(qByOrder(5));
+    return hasAnswer(qByOrder(1));
+  };
+
+  // DNA completion % shown in the header bar. Credit for what they've already
+  // added (onboarding picks / follows), climbing as steps are finished.
+  const basePct = alreadyAdded.length > 0 ? 35 : 10;
+  const dnaPct = Math.min(90, basePct + step * Math.round((90 - basePct) / 3));
 
   if (loading || !session) {
     return (
@@ -353,219 +496,252 @@ export default function EntertainmentDNAPage() {
     );
   }
 
-  const renderQuestion = (question: SurveyQuestion) => {
-    const currentAnswer = getAnswer(question.id);
-    
+  // ── Stepped survey (dark, matches onboarding aesthetics) ──────────────
+  const typesQ = qByOrder(2);
+  const driversQ = qByOrder(5);
+  const loveQ = qByOrder(4);
+  const genderQ = qByOrder(1);
+
+  const pill = (selected: boolean) =>
+    `px-4 py-2.5 rounded-full text-sm flex items-center gap-2 text-left transition-all border ${
+      selected
+        ? "border-purple-400 text-white font-medium shadow-md shadow-purple-500/30"
+        : "border-white/15 bg-white/5 text-white/80 hover:bg-white/10"
+    }`;
+  const pillStyle = (selected: boolean) =>
+    selected ? { background: "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)" } : undefined;
+
+  const renderMulti = (q: SurveyQuestion, withIcons = false) => {
+    const current = getAnswer(q.id);
+    const currentAnswers = Array.isArray(current) ? current : [];
     return (
-      <div key={question.id} className="mb-8" data-testid={`question-${question.id}`}>
-        <h3 className="text-lg font-semibold text-gray-900 mb-3 leading-relaxed">
-          {question.question_text}
-          {!question.is_required && <span className="text-gray-400 text-sm font-normal ml-2">(optional)</span>}
-        </h3>
-
-        {question.question_type === 'text' && (
-          <textarea
-            value={(currentAnswer as string) || ""}
-            onChange={(e) => handleAnswer(question.id, e.target.value)}
-            placeholder="Just jot down a bunch of things you love..."
-            className="w-full p-3 border border-gray-200 rounded-xl focus:border-purple-300 focus:ring-purple-300 min-h-[100px] resize-vertical text-black bg-white placeholder:text-gray-400 text-sm"
-            data-testid={`text-input-${question.id}`}
-          />
-        )}
-
-        {question.question_type === 'select' && (
-          <div className="flex flex-wrap gap-2">
-            {question.options?.map((option, index) => {
-              const isSelected = currentAnswer === option;
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleAnswer(question.id, option)}
-                  className={`px-4 py-2 rounded-full border-2 transition-all text-sm ${
-                    isSelected
-                      ? 'border-purple-600 bg-purple-600 text-white font-medium'
-                      : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50 text-gray-700'
-                  }`}
-                  data-testid={`option-${question.id}-${option.replace(' (please specify)', '')}`}
-                >
-                  {option.replace(' (please specify)', '')}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {question.question_type === 'multi-select' && (
-          <div className="flex flex-wrap gap-2">
-            {question.options?.map((option, index) => {
-              const currentAnswers = Array.isArray(currentAnswer) ? currentAnswer : [];
-              const isChecked = currentAnswers.includes(option);
-
-              return (
-                <button
-                  key={index}
-                  onClick={() => {
-                    const updatedAnswers = isChecked
-                      ? currentAnswers.filter(a => a !== option)
-                      : [...currentAnswers, option];
-                    handleAnswer(question.id, updatedAnswers);
-                  }}
-                  className={`px-4 py-2 rounded-full border-2 transition-all text-sm ${
-                    isChecked
-                      ? 'border-purple-600 bg-purple-600 text-white font-medium'
-                      : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50 text-gray-700'
-                  }`}
-                  data-testid={`multi-option-${question.id}-${option.replace(' (please specify)', '')}`}
-                >
-                  {option.replace(' (please specify)', '')}
-                </button>
-              );
-            })}
-          </div>
-        )}
+      <div className="flex flex-wrap gap-2">
+        {q.options?.map((option, index) => {
+          const isChecked = currentAnswers.includes(option);
+          const clean = option.replace(" (please specify)", "");
+          const IconComponent = withIcons ? ENTERTAINMENT_ICONS[clean] : undefined;
+          return (
+            <button
+              key={index}
+              onClick={() => {
+                const updated = isChecked
+                  ? currentAnswers.filter((a) => a !== option)
+                  : [...currentAnswers, option];
+                handleAnswer(q.id, updated);
+              }}
+              className={pill(isChecked)}
+              style={pillStyle(isChecked)}
+              data-testid={`multi-option-${q.id}-${clean}`}
+            >
+              {IconComponent && <IconComponent size={15} />}
+              {clean}
+              {isChecked && <Check size={15} />}
+            </button>
+          );
+        })}
       </div>
     );
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-
-      {/* Dark purple gradient hero */}
-      <div
-        className="px-5 pt-5 pb-10"
-        style={{ background: "linear-gradient(135deg, #0a0a0f 0%, #12121f 50%, #2d1f4e 100%)" }}
-      >
-        {/* Back Button */}
-        <button
-          onClick={() => setLocation('/')}
-          className="flex items-center gap-2 text-white/50 hover:text-white/80 mb-6 transition-colors"
-        >
-          <ArrowLeft size={18} />
-          <span className="text-sm">Back</span>
-        </button>
-
-        {/* Header */}
-        <div className="w-12 h-12 bg-purple-600/30 border border-purple-500/40 rounded-2xl flex items-center justify-center mb-4">
-          <Dna className="text-purple-300" size={24} />
-        </div>
-        <h1
-          className="text-[1.6rem] font-bold text-white leading-tight mb-2"
-          style={{ fontFamily: "Poppins, sans-serif" }}
-        >
-          Your entertainment DNA starts here
-        </h1>
-        <p className="text-white/50 text-sm">Answer a few quick questions to shape your taste profile.</p>
-        <button
-          onClick={() => window.location.href = '/activity'}
-          className="text-xs text-purple-400 hover:text-purple-300 mt-3"
-        >
-          Skip for now
-        </button>
+  const renderSelect = (q: SurveyQuestion) => {
+    const current = getAnswer(q.id);
+    return (
+      <div className="flex flex-wrap gap-2">
+        {q.options?.map((option, index) => {
+          const isSelected = current === option;
+          return (
+            <button
+              key={index}
+              onClick={() => handleAnswer(q.id, option)}
+              className={pill(isSelected)}
+              style={pillStyle(isSelected)}
+              data-testid={`option-${q.id}-${option}`}
+            >
+              {option}
+              {isSelected && <Check size={15} />}
+            </button>
+          );
+        })}
       </div>
+    );
+  };
 
-      {/* Questions — white area */}
-      <div className="px-5 pt-6 pb-10 max-w-lg mx-auto">
-        {/* DNA Questions */}
-        <div className="space-y-6 mb-8">
-          {questions.map((question) => {
-            const currentAnswer = getAnswer(question.id);
-            
-            return (
-              <div key={question.id} className="bg-gray-50 rounded-xl p-5 border border-gray-200" data-testid={`question-${question.id}`}>
-                {question.question_type === 'text' ? (
-                  <>
-                    <h3 className="text-base font-semibold text-gray-900 mb-1 leading-tight">
-                      What do you love?
-                    </h3>
-                    <p className="text-gray-600 text-sm leading-snug mb-2">
-                      Drop anything you're into lately or always come back to — books, shows, teams, creators, comfort rewatches, guilty pleasures. Whatever feels you.
-                      <span className="text-gray-400 ml-1">(optional)</span>
-                    </p>
-                    <textarea
-                      value={(currentAnswer as string) || ""}
-                      onChange={(e) => handleAnswer(question.id, e.target.value)}
-                      placeholder="Type freely — one thing per line or however it comes out."
-                      className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:border-purple-400 focus:ring-purple-400 min-h-[100px] resize-vertical text-black placeholder:text-gray-400 text-sm"
-                      data-testid={`text-input-${question.id}`}
-                    />
-                    <p className="text-gray-400 text-xs mt-2 text-center">Scroll down to continue</p>
-                  </>
-                ) : (
-                  <h3 className="text-base font-semibold text-gray-900 mb-2 leading-snug">
-                    {question.question_text}
-                    {!question.is_required && <span className="text-gray-400 text-sm font-normal ml-2">(optional)</span>}
-                  </h3>
-                )}
+  const stepTitles = ["What you're into", "What it does for you", "Last thing"];
+  const totalSteps = 3;
 
-                {question.question_type === 'select' && (
-                  <div className="flex flex-wrap gap-2">
-                    {question.options?.map((option, index) => {
-                      const isSelected = currentAnswer === option;
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => handleAnswer(question.id, option)}
-                          className={`px-5 py-2.5 rounded-full transition-all text-sm flex items-center gap-2 text-left ${
-                            isSelected
-                              ? 'bg-purple-700 border-2 border-purple-400 text-white font-medium shadow-md shadow-purple-500/20'
-                              : 'bg-gradient-to-r from-violet-600 to-purple-700 text-white shadow-sm shadow-purple-500/20'
-                          }`}
-                          data-testid={`option-${question.id}-${option.replace(' (please specify)', '')}`}
-                        >
-                          {option.replace(' (please specify)', '')}
-                          {isSelected && <Check size={16} />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+  return (
+    <div className="min-h-screen w-full flex items-stretch justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900">
+      <div className="w-full max-w-[430px] flex flex-col text-white relative bg-gradient-to-b from-slate-900/60 via-purple-950/40 to-purple-900/50 px-5 pb-10">
+        {/* Header */}
+        <div className="pt-5">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => (step > 0 ? setStep(step - 1) : setLocation("/"))}
+              className="flex items-center gap-2 text-white/50 hover:text-white/80 transition-colors"
+              data-testid="dna-back-button"
+            >
+              <ArrowLeft size={18} />
+              <span className="text-sm">{step > 0 ? "Back" : "Exit"}</span>
+            </button>
+            <button
+              onClick={() => setLocation("/activity")}
+              className="text-xs text-purple-400 hover:text-purple-300"
+            >
+              Skip for now
+            </button>
+          </div>
 
-                {question.question_type === 'multi-select' && (
-                  <div className="flex flex-wrap gap-2">
-                    {question.options?.map((option, index) => {
-                      const currentAnswers = Array.isArray(currentAnswer) ? currentAnswer : [];
-                      const isChecked = currentAnswers.includes(option);
-                      const cleanOption = option.replace(' (please specify)', '');
-                      const IconComponent = ENTERTAINMENT_ICONS[cleanOption];
-
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => {
-                            const updatedAnswers = isChecked
-                              ? currentAnswers.filter(a => a !== option)
-                              : [...currentAnswers, option];
-                            handleAnswer(question.id, updatedAnswers);
-                          }}
-                          className={`px-5 py-2.5 rounded-full transition-all text-sm flex items-center gap-2 text-left ${
-                            isChecked
-                              ? 'bg-purple-700 border-2 border-purple-400 text-white font-medium shadow-md shadow-purple-500/20'
-                              : 'bg-gradient-to-r from-violet-600 to-purple-700 text-white shadow-sm shadow-purple-500/20'
-                          }`}
-                          data-testid={`multi-option-${question.id}-${cleanOption}`}
-                        >
-                          {IconComponent && <IconComponent size={16} />}
-                          {cleanOption}
-                          {isChecked && <Check size={16} />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+          {/* DNA progress */}
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-9 h-9 bg-purple-600/30 border border-purple-500/40 rounded-xl flex items-center justify-center shrink-0">
+              <Dna className="text-purple-300" size={18} />
+            </div>
+            <div className="flex-1">
+              <div className="flex justify-between text-[11px] text-white/50 mb-1">
+                <span>Your DNA</span>
+                <span>{dnaPct}% complete</span>
               </div>
-            );
-          })}
+              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${dnaPct}%`, background: "linear-gradient(90deg, #7c3aed, #d946ef)" }}
+                />
+              </div>
+            </div>
+          </div>
+          <p className="text-white/40 text-xs mt-2 mb-1">
+            Step {step + 1} of {totalSteps} — {stepTitles[step]}
+          </p>
         </div>
 
-        {/* Action Button */}
-        <Button
-          onClick={generateDNA}
-          disabled={!isComplete()}
-          className="w-full bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600 text-white font-semibold rounded-full py-4 text-base shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-          data-testid="get-dna-button"
-        >
-          Discover Your DNA
-        </Button>
+        {/* Step content */}
+        <div className="flex-1 pt-4 space-y-6">
+          {step === 0 && (
+            <>
+              {typesQ && (
+                <div>
+                  <h2 className="text-lg font-bold leading-snug mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                    What do you like to consume?
+                  </h2>
+                  <p className="text-white/50 text-sm mb-3">Select all that apply.</p>
+                  {renderMulti(typesQ, true)}
+                </div>
+              )}
+              <div>
+                <h2 className="text-lg font-bold leading-snug mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                  Pick your rooms
+                </h2>
+                <p className="text-white/50 text-sm mb-3">
+                  Join the conversations you'd actually hang out in. These shape your DNA too.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {GENRE_ROOMS.map((room) => {
+                    const on = selectedRooms.includes(room.id);
+                    const Icon = room.Icon;
+                    return (
+                      <button
+                        key={room.id}
+                        onClick={() => toggleRoom(room.id)}
+                        className={pill(on)}
+                        style={pillStyle(on)}
+                        data-testid={`room-pill-${room.name}`}
+                      >
+                        <Icon size={15} />
+                        {room.name}
+                        {on && <Check size={15} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+
+          {step === 1 && (
+            <>
+              {driversQ && (
+                <div>
+                  <h2 className="text-lg font-bold leading-snug mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                    What drives your choices?
+                  </h2>
+                  <p className="text-white/50 text-sm mb-3">Pick up to 3.</p>
+                  {renderMulti(driversQ)}
+                </div>
+              )}
+              {loveQ && (
+                <div>
+                  <h2 className="text-lg font-bold leading-snug mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                    What do you love?
+                  </h2>
+                  <p className="text-white/50 text-sm mb-3">
+                    What else are you into that we haven't asked about? Teams, athletes, musicians,
+                    authors, comfort rewatches — anything. <span className="text-white/30">(optional)</span>
+                  </p>
+                  <textarea
+                    value={(getAnswer(loveQ.id) as string) || ""}
+                    onChange={(e) => handleAnswer(loveQ.id, e.target.value)}
+                    placeholder="Type freely — one thing per line or however it comes out."
+                    className="w-full p-3 bg-white/5 border border-white/15 rounded-xl focus:border-purple-400 focus:outline-none min-h-[110px] resize-vertical text-white placeholder:text-white/30 text-sm"
+                    data-testid={`text-input-${loveQ.id}`}
+                  />
+                  {alreadyAdded.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-white/40 text-xs mb-2">Already added to your DNA</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {alreadyAdded.map((t) => (
+                          <span
+                            key={t}
+                            className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/40 text-xs"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          {step === 2 && genderQ && (
+            <div>
+              <h2 className="text-lg font-bold leading-snug mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                One quick detail
+              </h2>
+              <p className="text-white/50 text-sm mb-3">{genderQ.question_text}</p>
+              {renderSelect(genderQ)}
+              <p className="text-white/30 text-xs mt-6">
+                That's everything — hit the button below to generate your Entertainment DNA.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer button */}
+        <div className="pt-6">
+          {step < totalSteps - 1 ? (
+            <button
+              onClick={() => setStep(step + 1)}
+              disabled={!stepComplete(step)}
+              className="w-full text-white font-semibold rounded-full py-3.5 text-base shadow-lg shadow-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
+              data-testid="dna-continue-button"
+            >
+              Continue
+              <ArrowRight size={18} />
+            </button>
+          ) : (
+            <Button
+              onClick={generateDNA}
+              disabled={!stepComplete(2)}
+              className="w-full bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600 text-white font-semibold rounded-full py-4 text-base shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="get-dna-button"
+            >
+              Discover Your DNA
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
