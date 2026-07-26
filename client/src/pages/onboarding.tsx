@@ -322,9 +322,38 @@ export default function OnboardingPage() {
           </h1>
           <p className="text-center text-[13px] text-white/60 mt-2">
             Tap everything you've <span className="text-purple-300 font-semibold">loved</span>.
-            <br />
-            Every pick counts as a 5-star rating on your profile.
           </p>
+
+          <div className="flex flex-col items-center mt-5">
+            <p className="text-[11px] tracking-[0.2em] font-bold text-purple-300 uppercase">
+              Entertainment DNA
+            </p>
+            <div className="flex items-center gap-2 mt-3">
+              {Array.from({ length: 10 }).map((_, i) => {
+                const filled = i < Math.min(loved.length, 10);
+                return (
+                  <div
+                    key={i}
+                    className="w-3 h-3 rounded-full transition-all"
+                    style={{
+                      background: filled ? "#a855f7" : "rgba(255,255,255,0.15)",
+                      boxShadow: filled ? "0 0 8px rgba(168,85,247,0.7)" : "none",
+                    }}
+                  />
+                );
+              })}
+            </div>
+            <p className="text-sm font-bold text-white/80 mt-2.5">
+              {Math.min(loved.length, 10)} / 10
+            </p>
+            <p className="text-[12px] text-white/55 mt-1">
+              {loved.length < 3
+                ? `Pick at least ${3 - loved.length} more to continue`
+                : loved.length < 10
+                  ? `${10 - loved.length} more to unlock your Entertainment DNA`
+                  : "Your Entertainment DNA is unlocked"}
+            </p>
+          </div>
 
           <div className="grid grid-cols-3 gap-2.5 mt-5">
             {lovedGrid.map((item) => {
@@ -359,37 +388,6 @@ export default function OnboardingPage() {
                 </button>
               );
             })}
-          </div>
-
-          <div className="flex flex-col items-center mt-6">
-            <p className="text-[11px] tracking-[0.2em] font-bold text-purple-300 uppercase">
-              Entertainment DNA
-            </p>
-            <div className="flex items-center gap-2 mt-3">
-              {Array.from({ length: 10 }).map((_, i) => {
-                const filled = i < Math.min(loved.length, 10);
-                return (
-                  <div
-                    key={i}
-                    className="w-3 h-3 rounded-full transition-all"
-                    style={{
-                      background: filled ? "#a855f7" : "rgba(255,255,255,0.15)",
-                      boxShadow: filled ? "0 0 8px rgba(168,85,247,0.7)" : "none",
-                    }}
-                  />
-                );
-              })}
-            </div>
-            <p className="text-sm font-bold text-white/80 mt-2.5">
-              {Math.min(loved.length, 10)} / 10
-            </p>
-            <p className="text-[12px] text-white/55 mt-1">
-              {loved.length < 3
-                ? `Pick at least ${3 - loved.length} more to continue`
-                : loved.length < 10
-                  ? `${10 - loved.length} more to unlock your Entertainment DNA`
-                  : "Your Entertainment DNA is unlocked"}
-            </p>
           </div>
 
           <button
