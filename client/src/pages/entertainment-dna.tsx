@@ -510,6 +510,20 @@ export default function EntertainmentDNAPage() {
     }`;
   const pillStyle = (_selected: boolean) => undefined;
 
+  // Short display labels for the long driver options. The full original
+  // strings are still what gets saved — this is display-only.
+  const SHORT_LABELS: Record<string, string> = {
+    "I want to feel something—laugh, cry, get emotional": "Feeling all the feels",
+    "I’m looking to escape": "Escaping reality",
+    "I want something to connect over with others": "Connecting with others",
+    "I’m in it for the visuals, the style, the overall vibe": "The vibes and visuals",
+    "I need something easy to unwind": "Easy unwinding",
+    "I love trying to figure things out—mysteries, problems, twists": "Solving the mystery",
+    "I’m curious about people and why they do what they do": "Understanding people",
+    "I just want something fun or action packed": "Fun and action",
+    "It depends on the day": "Depends on the day",
+  };
+
   const renderMulti = (q: SurveyQuestion, withIcons = false) => {
     const current = getAnswer(q.id);
     const currentAnswers = Array.isArray(current) ? current : [];
@@ -517,7 +531,7 @@ export default function EntertainmentDNAPage() {
       <div className="flex flex-wrap gap-2">
         {q.options?.map((option, index) => {
           const isChecked = currentAnswers.includes(option);
-          const clean = option.replace(" (please specify)", "");
+          const clean = SHORT_LABELS[option.replace(" (please specify)", "")] || option.replace(" (please specify)", "");
           const IconComponent = withIcons ? ENTERTAINMENT_ICONS[clean] : undefined;
           return (
             <button
