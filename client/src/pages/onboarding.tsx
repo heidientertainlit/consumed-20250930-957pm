@@ -205,13 +205,18 @@ export default function OnboardingPage() {
 
           {/* White body */}
           <div className="flex-1 flex flex-col px-6 pt-7 pb-10">
-            <h2
-              className="text-center text-[22px] leading-[1.15] font-black text-gray-900"
-              style={{ fontFamily: "Poppins, sans-serif" }}
-            >
-              Settle the debate.
-            </h2>
-            <div className="mx-auto mt-2.5 h-1 w-14 rounded-full bg-purple-500" />
+            <div className="flex justify-center">
+              <h2
+                className="text-center text-[20px] leading-[1.15] font-black text-white px-6 py-2.5 rounded-full"
+                style={{
+                  fontFamily: "Poppins, sans-serif",
+                  background: "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)",
+                  boxShadow: "0 6px 18px rgba(124,58,237,0.3)",
+                }}
+              >
+                Settle the debate.
+              </h2>
+            </div>
 
             <div className="flex items-center justify-center gap-3 mt-6 relative">
               {[debate.left, debate.right].map((side) => {
@@ -260,13 +265,18 @@ export default function OnboardingPage() {
             </div>
 
             <div className="mt-9">
-              <h2
-                className="text-center text-[22px] leading-[1.15] font-black text-gray-900"
-                style={{ fontFamily: "Poppins, sans-serif" }}
-              >
-                What do you love talking about?
-              </h2>
-              <div className="mx-auto mt-2.5 h-1 w-14 rounded-full bg-purple-500" />
+              <div className="flex justify-center">
+                <h2
+                  className="text-center text-[20px] leading-[1.15] font-black text-white px-6 py-2.5 rounded-full"
+                  style={{
+                    fontFamily: "Poppins, sans-serif",
+                    background: "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)",
+                    boxShadow: "0 6px 18px rgba(124,58,237,0.3)",
+                  }}
+                >
+                  What do you love talking about?
+                </h2>
+              </div>
               <p className="text-center text-[12px] text-gray-400 mt-3">
                 Follow the conversations for your favorite genres — pick as many as you like.
               </p>
