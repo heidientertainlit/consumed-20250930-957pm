@@ -575,7 +575,7 @@ export default function EntertainmentDNAPage() {
         {/* Dark purple gradient header */}
         <div
           className="px-5 pt-5 pb-6 text-white"
-          style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #4c1d95 55%, #6d28d9 100%)" }}
+          style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}
         >
           <div className="flex items-center justify-between mb-4">
             <button
@@ -632,11 +632,8 @@ export default function EntertainmentDNAPage() {
               )}
               <div>
                 <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
-                  Pick your rooms
+                  What conversations do you want to follow?
                 </h2>
-                <p className="text-gray-500 text-sm mb-3">
-                  Join the conversations you'd actually hang out in. These shape your DNA too.
-                </p>
                 <div className="flex flex-wrap gap-2">
                   {[...GENRE_ROOMS]
                     .sort((a, b) => Number(initialFollows.has(a.id)) - Number(initialFollows.has(b.id)))
