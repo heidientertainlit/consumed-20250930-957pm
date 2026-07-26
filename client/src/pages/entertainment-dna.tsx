@@ -506,7 +506,7 @@ export default function EntertainmentDNAPage() {
     `px-4 py-2.5 rounded-full text-sm flex items-center gap-2 text-left transition-all border ${
       selected
         ? "border-gray-300 bg-gray-200 text-gray-900 font-medium shadow-sm"
-        : "border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50"
+        : "border-gray-300 bg-white text-gray-800 hover:border-purple-300 hover:bg-purple-50"
     }`;
   const pillStyle = (_selected: boolean) => undefined;
 
@@ -635,7 +635,7 @@ export default function EntertainmentDNAPage() {
                   <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                     What do you like to consume?
                   </h2>
-                  <p className="text-gray-500 text-sm mb-3">Select all that apply.</p>
+                  <p className="text-gray-600 text-sm mb-3">Select all that apply.</p>
                   {renderMulti(typesQ, true)}
                 </div>
               )}
@@ -675,14 +675,14 @@ export default function EntertainmentDNAPage() {
                   <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                     What do you love?
                   </h2>
-                  <p className="text-gray-500 text-sm mb-3">
-                    What else are you into that we haven't asked about? Teams, athletes, musicians,
-                    authors, comfort rewatches — anything. <span className="text-gray-400">(optional)</span>
+                  <p className="text-gray-600 text-sm mb-3">
+                    Teams, musicians, authors, comfort rewatches — anything else.{" "}
+                    <span className="text-gray-400">(optional)</span>
                   </p>
                   <textarea
                     value={(getAnswer(loveQ.id) as string) || ""}
                     onChange={(e) => handleAnswer(loveQ.id, e.target.value)}
-                    placeholder="Type freely — one thing per line or however it comes out."
+                    placeholder="Type anything you love..."
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-purple-400 focus:outline-none min-h-[110px] resize-vertical text-gray-900 placeholder:text-gray-400 text-sm"
                     data-testid={`text-input-${loveQ.id}`}
                   />
@@ -708,7 +708,7 @@ export default function EntertainmentDNAPage() {
                   <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                     What drives your choices?
                   </h2>
-                  <p className="text-gray-500 text-sm mb-3">Pick up to 3.</p>
+                  <p className="text-gray-600 text-sm mb-3">Pick up to 3.</p>
                   {renderMulti(driversQ)}
                 </div>
               )}
@@ -721,7 +721,7 @@ export default function EntertainmentDNAPage() {
               <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                 One quick detail
               </h2>
-              <p className="text-gray-500 text-sm mb-3">{genderQ.question_text}</p>
+              <p className="text-gray-600 text-sm mb-3">{genderQ.question_text}</p>
               {renderSelect(genderQ)}
               <p className="text-gray-400 text-xs mt-6">
                 That's everything — hit the button below to generate your Entertainment DNA.
