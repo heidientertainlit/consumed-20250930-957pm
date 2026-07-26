@@ -601,13 +601,13 @@ export default function EntertainmentDNAPage() {
             </div>
             <div className="min-w-0">
               <p className="text-purple-300 text-[11px] font-semibold tracking-[0.15em] uppercase mb-0.5">
-                You're building
+                Finish building
               </p>
               <h1
                 className="text-2xl font-bold leading-tight"
                 style={{ fontFamily: "Poppins, sans-serif" }}
               >
-                Finish Your Entertainment DNA
+                Your Entertainment DNA
               </h1>
             </div>
           </div>
