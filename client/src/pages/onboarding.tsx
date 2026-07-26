@@ -375,13 +375,13 @@ export default function OnboardingPage() {
       <Shell>
         <ProgressBar current={1} />
         <div className="flex-1 flex flex-col px-5 pt-6 pb-8">
-          <h1 className="text-center text-[26px] leading-[1.2] font-black" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Every title you add shapes your
+          <h1 className="text-center text-[22px] leading-[1.25] font-black" style={{ fontFamily: "Poppins, sans-serif" }}>
+            Every title you add shapes
             <br />
-            Entertainment <span className="text-purple-400">DNA</span>
+            your Entertainment DNA
           </h1>
           <p className="text-center text-[13px] text-white/60 mt-2">
-            Tap everything you've <span className="text-purple-300 font-semibold">loved</span>.
+            Tap everything you've loved.
           </p>
 
           <div className="flex flex-col items-center mt-5">
