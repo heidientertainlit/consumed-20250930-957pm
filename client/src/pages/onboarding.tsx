@@ -145,7 +145,7 @@ export default function OnboardingPage() {
       <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
           {/* Gradient hero header */}
-          <div className="relative text-white px-6 pb-8 bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800">
+          <div className="relative text-white px-6 pb-8 bg-gradient-to-r from-slate-900 via-purple-900 to-indigo-900">
             <button
               onClick={() => finish("/activity")}
               className="absolute top-5 right-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
