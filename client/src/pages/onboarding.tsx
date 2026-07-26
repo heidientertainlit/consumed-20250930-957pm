@@ -207,7 +207,7 @@ export default function OnboardingPage() {
           <div className="flex-1 flex flex-col px-6 pt-7 pb-10">
             <div className="flex justify-center">
               <h2
-                className="text-center text-[20px] leading-[1.15] font-black text-white px-6 py-2.5 rounded-full"
+                className="w-[280px] text-center text-[20px] leading-[1.2] font-black text-white px-4 py-2.5 rounded-3xl"
                 style={{
                   fontFamily: "Poppins, sans-serif",
                   background: "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)",
@@ -267,14 +267,16 @@ export default function OnboardingPage() {
             <div className="mt-9">
               <div className="flex justify-center">
                 <h2
-                  className="text-center text-[20px] leading-[1.15] font-black text-white px-6 py-2.5 rounded-full"
+                  className="w-[280px] text-center text-[20px] leading-[1.2] font-black text-white px-4 py-2.5 rounded-3xl"
                   style={{
                     fontFamily: "Poppins, sans-serif",
                     background: "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)",
                     boxShadow: "0 6px 18px rgba(124,58,237,0.3)",
                   }}
                 >
-                  What do you love talking about?
+                  What do you love
+                  <br />
+                  talking about?
                 </h2>
               </div>
               <p className="text-center text-[12px] text-gray-400 mt-3">
