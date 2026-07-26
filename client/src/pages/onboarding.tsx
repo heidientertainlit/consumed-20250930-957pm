@@ -33,6 +33,16 @@ const lovedGrid = [
   { title: "The Hobbit", type: "Book", externalId: "OlCHcjX0RT4C", source: "googlebooks", poster: "https://books.google.com/books/content?id=OlCHcjX0RT4C&printsec=frontcover&img=1&zoom=2" },
 ];
 
+// Real rooms from the pools table — tapping a pill follows the room (room_follows)
+const roomOptions = [
+  { id: "eb529882-4a66-496d-97f2-bf9981692968", name: "True Crime" },
+  { id: "c73774e0-c54c-44ed-8b14-ae0e3b076ddc", name: "Reality" },
+  { id: "a776d7dd-8206-4381-b847-17ff6f1e0d67", name: "Heartwarming" },
+  { id: "9e424f35-cd99-43ff-b695-d0ae89747b5a", name: "Action & Thriller" },
+  { id: "47182919-da7a-41bb-9688-50ec11561e53", name: "Rom-Com" },
+  { id: "58841101-ce10-46d7-9241-f7d52a11f630", name: "Fantasy" },
+];
+
 const dnaMessages = (n: number): string => {
   if (n === 0) return "Entertainment DNA";
   if (n === 1) return "You're starting to take shape...";
@@ -50,7 +60,8 @@ export default function OnboardingPage() {
   const [, setLocation] = useLocation();
   const { user, loading: authLoading } = useAuth();
   const [step, setStep] = useState<Step>("debate");
-  const [vote, setVote] = useState<string | null>(null);
+  const [vote, setVote] = useState<string | null | undefined>(undefined);
+  const [rooms, setRooms] = useState<string[]>([]);
   const [loved, setLoved] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -59,18 +70,31 @@ export default function OnboardingPage() {
     setLocation(route);
   };
 
-  const submitVote = async (side: string | null) => {
-    setVote(side);
+  const toggleRoom = (id: string) =>
+    setRooms((r) => (r.includes(id) ? r.filter((x) => x !== id) : [...r, id]));
+
+  const submitDebateStep = () => {
     setStep("loved");
-    if (!side || !user?.id) return;
-    // Same write path as every other poll — dedup handled by unique constraint,
-    // feed automatically hides answered polls.
-    supabase
-      .from("user_predictions")
-      .insert({ user_id: user.id, pool_id: DEBATE_POOL_ID, prediction: side, points_earned: 10 })
-      .then(({ error }) => {
-        if (error && error.code !== "23505") console.error("[onboarding vote]", error);
-      });
+    if (!user?.id) return;
+    if (vote && vote !== "both") {
+      // Same write path as every other poll — dedup handled by unique constraint,
+      // feed automatically hides answered polls.
+      supabase
+        .from("user_predictions")
+        .insert({ user_id: user.id, pool_id: DEBATE_POOL_ID, prediction: vote, points_earned: 10 })
+        .then(({ error }) => {
+          if (error && error.code !== "23505") console.error("[onboarding vote]", error);
+        });
+    }
+    if (rooms.length > 0) {
+      // Real follows — same rows as tapping Follow inside a room.
+      supabase
+        .from("room_follows")
+        .insert(rooms.map((room_id) => ({ user_id: user.id, room_id })))
+        .then(({ error }) => {
+          if (error && error.code !== "23505") console.error("[onboarding room follow]", error);
+        });
+    }
   };
 
   const toggleLoved = (title: string) =>
@@ -187,38 +211,95 @@ export default function OnboardingPage() {
             </h2>
             <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-purple-500" />
 
-            <div className="flex items-center justify-center gap-3 mt-7 relative">
-              {[debate.left, debate.right].map((side) => (
-                <button
-                  key={side.name}
-                  onClick={() => submitVote(side.name)}
-                  className="w-[42%] rounded-2xl overflow-hidden border border-gray-200 active:scale-95 transition-transform"
-                  style={{ aspectRatio: "2/3", boxShadow: "0 10px 30px rgba(0,0,0,0.18)" }}
-                >
-                  <img src={side.poster} alt={side.name} className="w-full h-full object-cover" />
-                </button>
-              ))}
+            <div className="flex items-center justify-center gap-3 mt-6 relative">
+              {[debate.left, debate.right].map((side) => {
+                const chosen = vote === side.name;
+                const dimmed = vote !== undefined && vote !== side.name;
+                return (
+                  <button
+                    key={side.name}
+                    onClick={() => setVote(side.name)}
+                    className="w-[40%] rounded-2xl overflow-hidden border-2 active:scale-95 transition-all"
+                    style={{
+                      aspectRatio: "2/3",
+                      borderColor: chosen ? "#7c3aed" : "rgb(229,231,235)",
+                      boxShadow: chosen
+                        ? "0 10px 30px rgba(124,58,237,0.35)"
+                        : "0 10px 30px rgba(0,0,0,0.18)",
+                      opacity: dimmed ? 0.45 : 1,
+                    }}
+                  >
+                    <img src={side.poster} alt={side.name} className="w-full h-full object-cover" />
+                  </button>
+                );
+              })}
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-purple-700 text-white border-4 border-white flex items-center justify-center text-sm font-black shadow-lg">
                 VS
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                setVote("both");
-                setStep("loved");
-              }}
-              className="mx-auto mt-7 text-sm text-purple-700 font-semibold hover:text-purple-900 transition-colors"
-            >
-              But how could I choose!?
-            </button>
-            <button
-              onClick={() => submitVote(null)}
-              className="mx-auto mt-4 text-sm text-gray-400 font-medium hover:text-gray-600 transition-colors"
-            >
-              Neither / Haven't seen
-            </button>
+            <div className="flex items-center justify-center gap-5 mt-4">
+              <button
+                onClick={() => setVote("both")}
+                className={`text-[13px] font-semibold transition-colors ${
+                  vote === "both" ? "text-purple-700 underline underline-offset-4" : "text-purple-600 hover:text-purple-800"
+                }`}
+              >
+                But how could I choose!?
+              </button>
+              <button
+                onClick={() => setVote(null)}
+                className={`text-[13px] font-medium transition-colors ${
+                  vote === null ? "text-gray-700 underline underline-offset-4" : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                Neither / Haven't seen
+              </button>
+            </div>
+
+            <div className="mt-8">
+              <h2
+                className="text-center text-[20px] leading-[1.2] font-black text-gray-900"
+                style={{ fontFamily: "Poppins, sans-serif" }}
+              >
+                Which conversations do you want to follow?
+              </h2>
+              <p className="text-center text-[12px] text-gray-400 mt-1.5">
+                Pick as many as you like — we'll add them to your Rooms.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2 mt-4">
+                {roomOptions.map((room) => {
+                  const on = rooms.includes(room.id);
+                  return (
+                    <button
+                      key={room.id}
+                      onClick={() => toggleRoom(room.id)}
+                      className="px-4 py-2 rounded-full text-[13px] font-semibold border transition-all active:scale-95"
+                      style={{
+                        borderColor: on ? "#7c3aed" : "rgb(229,231,235)",
+                        background: on
+                          ? "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)"
+                          : "white",
+                        color: on ? "white" : "rgb(75,85,99)",
+                        boxShadow: on ? "0 4px 14px rgba(124,58,237,0.3)" : "none",
+                      }}
+                    >
+                      {room.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex-1" />
+            <button
+              onClick={submitDebateStep}
+              disabled={vote === undefined}
+              className="w-full py-3.5 rounded-full font-bold text-[15px] text-white mt-8 transition-all active:scale-95 disabled:opacity-40"
+              style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
+            >
+              Continue
+            </button>
           </div>
         </div>
       </div>
