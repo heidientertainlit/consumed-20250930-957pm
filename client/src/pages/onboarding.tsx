@@ -45,15 +45,6 @@ const roomOptions = [
   { id: "3e0a4b3d-e211-44c7-9633-4a6a5a9206de", name: "Sports", Icon: Trophy },
 ];
 
-const dnaMessages = (n: number): string => {
-  if (n === 0) return "Entertainment DNA";
-  if (n === 1) return "You're starting to take shape...";
-  if (n === 2) return "Interesting...";
-  if (n === 3) return "We're seeing a pattern.";
-  if (n === 4) return "Your Entertainment DNA is coming to life.";
-  return "Your Entertainment DNA is ready.";
-};
-
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
 type Step = "debate" | "loved" | "reveal";
@@ -325,7 +316,7 @@ export default function OnboardingPage() {
         <ProgressBar current={1} />
         <div className="flex-1 flex flex-col px-5 pt-6 pb-8">
           <h1 className="text-center text-[26px] leading-[1.2] font-black" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Let's build your
+            Keep building your
             <br />
             Entertainment <span className="text-purple-400">DNA.</span>
           </h1>
@@ -370,20 +361,35 @@ export default function OnboardingPage() {
             })}
           </div>
 
-          <div className="flex items-center justify-center gap-3 mt-5 min-h-[44px]">
-            <div
-              className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 border transition-all"
-              style={{
-                borderColor: loved.length > 0 ? "#a855f7" : "rgba(255,255,255,0.25)",
-                background: loved.length > 0 ? "rgba(168,85,247,0.18)" : "rgba(255,255,255,0.05)",
-                boxShadow: loved.length > 0 ? "0 0 14px rgba(168,85,247,0.4)" : "none",
-              }}
-            >
-              <span className="text-[11px] font-bold text-purple-300">
-                {Math.round((loved.length / lovedGrid.length) * 100)}%
-              </span>
+          <div className="flex flex-col items-center mt-6">
+            <p className="text-[11px] tracking-[0.2em] font-bold text-purple-300 uppercase">
+              Entertainment DNA
+            </p>
+            <div className="flex items-center gap-2 mt-3">
+              {Array.from({ length: 10 }).map((_, i) => {
+                const filled = i < Math.min(loved.length, 10);
+                return (
+                  <div
+                    key={i}
+                    className="w-3 h-3 rounded-full transition-all"
+                    style={{
+                      background: filled ? "#a855f7" : "rgba(255,255,255,0.15)",
+                      boxShadow: filled ? "0 0 8px rgba(168,85,247,0.7)" : "none",
+                    }}
+                  />
+                );
+              })}
             </div>
-            <p className="text-sm text-white/70 font-medium">{dnaMessages(loved.length)}</p>
+            <p className="text-sm font-bold text-white/80 mt-2.5">
+              {Math.min(loved.length, 10)} / 10
+            </p>
+            <p className="text-[12px] text-white/55 mt-1">
+              {loved.length < 3
+                ? `Pick at least ${3 - loved.length} more to continue`
+                : loved.length < 10
+                  ? `${10 - loved.length} more to unlock your Entertainment DNA`
+                  : "Your Entertainment DNA is unlocked"}
+            </p>
           </div>
 
           <button
