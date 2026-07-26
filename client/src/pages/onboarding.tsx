@@ -19,18 +19,18 @@ const debate = {
 };
 
 const lovedGrid = [
-  { title: "Harry Potter", externalId: "671", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg" },
-  { title: "Stranger Things", externalId: "66732", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/uOOtwVbSr4QDjAGIifLDwpb2Pdl.jpg" },
-  { title: "The Bear", externalId: "136315", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/eKfVzzEazSIjJMrw9ADa2x8ksLz.jpg" },
-  { title: "Wicked", externalId: "402431", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/xDGbZ0JJ3mYaGKy4Nzd9Kph6M9L.jpg" },
-  { title: "The Last of Us", externalId: "100088", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg" },
-  { title: "The Eras Tour", externalId: "1160164", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/jf3YO8hOqGHCupsREf5qymYq1n.jpg" },
-  { title: "The Office", externalId: "2316", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg" },
-  { title: "Atomic Habits", externalId: "fFCjDQAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=fFCjDQAAQBAJ&printsec=frontcover&img=1&zoom=2" },
-  { title: "Serial", externalId: "917918570", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts221/v4/9a/fb/87/9afb8760-0e05-2b3e-24a2-7e14cce74570/mza_14816055607064169808.jpg/600x600bb.jpg" },
-  { title: "Dune: Part Two", externalId: "693134", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg" },
-  { title: "HIT ME HARD AND SOFT", externalId: "1739659134", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg" },
-  { title: "The Hobbit", externalId: "OlCHcjX0RT4C", source: "googlebooks", poster: "https://books.google.com/books/content?id=OlCHcjX0RT4C&printsec=frontcover&img=1&zoom=2" },
+  { title: "Harry Potter", type: "Movie", externalId: "671", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg" },
+  { title: "Stranger Things", type: "TV", externalId: "66732", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/uOOtwVbSr4QDjAGIifLDwpb2Pdl.jpg" },
+  { title: "The Bear", type: "TV", externalId: "136315", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/eKfVzzEazSIjJMrw9ADa2x8ksLz.jpg" },
+  { title: "Wicked", type: "Movie", externalId: "402431", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/xDGbZ0JJ3mYaGKy4Nzd9Kph6M9L.jpg" },
+  { title: "The Last of Us", type: "TV", externalId: "100088", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg" },
+  { title: "The Eras Tour", type: "Movie", externalId: "1160164", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/jf3YO8hOqGHCupsREf5qymYq1n.jpg" },
+  { title: "The Office", type: "TV", externalId: "2316", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg" },
+  { title: "Atomic Habits", type: "Book", externalId: "fFCjDQAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=fFCjDQAAQBAJ&printsec=frontcover&img=1&zoom=2" },
+  { title: "Serial", type: "Podcast", externalId: "917918570", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts221/v4/9a/fb/87/9afb8760-0e05-2b3e-24a2-7e14cce74570/mza_14816055607064169808.jpg/600x600bb.jpg" },
+  { title: "Dune: Part Two", type: "Movie", externalId: "693134", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg" },
+  { title: "HIT ME HARD AND SOFT", type: "Music", externalId: "1739659134", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg" },
+  { title: "The Hobbit", type: "Book", externalId: "OlCHcjX0RT4C", source: "googlebooks", poster: "https://books.google.com/books/content?id=OlCHcjX0RT4C&printsec=frontcover&img=1&zoom=2" },
 ];
 
 const dnaMessages = (n: number): string => {
@@ -235,7 +235,9 @@ export default function OnboardingPage() {
             Entertainment <span className="text-purple-400">DNA.</span>
           </h1>
           <p className="text-center text-[13px] text-white/60 mt-2">
-            Every title tells us a little more about your taste.
+            Tap everything you've <span className="text-purple-300 font-semibold">loved</span>.
+            <br />
+            Every pick counts as a 5-star rating on your profile.
           </p>
 
           <div className="grid grid-cols-3 gap-2.5 mt-5">
@@ -253,6 +255,12 @@ export default function OnboardingPage() {
                   }}
                 >
                   <img src={item.poster} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+                  <span
+                    className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold"
+                    style={{ background: "rgba(0,0,0,0.65)", color: "#d8b4fe", backdropFilter: "blur(4px)" }}
+                  >
+                    {item.type}
+                  </span>
                   <div
                     className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center"
                     style={{
