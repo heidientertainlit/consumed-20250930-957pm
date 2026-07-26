@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Check, Sparkles, Brain, Search, Tv, Heart, Zap, Clapperboard, Wand2, Smile, Trophy } from "lucide-react";
+import { Check, Sparkles, Brain, Dna, Search, Tv, Heart, Zap, Clapperboard, Wand2, Smile, Trophy } from "lucide-react";
 import { markOnboardingComplete } from "@/components/route-guards";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
@@ -500,25 +500,24 @@ export default function OnboardingPage() {
             onClick={() => setShowTenPrompt(false)}
           >
             <div
-              className="w-full max-w-sm rounded-3xl p-6 text-center"
-              style={{
-                background: "linear-gradient(160deg, #2a1b4d, #1a1230)",
-                border: "1px solid rgba(168,85,247,0.35)",
-                boxShadow: "0 0 40px rgba(168,85,247,0.35)",
-              }}
+              className="w-full max-w-sm rounded-3xl p-6 text-center bg-white"
+              style={{ boxShadow: "0 0 40px rgba(168,85,247,0.35)" }}
               onClick={(e) => e.stopPropagation()}
             >
               <div
                 className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center"
-                style={{ background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.4)" }}
+                style={{ background: "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.35)" }}
               >
-                <Brain size={32} className="text-purple-300" />
+                <Dna size={32} className="text-purple-500" />
               </div>
-              <h3 className="text-xl font-black mt-4 text-white" style={{ fontFamily: "Poppins, sans-serif" }}>
+              <h3 className="text-xl font-black mt-4 text-gray-900" style={{ fontFamily: "Poppins, sans-serif" }}>
                 That's 10!
               </h3>
-              <p className="text-sm text-white/65 mt-2 leading-relaxed">
-                Your Entertainment DNA is unlocked. Keep adding — every title makes it more fine-tuned.
+              <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+                You can keep adding to strengthen your Entertainment DNA, or see your DNA now.
+              </p>
+              <p className="text-[12px] text-gray-400 mt-2">
+                The more you add, the better it gets — you can always add more later.
               </p>
               <button
                 onClick={() => {
@@ -532,8 +531,8 @@ export default function OnboardingPage() {
               </button>
               <button
                 onClick={() => setShowTenPrompt(false)}
-                className="w-full py-3 rounded-full font-bold text-[14px] text-purple-200 mt-2.5 active:scale-95 transition-transform"
-                style={{ border: "1px solid rgba(168,85,247,0.45)", background: "transparent" }}
+                className="w-full py-3 rounded-full font-bold text-[14px] text-purple-600 mt-2.5 active:scale-95 transition-transform"
+                style={{ border: "1px solid rgba(168,85,247,0.5)", background: "white" }}
               >
                 Keep adding
               </button>
