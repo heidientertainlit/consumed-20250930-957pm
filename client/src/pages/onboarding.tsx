@@ -316,19 +316,16 @@ export default function OnboardingPage() {
         <ProgressBar current={1} />
         <div className="flex-1 flex flex-col px-5 pt-6 pb-8">
           <h1 className="text-center text-[26px] leading-[1.2] font-black" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Keep building your
+            Every title you add shapes your
             <br />
-            Entertainment <span className="text-purple-400">DNA.</span>
+            Entertainment <span className="text-purple-400">DNA</span>
           </h1>
           <p className="text-center text-[13px] text-white/60 mt-2">
             Tap everything you've <span className="text-purple-300 font-semibold">loved</span>.
           </p>
 
           <div className="flex flex-col items-center mt-5">
-            <p className="text-[11px] tracking-[0.2em] font-bold text-purple-300 uppercase">
-              Entertainment DNA
-            </p>
-            <div className="flex items-center gap-2 mt-3">
+            <div className="flex items-center gap-2">
               {Array.from({ length: 10 }).map((_, i) => {
                 const filled = i < Math.min(loved.length, 10);
                 return (
