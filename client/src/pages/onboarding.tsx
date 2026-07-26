@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Check, Sparkles, Brain } from "lucide-react";
+import { Check, Sparkles, Brain, Search, Tv, Heart, Zap, Clapperboard, Wand2, Smile, Trophy } from "lucide-react";
 import { markOnboardingComplete } from "@/components/route-guards";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
@@ -35,14 +35,14 @@ const lovedGrid = [
 
 // Real rooms from the pools table — tapping a pill follows the room (room_follows)
 const roomOptions = [
-  { id: "eb529882-4a66-496d-97f2-bf9981692968", name: "True Crime" },
-  { id: "c73774e0-c54c-44ed-8b14-ae0e3b076ddc", name: "Reality" },
-  { id: "a776d7dd-8206-4381-b847-17ff6f1e0d67", name: "Heartwarming" },
-  { id: "9e424f35-cd99-43ff-b695-d0ae89747b5a", name: "Action & Thriller" },
-  { id: "47182919-da7a-41bb-9688-50ec11561e53", name: "Rom-Com" },
-  { id: "58841101-ce10-46d7-9241-f7d52a11f630", name: "Fantasy" },
-  { id: "b32722af-0a76-4df3-9fa2-a94a7e3046fb", name: "Comedy" },
-  { id: "3e0a4b3d-e211-44c7-9633-4a6a5a9206de", name: "Sports" },
+  { id: "eb529882-4a66-496d-97f2-bf9981692968", name: "True Crime", Icon: Search },
+  { id: "c73774e0-c54c-44ed-8b14-ae0e3b076ddc", name: "Reality", Icon: Tv },
+  { id: "a776d7dd-8206-4381-b847-17ff6f1e0d67", name: "Heartwarming", Icon: Heart },
+  { id: "9e424f35-cd99-43ff-b695-d0ae89747b5a", name: "Action & Thriller", Icon: Zap },
+  { id: "47182919-da7a-41bb-9688-50ec11561e53", name: "Rom-Com", Icon: Clapperboard },
+  { id: "58841101-ce10-46d7-9241-f7d52a11f630", name: "Fantasy", Icon: Wand2 },
+  { id: "b32722af-0a76-4df3-9fa2-a94a7e3046fb", name: "Comedy", Icon: Smile },
+  { id: "3e0a4b3d-e211-44c7-9633-4a6a5a9206de", name: "Sports", Icon: Trophy },
 ];
 
 const dnaMessages = (n: number): string => {
@@ -204,39 +204,41 @@ export default function OnboardingPage() {
           </div>
 
           {/* White body */}
-          <div className="flex-1 flex flex-col px-6 pt-7 pb-10">
-            <div className="flex justify-center">
-              <h2
-                className="w-[280px] text-center text-[20px] leading-[1.2] font-black text-white px-4 py-2.5 rounded-3xl"
-                style={{
-                  fontFamily: "Poppins, sans-serif",
-                  background: "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)",
-                  boxShadow: "0 6px 18px rgba(124,58,237,0.3)",
-                }}
-              >
-                Settle the debate.
-              </h2>
-            </div>
+          <div className="flex-1 flex flex-col px-6 pt-8 pb-10">
+            <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600">STEP ONE</p>
+            <h2
+              className="text-[26px] leading-[1.15] font-black text-gray-900 mt-1.5"
+              style={{ fontFamily: "Poppins, sans-serif" }}
+            >
+              Settle the debate.
+            </h2>
 
-            <div className="flex items-center justify-center gap-3 mt-6 relative">
+            <div className="flex items-center justify-center gap-4 mt-5 relative">
               {[debate.left, debate.right].map((side) => {
                 const chosen = vote === side.name;
-                const dimmed = vote !== undefined && vote !== side.name;
                 return (
                   <button
                     key={side.name}
                     onClick={() => setVote(side.name)}
-                    className="w-[40%] rounded-2xl overflow-hidden border-2 active:scale-95 transition-all"
+                    className="w-[44%] rounded-2xl overflow-hidden relative active:scale-95 transition-all"
                     style={{
                       aspectRatio: "2/3",
-                      borderColor: chosen ? "#7c3aed" : "rgb(229,231,235)",
                       boxShadow: chosen
-                        ? "0 10px 30px rgba(124,58,237,0.35)"
+                        ? "0 10px 30px rgba(124,58,237,0.4)"
                         : "0 10px 30px rgba(0,0,0,0.18)",
-                      opacity: dimmed ? 0.45 : 1,
+                      outline: chosen ? "3px solid #7c3aed" : "none",
                     }}
                   >
                     <img src={side.poster} alt={side.name} className="w-full h-full object-cover" />
+                    <div
+                      className="absolute top-2 right-2 w-7 h-7 rounded-full border-2 flex items-center justify-center"
+                      style={{
+                        borderColor: chosen ? "#7c3aed" : "rgba(255,255,255,0.85)",
+                        background: chosen ? "#7c3aed" : "rgba(0,0,0,0.25)",
+                      }}
+                    >
+                      {chosen && <Check size={15} className="text-white" />}
+                    </div>
                   </button>
                 );
               })}
@@ -245,7 +247,7 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-5 mt-4">
+            <div className="flex items-center justify-between mt-4 px-1">
               <button
                 onClick={() => setVote("both")}
                 className={`text-[13px] font-semibold transition-colors ${
@@ -264,41 +266,38 @@ export default function OnboardingPage() {
               </button>
             </div>
 
-            <div className="mt-9">
-              <div className="flex justify-center">
-                <h2
-                  className="w-[280px] text-center text-[20px] leading-[1.2] font-black text-white px-4 py-2.5 rounded-3xl"
-                  style={{
-                    fontFamily: "Poppins, sans-serif",
-                    background: "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)",
-                    boxShadow: "0 6px 18px rgba(124,58,237,0.3)",
-                  }}
-                >
-                  What do you love
-                  <br />
-                  talking about?
-                </h2>
-              </div>
-              <p className="text-center text-[12px] text-gray-400 mt-3">
-                Follow the conversations for your favorite genres — pick as many as you like.
+            <div className="mt-10">
+              <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600">STEP TWO</p>
+              <h2
+                className="text-[26px] leading-[1.15] font-black text-gray-900 mt-1.5"
+                style={{ fontFamily: "Poppins, sans-serif" }}
+              >
+                What do you love
+                <br />
+                talking about?
+              </h2>
+              <p className="text-[13px] text-gray-400 mt-2">
+                Follow the conversations for your favorite topics — pick as many as you like.
               </p>
-              <div className="flex flex-wrap justify-center gap-2 mt-4">
+              <div className="flex flex-wrap gap-2.5 mt-5">
                 {roomOptions.map((room) => {
                   const on = rooms.includes(room.id);
+                  const Icon = room.Icon;
                   return (
                     <button
                       key={room.id}
                       onClick={() => toggleRoom(room.id)}
-                      className="px-4 py-2 rounded-full text-[13px] font-semibold border transition-all active:scale-95"
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold border transition-all active:scale-95"
                       style={{
                         borderColor: on ? "#7c3aed" : "rgb(229,231,235)",
                         background: on
                           ? "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)"
                           : "white",
-                        color: on ? "white" : "rgb(75,85,99)",
+                        color: on ? "white" : "rgb(55,65,81)",
                         boxShadow: on ? "0 4px 14px rgba(124,58,237,0.3)" : "none",
                       }}
                     >
+                      <Icon size={15} className={on ? "text-white" : "text-purple-600"} />
                       {room.name}
                     </button>
                   );
@@ -310,7 +309,7 @@ export default function OnboardingPage() {
             <button
               onClick={submitDebateStep}
               disabled={vote === undefined}
-              className="w-full py-3.5 rounded-full font-bold text-[15px] text-white mt-8 transition-all active:scale-95 disabled:opacity-40"
+              className="w-full py-3.5 rounded-full font-bold text-[15px] text-white mt-10 transition-all active:scale-95 disabled:opacity-40"
               style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
             >
               Continue
