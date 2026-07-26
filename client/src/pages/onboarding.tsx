@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Check, Sparkles, Brain, Dna, Search, Tv, Heart, Zap, Clapperboard, Wand2, Smile, Trophy } from "lucide-react";
+import { Check, Sparkles, Dna, Search, Tv, Heart, Zap, Clapperboard, Wand2, Smile, Trophy } from "lucide-react";
 import { markOnboardingComplete } from "@/components/route-guards";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
@@ -27,8 +27,6 @@ const lovedRows: { label: string; items: { title: string; externalId: string; so
       { title: "Wicked", externalId: "402431", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/xDGbZ0JJ3mYaGKy4Nzd9Kph6M9L.jpg" },
       { title: "The Eras Tour", externalId: "1160164", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/jf3YO8hOqGHCupsREf5qymYq1n.jpg" },
       { title: "Dune: Part Two", externalId: "693134", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg" },
-      { title: "Barbie", externalId: "346698", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg" },
-      { title: "Oppenheimer", externalId: "872585", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg" },
       { title: "Inside Out 2", externalId: "1022789", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg" },
       { title: "Top Gun: Maverick", externalId: "361743", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/n0YuM4f5lvGAP6MAW2kBIzugXnc.jpg" },
       { title: "Everything Everywhere All at Once", externalId: "545611", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/u68AjlvlutfEIcpmbYpKcdi09ut.jpg" },
@@ -584,22 +582,50 @@ export default function OnboardingPage() {
             boxShadow: "0 0 50px rgba(168,85,247,0.3)",
           }}
         >
-          <Brain size={44} className="text-purple-300" />
+          <Dna size={44} className="text-purple-300" />
         </div>
-        <h2 className="text-2xl font-black mt-7 text-center" style={{ fontFamily: "Poppins, sans-serif" }}>
-          Your starter DNA is ready.
+        <div
+          className="mt-6 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-[0.15em] uppercase"
+          style={{ background: "rgba(168,85,247,0.18)", border: "1px solid rgba(168,85,247,0.5)", color: "#d8b4fe" }}
+        >
+          Level 1 DNA unlocked
+        </div>
+        <h2 className="text-2xl font-black mt-4 text-center" style={{ fontFamily: "Poppins, sans-serif" }}>
+          Your Entertainment DNA has started forming.
         </h2>
-        <p className="text-sm text-white/60 mt-2 text-center leading-relaxed">
+        <p className="text-sm text-white/60 mt-3 text-center leading-relaxed">
           {vote === "both" ? "Team Both — respect. " : vote ? `Team ${vote}. ` : ""}
-          {loved.length > 0 ? `Fan of ${loved.join(", ")}.` : ""}
+          {loved.length > 0
+            ? `${loved.length} ${loved.length === 1 ? "title" : "titles"} are already shaping your profile.`
+            : "Your profile is ready to grow."}
         </p>
+
+        <div
+          className="w-full mt-7 rounded-2xl px-5 py-4 text-left"
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+        >
+          <p className="text-[11px] font-bold tracking-[0.15em] uppercase text-white/40">Level it up</p>
+          <ul className="mt-2.5 space-y-2">
+            {[
+              "Add more titles you love (and skip the ones you don't)",
+              "Rate what you're watching, reading, and listening to",
+              "Play daily trivia and cast your takes",
+            ].map((tip) => (
+              <li key={tip} className="flex items-start gap-2.5 text-[13px] text-white/75 leading-snug">
+                <Check size={15} className="text-purple-300 mt-0.5 shrink-0" />
+                {tip}
+              </li>
+            ))}
+          </ul>
+        </div>
+
         <p className="text-[12px] text-white/40 mt-4 flex items-center gap-1.5">
-          <Sparkles size={12} /> It gets even more fine-tuned with every title you add
+          <Sparkles size={12} /> The more you add, the sharper your DNA gets
         </p>
 
         <button
           onClick={() => finish("/activity")}
-          className="w-full py-3.5 rounded-full font-bold text-[15px] mt-9 active:scale-95 transition-transform"
+          className="w-full py-3.5 rounded-full font-bold text-[15px] mt-7 active:scale-95 transition-transform"
           style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
         >
           View feed
