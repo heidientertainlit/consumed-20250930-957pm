@@ -206,12 +206,12 @@ export default function OnboardingPage() {
           {/* White body */}
           <div className="flex-1 flex flex-col px-6 pt-7 pb-10">
             <h2
-              className="text-center text-[28px] leading-[1.1] font-black text-gray-900"
+              className="text-center text-[22px] leading-[1.15] font-black text-gray-900"
               style={{ fontFamily: "Poppins, sans-serif" }}
             >
               Settle the debate.
             </h2>
-            <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-purple-500" />
+            <div className="mx-auto mt-2.5 h-1 w-14 rounded-full bg-purple-500" />
 
             <div className="flex items-center justify-center gap-3 mt-6 relative">
               {[debate.left, debate.right].map((side) => {
@@ -259,14 +259,15 @@ export default function OnboardingPage() {
               </button>
             </div>
 
-            <div className="mt-8">
+            <div className="mt-9">
               <h2
-                className="text-center text-[20px] leading-[1.2] font-black text-gray-900"
+                className="text-center text-[22px] leading-[1.15] font-black text-gray-900"
                 style={{ fontFamily: "Poppins, sans-serif" }}
               >
                 Which conversations do you want to follow?
               </h2>
-              <p className="text-center text-[12px] text-gray-400 mt-1.5">
+              <div className="mx-auto mt-2.5 h-1 w-14 rounded-full bg-purple-500" />
+              <p className="text-center text-[12px] text-gray-400 mt-3">
                 Pick as many as you like — we'll add them to your Rooms.
               </p>
               <div className="flex flex-wrap justify-center gap-2 mt-4">
