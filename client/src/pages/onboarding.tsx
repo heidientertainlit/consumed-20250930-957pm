@@ -41,6 +41,8 @@ const roomOptions = [
   { id: "9e424f35-cd99-43ff-b695-d0ae89747b5a", name: "Action & Thriller" },
   { id: "47182919-da7a-41bb-9688-50ec11561e53", name: "Rom-Com" },
   { id: "58841101-ce10-46d7-9241-f7d52a11f630", name: "Fantasy" },
+  { id: "b32722af-0a76-4df3-9fa2-a94a7e3046fb", name: "Comedy" },
+  { id: "3e0a4b3d-e211-44c7-9633-4a6a5a9206de", name: "Sports" },
 ];
 
 const dnaMessages = (n: number): string => {
