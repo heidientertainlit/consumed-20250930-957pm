@@ -19,13 +19,28 @@ const debate = {
 };
 
 const lovedGrid = [
+  { title: "Harry Potter", externalId: "671", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg" },
   { title: "Stranger Things", externalId: "66732", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/uOOtwVbSr4QDjAGIifLDwpb2Pdl.jpg" },
   { title: "The Bear", externalId: "136315", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/eKfVzzEazSIjJMrw9ADa2x8ksLz.jpg" },
   { title: "Wicked", externalId: "402431", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/xDGbZ0JJ3mYaGKy4Nzd9Kph6M9L.jpg" },
-  { title: "Harry Potter", externalId: "671", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg" },
-  { title: "The Office", externalId: "2316", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg" },
   { title: "The Last of Us", externalId: "100088", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg" },
+  { title: "The Eras Tour", externalId: "1160164", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/jf3YO8hOqGHCupsREf5qymYq1n.jpg" },
+  { title: "The Office", externalId: "2316", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg" },
+  { title: "Atomic Habits", externalId: "fFCjDQAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=fFCjDQAAQBAJ&printsec=frontcover&img=1&zoom=2" },
+  { title: "Serial", externalId: "917918570", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts221/v4/9a/fb/87/9afb8760-0e05-2b3e-24a2-7e14cce74570/mza_14816055607064169808.jpg/600x600bb.jpg" },
+  { title: "Dune: Part Two", externalId: "693134", source: "tmdb", poster: "https://image.tmdb.org/t/p/w300/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg" },
+  { title: "HIT ME HARD AND SOFT", externalId: "1739659134", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg" },
+  { title: "The Hobbit", externalId: "OlCHcjX0RT4C", source: "googlebooks", poster: "https://books.google.com/books/content?id=OlCHcjX0RT4C&printsec=frontcover&img=1&zoom=2" },
 ];
+
+const dnaMessages = (n: number): string => {
+  if (n === 0) return "Entertainment DNA";
+  if (n === 1) return "You're starting to take shape...";
+  if (n === 2) return "Interesting...";
+  if (n === 3) return "We're seeing a pattern.";
+  if (n === 4) return "Your Entertainment DNA is coming to life.";
+  return "Your Entertainment DNA is ready.";
+};
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
@@ -59,9 +74,7 @@ export default function OnboardingPage() {
   };
 
   const toggleLoved = (title: string) =>
-    setLoved((l) =>
-      l.includes(title) ? l.filter((t) => t !== title) : l.length < 3 ? [...l, title] : l,
-    );
+    setLoved((l) => (l.includes(title) ? l.filter((t) => t !== title) : [...l, title]));
 
   const submitLoved = async () => {
     if (saving) return;
@@ -215,22 +228,17 @@ export default function OnboardingPage() {
     return (
       <Shell>
         <ProgressBar current={1} />
-        <div className="flex-1 flex flex-col px-6 pt-6 pb-8">
-          <h1 className="text-center text-[28px] leading-[1.15] font-black" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Which of these
+        <div className="flex-1 flex flex-col px-5 pt-6 pb-8">
+          <h1 className="text-center text-[26px] leading-[1.2] font-black" style={{ fontFamily: "Poppins, sans-serif" }}>
+            Let's build your
             <br />
-            have you{" "}
-            <span className="text-purple-400 underline decoration-purple-500 underline-offset-4">
-              loved?
-            </span>
+            Entertainment <span className="text-purple-400">DNA.</span>
           </h1>
-          <p className="text-center text-sm text-white/60 mt-3">
-            Choose 3 to help build your
-            <br />
-            Entertainment DNA.
+          <p className="text-center text-[13px] text-white/60 mt-2">
+            Every title tells us a little more about your taste.
           </p>
 
-          <div className="grid grid-cols-2 gap-3 mt-6">
+          <div className="grid grid-cols-3 gap-2.5 mt-5">
             {lovedGrid.map((item) => {
               const selected = loved.includes(item.title);
               return (
@@ -239,46 +247,46 @@ export default function OnboardingPage() {
                   onClick={() => toggleLoved(item.title)}
                   className="relative rounded-xl overflow-hidden border transition-all active:scale-95"
                   style={{
-                    aspectRatio: "3/4",
+                    aspectRatio: "2/3",
                     borderColor: selected ? "#a855f7" : "rgba(255,255,255,0.1)",
-                    boxShadow: selected ? "0 0 20px rgba(168,85,247,0.4)" : "none",
+                    boxShadow: selected ? "0 0 16px rgba(168,85,247,0.45)" : "none",
                   }}
                 >
-                  <img src={item.poster} alt={item.title} className="w-full h-full object-cover" />
+                  <img src={item.poster} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
                   <div
-                    className="absolute top-2 right-2 w-6 h-6 rounded-full border-2 flex items-center justify-center"
+                    className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center"
                     style={{
                       borderColor: selected ? "#a855f7" : "rgba(255,255,255,0.6)",
-                      background: selected ? "#a855f7" : "rgba(0,0,0,0.35)",
+                      background: selected ? "#a855f7" : "rgba(0,0,0,0.4)",
                     }}
                   >
-                    {selected && <Check size={14} className="text-white" />}
+                    {selected && <Check size={13} className="text-white" />}
                   </div>
                 </button>
               );
             })}
           </div>
 
-          <p className="text-center text-xs text-white/50 mt-4 font-medium">Choose 3</p>
-          <div className="flex items-center justify-center gap-2.5 mt-2">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="w-8 h-8 rounded-full border-2 flex items-center justify-center"
-                style={{
-                  borderColor: i < loved.length ? "#a855f7" : "rgba(255,255,255,0.2)",
-                  background: i < loved.length ? "rgba(168,85,247,0.25)" : "transparent",
-                }}
-              >
-                {i < loved.length && <Check size={14} className="text-purple-300" />}
-              </div>
-            ))}
+          <div className="flex items-center justify-center gap-3 mt-5 min-h-[44px]">
+            <div
+              className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 border transition-all"
+              style={{
+                borderColor: loved.length > 0 ? "#a855f7" : "rgba(255,255,255,0.25)",
+                background: loved.length > 0 ? "rgba(168,85,247,0.18)" : "rgba(255,255,255,0.05)",
+                boxShadow: loved.length > 0 ? "0 0 14px rgba(168,85,247,0.4)" : "none",
+              }}
+            >
+              <span className="text-[11px] font-bold text-purple-300">
+                {Math.round((loved.length / lovedGrid.length) * 100)}%
+              </span>
+            </div>
+            <p className="text-sm text-white/70 font-medium">{dnaMessages(loved.length)}</p>
           </div>
 
           <button
             onClick={submitLoved}
             disabled={loved.length < 3 || saving}
-            className="w-full py-3.5 rounded-full font-bold text-[15px] mt-5 transition-all active:scale-95 disabled:opacity-40"
+            className="w-full py-3.5 rounded-full font-bold text-[15px] mt-4 transition-all active:scale-95 disabled:opacity-40"
             style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
           >
             {saving ? "Saving..." : "Continue"}
@@ -290,10 +298,10 @@ export default function OnboardingPage() {
             }}
             className="mx-auto text-sm text-white/45 font-medium mt-4"
           >
-            None of these
+            None of these — I'll do it later
           </button>
           <p className="text-center text-[12px] text-white/40 mt-2">
-            You can always update this later.
+            Pick at least 3. You can always add more later.
           </p>
         </div>
       </Shell>
