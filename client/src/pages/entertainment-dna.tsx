@@ -509,7 +509,7 @@ export default function EntertainmentDNAPage() {
         : "border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50"
     }`;
   const pillStyle = (selected: boolean) =>
-    selected ? { background: "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)" } : undefined;
+    selected ? { background: "linear-gradient(135deg,#2563eb,#4f46e5 45%,#7c3aed)" } : undefined;
 
   const renderMulti = (q: SurveyQuestion, withIcons = false) => {
     const current = getAnswer(q.id);
