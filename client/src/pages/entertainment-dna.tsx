@@ -594,25 +594,35 @@ export default function EntertainmentDNAPage() {
             </button>
           </div>
 
-          {/* DNA progress */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-white/10 border border-white/25 rounded-xl flex items-center justify-center shrink-0">
-              <Dna className="text-purple-200" size={18} />
+          {/* DNA hero */}
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-14 h-14 rounded-full bg-purple-600/25 border border-purple-400/40 flex items-center justify-center shrink-0 shadow-lg shadow-purple-900/40">
+              <Dna className="text-purple-200" size={26} />
             </div>
-            <div className="flex-1">
-              <div className="flex justify-between text-[11px] text-white/60 mb-1">
-                <span>Your DNA</span>
-                <span>{dnaPct}% complete</span>
-              </div>
-              <div className="h-2 rounded-full bg-white/15 overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${dnaPct}%`, background: "linear-gradient(90deg, #a78bfa, #e879f9)" }}
-                />
-              </div>
+            <div className="min-w-0">
+              <p className="text-purple-300 text-[11px] font-semibold tracking-[0.15em] uppercase mb-0.5">
+                You're building
+              </p>
+              <h1
+                className="text-2xl font-bold leading-tight"
+                style={{ fontFamily: "Poppins, sans-serif" }}
+              >
+                Finish Your Entertainment DNA
+              </h1>
             </div>
           </div>
-          <p className="text-white/50 text-xs mt-3">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-2 rounded-full bg-white/15 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${dnaPct}%`, background: "linear-gradient(90deg, #a78bfa, #e879f9)" }}
+              />
+            </div>
+            <span className="text-sm text-purple-200 font-medium shrink-0">
+              <span className="text-white font-semibold">{dnaPct}%</span> complete
+            </span>
+          </div>
+          <p className="text-white/50 text-xs mt-2">
             Step {step + 1} of {totalSteps} — {stepTitles[step]}
           </p>
         </div>
