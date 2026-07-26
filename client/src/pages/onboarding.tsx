@@ -52,24 +52,13 @@ const lovedRows: { label: string; items: { title: string; externalId: string; so
     label: "Books",
     items: [
       { title: "Atomic Habits", externalId: "fFCjDQAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=fFCjDQAAQBAJ&printsec=frontcover&img=1&zoom=2" },
-      { title: "The Hobbit", externalId: "OlCHcjX0RT4C", source: "googlebooks", poster: "https://books.google.com/books/content?id=OlCHcjX0RT4C&printsec=frontcover&img=1&zoom=2" },
+      { title: "The Hobbit", externalId: "F2xu1nZOzKoC", source: "googlebooks", poster: "https://books.google.com/books/content?id=F2xu1nZOzKoC&printsec=frontcover&img=1&zoom=2" },
       { title: "Fourth Wing", externalId: "E-OLEAAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=E-OLEAAAQBAJ&printsec=frontcover&img=1&zoom=2" },
-      { title: "It Ends with Us", externalId: "UnIQEQAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=UnIQEQAAQBAJ&printsec=frontcover&img=1&zoom=2" },
-      { title: "The Housemaid", externalId: "rVIm0AEACAAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=rVIm0AEACAAJ&printsec=frontcover&img=1&zoom=2" },
+      { title: "It Ends with Us", externalId: "KmbkCgAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=KmbkCgAAQBAJ&printsec=frontcover&img=1&zoom=2" },
+      { title: "The Silent Patient", externalId: "tLdiDwAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=tLdiDwAAQBAJ&printsec=frontcover&img=1&zoom=2" },
       { title: "A Court of Thorns and Roses", externalId: "E-kdBQAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=E-kdBQAAQBAJ&printsec=frontcover&img=1&zoom=2" },
       { title: "The Midnight Library", externalId: "63fYDwAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=63fYDwAAQBAJ&printsec=frontcover&img=1&zoom=2" },
       { title: "Onyx Storm", externalId: "Vuv4EAAAQBAJ", source: "googlebooks", poster: "https://books.google.com/books/content?id=Vuv4EAAAQBAJ&printsec=frontcover&img=1&zoom=2" },
-    ],
-  },
-  {
-    label: "Music",
-    items: [
-      { title: "HIT ME HARD AND SOFT", externalId: "1739659134", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg" },
-      { title: "Short n' Sweet", externalId: "1752214909", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a1/1c/ca/a11ccab6-7d4c-e041-d028-998bcebeb709/24UMGIM61704.rgb.jpg/600x600bb.jpg" },
-      { title: "The Tortured Poets Department", externalId: "1736268219", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/6b/7d/61/6b7d61e4-e6f1-83bc-d645-463aa06b33c4/24UMGIM29563.rgb.jpg/600x600bb.jpg" },
-      { title: "GUTS", externalId: "1694767605", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/9e/0d/17/9e0d17e0-c068-fbd9-fd85-610cc87c86aa/23UMGIM71511.rgb.jpg/600x600bb.jpg" },
-      { title: "SOS", externalId: "1658650487", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/62/93/13/6293132e-20ff-67ab-3d1f-96bb6797a6ba/196589564955.jpg/600x600bb.jpg" },
-      { title: "Midnights", externalId: "1649434996", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/67/b5/01/67b501d5-362e-797e-7dbd-942b9e273084/22UM1IM24801.rgb.jpg/600x600bb.jpg" },
     ],
   },
   {
@@ -81,6 +70,17 @@ const lovedRows: { label: string; items: { title: string; externalId: string; so
       { title: "The Daily", externalId: "1200361736", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts221/v4/ab/64/66/ab6466a9-9a7d-e20e-7a3d-bc5be37d29ce/mza_15084852813176276273.jpg/600x600bb.jpg" },
       { title: "Call Her Daddy", externalId: "1418960261", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts211/v4/05/10/91/05109145-8c22-5464-1f20-aaedeab769f8/mza_10276081716633787086.jpg/600x600bb.jpg" },
       { title: "New Heights with Jason & Travis Kelce", externalId: "1643745036", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts221/v4/3a/7b/24/3a7b2444-814b-2ad4-1398-6406514a78a3/mza_6923137187248425375.jpeg/600x600bb.jpg" },
+    ],
+  },
+  {
+    label: "Music",
+    items: [
+      { title: "HIT ME HARD AND SOFT", externalId: "1739659134", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg" },
+      { title: "Short n' Sweet", externalId: "1752214909", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a1/1c/ca/a11ccab6-7d4c-e041-d028-998bcebeb709/24UMGIM61704.rgb.jpg/600x600bb.jpg" },
+      { title: "The Tortured Poets Department", externalId: "1736268219", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/6b/7d/61/6b7d61e4-e6f1-83bc-d645-463aa06b33c4/24UMGIM29563.rgb.jpg/600x600bb.jpg" },
+      { title: "GUTS", externalId: "1694767605", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/9e/0d/17/9e0d17e0-c068-fbd9-fd85-610cc87c86aa/23UMGIM71511.rgb.jpg/600x600bb.jpg" },
+      { title: "SOS", externalId: "1658650487", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/62/93/13/6293132e-20ff-67ab-3d1f-96bb6797a6ba/196589564955.jpg/600x600bb.jpg" },
+      { title: "Midnights", externalId: "1649434996", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/67/b5/01/67b501d5-362e-797e-7dbd-942b9e273084/22UM1IM24801.rgb.jpg/600x600bb.jpg" },
     ],
   },
 ];
