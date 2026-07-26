@@ -505,11 +505,10 @@ export default function EntertainmentDNAPage() {
   const pill = (selected: boolean) =>
     `px-4 py-2.5 rounded-full text-sm flex items-center gap-2 text-left transition-all border ${
       selected
-        ? "border-purple-500 text-white font-medium shadow-md shadow-purple-500/25"
+        ? "border-slate-600 bg-slate-700 text-white font-medium shadow-sm"
         : "border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50"
     }`;
-  const pillStyle = (selected: boolean) =>
-    selected ? { background: "linear-gradient(135deg,#2563eb,#4f46e5 45%,#7c3aed)" } : undefined;
+  const pillStyle = (_selected: boolean) => undefined;
 
   const renderMulti = (q: SurveyQuestion, withIcons = false) => {
     const current = getAnswer(q.id);
