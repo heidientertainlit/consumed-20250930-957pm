@@ -767,7 +767,6 @@ export default function UserProfile() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to regenerate');
       await fetchDnaProfile();
-      toast({ title: 'DNA Updated!', description: 'Your Entertainment DNA has been regenerated.' });
     } catch (err: any) {
       toast({ title: 'Regeneration failed', description: err.message || 'Please try again.', variant: 'destructive' });
     } finally {

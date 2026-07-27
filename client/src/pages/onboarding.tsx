@@ -278,10 +278,18 @@ export default function OnboardingPage() {
     try {
       if (user?.id && loved.length > 0) {
         const picks = allLovedItems.filter((i) => loved.includes(i.title));
+        const typeByLabel: Record<string, string> = {
+          Movies: "movie", "TV Shows": "tv", Books: "book", Podcasts: "podcast", Music: "music",
+        };
+        const typeByTitle: Record<string, string> = {};
+        for (const row of lovedRows)
+          for (const it of row.items) typeByTitle[it.title] = typeByLabel[row.label] || "movie";
         for (const p of picks) {
           const { error } = await supabase.from("media_ratings").upsert(
             {
               user_id: user.id,
+              media_title: p.title,
+              media_type: typeByTitle[p.title] || "movie",
               media_external_id: p.externalId,
               media_external_source: p.source,
               rating: 5,
@@ -303,12 +311,6 @@ export default function OnboardingPage() {
             const listsData = await listsRes.json();
             const finished = (listsData?.lists || []).find((l: any) => l.title?.toLowerCase().includes("finished"));
             if (finished?.id) {
-              const typeByLabel: Record<string, string> = {
-                Movies: "movie", "TV Shows": "tv", Books: "book", Podcasts: "podcast", Music: "music",
-              };
-              const typeByTitle: Record<string, string> = {};
-              for (const row of lovedRows)
-                for (const it of row.items) typeByTitle[it.title] = typeByLabel[row.label] || "movie";
               await Promise.all(
                 picks.map((p) =>
                   fetch(`${SUPABASE_URL}/functions/v1/add-media-to-list`, {
