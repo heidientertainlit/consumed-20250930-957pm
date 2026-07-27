@@ -341,28 +341,16 @@ export default function EntertainmentDNAPage() {
 
   if (loading || !session) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Loader2 className="text-white animate-spin" size={32} />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading...</h1>
-          <p className="text-gray-600">Checking your account...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}>
+        <div className="w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (isLoadingQuestions) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Loader2 className="text-white animate-spin" size={32} />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading Your Entertainment DNA Survey</h1>
-          <p className="text-gray-600">Preparing your personalized questions...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}>
+        <div className="w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
