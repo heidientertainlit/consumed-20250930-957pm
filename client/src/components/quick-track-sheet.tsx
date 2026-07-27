@@ -79,6 +79,13 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
   const [correctedQuery, setCorrectedQuery] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [selectedList, setSelectedList] = useState<string>("queue");
+  // Season/episode picker for TV (compose step only — search is untouched)
+  const [seasons, setSeasons] = useState<any[]>([]);
+  const [episodes, setEpisodes] = useState<any[]>([]);
+  const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
+  const [selectedEpisode, setSelectedEpisode] = useState<number | null>(null);
+  const [isLoadingSeasons, setIsLoadingSeasons] = useState(false);
+  const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // "React to this title (optional)" composer
@@ -99,6 +106,8 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     setCorrectedQuery(null);
     setSelectedMedia(null);
     setSelectedList("queue");
+    setSeasons([]); setEpisodes([]);
+    setSelectedSeason(null); setSelectedEpisode(null);
     setIsSaving(false);
     setComposerMode("rate");
     setRating(0); setTakeText("");
@@ -160,6 +169,61 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     }
   };
 
+  useEffect(() => {
+    if (selectedMedia?.type === "tv" && selectedMedia.external_id) {
+      fetchSeasons(selectedMedia.external_id);
+    } else {
+      setSeasons([]); setEpisodes([]);
+      setSelectedSeason(null); setSelectedEpisode(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMedia]);
+
+  useEffect(() => {
+    if (selectedMedia?.type === "tv" && selectedMedia.external_id && selectedSeason) {
+      fetchEpisodes(selectedMedia.external_id, selectedSeason);
+    } else {
+      setEpisodes([]); setSelectedEpisode(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSeason]);
+
+  const fetchSeasons = async (externalId: string) => {
+    setIsLoadingSeasons(true);
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/functions/v1/get-media-details?source=tmdb&external_id=${externalId}&media_type=tv`,
+        { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` } },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setSeasons(data.seasons || []);
+      }
+    } catch (e) {
+      console.error("Error fetching seasons:", e);
+    } finally {
+      setIsLoadingSeasons(false);
+    }
+  };
+
+  const fetchEpisodes = async (externalId: string, seasonNum: number) => {
+    setIsLoadingEpisodes(true);
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/functions/v1/get-season-episodes?external_id=${externalId}&season=${seasonNum}`,
+        { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` } },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setEpisodes(data.episodes || []);
+      }
+    } catch (e) {
+      console.error("Error fetching episodes:", e);
+    } finally {
+      setIsLoadingEpisodes(false);
+    }
+  };
+
   const mapMedia = (r: any): TrackDetailsMedia => ({
     title: r.title,
     mediaType: r.type,
@@ -210,7 +274,15 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
         method: "POST",
         headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          media: mapMedia(selectedMedia),
+          media: {
+            ...mapMedia(selectedMedia),
+            seasonNumber: selectedSeason || undefined,
+            episodeNumber: selectedEpisode || undefined,
+            episodeTitle:
+              selectedEpisode
+                ? episodes.find((ep: any) => (ep.episodeNumber || ep.episode_number) === selectedEpisode)?.name || undefined
+                : undefined,
+          },
           listType: selectedList,
           rating: hasRating ? rating : undefined,
           review: hasRating && hasTake ? takeText.trim() : undefined,
@@ -457,6 +529,50 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                   </button>
                 </div>
               </div>
+
+              {/* Season / episode (TV only, optional) */}
+              {selectedMedia.type === "tv" && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">
+                    Season & episode <span className="text-gray-400 font-normal">(optional)</span>
+                  </p>
+                  {isLoadingSeasons ? (
+                    <div className="flex items-center gap-2 text-sm text-gray-400 py-1">
+                      <Loader2 className="animate-spin" size={14} /> Loading seasons…
+                    </div>
+                  ) : seasons.length > 0 ? (
+                    <div className="flex gap-2">
+                      <select
+                        value={selectedSeason || ""}
+                        onChange={(e) => setSelectedSeason(Number(e.target.value) || null)}
+                        className="flex-1 px-3 py-2.5 border border-gray-200 rounded-2xl text-sm bg-gray-50 text-gray-900"
+                        data-testid="quick-track-season"
+                      >
+                        <option value="">Whole series</option>
+                        {seasons.map((se: any) => {
+                          const n = se.seasonNumber || se.season_number;
+                          return <option key={n} value={n}>Season {n}</option>;
+                        })}
+                      </select>
+                      {selectedSeason && (
+                        <select
+                          value={selectedEpisode || ""}
+                          onChange={(e) => setSelectedEpisode(Number(e.target.value) || null)}
+                          disabled={isLoadingEpisodes}
+                          className="flex-1 px-3 py-2.5 border border-gray-200 rounded-2xl text-sm bg-gray-50 text-gray-900 disabled:opacity-60"
+                          data-testid="quick-track-episode"
+                        >
+                          <option value="">{isLoadingEpisodes ? "Loading…" : "All episodes"}</option>
+                          {episodes.map((ep: any) => {
+                            const n = ep.episodeNumber || ep.episode_number;
+                            return <option key={n} value={n}>Ep {n}{ep.name ? ` · ${ep.name}` : ""}</option>;
+                          })}
+                        </select>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              )}
 
               {/* status / list — the primary "where does this go?" step */}
               <div>
