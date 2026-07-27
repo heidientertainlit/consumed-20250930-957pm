@@ -704,20 +704,20 @@ export default function OnboardingPage() {
             </p>
           </div>
 
-          <div className="mt-auto pt-8">
+          <div className="pt-8">
             <button
               onClick={() => finish("/entertainment-dna")}
-              className="w-full py-3.5 rounded-full font-bold text-[15px] text-white active:scale-95 transition-transform"
+              className="w-full py-4 rounded-full font-medium text-[17px] text-white active:scale-95 transition-transform"
               style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
             >
               Take the DNA quiz
             </button>
             <button
               onClick={() => finish("/activity")}
-              className="w-full py-3 rounded-full font-bold text-[14px] mt-2.5 text-purple-700 active:scale-95 transition-transform"
+              className="w-full py-3.5 rounded-full font-medium text-[16px] mt-3 text-purple-700 active:scale-95 transition-transform"
               style={{ border: "1px solid rgba(124,58,237,0.45)", background: "white" }}
             >
-              View feed
+              Skip to feed
             </button>
           </div>
         </div>
