@@ -1,3 +1,4 @@
+import FollowCreatorsCard from "@/components/follow-creators-card";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Plus, Star, X, Search, Loader2, ArrowLeft, ArrowRight, MessageSquarePlus, ChevronRight } from "lucide-react";
@@ -934,6 +935,12 @@ export default function FeedComposerBar({
                           />
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {pageMode && (
+                    <div className="px-5 mb-6">
+                      <FollowCreatorsCard dismissible={false} />
                     </div>
                   )}
 

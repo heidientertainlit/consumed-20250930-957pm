@@ -119,7 +119,24 @@ serve(async (req) => {
         trackedCount: 0,
       }));
 
-    return new Response(JSON.stringify({ creators: [...personal, ...fallback] }), {
+    // Enrich with TMDB person profile photos (covers directors, musicians, many authors/hosts)
+    const tmdbKey = Deno.env.get('TMDB_API_KEY');
+    let enriched = [...personal, ...fallback];
+    if (tmdbKey) {
+      enriched = await Promise.all(enriched.map(async (c) => {
+        try {
+          const res = await fetch(`https://api.themoviedb.org/3/search/person?api_key=${tmdbKey}&query=${encodeURIComponent(c.name)}`);
+          if (res.ok) {
+            const json = await res.json();
+            const hit = (json.results || []).find((p: any) => p.profile_path && p.name.toLowerCase() === c.name.toLowerCase()) || (json.results || [])[0];
+            if (hit?.profile_path) return { ...c, image: `https://image.tmdb.org/t/p/w185${hit.profile_path}` };
+          }
+        } catch (_) { /* keep initials fallback */ }
+        return { ...c, image: null };
+      }));
+    }
+
+    return new Response(JSON.stringify({ creators: enriched }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

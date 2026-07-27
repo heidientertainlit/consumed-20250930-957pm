@@ -6,6 +6,7 @@ import { Check, Plus, Users, X } from "lucide-react";
 interface SuggestedCreator {
   name: string;
   role: string;
+  image?: string | null;
   externalId: string;
   externalSource: string;
   trackedCount: number;
@@ -76,7 +77,7 @@ export default function FollowCreatorsCard({ dismissible = true }: { dismissible
           action: isFollowed ? "unfollow" : "follow",
           creatorName: creator.name,
           creatorRole: creator.role,
-          creatorImage: "",
+          creatorImage: creator.image || "",
           externalId: creator.externalId,
           externalSource: creator.externalSource,
         }),
@@ -105,7 +106,7 @@ export default function FollowCreatorsCard({ dismissible = true }: { dismissible
       <div className="flex items-start justify-between mb-1">
         <div className="flex items-center gap-2">
           <Users size={16} className="text-purple-600" />
-          <h3 className="text-[15px] font-bold text-gray-900">Which of these do you want to follow?</h3>
+          <h3 className="text-[15px] font-bold text-gray-900">Which of these creators do you want to follow?</h3>
         </div>
         {dismissible && (
           <button
@@ -132,7 +133,18 @@ export default function FollowCreatorsCard({ dismissible = true }: { dismissible
               className="flex flex-col items-center gap-1.5 shrink-0 w-[86px]"
               data-testid={`suggested-creator-${creator.externalId}`}
             >
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center text-[16px] font-bold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}>
+              {creator.image ? (
+                <img
+                  src={creator.image}
+                  alt={creator.name}
+                  className="w-14 h-14 rounded-full object-cover"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; (e.currentTarget.nextElementSibling as HTMLElement)?.style.removeProperty("display"); }}
+                />
+              ) : null}
+              <div
+                style={creator.image ? { display: "none" } : undefined}
+                className={`w-14 h-14 rounded-full flex items-center justify-center text-[16px] font-bold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
+              >
                 {initials(creator.name)}
               </div>
               <p className="text-[12px] font-semibold text-gray-800 text-center leading-tight line-clamp-2">{creator.name}</p>
