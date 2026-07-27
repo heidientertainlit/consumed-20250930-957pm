@@ -646,64 +646,82 @@ export default function OnboardingPage() {
     );
 
   return (
-    <Shell>
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-16">
+    <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
+      <div className="w-full max-w-[430px] flex flex-col relative bg-white">
+        {/* Purple gradient hero */}
         <div
-          className="w-24 h-24 rounded-3xl flex items-center justify-center"
-          style={{
-            background: "rgba(168,85,247,0.12)",
-            border: "1px solid rgba(168,85,247,0.4)",
-            boxShadow: "0 0 50px rgba(168,85,247,0.3)",
-          }}
+          className="relative px-6 pt-16 pb-10 flex flex-col items-center text-white"
+          style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}
         >
-          <Dna size={44} className="text-purple-300" />
-        </div>
-        <div
-          className="mt-6 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-[0.15em] uppercase"
-          style={{ background: "rgba(168,85,247,0.18)", border: "1px solid rgba(168,85,247,0.5)", color: "#d8b4fe" }}
-        >
-          Level 1 DNA unlocked
-        </div>
-        <h2 className="text-2xl font-black mt-4 text-center" style={{ fontFamily: "Poppins, sans-serif" }}>
-          Your Entertainment DNA has started forming.
-        </h2>
-
-
-        <div className="w-full mt-4">
-          <div className="flex items-center justify-between text-[11px] font-semibold text-white/45">
-            <span>Level 1</span>
-            <span>Full DNA profile</span>
+          <button
+            onClick={() => finish("/activity")}
+            className="absolute top-5 right-5 z-10 text-sm text-white/40 hover:text-white/70 transition-colors"
+          >
+            Skip
+          </button>
+          <div
+            className="w-24 h-24 rounded-3xl flex items-center justify-center"
+            style={{
+              background: "rgba(168,85,247,0.12)",
+              border: "1px solid rgba(168,85,247,0.4)",
+              boxShadow: "0 0 50px rgba(168,85,247,0.3)",
+            }}
+          >
+            <Dna size={44} className="text-purple-300" />
           </div>
-          <div className="mt-1.5 h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: `${Math.min(20 + loved.length * 2.5, 55)}%`,
-                background: "linear-gradient(90deg, #7c3aed, #d946ef)",
-                boxShadow: "0 0 10px rgba(168,85,247,0.6)",
-              }}
-            />
+          <div
+            className="mt-6 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-[0.15em] uppercase"
+            style={{ background: "rgba(168,85,247,0.18)", border: "1px solid rgba(168,85,247,0.5)", color: "#d8b4fe" }}
+          >
+            Level 1 DNA unlocked
           </div>
-          <p className="text-[12px] text-white/50 mt-2 text-center leading-snug">
-            Take the DNA quiz or add {Math.max(0, 30 - loved.length)} more titles to unlock your full archetype.
-          </p>
+          <h2 className="text-2xl font-black mt-4 text-center" style={{ fontFamily: "Poppins, sans-serif" }}>
+            Your Entertainment DNA has started forming.
+          </h2>
         </div>
 
-        <button
-          onClick={() => finish("/activity")}
-          className="w-full py-3.5 rounded-full font-bold text-[15px] mt-6 active:scale-95 transition-transform"
-          style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
-        >
-          View feed
-        </button>
-        <button
-          onClick={() => finish("/entertainment-dna")}
-          className="w-full py-3 rounded-full font-bold text-[14px] mt-2.5 text-purple-200 active:scale-95 transition-transform"
-          style={{ border: "1px solid rgba(168,85,247,0.5)", background: "rgba(168,85,247,0.08)" }}
-        >
-          Take the DNA quiz
-        </button>
+        {/* White body */}
+        <div className="flex-1 flex flex-col px-6 py-8">
+          <div className="w-full">
+            <div className="flex items-center justify-between text-[12px] font-semibold text-gray-500">
+              <span>Level 1</span>
+              <span>Full DNA profile</span>
+            </div>
+            <div className="mt-2 h-2.5 rounded-full overflow-hidden bg-gray-100">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${Math.min(20 + loved.length * 2.5, 55)}%`,
+                  background: "linear-gradient(90deg, #7c3aed, #d946ef)",
+                }}
+              />
+            </div>
+            <p
+              className="text-[17px] font-semibold text-gray-800 mt-5 text-center leading-snug"
+              style={{ fontFamily: "Poppins, sans-serif" }}
+            >
+              Take the DNA quiz or add {Math.max(0, 30 - loved.length)} more titles to unlock your full archetype.
+            </p>
+          </div>
+
+          <div className="mt-auto pt-8">
+            <button
+              onClick={() => finish("/entertainment-dna")}
+              className="w-full py-3.5 rounded-full font-bold text-[15px] text-white active:scale-95 transition-transform"
+              style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
+            >
+              Take the DNA quiz
+            </button>
+            <button
+              onClick={() => finish("/activity")}
+              className="w-full py-3 rounded-full font-bold text-[14px] mt-2.5 text-purple-700 active:scale-95 transition-transform"
+              style={{ border: "1px solid rgba(124,58,237,0.45)", background: "white" }}
+            >
+              View feed
+            </button>
+          </div>
+        </div>
       </div>
-    </Shell>
+    </div>
   );
 }
