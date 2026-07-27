@@ -326,6 +326,9 @@ export default function EntertainmentDNAPage() {
   // At least one selected room must map to a survey genre (Sports maps to none),
   // so the required genres answer is always written on submit.
   const hasMappableRoom = GENRE_ROOMS.some((r) => selectedRooms.includes(r.id) && r.genre);
+  // Onboarding already asked "What do you love talking about?" — if they picked
+  // mappable rooms there, don't ask again; their follows still write the genre answer.
+  const roomsAnsweredInOnboarding = GENRE_ROOMS.some((r) => initialFollows.has(r.id) && r.genre);
 
   // Step gating: 0 = types + rooms, 1 = drivers + open-ended, 2 = gender.
   const stepComplete = (s: number) => {
@@ -495,13 +498,14 @@ export default function EntertainmentDNAPage() {
   const loveQ = qByOrder(4);
   const genderQ = qByOrder(1);
 
-  const pill = (selected: boolean) =>
-    `px-4 py-2.5 rounded-full text-sm flex items-center gap-2 text-left transition-all border ${
-      selected
-        ? "border-gray-300 bg-gray-200 text-gray-900 font-medium shadow-sm"
-        : "border-gray-300 bg-white text-gray-800 hover:border-purple-300 hover:bg-purple-50"
-    }`;
-  const pillStyle = (_selected: boolean) => undefined;
+  const pill = (_selected: boolean) =>
+    "flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold border transition-all active:scale-95 text-left";
+  const pillStyle = (selected: boolean): React.CSSProperties => ({
+    borderColor: selected ? "#7c3aed" : "rgb(229,231,235)",
+    background: selected ? "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)" : "white",
+    color: selected ? "white" : "rgb(55,65,81)",
+    boxShadow: selected ? "0 4px 14px rgba(124,58,237,0.3)" : "none",
+  });
 
   const renderMulti = (q: SurveyQuestion, withIcons = false) => {
     const current = getAnswer(q.id);
@@ -525,7 +529,7 @@ export default function EntertainmentDNAPage() {
               style={pillStyle(isChecked)}
               data-testid={`multi-option-${q.id}-${clean}`}
             >
-              {IconComponent && <IconComponent size={15} />}
+              {IconComponent && <IconComponent size={15} className={isChecked ? "text-white" : "text-purple-600"} />}
               {clean}
               {isChecked && <Check size={15} />}
             </button>
@@ -628,17 +632,21 @@ export default function EntertainmentDNAPage() {
             <>
               {typesQ && (
                 <div>
-                  <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                  <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                     What do you like to consume?
                   </h2>
-                  <p className="text-gray-600 text-sm mb-3">Select all that apply.</p>
+                  <p className="text-[13px] text-gray-400 mt-1 mb-4">Select all that apply.</p>
                   {renderMulti(typesQ, true)}
                 </div>
               )}
+              {!roomsAnsweredInOnboarding && (
               <div>
-                <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                   What conversations do you want to follow?
                 </h2>
+                <p className="text-[13px] text-gray-400 mt-1 mb-4">
+                  Follow the conversations for your favorite topics — pick as many as you like.
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {[...GENRE_ROOMS]
                     .sort((a, b) => Number(initialFollows.has(a.id)) - Number(initialFollows.has(b.id)))
@@ -653,7 +661,7 @@ export default function EntertainmentDNAPage() {
                         style={pillStyle(on)}
                         data-testid={`room-pill-${room.name}`}
                       >
-                        <Icon size={15} />
+                        <Icon size={15} className={on ? "text-white" : "text-purple-600"} />
                         {room.name}
                         {on && <Check size={15} />}
                       </button>
@@ -661,12 +669,13 @@ export default function EntertainmentDNAPage() {
                   })}
                 </div>
               </div>
+              )}
               {genderQ && (
                 <div>
-                  <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                  <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                     One quick detail
                   </h2>
-                  <p className="text-gray-600 text-sm mb-3">{genderQ.question_text}</p>
+                  <p className="text-[13px] text-gray-400 mt-1 mb-4">{genderQ.question_text}</p>
                   {renderSelect(genderQ)}
                 </div>
               )}
@@ -678,7 +687,7 @@ export default function EntertainmentDNAPage() {
             <>
               {loveQ && (
                 <div>
-                  <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                  <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                     What do you love?
                   </h2>
                   <p className="text-gray-600 text-sm mb-3">
@@ -711,10 +720,10 @@ export default function EntertainmentDNAPage() {
               )}
               {driversQ && (
                 <div>
-                  <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                  <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                     What drives your choices?
                   </h2>
-                  <p className="text-gray-600 text-sm mb-3">Pick up to 3.</p>
+                  <p className="text-[13px] text-gray-400 mt-1 mb-4">Pick up to 3.</p>
                   {renderMulti(driversQ)}
                 </div>
               )}
