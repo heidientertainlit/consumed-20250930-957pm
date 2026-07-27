@@ -152,7 +152,7 @@ export default function EntertainmentDNAPage() {
       try {
         const [followsRes, ratingsRes] = await Promise.all([
           fetch(`${SUPABASE_URL}/rest/v1/room_follows?select=room_id&user_id=eq.${session.user.id}`, { headers }),
-          fetch(`${SUPABASE_URL}/rest/v1/media_ratings?select=title,media_type&user_id=eq.${session.user.id}&order=created_at.desc&limit=30`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/media_ratings?select=media_title,media_type&user_id=eq.${session.user.id}&order=created_at.desc&limit=30`, { headers }),
         ]);
         const follows = followsRes.ok ? await followsRes.json() : [];
         const ratings = ratingsRes.ok ? await ratingsRes.json() : [];
@@ -166,8 +166,8 @@ export default function EntertainmentDNAPage() {
 
         const titles: string[] = [];
         const types = new Set<string>();
-        for (const r of ratings as { title: string; media_type: string }[]) {
-          if (r.title && !titles.includes(r.title)) titles.push(r.title);
+        for (const r of ratings as { media_title: string; media_type: string }[]) {
+          if (r.media_title && !titles.includes(r.media_title)) titles.push(r.media_title);
           const t = TYPE_FROM_MEDIA[(r.media_type || '').toLowerCase()];
           if (t) types.add(t);
         }
@@ -330,10 +330,19 @@ export default function EntertainmentDNAPage() {
   // mappable rooms there, don't ask again; their follows still write the genre answer.
   const roomsAnsweredInOnboarding = GENRE_ROOMS.some((r) => initialFollows.has(r.id) && r.genre);
 
-  // Step gating: 0 = types + rooms, 1 = drivers + open-ended, 2 = gender.
-  const stepComplete = (s: number) => {
-    if (s === 0) return hasAnswer(qByOrder(2)) && hasMappableRoom;
-    return hasAnswer(qByOrder(5)) && hasAnswer(qByOrder(1));
+  // One question per screen. Rooms screen is skipped when onboarding already
+  // captured mappable rooms. Gender question dropped from the survey.
+  const screens: ("types" | "rooms" | "love" | "drivers")[] = [
+    "types",
+    ...(roomsAnsweredInOnboarding ? [] : ["rooms" as const]),
+    "love",
+    "drivers",
+  ];
+  const screenComplete = (name: string) => {
+    if (name === "types") return hasAnswer(qByOrder(2));
+    if (name === "rooms") return hasMappableRoom;
+    if (name === "love") return true; // optional
+    return hasAnswer(qByOrder(5));
   };
 
   // DNA completion % shown in the header bar. Credit for what they've already
@@ -496,7 +505,6 @@ export default function EntertainmentDNAPage() {
   const typesQ = qByOrder(2);
   const driversQ = qByOrder(5);
   const loveQ = qByOrder(4);
-  const genderQ = qByOrder(1);
 
   const pill = (_selected: boolean) =>
     "flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold border transition-all active:scale-95 text-left";
@@ -539,33 +547,21 @@ export default function EntertainmentDNAPage() {
     );
   };
 
-  const renderSelect = (q: SurveyQuestion) => {
-    const current = getAnswer(q.id);
-    return (
-      <div className="flex flex-wrap gap-2">
-        {q.options?.map((option, index) => {
-          const isSelected = current === option;
-          return (
-            <button
-              key={index}
-              onClick={() => handleAnswer(q.id, option)}
-              className={pill(isSelected)}
-              style={pillStyle(isSelected)}
-              data-testid={`option-${q.id}-${option}`}
-            >
-              {option}
-              {isSelected && <Check size={15} />}
-            </button>
-          );
-        })}
-      </div>
-    );
+  const totalSteps = screens.length;
+  const clampedStep = Math.min(step, totalSteps - 1);
+  const screen = screens[clampedStep];
+  const screenTitles: Record<string, string> = {
+    types: "Starting to take shape",
+    rooms: "Beginning to see patterns",
+    love: "Your taste is becoming clearer",
+    drivers: "Almost ready",
   };
-
-  const stepTitles = ["Starting to take shape", "Almost ready"];
-  const totalSteps = 2;
   const basePct = alreadyAdded.length > 0 ? 35 : 10;
-  const dnaPct = step >= totalSteps - 1 ? 99 : basePct;
+  const dnaPct = clampedStep >= totalSteps - 1 ? 99 : Math.round(basePct + (clampedStep / totalSteps) * (90 - basePct));
+  const typesCount = (() => {
+    const a = typesQ ? getAnswer(typesQ.id) : undefined;
+    return Array.isArray(a) ? a.length : 0;
+  })();
 
 
   return (
@@ -578,12 +574,12 @@ export default function EntertainmentDNAPage() {
         >
           <div className="flex items-center justify-between mb-4">
             <button
-              onClick={() => (step > 0 ? setStep(step - 1) : setLocation("/"))}
+              onClick={() => (clampedStep > 0 ? setStep(clampedStep - 1) : setLocation("/"))}
               className="flex items-center gap-2 text-white/60 hover:text-white transition-colors"
               data-testid="dna-back-button"
             >
               <ArrowLeft size={18} />
-              <span className="text-sm">{step > 0 ? "Back" : "Exit"}</span>
+              <span className="text-sm">{clampedStep > 0 ? "Back" : "Exit"}</span>
             </button>
             <button
               onClick={() => setLocation("/activity")}
@@ -622,135 +618,162 @@ export default function EntertainmentDNAPage() {
             </span>
           </div>
           <p className="text-white/50 text-xs mt-2">
-            Step {step + 1} of {totalSteps} — {stepTitles[step]}
+            Step {clampedStep + 1} of {totalSteps} — {screenTitles[screen]}
           </p>
         </div>
 
         {/* White step content */}
-        <div className="flex-1 px-5 pt-6 pb-4 space-y-7 bg-white">
-          {step === 0 && (
-            <>
-              {typesQ && (
-                <div>
-                  <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">LET&apos;S START WITH THE BASICS</p>
-                  <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
-                    Where do you spend your entertainment time?
-                  </h2>
-                  <p className="text-[13px] text-gray-400 mt-1 mb-4">Pick everything you regularly watch, read, listen to, or play.</p>
-                  {renderMulti(typesQ, true)}
-                </div>
-              )}
-              {!roomsAnsweredInOnboarding && (
-              <div>
-                <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">NOW THE FUN PART</p>
-                <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
-                  What could you talk about for hours?
-                </h2>
-                <p className="text-[13px] text-gray-400 mt-1 mb-4">
-                  Pick as many as you like — each one shapes your DNA.
-                </p>
-                {selectedRooms.length > 0 && (
-                  <p className="text-[13px] font-semibold text-purple-600 mb-3" data-testid="dna-room-feedback">
-                    {selectedRooms.length >= 3
-                      ? "\u{1F9EC} Your patterns are showing already..."
-                      : "\u2728 Your DNA is starting to take shape..."}
-                  </p>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  {[...GENRE_ROOMS]
-                    .sort((a, b) => Number(initialFollows.has(a.id)) - Number(initialFollows.has(b.id)))
-                    .map((room) => {
-                    const on = selectedRooms.includes(room.id);
-                    const Icon = room.Icon;
-                    return (
-                      <button
-                        key={room.id}
-                        onClick={() => toggleRoom(room.id)}
-                        className={pill(on)}
-                        style={pillStyle(on)}
-                        data-testid={`room-pill-${room.name}`}
+        <div className="flex-1 px-5 pt-6 pb-4 bg-white">
+          {screen === "types" && typesQ && (
+            <div>
+              <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">LET&apos;S START WITH THE BASICS</p>
+              <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                What are you into?
+              </h2>
+              <p className="text-[13px] text-gray-400 mt-1 mb-5">Pick everything you regularly watch, read, listen to, or play.</p>
+              <div className="grid grid-cols-2 gap-3">
+                {typesQ.options?.map((option) => {
+                  const current = getAnswer(typesQ.id);
+                  const currentAnswers = Array.isArray(current) ? current : [];
+                  const on = currentAnswers.includes(option);
+                  const clean = option.replace(" (please specify)", "");
+                  const IconComponent = ENTERTAINMENT_ICONS[clean];
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        const updated = on
+                          ? currentAnswers.filter((a) => a !== option)
+                          : [...currentAnswers, option];
+                        handleAnswer(typesQ.id, updated);
+                      }}
+                      className="relative flex flex-col items-start gap-2.5 p-4 rounded-2xl border text-left transition-all active:scale-95"
+                      style={{
+                        borderColor: on ? "#7c3aed" : "rgb(229,231,235)",
+                        background: on ? "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)" : "white",
+                        boxShadow: on ? "0 4px 14px rgba(124,58,237,0.3)" : "none",
+                      }}
+                      data-testid={`multi-option-${typesQ.id}-${clean}`}
+                    >
+                      {IconComponent && <IconComponent size={26} className={on ? "text-white" : "text-purple-600"} />}
+                      <span className={`text-[15px] font-semibold ${on ? "text-white" : "text-gray-800"}`}>{clean}</span>
+                      <span
+                        className="absolute top-3 right-3 w-5 h-5 rounded-full border flex items-center justify-center"
+                        style={{ borderColor: on ? "white" : "rgb(209,213,219)", background: on ? "rgba(255,255,255,0.2)" : "transparent" }}
                       >
-                        <Icon size={15} className={on ? "text-white" : "text-purple-600"} />
-                        {room.name}
-                        {on && <Check size={15} />}
-                      </button>
-                    );
-                  })}
-                </div>
+                        {on && <Check size={13} className="text-white" />}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
+              {typesCount > 0 && (
+                <p className="text-[13px] font-semibold text-purple-600 mt-4" data-testid="dna-types-feedback">
+                  {typesCount >= 3
+                    ? "\u2728 A true multi-format consumer. We like that."
+                    : "\u2728 Noted. Your DNA is starting to take shape..."}
+                </p>
               )}
-              {genderQ && (
-                <div>
-                  <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">ONE QUICK DETAIL</p>
-                  <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
-                    How do you identify?
-                  </h2>
-                  <p className="text-[13px] text-gray-400 mt-1 mb-4">This helps us fine-tune your matches.</p>
-                  {renderSelect(genderQ)}
-                </div>
-              )}
-
-            </>
+            </div>
           )}
 
-          {step === 1 && (
-            <>
-              {loveQ && (
-                <div>
-                  <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">TELL US ANYTHING</p>
-                  <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
-                    What do you love?
-                  </h2>
-                  <p className="text-[13px] text-gray-400 mt-1 mb-4">
-                    Teams, musicians, authors, comfort rewatches — anything goes.{" "}
-                    <span className="text-gray-300">(optional)</span>
-                  </p>
-                  <textarea
-                    value={(getAnswer(loveQ.id) as string) || ""}
-                    onChange={(e) => handleAnswer(loveQ.id, e.target.value)}
-                    placeholder="Type anything you love..."
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-purple-400 focus:outline-none min-h-[110px] resize-vertical text-gray-900 placeholder:text-gray-400 text-sm"
-                    data-testid={`text-input-${loveQ.id}`}
-                  />
-                  {alreadyAdded.length > 0 && (
-                    <div className="mt-3">
-                      <p className="text-gray-400 text-xs mb-2">Already added to your DNA</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {alreadyAdded.map((t) => (
-                          <span
-                            key={t}
-                            className="px-2.5 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-400 text-xs"
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+          {screen === "rooms" && (
+            <div>
+              <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">NOW FOR THE FUN QUESTION</p>
+              <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                What could you talk about for hours?
+              </h2>
+              <p className="text-[13px] text-gray-400 mt-1 mb-4">
+                {typesCount > 0
+                  ? `Nice \u2014 ${typesCount} format${typesCount === 1 ? "" : "s"} locked in. Now pick as many topics as you like.`
+                  : "Pick as many as you like \u2014 each one shapes your DNA."}
+              </p>
+              {selectedRooms.length > 0 && (
+                <p className="text-[13px] font-semibold text-purple-600 mb-3" data-testid="dna-room-feedback">
+                  {selectedRooms.length >= 3
+                    ? "\uD83E\uDDEC Your patterns are showing already..."
+                    : "\u2728 Your DNA is starting to take shape..."}
+                </p>
               )}
-              {driversQ && (
-                <div>
-                  <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">LAST QUESTION — ALMOST DONE</p>
-                  <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
-                    When you press play, what are you hoping for?
-                  </h2>
-                  <p className="text-[13px] text-gray-400 mt-1 mb-4">Pick up to 3 — same taste, different moods.</p>
-                  {renderMulti(driversQ)}
-                </div>
-              )}
-
-            </>
+              <div className="flex flex-wrap gap-2">
+                {[...GENRE_ROOMS]
+                  .sort((a, b) => Number(initialFollows.has(a.id)) - Number(initialFollows.has(b.id)))
+                  .map((room) => {
+                  const on = selectedRooms.includes(room.id);
+                  const Icon = room.Icon;
+                  return (
+                    <button
+                      key={room.id}
+                      onClick={() => toggleRoom(room.id)}
+                      className={pill(on)}
+                      style={pillStyle(on)}
+                      data-testid={`room-pill-${room.name}`}
+                    >
+                      <Icon size={15} className={on ? "text-white" : "text-purple-600"} />
+                      {room.name}
+                      {on && <Check size={15} />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           )}
 
+          {screen === "love" && loveQ && (
+            <div>
+              <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">TELL US ANYTHING</p>
+              <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                What do you love?
+              </h2>
+              <p className="text-[13px] text-gray-400 mt-1 mb-4">
+                {selectedRooms.length >= 3
+                  ? "Your taste is coming through. Anything else we should know \u2014 teams, musicians, authors, comfort rewatches?"
+                  : "Teams, musicians, authors, comfort rewatches \u2014 anything goes."}{" "}
+                <span className="text-gray-300">(optional)</span>
+              </p>
+              <textarea
+                value={(getAnswer(loveQ.id) as string) || ""}
+                onChange={(e) => handleAnswer(loveQ.id, e.target.value)}
+                placeholder="Type anything you love..."
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-purple-400 focus:outline-none min-h-[110px] resize-vertical text-gray-900 placeholder:text-gray-400 text-sm"
+                data-testid={`text-input-${loveQ.id}`}
+              />
+              {alreadyAdded.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-gray-400 text-xs mb-2">Already added to your DNA</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {alreadyAdded.map((t) => (
+                      <span
+                        key={t}
+                        className="px-2.5 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-400 text-xs"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {screen === "drivers" && driversQ && (
+            <div>
+              <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">LAST QUESTION — ALMOST DONE</p>
+              <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                When you press play, what are you hoping for?
+              </h2>
+              <p className="text-[13px] text-gray-400 mt-1 mb-4">Pick up to 3 — one more answer and we can decode you.</p>
+              {renderMulti(driversQ)}
+            </div>
+          )}
         </div>
 
         {/* Footer button */}
         <div className="px-5 pb-10 bg-white">
-          {step < totalSteps - 1 ? (
+          {clampedStep < totalSteps - 1 ? (
             <button
-              onClick={() => setStep(step + 1)}
-              disabled={!stepComplete(step)}
+              onClick={() => setStep(clampedStep + 1)}
+              disabled={!screenComplete(screen)}
               className="w-full text-white font-semibold rounded-full py-3.5 text-base shadow-lg shadow-purple-500/25 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
               data-testid="dna-continue-button"
@@ -761,7 +784,7 @@ export default function EntertainmentDNAPage() {
           ) : (
             <Button
               onClick={generateDNA}
-              disabled={!stepComplete(1)}
+              disabled={!screenComplete("drivers")}
               className="w-full bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600 text-white font-semibold rounded-full py-4 text-base shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="get-dna-button"
             >
