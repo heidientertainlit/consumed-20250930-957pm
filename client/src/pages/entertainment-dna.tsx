@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import html2canvas from "html2canvas";
 import { ShareImageSheet } from "@/components/share-image-sheet";
+import { APP_BASE } from "@/lib/share";
 import { useFirstSessionHooks } from "@/components/first-session-hooks";
 
 // Icon mapping for entertainment types
@@ -442,16 +443,18 @@ export default function EntertainmentDNAPage() {
           backgroundColor: null,
         });
         const shareText = `I'm a "${dnaProfile.title}" — ${dnaProfile.description} Check out my Entertainment DNA on Consumed!`;
+        // Public, no-login-required DNA page for recipients.
+        const shareUrl = session?.user?.id ? `${APP_BASE}/edna/${session.user.id}` : APP_BASE;
         // Prefer the OS share sheet (text, AirDrop, etc.) with the image attached.
         const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, 'image/png'));
         if (blob && navigator.share) {
           const file = new File([blob], 'my-entertainment-dna.png', { type: 'image/png' });
-          const withImage = { files: [file], title: 'My Entertainment DNA', text: shareText };
+          const withImage = { files: [file], title: 'My Entertainment DNA', text: `${shareText} ${shareUrl}` };
           try {
             if (navigator.canShare?.(withImage)) {
               await navigator.share(withImage);
             } else {
-              await navigator.share({ title: 'My Entertainment DNA', text: shareText });
+              await navigator.share({ title: 'My Entertainment DNA', text: shareText, url: shareUrl });
             }
             return;
           } catch (err: any) {
@@ -562,6 +565,7 @@ export default function EntertainmentDNAPage() {
           fileName="my-entertainment-dna.png"
           title="Share Your Entertainment DNA"
           shareText={`I'm a "${dnaProfile.title}" — ${dnaProfile.description} Check out my Entertainment DNA on Consumed!`}
+          shareUrl={session?.user?.id ? `${APP_BASE}/edna/${session.user.id}` : undefined}
         />
       </div>
     );
