@@ -106,7 +106,7 @@ export default function FollowCreatorsCard({ dismissible = true }: { dismissible
       <div className="flex items-start justify-between mb-1">
         <div className="flex items-center gap-2">
           <Users size={16} className="text-purple-600" />
-          <h3 className="text-[15px] font-bold text-gray-900">Which of these creators do you want to follow?</h3>
+          <h3 className="text-[15px] font-bold text-gray-900">Artists & Creators</h3>
         </div>
         {dismissible && (
           <button
@@ -122,15 +122,15 @@ export default function FollowCreatorsCard({ dismissible = true }: { dismissible
         )}
       </div>
       <p className="text-[13px] text-gray-400 mb-3">
-        Following creators sharpens your DNA and recommendations.
+        Follow creators you like and sharpen your DNA and recommendations.
       </p>
-      <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+      <div className="flex items-stretch gap-2.5 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
         {creators.map((creator, i) => {
           const on = followedIds.has(creator.externalId);
           return (
             <div
               key={creator.externalId}
-              className="flex flex-col items-center gap-1.5 shrink-0 w-[86px]"
+              className="flex flex-col items-center gap-1.5 shrink-0 w-[86px] self-stretch"
               data-testid={`suggested-creator-${creator.externalId}`}
             >
               {creator.image ? (
@@ -147,8 +147,8 @@ export default function FollowCreatorsCard({ dismissible = true }: { dismissible
               >
                 {initials(creator.name)}
               </div>
-              <p className="text-[12px] font-semibold text-gray-800 text-center leading-tight line-clamp-2">{creator.name}</p>
-              <p className="text-[10px] text-gray-400 -mt-1">{creator.role}</p>
+              <p className="text-[12px] font-semibold text-gray-800 text-center leading-tight line-clamp-2 h-[30px] flex items-center">{creator.name}</p>
+              <p className="text-[10px] text-gray-400 -mt-1 mb-auto">{creator.role}</p>
               <button
                 onClick={() => toggleFollow(creator)}
                 disabled={pendingId === creator.externalId}
