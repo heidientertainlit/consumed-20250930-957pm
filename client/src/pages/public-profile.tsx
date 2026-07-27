@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
-import { Loader2, Star, Trophy, TrendingUp, BookOpen, Tv, Film, Music, Headphones, Gamepad2, Lock } from "lucide-react";
+import { Loader2, Star, Trophy, TrendingUp, BookOpen, Tv, Film, Music, Headphones, Gamepad2, Lock, Youtube } from "lucide-react";
 
 interface PublicProfile {
   id: string;
@@ -83,6 +83,7 @@ export default function PublicProfilePage() {
       case 'music': return <Music size={12} className="text-pink-500" />;
       case 'podcast': return <Headphones size={12} className="text-violet-500" />;
       case 'game': return <Gamepad2 size={12} className="text-emerald-500" />;
+      case 'youtube': return <Youtube size={12} className="text-red-500" />;
       default: return <Star size={12} className="text-gray-400" />;
     }
   };

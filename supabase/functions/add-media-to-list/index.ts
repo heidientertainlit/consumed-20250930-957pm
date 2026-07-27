@@ -239,7 +239,7 @@ serve(async (req) => {
     // CRITICAL: Ensure we have a poster image URL before inserting
     // This prevents the "random stock image" bug in the activity feed
     let finalImageUrl = media_image_url || null;
-    if (!finalImageUrl) {
+    if (!finalImageUrl && media_external_source !== 'youtube') {
       console.log('No image URL provided, fetching from TMDB for:', media_title);
       finalImageUrl = await fetchTmdbPosterUrl(media_external_id, media_external_source, media_type, media_title);
       if (finalImageUrl) {
@@ -260,6 +260,7 @@ serve(async (req) => {
         image_url: finalImageUrl,
         external_id: media_external_id || null,
         external_source: media_external_source || 'tmdb',
+        ...(media_subtype ? { media_subtype } : {}),
         ...(series_name ? { series_name } : {})
       })
       .select()

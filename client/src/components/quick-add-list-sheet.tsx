@@ -21,6 +21,7 @@ interface QuickAddListSheetProps {
     imageUrl?: string;
     externalId?: string;
     externalSource?: string;
+    mediaSubtype?: string;
     creator?: string;
     seriesName?: string;
   } | null;
@@ -298,6 +299,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
           media_image_url: effectiveMedia.imageUrl || '',
           media_external_id: effectiveMedia.externalId,
           media_external_source: effectiveMedia.externalSource || 'tmdb',
+          ...((effectiveMedia as any).mediaSubtype ? { media_subtype: (effectiveMedia as any).mediaSubtype } : {}),
           ...(effectiveMedia.seriesName ? { series_name: effectiveMedia.seriesName } : {}),
         }),
       });
@@ -309,6 +311,26 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
 
       const responseData = await response.json().catch(() => ({}));
       if (responseData?.data?.id) setAddedItemId(responseData.data.id);
+
+      // YouTube channels also count as followed creators
+      if (
+        (effectiveMedia.externalSource || '') === 'youtube' &&
+        effectiveMedia.externalId &&
+        /^UC[\w-]{22}$/.test(effectiveMedia.externalId)
+      ) {
+        fetch(`${supabaseUrl}/functions/v1/follow-creator`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'follow',
+            creatorName: effectiveMedia.title,
+            creatorRole: 'YouTuber',
+            creatorImage: effectiveMedia.imageUrl || '',
+            externalId: effectiveMedia.externalId,
+            externalSource: 'youtube',
+          }),
+        }).catch(() => {});
+      }
 
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });

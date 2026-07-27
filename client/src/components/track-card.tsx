@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Film, Tv, BookOpen, Music, Loader2 } from "lucide-react";
+import { Search, Plus, Film, Tv, BookOpen, Music, Loader2, Youtube } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
@@ -79,6 +79,7 @@ export default function TrackCard() {
       case 'tv': return <Tv className="w-3 h-3" />;
       case 'book': return <BookOpen className="w-3 h-3" />;
       case 'music': return <Music className="w-3 h-3" />;
+      case 'youtube': return <Youtube className="w-3 h-3" />;
       default: return <Film className="w-3 h-3" />;
     }
   };

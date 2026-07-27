@@ -802,18 +802,43 @@ serve(async (req) => {
         try {
           const youtubeKey = Deno.env.get('YOUTUBE_API_KEY');
           if (youtubeKey) {
-            const youtubeResponse = await fetchWithTimeout(
-              `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&maxResults=5&key=${youtubeKey}&safeSearch=strict`,
-              {},
-              3000
-            );
-            if (youtubeResponse.ok) {
-              const youtubeData = await youtubeResponse.json();
+            const [videoResponse, channelResponse] = await Promise.all([
+              fetchWithTimeout(
+                `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&maxResults=5&key=${youtubeKey}&safeSearch=strict`,
+                {},
+                3000
+              ),
+              fetchWithTimeout(
+                `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=channel&maxResults=3&key=${youtubeKey}&safeSearch=strict`,
+                {},
+                3000
+              ).catch(() => null),
+            ]);
+            if (channelResponse && channelResponse.ok) {
+              const channelData = await channelResponse.json();
+              channelData.items?.forEach((channel: any) => {
+                if (isContentAppropriate(channel.snippet, 'youtube')) {
+                  youtubeResults.push({
+                    title: channel.snippet.title,
+                    type: 'youtube',
+                    media_subtype: 'channel',
+                    creator: channel.snippet.title,
+                    poster_url: channel.snippet.thumbnails?.medium?.url || channel.snippet.thumbnails?.default?.url || '',
+                    external_id: channel.id.channelId,
+                    external_source: 'youtube',
+                    description: channel.snippet.description
+                  });
+                }
+              });
+            }
+            if (videoResponse.ok) {
+              const youtubeData = await videoResponse.json();
               youtubeData.items?.forEach((video: any) => {
                 if (isContentAppropriate(video.snippet, 'youtube')) {
                   youtubeResults.push({
                     title: video.snippet.title,
                     type: 'youtube',
+                    media_subtype: 'video',
                     creator: video.snippet.channelTitle,
                     poster_url: video.snippet.thumbnails?.medium?.url || '',
                     external_id: video.id.videoId,

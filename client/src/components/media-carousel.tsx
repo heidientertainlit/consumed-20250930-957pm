@@ -1,4 +1,4 @@
-import { Plus, Star, Film, Tv, Music, Book, Mic, Check, Clock, X, Heart, Ban, Play, Folder } from "lucide-react";
+import { Plus, Star, Film, Tv, Music, Book, Mic, Check, Clock, X, Heart, Ban, Play, Folder, Youtube } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -342,6 +342,8 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         return <Book className={iconClass} />;
       case 'podcast':
         return <Mic className={iconClass} />;
+      case 'youtube':
+        return <Youtube className={iconClass} />;
       default:
         return <Tv className={iconClass} />;
     }

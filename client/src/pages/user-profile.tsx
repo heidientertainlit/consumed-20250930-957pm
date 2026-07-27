@@ -17,7 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity, MessageSquarePlus, Trash2, Dna, Send, Check, Flag, Ban } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity, MessageSquarePlus, Trash2, Dna, Send, Check, Flag, Ban, Youtube } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { getGameAlignment } from "@/lib/identity-feedback";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -2946,6 +2946,7 @@ export default function UserProfile() {
       case 'music': return <Music size={16} className="text-green-600" />;
       case 'podcast': return <Headphones size={16} className="text-blue-600" />;
       case 'game': return <Gamepad2 size={16} className="text-orange-600" />;
+      case 'youtube': return <Youtube size={16} className="text-red-600" />;
       default: return <Play size={16} className="text-gray-600" />;
     }
   };
@@ -2958,6 +2959,7 @@ export default function UserProfile() {
       book: 'Books',
       music: 'Music',
       podcast: 'Podcasts',
+      youtube: 'YouTube',
       game: 'Games'
     };
     

@@ -234,9 +234,52 @@ Deno.serve(async (req) => {
       }
     } else if (source === 'youtube') {
       const youtubeKey = Deno.env.get('YOUTUBE_API_KEY');
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/videos?id=${externalId}&part=snippet,contentDetails,statistics&key=${youtubeKey}`
-      );
+      const isChannelId = /^UC[\w-]{22}$/.test(externalId);
+      if (isChannelId) {
+        const chResponse = await fetch(
+          `https://www.googleapis.com/youtube/v3/channels?id=${externalId}&part=snippet,statistics&key=${youtubeKey}`
+        );
+        if (chResponse.ok) {
+          const chData = await chResponse.json();
+          const channel = chData.items?.[0];
+          if (channel) {
+            const subs = Number(channel.statistics?.subscriberCount || 0);
+            const subsLabel = subs >= 1000000
+              ? `${(subs / 1000000).toFixed(1)}M subscribers`
+              : subs >= 1000
+                ? `${Math.floor(subs / 1000)}K subscribers`
+                : `${subs} subscribers`;
+            mediaDetails = {
+              title: channel.snippet.title,
+              type: 'YouTube',
+              media_subtype: 'channel',
+              creator: channel.snippet.title,
+              artwork: channel.snippet.thumbnails?.high?.url || channel.snippet.thumbnails?.medium?.url,
+              description: stripHtml(channel.snippet.description),
+              rating: '4.0',
+              releaseDate: channel.snippet.publishedAt,
+              category: 'Channel',
+              language: 'English',
+              totalEpisodes: Number(channel.statistics?.videoCount || 0),
+              subscribers: subsLabel,
+              averageLength: 'N/A',
+              platforms: [
+                {
+                  name: 'YouTube',
+                  logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/159px-YouTube_full-color_icon_%282017%29.svg.png',
+                  url: `https://www.youtube.com/channel/${externalId}`
+                }
+              ]
+            };
+          }
+        }
+        // fall through to shared response handling below
+      }
+      const response = (isChannelId && mediaDetails)
+        ? { ok: false } as Response
+        : await fetch(
+            `https://www.googleapis.com/youtube/v3/videos?id=${externalId}&part=snippet,contentDetails,statistics&key=${youtubeKey}`
+          );
       
       if (response.ok) {
         const data = await response.json();
@@ -246,6 +289,7 @@ Deno.serve(async (req) => {
           mediaDetails = {
             title: video.snippet.title,
             type: 'YouTube',
+            media_subtype: 'video',
             creator: video.snippet.channelTitle,
             artwork: video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.medium?.url,
             description: stripHtml(video.snippet.description),

@@ -5386,7 +5386,7 @@ export default function Feed() {
     if (src === 'googlebooks' || src === 'open_library') return 'book';
     if (src === 'tmdb' || src === 'tmdb_movie') return 'movie';
     if (src === 'tmdb_tv') return 'tv';
-    if (src === 'youtube') return 'tv';
+    if (src === 'youtube') return 'youtube';
     return '';
   };
 
@@ -5398,6 +5398,7 @@ export default function Feed() {
     'books': ['book', 'ebook', 'audiobook'],
     'sports': ['sports', 'sport'],
     'podcasts': ['podcast'],
+    'youtube': ['youtube'],
     'gaming': ['game', 'gaming', 'video_game'],
   };
 
@@ -10925,6 +10926,7 @@ export default function Feed() {
                 selectedCategory === 'sports' ? "Sports" :
                 selectedCategory === 'podcasts' ? "Podcasts" :
                 selectedCategory === 'gaming' ? "Gaming" :
+                selectedCategory === 'youtube' ? "YouTube" :
                 mediaTypeFilter === "movie" ? "Movies" : mediaTypeFilter === "tv" ? "TV Shows" : mediaTypeFilter === "book" ? "Books" : mediaTypeFilter === "music" ? "Music" : mediaTypeFilter === "podcast" ? "Podcasts" : "Gaming"
               } Activity Yet</h3>
               <p className="text-gray-600 max-w-sm mx-auto">

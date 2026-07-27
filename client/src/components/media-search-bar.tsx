@@ -16,7 +16,8 @@ const normalizeMediaType = (type: string | undefined | null): string => {
   return "movie";
 };
 
-const formatTypeLabel = (type: string, seriesCount?: number): string => {
+const formatTypeLabel = (type: string, seriesCount?: number, subtype?: string): string => {
+  if (type === 'youtube' && subtype === 'channel') return 'YouTube channel';
   if (type === 'book_series') return seriesCount ? `${seriesCount}-book series` : 'book series';
   if (type === 'tv' || type === 'tv_show') return 'TV show';
   if (type === 'youtube') return 'YouTube';
@@ -139,9 +140,11 @@ export function MediaSearchBar({
             {displayResults.map((result, index) => {
               const poster = result.poster_url || result.image_url || result.image || result.poster_path || result.poster || '';
               const seriesLabel = result.series || inferSeries(result.title);
+              const isChannel = result.media_subtype === 'channel';
               const mediaObj = {
                 title: result.title,
                 mediaType: result.type || "movie",
+                mediaSubtype: result.media_subtype || undefined,
                 externalId: result.external_id || result.id,
                 externalSource: result.external_source || "tmdb",
                 imageUrl: poster || "",
@@ -157,13 +160,13 @@ export function MediaSearchBar({
                     onClick={clear}
                   >
                     {poster
-                      ? <img src={poster} alt={result.title} className="w-10 h-14 object-cover rounded shrink-0" onError={(e) => { e.currentTarget.style.display = "none"; }} />
-                      : <div className="w-10 h-14 bg-white/10 rounded shrink-0 flex items-center justify-center"><Film size={14} className="text-white/30" /></div>
+                      ? <img src={poster} alt={result.title} className={isChannel ? "w-10 h-10 object-cover rounded-full shrink-0 mt-1" : "w-10 h-14 object-cover rounded shrink-0"} onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                      : <div className={isChannel ? "w-10 h-10 bg-white/10 rounded-full shrink-0 mt-1 flex items-center justify-center" : "w-10 h-14 bg-white/10 rounded shrink-0 flex items-center justify-center"}><Film size={14} className="text-white/30" /></div>
                     }
                     <div className="flex-1 min-w-0 pt-0.5">
                       <p className="font-semibold text-white text-sm line-clamp-2 leading-snug">{result.title}</p>
                       <p className="text-xs text-white/50 mt-0.5 capitalize">
-                        {formatTypeLabel(result.type, result.series_count)}{result.year ? ` • ${result.year}` : ""}
+                        {formatTypeLabel(result.type, result.series_count, result.media_subtype)}{result.year ? ` • ${result.year}` : ""}
                       </p>
                       {result.creator && result.creator !== 'Unknown Author' && (
                         <p className="text-xs text-white/40 truncate">{result.creator}</p>
