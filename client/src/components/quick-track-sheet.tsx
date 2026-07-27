@@ -74,6 +74,9 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [mediaTypeFilter, setMediaTypeFilter] = useState<string | null>(null);
+  // Typo rescue: when a search returns zero results we ask spell-fix for a
+  // corrected title and quietly retry with it (media-search is untouched).
+  const [correctedQuery, setCorrectedQuery] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [selectedList, setSelectedList] = useState<string>("queue");
   const [isSaving, setIsSaving] = useState(false);
@@ -93,6 +96,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     setSearchResults([]);
     setIsSearching(false);
     setMediaTypeFilter(null);
+    setCorrectedQuery(null);
     setSelectedMedia(null);
     setSelectedList("queue");
     setIsSaving(false);
@@ -111,19 +115,44 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, session?.access_token, mediaTypeFilter]);
 
+  const runMediaSearch = async (query: string): Promise<any[]> => {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/media-search`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session!.access_token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ query, include_book_series: true, ...(mediaTypeFilter ? { type: mediaTypeFilter } : {}) }),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.results || [];
+  };
+
   const doSearch = async (query: string) => {
     if (!session?.access_token) return;
     setIsSearching(true);
+    setCorrectedQuery(null);
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/media-search`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ query, include_book_series: true, ...(mediaTypeFilter ? { type: mediaTypeFilter } : {}) }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSearchResults(data.results || []);
+      let results = await runMediaSearch(query);
+
+      // Zero results? Try a one-shot spelling correction and retry.
+      if (results.length === 0 && query.trim().length >= 4) {
+        try {
+          const fixRes = await fetch(`${SUPABASE_URL}/functions/v1/spell-fix`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ query, ...(mediaTypeFilter ? { type: mediaTypeFilter } : {}) }),
+          });
+          const { corrected } = fixRes.ok ? await fixRes.json() : { corrected: null };
+          if (corrected) {
+            const retried = await runMediaSearch(corrected);
+            if (retried.length > 0) {
+              results = retried;
+              setCorrectedQuery(corrected);
+            }
+          }
+        } catch { /* rescue is best-effort — fall through to "No results" */ }
       }
+
+      setSearchResults(results);
     } catch (e) {
       console.error("Track search error:", e);
     } finally {
@@ -360,6 +389,11 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
 
               {filteredResults.length > 0 && (
                 <>
+                  {correctedQuery && (
+                    <p className="text-xs text-gray-500 mb-1.5">
+                      Showing results for "<span className="font-semibold text-gray-700">{correctedQuery}</span>"
+                    </p>
+                  )}
                   <p className="text-xs font-semibold text-gray-400 mb-1.5">Top results</p>
                   <div className="space-y-1">
                     {filteredResults.slice(0, 12).map((r, idx) => (
