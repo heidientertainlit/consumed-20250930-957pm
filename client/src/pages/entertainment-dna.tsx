@@ -9,6 +9,7 @@ import { useFirstSessionHooks } from "@/components/first-session-hooks";
 // Icon mapping for entertainment types
 const ENTERTAINMENT_ICONS: Record<string, typeof Tv> = {
   'TV': Tv,
+  'TV Shows': Tv,
   'Movies': Film,
   'Books': BookOpen,
   'Music': Music,
@@ -650,18 +651,21 @@ export default function EntertainmentDNAPage() {
                       className="relative flex flex-col items-start gap-2.5 p-4 rounded-2xl border text-left transition-all active:scale-95"
                       style={{
                         borderColor: on ? "#7c3aed" : "rgb(229,231,235)",
-                        background: on ? "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)" : "white",
-                        boxShadow: on ? "0 4px 14px rgba(124,58,237,0.3)" : "none",
+                        background: on ? "#f8f6ff" : "white",
+                        boxShadow: on ? "0 2px 10px rgba(124,58,237,0.12)" : "none",
                       }}
                       data-testid={`multi-option-${typesQ.id}-${clean}`}
                     >
-                      {IconComponent && <IconComponent size={26} className={on ? "text-white" : "text-purple-600"} />}
-                      <span className={`text-[15px] font-semibold ${on ? "text-white" : "text-gray-800"}`}>{clean}</span>
+                      {IconComponent && <IconComponent size={26} className="text-purple-600" />}
+                      <span className="text-[15px] font-semibold text-gray-900">{clean}</span>
                       <span
-                        className="absolute top-3 right-3 w-5 h-5 rounded-full border flex items-center justify-center"
-                        style={{ borderColor: on ? "white" : "rgb(209,213,219)", background: on ? "rgba(255,255,255,0.2)" : "transparent" }}
+                        className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center border"
+                        style={{
+                          borderColor: on ? "#6d28d9" : "rgb(209,213,219)",
+                          background: on ? "#6d28d9" : "transparent",
+                        }}
                       >
-                        {on && <Check size={13} className="text-white" />}
+                        {on && <Check size={14} className="text-white" strokeWidth={3} />}
                       </span>
                     </button>
                   );
