@@ -499,14 +499,14 @@ export default function NewRoom() {
   if (!roomId) return null;
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white lg:bg-[#edecf2] flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <Loader2 className="animate-spin text-purple-500" size={28} />
       </div>
     );
   }
   if (!pool) {
     return (
-      <div className="min-h-screen bg-white lg:bg-[#edecf2] flex flex-col items-center justify-center gap-3 px-6 text-center">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-3 px-6 text-center">
         <p className="text-gray-700 font-semibold">{roomData?.error || "Room not found"}</p>
         <button onClick={() => setLocation("/rooms")} className="text-purple-600 font-semibold text-sm">Back to rooms</button>
       </div>
@@ -514,15 +514,15 @@ export default function NewRoom() {
   }
 
   return (
-    <div className="min-h-screen bg-white lg:bg-[#edecf2]">
-      <div className="max-w-md mx-auto pb-28 lg:max-w-2xl lg:bg-white lg:shadow-[0_0_50px_rgba(20,16,31,0.10)] lg:min-h-screen">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-md mx-auto pb-28 lg:max-w-none">
 
         {/* ── Purple gradient hero header ── */}
         <div className="relative pb-5" style={{ background: "linear-gradient(165deg, #14101f 0%, #1d1638 55%, #2d1f6e 100%)" }}>
           <div className="absolute inset-0 pointer-events-none opacity-40" style={{ background: "radial-gradient(circle at 85% 10%, rgba(168,85,247,0.45), transparent 55%)" }} />
           <div className="relative">
             <Navigation />
-            <div className="px-4 pt-2">
+            <div className="px-4 pt-2 lg:max-w-4xl lg:mx-auto lg:px-6">
               <div className="flex items-center justify-between mb-5">
                 <button onClick={() => window.history.back()} className="p-1 -ml-1 active:scale-90 transition-transform">
                   <ChevronLeft size={26} className="text-white" />
@@ -603,7 +603,7 @@ export default function NewRoom() {
 
         {/* ── Tabs ── */}
         <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-100">
-          <div className="flex px-4">
+          <div className="flex px-4 lg:max-w-4xl lg:mx-auto lg:px-6">
             {TABS.map((t) => {
               const active = tab === t;
               return (
@@ -618,7 +618,7 @@ export default function NewRoom() {
 
         {/* ════════ PLAY — real room-scoped trivia & votes ════════ */}
         {tab === "Play" && (
-          <div className="pb-2">
+          <div className="pb-2 lg:max-w-4xl lg:mx-auto">
             <RoomPlay
               roomName={pool?.name || ""}
               seriesTag={pool?.series_tag}
@@ -640,7 +640,7 @@ export default function NewRoom() {
             exploreSections.map((section) => (
               <div
                 key={section.key}
-                className="pt-7"
+                className="pt-7 lg:max-w-4xl lg:mx-auto"
               >
                 <SectionHeader title={section.title} />
                 <div className="flex items-start gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
@@ -706,7 +706,7 @@ export default function NewRoom() {
 
         {/* ════════ DISCUSS ════════ */}
         {tab === "Discuss" && (
-        <div>
+        <div className="lg:max-w-4xl lg:mx-auto">
           {/* Room Media */}
           {featuredTitles.length > 0 && (
             <div className="px-4 pt-4 pb-3 border-b border-gray-100">
