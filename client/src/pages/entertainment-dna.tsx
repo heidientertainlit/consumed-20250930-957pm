@@ -404,7 +404,7 @@ export default function EntertainmentDNAPage() {
         <div 
           ref={cardRef}
           className="w-[320px] bg-white rounded-3xl overflow-hidden shadow-2xl"
-          style={{ aspectRatio: '9/16' }}
+          style={{ minHeight: '568px' }}
         >
           {/* Gradient top border */}
           <div className="h-2 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500"></div>
@@ -444,8 +444,8 @@ export default function EntertainmentDNAPage() {
 
             {/* DNA Bio */}
             {dnaProfile.meaning && (
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-3 flex-1 overflow-hidden">
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">🔮 Your Entertainment DNA Profile:</h3>
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-3 flex-1">
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">Your Entertainment DNA Profile:</h3>
                 <p className="text-gray-700 text-xs leading-relaxed">{dnaProfile.meaning}</p>
               </div>
             )}
