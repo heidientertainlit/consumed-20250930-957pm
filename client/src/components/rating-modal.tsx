@@ -75,10 +75,6 @@ export default function RatingModal({
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Rating submitted!",
-        description: "Your rating has been shared with your friends",
-      });
       // Invalidate feed queries to show the new post
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });

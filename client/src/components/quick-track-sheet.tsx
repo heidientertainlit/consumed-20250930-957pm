@@ -252,9 +252,11 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
       queryClient.invalidateQueries({ queryKey: ["social-feed"] });
       queryClient.invalidateQueries({ queryKey: ["feed"] });
 
-      toast({
-        title: wantPred || wantPoll ? "Posted!" : hasRating ? "Rating posted" : hasTake ? "Take posted" : `Added to ${statusLabel}`,
-      });
+      if (!(hasRating && !wantPred && !wantPoll)) {
+        toast({
+          title: wantPred || wantPoll ? "Posted!" : hasTake ? "Take posted" : `Added to ${statusLabel}`,
+        });
+      }
       handleClose();
     } catch (e) {
       toast({ title: "Couldn't save that", variant: "destructive" });

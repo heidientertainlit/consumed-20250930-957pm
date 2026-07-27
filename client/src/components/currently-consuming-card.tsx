@@ -332,9 +332,6 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       }
       queryClient.invalidateQueries({ queryKey: ['media-reviews'] });
-      if (variables.isPrivate) {
-        toast({ title: "Rating saved!" });
-      }
     },
     onError: (error) => {
       console.error('Rating error:', error);

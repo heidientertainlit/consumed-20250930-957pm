@@ -326,10 +326,6 @@ export default function Track() {
       return response.json();
     },
     onSuccess: (data, variables) => {
-      toast({
-        title: "Rating submitted!",
-        description: `You rated ${variables.recommendation.title} ${variables.rating} stars.`,
-      });
       // Close the rating stars
       const uniqueId = `${variables.recommendation.external_source}-${variables.recommendation.external_id}`;
       setRatingStars(prev => ({ ...prev, [uniqueId]: false }));
