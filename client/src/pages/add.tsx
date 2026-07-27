@@ -1,3 +1,4 @@
+import FollowCreatorsCard from "@/components/follow-creators-card";
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, TrendingUp, Plus, Mic, Gamepad2, MessageSquarePlus, Star, X, Brain, ChevronRight, ArrowLeft } from "lucide-react";
@@ -860,6 +861,10 @@ export default function Search() {
             </div>
           )}
 
+
+        <div className="mt-6">
+          <FollowCreatorsCard dismissible={false} />
+        </div>
       </div>
 
       <QuickAddListSheet

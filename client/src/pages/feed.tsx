@@ -1,3 +1,4 @@
+import FollowCreatorsCard from "@/components/follow-creators-card";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient, useMutation, useInfiniteQuery } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
@@ -8993,6 +8994,11 @@ export default function Feed() {
               {/* Seen It? — Movies (round 2) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
                 <SeenItGame mediaTypeFilter="movie" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
+              )}
+
+              {/* Follow creators suggestion card */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
+                <FollowCreatorsCard />
               )}
 
               {/* DNA Moment #2 */}
