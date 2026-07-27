@@ -634,30 +634,29 @@ export default function EntertainmentDNAPage() {
                       }}
                       className="relative flex flex-col items-start gap-2.5 p-4 rounded-2xl border text-left transition-all active:scale-95"
                       style={{
-                        borderColor: "rgb(229,231,235)",
-                        background: on ? "#f7f7f8" : "white",
+                        borderColor: on ? "rgb(203,205,215)" : "rgb(235,236,240)",
+                        background: on ? "#fafafb" : "white",
                         boxShadow: "none",
                       }}
                       data-testid={`multi-option-${typesQ.id}-${clean}`}
                     >
-                      {IconComponent && <IconComponent size={26} style={{ color: "#1e1b4b" }} />}
-                      <span className="text-[15px] font-semibold text-gray-900">{clean}</span>
-                      <span
-                        className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center border"
-                        style={{
-                          borderColor: on ? "#1e1b4b" : "rgb(209,213,219)",
-                          background: on ? "#1e1b4b" : "transparent",
-                        }}
-                      >
-                        {on && <Check size={14} className="text-white" strokeWidth={3} />}
-                      </span>
+                      {IconComponent && <IconComponent size={24} strokeWidth={1.5} style={{ color: "#4b4a63" }} />}
+                      <span className="text-[15px] font-medium text-gray-800">{clean}</span>
+                      {on && (
+                        <span
+                          className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center"
+                          style={{ background: "#4b4a63" }}
+                        >
+                          <Check size={12} className="text-white" strokeWidth={2.5} />
+                        </span>
+                      )}
                     </button>
                   );
                 })}
               </div>
               {typesCount > 0 && (
                 <div className="mt-5 rounded-2xl bg-gray-50 px-4 py-3.5 flex items-start gap-3" data-testid="dna-types-feedback">
-                  <Sparkles size={18} className="shrink-0 mt-0.5" style={{ color: "#1e1b4b" }} />
+                  <Sparkles size={16} strokeWidth={1.75} className="shrink-0 mt-0.5" style={{ color: "#4b4a63" }} />
                   <p className="text-[14px] leading-snug">
                     {typesCount >= 3 ? (
                       <>
