@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Dna, Feather, Loader2, Download, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy, Sparkles, Check, ArrowLeft, ArrowRight, Search, Heart, Zap, Clapperboard, Wand2, Smile, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, Leaf, Plane, Users, Eye, CircleUser, Youtube } from "lucide-react";
+import { Dna, Feather, Loader2, Share2, Download, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy, Sparkles, Check, ArrowLeft, ArrowRight, Search, Heart, Zap, Clapperboard, Wand2, Smile, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, Leaf, Plane, Users, Eye, CircleUser, Youtube } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import html2canvas from "html2canvas";
+import { ShareImageSheet } from "@/components/share-image-sheet";
 import { useFirstSessionHooks } from "@/components/first-session-hooks";
 
 // Icon mapping for entertainment types
@@ -103,6 +104,9 @@ export default function EntertainmentDNAPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Analyzing your responses...");
   const [isDownloading, setIsDownloading] = useState(false);
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Stepped flow state + pre-fill from onboarding activity.
@@ -400,6 +404,7 @@ export default function EntertainmentDNAPage() {
             <div className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
           </div>
         </div>
+
       </div>
     );
   }
@@ -424,6 +429,24 @@ export default function EntertainmentDNAPage() {
         console.error('Error downloading image:', error);
       } finally {
         setIsDownloading(false);
+      }
+    };
+
+    const handleShare = async () => {
+      if (!cardRef.current || isSharing) return;
+      setIsSharing(true);
+      try {
+        const canvas = await html2canvas(cardRef.current, {
+          scale: 3,
+          useCORS: true,
+          backgroundColor: null,
+        });
+        setShareImageUrl(canvas.toDataURL('image/png'));
+        setShareSheetOpen(true);
+      } catch (error) {
+        console.error('Error preparing share image:', error);
+      } finally {
+        setIsSharing(false);
       }
     };
 
@@ -494,6 +517,16 @@ export default function EntertainmentDNAPage() {
             <Download size={18} />
             {isDownloading ? 'Saving...' : 'Save to Share'}
           </Button>
+
+          <Button 
+            onClick={handleShare}
+            disabled={isSharing}
+            className="bg-white/20 hover:bg-white/30 text-white border border-white/30 px-6 py-2.5 rounded-full shadow-lg text-sm flex items-center justify-center gap-2"
+            data-testid="share-dna-button"
+          >
+            <Share2 size={18} />
+            {isSharing ? 'Preparing...' : 'Share'}
+          </Button>
           
           <Button 
             onClick={() => window.location.href = '/activity'}
@@ -503,6 +536,15 @@ export default function EntertainmentDNAPage() {
             Check out what others are consuming
           </Button>
         </div>
+
+        <ShareImageSheet
+          open={shareSheetOpen}
+          onOpenChange={setShareSheetOpen}
+          imageDataUrl={shareImageUrl}
+          fileName="my-entertainment-dna.png"
+          title="Share Your Entertainment DNA"
+          shareText={`I'm a "${dnaProfile.title}" — ${dnaProfile.description} Check out my Entertainment DNA on Consumed!`}
+        />
       </div>
     );
   }

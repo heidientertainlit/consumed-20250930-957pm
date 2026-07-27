@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { Check, Sparkles, Dna, Search, Tv, Heart, Zap, Clapperboard, Wand2, Smile, Trophy, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, BookOpen, Leaf } from "lucide-react";
+import { Check, ChevronRight, Sparkles, Dna, Search, Tv, Heart, Zap, Clapperboard, Wand2, Smile, Trophy, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, BookOpen, Leaf } from "lucide-react";
 import { markOnboardingComplete } from "@/components/route-guards";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
@@ -225,9 +225,18 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false);
   const [showTenPrompt, setShowTenPrompt] = useState(false);
   const [tenPromptShown, setTenPromptShown] = useState(false);
+  const pendingSaves = useRef<Promise<void> | null>(null);
 
-  const finish = (route: string) => {
+  const finish = async (route: string) => {
     markOnboardingComplete();
+    // Ensure background onboarding writes (ratings, list adds) land before the
+    // next page fetches them — e.g. the DNA survey prefill is one-shot.
+    if (pendingSaves.current) {
+      await Promise.race([
+        pendingSaves.current,
+        new Promise((r) => setTimeout(r, 6000)),
+      ]).catch(() => {});
+    }
     setLocation(route);
   };
 
@@ -272,8 +281,10 @@ export default function OnboardingPage() {
   const submitLoved = async () => {
     if (saving) return;
     setSaving(true);
-    // Show the reveal immediately — persistence runs in the background.
+    // Show the reveal immediately — persistence runs in the background,
+    // tracked in pendingSaves so finish() can wait for it.
     setStep("reveal");
+    pendingSaves.current = (async () => {
     try {
       if (user?.id && loved.length > 0) {
         const picks = allLovedItems.filter((i) => loved.includes(i.title));
@@ -351,6 +362,7 @@ export default function OnboardingPage() {
     } finally {
       setSaving(false);
     }
+    })();
   };
 
   const ProgressBar = ({ current }: { current: number }) => (
@@ -585,10 +597,11 @@ export default function OnboardingPage() {
                   <p className="text-[12px] font-bold tracking-wide text-white/70 uppercase mb-2">
                     {row.label}
                   </p>
-                  <div
-                    className="flex gap-2.5 overflow-x-auto pb-1 -mx-5 px-5"
-                    style={{ scrollbarWidth: "none" }}
-                  >
+                  <div className="relative -mx-5">
+                    <div
+                      className="flex gap-2.5 overflow-x-auto pb-1 px-5"
+                      style={{ scrollbarWidth: "none" }}
+                    >
                     {visible.map((item) => {
                       const added = loved.includes(item.title);
                       return (
@@ -618,6 +631,14 @@ export default function OnboardingPage() {
                         </button>
                       );
                     })}
+                    </div>
+                    {/* Swipe hint: right-edge fade + chevron */}
+                    <div
+                      className="pointer-events-none absolute inset-y-0 right-0 w-12 flex items-center justify-end pr-1"
+                      style={{ background: "linear-gradient(to left, rgba(10,6,24,0.9), rgba(10,6,24,0))" }}
+                    >
+                      <ChevronRight size={18} className="text-white/60" />
+                    </div>
                   </div>
                 </div>
               );
