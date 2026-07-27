@@ -118,7 +118,7 @@ export default function LoginPage() {
       // race past onboarding straight to the saved returnUrl.
       const createdAt = new Date(user.created_at).getTime();
       const isNewUser = Date.now() - createdAt < 10 * 60 * 1000;
-      if (justSignedUp || (isNewUser && !isOnboardingComplete())) {
+      if (justSignedUp || (isNewUser && !isOnboardingComplete(user.id))) {
         sessionStorage.removeItem('returnUrl');
         setLocation('/onboarding');
         return;

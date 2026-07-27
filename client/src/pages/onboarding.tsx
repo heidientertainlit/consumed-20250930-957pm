@@ -228,7 +228,7 @@ export default function OnboardingPage() {
   const pendingSaves = useRef<Promise<void> | null>(null);
 
   const finish = async (route: string) => {
-    markOnboardingComplete();
+    markOnboardingComplete(user?.id);
     // Ensure background onboarding writes (ratings, list adds) land before the
     // next page fetches them — e.g. the DNA survey prefill is one-shot.
     if (pendingSaves.current) {

@@ -5128,13 +5128,13 @@ export default function Feed() {
   // Safety net: the feed is no longer wrapped in ProtectedRoute (guests allowed),
   // so replicate its new-user onboarding redirect here for logged-in users.
   useEffect(() => {
-    if (!authLoading && user && !isOnboardingComplete()) {
+    if (!authLoading && user && !isOnboardingComplete(user.id)) {
       const createdAt = new Date(user.created_at).getTime();
       const isNewUser = Date.now() - createdAt < 10 * 60 * 1000;
       if (isNewUser) {
         setLocation('/onboarding');
       } else {
-        markOnboardingComplete();
+        markOnboardingComplete(user.id);
       }
     }
   }, [authLoading, user]);

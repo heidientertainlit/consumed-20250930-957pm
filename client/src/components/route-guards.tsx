@@ -9,12 +9,18 @@ interface RouteGuardProps {
 const ONBOARDING_KEY = 'consumed_onboarding_completed';
 const NEW_USER_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 
-export function isOnboardingComplete(): boolean {
-  return localStorage.getItem(ONBOARDING_KEY) === 'true';
+// The flag is scoped per user id — a shared browser-wide flag used to make
+// every subsequent signup on the same browser skip onboarding entirely.
+function onboardingKey(userId?: string | null): string {
+  return userId ? `${ONBOARDING_KEY}:${userId}` : ONBOARDING_KEY;
 }
 
-export function markOnboardingComplete(): void {
-  localStorage.setItem(ONBOARDING_KEY, 'true');
+export function isOnboardingComplete(userId?: string | null): boolean {
+  return localStorage.getItem(onboardingKey(userId)) === 'true';
+}
+
+export function markOnboardingComplete(userId?: string | null): void {
+  localStorage.setItem(onboardingKey(userId), 'true');
 }
 
 export function ProtectedRoute({ children }: RouteGuardProps) {
@@ -34,7 +40,7 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
 
     if (!loading && user) {
       const currentPath = window.location.pathname;
-      const onboardingDone = isOnboardingComplete();
+      const onboardingDone = isOnboardingComplete(user.id);
 
       if (!onboardingDone) {
         const createdAt = new Date(user.created_at).getTime();
@@ -45,7 +51,7 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
           return;
         } else {
           // Existing user without the key — mark complete silently
-          markOnboardingComplete();
+          markOnboardingComplete(user.id);
         }
       }
 
@@ -77,7 +83,7 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
 
   useEffect(() => {
     if (!loading && user) {
-      const onboardingDone = isOnboardingComplete();
+      const onboardingDone = isOnboardingComplete(user.id);
       if (onboardingDone) {
         setLocation('/activity');
       } else {
@@ -86,7 +92,7 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
         if (isNewUser) {
           setLocation('/onboarding');
         } else {
-          markOnboardingComplete();
+          markOnboardingComplete(user.id);
           setLocation('/activity');
         }
       }
