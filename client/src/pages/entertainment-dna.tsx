@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Dna, Loader2, Download, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy, Sparkles, Check, ArrowLeft, ArrowRight, Search, Heart, Zap, Clapperboard, Wand2, Smile, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, Leaf, Plane, Users, Eye, CircleUser, Youtube } from "lucide-react";
+import { Dna, Feather, Loader2, Download, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy, Sparkles, Check, ArrowLeft, ArrowRight, Search, Heart, Zap, Clapperboard, Wand2, Smile, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, Leaf, Plane, Users, Eye, CircleUser, Youtube } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import html2canvas from "html2canvas";
@@ -435,9 +435,6 @@ export default function EntertainmentDNAPage() {
           className="w-[320px] bg-white rounded-3xl overflow-hidden shadow-2xl"
           style={{ minHeight: '568px' }}
         >
-          {/* Gradient top border */}
-          <div className="h-2 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500"></div>
-          
           <div className="p-5 flex flex-col h-full">
             {/* Header */}
             <div className="text-center mb-3">
@@ -499,19 +496,11 @@ export default function EntertainmentDNAPage() {
           </Button>
           
           <Button 
-            onClick={() => window.location.href = '/profile'}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-2.5 rounded-full shadow-lg text-sm"
-            data-testid="complete-onboarding-button"
-          >
-            Back to My DNA
-          </Button>
-
-          <Button 
             onClick={() => window.location.href = '/activity'}
-            className="bg-white/20 hover:bg-white/30 text-white border border-white/30 px-6 py-2.5 rounded-full shadow-lg text-sm"
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-2.5 rounded-full shadow-lg text-sm"
             data-testid="go-to-feed-button"
           >
-            Go to the main feed
+            Check out what others are consuming
           </Button>
         </div>
       </div>
@@ -724,31 +713,45 @@ export default function EntertainmentDNAPage() {
               <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                 What do you love?
               </h2>
-              <p className="text-[13px] text-gray-400 mt-1 mb-4">
-                {selectedRooms.length >= 3
-                  ? "Your taste is coming through. Anything else we should know \u2014 teams, musicians, authors, comfort rewatches?"
-                  : "Teams, musicians, authors, comfort rewatches \u2014 anything goes."}{" "}
-                <span className="text-gray-300">(optional)</span>
+              <p className="text-[14px] text-gray-400 mt-1 mb-4">
+                Anything we missed? <span className="text-gray-300">(optional)</span>
               </p>
-              <textarea
-                value={(getAnswer(loveQ.id) as string) || ""}
-                onChange={(e) => handleAnswer(loveQ.id, e.target.value)}
-                placeholder="Type anything you love..."
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-purple-400 focus:outline-none min-h-[110px] resize-vertical text-gray-900 placeholder:text-gray-400 text-sm"
-                data-testid={`text-input-${loveQ.id}`}
-              />
+              <div className="relative">
+                <textarea
+                  value={(getAnswer(loveQ.id) as string) || ""}
+                  onChange={(e) => handleAnswer(loveQ.id, e.target.value)}
+                  placeholder="Share anything you love..."
+                  className="w-full p-4 bg-white border border-gray-200 rounded-2xl focus:border-purple-400 focus:outline-none min-h-[160px] resize-none text-gray-900 placeholder:text-gray-400 text-[15px]"
+                  data-testid={`text-input-${loveQ.id}`}
+                />
+                <Feather size={16} className="absolute bottom-4 right-4 text-gray-400 pointer-events-none" />
+              </div>
               {alreadyAdded.length > 0 && (
-                <div className="mt-3">
-                  <p className="text-gray-400 text-xs mb-2">Already added to your DNA</p>
-                  <div className="flex flex-wrap gap-1.5">
+                <div className="mt-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex-1 h-px bg-gray-200" />
+                    <p className="flex items-center gap-1.5 text-[14px] font-bold text-gray-900 shrink-0">
+                      <Sparkles size={14} className="text-purple-600" />
+                      Already shaping your DNA
+                    </p>
+                    <div className="flex-1 h-px bg-gray-200" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                      <Sparkles size={15} className="text-purple-600" />
+                    </span>
                     {alreadyAdded.map((t) => (
                       <span
                         key={t}
-                        className="px-2.5 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-400 text-xs"
+                        className="px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-800 text-[14px] font-medium"
                       >
                         {t}
                       </span>
                     ))}
+                  </div>
+                  <div className="mt-5 flex items-center gap-3 bg-purple-50 rounded-2xl px-4 py-3.5">
+                    <Dna size={18} className="text-purple-600 shrink-0" />
+                    <p className="text-[14px] text-gray-800">This makes your DNA even more personal.</p>
                   </div>
                 </div>
               )}

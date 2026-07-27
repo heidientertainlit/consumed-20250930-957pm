@@ -222,7 +222,6 @@ export default function OnboardingPage() {
   const [vote, setVote] = useState<string | null | undefined>(undefined);
   const [rooms, setRooms] = useState<string[]>([]);
   const [loved, setLoved] = useState<string[]>([]);
-  const [fadingOut, setFadingOut] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [showTenPrompt, setShowTenPrompt] = useState(false);
   const [tenPromptShown, setTenPromptShown] = useState(false);
@@ -263,9 +262,7 @@ export default function OnboardingPage() {
     if (loved.includes(title)) return;
     const newCount = loved.length + 1;
     setLoved((l) => [...l, title]);
-    setFadingOut((f) => [...f, title]);
-    // Show "Added" briefly, then the card leaves the row and the next title slides in.
-    setTimeout(() => setFadingOut((f) => f.filter((t) => t !== title)), 800);
+    // Cards stay in place with an "Added" badge — no layout shift.
     if (newCount === 10 && !tenPromptShown) {
       setTenPromptShown(true);
       setTimeout(() => setShowTenPrompt(true), 900);
@@ -275,6 +272,8 @@ export default function OnboardingPage() {
   const submitLoved = async () => {
     if (saving) return;
     setSaving(true);
+    // Show the reveal immediately — persistence runs in the background.
+    setStep("reveal");
     try {
       if (user?.id && loved.length > 0) {
         const picks = allLovedItems.filter((i) => loved.includes(i.title));
@@ -284,20 +283,22 @@ export default function OnboardingPage() {
         const typeByTitle: Record<string, string> = {};
         for (const row of lovedRows)
           for (const it of row.items) typeByTitle[it.title] = typeByLabel[row.label] || "movie";
-        for (const p of picks) {
-          const { error } = await supabase.from("media_ratings").upsert(
-            {
-              user_id: user.id,
-              media_title: p.title,
-              media_type: typeByTitle[p.title] || "movie",
-              media_external_id: p.externalId,
-              media_external_source: p.source,
-              rating: 5,
-            },
-            { onConflict: "user_id,media_external_id,media_external_source" },
-          );
-          if (error) console.error("[onboarding rating]", error);
-        }
+        await Promise.all(
+          picks.map(async (p) => {
+            const { error } = await supabase.from("media_ratings").upsert(
+              {
+                user_id: user.id,
+                media_title: p.title,
+                media_type: typeByTitle[p.title] || "movie",
+                media_external_id: p.externalId,
+                media_external_source: p.source,
+                rating: 5,
+              },
+              { onConflict: "user_id,media_external_id,media_external_source" },
+            );
+            if (error) console.error("[onboarding rating]", error);
+          }),
+        );
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData?.session?.access_token;
         // Also track the picks (list_items) so they count toward "tracked" and DNA levels.
@@ -349,7 +350,6 @@ export default function OnboardingPage() {
       }
     } finally {
       setSaving(false);
-      setStep("reveal");
     }
   };
 
@@ -579,9 +579,7 @@ export default function OnboardingPage() {
 
           <div className="mt-5 space-y-4">
             {lovedRows.map((row) => {
-              const visible = row.items.filter(
-                (item) => !loved.includes(item.title) || fadingOut.includes(item.title),
-              );
+              const visible = row.items;
               return (
                 <div key={row.label}>
                   <p className="text-[12px] font-bold tracking-wide text-white/70 uppercase mb-2">
@@ -592,7 +590,7 @@ export default function OnboardingPage() {
                     style={{ scrollbarWidth: "none" }}
                   >
                     {visible.map((item) => {
-                      const added = fadingOut.includes(item.title);
+                      const added = loved.includes(item.title);
                       return (
                         <button
                           key={item.title}
@@ -608,21 +606,18 @@ export default function OnboardingPage() {
                         >
                           <img src={item.poster} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
                           {added && (
-                            <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.55)" }}>
+                            <div className="absolute inset-0 pointer-events-none transition-opacity" style={{ background: "rgba(20,10,40,0.45)" }}>
                               <span
-                                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold text-white"
+                                className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full flex items-center justify-center text-white shadow-lg"
                                 style={{ background: "#a855f7" }}
                               >
-                                <Check size={12} /> Added
+                                <Check size={14} strokeWidth={3} />
                               </span>
                             </div>
                           )}
                         </button>
                       );
                     })}
-                    {visible.length === 0 && (
-                      <p className="text-[12px] text-white/40 py-4">All added — nice taste.</p>
-                    )}
                   </div>
                 </div>
               );
