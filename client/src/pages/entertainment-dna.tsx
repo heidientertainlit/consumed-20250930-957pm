@@ -330,14 +330,11 @@ export default function EntertainmentDNAPage() {
   // Step gating: 0 = types + rooms, 1 = drivers + open-ended, 2 = gender.
   const stepComplete = (s: number) => {
     if (s === 0) return hasAnswer(qByOrder(2)) && hasMappableRoom;
-    if (s === 1) return hasAnswer(qByOrder(5));
-    return hasAnswer(qByOrder(1));
+    return hasAnswer(qByOrder(5)) && hasAnswer(qByOrder(1));
   };
 
   // DNA completion % shown in the header bar. Credit for what they've already
   // added (onboarding picks / follows), climbing as steps are finished.
-  const basePct = alreadyAdded.length > 0 ? 35 : 10;
-  const dnaPct = Math.min(90, basePct + step * Math.round((90 - basePct) / 3));
 
   if (loading || !session) {
     return (
@@ -473,11 +470,19 @@ export default function EntertainmentDNAPage() {
           </Button>
           
           <Button 
-            onClick={() => window.location.href = '/activity'}
+            onClick={() => window.location.href = '/profile'}
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-2.5 rounded-full shadow-lg text-sm"
             data-testid="complete-onboarding-button"
           >
             Back to My DNA
+          </Button>
+
+          <Button 
+            onClick={() => window.location.href = '/activity'}
+            className="bg-white/20 hover:bg-white/30 text-white border border-white/30 px-6 py-2.5 rounded-full shadow-lg text-sm"
+            data-testid="go-to-feed-button"
+          >
+            Go to the main feed
           </Button>
         </div>
       </div>
@@ -553,8 +558,11 @@ export default function EntertainmentDNAPage() {
     );
   };
 
-  const stepTitles = ["What you're into", "What it does for you", "Last thing"];
-  const totalSteps = 3;
+  const stepTitles = ["What you're into", "Finish up"];
+  const totalSteps = 2;
+  const basePct = alreadyAdded.length > 0 ? 35 : 10;
+  const dnaPct = step >= totalSteps - 1 ? 99 : basePct;
+
 
   return (
     <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
@@ -653,6 +661,16 @@ export default function EntertainmentDNAPage() {
                   })}
                 </div>
               </div>
+              {genderQ && (
+                <div>
+                  <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+                    One quick detail
+                  </h2>
+                  <p className="text-gray-600 text-sm mb-3">{genderQ.question_text}</p>
+                  {renderSelect(genderQ)}
+                </div>
+              )}
+
             </>
           )}
 
@@ -704,18 +722,6 @@ export default function EntertainmentDNAPage() {
             </>
           )}
 
-          {step === 2 && genderQ && (
-            <div>
-              <h2 className="text-xl font-bold leading-snug text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
-                One quick detail
-              </h2>
-              <p className="text-gray-600 text-sm mb-3">{genderQ.question_text}</p>
-              {renderSelect(genderQ)}
-              <p className="text-gray-400 text-xs mt-6">
-                That's everything — hit the button below to generate your Entertainment DNA.
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Footer button */}
@@ -734,7 +740,7 @@ export default function EntertainmentDNAPage() {
           ) : (
             <Button
               onClick={generateDNA}
-              disabled={!stepComplete(2)}
+              disabled={!stepComplete(1)}
               className="w-full bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600 text-white font-semibold rounded-full py-4 text-base shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="get-dna-button"
             >
