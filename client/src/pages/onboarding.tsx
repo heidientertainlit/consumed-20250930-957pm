@@ -224,6 +224,8 @@ export default function OnboardingPage() {
   const [loved, setLoved] = useState<string[]>([]);
   const [fadingOut, setFadingOut] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [showTenPrompt, setShowTenPrompt] = useState(false);
+  const [tenPromptShown, setTenPromptShown] = useState(false);
 
   const finish = (route: string) => {
     markOnboardingComplete();
@@ -259,10 +261,15 @@ export default function OnboardingPage() {
 
   const addLoved = (title: string) => {
     if (loved.includes(title)) return;
+    const newCount = loved.length + 1;
     setLoved((l) => [...l, title]);
     setFadingOut((f) => [...f, title]);
     // Show "Added" briefly, then the card leaves the row and the next title slides in.
     setTimeout(() => setFadingOut((f) => f.filter((t) => t !== title)), 800);
+    if (newCount === 10 && !tenPromptShown) {
+      setTenPromptShown(true);
+      setTimeout(() => setShowTenPrompt(true), 900);
+    }
   };
 
   const submitLoved = async () => {
@@ -597,6 +604,43 @@ export default function OnboardingPage() {
             Pick at least 3. You can always add more later.
           </p>
         </div>
+
+        {showTenPrompt && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center px-6"
+            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+            onClick={() => setShowTenPrompt(false)}
+          >
+            <div
+              className="w-full max-w-sm rounded-3xl p-6 text-center bg-white"
+              style={{ boxShadow: "0 0 40px rgba(168,85,247,0.35)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div
+                className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center"
+                style={{ background: "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.35)" }}
+              >
+                <Dna size={32} className="text-purple-500" />
+              </div>
+              <h3 className="text-xl font-black mt-4 text-gray-900" style={{ fontFamily: "Poppins, sans-serif" }}>
+                That's 10!
+              </h3>
+              <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+                Your Entertainment DNA is unlocked.
+              </p>
+              <button
+                onClick={() => {
+                  setShowTenPrompt(false);
+                  submitLoved();
+                }}
+                className="w-full py-3 rounded-full font-bold text-[15px] text-white mt-5 active:scale-95 transition-transform"
+                style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
+              >
+                See my DNA now
+              </button>
+            </div>
+          </div>
+        )}
 
       </Shell>
     );
