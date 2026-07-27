@@ -631,7 +631,7 @@ export default function EntertainmentDNAPage() {
               <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                 What are you into?
               </h2>
-              <p className="text-[13px] text-gray-400 mt-1 mb-5">Pick everything you regularly watch, read, listen to, or play.</p>
+              <p className="text-[13px] text-gray-400 mt-1 mb-5">Pick <span className="text-gray-500 font-medium underline decoration-purple-300 decoration-2 underline-offset-2">everything</span> you regularly watch, read, listen to, or play.</p>
               <div className="grid grid-cols-2 gap-3">
                 {typesQ.options?.map((option) => {
                   const current = getAnswer(typesQ.id);
@@ -650,9 +650,9 @@ export default function EntertainmentDNAPage() {
                       }}
                       className="relative flex flex-col items-start gap-2.5 p-4 rounded-2xl border text-left transition-all active:scale-95"
                       style={{
-                        borderColor: on ? "#7c3aed" : "rgb(229,231,235)",
-                        background: on ? "#f8f6ff" : "white",
-                        boxShadow: on ? "0 2px 10px rgba(124,58,237,0.12)" : "none",
+                        borderColor: on ? "transparent" : "rgb(229,231,235)",
+                        background: on ? "#ece7fb" : "white",
+                        boxShadow: "none",
                       }}
                       data-testid={`multi-option-${typesQ.id}-${clean}`}
                     >
@@ -672,11 +672,22 @@ export default function EntertainmentDNAPage() {
                 })}
               </div>
               {typesCount > 0 && (
-                <p className="text-[13px] font-semibold text-purple-600 mt-4" data-testid="dna-types-feedback">
-                  {typesCount >= 3
-                    ? "\u2728 A true multi-format consumer. We like that."
-                    : "\u2728 Noted. Your DNA is starting to take shape..."}
-                </p>
+                <div className="mt-5 rounded-2xl bg-purple-50/80 px-4 py-3.5 flex items-start gap-3" data-testid="dna-types-feedback">
+                  <Sparkles size={18} className="text-purple-600 shrink-0 mt-0.5" />
+                  <p className="text-[14px] leading-snug">
+                    {typesCount >= 3 ? (
+                      <>
+                        <span className="font-bold text-gray-900">A true multi-format consumer.</span>{" "}
+                        <span className="text-gray-500">We like that.</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-bold text-gray-900">Noted.</span>{" "}
+                        <span className="text-gray-500">Your DNA is starting to take shape...</span>
+                      </>
+                    )}
+                  </p>
+                </div>
               )}
             </div>
           )}
