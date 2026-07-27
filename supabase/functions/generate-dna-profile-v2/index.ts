@@ -248,7 +248,8 @@ serve(async (req) => {
       { data: allSignals },
       { data: recentSignals },
       { data: showSignalsRaw },
-      { data: existingProfile }
+      { data: existingProfile },
+      { data: followedCreatorRows }
     ] = await Promise.all([
       supabaseClient
         .from('edna_responses')
@@ -277,7 +278,12 @@ serve(async (req) => {
         .from('dna_profiles')
         .select('id, core_archetype, label')
         .eq('user_id', userId)
-        .single()
+        .single(),
+      supabaseClient
+        .from('followed_creators')
+        .select('creator_name, creator_role')
+        .eq('user_id', userId)
+        .limit(30)
     ]);
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -341,6 +347,21 @@ serve(async (req) => {
       ? (getArchetype(existingProfile.core_archetype)?.displayName ?? existingProfile.label)
       : null;
 
+    // Sanitize user-controlled text before it enters the LLM prompt
+    const promptSafe = (v: unknown, maxLen = 60) =>
+      String(v ?? '')
+        .replace(/[\r\n\t]+/g, ' ')
+        .replace(/[`#>{}\[\]|]/g, '')
+        .trim()
+        .slice(0, maxLen);
+
+    const followedCreatorsForAI = (followedCreatorRows || []).length
+      ? (followedCreatorRows || [])
+          .map((c: any) => `- ${promptSafe(c.creator_name)} (${promptSafe(c.creator_role, 30) || 'Creator'})`)
+          .filter((line: string) => line.length > 4)
+          .join('\n')
+      : 'None yet';
+
     // ── 6. Build taxonomy-constrained prompt ─────────────────────────────────
     const prompt = `You are assigning and writing an Entertainment DNA profile for a user on Consumed.
 
@@ -365,6 +386,9 @@ BEHAVIORAL SIGNALS (what they actually consume — ordered by strength):
 ${formattedSignals}
 
 TOP SHOWS/FRANCHISES ENGAGED WITH: ${topShows}
+
+FOLLOWED CREATORS & ARTISTS (explicit taste declarations — weigh these strongly):
+${followedCreatorsForAI}
 
 PRE-SCORED ARCHETYPES (from behavior — use this to inform your assignment):
 ${topArchetypesForAI}
@@ -524,7 +548,7 @@ Respond with valid JSON only:
       // legacy fields still returned for any existing frontend callers
       tend_to_insights:      gpt.evidence || [],
       cross_media_patterns:  [],
-      top_creators:          [],
+      top_creators:          (followedCreatorRows || []).map((c: any) => c.creator_name).slice(0, 10),
       dna_level:             2,
       level_name:            'DNA Profile',
       unlocks:               ['Celebrity DNA matching', '"You tend to..." insights', 'Cross-media patterns'],

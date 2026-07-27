@@ -91,6 +91,7 @@ interface SignalAccum {
     moments: number;
     reactions_hot_take: number;
     reactions_disagree: number;
+    followed: number;
   };
 }
 
@@ -130,6 +131,7 @@ serve(async (req) => {
       { data: rawPredictions },
       { data: momentResponses },
       { data: rawReactions },
+      { data: followedCreatorRows },
     ] = await Promise.all([
       svc.from('lists').select('id').eq('user_id', userId),
       svc.from('media_ratings')
@@ -143,6 +145,9 @@ serve(async (req) => {
         .eq('user_id', userId),
       svc.from('post_reactions')
         .select('reaction, social_post_id')
+        .eq('user_id', userId),
+      svc.from('followed_creators')
+        .select('creator_name, creator_role')
         .eq('user_id', userId),
     ]);
 
@@ -202,6 +207,7 @@ serve(async (req) => {
             trivia_attempts: 0, trivia_correct: 0,
             polls: 0, genre_polls: 0, moments: 0,
             reactions_hot_take: 0, reactions_disagree: 0,
+            followed: 0,
           }
         });
       }
@@ -219,6 +225,14 @@ serve(async (req) => {
         const s = touch('creator', item.creator.trim());
         if (s) { s.weightedCount += 1.0; s.sources.tracked += 1; }
       }
+    }
+
+    // ── Source 1b: Followed creators — explicit taste declaration, weight 2.0 ──
+    for (const fc of followedCreatorRows || []) {
+      const name = (fc.creator_name || '').trim();
+      if (name.length < 2) continue;
+      const s = touch('creator', name);
+      if (s) { s.weightedCount += 2.0; s.sources.followed += 1; }
     }
 
     // ── Genre signals via the shared media_genres cache (cache-first + write-back)
