@@ -778,17 +778,17 @@ export default function EntertainmentDNAPage() {
                           : [...currentAnswers, option];
                         handleAnswer(driversQ.id, updated);
                       }}
-                      className={`relative flex items-start gap-3 p-4 pr-9 rounded-2xl border text-left transition-all active:scale-95 ${isLastOdd ? "col-span-2" : ""}`}
+                      className={`relative flex items-center gap-3.5 px-4 py-5 pr-11 rounded-2xl border text-left transition-all active:scale-95 ${isLastOdd ? "col-span-2" : ""}`}
                       style={{
                         borderColor: on ? "#7c3aed" : "rgb(229,231,235)",
                         background: on ? "#f6f3fd" : "white",
                       }}
                       data-testid={`multi-option-${driversQ.id}-${option}`}
                     >
-                      {IconComponent && <IconComponent size={22} className="text-purple-600 shrink-0 mt-0.5" />}
-                      <span className="text-[14px] font-semibold text-gray-900 leading-snug">{option}</span>
+                      {IconComponent && <IconComponent size={24} className="text-purple-600 shrink-0" />}
+                      <span className="text-[14px] font-medium text-gray-900 leading-relaxed">{option}</span>
                       <span
-                        className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center border"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center border"
                         style={{
                           borderColor: on ? "#6d28d9" : "rgb(209,213,219)",
                           background: on ? "#6d28d9" : "transparent",
