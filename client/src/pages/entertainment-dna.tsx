@@ -761,7 +761,7 @@ export default function EntertainmentDNAPage() {
               <h2 className="text-[22px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                 When you press play, what are you hoping for?
               </h2>
-              <p className="text-[13px] text-gray-400 mt-1 mb-4">Pick up to 3 — one more answer and we can decode your DNA.</p>
+              <p className="text-[13px] text-gray-400 mt-1 mb-4">Select as many as you want.</p>
               <div className="grid grid-cols-2 gap-2.5">
                 {driversQ.options?.map((option, index) => {
                   const current = getAnswer(driversQ.id);
@@ -778,7 +778,7 @@ export default function EntertainmentDNAPage() {
                           : [...currentAnswers, option];
                         handleAnswer(driversQ.id, updated);
                       }}
-                      className={`relative flex items-center gap-3 px-3.5 py-3.5 pr-9 rounded-2xl border text-left transition-all active:scale-95 ${isLastOdd ? "col-span-2" : ""}`}
+                      className={`relative flex items-center gap-3 px-3.5 py-3.5 rounded-2xl border text-left transition-all active:scale-95 ${isLastOdd ? "col-span-2" : ""}`}
                       style={{
                         borderColor: on ? "#7c3aed" : "rgb(229,231,235)",
                         background: on ? "#f6f3fd" : "white",
@@ -787,15 +787,11 @@ export default function EntertainmentDNAPage() {
                     >
                       {IconComponent && <IconComponent size={20} className="text-purple-600 shrink-0" />}
                       <span className="text-[13px] font-medium text-gray-900 leading-snug">{option}</span>
-                      <span
-                        className="absolute right-3 top-3 w-5 h-5 rounded-full flex items-center justify-center border"
-                        style={{
-                          borderColor: on ? "#6d28d9" : "rgb(209,213,219)",
-                          background: on ? "#6d28d9" : "transparent",
-                        }}
-                      >
-                        {on && <Check size={12} className="text-white" strokeWidth={3} />}
-                      </span>
+                      {on && (
+                        <span className="absolute right-3 top-3 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#6d28d9" }}>
+                          <Check size={12} className="text-white" strokeWidth={3} />
+                        </span>
+                      )}
                     </button>
                   );
                 })}
