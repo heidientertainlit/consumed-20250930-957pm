@@ -194,13 +194,13 @@ export default function PoolsPage() {
       <Navigation />
       <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
         <div className="flex flex-col items-center pt-8 pb-5 px-4">
-          <div className="w-full flex items-center justify-between max-w-sm">
+          <div className="w-full flex items-center justify-between max-w-sm lg:max-w-2xl">
             <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>Rooms</h1>
           </div>
         </div>
       </div>
 
-      <div className="bg-gray-50 px-4 pt-4 space-y-5 min-h-screen">
+      <div className="bg-gray-50 px-4 pt-4 space-y-5 min-h-screen lg:px-[max(1rem,calc((100%-42rem)/2))]">
         {/* Search bar */}
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />

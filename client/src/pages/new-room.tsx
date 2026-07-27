@@ -499,14 +499,14 @@ export default function NewRoom() {
   if (!roomId) return null;
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-white lg:bg-[#edecf2] flex items-center justify-center">
         <Loader2 className="animate-spin text-purple-500" size={28} />
       </div>
     );
   }
   if (!pool) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-3 px-6 text-center">
+      <div className="min-h-screen bg-white lg:bg-[#edecf2] flex flex-col items-center justify-center gap-3 px-6 text-center">
         <p className="text-gray-700 font-semibold">{roomData?.error || "Room not found"}</p>
         <button onClick={() => setLocation("/rooms")} className="text-purple-600 font-semibold text-sm">Back to rooms</button>
       </div>
@@ -514,8 +514,8 @@ export default function NewRoom() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-md mx-auto pb-28">
+    <div className="min-h-screen bg-white lg:bg-[#edecf2]">
+      <div className="max-w-md mx-auto pb-28 lg:max-w-2xl lg:bg-white lg:shadow-[0_0_50px_rgba(20,16,31,0.10)] lg:min-h-screen">
 
         {/* ── Purple gradient hero header ── */}
         <div className="relative pb-5" style={{ background: "linear-gradient(165deg, #14101f 0%, #1d1638 55%, #2d1f6e 100%)" }}>
@@ -1078,8 +1078,8 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white flex flex-col">
-      <div className="max-w-md w-full mx-auto flex flex-col h-full">
+    <div className="fixed inset-0 z-[100] bg-white lg:bg-black/40 flex flex-col">
+      <div className="max-w-md w-full mx-auto flex flex-col h-full lg:max-w-2xl lg:bg-white lg:shadow-2xl">
         {/* header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
           <button onClick={onClose} className="p-1 -ml-1 active:scale-90 transition-transform"><ChevronLeft size={24} className="text-gray-700" /></button>
