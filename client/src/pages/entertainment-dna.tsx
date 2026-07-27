@@ -562,7 +562,7 @@ export default function EntertainmentDNAPage() {
     );
   };
 
-  const stepTitles = ["What you're into", "Finish up"];
+  const stepTitles = ["Starting to take shape", "Almost ready"];
   const totalSteps = 2;
   const basePct = alreadyAdded.length > 0 ? 35 : 10;
   const dnaPct = step >= totalSteps - 1 ? 99 : basePct;
@@ -632,21 +632,30 @@ export default function EntertainmentDNAPage() {
             <>
               {typesQ && (
                 <div>
+                  <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">LET&apos;S START WITH THE BASICS</p>
                   <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
-                    What do you like to consume?
+                    Where do you spend your entertainment time?
                   </h2>
-                  <p className="text-[13px] text-gray-400 mt-1 mb-4">Select all that apply.</p>
+                  <p className="text-[13px] text-gray-400 mt-1 mb-4">Pick everything you regularly watch, read, listen to, or play.</p>
                   {renderMulti(typesQ, true)}
                 </div>
               )}
               {!roomsAnsweredInOnboarding && (
               <div>
+                <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">NOW THE FUN PART</p>
                 <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
-                  What conversations do you want to follow?
+                  What could you talk about for hours?
                 </h2>
                 <p className="text-[13px] text-gray-400 mt-1 mb-4">
-                  Follow the conversations for your favorite topics — pick as many as you like.
+                  Pick as many as you like — each one shapes your DNA.
                 </p>
+                {selectedRooms.length > 0 && (
+                  <p className="text-[13px] font-semibold text-purple-600 mb-3" data-testid="dna-room-feedback">
+                    {selectedRooms.length >= 3
+                      ? "\u{1F9EC} Your patterns are showing already..."
+                      : "\u2728 Your DNA is starting to take shape..."}
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-2">
                   {[...GENRE_ROOMS]
                     .sort((a, b) => Number(initialFollows.has(a.id)) - Number(initialFollows.has(b.id)))
@@ -672,10 +681,11 @@ export default function EntertainmentDNAPage() {
               )}
               {genderQ && (
                 <div>
+                  <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">ONE QUICK DETAIL</p>
                   <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
-                    One quick detail
+                    How do you identify?
                   </h2>
-                  <p className="text-[13px] text-gray-400 mt-1 mb-4">{genderQ.question_text}</p>
+                  <p className="text-[13px] text-gray-400 mt-1 mb-4">This helps us fine-tune your matches.</p>
                   {renderSelect(genderQ)}
                 </div>
               )}
@@ -687,12 +697,13 @@ export default function EntertainmentDNAPage() {
             <>
               {loveQ && (
                 <div>
+                  <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">TELL US ANYTHING</p>
                   <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                     What do you love?
                   </h2>
-                  <p className="text-gray-600 text-sm mb-3">
-                    Teams, musicians, authors, comfort rewatches — anything else.{" "}
-                    <span className="text-gray-400">(optional)</span>
+                  <p className="text-[13px] text-gray-400 mt-1 mb-4">
+                    Teams, musicians, authors, comfort rewatches — anything goes.{" "}
+                    <span className="text-gray-300">(optional)</span>
                   </p>
                   <textarea
                     value={(getAnswer(loveQ.id) as string) || ""}
@@ -720,10 +731,11 @@ export default function EntertainmentDNAPage() {
               )}
               {driversQ && (
                 <div>
+                  <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">LAST QUESTION — ALMOST DONE</p>
                   <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
-                    What drives your choices?
+                    When you press play, what are you hoping for?
                   </h2>
-                  <p className="text-[13px] text-gray-400 mt-1 mb-4">Pick up to 3.</p>
+                  <p className="text-[13px] text-gray-400 mt-1 mb-4">Pick up to 3 — same taste, different moods.</p>
                   {renderMulti(driversQ)}
                 </div>
               )}
