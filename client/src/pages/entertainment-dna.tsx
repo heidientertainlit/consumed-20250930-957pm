@@ -634,19 +634,19 @@ export default function EntertainmentDNAPage() {
                       }}
                       className="relative flex flex-col items-start gap-2.5 p-4 rounded-2xl border text-left transition-all active:scale-95"
                       style={{
-                        borderColor: on ? "transparent" : "rgb(229,231,235)",
-                        background: on ? "#ece7fb" : "white",
+                        borderColor: "rgb(229,231,235)",
+                        background: on ? "#f7f7f8" : "white",
                         boxShadow: "none",
                       }}
                       data-testid={`multi-option-${typesQ.id}-${clean}`}
                     >
-                      {IconComponent && <IconComponent size={26} className="text-purple-600" />}
+                      {IconComponent && <IconComponent size={26} style={{ color: "#1e1b4b" }} />}
                       <span className="text-[15px] font-semibold text-gray-900">{clean}</span>
                       <span
                         className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center border"
                         style={{
-                          borderColor: on ? "#6d28d9" : "rgb(209,213,219)",
-                          background: on ? "#6d28d9" : "transparent",
+                          borderColor: on ? "#1e1b4b" : "rgb(209,213,219)",
+                          background: on ? "#1e1b4b" : "transparent",
                         }}
                       >
                         {on && <Check size={14} className="text-white" strokeWidth={3} />}
@@ -656,8 +656,8 @@ export default function EntertainmentDNAPage() {
                 })}
               </div>
               {typesCount > 0 && (
-                <div className="mt-5 rounded-2xl bg-purple-50/80 px-4 py-3.5 flex items-start gap-3" data-testid="dna-types-feedback">
-                  <Sparkles size={18} className="text-purple-600 shrink-0 mt-0.5" />
+                <div className="mt-5 rounded-2xl bg-gray-50 px-4 py-3.5 flex items-start gap-3" data-testid="dna-types-feedback">
+                  <Sparkles size={18} className="shrink-0 mt-0.5" style={{ color: "#1e1b4b" }} />
                   <p className="text-[14px] leading-snug">
                     {typesCount >= 3 ? (
                       <>
