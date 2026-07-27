@@ -751,6 +751,18 @@ export default function UserProfile() {
     }
   };
 
+  // Lightweight refresh: just re-fetches the saved profile (no AI regeneration).
+  const [isRefreshingDna, setIsRefreshingDna] = useState(false);
+  const handleRefreshDna = async () => {
+    if (isRefreshingDna) return;
+    setIsRefreshingDna(true);
+    try {
+      await fetchDnaProfile();
+    } finally {
+      setIsRefreshingDna(false);
+    }
+  };
+
   const handleRegenerateDna = async () => {
     if (!session?.access_token) return;
     setIsRegeneratingDna(true);
@@ -3759,12 +3771,12 @@ export default function UserProfile() {
                 })()}
 
                 <button
-                  onClick={handleRegenerateDna}
-                  disabled={isRegeneratingDna}
+                  onClick={handleRefreshDna}
+                  disabled={isRefreshingDna}
                   className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-semibold text-gray-500 bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-60"
                 >
-                  {isRegeneratingDna ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} className="text-purple-400" />}
-                  {isRegeneratingDna ? 'Updating DNA…' : 'Regenerate DNA'}
+                  {isRefreshingDna ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} className="text-purple-400" />}
+                  {isRefreshingDna ? 'Refreshing…' : 'Refresh DNA'}
                 </button>
 
               </>

@@ -441,6 +441,24 @@ export default function EntertainmentDNAPage() {
           useCORS: true,
           backgroundColor: null,
         });
+        const shareText = `I'm a "${dnaProfile.title}" — ${dnaProfile.description} Check out my Entertainment DNA on Consumed!`;
+        // Prefer the OS share sheet (text, AirDrop, etc.) with the image attached.
+        const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+        if (blob && navigator.share) {
+          const file = new File([blob], 'my-entertainment-dna.png', { type: 'image/png' });
+          const withImage = { files: [file], title: 'My Entertainment DNA', text: shareText };
+          try {
+            if (navigator.canShare?.(withImage)) {
+              await navigator.share(withImage);
+            } else {
+              await navigator.share({ title: 'My Entertainment DNA', text: shareText });
+            }
+            return;
+          } catch (err: any) {
+            if (err?.name === 'AbortError') return; // user closed the share sheet
+          }
+        }
+        // Fallback (no native share support): show the in-app share sheet.
         setShareImageUrl(canvas.toDataURL('image/png'));
         setShareSheetOpen(true);
       } catch (error) {
@@ -715,8 +733,8 @@ export default function EntertainmentDNAPage() {
               </h2>
               <p className="text-[13px] text-gray-400 mt-1 mb-4">
                 {typesCount > 0
-                  ? `Nice \u2014 ${typesCount} format${typesCount === 1 ? "" : "s"} locked in. Now pick as many topics as you like.`
-                  : "Pick as many as you like \u2014 each one shapes your DNA."}
+                  ? `Nice — ${typesCount} format${typesCount === 1 ? "" : "s"} locked in. Now pick as many topics as you like.`
+                  : "Pick as many as you like — each one shapes your DNA."}
               </p>
               {selectedRooms.length > 0 && (
                 <p className="text-[13px] font-semibold text-purple-600 mb-3" data-testid="dna-room-feedback">

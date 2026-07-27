@@ -607,6 +607,7 @@ export default function OnboardingPage() {
                       return (
                         <button
                           key={item.title}
+                          onMouseDown={(e) => e.preventDefault()}
                           onClick={() => !added && addLoved(item.title)}
                           className="relative rounded-xl overflow-hidden border transition-all active:scale-95 flex-shrink-0"
                           style={{
