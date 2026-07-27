@@ -527,7 +527,7 @@ export default function OnboardingPage() {
                 ? `Pick at least ${3 - loved.length} more to continue`
                 : loved.length < 10
                   ? `${10 - loved.length} more to unlock your Entertainment DNA`
-                  : "Your Entertainment DNA is unlocked"}
+                  : "You've started to unlock your Entertainment DNA"}
             </p>
           </div>
 
@@ -626,7 +626,7 @@ export default function OnboardingPage() {
                 That's 10!
               </h3>
               <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-                Your Entertainment DNA is unlocked.
+                You've started to unlock your Entertainment DNA.
               </p>
               <button
                 onClick={() => {
@@ -667,53 +667,7 @@ export default function OnboardingPage() {
         <h2 className="text-2xl font-black mt-4 text-center" style={{ fontFamily: "Poppins, sans-serif" }}>
           Your Entertainment DNA has started forming.
         </h2>
-        <p className="text-sm text-white/60 mt-3 text-center leading-relaxed">
-          {vote === "both" ? "Team Both — respect. " : vote ? `Team ${vote}. ` : ""}
-          {loved.length > 0
-            ? `${loved.length} ${loved.length === 1 ? "title" : "titles"} are already shaping your profile.`
-            : "Your profile is ready to grow."}
-        </p>
 
-        {(() => {
-          const counts: Record<string, number> = {};
-          for (const t of loved) for (const g of TITLE_GENRES[t] || []) counts[g] = (counts[g] || 0) + 1;
-          const topGenres = Object.entries(counts)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 4)
-            .map(([g]) => g);
-          const shownTitles = loved.slice(0, 3);
-          const extra = loved.length - shownTitles.length;
-          if (topGenres.length === 0) return null;
-          return (
-            <div
-              className="w-full mt-7 rounded-2xl px-5 py-4 text-left"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
-            >
-              <p className="text-[11px] font-bold tracking-[0.15em] uppercase text-white/40">
-                Forming from your picks
-              </p>
-              <div className="flex flex-wrap gap-2 mt-3">
-                {topGenres.map((g) => (
-                  <span
-                    key={g}
-                    className="px-3 py-1 rounded-full text-[12px] font-semibold"
-                    style={{
-                      background: "rgba(168,85,247,0.16)",
-                      border: "1px solid rgba(168,85,247,0.45)",
-                      color: "#e9d5ff",
-                    }}
-                  >
-                    {g}
-                  </span>
-                ))}
-              </div>
-              <p className="text-[12px] text-white/50 mt-3 leading-snug">
-                Built from {shownTitles.join(", ")}
-                {extra > 0 ? ` and ${extra} more` : ""}.
-              </p>
-            </div>
-          );
-        })()}
 
         <div className="w-full mt-4">
           <div className="flex items-center justify-between text-[11px] font-semibold text-white/45">
@@ -731,7 +685,7 @@ export default function OnboardingPage() {
             />
           </div>
           <p className="text-[12px] text-white/50 mt-2 text-center leading-snug">
-            Take the DNA quiz or add ~15 more titles to unlock your full archetype.
+            Take the DNA quiz or add {Math.max(0, 30 - loved.length)} more titles to unlock your full archetype.
           </p>
         </div>
 
