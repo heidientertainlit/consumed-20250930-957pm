@@ -758,7 +758,7 @@ export default function EntertainmentDNAPage() {
           {screen === "drivers" && driversQ && (
             <div>
               <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">LAST QUESTION — ALMOST DONE</p>
-              <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+              <h2 className="text-[22px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
                 When you press play, what are you hoping for?
               </h2>
               <p className="text-[13px] text-gray-400 mt-1 mb-4">Pick up to 3 — one more answer and we can decode your DNA.</p>
