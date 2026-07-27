@@ -21,7 +21,7 @@ const ENTERTAINMENT_ICONS: Record<string, typeof Tv> = {
 // follows the room AND counts as the genre answer for the DNA generator.
 // `genre` maps to the option wording on the survey's genre question.
 const GENRE_ROOMS: { id: string; name: string; genre: string | null; Icon: typeof Tv }[] = [
-  { id: "eb529882-4a66-496d-97f2-bf9981692968", name: "True Crime", genre: "Crime", Icon: Search },
+  { id: "eb529882-4a66-496d-97f2-bf9981692968", name: "True Crime", genre: "True Crime", Icon: Search },
   { id: "c73774e0-c54c-44ed-8b14-ae0e3b076ddc", name: "Reality", genre: "Reality", Icon: Tv },
   { id: "a776d7dd-8206-4381-b847-17ff6f1e0d67", name: "Heartwarming", genre: "Romance", Icon: Heart },
   { id: "9e424f35-cd99-43ff-b695-d0ae89747b5a", name: "Action & Thriller", genre: "Action", Icon: Zap },
