@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Dna, Loader2, Download, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy, Sparkles, Check, ArrowLeft, ArrowRight, Search, Heart, Zap, Clapperboard, Wand2, Smile, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, Leaf } from "lucide-react";
+import { Dna, Loader2, Download, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy, Sparkles, Check, ArrowLeft, ArrowRight, Search, Heart, Zap, Clapperboard, Wand2, Smile, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, Leaf, Plane, Users, Eye, CircleUser } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import html2canvas from "html2canvas";
@@ -17,6 +17,21 @@ const ENTERTAINMENT_ICONS: Record<string, typeof Tv> = {
   'Gaming': Gamepad2,
   'Sports': Trophy,
 };
+
+// Icons for the "when you press play" drivers question, keyed by option keywords.
+const DRIVER_ICONS: { match: string; Icon: typeof Tv }[] = [
+  { match: "feel something", Icon: Heart },
+  { match: "escape", Icon: Plane },
+  { match: "connect over", Icon: Users },
+  { match: "visuals", Icon: Eye },
+  { match: "unwind", Icon: Leaf },
+  { match: "figure things out", Icon: Search },
+  { match: "curious about people", Icon: CircleUser },
+  { match: "fun or action", Icon: Zap },
+  { match: "depends on the day", Icon: Sparkles },
+];
+const driverIcon = (option: string) =>
+  DRIVER_ICONS.find((d) => option.toLowerCase().includes(d.match))?.Icon;
 
 // Official genre rooms (pools table, room_category='genre'). Tapping one both
 // follows the room AND counts as the genre answer for the DNA generator.
@@ -516,37 +531,6 @@ export default function EntertainmentDNAPage() {
     boxShadow: selected ? "0 4px 14px rgba(124,58,237,0.3)" : "none",
   });
 
-  const renderMulti = (q: SurveyQuestion, withIcons = false) => {
-    const current = getAnswer(q.id);
-    const currentAnswers = Array.isArray(current) ? current : [];
-    return (
-      <div className="flex flex-wrap gap-2">
-        {q.options?.map((option, index) => {
-          const isChecked = currentAnswers.includes(option);
-          const clean = option.replace(" (please specify)", "");
-          const IconComponent = withIcons ? ENTERTAINMENT_ICONS[clean] : undefined;
-          return (
-            <button
-              key={index}
-              onClick={() => {
-                const updated = isChecked
-                  ? currentAnswers.filter((a) => a !== option)
-                  : [...currentAnswers, option];
-                handleAnswer(q.id, updated);
-              }}
-              className={pill(isChecked)}
-              style={pillStyle(isChecked)}
-              data-testid={`multi-option-${q.id}-${clean}`}
-            >
-              {IconComponent && <IconComponent size={15} className={isChecked ? "text-white" : "text-purple-600"} />}
-              {clean}
-              {isChecked && <Check size={15} />}
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
 
   const totalSteps = screens.length;
   const clampedStep = Math.min(step, totalSteps - 1);
@@ -778,7 +762,44 @@ export default function EntertainmentDNAPage() {
                 When you press play, what are you hoping for?
               </h2>
               <p className="text-[13px] text-gray-400 mt-1 mb-4">Pick up to 3 — one more answer and we can decode you.</p>
-              {renderMulti(driversQ)}
+              <div className="grid grid-cols-2 gap-3">
+                {driversQ.options?.map((option, index) => {
+                  const current = getAnswer(driversQ.id);
+                  const currentAnswers = Array.isArray(current) ? current : [];
+                  const on = currentAnswers.includes(option);
+                  const IconComponent = driverIcon(option);
+                  const isLastOdd = index === (driversQ.options?.length || 0) - 1 && (driversQ.options?.length || 0) % 2 === 1;
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        const updated = on
+                          ? currentAnswers.filter((a) => a !== option)
+                          : [...currentAnswers, option];
+                        handleAnswer(driversQ.id, updated);
+                      }}
+                      className={`relative flex items-start gap-3 p-4 pr-9 rounded-2xl border text-left transition-all active:scale-95 ${isLastOdd ? "col-span-2" : ""}`}
+                      style={{
+                        borderColor: on ? "#7c3aed" : "rgb(229,231,235)",
+                        background: on ? "#f6f3fd" : "white",
+                      }}
+                      data-testid={`multi-option-${driversQ.id}-${option}`}
+                    >
+                      {IconComponent && <IconComponent size={22} className="text-purple-600 shrink-0 mt-0.5" />}
+                      <span className="text-[14px] font-semibold text-gray-900 leading-snug">{option}</span>
+                      <span
+                        className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center border"
+                        style={{
+                          borderColor: on ? "#6d28d9" : "rgb(209,213,219)",
+                          background: on ? "#6d28d9" : "transparent",
+                        }}
+                      >
+                        {on && <Check size={14} className="text-white" strokeWidth={3} />}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
