@@ -3080,7 +3080,20 @@ export default function UserProfile() {
                   const archetypeInfo = dnaProfile.core_archetype ? DNA_ARCHETYPE_MAP[dnaProfile.core_archetype] : null;
                   const archetypeName = archetypeInfo?.displayName || null;
                   if (!archetypeName) return (
-                    <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>DNA profile needs refresh</p>
+                    <div>
+                      <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>DNA profile needs refresh</p>
+                      {isOwnProfile && (
+                        <button
+                          onClick={handleRegenerateDna}
+                          disabled={isRegeneratingDna}
+                          className="mt-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-white disabled:opacity-60"
+                          style={{ background: 'linear-gradient(90deg, #7c3aed, #a855f7)' }}
+                          data-testid="button-refresh-dna"
+                        >
+                          {isRegeneratingDna ? 'Refreshing…' : 'Refresh my DNA'}
+                        </button>
+                      )}
+                    </div>
                   );
                   const words = archetypeName.trim().split(/\s+/);
                   const hasPrefix = words[0]?.toLowerCase() === 'the' && words.length > 2;

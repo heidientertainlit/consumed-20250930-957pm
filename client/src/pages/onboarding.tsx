@@ -290,9 +290,53 @@ export default function OnboardingPage() {
           );
           if (error) console.error("[onboarding rating]", error);
         }
-        // Fire-and-forget DNA signal rebuild (same as feed reactions / seen-it game)
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData?.session?.access_token;
+        // Also track the picks (list_items) so they count toward "tracked" and DNA levels.
+        if (token) {
+          try {
+            const listsRes = await fetch(`${SUPABASE_URL}/functions/v1/get-user-lists-with-media`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+              body: JSON.stringify({}),
+            });
+            const listsData = await listsRes.json();
+            const finished = (listsData?.lists || []).find((l: any) => l.title?.toLowerCase().includes("finished"));
+            if (finished?.id) {
+              const typeByLabel: Record<string, string> = {
+                Movies: "movie", "TV Shows": "tv", Books: "book", Podcasts: "podcast", Music: "music",
+              };
+              const typeByTitle: Record<string, string> = {};
+              for (const row of lovedRows)
+                for (const it of row.items) typeByTitle[it.title] = typeByLabel[row.label] || "movie";
+              await Promise.all(
+                picks.map((p) =>
+                  fetch(`${SUPABASE_URL}/functions/v1/add-media-to-list`, {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      list_id: finished.id,
+                      media_title: p.title,
+                      media_type: typeByTitle[p.title] || "movie",
+                      media_external_id: p.externalId,
+                      media_external_source: p.source,
+                      media_image_url: p.poster,
+                      rating: 5,
+                      skip_social_post: true,
+                    }),
+                  })
+                    .then((r) => { if (!r.ok) console.error("[onboarding track]", p.title, r.status); })
+                    .catch((e) => console.error("[onboarding track]", p.title, e)),
+                ),
+              );
+            } else {
+              console.error("[onboarding track] no Finished list found");
+            }
+          } catch (e) {
+            console.error("[onboarding track]", e);
+          }
+        }
+        // Fire-and-forget DNA signal rebuild (same as feed reactions / seen-it game)
         if (token) {
           fetch(`${SUPABASE_URL}/functions/v1/extract-dna-signals`, {
             method: "POST",
