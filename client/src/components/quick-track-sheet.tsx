@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   Search, Loader2, Star, X, Sparkles,
@@ -173,54 +173,67 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     if (selectedMedia?.type === "tv" && selectedMedia.external_id) {
       fetchSeasons(selectedMedia.external_id);
     } else {
+      seasonsReqId.current++; episodesReqId.current++;
       setSeasons([]); setEpisodes([]);
       setSelectedSeason(null); setSelectedEpisode(null);
+      setIsLoadingSeasons(false); setIsLoadingEpisodes(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMedia]);
 
   useEffect(() => {
+    // Always drop any prior episode selection the moment the season changes,
+    // so a save can never carry an episode from a different season.
+    setEpisodes([]);
+    setSelectedEpisode(null);
     if (selectedMedia?.type === "tv" && selectedMedia.external_id && selectedSeason) {
       fetchEpisodes(selectedMedia.external_id, selectedSeason);
-    } else {
-      setEpisodes([]); setSelectedEpisode(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSeason]);
 
+  const seasonsReqId = useRef(0);
+  const episodesReqId = useRef(0);
+
   const fetchSeasons = async (externalId: string) => {
+    const reqId = ++seasonsReqId.current;
     setIsLoadingSeasons(true);
     try {
       const res = await fetch(
         `${SUPABASE_URL}/functions/v1/get-media-details?source=tmdb&external_id=${externalId}&media_type=tv`,
         { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` } },
       );
+      if (reqId !== seasonsReqId.current) return; // stale response — a newer fetch superseded this one
       if (res.ok) {
         const data = await res.json();
+        if (reqId !== seasonsReqId.current) return;
         setSeasons(data.seasons || []);
       }
     } catch (e) {
       console.error("Error fetching seasons:", e);
     } finally {
-      setIsLoadingSeasons(false);
+      if (reqId === seasonsReqId.current) setIsLoadingSeasons(false);
     }
   };
 
   const fetchEpisodes = async (externalId: string, seasonNum: number) => {
+    const reqId = ++episodesReqId.current;
     setIsLoadingEpisodes(true);
     try {
       const res = await fetch(
         `${SUPABASE_URL}/functions/v1/get-season-episodes?external_id=${externalId}&season=${seasonNum}`,
         { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` } },
       );
+      if (reqId !== episodesReqId.current) return; // stale response
       if (res.ok) {
         const data = await res.json();
+        if (reqId !== episodesReqId.current) return;
         setEpisodes(data.episodes || []);
       }
     } catch (e) {
       console.error("Error fetching episodes:", e);
     } finally {
-      setIsLoadingEpisodes(false);
+      if (reqId === episodesReqId.current) setIsLoadingEpisodes(false);
     }
   };
 
@@ -541,33 +554,89 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                       <Loader2 className="animate-spin" size={14} /> Loading seasons…
                     </div>
                   ) : seasons.length > 0 ? (
-                    <div className="flex gap-2">
-                      <select
-                        value={selectedSeason || ""}
-                        onChange={(e) => setSelectedSeason(Number(e.target.value) || null)}
-                        className="flex-1 px-3 py-2.5 border border-gray-200 rounded-2xl text-sm bg-gray-50 text-gray-900"
-                        data-testid="quick-track-season"
-                      >
-                        <option value="">Whole series</option>
+                    <div className="space-y-2">
+                      <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedSeason(null)}
+                          className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                            selectedSeason === null
+                              ? "bg-purple-600 border-purple-600 text-white"
+                              : "bg-white border-gray-200 text-gray-600"
+                          }`}
+                          data-testid="quick-track-season-all"
+                        >
+                          Whole series
+                        </button>
                         {seasons.map((se: any) => {
                           const n = se.seasonNumber || se.season_number;
-                          return <option key={n} value={n}>Season {n}</option>;
+                          return (
+                            <button
+                              key={n}
+                              type="button"
+                              onClick={() => setSelectedSeason(selectedSeason === n ? null : n)}
+                              className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                                selectedSeason === n
+                                  ? "bg-purple-600 border-purple-600 text-white"
+                                  : "bg-white border-gray-200 text-gray-600"
+                              }`}
+                              data-testid={`quick-track-season-${n}`}
+                            >
+                              Season {n}
+                            </button>
+                          );
                         })}
-                      </select>
+                      </div>
                       {selectedSeason && (
-                        <select
-                          value={selectedEpisode || ""}
-                          onChange={(e) => setSelectedEpisode(Number(e.target.value) || null)}
-                          disabled={isLoadingEpisodes}
-                          className="flex-1 px-3 py-2.5 border border-gray-200 rounded-2xl text-sm bg-gray-50 text-gray-900 disabled:opacity-60"
-                          data-testid="quick-track-episode"
-                        >
-                          <option value="">{isLoadingEpisodes ? "Loading…" : "All episodes"}</option>
-                          {episodes.map((ep: any) => {
-                            const n = ep.episodeNumber || ep.episode_number;
-                            return <option key={n} value={n}>Ep {n}{ep.name ? ` · ${ep.name}` : ""}</option>;
-                          })}
-                        </select>
+                        <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
+                          {isLoadingEpisodes ? (
+                            <div className="flex items-center gap-2 text-sm text-gray-400 py-1">
+                              <Loader2 className="animate-spin" size={14} /> Loading episodes…
+                            </div>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedEpisode(null)}
+                                className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                                  selectedEpisode === null
+                                    ? "bg-purple-100 border-purple-300 text-purple-700"
+                                    : "bg-white border-gray-200 text-gray-600"
+                                }`}
+                                data-testid="quick-track-episode-all"
+                              >
+                                All episodes
+                              </button>
+                              {episodes.map((ep: any) => {
+                                const n = ep.episodeNumber || ep.episode_number;
+                                return (
+                                  <button
+                                    key={n}
+                                    type="button"
+                                    onClick={() => setSelectedEpisode(selectedEpisode === n ? null : n)}
+                                    className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                                      selectedEpisode === n
+                                        ? "bg-purple-100 border-purple-300 text-purple-700"
+                                        : "bg-white border-gray-200 text-gray-600"
+                                    }`}
+                                    title={ep.name || undefined}
+                                    data-testid={`quick-track-episode-${n}`}
+                                  >
+                                    Ep {n}
+                                  </button>
+                                );
+                              })}
+                            </>
+                          )}
+                        </div>
+                      )}
+                      {selectedSeason && selectedEpisode && (
+                        <p className="text-xs text-gray-500">
+                          Tracking S{selectedSeason} · E{selectedEpisode}
+                          {episodes.find((ep: any) => (ep.episodeNumber || ep.episode_number) === selectedEpisode)?.name
+                            ? ` — ${episodes.find((ep: any) => (ep.episodeNumber || ep.episode_number) === selectedEpisode)?.name}`
+                            : ""}
+                        </p>
                       )}
                     </div>
                   ) : null}
