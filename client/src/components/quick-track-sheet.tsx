@@ -139,11 +139,13 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     if (!session?.access_token) return;
     setIsSearching(true);
     setCorrectedQuery(null);
+    const matchesFilter = (r: any) =>
+      !mediaTypeFilter || r.type === mediaTypeFilter || (mediaTypeFilter === "book" && r.type === "book_series");
     try {
       let results = await runMediaSearch(query);
 
-      // Zero results? Try a one-shot spelling correction and retry.
-      if (results.length === 0 && query.trim().length >= 4) {
+      // No *visible* results (after the media-type filter)? Try a one-shot spelling correction and retry.
+      if (results.filter(matchesFilter).length === 0 && query.trim().length >= 4) {
         try {
           const fixRes = await fetch(`${SUPABASE_URL}/functions/v1/spell-fix`, {
             method: "POST",
@@ -153,7 +155,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
           const { corrected } = fixRes.ok ? await fixRes.json() : { corrected: null };
           if (corrected) {
             const retried = await runMediaSearch(corrected);
-            if (retried.length > 0) {
+            if (retried.filter(matchesFilter).length > 0) {
               results = retried;
               setCorrectedQuery(corrected);
             }
