@@ -153,6 +153,9 @@ serve(async (req) => {
           image_url, 
           media_external_id, 
           media_external_source, 
+          media_season_number,
+          media_episode_number,
+          media_episode_title,
           media_description,
           contains_spoilers,
           fire_votes,
@@ -1289,6 +1292,9 @@ serve(async (req) => {
             totalCount: listData.totalCount
           } : null,
           recCategory: post.rec_category || null,
+          media_season_number: post.media_season_number || null,
+          media_episode_number: post.media_episode_number || null,
+          media_episode_title: post.media_episode_title || null,
           mediaItems: hasMedia ? [{
             id: `embedded_${post.id}`,
             title: post.media_title,

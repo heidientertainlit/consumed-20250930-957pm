@@ -5494,7 +5494,7 @@ export default function Feed() {
           id: p.id, type: postType,
           user: { id: userObj?.id || '', username: userObj?.username || '', displayName: userObj?.displayName || userObj?.display_name || '', avatar: userObj?.avatar_url || userObj?.avatarUrl || userObj?.avatar || '', is_persona: userObj?.is_persona || false },
           content: (postType === 'poll' || postType === 'predict') ? ((p as any).question || content) : content,
-          mediaTitle: media?.title || (p as any).mediaTitle || (p as any).media_title, mediaType: media?.mediaType || media?.type || (p as any).media_type, mediaImage: mediaImg, externalId: eid, externalSource: src,
+          mediaTitle: ((media?.title || (p as any).mediaTitle || (p as any).media_title) || '') + ((p as any).media_season_number ? ` · S${(p as any).media_season_number}${(p as any).media_episode_number ? ` E${(p as any).media_episode_number}` : ''}` : '') || null, mediaType: media?.mediaType || media?.type || (p as any).media_type, mediaImage: mediaImg, externalId: eid, externalSource: src,
           rating: p.rating, containsSpoilers: p.containsSpoilers || false, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
           fire_votes: p.fire_votes || 0, ice_votes: p.ice_votes || 0,
           options: (p as any).options || [], optionVotes: (p as any).optionVotes || [], timestamp: p.createdAt || p.created_at || p.timestamp, pollId: (p as any).poolId || p.id,

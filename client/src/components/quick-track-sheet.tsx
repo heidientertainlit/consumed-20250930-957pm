@@ -135,8 +135,11 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     return data.results || [];
   };
 
+  const searchReqId = useRef(0);
+
   const doSearch = async (query: string) => {
     if (!session?.access_token) return;
+    const reqId = ++searchReqId.current;
     setIsSearching(true);
     setCorrectedQuery(null);
     const matchesFilter = (r: any) =>
@@ -155,7 +158,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
           const { corrected } = fixRes.ok ? await fixRes.json() : { corrected: null };
           if (corrected) {
             const retried = await runMediaSearch(corrected);
-            if (retried.filter(matchesFilter).length > 0) {
+            if (retried.filter(matchesFilter).length > 0 && reqId === searchReqId.current) {
               results = retried;
               setCorrectedQuery(corrected);
             }
@@ -163,11 +166,11 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
         } catch { /* rescue is best-effort — fall through to "No results" */ }
       }
 
-      setSearchResults(results);
+      if (reqId === searchReqId.current) setSearchResults(results);
     } catch (e) {
       console.error("Track search error:", e);
     } finally {
-      setIsSearching(false);
+      if (reqId === searchReqId.current) setIsSearching(false);
     }
   };
 

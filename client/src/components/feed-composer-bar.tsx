@@ -229,6 +229,16 @@ export default function FeedComposerBar({
   const [isSearching, setIsSearching] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
+  const [correctedQuery, setCorrectedQuery] = useState<string | null>(null);
+  // Season/episode picker (TV only, optional)
+  const [seasons, setSeasons] = useState<any[]>([]);
+  const [episodes, setEpisodes] = useState<any[]>([]);
+  const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
+  const [selectedEpisode, setSelectedEpisode] = useState<number | null>(null);
+  const [isLoadingSeasons, setIsLoadingSeasons] = useState(false);
+  const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
+  const seasonsReqId = useRef(0);
+  const episodesReqId = useRef(0);
   const [recommendedItems, setRecommendedItems] = useState<any[]>([]);
   const [trendingItems, setTrendingItems] = useState<any[]>([]);
   const [friendsConsumingItems, setFriendsConsumingItems] = useState<any[]>([]);
@@ -345,6 +355,7 @@ export default function FeedComposerBar({
     }
   };
 
+  const searchReqId = useRef(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recommendedScrollRef = useRef<HTMLDivElement>(null);
@@ -361,24 +372,116 @@ export default function FeedComposerBar({
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     searchDebounceRef.current = setTimeout(async () => {
       if (!session?.access_token) return;
+      const reqId = ++searchReqId.current;
       setIsSearching(true);
-      try {
-        const url = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
+      setCorrectedQuery(null);
+      const url = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
+      const runSearch = async (q: string): Promise<any[]> => {
         const res = await fetch(`${url}/functions/v1/media-search`, {
           method: "POST",
           headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ query: searchQuery, type: mediaFilter === "all" ? undefined : mediaFilter, include_book_series: true }),
+          body: JSON.stringify({ query: q, type: mediaFilter === "all" ? undefined : mediaFilter, include_book_series: true }),
         });
-        if (!res.ok) return;
+        if (!res.ok) return [];
         const data = await res.json();
-        setSearchResults((data.results || []).slice(0, 10).map((r: any) => ({
+        return (data.results || []).slice(0, 10).map((r: any) => ({
           ...r,
           image_url: r.image_url || r.poster_url || r.image || "",
-        })));
+        }));
+      };
+      const matchesFilter = (r: any) =>
+        mediaFilter === "all" || r.type === mediaFilter || (mediaFilter === "book" && r.type === "book_series");
+      try {
+        let results = await runSearch(searchQuery);
+        // No visible results? Try a one-shot spelling correction and retry.
+        if (results.filter(matchesFilter).length === 0 && searchQuery.trim().length >= 4) {
+          try {
+            const fixRes = await fetch(`${url}/functions/v1/spell-fix`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ query: searchQuery, ...(mediaFilter !== "all" ? { type: mediaFilter } : {}) }),
+            });
+            const { corrected } = fixRes.ok ? await fixRes.json() : { corrected: null };
+            if (corrected) {
+              const retried = await runSearch(corrected);
+              if (retried.filter(matchesFilter).length > 0 && reqId === searchReqId.current) {
+                results = retried;
+                setCorrectedQuery(corrected);
+              }
+            }
+          } catch { /* best-effort */ }
+        }
+        if (reqId === searchReqId.current) setSearchResults(results);
       } catch {}
-      finally { setIsSearching(false); }
+      finally { if (reqId === searchReqId.current) setIsSearching(false); }
     }, 350);
   }, [searchQuery, mediaFilter, session]);
+
+  useEffect(() => {
+    // Any media change invalidates prior season/episode state entirely.
+    seasonsReqId.current++; episodesReqId.current++;
+    setSeasons([]); setEpisodes([]);
+    setSelectedSeason(null); setSelectedEpisode(null);
+    setIsLoadingSeasons(false); setIsLoadingEpisodes(false);
+    if (selectedMedia?.type === "tv" && selectedMedia.external_id) {
+      fetchSeasons(selectedMedia.external_id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMedia]);
+
+  useEffect(() => {
+    // Drop any prior episode selection the moment the season changes.
+    setEpisodes([]);
+    setSelectedEpisode(null);
+    if (selectedMedia?.type === "tv" && selectedMedia.external_id && selectedSeason) {
+      fetchEpisodes(selectedMedia.external_id, selectedSeason);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSeason]);
+
+  const fetchSeasons = async (externalId: string) => {
+    const reqId = ++seasonsReqId.current;
+    setIsLoadingSeasons(true);
+    const url = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
+    try {
+      const res = await fetch(
+        `${url}/functions/v1/get-media-details?source=tmdb&external_id=${externalId}&media_type=tv`,
+        { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` } },
+      );
+      if (reqId !== seasonsReqId.current) return;
+      if (res.ok) {
+        const data = await res.json();
+        if (reqId !== seasonsReqId.current) return;
+        setSeasons(data.seasons || []);
+      }
+    } catch (e) {
+      console.error("Error fetching seasons:", e);
+    } finally {
+      if (reqId === seasonsReqId.current) setIsLoadingSeasons(false);
+    }
+  };
+
+  const fetchEpisodes = async (externalId: string, seasonNum: number) => {
+    const reqId = ++episodesReqId.current;
+    setIsLoadingEpisodes(true);
+    const url = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
+    try {
+      const res = await fetch(
+        `${url}/functions/v1/get-season-episodes?external_id=${externalId}&season=${seasonNum}`,
+        { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` } },
+      );
+      if (reqId !== episodesReqId.current) return;
+      if (res.ok) {
+        const data = await res.json();
+        if (reqId !== episodesReqId.current) return;
+        setEpisodes(data.episodes || []);
+      }
+    } catch (e) {
+      console.error("Error fetching episodes:", e);
+    } finally {
+      if (reqId === episodesReqId.current) setIsLoadingEpisodes(false);
+    }
+  };
 
   const resetForm = () => {
     setRatingValue(0);
@@ -387,6 +490,7 @@ export default function FeedComposerBar({
     setSearchQuery("");
     setSearchResults([]);
     setMediaFilter("all");
+    setCorrectedQuery(null);
     setInlineSearchOpen(false);
     if (pageMode) {
       // In pageMode the composer IS the page; Cancel/backdrop returns to the
@@ -608,6 +712,12 @@ export default function FeedComposerBar({
     media_image_url: selectedMedia.image_url || selectedMedia.poster_url || selectedMedia.image,
     media_external_id: selectedMedia.external_id || selectedMedia.id,
     media_external_source: selectedMedia.external_source || selectedMedia.source || "tmdb",
+    media_season_number: selectedMedia.type === "tv" ? selectedSeason || undefined : undefined,
+    media_episode_number: selectedMedia.type === "tv" ? selectedEpisode || undefined : undefined,
+    media_episode_title:
+      selectedMedia.type === "tv" && selectedEpisode
+        ? episodes.find((ep: any) => (ep.episodeNumber || ep.episode_number) === selectedEpisode)?.name || undefined
+        : undefined,
   } : {};
 
   const handleComposeSubmit = async ({ title, body, tag }: { title: string; body: string; tag: string }): Promise<boolean> => {
@@ -709,6 +819,59 @@ export default function FeedComposerBar({
               </div>
             )}
 
+            {/* Season / episode pills (TV only, optional) */}
+            {selectedMedia?.type === "tv" && (isLoadingSeasons || seasons.length > 0) && (
+              <div className="mb-2 space-y-1.5">
+                {isLoadingSeasons ? (
+                  <div className="flex items-center gap-2 text-xs text-gray-400 py-1">
+                    <Loader2 className="animate-spin" size={12} /> Loading seasons…
+                  </div>
+                ) : (
+                  <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
+                    <button type="button" onClick={() => setSelectedSeason(null)}
+                      className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedSeason === null ? "bg-purple-600 border-purple-600 text-white" : "bg-white border-gray-200 text-gray-600"}`}>
+                      Whole series
+                    </button>
+                    {seasons.map((se: any) => {
+                      const n = se.seasonNumber || se.season_number;
+                      return (
+                        <button key={n} type="button" onClick={() => setSelectedSeason(selectedSeason === n ? null : n)}
+                          className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedSeason === n ? "bg-purple-600 border-purple-600 text-white" : "bg-white border-gray-200 text-gray-600"}`}>
+                          Season {n}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {selectedSeason && (
+                  <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
+                    {isLoadingEpisodes ? (
+                      <div className="flex items-center gap-2 text-xs text-gray-400 py-1">
+                        <Loader2 className="animate-spin" size={12} /> Loading episodes…
+                      </div>
+                    ) : (
+                      <>
+                        <button type="button" onClick={() => setSelectedEpisode(null)}
+                          className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedEpisode === null ? "bg-purple-100 border-purple-300 text-purple-700" : "bg-white border-gray-200 text-gray-600"}`}>
+                          All episodes
+                        </button>
+                        {episodes.map((ep: any) => {
+                          const n = ep.episodeNumber || ep.episode_number;
+                          return (
+                            <button key={n} type="button" onClick={() => setSelectedEpisode(selectedEpisode === n ? null : n)}
+                              title={ep.name || undefined}
+                              className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedEpisode === n ? "bg-purple-100 border-purple-300 text-purple-700" : "bg-white border-gray-200 text-gray-600"}`}>
+                              Ep {n}
+                            </button>
+                          );
+                        })}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             <RoomComposer
               key={selectedMedia ? (selectedMedia.external_id || selectedMedia.id || 'media') : 'none'}
               tags={MEDIA_TAGS}
@@ -766,6 +929,9 @@ export default function FeedComposerBar({
                             </div>
                             {searchQuery && (
                               <div className="max-h-56 overflow-y-auto">
+                                {correctedQuery && !isSearching && searchResults.length > 0 && (
+                                  <p className="px-3 pt-2 text-[11px] text-purple-600">Showing results for "{correctedQuery}"</p>
+                                )}
                                 {!isSearching && searchResults.length === 0 && (
                                   <p className="text-center text-xs text-gray-400 py-6">No results for "{searchQuery}"</p>
                                 )}
@@ -984,6 +1150,9 @@ export default function FeedComposerBar({
               )}
 
               {/* Search results */}
+              {correctedQuery && searchQuery && !isSearching && searchResults.length > 0 && (
+                <p className={`px-5 pb-2 text-xs ${pageMode ? 'text-purple-600' : 'text-purple-300'}`}>Showing results for "{correctedQuery}"</p>
+              )}
               {searchResults.length > 0 && (
                 <div className="pt-2 pb-10">
                   <p className={`px-5 text-xs font-bold uppercase tracking-widest mb-2 ${pageMode ? 'text-gray-500' : 'text-white/40'}`}>Results</p>
