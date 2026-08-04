@@ -40,7 +40,7 @@ interface DnaMomentData {
   friendResponses: any[];
 }
 
-export function DnaMomentCard() {
+export function DnaMomentCard({ slot = 0 }: { slot?: number } = {}) {
   const { session } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -67,7 +67,7 @@ export function DnaMomentCard() {
   };
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['dna-moments-carousel', session?.user?.id],
+    queryKey: ['dna-moments-carousel', session?.user?.id, slot],
     queryFn: async () => {
       const userId = session?.user?.id;
       
@@ -94,7 +94,8 @@ export function DnaMomentCard() {
 
       const unanswered = allMoments.filter((m: any) => !answeredIds.includes(m.id));
       
-      const momentsToShow = unanswered.slice(0, 5).map((m: any) => ({
+      // Each feed slot shows its own single question (slot 0 → 1st unanswered, slot 1 → 2nd, …)
+      const momentsToShow = unanswered.slice(slot, slot + 1).map((m: any) => ({
         id: m.id,
         questionText: m.question_text,
         optionA: m.option_a,

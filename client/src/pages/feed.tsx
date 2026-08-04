@@ -16,7 +16,6 @@ import FeedHero from "@/components/feed-hero";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
 import { DnaMomentCard } from "@/components/dna-moment-card";
-import { DnaMomentFeaturedCard } from "@/components/dna-moment-featured-card";
 import { FeedIdentityHero, IdentityFace } from "@/components/feed-identity-hero";
 import { isOnboardingComplete, markOnboardingComplete } from "@/components/route-guards";
 import { TriviaCarousel } from "@/components/trivia-carousel";
@@ -8514,9 +8513,6 @@ export default function Feed() {
             <div>
 
               <FeedIdentityHero />
-              <div className="mt-3">
-                <DnaMomentFeaturedCard />
-              </div>
 
             </div>
             
@@ -8884,7 +8880,7 @@ export default function Feed() {
 
               {/* DNA Moment #1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
-                <DnaMomentCard />
+                <DnaMomentCard slot={0} />
               )}
 
               {/* DNA Compare card */}
@@ -9003,7 +8999,7 @@ export default function Feed() {
 
               {/* DNA Moment #2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
-                <DnaMomentCard />
+                <DnaMomentCard slot={1} />
               )}
 
               {/* TV trivia — round 2 */}
@@ -9061,6 +9057,11 @@ export default function Feed() {
               {/* Sprinkled single-conversation card #3 */}
               {renderConvoSprinkle(2)}
 
+              {/* DNA Moment #3 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
+                <DnaMomentCard slot={2} />
+              )}
+
               {/* Movies Polls — round 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Movies" />
@@ -9093,6 +9094,11 @@ export default function Feed() {
 
               {/* UGC slot 18 — after Music trivia round 2 */}
               {renderPostBatchByIndex(18)}
+
+              {/* DNA Moment #4 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
+                <DnaMomentCard slot={3} />
+              )}
 
               {/* Seen It? — Music (round 2) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
