@@ -146,7 +146,7 @@ export function DnaMomentFeaturedCard() {
     .replace(/\b\w/g, (c: string) => c.toUpperCase());
 
   return (
-    <div className="bg-gradient-to-br from-violet-950 via-purple-950 to-indigo-950 rounded-2xl overflow-hidden shadow-lg border border-violet-800/30">
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-200">
       {/* Header */}
       <div className="px-4 pt-4 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -154,39 +154,39 @@ export function DnaMomentFeaturedCard() {
             <Dna className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
-            <p className="text-xs font-bold text-violet-300 tracking-wider uppercase">Today's DNA Question</p>
-            <p className="text-[10px] text-violet-400/60">{categoryLabel}</p>
+            <p className="text-xs font-bold text-violet-600 tracking-wider uppercase">Today's DNA Question</p>
+            <p className="text-[10px] text-gray-400">{categoryLabel}</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-violet-400" />
-          <span className="text-[10px] text-violet-400 font-medium">+5 pts</span>
+          <Sparkles className="w-3 h-3 text-violet-500" />
+          <span className="text-[10px] text-violet-500 font-medium">+5 pts</span>
         </div>
       </div>
 
       {/* Question */}
       <div className="px-4 pb-4">
-        <h2 className="text-white font-bold text-lg leading-snug mb-4">{moment.questionText}</h2>
+        <h2 className="text-gray-900 font-bold text-lg leading-snug mb-4">{moment.questionText}</h2>
 
         {!isAnswered ? (
           <div className="flex flex-col gap-3">
             <button
               onClick={() => answerMutation.mutate({ momentId: moment.id, answer: 'a' })}
               disabled={answerMutation.isPending}
-              className="w-full py-3.5 px-5 rounded-xl bg-white/10 border border-white/20 text-white text-sm font-semibold hover:bg-violet-600/40 hover:border-violet-500/50 active:scale-[0.98] transition-all text-left"
+              className="w-full py-3.5 px-5 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm font-semibold hover:bg-violet-50 hover:border-violet-300 active:scale-[0.98] transition-all text-left"
             >
               {moment.optionA}
             </button>
             <button
               onClick={() => answerMutation.mutate({ momentId: moment.id, answer: 'b' })}
               disabled={answerMutation.isPending}
-              className="w-full py-3.5 px-5 rounded-xl bg-white/10 border border-white/20 text-white text-sm font-semibold hover:bg-violet-600/40 hover:border-violet-500/50 active:scale-[0.98] transition-all text-left"
+              className="w-full py-3.5 px-5 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm font-semibold hover:bg-violet-50 hover:border-violet-300 active:scale-[0.98] transition-all text-left"
             >
               {moment.optionB}
             </button>
             {answerMutation.isPending && (
               <div className="flex justify-center pt-1">
-                <Loader2 className="w-4 h-4 animate-spin text-violet-400" />
+                <Loader2 className="w-4 h-4 animate-spin text-violet-500" />
               </div>
             )}
           </div>
@@ -199,26 +199,26 @@ export function DnaMomentFeaturedCard() {
               return (
                 <div
                   key={opt}
-                  className={`rounded-xl overflow-hidden border transition-all ${isChosen ? 'border-violet-500' : 'border-white/10'}`}
+                  className={`rounded-xl overflow-hidden border transition-all ${isChosen ? 'border-violet-400' : 'border-gray-200'}`}
                 >
                   <div className="relative px-4 py-3">
                     <div
-                      className={`absolute inset-0 transition-all duration-700 ease-out ${isChosen ? 'bg-violet-600/30' : 'bg-white/5'}`}
+                      className={`absolute inset-0 transition-all duration-700 ease-out ${isChosen ? 'bg-violet-100' : 'bg-gray-100'}`}
                       style={{ width: `${pct}%` }}
                     />
                     <div className="relative flex items-center justify-between">
-                      <span className={`text-sm font-semibold ${isChosen ? 'text-white' : 'text-gray-300'}`}>
-                        {isChosen && <span className="text-violet-300 mr-1.5">✓</span>}
+                      <span className={`text-sm font-semibold ${isChosen ? 'text-gray-900' : 'text-gray-600'}`}>
+                        {isChosen && <span className="text-violet-600 mr-1.5">✓</span>}
                         {label}
                       </span>
-                      <span className={`text-sm font-bold ml-3 shrink-0 ${isChosen ? 'text-violet-300' : 'text-gray-400'}`}>{pct}%</span>
+                      <span className={`text-sm font-bold ml-3 shrink-0 ${isChosen ? 'text-violet-600' : 'text-gray-400'}`}>{pct}%</span>
                     </div>
                   </div>
                 </div>
               );
             })}
             {displayStats && (
-              <p className="text-center text-[10px] text-violet-400/60 mt-1">{displayStats.total} answers so far</p>
+              <p className="text-center text-[10px] text-gray-400 mt-1">{displayStats.total} answers so far</p>
             )}
           </div>
         )}
@@ -226,10 +226,10 @@ export function DnaMomentFeaturedCard() {
 
       {/* Footer */}
       <Link href="/entertainment-dna">
-        <div className="border-t border-white/5 px-4 py-2.5 flex items-center justify-center gap-1.5 hover:bg-white/5 transition-colors cursor-pointer">
-          <Sparkles className="w-3 h-3 text-violet-400" />
-          <span className="text-xs text-violet-300 font-medium">See your Entertainment DNA</span>
-          <ArrowRight className="w-3 h-3 text-violet-400" />
+        <div className="border-t border-gray-100 px-4 py-2.5 flex items-center justify-center gap-1.5 hover:bg-gray-50 transition-colors cursor-pointer">
+          <Sparkles className="w-3 h-3 text-violet-500" />
+          <span className="text-xs text-violet-600 font-medium">See your Entertainment DNA</span>
+          <ArrowRight className="w-3 h-3 text-violet-500" />
         </div>
       </Link>
     </div>
