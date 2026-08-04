@@ -2,6 +2,7 @@ import FollowCreatorsCard from "@/components/follow-creators-card";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Plus, Star, X, Search, Loader2, ArrowLeft, ArrowRight, MessageSquarePlus, ChevronRight } from "lucide-react";
+import MediaSearchPanel from "@/components/media-search-panel";
 import { supabase } from "@/lib/supabase";
 import { StarRater } from "@/components/star-rater";
 import { useAuth } from "@/lib/auth";
@@ -905,59 +906,26 @@ export default function FeedComposerBar({
                             <Plus size={15} /> Add media
                           </button>
                         ) : (
-                          <div className="rounded-xl border border-gray-200 overflow-hidden">
-                            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-gray-50">
-                              <Search size={15} className="text-gray-400 flex-shrink-0" />
-                              <input
-                                autoFocus
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search movies, shows, books…"
-                                className="flex-1 text-sm text-gray-800 placeholder:text-gray-400 bg-transparent outline-none"
-                              />
-                              {isSearching ? (
-                                <Loader2 size={14} className="text-gray-400 animate-spin flex-shrink-0" />
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => { setInlineSearchOpen(false); setSearchQuery(""); setSearchResults([]); }}
-                                  aria-label="Close search"
-                                >
-                                  <X size={15} className="text-gray-400" />
-                                </button>
-                              )}
+                          <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
+                            <div className="flex items-center justify-end px-2 pt-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setInlineSearchOpen(false)}
+                                aria-label="Close search"
+                                className="p-1 rounded-full hover:bg-gray-100"
+                              >
+                                <X size={15} className="text-gray-400" />
+                              </button>
                             </div>
-                            {searchQuery && (
-                              <div className="max-h-56 overflow-y-auto">
-                                {correctedQuery && !isSearching && searchResults.length > 0 && (
-                                  <p className="px-3 pt-2 text-[11px] text-purple-600">Showing results for "{correctedQuery}"</p>
-                                )}
-                                {!isSearching && searchResults.length === 0 && (
-                                  <p className="text-center text-xs text-gray-400 py-6">No results for "{searchQuery}"</p>
-                                )}
-                                {searchResults.map((r, i) => {
-                                  const mediaType = r.type === 'book_series' ? 'book' : r.type;
+                            <div className="max-h-80 overflow-y-auto flex flex-col">
+                              <MediaSearchPanel
+                                onSelect={(r: any) => {
                                   const externalSource = r.external_source === 'openai' ? 'openlibrary' : (r.external_source || 'tmdb');
-                                  const img = r.image_url || r.poster_url || r.image;
-                                  return (
-                                    <button
-                                      key={i}
-                                      type="button"
-                                      onClick={() => { selectMedia({ ...r, type: r.type, external_source: externalSource }); setInlineSearchOpen(false); }}
-                                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 text-left"
-                                    >
-                                      {img && <img src={img} alt="" className="w-8 h-11 object-cover rounded flex-shrink-0" />}
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-gray-800 truncate">{r.title}</p>
-                                        <p className="text-[11px] text-gray-400 truncate">
-                                          {typeLabel(mediaType)}{r.year ? ` · ${r.year}` : ""}{r.creator ? ` · ${r.creator}` : ""}
-                                        </p>
-                                      </div>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            )}
+                                  selectMedia({ ...r, type: r.type, external_source: externalSource, image_url: r.image || r.image_url || r.poster_url || "" });
+                                  setInlineSearchOpen(false);
+                                }}
+                              />
+                            </div>
                           </div>
                         )}
                       </div>
