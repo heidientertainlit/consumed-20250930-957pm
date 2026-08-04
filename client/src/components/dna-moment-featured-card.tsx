@@ -36,6 +36,7 @@ export function DnaMomentFeaturedCard() {
         .select('*')
         .eq('is_active', true)
         .in('display_type', ['featured', 'both'])
+        .eq('is_active', true)
         .gte('display_date', `${today}T00:00:00`)
         .lte('display_date', `${today}T23:59:59`)
         .limit(1)
@@ -49,6 +50,7 @@ export function DnaMomentFeaturedCard() {
           .select('*')
           .eq('is_active', true)
           .in('display_type', ['featured', 'both'])
+        .eq('is_active', true)
           .order('created_at', { ascending: false })
           .limit(1)
           .single();

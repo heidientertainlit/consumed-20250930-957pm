@@ -75,6 +75,7 @@ export function DnaMomentCard() {
         .from('dna_moments')
         .select('*')
         .in('display_type', ['feed', 'both'])
+        .eq('is_active', true)
         .order('created_at', { ascending: true });
       
       if (momentsError || !allMoments) {
