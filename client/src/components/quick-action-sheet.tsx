@@ -140,6 +140,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   const [shareToFeed, setShareToFeed] = useState(true);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [mediaTypeFilter, setMediaTypeFilter] = useState<string | null>(null);
+  const [correctedQuery, setCorrectedQuery] = useState<string | null>(null);
 
   const episodeCache = useRef<Record<string, any[]>>({});
 
@@ -235,27 +236,58 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
     }
   }, [selectedSeason]);
 
+  const searchReqIdQA = useRef(0);
+
   const handleMediaSearch = async (query: string) => {
     if (!session?.access_token) return;
+    const reqId = ++searchReqIdQA.current;
     setIsSearching(true);
-    try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+    setCorrectedQuery(null);
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+    const runSearch = async (q: string): Promise<any[]> => {
       const response = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query, include_book_series: true, ...(mediaTypeFilter ? { type: mediaTypeFilter } : {}) })
+        body: JSON.stringify({ query: q, include_book_series: true, ...(mediaTypeFilter ? { type: mediaTypeFilter } : {}) })
       });
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data.results || []);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.results || [];
+    };
+    const matchesFilter = (r: any) =>
+      !mediaTypeFilter || r.type === mediaTypeFilter || (mediaTypeFilter === 'book' && r.type === 'book_series');
+    try {
+      let results = await runSearch(query);
+      let corrected: string | null = null;
+      // No visible results? Try a one-shot spelling correction and retry.
+      if (results.filter(matchesFilter).length === 0 && query.trim().length >= 4) {
+        try {
+          const fixRes = await fetch(`${supabaseUrl}/functions/v1/spell-fix`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, ...(mediaTypeFilter ? { type: mediaTypeFilter } : {}) }),
+          });
+          const fix = fixRes.ok ? await fixRes.json() : { corrected: null };
+          if (fix.corrected) {
+            const retried = await runSearch(fix.corrected);
+            if (retried.filter(matchesFilter).length > 0) {
+              results = retried;
+              corrected = fix.corrected;
+            }
+          }
+        } catch { /* best-effort */ }
+      }
+      if (reqId === searchReqIdQA.current) {
+        setSearchResults(results);
+        setCorrectedQuery(corrected);
       }
     } catch (error) {
       console.error('Search error:', error);
     } finally {
-      setIsSearching(false);
+      if (reqId === searchReqIdQA.current) setIsSearching(false);
     }
   };
 
@@ -1070,23 +1102,52 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                       </label>
                     </div>
                     {selectedMedia.type === 'tv' && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-gray-500 uppercase">Episode</p>
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-medium text-gray-500 uppercase">Season & episode <span className="normal-case text-gray-400">(optional)</span></p>
                         {isLoadingSeasons ? (
                           <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="animate-spin" size={14} />Loading...</div>
                         ) : seasons.length > 0 ? (
-                          <div className="flex gap-2">
-                            <select value={selectedSeason || ""} onChange={(e) => setSelectedSeason(Number(e.target.value) || null)} className="flex-1 px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white">
-                              <option value="">All seasons</option>
-                              {seasons.map((s) => <option key={s.seasonNumber || s.season_number} value={s.seasonNumber || s.season_number}>S{s.seasonNumber || s.season_number}</option>)}
-                            </select>
+                          <>
+                            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
+                              <button type="button" onClick={() => setSelectedSeason(null)}
+                                className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedSeason === null ? "bg-purple-600 border-purple-600 text-white" : "bg-white border-gray-200 text-gray-600"}`}>
+                                Whole series
+                              </button>
+                              {seasons.map((se: any) => {
+                                const n = se.seasonNumber || se.season_number;
+                                return (
+                                  <button key={n} type="button" onClick={() => setSelectedSeason(selectedSeason === n ? null : n)}
+                                    className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedSeason === n ? "bg-purple-600 border-purple-600 text-white" : "bg-white border-gray-200 text-gray-600"}`}>
+                                    Season {n}
+                                  </button>
+                                );
+                              })}
+                            </div>
                             {selectedSeason && (
-                              <select value={selectedEpisode || ""} onChange={(e) => setSelectedEpisode(Number(e.target.value) || null)} className="flex-1 px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white" disabled={isLoadingEpisodes}>
-                                <option value="">{isLoadingEpisodes ? "..." : "All eps"}</option>
-                                {episodes.map((ep) => <option key={ep.episodeNumber || ep.episode_number} value={ep.episodeNumber || ep.episode_number}>E{ep.episodeNumber || ep.episode_number}</option>)}
-                              </select>
+                              <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
+                                {isLoadingEpisodes ? (
+                                  <div className="flex items-center gap-2 text-xs text-gray-400 py-1"><Loader2 className="animate-spin" size={12} /> Loading episodes…</div>
+                                ) : (
+                                  <>
+                                    <button type="button" onClick={() => setSelectedEpisode(null)}
+                                      className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedEpisode === null ? "bg-purple-100 border-purple-300 text-purple-700" : "bg-white border-gray-200 text-gray-600"}`}>
+                                      All episodes
+                                    </button>
+                                    {episodes.map((ep: any) => {
+                                      const n = ep.episodeNumber || ep.episode_number;
+                                      return (
+                                        <button key={n} type="button" onClick={() => setSelectedEpisode(selectedEpisode === n ? null : n)}
+                                          title={ep.name || undefined}
+                                          className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedEpisode === n ? "bg-purple-100 border-purple-300 text-purple-700" : "bg-white border-gray-200 text-gray-600"}`}>
+                                          Ep {n}
+                                        </button>
+                                      );
+                                    })}
+                                  </>
+                                )}
+                              </div>
                             )}
-                          </div>
+                          </>
                         ) : null}
                       </div>
                     )}
@@ -1636,6 +1697,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           <div className="flex justify-center py-4">
             <Loader2 className="animate-spin text-purple-500" size={20} />
           </div>
+        )}
+        {correctedQuery && !isSearching && searchResults.length > 0 && (
+          <p className="text-xs text-purple-600 px-1 pb-1">Showing results for "{correctedQuery}"</p>
         )}
         {searchResults.length > 0 && (
           <div className="overflow-y-auto border border-gray-100 rounded-xl flex-1 min-h-0">

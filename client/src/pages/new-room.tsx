@@ -119,20 +119,45 @@ export default function NewRoom() {
   const [ratingValue, setRatingValue] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
 
+  const searchReqIdRoom = useRef(0);
+  const [correctedQuery, setCorrectedQuery] = useState<string | null>(null);
+
   useEffect(() => {
-    if (!searchQuery.trim()) { setSearchResults([]); return; }
+    if (!searchQuery.trim()) { setSearchResults([]); setCorrectedQuery(null); return; }
     const t = setTimeout(async () => {
+      const reqId = ++searchReqIdRoom.current;
       setIsSearching(true);
-      try {
+      setCorrectedQuery(null);
+      const runSearch = async (q: string): Promise<any[]> => {
         const res = await fetch(`${SUPABASE_URL}/functions/v1/media-search`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ query: searchQuery, include_book_series: true }),
+          body: JSON.stringify({ query: q, include_book_series: true }),
         });
         const data = await res.json();
-        setSearchResults(data?.results || []);
-      } catch (_) { setSearchResults([]); }
-      finally { setIsSearching(false); }
+        return data?.results || [];
+      };
+      try {
+        let results = await runSearch(searchQuery);
+        let corrected: string | null = null;
+        // No results? Try a one-shot spelling correction and retry.
+        if (results.length === 0 && searchQuery.trim().length >= 4) {
+          try {
+            const fixRes = await fetch(`${SUPABASE_URL}/functions/v1/spell-fix`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ query: searchQuery }),
+            });
+            const fix = fixRes.ok ? await fixRes.json() : { corrected: null };
+            if (fix.corrected) {
+              const retried = await runSearch(fix.corrected);
+              if (retried.length > 0) { results = retried; corrected = fix.corrected; }
+            }
+          } catch { /* best-effort */ }
+        }
+        if (reqId === searchReqIdRoom.current) { setSearchResults(results); setCorrectedQuery(corrected); }
+      } catch (_) { if (reqId === searchReqIdRoom.current) setSearchResults([]); }
+      finally { if (reqId === searchReqIdRoom.current) setIsSearching(false); }
     }, 400);
     return () => clearTimeout(t);
   }, [searchQuery, token]);
@@ -812,6 +837,9 @@ export default function NewRoom() {
                               </div>
                               {searchQuery && (
                                 <div className="max-h-56 overflow-y-auto">
+                                  {correctedQuery && !isSearching && searchResults.length > 0 && (
+                                    <p className="px-3 pt-2 text-[11px] text-purple-600">Showing results for "{correctedQuery}"</p>
+                                  )}
                                   {!isSearching && searchResults.length === 0 && (
                                     <p className="text-center text-xs text-gray-400 py-6">No results for "{searchQuery}"</p>
                                   )}

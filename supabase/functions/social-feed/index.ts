@@ -1101,6 +1101,9 @@ serve(async (req) => {
               totalCount: listData.totalCount
             } : null,
             recCategory: post.rec_category || null,
+            media_season_number: post.media_season_number || null,
+            media_episode_number: post.media_episode_number || null,
+            media_episode_title: post.media_episode_title || null,
             mediaItems: [{
               id: `${post.media_external_source}-${post.media_external_id}`,
               title: post.media_title || '',

@@ -1111,7 +1111,7 @@ export default function FeedComposerBar({
               )}
 
               {/* No results */}
-              {searchQuery && !isSearching && searchResults.length === 0 && (
+              {searchQuery && !isSearching && searchResults.filter((r) => mediaFilter === "all" || r.type === mediaFilter || (mediaFilter === "book" && r.type === "book_series")).length === 0 && (
                 <div className="flex flex-col items-center justify-center h-40 text-center px-8">
                   <p className={`text-sm ${pageMode ? 'text-gray-400' : 'text-white/40'}`}>No results for "<span className={pageMode ? 'text-gray-700' : 'text-white/60'}>{searchQuery}</span>"</p>
                 </div>
@@ -1124,7 +1124,7 @@ export default function FeedComposerBar({
               {searchResults.length > 0 && (
                 <div className="pt-2 pb-10">
                   <p className={`px-5 text-xs font-bold uppercase tracking-widest mb-2 ${pageMode ? 'text-gray-500' : 'text-white/40'}`}>Results</p>
-                  {searchResults.map((r, i) => {
+                  {searchResults.filter((r) => mediaFilter === "all" || r.type === mediaFilter || (mediaFilter === "book" && r.type === "book_series")).map((r, i) => {
                     const mediaType = r.type === 'book_series' ? 'book' : r.type;
                     const externalSource = r.external_source === 'openai' ? 'openlibrary' : (r.external_source || 'tmdb');
                     return (
