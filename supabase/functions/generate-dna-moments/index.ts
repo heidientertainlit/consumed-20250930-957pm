@@ -92,7 +92,110 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // All operations on this function are admin-only
+    const { data: profile } = await supabaseAdmin
+      .from('users')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single();
+    if (!profile?.is_admin) {
+      return new Response(JSON.stringify({ error: 'Admin only' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     const body = await req.json().catch(() => ({}));
+
+    // ── Admin CRUD actions (create / update / delete) ──
+    const action: string | undefined = body.action;
+    const badRequest = (msg: string) =>
+      new Response(JSON.stringify({ error: msg }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+    // Field validators shared by create + update. Return a cleaned value or throw a string error.
+    const DISPLAY_TYPES = ['feed', 'featured', 'both'];
+    const cleanText = (v: unknown, field: string, required: boolean, max = 500): string | null => {
+      if (v === null || v === undefined || v === '') {
+        if (required) throw `${field} is required`;
+        return null;
+      }
+      if (typeof v !== 'string') throw `${field} must be a string`;
+      const t = v.trim();
+      if (!t) { if (required) throw `${field} cannot be blank`; return null; }
+      if (t.length > max) throw `${field} is too long (max ${max} chars)`;
+      return t;
+    };
+    const validators: Record<string, (v: unknown) => unknown> = {
+      question_text: (v) => cleanText(v, 'question_text', true),
+      option_a: (v) => cleanText(v, 'option_a', true, 120),
+      option_b: (v) => cleanText(v, 'option_b', true, 120),
+      option_c: (v) => cleanText(v, 'option_c', false, 120),
+      option_d: (v) => cleanText(v, 'option_d', false, 120),
+      option_e: (v) => cleanText(v, 'option_e', false, 120),
+      is_multi_select: (v) => { if (typeof v !== 'boolean') throw 'is_multi_select must be true or false'; return v; },
+      is_active: (v) => { if (typeof v !== 'boolean') throw 'is_active must be true or false'; return v; },
+      category: (v) => { if (typeof v !== 'string' || !ALL_CATEGORIES.includes(v)) throw `category must be one of: ${ALL_CATEGORIES.join(', ')}`; return v; },
+      display_type: (v) => { if (typeof v !== 'string' || !DISPLAY_TYPES.includes(v)) throw `display_type must be one of: ${DISPLAY_TYPES.join(', ')}`; return v; },
+      display_date: (v) => {
+        if (v === null) return null;
+        if (typeof v !== 'string' || isNaN(Date.parse(v))) throw 'display_date must be a valid ISO date or null';
+        return new Date(v).toISOString();
+      },
+    };
+
+    if (action === 'create') {
+      const q = body.question || {};
+      const row: Record<string, unknown> = {};
+      try {
+        row.question_text = validators.question_text(q.question_text);
+        row.option_a = validators.option_a(q.option_a);
+        row.option_b = validators.option_b(q.option_b);
+        row.option_c = validators.option_c(q.option_c ?? null);
+        row.option_d = validators.option_d(q.option_d ?? null);
+        row.option_e = validators.option_e(q.option_e ?? null);
+        row.is_multi_select = validators.is_multi_select(q.is_multi_select ?? false);
+        row.is_active = validators.is_active(q.is_active ?? false);
+        row.category = validators.category(q.category ?? 'consumption_style');
+        row.display_type = validators.display_type(q.display_type ?? 'feed');
+      } catch (msg) {
+        return badRequest(String(msg));
+      }
+      const { data: created, error: createError } = await supabaseAdmin
+        .from('dna_moments')
+        .insert(row)
+        .select()
+        .single();
+      if (createError) throw createError;
+      return new Response(JSON.stringify({ success: true, question: created }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (action === 'update') {
+      const updates: Record<string, unknown> = {};
+      try {
+        for (const [key, validate] of Object.entries(validators)) {
+          if (key in (body.updates || {})) updates[key] = validate(body.updates[key]);
+        }
+      } catch (msg) {
+        return badRequest(String(msg));
+      }
+      if (!body.id || typeof body.id !== 'string' || Object.keys(updates).length === 0) {
+        return badRequest('id and at least one valid update field are required');
+      }
+      const { data: updated, error: updateError } = await supabaseAdmin
+        .from('dna_moments')
+        .update(updates)
+        .eq('id', body.id)
+        .select()
+        .single();
+      if (updateError) throw updateError;
+      return new Response(JSON.stringify({ success: true, question: updated }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (action === 'delete') {
+      if (!body.id) {
+        return new Response(JSON.stringify({ error: 'id is required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const { error: deleteError } = await supabaseAdmin.from('dna_moments').delete().eq('id', body.id);
+      if (deleteError) throw deleteError;
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // ── Default: AI generation ──
     const count: number = Math.min(Math.max(parseInt(body.count || '5'), 1), 10);
     const displayType: string = body.display_type || 'feed';
     // If a specific category was passed (legacy / future), use it; otherwise auto-balance

@@ -148,6 +148,19 @@ export default function AdminDnaMomentsPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
 
+  // All writes go through the admin edge function (browser writes to
+  // dna_moments are blocked by database security).
+  const adminAction = async (payload: Record<string, unknown>) => {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-dna-moments`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session?.access_token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Request failed");
+    return data;
+  };
+
   const [activeTab, setActiveTab] = useState<"generate" | "drafts" | "scheduled" | "published">("generate");
   const [genCount, setGenCount] = useState(5);
   const [genDisplayType, setGenDisplayType] = useState<"feed" | "featured">("feed");
@@ -169,8 +182,7 @@ export default function AdminDnaMomentsPage() {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase.from("dna_moments").update({ is_active }).eq("id", id);
-      if (error) throw error;
+      await adminAction({ action: "update", id, updates: { is_active } });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-dna-moments"] }),
     onError: () => toast({ title: "Error", description: "Failed to update", variant: "destructive" }),
@@ -178,8 +190,7 @@ export default function AdminDnaMomentsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("dna_moments").delete().eq("id", id);
-      if (error) throw error;
+      await adminAction({ action: "delete", id });
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-dna-moments"] }); toast({ title: "Deleted" }); },
     onError: () => toast({ title: "Error", description: "Failed to delete", variant: "destructive" }),
@@ -187,8 +198,7 @@ export default function AdminDnaMomentsPage() {
 
   const setDateMutation = useMutation({
     mutationFn: async ({ id, display_date }: { id: string; display_date: string | null }) => {
-      const { error } = await supabase.from("dna_moments").update({ display_date }).eq("id", id);
-      if (error) throw error;
+      await adminAction({ action: "update", id, updates: { display_date } });
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-dna-moments"] }); setEditingDateId(null); },
     onError: () => toast({ title: "Error", description: "Failed to update date", variant: "destructive" }),
@@ -196,8 +206,7 @@ export default function AdminDnaMomentsPage() {
 
   const setDisplayTypeMutation = useMutation({
     mutationFn: async ({ id, display_type }: { id: string; display_type: string }) => {
-      const { error } = await supabase.from("dna_moments").update({ display_type }).eq("id", id);
-      if (error) throw error;
+      await adminAction({ action: "update", id, updates: { display_type } });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-dna-moments"] }),
     onError: () => toast({ title: "Error", description: "Failed to update display type", variant: "destructive" }),
@@ -225,6 +234,42 @@ export default function AdminDnaMomentsPage() {
       setIsGenerating(false);
     }
   };
+
+  // ── Manual "write your own question" ──
+  const [manualQ, setManualQ] = useState("");
+  const [manualOpts, setManualOpts] = useState<string[]>(["", ""]);
+  const [manualCategory, setManualCategory] = useState("consumption_style");
+  const [manualDisplayType, setManualDisplayType] = useState<"feed" | "featured" | "both">("feed");
+  const [manualPublish, setManualPublish] = useState(true);
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const opts = manualOpts.map(o => o.trim());
+      await adminAction({
+        action: "create",
+        question: {
+          question_text: manualQ.trim(),
+          option_a: opts[0],
+          option_b: opts[1],
+          option_c: opts[2] || null,
+          option_d: opts[3] || null,
+          option_e: opts[4] || null,
+          category: manualCategory,
+          display_type: manualDisplayType,
+          is_active: manualPublish,
+        },
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-dna-moments"] });
+      toast({ title: "Question added", description: manualPublish ? "Published — it's live in the feed" : "Saved as draft" });
+      setManualQ("");
+      setManualOpts(["", ""]);
+    },
+    onError: (err: any) => toast({ title: "Error", description: err.message || "Failed to add question", variant: "destructive" }),
+  });
+
+  const canSubmitManual = manualQ.trim().length > 0 && manualOpts[0]?.trim() && manualOpts[1]?.trim();
 
   const drafts = moments.filter(m => getStatus(m) === "draft");
   const scheduled = moments.filter(m => getStatus(m) === "scheduled").sort((a, b) => (a.display_date || "").localeCompare(b.display_date || ""));
@@ -289,6 +334,72 @@ export default function AdminDnaMomentsPage() {
         {/* ── Generate Tab ── */}
         {activeTab === "generate" && (
           <div className="space-y-6">
+            {/* Write your own */}
+            <div className="bg-gray-900/60 border border-gray-700/50 rounded-2xl p-5 space-y-4">
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Write your own question</p>
+              <input
+                value={manualQ}
+                onChange={e => setManualQ(e.target.value)}
+                placeholder="e.g. Rewatch an old favorite or start something new?"
+                className="w-full bg-gray-800/70 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+              />
+              <div className="space-y-2">
+                {manualOpts.map((opt, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-[10px] text-gray-500 font-bold w-4">{String.fromCharCode(65 + i)}</span>
+                    <input
+                      value={opt}
+                      onChange={e => setManualOpts(prev => prev.map((o, j) => (j === i ? e.target.value : o)))}
+                      placeholder={i < 2 ? `Option ${String.fromCharCode(65 + i)} (required)` : `Option ${String.fromCharCode(65 + i)} (optional)`}
+                      className="flex-1 bg-gray-800/70 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+                    />
+                    {i >= 2 && (
+                      <button onClick={() => setManualOpts(prev => prev.filter((_, j) => j !== i))} className="text-gray-600 hover:text-red-400">
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {manualOpts.length < 5 && (
+                  <button onClick={() => setManualOpts(prev => [...prev, ""])} className="text-xs text-violet-400 hover:text-violet-300 font-medium">
+                    + Add option
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-2 flex-wrap items-center">
+                <select
+                  value={manualCategory}
+                  onChange={e => setManualCategory(e.target.value)}
+                  className="bg-gray-800 border border-gray-700 rounded-xl px-2.5 py-1.5 text-xs text-gray-300 focus:outline-none"
+                >
+                  {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+                    <option key={key} value={key}>{label}</option>
+                  ))}
+                </select>
+                <select
+                  value={manualDisplayType}
+                  onChange={e => setManualDisplayType(e.target.value as any)}
+                  className="bg-gray-800 border border-gray-700 rounded-xl px-2.5 py-1.5 text-xs text-gray-300 focus:outline-none"
+                >
+                  <option value="feed">Feed</option>
+                  <option value="featured">Featured</option>
+                  <option value="both">Feed + Featured</option>
+                </select>
+                <label className="flex items-center gap-1.5 text-xs text-gray-400">
+                  <input type="checkbox" checked={manualPublish} onChange={e => setManualPublish(e.target.checked)} className="accent-purple-500" />
+                  Publish immediately
+                </label>
+              </div>
+              <button
+                onClick={() => createMutation.mutate()}
+                disabled={!canSubmitManual || createMutation.isPending}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {createMutation.isPending ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
+                {manualPublish ? "Add & publish" : "Add as draft"}
+              </button>
+            </div>
+
             {/* Info strip */}
             <div className="bg-purple-900/20 border border-purple-700/30 rounded-2xl p-4">
               <p className="text-xs text-purple-300 font-medium mb-1">Auto-balanced generation</p>
