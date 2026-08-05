@@ -1460,12 +1460,26 @@ export default function MediaDetail() {
                 </div>
               )}
 
-              {/* Your rating — own line, icon left-aligned under the star above */}
-              {(userRating?.rating || userReview?.rating) && (
+              {/* Your rating + list status — own line, icon left-aligned under the star above */}
+              {((userRating?.rating || userReview?.rating) || (session && onListStatus)) && (
                 <div className="flex items-center gap-1.5 text-sm mb-2.5 -mt-1">
-                  <Heart className="w-3.5 h-3.5 text-purple-400 fill-current" />
-                  <span className="font-semibold text-purple-300">{userRating?.rating || userReview?.rating}</span>
-                  <span className="text-purple-300/80">you</span>
+                  {(userRating?.rating || userReview?.rating) && (
+                    <>
+                      <Star className="w-3.5 h-3.5 text-purple-400" />
+                      <span className="font-semibold text-purple-300">{userRating?.rating || userReview?.rating}</span>
+                      <span className="text-purple-300/80">you</span>
+                    </>
+                  )}
+                  {session && onListStatus && (
+                    <button
+                      onClick={() => (onListStatus === 'Currently' && currentlyItem) ? setIsProgressSheetOpen(true) : setIsListSheetOpen(true)}
+                      className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-purple-300 transition-colors ml-2"
+                    >
+                      <Bookmark size={10} className="text-purple-400/70 fill-current" />
+                      <span>{onListStatus === "Want To" ? "Want to" : (onListStatus || "On a list")}</span>
+                      <ChevronDown size={10} />
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -1493,16 +1507,6 @@ export default function MediaDetail() {
                     <Clock className="w-3.5 h-3.5 text-gray-400" />
                     <span>~{mediaItem.averageLength}</span>
                   </div>
-                )}
-                {session && onListStatus && (
-                  <button
-                    onClick={() => (onListStatus === 'Currently' && currentlyItem) ? setIsProgressSheetOpen(true) : setIsListSheetOpen(true)}
-                    className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-purple-300 transition-colors"
-                  >
-                    <Bookmark size={10} className="text-purple-400/70 fill-current" />
-                    <span>{onListStatus === "Want To" ? "Want to" : (onListStatus || "On a list")}</span>
-                    <ChevronDown size={10} />
-                  </button>
                 )}
               </div>
 
@@ -1541,26 +1545,25 @@ export default function MediaDetail() {
                 </div>
               )}
 
-              {/* Description dropdown toggle */}
-              {mediaItem.description && (
-                <button
-                  onClick={() => setShowAbout(!showAbout)}
-                  className="flex items-center gap-1 text-sm text-gray-300 hover:text-white transition-colors mt-2"
-                  data-testid="button-toggle-description"
-                >
-                  <span>Description</span>
-                  <ChevronDown size={14} className={`transition-transform ${showAbout ? 'rotate-180' : ''}`} />
-                </button>
-              )}
             </div>
           </div>
 
-          {/* Description — revealed via dropdown toggle above */}
-          {mediaItem.description && showAbout && (
-            <div className="mt-3">
-              <p className="text-sm text-gray-300 leading-relaxed">
-                {mediaItem.description}
-              </p>
+          {/* Description — full-width below the poster/info row */}
+          {mediaItem.description && (
+            <div className="mt-4">
+              <button
+                onClick={() => setShowAbout(!showAbout)}
+                className="flex items-center gap-1 text-sm text-gray-300 hover:text-white transition-colors"
+                data-testid="button-toggle-description"
+              >
+                <span>Description</span>
+                <ChevronDown size={14} className={`transition-transform ${showAbout ? 'rotate-180' : ''}`} />
+              </button>
+              {showAbout && (
+                <p className="mt-2 text-sm text-gray-300 leading-relaxed">
+                  {mediaItem.description}
+                </p>
+              )}
             </div>
           )}
 
