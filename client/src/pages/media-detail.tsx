@@ -752,7 +752,7 @@ export default function MediaDetail() {
           lists!inner (
             id,
             title,
-            is_system
+            is_default
           )
         `)
         .eq('external_id', params.id)
@@ -773,7 +773,7 @@ export default function MediaDetail() {
   const LIST_STATUS_PRIORITY = ["Currently", "Want To", "Finished", "Did Not Finish", "Favorites"];
   const systemListTitles = (listsContainingMedia as any[])
     .map((item: any) => item.lists)
-    .filter((l: any) => l?.is_system)
+    .filter((l: any) => l?.is_default)
     .map((l: any) => l.title);
   const onListStatus = LIST_STATUS_PRIORITY.find(t => systemListTitles.includes(t)) || null;
 
