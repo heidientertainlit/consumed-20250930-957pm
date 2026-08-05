@@ -190,8 +190,8 @@ Deno.serve(async (req) => {
               if (hasTheatrical && !homeOut) {
                 const inTheatersNow = theatrical.some((r: any) => new Date(r.release_date).getTime() <= now);
                 providers.push({
-                  name: inTheatersNow ? 'In Theaters' : 'Coming to Theaters',
-                  logo: null,
+                  name: 'Fandango',
+                  logo: 'https://www.fandango.com/favicon.ico',
                   url: `https://www.fandango.com/search?q=${encodeURIComponent(data.title || data.name || '')}`
                 });
               }
