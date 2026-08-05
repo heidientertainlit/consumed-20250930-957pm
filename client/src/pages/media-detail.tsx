@@ -1473,11 +1473,11 @@ export default function MediaDetail() {
                   {session && onListStatus && (
                     <button
                       onClick={() => (onListStatus === 'Currently' && currentlyItem) ? setIsProgressSheetOpen(true) : setIsListSheetOpen(true)}
-                      className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-purple-300 transition-colors ml-2"
+                      className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-300 transition-colors ml-2"
                     >
-                      <Bookmark size={10} className="text-purple-400/70 fill-current" />
+                      <Bookmark size={12} className="text-purple-400/70 fill-current" />
                       <span>{onListStatus === "Want To" ? "Want to" : (onListStatus || "On a list")}</span>
-                      <ChevronDown size={10} />
+                      <ChevronDown size={12} />
                     </button>
                   )}
                 </div>
