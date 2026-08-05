@@ -1494,6 +1494,58 @@ export default function MediaDetail() {
                 )}
               </div>
 
+            {/* Watch On — directly under the status/chips row */}
+            {mediaItem.platforms && mediaItem.platforms.length > 0 && (
+              <div className="mt-2">
+                <h3 className="text-xs font-medium text-gray-400 mb-2">
+                  {mediaItem.type === 'movie' || mediaItem.type === 'tv'
+                    ? 'Watch On'
+                    : mediaItem.type === 'Podcast' || mediaItem.type === 'Music'
+                    ? 'Listen On'
+                    : mediaItem.type === 'Book'
+                    ? 'Read On'
+                    : 'Find On'}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {mediaItem.platforms.map((platform: any, index: number) => (
+                    platform.url ? (
+                      <a
+                        key={index}
+                        href={platform.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-2 py-1 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-xs"
+                      >
+                        {platform.logo && (
+                          <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
+                        )}
+                        <span className="font-medium text-gray-200">{platform.name}</span>
+                        <ExternalLink className="w-2.5 h-2.5 text-gray-400" />
+                      </a>
+                    ) : (
+                      <div key={index} className="flex items-center gap-1.5 px-2 py-1 bg-white/10 rounded-lg text-xs">
+                        {platform.logo && (
+                          <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
+                        )}
+                        <span className="font-medium text-gray-200">{platform.name}</span>
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+            )}
+
+              {/* Description dropdown toggle */}
+              {mediaItem.description && (
+                <button
+                  onClick={() => setShowAbout(!showAbout)}
+                  className="flex items-center gap-1 text-xs text-gray-300 hover:text-white transition-colors mt-2"
+                  data-testid="button-toggle-description"
+                >
+                  <span>Description</span>
+                  <ChevronDown size={14} className={`transition-transform ${showAbout ? 'rotate-180' : ''}`} />
+                </button>
+              )}
               {(() => {
                 const mediaAlignment = getMediaAlignment(archetypeKey, mediaItem?.type || params?.type);
                 return mediaAlignment ? (
@@ -1502,59 +1554,6 @@ export default function MediaDetail() {
               })()}
             </div>
           </div>
-
-          {/* Find On Platforms - above description */}
-          {mediaItem.platforms && mediaItem.platforms.length > 0 && (
-            <div className="mt-3">
-              <h3 className="text-xs font-medium text-gray-400 mb-2">
-                {mediaItem.type === 'movie' || mediaItem.type === 'tv'
-                  ? 'Watch On'
-                  : mediaItem.type === 'Podcast' || mediaItem.type === 'Music'
-                  ? 'Listen On'
-                  : mediaItem.type === 'Book'
-                  ? 'Read On'
-                  : 'Find On'}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {mediaItem.platforms.map((platform: any, index: number) => (
-                  platform.url ? (
-                    <a
-                      key={index}
-                      href={platform.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-2 py-1 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-xs"
-                    >
-                      {platform.logo && (
-                        <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
-                      )}
-                      <span className="font-medium text-gray-200">{platform.name}</span>
-                      <ExternalLink className="w-2.5 h-2.5 text-gray-400" />
-                    </a>
-                  ) : (
-                    <div key={index} className="flex items-center gap-1.5 px-2 py-1 bg-white/10 rounded-lg text-xs">
-                      {platform.logo && (
-                        <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
-                      )}
-                      <span className="font-medium text-gray-200">{platform.name}</span>
-                    </div>
-                  )
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Description dropdown toggle — below Watch On */}
-          {mediaItem.description && (
-            <button
-              onClick={() => setShowAbout(!showAbout)}
-              className="flex items-center gap-1 text-xs text-gray-300 hover:text-white transition-colors mt-3"
-              data-testid="button-toggle-description"
-            >
-              <span>Description</span>
-              <ChevronDown size={14} className={`transition-transform ${showAbout ? 'rotate-180' : ''}`} />
-            </button>
-          )}
 
           {/* Description — revealed via dropdown toggle above */}
           {mediaItem.description && showAbout && (
