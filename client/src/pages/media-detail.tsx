@@ -13,7 +13,6 @@ import MentionInput from "@/components/mention-input";
 import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 import { useDnaArchetype } from "@/hooks/use-dna-archetype";
-import { getMediaAlignment } from "@/lib/identity-feedback";
 import CreateListDialog from "@/components/create-list-dialog";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
@@ -1405,7 +1404,7 @@ export default function MediaDetail() {
               {session && (
                 <button
                   onClick={() => setIsListSheetOpen(true)}
-                  className="absolute -bottom-4 left-1/2 -translate-x-1/2 z-10 w-8 h-8 rounded-full bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white shadow-lg flex items-center justify-center ring-2 ring-white/40 transition-colors"
+                  className="absolute -bottom-3 -right-3 z-10 w-8 h-8 rounded-full bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white shadow-lg flex items-center justify-center ring-2 ring-white/40 transition-colors"
                   data-testid="button-quick-add"
                 >
                   <Plus size={16} />
@@ -1493,10 +1492,10 @@ export default function MediaDetail() {
                     <span>~{mediaItem.averageLength}</span>
                   </div>
                 )}
-                {session && currentlyItem && (
+                {session && onListStatus && (
                   <div className="flex items-center bg-purple-500/25 border border-purple-400/40 rounded-full h-6 overflow-hidden">
                     <button
-                      onClick={() => setIsProgressSheetOpen(true)}
+                      onClick={() => (onListStatus === 'Currently' && currentlyItem) ? setIsProgressSheetOpen(true) : setIsListSheetOpen(true)}
                       className="flex items-center gap-1 pl-2 pr-1 h-full text-[11px] text-purple-200 hover:bg-white/10 transition-colors"
                     >
                       <Bookmark size={10} className="text-purple-300 fill-current" />
@@ -1559,12 +1558,6 @@ export default function MediaDetail() {
                   <ChevronDown size={14} className={`transition-transform ${showAbout ? 'rotate-180' : ''}`} />
                 </button>
               )}
-              {(() => {
-                const mediaAlignment = getMediaAlignment(archetypeKey, mediaItem?.type || params?.type);
-                return mediaAlignment ? (
-                  <p className="text-xs text-purple-300 italic mt-1 flex items-center gap-1"><Dna className="w-3 h-3" /> {mediaAlignment}</p>
-                ) : null;
-              })()}
             </div>
           </div>
 
