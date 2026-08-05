@@ -1424,7 +1424,10 @@ export default function MediaDetail() {
                   <Share size={18} />
                 </button>
               </div>
-              <p className="text-sm text-gray-400 mb-2 truncate">by {mediaData.creator}</p>
+              <p className="text-sm text-gray-400 mb-2 truncate">
+                by {mediaData.creator}
+                {mediaItem.releaseDate && <span> · {new Date(mediaItem.releaseDate).getFullYear()}</span>}
+              </p>
               
               {/* Ratings row — divider-separated like the reference design */}
               {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating) && (
@@ -1483,33 +1486,6 @@ export default function MediaDetail() {
                 </div>
               )}
 
-              {/* Runtime / seasons row — plain icon + text, no pills */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-gray-300 mb-2.5">
-                {mediaItem.type === 'movie' && mediaItem.releaseDate && (
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                    <span>{new Date(mediaItem.releaseDate).getFullYear()}</span>
-                  </div>
-                )}
-                {mediaItem.type === 'tv' && mediaItem.totalSeasons > 0 ? (
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                    <span>{mediaItem.totalSeasons} {mediaItem.totalSeasons === 1 ? 'season' : 'seasons'}</span>
-                  </div>
-                ) : (mediaItem.type === 'tv' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1 ? (
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                    <span>{mediaItem.totalEpisodes} eps</span>
-                  </div>
-                ) : null}
-                {mediaItem.averageLength && (
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-gray-400" />
-                    <span>~{mediaItem.averageLength}</span>
-                  </div>
-                )}
-              </div>
-
             {/* Available on — minimal, deduped provider chips */}
               {mediaItem.platforms && mediaItem.platforms.length > 0 && (
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -1560,9 +1536,27 @@ export default function MediaDetail() {
                 <ChevronDown size={14} className={`transition-transform ${showAbout ? 'rotate-180' : ''}`} />
               </button>
               {showAbout && (
-                <p className="mt-2 text-sm text-gray-300 leading-relaxed">
-                  {mediaItem.description}
-                </p>
+                <>
+                  {(() => {
+                    const meta: string[] = [];
+                    if (mediaItem.releaseDate) meta.push(String(new Date(mediaItem.releaseDate).getFullYear()));
+                    const typeLabel = mediaItem.type === 'tv' ? 'TV Show' : mediaItem.type === 'movie' ? 'Movie' : null;
+                    if (typeLabel) meta.push(typeLabel);
+                    if (mediaItem.type === 'tv' && mediaItem.totalSeasons > 0) {
+                      meta.push(`${mediaItem.totalSeasons} ${mediaItem.totalSeasons === 1 ? 'season' : 'seasons'}`);
+                    } else if ((mediaItem.type === 'tv' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1) {
+                      meta.push(`${mediaItem.totalEpisodes} eps`);
+                    }
+                    if (mediaItem.averageLength) meta.push(`~${mediaItem.averageLength}`);
+                    if (mediaItem.genres?.length) meta.push(mediaItem.genres[0]);
+                    return meta.length > 0 ? (
+                      <p className="mt-2 text-xs text-gray-400">{meta.join(' · ')}</p>
+                    ) : null;
+                  })()}
+                  <p className="mt-2 text-sm text-gray-300 leading-relaxed">
+                    {mediaItem.description}
+                  </p>
+                </>
               )}
             </div>
           )}
