@@ -194,6 +194,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
       if (!response.ok) throw new Error('Failed to add');
       setAddedRecIds(prev => new Set(prev).add(rec.id));
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      queryClient.invalidateQueries({ queryKey: ['lists-containing-media'] });
     } catch (error: any) {
       toast({ title: error.message || 'Failed to add', variant: 'destructive' });
     } finally {
@@ -283,6 +284,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
           throw new Error('Failed to create list');
         }
         queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+        queryClient.invalidateQueries({ queryKey: ['lists-containing-media'] });
       }
       
       const response = await fetch(`${supabaseUrl}/functions/v1/add-media-to-list`, {
@@ -333,6 +335,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
       }
 
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      queryClient.invalidateQueries({ queryKey: ['lists-containing-media'] });
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       
@@ -619,6 +622,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
           body: JSON.stringify({ item_id: items[0].id, progress, progress_total: total, progress_mode: progressMode === 'minutes' ? 'percent' : progressMode }),
         });
         queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+        queryClient.invalidateQueries({ queryKey: ['lists-containing-media'] });
       }
     } catch (_) {}
     finally { setIsSavingProgress(false); }

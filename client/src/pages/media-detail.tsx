@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { StarRater } from "@/components/star-rater";
-import { ArrowLeft, ArrowUp, ArrowDown, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp, ListPlus, Flame, Lightbulb, Users, Dna } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown, Share, Star, Bookmark, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp, ListPlus, Flame, Lightbulb, Users, Dna } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/navigation";
@@ -769,6 +769,14 @@ export default function MediaDetail() {
     enabled: !!user?.id && !!params?.id && !!params?.source,
   });
 
+  // Small hero pill: which of the user's system lists holds this item
+  const LIST_STATUS_PRIORITY = ["Currently", "Want To", "Finished", "Did Not Finish", "Favorites"];
+  const systemListTitles = (listsContainingMedia as any[])
+    .map((item: any) => item.lists)
+    .filter((l: any) => l?.is_system)
+    .map((l: any) => l.title);
+  const onListStatus = LIST_STATUS_PRIORITY.find(t => systemListTitles.includes(t)) || null;
+
   // Query: is this media in the user's "Currently" list?
   // Uses the same edge function as my-library (handles user ID resolution server-side)
   const { data: currentlyItem, refetch: refetchCurrentlyItem } = useQuery({
@@ -961,6 +969,7 @@ export default function MediaDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['lists-containing-media'] });
       setTimeout(() => queryClient.refetchQueries({ queryKey: ['social-feed'] }), 800);
     },
     onError: (error) => {
@@ -1420,6 +1429,12 @@ export default function MediaDetail() {
               
               {/* Compact metadata chips */}
               <div className="flex flex-wrap items-center gap-2 text-xs mb-3">
+                {onListStatus && (
+                  <div className="flex items-center gap-1 bg-purple-500/25 border border-purple-400/40 px-2.5 py-1 rounded-full">
+                    <Bookmark className="w-3 h-3 text-purple-300 fill-current" />
+                    <span className="font-medium text-purple-200">{onListStatus === "Want To" ? "Want to" : onListStatus}</span>
+                  </div>
+                )}
                 {/* Ratings — separate pills so they wrap instead of overflowing on mobile */}
                 {avgRating && (
                   <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-full">
