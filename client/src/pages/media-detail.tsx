@@ -768,6 +768,22 @@ export default function MediaDetail() {
     enabled: !!user?.id && !!params?.id && !!params?.source,
   });
 
+  // DNA genre signals → real match % against this title's genres
+  const { data: dnaGenreSignals } = useQuery({
+    queryKey: ['dna-genre-signals', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase
+        .from('user_dna_signals')
+        .select('signal_value, strength')
+        .eq('user_id', user.id)
+        .eq('signal_type', 'genre');
+      return data || [];
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Small hero pill: which of the user's system lists holds this item
   const LIST_STATUS_PRIORITY = ["Currently", "Want To", "Finished", "Did Not Finish", "Favorites"];
   const systemListTitles = (listsContainingMedia as any[])
@@ -1556,9 +1572,40 @@ export default function MediaDetail() {
             </div>
           </div>
 
+          {/* DNA match % — only when the genre match is genuinely strong */}
+          {(() => {
+            const sigs = (dnaGenreSignals as any[]) || [];
+            const genres: string[] = mediaItem.genres || [];
+            if (sigs.length === 0 || genres.length === 0) return null;
+            const overallMax = Math.max(...sigs.map((s: any) => Number(s.strength) || 0));
+            if (overallMax <= 0) return null;
+            const genreText = genres.map(g => String(g).toLowerCase());
+            let matched = 0;
+            const hits: string[] = [];
+            for (const s of sigs) {
+              const v = String(s.signal_value || '').toLowerCase();
+              if (!v) continue;
+              const hit = genreText.some(g => g === v || g.includes(v) || v.includes(g));
+              if (hit) {
+                matched = Math.max(matched, Number(s.strength) || 0);
+                hits.push(s.signal_value);
+              }
+            }
+            if (matched <= 0) return null;
+            const pct = Math.min(100, Math.round((matched / overallMax) * 100));
+            if (pct < 70) return null;
+            return (
+              <div className="mt-4 flex items-center gap-1.5 text-sm">
+                <Dna className="w-3.5 h-3.5 text-purple-400" />
+                <span className="font-semibold text-purple-300">{pct}% match</span>
+                <span className="text-gray-400">with your taste in {hits.slice(0, 2).join(' & ').toLowerCase()}</span>
+              </div>
+            );
+          })()}
+
           {/* Description — starts open, clamped, with Read more */}
           {mediaItem.description && (
-            <div className="mt-4">
+            <div className="mt-3">
               <p className={`text-sm text-gray-300 leading-relaxed ${showAbout ? '' : 'line-clamp-3'}`}>
                 {mediaItem.description}
               </p>
