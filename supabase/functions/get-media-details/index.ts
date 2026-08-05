@@ -20,6 +20,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
+// Best-available deep link: most providers don't expose direct title URLs via TMDB,
+// so link to the provider's own search for this title.
+function providerSearchUrl(providerName: string, title: string): string {
+  const q = encodeURIComponent(title);
+  const n = (providerName || '').toLowerCase();
+  if (n.includes('netflix')) return `https://www.netflix.com/search?q=${q}`;
+  if (n.includes('hulu')) return `https://www.hulu.com/search?q=${q}`;
+  if (n.includes('disney')) return `https://www.disneyplus.com/search?q=${q}`;
+  if (n.includes('max') || n.includes('hbo')) return `https://play.max.com/search?q=${q}`;
+  if (n.includes('prime') || n.includes('amazon')) return `https://www.amazon.com/s?k=${q}&i=instant-video`;
+  if (n.includes('apple')) return `https://tv.apple.com/search?term=${q}`;
+  if (n.includes('paramount')) return `https://www.paramountplus.com/search/?q=${q}`;
+  if (n.includes('peacock')) return `https://www.peacocktv.com/search?q=${q}`;
+  if (n.includes('starz')) return `https://www.starz.com/us/en/search?q=${q}`;
+  if (n.includes('showtime')) return `https://www.paramountplus.com/search/?q=${q}`;
+  if (n.includes('crunchyroll')) return `https://www.crunchyroll.com/search?q=${q}`;
+  if (n.includes('tubi')) return `https://tubitv.com/search/${q}`;
+  if (n.includes('pluto')) return `https://pluto.tv/en/search/details?query=${q}`;
+  if (n.includes('youtube')) return `https://www.youtube.com/results?search_query=${q}`;
+  return `https://www.google.com/search?q=${encodeURIComponent('watch ' + title + ' on ' + providerName)}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -151,7 +173,7 @@ Deno.serve(async (req) => {
           platforms: data['watch/providers']?.results?.US?.flatrate?.map((p: any) => ({
             name: p.provider_name,
             logo: `https://image.tmdb.org/t/p/w92${p.logo_path}`,
-            url: null
+            url: providerSearchUrl(p.provider_name, data.title || data.name || '')
           })) || [],
           trailer: data.videos?.results?.find((v: any) => v.type === 'Trailer')?.key
         };
