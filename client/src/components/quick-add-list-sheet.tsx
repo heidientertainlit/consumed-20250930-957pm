@@ -334,6 +334,35 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
         }).catch(() => {});
       }
 
+      // Moving between status lists: remove this media from OTHER default lists
+      // so it doesn't stay in "Currently" after picking "Finished", etc.
+      try {
+        const { data: authUser } = await supabase.auth.getUser();
+        const uid = authUser?.user?.id;
+        if (uid && effectiveMedia.externalId) {
+          const { data: otherItems } = await supabase
+            .from('list_items')
+            .select('id, list_id, lists!inner ( id, title, is_default )')
+            .eq('user_id', uid)
+            .eq('external_id', effectiveMedia.externalId)
+            .eq('external_source', effectiveMedia.externalSource || 'tmdb')
+            .neq('list_id', actualListId);
+          const staleStatusItems = (otherItems || []).filter((it: any) => {
+            const l = it.lists;
+            return l?.is_default && isKnownDefaultList(l.title || '');
+          });
+          await Promise.all(staleStatusItems.map((it: any) =>
+            fetch(`${supabaseUrl}/functions/v1/delete-list-item`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ itemId: it.id }),
+            })
+          ));
+        }
+      } catch (e) {
+        console.error('Failed to remove from previous status list:', e);
+      }
+
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       queryClient.invalidateQueries({ queryKey: ['lists-containing-media'] });
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });

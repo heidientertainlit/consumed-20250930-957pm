@@ -1378,7 +1378,7 @@ export default function MediaDetail() {
 
       {/* Full-bleed purple hero */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] text-white">
-        <div className="max-w-6xl mx-auto px-4 pt-3 pb-6">
+        <div className="max-w-6xl mx-auto px-4 pt-3 pb-10">
           {/* Back button inline with content */}
           <Button
             variant="ghost"
@@ -1405,7 +1405,7 @@ export default function MediaDetail() {
               {session && (
                 <button
                   onClick={() => setIsListSheetOpen(true)}
-                  className="absolute -bottom-5 left-1/2 -translate-x-1/2 z-10 w-10 h-10 rounded-full bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white shadow-lg flex items-center justify-center ring-2 ring-white/40 transition-colors"
+                  className="absolute -bottom-4 -right-2 z-10 w-10 h-10 rounded-full bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white shadow-lg flex items-center justify-center ring-2 ring-white/40 transition-colors"
                   data-testid="button-quick-add"
                 >
                   <Plus size={20} />
