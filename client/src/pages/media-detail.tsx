@@ -1404,7 +1404,7 @@ export default function MediaDetail() {
               {session && (
                 <button
                   onClick={() => setIsListSheetOpen(true)}
-                  className="absolute -top-3 -right-3 z-10 w-8 h-8 rounded-full bg-white/15 backdrop-blur-md hover:bg-white/25 text-white shadow-lg flex items-center justify-center ring-1 ring-white/40 transition-colors"
+                  className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-white/15 backdrop-blur-md hover:bg-white/25 text-white shadow-lg flex items-center justify-center ring-1 ring-white/40 transition-colors"
                   data-testid="button-quick-add"
                 >
                   <Plus size={16} />
@@ -1524,9 +1524,16 @@ export default function MediaDetail() {
               {(() => {
                 const bits: JSX.Element[] = [];
                 const runtimeLabel = (() => {
-                  const m = parseInt(String(mediaItem.averageLength || '').replace(/[^0-9]/g, ''), 10);
+                  const raw = String(mediaItem.averageLength || '').trim();
+                  if (!raw) return null;
+                  // Already in "1h 30m" style — keep as-is
+                  const hm = raw.match(/(\d+)\s*h(?:\s*(\d+)\s*m)?/i);
+                  if (hm) return `${hm[1]}h${hm[2] ? ` ${hm[2]}m` : ''}`;
+                  // Minute-only forms like "173 min" / "~173 min"
+                  const minMatch = raw.match(/(\d+)/);
+                  const m = minMatch ? parseInt(minMatch[1], 10) : NaN;
                   if (!m || isNaN(m)) return null;
-                  return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60 ? `${m % 60}m` : ''}`.trim() : `${m} min`;
+                  return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m} min`;
                 })();
                 if (mediaItem.type === 'tv' && mediaItem.totalSeasons > 0) {
                   bits.push(<span key="s" className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" />{mediaItem.totalSeasons} {mediaItem.totalSeasons === 1 ? 'season' : 'seasons'}</span>);

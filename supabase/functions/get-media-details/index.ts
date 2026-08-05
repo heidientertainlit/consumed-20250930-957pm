@@ -187,8 +187,14 @@ Deno.serve(async (req) => {
               const now = Date.now();
               const hasTheatrical = theatrical.length > 0;
               const homeOut = homeRelease.some((r: any) => new Date(r.release_date).getTime() <= now);
-              if (hasTheatrical && !homeOut) {
-                const inTheatersNow = theatrical.some((r: any) => new Date(r.release_date).getTime() <= now);
+              // Show Fandango only when the film is in theaters now, or opens soon
+              // (Fandango sells advance tickets ~a few weeks out).
+              const inTheatersNow = theatrical.some((r: any) => new Date(r.release_date).getTime() <= now);
+              const opensSoon = theatrical.some((r: any) => {
+                const t = new Date(r.release_date).getTime();
+                return t > now && t - now <= 30 * 86400000;
+              });
+              if (hasTheatrical && !homeOut && (inTheatersNow || opensSoon)) {
                 providers.push({
                   name: 'Fandango',
                   logo: 'https://www.fandango.com/favicon.ico',
