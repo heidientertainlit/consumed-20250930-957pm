@@ -1431,7 +1431,7 @@ export default function MediaDetail() {
               <div className="flex flex-wrap items-center gap-2 text-xs mb-3">
                 {/* All ratings consolidated into a single pill */}
                 {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating || userRating?.rating || userReview?.rating) && (
-                  <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full">
+                  <div className="flex items-center gap-1.5">
                     <Star className="w-3 h-3 text-yellow-400 fill-current" />
                     {avgRating && (
                       <span><span className="font-medium text-white">{avgRating}</span><span className="text-gray-400"> Consumed</span></span>
