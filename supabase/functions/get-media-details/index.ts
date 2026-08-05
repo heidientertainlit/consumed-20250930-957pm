@@ -170,11 +170,28 @@ Deno.serve(async (req) => {
             character: c.character,
             profile: c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : null
           })) || [],
-          platforms: data['watch/providers']?.results?.US?.flatrate?.map((p: any) => ({
-            name: p.provider_name,
-            logo: `https://image.tmdb.org/t/p/w92${p.logo_path}`,
-            url: providerSearchUrl(p.provider_name, data.title || data.name || '')
-          })) || [],
+          platforms: (() => {
+            const providers = data['watch/providers']?.results?.US?.flatrate?.map((p: any) => ({
+              name: p.provider_name,
+              logo: `https://image.tmdb.org/t/p/w92${p.logo_path}`,
+              url: providerSearchUrl(p.provider_name, data.title || data.name || '')
+            })) || [];
+            // Movies with no streaming providers that are recent or upcoming → theatrical link
+            if (providers.length === 0 && isMovie && data.release_date) {
+              const release = new Date(data.release_date).getTime();
+              const now = Date.now();
+              const daysSinceRelease = (now - release) / 86400000;
+              // Upcoming, or released within the last ~120 days (typical theatrical window)
+              if (daysSinceRelease < 120) {
+                providers.push({
+                  name: 'In Theaters',
+                  logo: null,
+                  url: `https://www.fandango.com/search?q=${encodeURIComponent(data.title || data.name || '')}`
+                });
+              }
+            }
+            return providers;
+          })(),
           trailer: data.videos?.results?.find((v: any) => v.type === 'Trailer')?.key
         };
       }
