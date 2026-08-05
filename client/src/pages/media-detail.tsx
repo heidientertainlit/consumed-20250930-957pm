@@ -1429,12 +1429,6 @@ export default function MediaDetail() {
               
               {/* Compact metadata chips */}
               <div className="flex flex-wrap items-center gap-2 text-xs mb-3">
-                {onListStatus && (
-                  <div className="flex items-center gap-1 bg-purple-500/25 border border-purple-400/40 px-2.5 py-1 rounded-full">
-                    <Bookmark className="w-3 h-3 text-purple-300 fill-current" />
-                    <span className="font-medium text-purple-200">{onListStatus === "Want To" ? "Want to" : onListStatus}</span>
-                  </div>
-                )}
                 {/* Ratings — separate pills so they wrap instead of overflowing on mobile */}
                 {avgRating && (
                   <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-full">
@@ -1553,31 +1547,23 @@ export default function MediaDetail() {
             </div>
           )}
 
-          {/* Progress button — only for items already in a list (Add moved to poster +, Rate handled by reactions below) */}
+          {/* Compact list-status pill — only for items already in a list. Tap text = update progress, chevron = move list */}
           {session && currentlyItem && (
-            <div className="flex gap-2 mt-4">
-              {/* Split Progress button: left=update progress, right=move list */}
-              <div className="flex items-center bg-purple-600 rounded-full h-9 shadow-md overflow-hidden">
+            <div className="flex gap-2 mt-3">
+              <div className="flex items-center bg-white/10 border border-white/15 rounded-full h-7 overflow-hidden">
                 <button
                   onClick={() => setIsProgressSheetOpen(true)}
-                  className="flex items-center gap-1.5 pl-3 pr-2 h-full text-white text-xs hover:bg-purple-700 transition-colors"
+                  className="flex items-center gap-1 pl-2.5 pr-1.5 h-full text-[11px] text-purple-200 hover:bg-white/10 transition-colors"
                 >
-                  <TrendingUp size={13} />
-                  <span className="font-medium">Progress</span>
-                  <span className="text-purple-200 font-normal">
-                    {editMode === 'page'
-                      ? `${editProgress}${editTotal > 0 ? `/${editTotal} pg` : ' pg'}`
-                      : editMode === 'percent'
-                        ? `${editProgress}%`
-                        : `${editProgress}${editTotal > 0 ? `/${editTotal}` : ''}`}
-                  </span>
+                  <Bookmark size={11} className="text-purple-300 fill-current" />
+                  <span className="font-medium">{onListStatus === "Want To" ? "Want to" : (onListStatus || "On a list")}</span>
                 </button>
-                <div className="w-px h-5 bg-white/30 flex-shrink-0" />
+                <div className="w-px h-3.5 bg-white/20 flex-shrink-0" />
                 <button
                   onClick={() => setIsListSheetOpen(true)}
-                  className="px-2 h-full text-white hover:bg-purple-700 transition-colors flex items-center"
+                  className="px-1.5 h-full text-gray-300 hover:bg-white/10 transition-colors flex items-center"
                 >
-                  <ChevronDown size={14} />
+                  <ChevronDown size={12} />
                 </button>
               </div>
             </div>
