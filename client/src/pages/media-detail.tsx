@@ -1429,32 +1429,26 @@ export default function MediaDetail() {
               
               {/* Compact metadata chips */}
               <div className="flex flex-wrap items-center gap-2 text-xs mb-3">
-                {/* Ratings — separate pills so they wrap instead of overflowing on mobile */}
-                {avgRating && (
-                  <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-full">
+                {/* All ratings consolidated into a single pill */}
+                {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating || userRating?.rating || userReview?.rating) && (
+                  <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full">
                     <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                    <span className="font-medium text-white">{avgRating}</span>
-                    <span className="text-gray-400">Consumed</span>
-                  </div>
-                )}
-                {mediaItem.tmdb_score && (
-                  <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-full">
-                    <span className="font-medium text-blue-300">{Number(mediaItem.tmdb_score).toFixed(1)}</span>
-                    <span className="text-blue-300/70">TMDB</span>
-                  </div>
-                )}
-                {mediaItem.google_books_rating && (
-                  <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-full">
-                    <Star className="w-3 h-3 text-green-400 fill-current" />
-                    <span className="font-medium text-green-300">{Number(mediaItem.google_books_rating).toFixed(1)}</span>
-                    <span className="text-green-300/70">Books</span>
-                  </div>
-                )}
-                {(userRating?.rating || userReview?.rating) && (
-                  <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-full">
-                    <Star className="w-3 h-3 text-purple-300 fill-current" />
-                    <span className="font-semibold text-purple-200">{userRating?.rating || userReview?.rating}</span>
-                    <span className="text-purple-300/80">you</span>
+                    {avgRating && (
+                      <span><span className="font-medium text-white">{avgRating}</span><span className="text-gray-400"> Consumed</span></span>
+                    )}
+                    {avgRating && (mediaItem.tmdb_score || mediaItem.google_books_rating) && <span className="text-gray-500">·</span>}
+                    {mediaItem.tmdb_score && (
+                      <span><span className="font-medium text-blue-300">{Number(mediaItem.tmdb_score).toFixed(1)}</span><span className="text-blue-300/70"> TMDB</span></span>
+                    )}
+                    {mediaItem.google_books_rating && (
+                      <span><span className="font-medium text-green-300">{Number(mediaItem.google_books_rating).toFixed(1)}</span><span className="text-green-300/70"> Books</span></span>
+                    )}
+                    {(userRating?.rating || userReview?.rating) && (
+                      <>
+                        {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating) && <span className="text-gray-500">·</span>}
+                        <span><span className="font-semibold text-purple-200">{userRating?.rating || userReview?.rating}</span><span className="text-purple-300/80"> you</span></span>
+                      </>
+                    )}
                   </div>
                 )}
                 {mediaItem.type === 'movie' && mediaItem.releaseDate && (
@@ -1463,16 +1457,39 @@ export default function MediaDetail() {
                     <span>{new Date(mediaItem.releaseDate).getFullYear()}</span>
                   </div>
                 )}
-                {(mediaItem.type === 'tv' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1 && (
+                {mediaItem.type === 'tv' && mediaItem.totalSeasons > 0 ? (
+                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full text-gray-300">
+                    <Calendar className="w-3 h-3" />
+                    <span>{mediaItem.totalSeasons} {mediaItem.totalSeasons === 1 ? 'season' : 'seasons'}</span>
+                  </div>
+                ) : (mediaItem.type === 'tv' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1 ? (
                   <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full text-gray-300">
                     <Calendar className="w-3 h-3" />
                     <span>{mediaItem.totalEpisodes} eps</span>
                   </div>
-                )}
+                ) : null}
                 {mediaItem.averageLength && (
                   <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full text-gray-300">
                     <Clock className="w-3 h-3" />
                     <span>~{mediaItem.averageLength}</span>
+                  </div>
+                )}
+                {session && currentlyItem && (
+                  <div className="flex items-center bg-purple-500/25 border border-purple-400/40 rounded-full h-6 overflow-hidden">
+                    <button
+                      onClick={() => setIsProgressSheetOpen(true)}
+                      className="flex items-center gap-1 pl-2 pr-1 h-full text-[11px] text-purple-200 hover:bg-white/10 transition-colors"
+                    >
+                      <Bookmark size={10} className="text-purple-300 fill-current" />
+                      <span className="font-medium">{onListStatus === "Want To" ? "Want to" : (onListStatus || "On a list")}</span>
+                    </button>
+                    <div className="w-px h-3 bg-white/20 flex-shrink-0" />
+                    <button
+                      onClick={() => setIsListSheetOpen(true)}
+                      className="px-1 h-full text-purple-200 hover:bg-white/10 transition-colors flex items-center"
+                    >
+                      <ChevronDown size={11} />
+                    </button>
                   </div>
                 )}
               </div>
@@ -1547,27 +1564,6 @@ export default function MediaDetail() {
             </div>
           )}
 
-          {/* Compact list-status pill — only for items already in a list. Tap text = update progress, chevron = move list */}
-          {session && currentlyItem && (
-            <div className="flex gap-2 mt-3">
-              <div className="flex items-center bg-white/10 border border-white/15 rounded-full h-7 overflow-hidden">
-                <button
-                  onClick={() => setIsProgressSheetOpen(true)}
-                  className="flex items-center gap-1 pl-2.5 pr-1.5 h-full text-[11px] text-purple-200 hover:bg-white/10 transition-colors"
-                >
-                  <Bookmark size={11} className="text-purple-300 fill-current" />
-                  <span className="font-medium">{onListStatus === "Want To" ? "Want to" : (onListStatus || "On a list")}</span>
-                </button>
-                <div className="w-px h-3.5 bg-white/20 flex-shrink-0" />
-                <button
-                  onClick={() => setIsListSheetOpen(true)}
-                  className="px-1.5 h-full text-gray-300 hover:bg-white/10 transition-colors flex items-center"
-                >
-                  <ChevronDown size={12} />
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Stat row — hidden for now until there's more engagement (flip false → true to restore) */}
           {false && (
