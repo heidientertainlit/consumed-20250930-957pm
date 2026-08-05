@@ -337,11 +337,6 @@ export function JustTrackedSheet({
               </div>
 
               <h3 className="text-lg font-bold text-gray-900">{dnaMoment.question_text}</h3>
-              {dnaMoment.category && (
-                <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-teal-600 bg-teal-50 rounded-full">
-                  {dnaMoment.category}
-                </span>
-              )}
             </div>
 
             {!identityAnswer ? (
