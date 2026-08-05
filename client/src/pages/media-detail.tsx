@@ -1438,7 +1438,7 @@ export default function MediaDetail() {
                     )}
                     {avgRating && (mediaItem.tmdb_score || mediaItem.google_books_rating) && <span className="text-gray-500">·</span>}
                     {mediaItem.tmdb_score && (
-                      <span><span className="font-medium text-blue-300">{Number(mediaItem.tmdb_score).toFixed(1)}</span><span className="text-blue-300/70"> TMDB</span></span>
+                      <span><span className="font-medium text-blue-300">{Number(mediaItem.tmdb_score).toFixed(1)}</span><span className="text-blue-300/70"> IMDB</span></span>
                     )}
                     {mediaItem.google_books_rating && (
                       <span><span className="font-medium text-green-300">{Number(mediaItem.google_books_rating).toFixed(1)}</span><span className="text-green-300/70"> Books</span></span>
