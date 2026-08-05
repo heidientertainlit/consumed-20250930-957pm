@@ -1427,7 +1427,7 @@ export default function MediaDetail() {
               <p className="text-sm text-gray-400 mb-2 truncate">by {mediaData.creator}</p>
               
               {/* Ratings row — divider-separated like the reference design */}
-              {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating || userRating?.rating || userReview?.rating) && (
+              {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating) && (
                 <div className="flex flex-wrap items-center text-sm mb-2.5">
                   {(() => {
                     const parts: JSX.Element[] = [];
@@ -1450,14 +1450,6 @@ export default function MediaDetail() {
                         <span className="text-gray-400">Books</span>
                       </span>
                     );
-                    const myRating = userRating?.rating || userReview?.rating;
-                    if (myRating) parts.push(
-                      <span key="y" className="flex items-center gap-1.5">
-                        <Star className="w-3.5 h-3.5 text-purple-400 fill-current" />
-                        <span className="font-semibold text-purple-300">{myRating}</span>
-                        <span className="text-purple-300/80">you</span>
-                      </span>
-                    );
                     return parts.map((p, i) => (
                       <span key={i} className="flex items-center">
                         {i > 0 && <span className="mx-2 text-gray-500">·</span>}
@@ -1465,6 +1457,15 @@ export default function MediaDetail() {
                       </span>
                     ));
                   })()}
+                </div>
+              )}
+
+              {/* Your rating — own line, icon left-aligned under the star above */}
+              {(userRating?.rating || userReview?.rating) && (
+                <div className="flex items-center gap-1.5 text-sm mb-2.5 -mt-1">
+                  <Heart className="w-3.5 h-3.5 text-purple-400 fill-current" />
+                  <span className="font-semibold text-purple-300">{userRating?.rating || userReview?.rating}</span>
+                  <span className="text-purple-300/80">you</span>
                 </div>
               )}
 
