@@ -82,32 +82,32 @@ Deno.serve(async (req) => {
       let response;
       let apiUrl;
       if (mediaType === 'tv') {
-        apiUrl = `https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
+        apiUrl = `https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers,release_dates`;
         console.log('Fetching TV show:', externalId);
         response = await fetch(apiUrl);
         if (!response.ok) {
           console.log('TV not found, falling back to movie endpoint');
-          apiUrl = `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
+          apiUrl = `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers,release_dates`;
           response = await fetch(apiUrl);
         }
       } else if (mediaType === 'movie') {
-        apiUrl = `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
+        apiUrl = `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers,release_dates`;
         console.log('Fetching movie:', externalId);
         response = await fetch(apiUrl);
         if (!response.ok) {
           console.log('Movie not found, falling back to TV endpoint');
-          apiUrl = `https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
+          apiUrl = `https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers,release_dates`;
           response = await fetch(apiUrl);
         }
       } else {
         // No type provided: try movie first, then TV
-        apiUrl = `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
+        apiUrl = `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers,release_dates`;
         console.log('Fallback - trying movie first:', externalId);
         response = await fetch(apiUrl);
         
         if (!response.ok) {
           console.log('Movie not found, trying TV');
-          apiUrl = `https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
+          apiUrl = `https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers,release_dates`;
           response = await fetch(apiUrl);
         }
       }
@@ -176,15 +176,21 @@ Deno.serve(async (req) => {
               logo: `https://image.tmdb.org/t/p/w92${p.logo_path}`,
               url: providerSearchUrl(p.provider_name, data.title || data.name || '')
             })) || [];
-            // Movies with no streaming providers that are recent or upcoming → theatrical link
-            if (providers.length === 0 && isMovie && data.release_date) {
-              const release = new Date(data.release_date).getTime();
+            // Movies with no streaming providers: use TMDB release_dates to tell if
+            // the film is (or will be) in its theatrical run — i.e. it has a US
+            // theatrical release and no digital/physical release has happened yet.
+            if (providers.length === 0 && isMovie) {
+              const usReleases = data.release_dates?.results?.find((r: any) => r.iso_3166_1 === 'US')?.release_dates || [];
+              // TMDB types: 1 premiere, 2 limited theatrical, 3 theatrical, 4 digital, 5 physical, 6 TV
+              const theatrical = usReleases.filter((r: any) => r.type === 2 || r.type === 3);
+              const homeRelease = usReleases.filter((r: any) => r.type === 4 || r.type === 5);
               const now = Date.now();
-              const daysSinceRelease = (now - release) / 86400000;
-              // Upcoming, or released within the last ~120 days (typical theatrical window)
-              if (daysSinceRelease < 120) {
+              const hasTheatrical = theatrical.length > 0;
+              const homeOut = homeRelease.some((r: any) => new Date(r.release_date).getTime() <= now);
+              if (hasTheatrical && !homeOut) {
+                const inTheatersNow = theatrical.some((r: any) => new Date(r.release_date).getTime() <= now);
                 providers.push({
-                  name: 'In Theaters',
+                  name: inTheatersNow ? 'In Theaters' : 'Coming to Theaters',
                   logo: null,
                   url: `https://www.fandango.com/search?q=${encodeURIComponent(data.title || data.name || '')}`
                 });
