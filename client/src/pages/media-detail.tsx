@@ -1489,7 +1489,6 @@ export default function MediaDetail() {
             {/* Available on — minimal, deduped provider chips */}
               {mediaItem.platforms && mediaItem.platforms.length > 0 && (
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                  <span className="text-sm text-gray-400 mr-0.5">Available on</span>
                   {(() => {
                     const baseName = (n: string) => (n || '').replace(/\s+(standard\s+)?with ads.*$/i, '').replace(/\s+(premium|basic|standard)$/i, '').trim();
                     const seen = new Set<string>();
@@ -1521,12 +1520,9 @@ export default function MediaDetail() {
                 </div>
               )}
 
-            </div>
-          </div>
-
-          {/* Description — full-width below the poster/info row */}
+          {/* Description — directly under the provider chips */}
           {mediaItem.description && (
-            <div className="mt-4">
+            <div className="mt-3">
               <button
                 onClick={() => setShowAbout(!showAbout)}
                 className="flex items-center gap-1 text-sm text-gray-300 hover:text-white transition-colors"
@@ -1560,7 +1556,8 @@ export default function MediaDetail() {
               )}
             </div>
           )}
-
+            </div>
+          </div>
 
           {/* Stat row — hidden for now until there's more engagement (flip false → true to restore) */}
           {false && (
