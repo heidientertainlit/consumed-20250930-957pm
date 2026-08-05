@@ -768,19 +768,27 @@ export default function MediaDetail() {
     enabled: !!user?.id && !!params?.id && !!params?.source,
   });
 
-  // DNA genre signals → real match % against this title's genres
-  const { data: dnaGenreSignals } = useQuery({
-    queryKey: ['dna-genre-signals', user?.id],
+  // Your DNA-powered recommendations — if this title was recommended to you,
+  // surface the match confidence + the written reason (same engine as the feed carousel)
+  const { data: dnaRecMatch } = useQuery({
+    queryKey: ['dna-rec-match', user?.id, params?.source, params?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id) return null;
       const { data } = await supabase
-        .from('user_dna_signals')
-        .select('signal_value, strength')
+        .from('user_recommendations')
+        .select('recommendations')
         .eq('user_id', user.id)
-        .eq('signal_type', 'genre');
-      return data || [];
+        .eq('status', 'ready')
+        .order('generated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const recs = (data?.recommendations as any)?.recommendations || [];
+      return recs.find((r: any) =>
+        String(r.external_id) === String(params?.id) &&
+        String(r.external_source) === String(params?.source)
+      ) || null;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!params?.id && !!params?.source,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -1572,36 +1580,20 @@ export default function MediaDetail() {
             </div>
           </div>
 
-          {/* DNA match % — only when the genre match is genuinely strong */}
-          {(() => {
-            const sigs = (dnaGenreSignals as any[]) || [];
-            const genres: string[] = mediaItem.genres || [];
-            if (sigs.length === 0 || genres.length === 0) return null;
-            const overallMax = Math.max(...sigs.map((s: any) => Number(s.strength) || 0));
-            if (overallMax <= 0) return null;
-            const genreText = genres.map(g => String(g).toLowerCase());
-            let matched = 0;
-            const hits: string[] = [];
-            for (const s of sigs) {
-              const v = String(s.signal_value || '').toLowerCase();
-              if (!v) continue;
-              const hit = genreText.some(g => g === v || g.includes(v) || v.includes(g));
-              if (hit) {
-                matched = Math.max(matched, Number(s.strength) || 0);
-                hits.push(s.signal_value);
-              }
-            }
-            if (matched <= 0) return null;
-            const pct = Math.min(100, Math.round((matched / overallMax) * 100));
-            if (pct < 70) return null;
-            return (
-              <div className="mt-4 flex items-center gap-1.5 text-sm">
+          {/* DNA match — from the same recommendations engine as the feed; hidden once rated */}
+          {!(userRating?.rating || userReview?.rating) && dnaRecMatch && (
+            <div className="mt-4 text-sm">
+              <div className="flex items-center gap-1.5">
                 <Dna className="w-3.5 h-3.5 text-purple-400" />
-                <span className="font-semibold text-purple-300">{pct}% match</span>
-                <span className="text-gray-400">with your taste in {hits.slice(0, 2).join(' & ').toLowerCase()}</span>
+                <span className="font-semibold text-purple-300">
+                  {Math.min(100, Math.round(Number(dnaRecMatch.confidence || 0) * 10))}% DNA match
+                </span>
               </div>
-            );
-          })()}
+              {dnaRecMatch.reason && (
+                <p className="mt-1 text-gray-400 text-[13px] leading-snug">{dnaRecMatch.reason}</p>
+              )}
+            </div>
+          )}
 
           {/* Description — starts open, clamped, with Read more */}
           {mediaItem.description && (
