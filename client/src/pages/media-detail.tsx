@@ -1404,7 +1404,7 @@ export default function MediaDetail() {
               {session && (
                 <button
                   onClick={() => setIsListSheetOpen(true)}
-                  className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-white/15 backdrop-blur-md hover:bg-white/25 text-white shadow-lg flex items-center justify-center ring-1 ring-white/40 transition-colors"
+                  className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md hover:bg-black/70 text-white shadow-lg flex items-center justify-center ring-1 ring-white/40 transition-colors"
                   data-testid="button-quick-add"
                 >
                   <Plus size={16} />
