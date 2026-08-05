@@ -1488,7 +1488,7 @@ export default function MediaDetail() {
 
             {/* Available on — minimal, deduped provider chips */}
               {mediaItem.platforms && mediaItem.platforms.length > 0 && (
-                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <div className="mt-1 -ml-1.5 flex flex-wrap items-center gap-1.5">
                   {(() => {
                     const baseName = (n: string) => (n || '').replace(/\s+(standard\s+)?with ads.*$/i, '').replace(/\s+(premium|basic|standard)$/i, '').trim();
                     const seen = new Set<string>();
@@ -1522,7 +1522,7 @@ export default function MediaDetail() {
 
           {/* Description — directly under the provider chips */}
           {mediaItem.description && (
-            <div className="mt-3">
+            <div className="mt-3 ml-4">
               <button
                 onClick={() => setShowAbout(!showAbout)}
                 className="flex items-center gap-1 text-sm text-gray-300 hover:text-white transition-colors"
