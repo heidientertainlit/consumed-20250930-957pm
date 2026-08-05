@@ -1427,50 +1427,69 @@ export default function MediaDetail() {
               </div>
               <p className="text-sm text-gray-400 mb-2 truncate">by {mediaData.creator}</p>
               
-              {/* Compact metadata chips */}
-              <div className="flex flex-wrap items-center gap-2 text-xs mb-3">
-                {/* All ratings consolidated into a single pill */}
-                {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating || userRating?.rating || userReview?.rating) && (
-                  <div className="flex items-center gap-1.5">
-                    <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                    {avgRating && (
-                      <span><span className="font-medium text-white">{avgRating}</span><span className="text-gray-400"> Consumed</span></span>
-                    )}
-                    {avgRating && (mediaItem.tmdb_score || mediaItem.google_books_rating) && <span className="text-gray-500">·</span>}
-                    {mediaItem.tmdb_score && (
-                      <span><span className="font-medium text-blue-300">{Number(mediaItem.tmdb_score).toFixed(1)}</span><span className="text-blue-300/70"> IMDB</span></span>
-                    )}
-                    {mediaItem.google_books_rating && (
-                      <span><span className="font-medium text-green-300">{Number(mediaItem.google_books_rating).toFixed(1)}</span><span className="text-green-300/70"> Books</span></span>
-                    )}
-                    {(userRating?.rating || userReview?.rating) && (
-                      <>
-                        {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating) && <span className="text-gray-500">·</span>}
-                        <span><span className="font-semibold text-purple-200">{userRating?.rating || userReview?.rating}</span><span className="text-purple-300/80"> you</span></span>
-                      </>
-                    )}
-                  </div>
-                )}
+              {/* Ratings row — divider-separated like the reference design */}
+              {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating || userRating?.rating || userReview?.rating) && (
+                <div className="flex flex-wrap items-center text-sm mb-2.5">
+                  {(() => {
+                    const parts: JSX.Element[] = [];
+                    if (avgRating) parts.push(
+                      <span key="c" className="flex items-center gap-1.5">
+                        <Star className="w-3.5 h-3.5 text-yellow-400 fill-current" />
+                        <span className="font-semibold text-white">{avgRating}</span>
+                        <span className="text-gray-400">Consumed</span>
+                      </span>
+                    );
+                    if (mediaItem.tmdb_score) parts.push(
+                      <span key="i" className="flex items-center gap-1.5">
+                        <span className="font-semibold text-white">{Number(mediaItem.tmdb_score).toFixed(1)}</span>
+                        <span className="text-gray-400">IMDb</span>
+                      </span>
+                    );
+                    if (mediaItem.google_books_rating) parts.push(
+                      <span key="b" className="flex items-center gap-1.5">
+                        <span className="font-semibold text-white">{Number(mediaItem.google_books_rating).toFixed(1)}</span>
+                        <span className="text-gray-400">Books</span>
+                      </span>
+                    );
+                    const myRating = userRating?.rating || userReview?.rating;
+                    if (myRating) parts.push(
+                      <span key="y" className="flex items-center gap-1.5">
+                        <span className="font-semibold text-purple-300">{myRating}</span>
+                        <span className="text-purple-300/80">you</span>
+                      </span>
+                    );
+                    return parts.map((p, i) => (
+                      <span key={i} className="flex items-center">
+                        {i > 0 && <span className="mx-2.5 w-px h-3.5 bg-white/20" />}
+                        {p}
+                      </span>
+                    ));
+                  })()}
+                </div>
+              )}
+
+              {/* Runtime / seasons row — plain icon + text, no pills */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-gray-300 mb-2.5">
                 {mediaItem.type === 'movie' && mediaItem.releaseDate && (
-                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full text-gray-300">
-                    <Calendar className="w-3 h-3" />
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
                     <span>{new Date(mediaItem.releaseDate).getFullYear()}</span>
                   </div>
                 )}
                 {mediaItem.type === 'tv' && mediaItem.totalSeasons > 0 ? (
-                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full text-gray-300">
-                    <Calendar className="w-3 h-3" />
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
                     <span>{mediaItem.totalSeasons} {mediaItem.totalSeasons === 1 ? 'season' : 'seasons'}</span>
                   </div>
                 ) : (mediaItem.type === 'tv' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1 ? (
-                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full text-gray-300">
-                    <Calendar className="w-3 h-3" />
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
                     <span>{mediaItem.totalEpisodes} eps</span>
                   </div>
                 ) : null}
                 {mediaItem.averageLength && (
-                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full text-gray-300">
-                    <Clock className="w-3 h-3" />
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-gray-400" />
                     <span>~{mediaItem.averageLength}</span>
                   </div>
                 )}
@@ -1494,9 +1513,10 @@ export default function MediaDetail() {
                 )}
               </div>
 
-            {/* Watch On — minimal, deduped provider chips */}
+            {/* Available on — minimal, deduped provider chips */}
               {mediaItem.platforms && mediaItem.platforms.length > 0 && (
-                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                  <span className="text-sm text-gray-400 mr-0.5">Available on</span>
                   {(() => {
                     const baseName = (n: string) => (n || '').replace(/\s+(standard\s+)?with ads.*$/i, '').replace(/\s+(premium|basic|standard)$/i, '').trim();
                     const seen = new Set<string>();
@@ -1510,8 +1530,8 @@ export default function MediaDetail() {
                       const label = baseName(platform.name);
                       const inner = (
                         <>
-                          {platform.logo && <img src={platform.logo} alt={label} className="w-3.5 h-3.5 rounded-[3px] object-contain" />}
-                          <span className="text-[11px] text-gray-300">{label}</span>
+                          {platform.logo && <img src={platform.logo} alt={label} className="w-4 h-4 rounded-[3px] object-contain" />}
+                          <span className="text-sm text-white">{label}</span>
                         </>
                       );
                       return platform.url ? (
@@ -1532,7 +1552,7 @@ export default function MediaDetail() {
               {mediaItem.description && (
                 <button
                   onClick={() => setShowAbout(!showAbout)}
-                  className="flex items-center gap-1 text-xs text-gray-300 hover:text-white transition-colors mt-2"
+                  className="flex items-center gap-1 text-sm text-gray-300 hover:text-white transition-colors mt-2"
                   data-testid="button-toggle-description"
                 >
                   <span>Description</span>
