@@ -1404,7 +1404,7 @@ export default function MediaDetail() {
               {session && (
                 <button
                   onClick={() => setIsListSheetOpen(true)}
-                  className="absolute -bottom-3 -right-3 z-10 w-8 h-8 rounded-full bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white shadow-lg flex items-center justify-center ring-2 ring-white/40 transition-colors"
+                  className="absolute -bottom-4 left-1/2 -translate-x-1/2 z-10 w-8 h-8 rounded-full bg-white/15 backdrop-blur-md hover:bg-white/25 text-white shadow-lg flex items-center justify-center ring-1 ring-white/40 transition-colors"
                   data-testid="button-quick-add"
                 >
                   <Plus size={16} />
