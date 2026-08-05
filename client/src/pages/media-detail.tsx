@@ -1453,13 +1453,14 @@ export default function MediaDetail() {
                     const myRating = userRating?.rating || userReview?.rating;
                     if (myRating) parts.push(
                       <span key="y" className="flex items-center gap-1.5">
+                        <Star className="w-3.5 h-3.5 text-purple-400 fill-current" />
                         <span className="font-semibold text-purple-300">{myRating}</span>
                         <span className="text-purple-300/80">you</span>
                       </span>
                     );
                     return parts.map((p, i) => (
                       <span key={i} className="flex items-center">
-                        {i > 0 && <span className="mx-2.5 w-px h-3.5 bg-white/20" />}
+                        {i > 0 && <span className="mx-2 text-gray-500">·</span>}
                         {p}
                       </span>
                     ));
@@ -1493,22 +1494,14 @@ export default function MediaDetail() {
                   </div>
                 )}
                 {session && onListStatus && (
-                  <div className="flex items-center bg-purple-500/25 border border-purple-400/40 rounded-full h-6 overflow-hidden">
-                    <button
-                      onClick={() => (onListStatus === 'Currently' && currentlyItem) ? setIsProgressSheetOpen(true) : setIsListSheetOpen(true)}
-                      className="flex items-center gap-1 pl-2 pr-1 h-full text-[11px] text-purple-200 hover:bg-white/10 transition-colors"
-                    >
-                      <Bookmark size={10} className="text-purple-300 fill-current" />
-                      <span className="font-medium">{onListStatus === "Want To" ? "Want to" : (onListStatus || "On a list")}</span>
-                    </button>
-                    <div className="w-px h-3 bg-white/20 flex-shrink-0" />
-                    <button
-                      onClick={() => setIsListSheetOpen(true)}
-                      className="px-1 h-full text-purple-200 hover:bg-white/10 transition-colors flex items-center"
-                    >
-                      <ChevronDown size={11} />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => (onListStatus === 'Currently' && currentlyItem) ? setIsProgressSheetOpen(true) : setIsListSheetOpen(true)}
+                    className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-purple-300 transition-colors"
+                  >
+                    <Bookmark size={10} className="text-purple-400/70 fill-current" />
+                    <span>{onListStatus === "Want To" ? "Want to" : (onListStatus || "On a list")}</span>
+                    <ChevronDown size={10} />
+                  </button>
                 )}
               </div>
 
