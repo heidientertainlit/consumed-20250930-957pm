@@ -1494,17 +1494,6 @@ export default function MediaDetail() {
                 )}
               </div>
 
-              {/* Description dropdown toggle (replaces fans-here) */}
-              {mediaItem.description && (
-                <button
-                  onClick={() => setShowAbout(!showAbout)}
-                  className="flex items-center gap-1 text-xs text-gray-300 hover:text-white transition-colors mb-2"
-                  data-testid="button-toggle-description"
-                >
-                  <span>Description</span>
-                  <ChevronDown size={14} className={`transition-transform ${showAbout ? 'rotate-180' : ''}`} />
-                </button>
-              )}
               {(() => {
                 const mediaAlignment = getMediaAlignment(archetypeKey, mediaItem?.type || params?.type);
                 return mediaAlignment ? (
@@ -1553,6 +1542,18 @@ export default function MediaDetail() {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Description dropdown toggle — below Watch On */}
+          {mediaItem.description && (
+            <button
+              onClick={() => setShowAbout(!showAbout)}
+              className="flex items-center gap-1 text-xs text-gray-300 hover:text-white transition-colors mt-3"
+              data-testid="button-toggle-description"
+            >
+              <span>Description</span>
+              <ChevronDown size={14} className={`transition-transform ${showAbout ? 'rotate-180' : ''}`} />
+            </button>
           )}
 
           {/* Description — revealed via dropdown toggle above */}
