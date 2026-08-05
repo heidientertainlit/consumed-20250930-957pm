@@ -1405,7 +1405,7 @@ export default function MediaDetail() {
               {session && (
                 <button
                   onClick={() => setIsListSheetOpen(true)}
-                  className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white shadow-lg flex items-center justify-center ring-2 ring-white/40 transition-colors"
+                  className="absolute -bottom-5 left-1/2 -translate-x-1/2 z-10 w-10 h-10 rounded-full bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white shadow-lg flex items-center justify-center ring-2 ring-white/40 transition-colors"
                   data-testid="button-quick-add"
                 >
                   <Plus size={20} />
@@ -1494,46 +1494,39 @@ export default function MediaDetail() {
                 )}
               </div>
 
-            {/* Watch On — directly under the status/chips row */}
-            {mediaItem.platforms && mediaItem.platforms.length > 0 && (
-              <div className="mt-2">
-                <h3 className="text-xs font-medium text-gray-400 mb-2">
-                  {mediaItem.type === 'movie' || mediaItem.type === 'tv'
-                    ? 'Watch On'
-                    : mediaItem.type === 'Podcast' || mediaItem.type === 'Music'
-                    ? 'Listen On'
-                    : mediaItem.type === 'Book'
-                    ? 'Read On'
-                    : 'Find On'}
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {mediaItem.platforms.map((platform: any, index: number) => (
-                    platform.url ? (
-                      <a
-                        key={index}
-                        href={platform.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 px-2 py-1 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-xs"
-                      >
-                        {platform.logo && (
-                          <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
-                        )}
-                        <span className="font-medium text-gray-200">{platform.name}</span>
-                        <ExternalLink className="w-2.5 h-2.5 text-gray-400" />
-                      </a>
-                    ) : (
-                      <div key={index} className="flex items-center gap-1.5 px-2 py-1 bg-white/10 rounded-lg text-xs">
-                        {platform.logo && (
-                          <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
-                        )}
-                        <span className="font-medium text-gray-200">{platform.name}</span>
-                      </div>
-                    )
-                  ))}
+            {/* Watch On — minimal, deduped provider chips */}
+              {mediaItem.platforms && mediaItem.platforms.length > 0 && (
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  {(() => {
+                    const baseName = (n: string) => (n || '').replace(/\s+(standard\s+)?with ads.*$/i, '').replace(/\s+(premium|basic|standard)$/i, '').trim();
+                    const seen = new Set<string>();
+                    const unique = (mediaItem.platforms as any[]).filter((pf: any) => {
+                      const b = baseName(pf.name).toLowerCase();
+                      if (!b || seen.has(b)) return false;
+                      seen.add(b);
+                      return true;
+                    });
+                    return unique.map((platform: any, index: number) => {
+                      const label = baseName(platform.name);
+                      const inner = (
+                        <>
+                          {platform.logo && <img src={platform.logo} alt={label} className="w-3.5 h-3.5 rounded-[3px] object-contain" />}
+                          <span className="text-[11px] text-gray-300">{label}</span>
+                        </>
+                      );
+                      return platform.url ? (
+                        <a key={index} href={platform.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-1.5 py-0.5 rounded-md hover:bg-white/10 transition-colors">
+                          {inner}
+                        </a>
+                      ) : (
+                        <div key={index} className="flex items-center gap-1 px-1.5 py-0.5 rounded-md">
+                          {inner}
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
-              </div>
-            )}
+              )}
 
               {/* Description dropdown toggle */}
               {mediaItem.description && (
