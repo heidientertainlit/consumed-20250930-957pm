@@ -1520,44 +1520,50 @@ export default function MediaDetail() {
                 </div>
               )}
 
-          {/* Description — directly under the provider chips */}
-          {mediaItem.description && (
-            <div className="mt-3 ml-4">
-              <button
-                onClick={() => setShowAbout(!showAbout)}
-                className="flex items-center gap-1 text-sm text-gray-300 hover:text-white transition-colors"
-                data-testid="button-toggle-description"
-              >
-                <span>Description</span>
-                <ChevronDown size={14} className={`transition-transform ${showAbout ? 'rotate-180' : ''}`} />
-              </button>
-              {showAbout && (
-                <>
-                  {(() => {
-                    const meta: string[] = [];
-                    if (mediaItem.releaseDate) meta.push(String(new Date(mediaItem.releaseDate).getFullYear()));
-                    const typeLabel = mediaItem.type === 'tv' ? 'TV Show' : mediaItem.type === 'movie' ? 'Movie' : null;
-                    if (typeLabel) meta.push(typeLabel);
-                    if (mediaItem.type === 'tv' && mediaItem.totalSeasons > 0) {
-                      meta.push(`${mediaItem.totalSeasons} ${mediaItem.totalSeasons === 1 ? 'season' : 'seasons'}`);
-                    } else if ((mediaItem.type === 'tv' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1) {
-                      meta.push(`${mediaItem.totalEpisodes} eps`);
-                    }
-                    if (mediaItem.averageLength) meta.push(`~${mediaItem.averageLength}`);
-                    if (mediaItem.genres?.length) meta.push(mediaItem.genres[0]);
-                    return meta.length > 0 ? (
-                      <p className="mt-2 text-xs text-gray-400">{meta.join(' · ')}</p>
-                    ) : null;
-                  })()}
-                  <p className="mt-2 text-sm text-gray-300 leading-relaxed">
-                    {mediaItem.description}
-                  </p>
-                </>
-              )}
-            </div>
-          )}
+          {/* Runtime / seasons + genres — small line under the provider chips */}
+              {(() => {
+                const bits: JSX.Element[] = [];
+                const runtimeLabel = (() => {
+                  const m = parseInt(String(mediaItem.averageLength || '').replace(/[^0-9]/g, ''), 10);
+                  if (!m || isNaN(m)) return null;
+                  return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60 ? `${m % 60}m` : ''}`.trim() : `${m} min`;
+                })();
+                if (mediaItem.type === 'tv' && mediaItem.totalSeasons > 0) {
+                  bits.push(<span key="s" className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" />{mediaItem.totalSeasons} {mediaItem.totalSeasons === 1 ? 'season' : 'seasons'}</span>);
+                } else if ((mediaItem.type === 'tv' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1) {
+                  bits.push(<span key="e" className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" />{mediaItem.totalEpisodes} eps</span>);
+                }
+                if (runtimeLabel) bits.push(<span key="r" className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-gray-400" />{runtimeLabel}</span>);
+                if (mediaItem.genres?.length) bits.push(<span key="g">{mediaItem.genres.slice(0, 2).join(', ')}</span>);
+                return bits.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap items-center text-sm text-gray-300">
+                    {bits.map((b, i) => (
+                      <span key={i} className="flex items-center">
+                        {i > 0 && <span className="mx-2 text-gray-500">·</span>}
+                        {b}
+                      </span>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
             </div>
           </div>
+
+          {/* Description — starts open, clamped, with Read more */}
+          {mediaItem.description && (
+            <div className="mt-4">
+              <p className={`text-sm text-gray-300 leading-relaxed ${showAbout ? '' : 'line-clamp-3'}`}>
+                {mediaItem.description}
+              </p>
+              <button
+                onClick={() => setShowAbout(!showAbout)}
+                className="mt-1.5 text-sm text-purple-300 hover:text-purple-200 transition-colors"
+                data-testid="button-toggle-description"
+              >
+                {showAbout ? 'Show less' : 'Read more'}
+              </button>
+            </div>
+          )}
 
           {/* Stat row — hidden for now until there's more engagement (flip false → true to restore) */}
           {false && (
