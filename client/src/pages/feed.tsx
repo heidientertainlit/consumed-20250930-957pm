@@ -446,7 +446,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
       <div className="flex items-center gap-1.5 mb-1 px-1">
         <Flame size={15} className="text-orange-500 fill-orange-500 shrink-0" />
         <span className="text-[13px] font-semibold text-violet-600">{single ? 'The Conversation' : 'Trending Takes'}</span>
-        <span className="text-[11px] text-gray-400 font-medium ml-auto">{single ? 'Join in' : 'Trending now'}</span>
+        {!single && <span className="text-[11px] text-gray-400 font-medium ml-auto">Trending now</span>}
       </div>
 
       <div className="divide-y divide-gray-100">
@@ -460,36 +460,37 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
               {/* Compact trending row — same look expanded or not */}
               <button
                 onClick={() => { setExpandedKey(isOpen ? null : g.key); setActiveTakeId(null); setCommentText(''); if (!isOpen) loadThread(g); }}
-                className="w-full flex items-center gap-2.5 text-left py-2 px-1 active:bg-gray-50"
+                className="w-full flex items-start gap-3 text-left py-2 px-1 active:bg-gray-50"
               >
+                {/* Big poster anchor */}
+                <div
+                  className="relative shrink-0 w-[72px] h-[104px] rounded-lg overflow-hidden bg-gray-900 cursor-pointer"
+                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.18)' }}
+                  onClick={(e) => { e.stopPropagation(); onOpenMedia(g); }}
+                >
+                  {g.mediaImage?.startsWith?.('http') && (
+                    <img src={g.mediaImage} alt={g.title} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   {/* Take is the headline */}
                   {topGlimpse && !isOpen ? (
-                    <p className="text-[13px] font-normal text-gray-700 leading-snug line-clamp-2">
+                    <p className="text-[14px] font-normal text-gray-800 leading-snug line-clamp-3">
                       "{topGlimpse.content}"
                     </p>
                   ) : (
-                    <p className="text-[13px] font-medium text-gray-800 leading-snug">{g.title}</p>
+                    <p className="text-[14px] font-medium text-gray-800 leading-snug">{g.title}</p>
                   )}
                   {/* Media context line under the take */}
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <div
-                      className="relative shrink-0 w-[18px] h-[24px] rounded overflow-hidden bg-gray-900 cursor-pointer"
-                      onClick={(e) => { e.stopPropagation(); onOpenMedia(g); }}
-                    >
-                      {g.mediaImage?.startsWith?.('http') && (
-                        <img src={g.mediaImage} alt={g.title} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                      )}
-                    </div>
+                  <div className="flex items-center gap-1.5 mt-1.5">
                     <span className="text-[11.5px] text-gray-500 truncate">
                       <span className="font-medium text-gray-700">{g.title}</span> · {g.talkingCount} people talking
                     </span>
                     {topGlimpse && (() => {
                       const agree = (topGlimpse.likes || topGlimpse.likes_count || 0) + (takeReactions[topGlimpse.id] === 'up' ? 1 : 0);
-                      const disagree = (disagreeCounts[topGlimpse.id] || 0) + (takeReactions[topGlimpse.id] === 'down' ? 1 : 0);
                       return (
                         <span className="flex items-center gap-2 shrink-0 ml-auto text-[11px] text-gray-500 font-medium">
-                          <span className="flex items-center gap-0.5"><Flame size={12} className={takeReactions[topGlimpse.id] === 'up' ? 'text-orange-500 fill-orange-500' : ''} /> {agree}</span>
+                          <span className="flex items-center gap-0.5"><Check size={12} strokeWidth={2.5} className={takeReactions[topGlimpse.id] === 'up' ? 'text-green-600' : ''} /> {agree}</span>
                         </span>
                       );
                     })()}
@@ -531,9 +532,13 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                               {isActive && <div className="w-px flex-1 bg-gray-200 mt-1" />}
                             </div>
                             <div className="flex-1 min-w-0">
-                              {/* username · time */}
-                              <p className="text-[11px] text-gray-500 leading-none mb-1">
-                                <span className="font-semibold text-gray-800">{n}</span>
+                              {/* Commentary featured first */}
+                              {hasText && (
+                                <p className={`text-[13.5px] text-gray-900 leading-snug ${isActive ? '' : 'line-clamp-3'}`}>{t.content}</p>
+                              )}
+                              {/* name · time — small, underneath */}
+                              <p className={`text-[11px] text-gray-500 leading-none ${hasText ? 'mt-1' : ''}`}>
+                                <span className="font-semibold text-gray-600">— {n}</span>
                                 {when && <span> · {when}</span>}
                                 {!hasText && t.rating && (
                                   <span className="inline-flex items-center gap-0.5 ml-1.5 text-gray-600">
@@ -541,18 +546,23 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                                   </span>
                                 )}
                               </p>
-                              {hasText && (
-                                <p className={`text-[12.5px] text-gray-800 leading-snug ${isActive ? '' : 'line-clamp-3'}`}>{t.content}</p>
-                              )}
-                              {/* Action row: Agree · Disagree · Comment */}
+                              {/* Action row: Agree · Counter · Reply */}
                               <div className="flex items-center gap-4 mt-1.5">
                                 <button
                                   onClick={() => reactToTake(t.id, 'up')}
-                                  className={`flex items-center gap-1 text-[11px] p-0.5 ${takeReactions[t.id] === 'up' ? 'text-orange-500 font-semibold' : 'text-gray-400 font-medium'}`}
-                                  aria-label="Hot take"
+                                  className={`flex items-center gap-1 text-[11px] p-0.5 ${takeReactions[t.id] === 'up' ? 'text-green-600 font-semibold' : 'text-gray-400 font-medium'}`}
+                                  aria-label="Agree"
                                 >
-                                  <Flame size={13} strokeWidth={takeReactions[t.id] === 'up' ? 2.5 : 2} className={takeReactions[t.id] === 'up' ? 'fill-orange-500' : ''} />
-                                  {likeCount + (takeReactions[t.id] === 'up' ? 1 : 0)}
+                                  <Check size={13} strokeWidth={takeReactions[t.id] === 'up' ? 3 : 2} />
+                                  Agree{(() => { const c = likeCount + (takeReactions[t.id] === 'up' ? 1 : 0); return c > 0 ? ` · ${c}` : ''; })()}
+                                </button>
+                                <button
+                                  onClick={() => reactToTake(t.id, 'down')}
+                                  className={`flex items-center gap-1 text-[11px] p-0.5 ${takeReactions[t.id] === 'down' ? 'text-violet-600 font-semibold' : 'text-gray-400 font-medium'}`}
+                                  aria-label="Counter"
+                                >
+                                  <Undo2 size={13} strokeWidth={takeReactions[t.id] === 'down' ? 2.5 : 2} />
+                                  Counter
                                 </button>
                                 <button
                                   onClick={() => { setActiveTakeId(isActive ? null : takeId); setCommentText(''); }}
