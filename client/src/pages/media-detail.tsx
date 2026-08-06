@@ -1283,34 +1283,32 @@ export default function MediaDetail() {
     };
     if (isCompactRating) {
       return (
-        <div key={cardId} className="flex items-center gap-3 py-3" data-testid={`take-card-${post.id}`}>
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
-            style={{ background: avatarBg }}
-          >
-            {initial}
+        <div key={cardId} className="py-3" data-testid={`take-card-${post.id}`}>
+          <div className="flex items-center gap-0.5 mb-1">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <Star
+                key={n}
+                className={`w-5 h-5 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
+              />
+            ))}
           </div>
-          <div className="flex-1 min-w-0 flex items-center gap-1.5">
-            <span className="font-bold text-[14px] text-gray-900 truncate">{name}</span>
-            {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">· {takeTimeAgo(post.created_at)}</span>}
-            <span className="ml-1 flex items-center gap-0.5 shrink-0 text-[12px] font-semibold text-gray-700">
-              <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-              {ratingVal}
-            </span>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[13px] font-semibold text-gray-600 truncate">{name}</span>
+            {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">{takeTimeAgo(post.created_at)}</span>}
+            {!post._ratingOnly && (
+              <div className="ml-auto flex items-center gap-1.5 text-gray-400 shrink-0">
+                <button
+                  onClick={() => handleLike(post.id)}
+                  className={`active:scale-90 transition-transform ${isLiked ? 'text-orange-500' : ''}`}
+                  aria-label="Hot take"
+                  data-testid={`take-agree-${post.id}`}
+                >
+                  <Flame size={16} strokeWidth={2.5} className={isLiked ? 'fill-orange-500' : ''} />
+                </button>
+                <span className="text-[12px] font-medium text-gray-500">{Number(post.likes_count) || 0}</span>
+              </div>
+            )}
           </div>
-          {!post._ratingOnly && (
-            <div className="flex items-center gap-1.5 text-gray-400 shrink-0">
-              <button
-                onClick={() => handleLike(post.id)}
-                className={`active:scale-90 transition-transform ${isLiked ? 'text-orange-500' : ''}`}
-                aria-label="Hot take"
-                data-testid={`take-agree-${post.id}`}
-              >
-                <Flame size={16} strokeWidth={2.5} className={isLiked ? 'fill-orange-500' : ''} />
-              </button>
-              <span className="text-[12px] font-medium text-gray-500">{Number(post.likes_count) || 0}</span>
-            </div>
-          )}
         </div>
       );
     }
@@ -1720,6 +1718,7 @@ export default function MediaDetail() {
           {/* Your Reaction — dark purple pill button that expands the composer inline */}
           {session && (
           <div ref={composeSectionRef} className="mb-4">
+            <h3 className="text-base font-semibold text-gray-900 mb-2">Share Your Take</h3>
             {!composerOpen && (
               <button
                 type="button"
