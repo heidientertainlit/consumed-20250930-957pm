@@ -1592,16 +1592,11 @@ export default function MediaDetail() {
 
           {/* DNA match — from the same recommendations engine as the feed; hidden once rated */}
           {!(userRating?.rating || userReview?.rating) && typeof dnaRecMatch?.score === 'number' && (
-            <div className="mt-4 text-sm">
-              <div className="flex items-center gap-1.5">
-                <Dna className={`w-3.5 h-3.5 ${dnaRecMatch.score >= 70 ? 'text-purple-400' : 'text-gray-500'}`} />
-                <span className={`font-semibold ${dnaRecMatch.score >= 70 ? 'text-purple-300' : 'text-gray-400'}`}>
-                  {dnaRecMatch.score}% match for you
-                </span>
-              </div>
-              {dnaRecMatch.reason && (
-                <p className="mt-1 text-gray-400 text-[13px] leading-snug">{dnaRecMatch.reason}</p>
-              )}
+            <div className="mt-4 flex items-center gap-1.5 text-sm">
+              <Dna className={`w-3.5 h-3.5 ${dnaRecMatch.score >= 70 ? 'text-purple-400' : 'text-gray-500'}`} />
+              <span className={`font-semibold ${dnaRecMatch.score >= 70 ? 'text-purple-300' : 'text-gray-400'}`}>
+                {dnaRecMatch.score}% match for you
+              </span>
             </div>
           )}
 
