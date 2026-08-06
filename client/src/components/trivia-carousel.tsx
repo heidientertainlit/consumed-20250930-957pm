@@ -816,7 +816,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 <h3 className="text-gray-900 font-semibold text-[18px] leading-snug mb-1.5">{item.question}</h3>
                 {!answered && (
                   <p className="flex items-center gap-1.5 mb-3">
-                    <Trophy className="w-3.5 h-3.5 text-yellow-500" />
                     <span className="text-[12px] font-bold text-purple-600">+{item.pointsReward || 10} pts</span>
                   </p>
                 )}
@@ -985,14 +984,11 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                         toast({ title: 'Link copied', description: 'Paste it into a text to challenge a friend.' });
                       }
                     }}
-                    className="inline-flex items-center gap-1 text-[11px] font-medium text-purple-600 hover:text-purple-800 transition-colors"
+                    className="inline-flex items-center gap-1 text-[13px] font-medium text-gray-400 hover:text-gray-600 transition-colors mx-auto"
                   >
-                    <Share2 size={12} />
                     Share
+                    <span aria-hidden="true">→</span>
                   </button>
-                  <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold">
-                    +{item.pointsReward} pts
-                  </div>
                 </div>
               </div>
             );
