@@ -1466,6 +1466,39 @@ export default function MediaDetail() {
                 {mediaItem.releaseDate && <span> · {new Date(mediaItem.releaseDate).getFullYear()}</span>}
               </p>
               
+          {/* Runtime / seasons — small line under the byline */}
+              {(() => {
+                const bits: JSX.Element[] = [];
+                const runtimeLabel = (() => {
+                  const raw = String(mediaItem.averageLength || '').trim();
+                  if (!raw) return null;
+                  // Already in "1h 30m" style — keep as-is
+                  const hm = raw.match(/(\d+)\s*h(?:\s*(\d+)\s*m)?/i);
+                  if (hm) return `${hm[1]}h${hm[2] ? ` ${hm[2]}m` : ''}`;
+                  // Minute-only forms like "173 min" / "~173 min"
+                  const minMatch = raw.match(/(\d+)/);
+                  const m = minMatch ? parseInt(minMatch[1], 10) : NaN;
+                  if (!m || isNaN(m)) return null;
+                  return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m} min`;
+                })();
+                if (mediaItem.type === 'tv' && mediaItem.totalSeasons > 0) {
+                  bits.push(<span key="s" className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" />{mediaItem.totalSeasons} {mediaItem.totalSeasons === 1 ? 'season' : 'seasons'}</span>);
+                } else if ((mediaItem.type === 'tv' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1) {
+                  bits.push(<span key="e" className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" />{mediaItem.totalEpisodes} eps</span>);
+                }
+                if (runtimeLabel) bits.push(<span key="r" className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-gray-400" />{runtimeLabel}</span>);
+                return bits.length > 0 ? (
+                  <div className="-mt-1 mb-2.5 flex flex-wrap items-center text-sm text-gray-300">
+                    {bits.map((b, i) => (
+                      <span key={i} className="flex items-center">
+                        {i > 0 && <span className="mx-2 text-gray-500">·</span>}
+                        {b}
+                      </span>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
+
               {/* Ratings row — divider-separated like the reference design */}
               {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating) && (
                 <div className="flex flex-wrap items-center text-sm mb-2.5">
@@ -1497,29 +1530,6 @@ export default function MediaDetail() {
                       </span>
                     ));
                   })()}
-                </div>
-              )}
-
-              {/* Your rating + list status — own line, icon left-aligned under the star above */}
-              {((userRating?.rating || userReview?.rating) || (session && onListStatus)) && (
-                <div className="flex items-center gap-1.5 text-sm mb-2.5 -mt-1">
-                  {(userRating?.rating || userReview?.rating) && (
-                    <>
-                      <Star className="w-3.5 h-3.5 text-purple-400" />
-                      <span className="font-semibold text-purple-300">{userRating?.rating || userReview?.rating}</span>
-                      <span className="text-purple-300/80">you</span>
-                    </>
-                  )}
-                  {session && onListStatus && (
-                    <button
-                      onClick={() => (onListStatus === 'Currently' && currentlyItem) ? setIsProgressSheetOpen(true) : setIsListSheetOpen(true)}
-                      className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-300 transition-colors ml-2"
-                    >
-                      <Bookmark size={12} className="text-purple-400/70 fill-current" />
-                      <span>{onListStatus === "Want To" ? "Want to" : (onListStatus || "On a list")}</span>
-                      <ChevronDown size={12} />
-                    </button>
-                  )}
                 </div>
               )}
 
@@ -1557,38 +1567,6 @@ export default function MediaDetail() {
                 </div>
               )}
 
-          {/* Runtime / seasons + genres — small line under the provider chips */}
-              {(() => {
-                const bits: JSX.Element[] = [];
-                const runtimeLabel = (() => {
-                  const raw = String(mediaItem.averageLength || '').trim();
-                  if (!raw) return null;
-                  // Already in "1h 30m" style — keep as-is
-                  const hm = raw.match(/(\d+)\s*h(?:\s*(\d+)\s*m)?/i);
-                  if (hm) return `${hm[1]}h${hm[2] ? ` ${hm[2]}m` : ''}`;
-                  // Minute-only forms like "173 min" / "~173 min"
-                  const minMatch = raw.match(/(\d+)/);
-                  const m = minMatch ? parseInt(minMatch[1], 10) : NaN;
-                  if (!m || isNaN(m)) return null;
-                  return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m} min`;
-                })();
-                if (mediaItem.type === 'tv' && mediaItem.totalSeasons > 0) {
-                  bits.push(<span key="s" className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" />{mediaItem.totalSeasons} {mediaItem.totalSeasons === 1 ? 'season' : 'seasons'}</span>);
-                } else if ((mediaItem.type === 'tv' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1) {
-                  bits.push(<span key="e" className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" />{mediaItem.totalEpisodes} eps</span>);
-                }
-                if (runtimeLabel) bits.push(<span key="r" className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-gray-400" />{runtimeLabel}</span>);
-                return bits.length > 0 ? (
-                  <div className="mt-2 flex flex-wrap items-center text-sm text-gray-300">
-                    {bits.map((b, i) => (
-                      <span key={i} className="flex items-center">
-                        {i > 0 && <span className="mx-2 text-gray-500">·</span>}
-                        {b}
-                      </span>
-                    ))}
-                  </div>
-                ) : null;
-              })()}
             </div>
           </div>
 
