@@ -8985,7 +8985,9 @@ export default function Feed() {
 
               {/* Leaderboard #0 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 0 && (
-                <SocialProofCard card={buildLeaderboardSocialProof(playActivity[0], 0)} />
+                <div className="mt-6">
+                  <SocialProofCard card={buildLeaderboardSocialProof(playActivity[0], 0)} />
+                </div>
               )}
 
               {/* HIDDEN: Challenge Pools banner #1 (friend-vs-friend trivia Pools) — soft-hidden. Re-enable by uncommenting. */}
