@@ -779,22 +779,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
           </div>
           
           <div className="flex items-center gap-1">
-            {currentIndex > 0 && (
-              <button
-                onClick={scrollToPrev}
-                className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4 text-gray-600" />
-              </button>
-            )}
-            {currentIndex < filteredData.length - 1 && (
-              <button
-                onClick={scrollToNext}
-                className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-              >
-                <ChevronRight className="w-4 h-4 text-gray-600" />
-              </button>
-            )}
             {filteredData.length <= 8 ? (
               <span className="flex items-center gap-1 ml-1" aria-label={`${currentIndex + 1} of ${filteredData.length}`}>
                 {filteredData.map((_, i) => (
@@ -911,106 +895,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                           </div>
                         );
                       })}
-
-                      {/* ─── Inline rating / review strip ─── */}
-                      {item.mediaTitle && session?.access_token && (() => {
-                        const tr = triviaRatings[item.id] || { ratingState: 'idle', rating: 0, reviewText: '', skipped: false, hoverRating: 0, reviewFocused: false };
-                        if (tr.skipped) return null;
-                        return (
-                          <div className="mt-3 rounded-xl bg-violet-50 border border-violet-100 overflow-hidden">
-                            {tr.ratingState === 'idle' && (
-                              <div className="px-3 py-2.5">
-                                <div className="flex items-center justify-between mb-2">
-                                  <p className="text-[10px] font-bold text-violet-600 tracking-widest uppercase">
-                                    Rate {item.mediaTitle}
-                                  </p>
-                                  <button className="text-[10px] text-gray-400" onClick={(e) => { e.stopPropagation(); setTriviaRatingField(item.id, { skipped: true }); }}>
-                                    Skip
-                                  </button>
-                                </div>
-                                <div
-                                  className="flex items-center gap-1"
-                                  onMouseLeave={() => setTriviaRatingField(item.id, { hoverRating: 0 })}
-                                >
-                                  {[1,2,3,4,5].map(s => (
-                                    <button
-                                      key={s}
-                                      className="p-0.5 transition-transform hover:scale-110 active:scale-95"
-                                      onMouseEnter={() => setTriviaRatingField(item.id, { hoverRating: s })}
-                                      onClick={(e) => { e.stopPropagation(); handleTriviaRate(item, s); }}
-                                    >
-                                      <Star size={22} className={(tr.hoverRating || 0) >= s ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
-                                    </button>
-                                  ))}
-                                  <span className="text-[10px] text-gray-400 ml-1">while it's on your mind</span>
-                                </div>
-                              </div>
-                            )}
-                            {tr.ratingState === 'rated' && (
-                              <div>
-                                <div className="px-3 pt-2.5 pb-2 flex items-center justify-between">
-                                  <div>
-                                    <p className="text-[10px] font-bold text-violet-600 tracking-widest uppercase mb-1">{item.mediaTitle}</p>
-                                    <div className="flex items-center gap-0.5">
-                                      {[1,2,3,4,5].map(s => (
-                                        <Star key={s} size={13} className={s <= tr.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
-                                      ))}
-                                      <span className="ml-1 text-[10px] text-gray-500">{tr.rating}/5</span>
-                                    </div>
-                                  </div>
-                                  <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+5 pts</span>
-                                </div>
-                                <div className="border-t border-violet-100 mx-3" />
-                                <div className="px-3 pt-2 pb-2.5">
-                                  <p className="text-[10px] font-semibold text-gray-600 mb-1.5">
-                                    Add a quick take? <span className="font-normal text-gray-400">(optional)</span>
-                                  </p>
-                                  <div className={`flex items-end gap-1.5 bg-white rounded-lg border transition-colors ${tr.reviewFocused ? 'border-violet-300' : 'border-gray-200'}`}>
-                                    <textarea
-                                      value={tr.reviewText}
-                                      onChange={(e) => setTriviaRatingField(item.id, { reviewText: e.target.value })}
-                                      onFocus={() => setTriviaRatingField(item.id, { reviewFocused: true })}
-                                      onBlur={() => setTriviaRatingField(item.id, { reviewFocused: false })}
-                                      placeholder={`Your take on ${item.mediaTitle}…`}
-                                      rows={2}
-                                      className="flex-1 resize-none text-xs text-gray-800 placeholder-gray-400 px-2.5 py-2 bg-transparent outline-none leading-snug"
-                                      onClick={(e) => e.stopPropagation()}
-                                    />
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); handleTriviaReview(item, tr.reviewText); }}
-                                      disabled={!tr.reviewText.trim()}
-                                      className={`mb-1.5 mr-1.5 p-1.5 rounded-lg transition-all ${tr.reviewText.trim() ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-300'}`}
-                                    >
-                                      <Send size={12} />
-                                    </button>
-                                  </div>
-                                  <button className="mt-1 text-[10px] text-gray-400" onClick={(e) => { e.stopPropagation(); handleTriviaReview(item, ''); }}>
-                                    Skip review
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                            {tr.ratingState === 'reviewed' && (
-                              <div className="px-3 py-2.5 flex items-center justify-between">
-                                <div>
-                                  <div className="flex items-center gap-0.5 mb-0.5">
-                                    {[1,2,3,4,5].map(s => (
-                                      <Star key={s} size={12} className={s <= tr.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
-                                    ))}
-                                  </div>
-                                  {tr.reviewText.trim() && (
-                                    <p className="text-[11px] text-gray-500 italic line-clamp-1">"{tr.reviewText}"</p>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                                  <span className="text-[11px] font-semibold text-green-600">Posted</span>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })()}
 
                       {/* Continue/Done button */}
                       <button
