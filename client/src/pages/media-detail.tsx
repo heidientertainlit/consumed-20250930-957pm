@@ -1590,48 +1590,83 @@ export default function MediaDetail() {
           </div>
 
           {/* Match card + tap-to-rate + add to list — only for titles you haven't rated */}
-          {session && !(userRating?.rating || userReview?.rating) && (
+          {session && (() => {
+            const ownRating = Number(userRating?.rating || userReview?.rating) || 0;
+            const isRated = ownRating > 0;
+            // Big tappable star with half-star support (left half = .5, right half = full)
+            const heroStar = (n: number, current: number, interactive: boolean) => {
+              const isFull = current >= n;
+              const isHalf = !isFull && current >= n - 0.5;
+              return (
+                <div key={n} className="relative w-9 h-9">
+                  <Star className="absolute inset-0 w-9 h-9 text-purple-400/60" strokeWidth={1.5} fill="none" />
+                  {(isFull || isHalf) && (
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: isFull ? '100%' : '50%' }}>
+                      <Star className="w-9 h-9 text-purple-400 fill-purple-400" strokeWidth={1.5} />
+                    </div>
+                  )}
+                  {interactive && (
+                    <>
+                      <button
+                        type="button"
+                        aria-label={`Rate ${n - 0.5} stars`}
+                        className="absolute inset-y-0 left-0 w-1/2 z-10"
+                        onClick={() => quickRate(n - 0.5)}
+                        data-testid={`button-quick-rate-${n - 0.5}`}
+                      />
+                      <button
+                        type="button"
+                        aria-label={`Rate ${n} stars`}
+                        className="absolute inset-y-0 right-0 w-1/2 z-10"
+                        onClick={() => quickRate(n)}
+                        data-testid={`button-quick-rate-${n}`}
+                      />
+                    </>
+                  )}
+                </div>
+              );
+            };
+            const quickRate = (val: number) => {
+              setComposeRating(val);
+              setComposerOpen(true);
+              setTimeout(() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+            };
+            return (
             <div className="mt-6 space-y-3">
-              {typeof dnaRecMatch?.score === 'number' && (
+              {!isRated && typeof dnaRecMatch?.score === 'number' && (
                 <div className="flex items-center gap-1.5 px-1" data-testid="card-dna-match">
                   <Dna className="w-3.5 h-3.5 text-purple-400/70" />
                   <span className="text-[13px] text-purple-200/80">{dnaRecMatch.score}% match for you</span>
                 </div>
               )}
               <div className="rounded-2xl border border-purple-300/15 bg-black/20 px-4 py-4" data-testid="card-rate-title">
-                <p className="text-sm font-semibold text-white">Rate this title</p>
-                <div className="mt-3 mb-1 flex items-center justify-center gap-3">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => {
-                        setComposeRating(n);
-                        setComposerOpen(true);
-                        setTimeout(() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-                      }}
-                      className="p-1 active:scale-90 transition-transform"
-                      aria-label={`Rate ${n} star${n > 1 ? 's' : ''}`}
-                      data-testid={`button-quick-rate-${n}`}
-                    >
-                      <Star className={`w-7 h-7 ${composeRating >= n ? 'text-purple-400 fill-purple-400' : 'text-purple-400/70'}`} strokeWidth={1.5} fill={composeRating >= n ? undefined : 'none'} />
-                    </button>
-                  ))}
+                <p className="text-sm font-semibold text-white">{isRated ? 'Your rating' : 'Rate this title'}</p>
+                <div className="mt-3 mb-1 flex items-center justify-center gap-2.5">
+                  {[1, 2, 3, 4, 5].map((n) => heroStar(n, isRated ? ownRating : composeRating, !isRated))}
                 </div>
-                <p className="mt-2 text-center text-xs text-gray-400">Tap to rate</p>
+                {!isRated ? (
+                  <p className="mt-2 text-center text-xs text-gray-400">Tap to rate · tap left side for half stars</p>
+                ) : (
+                  <p className="mt-2 text-center text-xs text-gray-400">You rated this {ownRating % 1 === 0 ? ownRating : ownRating.toFixed(1)} out of 5</p>
+                )}
               </div>
-              {!onListStatus && (
-                <button
-                  type="button"
-                  onClick={() => setIsListSheetOpen(true)}
-                  className="w-full flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-purple-700 to-purple-500 hover:from-purple-600 hover:to-purple-400 text-white text-sm font-semibold py-3 shadow-sm transition-colors"
-                  data-testid="button-hero-add-to-list"
-                >
-                  <Plus className="w-4 h-4" /> Add to my list
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setIsListSheetOpen(true)}
+                className={`w-full flex items-center justify-center gap-1.5 rounded-full text-sm font-semibold py-3 transition-colors ${onListStatus
+                  ? 'border border-purple-300/25 text-purple-200 hover:bg-purple-500/10'
+                  : 'bg-gradient-to-r from-purple-700 to-purple-500 hover:from-purple-600 hover:to-purple-400 text-white shadow-sm'}`}
+                data-testid="button-hero-add-to-list"
+              >
+                {onListStatus ? (
+                  <>On your {onListStatus === 'Want To' ? 'Want To' : onListStatus} list <ChevronDown className="w-4 h-4" /></>
+                ) : (
+                  <><Plus className="w-4 h-4" /> Add to my list</>
+                )}
+              </button>
             </div>
-          )}
+            );
+          })()}
 
           {/* Description — starts open, clamped, with Read more */}
           {mediaItem.description && (
