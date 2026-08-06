@@ -1465,7 +1465,7 @@ export default function MediaDetail() {
                 by {mediaData.creator}
                 {mediaItem.releaseDate && <span> · {new Date(mediaItem.releaseDate).getFullYear()}</span>}
               </p>
-              
+              <div className="border-t border-white/10 my-2.5" />
           {/* Runtime / seasons — small line under the byline */}
               {(() => {
                 const bits: JSX.Element[] = [];
@@ -1488,7 +1488,7 @@ export default function MediaDetail() {
                 }
                 if (runtimeLabel) bits.push(<span key="r" className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-gray-400" />{runtimeLabel}</span>);
                 return bits.length > 0 ? (
-                  <div className="-mt-1 mb-2.5 flex flex-wrap items-center text-sm text-gray-300">
+                  <div className="mb-0 flex flex-wrap items-center text-sm text-gray-300">
                     {bits.map((b, i) => (
                       <span key={i} className="flex items-center">
                         {i > 0 && <span className="mx-2 text-gray-500">·</span>}
@@ -1501,7 +1501,9 @@ export default function MediaDetail() {
 
               {/* Ratings row — divider-separated like the reference design */}
               {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating) && (
-                <div className="flex flex-wrap items-center text-sm mb-2.5">
+                <>
+                <div className="border-t border-white/10 my-2.5" />
+                <div className="flex flex-wrap items-center text-sm mb-0">
                   {(() => {
                     const parts: JSX.Element[] = [];
                     if (avgRating) parts.push(
@@ -1531,13 +1533,20 @@ export default function MediaDetail() {
                     ));
                   })()}
                 </div>
+                </>
               )}
 
             {/* Available on — minimal, deduped provider chips */}
               {mediaItem.platforms && mediaItem.platforms.length > 0 && (
-                <div className="mt-2.5 pt-2.5 border-t border-white/10 -ml-1.5 flex flex-wrap items-center gap-1.5">
+                <><div className="border-t border-white/10 my-2.5" /><div className="-ml-1.5 flex flex-wrap items-center gap-1.5">
                   {(() => {
-                    const baseName = (n: string) => (n || '').replace(/\s+(standard\s+)?with ads.*$/i, '').replace(/\s+(amazon|apple tv|roku premium)\s+channel$/i, '').replace(/\s+(premium|basic|standard)$/i, '').trim();
+                    const baseName = (n: string) => {
+                      let v = (n || '').replace(/\s+(standard\s+)?with ads.*$/i, '').replace(/\s+(premium|basic|standard)$/i, '').trim();
+                      if (/amazon\s+channel$/i.test(v)) return 'Amazon';
+                      if (/apple\s*tv\s+channel$/i.test(v)) return 'Apple TV';
+                      if (/roku(\s+premium)?\s+channel$/i.test(v)) return 'Roku';
+                      return v;
+                    };
                     const seen = new Set<string>();
                     const sorted = [...(mediaItem.platforms as any[])].sort((a: any, b: any) => (a.name || '').length - (b.name || '').length);
                     const unique = sorted.filter((pf: any) => {
@@ -1565,7 +1574,7 @@ export default function MediaDetail() {
                       );
                     });
                   })()}
-                </div>
+                </div></>
               )}
 
             </div>
