@@ -1288,7 +1288,7 @@ export default function MediaDetail() {
             {[1, 2, 3, 4, 5].map((n) => (
               <Star
                 key={n}
-                className={`w-5 h-5 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
+                className={`w-7 h-7 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
               />
             ))}
           </div>
@@ -1321,7 +1321,7 @@ export default function MediaDetail() {
             {[1, 2, 3, 4, 5].map((n) => (
               <Star
                 key={n}
-                className={`w-5 h-5 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
+                className={`w-7 h-7 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
               />
             ))}
           </div>
