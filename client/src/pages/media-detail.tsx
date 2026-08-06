@@ -1302,71 +1302,75 @@ export default function MediaDetail() {
         </div>
       );
     }
+    // Content-first card: rating stars up top, the take itself as the headline,
+    // then a quiet byline (name · time) with actions — Reddit-style.
     return (
-      <div key={cardId} className="flex gap-3 py-4" data-testid={`take-card-${post.id}`}>
-        <div
-          className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
-          style={{ background: avatarBg }}
-        >
-          {initial}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="font-bold text-[14px] text-gray-900 truncate">{name}</span>
-            {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">· {takeTimeAgo(post.created_at)}</span>}
-            {ratingVal > 0 && (
-              <span className="ml-1 flex items-center gap-0.5 shrink-0 text-[12px] font-semibold text-gray-700">
-                <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                {ratingVal}
-              </span>
-            )}
-            {(() => {
-              const tag = dbTagToDisplay(post.post_type);
-              if (!tag) return null;
-              return (
-                <span
-                  className="ml-1 px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase rounded-sm shrink-0"
-                  style={{ backgroundColor: tag.bg, color: tag.fg }}
-                  data-testid={`take-tag-${post.id}`}
-                >
-                  {tag.label}
-                </span>
-              );
-            })()}
+      <div key={cardId} className="py-4" data-testid={`take-card-${post.id}`}>
+        {ratingVal > 0 && (
+          <div className="flex items-center gap-0.5 mb-1.5">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <Star
+                key={n}
+                className={`w-4 h-4 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
+              />
+            ))}
           </div>
-          <button onClick={toggleExpand} className="block w-full text-left" data-testid={`take-toggle-${post.id}`}>
-            <p className={`text-[14px] leading-relaxed mt-0.5 ${hasText ? 'text-gray-800' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-3'}`}>
-              {hasText ? post.content : 'Rated it — no take yet'}
-            </p>
-          </button>
+        )}
+        <button onClick={toggleExpand} className="block w-full text-left" data-testid={`take-toggle-${post.id}`}>
+          <p className={`text-[15px] leading-relaxed ${hasText ? 'text-gray-900' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-4'}`}>
+            {hasText ? post.content : 'Rated it — no take yet'}
+          </p>
+        </button>
 
-          {/* Actions — hidden for synthetic rating-only rows (no social post behind them) */}
+        {/* Byline + actions */}
+        <div className="flex items-center gap-2 mt-2 min-w-0">
+          <div
+            className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+            style={{ background: avatarBg }}
+          >
+            {initial}
+          </div>
+          <span className="text-[13px] font-semibold text-gray-600 truncate">{name}</span>
+          {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">{takeTimeAgo(post.created_at)}</span>}
+          {(() => {
+            const tag = dbTagToDisplay(post.post_type);
+            if (!tag) return null;
+            return (
+              <span
+                className="px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase rounded-sm shrink-0"
+                style={{ backgroundColor: tag.bg, color: tag.fg }}
+                data-testid={`take-tag-${post.id}`}
+              >
+                {tag.label}
+              </span>
+            );
+          })()}
           {!post._ratingOnly && (
-            <div className="flex items-center justify-between mt-2">
-              <div className="flex items-center gap-4 text-gray-400">
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => handleLike(post.id)}
-                    className={`active:scale-90 transition-transform ${isLiked ? 'text-orange-500' : ''}`}
-                    aria-label="Hot take"
-                    data-testid={`take-agree-${post.id}`}
-                  >
-                    <Flame size={16} strokeWidth={2.5} className={isLiked ? 'fill-orange-500' : ''} />
-                  </button>
-                  <span className="text-[12px] font-medium text-gray-500">{Number(post.likes_count) || 0}</span>
-                </div>
+            <div className="ml-auto flex items-center gap-4 text-gray-400 shrink-0">
+              <div className="flex items-center gap-1.5">
                 <button
-                  onClick={toggleExpand}
-                  className="text-[12px] font-medium active:text-purple-600"
-                  data-testid={`take-reply-${post.id}`}
+                  onClick={() => handleLike(post.id)}
+                  className={`active:scale-90 transition-transform ${isLiked ? 'text-orange-500' : ''}`}
+                  aria-label="Hot take"
+                  data-testid={`take-agree-${post.id}`}
                 >
-                  Reply{commentCount > 0 ? ` · ${commentCount}` : ''}
+                  <Flame size={16} strokeWidth={2.5} className={isLiked ? 'fill-orange-500' : ''} />
                 </button>
+                <span className="text-[12px] font-medium text-gray-500">{Number(post.likes_count) || 0}</span>
               </div>
+              <button
+                onClick={toggleExpand}
+                className="text-[12px] font-medium active:text-purple-600"
+                data-testid={`take-reply-${post.id}`}
+              >
+                Reply{commentCount > 0 ? ` · ${commentCount}` : ''}
+              </button>
               <ReportButton contentType="post" contentId={String(post.id)} className="text-gray-300 hover:text-red-500 [&_svg]:w-3.5 [&_svg]:h-3.5" />
             </div>
           )}
+        </div>
 
+        <div className="min-w-0">
           {/* Expanded thread — comments + reply input */}
           {!post._ratingOnly && isExpanded && (
             <div className="mt-3">
@@ -1714,10 +1718,13 @@ export default function MediaDetail() {
               <button
                 type="button"
                 onClick={() => setComposerOpen(true)}
-                className="w-full flex items-center justify-center gap-2 rounded-full bg-purple-900 hover:bg-purple-800 text-white text-[15px] font-semibold py-3 shadow-sm transition-colors active:scale-[0.99]"
+                className="w-full flex items-center gap-3 rounded-full bg-white border border-gray-200 px-4 py-3 text-left shadow-sm hover:border-purple-300 transition-colors active:scale-[0.99]"
                 data-testid="button-open-composer"
               >
-                <Sparkles size={16} /> Add your reaction
+                <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                  <Sparkles size={14} className="text-purple-600" />
+                </div>
+                <span className="text-[14px] text-gray-500">Share your take…</span>
               </button>
             )}
             {composerOpen && (
@@ -1754,12 +1761,28 @@ export default function MediaDetail() {
                 if (bText !== aText) return bText - aText;
                 return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
               });
-            if (communityTakes.length === 0) return null;
+            if (communityTakes.length === 0) {
+              return (
+                <div className="mb-4">
+                  <h3 className="text-base font-semibold text-gray-900 mb-0.5">The conversation</h3>
+                  <div className="py-8 text-center">
+                    <p className="text-sm text-gray-500 mb-2">Quiet in here so far. Someone has to go first —</p>
+                    <button
+                      onClick={() => { setComposerOpen(true); setTimeout(() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50); }}
+                      className="text-sm font-semibold text-purple-600"
+                      data-testid="button-first-take"
+                    >
+                      Share the first take
+                    </button>
+                  </div>
+                </div>
+              );
+            }
             return (
               <div className="mb-4">
-                <h3 className="text-base font-semibold text-gray-900 mb-0.5">What People Are Saying</h3>
-                <p className="text-xs text-gray-500 mb-2">Real reactions from the community</p>
-                <div className="bg-white rounded-2xl px-4 divide-y divide-gray-100">
+                <h3 className="text-base font-semibold text-gray-900 mb-0.5">The conversation</h3>
+                <p className="text-xs text-gray-500 mb-1">Takes and ratings from people here</p>
+                <div className="divide-y divide-gray-200/80">
                   {communityTakes.map((post: any) => renderTakeCard(post, 'trending'))}
                 </div>
               </div>
