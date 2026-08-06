@@ -1266,6 +1266,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [reportPostOpen, setReportPostOpen] = useState(false);
   const [shareCardOpen, setShareCardOpen] = useState(false);
   const takeBarRef = useRef<HTMLDivElement>(null);
+  const [showCounterPrompt, setShowCounterPrompt] = useState(false);
   const [reportCommentTarget, setReportCommentTarget] = useState<{id: string; userId: string; userName: string} | null>(null);
 
   const handleStarClick = (e: React.MouseEvent) => {
@@ -2556,18 +2557,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </span>
           </button>
 
-          {/* Counter — the friendly disagree: say why in a reply */}
+          {/* Counter — the friendly disagree: logged as a reaction, with an optional nudge to say why */}
           <button
             onClick={(e) => {
               e.stopPropagation();
-              const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
-              el?.focus();
+              const wasCountered = localReaction === 'down';
+              handleReaction('down');
+              setShowCounterPrompt(!wasCountered);
             }}
             className="flex items-center gap-1.5 active:scale-95 transition-transform"
             aria-label="Counter"
           >
-            <Undo2 size={15} className="text-gray-400" strokeWidth={2} />
-            <span className="text-[12px] text-gray-500 font-medium">Counter</span>
+            <Undo2 size={15} className={localReaction === 'down' ? 'text-violet-600' : 'text-gray-400'} strokeWidth={localReaction === 'down' ? 2.5 : 2} />
+            <span className={`text-[12px] ${localReaction === 'down' ? 'text-violet-700 font-semibold' : 'text-gray-500 font-medium'}`}>Counter</span>
           </button>
 
           {/* Rate it — other user's post */}
@@ -2596,6 +2598,26 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </button>
           )}
         </div>
+
+        {/* Counter follow-up — optional nudge to explain, never required */}
+        {showCounterPrompt && localReaction === 'down' && (
+          <div className="flex items-center gap-2 mx-4 mb-3 px-3 py-2 rounded-xl bg-violet-50 border border-violet-100" onClick={(e) => e.stopPropagation()}>
+            <p className="flex-1 text-[12px] text-violet-800">Want to expand on why you see it differently?</p>
+            <button
+              onClick={() => {
+                setShowCounterPrompt(false);
+                const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
+                el?.focus();
+              }}
+              className="text-[12px] font-semibold text-violet-700 shrink-0"
+            >
+              Add a comment
+            </button>
+            <button onClick={() => setShowCounterPrompt(false)} className="text-violet-400 shrink-0" aria-label="Dismiss">
+              <X size={14} />
+            </button>
+          </div>
+        )}
 
         {/* ── Take bar — always visible, inline comment strip ── */}
         {session?.access_token && (
