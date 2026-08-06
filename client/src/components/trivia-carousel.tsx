@@ -762,7 +762,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{category === 'Movies' ? 'Movie' : category} {challengesOnly ? 'Challenges' : 'Trivia'}</p>
-                  <p className="text-[10px] text-gray-500">{challengesOnly ? 'Multi-question challenges' : 'One question trivia'}</p>
+                  {challengesOnly && <p className="text-[10px] text-gray-500">Multi-question challenges</p>}
                 </div>
               </>
             ) : (
@@ -772,7 +772,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{challengesOnly ? 'Trivia Challenges' : 'Quick Trivia'}</p>
-                  <p className="text-[10px] text-gray-500">{challengesOnly ? 'Multi-question challenges' : 'One question trivia'}</p>
+                  {challengesOnly && <p className="text-[10px] text-gray-500">Multi-question challenges</p>}
                 </div>
               </>
             )}
@@ -795,9 +795,17 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 <ChevronRight className="w-4 h-4 text-gray-600" />
               </button>
             )}
-            <span className="text-xs text-gray-500 ml-1">
-              {currentIndex + 1}/{filteredData.length}
-            </span>
+            {filteredData.length <= 8 ? (
+              <span className="flex items-center gap-1 ml-1" aria-label={`${currentIndex + 1} of ${filteredData.length}`}>
+                {filteredData.map((_, i) => (
+                  <span key={i} className={`rounded-full transition-all ${i === currentIndex ? 'w-2 h-2 bg-purple-600' : 'w-1.5 h-1.5 bg-gray-300'}`} />
+                ))}
+              </span>
+            ) : (
+              <span className="text-xs text-gray-500 ml-1">
+                {currentIndex + 1}/{filteredData.length}
+              </span>
+            )}
           </div>
         </div>
 
@@ -824,22 +832,35 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                     </span>
                   )}
                 </div>
-                <h3 className="text-gray-900 font-semibold text-[18px] leading-snug mb-4">{item.question}</h3>
-                
+                <h3 className="text-gray-900 font-semibold text-[18px] leading-snug mb-1.5">{item.question}</h3>
+                {!answered && (
+                  <p className="flex items-center gap-1.5 mb-3">
+                    <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                    <span className="text-[12px] font-bold text-purple-600">+{item.pointsReward || 10} pts</span>
+                    <span className="text-[12px] text-gray-400">Correct answer</span>
+                  </p>
+                )}
+
                 {!answered ? (
                   <div className="flex flex-col gap-2">
                     {item.options.map((option, idx) => (
                       <button
                         key={idx}
-                        className={`py-3 px-4 rounded-full text-sm font-medium transition-all text-left ${
+                        className={`flex items-center gap-3 py-2.5 px-3 rounded-xl text-sm font-medium transition-all text-left border ${
                           selected === option 
-                            ? 'bg-purple-600 text-white shadow-md' 
-                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                            ? 'bg-purple-600 border-purple-600 text-white shadow-md' 
+                            : 'bg-white border-gray-200 text-gray-800 hover:border-purple-300 hover:bg-purple-50/40'
                         }`}
                         onClick={() => handleSelectAndSubmit(item, option)}
                         disabled={answerMutation.isPending}
                       >
-                        {option}
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+                          selected === option ? 'bg-white/25 text-white' : 'bg-purple-100 text-purple-700'
+                        }`}>
+                          {String.fromCharCode(65 + idx)}
+                        </span>
+                        <span className="flex-1 min-w-0">{option}</span>
+                        <ChevronRight className={`w-4 h-4 shrink-0 ${selected === option ? 'text-white/70' : 'text-gray-300'}`} />
                       </button>
                     ))}
                     {/* Social proof — most popular pick so far */}
