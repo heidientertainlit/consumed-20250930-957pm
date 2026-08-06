@@ -253,10 +253,7 @@ export function DnaMomentCard({ slot = 0 }: { slot?: number } = {}) {
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center">
             <Dna className="w-3.5 h-3.5 text-white" />
           </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-900">Entertainment DNA</p>
-            <p className="text-[10px] text-gray-500">This feeds your DNA</p>
-          </div>
+          <p className="text-sm font-semibold text-gray-900">Feed Your DNA</p>
         </div>
         
         <div className="flex items-center gap-1">
