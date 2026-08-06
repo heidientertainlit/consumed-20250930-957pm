@@ -427,7 +427,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     return (
       <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
         <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="w-4 h-4 text-purple-500" />
+          <endConfig.icon className="w-4 h-4 text-purple-500" />
           <span className="text-gray-900 font-semibold text-sm">{endConfig.question}</span>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${endConfig.pillBg}`}>{endConfig.pill}</span>
         </div>
@@ -472,7 +472,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-purple-500" />
+          <mediaConfig.icon className="w-4 h-4 text-purple-500" />
           <span className="text-gray-900 font-semibold text-sm">{mediaConfig.question}</span>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${mediaConfig.pillBg}`}>{mediaConfig.pill}</span>
         </div>
