@@ -629,7 +629,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
   if (loadingPersonal && !featured) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4 animate-pulse">
-        <div className="h-[52px]" style={{ background: 'linear-gradient(135deg, #0369a1 0%, #0284c7 40%, #0d9488 100%)' }} />
+        <div className="h-[44px]" />
         <div className="pt-4 pb-3 flex flex-col items-center gap-3">
           <div className="w-24 h-24 rounded-full bg-gray-100" />
           <div className="h-3 w-32 bg-gray-100 rounded-full" />
@@ -644,12 +644,11 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
     <>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
 
-        {/* Hero gradient banner — blue/green */}
-        <div className="relative h-[52px] overflow-hidden" style={{ background: 'linear-gradient(135deg, #0369a1 0%, #0284c7 40%, #0d9488 100%)' }}>
-          <div className="absolute top-2.5 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.28)' }}>
-            <Dna size={10} className="text-white" />
-            <span className="text-white text-[10px] font-bold uppercase tracking-widest">Compare DNA</span>
+        {/* Header — plain white, pill badge */}
+        <div className="relative h-[44px]">
+          <div className="absolute top-2.5 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100">
+            <Dna size={10} className="text-violet-600" />
+            <span className="text-violet-600 text-[10px] font-bold uppercase tracking-widest">Compare DNA</span>
           </div>
           <button
             onClick={() => {
@@ -662,65 +661,45 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                 window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`, '_blank');
               }
             }}
-            className="absolute top-2.5 right-3 flex items-center gap-1 text-white/70 hover:text-white transition-colors"
+            className="absolute top-2.5 right-3 flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors"
           >
             <Share2 size={13} />
             <span className="text-[11px] font-medium">Share</span>
           </button>
         </div>
 
-        {/* Triangle layout — compact, centered */}
-        <div className="pt-3 pb-2 flex flex-col items-center">
+        {/* Split card — you (violet) vs friend (amber), match badge centered */}
+        <div className="px-3 pt-1 pb-3">
           {!featured ? (
             <p className="text-gray-500 text-[13px] font-medium py-2 text-center">No friends to compare with yet.</p>
           ) : (
-            <div className="flex flex-col items-center" style={{ width: 210 }}>
-              {/* Arc ring — top of triangle, large */}
-              {(() => {
-                const pct = featured.pct;
-                const r = 46;
-                const circ = 2 * Math.PI * r;
-                const dash = (pct / 100) * circ;
-                return (
-                  <div className="relative flex items-center justify-center" style={{ width: 100, height: 100 }}>
-                    <svg className="absolute inset-0" width="100" height="100" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
-                      <circle cx="50" cy="50" r={r} fill="none" stroke="#ede9fe" strokeWidth="4" />
-                      <circle cx="50" cy="50" r={r} fill="none" stroke="#8b5cf6" strokeWidth="4"
-                        strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
-                    </svg>
-                    <div className="flex flex-col items-center z-10">
-                      <span className="font-black leading-none" style={{ fontSize: 24, color: '#8b5cf6' }}>{pct}%</span>
-                      <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Two circles — bottom of triangle, close together */}
-              <div className="flex justify-between w-full items-start">
-                <div className="flex flex-col items-center gap-0.5" style={{ width: 90 }}>
-                  <div className="rounded-full flex items-center justify-center font-black text-white text-[13px] shadow"
-                    style={{ width: 44, height: 44, background: '#8b5cf6' }}>
-                    {session?.user?.user_metadata?.display_name
-                      ? initials(session.user.user_metadata.display_name)
-                      : (user?.email?.[0] ?? 'Y').toUpperCase()}
-                  </div>
-                  <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wide text-center">
-                    {(session?.user?.user_metadata?.display_name ?? 'You').split(' ')[0]}
-                  </span>
-                  {myLabel && <span className="text-[8px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{myLabel}</span>}
+            <div className="relative flex rounded-2xl overflow-hidden border border-gray-100">
+              <div className="flex-1 bg-violet-50/70 flex flex-col items-center pt-5 pb-4 px-2">
+                <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] shadow"
+                  style={{ width: 56, height: 56, background: '#8b5cf6' }}>
+                  {session?.user?.user_metadata?.display_name
+                    ? initials(session.user.user_metadata.display_name)
+                    : (user?.email?.[0] ?? 'Y').toUpperCase()}
                 </div>
-
-                <div className="flex flex-col items-center gap-0.5" style={{ width: 90 }}>
-                  <div className="rounded-full flex items-center justify-center font-black text-white text-[13px] shadow"
-                    style={{ width: 44, height: 44, background: featured.color }}>
-                    {featured.initials}
-                  </div>
-                  <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wide text-center">
-                    {featured.displayName.split(' ')[0]}
-                  </span>
-                  {featured.label && <span className="text-[8px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{featured.label}</span>}
+                <span className="text-[13px] font-bold text-gray-900 mt-2 text-center">
+                  {(session?.user?.user_metadata?.display_name ?? 'You').split(' ')[0]}
+                </span>
+                {myLabel && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{myLabel}</span>}
+              </div>
+              <div className="flex-1 bg-amber-50/80 flex flex-col items-center pt-5 pb-4 px-2">
+                <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] shadow"
+                  style={{ width: 56, height: 56, background: featured.color }}>
+                  {featured.initials}
                 </div>
+                <span className="text-[13px] font-bold text-gray-900 mt-2 text-center">
+                  {featured.displayName.split(' ')[0]}
+                </span>
+                {featured.label && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{featured.label}</span>}
+              </div>
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-md flex flex-col items-center justify-center"
+                style={{ width: 76, height: 76 }}>
+                <span className="font-black leading-none text-gray-900" style={{ fontSize: 22 }}>{featured.pct}%</span>
+                <span className="text-[8px] font-bold text-violet-600 uppercase tracking-widest mt-0.5">Match</span>
               </div>
             </div>
           )}
@@ -939,12 +918,11 @@ export function DnaComparePostCard({ item }: { item: any }) {
     <>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
 
-        {/* Hero gradient banner — blue/green */}
-        <div className="relative h-[52px] overflow-hidden" style={{ background: 'linear-gradient(135deg, #0369a1 0%, #0284c7 40%, #0d9488 100%)' }}>
-          <div className="absolute top-2.5 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.28)' }}>
-            <Dna size={10} className="text-white" />
-            <span className="text-white text-[10px] font-bold uppercase tracking-widest">Compare DNA</span>
+        {/* Header — plain white, pill badge */}
+        <div className="relative h-[44px]">
+          <div className="absolute top-2.5 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100">
+            <Dna size={10} className="text-violet-600" />
+            <span className="text-violet-600 text-[10px] font-bold uppercase tracking-widest">Compare DNA</span>
           </div>
           <button
             onClick={() => {
@@ -956,7 +934,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
                 window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`, '_blank');
               }
             }}
-            className="absolute top-2.5 right-3 flex items-center gap-1 text-white/70 hover:text-white transition-colors"
+            className="absolute top-2.5 right-3 flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors"
           >
             <Share2 size={13} />
             <span className="text-[11px] font-medium">Share</span>
