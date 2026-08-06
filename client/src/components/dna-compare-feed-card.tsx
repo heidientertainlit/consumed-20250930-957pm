@@ -627,6 +627,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
   const overlaps = dynOverlaps.length > 0 ? dynOverlaps : (overlapsProp ?? []);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [savingImage, setSavingImage] = useState(false);
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
   const cardRef = useReactRef<HTMLDivElement>(null);
 
   // Show skeleton while loading — prevents null crash on featured.pct etc.
@@ -685,19 +686,22 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                   if (!cardRef.current || savingImage) return;
                   setSavingImage(true);
                   try {
-                    const canvas = await html2canvas(cardRef.current, { backgroundColor: '#ffffff', scale: 2, useCORS: true });
-                    const blob: Blob | null = await new Promise(res => canvas.toBlob(res, 'image/png'));
-                    if (!blob) return;
-                    const file = new File([blob], 'dna-match.png', { type: 'image/png' });
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                      await navigator.share({ files: [file], title: 'My Entertainment DNA' }).catch(() => {});
-                    } else {
-                      const a = document.createElement('a');
-                      a.href = URL.createObjectURL(blob);
-                      a.download = 'dna-match.png';
-                      a.click();
-                      URL.revokeObjectURL(a.href);
+                    const canvas = await html2canvas(cardRef.current, { scale: 3, useCORS: true, backgroundColor: '#ffffff' });
+                    const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+                    if (blob && navigator.share) {
+                      const file = new File([blob], 'dna-match.png', { type: 'image/png' });
+                      const withImage = { files: [file], title: 'My Entertainment DNA' } as any;
+                      try {
+                        if (navigator.canShare?.(withImage)) {
+                          await navigator.share(withImage);
+                          return;
+                        }
+                      } catch (err: any) {
+                        if (err?.name === 'AbortError') return;
+                      }
                     }
+                    // Fallback: show the image in-app so it can be long-pressed / right-click saved
+                    setShareImageUrl(canvas.toDataURL('image/png'));
                   } catch (err) {
                     console.error('Failed to save image', err);
                   } finally {
@@ -876,6 +880,15 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           session={session}
           userId={user.id}
         />
+      )}
+
+      {shareImageUrl && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-black/80 flex flex-col items-center justify-center p-6" onClick={() => setShareImageUrl(null)}>
+          <img src={shareImageUrl} alt="Your DNA match" className="max-w-full max-h-[70vh] rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()} />
+          <p className="text-white/90 text-[13px] font-medium mt-4 text-center">Press and hold the image to save it to your photos</p>
+          <button onClick={() => setShareImageUrl(null)} className="mt-3 px-5 py-2 rounded-full bg-white/15 text-white text-[13px] font-semibold">Close</button>
+        </div>,
+        document.body
       )}
     </>
   );
