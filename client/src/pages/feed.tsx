@@ -2269,7 +2269,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {/* Header: label + type pill + ‹ N of M › nav */}
           <div className="flex items-center justify-between px-4 pt-4 pb-2">
             <div className="flex items-center flex-wrap gap-2 gap-y-1">
-              <span className="text-gray-900 font-bold text-sm">Rate &amp; Review</span>
+              <span className="px-2.5 py-1 rounded-full bg-purple-50 text-purple-700 font-semibold text-[12px]">Rate &amp; Review</span>
             </div>
             {swipeProps?.navigate && swipeProps?.totalPosts && swipeProps.totalPosts > 1 && (
               <div className="flex items-center gap-1">
