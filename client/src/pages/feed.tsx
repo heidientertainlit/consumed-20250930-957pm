@@ -32,7 +32,7 @@ import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 
-import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronLeft, ChevronRight, ChevronDown, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, ArrowRight, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap, Smile, Share2 } from "lucide-react";
+import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronLeft, ChevronRight, ChevronDown, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, ArrowRight, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap, Smile, Share2, Undo2 } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import MentionInput from "@/components/mention-input";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -1265,6 +1265,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [isSearchingMedia, setIsSearchingMedia] = useState(false);
   const [reportPostOpen, setReportPostOpen] = useState(false);
   const [shareCardOpen, setShareCardOpen] = useState(false);
+  const takeBarRef = useRef<HTMLDivElement>(null);
   const [reportCommentTarget, setReportCommentTarget] = useState<{id: string; userId: string; userName: string} | null>(null);
 
   const handleStarClick = (e: React.MouseEvent) => {
@@ -2541,16 +2542,32 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           )}
 
-          {/* ── Action row: Hot take · Rate · Tell a friend (left-aligned) ── */}
+          {/* ── Action row: Agree · Counter · Rate · Share (left-aligned) ── */}
           <div className="flex items-center justify-start gap-6 px-4 pb-4" onClick={(e) => e.stopPropagation()}>
-          {/* Hot take */}
+          {/* Agree */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
             className="flex items-center gap-1.5 active:scale-95 transition-transform"
-            aria-label="Hot take"
+            aria-label="Agree"
           >
-            <Flame size={15} className={isLiked && !localReaction ? 'text-orange-500 fill-orange-500' : 'text-gray-400'} strokeWidth={isLiked && !localReaction ? 2.5 : 2} />
-            <span className={`text-[12px] ${isLiked && !localReaction ? 'text-orange-600 font-semibold' : 'text-gray-500 font-medium'}`}>{post.likes || 0}</span>
+            <Check size={15} className={isLiked && !localReaction ? 'text-green-600' : 'text-gray-400'} strokeWidth={isLiked && !localReaction ? 3 : 2} />
+            <span className={`text-[12px] ${isLiked && !localReaction ? 'text-green-700 font-semibold' : 'text-gray-500 font-medium'}`}>
+              Agree{(post.likes || 0) > 0 ? ` · ${post.likes}` : ''}
+            </span>
+          </button>
+
+          {/* Counter — the friendly disagree: say why in a reply */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
+              el?.focus();
+            }}
+            className="flex items-center gap-1.5 active:scale-95 transition-transform"
+            aria-label="Counter"
+          >
+            <Undo2 size={15} className="text-gray-400" strokeWidth={2} />
+            <span className="text-[12px] text-gray-500 font-medium">Counter</span>
           </button>
 
           {/* Rate it — other user's post */}
@@ -2582,7 +2599,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
         {/* ── Take bar — always visible, inline comment strip ── */}
         {session?.access_token && (
-          <div className="flex items-center gap-2 px-4 pb-4 pt-0" onClick={(e) => e.stopPropagation()}>
+          <div ref={takeBarRef} className="flex items-center gap-2 px-4 pb-4 pt-0" onClick={(e) => e.stopPropagation()}>
             <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
               <span className="text-violet-600 text-[9px] font-bold">
                 {(session?.user?.user_metadata?.display_name || session?.user?.email || 'Y')[0]?.toUpperCase()}
