@@ -818,7 +818,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   <p className="flex items-center gap-1.5 mb-3">
                     <Trophy className="w-3.5 h-3.5 text-yellow-500" />
                     <span className="text-[12px] font-bold text-purple-600">+{item.pointsReward || 10} pts</span>
-                    <span className="text-[12px] text-gray-400">Correct answer</span>
                   </p>
                 )}
 
