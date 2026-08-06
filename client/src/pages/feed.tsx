@@ -214,6 +214,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
 }) {
   const [expandedKey, setExpandedKey] = useState<string | null>(single && groups[0] ? groups[0].key : null);
   const [activeTakeId, setActiveTakeId] = useState<string | null>(null);
+  const [replyOpenId, setReplyOpenId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [commentedIds, setCommentedIds] = useState<Set<string>>(new Set());
@@ -525,22 +526,32 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                         <div key={takeId} className="px-1 py-2">
                           <div className="flex gap-2">
                             <div className="flex-1 min-w-0">
-                              {/* Commentary featured first */}
-                              {hasText && (
-                                <p className={`text-[13.5px] text-gray-900 leading-snug ${isActive ? '' : 'line-clamp-3'}`}>{t.content}</p>
-                              )}
+                              {/* Commentary featured — tap it to react */}
+                              {hasText ? (
+                                <button
+                                  className="block w-full text-left"
+                                  onClick={() => { setActiveTakeId(isActive ? null : takeId); setReplyOpenId(null); setCommentText(''); }}
+                                >
+                                  <p className={`text-[15px] text-gray-900 leading-snug ${isActive ? '' : 'line-clamp-3'}`}>{t.content}</p>
+                                </button>
+                              ) : t.rating ? (
+                                <button
+                                  className="flex items-center gap-0.5 text-left"
+                                  onClick={() => { setActiveTakeId(isActive ? null : takeId); setReplyOpenId(null); setCommentText(''); }}
+                                >
+                                  {[1,2,3,4,5].map(sn => (
+                                    <Star key={sn} size={22} className={sn <= Math.round(Number(t.rating)) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
+                                  ))}
+                                </button>
+                              ) : null}
                               {/* name · time — small, underneath */}
-                              <p className={`text-[11px] text-gray-500 leading-none ${hasText ? 'mt-1' : ''}`}>
+                              <p className="text-[11px] text-gray-500 leading-none mt-1">
                                 <span className="font-semibold text-gray-600">— {n}</span>
                                 {when && <span> · {when}</span>}
-                                {!hasText && t.rating && (
-                                  <span className="inline-flex items-center gap-0.5 ml-1.5 text-gray-600">
-                                    rated <Star size={10} className="text-yellow-400 fill-yellow-400 inline" /> {t.rating}/5
-                                  </span>
-                                )}
                               </p>
-                              {/* Action row: Agree · Counter · Reply — kept quiet */}
-                              <div className="flex items-center gap-5 mt-1 opacity-80">
+                              {/* Action row — revealed by tapping the take */}
+                              {isActive && (
+                              <div className="flex items-center gap-5 mt-1.5">
                                 <button
                                   onClick={() => reactToTake(t.id, 'up')}
                                   className={`flex items-center gap-1 text-[11px] p-0.5 ${takeReactions[t.id] === 'up' ? 'text-green-600 font-semibold' : 'text-gray-400 font-medium'}`}
@@ -558,8 +569,8 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                                   Counter
                                 </button>
                                 <button
-                                  onClick={() => { setActiveTakeId(isActive ? null : takeId); setCommentText(''); }}
-                                  className={`flex items-center gap-1 text-[11px] p-0.5 font-medium ${isActive ? 'text-violet-600' : 'text-gray-400'}`}
+                                  onClick={() => { setReplyOpenId(replyOpenId === takeId ? null : takeId); setCommentText(''); }}
+                                  className={`flex items-center gap-1 text-[11px] p-0.5 font-medium ${replyOpenId === takeId ? 'text-violet-600' : 'text-gray-400'}`}
                                 >
                                   <MessageCircle size={12} /> Reply{(() => {
                                     const shown = Math.max(replyCount, (threadReplies[t.id] || []).length);
@@ -567,6 +578,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                                   })()}
                                 </button>
                               </div>
+                              )}
 
                               {/* Visible replies — the thread grows under each take */}
                               {(threadReplies[t.id] || []).length > 0 && (
@@ -588,7 +600,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                                   })}
                                 </div>
                               )}
-                              {isActive && (
+                              {replyOpenId === takeId && (
                                 <div className="mt-2 flex items-center gap-1.5">
                                   <div className="flex-1 min-w-0">
                                     <MentionInput
