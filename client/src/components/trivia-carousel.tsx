@@ -810,10 +810,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                     <p className="text-[11px] font-bold text-purple-600 uppercase tracking-wider">{item.showTag}</p>
                   )}
                   {answered && (
-                    <span className="flex items-center gap-1 bg-green-50 border border-green-200 rounded-full px-2 py-0.5 ml-auto flex-shrink-0">
-                      <CheckCircle size={10} className="text-green-500" />
-                      <span className="text-[10px] font-bold text-green-600">Done</span>
-                    </span>
+                    <CheckCircle size={16} className="text-green-500 ml-auto flex-shrink-0" aria-label="Done" />
                   )}
                 </div>
                 <h3 className="text-gray-900 font-semibold text-[18px] leading-snug mb-1.5">{item.question}</h3>
