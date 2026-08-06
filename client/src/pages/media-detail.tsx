@@ -1465,7 +1465,7 @@ export default function MediaDetail() {
                 by {mediaData.creator}
                 {mediaItem.releaseDate && <span> · {new Date(mediaItem.releaseDate).getFullYear()}</span>}
               </p>
-              <div className="border-t border-white/10 my-2.5" />
+              <div className="border-t border-white/[0.05] my-2.5 mr-4" />
           {/* Runtime / seasons — small line under the byline */}
               {(() => {
                 const bits: JSX.Element[] = [];
@@ -1502,7 +1502,7 @@ export default function MediaDetail() {
               {/* Ratings row — divider-separated like the reference design */}
               {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating) && (
                 <>
-                <div className="border-t border-white/10 my-2.5" />
+                <div className="border-t border-white/[0.05] my-2.5 mr-4" />
                 <div className="flex flex-wrap items-center text-sm mb-0">
                   {(() => {
                     const parts: JSX.Element[] = [];
@@ -1538,7 +1538,7 @@ export default function MediaDetail() {
 
             {/* Available on — minimal, deduped provider chips */}
               {mediaItem.platforms && mediaItem.platforms.length > 0 && (
-                <><div className="border-t border-white/10 my-2.5" /><div className="-ml-1.5 flex flex-wrap items-center gap-1.5">
+                <><div className="border-t border-white/[0.05] my-2.5 mr-4" /><div className="-ml-1.5 flex flex-wrap items-center gap-1.5">
                   {(() => {
                     const baseName = (n: string) => {
                       let v = (n || '').replace(/\s+(standard\s+)?with ads.*$/i, '').replace(/\s+(premium|basic|standard)$/i, '').trim();
