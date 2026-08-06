@@ -673,23 +673,46 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           {!featured ? (
             <p className="text-gray-500 text-[13px] font-medium py-2 text-center">No friends to compare with yet.</p>
           ) : (
-            <div className="relative flex rounded-2xl overflow-hidden border border-gray-100">
-              <div className="flex-1 bg-violet-50/70 flex flex-col items-center justify-end pt-[120px] pb-4 px-2">
-                <span className="text-[13px] font-bold text-gray-900 text-center">
-                  {(session?.user?.user_metadata?.display_name ?? 'You').split(' ')[0]}
-                </span>
-                {myLabel && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{myLabel}</span>}
+            <div className="flex flex-col items-center pt-1 pb-2">
+              {/* Big match number */}
+              <span className="font-black leading-none" style={{ fontSize: 44, color: '#7c3aed' }}>{featured.pct}%</span>
+              <span className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Match</span>
+
+              {/* Avatars joined by dashed line with DNA strand in the middle */}
+              <div className="flex items-center w-full max-w-[300px] mt-5 px-2">
+                <div className="flex flex-col items-center" style={{ width: 100 }}>
+                  <div className="rounded-full flex items-center justify-center font-black text-white text-[15px] shadow"
+                    style={{ width: 52, height: 52, background: '#8b5cf6' }}>
+                    {session?.user?.user_metadata?.display_name
+                      ? initials(session.user.user_metadata.display_name)
+                      : (user?.email?.[0] ?? 'Y').toUpperCase()}
+                  </div>
+                </div>
+                <div className="flex-1 border-t-2 border-dashed border-gray-200" />
+                <Dna size={18} className="text-violet-500 shrink-0 mx-1.5" />
+                <div className="flex-1 border-t-2 border-dashed border-gray-200" />
+                <div className="flex flex-col items-center" style={{ width: 100 }}>
+                  <div className="rounded-full flex items-center justify-center font-black text-white text-[15px] shadow"
+                    style={{ width: 52, height: 52, background: '#3b82f6' }}>
+                    {featured.initials}
+                  </div>
+                </div>
               </div>
-              <div className="flex-1 bg-blue-50/70 flex flex-col items-center justify-end pt-[120px] pb-4 px-2">
-                <span className="text-[13px] font-bold text-gray-900 text-center">
-                  {featured.displayName.split(' ')[0]}
-                </span>
-                {featured.label && <span className="text-[10px] text-blue-500 font-medium text-center leading-tight line-clamp-2">{featured.label}</span>}
-              </div>
-              <div className="absolute left-1/2 -translate-x-1/2 rounded-full shadow-lg flex flex-col items-center justify-center"
-                style={{ width: 92, height: 92, top: 20, background: 'white', border: '3px solid #8b5cf6' }}>
-                <span className="font-black leading-none" style={{ fontSize: 23, color: '#7c3aed' }}>{featured.pct}%</span>
-                <span className="text-[10px] font-bold text-violet-500 uppercase tracking-widest mt-1">Match</span>
+              {/* Names + archetypes under each avatar */}
+              <div className="flex w-full max-w-[300px] px-2 mt-2">
+                <div className="flex flex-col items-center" style={{ width: 100 }}>
+                  <span className="text-[13px] font-bold text-gray-900 text-center">
+                    {(session?.user?.user_metadata?.display_name ?? 'You').split(' ')[0]}
+                  </span>
+                  {myLabel && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{myLabel}</span>}
+                </div>
+                <div className="flex-1" />
+                <div className="flex flex-col items-center" style={{ width: 100 }}>
+                  <span className="text-[13px] font-bold text-gray-900 text-center">
+                    {featured.displayName.split(' ')[0]}
+                  </span>
+                  {featured.label && <span className="text-[10px] text-blue-500 font-medium text-center leading-tight line-clamp-2">{featured.label}</span>}
+                </div>
               </div>
             </div>
           )}
