@@ -229,6 +229,26 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
   const [threadReplies, setThreadReplies] = useState<Record<string, any[]>>({});
   const [disagreeCounts, setDisagreeCounts] = useState<Record<string, number>>({});
   const [loadedKeys, setLoadedKeys] = useState<Set<string>>(new Set());
+  // External rating (IMDb/TMDB score etc.) for the featured title
+  const [extScores, setExtScores] = useState<Record<string, string>>({});
+  const extFetchedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!session?.access_token) return;
+    const targets = single ? groups.slice(0, 1) : [];
+    targets.forEach((g: any) => {
+      if (!g?.externalId || !g?.externalSource || extFetchedRef.current.has(g.key)) return;
+      extFetchedRef.current.add(g.key);
+      fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${g.externalSource}&external_id=${g.externalId}&media_type=${g.mediaType || ''}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          const score = d?.tmdb_score ? `${Number(d.tmdb_score).toFixed(1)} IMDb` : d?.google_books_rating ? `${Number(d.google_books_rating).toFixed(1)} Books` : null;
+          if (score) setExtScores(prev => ({ ...prev, [g.key]: score }));
+        })
+        .catch(() => {});
+    });
+  }, [single, groups, session?.access_token]);
 
   // Load disagree counts for ALL takes up-front so collapsed rows can show them.
   // Keyed on take ids + user so counts refetch if groups or the signed-in user change.
@@ -446,21 +466,48 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-2 p-3 border border-violet-100">
       <div className="flex items-center gap-1.5 mb-1 px-1">
         <Flame size={15} className="text-orange-500 fill-orange-500 shrink-0" />
-        <span className="text-[13px] font-semibold text-violet-600 truncate">{single ? `Conversations about ${groups[0]?.title || ''}` : 'Trending Takes'}</span>
+        <span className="text-[13px] font-semibold text-violet-600 truncate">{single ? 'People are talking' : 'Trending Takes'}</span>
         {!single && <span className="text-[11px] text-gray-400 font-medium ml-auto">Trending now</span>}
       </div>
 
       <div className="divide-y divide-gray-100">
         {groups.map((g: any) => {
-          const isOpen = expandedKey === g.key;
+          const isOpen = single || expandedKey === g.key;
           const myRating = ratings[g.key] || 0;
           const topGlimpse = g.topTakes.find((t: any) => t.content?.trim());
 
           return (
             <div key={g.key}>
-              {/* Compact trending row — same look expanded or not */}
+              {isOpen ? (
+                /* Open header — poster left; title, overall rating, and tap-to-rate stars right */
+                <div className="w-full flex items-start gap-3 text-left py-2 px-1">
+                  <div
+                    className="relative shrink-0 w-[72px] h-[104px] rounded-lg overflow-hidden bg-gray-900 cursor-pointer"
+                    style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.18)' }}
+                    onClick={() => onOpenMedia(g)}
+                  >
+                    {g.mediaImage?.startsWith?.('http') && (
+                      <img src={g.mediaImage} alt={g.title} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[18px] font-bold text-gray-900 leading-snug cursor-pointer" onClick={() => onOpenMedia(g)}>{g.title}</p>
+                    <p className="text-[11.5px] text-gray-500 mt-0.5">
+                      {extScores[g.key] && <><span className="font-semibold text-gray-700">{extScores[g.key]}</span> · </>}{g.talkingCount} people talking
+                    </p>
+                    <div className="flex items-center gap-0.5 mt-2 -ml-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button key={star} onClick={() => submitRating(g, star)} className="p-1 active:scale-90 transition-transform">
+                          <Star size={30} className={myRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+                        </button>
+                      ))}
+                      {savedKeys.has(g.key) && <span className="text-[10.5px] text-green-600 font-medium ml-1">Saved</span>}
+                    </div>
+                  </div>
+                </div>
+              ) : (
               <button
-                onClick={() => { setExpandedKey(isOpen ? null : g.key); setActiveTakeId(null); setCommentText(''); if (!isOpen) loadThread(g); }}
+                onClick={() => { setExpandedKey(g.key); setActiveTakeId(null); setCommentText(''); loadThread(g); }}
                 className="w-full flex items-start gap-3 text-left py-2 px-1 active:bg-gray-50"
               >
                 {/* Big poster anchor */}
@@ -475,17 +522,16 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                 </div>
                 <div className="flex-1 min-w-0">
                   {/* Take is the headline */}
-                  {topGlimpse && !isOpen ? (
+                  {topGlimpse ? (
                     <p className="text-[14px] font-normal text-gray-800 leading-snug line-clamp-3">
                       "{topGlimpse.content}"
                     </p>
                   ) : (
                     <p className="text-[14px] font-medium text-gray-800 leading-snug">{g.title}</p>
                   )}
-                  {/* Media context line under the take */}
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <span className="text-[11.5px] text-gray-500 truncate">
-                      {!isOpen && <><span className="font-medium text-gray-700">{g.title}</span> · </>}{g.talkingCount} people talking
+                      <span className="font-medium text-gray-700">{g.title}</span> · {g.talkingCount} people talking
                     </span>
                     {topGlimpse && (() => {
                       const agree = (topGlimpse.likes || topGlimpse.likes_count || 0) + (takeReactions[topGlimpse.id] === 'up' ? 1 : 0);
@@ -497,20 +543,11 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                     })()}
                   </div>
                 </div>
-                <ChevronDown size={16} className={`text-gray-400 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
               </button>
+              )}
 
               {isOpen && (
                 <div className="pb-2 pl-1 pr-1">
-                  {/* Inline rating */}
-                  <div className="flex items-center gap-0.5">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button key={star} onClick={() => submitRating(g, star)} className="p-1 active:scale-90 transition-transform">
-                        <Star size={32} className={myRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
-                      </button>
-                    ))}
-                    {savedKeys.has(g.key) && <span className="text-[10.5px] text-green-600 font-medium ml-1">Saved</span>}
-                  </div>
 
                   {/* Takes — visible, tap a take to reply to it */}
                   <div className="mt-1 divide-y divide-gray-100">
@@ -546,7 +583,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                               ) : null}
                               {/* name · time — small, underneath */}
                               <p className="text-[11px] text-gray-500 leading-none mt-1">
-                                <span className="font-semibold text-gray-600">— {n}</span>
+                                <span className="font-normal text-gray-500">— {n}</span>
                                 {when && <span> · {when}</span>}
                               </p>
                               {/* Action row — revealed by tapping the take */}
