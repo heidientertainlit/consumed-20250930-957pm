@@ -663,8 +663,8 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
             }}
             className="absolute top-2.5 right-3 flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <Share2 size={13} />
-            <span className="text-[11px] font-medium">Share</span>
+            <span className="text-[13px] font-medium">Share</span>
+            <span className="text-[13px]" aria-hidden="true">→</span>
           </button>
         </div>
 
@@ -680,16 +680,16 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                 </span>
                 {myLabel && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{myLabel}</span>}
               </div>
-              <div className="flex-1 bg-amber-50/80 flex flex-col items-center justify-end pt-[120px] pb-4 px-2">
+              <div className="flex-1 bg-blue-50/70 flex flex-col items-center justify-end pt-[120px] pb-4 px-2">
                 <span className="text-[13px] font-bold text-gray-900 text-center">
                   {featured.displayName.split(' ')[0]}
                 </span>
-                {featured.label && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{featured.label}</span>}
+                {featured.label && <span className="text-[10px] text-blue-500 font-medium text-center leading-tight line-clamp-2">{featured.label}</span>}
               </div>
               <div className="absolute left-1/2 -translate-x-1/2 rounded-full shadow-lg flex flex-col items-center justify-center"
-                style={{ width: 92, height: 92, top: 20, background: 'linear-gradient(160deg, #064e3b 0%, #059669 60%, #10b981 100%)' }}>
-                <span className="font-black leading-none text-white" style={{ fontSize: 23 }}>{featured.pct}%</span>
-                <span className="text-[10px] font-bold text-white/90 uppercase tracking-widest mt-1">Match</span>
+                style={{ width: 92, height: 92, top: 20, background: 'white', border: '3px solid #8b5cf6' }}>
+                <span className="font-black leading-none" style={{ fontSize: 23, color: '#7c3aed' }}>{featured.pct}%</span>
+                <span className="text-[10px] font-bold text-violet-500 uppercase tracking-widest mt-1">Match</span>
               </div>
             </div>
           )}
@@ -926,8 +926,8 @@ export function DnaComparePostCard({ item }: { item: any }) {
             }}
             className="absolute top-2.5 right-3 flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <Share2 size={13} />
-            <span className="text-[11px] font-medium">Share</span>
+            <span className="text-[13px] font-medium">Share</span>
+            <span className="text-[13px]" aria-hidden="true">→</span>
           </button>
         </div>
 
