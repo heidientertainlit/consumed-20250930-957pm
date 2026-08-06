@@ -419,12 +419,9 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
     <div className="bg-white border border-gray-100 shadow rounded-2xl p-4 overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          {category && (
-            <span className="inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-full bg-blue-100 text-blue-700 text-[11px] font-bold tracking-wide">
-              {category}
-            </span>
-          )}
-          <p className="text-sm font-semibold text-gray-900">Cast Your Vote</p>
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-purple-50 text-purple-600/80 font-medium text-[11px]">
+            Cast Your Vote{category ? ` (${category})` : ''}
+          </span>
         </div>
 
         <div className="flex items-center gap-1.5">
@@ -455,19 +452,22 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
               </div>
               
               {!voted ? (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
                   {poll.options.slice(0, 4).map((option, idx) => (
                     <button
                       key={idx}
-                      className={`min-h-[72px] py-3 px-3 rounded-2xl border text-[14px] font-medium transition-all flex items-center justify-center text-center leading-tight ${
+                      className={`w-full py-3 px-3 rounded-2xl border text-[14px] font-medium transition-all flex items-center gap-3 text-left leading-tight ${
                         selected === option
-                          ? 'bg-gradient-to-br from-slate-800 to-blue-900 border-blue-500/50 text-white shadow-lg'
-                          : 'bg-gray-50 border-gray-200/80 text-gray-700 hover:bg-gray-100'
+                          ? 'bg-violet-50 border-violet-400 text-violet-900'
+                          : 'bg-white border-gray-200 text-gray-800 hover:bg-gray-50 shadow-sm'
                       }`}
                       onClick={() => handleSelectAndVote(poll, option)}
                       disabled={voteMutation.isPending}
                     >
-                      {option}
+                      <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[12px] font-bold shrink-0 ${selected === option ? 'bg-violet-200 text-violet-700' : 'bg-gray-100 text-gray-500'}`}>
+                        {idx + 1}
+                      </span>
+                      <span className="flex-1">{option}</span>
                     </button>
                   ))}
                 </div>
