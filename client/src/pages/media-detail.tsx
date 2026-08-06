@@ -75,6 +75,18 @@ export default function MediaDetail() {
   const [isComposePosting, setIsComposePosting] = useState(false);
   const [composePredictionOptions, setComposePredictionOptions] = useState<string[]>(["", ""]);
   const [composerOpen, setComposerOpen] = useState(false);
+  // Rotating conversation-starter prompts for the composer trigger
+  const TAKE_PROMPTS = [
+    'I wish that this…',
+    "I couldn't believe…",
+    'The characters were…',
+    "Season 1 didn't…",
+  ];
+  const [promptIdx, setPromptIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setPromptIdx((i) => (i + 1) % TAKE_PROMPTS.length), 4000);
+    return () => clearInterval(t);
+  }, []);
   const composeSectionRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1311,7 +1323,7 @@ export default function MediaDetail() {
             {[1, 2, 3, 4, 5].map((n) => (
               <Star
                 key={n}
-                className={`w-4 h-4 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
+                className={`w-5 h-5 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
               />
             ))}
           </div>
@@ -1324,12 +1336,6 @@ export default function MediaDetail() {
 
         {/* Byline + actions */}
         <div className="flex items-center gap-2 mt-2 min-w-0">
-          <div
-            className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-            style={{ background: avatarBg }}
-          >
-            {initial}
-          </div>
           <span className="text-[13px] font-semibold text-gray-600 truncate">{name}</span>
           {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">{takeTimeAgo(post.created_at)}</span>}
           {(() => {
@@ -1724,7 +1730,7 @@ export default function MediaDetail() {
                 <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
                   <Sparkles size={14} className="text-purple-600" />
                 </div>
-                <span className="text-[14px] text-gray-500">Share your take…</span>
+                <span className="text-[14px] text-gray-500">{TAKE_PROMPTS[promptIdx]}</span>
               </button>
             )}
             {composerOpen && (
@@ -1764,7 +1770,7 @@ export default function MediaDetail() {
             if (communityTakes.length === 0) {
               return (
                 <div className="mb-4">
-                  <h3 className="text-base font-semibold text-gray-900 mb-0.5">The conversation</h3>
+                  <h3 className="text-base font-semibold text-gray-900 mb-0.5">What people are saying...</h3>
                   <div className="py-8 text-center">
                     <p className="text-sm text-gray-500 mb-2">Quiet in here so far. Someone has to go first —</p>
                     <button
@@ -1780,8 +1786,7 @@ export default function MediaDetail() {
             }
             return (
               <div className="mb-4">
-                <h3 className="text-base font-semibold text-gray-900 mb-0.5">The conversation</h3>
-                <p className="text-xs text-gray-500 mb-1">Takes and ratings from people here</p>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">What people are saying...</h3>
                 <div className="divide-y divide-gray-200/80">
                   {communityTakes.map((post: any) => renderTakeCard(post, 'trending'))}
                 </div>
