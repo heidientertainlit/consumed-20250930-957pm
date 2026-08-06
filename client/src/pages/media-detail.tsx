@@ -1070,12 +1070,15 @@ export default function MediaDetail() {
           ice_votes: 0,
         });
         if (rating) {
-          await supabase.from('media_ratings').upsert({
+          const { error: ratingErr } = await supabase.from('media_ratings').upsert({
             user_id: authUser.id,
             media_external_id: params?.id,
             media_external_source: params?.source || 'tmdb',
+            media_title: mediaItem.title,
+            media_type: (mediaItem.type || params?.type || 'movie').toLowerCase(),
             rating,
           }, { onConflict: 'user_id,media_external_id,media_external_source' });
+          if (ratingErr) console.error('Failed to save rating:', ratingErr);
         }
       }
 
@@ -1598,11 +1601,11 @@ export default function MediaDetail() {
               const isFull = current >= n;
               const isHalf = !isFull && current >= n - 0.5;
               return (
-                <div key={n} className="relative w-9 h-9">
-                  <Star className="absolute inset-0 w-9 h-9 text-purple-400/60" strokeWidth={1.5} fill="none" />
+                <div key={n} className="relative w-11 h-11">
+                  <Star className="absolute inset-0 w-11 h-11 text-purple-400/60" strokeWidth={1.5} fill="none" />
                   {(isFull || isHalf) && (
                     <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: isFull ? '100%' : '50%' }}>
-                      <Star className="w-9 h-9 text-purple-400 fill-purple-400" strokeWidth={1.5} />
+                      <Star className="w-11 h-11 text-purple-400 fill-purple-400" strokeWidth={1.5} />
                     </div>
                   )}
                   {interactive && (
@@ -1640,8 +1643,8 @@ export default function MediaDetail() {
                 </div>
               )}
               <div className="rounded-2xl border border-purple-300/15 bg-black/20 px-4 py-4" data-testid="card-rate-title">
-                <p className="text-sm font-semibold text-white">{isRated ? 'Your rating' : 'Rate this title'}</p>
-                <div className="mt-3 mb-1 flex items-center justify-center gap-2.5">
+                <p className="text-center text-sm font-semibold text-white">{isRated ? 'Your rating' : 'Rate this title'}</p>
+                <div className="mt-3 mb-1 flex items-center justify-center gap-4">
                   {[1, 2, 3, 4, 5].map((n) => heroStar(n, isRated ? ownRating : composeRating, !isRated))}
                 </div>
                 {!isRated ? (
@@ -1671,11 +1674,10 @@ export default function MediaDetail() {
           {/* Description — starts open, clamped, with Read more */}
           {mediaItem.description && (
             <div className="mt-6">
-              <h3 className="mb-1.5 text-sm font-semibold text-white">About</h3>
-              {mediaItem.genres?.length > 0 && (
-                <p className="mb-1.5 text-sm text-gray-400" data-testid="text-genres">{mediaItem.genres.slice(0, 3).join(' \u00b7 ')}</p>
-              )}
               <p className={`text-sm text-gray-300 leading-relaxed ${showAbout ? '' : 'line-clamp-3'}`}>
+                {mediaItem.genres?.length > 0 && (
+                  <span className="italic text-gray-400" data-testid="text-genres">{mediaItem.genres.slice(0, 2).join(', ')} — </span>
+                )}
                 {mediaItem.description}
               </p>
               <button
