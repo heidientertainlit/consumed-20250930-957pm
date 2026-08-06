@@ -1259,7 +1259,12 @@ export default function MediaDetail() {
   const renderTakeCard = (post: any, sectionKey: string) => {
     const cardId = `${sectionKey}:${post.id}`;
     const rawName = post.users?.display_name || post.users?.user_name || '';
-    const name = rawName.includes('+') ? (rawName.split('+').pop() || rawName) : (rawName || 'Someone');
+    const fullName = rawName.includes('+') ? (rawName.split('+').pop() || rawName) : (rawName || 'Someone');
+    // Display as "First L." so it reads as the commenter, not the media's creator
+    const name = (() => {
+      const parts = fullName.trim().split(/\s+/);
+      return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
+    })();
     const initial = (name[0] || '?').toUpperCase();
     const isExpanded = expandedTake === cardId;
     const isLiked = likedPosts.has(post.id);
@@ -1293,7 +1298,7 @@ export default function MediaDetail() {
             ))}
           </div>
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[13px] font-semibold text-gray-600 truncate">{name}</span>
+            <span className="text-[13px] font-semibold text-gray-600 truncate">— {name}</span>
             {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">{takeTimeAgo(post.created_at)}</span>}
             {!post._ratingOnly && (
               <div className="ml-auto flex items-center gap-1.5 text-gray-400 shrink-0">
@@ -1334,7 +1339,7 @@ export default function MediaDetail() {
 
         {/* Byline + actions */}
         <div className="flex items-center gap-2 mt-2 min-w-0">
-          <span className="text-[13px] font-semibold text-gray-600 truncate">{name}</span>
+          <span className="text-[13px] font-semibold text-gray-600 truncate">— {name}</span>
           {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">{takeTimeAgo(post.created_at)}</span>}
           {(() => {
             const tag = dbTagToDisplay(post.post_type);

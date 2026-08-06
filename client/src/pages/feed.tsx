@@ -2374,27 +2374,33 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 </div>
               )}
 
-              {/* Rating stars */}
-              {hasRating && (
+              {/* Rating stars — bigger when it's a rating without commentary */}
+              {hasRating && (() => {
+                const starSz = hasContent ? 18 : 26;
+                return (
                 <div className="flex items-center gap-0.5 mt-1.5">
                   {[1,2,3,4,5].map(s => {
                     const r = post.rating!;
-                    if (s <= Math.floor(r)) return <Star key={s} size={18} className="text-yellow-400 fill-yellow-400" />;
+                    if (s <= Math.floor(r)) return <Star key={s} size={starSz} className="text-yellow-400 fill-yellow-400" />;
                     if (s === Math.ceil(r) && r % 1 >= 0.5) return (
-                      <div key={s} className="relative" style={{ width: 18, height: 18 }}>
-                        <Star size={18} className="absolute text-gray-300" />
-                        <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}><Star size={18} className="text-yellow-400 fill-yellow-400" /></div>
+                      <div key={s} className="relative" style={{ width: starSz, height: starSz }}>
+                        <Star size={starSz} className="absolute text-gray-300" />
+                        <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}><Star size={starSz} className="text-yellow-400 fill-yellow-400" /></div>
                       </div>
                     );
-                    return <Star key={s} size={18} className="text-gray-300" />;
+                    return <Star key={s} size={starSz} className="text-gray-300" />;
                   })}
                 </div>
-              )}
+                );
+              })()}
 
-              {/* Reviewer — small byline under the stars, no avatar */}
+              {/* Reviewer — small "— First L." byline under the stars, no avatar */}
               <div className="flex items-center gap-2 mt-1">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-gray-600 leading-tight truncate">{displayName}</p>
+                  <p className="text-[13px] font-medium text-gray-600 leading-tight truncate">— {(() => {
+                    const parts = (displayName || '').trim().split(/\s+/);
+                    return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
+                  })()}</p>
                   {isOtherUser && tasteAlignment !== null ? (
                     <p className="text-[12px] text-violet-600 font-medium leading-tight"><span className="font-semibold">{tasteAlignment}%</span> aligned with you</p>
                   ) : isOtherUser && alignmentNudge && !ratingSubmitted ? (
