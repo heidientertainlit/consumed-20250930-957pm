@@ -1575,7 +1575,6 @@ export default function MediaDetail() {
                   bits.push(<span key="e" className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" />{mediaItem.totalEpisodes} eps</span>);
                 }
                 if (runtimeLabel) bits.push(<span key="r" className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-gray-400" />{runtimeLabel}</span>);
-                if (mediaItem.genres?.length) bits.push(<span key="g">{mediaItem.genres.slice(0, 2).join(', ')}</span>);
                 return bits.length > 0 ? (
                   <div className="mt-2 flex flex-wrap items-center text-sm text-gray-300">
                     {bits.map((b, i) => (
@@ -1595,18 +1594,11 @@ export default function MediaDetail() {
             <div className="mt-6 space-y-3">
               {typeof dnaRecMatch?.score === 'number' && (
                 <div className="flex items-center justify-between gap-3 rounded-2xl border border-purple-300/15 bg-black/20 px-4 py-2.5" data-testid="card-dna-match">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <Dna className={`w-4 h-4 shrink-0 ${dnaRecMatch.score >= 70 ? 'text-purple-400' : 'text-gray-500'}`} />
-                      <span className="text-sm font-semibold text-white">Your match</span>
-                    </div>
-                    {dnaRecMatch.reason && (
-                      <p className="mt-0.5 text-xs text-gray-400 leading-snug">{dnaRecMatch.reason}</p>
-                    )}
+                  <div className="flex items-center gap-2">
+                    <Dna className={`w-4 h-4 shrink-0 ${dnaRecMatch.score >= 70 ? 'text-purple-400' : 'text-gray-500'}`} />
+                    <span className="text-sm font-semibold text-white">Your match</span>
                   </div>
-                  <span className={`shrink-0 text-xl font-bold ${dnaRecMatch.score >= 70 ? 'text-purple-300' : 'text-gray-400'}`}>
-                    {dnaRecMatch.score}%
-                  </span>
+                  <span className="shrink-0 text-sm font-bold text-white">{dnaRecMatch.score}%</span>
                 </div>
               )}
               <div className="rounded-2xl border border-purple-300/15 bg-black/20 px-4 py-4" data-testid="card-rate-title">
@@ -1648,6 +1640,9 @@ export default function MediaDetail() {
           {mediaItem.description && (
             <div className="mt-6">
               <h3 className="mb-1.5 text-sm font-semibold text-white">About</h3>
+              {mediaItem.genres?.length > 0 && (
+                <p className="mb-1.5 text-sm text-gray-400" data-testid="text-genres">{mediaItem.genres.slice(0, 3).join(' \u00b7 ')}</p>
+              )}
               <p className={`text-sm text-gray-300 leading-relaxed ${showAbout ? '' : 'line-clamp-3'}`}>
                 {mediaItem.description}
               </p>
