@@ -1590,13 +1590,52 @@ export default function MediaDetail() {
             </div>
           </div>
 
-          {/* DNA match — from the same recommendations engine as the feed; hidden once rated */}
-          {!(userRating?.rating || userReview?.rating) && typeof dnaRecMatch?.score === 'number' && (
-            <div className="mt-4 flex items-center gap-1.5 text-sm">
-              <Dna className={`w-3.5 h-3.5 ${dnaRecMatch.score >= 70 ? 'text-purple-400' : 'text-gray-500'}`} />
-              <span className={`font-semibold ${dnaRecMatch.score >= 70 ? 'text-purple-300' : 'text-gray-400'}`}>
-                {dnaRecMatch.score}% match for you
-              </span>
+          {/* Match card + tap-to-rate + add to list — only for titles you haven't rated */}
+          {session && !(userRating?.rating || userReview?.rating) && (
+            <div className="mt-4 space-y-2.5">
+              {typeof dnaRecMatch?.score === 'number' && (
+                <div className="flex items-center justify-between rounded-2xl bg-white/[0.06] ring-1 ring-white/10 px-4 py-3" data-testid="card-dna-match">
+                  <div className="flex items-center gap-2">
+                    <Dna className={`w-4 h-4 ${dnaRecMatch.score >= 70 ? 'text-purple-400' : 'text-gray-500'}`} />
+                    <span className="text-sm font-semibold text-white">Your match</span>
+                  </div>
+                  <span className={`text-xl font-bold ${dnaRecMatch.score >= 70 ? 'text-purple-300' : 'text-gray-400'}`}>
+                    {dnaRecMatch.score}%
+                  </span>
+                </div>
+              )}
+              <div className="rounded-2xl bg-white/[0.06] ring-1 ring-white/10 px-4 py-3" data-testid="card-rate-title">
+                <p className="text-sm font-semibold text-white">Rate this title</p>
+                <div className="mt-2 flex items-center justify-center gap-3">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => {
+                        setComposeRating(n);
+                        setComposerOpen(true);
+                        setTimeout(() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+                      }}
+                      className="p-1 active:scale-90 transition-transform"
+                      aria-label={`Rate ${n} star${n > 1 ? 's' : ''}`}
+                      data-testid={`button-quick-rate-${n}`}
+                    >
+                      <Star className={`w-7 h-7 ${composeRating >= n ? 'text-purple-400 fill-purple-400' : 'text-purple-400/70'}`} strokeWidth={1.5} fill={composeRating >= n ? undefined : 'none'} />
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-center text-xs text-gray-400">Tap to rate</p>
+              </div>
+              {!onListStatus && (
+                <button
+                  type="button"
+                  onClick={() => setIsListSheetOpen(true)}
+                  className="w-full flex items-center justify-center gap-1.5 rounded-full border border-purple-400/50 text-purple-200 hover:bg-purple-500/10 text-sm font-semibold py-2.5 transition-colors"
+                  data-testid="button-hero-add-to-list"
+                >
+                  <Plus className="w-4 h-4" /> Add to my list
+                </button>
+              )}
             </div>
           )}
 
