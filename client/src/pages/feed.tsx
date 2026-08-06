@@ -2622,11 +2622,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         {/* ── Take bar — always visible, inline comment strip ── */}
         {session?.access_token && (
           <div ref={takeBarRef} className="flex items-center gap-2 px-4 pb-4 pt-0" onClick={(e) => e.stopPropagation()}>
-            <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-violet-600 text-[9px] font-bold">
-                {(session?.user?.user_metadata?.display_name || session?.user?.email || 'Y')[0]?.toUpperCase()}
-              </span>
-            </div>
             <div className="flex-1 flex items-center bg-gray-50 rounded-full px-3 py-1.5 gap-2 border border-gray-100" onClick={(e) => e.stopPropagation()}>
               <MentionInput
                 value={commentText}
