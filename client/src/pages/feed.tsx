@@ -445,7 +445,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-2 p-3 border border-violet-100">
       <div className="flex items-center gap-1.5 mb-1 px-1">
         <Flame size={15} className="text-orange-500 fill-orange-500 shrink-0" />
-        <span className="text-[13px] font-semibold text-violet-600">{single ? 'The Conversation' : 'Trending Takes'}</span>
+        <span className="text-[13px] font-semibold text-violet-600 truncate">{single ? `Conversations about ${groups[0]?.title || ''}` : 'Trending Takes'}</span>
         {!single && <span className="text-[11px] text-gray-400 font-medium ml-auto">Trending now</span>}
       </div>
 
@@ -484,7 +484,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                   {/* Media context line under the take */}
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <span className="text-[11.5px] text-gray-500 truncate">
-                      <span className="font-medium text-gray-700">{g.title}</span> · {g.talkingCount} people talking
+                      {!isOpen && <><span className="font-medium text-gray-700">{g.title}</span> · </>}{g.talkingCount} people talking
                     </span>
                     {topGlimpse && (() => {
                       const agree = (topGlimpse.likes || topGlimpse.likes_count || 0) + (takeReactions[topGlimpse.id] === 'up' ? 1 : 0);
@@ -504,8 +504,8 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                   {/* Inline rating */}
                   <div className="flex items-center gap-0.5">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <button key={star} onClick={() => submitRating(g, star)} className="p-0.5">
-                        <Star size={14} className={myRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+                      <button key={star} onClick={() => submitRating(g, star)} className="p-1 active:scale-90 transition-transform">
+                        <Star size={32} className={myRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
                       </button>
                     ))}
                     {savedKeys.has(g.key) && <span className="text-[10.5px] text-green-600 font-medium ml-1">Saved</span>}
@@ -524,13 +524,6 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                       return (
                         <div key={takeId} className="px-1 py-2">
                           <div className="flex gap-2">
-                            {/* Avatar + thread line */}
-                            <div className="flex flex-col items-center shrink-0">
-                              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ background: avatarBg(n) }}>
-                                {n[0]?.toUpperCase()}
-                              </div>
-                              {isActive && <div className="w-px flex-1 bg-gray-200 mt-1" />}
-                            </div>
                             <div className="flex-1 min-w-0">
                               {/* Commentary featured first */}
                               {hasText && (
@@ -546,8 +539,8 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                                   </span>
                                 )}
                               </p>
-                              {/* Action row: Agree · Counter · Reply */}
-                              <div className="flex items-center gap-4 mt-1.5">
+                              {/* Action row: Agree · Counter · Reply — kept quiet */}
+                              <div className="flex items-center gap-5 mt-1 opacity-80">
                                 <button
                                   onClick={() => reactToTake(t.id, 'up')}
                                   className={`flex items-center gap-1 text-[11px] p-0.5 ${takeReactions[t.id] === 'up' ? 'text-green-600 font-semibold' : 'text-gray-400 font-medium'}`}
@@ -583,9 +576,6 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                                     const cWhen = takeTimeAgo(c.created_at);
                                     return (
                                       <div key={c.id} className="flex gap-1.5">
-                                        <div className="w-4.5 h-4.5 min-w-[18px] min-h-[18px] rounded-full flex items-center justify-center text-white text-[7.5px] font-bold mt-0.5" style={{ background: avatarBg(cn) }}>
-                                          {cn[0]?.toUpperCase()}
-                                        </div>
                                         <div className="min-w-0">
                                           <p className="text-[10.5px] text-gray-500 leading-none mb-0.5">
                                             <span className="font-semibold text-gray-700">{cn}</span>
