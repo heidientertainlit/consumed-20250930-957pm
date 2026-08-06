@@ -1535,11 +1535,12 @@ export default function MediaDetail() {
 
             {/* Available on — minimal, deduped provider chips */}
               {mediaItem.platforms && mediaItem.platforms.length > 0 && (
-                <div className="mt-1 -ml-1.5 flex flex-wrap items-center gap-1.5">
+                <div className="mt-2.5 pt-2.5 border-t border-white/10 -ml-1.5 flex flex-wrap items-center gap-1.5">
                   {(() => {
-                    const baseName = (n: string) => (n || '').replace(/\s+(standard\s+)?with ads.*$/i, '').replace(/\s+(premium|basic|standard)$/i, '').trim();
+                    const baseName = (n: string) => (n || '').replace(/\s+(standard\s+)?with ads.*$/i, '').replace(/\s+(amazon|apple tv|roku premium)\s+channel$/i, '').replace(/\s+(premium|basic|standard)$/i, '').trim();
                     const seen = new Set<string>();
-                    const unique = (mediaItem.platforms as any[]).filter((pf: any) => {
+                    const sorted = [...(mediaItem.platforms as any[])].sort((a: any, b: any) => (a.name || '').length - (b.name || '').length);
+                    const unique = sorted.filter((pf: any) => {
                       const b = baseName(pf.name).toLowerCase();
                       if (!b || seen.has(b)) return false;
                       seen.add(b);
