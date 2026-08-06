@@ -642,7 +642,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
 
         {/* Header — plain white, pill badge */}
         <div className="relative h-[44px]">
@@ -673,9 +673,9 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           {!featured ? (
             <p className="text-gray-500 text-[13px] font-medium py-2 text-center">No friends to compare with yet.</p>
           ) : (
-            <div className="flex flex-col items-center pt-1 pb-2">
+            <div className="flex flex-col items-center pt-4 pb-2">
               {/* Big match number */}
-              <span className="font-black leading-none" style={{ fontSize: 44, color: '#7c3aed' }}>{featured.pct}%</span>
+              <span className="font-black leading-none" style={{ fontSize: 38, color: '#7c3aed' }}>{featured.pct}%</span>
               <span className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Match</span>
 
               {/* Avatars joined by dashed line with DNA strand in the middle */}
@@ -929,7 +929,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
 
         {/* Header — plain white, pill badge */}
         <div className="relative h-[44px]">
