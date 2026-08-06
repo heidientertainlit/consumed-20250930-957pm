@@ -2353,7 +2353,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {/* Bottom-right: Add to list button on poster */}
               {onAddToList && (post.externalId || post.mediaTitle) && (
                 <button
-                  className="absolute bottom-2 right-2 z-10 w-7 h-7 rounded-full bg-purple-500/40 backdrop-blur-sm border border-purple-300/40 flex items-center justify-center active:scale-90 transition-transform"
+                  className="absolute top-1.5 right-1.5 z-10 w-7 h-7 rounded-full bg-purple-500/40 backdrop-blur-sm border border-purple-300/40 flex items-center justify-center active:scale-90 transition-transform"
                   onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
                 >
                   <Plus size={14} className="text-white" strokeWidth={2.5} />
@@ -2363,16 +2363,37 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
             {/* Take (right) */}
             <div className="flex-1 min-w-0 flex flex-col" style={{ minHeight: 180 }} onClick={(e) => e.stopPropagation()}>
-              {/* Reviewer up top — avatar, name, alignment right under the name */}
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0"
-                  style={{ background: `hsl(${(displayName.charCodeAt(0) * 47) % 360}, 50%, 48%)` }}
-                >
-                  {displayName[0]?.toUpperCase()}
+              {/* Title first — the media is the headline */}
+              {post.mediaTitle && (
+                <div className="min-w-0">
+                  <p className="text-[17px] font-bold text-gray-900 leading-snug">{post.mediaTitle}</p>
+                  {mediaCreator && (
+                    <p className="text-[12px] text-gray-500 leading-snug truncate mt-0.5">by {mediaCreator}</p>
+                  )}
                 </div>
+              )}
+
+              {/* Rating stars */}
+              {hasRating && (
+                <div className="flex items-center gap-0.5 mt-1.5">
+                  {[1,2,3,4,5].map(s => {
+                    const r = post.rating!;
+                    if (s <= Math.floor(r)) return <Star key={s} size={18} className="text-yellow-400 fill-yellow-400" />;
+                    if (s === Math.ceil(r) && r % 1 >= 0.5) return (
+                      <div key={s} className="relative" style={{ width: 18, height: 18 }}>
+                        <Star size={18} className="absolute text-gray-300" />
+                        <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}><Star size={18} className="text-yellow-400 fill-yellow-400" /></div>
+                      </div>
+                    );
+                    return <Star key={s} size={18} className="text-gray-300" />;
+                  })}
+                </div>
+              )}
+
+              {/* Reviewer — small byline under the stars, no avatar */}
+              <div className="flex items-center gap-2 mt-1">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-semibold text-gray-800 leading-tight truncate">{displayName}</p>
+                  <p className="text-[13px] font-medium text-gray-600 leading-tight truncate">{displayName}</p>
                   {isOtherUser && tasteAlignment !== null ? (
                     <p className="text-[12px] text-violet-600 font-medium leading-tight"><span className="font-semibold">{tasteAlignment}%</span> aligned with you</p>
                   ) : isOtherUser && alignmentNudge && !ratingSubmitted ? (
@@ -2388,33 +2409,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   )}
                 </div>
               </div>
-
-              {/* Title + creator */}
-              {post.mediaTitle && (
-                <div className="mt-2 min-w-0">
-                  <p className="text-[14px] font-semibold text-gray-900 leading-snug">{post.mediaTitle}</p>
-                  {mediaCreator && (
-                    <p className="text-[12px] text-gray-500 leading-snug truncate mt-0.5">by {mediaCreator}</p>
-                  )}
-                </div>
-              )}
-
-              {/* Rating stars */}
-              {hasRating && (
-                <div className="flex items-center gap-0.5 mt-1.5">
-                  {[1,2,3,4,5].map(s => {
-                    const r = post.rating!;
-                    if (s <= Math.floor(r)) return <Star key={s} size={16} className="text-yellow-400 fill-yellow-400" />;
-                    if (s === Math.ceil(r) && r % 1 >= 0.5) return (
-                      <div key={s} className="relative" style={{ width: 16, height: 16 }}>
-                        <Star size={16} className="absolute text-gray-300" />
-                        <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}><Star size={16} className="text-yellow-400 fill-yellow-400" /></div>
-                      </div>
-                    );
-                    return <Star key={s} size={16} className="text-gray-300" />;
-                  })}
-                </div>
-              )}
 
               {/* Other ratings — tight under the stars */}
               {relatedRatings.length > 0 && (
