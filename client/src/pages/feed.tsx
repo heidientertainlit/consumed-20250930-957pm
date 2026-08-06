@@ -495,11 +495,16 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                     <p className="text-[11.5px] text-gray-500 mt-0.5">
                       {extScores[g.key] && <><span className="font-semibold text-gray-700">{extScores[g.key]}</span> · </>}{g.talkingCount} people talking
                     </p>
-                    <div className="flex items-center gap-0.5 mt-2 -ml-1">
+                    <div className="flex items-center gap-0.5 mt-2 -ml-0.5">
                       {[1, 2, 3, 4, 5].map((star) => (
-                        <button key={star} onClick={() => submitRating(g, star)} className="p-1 active:scale-90 transition-transform">
-                          <Star size={30} className={myRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
-                        </button>
+                        <div key={star} className="relative" style={{ width: 32, height: 32 }}>
+                          <Star size={32} className="absolute inset-0 text-gray-300" />
+                          <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: myRating >= star ? '100%' : myRating >= star - 0.5 ? '50%' : '0%' }}>
+                            <Star size={32} className="text-yellow-400 fill-yellow-400" />
+                          </div>
+                          <button className="absolute top-0 left-0 h-full z-10 active:scale-90 transition-transform" style={{ width: '50%' }} onClick={() => submitRating(g, star - 0.5)} aria-label={`Rate ${star - 0.5}`} />
+                          <button className="absolute top-0 right-0 h-full z-10 active:scale-90 transition-transform" style={{ width: '50%' }} onClick={() => submitRating(g, star)} aria-label={`Rate ${star}`} />
+                        </div>
                       ))}
                       {savedKeys.has(g.key) && <span className="text-[10.5px] text-green-600 font-medium ml-1">Saved</span>}
                     </div>
@@ -576,9 +581,17 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                                   className="flex items-center gap-0.5 text-left"
                                   onClick={() => { setActiveTakeId(isActive ? null : takeId); setReplyOpenId(null); setCommentText(''); }}
                                 >
-                                  {[1,2,3,4,5].map(sn => (
-                                    <Star key={sn} size={22} className={sn <= Math.round(Number(t.rating)) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
-                                  ))}
+                                  {[1,2,3,4,5].map(sn => {
+                                    const rv = Number(t.rating) || 0;
+                                    return (
+                                      <div key={sn} className="relative" style={{ width: 22, height: 22 }}>
+                                        <Star size={22} className="absolute inset-0 text-gray-200 fill-gray-200" />
+                                        <div className="absolute inset-0 overflow-hidden" style={{ width: rv >= sn ? '100%' : rv >= sn - 0.5 ? '50%' : '0%' }}>
+                                          <Star size={22} className="text-yellow-400 fill-yellow-400" />
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                                 </button>
                               ) : null}
                               {/* name · time — small, underneath */}
