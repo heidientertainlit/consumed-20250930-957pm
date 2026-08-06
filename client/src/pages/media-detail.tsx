@@ -1594,7 +1594,7 @@ export default function MediaDetail() {
           {session && !(userRating?.rating || userReview?.rating) && (
             <div className="mt-4 space-y-2.5">
               {typeof dnaRecMatch?.score === 'number' && (
-                <div className="flex items-center justify-between rounded-2xl bg-white/[0.06] ring-1 ring-white/10 px-4 py-3" data-testid="card-dna-match">
+                <div className="flex items-center justify-between rounded-2xl bg-[#1c1528] border border-white/5 px-4 py-3" data-testid="card-dna-match">
                   <div className="flex items-center gap-2">
                     <Dna className={`w-4 h-4 ${dnaRecMatch.score >= 70 ? 'text-purple-400' : 'text-gray-500'}`} />
                     <span className="text-sm font-semibold text-white">Your match</span>
@@ -1604,7 +1604,7 @@ export default function MediaDetail() {
                   </span>
                 </div>
               )}
-              <div className="rounded-2xl bg-white/[0.06] ring-1 ring-white/10 px-4 py-3" data-testid="card-rate-title">
+              <div className="rounded-2xl bg-[#1c1528] border border-white/5 px-4 py-3" data-testid="card-rate-title">
                 <p className="text-sm font-semibold text-white">Rate this title</p>
                 <div className="mt-2 flex items-center justify-center gap-3">
                   {[1, 2, 3, 4, 5].map((n) => (
@@ -1630,7 +1630,7 @@ export default function MediaDetail() {
                 <button
                   type="button"
                   onClick={() => setIsListSheetOpen(true)}
-                  className="w-full flex items-center justify-center gap-1.5 rounded-full border border-purple-400/50 text-purple-200 hover:bg-purple-500/10 text-sm font-semibold py-2.5 transition-colors"
+                  className="w-full flex items-center justify-center gap-1.5 rounded-full bg-purple-700 hover:bg-purple-600 text-white text-sm font-semibold py-2.5 transition-colors"
                   data-testid="button-hero-add-to-list"
                 >
                   <Plus className="w-4 h-4" /> Add to my list
