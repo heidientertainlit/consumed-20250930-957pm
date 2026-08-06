@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import html2canvas from "html2canvas";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
@@ -29,6 +31,10 @@ export function FeedIdentityHero() {
   const [tracked, setTracked] = useState<number>(0);
   const [globalRank, setGlobalRank] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [savingImage, setSavingImage] = useState(false);
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+  const heroCardRef = useRef<HTMLDivElement>(null);
 
   const displayName =
     user?.user_metadata?.display_name ||
@@ -118,6 +124,7 @@ export function FeedIdentityHero() {
       <div className="pt-3">
         {/* ── Identity card ── */}
         <div
+          ref={heroCardRef}
           className="relative overflow-hidden rounded-3xl p-6"
           style={{
             background: "linear-gradient(155deg, rgba(48,36,82,0.65) 0%, rgba(28,22,48,0.55) 100%)",
@@ -146,27 +153,71 @@ export function FeedIdentityHero() {
               </span>
               <Dna size={13} className="text-purple-400" />
             </div>
-            <button
-              onClick={async () => {
-                const shareUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-                const archetype = dna?.label ? `The ${dna.label}` : "my Entertainment DNA";
-                const text = `I'm ${archetype} on Consumed — what's your Entertainment DNA?`;
-                try {
-                  if (navigator.share) {
-                    await navigator.share({ title: "My Entertainment DNA", text, url: shareUrl });
-                  } else {
-                    await navigator.clipboard.writeText(`${text} ${shareUrl}`);
-                  }
-                } catch {
-                  /* user cancelled or share unavailable */
-                }
-              }}
-              className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform"
-              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
-              aria-label="Share your DNA"
-            >
-              <Forward size={13} className="text-purple-300" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShareMenuOpen(v => !v)}
+                className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
+                aria-label="Share your DNA"
+              >
+                <Forward size={13} className="text-purple-300" />
+              </button>
+              {shareMenuOpen && (
+                <div className="absolute top-9 right-0 z-30 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden w-[160px]">
+                  <button
+                    onClick={async () => {
+                      setShareMenuOpen(false);
+                      const shareUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+                      const archetype = dna?.label ? `The ${dna.label}` : "my Entertainment DNA";
+                      const text = `I'm ${archetype} on Consumed — what's your Entertainment DNA?`;
+                      try {
+                        if (navigator.share) {
+                          await navigator.share({ title: "My Entertainment DNA", text, url: shareUrl });
+                        } else {
+                          await navigator.clipboard.writeText(`${text} ${shareUrl}`);
+                        }
+                      } catch {
+                        /* user cancelled or share unavailable */
+                      }
+                    }}
+                    className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-gray-800 hover:bg-gray-50 border-b border-gray-100"
+                  >
+                    Share link
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setShareMenuOpen(false);
+                      if (!heroCardRef.current || savingImage) return;
+                      setSavingImage(true);
+                      try {
+                        const canvas = await html2canvas(heroCardRef.current, { scale: 3, useCORS: true, backgroundColor: '#0d0221' });
+                        const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+                        if (blob && navigator.share) {
+                          const file = new File([blob], 'my-entertainment-dna.png', { type: 'image/png' });
+                          const withImage = { files: [file], title: 'My Entertainment DNA' } as any;
+                          try {
+                            if (navigator.canShare?.(withImage)) {
+                              await navigator.share(withImage);
+                              return;
+                            }
+                          } catch (err: any) {
+                            if (err?.name === 'AbortError') return;
+                          }
+                        }
+                        setShareImageUrl(canvas.toDataURL('image/png'));
+                      } catch {
+                        /* capture failed */
+                      } finally {
+                        setSavingImage(false);
+                      }
+                    }}
+                    className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-gray-800 hover:bg-gray-50"
+                  >
+                    {savingImage ? 'Preparing…' : 'Save as image'}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Headline + avatar */}
@@ -255,6 +306,15 @@ export function FeedIdentityHero() {
           <HeroCTAButtons />
         </div>
       </div>
+
+      {shareImageUrl && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-black/80 flex flex-col items-center justify-center p-6" onClick={() => setShareImageUrl(null)}>
+          <img src={shareImageUrl} alt="Your Entertainment DNA" className="max-w-full max-h-[70vh] rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()} />
+          <p className="text-white/90 text-[13px] font-medium mt-4 text-center">Press and hold the image to save it to your photos</p>
+          <button onClick={() => setShareImageUrl(null)} className="mt-3 px-5 py-2 rounded-full bg-white/15 text-white text-[13px] font-semibold">Close</button>
+        </div>,
+        document.body
+      )}
     </>
   );
 }

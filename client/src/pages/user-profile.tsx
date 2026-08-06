@@ -192,6 +192,9 @@ export default function UserProfile() {
   const [dnaCompareError, setDnaCompareError] = useState<string | null>(null);
   const [dnaIsDownloading, setDnaIsDownloading] = useState(false);
   const [dnaShareSheetOpen, setDnaShareSheetOpen] = useState(false);
+  const [profileShareMenuOpen, setProfileShareMenuOpen] = useState(false);
+  const [profileHeroSaving, setProfileHeroSaving] = useState(false);
+  const profileHeroRef = useRef<HTMLDivElement>(null);
   const [dnaShareImageUrl, setDnaShareImageUrl] = useState<string | null>(null);
   const [dnaShareSheetTitle, setDnaShareSheetTitle] = useState("Your Entertainment DNA");
   const [dnaIsPostingToFeed, setDnaIsPostingToFeed] = useState(false);
@@ -3017,6 +3020,7 @@ export default function UserProfile() {
         <div style={{ background: 'linear-gradient(180deg, #0d0221 0%, #1a0535 100%)' }}>
           <div className="max-w-4xl mx-auto px-4 pt-4 pb-5">
             <div
+              ref={profileHeroRef}
               className="relative overflow-hidden rounded-3xl px-6 pt-6 pb-2"
               style={{
                 background: 'linear-gradient(155deg, #2c2150 0%, #181030 100%)',
@@ -3063,17 +3067,63 @@ export default function UserProfile() {
                   )}
                 </div>
               </div>
-              <button
-                onClick={async () => {
-                  const profileUserId = isOwnProfile ? user?.id : viewingUserId;
-                  await copyLink({ kind: 'profile', id: profileUserId });
-                  toast({ title: "Link Copied!", description: "Share this profile with your friends" });
-                }}
-                className="text-white/50 hover:text-white/90 transition-colors flex-shrink-0 mt-1"
-                data-testid="button-share-profile-inline"
-              >
-                <CornerUpRight size={16} />
-              </button>
+              <div className="relative flex-shrink-0 mt-1">
+                <button
+                  onClick={() => setProfileShareMenuOpen(v => !v)}
+                  className="text-white/50 hover:text-white/90 transition-colors"
+                  data-testid="button-share-profile-inline"
+                >
+                  <CornerUpRight size={16} />
+                </button>
+                {profileShareMenuOpen && (
+                  <div className="absolute top-7 right-0 z-30 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden w-[160px]">
+                    <button
+                      onClick={async () => {
+                        setProfileShareMenuOpen(false);
+                        const profileUserId = isOwnProfile ? user?.id : viewingUserId;
+                        await copyLink({ kind: 'profile', id: profileUserId });
+                        toast({ title: "Link Copied!", description: "Share this profile with your friends" });
+                      }}
+                      className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-gray-800 hover:bg-gray-50 border-b border-gray-100"
+                    >
+                      Share link
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setProfileShareMenuOpen(false);
+                        if (!profileHeroRef.current || profileHeroSaving) return;
+                        setProfileHeroSaving(true);
+                        try {
+                          const canvas = await html2canvas(profileHeroRef.current, { scale: 3, useCORS: true, backgroundColor: '#0d0221' });
+                          const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+                          if (blob && navigator.share) {
+                            const file = new File([blob], 'my-entertainment-dna.png', { type: 'image/png' });
+                            const withImage = { files: [file], title: 'My Entertainment DNA' } as any;
+                            try {
+                              if (navigator.canShare?.(withImage)) {
+                                await navigator.share(withImage);
+                                return;
+                              }
+                            } catch (err: any) {
+                              if (err?.name === 'AbortError') return;
+                            }
+                          }
+                          setDnaShareImageUrl(canvas.toDataURL('image/png'));
+                          setDnaShareSheetTitle("Your Entertainment DNA");
+                          setDnaShareSheetOpen(true);
+                        } catch {
+                          toast({ title: "Error", description: "Could not generate image", variant: "destructive" });
+                        } finally {
+                          setProfileHeroSaving(false);
+                        }
+                      }}
+                      className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-gray-800 hover:bg-gray-50"
+                    >
+                      {profileHeroSaving ? 'Preparing…' : 'Save as image'}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Face + archetype */}
