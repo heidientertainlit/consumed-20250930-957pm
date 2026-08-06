@@ -802,12 +802,6 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
               <div className="mt-2 flex flex-col gap-1.5 pl-1">
                 {overlaps.map((u) => (
                   <div key={u.displayName} className="flex items-center gap-2">
-                    <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-white font-black flex-shrink-0"
-                      style={{ fontSize: 8, background: u.color }}
-                    >
-                      {u.initials}
-                    </div>
                     <span className="text-[11px] font-semibold text-gray-700 flex-1">{u.displayName.split(' ')[0]}</span>
                     {u.pct != null && u.pct > 0 && (
                       <span className="text-purple-500 text-[10px] font-bold">{u.pct}%</span>
@@ -1087,12 +1081,6 @@ export function DnaComparePostCard({ item }: { item: any }) {
               <div className="mt-2 flex flex-col gap-1.5 pl-1">
                 {posterOverlaps.map((u) => (
                   <div key={u.displayName} className="flex items-center gap-2">
-                    <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-white font-black flex-shrink-0"
-                      style={{ fontSize: 8, background: u.color }}
-                    >
-                      {u.initials}
-                    </div>
                     <span className="text-[11px] font-semibold text-gray-700 flex-1">{u.displayName}</span>
                     {u.pct != null && u.pct > 0 && (
                       <span className="text-purple-500 text-[10px] font-bold">{u.pct}%</span>
