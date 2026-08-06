@@ -674,32 +674,22 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
             <p className="text-gray-500 text-[13px] font-medium py-2 text-center">No friends to compare with yet.</p>
           ) : (
             <div className="relative flex rounded-2xl overflow-hidden border border-gray-100">
-              <div className="flex-1 bg-violet-50/70 flex flex-col items-center pt-5 pb-4 px-2">
-                <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] shadow"
-                  style={{ width: 56, height: 56, background: '#8b5cf6' }}>
-                  {session?.user?.user_metadata?.display_name
-                    ? initials(session.user.user_metadata.display_name)
-                    : (user?.email?.[0] ?? 'Y').toUpperCase()}
-                </div>
-                <span className="text-[13px] font-bold text-gray-900 mt-2 text-center">
+              <div className="flex-1 bg-violet-50/70 flex flex-col items-center justify-end pt-16 pb-4 px-2">
+                <span className="text-[13px] font-bold text-gray-900 text-center">
                   {(session?.user?.user_metadata?.display_name ?? 'You').split(' ')[0]}
                 </span>
                 {myLabel && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{myLabel}</span>}
               </div>
-              <div className="flex-1 bg-amber-50/80 flex flex-col items-center pt-5 pb-4 px-2">
-                <div className="rounded-full flex items-center justify-center font-black text-white text-[16px] shadow"
-                  style={{ width: 56, height: 56, background: featured.color }}>
-                  {featured.initials}
-                </div>
-                <span className="text-[13px] font-bold text-gray-900 mt-2 text-center">
+              <div className="flex-1 bg-amber-50/80 flex flex-col items-center justify-end pt-16 pb-4 px-2">
+                <span className="text-[13px] font-bold text-gray-900 text-center">
                   {featured.displayName.split(' ')[0]}
                 </span>
                 {featured.label && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{featured.label}</span>}
               </div>
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-md flex flex-col items-center justify-center"
-                style={{ width: 76, height: 76 }}>
-                <span className="font-black leading-none text-gray-900" style={{ fontSize: 22 }}>{featured.pct}%</span>
-                <span className="text-[8px] font-bold text-violet-600 uppercase tracking-widest mt-0.5">Match</span>
+              <div className="absolute left-1/2 -translate-x-1/2 rounded-full shadow-lg flex flex-col items-center justify-center"
+                style={{ width: 92, height: 92, top: 10, background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)' }}>
+                <span className="font-black leading-none text-white" style={{ fontSize: 26 }}>{featured.pct}%</span>
+                <span className="text-[8px] font-bold text-white/80 uppercase tracking-widest mt-0.5">Match</span>
               </div>
             </div>
           )}
