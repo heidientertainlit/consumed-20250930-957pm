@@ -1593,12 +1593,9 @@ export default function MediaDetail() {
           {session && !(userRating?.rating || userReview?.rating) && (
             <div className="mt-6 space-y-3">
               {typeof dnaRecMatch?.score === 'number' && (
-                <div className="flex items-center justify-between gap-3 rounded-2xl border border-purple-300/15 bg-black/20 px-4 py-2.5" data-testid="card-dna-match">
-                  <div className="flex items-center gap-2">
-                    <Dna className={`w-4 h-4 shrink-0 ${dnaRecMatch.score >= 70 ? 'text-purple-400' : 'text-gray-500'}`} />
-                    <span className="text-sm font-semibold text-white">Your match</span>
-                  </div>
-                  <span className="shrink-0 text-sm font-bold text-white">{dnaRecMatch.score}%</span>
+                <div className="flex items-center gap-1.5 px-1" data-testid="card-dna-match">
+                  <Dna className="w-3.5 h-3.5 text-purple-400/70" />
+                  <span className="text-[13px] text-purple-200/80">{dnaRecMatch.score}% match for you</span>
                 </div>
               )}
               <div className="rounded-2xl border border-purple-300/15 bg-black/20 px-4 py-4" data-testid="card-rate-title">
