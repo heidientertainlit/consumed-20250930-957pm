@@ -424,7 +424,7 @@ export default function MediaDetail() {
   });
 
   // Fetch user's own rating from media_ratings table (includes private ratings)
-  const { data: userRating } = useQuery({
+  const { data: userRating, isFetched: userRatingFetched } = useQuery({
     queryKey: ['user-media-rating', params?.source, params?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -768,28 +768,38 @@ export default function MediaDetail() {
     enabled: !!user?.id && !!params?.id && !!params?.source,
   });
 
-  // Your DNA-powered recommendations — if this title was recommended to you,
-  // surface the match confidence + the written reason (same engine as the feed carousel)
+  // On-demand DNA match: scores THIS title against your taste profile (server-cached)
   const { data: dnaRecMatch } = useQuery({
-    queryKey: ['dna-rec-match', user?.id, params?.source, params?.id],
+    queryKey: ['dna-match-score', user?.id, params?.source, params?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
-      const { data } = await supabase
-        .from('user_recommendations')
-        .select('recommendations')
-        .eq('user_id', user.id)
-        .eq('status', 'ready')
-        .order('generated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      const recs = (data?.recommendations as any)?.recommendations || [];
-      return recs.find((r: any) =>
-        String(r.external_id) === String(params?.id) &&
-        String(r.external_source) === String(params?.source)
-      ) || null;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+      const res = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/score-media-match`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            external_source: params?.source,
+            external_id: params?.id,
+            media_type: params?.type,
+            title: (mediaItem as any)?.title,
+            creator: (mediaItem as any)?.creator,
+            genres: (mediaItem as any)?.genres || [],
+            description: (mediaItem as any)?.description,
+          }),
+        }
+      );
+      if (!res.ok) return null;
+      const json = await res.json();
+      return typeof json.score === 'number' ? json : null;
     },
-    enabled: !!user?.id && !!params?.id && !!params?.source,
-    staleTime: 5 * 60 * 1000,
+    enabled: !!user?.id && !!params?.id && !!params?.source && !!(mediaItem as any)?.title && userRatingFetched && !userRating?.rating,
+    staleTime: 30 * 60 * 1000,
+    retry: false,
   });
 
   // Small hero pill: which of the user's system lists holds this item
@@ -1581,12 +1591,12 @@ export default function MediaDetail() {
           </div>
 
           {/* DNA match — from the same recommendations engine as the feed; hidden once rated */}
-          {!(userRating?.rating || userReview?.rating) && dnaRecMatch && (
+          {!(userRating?.rating || userReview?.rating) && typeof dnaRecMatch?.score === 'number' && (
             <div className="mt-4 text-sm">
               <div className="flex items-center gap-1.5">
-                <Dna className="w-3.5 h-3.5 text-purple-400" />
-                <span className="font-semibold text-purple-300">
-                  {Math.min(100, Math.round(Number(dnaRecMatch.confidence || 0) * 10))}% DNA match
+                <Dna className={`w-3.5 h-3.5 ${dnaRecMatch.score >= 70 ? 'text-purple-400' : 'text-gray-500'}`} />
+                <span className={`font-semibold ${dnaRecMatch.score >= 70 ? 'text-purple-300' : 'text-gray-400'}`}>
+                  {dnaRecMatch.score}% match for you
                 </span>
               </div>
               {dnaRecMatch.reason && (
