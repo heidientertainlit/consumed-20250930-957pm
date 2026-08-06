@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef as useReactRef } from "react";
+import html2canvas from "html2canvas";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
@@ -624,6 +625,9 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
   const featured = dynFeatured ?? featuredProp ?? null;
   const overlaps = dynOverlaps.length > 0 ? dynOverlaps : (overlapsProp ?? []);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [savingImage, setSavingImage] = useState(false);
+  const cardRef = useReactRef<HTMLDivElement>(null);
 
   // Show skeleton while loading — prevents null crash on featured.pct etc.
   if (loadingPersonal && !featured) {
@@ -642,7 +646,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
+      <div ref={cardRef} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
 
         {/* Header — plain white, pill badge */}
         <div className="relative h-[44px]">
@@ -651,21 +655,61 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
             <span className="text-violet-600 text-[10px] font-bold uppercase tracking-widest">Compare DNA</span>
           </div>
           <button
-            onClick={() => {
-              if (!featured) return;
-              const text = `I'm ${featured.pct}% aligned with ${featured.displayName} on Consumed! Check your Entertainment DNA 🧬`;
-              const url = (import.meta.env.VITE_APP_URL as string) || window.location.origin;
-              if (navigator.share) {
-                navigator.share({ title: 'My Entertainment DNA', text, url }).catch(() => {});
-              } else {
-                window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`, '_blank');
-              }
-            }}
+            onClick={() => setShareMenuOpen(v => !v)}
             className="absolute top-2.5 right-3 flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors"
           >
             <span className="text-[13px] font-medium">Share</span>
             <span className="text-[13px]" aria-hidden="true">→</span>
           </button>
+          {shareMenuOpen && (
+            <div className="absolute top-9 right-3 z-20 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden w-[170px]">
+              <button
+                onClick={() => {
+                  setShareMenuOpen(false);
+                  if (!featured) return;
+                  const text = `I'm ${featured.pct}% aligned with ${featured.displayName} on Consumed! Check your Entertainment DNA 🧬`;
+                  const url = (import.meta.env.VITE_APP_URL as string) || window.location.origin;
+                  if (navigator.share) {
+                    navigator.share({ title: 'My Entertainment DNA', text, url }).catch(() => {});
+                  } else {
+                    window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+                  }
+                }}
+                className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-gray-800 hover:bg-gray-50 border-b border-gray-100"
+              >
+                Share link
+              </button>
+              <button
+                onClick={async () => {
+                  setShareMenuOpen(false);
+                  if (!cardRef.current || savingImage) return;
+                  setSavingImage(true);
+                  try {
+                    const canvas = await html2canvas(cardRef.current, { backgroundColor: '#ffffff', scale: 2, useCORS: true });
+                    const blob: Blob | null = await new Promise(res => canvas.toBlob(res, 'image/png'));
+                    if (!blob) return;
+                    const file = new File([blob], 'dna-match.png', { type: 'image/png' });
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                      await navigator.share({ files: [file], title: 'My Entertainment DNA' }).catch(() => {});
+                    } else {
+                      const a = document.createElement('a');
+                      a.href = URL.createObjectURL(blob);
+                      a.download = 'dna-match.png';
+                      a.click();
+                      URL.revokeObjectURL(a.href);
+                    }
+                  } catch (err) {
+                    console.error('Failed to save image', err);
+                  } finally {
+                    setSavingImage(false);
+                  }
+                }}
+                className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-gray-800 hover:bg-gray-50"
+              >
+                {savingImage ? 'Saving…' : 'Save as image'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Split card — you (violet) vs friend (amber), match badge centered */}
