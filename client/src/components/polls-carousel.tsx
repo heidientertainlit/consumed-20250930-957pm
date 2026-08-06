@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { trackEvent } from '@/lib/posthog';
-import { BarChart3, Loader2, ChevronLeft, ChevronRight, Users, Check, Search, Plus, X } from 'lucide-react';
+import { BarChart3, Loader2, ChevronLeft, ChevronRight, Users, Check, Search, Plus, X, Vote } from 'lucide-react';
 import { incrementActivityCount } from '@/components/dna-survey-nudge';
 
 function normalizeCategory(cat: string | null | undefined): string {
@@ -419,9 +419,10 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
     <div className="bg-white border border-gray-100 shadow rounded-2xl p-4 overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-purple-50 text-purple-600/80 font-medium text-[11px]">
-            Cast Your Vote{category ? ` (${category})` : ''}
-          </span>
+          <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center">
+            <Vote className="w-4 h-4 text-white" />
+          </div>
+          <p className="text-sm font-semibold text-gray-900">Cast Your Vote</p>
         </div>
 
         <div className="flex items-center gap-1.5">
@@ -441,33 +442,34 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
           
           return (
             <div key={poll.id} ref={(el) => { slideRefs.current[filteredData.indexOf(poll)] = el; }} className="flex-shrink-0 w-full snap-center h-auto">
-              <div className="flex items-start justify-between gap-2 mb-3">
-                <h3 className="text-gray-900 font-semibold text-base leading-snug flex-1">{poll.title}</h3>
+              <div className="flex items-start justify-between mb-1">
+                {category && (
+                  <p className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">{category}</p>
+                )}
                 {voted && (
-                  <span className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-green-700 text-[10px] font-bold">
-                    <Check className="w-2.5 h-2.5" />
-                    Voted
-                  </span>
+                  <Check size={16} className="text-green-500 ml-auto flex-shrink-0" aria-label="Voted" />
                 )}
               </div>
+              <h3 className="text-gray-900 font-semibold text-[18px] leading-snug mb-3">{poll.title}</h3>
               
               {!voted ? (
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {poll.options.slice(0, 4).map((option, idx) => (
                     <button
                       key={idx}
-                      className={`w-full py-3 px-3 rounded-2xl border text-[14px] font-medium transition-all flex items-center gap-3 text-left leading-tight ${
+                      className={`w-full py-3.5 px-3.5 rounded-2xl border text-[15px] font-medium transition-all flex items-center gap-3 text-left leading-tight ${
                         selected === option
-                          ? 'bg-violet-50 border-violet-400 text-violet-900'
+                          ? 'bg-blue-50 border-blue-400 text-blue-900'
                           : 'bg-white border-gray-200 text-gray-800 hover:bg-gray-50 shadow-sm'
                       }`}
                       onClick={() => handleSelectAndVote(poll, option)}
                       disabled={voteMutation.isPending}
                     >
-                      <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[12px] font-bold shrink-0 ${selected === option ? 'bg-violet-200 text-violet-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {idx + 1}
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0 ${selected === option ? 'bg-blue-200 text-blue-700' : 'bg-blue-50 text-blue-600'}`}>
+                        {String.fromCharCode(65 + idx)}
                       </span>
                       <span className="flex-1">{option}</span>
+                      <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
                     </button>
                   ))}
                 </div>
