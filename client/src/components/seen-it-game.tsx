@@ -616,7 +616,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
               }
             }}
             style={{
-              position: 'absolute', bottom: 12, right: 12,
+              position: 'absolute', top: 12, right: 12,
               width: 36, height: 36, borderRadius: '50%',
               background: '#7C3AED', border: 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
