@@ -1619,7 +1619,7 @@ export default function UserProfile() {
 
   // Fetch DNA engagement and genre signals when DNA tab is active
   useEffect(() => {
-    if (isOwnProfile && viewingUserId && activeSection === 'dna') {
+    if (viewingUserId && activeSection === 'dna') {
       supabase
         .from('user_dna_signals')
         .select('signal_value, source_count')
@@ -4042,24 +4042,7 @@ export default function UserProfile() {
                     {dnaProfile.tagline && (
                       <p className="text-sm text-gray-600 italic">{dnaProfile.tagline}</p>
                     )}
-                    {dnaProfile.core_archetype && (() => {
-                      const archetypeName = dnaProfile.core_archetype.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
-                      const alignmentLine = getGameAlignment(dnaProfile.core_archetype, 'trivia');
-                      return (
-                        <div className="flex flex-col gap-1 mt-2">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase self-start" style={{ background: 'rgba(124,58,237,0.1)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.25)' }}>
-                            <Sparkles size={10} />
-                            {archetypeName}
-                          </span>
-                          {alignmentLine && <p className="text-xs text-purple-500 italic">{alignmentLine}</p>}
-                        </div>
-                      );
-                    })()}
                   </div>
-
-                  {dnaProfile.profile_text && (
-                    <p className="text-sm text-gray-700 leading-relaxed">{dnaProfile.profile_text}</p>
-                  )}
 
                   {dnaProfile.favorite_genres && dnaProfile.favorite_genres.length > 0 && (
                     <div>
@@ -4129,6 +4112,181 @@ export default function UserProfile() {
                 </div>
               )}
             </div>
+
+            {dnaProfileStatus === 'has_profile' && dnaProfile && (
+              <>
+                {/* Mostly Into + Recently shaping their DNA */}
+                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Mostly Into</h3>
+                      {dnaGenreSignals.length > 0 ? (() => {
+                        const total = dnaGenreSignals.reduce((sum: number, g: any) => sum + g.source_count, 0) || 1;
+                        const top = dnaGenreSignals.slice(0, 3);
+                        const colors = ['#ec4899', '#7c3aed', '#2563eb'];
+                        return (
+                          <div className="space-y-3">
+                            {top.map((g: any, i: number) => {
+                              const pct = Math.round((g.source_count / total) * 100);
+                              const label = g.signal_value.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+                              return (
+                                <div key={i}>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-medium text-gray-700 truncate">{label}</span>
+                                    <span className="text-xs font-semibold text-gray-500 ml-2 flex-shrink-0">{pct}%</span>
+                                  </div>
+                                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: colors[i % colors.length] }} />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })() : (
+                        <p className="text-xs text-gray-400">Not enough data yet</p>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-[13px] font-semibold text-purple-600 mb-3">Recently shaping their DNA</h3>
+                      {(() => {
+                        const items = currentlyList?.items?.slice(0, 3) || [];
+                        if (items.length === 0) return <p className="text-xs text-gray-400">Nothing in progress</p>;
+                        return (
+                          <div className="space-y-2.5">
+                            {items.map((item: any) => (
+                              <div
+                                key={item.id}
+                                className="flex items-center gap-2.5 cursor-pointer"
+                                onClick={() => {
+                                  const id = (item.external_id || '').toString().replace(/^\//, '');
+                                  if (id) setLocation(`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${id}`);
+                                }}
+                              >
+                                <div className="w-9 h-12 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                                  {item.image_url
+                                    ? <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                                    : <div className="w-full h-full flex items-center justify-center"><Film size={14} className="text-gray-400" /></div>}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-medium text-gray-900 truncate">{item.title}</p>
+                                  <p className="text-[10px] text-gray-400">{item.media_type === 'tv' ? 'TV Show' : (item.media_type ? item.media_type.charAt(0).toUpperCase() + item.media_type.slice(1) : '')}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { val: totalItemsLogged, label: 'Titles Tracked', color: 'text-purple-600' },
+                      { val: userStats?.moviesWatched ?? 0, label: 'Movies', color: 'text-pink-600' },
+                      { val: userStats?.tvShowsWatched ?? 0, label: 'TV Shows', color: 'text-blue-600' },
+                      { val: userStats?.booksRead ?? 0, label: 'Books', color: 'text-emerald-600' },
+                    ].map(({ val, label, color }) => (
+                      <div key={label} className="text-center">
+                        <p className={`text-2xl font-black ${color}`}>{val}</p>
+                        <p className="text-gray-400 text-[10px] mt-0.5 leading-tight">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* DNA Journey + Current Era */}
+                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-xs font-bold text-gray-900 mb-3">DNA Journey</h3>
+                      {dnaSnapshots.length > 0 ? (() => {
+                        const ARCHETYPE_NAMES: Record<string, string> = {
+                          theory_crafter: 'The Theory Crafter', comfort_rewatcher: 'The Comfort Rewatcher',
+                          prestige_detective: 'The Prestige Detective', emotional_binger: 'The Emotional Binger',
+                          first_episode_judge: 'The First Episode Judge', hidden_gem_hunter: 'The Hidden Gem Hunter',
+                          dark_season_devotee: 'The Dark Season Devotee', story_sharer: 'The Story Sharer',
+                          slow_burn_devotee: 'The Slow Burn Devotee', genre_loyalist: 'The Genre Loyalist',
+                          era_hopper: 'The Era Hopper', taste_signaler: 'The Taste Signaler',
+                          chaos_watcher: 'The Chaos Watcher', lore_diver: 'The Lore Diver',
+                          completionist: 'The Completionist', mood_matcher: 'The Mood Matcher',
+                          culture_tracker: 'The Culture Tracker', nostalgia_keeper: 'The Nostalgia Keeper',
+                          action_seeker: 'The Action Seeker', social_watcher: 'The Social Watcher',
+                        };
+                        const fmtDate = (iso: string) => {
+                          const d = new Date(iso);
+                          const now = new Date();
+                          const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
+                          if (diffDays === 0) return 'Today';
+                          if (diffDays === 1) return 'Yesterday';
+                          if (diffDays < 7) return `${diffDays}d ago`;
+                          return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        };
+                        const shown = dnaSnapshots.slice(0, 4);
+                        return (
+                          <div className="relative">
+                            <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gray-100" />
+                            <div className="space-y-3">
+                              {shown.map((snap: any, i: number) => (
+                                <div key={snap.created_at} className="flex items-start gap-3 relative">
+                                  <div className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 mt-0.5 ${i === 0 ? 'bg-purple-500 border-purple-500' : 'bg-white border-gray-300'}`} />
+                                  <div className="flex-1 min-w-0">
+                                    <span className={`block text-[10px] font-medium ${i === 0 ? 'text-purple-500' : 'text-gray-400'}`}>
+                                      {i === 0 ? 'Now' : fmtDate(snap.created_at)}
+                                    </span>
+                                    <span className={`block text-xs font-semibold truncate ${i === 0 ? 'text-purple-700' : 'text-gray-700'}`}>
+                                      {(ARCHETYPE_NAMES[snap.core_archetype] ?? snap.core_archetype ?? '').replace(/^The\s+/, '')}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })() : (
+                        <p className="text-xs text-gray-400">No journey yet</p>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-gray-900 mb-3">Current Era</h3>
+                      {dnaProfile.current_era && (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-purple-700 bg-purple-50 border border-purple-100 rounded-full px-3 py-1.5">
+                          <Sparkles size={11} className="text-purple-400 flex-shrink-0" />
+                          {dnaProfile.current_era.replace(/_era$/, '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                        </span>
+                      )}
+                      {(() => {
+                        const items = currentlyList?.items?.slice(0, 3) || [];
+                        if (items.length === 0) return null;
+                        return (
+                          <div className="mt-3">
+                            <p className="text-[10px] text-gray-400 mb-1.5">Influenced by</p>
+                            <div className="space-y-1.5">
+                              {items.map((item: any) => (
+                                <div
+                                  key={item.id}
+                                  className="flex items-center justify-between gap-2 cursor-pointer"
+                                  onClick={() => {
+                                    const id = (item.external_id || '').toString().replace(/^\//, '');
+                                    if (id) setLocation(`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${id}`);
+                                  }}
+                                >
+                                  <span className="text-xs text-gray-700 truncate">{item.title}</span>
+                                  <ChevronRight size={13} className="text-gray-300 flex-shrink-0" />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
