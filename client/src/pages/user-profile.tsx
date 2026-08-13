@@ -332,7 +332,7 @@ export default function UserProfile() {
   useEffect(() => {
     if (!isOwnProfile && !initialSectionSet.current) {
       initialSectionSet.current = true;
-      setActiveSection('overview');
+      setActiveSection('dna');
     }
     if (isOwnProfile) {
       initialSectionSet.current = false;
@@ -3391,104 +3391,34 @@ export default function UserProfile() {
           <div className="bg-white border-b border-gray-100 px-4 py-3 -mx-0">
             <div className="flex gap-2 overflow-x-auto scrollbar-hide">
               <button
-                onClick={() => setActiveSection('overview')}
+                onClick={() => setActiveSection('dna')}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  activeSection === 'overview'
+                  activeSection === 'dna'
                     ? 'bg-purple-600 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                 }`}
+                data-testid="tab-friend-dna"
               >
-                Overview
+                DNA
               </button>
-              {dnaProfileStatus === 'has_profile' && (
-                <button
-                  onClick={() => setActiveSection('dna')}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                    activeSection === 'dna'
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                  }`}
-                >
-                  DNA
-                </button>
-              )}
+              <button
+                onClick={() => setActiveSection('their-media')}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  activeSection === 'their-media'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+                data-testid="tab-friend-media"
+              >
+                Their Media
+              </button>
             </div>
           </div>
         )}
 
-        {/* GLANCEABLE VIEW FOR FRIEND PROFILES - Shows all key sections at once */}
-        {!isOwnProfile && friendshipStatus === 'friends' && activeSection === 'overview' && (
+        {/* Their Media — friend lists */}
+        {!isOwnProfile && friendshipStatus === 'friends' && activeSection === 'their-media' && (
           <div className="px-4 py-4 space-y-4">
-            {/* Compact Stats Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <BarChart3 size={14} className="text-purple-600" />
-                Stats
-              </h4>
-              {userStats ? (
-                <div className="grid grid-cols-6 gap-2">
-                  <div className="text-center">
-                    <div className="text-base font-bold text-purple-700">{userStats.moviesWatched}</div>
-                    <div className="text-[10px] text-gray-500">Movies</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-base font-bold text-pink-600">{userStats.tvShowsWatched}</div>
-                    <div className="text-[10px] text-gray-500">TV</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-base font-bold text-cyan-600">{userStats.booksRead}</div>
-                    <div className="text-[10px] text-gray-500">Books</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-base font-bold text-green-600">{userStats.musicHours}h</div>
-                    <div className="text-[10px] text-gray-500">Music</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-base font-bold text-blue-600">{userStats.podcastHours}h</div>
-                    <div className="text-[10px] text-gray-500">Pods</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-base font-bold text-orange-600">{userStats.gamesPlayed}</div>
-                    <div className="text-[10px] text-gray-500">Games</div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-sm text-gray-500 text-center py-2">No stats yet</div>
-              )}
-            </div>
-
-            {/* Compact DNA Card */}
-            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200 p-4 shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="text-white" size={14} />
-                </div>
-                <h4 className="text-sm font-semibold text-gray-700">{userProfileData?.display_name || userProfileData?.first_name || 'Their'}'s Entertainment DNA</h4>
-              </div>
-              {dnaProfileStatus === 'has_profile' && dnaProfile ? (
-                <div>
-                  <h5 className="text-base font-bold bg-gradient-to-r from-purple-800 to-indigo-900 bg-clip-text text-transparent mb-1">
-                    {dnaProfile.label || 'DNA Profile'}
-                  </h5>
-                  {dnaProfile.tagline && (
-                    <p className="text-xs text-gray-600 italic mb-2">{dnaProfile.tagline}</p>
-                  )}
-                  <p className="text-xs text-gray-600 line-clamp-2">
-                    {dnaProfile.profile_text?.slice(0, 120)}...
-                  </p>
-                  <button 
-                    onClick={() => setActiveSection('dna')}
-                    className="text-xs text-purple-600 font-medium mt-2 hover:text-purple-700"
-                  >
-                    View Full DNA →
-                  </button>
-                </div>
-              ) : (
-                <p className="text-xs text-gray-500">No DNA profile yet</p>
-              )}
-            </div>
-
-            {/* Compact Lists Card */}
             <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
               <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                 <List size={14} className="text-purple-600" />
@@ -3496,10 +3426,10 @@ export default function UserProfile() {
               </h4>
               {userLists && userLists.length > 0 ? (
                 <div className="space-y-2">
-                  {userLists.slice(0, 4).map((list: any) => {
+                  {userLists.map((list: any) => {
                     const itemCount = list.items?.length ?? list.item_count ?? 0;
                     return (
-                      <div 
+                      <div
                         key={list.id}
                         className="flex items-center justify-between py-1.5 px-2 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => {
@@ -3524,33 +3454,11 @@ export default function UserProfile() {
                       </div>
                     );
                   })}
-                  {userLists.length > 4 && (
-                    <button 
-                      onClick={() => {
-                        const listSlug = userLists[0]?.title?.toLowerCase().replace(/\s+/g, '-') || 'all';
-                        const userParam = viewingUserId ? `?user=${viewingUserId}` : '';
-                        setLocation(`/list/${listSlug}${userParam}`);
-                      }}
-                      className="text-xs text-purple-600 font-medium w-full text-center pt-1 hover:text-purple-700"
-                    >
-                      View all {userLists.length} lists →
-                    </button>
-                  )}
                 </div>
               ) : (
                 <p className="text-xs text-gray-500 text-center py-2">No lists yet</p>
               )}
             </div>
-
-            {/* Compare DNA Button */}
-            {dnaLevel >= 2 && dnaProfileStatus === 'has_profile' && (
-              <FriendDNACompareButton 
-                friendId={viewingUserId || ''}
-                friendName={userProfileData?.first_name || userProfileData?.user_name || 'Friend'}
-                userDnaLevel={dnaLevel}
-                userItemCount={dnaItemCount}
-              />
-            )}
           </div>
         )}
 
@@ -3629,15 +3537,18 @@ export default function UserProfile() {
 
                 {/* Stats */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-4 gap-x-2 gap-y-3">
                     {[
-                      { val: totalItemsLogged, label: 'Titles Tracked', color: 'text-purple-600' },
+                      { val: totalItemsLogged, label: 'Titles Tracked', color: 'text-purple-700' },
                       { val: userStats?.moviesWatched ?? 0, label: 'Movies', color: 'text-pink-600' },
-                      { val: userStats?.tvShowsWatched ?? 0, label: 'TV Shows', color: 'text-blue-600' },
-                      { val: userStats?.booksRead ?? 0, label: 'Books', color: 'text-emerald-600' },
+                      { val: userStats?.tvShowsWatched ?? 0, label: 'TV', color: 'text-blue-600' },
+                      { val: userStats?.booksRead ?? 0, label: 'Books', color: 'text-cyan-600' },
+                      { val: `${userStats?.musicHours ?? 0}h`, label: 'Music', color: 'text-green-600' },
+                      { val: `${userStats?.podcastHours ?? 0}h`, label: 'Pods', color: 'text-indigo-600' },
+                      { val: userStats?.gamesPlayed ?? 0, label: 'Games', color: 'text-orange-600' },
                     ].map(({ val, label, color }) => (
                       <div key={label} className="text-center">
-                        <p className={`text-2xl font-black ${color}`}>{val}</p>
+                        <p className={`text-xl font-black ${color}`}>{val}</p>
                         <p className="text-gray-400 text-[10px] mt-0.5 leading-tight">{label}</p>
                       </div>
                     ))}
@@ -4101,15 +4012,18 @@ export default function UserProfile() {
 
                 {/* Stats */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-4 gap-x-2 gap-y-3">
                     {[
-                      { val: totalItemsLogged, label: 'Titles Tracked', color: 'text-purple-600' },
+                      { val: totalItemsLogged, label: 'Titles Tracked', color: 'text-purple-700' },
                       { val: userStats?.moviesWatched ?? 0, label: 'Movies', color: 'text-pink-600' },
-                      { val: userStats?.tvShowsWatched ?? 0, label: 'TV Shows', color: 'text-blue-600' },
-                      { val: userStats?.booksRead ?? 0, label: 'Books', color: 'text-emerald-600' },
+                      { val: userStats?.tvShowsWatched ?? 0, label: 'TV', color: 'text-blue-600' },
+                      { val: userStats?.booksRead ?? 0, label: 'Books', color: 'text-cyan-600' },
+                      { val: `${userStats?.musicHours ?? 0}h`, label: 'Music', color: 'text-green-600' },
+                      { val: `${userStats?.podcastHours ?? 0}h`, label: 'Pods', color: 'text-indigo-600' },
+                      { val: userStats?.gamesPlayed ?? 0, label: 'Games', color: 'text-orange-600' },
                     ].map(({ val, label, color }) => (
                       <div key={label} className="text-center">
-                        <p className={`text-2xl font-black ${color}`}>{val}</p>
+                        <p className={`text-xl font-black ${color}`}>{val}</p>
                         <p className="text-gray-400 text-[10px] mt-0.5 leading-tight">{label}</p>
                       </div>
                     ))}
