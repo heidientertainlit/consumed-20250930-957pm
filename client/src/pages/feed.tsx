@@ -2761,7 +2761,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         )}
 
         {/* ── Inline Comments section ── */}
-        <div className="border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()}>
           {/* Header — only shown when there are comments */}
           {comments.length > 2 && (
             <div className="flex items-center justify-end px-4 pt-2">
