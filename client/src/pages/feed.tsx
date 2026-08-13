@@ -1332,6 +1332,16 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     if (!session?.access_token || !extId || !post.mediaTitle) return;
     const fetchScore = async () => {
       try {
+        // Viewer's own verdict beats a prediction: 4.5+ stars shows "You loved this"
+        const { data: own } = await supabase
+          .from('media_ratings')
+          .select('rating')
+          .eq('media_external_id', extId)
+          .eq('media_external_source', extSource)
+          .eq('user_id', session!.user.id)
+          .maybeSingle();
+        if (cancelled) return;
+        if (Number(own?.rating) >= 4.5) { setLovedIt(true); return; }
         const res = await fetch(`${supabaseUrl}/functions/v1/score-media-match`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
@@ -1357,6 +1367,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [reportPostOpen, setReportPostOpen] = useState(false);
   const [shareCardOpen, setShareCardOpen] = useState(false);
   const [matchScore, setMatchScore] = useState<number | null>(null);
+  const [lovedIt, setLovedIt] = useState(false);
   const takeBarRef = useRef<HTMLDivElement>(null);
   const [showCounterPrompt, setShowCounterPrompt] = useState(false);
   const [replyOpen, setReplyOpen] = useState(false);
@@ -1968,10 +1979,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           <Plus size={13} className="text-white" strokeWidth={2.5} />
         </button>
       )}
-      {matchScore != null && (
+      {(lovedIt || matchScore != null) && (
         <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-[#2a1b4a] ring-1 ring-purple-400/30 shadow-lg px-2 py-0.5" data-testid={`feed-dna-match-${post.id}`}>
-          <Dna className="w-2.5 h-2.5 text-purple-300" />
-          <span className="text-[10px] font-medium text-purple-200">{matchScore}% match</span>
+          {lovedIt ? (
+            <>
+              <Star className="w-2.5 h-2.5 text-purple-300 fill-purple-300" />
+              <span className="text-[10px] font-medium text-purple-200">You loved this</span>
+            </>
+          ) : (
+            <>
+              <Dna className="w-2.5 h-2.5 text-purple-300" />
+              <span className="text-[10px] font-medium text-purple-200">{matchScore}% match</span>
+            </>
+          )}
         </span>
       )}
     </div>
