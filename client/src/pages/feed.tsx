@@ -2613,19 +2613,17 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
           {/* ── Action row: Agree · Counter · Rate · Share (left-aligned) ── */}
           <div className="flex items-center justify-start gap-6 px-4 pb-4" onClick={(e) => e.stopPropagation()}>
-          {/* Agree */}
+          {/* Thumbs up — YouTube-style */}
           <button
             onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
             className="flex items-center gap-1.5 active:scale-95 transition-transform"
-            aria-label="Agree"
+            aria-label="Like"
           >
-            <Check size={15} className={isLiked && !localReaction ? 'text-green-600' : 'text-gray-400'} strokeWidth={isLiked && !localReaction ? 3 : 2} />
-            <span className={`text-[12px] ${isLiked && !localReaction ? 'text-green-700 font-semibold' : 'text-gray-500 font-medium'}`}>
-              Agree{(post.likes || 0) > 0 ? ` · ${post.likes}` : ''}
-            </span>
+            <ThumbsUp size={16} className={isLiked && !localReaction ? 'text-gray-900 fill-gray-900' : 'text-gray-700'} strokeWidth={1.75} />
+            {(post.likes || 0) > 0 && <span className="text-[12px] text-gray-600 font-medium">{post.likes}</span>}
           </button>
 
-          {/* Counter — the friendly disagree: logged as a reaction, with an optional nudge to say why */}
+          {/* Thumbs down */}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -2633,11 +2631,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               handleReaction('down');
               setShowCounterPrompt(!wasCountered);
             }}
-            className="flex items-center gap-1.5 active:scale-95 transition-transform"
-            aria-label="Counter"
+            className="flex items-center active:scale-95 transition-transform"
+            aria-label="Dislike"
           >
-            <Undo2 size={15} className={localReaction === 'down' ? 'text-violet-600' : 'text-gray-400'} strokeWidth={localReaction === 'down' ? 2.5 : 2} />
-            <span className={`text-[12px] ${localReaction === 'down' ? 'text-violet-700 font-semibold' : 'text-gray-500 font-medium'}`}>Counter</span>
+            <ThumbsDown size={16} className={localReaction === 'down' ? 'text-gray-900 fill-gray-900' : 'text-gray-700'} strokeWidth={1.75} />
           </button>
 
           {/* Reply — reveals the take bar, YouTube-style */}
@@ -2651,10 +2648,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   el?.focus();
                 }, 50);
               }}
-              className="flex items-center gap-1.5 active:scale-95 transition-transform"
+              className="flex items-center active:scale-95 transition-transform"
               aria-label="Reply"
             >
-              <span className={`text-[12px] ${replyOpen ? 'text-gray-800 font-semibold' : 'text-gray-500 font-medium'}`}>Reply</span>
+              <span className="text-[13px] font-semibold text-gray-900">Reply</span>
             </button>
           )}
 
