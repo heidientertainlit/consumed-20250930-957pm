@@ -2689,73 +2689,52 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           )}
 
-          {/* ── Action row: Agree · Counter · Rate · Share (left-aligned) ── */}
-          <div className="flex items-center justify-start gap-6 px-4 pb-4" onClick={(e) => e.stopPropagation()}>
-          {/* Thumbs up — YouTube-style */}
-          <button
-            onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
-            className="flex items-center gap-1.5 active:scale-95 transition-transform"
-            aria-label="Like"
-          >
-            <ThumbsUp size={16} className={isLiked && !localReaction ? 'text-gray-900 fill-gray-900' : 'text-gray-400'} strokeWidth={1.75} />
-            {(post.likes || 0) > 0 && <span className="text-[12px] text-gray-500 font-medium">{post.likes}</span>}
-          </button>
+          {/* ── Action row: YouTube-style compact pills, tucked up near the content ── */}
+          <div className="flex items-center justify-start gap-2 px-4 pb-3" onClick={(e) => e.stopPropagation()}>
+            {/* Like / dislike — one grouped pill with a divider */}
+            <div className="flex items-center bg-gray-100 rounded-full">
+              <button
+                onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
+                className="flex items-center gap-1.5 pl-3.5 pr-3 py-1.5 active:scale-95 transition-transform"
+                aria-label="Like"
+              >
+                <ThumbsUp size={15} className={isLiked && !localReaction ? 'text-gray-900 fill-gray-900' : 'text-gray-600'} strokeWidth={1.75} />
+                {(post.likes || 0) > 0 && <span className="text-[12px] text-gray-600 font-medium">{post.likes}</span>}
+              </button>
+              <div className="w-px h-4 bg-gray-300" />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const wasCountered = localReaction === 'down';
+                  handleReaction('down');
+                  setShowCounterPrompt(!wasCountered);
+                }}
+                className="flex items-center pl-3 pr-3.5 py-1.5 active:scale-95 transition-transform"
+                aria-label="Dislike"
+              >
+                <ThumbsDown size={15} className={`translate-y-[1px] ${localReaction === 'down' ? 'text-gray-900 fill-gray-900' : 'text-gray-600'}`} strokeWidth={1.75} />
+              </button>
+            </div>
 
-          {/* Thumbs down */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              const wasCountered = localReaction === 'down';
-              handleReaction('down');
-              setShowCounterPrompt(!wasCountered);
-            }}
-            className="flex items-center active:scale-95 transition-transform"
-            aria-label="Dislike"
-          >
-            <ThumbsDown size={16} className={`translate-y-[2px] ${localReaction === 'down' ? 'text-gray-900 fill-gray-900' : 'text-gray-400'}`} strokeWidth={1.75} />
-          </button>
+            {/* Rate it — other user's post */}
+            {isOtherUser && session?.access_token && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowInlineRater(v => !v); }}
+                className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3.5 py-1.5 active:scale-95 transition-transform"
+              >
+                <Star size={14} className={ratingSubmitted ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'} strokeWidth={1.75} />
+                {!ratingSubmitted && <span className="text-[12px] text-gray-600 font-medium">Rate</span>}
+              </button>
+            )}
 
-          {/* Reply — reveals the take bar, YouTube-style */}
-          {session?.access_token && (
+            {/* Share — image card for Instagram/social */}
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setReplyOpen(v => !v);
-                setTimeout(() => {
-                  const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
-                  el?.focus();
-                }, 50);
-              }}
-              className="flex items-center active:scale-95 transition-transform"
-              aria-label="Reply"
+              className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3.5 py-1.5 active:scale-95 transition-transform"
+              onClick={(e) => { e.stopPropagation(); setShareCardOpen(true); }}
             >
-              <span className="text-[13px] text-gray-400">Reply</span>
+              <span className="text-[12px] text-gray-600 font-medium">Share</span>
+              <ArrowRight size={12} className="text-gray-600" />
             </button>
-          )}
-
-          {/* Rate it — other user's post */}
-          {isOtherUser && session?.access_token && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowInlineRater(v => !v); }}
-              className="flex items-center gap-1.5 active:scale-95 transition-transform"
-            >
-              <Star size={15} className={ratingSubmitted ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'} strokeWidth={1.75} />
-              {!ratingSubmitted && (
-                <span className="text-[13px] text-gray-400">
-                  Rate
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* Share — image card for Instagram/social */}
-          <button
-            className="flex items-center gap-1.5 active:scale-95 transition-transform"
-            onClick={(e) => { e.stopPropagation(); setShareCardOpen(true); }}
-          >
-            <span className="text-[13px] text-gray-400">Share</span>
-            <ArrowRight size={13} className="text-gray-400" />
-          </button>
         </div>
 
         {/* Counter follow-up — optional nudge to explain, never required */}
