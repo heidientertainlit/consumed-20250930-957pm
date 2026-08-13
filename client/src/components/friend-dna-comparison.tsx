@@ -757,7 +757,9 @@ export function FriendDNACompareButton({
   friendName, 
   userDnaLevel, 
   userItemCount,
-  hasSurvey = false
+  hasSurvey = false,
+  onCompare,
+  isComparing = false
 }: {
   friendId: string;
   friendName: string;
@@ -765,6 +767,8 @@ export function FriendDNACompareButton({
   userDnaLevel: 0 | 1 | 2;
   userItemCount: number;
   hasSurvey?: boolean;
+  onCompare?: () => void;
+  isComparing?: boolean;
 }) {
   const canCompare = hasSurvey && userItemCount >= 10;
 
@@ -789,7 +793,12 @@ export function FriendDNACompareButton({
     <Button 
       variant="outline" 
       size="sm"
+      disabled={isComparing}
       onClick={() => {
+        if (onCompare) {
+          onCompare();
+          return;
+        }
         window.history.pushState({}, '', '/me?tab=dna');
         window.dispatchEvent(new PopStateEvent('popstate'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -797,8 +806,8 @@ export function FriendDNACompareButton({
       className="border-purple-200 hover:border-purple-300 hover:bg-purple-50"
       data-testid="button-compare-dna"
     >
-      <Users size={14} className="mr-2 text-purple-600" />
-      Compare DNA
+      {isComparing ? <Loader2 size={14} className="mr-2 animate-spin text-purple-600" /> : <Users size={14} className="mr-2 text-purple-600" />}
+      {isComparing ? 'Comparing…' : 'Compare DNA'}
     </Button>
   );
 }

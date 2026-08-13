@@ -712,6 +712,55 @@ export default function UserProfile() {
   const dnaSelectedFriend = dnaCompareFriends.find((f: any) => f.id === dnaSelectedFriendId);
   const dnaCanCompare = dnaProfileStatus === 'has_profile' && dnaLevel >= 2;
 
+  const [isComparingWithProfileFriend, setIsComparingWithProfileFriend] = useState(false);
+
+  // Compare with the friend whose profile you're viewing, post the result to the feed, and go there
+  const handleCompareFromFriendProfile = async () => {
+    if (!session?.access_token || !user?.id || !viewingUserId) return;
+    setIsComparingWithProfileFriend(true);
+    try {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/compare-dna-friend', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ friend_id: viewingUserId }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        toast({ title: "Couldn't compare", description: err.error || 'Failed to compare DNA', variant: "destructive" });
+        return;
+      }
+      const result = await response.json();
+      const content = {
+        friend_id: viewingUserId,
+        friend_name: result.friend_name || userProfileData?.display_name || userProfileData?.user_name || 'Friend',
+        match_score: result.match_score,
+        shared_genres: result.shared_genres || [],
+        shared_titles: result.shared_titles || [],
+        compatibility_line: result.insights?.compatibilityLine || result.compatibility_line || '',
+      };
+      const { data: post } = await supabase
+        .from('social_posts')
+        .insert({ user_id: user.id, post_type: 'dna_compare', content: JSON.stringify(content) })
+        .select('id')
+        .single();
+      await supabase.from('notifications').insert({
+        user_id: viewingUserId,
+        type: 'dna_compare',
+        post_id: post?.id || null,
+        triggered_by_user_id: user.id,
+        message: `${user.user_metadata?.display_name || user.email?.split('@')[0] || 'Someone'} compared DNA with you and shared it to the feed`,
+        read: false,
+      });
+      toast({ title: `${content.match_score}% match!`, description: "Your comparison is on the feed." });
+      setLocation('/');
+    } catch (err) {
+      console.error('Compare from profile failed:', err);
+      toast({ title: "Error", description: "Could not compare DNA", variant: "destructive" });
+    } finally {
+      setIsComparingWithProfileFriend(false);
+    }
+  };
+
   const handleDnaSelectFriend = async (friendId: string) => {
     if (!session?.access_token || !dnaCanCompare) return;
     if (dnaSelectedFriendId === friendId) {
@@ -3944,6 +3993,8 @@ export default function UserProfile() {
                 userDnaLevel={viewerHasSurvey && viewerItemCount >= 10 ? 2 : viewerHasSurvey ? 1 : 0}
                 userItemCount={viewerItemCount}
                 hasSurvey={viewerHasSurvey}
+                onCompare={handleCompareFromFriendProfile}
+                isComparing={isComparingWithProfileFriend}
               />
             )}
 
