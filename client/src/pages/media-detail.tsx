@@ -50,6 +50,7 @@ export default function MediaDetail() {
   const { session, user } = useAuth();
   const { archetypeKey } = useDnaArchetype();
   const [showAbout, setShowAbout] = useState(false);
+  const [showAllPlatforms, setShowAllPlatforms] = useState(false);
   // Dormant: the full reviews list (Activity Section) is gated on showReviews, whose only
   // trigger was the hero "Hot Takes" stat. That stat row is hidden for now, so this stays
   // false. Kept in place (not removed) so it can be re-enabled with the stat row later.
@@ -1568,7 +1569,10 @@ export default function MediaDetail() {
                       seen.add(b);
                       return true;
                     });
-                    return unique.map((platform: any, index: number) => {
+                    const MAX_VISIBLE = 3;
+                    const visible = showAllPlatforms ? unique : unique.slice(0, MAX_VISIBLE);
+                    const hiddenCount = unique.length - MAX_VISIBLE;
+                    const chips = visible.map((platform: any, index: number) => {
                       const label = baseName(platform.name);
                       const inner = (
                         <>
@@ -1586,6 +1590,20 @@ export default function MediaDetail() {
                         </div>
                       );
                     });
+                    return (
+                      <>
+                        {chips}
+                        {hiddenCount > 0 && (
+                          <button
+                            onClick={() => setShowAllPlatforms(v => !v)}
+                            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-sm text-purple-300 hover:bg-white/10 transition-colors"
+                          >
+                            {showAllPlatforms ? 'less' : `+${hiddenCount} more`}
+                            <ChevronDown size={13} className={`transition-transform ${showAllPlatforms ? 'rotate-180' : ''}`} />
+                          </button>
+                        )}
+                      </>
+                    );
                   })()}
                 </div></>
               )}
