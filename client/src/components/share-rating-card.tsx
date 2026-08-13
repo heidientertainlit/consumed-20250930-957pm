@@ -353,8 +353,8 @@ export function ShareRatingCard(props: ShareRatingCardProps) {
       } else {
         const firstName = (props.displayName || "").trim().split(/\s+/)[0];
         const shareTitle = firstName
-          ? `${firstName}'s take on ${props.mediaTitle} — what's yours?`
-          : `My take on ${props.mediaTitle} — what's yours?`;
+          ? `${firstName}'s take on ${props.mediaTitle} — what's yours? (via Consumed)`
+          : `My take on ${props.mediaTitle} — what's yours? (via Consumed)`;
         const result = await shareBlob(blobRef.current, shareTitle);
         if (result === "downloaded") setNotice("Sharing not available here — image downloaded instead");
       }
