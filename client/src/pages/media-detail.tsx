@@ -1516,6 +1516,7 @@ export default function MediaDetail() {
                 );
                 if (mediaItem.tmdb_score) bits.push(
                   <span key="i" className="flex items-center gap-1.5">
+                    <Star className="w-3.5 h-3.5 text-yellow-400" fill="none" />
                     <span className="font-semibold text-white">{Number(mediaItem.tmdb_score).toFixed(1)}</span>
                     <span className="text-gray-400">IMDb</span>
                   </span>
@@ -1527,13 +1528,8 @@ export default function MediaDetail() {
                   </span>
                 );
                 return bits.length > 0 ? (
-                  <div className="mb-0 flex flex-wrap items-center text-sm text-gray-300">
-                    {bits.map((b, i) => (
-                      <span key={i} className="flex items-center">
-                        {i > 0 && <span className="mx-2 text-gray-500">·</span>}
-                        {b}
-                      </span>
-                    ))}
+                  <div className="mb-0 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-300">
+                    {bits}
                   </div>
                 ) : null;
               })()}
