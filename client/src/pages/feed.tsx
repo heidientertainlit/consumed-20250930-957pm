@@ -1293,7 +1293,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       onLike(post.id);
       // remove any existing flame/down reaction
       if (userId) {
-        supabase.from('post_reactions').delete()
+        await supabase.from('post_reactions').delete()
           .eq('social_post_id', post.id).eq('user_id', userId);
       }
       return;
