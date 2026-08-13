@@ -8156,6 +8156,34 @@ export default function Feed() {
     // Transform the response to match frontend interface
     const transformedComments = result.comments?.map(transformComment) || [];
 
+    // Resolve real names (first + last) for commenters — usernames feel too heavy in bylines
+    try {
+      const collectIds = (list: any[]): string[] => list.flatMap((c: any) => [c.user?.id, ...collectIds(c.replies || [])]).filter(Boolean);
+      const ids = [...new Set(collectIds(transformedComments))];
+      if (ids.length > 0) {
+        const { data: users } = await supabase
+          .from('users')
+          .select('id, display_name, user_name, first_name, last_name')
+          .in('id', ids);
+        if (users && users.length > 0) {
+          const userMap = new Map(users.map((u: any) => [u.id, u]));
+          const applyNames = (list: any[]) => list.forEach((c: any) => {
+            const dbUser = c.user?.id ? userMap.get(c.user.id) : null;
+            if (dbUser) {
+              const fullName = (dbUser.first_name && dbUser.last_name)
+                ? `${dbUser.first_name} ${dbUser.last_name}`.trim()
+                : dbUser.first_name || null;
+              c.user.displayName = fullName || dbUser.display_name || dbUser.user_name || c.user.username;
+            }
+            applyNames(c.replies || []);
+          });
+          applyNames(transformedComments);
+        }
+      }
+    } catch (e) {
+      // Name enrichment is cosmetic — never block comments on it
+    }
+
     console.log('🔄 Transformed comments with nesting:', transformedComments);
     return transformedComments;
   };
