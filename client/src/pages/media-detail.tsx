@@ -1327,21 +1327,21 @@ export default function MediaDetail() {
             {[1, 2, 3, 4, 5].map((n) => (
               <Star
                 key={n}
-                className={`w-7 h-7 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
+                className={`w-4 h-4 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
               />
             ))}
           </div>
         )}
         <button onClick={toggleExpand} className="block w-full text-left" data-testid={`take-toggle-${post.id}`}>
-          <p className={`text-[15px] leading-relaxed ${hasText ? 'text-gray-900' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-4'}`}>
-            {hasText ? post.content : 'Rated it — no take yet'}
+          <p className={`text-[16px] leading-relaxed ${hasText ? 'text-gray-900 font-medium' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-4'}`}>
+            {hasText ? <>&ldquo;{post.content}&rdquo;</> : 'Rated it — no take yet'}
           </p>
         </button>
 
-        {/* Byline + actions */}
-        <div className="flex items-center gap-2 mt-2 min-w-0">
-          <span className="text-[13px] font-semibold text-gray-600 truncate">— {name}</span>
-          {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">{takeTimeAgo(post.created_at)}</span>}
+        {/* Quiet byline underneath, then actions */}
+        <div className="flex items-center gap-2 mt-1.5 min-w-0">
+          <span className="text-[12px] text-gray-500 truncate">{name}</span>
+          {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">· {takeTimeAgo(post.created_at)}</span>}
           {(() => {
             const tag = dbTagToDisplay(post.post_type);
             if (!tag) return null;
@@ -1723,7 +1723,7 @@ export default function MediaDetail() {
           {/* Your Reaction — dark purple pill button that expands the composer inline */}
           {session && (
           <div ref={composeSectionRef} className="mb-4">
-            <h3 className="text-base font-semibold text-gray-900 mb-2">Share Your Take</h3>
+            <h3 className="text-base font-semibold text-gray-900 mb-2">What people are saying...</h3>
             {!composerOpen && (
               <button
                 type="button"
@@ -1774,7 +1774,6 @@ export default function MediaDetail() {
             if (communityTakes.length === 0) {
               return (
                 <div className="mb-4">
-                  <h3 className="text-base font-semibold text-gray-900 mb-0.5">What people are saying...</h3>
                   <div className="py-8 text-center">
                     <p className="text-sm text-gray-500 mb-2">Quiet in here so far. Someone has to go first —</p>
                     <button
@@ -1790,7 +1789,6 @@ export default function MediaDetail() {
             }
             return (
               <div className="mb-4">
-                <h3 className="text-base font-semibold text-gray-900 mb-1">What people are saying...</h3>
                 <div className="divide-y divide-gray-200/80">
                   {communityTakes.map((post: any) => renderTakeCard(post, 'trending'))}
                 </div>
