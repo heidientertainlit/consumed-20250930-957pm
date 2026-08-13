@@ -1329,6 +1329,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [shareCardOpen, setShareCardOpen] = useState(false);
   const takeBarRef = useRef<HTMLDivElement>(null);
   const [showCounterPrompt, setShowCounterPrompt] = useState(false);
+  const [replyOpen, setReplyOpen] = useState(false);
   const [reportCommentTarget, setReportCommentTarget] = useState<{id: string; userId: string; userName: string} | null>(null);
 
   const handleStarClick = (e: React.MouseEvent) => {
@@ -2639,6 +2640,24 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <span className={`text-[12px] ${localReaction === 'down' ? 'text-violet-700 font-semibold' : 'text-gray-500 font-medium'}`}>Counter</span>
           </button>
 
+          {/* Reply — reveals the take bar, YouTube-style */}
+          {session?.access_token && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setReplyOpen(v => !v);
+                setTimeout(() => {
+                  const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
+                  el?.focus();
+                }, 50);
+              }}
+              className="flex items-center gap-1.5 active:scale-95 transition-transform"
+              aria-label="Reply"
+            >
+              <span className={`text-[12px] ${replyOpen ? 'text-gray-800 font-semibold' : 'text-gray-500 font-medium'}`}>Reply</span>
+            </button>
+          )}
+
           {/* Rate it — other user's post */}
           {isOtherUser && session?.access_token && (
             <button
@@ -2673,8 +2692,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <button
               onClick={() => {
                 setShowCounterPrompt(false);
-                const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
-                el?.focus();
+                setReplyOpen(true);
+                setTimeout(() => {
+                  const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
+                  el?.focus();
+                }, 50);
               }}
               className="text-[12px] font-semibold text-violet-700 shrink-0"
             >
@@ -2686,8 +2708,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         )}
 
-        {/* ── Take bar — always visible, inline comment strip ── */}
-        {session?.access_token && (
+        {/* ── Take bar — revealed by Reply, YouTube-style ── */}
+        {session?.access_token && replyOpen && (
           <div ref={takeBarRef} className="flex items-center gap-2 px-4 pb-4 pt-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex-1 flex items-center bg-gray-50 rounded-full px-3 py-1.5 gap-2 border border-gray-100" onClick={(e) => e.stopPropagation()}>
               <MentionInput
