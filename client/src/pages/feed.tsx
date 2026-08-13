@@ -1980,7 +1980,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </button>
       )}
       {(lovedIt || matchScore != null) && (
-        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-[#2a1b4a] ring-1 ring-purple-400/30 shadow-lg px-2 py-0.5" data-testid={`feed-dna-match-${post.id}`}>
+        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-[#6d4fc2] ring-1 ring-purple-400/30 shadow-lg px-2 py-0.5" data-testid={`feed-dna-match-${post.id}`}>
           {lovedIt ? (
             <>
               <Star className="w-2.5 h-2.5 text-purple-300 fill-purple-300" />
@@ -2483,7 +2483,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
             {/* DNA match / loved-it pill — hangs off the poster's bottom edge */}
             {(lovedIt || matchScore != null) && (
-              <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-[#2a1b4a] ring-1 ring-purple-400/30 shadow-lg px-2 py-0.5" data-testid={`feed-dna-match-${post.id}`}>
+              <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-[#6d4fc2] ring-1 ring-purple-400/30 shadow-lg px-2 py-0.5" data-testid={`feed-dna-match-${post.id}`}>
                 {lovedIt ? (
                   <>
                     <Star className="w-2.5 h-2.5 text-purple-300 fill-purple-300" />

@@ -1478,12 +1478,12 @@ export default function MediaDetail() {
                 </button>
               )}
               {session && (Number(userRating?.rating || userReview?.rating) >= 4.5 ? (
-                <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-[#2a1b4a] ring-1 ring-purple-400/30 shadow-lg px-2.5 py-1" data-testid="card-dna-match">
+                <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-[#6d4fc2] ring-1 ring-purple-400/30 shadow-lg px-2.5 py-1" data-testid="card-dna-match">
                   <Star className="w-3 h-3 text-purple-300 fill-purple-300" />
                   <span className="text-[11px] font-medium text-purple-200">You loved this</span>
                 </span>
               ) : typeof dnaRecMatch?.score === 'number' ? (
-                <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-[#2a1b4a] ring-1 ring-purple-400/30 shadow-lg px-2.5 py-1" data-testid="card-dna-match">
+                <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-[#6d4fc2] ring-1 ring-purple-400/30 shadow-lg px-2.5 py-1" data-testid="card-dna-match">
                   <Dna className="w-3 h-3 text-purple-300" />
                   <span className="text-[11px] font-medium text-purple-200">{dnaRecMatch.score}% match</span>
                 </span>
