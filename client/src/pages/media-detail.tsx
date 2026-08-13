@@ -1616,6 +1616,35 @@ export default function MediaDetail() {
           )}
 
 
+          {/* Stat row — hidden for now until there's more engagement (flip false → true to restore) */}
+          {false && (
+          <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-white/10">
+            <button onClick={() => setShowReviews(true)} className="flex flex-col items-center gap-1 py-1" data-testid="stat-hot-takes">
+              <Flame className="w-5 h-5 text-orange-400" />
+              <span className="text-base font-bold text-white">{formatCount(takes.length)}</span>
+              <span className="text-[11px] text-gray-400">Hot Takes</span>
+            </button>
+            <div className="flex flex-col items-center gap-1 py-1" data-testid="stat-theories">
+              <Lightbulb className="w-5 h-5 text-purple-300" />
+              <span className="text-base font-bold text-white">{formatCount(theoriesCount)}</span>
+              <span className="text-[11px] text-gray-400">Theories</span>
+            </div>
+            <div className="flex flex-col items-center gap-1 py-1" data-testid="stat-predictions">
+              <Target className="w-5 h-5 text-pink-400" />
+              <span className="text-base font-bold text-white">{formatCount(predictions.length)}</span>
+              <span className="text-[11px] text-gray-400">Predictions</span>
+            </div>
+            <div className="flex flex-col items-center gap-1 py-1" data-testid="stat-fans">
+              <Users className="w-5 h-5 text-blue-300" />
+              <span className="text-base font-bold text-white">{formatCount(fansCount)}</span>
+              <span className="text-[11px] text-gray-400">Fans Here</span>
+            </div>
+          </div>
+          )}
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 pt-5 pb-8">
           {/* Match card + tap-to-rate + add to list — only for titles you haven't rated */}
           {session && (() => {
             const ownRating = Number(userRating?.rating || userReview?.rating) || 0;
@@ -1659,7 +1688,7 @@ export default function MediaDetail() {
               setTimeout(() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
             };
             return (
-            <div className="mt-4 relative z-10 -mb-16">
+            <div className="mb-6">
               <div className="rounded-2xl border border-purple-300/15 bg-gradient-to-br from-[#2a1b4a] to-[#180d2f] shadow-xl px-4 py-4" data-testid="card-rate-title">
                 <p className="text-center text-[11px] font-semibold tracking-widest uppercase text-gray-400">{isRated ? 'Your rating' : 'Rate this title'}</p>
                 <div className="mt-3 flex items-center justify-center gap-3">
@@ -1689,35 +1718,7 @@ export default function MediaDetail() {
             );
           })()}
 
-          {/* Stat row — hidden for now until there's more engagement (flip false → true to restore) */}
-          {false && (
-          <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-white/10">
-            <button onClick={() => setShowReviews(true)} className="flex flex-col items-center gap-1 py-1" data-testid="stat-hot-takes">
-              <Flame className="w-5 h-5 text-orange-400" />
-              <span className="text-base font-bold text-white">{formatCount(takes.length)}</span>
-              <span className="text-[11px] text-gray-400">Hot Takes</span>
-            </button>
-            <div className="flex flex-col items-center gap-1 py-1" data-testid="stat-theories">
-              <Lightbulb className="w-5 h-5 text-purple-300" />
-              <span className="text-base font-bold text-white">{formatCount(theoriesCount)}</span>
-              <span className="text-[11px] text-gray-400">Theories</span>
-            </div>
-            <div className="flex flex-col items-center gap-1 py-1" data-testid="stat-predictions">
-              <Target className="w-5 h-5 text-pink-400" />
-              <span className="text-base font-bold text-white">{formatCount(predictions.length)}</span>
-              <span className="text-[11px] text-gray-400">Predictions</span>
-            </div>
-            <div className="flex flex-col items-center gap-1 py-1" data-testid="stat-fans">
-              <Users className="w-5 h-5 text-blue-300" />
-              <span className="text-base font-bold text-white">{formatCount(fansCount)}</span>
-              <span className="text-[11px] text-gray-400">Fans Here</span>
-            </div>
-          </div>
-          )}
-        </div>
-      </div>
 
-      <div className="max-w-6xl mx-auto px-4 pt-24 pb-8">
           {/* Your Reaction — dark purple pill button that expands the composer inline */}
           {session && (
           <div ref={composeSectionRef} className="mb-4">
