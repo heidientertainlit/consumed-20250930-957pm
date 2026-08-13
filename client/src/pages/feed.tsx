@@ -2531,31 +2531,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 );
               })()}
 
-              {/* Reviewer — small "— First L." byline under the stars, no avatar */}
-              <div className="flex items-center gap-2 mt-1">
-                <div className="flex-1 min-w-0">
-                  <p
-                    className={`text-[13px] font-medium text-gray-600 leading-tight truncate ${post.user?.id ? 'cursor-pointer hover:text-gray-900' : ''}`}
-                    onClick={(e) => { if (post.user?.id) { e.stopPropagation(); setLocation(`/user/${post.user.id}`); } }}
-                  >— {(() => {
-                    const parts = (displayName || '').trim().split(/\s+/);
-                    return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
-                  })()}</p>
-                  {isOtherUser && tasteAlignment !== null ? (
-                    <p className="text-[12px] text-violet-600 font-medium leading-tight"><span className="font-semibold">{tasteAlignment}%</span> aligned with you</p>
-                  ) : isOtherUser && alignmentNudge && !ratingSubmitted ? (
-                    <p className="text-[11px] text-gray-400 leading-tight">Rate 10 things to see your alignment</p>
-                  ) : null}
-                </div>
-                <div className="flex items-center gap-0.5 flex-shrink-0 self-start">
-                  {currentUserId && post.user?.id !== currentUserId && hasContent && (
-                    <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-500 transition-colors p-1 rounded-full hover:bg-orange-50" title="Report review"><Flag size={13} /></button>
-                  )}
-                  {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
-                    <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this post?')) onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50" title="Delete post"><Trash2 size={13} /></button>
-                  )}
-                </div>
-              </div>
 
               {/* Other ratings — tight under the stars */}
               {relatedRatings.length > 0 && (
@@ -2607,6 +2582,32 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {hasContent && (
                 <p className="text-[15px] font-normal text-gray-700 leading-snug mt-1.5">"{post.content}"</p>
               )}
+
+              {/* Reviewer — gray "— First L." byline under the quote, no avatar */}
+              <div className="flex items-center gap-2 mt-1">
+                <div className="flex-1 min-w-0">
+                  <p
+                    className={`text-[12px] font-normal text-gray-400 leading-tight truncate ${post.user?.id ? 'cursor-pointer hover:text-gray-600' : ''}`}
+                    onClick={(e) => { if (post.user?.id) { e.stopPropagation(); setLocation(`/user/${post.user.id}`); } }}
+                  >— {(() => {
+                    const parts = (displayName || '').trim().split(/\s+/);
+                    return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
+                  })()}</p>
+                  {isOtherUser && tasteAlignment !== null ? (
+                    <p className="text-[12px] text-violet-600 font-medium leading-tight"><span className="font-semibold">{tasteAlignment}%</span> aligned with you</p>
+                  ) : isOtherUser && alignmentNudge && !ratingSubmitted ? (
+                    <p className="text-[11px] text-gray-400 leading-tight">Rate 10 things to see your alignment</p>
+                  ) : null}
+                </div>
+                <div className="flex items-center gap-0.5 flex-shrink-0 self-start">
+                  {currentUserId && post.user?.id !== currentUserId && hasContent && (
+                    <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-500 transition-colors p-1 rounded-full hover:bg-orange-50" title="Report review"><Flag size={13} /></button>
+                  )}
+                  {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
+                    <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this post?')) onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50" title="Delete post"><Trash2 size={13} /></button>
+                  )}
+                </div>
+              </div>
 
               {/* Your own rating, once submitted */}
               {isOtherUser && ratingSubmitted && ratingValue > 0 && (

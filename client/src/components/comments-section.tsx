@@ -316,47 +316,12 @@ function CommentItem({
       )}
       
       <div 
-        className="flex items-start space-x-2"
+        className="flex items-start"
         style={{ marginLeft: depth > 0 ? `${indentPx}px` : '0' }}
       >
-        <Link href={`/user/${comment.user.id}`}>
-          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 relative z-10 cursor-pointer hover:bg-gray-300 transition-colors">
-            <User size={16} className="text-gray-600" />
-          </div>
-        </Link>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-2 mb-1 flex-wrap">
-            <Link 
-              href={`/user/${comment.user.id}`}
-              className="font-medium text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
-              data-testid={`link-commenter-${comment.user.id}`}
-            >
-              {comment.user.displayName}
-            </Link>
-            <span className="text-xs text-gray-500">
-              {formatCommentDate(comment.createdAt)}
-            </span>
-            {currentUserId === comment.user.id && onDeleteComment ? (
-              <button
-                onClick={() => onDeleteComment(comment.id, postId)}
-                className="text-gray-400 hover:text-red-500 transition-colors ml-auto"
-                data-testid={`button-delete-comment-${comment.id}`}
-                title="Delete comment"
-              >
-                <Trash2 size={14} />
-              </button>
-            ) : currentUserId && currentUserId !== comment.user.id && onReportComment ? (
-              <button
-                onClick={() => onReportComment(comment.id, comment.user.id, comment.user.username)}
-                className="text-gray-400 hover:text-orange-500 transition-colors ml-auto"
-                title="Report comment"
-              >
-                <Flag size={14} />
-              </button>
-            ) : null}
-          </div>
           {mediaData ? (
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1">
               {displayPoster && (
                 <img src={displayPoster} alt={displayTitle} className="w-9 h-12 rounded object-cover flex-shrink-0" />
               )}
@@ -370,8 +335,35 @@ function CommentItem({
               </div>
             </div>
           ) : (
-            <p className="text-sm text-gray-800 mb-2 break-words">{renderMentions(comment.content)}</p>
+            <p className="text-[14px] text-gray-800 break-words leading-snug">{renderMentions(comment.content)}</p>
           )}
+          <div className="flex items-center gap-2 mt-0.5 mb-1.5 flex-wrap">
+            <Link 
+              href={`/user/${comment.user.id}`}
+              className="text-[11px] text-gray-400 hover:text-purple-600 cursor-pointer transition-colors"
+              data-testid={`link-commenter-${comment.user.id}`}
+            >
+              — {comment.user.displayName} · {formatCommentDate(comment.createdAt)}
+            </Link>
+            {currentUserId === comment.user.id && onDeleteComment ? (
+              <button
+                onClick={() => onDeleteComment(comment.id, postId)}
+                className="text-gray-300 hover:text-red-500 transition-colors ml-auto"
+                data-testid={`button-delete-comment-${comment.id}`}
+                title="Delete comment"
+              >
+                <Trash2 size={13} />
+              </button>
+            ) : currentUserId && currentUserId !== comment.user.id && onReportComment ? (
+              <button
+                onClick={() => onReportComment(comment.id, comment.user.id, comment.user.username)}
+                className="text-gray-300 hover:text-orange-500 transition-colors ml-auto"
+                title="Report comment"
+              >
+                <Flag size={13} />
+              </button>
+            ) : null}
+          </div>
           
           {/* Action buttons */}
           <div className="flex items-center gap-3">
