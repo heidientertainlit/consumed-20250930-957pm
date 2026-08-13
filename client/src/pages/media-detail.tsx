@@ -1699,12 +1699,13 @@ export default function MediaDetail() {
                 ) : (
                   <p className="mt-2 text-center text-xs text-gray-500">You rated this {ownRating % 1 === 0 ? ownRating : ownRating.toFixed(1)} out of 5</p>
                 )}
+                <div className="mt-4 -mx-4 border-t border-gray-200" />
                 <button
                   type="button"
                   onClick={() => setIsListSheetOpen(true)}
-                  className={`mt-4 w-full flex items-center justify-center gap-1.5 rounded-full text-sm font-semibold py-3 transition-colors ${onListStatus
-                    ? 'border border-purple-300 text-purple-700 hover:bg-purple-50'
-                    : 'bg-white border border-gray-300 hover:border-purple-400 hover:bg-purple-50 text-gray-900 shadow-sm'}`}
+                  className={`w-full flex items-center justify-center gap-1.5 text-[15px] font-semibold pt-4 pb-1 transition-colors ${onListStatus
+                    ? 'text-purple-700 hover:text-purple-800'
+                    : 'text-purple-600 hover:text-purple-700'}`}
                   data-testid="button-hero-add-to-list"
                 >
                   {onListStatus ? (
