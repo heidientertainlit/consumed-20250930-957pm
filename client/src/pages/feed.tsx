@@ -2421,8 +2421,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             style={{ animation: `seen-it-${enterDir} 0.24s cubic-bezier(0.25, 0.46, 0.45, 0.94) both` }}
           >
             {/* Poster anchor (left) */}
+            <div className="relative w-[120px] shrink-0 self-start">
             <div
-              className="relative w-[120px] shrink-0 rounded-xl overflow-hidden bg-gray-900 cursor-pointer self-start"
+              className="relative w-full rounded-xl overflow-hidden bg-gray-900 cursor-pointer"
               style={{ height: 180, boxShadow: '0 6px 20px rgba(0,0,0,0.22)' }}
               onClick={() => {
                 if (swipeProps?.getSwiped?.()) return;
@@ -2470,23 +2471,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 </span>
               )}
 
-              {/* DNA match / loved-it pill */}
-              {(lovedIt || matchScore != null) && (
-                <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-[#2a1b4a]/90 backdrop-blur-sm ring-1 ring-purple-400/30 shadow-lg px-2 py-0.5" data-testid={`feed-dna-match-${post.id}`}>
-                  {lovedIt ? (
-                    <>
-                      <Star className="w-2.5 h-2.5 text-purple-300 fill-purple-300" />
-                      <span className="text-[10px] font-medium text-purple-200">You loved this</span>
-                    </>
-                  ) : (
-                    <>
-                      <Dna className="w-2.5 h-2.5 text-purple-300" />
-                      <span className="text-[10px] font-medium text-purple-200">{matchScore}% match</span>
-                    </>
-                  )}
-                </span>
-              )}
-
               {/* Bottom-right: Add to list button on poster */}
               {onAddToList && (post.externalId || post.mediaTitle) && (
                 <button
@@ -2496,6 +2480,23 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <Plus size={14} className="text-white" strokeWidth={2.5} />
                 </button>
               )}
+            </div>
+            {/* DNA match / loved-it pill — hangs off the poster's bottom edge */}
+            {(lovedIt || matchScore != null) && (
+              <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-[#2a1b4a] ring-1 ring-purple-400/30 shadow-lg px-2 py-0.5" data-testid={`feed-dna-match-${post.id}`}>
+                {lovedIt ? (
+                  <>
+                    <Star className="w-2.5 h-2.5 text-purple-300 fill-purple-300" />
+                    <span className="text-[10px] font-medium text-purple-200">You loved this</span>
+                  </>
+                ) : (
+                  <>
+                    <Dna className="w-2.5 h-2.5 text-purple-300" />
+                    <span className="text-[10px] font-medium text-purple-200">{matchScore}% match</span>
+                  </>
+                )}
+              </span>
+            )}
             </div>
 
             {/* Take (right) */}
