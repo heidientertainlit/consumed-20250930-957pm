@@ -1286,6 +1286,35 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       });
   }, [post.id, session?.user?.id]);
 
+  // DNA match pill on the poster — same cached edge fn as the media detail page
+  useEffect(() => {
+    let cancelled = false;
+    const extId = post.externalId;
+    const extSource = post.externalSource || 'tmdb';
+    if (!session?.access_token || !extId || !post.mediaTitle) return;
+    const fetchScore = async () => {
+      try {
+        const res = await fetch(`${supabaseUrl}/functions/v1/score-media-match`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            external_source: extSource,
+            external_id: extId,
+            media_type: post.mediaType,
+            title: post.mediaTitle,
+          }),
+        });
+        if (!res.ok || cancelled) return;
+        const json = await res.json();
+        if (cancelled) return;
+        if (typeof json.score === 'number') setMatchScore(json.score);
+        else if (json.pending) setTimeout(() => { if (!cancelled) fetchScore(); }, 8000);
+      } catch {}
+    };
+    fetchScore();
+    return () => { cancelled = true; };
+  }, [post.externalId, post.externalSource, session?.access_token]);
+
   const handleReaction = async (type: 'up' | 'flame' | 'down') => {
     const userId = session?.user?.id;
     if (type === 'up') {
@@ -1327,6 +1356,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [isSearchingMedia, setIsSearchingMedia] = useState(false);
   const [reportPostOpen, setReportPostOpen] = useState(false);
   const [shareCardOpen, setShareCardOpen] = useState(false);
+  const [matchScore, setMatchScore] = useState<number | null>(null);
   const takeBarRef = useRef<HTMLDivElement>(null);
   const [showCounterPrompt, setShowCounterPrompt] = useState(false);
   const [replyOpen, setReplyOpen] = useState(false);
@@ -1937,6 +1967,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         >
           <Plus size={13} className="text-white" strokeWidth={2.5} />
         </button>
+      )}
+      {matchScore != null && (
+        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-[#2a1b4a] ring-1 ring-purple-400/30 shadow-lg px-2 py-0.5" data-testid={`feed-dna-match-${post.id}`}>
+          <Dna className="w-2.5 h-2.5 text-purple-300" />
+          <span className="text-[10px] font-medium text-purple-200">{matchScore}% match</span>
+        </span>
       )}
     </div>
   ) : null;
