@@ -808,10 +808,13 @@ export default function MediaDetail() {
       );
       if (!res.ok) return null;
       const json = await res.json();
-      return typeof json.score === 'number' ? json : null;
+      // Keep the pending marker so we can poll until the score is ready
+      return (typeof json.score === 'number' || json.pending) ? json : null;
     },
-    enabled: !!user?.id && !!params?.id && !!params?.source && !!(mediaItem as any)?.title && userRatingFetched && !userRating?.rating,
+    enabled: !!user?.id && !!params?.id && !!params?.source && !!(mediaItem as any)?.title,
     staleTime: 30 * 60 * 1000,
+    // v5: callback receives the Query object — poll while the score is still generating
+    refetchInterval: (query) => (query.state.data as any)?.pending ? 8000 : false,
     retry: false,
   });
 
@@ -1474,7 +1477,7 @@ export default function MediaDetail() {
                   <Plus size={16} />
                 </button>
               )}
-              {session && !(Number(userRating?.rating || userReview?.rating) > 0) && typeof dnaRecMatch?.score === 'number' && (
+              {session && typeof dnaRecMatch?.score === 'number' && (
                 <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 whitespace-nowrap rounded-full bg-[#2a1b4a] ring-1 ring-purple-400/30 shadow-lg px-2.5 py-1" data-testid="card-dna-match">
                   <Dna className="w-3 h-3 text-purple-300" />
                   <span className="text-[11px] font-medium text-purple-200">{dnaRecMatch.score}% match</span>
