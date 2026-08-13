@@ -751,8 +751,8 @@ export default function UserProfile() {
         message: `${user.user_metadata?.display_name || user.email?.split('@')[0] || 'Someone'} compared DNA with you and shared it to the feed`,
         read: false,
       });
-      toast({ title: `${content.match_score}% match!`, description: "Your comparison is on the feed." });
-      setLocation('/');
+      toast({ title: `${content.match_score}% match!`, description: "Taking you to your comparison…" });
+      setLocation(post?.id ? `/?post=${post.id}` : '/');
     } catch (err) {
       console.error('Compare from profile failed:', err);
       toast({ title: "Error", description: "Could not compare DNA", variant: "destructive" });
@@ -3347,12 +3347,23 @@ export default function UserProfile() {
                     <>
                       <Button 
                         disabled
-                        className="bg-gray-300 text-gray-600 rounded-full px-8 py-3 text-base font-semibold cursor-not-allowed"
+                        className="bg-gray-300 text-gray-600 rounded-full px-5 py-3 text-sm font-semibold cursor-not-allowed"
                         data-testid="button-already-friends"
                       >
-                        <Users size={20} className="mr-2" />
+                        <Users size={18} className="mr-2" />
                         Already Friends
                       </Button>
+                      {viewingUserId && dnaProfileStatus === 'has_profile' && (
+                        <FriendDNACompareButton
+                          friendId={viewingUserId}
+                          friendName={userProfileData?.first_name || userProfileData?.user_name || 'Friend'}
+                          userDnaLevel={viewerHasSurvey && viewerItemCount >= 10 ? 2 : viewerHasSurvey ? 1 : 0}
+                          userItemCount={viewerItemCount}
+                          hasSurvey={viewerHasSurvey}
+                          onCompare={handleCompareFromFriendProfile}
+                          isComparing={isComparingWithProfileFriend}
+                        />
+                      )}
                     </>
                   ) : friendshipStatus === 'pending_sent' ? (
                     <Button 
@@ -3985,18 +3996,6 @@ export default function UserProfile() {
         {/* Full DNA Section for Friend Profiles */}
         {!isOwnProfile && activeSection === 'dna' && (
           <div className="px-4 py-4 space-y-4">
-            {/* Compare DNA button — card removed per request; keep the action */}
-            {dnaProfileStatus === 'has_profile' && dnaProfile && (
-              <FriendDNACompareButton
-                friendId={viewingUserId || ''}
-                friendName={userProfileData?.first_name || userProfileData?.user_name || 'Friend'}
-                userDnaLevel={viewerHasSurvey && viewerItemCount >= 10 ? 2 : viewerHasSurvey ? 1 : 0}
-                userItemCount={viewerItemCount}
-                hasSurvey={viewerHasSurvey}
-                onCompare={handleCompareFromFriendProfile}
-                isComparing={isComparingWithProfileFriend}
-              />
-            )}
 
             {dnaProfileStatus === 'has_profile' && dnaProfile && (
               <>
