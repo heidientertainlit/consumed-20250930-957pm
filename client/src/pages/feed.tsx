@@ -2634,7 +2634,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             className="flex items-center active:scale-95 transition-transform"
             aria-label="Dislike"
           >
-            <ThumbsDown size={16} className={localReaction === 'down' ? 'text-gray-900 fill-gray-900' : 'text-gray-400'} strokeWidth={1.75} />
+            <ThumbsDown size={16} className={`translate-y-[2px] ${localReaction === 'down' ? 'text-gray-900 fill-gray-900' : 'text-gray-400'}`} strokeWidth={1.75} />
           </button>
 
           {/* Reply — reveals the take bar, YouTube-style */}
