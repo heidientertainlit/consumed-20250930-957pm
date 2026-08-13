@@ -2781,31 +2781,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         )}
 
-        {/* ── Take bar — revealed by Reply, YouTube-style ── */}
-        {session?.access_token && replyOpen && (
-          <div ref={takeBarRef} className="flex items-center gap-2 px-4 pb-4 pt-0" onClick={(e) => e.stopPropagation()}>
-            <div className="flex-1 flex items-center bg-gray-50 rounded-full px-3 py-1.5 gap-2 border border-gray-100" onClick={(e) => e.stopPropagation()}>
-              <MentionInput
-                value={commentText}
-                onChange={setCommentText}
-                placeholder="Add your take or @tag a friend..."
-                session={session}
-                onSubmit={submitComment}
-                className="flex-1 text-[13px] h-auto px-0 py-0 border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none text-gray-700 placeholder:text-gray-400"
-              />
-              {commentText.trim() && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); submitComment(); }}
-                  disabled={submitting}
-                  className="w-5 h-5 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 disabled:opacity-50"
-                >
-                  <Send size={10} className="text-white ml-px" />
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* ── Inline Comments section ── */}
         <div className="border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
           {/* Header — only shown when there are comments */}
@@ -2877,6 +2852,29 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </button>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ── Join the conversation — always visible, like People are talking ── */}
+          {session?.access_token && (
+            <div ref={takeBarRef} className="flex items-center gap-2 px-4 pb-4 pt-1" onClick={(e) => e.stopPropagation()}>
+              <div className="flex-1 flex items-center bg-white rounded-full px-4 py-2.5 gap-2 border border-gray-200" onClick={(e) => e.stopPropagation()}>
+                <MentionInput
+                  value={commentText}
+                  onChange={setCommentText}
+                  placeholder="Join the conversation..."
+                  session={session}
+                  onSubmit={submitComment}
+                  className="flex-1 text-[14px] h-auto px-0 py-0 border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none text-gray-700 placeholder:text-gray-400"
+                />
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); submitComment(); }}
+                disabled={submitting || !commentText.trim()}
+                className="w-10 h-10 rounded-full bg-violet-200 hover:bg-violet-300 flex items-center justify-center flex-shrink-0 disabled:opacity-60 transition-colors"
+              >
+                <Send size={15} className="text-white ml-px" />
+              </button>
             </div>
           )}
 
