@@ -367,7 +367,7 @@ export function ShareRatingCard(props: ShareRatingCardProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-3 px-1">
-          <p className="text-white font-semibold text-[15px]">Share your rating</p>
+          <p className="text-white font-semibold text-[15px]">Share your take</p>
           <button onClick={onClose} aria-label="Close" className="p-1.5 rounded-full bg-white/10 text-white/70 hover:text-white">
             <X size={16} />
           </button>
@@ -383,23 +383,22 @@ export function ShareRatingCard(props: ShareRatingCardProps) {
 
         {notice && <p className="text-[12px] text-violet-300 text-center mt-3">{notice}</p>}
 
-        <div className="flex gap-2 mt-4">
-          <button
-            onClick={() => handleShare(false)}
-            disabled={!previewUrl || sharing}
-            className="flex-1 flex items-center justify-center gap-2 disabled:opacity-50 text-white font-semibold text-[14px] py-3 rounded-full active:scale-95 transition-transform"
-            style={{ background: "linear-gradient(135deg, #6d28d9 0%, #9333ea 45%, #d946ef 100%)" }}
-          >
-            {sharing ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
-            Share with a friend
-          </button>
+        <div className="flex flex-col gap-2.5 mt-4">
           <button
             onClick={() => handleShare(true)}
             disabled={!previewUrl || sharing}
-            aria-label="Save image"
-            className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 disabled:opacity-50 text-white font-medium text-[14px] px-4 py-3 rounded-xl"
+            className="w-full flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 hover:bg-white/10 disabled:opacity-50 text-white/90 font-medium text-[15px] py-3 active:scale-[0.98] transition-transform"
           >
-            <Download size={16} />
+            <Download size={17} />
+            Save to Photos
+          </button>
+          <button
+            onClick={() => handleShare(false)}
+            disabled={!previewUrl || sharing}
+            className="w-full flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 hover:bg-white/10 disabled:opacity-50 text-white/90 font-medium text-[15px] py-3 active:scale-[0.98] transition-transform"
+          >
+            {sharing ? <Loader2 size={17} className="animate-spin" /> : <Share2 size={17} />}
+            Share with a Friend
           </button>
         </div>
       </div>
