@@ -294,6 +294,8 @@ export default function UserProfile() {
   const historyRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState<string>('dna');
   const [showAllOwnLists, setShowAllOwnLists] = useState(false);
+  const [viewerHasSurvey, setViewerHasSurvey] = useState(false);
+  const [viewerItemCount, setViewerItemCount] = useState(0);
   const initialSectionSet = useRef(false);
   const [isRegeneratingDna, setIsRegeneratingDna] = useState(false);
   const [dnaEngagement, setDnaEngagement] = useState<{[key: string]: number}>({});
@@ -1617,6 +1619,26 @@ export default function UserProfile() {
     setUserBadges([]);
     setFriendshipStatus('loading');
   }, [viewingUserId]);
+
+  // Viewer's own compare eligibility (survey + items) when viewing a friend
+  useEffect(() => {
+    if (isOwnProfile || !user?.id) return;
+    supabase
+      .from('dna_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => setViewerHasSurvey(!!data));
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+    };
+    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+    fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/calculate-dna-level?user_id=${user.id}`, { headers })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setViewerItemCount(data.items_logged || 0); })
+      .catch(() => {});
+  }, [isOwnProfile, user?.id, session?.access_token]);
 
   // Fetch DNA engagement and genre signals when DNA tab is active
   useEffect(() => {
@@ -3287,9 +3309,9 @@ export default function UserProfile() {
                           friendId={viewingUserId}
                           friendName={userProfileData?.display_name || userProfileData?.user_name || 'Friend'}
                           friendAvatar={userProfileData?.avatar_url}
-                          userDnaLevel={dnaLevel}
-                          userItemCount={dnaItemCount}
-                          hasSurvey={dnaProfileStatus === 'has_profile'}
+                          userDnaLevel={viewerHasSurvey && viewerItemCount >= 10 ? 2 : viewerHasSurvey ? 1 : 0}
+                          userItemCount={viewerItemCount}
+                          hasSurvey={viewerHasSurvey}
                         />
                       )}
                     </>
@@ -3934,12 +3956,13 @@ export default function UserProfile() {
         {!isOwnProfile && activeSection === 'dna' && (
           <div className="px-4 py-4 space-y-4">
             {/* Compare DNA button — card removed per request; keep the action */}
-            {dnaProfileStatus === 'has_profile' && dnaProfile && dnaLevel >= 2 && (
+            {dnaProfileStatus === 'has_profile' && dnaProfile && (
               <FriendDNACompareButton
                 friendId={viewingUserId || ''}
                 friendName={userProfileData?.first_name || userProfileData?.user_name || 'Friend'}
-                userDnaLevel={dnaLevel}
-                userItemCount={dnaItemCount}
+                userDnaLevel={viewerHasSurvey && viewerItemCount >= 10 ? 2 : viewerHasSurvey ? 1 : 0}
+                userItemCount={viewerItemCount}
+                hasSurvey={viewerHasSurvey}
               />
             )}
 

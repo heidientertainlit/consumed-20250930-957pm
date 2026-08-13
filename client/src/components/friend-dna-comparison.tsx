@@ -387,13 +387,12 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
 
   // Locked state for Level 0-1
   if (dnaLevel < 2) {
-    const itemsNeeded = Math.max(0, 30 - itemCount);
+    const itemsNeeded = Math.max(0, 10 - itemCount);
     return (
       <div className="mt-4 bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center gap-2 mb-4">
           <Users className="text-blue-500" size={20} />
           <h4 className="font-semibold text-gray-900">Friend DNA Comparisons</h4>
-          <Badge className="bg-blue-100 text-blue-700 text-xs ml-auto">Level 2</Badge>
         </div>
         
         <div className="flex flex-col items-center justify-center py-6 text-center">
@@ -413,10 +412,10 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
           ) : (
             <div className="w-full max-w-xs">
               <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                <span>Progress to Level 2</span>
-                <span className="font-medium text-purple-600">{itemCount} / 30</span>
+                <span>Progress to unlock</span>
+                <span className="font-medium text-purple-600">{itemCount} / 10</span>
               </div>
-              <Progress value={(itemCount / 30) * 100} className="h-2" />
+              <Progress value={(itemCount / 10) * 100} className="h-2" />
               <p className="text-xs text-gray-500 mt-2">
                 Log <span className="font-semibold text-purple-600">{itemsNeeded} more items</span> to unlock
               </p>
@@ -767,9 +766,10 @@ export function FriendDNACompareButton({
   userItemCount: number;
   hasSurvey?: boolean;
 }) {
-  const canCompare = hasSurvey && userDnaLevel >= 2;
+  const canCompare = hasSurvey && userItemCount >= 10;
 
   if (!canCompare) {
+    const itemsNeeded = Math.max(0, 10 - userItemCount);
     return (
       <Button 
         variant="outline" 
@@ -777,10 +777,10 @@ export function FriendDNACompareButton({
         disabled
         className="opacity-60"
         data-testid="button-compare-dna-locked"
+        title={!hasSurvey ? 'Finish the DNA survey to unlock' : `Track ${itemsNeeded} more items to unlock`}
       >
         <Lock size={14} className="mr-2" />
         Compare DNA
-        <Badge className="ml-2 bg-emerald-100 text-emerald-700 text-xs">L2</Badge>
       </Button>
     );
   }
@@ -804,7 +804,7 @@ export function FriendDNACompareButton({
 }
 
 export function FriendDNALockMessage({ itemCount }: { itemCount: number }) {
-  const itemsNeeded = Math.max(0, 30 - itemCount);
+  const itemsNeeded = Math.max(0, 10 - itemCount);
   
   return (
     <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200 text-center">
