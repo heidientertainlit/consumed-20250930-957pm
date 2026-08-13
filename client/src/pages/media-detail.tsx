@@ -1501,6 +1501,25 @@ export default function MediaDetail() {
                   bits.push(<span key="e" className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" />{mediaItem.totalEpisodes} eps</span>);
                 }
                 if (runtimeLabel) bits.push(<span key="r" className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-gray-400" />{runtimeLabel}</span>);
+                if (avgRating) bits.push(
+                  <span key="c" className="flex items-center gap-1.5">
+                    <Star className="w-3.5 h-3.5 text-yellow-400 fill-current" />
+                    <span className="font-semibold text-white">{avgRating}</span>
+                    <span className="text-gray-400">Consumed</span>
+                  </span>
+                );
+                if (mediaItem.tmdb_score) bits.push(
+                  <span key="i" className="flex items-center gap-1.5">
+                    <span className="font-semibold text-white">{Number(mediaItem.tmdb_score).toFixed(1)}</span>
+                    <span className="text-gray-400">IMDb</span>
+                  </span>
+                );
+                if (mediaItem.google_books_rating) bits.push(
+                  <span key="b" className="flex items-center gap-1.5">
+                    <span className="font-semibold text-white">{Number(mediaItem.google_books_rating).toFixed(1)}</span>
+                    <span className="text-gray-400">Books</span>
+                  </span>
+                );
                 return bits.length > 0 ? (
                   <div className="mb-0 flex flex-wrap items-center text-sm text-gray-300">
                     {bits.map((b, i) => (
@@ -1512,43 +1531,6 @@ export default function MediaDetail() {
                   </div>
                 ) : null;
               })()}
-
-              {/* Ratings row — divider-separated like the reference design */}
-              {(avgRating || mediaItem.tmdb_score || mediaItem.google_books_rating) && (
-                <>
-                <div className="border-t border-white/[0.05] my-2.5 mr-4" />
-                <div className="flex flex-wrap items-center text-sm mb-0">
-                  {(() => {
-                    const parts: JSX.Element[] = [];
-                    if (avgRating) parts.push(
-                      <span key="c" className="flex items-center gap-1.5">
-                        <Star className="w-3.5 h-3.5 text-yellow-400 fill-current" />
-                        <span className="font-semibold text-white">{avgRating}</span>
-                        <span className="text-gray-400">Consumed</span>
-                      </span>
-                    );
-                    if (mediaItem.tmdb_score) parts.push(
-                      <span key="i" className="flex items-center gap-1.5">
-                        <span className="font-semibold text-white">{Number(mediaItem.tmdb_score).toFixed(1)}</span>
-                        <span className="text-gray-400">IMDb</span>
-                      </span>
-                    );
-                    if (mediaItem.google_books_rating) parts.push(
-                      <span key="b" className="flex items-center gap-1.5">
-                        <span className="font-semibold text-white">{Number(mediaItem.google_books_rating).toFixed(1)}</span>
-                        <span className="text-gray-400">Books</span>
-                      </span>
-                    );
-                    return parts.map((p, i) => (
-                      <span key={i} className="flex items-center">
-                        {i > 0 && <span className="mx-2 text-gray-500">·</span>}
-                        {p}
-                      </span>
-                    ));
-                  })()}
-                </div>
-                </>
-              )}
 
             {/* Available on — minimal, deduped provider chips */}
               {mediaItem.platforms && mediaItem.platforms.length > 0 && (
@@ -1608,6 +1590,13 @@ export default function MediaDetail() {
                 </div></>
               )}
 
+              {session && !(Number(userRating?.rating || userReview?.rating) > 0) && typeof dnaRecMatch?.score === 'number' && (
+                <div className="mt-3 flex items-center gap-1.5" data-testid="card-dna-match">
+                  <Dna className="w-3.5 h-3.5 text-purple-400/70" />
+                  <span className="text-[13px] text-purple-200/80">{dnaRecMatch.score}% match for you</span>
+                </div>
+              )}
+
             </div>
           </div>
 
@@ -1620,11 +1609,11 @@ export default function MediaDetail() {
               const isFull = current >= n;
               const isHalf = !isFull && current >= n - 0.5;
               return (
-                <div key={n} className="relative w-11 h-11">
-                  <Star className="absolute inset-0 w-11 h-11 text-purple-400/60" strokeWidth={1.5} fill="none" />
+                <div key={n} className="relative w-9 h-9">
+                  <Star className="absolute inset-0 w-9 h-9 text-purple-400/60" strokeWidth={1.5} fill="none" />
                   {(isFull || isHalf) && (
                     <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: isFull ? '100%' : '50%' }}>
-                      <Star className="w-11 h-11 text-purple-400 fill-purple-400" strokeWidth={1.5} />
+                      <Star className="w-9 h-9 text-purple-400 fill-purple-400" strokeWidth={1.5} />
                     </div>
                   )}
                   {interactive && (
@@ -1654,38 +1643,36 @@ export default function MediaDetail() {
               setTimeout(() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
             };
             return (
-            <div className="mt-6 space-y-3">
-              {!isRated && typeof dnaRecMatch?.score === 'number' && (
-                <div className="flex items-center gap-1.5 px-1" data-testid="card-dna-match">
-                  <Dna className="w-3.5 h-3.5 text-purple-400/70" />
-                  <span className="text-[13px] text-purple-200/80">{dnaRecMatch.score}% match for you</span>
-                </div>
-              )}
+            <div className="mt-6">
               <div className="rounded-2xl border border-purple-300/15 bg-black/20 px-4 py-4" data-testid="card-rate-title">
-                <p className="text-center text-sm font-semibold text-white">{isRated ? 'Your rating' : 'Rate this title'}</p>
-                <div className="mt-3 mb-1 flex items-center justify-center gap-4">
-                  {[1, 2, 3, 4, 5].map((n) => heroStar(n, isRated ? ownRating : composeRating, !isRated))}
+                <p className="text-[11px] font-semibold tracking-widest uppercase text-gray-400">{isRated ? 'Your rating' : 'Rate this title'}</p>
+                <div className="mt-2 flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      {[1, 2, 3, 4, 5].map((n) => heroStar(n, isRated ? ownRating : composeRating, !isRated))}
+                    </div>
+                    {!isRated ? (
+                      <p className="mt-1.5 text-xs text-gray-400">Tap left side for ½</p>
+                    ) : (
+                      <p className="mt-1.5 text-xs text-gray-400">You rated this {ownRating % 1 === 0 ? ownRating : ownRating.toFixed(1)} out of 5</p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsListSheetOpen(true)}
+                    className={`flex items-center justify-center gap-1.5 rounded-full text-sm font-semibold px-5 py-3 transition-colors ${onListStatus
+                      ? 'border border-purple-300/25 text-purple-200 hover:bg-purple-500/10'
+                      : 'bg-gradient-to-r from-purple-700 to-purple-500 hover:from-purple-600 hover:to-purple-400 text-white shadow-sm'}`}
+                    data-testid="button-hero-add-to-list"
+                  >
+                    {onListStatus ? (
+                      <>On your {onListStatus === 'Want To' ? 'Want To' : onListStatus} list <ChevronDown className="w-4 h-4" /></>
+                    ) : (
+                      <><Plus className="w-4 h-4" /> Add to my list</>
+                    )}
+                  </button>
                 </div>
-                {!isRated ? (
-                  <p className="mt-2 text-center text-xs text-gray-400">Tap to rate · tap left side for half stars</p>
-                ) : (
-                  <p className="mt-2 text-center text-xs text-gray-400">You rated this {ownRating % 1 === 0 ? ownRating : ownRating.toFixed(1)} out of 5</p>
-                )}
               </div>
-              <button
-                type="button"
-                onClick={() => setIsListSheetOpen(true)}
-                className={`w-full flex items-center justify-center gap-1.5 rounded-full text-sm font-semibold py-3 transition-colors ${onListStatus
-                  ? 'border border-purple-300/25 text-purple-200 hover:bg-purple-500/10'
-                  : 'bg-gradient-to-r from-purple-700 to-purple-500 hover:from-purple-600 hover:to-purple-400 text-white shadow-sm'}`}
-                data-testid="button-hero-add-to-list"
-              >
-                {onListStatus ? (
-                  <>On your {onListStatus === 'Want To' ? 'Want To' : onListStatus} list <ChevronDown className="w-4 h-4" /></>
-                ) : (
-                  <><Plus className="w-4 h-4" /> Add to my list</>
-                )}
-              </button>
             </div>
             );
           })()}
