@@ -2534,7 +2534,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {/* Reviewer — small "— First L." byline under the stars, no avatar */}
               <div className="flex items-center gap-2 mt-1">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-gray-600 leading-tight truncate">— {(() => {
+                  <p
+                    className={`text-[13px] font-medium text-gray-600 leading-tight truncate ${post.user?.id ? 'cursor-pointer hover:text-gray-900' : ''}`}
+                    onClick={(e) => { if (post.user?.id) { e.stopPropagation(); setLocation(`/user/${post.user.id}`); } }}
+                  >— {(() => {
                     const parts = (displayName || '').trim().split(/\s+/);
                     return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
                   })()}</p>
