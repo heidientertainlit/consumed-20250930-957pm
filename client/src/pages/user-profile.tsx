@@ -4495,7 +4495,7 @@ export default function UserProfile() {
               {/* Add Media — full-width button above filters */}
               <button
                 onClick={() => setLocation('/add')}
-                className="mx-auto flex items-center justify-center gap-1.5 px-5 py-2 rounded-full bg-purple-50 text-purple-700 border border-purple-200 text-sm font-medium hover:bg-purple-100 active:scale-95 transition-all mb-4"
+                className="w-full flex items-center justify-center gap-1.5 px-5 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-sm font-medium hover:bg-blue-100 active:scale-95 transition-all mb-4"
               >
                 <Plus size={16} />
                 Add Media
