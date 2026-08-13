@@ -1500,7 +1500,7 @@ export default function MediaDetail() {
                 } else if ((mediaItem.type === 'tv' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1) {
                   bits.push(<span key="e" className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" />{mediaItem.totalEpisodes} eps</span>);
                 }
-                if (runtimeLabel) bits.push(<span key="r" className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-gray-400" />{runtimeLabel}</span>);
+                if (runtimeLabel && mediaItem.type !== 'tv') bits.push(<span key="r" className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-gray-400" />{runtimeLabel}</span>);
                 if (avgRating) bits.push(
                   <span key="c" className="flex items-center gap-1.5">
                     <Star className="w-3.5 h-3.5 text-yellow-400 fill-current" />
@@ -1551,7 +1551,7 @@ export default function MediaDetail() {
                       seen.add(b);
                       return true;
                     });
-                    const MAX_VISIBLE = 3;
+                    const MAX_VISIBLE = 1;
                     const visible = showAllPlatforms ? unique : unique.slice(0, MAX_VISIBLE);
                     const hiddenCount = unique.length - MAX_VISIBLE;
                     const chips = visible.map((platform: any, index: number) => {
@@ -1609,11 +1609,11 @@ export default function MediaDetail() {
               const isFull = current >= n;
               const isHalf = !isFull && current >= n - 0.5;
               return (
-                <div key={n} className="relative w-9 h-9">
-                  <Star className="absolute inset-0 w-9 h-9 text-purple-400/60" strokeWidth={1.5} fill="none" />
+                <div key={n} className="relative w-11 h-11">
+                  <Star className="absolute inset-0 w-11 h-11 text-purple-400/60" strokeWidth={1.5} fill="none" />
                   {(isFull || isHalf) && (
                     <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: isFull ? '100%' : '50%' }}>
-                      <Star className="w-9 h-9 text-purple-400 fill-purple-400" strokeWidth={1.5} />
+                      <Star className="w-11 h-11 text-purple-400 fill-purple-400" strokeWidth={1.5} />
                     </div>
                   )}
                   {interactive && (
@@ -1645,33 +1645,29 @@ export default function MediaDetail() {
             return (
             <div className="mt-6">
               <div className="rounded-2xl border border-purple-300/15 bg-black/20 px-4 py-4" data-testid="card-rate-title">
-                <p className="text-[11px] font-semibold tracking-widest uppercase text-gray-400">{isRated ? 'Your rating' : 'Rate this title'}</p>
-                <div className="mt-2 flex items-center justify-between gap-3 flex-wrap">
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      {[1, 2, 3, 4, 5].map((n) => heroStar(n, isRated ? ownRating : composeRating, !isRated))}
-                    </div>
-                    {!isRated ? (
-                      <p className="mt-1.5 text-xs text-gray-400">Tap left side for ½</p>
-                    ) : (
-                      <p className="mt-1.5 text-xs text-gray-400">You rated this {ownRating % 1 === 0 ? ownRating : ownRating.toFixed(1)} out of 5</p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsListSheetOpen(true)}
-                    className={`flex items-center justify-center gap-1.5 rounded-full text-sm font-semibold px-5 py-3 transition-colors ${onListStatus
-                      ? 'border border-purple-300/25 text-purple-200 hover:bg-purple-500/10'
-                      : 'bg-gradient-to-r from-purple-700 to-purple-500 hover:from-purple-600 hover:to-purple-400 text-white shadow-sm'}`}
-                    data-testid="button-hero-add-to-list"
-                  >
-                    {onListStatus ? (
-                      <>On your {onListStatus === 'Want To' ? 'Want To' : onListStatus} list <ChevronDown className="w-4 h-4" /></>
-                    ) : (
-                      <><Plus className="w-4 h-4" /> Add to my list</>
-                    )}
-                  </button>
+                <p className="text-center text-[11px] font-semibold tracking-widest uppercase text-gray-400">{isRated ? 'Your rating' : 'Rate this title'}</p>
+                <div className="mt-3 flex items-center justify-center gap-3">
+                  {[1, 2, 3, 4, 5].map((n) => heroStar(n, isRated ? ownRating : composeRating, !isRated))}
                 </div>
+                {!isRated ? (
+                  <p className="mt-2 text-center text-xs text-gray-400">Tap to rate · tap left side for ½</p>
+                ) : (
+                  <p className="mt-2 text-center text-xs text-gray-400">You rated this {ownRating % 1 === 0 ? ownRating : ownRating.toFixed(1)} out of 5</p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsListSheetOpen(true)}
+                  className={`mt-4 w-full flex items-center justify-center gap-1.5 rounded-full text-sm font-semibold py-3 transition-colors ${onListStatus
+                    ? 'border border-purple-300/25 text-purple-200 hover:bg-purple-500/10'
+                    : 'bg-gradient-to-r from-purple-700 to-purple-500 hover:from-purple-600 hover:to-purple-400 text-white shadow-sm'}`}
+                  data-testid="button-hero-add-to-list"
+                >
+                  {onListStatus ? (
+                    <>On your {onListStatus === 'Want To' ? 'Want To' : onListStatus} list <ChevronDown className="w-4 h-4" /></>
+                  ) : (
+                    <><Plus className="w-4 h-4" /> Add to my list</>
+                  )}
+                </button>
               </div>
             </div>
             );
