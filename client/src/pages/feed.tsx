@@ -2691,8 +2691,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
           {/* ── Action row: YouTube-style compact pills, tucked up near the content ── */}
           <div className="flex items-center justify-start gap-2 px-4 pb-3" onClick={(e) => e.stopPropagation()}>
-            {/* Like / dislike — one grouped pill with a divider */}
-            <div className="flex items-center bg-gray-100 rounded-full">
+            {/* Like / dislike — grouped with a divider, no background */}
+            <div className="flex items-center">
               <button
                 onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
                 className="flex items-center gap-1.5 pl-3.5 pr-3 py-1.5 active:scale-95 transition-transform"
@@ -2727,7 +2727,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     el?.focus();
                   }, 50);
                 }}
-                className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3.5 py-1.5 active:scale-95 transition-transform"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 active:scale-95 transition-transform"
               >
                 <span className="text-[12px] text-gray-600 font-medium">Reply</span>
               </button>
@@ -2737,7 +2737,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {isOtherUser && session?.access_token && (
               <button
                 onClick={(e) => { e.stopPropagation(); setShowInlineRater(v => !v); }}
-                className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3.5 py-1.5 active:scale-95 transition-transform"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 active:scale-95 transition-transform"
               >
                 <Star size={14} className={ratingSubmitted ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'} strokeWidth={1.75} />
                 {!ratingSubmitted && <span className="text-[12px] text-gray-600 font-medium">Rate</span>}
@@ -2746,7 +2746,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
             {/* Share — image card for Instagram/social */}
             <button
-              className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3.5 py-1.5 active:scale-95 transition-transform"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 active:scale-95 transition-transform"
               onClick={(e) => { e.stopPropagation(); setShareCardOpen(true); }}
             >
               <span className="text-[12px] text-gray-600 font-medium">Share</span>
