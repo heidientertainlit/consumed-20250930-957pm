@@ -2808,16 +2808,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         {/* ── Inline Comments section ── */}
         <div className="border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
           {/* Header — only shown when there are comments */}
-          {(comments.length > 0 || (post.comments || 0) > 0) && (
-            <div className="flex items-center justify-between px-4 pt-3 pb-1">
-              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-                Comments on this take{Math.max(post.comments || 0, comments.length) > 0 ? ` (${Math.max(post.comments || 0, comments.length)})` : ''}
-              </span>
-              {comments.length > 2 && (
-                <button onClick={() => setShowAllComments(v => !v)} className="flex items-center gap-0.5 text-[10px] font-medium text-violet-500">
-                  {showAllComments ? 'Less' : 'Newest'} <ChevronDown size={11} className={`transition-transform ${showAllComments ? 'rotate-180' : ''}`} />
-                </button>
-              )}
+          {comments.length > 2 && (
+            <div className="flex items-center justify-end px-4 pt-2">
+              <button onClick={() => setShowAllComments(v => !v)} className="flex items-center gap-0.5 text-[10px] font-medium text-violet-500">
+                {showAllComments ? 'Less' : 'Newest'} <ChevronDown size={11} className={`transition-transform ${showAllComments ? 'rotate-180' : ''}`} />
+              </button>
             </div>
           )}
 
@@ -2828,17 +2823,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 const cName = c.user?.displayName || c.user?.username || c.username || 'User';
                 const isReplying = replyingToId === c.id;
                 return (
-                  <div key={c.id} className="flex gap-2.5">
-                    <div className="flex flex-col items-center flex-shrink-0" style={{ width: 26 }}>
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-[10px] font-bold overflow-hidden">
-                        {c.user?.avatar ? <img src={c.user.avatar} className="w-full h-full object-cover" alt="" /> : cName[0]?.toUpperCase()}
-                      </div>
-                      {(c.replies?.length > 0 || isReplying) && <div className="w-px flex-1 bg-gray-200 mt-1 min-h-[12px]" />}
-                    </div>
+                  <div key={c.id} className="flex gap-0">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-gray-900">{cName}</span>
-                        <span className="text-[10px] text-gray-400">{c.created_at ? timeAgo(c.created_at) : ''}</span>
+                      <p className="text-[14px] text-gray-800 leading-snug">{c.content}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[11px] text-gray-400">— {cName}{c.created_at ? ` · ${timeAgo(c.created_at)}` : ''}</span>
                         <div className="ml-auto flex items-center gap-1">
                           {currentUserId === (c.user?.id || c.userId) ? (
                             <button onClick={(e) => { e.stopPropagation(); deleteComment(c.id); }} className="text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={10} /></button>
@@ -2847,7 +2836,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                           ) : null}
                         </div>
                       </div>
-                      <p className="text-xs text-gray-700 leading-snug mt-0.5">{c.content}</p>
                       <div className="flex items-center gap-3 mt-1">
                         <button onClick={() => { setReplyingToId(isReplying ? null : c.id); setReplyText(''); }} className="text-[10px] font-semibold text-gray-400 hover:text-violet-500 transition-colors">Reply</button>
                         <div className="flex items-center gap-1 text-gray-400">
@@ -2869,17 +2857,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                           {c.replies.map((r: any) => {
                             const rName = r.user?.displayName || r.user?.username || r.username || 'User';
                             return (
-                              <div key={r.id} className="flex gap-2 pt-1">
-                                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-300 to-blue-300 flex items-center justify-center text-white text-[9px] font-bold overflow-hidden flex-shrink-0">
-                                  {r.user?.avatar ? <img src={r.user.avatar} className="w-full h-full object-cover" alt="" /> : rName[0]?.toUpperCase()}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] font-semibold text-gray-800">{rName}</span>
-                                    <span className="text-[9px] text-gray-400">{r.created_at ? timeAgo(r.created_at) : ''}</span>
-                                  </div>
-                                  <p className="text-[11px] text-gray-600 leading-snug mt-0.5">{r.content}</p>
-                                </div>
+                              <div key={r.id} className="pt-1">
+                                <p className="text-[12px] text-gray-700 leading-snug">{r.content}</p>
+                                <span className="text-[10px] text-gray-400">— {rName}{r.created_at ? ` · ${timeAgo(r.created_at)}` : ''}</span>
                               </div>
                             );
                           })}

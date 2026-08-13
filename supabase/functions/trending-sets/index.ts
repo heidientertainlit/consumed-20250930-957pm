@@ -35,7 +35,7 @@ async function fetchTrendingMovies(apiKey: string, page = 1): Promise<TrendingSe
 
     if (trendingRes.ok) {
       const data = await trendingRes.json();
-      const items = (data.results || []).slice(0, 8).map((m: any, i: number) => ({
+      const items = (data.results || []).slice(0, 20).map((m: any, i: number) => ({
         id: `trending-movie-${m.id}`,
         title: m.title,
         image_url: m.poster_path ? `https://image.tmdb.org/t/p/w300${m.poster_path}` : '',
@@ -52,7 +52,7 @@ async function fetchTrendingMovies(apiKey: string, page = 1): Promise<TrendingSe
 
     if (nowPlayingRes.ok) {
       const data = await nowPlayingRes.json();
-      const items = (data.results || []).slice(0, 8).map((m: any, i: number) => ({
+      const items = (data.results || []).slice(0, 20).map((m: any, i: number) => ({
         id: `now-playing-${m.id}`,
         title: m.title,
         image_url: m.poster_path ? `https://image.tmdb.org/t/p/w300${m.poster_path}` : '',
@@ -86,7 +86,7 @@ async function fetchTrendingTV(apiKey: string, page = 1): Promise<TrendingSet[]>
 
     if (trendingRes.ok) {
       const data = await trendingRes.json();
-      const items = (data.results || []).slice(0, 8).map((s: any, i: number) => ({
+      const items = (data.results || []).slice(0, 20).map((s: any, i: number) => ({
         id: `trending-tv-${s.id}`,
         title: s.name,
         image_url: s.poster_path ? `https://image.tmdb.org/t/p/w300${s.poster_path}` : '',
@@ -103,7 +103,7 @@ async function fetchTrendingTV(apiKey: string, page = 1): Promise<TrendingSet[]>
 
     if (topRatedRes.ok) {
       const data = await topRatedRes.json();
-      const items = (data.results || []).slice(0, 8).map((s: any, i: number) => ({
+      const items = (data.results || []).slice(0, 20).map((s: any, i: number) => ({
         id: `on-air-tv-${s.id}`,
         title: s.name,
         image_url: s.poster_path ? `https://image.tmdb.org/t/p/w300${s.poster_path}` : '',
@@ -148,8 +148,8 @@ function parseItunesRssEntry(entry: any, mediaType: string, prefix: string): any
 
 async function fetchTrendingMusic(page = 1): Promise<TrendingSet[]> {
   const pageSuffix = page > 1 ? `-p${page}` : '';
-  const offset = (page - 1) * 8;
-  const rssLimit = Math.min(page * 10, 100);
+  const offset = (page - 1) * 20;
+  const rssLimit = Math.min(page * 20, 200);
   try {
     const sets: TrendingSet[] = [];
 
@@ -164,7 +164,7 @@ async function fetchTrendingMusic(page = 1): Promise<TrendingSet[]> {
       const items = entries
         .map((e, i) => { const r = parseItunesRssEntry(e, 'music', 'itunes-album'); return r ? { ...r, position: i + 1 } : null; })
         .filter(Boolean)
-        .slice(offset, offset + 8);
+        .slice(offset, offset + 20);
       if (items.length > 0) {
         sets.push({ id: `apple-top-albums${pageSuffix}`, title: 'Top Albums Right Now', media_type: 'music', items });
       }
@@ -176,7 +176,7 @@ async function fetchTrendingMusic(page = 1): Promise<TrendingSet[]> {
       const items = entries
         .map((e, i) => { const r = parseItunesRssEntry(e, 'music', 'itunes-song'); return r ? { ...r, position: i + 1 } : null; })
         .filter(Boolean)
-        .slice(offset, offset + 8);
+        .slice(offset, offset + 20);
       if (items.length > 0) {
         sets.push({ id: `apple-hot-songs${pageSuffix}`, title: 'Hot Songs Right Now', media_type: 'music', items });
       }
@@ -191,8 +191,8 @@ async function fetchTrendingMusic(page = 1): Promise<TrendingSet[]> {
 
 async function fetchTrendingPodcasts(page = 1): Promise<TrendingSet[]> {
   const pageSuffix = page > 1 ? `-p${page}` : '';
-  const offset = (page - 1) * 8;
-  const rssLimit = Math.min(page * 10, 100);
+  const offset = (page - 1) * 20;
+  const rssLimit = Math.min(page * 20, 200);
   try {
     const sets: TrendingSet[] = [];
 
@@ -221,7 +221,7 @@ async function fetchTrendingPodcasts(page = 1): Promise<TrendingSet[]> {
           };
         })
         .filter(Boolean)
-        .slice(offset, offset + 8);
+        .slice(offset, offset + 20);
       if (items.length > 0) {
         sets.push({ id: `apple-top-podcasts${pageSuffix}`, title: 'Top Podcasts Right Now', media_type: 'podcast', items });
       }
@@ -236,7 +236,7 @@ async function fetchTrendingPodcasts(page = 1): Promise<TrendingSet[]> {
 
 async function fetchTrendingBooks(apiKey: string, page = 1): Promise<TrendingSet[]> {
   const pageSuffix = page > 1 ? `-p${page}` : '';
-  const startIndex = (page - 1) * 8;
+  const startIndex = (page - 1) * 20;
   try {
     const sets: TrendingSet[] = [];
 
@@ -247,7 +247,7 @@ async function fetchTrendingBooks(apiKey: string, page = 1): Promise<TrendingSet
 
     for (const query of queries) {
       const res = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query.q)}&maxResults=8&startIndex=${startIndex}&printType=books&langRestrict=en&key=${apiKey}`
+        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query.q)}&maxResults=20&startIndex=${startIndex}&printType=books&langRestrict=en&key=${apiKey}`
       );
 
       if (res.ok) {
