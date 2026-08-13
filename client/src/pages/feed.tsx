@@ -2644,7 +2644,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )}
 
           {/* light divider between review and actions */}
-          <div className={`border-t border-gray-100 mx-4 mb-3 ${relatedRatings.length > 0 ? 'mt-1.5' : 'mt-4'}`} />
+          <div className={`mb-3 ${relatedRatings.length > 0 ? 'mt-1.5' : 'mt-4'}`} />
 
           {/* YOUR TURN — inline star rater appears above the action row */}
           {isOtherUser && session?.access_token && showInlineRater && !ratingSubmitted && (
@@ -2761,7 +2761,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         )}
 
         {/* ── Inline Comments section ── */}
-        <div onClick={(e) => e.stopPropagation()}>
+        <div className="border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
           {/* Header — only shown when there are comments */}
           {comments.length > 2 && (
             <div className="flex items-center justify-end px-4 pt-2">
