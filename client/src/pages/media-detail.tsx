@@ -1596,6 +1596,26 @@ export default function MediaDetail() {
             </div>
           </div>
 
+          {/* Description — starts open, clamped, with Read more */}
+          {mediaItem.description && (
+            <div className="mt-4">
+              <p className={`text-sm text-gray-300 leading-relaxed ${showAbout ? '' : 'line-clamp-1'}`}>
+                {mediaItem.genres?.length > 0 && (
+                  <span className="italic text-gray-400" data-testid="text-genres">{mediaItem.genres.slice(0, 2).join(', ')} — </span>
+                )}
+                {mediaItem.description}
+              </p>
+              <button
+                onClick={() => setShowAbout(!showAbout)}
+                className="mt-0.5 text-sm text-purple-300 hover:text-purple-200 transition-colors"
+                data-testid="button-toggle-description"
+              >
+                {showAbout ? 'Show less' : 'Read more'}
+              </button>
+            </div>
+          )}
+
+
           {/* Match card + tap-to-rate + add to list — only for titles you haven't rated */}
           {session && (() => {
             const ownRating = Number(userRating?.rating || userReview?.rating) || 0;
@@ -1639,8 +1659,8 @@ export default function MediaDetail() {
               setTimeout(() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
             };
             return (
-            <div className="mt-6">
-              <div className="rounded-2xl border border-purple-300/15 bg-black/20 px-4 py-4" data-testid="card-rate-title">
+            <div className="mt-4 relative z-10 -mb-16">
+              <div className="rounded-2xl border border-purple-300/15 bg-gradient-to-br from-[#2a1b4a] to-[#180d2f] shadow-xl px-4 py-4" data-testid="card-rate-title">
                 <p className="text-center text-[11px] font-semibold tracking-widest uppercase text-gray-400">{isRated ? 'Your rating' : 'Rate this title'}</p>
                 <div className="mt-3 flex items-center justify-center gap-3">
                   {[1, 2, 3, 4, 5].map((n) => heroStar(n, isRated ? ownRating : composeRating, !isRated))}
@@ -1668,25 +1688,6 @@ export default function MediaDetail() {
             </div>
             );
           })()}
-
-          {/* Description — starts open, clamped, with Read more */}
-          {mediaItem.description && (
-            <div className="mt-4">
-              <p className={`text-sm text-gray-300 leading-relaxed ${showAbout ? '' : 'line-clamp-1'}`}>
-                {mediaItem.genres?.length > 0 && (
-                  <span className="italic text-gray-400" data-testid="text-genres">{mediaItem.genres.slice(0, 2).join(', ')} — </span>
-                )}
-                {mediaItem.description}
-              </p>
-              <button
-                onClick={() => setShowAbout(!showAbout)}
-                className="mt-0.5 text-sm text-purple-300 hover:text-purple-200 transition-colors"
-                data-testid="button-toggle-description"
-              >
-                {showAbout ? 'Show less' : 'Read more'}
-              </button>
-            </div>
-          )}
 
           {/* Stat row — hidden for now until there's more engagement (flip false → true to restore) */}
           {false && (
@@ -1716,7 +1717,7 @@ export default function MediaDetail() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 pt-4 pb-8">
+      <div className="max-w-6xl mx-auto px-4 pt-24 pb-8">
           {/* Your Reaction — dark purple pill button that expands the composer inline */}
           {session && (
           <div ref={composeSectionRef} className="mb-4">
