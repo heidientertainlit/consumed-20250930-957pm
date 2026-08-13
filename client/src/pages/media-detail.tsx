@@ -1318,30 +1318,22 @@ export default function MediaDetail() {
         </div>
       );
     }
-    // Content-first card: rating stars up top, the take itself as the headline,
-    // then a quiet byline (name · time) with actions — Reddit-style.
+    // YouTube-style: byline on top, take as body, actions row underneath.
     return (
       <div key={cardId} className="py-4" data-testid={`take-card-${post.id}`}>
-        {ratingVal > 0 && (
-          <div className="flex items-center gap-0.5 mb-1.5">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <Star
-                key={n}
-                className={`w-4 h-4 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
-              />
-            ))}
-          </div>
-        )}
-        <button onClick={toggleExpand} className="block w-full text-left" data-testid={`take-toggle-${post.id}`}>
-          <p className={`text-[16px] leading-relaxed ${hasText ? 'text-gray-900 font-medium' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-4'}`}>
-            {hasText ? <>&ldquo;{post.content}&rdquo;</> : 'Rated it — no take yet'}
-          </p>
-        </button>
-
-        {/* Quiet byline underneath, then actions */}
-        <div className="flex items-center gap-2 mt-1.5 min-w-0">
-          <span className="text-[12px] text-gray-500 truncate">{name}</span>
-          {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">· {takeTimeAgo(post.created_at)}</span>}
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-[13px] font-semibold text-gray-800 truncate">{name}</span>
+          {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">{takeTimeAgo(post.created_at)}</span>}
+          {ratingVal > 0 && (
+            <span className="flex items-center gap-0.5 shrink-0">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <Star
+                  key={n}
+                  className={`w-3.5 h-3.5 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
+                />
+              ))}
+            </span>
+          )}
           {(() => {
             const tag = dbTagToDisplay(post.post_type);
             if (!tag) return null;
@@ -1355,30 +1347,51 @@ export default function MediaDetail() {
               </span>
             );
           })()}
-          {!post._ratingOnly && (
-            <div className="ml-auto flex items-center gap-4 text-gray-400 shrink-0">
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => handleLike(post.id)}
-                  className={`active:scale-90 transition-transform ${isLiked ? 'text-orange-500' : ''}`}
-                  aria-label="Hot take"
-                  data-testid={`take-agree-${post.id}`}
-                >
-                  <Flame size={16} strokeWidth={2.5} className={isLiked ? 'fill-orange-500' : ''} />
-                </button>
-                <span className="text-[12px] font-medium text-gray-500">{Number(post.likes_count) || 0}</span>
-              </div>
-              <button
-                onClick={toggleExpand}
-                className="text-[12px] font-medium active:text-purple-600"
-                data-testid={`take-reply-${post.id}`}
-              >
-                Reply{commentCount > 0 ? ` · ${commentCount}` : ''}
-              </button>
-              <ReportButton contentType="post" contentId={String(post.id)} className="text-gray-300 hover:text-red-500 [&_svg]:w-3.5 [&_svg]:h-3.5" />
-            </div>
-          )}
         </div>
+        <button onClick={toggleExpand} className="block w-full text-left mt-1" data-testid={`take-toggle-${post.id}`}>
+          <p className={`text-[15px] leading-relaxed ${hasText ? 'text-gray-900' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-4'}`}>
+            {hasText ? post.content : 'Rated it — no take yet'}
+          </p>
+        </button>
+
+        {/* Actions row — YouTube-style, left aligned */}
+        {!post._ratingOnly && (
+          <div className="flex items-center gap-5 mt-2 text-gray-500">
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => handleLike(post.id)}
+                className={`active:scale-90 transition-transform ${isLiked ? 'text-orange-500' : ''}`}
+                aria-label="Hot take"
+                data-testid={`take-agree-${post.id}`}
+              >
+                <Flame size={16} strokeWidth={2.5} className={isLiked ? 'fill-orange-500' : ''} />
+              </button>
+              <span className="text-[12px] font-medium">{Number(post.likes_count) || 0}</span>
+            </div>
+            <button
+              onClick={toggleExpand}
+              className="text-[12px] font-semibold active:text-purple-600"
+              data-testid={`take-reply-${post.id}`}
+            >
+              Reply{commentCount > 0 ? ` · ${commentCount}` : ''}
+            </button>
+            <button
+              onClick={() => { setComposerOpen(true); setTimeout(() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50); }}
+              className="flex items-center gap-1 text-[12px] font-semibold active:text-purple-600"
+              data-testid={`take-rate-${post.id}`}
+            >
+              <Star size={14} className="text-yellow-400" /> Rate
+            </button>
+            <button
+              onClick={handleShare}
+              className="text-[12px] font-semibold active:text-purple-600"
+              data-testid={`take-share-${post.id}`}
+            >
+              Share
+            </button>
+            <ReportButton contentType="post" contentId={String(post.id)} className="ml-auto text-gray-300 hover:text-red-500 [&_svg]:w-3.5 [&_svg]:h-3.5" />
+          </div>
+        )}
 
         <div className="min-w-0">
           {/* Expanded thread — comments + reply input */}
