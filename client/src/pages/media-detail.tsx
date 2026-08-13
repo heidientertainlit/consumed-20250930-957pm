@@ -1294,13 +1294,13 @@ export default function MediaDetail() {
             {[1, 2, 3, 4, 5].map((n) => (
               <Star
                 key={n}
-                className={`w-7 h-7 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
+                className={`w-4 h-4 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
               />
             ))}
           </div>
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[13px] font-semibold text-gray-600 truncate">— {name}</span>
-            {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">{takeTimeAgo(post.created_at)}</span>}
+            <span className="text-[12px] text-gray-500 truncate">{name}</span>
+            {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">· {takeTimeAgo(post.created_at)}</span>}
             {!post._ratingOnly && (
               <div className="ml-auto flex items-center gap-1.5 text-gray-400 shrink-0">
                 <button
