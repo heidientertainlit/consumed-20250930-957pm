@@ -1675,7 +1675,7 @@ export default function MediaDetail() {
 
           {/* Description — starts open, clamped, with Read more */}
           {mediaItem.description && (
-            <div className="mt-6">
+            <div className="mt-4">
               <p className={`text-sm text-gray-300 leading-relaxed ${showAbout ? '' : 'line-clamp-1'}`}>
                 {mediaItem.genres?.length > 0 && (
                   <span className="italic text-gray-400" data-testid="text-genres">{mediaItem.genres.slice(0, 2).join(', ')} — </span>
@@ -1684,7 +1684,7 @@ export default function MediaDetail() {
               </p>
               <button
                 onClick={() => setShowAbout(!showAbout)}
-                className="mt-1.5 text-sm text-purple-300 hover:text-purple-200 transition-colors"
+                className="mt-0.5 text-sm text-purple-300 hover:text-purple-200 transition-colors"
                 data-testid="button-toggle-description"
               >
                 {showAbout ? 'Show less' : 'Read more'}
