@@ -1286,35 +1286,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       });
   }, [post.id, session?.user?.id]);
 
-  // DNA match pill on the poster — same cached edge fn as the media detail page
-  useEffect(() => {
-    let cancelled = false;
-    const extId = post.externalId;
-    const extSource = post.externalSource || 'tmdb';
-    if (!session?.access_token || !extId || !post.mediaTitle) return;
-    const fetchScore = async () => {
-      try {
-        const res = await fetch(`${supabaseUrl}/functions/v1/score-media-match`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            external_source: extSource,
-            external_id: extId,
-            media_type: post.mediaType,
-            title: post.mediaTitle,
-          }),
-        });
-        if (!res.ok || cancelled) return;
-        const json = await res.json();
-        if (cancelled) return;
-        if (typeof json.score === 'number') setMatchScore(json.score);
-        else if (json.pending) setTimeout(() => { if (!cancelled) fetchScore(); }, 8000);
-      } catch {}
-    };
-    fetchScore();
-    return () => { cancelled = true; };
-  }, [post.externalId, post.externalSource, session?.access_token]);
-
   const handleReaction = async (type: 'up' | 'flame' | 'down') => {
     const userId = session?.user?.id;
     if (type === 'up') {
@@ -1353,6 +1324,35 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const touchStartY = useRef<number>(0);
   const [resolvedExternalId, setResolvedExternalId] = useState(post.externalId || '');
   const [resolvedExternalSource, setResolvedExternalSource] = useState(post.externalSource || 'tmdb');
+  // DNA match pill on the poster — same cached edge fn as the media detail page
+  useEffect(() => {
+    let cancelled = false;
+    const extId = post.externalId || resolvedExternalId;
+    const extSource = post.externalSource || resolvedExternalSource || 'tmdb';
+    if (!session?.access_token || !extId || !post.mediaTitle) return;
+    const fetchScore = async () => {
+      try {
+        const res = await fetch(`${supabaseUrl}/functions/v1/score-media-match`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            external_source: extSource,
+            external_id: extId,
+            media_type: post.mediaType,
+            title: post.mediaTitle,
+          }),
+        });
+        if (!res.ok || cancelled) return;
+        const json = await res.json();
+        if (cancelled) return;
+        if (typeof json.score === 'number') setMatchScore(json.score);
+        else if (json.pending) setTimeout(() => { if (!cancelled) fetchScore(); }, 8000);
+      } catch {}
+    };
+    fetchScore();
+    return () => { cancelled = true; };
+  }, [post.externalId, post.externalSource, resolvedExternalId, resolvedExternalSource, session?.access_token]);
+
   const [isSearchingMedia, setIsSearchingMedia] = useState(false);
   const [reportPostOpen, setReportPostOpen] = useState(false);
   const [shareCardOpen, setShareCardOpen] = useState(false);
