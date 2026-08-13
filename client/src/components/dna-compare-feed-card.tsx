@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef as useReactRef } from "react";
 import html2canvas from "html2canvas";
-import { ShareImageSheet } from "@/components/share-image-sheet";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { Dna, ArrowRight, Users, X, ChevronLeft, ChevronDown, Loader2, Share2, CheckCircle2, Heart, Zap } from "lucide-react";
+import { Dna, ArrowRight, Users, X, ChevronLeft, ChevronDown, Loader2, Share2, CheckCircle2, Heart, Zap, Download } from "lucide-react";
 
 /* ── types ─────────────────────────────────────────── */
 interface OverlapUser {
@@ -902,6 +901,9 @@ export function DnaComparePostCard({ item }: { item: any }) {
   const [postShareMenuOpen, setPostShareMenuOpen] = useState(false);
   const [postSavingImage, setPostSavingImage] = useState(false);
   const [postShareImageUrl, setPostShareImageUrl] = useState<string | null>(null);
+  const [postShareNotice, setPostShareNotice] = useState<string | null>(null);
+  const [postIsSharing, setPostIsSharing] = useState(false);
+  const postShareBlobRef = useReactRef<Blob | null>(null);
   const postCardRef = useReactRef<HTMLDivElement>(null);
   const [posterOverlaps, setPosterOverlaps] = useState<OverlapUser[]>([]);
   const [postOthersExpanded, setPostOthersExpanded] = useState(false);
@@ -1005,7 +1007,9 @@ export function DnaComparePostCard({ item }: { item: any }) {
               setPostSavingImage(true);
               try {
                 const canvas = await html2canvas(postCardRef.current, { scale: 3, useCORS: true, backgroundColor: '#ffffff' });
+                postShareBlobRef.current = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/png'));
                 setPostShareImageUrl(canvas.toDataURL('image/png'));
+                setPostShareNotice(null);
                 setPostShareMenuOpen(true);
               } catch (err) {
                 console.error('Failed to prepare share image', err);
@@ -1169,15 +1173,71 @@ export function DnaComparePostCard({ item }: { item: any }) {
           userId={user.id}
         />
       )}
-      <ShareImageSheet
-        open={postShareMenuOpen}
-        onOpenChange={setPostShareMenuOpen}
-        imageDataUrl={postShareImageUrl}
-        fileName="dna-match.png"
-        title="Share DNA Match"
-        shareText={`${posterName.split(' ')[0]} is ${matchScore}% aligned with ${friendName} on Consumed! Check your Entertainment DNA 🧬`}
-        shareUrl={(import.meta.env.VITE_APP_URL as string) || window.location.origin}
-      />
+      {postShareMenuOpen && createPortal(
+        <div className="fixed inset-0 z-[100000] flex items-end sm:items-center justify-center" onClick={() => setPostShareMenuOpen(false)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div
+            className="relative w-full sm:max-w-sm bg-gray-950 rounded-t-3xl sm:rounded-3xl p-4 pb-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4 px-1">
+              <p className="text-white font-semibold text-[15px]">Share DNA Match</p>
+              <button onClick={() => setPostShareMenuOpen(false)} aria-label="Close" className="p-1.5 rounded-full bg-white/10 text-white/70 hover:text-white">
+                <X size={16} />
+              </button>
+            </div>
+            {postShareNotice && <p className="text-[12px] text-violet-300 text-center mb-3">{postShareNotice}</p>}
+            <div className="flex flex-col gap-2.5">
+              <button
+                onClick={() => {
+                  if (!postShareBlobRef.current) return;
+                  const url = URL.createObjectURL(postShareBlobRef.current);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'dna-match.png';
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  setTimeout(() => URL.revokeObjectURL(url), 5000);
+                  setPostShareNotice('Image saved');
+                }}
+                className="w-full flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 hover:bg-white/10 text-white/90 font-medium text-[15px] py-3 active:scale-[0.98] transition-transform"
+              >
+                <Download size={17} />
+                Save to Photos
+              </button>
+              <button
+                disabled={postIsSharing}
+                onClick={async () => {
+                  if (!postShareBlobRef.current || postIsSharing) return;
+                  setPostIsSharing(true);
+                  try {
+                    const file = new File([postShareBlobRef.current], 'dna-match.png', { type: 'image/png' });
+                    const text = `${posterName.split(' ')[0]} is ${matchScore}% aligned with ${friendName} on Consumed! Check your Entertainment DNA 🧬`;
+                    const withImage = { files: [file], title: 'Entertainment DNA Match', text } as any;
+                    if (navigator.canShare?.(withImage)) {
+                      await navigator.share(withImage);
+                    } else if (navigator.share) {
+                      await navigator.share({ title: 'Entertainment DNA Match', text, url: (import.meta.env.VITE_APP_URL as string) || window.location.origin });
+                    } else {
+                      setPostShareNotice('Sharing not available here — use Save to Photos instead');
+                    }
+                  } catch (err: any) {
+                    if (err?.name !== 'AbortError') setPostShareNotice('Could not share — use Save to Photos instead');
+                  } finally {
+                    setPostIsSharing(false);
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 hover:bg-white/10 disabled:opacity-50 text-white/90 font-medium text-[15px] py-3 active:scale-[0.98] transition-transform"
+              >
+                {postIsSharing ? <Loader2 size={17} className="animate-spin" /> : <Share2 size={17} />}
+                Share with a Friend
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }

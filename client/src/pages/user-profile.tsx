@@ -752,6 +752,7 @@ export default function UserProfile() {
         read: false,
       });
       toast({ title: `${content.match_score}% match!`, description: "Taking you to your comparison…" });
+      await queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       setLocation(post?.id ? `/?post=${post.id}` : '/');
     } catch (err) {
       console.error('Compare from profile failed:', err);
