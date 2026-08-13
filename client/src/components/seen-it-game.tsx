@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Eye, ChevronLeft, ChevronRight, Check, X, Plus, Star, Loader2, Sparkles, BookOpen, Headphones, Gamepad2, Heart } from "lucide-react";
+import { Eye, EyeOff, ChevronLeft, ChevronRight, Check, X, Plus, Star, Loader2, Sparkles, BookOpen, Headphones, Gamepad2, Heart, ThumbsUp } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
@@ -404,6 +404,25 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     setTakeText('');
   };
 
+  // One-tap reaction: records "seen" + a rating signal in a single gesture
+  const reactWithRating = (setId: string, item: SeenItItem, stars: number) => {
+    handleResponse(setId, item, true, true);
+    const newMap = { ...ratingMap, [item.id]: stars };
+    setRatingMap(newMap);
+    try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
+    if (item.external_id && item.external_source && session) {
+      supabase.functions.invoke('track-media', {
+        body: {
+          media: { title: item.title, mediaType: item.media_type || 'movie', imageUrl: item.image_url, externalId: item.external_id, externalSource: item.external_source },
+          listType: 'finished',
+          rating: stars,
+          skip_social_post: true,
+        },
+      }).catch(() => {});
+    }
+    trackEvent('seen_it_reaction', { item_id: item.id, stars });
+  };
+
 
   // ── Render ────────────────────────────────────────────────────────────────
   if (isLoading && !mediaTypeFilter) {
@@ -673,43 +692,55 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         </div>
       )}
 
-      {/* Action buttons: Next | Seen It | Add to list | Rate it */}
-      <div className="flex items-center justify-around px-4 py-3">
+      {/* Reaction-first actions: one tap = seen + rating signal */}
+      <div className="flex items-start justify-around px-2 py-3">
 
-        {/* Seen It — green only after user has responded true */}
+        {/* Loved it — seen + 5-star signal */}
         <button
-          onClick={() => handleResponse(currentSet.id, activeItem, true)}
-          className="flex flex-col items-center gap-1 group"
+          onClick={() => reactWithRating(currentSet.id, activeItem, 5)}
+          className="flex flex-col items-center gap-1 group w-16"
+          data-testid="button-loved-it"
         >
-          <div className={`w-14 h-14 rounded-full flex items-center justify-center group-active:scale-90 transition-all shadow-md ${responses[activeItem.id] === true ? 'bg-green-500' : 'bg-gray-100'}`}>
-            <Check size={22} className={responses[activeItem.id] === true ? 'text-white' : 'text-gray-500'} />
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center group-active:scale-90 transition-all shadow-sm ${responses[activeItem.id] === true && ratingMap[activeItem.id] === 5 ? 'bg-pink-500' : 'bg-pink-50'}`}>
+            <Heart size={20} className={responses[activeItem.id] === true && ratingMap[activeItem.id] === 5 ? 'text-white fill-white' : 'text-pink-500'} />
           </div>
-          <span className={`text-[10px] font-medium ${responses[activeItem.id] === true ? 'text-green-600' : 'text-gray-400'}`}>{mediaConfig.actionYes}</span>
+          <span className="text-[10px] font-medium text-gray-500 text-center leading-tight">Loved it</span>
         </button>
 
-        {/* Not Interested — lighter/smaller, dismissal action */}
+        {/* It was fine — seen + 3-star signal */}
+        <button
+          onClick={() => reactWithRating(currentSet.id, activeItem, 3)}
+          className="flex flex-col items-center gap-1 group w-16"
+          data-testid="button-it-was-fine"
+        >
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center group-active:scale-90 transition-all shadow-sm ${responses[activeItem.id] === true && ratingMap[activeItem.id] === 3 ? 'bg-amber-400' : 'bg-amber-50'}`}>
+            <ThumbsUp size={19} className={responses[activeItem.id] === true && ratingMap[activeItem.id] === 3 ? 'text-white' : 'text-amber-500'} />
+          </div>
+          <span className="text-[10px] font-medium text-gray-500 text-center leading-tight">It was fine</span>
+        </button>
+
+        {/* Not for me — dismissal */}
         <button
           onClick={() => handleResponse(currentSet.id, activeItem, 'skip')}
-          className="flex flex-col items-center gap-1 group"
+          className="flex flex-col items-center gap-1 group w-16"
+          data-testid="button-not-for-me"
         >
-          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
-            <X size={16} className="text-gray-400" />
+          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center group-active:scale-90 transition-all">
+            <X size={18} className="text-gray-400" />
           </div>
-          <span className="text-[10px] text-gray-400">Not interested</span>
+          <span className="text-[10px] font-medium text-gray-500 text-center leading-tight">Not for me</span>
         </button>
 
-        {/* Rate it — gray, optional */}
+        {/* Haven't seen it */}
         <button
-          onClick={() => {
-            setTakeText('');
-            setRatePrompt(prev => prev?.item.id === activeItem.id ? null : { item: activeItem, setId: currentSet.id, answered: responses[activeItem.id] !== undefined });
-          }}
-          className="flex flex-col items-center gap-1 group"
+          onClick={() => handleResponse(currentSet.id, activeItem, false)}
+          className="flex flex-col items-center gap-1 group w-16"
+          data-testid="button-havent-seen"
         >
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center group-active:scale-90 transition-all ${ratePrompt?.item.id === activeItem.id ? 'bg-yellow-400' : 'bg-gray-100'}`}>
-            <Star size={20} className={ratePrompt?.item.id === activeItem.id ? 'text-white fill-white' : 'text-gray-500'} />
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center group-active:scale-90 transition-all ${responses[activeItem.id] === false ? 'bg-gray-300' : 'bg-gray-100'}`}>
+            <EyeOff size={18} className={responses[activeItem.id] === false ? 'text-white' : 'text-gray-400'} />
           </div>
-          <span className={`text-[10px] font-medium ${ratePrompt?.item.id === activeItem.id ? 'text-yellow-500' : 'text-gray-400'}`}>Rate it</span>
+          <span className="text-[10px] font-medium text-gray-500 text-center leading-tight">Haven't seen it</span>
         </button>
 
       </div>
