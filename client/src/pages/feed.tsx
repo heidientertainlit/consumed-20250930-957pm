@@ -2651,7 +2651,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               className="flex items-center active:scale-95 transition-transform"
               aria-label="Reply"
             >
-              <span className="text-[13px] font-medium text-gray-500">Reply</span>
+              <span className="text-[13px] text-gray-400">Reply</span>
             </button>
           )}
 
@@ -2663,7 +2663,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             >
               <Star size={15} className={ratingSubmitted ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'} strokeWidth={1.75} />
               {!ratingSubmitted && (
-                <span className="text-[13px] font-medium text-gray-500">
+                <span className="text-[13px] text-gray-400">
                   Rate
                 </span>
               )}
@@ -2671,15 +2671,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )}
 
           {/* Share — image card for Instagram/social */}
-          {post.rating != null && Number(post.rating) > 0 && (
-            <button
-              className="flex items-center gap-1.5 active:scale-95 transition-transform"
-              onClick={(e) => { e.stopPropagation(); setShareCardOpen(true); }}
-            >
-              <span className="text-[13px] font-medium text-gray-500">Share</span>
-              <ArrowRight size={13} className="text-gray-400" />
-            </button>
-          )}
+          <button
+            className="flex items-center gap-1.5 active:scale-95 transition-transform"
+            onClick={(e) => { e.stopPropagation(); setShareCardOpen(true); }}
+          >
+            <span className="text-[13px] text-gray-400">Share</span>
+            <ArrowRight size={13} className="text-gray-400" />
+          </button>
         </div>
 
         {/* Counter follow-up — optional nudge to explain, never required */}
