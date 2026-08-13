@@ -1428,7 +1428,7 @@ export default function MediaDetail() {
 
       {/* Full-bleed purple hero */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] text-white">
-        <div className="max-w-6xl mx-auto px-4 pt-3 pb-10">
+        <div className="max-w-6xl mx-auto px-4 pt-3 pb-4">
           {/* Back button inline with content */}
           <Button
             variant="ghost"
@@ -1720,7 +1720,7 @@ export default function MediaDetail() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 pt-6 pb-8">
+      <div className="max-w-6xl mx-auto px-4 pt-4 pb-8">
           {/* Your Reaction — dark purple pill button that expands the composer inline */}
           {session && (
           <div ref={composeSectionRef} className="mb-4">
