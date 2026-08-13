@@ -2716,6 +2716,23 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               </button>
             </div>
 
+            {/* Reply — reveals the conversation bar */}
+            {session?.access_token && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setReplyOpen(v => !v);
+                  setTimeout(() => {
+                    const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
+                    el?.focus();
+                  }, 50);
+                }}
+                className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3.5 py-1.5 active:scale-95 transition-transform"
+              >
+                <span className="text-[12px] text-gray-600 font-medium">Reply</span>
+              </button>
+            )}
+
             {/* Rate it — other user's post */}
             {isOtherUser && session?.access_token && (
               <button
@@ -2785,7 +2802,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       {/* Byline underneath — gray afterthought */}
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-[11px] text-gray-500">— {cName}{c.created_at ? ` · ${timeAgo(c.created_at)}` : ''}</span>
-                        <button onClick={() => { setReplyingToId(isReplying ? null : c.id); setReplyText(''); }} className="text-[12px] font-medium text-gray-400 hover:text-violet-500 transition-colors">Reply</button>
+                        <button onClick={() => { setReplyingToId(isReplying ? null : c.id); setReplyText(''); setReplyOpen(true); }} className="text-[12px] font-medium text-gray-400 hover:text-violet-500 transition-colors">Reply</button>
                         <div className="flex items-center gap-1 text-gray-400">
                           <Heart size={11} />
                           {(c.likes_count || 0) > 0 && <span className="text-[10px]">{c.likes_count}</span>}
@@ -2834,8 +2851,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           )}
 
-          {/* ── Join the conversation — always visible, like People are talking ── */}
-          {session?.access_token && (
+          {/* ── Join the conversation — revealed by Reply ── */}
+          {session?.access_token && replyOpen && (
             <div ref={takeBarRef} className="flex items-center gap-2 px-4 pb-4 pt-1" onClick={(e) => e.stopPropagation()}>
               <div className="flex-1 flex items-center bg-white rounded-full px-4 py-2.5 gap-2 border border-gray-200" onClick={(e) => e.stopPropagation()}>
                 <MentionInput
