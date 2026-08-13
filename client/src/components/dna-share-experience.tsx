@@ -76,35 +76,22 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
   };
 
   const handleShare = async () => {
-    if (!cardRef.current || isSharing || !profile) return;
+    if (isSharing || !profile) return;
     setIsSharing(true);
     try {
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: null,
-      });
       const shareText = `I'm a "${profile.title}" — ${profile.description} Check out my Entertainment DNA on Consumed!`;
       const shareUrl = `${APP_BASE}/edna/${userId}`;
-      const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, "image/png"));
-      if (blob && navigator.share) {
-        const file = new File([blob], "my-entertainment-dna.png", { type: "image/png" });
-        const withImage = { files: [file], title: "My Entertainment DNA", text: `${shareText} ${shareUrl}` };
+      if (navigator.share) {
         try {
-          if (navigator.canShare?.(withImage)) {
-            await navigator.share(withImage);
-          } else {
-            await navigator.share({ title: "My Entertainment DNA", text: shareText, url: shareUrl });
-          }
+          await navigator.share({ title: "My Entertainment DNA", text: shareText, url: shareUrl });
           return;
         } catch (err: any) {
           if (err?.name === "AbortError") return;
         }
       }
-      setShareImageUrl(canvas.toDataURL("image/png"));
-      setShareSheetOpen(true);
+      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
     } catch (error) {
-      console.error("Error preparing share image:", error);
+      console.error("Error sharing link:", error);
     } finally {
       setIsSharing(false);
     }
