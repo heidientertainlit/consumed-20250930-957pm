@@ -198,7 +198,7 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
                 data-testid="download-dna-button"
               >
                 <Download size={18} />
-                {isDownloading ? "Saving..." : "Save to Share"}
+                {isDownloading ? "Saving..." : "Save to Photos"}
               </Button>
 
               <Button
@@ -208,7 +208,7 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
                 data-testid="share-dna-button"
               >
                 <Share2 size={18} />
-                {isSharing ? "Preparing..." : "Share"}
+                {isSharing ? "Preparing..." : "Share with a Friend"}
               </Button>
             </div>
 
