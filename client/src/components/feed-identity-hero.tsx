@@ -172,7 +172,14 @@ export function FeedIdentityHero() {
                 </span>
               </h1>
             </div>
-            <IdentityFace size={108} className="mr-2" />
+            <button
+              onClick={() => setLocation("/profile")}
+              className="shrink-0 active:scale-95 transition-transform"
+              aria-label="View your DNA page"
+              data-testid="button-hero-face-dna"
+            >
+              <IdentityFace size={108} className="mr-2" />
+            </button>
           </div>
 
           {/* Secondary archetypes — subtle "with shades of" subtitle, aligned to the headline */}
