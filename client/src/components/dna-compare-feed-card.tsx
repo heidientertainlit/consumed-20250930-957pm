@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef as useReactRef } from "react";
 import html2canvas from "html2canvas";
+import { ShareImageSheet } from "@/components/share-image-sheet";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
@@ -999,63 +1000,25 @@ export function DnaComparePostCard({ item }: { item: any }) {
             <span className="text-violet-600 text-[10px] font-bold uppercase tracking-widest">Compare DNA</span>
           </div>
           <button
-            onClick={() => setPostShareMenuOpen(v => !v)}
+            onClick={async () => {
+              if (!postCardRef.current || postSavingImage) return;
+              setPostSavingImage(true);
+              try {
+                const canvas = await html2canvas(postCardRef.current, { scale: 3, useCORS: true, backgroundColor: '#ffffff' });
+                setPostShareImageUrl(canvas.toDataURL('image/png'));
+                setPostShareMenuOpen(true);
+              } catch (err) {
+                console.error('Failed to prepare share image', err);
+              } finally {
+                setPostSavingImage(false);
+              }
+            }}
             className="absolute top-2.5 right-3 flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors"
             data-testid="button-share-dna-compare-post"
           >
-            <span className="text-[13px] font-medium">Share</span>
+            <span className="text-[13px] font-medium">{postSavingImage ? 'Preparing…' : 'Share'}</span>
             <span className="text-[13px]" aria-hidden="true">→</span>
           </button>
-          {postShareMenuOpen && (
-            <div className="absolute top-9 right-3 z-20 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden w-[170px]">
-              <button
-                onClick={() => {
-                  setPostShareMenuOpen(false);
-                  const text = `${posterName.split(' ')[0]} is ${matchScore}% aligned with ${friendName} on Consumed! Check your Entertainment DNA 🧬`;
-                  const url = (import.meta.env.VITE_APP_URL as string) || window.location.origin;
-                  if (navigator.share) {
-                    navigator.share({ title: 'Entertainment DNA Match', text, url }).catch(() => {});
-                  } else {
-                    window.open(`sms:?body=${encodeURIComponent(text + ' ' + url)}`, '_blank');
-                  }
-                }}
-                className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-gray-800 hover:bg-gray-50 border-b border-gray-100"
-              >
-                Share link
-              </button>
-              <button
-                onClick={async () => {
-                  setPostShareMenuOpen(false);
-                  if (!postCardRef.current || postSavingImage) return;
-                  setPostSavingImage(true);
-                  try {
-                    const canvas = await html2canvas(postCardRef.current, { scale: 3, useCORS: true, backgroundColor: '#ffffff' });
-                    const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, 'image/png'));
-                    if (blob && navigator.share) {
-                      const file = new File([blob], 'dna-match.png', { type: 'image/png' });
-                      const withImage = { files: [file], title: 'Entertainment DNA Match' } as any;
-                      try {
-                        if (navigator.canShare?.(withImage)) {
-                          await navigator.share(withImage);
-                          return;
-                        }
-                      } catch (err: any) {
-                        if (err?.name === 'AbortError') return;
-                      }
-                    }
-                    setPostShareImageUrl(canvas.toDataURL('image/png'));
-                  } catch (err) {
-                    console.error('Failed to save image', err);
-                  } finally {
-                    setPostSavingImage(false);
-                  }
-                }}
-                className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-gray-800 hover:bg-gray-50"
-              >
-                {postSavingImage ? 'Saving…' : 'Save as image'}
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Horizontal layout — avatars flank the ring on each side */}
@@ -1206,14 +1169,15 @@ export function DnaComparePostCard({ item }: { item: any }) {
           userId={user.id}
         />
       )}
-      {postShareImageUrl && createPortal(
-        <div className="fixed inset-0 z-[99999] bg-black/80 flex flex-col items-center justify-center p-6" onClick={() => setPostShareImageUrl(null)}>
-          <img src={postShareImageUrl} alt="DNA match" className="max-w-full max-h-[70vh] rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()} />
-          <p className="text-white/90 text-[13px] font-medium mt-4 text-center">Press and hold the image to save it to your photos</p>
-          <button onClick={() => setPostShareImageUrl(null)} className="mt-3 px-5 py-2 rounded-full bg-white/15 text-white text-[13px] font-semibold">Close</button>
-        </div>,
-        document.body
-      )}
+      <ShareImageSheet
+        open={postShareMenuOpen}
+        onOpenChange={setPostShareMenuOpen}
+        imageDataUrl={postShareImageUrl}
+        fileName="dna-match.png"
+        title="Share DNA Match"
+        shareText={`${posterName.split(' ')[0]} is ${matchScore}% aligned with ${friendName} on Consumed! Check your Entertainment DNA 🧬`}
+        shareUrl={(import.meta.env.VITE_APP_URL as string) || window.location.origin}
+      />
     </>
   );
 }
