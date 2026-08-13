@@ -2801,7 +2801,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       <p className="text-[15px] text-gray-900 leading-snug">{c.content}</p>
                       {/* Byline underneath — gray afterthought; thumbs + reply pushed right */}
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[11px] text-gray-500">— {cName}{c.created_at ? ` · ${timeAgo(c.created_at)}` : ''}</span>
+                        <span className="text-[11px] text-gray-400">{(() => {
+                          const parts = (cName || '').trim().split(/\s+/);
+                          return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
+                        })()}{c.created_at ? ` · ${timeAgo(c.created_at)}` : ''}</span>
                         <div className="ml-auto flex items-center gap-3">
                           <div className="flex items-center gap-1 text-gray-400">
                             <ThumbsUp size={12} strokeWidth={1.75} />
@@ -2832,7 +2835,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                             return (
                               <div key={r.id} className="pt-1">
                                 <p className="text-[14px] text-gray-800 leading-snug">{r.content}</p>
-                                <span className="text-[12px] text-gray-400">— {rName}{r.created_at ? ` · ${timeAgo(r.created_at)}` : ''}</span>
+                                <span className="text-[11px] text-gray-400">{(() => {
+                                  const parts = (rName || '').trim().split(/\s+/);
+                                  return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
+                                })()}{r.created_at ? ` · ${timeAgo(r.created_at)}` : ''}</span>
                               </div>
                             );
                           })}
