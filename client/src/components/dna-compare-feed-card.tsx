@@ -1042,17 +1042,15 @@ export function DnaComparePostCard({ item }: { item: any }) {
               const circ = 2 * Math.PI * r;
               const dash = (matchScore / 100) * circ;
               return (
-                <div style={{ position: 'absolute', left: 'calc(50% - 53px)', top: 'calc(50% - 53px)', zIndex: 2, background: 'white', borderRadius: '50%' }}>
-                  <div className="relative flex items-center justify-center" style={{ width: 106, height: 106 }}>
-                    <svg className="absolute inset-0" width="106" height="106" viewBox="0 0 106 106">
+                <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ background: 'white', borderRadius: '50%', width: 106, height: 106, position: 'relative' }}>
+                    <svg width="106" height="106" viewBox="0 0 106 106" style={{ display: 'block' }}>
                       <circle cx="53" cy="53" r={r} fill="none" stroke="#ede9fe" strokeWidth="4" />
                       <circle cx="53" cy="53" r={r} fill="none" stroke="#8b5cf6" strokeWidth="4"
                         strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" transform="rotate(-90 53 53)" />
+                      <text x="53" y="52" textAnchor="middle" fill="#8b5cf6" fontSize="26" fontWeight="900" fontFamily="inherit" dominantBaseline="middle">{matchScore}%</text>
+                      <text x="53" y="70" textAnchor="middle" fill="#9ca3af" fontSize="7" fontWeight="700" letterSpacing="1.5" fontFamily="inherit">ALIGNED</text>
                     </svg>
-                    <div className="flex flex-col items-center" style={{ zIndex: 3, position: 'relative' }}>
-                      <span className="font-black leading-none" style={{ fontSize: 26, color: '#8b5cf6' }}>{matchScore}%</span>
-                      <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">aligned</span>
-                    </div>
                   </div>
                 </div>
               );
@@ -1209,18 +1207,17 @@ export function DnaComparePostCard({ item }: { item: any }) {
               <button
                 disabled={postIsSharing}
                 onClick={async () => {
-                  if (!postShareBlobRef.current || postIsSharing) return;
+                  if (postIsSharing) return;
                   setPostIsSharing(true);
                   try {
-                    const file = new File([postShareBlobRef.current], 'dna-match.png', { type: 'image/png' });
                     const text = `${posterName.split(' ')[0]} is ${matchScore}% aligned with ${friendName} on Consumed! Check your Entertainment DNA 🧬`;
-                    const withImage = { files: [file], title: 'Entertainment DNA Match', text } as any;
-                    if (navigator.canShare?.(withImage)) {
-                      await navigator.share(withImage);
-                    } else if (navigator.share) {
-                      await navigator.share({ title: 'Entertainment DNA Match', text, url: (import.meta.env.VITE_APP_URL as string) || window.location.origin });
+                    const base = (import.meta.env.VITE_APP_URL as string) || window.location.origin;
+                    const postUrl = item?.id ? `${base}/?post=${item.id}` : base;
+                    if (navigator.share) {
+                      await navigator.share({ title: 'Entertainment DNA Match', text, url: postUrl });
                     } else {
-                      setPostShareNotice('Sharing not available here — use Save to Photos instead');
+                      await navigator.clipboard.writeText(`${text} ${postUrl}`);
+                      setPostShareNotice('Link copied to clipboard');
                     }
                   } catch (err: any) {
                     if (err?.name !== 'AbortError') setPostShareNotice('Could not share — use Save to Photos instead');
