@@ -2781,10 +2781,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <div key={c.id} className="flex gap-0 py-3 first:pt-2">
                     <div className="flex-1 min-w-0">
                       {/* Comment text featured — plain, like "People are talking" */}
-                      <p className="text-[16px] text-gray-900 leading-snug">{c.content}</p>
+                      <p className="text-[15px] text-gray-900 leading-snug">{c.content}</p>
                       {/* Byline underneath — gray afterthought */}
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[13px] text-gray-400">— {cName}{c.created_at ? ` · ${timeAgo(c.created_at)}` : ''}</span>
+                        <span className="text-[11px] text-gray-500">— {cName}{c.created_at ? ` · ${timeAgo(c.created_at)}` : ''}</span>
                         <button onClick={() => { setReplyingToId(isReplying ? null : c.id); setReplyText(''); }} className="text-[12px] font-medium text-gray-400 hover:text-violet-500 transition-colors">Reply</button>
                         <div className="flex items-center gap-1 text-gray-400">
                           <Heart size={11} />
