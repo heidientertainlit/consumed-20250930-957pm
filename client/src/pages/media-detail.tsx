@@ -1590,12 +1590,6 @@ export default function MediaDetail() {
                 </div></>
               )}
 
-              {session && !(Number(userRating?.rating || userReview?.rating) > 0) && typeof dnaRecMatch?.score === 'number' && (
-                <div className="mt-3 flex items-center gap-1.5" data-testid="card-dna-match">
-                  <Dna className="w-3.5 h-3.5 text-purple-400/70" />
-                  <span className="text-[13px] text-purple-200/80">{dnaRecMatch.score}% match for you</span>
-                </div>
-              )}
 
             </div>
           </div>
@@ -1645,7 +1639,15 @@ export default function MediaDetail() {
             return (
             <div className="mt-6">
               <div className="rounded-2xl border border-purple-300/15 bg-black/20 px-4 py-4" data-testid="card-rate-title">
-                <p className="text-center text-[11px] font-semibold tracking-widest uppercase text-gray-400">{isRated ? 'Your rating' : 'Rate this title'}</p>
+                <div className="relative flex items-center justify-center">
+                  <p className="text-center text-[11px] font-semibold tracking-widest uppercase text-gray-400">{isRated ? 'Your rating' : 'Rate this title'}</p>
+                  {!isRated && typeof dnaRecMatch?.score === 'number' && (
+                    <span className="absolute right-0 flex items-center gap-1 rounded-full bg-purple-500/15 px-2 py-0.5" data-testid="card-dna-match">
+                      <Dna className="w-3 h-3 text-purple-300" />
+                      <span className="text-[11px] font-medium text-purple-200">{dnaRecMatch.score}% match</span>
+                    </span>
+                  )}
+                </div>
                 <div className="mt-3 flex items-center justify-center gap-3">
                   {[1, 2, 3, 4, 5].map((n) => heroStar(n, isRated ? ownRating : composeRating, !isRated))}
                 </div>
