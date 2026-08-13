@@ -293,6 +293,7 @@ export default function UserProfile() {
   const listsRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState<string>('dna');
+  const [showAllOwnLists, setShowAllOwnLists] = useState(false);
   const initialSectionSet = useRef(false);
   const [isRegeneratingDna, setIsRegeneratingDna] = useState(false);
   const [dnaEngagement, setDnaEngagement] = useState<{[key: string]: number}>({});
@@ -4436,6 +4437,56 @@ export default function UserProfile() {
         {/* All My Media Section (own profile only) */}
         {activeSection === 'all-media' && isOwnProfile && (
           <div className="px-4 mb-8">
+            {/* Lists glimpse */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mb-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <List size={14} className="text-purple-600" />
+                Lists
+              </h4>
+              {userLists && userLists.length > 0 ? (
+                <div className="space-y-2">
+                  {(showAllOwnLists ? userLists : userLists.slice(0, 4)).map((list: any) => {
+                    const itemCount = list.items?.length ?? list.item_count ?? 0;
+                    return (
+                      <div
+                        key={list.id}
+                        className="flex items-center justify-between py-1.5 px-2 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => {
+                          const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
+                          setLocation(`/list/${listSlug}`);
+                        }}
+                        data-testid={`link-own-list-${list.id}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-gradient-to-br from-purple-100 to-blue-100 rounded flex items-center justify-center">
+                            {list.title === 'Want to Watch' || list.title === 'Want To' ? <Play className="text-purple-600" size={12} /> :
+                             list.title === 'Currently' ? <Clock className="text-blue-600" size={12} /> :
+                             list.title === 'Completed' || list.title === 'Finished' ? <Trophy className="text-green-600" size={12} /> :
+                             <List className="text-purple-600" size={12} />}
+                          </div>
+                          <span className="text-sm font-medium text-gray-800">{list.title}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-gray-500">{itemCount}</span>
+                          <ChevronRight size={14} className="text-gray-400" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {userLists.length > 4 && (
+                    <button
+                      onClick={() => setShowAllOwnLists(v => !v)}
+                      className="text-xs text-purple-600 font-medium w-full text-center pt-1 hover:text-purple-700"
+                      data-testid="button-toggle-own-lists"
+                    >
+                      {showAllOwnLists ? 'Show less' : `See all ${userLists.length} lists`}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 text-center py-2">No lists yet</p>
+              )}
+            </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               {/* Add Media — full-width button above filters */}
               <button
@@ -4681,47 +4732,6 @@ export default function UserProfile() {
               )}
             </div>
 
-            {/* Lists card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mt-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <List size={14} className="text-purple-600" />
-                Lists
-              </h4>
-              {userLists && userLists.length > 0 ? (
-                <div className="space-y-2">
-                  {userLists.map((list: any) => {
-                    const itemCount = list.items?.length ?? list.item_count ?? 0;
-                    return (
-                      <div
-                        key={list.id}
-                        className="flex items-center justify-between py-1.5 px-2 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
-                        onClick={() => {
-                          const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
-                          setLocation(`/list/${listSlug}`);
-                        }}
-                        data-testid={`link-own-list-${list.id}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-gradient-to-br from-purple-100 to-blue-100 rounded flex items-center justify-center">
-                            {list.title === 'Want to Watch' || list.title === 'Want To' ? <Play className="text-purple-600" size={12} /> :
-                             list.title === 'Currently' ? <Clock className="text-blue-600" size={12} /> :
-                             list.title === 'Completed' || list.title === 'Finished' ? <Trophy className="text-green-600" size={12} /> :
-                             <List className="text-purple-600" size={12} />}
-                          </div>
-                          <span className="text-sm font-medium text-gray-800">{list.title}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-gray-500">{itemCount}</span>
-                          <ChevronRight size={14} className="text-gray-400" />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-xs text-gray-500 text-center py-2">No lists yet</p>
-              )}
-            </div>
           </div>
         )}
 
