@@ -8839,6 +8839,12 @@ export default function Feed() {
                       <X size={16} />
                     </button>
                   </div>
+                  {(highlightedPost.type === 'dna_compare' || highlightedPost.post_type === 'dna_compare') ? (
+                    <div className="px-2 pb-2">
+                      <DnaComparePostCard item={highlightedPost} />
+                    </div>
+                  ) : (
+                  <>
                   <div className="px-4 pb-4">
                     {highlightedPost.user && (
                       <div className="flex items-start gap-3 mb-3">
@@ -8935,6 +8941,8 @@ export default function Feed() {
                       commentVotes={commentVotes}
                     />
                   </div>
+                  </>
+                  )}
                 </div>
               )}
 
