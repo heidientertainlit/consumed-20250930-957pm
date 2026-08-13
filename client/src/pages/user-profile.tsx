@@ -3304,16 +3304,6 @@ export default function UserProfile() {
                         <Users size={20} className="mr-2" />
                         Already Friends
                       </Button>
-                      {viewingUserId && (
-                        <FriendDNACompareButton
-                          friendId={viewingUserId}
-                          friendName={userProfileData?.display_name || userProfileData?.user_name || 'Friend'}
-                          friendAvatar={userProfileData?.avatar_url}
-                          userDnaLevel={viewerHasSurvey && viewerItemCount >= 10 ? 2 : viewerHasSurvey ? 1 : 0}
-                          userItemCount={viewerItemCount}
-                          hasSurvey={viewerHasSurvey}
-                        />
-                      )}
                     </>
                   ) : friendshipStatus === 'pending_sent' ? (
                     <Button 
@@ -3352,15 +3342,6 @@ export default function UserProfile() {
                         </>
                       )}
                     </Button>
-                  )}
-                  {user && (
-                    <button
-                      onClick={() => setIsProfileOptionsOpen(true)}
-                      className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors flex-shrink-0"
-                      title="More options"
-                    >
-                      <MoreHorizontal size={20} />
-                    </button>
                   )}
                 </div>
               )}
@@ -4759,6 +4740,19 @@ export default function UserProfile() {
               )}
             </div>
 
+          </div>
+        )}
+
+        {/* Report link at bottom of someone else's profile */}
+        {!isOwnProfile && user && (
+          <div className="px-4 pb-32 pt-8 flex justify-center">
+            <button
+              onClick={() => setIsProfileOptionsOpen(true)}
+              className="text-sm text-gray-400 hover:text-gray-600 underline underline-offset-2 transition-colors"
+              data-testid="button-report-this-person"
+            >
+              Report this person
+            </button>
           </div>
         )}
 
