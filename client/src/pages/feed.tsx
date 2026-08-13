@@ -2819,22 +2819,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
           {/* Comment list */}
           {comments.length > 0 && (
-            <div className="px-4 pt-1 pb-2 space-y-3">
+            <div className="px-4 pt-1 pb-2 divide-y divide-gray-100">
               {(showAllComments ? comments : comments.slice(0, 2)).map((c: any) => {
                 const cName = c.user?.displayName || c.user?.username || c.username || 'User';
                 const isReplying = replyingToId === c.id;
                 return (
-                  <div key={c.id} className="flex gap-0">
+                  <div key={c.id} className="flex gap-0 py-3 first:pt-2">
                     <div className="flex-1 min-w-0">
-                      {/* Lavender comment bubble — text featured, no avatar */}
-                      <div className="rounded-2xl bg-violet-50 px-4 py-3">
-                        <p className="text-[15px] text-gray-900 leading-snug">{c.content}</p>
-                      </div>
-                      {/* Meta row under the bubble */}
-                      <div className="flex items-center gap-2 mt-1 px-1">
-                        <span className="text-[11px] text-gray-400">{cName}{c.created_at ? ` · ${timeAgo(c.created_at)}` : ''}</span>
-                        <span className="text-[11px] text-gray-300">·</span>
-                        <button onClick={() => { setReplyingToId(isReplying ? null : c.id); setReplyText(''); }} className="text-[11px] font-semibold text-gray-400 hover:text-violet-500 transition-colors">Reply</button>
+                      {/* Comment text featured — plain, like "People are talking" */}
+                      <p className="text-[16px] text-gray-900 leading-snug">{c.content}</p>
+                      {/* Byline underneath — gray afterthought */}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[13px] text-gray-400">— {cName}{c.created_at ? ` · ${timeAgo(c.created_at)}` : ''}</span>
+                        <button onClick={() => { setReplyingToId(isReplying ? null : c.id); setReplyText(''); }} className="text-[12px] font-medium text-gray-400 hover:text-violet-500 transition-colors">Reply</button>
                         <div className="flex items-center gap-1 text-gray-400">
                           <Heart size={11} />
                           {(c.likes_count || 0) > 0 && <span className="text-[10px]">{c.likes_count}</span>}
@@ -2862,10 +2859,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                             const rName = r.user?.displayName || r.user?.username || r.username || 'User';
                             return (
                               <div key={r.id} className="pt-1">
-                                <div className="rounded-xl bg-violet-50/60 px-3 py-2">
-                                  <p className="text-[13px] text-gray-800 leading-snug">{r.content}</p>
-                                </div>
-                                <span className="text-[10px] text-gray-400 px-1">{rName}{r.created_at ? ` · ${timeAgo(r.created_at)}` : ''}</span>
+                                <p className="text-[14px] text-gray-800 leading-snug">{r.content}</p>
+                                <span className="text-[12px] text-gray-400">— {rName}{r.created_at ? ` · ${timeAgo(r.created_at)}` : ''}</span>
                               </div>
                             );
                           })}
@@ -2876,9 +2871,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 );
               })}
               {!showAllComments && comments.length > 2 && (
-                <button onClick={() => setShowAllComments(true)} className="text-[11px] font-semibold text-violet-500 hover:text-violet-700">
-                  View all {comments.length} comments ↓
-                </button>
+                <div className="py-2">
+                  <button onClick={() => setShowAllComments(true)} className="text-[11px] font-semibold text-violet-500 hover:text-violet-700">
+                    View all {comments.length} comments ↓
+                  </button>
+                </div>
               )}
             </div>
           )}
