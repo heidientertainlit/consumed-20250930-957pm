@@ -351,7 +351,16 @@ export function ShareRatingCard(props: ShareRatingCardProps) {
         setTimeout(() => URL.revokeObjectURL(url), 5000);
         setNotice("Image saved");
       } else {
-        const result = await shareBlob(blobRef.current, `${props.mediaTitle} on Consumed`);
+        const verb = (() => {
+          const t = (props.mediaType || "").toLowerCase();
+          if (t === "book" || t === "books") return "reading";
+          if (t === "podcast" || t === "music" || t === "audiobook") return "listening to";
+          if (t === "game" || t === "games") return "playing";
+          if (t === "tv" || t === "movie" || t === "film" || t === "youtube") return "watching";
+          return null;
+        })();
+        const shareTitle = verb ? `Here's what I'm ${verb} on Consumed` : `See my take on Consumed`;
+        const result = await shareBlob(blobRef.current, shareTitle);
         if (result === "downloaded") setNotice("Sharing not available here — image downloaded instead");
       }
     } finally {
