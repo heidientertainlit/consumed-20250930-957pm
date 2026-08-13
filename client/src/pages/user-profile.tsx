@@ -55,6 +55,7 @@ import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
 import { IdentityFace } from "@/components/feed-identity-hero";
 import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
+import { DnaShareExperience } from "@/components/dna-share-experience";
 import { ReportSheet } from "@/components/report-sheet";
 
 const DNA_ARCHETYPE_MAP: Record<string, { displayName: string; oneLiner: string }> = {
@@ -3067,63 +3068,13 @@ export default function UserProfile() {
                   )}
                 </div>
               </div>
-              <div className="relative flex-shrink-0 mt-1">
-                <button
-                  onClick={() => setProfileShareMenuOpen(v => !v)}
-                  className="text-white/50 hover:text-white/90 transition-colors"
-                  data-testid="button-share-profile-inline"
-                >
-                  <CornerUpRight size={16} />
-                </button>
-                {profileShareMenuOpen && (
-                  <div className="absolute top-7 right-0 z-30 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden w-[160px]">
-                    <button
-                      onClick={async () => {
-                        setProfileShareMenuOpen(false);
-                        const profileUserId = isOwnProfile ? user?.id : viewingUserId;
-                        await copyLink({ kind: 'profile', id: profileUserId });
-                        toast({ title: "Link Copied!", description: "Share this profile with your friends" });
-                      }}
-                      className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-gray-800 hover:bg-gray-50 border-b border-gray-100"
-                    >
-                      Share link
-                    </button>
-                    <button
-                      onClick={async () => {
-                        setProfileShareMenuOpen(false);
-                        if (!profileHeroRef.current || profileHeroSaving) return;
-                        setProfileHeroSaving(true);
-                        try {
-                          const canvas = await html2canvas(profileHeroRef.current, { scale: 3, useCORS: true, backgroundColor: '#0d0221' });
-                          const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, 'image/png'));
-                          if (blob && navigator.share) {
-                            const file = new File([blob], 'my-entertainment-dna.png', { type: 'image/png' });
-                            const withImage = { files: [file], title: 'My Entertainment DNA' } as any;
-                            try {
-                              if (navigator.canShare?.(withImage)) {
-                                await navigator.share(withImage);
-                                return;
-                              }
-                            } catch (err: any) {
-                              if (err?.name === 'AbortError') return;
-                            }
-                          }
-                          setDnaShareImageUrl(canvas.toDataURL('image/png'));
-                          setDnaShareSheetTitle("Your Entertainment DNA");
-                          setDnaShareSheetOpen(true);
-                        } catch {
-                          toast({ title: "Error", description: "Could not generate image", variant: "destructive" });
-                        } finally {
-                          setProfileHeroSaving(false);
-                        }
-                      }}
-                      className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-gray-800 hover:bg-gray-50"
-                    >
-                      {profileHeroSaving ? 'Preparing…' : 'Save as image'}
-                    </button>
-                  </div>
-                )}
-              </div>
+              <button
+                onClick={() => setProfileShareMenuOpen(true)}
+                className="text-white/50 hover:text-white/90 transition-colors flex-shrink-0 mt-1"
+                data-testid="button-share-profile-inline"
+              >
+                <CornerUpRight size={16} />
+              </button>
             </div>
 
             {/* Face + archetype */}
@@ -5719,6 +5670,12 @@ export default function UserProfile() {
         title={dnaShareSheetTitle}
         shareText={dnaProfile ? `I'm a "${dnaProfile.label}" - ${dnaProfile.tagline}. Check out my entertainment DNA on Consumed!` : undefined}
       />
+      {profileShareMenuOpen && (user?.id || viewingUserId) && (
+        <DnaShareExperience
+          userId={(isOwnProfile ? user?.id : viewingUserId) as string}
+          onClose={() => setProfileShareMenuOpen(false)}
+        />
+      )}
 
       {/* Profile Options Sheet */}
       <Sheet open={isProfileOptionsOpen} onOpenChange={setIsProfileOptionsOpen}>
