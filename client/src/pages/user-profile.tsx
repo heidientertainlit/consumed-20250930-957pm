@@ -4488,6 +4488,10 @@ export default function UserProfile() {
               )}
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <Film size={14} className="text-purple-600" />
+                All My Media
+              </h4>
               {/* Add Media — full-width button above filters */}
               <button
                 onClick={() => setLocation('/add')}
