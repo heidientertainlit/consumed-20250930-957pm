@@ -4021,97 +4021,15 @@ export default function UserProfile() {
         {/* Full DNA Section for Friend Profiles */}
         {!isOwnProfile && activeSection === 'dna' && (
           <div className="px-4 py-4 space-y-4">
-            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-5 shadow-sm">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="text-white" size={18} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                    {userProfileData?.display_name || userProfileData?.first_name || 'Their'}'s Entertainment DNA
-                  </h3>
-                </div>
-              </div>
-
-              {dnaProfileStatus === 'has_profile' && dnaProfile ? (
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-xl font-bold bg-gradient-to-r from-purple-800 to-indigo-900 bg-clip-text text-transparent mb-1">
-                      {dnaProfile.label || 'DNA Profile'}
-                    </h4>
-                    {dnaProfile.tagline && (
-                      <p className="text-sm text-gray-600 italic">{dnaProfile.tagline}</p>
-                    )}
-                  </div>
-
-                  {dnaProfile.favorite_genres && dnaProfile.favorite_genres.length > 0 && (
-                    <div>
-                      <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Favorite Genres</h5>
-                      <div className="flex flex-wrap gap-2">
-                        {dnaProfile.favorite_genres.map((genre: string, i: number) => (
-                          <span key={i} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                            {genre}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {dnaProfile.favorite_media_types && dnaProfile.favorite_media_types.length > 0 && (
-                    <div>
-                      <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Media Preferences</h5>
-                      <div className="flex flex-wrap gap-2">
-                        {dnaProfile.favorite_media_types.map((type: string, i: number) => (
-                          <span key={i} className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
-                            {type}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {dnaProfile.favorite_sports && dnaProfile.favorite_sports.length > 0 && (
-                    <div>
-                      <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sports</h5>
-                      <div className="flex flex-wrap gap-2">
-                        {dnaProfile.favorite_sports.map((sport: string, i: number) => (
-                          <span key={i} className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                            {sport}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0 && (
-                    <div>
-                      <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Flavor Notes</h5>
-                      <div className="flex flex-wrap gap-2">
-                        {dnaProfile.flavor_notes.map((note: string, i: number) => (
-                          <span key={i} className="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-medium">
-                            {note}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Compare DNA Button */}
-                  {dnaLevel >= 2 && (
-                    <FriendDNACompareButton 
-                      friendId={viewingUserId || ''}
-                      friendName={userProfileData?.first_name || userProfileData?.user_name || 'Friend'}
-                      userDnaLevel={dnaLevel}
-                      userItemCount={dnaItemCount}
-                    />
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-6">
-                  <p className="text-sm text-gray-500">No DNA profile yet</p>
-                </div>
-              )}
-            </div>
+            {/* Compare DNA button — card removed per request; keep the action */}
+            {dnaProfileStatus === 'has_profile' && dnaProfile && dnaLevel >= 2 && (
+              <FriendDNACompareButton
+                friendId={viewingUserId || ''}
+                friendName={userProfileData?.first_name || userProfileData?.user_name || 'Friend'}
+                userDnaLevel={dnaLevel}
+                userItemCount={dnaItemCount}
+              />
+            )}
 
             {dnaProfileStatus === 'has_profile' && dnaProfile && (
               <>
