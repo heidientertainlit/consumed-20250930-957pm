@@ -1598,7 +1598,7 @@ export default function MediaDetail() {
 
           {/* Description — starts open, clamped, with Read more */}
           {mediaItem.description && (
-            <div className="mt-4">
+            <div className="mt-6 mb-3">
               <p className={`text-sm text-gray-300 leading-relaxed ${showAbout ? '' : 'line-clamp-1'}`}>
                 {mediaItem.genres?.length > 0 && (
                   <span className="italic text-gray-400" data-testid="text-genres">{mediaItem.genres.slice(0, 2).join(', ')} — </span>
@@ -1689,21 +1689,21 @@ export default function MediaDetail() {
             };
             return (
             <div className="mb-6">
-              <div className="rounded-2xl border border-purple-300/15 bg-gradient-to-br from-[#2a1b4a] to-[#180d2f] shadow-xl px-4 py-4" data-testid="card-rate-title">
-                <p className="text-center text-[11px] font-semibold tracking-widest uppercase text-gray-400">{isRated ? 'Your rating' : 'Rate this title'}</p>
+              <div className="rounded-2xl border border-gray-200 bg-white shadow-sm px-4 py-4" data-testid="card-rate-title">
+                <p className="text-center text-[11px] font-semibold tracking-widest uppercase text-gray-500">{isRated ? 'Your rating' : 'Rate this title'}</p>
                 <div className="mt-3 flex items-center justify-center gap-3">
                   {[1, 2, 3, 4, 5].map((n) => heroStar(n, isRated ? ownRating : composeRating, !isRated))}
                 </div>
                 {!isRated ? (
-                  <p className="mt-2 text-center text-xs text-gray-400">Tap to rate · tap left side for ½</p>
+                  <p className="mt-2 text-center text-xs text-gray-500">Tap to rate · tap left side for ½</p>
                 ) : (
-                  <p className="mt-2 text-center text-xs text-gray-400">You rated this {ownRating % 1 === 0 ? ownRating : ownRating.toFixed(1)} out of 5</p>
+                  <p className="mt-2 text-center text-xs text-gray-500">You rated this {ownRating % 1 === 0 ? ownRating : ownRating.toFixed(1)} out of 5</p>
                 )}
                 <button
                   type="button"
                   onClick={() => setIsListSheetOpen(true)}
                   className={`mt-4 w-full flex items-center justify-center gap-1.5 rounded-full text-sm font-semibold py-3 transition-colors ${onListStatus
-                    ? 'border border-purple-300/25 text-purple-200 hover:bg-purple-500/10'
+                    ? 'border border-purple-300 text-purple-700 hover:bg-purple-50'
                     : 'bg-gradient-to-r from-purple-700 to-purple-500 hover:from-purple-600 hover:to-purple-400 text-white shadow-sm'}`}
                   data-testid="button-hero-add-to-list"
                 >
