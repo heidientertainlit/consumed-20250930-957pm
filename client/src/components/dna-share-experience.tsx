@@ -111,25 +111,35 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[99999] bg-gradient-to-br from-purple-900 via-indigo-950 to-black overflow-y-auto">
-      <div className="min-h-full flex flex-col items-center justify-center p-4 py-10">
-        {/* Close */}
-        <button
-          onClick={onClose}
-          className="self-end w-9 h-9 rounded-full bg-white/20 flex items-center justify-center mb-3 mr-1"
-          style={{ marginTop: "max(8px, env(safe-area-inset-top, 0px))" }}
-          aria-label="Close"
-        >
-          <X size={15} className="text-white" />
-        </button>
+    <div className="fixed inset-0 z-[99999] bg-black/60 flex items-end sm:items-center justify-center" onClick={onClose}>
+      {/* Small action sheet — just the two buttons */}
+      <div
+        className="w-full sm:w-[340px] rounded-t-3xl sm:rounded-3xl p-5 pb-8 sm:pb-5"
+        style={{ background: "linear-gradient(155deg, #2c2150 0%, #181030 100%)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-white font-semibold text-[15px]">Share your DNA</p>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center"
+            aria-label="Close"
+          >
+            <X size={14} className="text-white" />
+          </button>
+        </div>
 
         {loading || !profile ? (
-          <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="animate-spin text-white/80" size={28} />
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="animate-spin text-white/80" size={24} />
           </div>
         ) : (
           <>
-            {/* Shareable Card - Instagram Story optimized */}
+            {/* Hidden shareable card — rendered off-screen for image capture */}
+            <div
+              style={{ position: "fixed", left: "-10000px", top: 0, pointerEvents: "none" }}
+              aria-hidden="true"
+            >
             <div
               ref={cardRef}
               className="w-[320px] bg-white rounded-3xl overflow-hidden shadow-2xl"
@@ -177,9 +187,10 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
                 </div>
               </div>
             </div>
+            </div>
 
             {/* Action Buttons */}
-            <div className="mt-6 flex flex-col gap-3 w-[320px]">
+            <div className="flex flex-col gap-3">
               <Button
                 onClick={handleDownload}
                 disabled={isDownloading}
