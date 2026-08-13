@@ -1030,7 +1030,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
           {/* Trio row: avatar | ring | avatar, avatars partially behind ring */}
           <div style={{ position: 'relative', width: 240, height: 110 }}>
             {/* Left avatar — behind ring */}
-            <div style={{ position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}>
+            <div style={{ position: 'absolute', left: 4, top: 'calc(50% - 35px)', zIndex: 1 }}>
               <div className="rounded-full flex items-center justify-center font-black text-white border-2 border-white"
                 style={{ width: 70, height: 70, background: '#8b5cf6', fontSize: 18, boxShadow: '0 2px 8px rgba(139,92,246,0.35)' }}>
                 {initials(posterName)}
@@ -1042,12 +1042,12 @@ export function DnaComparePostCard({ item }: { item: any }) {
               const circ = 2 * Math.PI * r;
               const dash = (matchScore / 100) * circ;
               return (
-                <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 2, background: 'white', borderRadius: '50%' }}>
+                <div style={{ position: 'absolute', left: 'calc(50% - 53px)', top: 'calc(50% - 53px)', zIndex: 2, background: 'white', borderRadius: '50%' }}>
                   <div className="relative flex items-center justify-center" style={{ width: 106, height: 106 }}>
-                    <svg className="absolute inset-0" width="106" height="106" viewBox="0 0 106 106" style={{ transform: 'rotate(-90deg)' }}>
+                    <svg className="absolute inset-0" width="106" height="106" viewBox="0 0 106 106">
                       <circle cx="53" cy="53" r={r} fill="none" stroke="#ede9fe" strokeWidth="4" />
                       <circle cx="53" cy="53" r={r} fill="none" stroke="#8b5cf6" strokeWidth="4"
-                        strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
+                        strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" transform="rotate(-90 53 53)" />
                     </svg>
                     <div className="flex flex-col items-center" style={{ zIndex: 3, position: 'relative' }}>
                       <span className="font-black leading-none" style={{ fontSize: 26, color: '#8b5cf6' }}>{matchScore}%</span>
@@ -1058,7 +1058,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
               );
             })()}
             {/* Right avatar — behind ring */}
-            <div style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}>
+            <div style={{ position: 'absolute', right: 4, top: 'calc(50% - 35px)', zIndex: 1 }}>
               <div className="rounded-full flex items-center justify-center font-black text-white border-2 border-white"
                 style={{ width: 70, height: 70, background: '#a855f7', fontSize: 18, boxShadow: '0 2px 8px rgba(168,85,247,0.35)' }}>
                 {initials(friendName)}
@@ -1181,7 +1181,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4 px-1">
-              <p className="text-white font-semibold text-[15px]">Share DNA Match</p>
+              <p className="text-white font-semibold text-[15px]">Share DNA Comparison</p>
               <button onClick={() => setPostShareMenuOpen(false)} aria-label="Close" className="p-1.5 rounded-full bg-white/10 text-white/70 hover:text-white">
                 <X size={16} />
               </button>
