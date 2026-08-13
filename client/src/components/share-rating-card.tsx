@@ -363,7 +363,7 @@ export function ShareRatingCard(props: ShareRatingCardProps) {
     <div className="fixed inset-0 z-[100000] flex items-center justify-center px-3" onClick={onClose}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative w-full sm:max-w-sm bg-gray-950 rounded-3xl p-4 pb-6 max-h-[86vh] overflow-y-auto -mt-8"
+        className="relative w-full sm:max-w-sm bg-gray-950 rounded-3xl p-4 pb-6 max-h-[92vh] flex flex-col -mt-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-3 px-1">
@@ -373,7 +373,7 @@ export function ShareRatingCard(props: ShareRatingCardProps) {
           </button>
         </div>
 
-        <div className="rounded-2xl overflow-hidden bg-gray-900 flex items-center justify-center" style={{ aspectRatio: "9 / 16" }}>
+        <div className="rounded-2xl overflow-hidden bg-gray-900 flex items-center justify-center flex-1 min-h-0" style={{ aspectRatio: "9 / 16", maxHeight: "58vh", margin: "0 auto" }}>
           {previewUrl ? (
             <img src={previewUrl} alt="Rating card preview" className="w-full h-full object-contain" />
           ) : (
