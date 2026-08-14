@@ -1753,7 +1753,6 @@ export default function MediaDetail() {
           {/* Your Reaction — dark purple pill button that expands the composer inline */}
           {session && (
           <div ref={composeSectionRef} className="mb-4">
-            <h3 className="text-base font-semibold text-gray-900 mb-2">What people are saying...</h3>
             {!composerOpen && (
               <button
                 type="button"
