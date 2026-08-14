@@ -15,5 +15,6 @@
 - [YouTube media type](youtube-media-type.md) — first-class type with media_subtype channel/video; channel add auto-follows creator; never map youtube→tv; UC-regex distinguishes IDs.
 - [Creator follows feed DNA & recs](creator-follows-dna.md) — user_dna_signals is delete-and-reinsert by extract-dna-signals; derive new signal sources there, never write signals elsewhere.
 - [DNA Moment feed cards](dna-moments-cards.md) — cards return null on ANY query error (silent vanish); dna_moments is public-read-only RLS, admin page client writes fail; verify schema vs client filters.
+- [Media match % scoring](media-match-scoring.md) — feed % badge = score-media-match fn; callers send title only, prompt must allow model's own title knowledge; recalibration requires cache wipe.
 - [Media page DNA match line](media-match-line.md) — never show % match on titles the user rated; blend genre+creator signals normalized to user's top strengths; ≥70% + named evidence or nothing.
 - [Room Explore genre discovery](room-explore-genre-discovery.md) — room-explore uses explicit per-tag genre config + example-seed recommendations (NOT fuzzy keyword, which pulled cartoons); never media-search (title matcher).
