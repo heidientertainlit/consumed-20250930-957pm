@@ -2801,7 +2801,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       <p className="text-[15px] text-gray-900 leading-snug">{c.content}</p>
                       {/* Name · time — quiet, under the text */}
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[12px] text-gray-400">{(() => {
+                        <span className="text-[12px] text-gray-400">— {(() => {
                           const parts = (cName || '').trim().split(/\s+/);
                           return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
                         })()}{c.created_at ? `  ·  ${timeAgo(c.created_at)}` : ''}</span>
