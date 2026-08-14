@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { MessageCircle, ArrowRight, Send, Loader2 } from 'lucide-react';
+import { MessageCircle, Send, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useLocation } from 'wouter';
 import { supabase } from '@/lib/supabase';
 
 interface FeedbackDialogProps {
@@ -18,7 +17,6 @@ export function FeedbackDialog({ isOpen, onClose }: FeedbackDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user, session } = useAuth();
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
 
   const handleSubmitOpenFeedback = async () => {
     if (!openFeedback.trim()) {
@@ -57,11 +55,6 @@ export function FeedbackDialog({ isOpen, onClose }: FeedbackDialogProps) {
     }
   };
 
-  const handleTakeSurvey = () => {
-    onClose();
-    setLocation('/feedback-survey');
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-white">
@@ -75,30 +68,11 @@ export function FeedbackDialog({ isOpen, onClose }: FeedbackDialogProps) {
         <div className="space-y-4 pt-2">
           <div className="text-gray-600 text-sm leading-relaxed">
             <p>
-              We're still in beta, and your honest feedback helps shape what this becomes. Tell us what's clicking, what's confusing, and what you wish existed. Feedback = gold. You won't hurt our feelings.
+              We're in beta and your feedback shapes what this becomes — and please tell us if something is broken or not working right. You won't hurt our feelings.
             </p>
           </div>
 
           <div className="border-t border-gray-100 pt-4">
-            <p className="text-sm text-gray-600 mb-3">
-              Submit any thoughts below or take the 5 question survey here:
-            </p>
-            
-            <Button 
-              onClick={handleTakeSurvey}
-              variant="outline"
-              className="w-full mb-4 border-purple-200 text-purple-600 hover:bg-purple-50"
-              data-testid="take-survey-button"
-            >
-              Take 5 Question Survey
-              <ArrowRight size={16} className="ml-2" />
-            </Button>
-          </div>
-
-          <div className="border-t border-gray-100 pt-4">
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
-              Open Form
-            </label>
             <Textarea
               placeholder="What's on your mind? Share anything..."
               value={openFeedback}
