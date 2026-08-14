@@ -14,19 +14,61 @@ const ROLE_BY_TYPE: Record<string, string> = {
   podcast: 'Host',
 };
 
-// Popular fallback creators so new users still get a useful batch
+// Popular creators across all media types — blended into every batch for discovery
 const POPULAR: { name: string; role: string }[] = [
-  { name: 'Christopher Nolan', role: 'Director' },
-  { name: 'Taylor Swift', role: 'Musician' },
-  { name: 'Stephen King', role: 'Author' },
-  { name: 'Greta Gerwig', role: 'Director' },
-  { name: 'Sarah J. Maas', role: 'Author' },
-  { name: 'Quentin Tarantino', role: 'Director' },
-  { name: 'Beyonc\u00e9', role: 'Musician' },
-  { name: 'Colleen Hoover', role: 'Author' },
-  { name: 'Denis Villeneuve', role: 'Director' },
-  { name: 'Kendrick Lamar', role: 'Musician' },
+  // Directors
+  { name: 'Christopher Nolan', role: 'Director' }, { name: 'Greta Gerwig', role: 'Director' },
+  { name: 'Denis Villeneuve', role: 'Director' }, { name: 'Quentin Tarantino', role: 'Director' },
+  { name: 'Steven Spielberg', role: 'Director' }, { name: 'Martin Scorsese', role: 'Director' },
+  { name: 'Jordan Peele', role: 'Director' }, { name: 'Nancy Meyers', role: 'Director' },
+  { name: 'Wes Anderson', role: 'Director' }, { name: 'Ava DuVernay', role: 'Director' },
+  { name: 'Rian Johnson', role: 'Director' }, { name: 'Sofia Coppola', role: 'Director' },
+  { name: 'Ryan Coogler', role: 'Director' }, { name: 'Bong Joon-ho', role: 'Director' },
+  { name: 'Emerald Fennell', role: 'Director' }, { name: 'Baz Luhrmann', role: 'Director' },
+  { name: 'Ron Howard', role: 'Director' }, { name: 'Kathryn Bigelow', role: 'Director' },
+  // TV creators / showrunners
+  { name: 'Shonda Rhimes', role: 'Creator' }, { name: 'Julian Fellowes', role: 'Creator' },
+  { name: 'Mike White', role: 'Creator' }, { name: 'Taylor Sheridan', role: 'Creator' },
+  { name: 'Amy Sherman-Palladino', role: 'Creator' }, { name: 'Vince Gilligan', role: 'Creator' },
+  { name: 'Mindy Kaling', role: 'Creator' }, { name: 'Ryan Murphy', role: 'Creator' },
+  { name: 'Jesse Armstrong', role: 'Creator' }, { name: 'Phoebe Waller-Bridge', role: 'Creator' },
+  { name: 'Tina Fey', role: 'Creator' }, { name: 'Issa Rae', role: 'Creator' },
+  { name: 'Greg Daniels', role: 'Creator' }, { name: 'Craig Mazin', role: 'Creator' },
+  { name: 'Quinta Brunson', role: 'Creator' }, { name: 'Dan Levy', role: 'Creator' },
+  // Authors
+  { name: 'Emily Henry', role: 'Author' }, { name: 'Kristin Hannah', role: 'Author' },
+  { name: 'Colleen Hoover', role: 'Author' }, { name: 'Sarah J. Maas', role: 'Author' },
+  { name: 'Stephen King', role: 'Author' }, { name: 'Taylor Jenkins Reid', role: 'Author' },
+  { name: 'Rebecca Yarros', role: 'Author' }, { name: 'Freida McFadden', role: 'Author' },
+  { name: 'Abby Jimenez', role: 'Author' }, { name: 'Ann Patchett', role: 'Author' },
+  { name: 'Fredrik Backman', role: 'Author' }, { name: 'Ali Hazelwood', role: 'Author' },
+  { name: 'Celeste Ng', role: 'Author' }, { name: 'Delia Owens', role: 'Author' },
+  { name: 'Matt Haig', role: 'Author' }, { name: 'Gillian Flynn', role: 'Author' },
+  { name: 'Brandon Sanderson', role: 'Author' }, { name: 'Kate Quinn', role: 'Author' },
+  { name: 'Bonnie Garmus', role: 'Author' }, { name: 'Andy Weir', role: 'Author' },
+  { name: 'Liane Moriarty', role: 'Author' }, { name: 'Jodi Picoult', role: 'Author' },
+  // Musicians
+  { name: 'Taylor Swift', role: 'Musician' }, { name: 'Beyonc\u00e9', role: 'Musician' },
+  { name: 'Kendrick Lamar', role: 'Musician' }, { name: 'Adele', role: 'Musician' },
+  { name: 'Billie Eilish', role: 'Musician' }, { name: 'Ed Sheeran', role: 'Musician' },
+  { name: 'Olivia Rodrigo', role: 'Musician' }, { name: 'Bruno Mars', role: 'Musician' },
+  { name: 'Sabrina Carpenter', role: 'Musician' }, { name: 'The Weeknd', role: 'Musician' },
+  { name: 'Dua Lipa', role: 'Musician' }, { name: 'Morgan Wallen', role: 'Musician' },
+  { name: 'SZA', role: 'Musician' }, { name: 'Harry Styles', role: 'Musician' },
+  { name: 'Lana Del Rey', role: 'Musician' }, { name: 'Chappell Roan', role: 'Musician' },
+  { name: 'Zach Bryan', role: 'Musician' }, { name: 'Hozier', role: 'Musician' },
+  { name: 'Noah Kahan', role: 'Musician' }, { name: 'Gracie Abrams', role: 'Musician' },
+  // Podcast hosts
+  { name: 'Joe Rogan', role: 'Host' }, { name: 'Alex Cooper', role: 'Host' },
+  { name: 'Dax Shepard', role: 'Host' }, { name: 'Mel Robbins', role: 'Host' },
+  { name: 'Jay Shetty', role: 'Host' }, { name: 'Amy Poehler', role: 'Host' },
+  { name: 'Ashley Flowers', role: 'Host' }, { name: 'Conan O\u2019Brien', role: 'Host' },
+  { name: 'Bren\u00e9 Brown', role: 'Host' }, { name: 'Ira Glass', role: 'Host' },
+  { name: 'Michelle Obama', role: 'Host' }, { name: 'Malcolm Gladwell', role: 'Host' },
+  { name: 'Jason Bateman', role: 'Host' }, { name: 'Andrew Huberman', role: 'Host' },
+  { name: 'Sarah Koenig', role: 'Host' }, { name: 'Bobby Bones', role: 'Host' },
 ];
+
 
 const slug = (name: string) =>
   'name:' + name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -100,7 +142,7 @@ serve(async (req) => {
 
     const personal = [...counts.values()]
       .sort((a, b) => b.count - a.count)
-      .slice(0, 8)
+      .slice(0, 4)
       .map((c) => ({
         name: c.name,
         role: c.role,
@@ -109,9 +151,18 @@ serve(async (req) => {
         trackedCount: c.count,
       }));
 
-    // Top up with popular fallbacks the user hasn't followed or been offered
+    // Blend in popular creators across ALL media types for discovery.
+    // Shuffled each request, and spread across roles so one media type can't dominate.
     const offered = new Set(personal.map((p) => p.name.toLowerCase()));
-    const fallback = POPULAR
+    const shuffled = [...POPULAR].sort(() => Math.random() - 0.5);
+    const pickedRoles = new Map<string, number>();
+    const diverse: typeof POPULAR = [];
+    for (const p of shuffled) {
+      if ((pickedRoles.get(p.role) || 0) >= 2) continue;
+      diverse.push(p);
+      pickedRoles.set(p.role, (pickedRoles.get(p.role) || 0) + 1);
+    }
+    const fallback = diverse
       .filter((p) => !followedNames.has(p.name.toLowerCase()) && !offered.has(p.name.toLowerCase()) && !followedIds.has(slug(p.name)))
       .slice(0, Math.max(0, 8 - personal.length))
       .map((p) => ({
