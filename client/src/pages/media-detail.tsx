@@ -1408,9 +1408,9 @@ export default function MediaDetail() {
         <div className="min-w-0">
           {/* Expanded thread — comments + reply input */}
           {!post._ratingOnly && isExpanded && (
-            <div className="mt-3">
+            <div className="mt-1.5">
               {expandedComments[post.id]?.length > 0 && (
-                <div className="space-y-3 border-l-2 border-gray-100 pl-3 mb-3">
+                <div className="space-y-3 border-l-2 border-gray-100 pl-3 ml-2 mb-3">
                   {expandedComments[post.id].map((comment: any) => renderComment(comment, post.id))}
                 </div>
               )}
