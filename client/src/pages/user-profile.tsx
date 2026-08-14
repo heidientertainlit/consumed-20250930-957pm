@@ -3767,15 +3767,6 @@ export default function UserProfile() {
                   );
                 })()}
 
-                <button
-                  onClick={handleRefreshDna}
-                  disabled={isRefreshingDna}
-                  className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-semibold text-gray-500 bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-60"
-                >
-                  {isRefreshingDna ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} className="text-purple-400" />}
-                  {isRefreshingDna ? 'Refreshing…' : 'Refresh DNA'}
-                </button>
-
               </>
             ) : (
               <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-center">
