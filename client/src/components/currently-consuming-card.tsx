@@ -993,19 +993,22 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
                             className="fill-yellow-400 text-yellow-400"
                           />
                         </div>
+                        {/* Tap targets: left half = half star, right half = full star */}
+                        <button
+                          type="button"
+                          aria-label={`Rate ${star - 0.5} stars`}
+                          onClick={() => setRating(star - 0.5)}
+                          className="absolute left-0 top-0 w-1/2 h-full z-10"
+                        />
+                        <button
+                          type="button"
+                          aria-label={`Rate ${star} stars`}
+                          onClick={() => setRating(star)}
+                          className="absolute right-0 top-0 w-1/2 h-full z-10"
+                        />
                       </div>
                     ))}
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="5"
-                    step="0.5"
-                    value={rating}
-                    onChange={(e) => setRating(parseFloat(e.target.value))}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    style={{ margin: 0 }}
-                  />
                 </div>
               </div>
               <p className="text-center text-sm text-gray-500">
