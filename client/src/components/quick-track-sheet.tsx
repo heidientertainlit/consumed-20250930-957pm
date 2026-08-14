@@ -511,85 +511,29 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                 </div>
               </div>
 
-              {/* React to this title (optional) — all-at-once composer */}
+              {/* Take + optional rating — matches the main composer */}
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-2">React to this title <span className="text-gray-400 font-normal">(optional)</span></p>
                 <div className="rounded-2xl border border-gray-200 overflow-hidden">
-                  {/* Mode switcher */}
-                  <div className="grid grid-cols-4 gap-1 p-2">
-                    {COMPOSER_MODES.map(({ id, label, Icon }) => {
-                      const active = composerMode === id;
-                      const filled =
-                        id === "rate" ? rating > 0
-                        : id === "take" ? takeText.trim().length > 0
-                        : id === "predict" ? (predQuestion.trim().length > 0 || predOptions.some((o) => o.trim()))
-                        : (pollQuestion.trim().length > 0 || pollOptions.some((o) => o.trim()));
-                      return (
-                        <button
-                          key={id}
-                          onClick={() => setComposerMode(id)}
-                          className="flex flex-col items-center gap-1 py-1.5 rounded-xl"
-                          data-testid={`quick-track-mode-${id}`}
-                        >
-                          <span className={`relative w-11 h-11 rounded-full flex items-center justify-center transition-colors ${active ? "bg-purple-600" : "bg-gray-100"}`}>
-                            <Icon size={20} className={active ? "text-white" : "text-gray-500"} />
-                            {filled && <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-purple-500 border-2 border-white" />}
-                          </span>
-                          <span className={`text-xs font-medium ${active ? "text-purple-700" : "text-gray-500"}`}>{label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Active mode body */}
-                  <div className="px-3.5 pb-3.5 pt-2 border-t border-gray-100">
-                    {composerMode === "rate" && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-1.5">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button key={star} onClick={() => setRating(rating === star ? 0 : star)} className="p-0.5" data-testid={`quick-track-star-${star}`}>
-                              <Star size={30} className={rating >= star ? "text-purple-500" : "text-gray-300"} fill={rating >= star ? "currentColor" : "none"} />
-                            </button>
-                          ))}
-                        </div>
-                        <textarea
-                          value={takeText}
-                          onChange={(e) => setTakeText(e.target.value)}
-                          placeholder="Write your review… (optional)"
-                          rows={3}
-                          className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                          data-testid="quick-track-take"
-                        />
+                  <div className="p-3.5 space-y-3">
+                    <textarea
+                      value={takeText}
+                      onChange={(e) => setTakeText(e.target.value)}
+                      placeholder="What do you think?"
+                      rows={3}
+                      className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      data-testid="quick-track-take"
+                    />
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700">Add Rating <span className="text-gray-400 font-normal">(optional)</span></p>
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button key={star} onClick={() => setRating(rating === star ? 0 : star)} className="p-0.5" data-testid={`quick-track-star-${star}`}>
+                            <Star size={30} className={rating >= star ? "text-purple-500" : "text-gray-300"} fill={rating >= star ? "currentColor" : "none"} />
+                          </button>
+                        ))}
                       </div>
-                    )}
-                    {composerMode === "take" && (
-                      <textarea
-                        value={takeText}
-                        onChange={(e) => setTakeText(e.target.value)}
-                        placeholder="Share a take…"
-                        rows={3}
-                        className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        data-testid="quick-track-take"
-                      />
-                    )}
-                    {composerMode === "predict" && (
-                      <QuestionOptions
-                        question={predQuestion}
-                        setQuestion={setPredQuestion}
-                        options={predOptions}
-                        setOptions={setPredOptions}
-                        placeholder="What do you predict?"
-                      />
-                    )}
-                    {composerMode === "poll" && (
-                      <QuestionOptions
-                        question={pollQuestion}
-                        setQuestion={setPollQuestion}
-                        options={pollOptions}
-                        setOptions={setPollOptions}
-                        placeholder="Ask a question…"
-                      />
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
