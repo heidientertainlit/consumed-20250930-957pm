@@ -2386,27 +2386,18 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         <div className="bg-white rounded-2xl shadow-sm overflow-visible">
 
           {/* Header: label + type pill + ‹ N of M › nav */}
-          <div className="flex items-center justify-between px-4 pt-4 pb-2">
-            <div className="flex items-center flex-wrap gap-2 gap-y-1" />
-            {swipeProps?.navigate && swipeProps?.totalPosts && swipeProps.totalPosts > 1 && (
-              <div className="flex items-center gap-1">
+          {swipeProps?.navigate && swipeProps?.totalPosts && swipeProps.totalPosts > 1 && (
+            <div className="flex items-center justify-center gap-1.5 px-4 pt-4 pb-2">
+              {Array.from({ length: swipeProps.totalPosts }).map((_, i) => (
                 <button
-                  onClick={(e) => { e.stopPropagation(); swipeProps.navigate!(1); }}
-                  disabled={(stackIndex ?? 0) === 0}
-                  className="disabled:opacity-30"
-                >
-                  <ChevronLeft className="w-4 h-4 text-gray-400" />
-                </button>
-                <span className="text-purple-500 text-xs font-medium">{(stackIndex ?? 0) + 1} of {swipeProps.totalPosts}</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); swipeProps.navigate!(-1); }}
-                  disabled={(stackIndex ?? 0) >= swipeProps.totalPosts - 1}
-                  className="disabled:opacity-30"
-                >
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
-                </button>
-              </div>
-            )}
+                  key={i}
+                  onClick={(e) => { e.stopPropagation(); swipeProps.navigate!((stackIndex ?? 0) - i); }}
+                  aria-label={`Go to post ${i + 1}`}
+                  className={`rounded-full transition-all ${i === (stackIndex ?? 0) ? 'w-2 h-2 bg-purple-500' : 'w-1.5 h-1.5 bg-gray-300'}`}
+                />
+              ))}
+            </div>
+          )}
           </div>
 
           {/* Content row — poster anchored left, take on the right (updates as you swipe) */}
