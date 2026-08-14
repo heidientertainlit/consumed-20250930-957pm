@@ -1737,7 +1737,7 @@ export default function MediaDetail() {
                   type="button"
                   onClick={() => setIsListSheetOpen(true)}
                   className={`w-full flex items-center justify-center gap-1.5 text-[15px] font-semibold pt-4 pb-1 transition-colors ${onListStatus
-                    ? 'text-purple-700 hover:text-purple-800'
+                    ? 'text-gray-500 hover:text-gray-600'
                     : 'text-purple-600 hover:text-purple-700'}`}
                   data-testid="button-hero-add-to-list"
                 >
