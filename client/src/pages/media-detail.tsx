@@ -10,7 +10,7 @@ import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import MentionInput from "@/components/mention-input";
-import { copyLink } from "@/lib/share";
+import { shareLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 import { useDnaArchetype } from "@/hooks/use-dna-archetype";
 import CreateListDialog from "@/components/create-list-dialog";
@@ -356,25 +356,22 @@ export default function MediaDetail() {
 
   const handleShare = async () => {
     try {
-      await copyLink({
+      const result = await shareLink({
         kind: 'media',
         obj: {
           type: params?.type,
           source: params?.source,
           id: params?.id
-        }
+        },
+        title: mediaData?.title || 'Check this out on Consumed'
       });
-      toast({
-        title: "Link copied!",
-        description: "Share this media with your friends",
-      });
+      // Native share sheet opened — no toast needed. Only confirm when we
+      // silently copied to the clipboard (desktop fallback).
+      if (result === 'copied') {
+        toast({ title: "Link copied!" });
+      }
     } catch (err) {
-      console.error('Failed to copy link:', err);
-      toast({
-        title: "Failed to copy link",
-        description: "Please try again",
-        variant: "destructive"
-      });
+      console.error('Failed to share link:', err);
     }
   };
 
