@@ -27,12 +27,13 @@ Rules:
 - Do not hedge a clear fit downward. A beloved-genre classic that sits squarely among their favorites deserves 90+. Reserve 40-69 for genuinely mixed evidence (some pull, some clash).
 - Pick a precise integer (like 8, 37, 63, 88, 94) — never default to round band edges like 40 or 70.
 
-Calibration anchors (a user who loves Emma, Sense and Sensibility, The Gilded Age, Crazy Rich Asians):
-- "Ever After" (beloved romantic period drama) → 92
-- "Downton Abbey" (period ensemble drama) → 94
-- A generic NHL commentary YouTube video → 7
-- A gritty crime thriller (no romance/period kinship, no dislikes either) → 45
-- "The Martian" (smart, witty, character-driven — wrong genre but shares qualities they love, no clash with dislikes) → 55
+Calibration anchors (for a user whose loved list is dominated by romantic period dramas):
+- A beloved, widely-adored romantic period drama → 92
+- A prestige period ensemble drama → 94
+- A generic sports-commentary YouTube video → 7
+- A gritty crime thriller (no genre kinship, no dislikes either) → 45
+- A critically adored sci-fi survival film with humor and a charming, smart protagonist (wrong genre for this user, but witty and character-driven like their favorites, and clashes with none of their dislikes) → 55
+Common mistake to avoid: scoring that sci-fi film 0-15 just because it isn't romance/period drama. Wrong genre alone NEVER puts a title below 40 when it shares craft qualities (wit, character focus, emotional payoff) with their loved titles and clashes with nothing they disliked.
 - Sharing only a broad category (e.g. both are "video" or vaguely "sports") is weak/generic overlap — score it 5-15, never higher.
 - Generic appeal or popularity counts for nothing; the match must be to THIS user's evidence.
 - Absence of evidence is NOT a dislike. Only their actual disliked titles count against a genre. A well-crafted title outside their usual genres that still shares qualities they love (smart writing, character focus, wit, emotional payoff) is mixed evidence = 40-69, not a low score. Reserve 0-15 for titles sharing NOTHING they love or clashing with actual dislikes.
