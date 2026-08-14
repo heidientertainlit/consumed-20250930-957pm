@@ -513,7 +513,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
 
               {/* Take + optional rating — matches the main composer */}
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-2">React to this title <span className="text-gray-400 font-normal">(optional)</span></p>
+                <p className="text-sm font-semibold text-gray-700 mb-2">Add a reaction <span className="text-gray-400 font-normal">(optional)</span></p>
                 <div className="rounded-2xl border border-gray-200 overflow-hidden">
                   <div className="p-3.5 space-y-3">
                     <textarea
@@ -525,7 +525,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                       data-testid="quick-track-take"
                     />
                     <div>
-                      <p className="text-sm font-semibold text-gray-700">Add Rating <span className="text-gray-400 font-normal">(optional)</span></p>
+                      <p className="text-sm font-semibold text-gray-700">What would you rate it? <span className="text-gray-400 font-normal">(optional)</span></p>
                       <div className="flex items-center gap-1.5 mt-1.5">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <button key={star} onClick={() => setRating(rating === star ? 0 : star)} className="p-0.5" data-testid={`quick-track-star-${star}`}>
