@@ -893,36 +893,17 @@ export default function NewRoom() {
 
           <div className="px-4 pt-4">
             {/* Hot conversation */}
-            {trending.length > 0 && (() => {
-              const hot = trending[0];
-              const hg = dbToDisplay(hot.tag);
-              return (
-                <button
-                  onClick={() => setActiveTake(hot)}
-                  className="w-full text-left bg-purple-50/60 border border-purple-200/60 rounded-2xl p-4 mb-4 shadow-sm active:bg-purple-50 transition-colors"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    {hg && (
-                      <span className="px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase rounded-full" style={{ background: hg.bg, color: hg.fg }}>{hg.label}</span>
-                    )}
-                    <span className="text-[11px] font-bold tracking-wider uppercase flex items-center gap-1" style={{ color: ACCENT }}>
-                      <Flame size={13} className="text-orange-500" />
-                      Hot Conversation
-                    </span>
-                  </div>
-                  <p className="text-[15px] font-semibold text-gray-900 leading-snug">{hot.title}</p>
-                  {hot.body && (
-                    <div className="bg-white/70 rounded-xl p-3 mt-2.5 text-[13px] leading-relaxed text-gray-600 border border-purple-100/50 line-clamp-2">
-                      <span className="font-semibold text-gray-900">{nameOf(hot.users)}:</span> {hot.body}
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-[11px] font-medium text-purple-700/80">{hot.reply_count || 0} {(hot.reply_count || 0) === 1 ? "reply" : "replies"} · {hot.upvotes || 0} agree</span>
-                    <span className="text-[11px] font-semibold text-purple-700 bg-purple-100/80 px-3 py-1.5 rounded-full">Tap to join</span>
-                  </div>
-                </button>
-              );
-            })()}
+            {trending.length > 0 && (
+              <HotConversationCard
+                take={trending[0]}
+                agreed={hasAgreed(trending[0].id)}
+                onAgree={() => handleAgree(trending[0])}
+                currentUserId={currentUserId}
+                myVotes={myVotes}
+                onChanged={() => { refetchTakes(); refetchMyVotes(); }}
+                logRoomEvent={logRoomEvent}
+              />
+            )}
 
             {/* Conversations — minimal threaded rows */}
             {sortedTakes.length === 0 && (
@@ -1035,6 +1016,141 @@ export default function NewRoom() {
         media={addMedia}
         elevated
       />
+    </div>
+  );
+}
+
+// ── Hot Conversation — inline thread on the room page ──────────────────
+function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, onChanged, logRoomEvent }: {
+  take: any;
+  agreed: boolean;
+  onAgree: () => void;
+  currentUserId: string | null;
+  myVotes: any[];
+  onChanged: () => void;
+  logRoomEvent: (action_type: string, metadata?: Record<string, any>) => Promise<void>;
+}) {
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [replying, setReplying] = useState(false);
+  const hg = dbToDisplay(take.tag);
+
+  const { data: repliesData, refetch: refetchReplies } = useQuery({
+    queryKey: ["hot-take-replies", take.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("room_take_replies")
+        .select("*, users:user_id(id, display_name, user_name)")
+        .eq("take_id", take.id)
+        .order("upvotes", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!take.id,
+  });
+  const replies: any[] = repliesData || [];
+
+  const handleReply = async () => {
+    if (!replyText.trim() || !currentUserId) return;
+    setReplying(true);
+    await supabase.from("room_take_replies").insert({
+      take_id: take.id,
+      parent_reply_id: null,
+      user_id: currentUserId,
+      content: replyText.trim(),
+    });
+    await supabase.from("room_takes").update({ reply_count: (take.reply_count || 0) + 1 }).eq("id", take.id);
+    logRoomEvent("room_reply", { take_id: take.id });
+    setReplyText("");
+    setReplying(false);
+    setReplyOpen(false);
+    refetchReplies();
+    onChanged();
+  };
+
+  const myReplyVote = (replyId: string) => myVotes.find((v) => v.reply_id === replyId);
+  const handleReplyUpvote = async (reply: any) => {
+    if (!currentUserId) return;
+    const existing = myReplyVote(reply.id);
+    if (existing) {
+      if (existing.vote === 1) {
+        await supabase.from("room_take_votes").delete().eq("id", existing.id);
+        await supabase.from("room_take_replies").update({ upvotes: Math.max(0, (reply.upvotes || 0) - 1) }).eq("id", reply.id);
+      } else {
+        await supabase.from("room_take_votes").update({ vote: 1 }).eq("id", existing.id);
+        await supabase.from("room_take_replies").update({ upvotes: (reply.upvotes || 0) + 1 }).eq("id", reply.id);
+      }
+    } else {
+      await supabase.from("room_take_votes").insert({ reply_id: reply.id, user_id: currentUserId, vote: 1 });
+      await supabase.from("room_take_replies").update({ upvotes: (reply.upvotes || 0) + 1 }).eq("id", reply.id);
+    }
+    refetchReplies();
+    onChanged();
+  };
+
+  return (
+    <div className="bg-purple-50/60 border border-purple-200/60 rounded-2xl p-4 mb-4 shadow-sm">
+      <div className="flex items-center gap-2 mb-2">
+        {hg && (
+          <span className="px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase rounded-full" style={{ background: hg.bg, color: hg.fg }}>{hg.label}</span>
+        )}
+        <span className="text-[11px] font-bold tracking-wider uppercase flex items-center gap-1" style={{ color: ACCENT }}>
+          <Flame size={13} className="text-orange-500" />
+          Hot Conversation
+        </span>
+      </div>
+      <p className="text-[15px] font-semibold text-gray-900 leading-snug">{take.title}</p>
+      {take.body && (
+        <div className="bg-white/70 rounded-xl p-3 mt-2.5 text-[13px] leading-relaxed text-gray-600 border border-purple-100/50">
+          <span className="font-semibold text-gray-900">{nameOf(take.users)}:</span> {take.body}
+        </div>
+      )}
+      {/* Action row — thumbs + reply, same as everywhere else */}
+      <div className="flex items-center gap-5 mt-3 text-gray-400">
+        <button onClick={onAgree} className="flex items-center gap-1 active:scale-90 transition-transform" style={agreed ? { color: ACCENT } : undefined} aria-label="Agree">
+          <ThumbsUp size={13} strokeWidth={agreed ? 2.5 : 1.75} />
+          {(take.upvotes || 0) > 0 && <span className="text-[11px] font-medium">{take.upvotes}</span>}
+        </button>
+        <button onClick={() => { if (agreed) onAgree(); }} className="active:scale-90 transition-transform translate-y-[1px]" aria-label="Remove agree">
+          <ThumbsDown size={13} strokeWidth={1.75} />
+        </button>
+        <button onClick={() => setReplyOpen((v) => !v)} className="text-[12px] font-semibold text-gray-500 hover:text-violet-500 transition-colors">Reply</button>
+      </div>
+      {/* Replies — right here in the card */}
+      {replies.length > 0 && (
+        <div className="mt-3 pl-3 border-l-2 border-purple-100 space-y-3">
+          {replies.map((r: any) => {
+            const voted = myReplyVote(r.id)?.vote === 1;
+            return (
+              <div key={r.id}>
+                <p className="text-[14px] text-gray-800 leading-snug">{r.content}</p>
+                <div className="flex items-center gap-4 mt-0.5">
+                  <span className="text-[11px] text-gray-400">— {nameOf(r.users)} · {timeAgo(r.created_at)}</span>
+                  <button onClick={() => handleReplyUpvote(r)} className="flex items-center gap-1 text-[11px] font-medium active:scale-95 transition-transform" style={voted ? { color: ACCENT } : { color: "#9ca3af" }}>
+                    <ThumbsUp size={12} strokeWidth={voted ? 2.5 : 1.75} /> {(r.upvotes || 0) > 0 ? r.upvotes : ""}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {(replyOpen || replies.length > 0) && (
+        <div className="mt-3 flex items-center gap-2">
+          <input
+            autoFocus={replyOpen}
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleReply(); } }}
+            placeholder={currentUserId ? "Join the conversation…" : "Sign in to reply"}
+            disabled={!currentUserId || replying}
+            className="flex-1 rounded-full bg-white border border-purple-100 px-4 py-2 text-[13px] outline-none focus:border-purple-300 disabled:opacity-60"
+          />
+          <button onClick={handleReply} disabled={!replyText.trim() || replying} className="w-8 h-8 rounded-full flex items-center justify-center text-white disabled:opacity-40" style={{ background: ACCENT }}>
+            {replying ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
