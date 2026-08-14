@@ -6,7 +6,7 @@ import {
   ChevronLeft, ChevronRight, ChevronDown, MoreHorizontal, Check, Plus, Copy,
   MessageCircle, ArrowUp, ArrowDown, ThumbsUp, ThumbsDown,
   Tv, Flame, Bell, Users, X,
-  Flag, EyeOff, BellOff, CircleHelp, Send, Loader2, Search, Star,
+  Flag, EyeOff, BellOff, CircleHelp, Send, Loader2, Search, Star, Trash2,
   Film, BookOpen, Mic, BadgeCheck,
 } from "lucide-react";
 import Navigation from "@/components/navigation";
@@ -973,6 +973,17 @@ export default function NewRoom() {
                         {menuFor === t.id && (<>
                           <div className="fixed inset-0 z-10" onClick={() => setMenuFor(null)} />
                           <div className="absolute right-0 top-7 z-20 w-52 rounded-2xl border border-gray-100 bg-white shadow-lg overflow-hidden py-1">
+                            {currentUserId && t.user_id === currentUserId && (
+                              <button onClick={async () => {
+                                setMenuFor(null);
+                                if (!confirm('Delete this post?')) return;
+                                await supabase.from('room_take_replies').delete().eq('take_id', t.id);
+                                await supabase.from('room_takes').delete().eq('id', t.id).eq('user_id', currentUserId);
+                                refetchTakes();
+                              }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-red-600 active:bg-gray-50">
+                                <Trash2 size={16} /> Delete post
+                              </button>
+                            )}
                             <button onClick={() => { setFlagged((f) => [...f, t.id]); setMenuFor(null); }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-red-600 active:bg-gray-50">
                               <Flag size={16} /> Flag as inappropriate
                             </button>
@@ -1033,6 +1044,7 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [replying, setReplying] = useState(false);
+  const [hiddenReplies, setHiddenReplies] = useState<string[]>([]);
   const hg = dbToDisplay(take.tag);
 
   const { data: repliesData, refetch: refetchReplies } = useQuery({
@@ -1048,7 +1060,7 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
     },
     enabled: !!take.id,
   });
-  const replies: any[] = repliesData || [];
+  const replies: any[] = (repliesData || []).filter((r: any) => !hiddenReplies.includes(r.id));
 
   const handleReply = async () => {
     if (!replyText.trim() || !currentUserId) return;
@@ -1064,6 +1076,15 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
     setReplyText("");
     setReplying(false);
     setReplyOpen(false);
+    refetchReplies();
+    onChanged();
+  };
+
+  const handleReplyDelete = async (reply: any) => {
+    if (!currentUserId || reply.user_id !== currentUserId) return;
+    if (!confirm("Delete this reply?")) return;
+    await supabase.from("room_take_replies").delete().eq("id", reply.id).eq("user_id", currentUserId);
+    await supabase.from("room_takes").update({ reply_count: Math.max(0, (take.reply_count || 1) - 1) }).eq("id", take.id);
     refetchReplies();
     onChanged();
   };
@@ -1129,6 +1150,13 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
                   <button onClick={() => handleReplyUpvote(r)} className="flex items-center gap-1 text-[11px] font-medium active:scale-95 transition-transform" style={voted ? { color: ACCENT } : { color: "#9ca3af" }}>
                     <ThumbsUp size={12} strokeWidth={voted ? 2.5 : 1.75} /> {(r.upvotes || 0) > 0 ? r.upvotes : ""}
                   </button>
+                  <span className="ml-auto flex items-center">
+                    {currentUserId && r.user_id === currentUserId ? (
+                      <button onClick={() => handleReplyDelete(r)} className="text-gray-300 hover:text-red-400 transition-colors" aria-label="Delete reply"><Trash2 size={12} /></button>
+                    ) : currentUserId ? (
+                      <button onClick={() => setHiddenReplies((h) => [...h, r.id])} className="text-gray-300 hover:text-orange-500 transition-colors" title="Flag reply" aria-label="Flag reply"><Flag size={12} /></button>
+                    ) : null}
+                  </span>
                 </div>
               </div>
             );
@@ -1166,6 +1194,7 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
 }) {
   const [replyText, setReplyText] = useState("");
   const [replying, setReplying] = useState(false);
+  const [hiddenReplies, setHiddenReplies] = useState<string[]>([]);
   const g = dbToDisplay(take.tag);
   const TagIcon = g?.icon;
 
@@ -1182,7 +1211,16 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
     },
     enabled: !!take.id,
   });
-  const replies: any[] = repliesData || [];
+  const replies: any[] = (repliesData || []).filter((r: any) => !hiddenReplies.includes(r.id));
+
+  const handleReplyDelete = async (reply: any) => {
+    if (!currentUserId || reply.user_id !== currentUserId) return;
+    if (!confirm("Delete this reply?")) return;
+    await supabase.from("room_take_replies").delete().eq("id", reply.id).eq("user_id", currentUserId);
+    await supabase.from("room_takes").update({ reply_count: Math.max(0, (take.reply_count || 1) - 1) }).eq("id", take.id);
+    refetchReplies();
+    onChanged();
+  };
 
   const handleReply = async () => {
     if (!replyText.trim() || !currentUserId) return;
@@ -1282,9 +1320,16 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
                       <span className="text-gray-400 text-[12px]">· {timeAgo(r.created_at)}</span>
                     </div>
                     <p className="text-[14px] text-gray-800 leading-relaxed mt-0.5">{r.content}</p>
-                    <button onClick={() => handleReplyUpvote(r)} className="flex items-center gap-1.5 text-[12px] font-medium mt-1.5 active:scale-95 transition-transform" style={voted ? { color: ACCENT } : { color: "#9ca3af" }}>
-                      <ThumbsUp size={13} strokeWidth={voted ? 2.5 : 1.75} /> {(r.upvotes || 0) > 0 ? r.upvotes : ""}
-                    </button>
+                    <div className="flex items-center gap-4 mt-1.5">
+                      <button onClick={() => handleReplyUpvote(r)} className="flex items-center gap-1.5 text-[12px] font-medium active:scale-95 transition-transform" style={voted ? { color: ACCENT } : { color: "#9ca3af" }}>
+                        <ThumbsUp size={13} strokeWidth={voted ? 2.5 : 1.75} /> {(r.upvotes || 0) > 0 ? r.upvotes : ""}
+                      </button>
+                      {currentUserId && r.user_id === currentUserId ? (
+                        <button onClick={() => handleReplyDelete(r)} className="text-gray-300 hover:text-red-400 transition-colors" aria-label="Delete reply"><Trash2 size={13} /></button>
+                      ) : currentUserId ? (
+                        <button onClick={() => setHiddenReplies((h) => [...h, r.id])} className="text-gray-300 hover:text-orange-500 transition-colors" title="Flag reply" aria-label="Flag reply"><Flag size={13} /></button>
+                      ) : null}
+                    </div>
                   </div>
                 );
               })}
