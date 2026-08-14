@@ -2837,10 +2837,15 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                             const rName = r.user?.displayName || r.user?.username || r.username || 'User';
                             return (
                               <div key={r.id} className="pt-1">
-                                <span className="text-[11px] text-gray-400">{(() => {
-                                  const parts = (rName || '').trim().split(/\s+/);
-                                  return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
-                                })()}{r.created_at ? ` · ${timeAgo(r.created_at)}` : ''}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] text-gray-400">{(() => {
+                                    const parts = (rName || '').trim().split(/\s+/);
+                                    return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
+                                  })()}{r.created_at ? ` · ${timeAgo(r.created_at)}` : ''}</span>
+                                  {currentUserId === (r.user?.id || r.userId) && (
+                                    <button onClick={(e) => { e.stopPropagation(); deleteComment(r.id); }} className="ml-auto text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={11} /></button>
+                                  )}
+                                </div>
                                 <p className="text-[14px] text-gray-800 leading-snug mt-0.5">{r.content}</p>
                               </div>
                             );
@@ -6215,7 +6220,7 @@ export default function Feed() {
               isLiked={likedPosts.has(p.id)}
               session={session}
               fetchComments={fetchComments}
-              currentUserId={currentAppUserId || undefined}
+              currentUserId={effectiveUserId || currentAppUserId || undefined}
               onDeletePost={handleDeletePost}
               onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
               forceActionFirst={true}
@@ -6246,7 +6251,7 @@ export default function Feed() {
               isLiked={likedPosts.has(p.id)}
               session={session}
               fetchComments={fetchComments}
-              currentUserId={currentAppUserId || undefined}
+              currentUserId={effectiveUserId || currentAppUserId || undefined}
               onDeletePost={handleDeletePost}
               onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
               forceNormal={true}
@@ -6366,7 +6371,7 @@ export default function Feed() {
               isLiked={likedPosts.has(item.id)}
               session={session}
               fetchComments={fetchComments}
-              currentUserId={currentAppUserId || undefined}
+              currentUserId={effectiveUserId || currentAppUserId || undefined}
               onDeletePost={handleDeletePost}
               onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
               forceActionFirst={true}
@@ -6436,7 +6441,7 @@ export default function Feed() {
       };
       return (
         <div key={`${keyPrefix}-pred-${item.id}`} className="mb-3">
-          <CollaborativePredictionCard prediction={predictionCardData as any} currentUserId={currentAppUserId || undefined} />
+          <CollaborativePredictionCard prediction={predictionCardData as any} currentUserId={effectiveUserId || currentAppUserId || undefined} />
         </div>
       );
     }
@@ -6570,7 +6575,7 @@ export default function Feed() {
             isLiked={likedPosts.has(item.id)}
             session={session}
             fetchComments={fetchComments}
-            currentUserId={currentAppUserId || undefined}
+            currentUserId={effectiveUserId || currentAppUserId || undefined}
             onDeletePost={handleDeletePost}
             onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
           />
@@ -6594,7 +6599,7 @@ export default function Feed() {
         onSubmitComment={(id, content) => handleComment(id, undefined, content)}
         isSubmitting={commentMutation.isPending}
         session={session}
-        currentUserId={currentAppUserId || undefined}
+        currentUserId={effectiveUserId || currentAppUserId || undefined}
         onDeleteComment={handleDeleteComment}
         onDeletePost={handleDeletePost}
         onLikeComment={handleLikeComment}
@@ -6630,7 +6635,7 @@ export default function Feed() {
   //         {carousel.posts.map((post: any) => (
   //           <UGCGroupCard key={post.id} post={post} onLike={handleLike}
   //             isLiked={likedPosts.has(post.id)} session={session}
-  //             fetchComments={fetchComments} currentUserId={currentAppUserId || undefined}
+  //             fetchComments={fetchComments} currentUserId={effectiveUserId || currentAppUserId || undefined}
   //             onDeletePost={handleDeletePost}
   //             onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
   //             forceNormal={true} />
@@ -9520,7 +9525,7 @@ export default function Feed() {
                   };
                   return (
                     <div key={`prediction-${post.id}`} className="mb-4">
-                      <CollaborativePredictionCard prediction={predictionCardData as any} currentUserId={currentAppUserId || undefined} />
+                      <CollaborativePredictionCard prediction={predictionCardData as any} currentUserId={effectiveUserId || currentAppUserId || undefined} />
                     </div>
                   );
                 }
