@@ -2795,7 +2795,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 const cName = c.user?.displayName || c.user?.username || c.username || 'User';
                 const isReplying = replyingToId === c.id;
                 return (
-                  <div key={c.id} className="flex gap-0 py-3 first:pt-2">
+                  <div key={c.id} className="flex gap-2.5 py-3 first:pt-2">
+                    <div className="w-6 h-6 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center text-[10px] font-medium text-gray-400 overflow-hidden mt-0.5">
+                      {c.user?.avatar ? <img src={c.user.avatar} className="w-full h-full object-cover" alt="" /> : (cName[0]?.toUpperCase() || '?')}
+                    </div>
                     <div className="flex-1 min-w-0">
                       {/* Comment text featured */}
                       <p className="text-[15px] text-gray-900 leading-snug">{c.content}</p>
