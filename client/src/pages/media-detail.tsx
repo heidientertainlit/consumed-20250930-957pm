@@ -1856,7 +1856,7 @@ export default function MediaDetail() {
               );
             }
             return (
-              <div className="mb-4">
+              <div className="mb-4 -mt-2 pl-2">
                 <div className="divide-y divide-gray-200/80">
                   {communityTakes.map((post: any) => renderTakeCard(post, 'trending'))}
                 </div>
