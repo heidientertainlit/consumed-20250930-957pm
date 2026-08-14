@@ -16,6 +16,7 @@ import FeedHero from "@/components/feed-hero";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
 import { DnaMomentCard } from "@/components/dna-moment-card";
+import { HotInRoomsCard } from "@/components/hot-in-rooms-card";
 import { FeedIdentityHero, IdentityFace } from "@/components/feed-identity-hero";
 import { isOnboardingComplete, markOnboardingComplete } from "@/components/route-guards";
 import { TriviaCarousel } from "@/components/trivia-carousel";
@@ -9097,6 +9098,11 @@ export default function Feed() {
               {/* Sprinkled single-conversation card #1 */}
               {renderConvoSprinkle(0)}
 
+              {/* Hot in Rooms #1 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+                <HotInRoomsCard slot={0} />
+              )}
+
               {/* DNA Moment #1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
                 <DnaMomentCard slot={0} />
@@ -9223,6 +9229,11 @@ export default function Feed() {
                 <DnaMomentCard slot={1} />
               )}
 
+              {/* Hot in Rooms #2 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+                <HotInRoomsCard slot={1} />
+              )}
+
               {/* TV trivia — round 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
@@ -9315,6 +9326,11 @@ export default function Feed() {
 
               {/* UGC slot 18 — after Music trivia round 2 */}
               {renderPostBatchByIndex(18)}
+
+              {/* Hot in Rooms #3 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+                <HotInRoomsCard slot={2} />
+              )}
 
               {/* DNA Moment #4 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
