@@ -1354,7 +1354,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         if (!res.ok || cancelled) return;
         const json = await res.json();
         if (cancelled) return;
-        if (typeof json.score === 'number') setMatchScore(json.score);
+        if (typeof json.score === 'number' && json.score >= 5) setMatchScore(json.score);
         else if (json.pending) setTimeout(() => { if (!cancelled) fetchScore(); }, 8000);
       } catch {}
     };

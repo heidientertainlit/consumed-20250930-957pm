@@ -132,8 +132,10 @@ ${Array.isArray(genres) && genres.length ? `Genres: ${genres.join(', ')}` : ''}
 ${description ? `About: ${String(description).slice(0, 500)}` : ''}
 
 Rules:
-- Be honest and calibrated. Use the full range: a poor fit should score below 40, a mixed fit 40-69, a strong fit 70-89, a near-perfect fit 90+.
-- Base the score on concrete evidence from their profile (loved/disliked titles, genres, creators), not generic appeal.
+- Be honest and brutally calibrated. Use the FULL range: no real overlap = 0-4, weak/generic overlap = 5-15, some overlap = 16-39, mixed fit = 40-69, strong fit = 70-89, near-perfect = 90+.
+- Sharing only a broad category (e.g. both are "video" or vaguely "sports") is weak/generic overlap — score it 5-15, never higher.
+- Base the score ONLY on concrete evidence from their profile (loved/disliked titles, genres, creators). Generic appeal or popularity counts for nothing.
+- If the title gives you too little information to judge (e.g. an obscure video with no genre data), or the user profile has no relevant evidence either way, score it 0-4.
 - The reason must be ONE short sentence (max 20 words) naming specific evidence, e.g. "You loved Little Fires Everywhere and rate character-driven drama highly."
 
 Respond with ONLY valid JSON: {"score": <0-100>, "reason": "<one sentence>"}`;
