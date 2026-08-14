@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { StarRater } from "@/components/star-rater";
-import { ArrowLeft, ArrowUp, ArrowDown, Share, Star, Bookmark, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp, ListPlus, Flame, Lightbulb, Users, Dna } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown, Share, Star, Bookmark, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp, ListPlus, Flame, Lightbulb, Users, Dna, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/navigation";
@@ -257,22 +257,34 @@ export default function MediaDetail() {
     const isReplying = replyingToComment === comment.id;
     return (
       <div key={comment.id}>
-        <div className="flex items-start gap-2">
-          <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <span className="text-purple-600 text-[10px] font-semibold">{(cName[0] || '?').toUpperCase()}</span>
+        <div className="flex items-start gap-2.5">
+          <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5 overflow-hidden">
+            {comment.users?.avatar ? <img src={comment.users.avatar} className="w-full h-full object-cover" alt="" /> : <span className="text-gray-400 text-[10px] font-medium">{(cName[0] || '?').toUpperCase()}</span>}
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-xs font-medium text-gray-900">{cName}</span>
-            <p className="text-sm text-gray-700 leading-snug">{comment.content}</p>
-            <div className="flex items-center justify-between mt-0.5">
+            <p className="text-[15px] text-gray-900 leading-snug">{comment.content}</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[12px] text-gray-400">— {(() => {
+                const parts = (cName || '').trim().split(/\s+/);
+                return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
+              })()}{comment.created_at ? `  ·  ${takeTimeAgo(comment.created_at)}` : ''}</span>
+              <div className="ml-auto flex items-center gap-1">
+                <ReportButton contentType="comment" contentId={String(comment.id)} className="text-gray-200 hover:text-red-500 [&_svg]:w-3 [&_svg]:h-3" />
+              </div>
+            </div>
+            <div className="flex items-center gap-5 mt-1.5">
+              <div className="flex items-center gap-1 text-gray-400">
+                <ThumbsUp size={13} strokeWidth={1.75} />
+                {(comment.likes_count || 0) > 0 && <span className="text-[11px]">{comment.likes_count}</span>}
+              </div>
+              <ThumbsDown size={13} strokeWidth={1.75} className="text-gray-400 translate-y-[1px]" />
               <button
                 onClick={() => { setReplyingToComment(isReplying ? null : comment.id); setCommentReplyContent(''); }}
-                className={`text-xs font-medium transition-colors ${isReplying ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'}`}
+                className={`text-[12px] font-semibold transition-colors ${isReplying ? 'text-violet-600' : 'text-gray-500 hover:text-violet-500'}`}
                 data-testid={`comment-reply-${comment.id}`}
               >
                 Reply
               </button>
-              <ReportButton contentType="comment" contentId={String(comment.id)} className="text-gray-200 hover:text-red-500 [&_svg]:w-3 [&_svg]:h-3" />
             </div>
             {isReplying && (
               <div className="flex items-center gap-2 mt-1.5">
