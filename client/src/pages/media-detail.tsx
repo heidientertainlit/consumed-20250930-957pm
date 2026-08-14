@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { StarRater } from "@/components/star-rater";
-import { ArrowLeft, ArrowUp, ArrowDown, Share, Star, Bookmark, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp, ListPlus, Flame, Lightbulb, Users, Dna, ThumbsUp, ThumbsDown } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown, Share, Star, Bookmark, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp, ListPlus, Flame, Lightbulb, Users, Dna, ThumbsUp, ThumbsDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/navigation";
@@ -1717,6 +1717,45 @@ export default function MediaDetail() {
               setComposerOpen(true);
               setTimeout(() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
             };
+            if (isRated) {
+              // Compact one-row summary once rated: stars · "Your rating: X" | list status
+              return (
+              <div className="mb-6">
+                <div className="rounded-2xl border border-gray-200 bg-white shadow-sm px-4 py-3 flex items-center justify-center gap-3" data-testid="card-rate-title">
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((n) => {
+                      const isFull = ownRating >= n;
+                      const isHalf = !isFull && ownRating >= n - 0.5;
+                      return (
+                        <div key={n} className="relative">
+                          <Star className={`w-5 h-5 ${isFull ? 'text-purple-500 fill-purple-500' : 'text-gray-200 fill-gray-200'}`} strokeWidth={1.5} />
+                          {isHalf && (
+                            <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: '50%' }}>
+                              <Star className="w-5 h-5 text-purple-500 fill-purple-500" strokeWidth={1.5} />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <span className="text-[14px] text-gray-500">Your rating: {ownRating % 1 === 0 ? ownRating.toFixed(1) : ownRating.toFixed(1)}</span>
+                  <div className="h-6 w-px bg-gray-200" />
+                  <button
+                    type="button"
+                    onClick={() => setIsListSheetOpen(true)}
+                    className="flex items-center gap-1 text-[14px] font-semibold text-gray-800 hover:text-gray-900 transition-colors"
+                    data-testid="button-hero-add-to-list"
+                  >
+                    {onListStatus ? (
+                      <><Check className="w-4 h-4" strokeWidth={2.5} /> {onListStatus === 'Want To' ? 'Want To' : onListStatus} <ChevronDown className="w-4 h-4 text-gray-400" /></>
+                    ) : (
+                      <><Plus className="w-4 h-4" /> Add to list</>
+                    )}
+                  </button>
+                </div>
+              </div>
+              );
+            }
             return (
             <div className="mb-6">
               <div className="rounded-2xl border border-gray-200 bg-white shadow-sm px-4 py-4" data-testid="card-rate-title">
