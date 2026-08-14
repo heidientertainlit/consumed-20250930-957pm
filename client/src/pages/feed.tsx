@@ -2797,30 +2797,27 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 return (
                   <div key={c.id} className="flex gap-0 py-3 first:pt-2">
                     <div className="flex-1 min-w-0">
-                      {/* Name · time on top — YouTube-style, light */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-gray-400">{(() => {
+                      {/* Comment text featured — like "People are talking" */}
+                      <p className="text-[15px] text-gray-900 leading-snug">{c.content}</p>
+                      {/* Byline underneath — thumbs + reply pushed quietly right */}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[11px] text-gray-500">— {(() => {
                           const parts = (cName || '').trim().split(/\s+/);
                           return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
                         })()}{c.created_at ? ` · ${timeAgo(c.created_at)}` : ''}</span>
-                        <div className="ml-auto flex items-center gap-1">
+                        <div className="ml-auto flex items-center gap-3">
+                          <div className="flex items-center gap-1 text-gray-400">
+                            <ThumbsUp size={12} strokeWidth={1.75} />
+                            {(c.likes_count || 0) > 0 && <span className="text-[10px]">{c.likes_count}</span>}
+                          </div>
+                          <ThumbsDown size={12} strokeWidth={1.75} className="text-gray-400 translate-y-[1px]" />
+                          <button onClick={() => { setReplyingToId(isReplying ? null : c.id); setReplyText(''); setReplyOpen(true); }} className="text-[12px] font-medium text-gray-400 hover:text-violet-500 transition-colors">Reply</button>
                           {currentUserId === (c.user?.id || c.userId) ? (
                             <button onClick={(e) => { e.stopPropagation(); deleteComment(c.id); }} className="text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
                           ) : currentUserId ? (
                             <button onClick={(e) => { e.stopPropagation(); setReportCommentTarget({ id: c.id, userId: c.user?.id || c.userId || '', userName: cName }); }} className="text-gray-300 hover:text-orange-500 transition-colors" title="Report comment"><Flag size={12} /></button>
                           ) : null}
                         </div>
-                      </div>
-                      {/* Comment text featured */}
-                      <p className="text-[15px] text-gray-900 leading-snug mt-0.5">{c.content}</p>
-                      {/* Light action row underneath */}
-                      <div className="flex items-center gap-4 mt-1.5">
-                        <div className="flex items-center gap-1 text-gray-400">
-                          <ThumbsUp size={12} strokeWidth={1.75} />
-                          {(c.likes_count || 0) > 0 && <span className="text-[10px]">{c.likes_count}</span>}
-                        </div>
-                        <ThumbsDown size={12} strokeWidth={1.75} className="text-gray-400 translate-y-[1px]" />
-                        <button onClick={() => { setReplyingToId(isReplying ? null : c.id); setReplyText(''); setReplyOpen(true); }} className="text-[12px] font-medium text-gray-400 hover:text-violet-500 transition-colors">Reply</button>
                       </div>
                       {isReplying && (
                         <div className="mt-2 flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-violet-200">
@@ -2837,8 +2834,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                             const rName = r.user?.displayName || r.user?.username || r.username || 'User';
                             return (
                               <div key={r.id} className="pt-1">
+                                <p className="text-[14px] text-gray-800 leading-snug">{r.content}</p>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[11px] text-gray-400">{(() => {
+                                  <span className="text-[11px] text-gray-500">— {(() => {
                                     const parts = (rName || '').trim().split(/\s+/);
                                     return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
                                   })()}{r.created_at ? ` · ${timeAgo(r.created_at)}` : ''}</span>
@@ -2846,7 +2844,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                                     <button onClick={(e) => { e.stopPropagation(); deleteComment(r.id); }} className="ml-auto text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={11} /></button>
                                   )}
                                 </div>
-                                <p className="text-[14px] text-gray-800 leading-snug mt-0.5">{r.content}</p>
                               </div>
                             );
                           })}
