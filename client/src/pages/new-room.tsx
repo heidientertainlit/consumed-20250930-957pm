@@ -4,7 +4,7 @@ import { StarRater } from "@/components/star-rater";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft, ChevronRight, ChevronDown, MoreHorizontal, Check, Plus, Copy,
-  MessageCircle, ArrowUp, ArrowDown,
+  MessageCircle, ArrowUp, ArrowDown, ThumbsUp, ThumbsDown,
   Tv, Flame, Bell, Users, X,
   Flag, EyeOff, BellOff, CircleHelp, Send, Loader2, Search, Star,
   Film, BookOpen, Mic, BadgeCheck,
@@ -976,11 +976,11 @@ export default function NewRoom() {
                       <div className="flex items-center gap-4 text-gray-400">
                         <div className="flex items-center gap-2">
                           <button onClick={() => handleAgree(t)} className="active:scale-90 transition-transform" style={agreed ? { color: ACCENT } : undefined} aria-label="Agree">
-                            <ArrowUp size={15} strokeWidth={2.5} />
+                            <ThumbsUp size={13} strokeWidth={agreed ? 2.5 : 1.75} />
                           </button>
                           {(t.upvotes || 0) > 0 && <span className="text-[12px] font-medium text-gray-500">{t.upvotes}</span>}
-                          <button onClick={() => { if (agreed) handleAgree(t); }} className="active:scale-90 transition-transform" aria-label="Remove agree">
-                            <ArrowDown size={15} strokeWidth={2.5} />
+                          <button onClick={() => { if (agreed) handleAgree(t); }} className="active:scale-90 transition-transform translate-y-[1px]" aria-label="Remove agree">
+                            <ThumbsDown size={13} strokeWidth={1.75} />
                           </button>
                         </div>
                         <button onClick={() => setActiveTake(t)} className="text-[12px] font-medium active:text-purple-600">
@@ -1167,7 +1167,7 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
                     </div>
                     <p className="text-[14px] text-gray-800 leading-relaxed mt-0.5">{r.content}</p>
                     <button onClick={() => handleReplyUpvote(r)} className="flex items-center gap-1.5 text-[12px] font-medium mt-1.5 active:scale-95 transition-transform" style={voted ? { color: ACCENT } : { color: "#9ca3af" }}>
-                      <ArrowUp size={14} strokeWidth={2.5} /> {(r.upvotes || 0) > 0 ? r.upvotes : ""}
+                      <ThumbsUp size={13} strokeWidth={voted ? 2.5 : 1.75} /> {(r.upvotes || 0) > 0 ? r.upvotes : ""}
                     </button>
                   </div>
                 );
