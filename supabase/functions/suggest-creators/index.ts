@@ -79,6 +79,9 @@ serve(async (req) => {
     for (const item of items || []) {
       const name = (item.creator || '').trim();
       if (!name || name.length > 60) continue;
+      // Junk guard: ranked-list leftovers ("#1)", "2."), non-names ("Unknown", "TV Show"), anything without letters
+      if (/^#/.test(name) || /^[\d.\-)\s]+$/.test(name) || !/\p{L}/u.test(name)) continue;
+      if (/^(unknown|tv show|movie|book|music|podcast|n\/a|none|various|misc)\.?$/i.test(name)) continue;
       if (item.external_source === 'youtube') continue;
       const key = name.toLowerCase();
       if (followedNames.has(key)) continue;

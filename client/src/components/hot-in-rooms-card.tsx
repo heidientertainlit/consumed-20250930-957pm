@@ -19,11 +19,12 @@ export function HotInRoomsCard({ slot = 0 }: { slot?: number }) {
       const since = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from("room_takes")
-        .select("id, room_id, title, body, tag, upvotes, reply_count, created_at, users:user_id(display_name, user_name), pools:room_id(id, name, is_public)")
+        .select("id, room_id, title, body, tag, upvotes, reply_count, created_at, users:user_id(display_name, user_name), pools:room_id!inner(id, name, is_public)")
+        .eq("pools.is_public", true)
         .gte("created_at", since)
         .order("upvotes", { ascending: false })
         .order("reply_count", { ascending: false })
-        .limit(30);
+        .limit(100);
       if (error) throw error;
       // Hottest take per room (public rooms only), ranked by heat
       const byRoom = new Map<string, any>();
