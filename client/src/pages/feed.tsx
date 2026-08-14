@@ -607,16 +607,15 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                                   className={`flex items-center gap-1 text-[11px] p-0.5 ${takeReactions[t.id] === 'up' ? 'text-green-600 font-semibold' : 'text-gray-400 font-medium'}`}
                                   aria-label="Agree"
                                 >
-                                  <Check size={13} strokeWidth={takeReactions[t.id] === 'up' ? 3 : 2} />
-                                  Agree{(() => { const c = likeCount + (takeReactions[t.id] === 'up' ? 1 : 0); return c > 0 ? ` · ${c}` : ''; })()}
+                                  <ThumbsUp size={13} strokeWidth={takeReactions[t.id] === 'up' ? 2.5 : 1.75} />
+                                  {(() => { const c = likeCount + (takeReactions[t.id] === 'up' ? 1 : 0); return c > 0 ? <span>{c}</span> : null; })()}
                                 </button>
                                 <button
                                   onClick={() => reactToTake(t.id, 'down')}
-                                  className={`flex items-center gap-1 text-[11px] p-0.5 ${takeReactions[t.id] === 'down' ? 'text-violet-600 font-semibold' : 'text-gray-400 font-medium'}`}
+                                  className={`flex items-center gap-1 text-[11px] p-0.5 translate-y-[1px] ${takeReactions[t.id] === 'down' ? 'text-violet-600 font-semibold' : 'text-gray-400 font-medium'}`}
                                   aria-label="Counter"
                                 >
-                                  <Undo2 size={13} strokeWidth={takeReactions[t.id] === 'down' ? 2.5 : 2} />
-                                  Counter
+                                  <ThumbsDown size={13} strokeWidth={takeReactions[t.id] === 'down' ? 2.5 : 1.75} />
                                 </button>
                                 <button
                                   onClick={() => { setReplyOpenId(replyOpenId === takeId ? null : takeId); setCommentText(''); }}
