@@ -140,31 +140,29 @@ serve(async (req) => {
       }
     }
 
-    const personal = [...counts.values()]
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 4)
-      .map((c) => ({
-        name: c.name,
-        role: c.role,
-        externalId: slug(c.name),
-        externalSource: c.source,
-        trackedCount: c.count,
-      }));
-
-    // Blend in popular creators across ALL media types for discovery.
-    // Shuffled each request, and spread across roles so one media type can't dominate.
-    const offered = new Set(personal.map((p) => p.name.toLowerCase()));
+    // All-discovery batch: weighted toward movies & TV, then books, podcasts, music.
+    // Shuffled fresh each request so the row feels alive for everyone — including brand-new users.
+    const personal: any[] = [];
+    const offered = new Set<string>();
+    const ROLE_QUOTA: Record<string, number> = { Director: 2, Creator: 2, Author: 2, Host: 1, Musician: 1 };
     const shuffled = [...POPULAR].sort(() => Math.random() - 0.5);
     const pickedRoles = new Map<string, number>();
     const diverse: typeof POPULAR = [];
     for (const p of shuffled) {
-      if ((pickedRoles.get(p.role) || 0) >= 2) continue;
+      if ((pickedRoles.get(p.role) || 0) >= (ROLE_QUOTA[p.role] || 0)) continue;
+      if (followedNames.has(p.name.toLowerCase()) || followedIds.has(slug(p.name))) continue;
       diverse.push(p);
       pickedRoles.set(p.role, (pickedRoles.get(p.role) || 0) + 1);
     }
+    // If quotas can't fill 8 (heavy follower), top up with any remaining unfollowed names
+    for (const p of shuffled) {
+      if (diverse.length >= 8) break;
+      if (diverse.includes(p)) continue;
+      if (followedNames.has(p.name.toLowerCase()) || followedIds.has(slug(p.name))) continue;
+      diverse.push(p);
+    }
     const fallback = diverse
-      .filter((p) => !followedNames.has(p.name.toLowerCase()) && !offered.has(p.name.toLowerCase()) && !followedIds.has(slug(p.name)))
-      .slice(0, Math.max(0, 8 - personal.length))
+      .slice(0, 8)
       .map((p) => ({
         name: p.name,
         role: p.role,
