@@ -2398,7 +2398,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               ))}
             </div>
           )}
-          </div>
 
           {/* Content row — poster anchored left, take on the right (updates as you swipe) */}
           {(() => {
