@@ -20,6 +20,7 @@ import { ReportButton } from "@/components/report-button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 import { supabase } from "@/lib/supabase";
+import MediaPlayTab from "@/components/media-play-tab";
 import { apiRequest } from "@/lib/queryClient";
 import {
   DropdownMenu,
@@ -55,6 +56,7 @@ export default function MediaDetail() {
   // trigger was the hero "Hot Takes" stat. That stat row is hidden for now, so this stays
   // false. Kept in place (not removed) so it can be re-enabled with the stat row later.
   const [showReviews, setShowReviews] = useState(false);
+  const [mediaTab, setMediaTab] = useState<'takes' | 'play'>('takes');
   const [showConversations, setShowConversations] = useState(false);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [showCreateListDialog, setShowCreateListDialog] = useState(false);
@@ -1675,6 +1677,37 @@ export default function MediaDetail() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 pt-5 pb-8">
+          {/* Takes | Play quiet text toggle */}
+          <div className="flex items-center gap-6 mb-4 px-1">
+            <button
+              onClick={() => setMediaTab('takes')}
+              className={`text-sm font-semibold pb-1 border-b-2 transition-colors ${
+                mediaTab === 'takes' ? 'text-gray-900 border-purple-500' : 'text-gray-400 border-transparent'
+              }`}
+              data-testid="tab-takes"
+            >
+              Takes
+            </button>
+            <button
+              onClick={() => setMediaTab('play')}
+              className={`text-sm font-semibold pb-1 border-b-2 transition-colors ${
+                mediaTab === 'play' ? 'text-gray-900 border-purple-500' : 'text-gray-400 border-transparent'
+              }`}
+              data-testid="tab-play"
+            >
+              Play
+            </button>
+          </div>
+
+          {mediaTab === 'play' && (
+            <MediaPlayTab
+              externalId={params?.id}
+              externalSource={params?.source}
+              mediaTitle={mediaItem?.title || mediaData?.title}
+            />
+          )}
+
+          <div className={mediaTab === 'play' ? 'hidden' : ''}>
           {/* Match card + tap-to-rate + add to list — only for titles you haven't rated */}
           {session && (() => {
             const ownRating = Number(userRating?.rating || userReview?.rating) || 0;
@@ -2264,6 +2297,8 @@ export default function MediaDetail() {
                 </div>
               </div>
             )}
+
+          </div>{/* end takes-tab content */}
 
         </div>
       </div>
