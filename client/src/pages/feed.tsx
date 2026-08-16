@@ -24,7 +24,7 @@ import CastApprovalCard from "@/components/cast-approval-card";
 
 import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
 import { PollsCarousel } from "@/components/polls-carousel";
-import WhoReactedSheet from "@/components/who-reacted-sheet";
+import { WhoReactedInline } from "@/components/who-reacted-sheet";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { GamesCarousel } from "@/components/games-carousel";
 import SeenItGame from "@/components/seen-it-game";
@@ -2698,10 +2698,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               </button>
               {(post.likes || 0) > 0 && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); setWhoReactedOpen(true); }}
-                  className="-ml-2 pr-2 py-1.5 text-[12px] text-gray-600 font-medium underline-offset-2 active:underline"
+                  onClick={(e) => { e.stopPropagation(); setWhoReactedOpen(v => !v); }}
+                  className="-ml-1 min-w-[36px] min-h-[36px] px-2 flex items-center justify-center text-[12px] font-medium"
                   aria-label="See who liked this"
-                >{post.likes}</button>
+                >
+                  <span className={whoReactedOpen ? 'text-purple-600 underline underline-offset-2' : 'text-gray-600'}>{post.likes}</span>
+                </button>
               )}
               <div className="w-px h-4 bg-gray-300" />
               <button
@@ -2718,15 +2720,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               </button>
               {dislikeCount > 0 && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); setWhoReactedOpen(true); }}
-                  className="-ml-2 pr-2 py-1.5 text-[12px] text-gray-600 font-medium underline-offset-2 active:underline"
+                  onClick={(e) => { e.stopPropagation(); setWhoReactedOpen(v => !v); }}
+                  className="-ml-1 min-w-[36px] min-h-[36px] px-2 flex items-center justify-center text-[12px] font-medium"
                   aria-label="See who disliked this"
-                >{dislikeCount}</button>
+                >
+                  <span className={whoReactedOpen ? 'text-purple-600 underline underline-offset-2' : 'text-gray-600'}>{dislikeCount}</span>
+                </button>
               )}
             </div>
-            {whoReactedOpen && (
-              <WhoReactedSheet postId={post.id} onClose={() => setWhoReactedOpen(false)} />
-            )}
 
             {/* Reply — reveals the conversation bar */}
             {session?.access_token && (
@@ -2906,7 +2907,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
         </div>
 
-        </div>{/* ── end outer white container ── */}
+        </div>
+          {whoReactedOpen && (
+            <div onClick={(e) => e.stopPropagation()}>
+              <WhoReactedInline postId={post.id} />
+            </div>
+          )}
+{/* ── end outer white container ── */}
 
         {/* Post detail bottom sheet */}
         <PostDetailSheet
