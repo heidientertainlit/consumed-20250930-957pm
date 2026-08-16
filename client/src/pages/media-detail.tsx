@@ -56,7 +56,7 @@ export default function MediaDetail() {
   // trigger was the hero "Hot Takes" stat. That stat row is hidden for now, so this stays
   // false. Kept in place (not removed) so it can be re-enabled with the stat row later.
   const [showReviews, setShowReviews] = useState(false);
-  const [mediaTab, setMediaTab] = useState<'takes' | 'play'>('takes');
+  const [mediaTab, setMediaTab] = useState<'takes' | 'play' | 'explore'>('takes');
   const [showConversations, setShowConversations] = useState(false);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [showCreateListDialog, setShowCreateListDialog] = useState(false);
@@ -1790,27 +1790,25 @@ export default function MediaDetail() {
             );
           })()}
 
-          {/* Takes | Play toggle — above the composer */}
-          <div className="flex items-center gap-3 mb-4 px-1">
-            <button
-              onClick={() => setMediaTab('takes')}
-              className={`text-sm font-semibold transition-colors ${
-                mediaTab === 'takes' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'
-              }`}
-              data-testid="tab-takes"
-            >
-              Takes
-            </button>
-            <span className="text-gray-300 text-sm">|</span>
-            <button
-              onClick={() => setMediaTab('play')}
-              className={`text-sm font-semibold transition-colors ${
-                mediaTab === 'play' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'
-              }`}
-              data-testid="tab-play"
-            >
-              Play
-            </button>
+          {/* Takes / Play / Explore tabs — same look as room tabs */}
+          <div className="bg-white/95 backdrop-blur-md border-b border-gray-100 mb-4 -mx-4 px-4">
+            <div className="flex">
+              {(['takes', 'play', 'explore'] as const).map((t) => {
+                const active = mediaTab === t;
+                const label = t === 'takes' ? 'Takes' : t === 'play' ? 'Play' : 'Explore';
+                return (
+                  <button
+                    key={t}
+                    onClick={() => setMediaTab(t)}
+                    className={`relative flex-1 py-3.5 text-[14px] font-semibold transition-colors ${active ? 'text-gray-900' : 'text-gray-400'}`}
+                    data-testid={`tab-${t}`}
+                  >
+                    {label}
+                    {active && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] w-10 rounded-full" style={{ background: '#7c3aed' }} />}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {mediaTab === 'play' && (
@@ -1821,7 +1819,7 @@ export default function MediaDetail() {
             />
           )}
 
-          <div className={mediaTab === 'play' ? 'hidden' : ''}>
+          <div className={mediaTab !== 'takes' ? 'hidden' : ''}>
           {/* Your Reaction — dark purple pill button that expands the composer inline */}
           {session && (
           <div ref={composeSectionRef} className="mb-4">
@@ -2153,6 +2151,41 @@ export default function MediaDetail() {
               </div>
             )}
 
+            {/* Polls */}
+            {polls.length > 0 && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-blue-500" />
+                  Polls ({polls.length})
+                </h2>
+                <div className="space-y-4">
+                  {polls.map((poll: any) => (
+                    <div key={poll.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-blue-600 text-sm font-medium">
+                            {poll.users?.display_name?.[0]?.toUpperCase() || poll.users?.user_name?.[0]?.toUpperCase() || '?'}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 mb-1">
+                            {poll.prediction_pools?.title || poll.content}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {poll.prediction_pools?.total_participants || 0} votes
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </div>{/* end takes-tab content */}
+
+          {mediaTab === 'explore' && (
+          <div className="space-y-4">
             {/* Similar Media Section */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -2267,38 +2300,9 @@ export default function MediaDetail() {
               )}
             </div>
 
-            {/* Polls */}
-            {polls.length > 0 && (
-              <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <MessageCircle className="w-5 h-5 text-blue-500" />
-                  Polls ({polls.length})
-                </h2>
-                <div className="space-y-4">
-                  {polls.map((poll: any) => (
-                    <div key={poll.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                          <span className="text-blue-600 text-sm font-medium">
-                            {poll.users?.display_name?.[0]?.toUpperCase() || poll.users?.user_name?.[0]?.toUpperCase() || '?'}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900 mb-1">
-                            {poll.prediction_pools?.title || poll.content}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {poll.prediction_pools?.total_participants || 0} votes
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          </div>
+          )}
 
-          </div>{/* end takes-tab content */}
 
         </div>
       </div>
