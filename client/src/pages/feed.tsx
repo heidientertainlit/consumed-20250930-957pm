@@ -24,6 +24,7 @@ import CastApprovalCard from "@/components/cast-approval-card";
 
 import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
 import { PollsCarousel } from "@/components/polls-carousel";
+import WhoReactedSheet from "@/components/who-reacted-sheet";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { GamesCarousel } from "@/components/games-carousel";
 import SeenItGame from "@/components/seen-it-game";
@@ -1263,6 +1264,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   // Agree / Hot Take / Not My Take reaction state
   const [localReaction, setLocalReaction] = useState<'flame' | 'down' | null>(null);
   const [reactionLoaded, setReactionLoaded] = useState(false);
+  // Who-reacted sheet + dislike count
+  const [whoReactedOpen, setWhoReactedOpen] = useState(false);
+  const [dislikeCount, setDislikeCount] = useState(0);
   // Poster card detail sheet
   const [posterDetailOpen, setPosterDetailOpen] = useState(false);
   // "Tell a friend" — copies a share link, brief confirmation
@@ -1276,19 +1280,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     setReactionLoaded(true);
     supabase
       .from('post_reactions')
-      .select('reaction')
+      .select('reaction, user_id')
       .eq('social_post_id', post.id)
-      .eq('user_id', userId)
-      .maybeSingle()
       .then(({ data }) => {
-        if (data?.reaction === 'hot_take') setLocalReaction('flame');
-        else if (data?.reaction === 'disagree') setLocalReaction('down');
+        const rows = data || [];
+        setDislikeCount(rows.filter(r => r.reaction === 'disagree').length);
+        const mine = rows.find(r => r.user_id === userId);
+        if (mine?.reaction === 'hot_take') setLocalReaction('flame');
+        else if (mine?.reaction === 'disagree') setLocalReaction('down');
       });
   }, [post.id, session?.user?.id]);
 
   const handleReaction = async (type: 'up' | 'flame' | 'down') => {
     const userId = session?.user?.id;
     if (type === 'up') {
+      if (localReaction === 'down') setDislikeCount(c => Math.max(0, c - 1));
       setLocalReaction(null);
       onLike(post.id);
       // remove any existing flame/down reaction
@@ -1303,10 +1309,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     const isToggleOff = (type === 'flame' && localReaction === 'flame') || (type === 'down' && localReaction === 'down');
     if (isLiked) onLike(post.id); // un-like when reacting
     if (isToggleOff) {
+      if (type === 'down') setDislikeCount(c => Math.max(0, c - 1));
       setLocalReaction(null);
       await supabase.from('post_reactions').delete()
         .eq('social_post_id', post.id).eq('user_id', userId);
     } else {
+      if (type === 'down' && localReaction !== 'down') setDislikeCount(c => c + 1);
       setLocalReaction(type === 'flame' ? 'flame' : 'down');
       await supabase.from('post_reactions')
         .upsert({ social_post_id: post.id, user_id: userId, reaction: dbReaction }, { onConflict: 'social_post_id,user_id' });
@@ -2687,8 +2695,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 aria-label="Like"
               >
                 <ThumbsUp size={15} className={isLiked && !localReaction ? 'text-gray-900 fill-gray-900' : 'text-gray-600'} strokeWidth={1.75} />
-                {(post.likes || 0) > 0 && <span className="text-[12px] text-gray-600 font-medium">{post.likes}</span>}
               </button>
+              {(post.likes || 0) > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setWhoReactedOpen(true); }}
+                  className="-ml-2 pr-2 py-1.5 text-[12px] text-gray-600 font-medium underline-offset-2 active:underline"
+                  aria-label="See who liked this"
+                >{post.likes}</button>
+              )}
               <div className="w-px h-4 bg-gray-300" />
               <button
                 onClick={(e) => {
@@ -2702,7 +2716,17 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               >
                 <ThumbsDown size={15} className={`translate-y-[1px] ${localReaction === 'down' ? 'text-gray-900 fill-gray-900' : 'text-gray-600'}`} strokeWidth={1.75} />
               </button>
+              {dislikeCount > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setWhoReactedOpen(true); }}
+                  className="-ml-2 pr-2 py-1.5 text-[12px] text-gray-600 font-medium underline-offset-2 active:underline"
+                  aria-label="See who disliked this"
+                >{dislikeCount}</button>
+              )}
             </div>
+            {whoReactedOpen && (
+              <WhoReactedSheet postId={post.id} onClose={() => setWhoReactedOpen(false)} />
+            )}
 
             {/* Reply — reveals the conversation bar */}
             {session?.access_token && (
