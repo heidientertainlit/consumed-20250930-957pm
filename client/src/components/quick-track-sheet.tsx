@@ -422,9 +422,14 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                   </p>
                   <p className="text-sm text-gray-500">
                     {importResult.skipped > 0 && `${importResult.skipped} skipped — already in your library.`}
-                    {importResult.failed > 0 && ` ${importResult.failed} couldn't be added.`}
                     {importResult.skipped === 0 && importResult.failed === 0 && "All set — they're in your lists now."}
                   </p>
+                  {importResult.failed > 0 && (
+                    <p className="text-sm text-gray-500">
+                      {importResult.failed} {importResult.failed === 1 ? "item" : "items"} couldn't be imported — usually a
+                      formatting quirk in the export. Email Heidi (the builder of Consumed) if you'd like her to add them for you.
+                    </p>
+                  )}
                   <button
                     onClick={handleClose}
                     className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold px-6 py-2.5 rounded-full transition-colors"
