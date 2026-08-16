@@ -1648,29 +1648,6 @@ export default function MediaDetail() {
           )}
 
 
-          {/* Takes | Play toggle */}
-          <div className="flex items-center gap-3 mt-4">
-            <button
-              onClick={() => setMediaTab('takes')}
-              className={`text-sm font-semibold transition-colors ${
-                mediaTab === 'takes' ? 'text-white' : 'text-white/40 hover:text-white/60'
-              }`}
-              data-testid="tab-takes"
-            >
-              Takes
-            </button>
-            <span className="text-white/25 text-sm">|</span>
-            <button
-              onClick={() => setMediaTab('play')}
-              className={`text-sm font-semibold transition-colors ${
-                mediaTab === 'play' ? 'text-white' : 'text-white/40 hover:text-white/60'
-              }`}
-              data-testid="tab-play"
-            >
-              Play
-            </button>
-          </div>
-
           {/* Stat row — hidden for now until there's more engagement (flip false → true to restore) */}
           {false && (
           <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-white/10">
@@ -1700,15 +1677,6 @@ export default function MediaDetail() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 pt-5 pb-8">
-          {mediaTab === 'play' && (
-            <MediaPlayTab
-              externalId={params?.id}
-              externalSource={params?.source}
-              mediaTitle={mediaItem?.title || mediaData?.title}
-            />
-          )}
-
-          <div className={mediaTab === 'play' ? 'hidden' : ''}>
           {/* Match card + tap-to-rate + add to list — only for titles you haven't rated */}
           {session && (() => {
             const ownRating = Number(userRating?.rating || userReview?.rating) || 0;
@@ -1822,7 +1790,38 @@ export default function MediaDetail() {
             );
           })()}
 
+          {/* Takes | Play toggle — above the composer */}
+          <div className="flex items-center gap-3 mb-4 px-1">
+            <button
+              onClick={() => setMediaTab('takes')}
+              className={`text-sm font-semibold transition-colors ${
+                mediaTab === 'takes' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'
+              }`}
+              data-testid="tab-takes"
+            >
+              Takes
+            </button>
+            <span className="text-gray-300 text-sm">|</span>
+            <button
+              onClick={() => setMediaTab('play')}
+              className={`text-sm font-semibold transition-colors ${
+                mediaTab === 'play' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'
+              }`}
+              data-testid="tab-play"
+            >
+              Play
+            </button>
+          </div>
 
+          {mediaTab === 'play' && (
+            <MediaPlayTab
+              externalId={params?.id}
+              externalSource={params?.source}
+              mediaTitle={mediaItem?.title || mediaData?.title}
+            />
+          )}
+
+          <div className={mediaTab === 'play' ? 'hidden' : ''}>
           {/* Your Reaction — dark purple pill button that expands the composer inline */}
           {session && (
           <div ref={composeSectionRef} className="mb-4">
