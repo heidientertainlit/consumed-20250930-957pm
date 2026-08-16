@@ -7582,6 +7582,7 @@ export default function Feed() {
         .select('*')
         .eq('status', 'open')
         .is('partner_tag', null)
+        .is('play_context', null)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -7630,6 +7631,7 @@ export default function Feed() {
         .eq('type', 'clash')
         .eq('status', 'open')
         .is('partner_tag', null)
+        .is('play_context', null)
         .order('created_at', { ascending: false });
       return data || [];
     },

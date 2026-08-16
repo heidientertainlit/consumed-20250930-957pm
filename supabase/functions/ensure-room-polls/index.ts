@@ -4,9 +4,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // Stamps baseline template polls onto a room the first time its Play tab is
 // opened, so every room has a few polls even before real content exists.
 // Templates live in room_poll_templates ({room} placeholder).
-// Stamped polls carry partner_tag = normalized room key, which keeps them out
-// of the global feed carousels (those filter partner_tag IS NULL) while
-// RoomPlay's tag matching picks them up.
+// Stamped polls carry play_context = normalized room key, which keeps them out
+// of the global feed carousels (those filter play_context IS NULL) while
+// RoomPlay's tag matching picks them up. partner_tag stays free for real partners.
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -63,7 +63,7 @@ serve(async (req) => {
     const { data: existing, error: existErr } = await admin
       .from('prediction_pools')
       .select('id, title')
-      .eq('partner_tag', roomKey)
+      .eq('play_context', roomKey)
       .eq('type', 'vote')
       .eq('origin_type', 'consumed')
       .eq('status', 'open');
@@ -104,7 +104,7 @@ serve(async (req) => {
         options: t.options,
         points_reward: 10,
         origin_type: 'consumed',
-        partner_tag: roomKey,
+        play_context: roomKey,
         show_tag: room_name,
       }))
       .filter((r) => !existingSet.has(r.title))

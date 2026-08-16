@@ -112,8 +112,8 @@ serve(async (req) => {
         options: t.options,
         points_reward: 10,
         origin_type: 'consumed',
-        // 'media' partner tag keeps baselines off the feed carousels and out of room Play tabs
-        partner_tag: 'media',
+        // 'media' play context keeps baselines off the feed carousels; partner_tag stays free for real partners
+        play_context: 'media',
         media_title: title,
         media_external_id: external_id,
         media_external_source: external_source,

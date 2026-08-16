@@ -125,6 +125,8 @@ export default function RoomPlay({ roomName, seriesTag, exampleTitles, logRoomEv
       const roomNameN = norm(roomName);
       const seriesN = norm(seriesTag);
       const tagMatch = (p: any) => {
+        const ctx = norm(p.play_context);
+        if (ctx && ctx !== 'media' && (roomNameN.includes(ctx) || seriesN === ctx)) return true;
         const partner = norm(p.partner_tag);
         if (partner && (roomNameN.includes(partner) || seriesN === partner)) return true;
         const show = norm(p.show_tag);

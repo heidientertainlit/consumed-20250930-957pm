@@ -142,6 +142,7 @@ export function PollsCarousel({ expanded = false, category, mediaFilter }: Polls
         .eq('type', 'vote')
         .eq('status', 'open')
         .is('partner_tag', null)
+        .is('play_context', null)
         .or(`publish_at.is.null,publish_at.lte.${now}`)
         .or(`featured_date.is.null,featured_date.lt.${today}`)
         .order('created_at', { ascending: false })
