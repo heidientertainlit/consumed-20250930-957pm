@@ -100,6 +100,16 @@ export default function RoomPlay({ roomName, seriesTag, exampleTitles, logRoomEv
   const { data, isLoading } = useQuery({
     queryKey: ["room-play", roomName, seriesTag, exampleTitles.join("|"), user?.id],
     queryFn: async () => {
+      // Stamp baseline template polls for this room first so Play is never empty
+      if (roomName) {
+        try {
+          await supabase.functions.invoke("ensure-room-polls", {
+            body: { room_name: roomName, series_tag: seriesTag || undefined },
+          });
+        } catch (e) {
+          console.error("ensure-room-polls failed:", e);
+        }
+      }
       const now = new Date().toISOString();
       const { data: pools, error } = await supabase
         .from("prediction_pools")
