@@ -50,9 +50,11 @@ interface PollItem {
 interface PollsCarouselProps {
   expanded?: boolean;
   category?: string;
+  /** When set, only show polls tagged to this media item (media detail Play tab) */
+  mediaFilter?: { externalId?: string; externalSource?: string; mediaTitle?: string };
 }
 
-export function PollsCarousel({ expanded = false, category }: PollsCarouselProps) {
+export function PollsCarousel({ expanded = false, category, mediaFilter }: PollsCarouselProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -69,10 +71,70 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   const [isSearching, setIsSearching] = useState<Record<string, boolean>>({});
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['polls-carousel', user?.id],
+    queryKey: ['polls-carousel', user?.id, mediaFilter?.externalSource, mediaFilter?.externalId, mediaFilter?.mediaTitle],
     queryFn: async () => {
       const now = new Date().toISOString();
       const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // YYYY-MM-DD Pacific Time
+
+      // Media-scoped mode: only polls tagged to a specific title (media detail Play tab)
+      if (mediaFilter) {
+        // Stamp baseline template polls for this title first so the tab is never empty
+        if (mediaFilter.externalId && mediaFilter.externalSource && mediaFilter.mediaTitle) {
+          try {
+            await supabase.functions.invoke('ensure-media-polls', {
+              body: {
+                external_id: mediaFilter.externalId,
+                external_source: mediaFilter.externalSource,
+                title: mediaFilter.mediaTitle,
+              },
+            });
+          } catch (e) {
+            console.error('ensure-media-polls failed:', e);
+          }
+        }
+        const seen = new Set<string>();
+        const merged: any[] = [];
+        if (mediaFilter.externalId && mediaFilter.externalSource) {
+          const { data: byId } = await supabase
+            .from('prediction_pools')
+            .select('*')
+            .eq('type', 'vote')
+            .eq('status', 'open')
+            .eq('media_external_id', mediaFilter.externalId)
+            .eq('media_external_source', mediaFilter.externalSource)
+            .or(`publish_at.is.null,publish_at.lte.${now}`)
+            .order('created_at', { ascending: false })
+            .limit(50);
+          for (const pool of byId || []) {
+            if (!seen.has(pool.id)) { seen.add(pool.id); merged.push(pool); }
+          }
+        }
+        if (mediaFilter.mediaTitle?.trim()) {
+          const { data: byTitle } = await supabase
+            .from('prediction_pools')
+            .select('*')
+            .eq('type', 'vote')
+            .eq('status', 'open')
+            .ilike('media_title', mediaFilter.mediaTitle.trim())
+            .or(`publish_at.is.null,publish_at.lte.${now}`)
+            .order('created_at', { ascending: false })
+            .limit(50);
+          for (const pool of byTitle || []) {
+            if (!seen.has(pool.id)) { seen.add(pool.id); merged.push(pool); }
+          }
+        }
+        const items: PollItem[] = merged.map(pool => ({
+          id: pool.id,
+          title: pool.title,
+          options: Array.isArray(pool.options) ? pool.options.filter((o: any) => typeof o === 'string') : [],
+          category: normalizeCategory(pool.category),
+          pointsReward: pool.points_reward || 2,
+          origin_type: pool.origin_type || undefined,
+          origin_user_id: pool.origin_user_id || undefined,
+        })).filter(item => item.options.length > 0);
+        return items;
+      }
+
       const { data: pools, error } = await supabase
         .from('prediction_pools')
         .select('*')

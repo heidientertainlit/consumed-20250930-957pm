@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import PlayCard from "@/components/play-card";
+import { PollsCarousel } from "@/components/polls-carousel";
 
 interface MediaPlayTabProps {
   externalId?: string;
@@ -10,60 +11,45 @@ interface MediaPlayTabProps {
 }
 
 export default function MediaPlayTab({ externalId, externalSource, mediaTitle }: MediaPlayTabProps) {
-  const { data: pools, isLoading } = useQuery({
+  // Make sure this title has its baseline polls (stamped server-side from templates),
+  // then load any trivia tagged to it. Polls render through the same PollsCarousel as the feed.
+  const { data, isLoading } = useQuery({
     queryKey: ["media-play-tab", externalSource, externalId, mediaTitle],
     queryFn: async () => {
-      // Make sure this title has its baseline polls (stamped server-side from templates)
-      if (externalId && externalSource && mediaTitle) {
-        try {
-          await supabase.functions.invoke("ensure-media-polls", {
-            body: { external_id: externalId, external_source: externalSource, title: mediaTitle },
-          });
-        } catch (e) {
-          console.error("ensure-media-polls failed:", e);
-        }
-      }
       const now = new Date().toISOString();
       const seen = new Set<string>();
-      const merged: any[] = [];
+      const trivia: any[] = [];
 
-      // 1. Pools explicitly linked to this title by external id
       if (externalId && externalSource) {
-        const { data } = await supabase
+        const { data: byId } = await supabase
           .from("prediction_pools")
           .select("*")
+          .eq("type", "trivia")
           .eq("status", "open")
           .eq("media_external_id", externalId)
           .eq("media_external_source", externalSource)
           .or(`publish_at.is.null,publish_at.lte.${now}`)
           .order("created_at", { ascending: false })
           .limit(50);
-        for (const p of data || []) {
-          if (!seen.has(p.id)) { seen.add(p.id); merged.push(p); }
+        for (const p of byId || []) {
+          if (!seen.has(p.id)) { seen.add(p.id); trivia.push(p); }
         }
       }
-
-      // 2. Pools tagged with this media title (older content without external ids)
       if (mediaTitle && mediaTitle.trim()) {
-        const { data } = await supabase
+        const { data: byTitle } = await supabase
           .from("prediction_pools")
           .select("*")
+          .eq("type", "trivia")
           .eq("status", "open")
           .ilike("media_title", mediaTitle.trim())
           .or(`publish_at.is.null,publish_at.lte.${now}`)
           .order("created_at", { ascending: false })
           .limit(50);
-        for (const p of data || []) {
-          if (!seen.has(p.id)) { seen.add(p.id); merged.push(p); }
+        for (const p of byTitle || []) {
+          if (!seen.has(p.id)) { seen.add(p.id); trivia.push(p); }
         }
       }
-
-      // Polls first (always answerable), then trivia, newest first within each
-      merged.sort((a, b) => {
-        if (a.type !== b.type) return a.type === "vote" ? -1 : 1;
-        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-      });
-      return merged;
+      return { trivia, ensured: true };
     },
     enabled: !!(externalId && externalSource) || !!mediaTitle,
   });
@@ -76,27 +62,22 @@ export default function MediaPlayTab({ externalId, externalSource, mediaTitle }:
     );
   }
 
-  if (!pools || pools.length === 0) {
-    return (
-      <div className="py-12 text-center">
-        <p className="text-sm text-gray-500">No games for this one yet — check back soon.</p>
-      </div>
-    );
-  }
+  const trivia = data?.trivia || [];
 
   return (
-    <div className="pb-4">
-      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {pools.map((pool: any) => (
-          <div key={pool.id} className="snap-center flex-shrink-0 w-[88%] max-w-md">
-            <PlayCard game={pool} />
-          </div>
-        ))}
-      </div>
-      {pools.length > 1 && (
-        <p className="text-center text-xs text-gray-400 mt-1">
-          Swipe for more · {pools.length} to play
-        </p>
+    <div className="space-y-4 pb-4">
+      {/* Polls — identical look & behavior to the feed polls carousel */}
+      <PollsCarousel mediaFilter={{ externalId, externalSource, mediaTitle }} />
+
+      {/* Trivia tagged to this title */}
+      {trivia.length > 0 && (
+        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {trivia.map((pool: any) => (
+            <div key={pool.id} className="snap-center flex-shrink-0 w-[88%] max-w-md">
+              <PlayCard game={pool} />
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
