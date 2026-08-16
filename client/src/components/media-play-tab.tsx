@@ -13,6 +13,16 @@ export default function MediaPlayTab({ externalId, externalSource, mediaTitle }:
   const { data: pools, isLoading } = useQuery({
     queryKey: ["media-play-tab", externalSource, externalId, mediaTitle],
     queryFn: async () => {
+      // Make sure this title has its baseline polls (stamped server-side from templates)
+      if (externalId && externalSource && mediaTitle) {
+        try {
+          await supabase.functions.invoke("ensure-media-polls", {
+            body: { external_id: externalId, external_source: externalSource, title: mediaTitle },
+          });
+        } catch (e) {
+          console.error("ensure-media-polls failed:", e);
+        }
+      }
       const now = new Date().toISOString();
       const seen = new Set<string>();
       const merged: any[] = [];
