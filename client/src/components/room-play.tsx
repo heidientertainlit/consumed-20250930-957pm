@@ -125,7 +125,6 @@ export default function RoomPlay({ roomName, seriesTag, exampleTitles, logRoomEv
       const seriesN = norm(seriesTag);
       const tagMatch = (p: any) => {
         const partner = norm(p.partner_tag);
-        if (partner === 'media') return false; // media-page baseline polls stay on media pages
         if (partner && (roomNameN.includes(partner) || seriesN === partner)) return true;
         const show = norm(p.show_tag);
         if (show && keywords.has(show)) return true;
@@ -140,7 +139,7 @@ export default function RoomPlay({ roomName, seriesTag, exampleTitles, logRoomEv
       if (genreCfg) {
         const matchedIds = new Set(matches.map((p: any) => p.id));
         const withMedia = (pools || []).filter(
-          (p: any) => !matchedIds.has(p.id) && p.media_external_id && p.media_external_source && norm(p.partner_tag) !== 'media',
+          (p: any) => !matchedIds.has(p.id) && p.media_external_id && p.media_external_source,
         );
         if (withMedia.length > 0) {
           const { data: genreRows } = await supabase

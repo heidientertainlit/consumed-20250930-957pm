@@ -95,6 +95,7 @@ serve(async (req) => {
     const existingSet = new Set((existing || []).map((r: any) => r.title));
     const rows = picked
       .map((t: any) => ({
+        id: crypto.randomUUID(), // prediction_pools has no default id
         title: String(t.template_title).replaceAll('{room}', room_name),
         type: 'vote',
         status: 'open',
