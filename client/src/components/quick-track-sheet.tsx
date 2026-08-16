@@ -6,6 +6,7 @@ import {
   Tv, Film, BookOpen, Music, Mic, Youtube,
   Flame, Eye, BarChart3,
   Clock, Play, Check, Ban, Heart,
+  Upload, ArrowLeft,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -38,7 +39,7 @@ const TYPE_PILLS: { value: string; label: string; Icon: typeof Tv }[] = [
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
-type Step = "search" | "compose";
+type Step = "search" | "compose" | "import";
 
 // Full set of system lists (slugs map to track-media's listType).
 const LIST_CHOICES: { id: string; label: string; desc: string; bg: string; icon: JSX.Element }[] = [
@@ -84,6 +85,13 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
   const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Goodreads / Letterboxd import
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ imported: number; skipped: number; failed: number } | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
+  const importReqId = useRef(0);
+
   // "React to this title (optional)" composer
   const [composerMode, setComposerMode] = useState<ComposerMode>("rate");
   const [rating, setRating] = useState(0);
@@ -100,6 +108,8 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     setSeasons([]); setEpisodes([]);
     setSelectedSeason(null); setSelectedEpisode(null);
     setIsSaving(false);
+    importReqId.current++; // invalidate any in-flight import result
+    setIsImporting(false); setImportResult(null); setImportError(null);
     setComposerMode("rate");
     setRating(0); setTakeText("");
     setPredQuestion(""); setPredOptions(["", ""]);
@@ -315,6 +325,37 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     }
   };
 
+  const handleImportFile = async (file: File | null) => {
+    if (!file || !session?.access_token) return;
+    const reqId = ++importReqId.current;
+    setIsImporting(true);
+    setImportError(null);
+    setImportResult(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/import-media`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (reqId !== importReqId.current) return; // sheet was closed/reset — drop stale result
+      if (!res.ok) {
+        setImportError(data?.error || "Import failed. Make sure it's a Goodreads or Letterboxd export file.");
+      } else {
+        setImportResult({ imported: data.imported || 0, skipped: data.skipped || 0, failed: data.failed || 0 });
+        window.dispatchEvent(new CustomEvent("consumed:media-tracked"));
+        queryClient.invalidateQueries({ queryKey: ["user-lists-with-media"] });
+      }
+    } catch (e) {
+      if (reqId === importReqId.current) setImportError("Import failed. Check your connection and try again.");
+    } finally {
+      if (reqId === importReqId.current) setIsImporting(false);
+      if (importFileRef.current) importFileRef.current.value = "";
+    }
+  };
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -341,6 +382,103 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
             </div>
 
             <MediaSearchPanel onSelect={pickMedia} />
+
+            <button
+              onClick={() => setStep("import")}
+              className="flex items-center justify-center gap-2 mx-5 mb-4 py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-medium text-gray-500 hover:text-purple-600 hover:border-purple-300 transition-colors"
+              data-testid="quick-track-import-open"
+            >
+              <Upload size={15} />
+              Import from Goodreads or Letterboxd
+            </button>
+          </>
+        )}
+
+        {/* ── Import step ── */}
+        {step === "import" && (
+          <>
+            <div className="relative flex items-center justify-center px-5 py-2">
+              <button
+                onClick={() => { importReqId.current++; setStep("search"); setIsImporting(false); setImportResult(null); setImportError(null); }}
+                className="absolute left-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400"
+                data-testid="quick-track-import-back"
+              >
+                <ArrowLeft size={18} />
+              </button>
+              <h2 className="text-base font-bold text-gray-900">Import your library</h2>
+              <button onClick={handleClose} className="absolute right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 pb-6 min-h-0 space-y-4">
+              {importResult ? (
+                <div className="text-center py-6 space-y-3">
+                  <div className="w-14 h-14 mx-auto rounded-full bg-green-100 flex items-center justify-center">
+                    <Check size={26} className="text-green-600" />
+                  </div>
+                  <p className="font-bold text-gray-900 text-lg">
+                    {importResult.imported} {importResult.imported === 1 ? "item" : "items"} imported
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {importResult.skipped > 0 && `${importResult.skipped} skipped — already in your library.`}
+                    {importResult.failed > 0 && ` ${importResult.failed} couldn't be added.`}
+                    {importResult.skipped === 0 && importResult.failed === 0 && "All set — they're in your lists now."}
+                  </p>
+                  <button
+                    onClick={handleClose}
+                    className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold px-6 py-2.5 rounded-full transition-colors"
+                    data-testid="quick-track-import-done"
+                  >
+                    Done
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-600">
+                    Upload your <span className="font-semibold">Goodreads</span> or <span className="font-semibold">Letterboxd</span> export
+                    and your books and movies land in your lists automatically. Anything already in your library is skipped, so
+                    it's safe to re-import a fresh export anytime.
+                  </p>
+
+                  <button
+                    onClick={() => importFileRef.current?.click()}
+                    disabled={isImporting}
+                    className="w-full flex flex-col items-center gap-2 py-8 rounded-2xl border-2 border-dashed border-purple-200 bg-purple-50/50 hover:bg-purple-50 transition-colors disabled:opacity-60"
+                    data-testid="quick-track-import-upload"
+                  >
+                    {isImporting ? (
+                      <>
+                        <Loader2 className="animate-spin text-purple-600" size={28} />
+                        <span className="text-sm font-medium text-purple-700">Importing… this can take a minute</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="text-purple-600" size={28} />
+                        <span className="text-sm font-semibold text-purple-700">Choose your export file</span>
+                        <span className="text-xs text-gray-400">CSV or ZIP</span>
+                      </>
+                    )}
+                  </button>
+                  <input
+                    ref={importFileRef}
+                    type="file"
+                    accept=".csv,.zip"
+                    className="hidden"
+                    onChange={(e) => handleImportFile(e.target.files?.[0] || null)}
+                  />
+
+                  {importError && (
+                    <p className="text-sm text-red-600 text-center">{importError}</p>
+                  )}
+
+                  <div className="text-xs text-gray-400 space-y-1.5 pt-1">
+                    <p><span className="font-semibold text-gray-500">Goodreads:</span> My Books → Import and export → Export Library</p>
+                    <p><span className="font-semibold text-gray-500">Letterboxd:</span> Settings → Data → Export Your Data</p>
+                  </div>
+                </>
+              )}
+            </div>
           </>
         )}
 

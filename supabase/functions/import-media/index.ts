@@ -397,6 +397,21 @@ serve(async (req) => {
       });
     }
 
+    const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20MB — far larger than any real export
+    if (file.size > MAX_FILE_BYTES) {
+      return new Response(JSON.stringify({ error: 'File too large (limit 20MB). Export files are normally well under this.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const okName = /\.(csv|zip)$/i.test(file.name || '');
+    if (!okName) {
+      return new Response(JSON.stringify({ error: 'Unsupported file type. Upload the CSV or ZIP export from Goodreads or Letterboxd.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     console.log('Import: Processing file:', file.name, file.type);
 
     // Read file content
@@ -443,6 +458,14 @@ serve(async (req) => {
 
     console.log('Import: Parsed items:', mediaItems.length);
 
+    const MAX_ITEMS = 20000;
+    if (mediaItems.length > MAX_ITEMS) {
+      return new Response(JSON.stringify({ error: `File has too many rows (limit ${MAX_ITEMS}).` }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     if (mediaItems.length === 0) {
       return new Response(JSON.stringify({ 
         error: 'No valid items found in file. Please ensure the file contains properly formatted media data.' 
@@ -465,6 +488,42 @@ serve(async (req) => {
         listMapping[key] = list.id;
       }
     }
+
+    // ── Dedupe protection: skip anything this user already has (same title + type) ──
+    // Re-importing the same export (or a fresh one months later) only adds new items.
+    const existingKeys = new Set<string>();
+    {
+      const pageSize = 1000;
+      for (let page = 0; ; page++) {
+        const { data: existingItems, error: existErr } = await supabase
+          .from('list_items')
+          .select('title, media_type')
+          .eq('user_id', appUser.id)
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        if (existErr) {
+          console.error('Import: existing items fetch error:', existErr.message);
+          return new Response(JSON.stringify({ error: 'Could not check your library for duplicates. Please try again.' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        for (const it of existingItems || []) {
+          existingKeys.add(`${(it.title || '').toLowerCase().trim()}::${(it.media_type || '').toLowerCase()}`);
+        }
+        if (!existingItems || existingItems.length < pageSize) break;
+      }
+    }
+    const beforeDedupe = mediaItems.length;
+    // Also dedupe within the file itself
+    const seenInFile = new Set<string>();
+    mediaItems = mediaItems.filter((item) => {
+      const key = `${(item.title || '').toLowerCase().trim()}::${(item.mediaType || '').toLowerCase()}`;
+      if (existingKeys.has(key) || seenInFile.has(key)) return false;
+      seenInFile.add(key);
+      return true;
+    });
+    const skippedCount = beforeDedupe - mediaItems.length;
+    console.log('Import: Deduped', skippedCount, 'of', beforeDedupe);
 
     // Insert items in batches (max 100 at a time)
     const batchSize = 100;
@@ -512,8 +571,9 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       success: true,
       imported: successCount,
+      skipped: skippedCount,
       failed: errorCount,
-      total: mediaItems.length,
+      total: beforeDedupe,
       errors: errors.length > 0 ? errors : undefined
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
