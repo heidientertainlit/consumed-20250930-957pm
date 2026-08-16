@@ -103,6 +103,7 @@ serve(async (req) => {
 
     const rows = picked
       .map((t: any) => ({
+        id: crypto.randomUUID(), // prediction_pools has no default id
         title: String(t.template_title).replaceAll('{title}', title),
         type: 'vote',
         status: 'open',
@@ -124,8 +125,12 @@ serve(async (req) => {
     let created = 0;
     if (rows.length > 0) {
       const { error: insErr } = await admin.from('prediction_pools').insert(rows);
-      if (insErr) throw insErr;
-      created = rows.length;
+      if (insErr) {
+        // 23505 = another concurrent open already stamped these; that's fine
+        if ((insErr as any).code !== '23505') throw insErr;
+      } else {
+        created = rows.length;
+      }
     }
 
     return new Response(JSON.stringify({ created, existing: existing?.length || 0 }), {

@@ -41,7 +41,7 @@ export default function MediaPlayTab({ externalId, externalSource, mediaTitle }:
           .select("*")
           .eq("type", "trivia")
           .eq("status", "open")
-          .ilike("media_title", mediaTitle.trim())
+          .ilike("media_title", mediaTitle.trim().replace(/[%_]/g, "\\$&"))
           .or(`publish_at.is.null,publish_at.lte.${now}`)
           .order("created_at", { ascending: false })
           .limit(50);

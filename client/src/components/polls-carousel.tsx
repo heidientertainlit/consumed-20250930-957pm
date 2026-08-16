@@ -81,13 +81,14 @@ export function PollsCarousel({ expanded = false, category, mediaFilter }: Polls
         // Stamp baseline template polls for this title first so the tab is never empty
         if (mediaFilter.externalId && mediaFilter.externalSource && mediaFilter.mediaTitle) {
           try {
-            await supabase.functions.invoke('ensure-media-polls', {
+            const { error: ensureErr } = await supabase.functions.invoke('ensure-media-polls', {
               body: {
                 external_id: mediaFilter.externalId,
                 external_source: mediaFilter.externalSource,
                 title: mediaFilter.mediaTitle,
               },
             });
+            if (ensureErr) console.error('ensure-media-polls failed:', ensureErr);
           } catch (e) {
             console.error('ensure-media-polls failed:', e);
           }
@@ -115,7 +116,7 @@ export function PollsCarousel({ expanded = false, category, mediaFilter }: Polls
             .select('*')
             .eq('type', 'vote')
             .eq('status', 'open')
-            .ilike('media_title', mediaFilter.mediaTitle.trim())
+            .ilike('media_title', mediaFilter.mediaTitle.trim().replace(/[%_]/g, '\\$&'))
             .or(`publish_at.is.null,publish_at.lte.${now}`)
             .order('created_at', { ascending: false })
             .limit(50);

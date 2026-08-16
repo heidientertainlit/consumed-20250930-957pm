@@ -103,9 +103,10 @@ export default function RoomPlay({ roomName, seriesTag, exampleTitles, logRoomEv
       // Stamp baseline template polls for this room first so Play is never empty
       if (roomName) {
         try {
-          await supabase.functions.invoke("ensure-room-polls", {
+          const { error: ensureErr } = await supabase.functions.invoke("ensure-room-polls", {
             body: { room_name: roomName, series_tag: seriesTag || undefined },
           });
+          if (ensureErr) console.error("ensure-room-polls failed:", ensureErr);
         } catch (e) {
           console.error("ensure-room-polls failed:", e);
         }
