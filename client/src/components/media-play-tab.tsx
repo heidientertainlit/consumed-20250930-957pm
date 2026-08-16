@@ -85,10 +85,19 @@ export default function MediaPlayTab({ externalId, externalSource, mediaTitle }:
   }
 
   return (
-    <div className="space-y-4 pb-4">
-      {pools.map((pool: any) => (
-        <PlayCard key={pool.id} game={pool} />
-      ))}
+    <div className="pb-4">
+      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {pools.map((pool: any) => (
+          <div key={pool.id} className="snap-center flex-shrink-0 w-[88%] max-w-md">
+            <PlayCard game={pool} />
+          </div>
+        ))}
+      </div>
+      {pools.length > 1 && (
+        <p className="text-center text-xs text-gray-400 mt-1">
+          Swipe for more · {pools.length} to play
+        </p>
+      )}
     </div>
   );
 }
