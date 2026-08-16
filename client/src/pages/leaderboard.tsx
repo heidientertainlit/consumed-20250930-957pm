@@ -57,6 +57,7 @@ export default function Leaderboard() {
     tabParam === 'games' || tabParam === 'consumption' || tabParam === 'predictions' ? 
       (tabParam === 'predictions' ? 'games' : tabParam) : 'engagement'
   );
+  const [engagerBoard, setEngagerBoard] = useState<string>('overall');
 
   const toggleExpanded = (categoryName: string) => {
     setExpandedCategories(prev => {
@@ -635,14 +636,39 @@ export default function Leaderboard() {
             </TabsList>
 
             <TabsContent value="engagement">
-              {renderCategoryCard(
-                'Top Takes',
-                Flame,
-                leaderboardData?.categories?.top_takes,
-                'Top Takes',
-                'Post takes and earn agrees to appear here!',
-                'from-orange-500 to-red-500'
-              )}
+              {/* ── Top Engagers: Overall first, then by genre ── */}
+              <div className="flex gap-2 overflow-x-auto pb-2 mb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {['overall', ...((leaderboardData?.categories as any)?.genre_engagers || []).map((b: any) => b.genre)].map((key: string) => (
+                  <button
+                    key={key}
+                    onClick={() => setEngagerBoard(key)}
+                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium capitalize transition-colors ${
+                      engagerBoard === key
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-white border border-gray-200 text-gray-600'
+                    }`}
+                  >
+                    {key === 'overall' ? 'Overall' : key}
+                  </button>
+                ))}
+              </div>
+              {engagerBoard === 'overall'
+                ? renderCategoryCard(
+                    'Overall Top Engagers',
+                    TrendingUp,
+                    leaderboardData?.categories?.overall,
+                    'Top Engagers',
+                    'Start posting and engaging to appear here!',
+                    'from-purple-600 to-pink-600'
+                  )
+                : renderCategoryCard(
+                    `Top Engagers · ${engagerBoard.charAt(0).toUpperCase()}${engagerBoard.slice(1)}`,
+                    TrendingUp,
+                    ((leaderboardData?.categories as any)?.genre_engagers || []).find((b: any) => b.genre === engagerBoard)?.entries,
+                    `Top Engagers ${engagerBoard}`,
+                    'Post and react to titles in this genre to appear here!',
+                    'from-purple-600 to-pink-600'
+                  )}
 
               {/* ── Conversation Starters / Top Commenters / Room Regulars — hidden for now (same people on every board) ── */}
               {false && (
@@ -672,15 +698,6 @@ export default function Leaderboard() {
                     'from-fuchsia-600 to-pink-500'
                   )}
                 </>
-              )}
-
-              {renderCategoryCard(
-                'Overall Top Engagers',
-                TrendingUp,
-                leaderboardData?.categories?.overall,
-                'Top Engagers',
-                'Start posting and engaging to appear here!',
-                'from-purple-600 to-pink-600'
               )}
 
               {/* ── Top of Taste — removed ── */}

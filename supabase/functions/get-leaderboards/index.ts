@@ -161,7 +161,7 @@ serve(async (req) => {
       // Posts created (10 points each + bonus for engagement received)
       const { data: posts } = await supabase
         .from('social_posts')
-        .select('user_id, likes_count, comments_count, created_at')
+        .select('id, user_id, likes_count, comments_count, created_at, media_external_id, media_external_source')
         .gte('created_at', dateFilter || '1970-01-01');
 
       (posts || []).forEach((p: any) => {
@@ -175,7 +175,7 @@ serve(async (req) => {
       // Likes given (2 points each)
       const { data: likesGiven } = await supabase
         .from('social_post_likes')
-        .select('user_id, created_at')
+        .select('user_id, social_post_id, created_at')
         .gte('created_at', dateFilter || '1970-01-01');
       
       (likesGiven || []).forEach((like: any) => {
@@ -185,7 +185,7 @@ serve(async (req) => {
       // Comments made (5 points each)
       const { data: commentsMade } = await supabase
         .from('social_post_comments')
-        .select('user_id, created_at')
+        .select('user_id, social_post_id, created_at')
         .gte('created_at', dateFilter || '1970-01-01');
       
       (commentsMade || []).forEach((comment: any) => {
@@ -238,6 +238,57 @@ serve(async (req) => {
       (ranks || []).forEach((rank: any) => {
         engagementMap[rank.user_id] = (engagementMap[rank.user_id] || 0) + 10;
       });
+
+      // ── TOP ENGAGERS BY GENRE ──
+      // Attribute the same engagement scoring to the canonical genre(s) of the
+      // media each post is about (via the media_genres cache).
+      try {
+        const mediaPosts = (posts || []).filter((p: any) => p.media_external_id && p.media_external_source);
+        const extIds = [...new Set(mediaPosts.map((p: any) => p.media_external_id))];
+        const genreByMedia: Record<string, string[]> = {};
+        for (let i = 0; i < extIds.length; i += 200) {
+          const { data: genreRows } = await supabase
+            .from('media_genres')
+            .select('external_source, external_id, canonical_genres')
+            .in('external_id', extIds.slice(i, i + 200));
+          for (const g of genreRows || []) {
+            genreByMedia[`${g.external_source}::${g.external_id}`] = g.canonical_genres || [];
+          }
+        }
+        const postGenres: Record<string, string[]> = {};
+        const genreMap: Record<string, Record<string, number>> = {};
+        const bump = (genre: string, userId: string, pts: number) => {
+          if (!genreMap[genre]) genreMap[genre] = {};
+          genreMap[genre][userId] = (genreMap[genre][userId] || 0) + pts;
+        };
+        for (const p of mediaPosts) {
+          const genres = genreByMedia[`${p.media_external_source}::${p.media_external_id}`] || [];
+          if (genres.length === 0) continue;
+          postGenres[p.id] = genres;
+          const score = 10 + (p.likes_count || 0) * 2 + (p.comments_count || 0) * 3;
+          for (const g of genres) bump(g, p.user_id, score);
+        }
+        for (const like of likesGiven || []) {
+          for (const g of postGenres[like.social_post_id] || []) bump(g, like.user_id, 2);
+        }
+        for (const c of commentsMade || []) {
+          for (const g of postGenres[c.social_post_id] || []) bump(g, c.user_id, 5);
+        }
+        const genreBoards = Object.entries(genreMap)
+          .map(([genre, userScores]) => ({
+            genre,
+            total: Object.values(userScores).reduce((a, b) => a + b, 0),
+            entries: formatEntries(Object.entries(userScores).map(([user_id, score]) => ({ user_id, score }))),
+          }))
+          .filter((b) => b.entries.length > 0)
+          .sort((a, b) => b.total - a.total)
+          .slice(0, 8)
+          .map(({ genre, entries }) => ({ genre, entries }));
+        (results as any).genre_engagers = genreBoards;
+      } catch (e) {
+        console.error('genre engagers failed:', e);
+        (results as any).genre_engagers = [];
+      }
 
       results.overall = formatEntries(
         Object.entries(engagementMap).map(([user_id, score]) => ({ user_id, score }))
