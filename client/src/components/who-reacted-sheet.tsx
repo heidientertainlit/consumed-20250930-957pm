@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ThumbsUp, ThumbsDown, Loader2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/lib/supabase";
+import { useLocation } from "wouter";
 
 interface WhoReactedSheetProps {
   postId: string | null; // open when non-null
@@ -15,8 +16,12 @@ interface Person {
 }
 
 function PersonRow({ person }: { person: Person }) {
+  const [, setLocation] = useLocation();
   return (
-    <div className="flex items-center gap-3 py-2">
+    <button
+      onClick={(e) => { e.stopPropagation(); setLocation(`/user/${person.id}`); }}
+      className="flex items-center gap-3 py-2 w-full text-left active:opacity-70"
+    >
       {person.avatar ? (
         <img src={person.avatar} alt="" className="w-8 h-8 rounded-full object-cover" />
       ) : (
@@ -25,7 +30,7 @@ function PersonRow({ person }: { person: Person }) {
         </div>
       )}
       <span className="text-sm text-gray-800 font-medium">{person.name}</span>
-    </div>
+    </button>
   );
 }
 
