@@ -478,8 +478,9 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                   )}
 
                   <div className="text-xs text-gray-400 space-y-1.5 pt-1">
-                    <p><span className="font-semibold text-gray-500">Goodreads:</span> My Books → Import and export → Export Library</p>
+                    <p><span className="font-semibold text-gray-500">Goodreads:</span> on a computer, go to My Books → Import and export → Export Library (the export tool doesn't show up on phones)</p>
                     <p><span className="font-semibold text-gray-500">Letterboxd:</span> Settings → Data → Export Your Data</p>
+                    <p className="pt-1">Want Heidi to import it for you? Email <a href="mailto:support@consumedapp.com" className="text-purple-600 underline">support@consumedapp.com</a></p>
                   </div>
                 </>
               )}
