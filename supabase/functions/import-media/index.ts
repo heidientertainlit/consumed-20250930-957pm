@@ -14,6 +14,10 @@ interface MediaItem {
   notes?: string;
   listType: string;
   rating?: number;
+  year?: string;          // for TMDB matching (Letterboxd)
+  searchTitle?: string;   // bare title without "(Year)" for lookups
+  externalId?: string;
+  externalSource?: string;
 }
 
 // Cache for TMDB lookups to avoid duplicate API calls
@@ -75,6 +79,74 @@ async function detectMediaType(title: string, retries = 2): Promise<'movie' | 't
   // Default to TV if we can't determine (Netflix has more TV content)
   mediaTypeCache[cleanedTitle] = 'tv';
   return 'tv';
+}
+
+// ── Catalog enrichment: attach poster + real catalog IDs to imported items ──
+// Movies → TMDB; books → Google Books. Lookup failures leave the item as-is
+// (it still imports, just without a poster). Never throws.
+function normTitle(t: string): string {
+  return (t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+async function enrichMovie(item: MediaItem): Promise<void> {
+  const tmdbKey = Deno.env.get('TMDB_API_KEY');
+  if (!tmdbKey) return;
+  try {
+    const bare = item.searchTitle || cleanTitle(item.title);
+    const query = encodeURIComponent(bare);
+    const yearParam = item.year ? `&year=${encodeURIComponent(item.year)}` : '';
+    const res = await fetch(
+      `https://api.themoviedb.org/3/search/movie?api_key=${tmdbKey}&query=${query}${yearParam}&page=1&include_adult=false`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    if (!res.ok) return;
+    const data = await res.json();
+    // Only accept a confident match: title must line up, and if we know the
+    // year it must be within a year (re-releases sometimes differ by one).
+    const match = (data.results || []).find((r: any) => {
+      if (normTitle(r.title) !== normTitle(bare) && normTitle(r.original_title) !== normTitle(bare)) return false;
+      if (item.year && r.release_date) {
+        const ry = parseInt(r.release_date.slice(0, 4));
+        if (!isNaN(ry) && Math.abs(ry - parseInt(item.year)) > 1) return false;
+      }
+      return true;
+    });
+    if (!match) return;
+    item.externalId = String(match.id);
+    item.externalSource = 'tmdb';
+    if (match.poster_path) item.imageUrl = `https://image.tmdb.org/t/p/w500${match.poster_path}`;
+  } catch (e) {
+    console.error('TMDB enrich failed for', item.title, e);
+  }
+}
+
+async function enrichBook(item: MediaItem): Promise<void> {
+  try {
+    const key = Deno.env.get('GOOGLE_BOOKS_API_KEY');
+    const parts = [`intitle:${item.title.replace(/\s*\(.*\)\s*$/, '')}`];
+    if (item.creator) parts.push(`inauthor:${item.creator}`);
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(parts.join(' '))}&maxResults=5${key ? `&key=${key}` : ''}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return;
+    const data = await res.json();
+    const bare = item.title.replace(/\s*\(.*\)\s*$/, '');
+    // Only accept volumes whose title actually matches (Goodreads titles often
+    // carry series suffixes, so allow prefix containment either way).
+    const vols = (data.items || []).filter((v: any) => {
+      const vt = normTitle(v.volumeInfo?.title || '');
+      const bt = normTitle(bare);
+      return vt && bt && (vt === bt || vt.startsWith(bt) || bt.startsWith(vt));
+    });
+    // Prefer an edition that actually has a cover (coverless editions return a gray placeholder).
+    const withCover = vols.find((v: any) => v.volumeInfo?.imageLinks?.thumbnail) || vols[0];
+    if (!withCover) return;
+    item.externalId = withCover.id;
+    item.externalSource = 'googlebooks';
+    const thumb = withCover.volumeInfo?.imageLinks?.thumbnail;
+    if (thumb) item.imageUrl = thumb.replace('http://', 'https://');
+  } catch (e) {
+    console.error('Google Books enrich failed for', item.title, e);
+  }
 }
 
 // Validate if a string looks like a real media title (not junk data)
@@ -233,7 +305,8 @@ function parseCSVLine(line: string): string[] {
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
     if (char === '"') {
-      inQuotes = !inQuotes;
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; } // escaped quote
+      else inQuotes = !inQuotes;
     } else if (char === ',' && !inQuotes) {
       fields.push(current.trim().replace(/^"|"$/g, ''));
       current = '';
@@ -246,48 +319,61 @@ function parseCSVLine(line: string): string[] {
   return fields;
 }
 
-// Parse Letterboxd CSV format
+// Parse Letterboxd CSV format.
+// Handles the full export: watched.csv (Date,Name,Year,...), ratings.csv
+// (...,Rating), diary.csv, and list files (Position,Name,Year,...).
 function parseLetterboxd(csvText: string): MediaItem[] {
   const lines = csvText.split('\n').filter(line => line.trim());
   const items: MediaItem[] = [];
-  
-  // Letterboxd exports have metadata rows before the actual data
-  // Find the row that starts with "Position,Name,Year" which is the real header
+
+  // Find the header row: any line containing both a Name and a Year column.
   let headerIdx = -1;
-  for (let i = 0; i < lines.length; i++) {
-    const lower = lines[i].toLowerCase();
-    if (lower.includes('position') && lower.includes('name') && lower.includes('year')) {
+  let header: string[] = [];
+  for (let i = 0; i < Math.min(lines.length, 10); i++) {
+    const cols = parseCSVLine(lines[i]).map(h => h.toLowerCase());
+    if (cols.includes('name') && cols.includes('year')) {
       headerIdx = i;
+      header = cols;
       break;
     }
   }
-  
+
   if (headerIdx === -1) {
-    console.log('Letterboxd: Could not find header row with Position,Name,Year');
+    console.log('Letterboxd: Could not find a header row with Name and Year columns');
     return items;
   }
-  
-  // Parse header to find column indices
-  const header = lines[headerIdx].split(',').map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
+
   const nameIdx = header.indexOf('name');
   const yearIdx = header.indexOf('year');
-  
-  console.log(`Letterboxd: Found header at line ${headerIdx}, name=${nameIdx}, year=${yearIdx}`);
-  
-  // Parse data rows (starting after the header)
+  const ratingIdx = header.indexOf('rating');
+
+  console.log(`Letterboxd: header at line ${headerIdx}, name=${nameIdx}, year=${yearIdx}, rating=${ratingIdx}`);
+
   for (let i = headerIdx + 1; i < lines.length; i++) {
-    const fields = lines[i].split(',').map(f => f.trim().replace(/^"|"$/g, ''));
-    if (fields[nameIdx] && fields[nameIdx] !== 'Name') {
-      const title = fields[yearIdx] ? `${fields[nameIdx]} (${fields[yearIdx]})` : fields[nameIdx];
-      items.push({
-        title,
-        mediaType: 'movie',
-        listType: 'finished'
-      });
+    const fields = parseCSVLine(lines[i]);
+    const name = fields[nameIdx];
+    if (!name || name === 'Name') continue;
+    const year = fields[yearIdx] || '';
+    const title = year ? `${name} (${year})` : name;
+
+    // Letterboxd ratings are 0.5–5 stars; round half-stars to our 1–5 scale.
+    let rating = 0;
+    if (ratingIdx >= 0 && fields[ratingIdx]) {
+      const raw = parseFloat(fields[ratingIdx]);
+      if (!isNaN(raw) && raw > 0) rating = Math.min(5, Math.max(1, Math.round(raw)));
     }
+
+    items.push({
+      title,
+      searchTitle: name,
+      year,
+      mediaType: 'movie',
+      listType: 'finished',
+      rating,
+    });
   }
-  
-  console.log(`Letterboxd: Parsed ${items.length} movies`);
+
+  console.log(`Letterboxd: Parsed ${items.length} movies, ${items.filter(i => (i.rating || 0) > 0).length} with ratings`);
   return items;
 }
 
@@ -514,16 +600,49 @@ serve(async (req) => {
       }
     }
     const beforeDedupe = mediaItems.length;
-    // Also dedupe within the file itself
-    const seenInFile = new Set<string>();
-    mediaItems = mediaItems.filter((item) => {
+    // Also dedupe within the file itself. A Letterboxd ZIP lists the same movie
+    // in watched.csv (no rating) and ratings.csv (rated) — keep the rated copy.
+    const keptByKey = new Map<string, MediaItem>();
+    for (const item of mediaItems) {
       const key = `${(item.title || '').toLowerCase().trim()}::${(item.mediaType || '').toLowerCase()}`;
-      if (existingKeys.has(key) || seenInFile.has(key)) return false;
-      seenInFile.add(key);
-      return true;
-    });
+      if (existingKeys.has(key)) continue;
+      const prev = keptByKey.get(key);
+      if (!prev) {
+        keptByKey.set(key, item);
+      } else if ((item.rating || 0) > 0 && (prev.rating || 0) === 0) {
+        keptByKey.set(key, item);
+      }
+    }
+    mediaItems = [...keptByKey.values()];
     const skippedCount = beforeDedupe - mediaItems.length;
     console.log('Import: Deduped', skippedCount, 'of', beforeDedupe);
+
+    // ── Enrich new items with posters + catalog IDs ──
+    // Only runs on items that passed dedupe (i.e. rows we are about to insert).
+    // Capped and rate-limited; anything not enriched still imports as plain text.
+    // Hard time budget: enrichment must never jeopardize the import itself.
+    // When the budget runs out, remaining items import without posters.
+    const ENRICH_CAP = 600;
+    const ENRICH_BUDGET_MS = 60000;
+    const enrichStart = Date.now();
+    const toEnrich = mediaItems.slice(0, ENRICH_CAP).filter(
+      (it) => it.mediaType === 'movie' || it.mediaType === 'book'
+    );
+    console.log('Import: Enriching', toEnrich.length, 'items with posters/catalog IDs');
+    const ENRICH_BATCH = 3;
+    for (let i = 0; i < toEnrich.length; i += ENRICH_BATCH) {
+      if (Date.now() - enrichStart > ENRICH_BUDGET_MS) {
+        console.log('Import: Enrichment time budget reached at item', i, '- importing the rest without posters');
+        break;
+      }
+      const batch = toEnrich.slice(i, i + ENRICH_BATCH);
+      await Promise.all(batch.map((it) => (it.mediaType === 'movie' ? enrichMovie(it) : enrichBook(it))));
+      if (i + ENRICH_BATCH < toEnrich.length) {
+        await new Promise((r) => setTimeout(r, 250));
+      }
+    }
+    const enrichedCount = toEnrich.filter((it) => it.externalId).length;
+    console.log('Import: Enriched', enrichedCount, 'of', toEnrich.length, 'in', Date.now() - enrichStart, 'ms');
 
     // Insert items in batches (max 100 at a time)
     const batchSize = 100;
@@ -548,7 +667,10 @@ serve(async (req) => {
           image_url: item.imageUrl || null,
           notes: item.notes || null,
           rating: item.rating || 0,
-          external_source: 'tmdb_verified' // Mark as verified so auto-fix doesn't recheck
+          external_id: item.externalId || null,
+          // Matched items carry their real catalog source; unmatched keep the
+          // legacy 'tmdb_verified' marker so auto-fix doesn't recheck them.
+          external_source: item.externalSource || 'tmdb_verified'
         };
       });
 
