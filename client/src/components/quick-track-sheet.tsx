@@ -442,8 +442,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                 <>
                   <p className="text-sm text-gray-600">
                     Upload your <span className="font-semibold">Goodreads</span> or <span className="font-semibold">Letterboxd</span> export
-                    and your books and movies land in your lists automatically. Anything already in your library is skipped, so
-                    it's safe to re-import a fresh export anytime.
+                    and everything lands in your lists. Duplicates are skipped.
                   </p>
 
                   <button
