@@ -617,35 +617,11 @@ serve(async (req) => {
     const skippedCount = beforeDedupe - mediaItems.length;
     console.log('Import: Deduped', skippedCount, 'of', beforeDedupe);
 
-    // ── Enrich new items with posters + catalog IDs ──
-    // Only runs on items that passed dedupe (i.e. rows we are about to insert).
-    // Capped and rate-limited; anything not enriched still imports as plain text.
-    // Hard time budget: enrichment must never jeopardize the import itself.
-    // When the budget runs out, remaining items import without posters.
-    const ENRICH_CAP = 600;
-    const ENRICH_BUDGET_MS = 60000;
-    const enrichStart = Date.now();
-    const toEnrich = mediaItems.slice(0, ENRICH_CAP).filter(
-      (it) => it.mediaType === 'movie' || it.mediaType === 'book'
-    );
-    console.log('Import: Enriching', toEnrich.length, 'items with posters/catalog IDs');
-    const ENRICH_BATCH = 3;
-    for (let i = 0; i < toEnrich.length; i += ENRICH_BATCH) {
-      if (Date.now() - enrichStart > ENRICH_BUDGET_MS) {
-        console.log('Import: Enrichment time budget reached at item', i, '- importing the rest without posters');
-        break;
-      }
-      const batch = toEnrich.slice(i, i + ENRICH_BATCH);
-      await Promise.all(batch.map((it) => (it.mediaType === 'movie' ? enrichMovie(it) : enrichBook(it))));
-      if (i + ENRICH_BATCH < toEnrich.length) {
-        await new Promise((r) => setTimeout(r, 250));
-      }
-    }
-    const enrichedCount = toEnrich.filter((it) => it.externalId).length;
-    console.log('Import: Enriched', enrichedCount, 'of', toEnrich.length, 'in', Date.now() - enrichStart, 'ms');
-
     // Insert items in batches (max 100 at a time)
     const batchSize = 100;
+    // Rows created by THIS import, collected so background enrichment can
+    // update ONLY these rows (by id) and never touch pre-existing data.
+    const insertedRows: { id: string; title: string; media_type: string }[] = [];
     let successCount = 0;
     let errorCount = 0;
     const errors: string[] = [];
@@ -685,10 +661,70 @@ serve(async (req) => {
         errors.push(`Batch ${i / batchSize + 1}: ${error.message}`);
       } else {
         successCount += data?.length || 0;
+        for (const row of data || []) insertedRows.push(row);
       }
     }
 
     console.log('Import: Complete. Success:', successCount, 'Errors:', errorCount);
+
+    // ── Background poster/catalog enrichment ──
+    // Runs AFTER the response is sent, so the import itself is never delayed
+    // or timed out by lookups. Updates are scoped to the row ids created by
+    // this import only — pre-existing rows are never touched.
+    const itemByKey = new Map<string, MediaItem>();
+    for (const it of mediaItems) itemByKey.set(`${it.title.toLowerCase()}|${it.mediaType}`, it);
+
+    const enrichInBackground = async () => {
+      const ENRICH_CAP = 600;
+      const ENRICH_BUDGET_MS = 300000; // generous: we're in the background now
+      const start = Date.now();
+      const targets = insertedRows
+        .filter((r) => r.media_type === 'movie' || r.media_type === 'book')
+        .slice(0, ENRICH_CAP);
+      console.log('Import: Background enrichment starting for', targets.length, 'rows');
+      let updated = 0;
+      const ENRICH_BATCH = 3;
+      for (let i = 0; i < targets.length; i += ENRICH_BATCH) {
+        if (Date.now() - start > ENRICH_BUDGET_MS) {
+          console.log('Import: Background enrichment budget reached at', i);
+          break;
+        }
+        const batch = targets.slice(i, i + ENRICH_BATCH);
+        await Promise.all(batch.map(async (row) => {
+          const item = itemByKey.get(`${row.title.toLowerCase()}|${row.media_type}`);
+          if (!item) return;
+          try {
+            if (item.mediaType === 'movie') await enrichMovie(item);
+            else await enrichBook(item);
+          } catch (_e) { return; }
+          if (!item.externalId && !item.imageUrl) return;
+          const patch: Record<string, unknown> = {};
+          if (item.imageUrl) patch.image_url = item.imageUrl;
+          if (item.externalId) {
+            patch.external_id = item.externalId;
+            patch.external_source = item.externalSource;
+          }
+          const { error: upErr } = await supabase
+            .from('list_items')
+            .update(patch)
+            .eq('id', row.id)
+            .eq('user_id', appUser.id);
+          if (!upErr) updated++;
+        }));
+        if (i + ENRICH_BATCH < targets.length) {
+          await new Promise((r) => setTimeout(r, 250));
+        }
+      }
+      console.log('Import: Background enrichment done.', updated, 'rows updated in', Date.now() - start, 'ms');
+    };
+
+    try {
+      // @ts-ignore EdgeRuntime is provided by the Supabase edge environment
+      EdgeRuntime.waitUntil(enrichInBackground());
+    } catch (_e) {
+      // Fallback (e.g. local dev): fire and forget
+      enrichInBackground().catch((e) => console.error('Import: background enrichment failed:', e));
+    }
 
     return new Response(JSON.stringify({
       success: true,
