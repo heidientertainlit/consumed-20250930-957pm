@@ -167,7 +167,7 @@ export default function UserProfile() {
   const canViewProfile = true; // Always true for now - will add privacy settings later
 
   // Entertainment DNA states
-  const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('no_profile');
+  const [dnaProfileStatus, setDnaProfileStatus] = useState<'loading' | 'no_profile' | 'has_profile' | 'generating'>('loading');
   const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
   const [isSubmittingSurvey, setIsSubmittingSurvey] = useState(false);
   const [dnaProfile, setDnaProfile] = useState<any>(null);
@@ -1662,7 +1662,7 @@ export default function UserProfile() {
     setUserStats(null);
     setUserPoints(null);
     setDnaProfile(null);
-    setDnaProfileStatus('no_profile');
+    setDnaProfileStatus('loading');
     setDnaLevel(0);
     setDnaItemCount(0);
     setHighlights([]);
@@ -2169,6 +2169,7 @@ export default function UserProfile() {
   const fetchDnaProfile = async () => {
     if (!viewingUserId) return;
 
+    setDnaProfileStatus('loading');
     try {
       const { data, error } = await supabase
         .from('dna_profiles')
@@ -2541,10 +2542,6 @@ export default function UserProfile() {
       setDnaProfileStatus('no_profile');
       setIsGeneratingProfile(false);
     }
-  };
-
-  const handleRetakeDNASurvey = () => {
-    setLocation('/entertainment-dna');
   };
 
   const handleDownloadDNA = async () => {
@@ -3711,14 +3708,7 @@ export default function UserProfile() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => setLocation('/entertainment-dna')}
-                    className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
-                  >
-                    <HelpCircle size={18} className="text-purple-500" />
-                    <span className="text-[10px] font-semibold text-gray-700">Retake Quiz</span>
-                  </button>
+                <div className="grid grid-cols-2 gap-2">
                   <div className="relative">
                     <button
                       onClick={() => setDnaShareMenuOpen(v => !v)}
@@ -3768,6 +3758,24 @@ export default function UserProfile() {
                 })()}
 
               </>
+            ) : dnaProfileStatus === 'loading' || dnaProfileStatus === 'generating' ? (
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm" aria-label="Loading Entertainment DNA">
+                <div className="animate-pulse space-y-4">
+                  <div className="h-4 w-32 bg-gray-100 rounded" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="h-3 bg-gray-100 rounded" />
+                      <div className="h-3 w-4/5 bg-gray-100 rounded" />
+                      <div className="h-3 w-3/5 bg-gray-100 rounded" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-3 bg-gray-100 rounded" />
+                      <div className="h-3 w-4/5 bg-gray-100 rounded" />
+                      <div className="h-3 w-2/3 bg-gray-100 rounded" />
+                    </div>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-center">
                 <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center bg-white/20">
