@@ -481,7 +481,7 @@ export default function OnboardingPage() {
                 className={`w-full rounded-xl border px-4 py-3 text-[13px] font-semibold transition-colors ${
                   vote === "both"
                     ? "border-purple-500 bg-purple-50 text-purple-700"
-                    : "border-purple-100 bg-white text-purple-600 hover:border-purple-300 hover:bg-purple-50/50"
+                    : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50"
                 }`}
               >
                 But how could I choose? I love them both!
