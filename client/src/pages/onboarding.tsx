@@ -475,19 +475,23 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between mt-4 px-1">
+            <div className="mt-5 space-y-2.5">
               <button
                 onClick={() => setVote("both")}
-                className={`text-[13px] font-semibold transition-colors ${
-                  vote === "both" ? "text-purple-700 underline underline-offset-4" : "text-purple-600 hover:text-purple-800"
+                className={`w-full rounded-xl border px-4 py-3 text-[13px] font-semibold transition-colors ${
+                  vote === "both"
+                    ? "border-purple-500 bg-purple-50 text-purple-700"
+                    : "border-purple-100 bg-white text-purple-600 hover:border-purple-300 hover:bg-purple-50/50"
                 }`}
               >
                 But how could I choose!?
               </button>
               <button
                 onClick={() => setVote(null)}
-                className={`text-[13px] font-medium transition-colors ${
-                  vote === null ? "text-gray-700 underline underline-offset-4" : "text-gray-400 hover:text-gray-600"
+                className={`w-full rounded-xl border px-4 py-3 text-[13px] font-medium transition-colors ${
+                  vote === null
+                    ? "border-gray-300 bg-gray-50 text-gray-700"
+                    : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50"
                 }`}
               >
                 Neither / Haven't seen
