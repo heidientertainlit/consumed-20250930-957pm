@@ -555,12 +555,10 @@ export default function OnboardingPage() {
         <ProgressBar current={1} />
         <div className="flex-1 flex flex-col px-5 pt-6 pb-8">
           <h1 className="text-center text-[22px] leading-[1.25] font-black" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Every title you add shapes
-            <br />
-            your Entertainment DNA
+            Pick titles you’ve loved.
           </h1>
           <p className="text-center text-[13px] text-white/60 mt-2">
-            Tap everything you've loved.
+            Choose at least 3. The more you pick, the better we’ll understand your taste.
           </p>
 
           <div className="flex flex-col items-center mt-5">
@@ -580,14 +578,13 @@ export default function OnboardingPage() {
               })}
             </div>
             <p className="text-sm font-bold text-white/80 mt-2.5">
-              {Math.min(loved.length, 10)} / 10
+              {Math.min(loved.length, 10)} / 10 selected
+              {loved.length >= 3 && <span className="text-purple-300"> ✓</span>}
             </p>
             <p className="text-[12px] text-white/55 mt-1">
               {loved.length < 3
-                ? `Pick at least ${3 - loved.length} more to continue`
-                : loved.length < 10
-                  ? `${10 - loved.length} more to unlock your Entertainment DNA`
-                  : "You've started to unlock your Entertainment DNA"}
+                ? "Every pick shapes your Entertainment DNA."
+                : "Keep going to make your Entertainment DNA even better."}
             </p>
           </div>
 
