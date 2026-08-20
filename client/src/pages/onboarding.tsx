@@ -268,7 +268,10 @@ export default function OnboardingPage() {
   };
 
   const addLoved = (title: string) => {
-    if (loved.includes(title)) return;
+    if (loved.includes(title)) {
+      setLoved((titles) => titles.filter((selectedTitle) => selectedTitle !== title));
+      return;
+    }
     const newCount = loved.length + 1;
     setLoved((l) => [...l, title]);
     // Cards stay in place with an "Added" badge — no layout shift.
@@ -607,7 +610,7 @@ export default function OnboardingPage() {
                         <button
                           key={item.title}
                           onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => !added && addLoved(item.title)}
+                          onClick={() => addLoved(item.title)}
                           className="relative rounded-xl overflow-hidden border transition-all active:scale-95 flex-shrink-0"
                           style={{
                             width: 104,
