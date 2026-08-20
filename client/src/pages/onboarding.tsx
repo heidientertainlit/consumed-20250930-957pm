@@ -484,7 +484,7 @@ export default function OnboardingPage() {
                     : "border-purple-100 bg-white text-purple-600 hover:border-purple-300 hover:bg-purple-50/50"
                 }`}
               >
-                But how could I choose!?
+                But how could I choose? I love them both!
               </button>
               <button
                 onClick={() => setVote(null)}
