@@ -500,9 +500,7 @@ export default function OnboardingPage() {
                 className="text-[26px] leading-[1.15] font-black text-gray-900 mt-1.5"
                 style={{ fontFamily: "Poppins, sans-serif" }}
               >
-                What do you love
-                <br />
-                talking about?
+                What are you into?
               </h2>
               <p className="text-[13px] text-gray-400 mt-2">
                 Follow the conversations for your favorite topics — pick as many as you like.
