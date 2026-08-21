@@ -576,7 +576,7 @@ export default function OnboardingPage() {
             </div>
 
             <div className="mt-10">
-              <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600">STEP TWO</p>
+              <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600">STEP TWO: WHAT ARE YOU INTO</p>
               <h2
                 className="text-[26px] leading-[1.15] font-black text-gray-900 mt-1.5"
                 style={{ fontFamily: "Poppins, sans-serif" }}
@@ -610,7 +610,7 @@ export default function OnboardingPage() {
               </div>
 
               <div className="mt-7">
-                <h3 className="text-[19px] leading-[1.2] font-black text-gray-900" style={{ fontFamily: "Poppins, sans-serif" }}>
+                <h3 className="text-[26px] leading-[1.15] font-black text-gray-900" style={{ fontFamily: "Poppins, sans-serif" }}>
                   And what pulls you in?
                 </h3>
                 <p className="text-[13px] text-gray-400 mt-2">
