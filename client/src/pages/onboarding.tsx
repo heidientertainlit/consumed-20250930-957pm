@@ -709,29 +709,28 @@ export default function OnboardingPage() {
   };
 
   const ONBOARDING_PROGRESS = [
-    { percent: 18, context: "Step 1 of 5 — Let’s get to know you" },
-    { percent: 42, context: "Step 2 of 5 — Your taste is taking shape" },
-    { percent: 60, context: "Step 3 of 5 — Your favorites are taking shape" },
+    { context: "Step 1 of 5 — Let’s get to know you" },
+    { context: "Step 2 of 5 — Your taste is taking shape" },
+    { context: "Step 3 of 5 — Your favorites are taking shape" },
   ];
 
   const ProgressBar = ({ current }: { current: number }) => {
     const progress = ONBOARDING_PROGRESS[current];
     return (
-      <div className="pt-16">
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-2 rounded-full overflow-hidden bg-white/15">
-            <div
-              className="h-full rounded-full transition-all duration-500"
+      <div className="mt-5 flex flex-col items-center">
+        <p className="text-[13px] text-white/55">{progress.context}</p>
+        <div className="flex items-center gap-2 mt-3" aria-label={`Onboarding ${progress.context}`}>
+          {[0, 1, 2, 3, 4].map((index) => (
+            <span
+              key={index}
+              className="h-2 w-2 rounded-full transition-all"
               style={{
-                width: `${progress.percent}%`,
-                background: "linear-gradient(90deg, #c084fc, #e879f9)",
-                boxShadow: "0 0 10px rgba(232,121,249,0.55)",
+                background: index <= current ? "#e879f9" : "rgba(255,255,255,0.2)",
+                boxShadow: index <= current ? "0 0 8px rgba(232,121,249,0.65)" : "none",
               }}
             />
-          </div>
-          <span className="text-sm font-semibold text-white shrink-0">{progress.percent}% complete</span>
+          ))}
         </div>
-        <p className="text-[13px] text-white/55 mt-3">{progress.context}</p>
       </div>
     );
   };
@@ -776,9 +775,8 @@ export default function OnboardingPage() {
             >
               Skip
             </button>
-            <ProgressBar current={0} />
             <h1
-              className="text-center text-[26px] leading-[1.2] font-black mt-6"
+              className="text-center text-[26px] leading-[1.2] font-black pt-16"
               style={{ fontFamily: "Poppins, sans-serif" }}
             >
               Help us determine your entertainment DNA
@@ -786,6 +784,7 @@ export default function OnboardingPage() {
             <p className="text-center text-[14px] italic text-white/70 mt-3">
               A quick first question
             </p>
+            <ProgressBar current={0} />
           </div>
 
           {/* White body */}
@@ -880,13 +879,13 @@ export default function OnboardingPage() {
             >
               Skip
             </button>
-            <ProgressBar current={1} />
-            <h1 className="text-center text-[26px] leading-[1.2] font-black mt-6" style={{ fontFamily: "Poppins, sans-serif" }}>
+            <h1 className="text-center text-[26px] leading-[1.2] font-black pt-16" style={{ fontFamily: "Poppins, sans-serif" }}>
               Help us determine your entertainment DNA
             </h1>
             <p className="text-center text-[14px] italic text-white/70 mt-3">
               Tell us what keeps you coming back
             </p>
+            <ProgressBar current={1} />
           </div>
 
           <div className="flex-1 flex flex-col px-6 pt-8 pb-10">
@@ -978,7 +977,6 @@ export default function OnboardingPage() {
         >
           Back
         </button>
-        <ProgressBar current={2} />
         <div className="flex-1 flex flex-col px-5 pt-6 pb-8">
           <h1 className="text-center text-[22px] leading-[1.25] font-black" style={{ fontFamily: "Poppins, sans-serif" }}>
             Pick titles you’ve loved.
@@ -986,6 +984,7 @@ export default function OnboardingPage() {
           <p className="text-center text-[13px] text-white/60 mt-2">
             Choose at least 3. The more you pick, the better we’ll understand your taste.
           </p>
+          <ProgressBar current={2} />
 
           <div className="flex flex-col items-center mt-5">
             <div className="flex items-center gap-2">
@@ -1143,7 +1142,7 @@ export default function OnboardingPage() {
   const titlesShapingDNA = existingTitles.length > 0 ? existingTitles : loved;
   const driversQuestion = questionByOrder(5);
 
-  const dnaHeader = (progress: number, stepLabel: string, onBack?: () => void) => (
+  const dnaHeader = (currentStep: number, stepLabel: string, onBack?: () => void) => (
     <div
       className="px-5 pt-5 pb-6 text-white"
       style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}
@@ -1169,18 +1168,19 @@ export default function OnboardingPage() {
           </h1>
         </div>
       </div>
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-2 rounded-full bg-white/15 overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${progress}%`, background: "linear-gradient(90deg, #a78bfa, #e879f9)" }}
+      <p className="text-white/50 text-xs">{stepLabel}</p>
+      <div className="flex items-center gap-2 mt-3" aria-label={stepLabel}>
+        {[1, 2, 3, 4, 5].map((stepNumber) => (
+          <span
+            key={stepNumber}
+            className="h-2 w-2 rounded-full transition-all"
+            style={{
+              background: stepNumber <= currentStep ? "#e879f9" : "rgba(255,255,255,0.2)",
+              boxShadow: stepNumber <= currentStep ? "0 0 8px rgba(232,121,249,0.65)" : "none",
+            }}
           />
-        </div>
-        <span className="text-sm text-purple-200 font-medium shrink-0">
-          <span className="text-white font-semibold">{progress}%</span> complete
-        </span>
+        ))}
       </div>
-      <p className="text-white/50 text-xs mt-2">{stepLabel}</p>
     </div>
   );
 
@@ -1218,7 +1218,7 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
-          {dnaHeader(72, "Step 4 of 5 — Your taste is becoming clearer", () => {
+          {dnaHeader(4, "Step 4 of 5 — Your taste is becoming clearer", () => {
             if (resumeDNA) finish("/activity");
             else setStep("loved");
           })}
@@ -1285,7 +1285,7 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
-          {dnaHeader(90, "Step 5 of 5 — Almost ready", () => setStep("love"))}
+          {dnaHeader(5, "Step 5 of 5 — Almost ready", () => setStep("love"))}
           <div className="flex-1 px-5 pt-6 pb-4 bg-white">
             <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">LAST QUESTION — ALMOST DONE</p>
             <h2 className="text-[22px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
