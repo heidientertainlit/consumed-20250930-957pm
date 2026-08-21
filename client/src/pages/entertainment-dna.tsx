@@ -348,7 +348,7 @@ export default function EntertainmentDNAPage() {
   // At least one selected room must map to a survey genre (Sports maps to none),
   // so the required genres answer is always written on submit.
   const hasMappableRoom = GENRE_ROOMS.some((r) => selectedRooms.includes(r.id) && r.genre);
-  // Onboarding already asked "What else are you into?" — if they picked
+  // Onboarding already asked "What’s in your rotation?" — if they picked
   // mappable rooms there, don't ask again; their follows still write the genre answer.
   const roomsAnsweredInOnboarding = GENRE_ROOMS.some((r) => initialFollows.has(r.id) && r.genre);
 

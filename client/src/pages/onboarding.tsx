@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { Check, ChevronRight, Sparkles, Dna, Search, Tv, Heart, Zap, Clapperboard, Wand2, Smile, Trophy, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, BookOpen, Leaf, Mic, Music } from "lucide-react";
+import { Check, ChevronRight, Sparkles, Dna, Search, Tv, Heart, Zap, Clapperboard, Wand2, Smile, Trophy, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, BookOpen, Leaf, Mic, Music, Gamepad2, Youtube } from "lucide-react";
 import { markOnboardingComplete } from "@/components/route-guards";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
@@ -19,7 +19,17 @@ const debate = {
 };
 
 // All titles below were verified via the media-search edge function (real ids + posters).
-const lovedRows: { label: string; items: { title: string; externalId: string; source: string; poster: string }[] }[] = [
+const lovedRows: {
+  label: string;
+  items: {
+    title: string;
+    externalId: string;
+    source: string;
+    poster: string;
+    mediaSubtype?: string;
+    creator?: string;
+  }[];
+}[] = [
   {
     label: "Movies",
     items: [
@@ -112,6 +122,27 @@ const lovedRows: { label: string; items: { title: string; externalId: string; so
       { title: "eternal sunshine", externalId: "1800579959", source: "itunes", poster: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/14/2a/2d/142a2d3e-fb3a-e818-8c7b-6eeb92990084/25UMGIM42095.rgb.jpg/600x600bb.jpg" },
     ],
   },
+  {
+    label: "Gaming",
+    items: [
+      { title: "Stardew Valley", externalId: "654", source: "rawg", poster: "https://media.rawg.io/media/games/713/713269608dc8f2f40f5a670a14b2de94.jpg" },
+      { title: "Baldur's Gate III", externalId: "324997", source: "rawg", poster: "https://media.rawg.io/media/games/699/69907ecf13f172e9e144069769c3be73.jpg" },
+      { title: "Animal Crossing: New Horizons", externalId: "421698", source: "rawg", poster: "https://media.rawg.io/media/games/42f/42fe1abd4d7c11ca92d93a0fb0f8662b.jpg" },
+      { title: "The Legend of Zelda: Breath of the Wild", externalId: "22511", source: "rawg", poster: "https://media.rawg.io/media/games/cc1/cc196a5ad763955d6532cdba236f730c.jpg" },
+      { title: "Fortnite Battle Royale", externalId: "47137", source: "rawg", poster: "https://media.rawg.io/media/games/dcb/dcbb67f371a9a28ea38ffd73ee0f53f3.jpg" },
+      { title: "The Sims 4", externalId: "42187", source: "rawg", poster: "https://media.rawg.io/media/games/e44/e445335e611b4ccf03af71fffcbd30a4.jpg" },
+    ],
+  },
+  {
+    label: "YouTube",
+    items: [
+      { title: "MrBeast", externalId: "UCX6OQ3DkcsbYNE6H8uQQuVA", source: "youtube", poster: "https://yt3.ggpht.com/nxYrc_1_2f77DoBadyxMTmv7ZpRZapHR5jbuYe7PlPd5cIRJxtNNEYyOC0ZsxaDyJJzXrnJiuDE=s800-c-k-c0x00ffffff-no-rj", mediaSubtype: "channel", creator: "MrBeast" },
+      { title: "Hot Ones", externalId: "UCPD_bxCRGpmmeQcbe2kpPaA", source: "youtube", poster: "https://yt3.ggpht.com/HFfZisaVh7x0A_ZxfEObPrpAyDPqsuIJD0P4zE23jNL65Pdn58ixh7GsDaJcGw5797VChzybXQ=s800-c-k-c0x00ffffff-no-rj", mediaSubtype: "channel", creator: "First We Feast" },
+      { title: "Dude Perfect", externalId: "UCRijo3ddMTht_IHyNSNXpNQ", source: "youtube", poster: "https://yt3.ggpht.com/nZRsCgyfOVFhBzY-YFV8AhdMcYAybNZ8uttjcsrUGOnGRSVF5yKqRh6XHIs_o03TcbixvlOZ=s800-c-k-c0x00ffffff-no-rj", mediaSubtype: "channel", creator: "Dude Perfect" },
+      { title: "Mark Rober", externalId: "UCY1kMZp36IQSyNx_9h4mpCg", source: "youtube", poster: "https://yt3.ggpht.com/ytc/AIdro_ksXY2REjZ6gYKSgnWT5jC_zT9mX900vyFtVinR8KbHww=s800-c-k-c0x00ffffff-no-rj", mediaSubtype: "channel", creator: "Mark Rober" },
+      { title: "Marques Brownlee", externalId: "UCBJycsmduvYEL83R_U4JriQ", source: "youtube", poster: "https://yt3.ggpht.com/qu4TmIaYUlS41-dJ9gZ7DUR3nilvmB5_11i6OKSdvNnBNiyOusZP1bMN6ICnuxtjFBb6ioKgRQ=s800-c-k-c0x00ffffff-no-rj", mediaSubtype: "channel", creator: "Marques Brownlee" },
+    ],
+  },
 ];
 
 const allLovedItems = lovedRows.flatMap((r) => r.items);
@@ -145,6 +176,8 @@ const mediaTypeOptions = [
   { id: "Books", name: "Books", Icon: BookOpen },
   { id: "Podcasts", name: "Podcasts", Icon: Mic },
   { id: "Music", name: "Music", Icon: Music },
+  { id: "Gaming", name: "Gaming", Icon: Gamepad2 },
+  { id: "YouTube", name: "YouTube", Icon: Youtube },
 ];
 
 
@@ -307,10 +340,13 @@ export default function OnboardingPage() {
         const picks = allLovedItems.filter((i) => loved.includes(i.title));
         const typeByLabel: Record<string, string> = {
           Movies: "movie", "TV Shows": "tv", Books: "book", Podcasts: "podcast", Music: "music",
+          Gaming: "game", YouTube: "youtube",
         };
         const typeByTitle: Record<string, string> = {};
         for (const row of lovedRows)
-          for (const it of row.items) typeByTitle[it.title] = typeByLabel[row.label] || "movie";
+          for (const it of row.items) {
+            typeByTitle[it.title] = typeByLabel[row.label] || "movie";
+          }
         await Promise.all(
           picks.map(async (p) => {
             const { error } = await supabase.from("media_ratings").upsert(
@@ -352,6 +388,8 @@ export default function OnboardingPage() {
                       media_external_id: p.externalId,
                       media_external_source: p.source,
                       media_image_url: p.poster,
+                      media_subtype: p.mediaSubtype,
+                      media_creator: p.creator,
                       rating: 5,
                       skip_social_post: true,
                     }),
@@ -363,6 +401,28 @@ export default function OnboardingPage() {
             } else {
               console.error("[onboarding track] no Finished list found");
             }
+
+            // As elsewhere in the app, adding a YouTube channel also follows
+            // that creator so their future activity can shape DNA and recommendations.
+            const youtubeChannels = picks.filter(
+              (p) => p.source === "youtube" && p.mediaSubtype === "channel" && /^UC[\w-]{22}$/.test(p.externalId),
+            );
+            await Promise.all(
+              youtubeChannels.map((channel) =>
+                fetch(`${SUPABASE_URL}/functions/v1/follow-creator`, {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    action: "follow",
+                    creatorName: channel.creator || channel.title,
+                    creatorRole: "YouTuber",
+                    creatorImage: channel.poster,
+                    externalId: channel.externalId,
+                    externalSource: "youtube",
+                  }),
+                }).catch(() => null),
+              ),
+            );
           } catch (e) {
             console.error("[onboarding track]", e);
           }
@@ -521,8 +581,11 @@ export default function OnboardingPage() {
                 className="text-[26px] leading-[1.15] font-black text-gray-900 mt-1.5"
                 style={{ fontFamily: "Poppins, sans-serif" }}
               >
-                What else are you into?
+                What’s in your rotation?
               </h2>
+              <p className="text-[13px] text-gray-400 mt-2">
+                Pick all the ways you like to unwind, obsess, and keep up.
+              </p>
               <div className="flex flex-wrap gap-2.5 mt-5">
                 {mediaTypeOptions.map((type) => {
                   const on = mediaTypes.includes(type.id);
@@ -663,6 +726,13 @@ export default function OnboardingPage() {
                           }}
                         >
                           <img src={item.poster} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+                          {(row.label === "Gaming" || row.label === "YouTube") && (
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-2 pt-7 pb-2 text-left">
+                              <span className="block text-[10px] leading-tight font-semibold text-white line-clamp-2">
+                                {item.title}
+                              </span>
+                            </div>
+                          )}
                           {added && (
                             <div className="absolute inset-0 pointer-events-none transition-opacity" style={{ background: "rgba(20,10,40,0.45)" }}>
                               <span
