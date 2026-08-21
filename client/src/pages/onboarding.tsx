@@ -471,7 +471,9 @@ export default function OnboardingPage() {
   const toggleDriver = (driver: string) =>
     setDrivers((current) => (current.includes(driver) ? current.filter((item) => item !== driver) : [...current, driver]));
   const titleRows = mediaTypes.length > 0
-    ? lovedRows.filter((row) => mediaTypes.includes(row.label))
+    ? [...lovedRows].sort(
+        (left, right) => Number(mediaTypes.includes(right.label)) - Number(mediaTypes.includes(left.label)),
+      )
     : lovedRows;
   const hasMappableRoom = rooms.some((roomId) => Boolean(ROOM_GENRES[roomId]));
 
