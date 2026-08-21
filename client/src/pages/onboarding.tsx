@@ -717,7 +717,7 @@ export default function OnboardingPage() {
   const ProgressBar = ({ current }: { current: number }) => {
     const progress = ONBOARDING_PROGRESS[current];
     return (
-      <div className="pt-6">
+      <div className="pt-16">
         <div className="flex items-center gap-3">
           <div className="flex-1 h-2 rounded-full overflow-hidden bg-white/15">
             <div
@@ -769,7 +769,7 @@ export default function OnboardingPage() {
       <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
           {/* Gradient hero header */}
-          <div className="relative text-white px-6 pb-8 bg-gradient-to-r from-slate-900 via-purple-900 to-indigo-900">
+          <div className="relative text-white px-6 pb-12 bg-gradient-to-r from-slate-950 via-purple-950 to-indigo-950">
             <button
               onClick={() => finish("/activity")}
               className="absolute top-5 right-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
@@ -855,11 +855,11 @@ export default function OnboardingPage() {
               </button>
             </div>
 
-            <div className="flex-1" />
+            <div className="min-h-6" />
             <button
               onClick={submitDebateStep}
               disabled={vote === undefined}
-              className="w-full py-3.5 rounded-full font-bold text-[15px] text-white mt-10 transition-all active:scale-95 disabled:opacity-40"
+              className="w-full py-3.5 rounded-full font-bold text-[15px] text-white mt-6 transition-all active:scale-95 disabled:opacity-40"
               style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
             >
               Continue
@@ -873,7 +873,7 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
-          <div className="relative text-white px-6 pb-8 bg-gradient-to-r from-slate-900 via-purple-900 to-indigo-900">
+          <div className="relative text-white px-6 pb-12 bg-gradient-to-r from-slate-950 via-purple-950 to-indigo-950">
             <button
               onClick={() => finish("/activity")}
               className="absolute top-5 right-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
