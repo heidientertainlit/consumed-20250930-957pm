@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { Check, ChevronRight, Sparkles, Dna, Search, Tv, Heart, Zap, Clapperboard, Wand2, Smile, Trophy, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, BookOpen, Leaf } from "lucide-react";
+import { Check, ChevronRight, Sparkles, Dna, Search, Tv, Heart, Zap, Clapperboard, Wand2, Smile, Trophy, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, BookOpen, Leaf, Mic, Music } from "lucide-react";
 import { markOnboardingComplete } from "@/components/route-guards";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
@@ -125,7 +125,7 @@ const roomOptions = [
   { id: "47182919-da7a-41bb-9688-50ec11561e53", name: "Rom-Com", Icon: Clapperboard },
   { id: "58841101-ce10-46d7-9241-f7d52a11f630", name: "Fantasy", Icon: Wand2 },
   { id: "b32722af-0a76-4df3-9fa2-a94a7e3046fb", name: "Comedy", Icon: Smile },
-  { id: "3e0a4b3d-e211-44c7-9633-4a6a5a9206de", name: "Sports", Icon: Trophy },
+  { id: "3e0a4b3d-e211-44c7-9633-4a6a5a9206de", name: "Sports Talk & Docs", Icon: Trophy },
   { id: "6ce32c55-b1ab-42ce-8e5c-6cf530e3e58b", name: "Horror", Icon: Skull },
   { id: "0ab28a57-065e-4d7a-8bd2-09af8c3be7d9", name: "Mystery", Icon: HelpCircle },
   { id: "cdd6dffe-70d2-45af-80b1-55e1f30ae6a5", name: "Period Drama", Icon: Crown },
@@ -137,6 +137,14 @@ const roomOptions = [
   { id: "dd89be31-9f46-47b9-848d-7519be038176", name: "Lifestyle", Icon: Home },
   { id: "4792cc12-15c9-4ea3-bf50-19abfbab49de", name: "Nonfiction", Icon: BookOpen },
   { id: "e227edc9-bcb1-4828-8360-374a9792a636", name: "Self Help", Icon: Leaf },
+];
+
+const mediaTypeOptions = [
+  { id: "Movies", name: "Movies", Icon: Clapperboard },
+  { id: "TV Shows", name: "TV Shows", Icon: Tv },
+  { id: "Books", name: "Books", Icon: BookOpen },
+  { id: "Podcasts", name: "Podcasts", Icon: Mic },
+  { id: "Music", name: "Music", Icon: Music },
 ];
 
 
@@ -221,6 +229,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>("debate");
   const [vote, setVote] = useState<string | null | undefined>(undefined);
   const [rooms, setRooms] = useState<string[]>([]);
+  const [mediaTypes, setMediaTypes] = useState<string[]>([]);
   const [loved, setLoved] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [showTenPrompt, setShowTenPrompt] = useState(false);
@@ -242,6 +251,11 @@ export default function OnboardingPage() {
 
   const toggleRoom = (id: string) =>
     setRooms((r) => (r.includes(id) ? r.filter((x) => x !== id) : [...r, id]));
+  const toggleMediaType = (id: string) =>
+    setMediaTypes((types) => (types.includes(id) ? types.filter((type) => type !== id) : [...types, id]));
+  const titleRows = mediaTypes.length > 0
+    ? lovedRows.filter((row) => mediaTypes.includes(row.label))
+    : lovedRows;
 
   const submitDebateStep = () => {
     setStep("loved");
@@ -509,10 +523,38 @@ export default function OnboardingPage() {
               >
                 What else are you into?
               </h2>
-              <p className="text-[13px] text-gray-400 mt-2">
-                Follow the conversations for your favorite topics — pick as many as you like.
-              </p>
               <div className="flex flex-wrap gap-2.5 mt-5">
+                {mediaTypeOptions.map((type) => {
+                  const on = mediaTypes.includes(type.id);
+                  const Icon = type.Icon;
+                  return (
+                    <button
+                      key={type.id}
+                      onClick={() => toggleMediaType(type.id)}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold border transition-all active:scale-95"
+                      style={{
+                        borderColor: on ? "#7c3aed" : "rgb(229,231,235)",
+                        background: on ? "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)" : "white",
+                        color: on ? "white" : "rgb(55,65,81)",
+                        boxShadow: on ? "0 4px 14px rgba(124,58,237,0.3)" : "none",
+                      }}
+                    >
+                      <Icon size={15} className={on ? "text-white" : "text-purple-600"} />
+                      {type.name}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-7">
+                <h3 className="text-[19px] leading-[1.2] font-black text-gray-900" style={{ fontFamily: "Poppins, sans-serif" }}>
+                  And what pulls you in?
+                </h3>
+                <p className="text-[13px] text-gray-400 mt-2">
+                  Follow the conversations for your favorite topics — pick as many as you like.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2.5 mt-4">
                 {roomOptions.map((room) => {
                   const on = rooms.includes(room.id);
                   const Icon = room.Icon;
@@ -592,7 +634,7 @@ export default function OnboardingPage() {
           </div>
 
           <div className="mt-5 space-y-4">
-            {lovedRows.map((row) => {
+            {titleRows.map((row) => {
               const visible = row.items;
               return (
                 <div key={row.label}>
