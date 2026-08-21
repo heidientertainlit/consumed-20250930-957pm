@@ -458,7 +458,7 @@ export default function OnboardingPage() {
         ))}
       </div>
       <p className="text-[11px] tracking-[0.2em] text-white/45 font-semibold mt-3">
-        {current + 1} OF 2
+        PART {current + 1} OF 2
       </p>
     </div>
   );
@@ -504,7 +504,7 @@ export default function OnboardingPage() {
               Help us determine your entertainment DNA
             </h1>
             <p className="text-center text-[14px] italic text-white/70 mt-3">
-              Answer these two quick questions
+              Answer these three quick questions
             </p>
           </div>
 
@@ -576,7 +576,7 @@ export default function OnboardingPage() {
             </div>
 
             <div className="mt-10">
-              <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600">STEP TWO: WHAT ARE YOU INTO</p>
+              <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600">STEP TWO</p>
               <h2
                 className="text-[26px] leading-[1.15] font-black text-gray-900 mt-1.5"
                 style={{ fontFamily: "Poppins, sans-serif" }}
@@ -609,8 +609,9 @@ export default function OnboardingPage() {
                 })}
               </div>
 
-              <div className="mt-7">
-                <h3 className="text-[26px] leading-[1.15] font-black text-gray-900" style={{ fontFamily: "Poppins, sans-serif" }}>
+              <div className="mt-8">
+                <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600">STEP THREE</p>
+                <h3 className="text-[26px] leading-[1.15] font-black text-gray-900 mt-1.5" style={{ fontFamily: "Poppins, sans-serif" }}>
                   And what pulls you in?
                 </h3>
                 <p className="text-[13px] text-gray-400 mt-2">
