@@ -714,18 +714,19 @@ export default function OnboardingPage() {
     { context: "Step 3 of 5 — Your favorites are taking shape" },
   ];
 
-  const ProgressBar = ({ current }: { current: number }) => {
+  const ProgressBar = ({ current, tone = "dark" }: { current: number; tone?: "dark" | "light" }) => {
     const progress = ONBOARDING_PROGRESS[current];
+    const light = tone === "light";
     return (
-      <div className="mt-5 flex flex-col items-center">
-        <p className="text-[13px] text-white/55">{progress.context}</p>
+      <div className="flex flex-col items-center">
+        <p className={light ? "text-[13px] text-gray-500" : "text-[13px] text-white/55"}>{progress.context}</p>
         <div className="flex items-center gap-2 mt-3" aria-label={`Onboarding ${progress.context}`}>
           {[0, 1, 2, 3, 4].map((index) => (
             <span
               key={index}
               className="h-2 w-2 rounded-full transition-all"
               style={{
-                background: index <= current ? "#e879f9" : "rgba(255,255,255,0.2)",
+                background: index <= current ? "#c026d3" : light ? "#e5e7eb" : "rgba(255,255,255,0.2)",
                 boxShadow: index <= current ? "0 0 8px rgba(232,121,249,0.65)" : "none",
               }}
             />
@@ -768,7 +769,7 @@ export default function OnboardingPage() {
       <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
           {/* Gradient hero header */}
-          <div className="relative text-white px-6 pb-12 bg-gradient-to-r from-slate-950 via-purple-950 to-indigo-950">
+          <div className="relative text-white px-6 pb-10 bg-gradient-to-r from-slate-950 via-purple-950 to-indigo-950">
             <button
               onClick={() => finish("/activity")}
               className="absolute top-5 right-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
@@ -784,7 +785,9 @@ export default function OnboardingPage() {
             <p className="text-center text-[14px] italic text-white/70 mt-3">
               A quick first question
             </p>
-            <ProgressBar current={0} />
+          </div>
+          <div className="px-6 py-4 bg-[#fbfaff] border-b border-purple-100">
+            <ProgressBar current={0} tone="light" />
           </div>
 
           {/* White body */}
@@ -872,7 +875,7 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
-          <div className="relative text-white px-6 pb-12 bg-gradient-to-r from-slate-950 via-purple-950 to-indigo-950">
+          <div className="relative text-white px-6 pb-10 bg-gradient-to-r from-slate-950 via-purple-950 to-indigo-950">
             <button
               onClick={() => finish("/activity")}
               className="absolute top-5 right-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
@@ -885,7 +888,9 @@ export default function OnboardingPage() {
             <p className="text-center text-[14px] italic text-white/70 mt-3">
               Tell us what keeps you coming back
             </p>
-            <ProgressBar current={1} />
+          </div>
+          <div className="px-6 py-4 bg-[#fbfaff] border-b border-purple-100">
+            <ProgressBar current={1} tone="light" />
           </div>
 
           <div className="flex-1 flex flex-col px-6 pt-8 pb-10">
