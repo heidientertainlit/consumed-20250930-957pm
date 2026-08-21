@@ -620,22 +620,19 @@ export default function OnboardingPage() {
               <div className="flex flex-wrap gap-2.5 mt-4">
                 {roomOptions.map((room) => {
                   const on = rooms.includes(room.id);
-                  const Icon = room.Icon;
                   return (
                     <button
                       key={room.id}
                       onClick={() => toggleRoom(room.id)}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold border transition-all active:scale-95"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all active:scale-95"
                       style={{
-                        borderColor: on ? "#7c3aed" : "rgb(229,231,235)",
-                        background: on
-                          ? "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)"
-                          : "white",
-                        color: on ? "white" : "rgb(55,65,81)",
-                        boxShadow: on ? "0 4px 14px rgba(124,58,237,0.3)" : "none",
+                        border: on ? "1px solid #ddd6fe" : "1px solid transparent",
+                        background: on ? "#f5f3ff" : "#f8fafc",
+                        color: on ? "#6d28d9" : "#4b5563",
+                        boxShadow: "none",
                       }}
                     >
-                      <Icon size={15} className={on ? "text-white" : "text-purple-600"} />
+                      {on && <Check size={12} strokeWidth={3} />}
                       {room.name}
                     </button>
                   );
