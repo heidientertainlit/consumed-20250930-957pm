@@ -708,26 +708,33 @@ export default function OnboardingPage() {
     }
   };
 
-  const ProgressBar = ({ current }: { current: number }) => (
-    <div className="pt-6 flex flex-col items-center">
-      <div className="flex items-center gap-2">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="h-1.5 rounded-full transition-all"
-            style={{
-              width: 56,
-              background: i <= current ? "#a855f7" : "rgba(255,255,255,0.14)",
-              boxShadow: i <= current ? "0 0 8px rgba(168,85,247,0.7)" : "none",
-            }}
-          />
-        ))}
+  const ONBOARDING_PROGRESS = [
+    { percent: 18, context: "Step 1 of 5 — Let’s get to know you" },
+    { percent: 42, context: "Step 2 of 5 — Your taste is taking shape" },
+    { percent: 60, context: "Step 3 of 5 — Your favorites are taking shape" },
+  ];
+
+  const ProgressBar = ({ current }: { current: number }) => {
+    const progress = ONBOARDING_PROGRESS[current];
+    return (
+      <div className="pt-6">
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-2 rounded-full overflow-hidden bg-white/15">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${progress.percent}%`,
+                background: "linear-gradient(90deg, #c084fc, #e879f9)",
+                boxShadow: "0 0 10px rgba(232,121,249,0.55)",
+              }}
+            />
+          </div>
+          <span className="text-sm font-semibold text-white shrink-0">{progress.percent}% complete</span>
+        </div>
+        <p className="text-[13px] text-white/55 mt-3">{progress.context}</p>
       </div>
-      <p className="text-[11px] tracking-[0.2em] text-white/45 font-semibold mt-3">
-        PART {current + 1} OF 5
-      </p>
-    </div>
-  );
+    );
+  };
 
   const Shell = ({ children }: { children: React.ReactNode }) => (
     <div className="min-h-screen w-full flex items-stretch justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900">
@@ -965,6 +972,12 @@ export default function OnboardingPage() {
   if (step === "loved")
     return (
       <Shell>
+        <button
+          onClick={() => setStep("interests")}
+          className="absolute top-5 left-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
+        >
+          Back
+        </button>
         <ProgressBar current={2} />
         <div className="flex-1 flex flex-col px-5 pt-6 pb-8">
           <h1 className="text-center text-[22px] leading-[1.25] font-black" style={{ fontFamily: "Poppins, sans-serif" }}>
