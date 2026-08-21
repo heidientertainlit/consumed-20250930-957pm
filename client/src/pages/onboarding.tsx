@@ -709,7 +709,7 @@ export default function OnboardingPage() {
   };
 
   const ONBOARDING_PROGRESS = [
-    { context: "Step 1 of 5 — Let’s get to know you" },
+    { context: "Step 1 of 5" },
     { context: "Step 2 of 5 — Your taste is taking shape" },
     { context: "Step 3 of 5 — Your favorites are taking shape" },
   ];
@@ -783,7 +783,7 @@ export default function OnboardingPage() {
               Help us determine your entertainment DNA
             </h1>
             <p className="text-center text-[14px] italic text-white/70 mt-3">
-              A quick first question
+              Let’s get to know you
             </p>
           </div>
           <div className="px-6 py-4 bg-[#fbfaff] border-b border-purple-100">
