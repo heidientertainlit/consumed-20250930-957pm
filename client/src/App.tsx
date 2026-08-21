@@ -67,7 +67,6 @@ import EngagePage from "@/pages/engage";
 
 import LoginPage from "./pages/login";
 import ResetPasswordPage from "./pages/reset-password";
-import EntertainmentDNAPage from "./pages/entertainment-dna";
 import OnboardingPage from "./pages/onboarding";
 import NotFoundPage from "./pages/not-found";
 
@@ -247,12 +246,14 @@ function Router() {
           </Route>
 
           <Route path="/onboarding">
-            <OnboardingPage />
+            <ProtectedRoute>
+              <OnboardingPage />
+            </ProtectedRoute>
           </Route>
 
           <Route path="/entertainment-dna">
             <ProtectedRoute>
-              <EntertainmentDNAPage />
+              <RedirectTo to="/onboarding?resume=dna" />
             </ProtectedRoute>
           </Route>
 

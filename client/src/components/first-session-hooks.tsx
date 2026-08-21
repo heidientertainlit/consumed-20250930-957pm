@@ -93,7 +93,7 @@ export function FirstSessionHooks({ onComplete }: FirstSessionHooksProps) {
         <button
           onClick={() => {
             setHookStatus(prev => ({ ...prev, dna: true }));
-            setLocation('/entertainment-dna');
+            setLocation('/onboarding?resume=dna');
           }}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
             hookStatus.dna

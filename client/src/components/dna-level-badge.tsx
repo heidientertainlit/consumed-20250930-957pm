@@ -133,7 +133,7 @@ export function DNAFeatureLock({ requiredLevel, currentLevel, currentItemCount, 
       <h4 className="font-semibold text-gray-700 mb-1">{featureName}</h4>
       {!hasSurvey ? (
         <p className="text-sm text-gray-500">
-          Complete the DNA survey to unlock
+          Complete your Entertainment DNA to unlock
         </p>
       ) : (
         <p className="text-sm text-gray-500">

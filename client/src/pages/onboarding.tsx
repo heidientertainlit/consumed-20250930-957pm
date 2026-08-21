@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { Check, ChevronRight, Sparkles, Dna, Search, Tv, Heart, Zap, Clapperboard, Wand2, Smile, Trophy, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, BookOpen, Leaf, Mic, Music, Gamepad2, Youtube } from "lucide-react";
+import { ArrowRight, Check, ChevronRight, CircleUser, Dna, Eye, Feather, Gamepad2, Heart, HeartHandshake, HelpCircle, Home, Leaf, Loader2, Mic, Music, Palette, Plane, Rocket, Search, Sparkles, Trophy, Tv, Users, Video, Wand2, Youtube, Zap, Clapperboard, Smile, Skull, Crown, Drama, BookOpen } from "lucide-react";
 import { markOnboardingComplete } from "@/components/route-guards";
+import { useFirstSessionHooks } from "@/components/first-session-hooks";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 
@@ -180,6 +181,68 @@ const mediaTypeOptions = [
   { id: "YouTube", name: "YouTube", Icon: Youtube },
 ];
 
+const FORMAT_FROM_MEDIA_TYPE: Record<string, string> = {
+  movie: "Movies",
+  tv: "TV Shows",
+  book: "Books",
+  podcast: "Podcasts",
+  music: "Music",
+  game: "Gaming",
+  youtube: "YouTube",
+};
+
+const TITLE_CONTEXT_LABEL = "Titles already shaping my DNA:";
+const stripTitleContext = (answer: string) =>
+  answer.replace(new RegExp(`(?:\\n\\n)?${TITLE_CONTEXT_LABEL}[\\s\\S]*$`), "").trim();
+const addTitleContext = (answer: string, titles: string[]) => {
+  const note = stripTitleContext(answer);
+  if (titles.length === 0) return note;
+  return [note, `${TITLE_CONTEXT_LABEL} ${titles.join(", ")}`].filter(Boolean).join("\n\n");
+};
+
+const ROOM_GENRES: Record<string, string | undefined> = {
+  "eb529882-4a66-496d-97f2-bf9981692968": "True Crime",
+  "c73774e0-c54c-44ed-8b14-ae0e3b076ddc": "Reality",
+  "a776d7dd-8206-4381-b847-17ff6f1e0d67": "Romance",
+  "9e424f35-cd99-43ff-b695-d0ae89747b5a": "Action",
+  "47182919-da7a-41bb-9688-50ec11561e53": "Rom-com/chick-lit",
+  "58841101-ce10-46d7-9241-f7d52a11f630": "Fantasy",
+  "b32722af-0a76-4df3-9fa2-a94a7e3046fb": "Comedy",
+  "3e0a4b3d-e211-44c7-9633-4a6a5a9206de": undefined,
+  "6ce32c55-b1ab-42ce-8e5c-6cf530e3e58b": "Horror",
+  "0ab28a57-065e-4d7a-8bd2-09af8c3be7d9": "Mystery/Thriller",
+  "cdd6dffe-70d2-45af-80b1-55e1f30ae6a5": "Historical",
+  "58db44eb-d82d-4173-85d9-c4c4e288d77b": "Science Fiction",
+  "41c7f7bb-faeb-4780-956e-f77f7f4adf64": "Documentaries",
+  "d7db8196-b5df-4354-944f-44c0b9857780": "Animation",
+  "f7f22b7c-2e3b-470e-ac60-d4ee9601b16b": "Drama",
+  "51432489-35b9-468a-a0fb-7648a7d588e3": "Romance",
+  "dd89be31-9f46-47b9-848d-7519be038176": "Lifestyle (Home Reno, Food, Travel)",
+  "4792cc12-15c9-4ea3-bf50-19abfbab49de": "Nonfiction",
+  "e227edc9-bcb1-4828-8360-374a9792a636": "Self Help",
+};
+
+const DRIVER_ICONS: { match: string; Icon: typeof Tv }[] = [
+  { match: "feel something", Icon: Heart },
+  { match: "escape", Icon: Plane },
+  { match: "connect over", Icon: Users },
+  { match: "visuals", Icon: Eye },
+  { match: "unwind", Icon: Leaf },
+  { match: "figure things out", Icon: Search },
+  { match: "curious about people", Icon: CircleUser },
+  { match: "fun or action", Icon: Zap },
+  { match: "depends on the day", Icon: Sparkles },
+];
+
+const driverIcon = (option: string) =>
+  DRIVER_ICONS.find((driver) => option.toLowerCase().includes(driver.match))?.Icon;
+
+interface SurveyQuestion {
+  id: string;
+  display_order: number;
+  options?: string[];
+}
+
 
 // Genre tags for each curated title — used to show "forming" genres on the reveal screen.
 const TITLE_GENRES: Record<string, string[]> = {
@@ -254,17 +317,36 @@ const TITLE_GENRES: Record<string, string[]> = {
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
-type Step = "debate" | "loved" | "reveal";
+type Step = "debate" | "interests" | "loved" | "love" | "drivers" | "generating" | "reveal";
 
 export default function OnboardingPage() {
   const [, setLocation] = useLocation();
-  const { user, loading: authLoading } = useAuth();
-  const [step, setStep] = useState<Step>("debate");
+  const { user, session, loading: authLoading } = useAuth();
+  const { markDNA } = useFirstSessionHooks();
+  const resumeDNA = useRef(new URLSearchParams(window.location.search).get("resume") === "dna").current;
+  const [step, setStep] = useState<Step>(() => (resumeDNA ? "love" : "debate"));
   const [vote, setVote] = useState<string | null | undefined>(undefined);
   const [rooms, setRooms] = useState<string[]>([]);
   const [mediaTypes, setMediaTypes] = useState<string[]>([]);
   const [loved, setLoved] = useState<string[]>([]);
+  const [existingTitles, setExistingTitles] = useState<string[]>([]);
+  const [loveNote, setLoveNote] = useState("");
+  const [drivers, setDrivers] = useState<string[]>([]);
+  const [surveyQuestions, setSurveyQuestions] = useState<SurveyQuestion[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
+  const [questionLoadError, setQuestionLoadError] = useState<string | null>(null);
+  const [questionReloadKey, setQuestionReloadKey] = useState(0);
+  const [resumePrefillLoading, setResumePrefillLoading] = useState(resumeDNA);
   const [saving, setSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(74);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [generatedProfile, setGeneratedProfile] = useState<{
+    label?: string;
+    tagline?: string;
+    flavor_notes?: string[];
+    profile_text?: string;
+  } | null>(null);
   const [showTenPrompt, setShowTenPrompt] = useState(false);
   const [tenPromptShown, setTenPromptShown] = useState(false);
   const pendingSaves = useRef<Promise<void> | null>(null);
@@ -272,7 +354,7 @@ export default function OnboardingPage() {
   const finish = async (route: string) => {
     markOnboardingComplete(user?.id);
     // Ensure background onboarding writes (ratings, list adds) land before the
-    // next page fetches them — e.g. the DNA survey prefill is one-shot.
+    // next page fetches them — e.g. the DNA completion prefill is one-shot.
     if (pendingSaves.current) {
       await Promise.race([
         pendingSaves.current,
@@ -282,16 +364,119 @@ export default function OnboardingPage() {
     setLocation(route);
   };
 
+  useEffect(() => {
+    if (!session?.access_token) return;
+    let cancelled = false;
+
+    const loadQuestions = async () => {
+      setQuestionsLoading(true);
+      setQuestionLoadError(null);
+      const { data, error } = await supabase
+        .from("edna_questions")
+        .select("id, display_order, options")
+        .in("display_order", [2, 3, 4, 5])
+        .order("display_order", { ascending: true });
+      if (!cancelled) {
+        if (error) {
+          console.error("[onboarding DNA questions]", error);
+          setQuestionLoadError("We couldn't load your DNA questions. Please try again.");
+          setSurveyQuestions([]);
+          setResumePrefillLoading(false);
+        } else {
+          if (resumeDNA) setResumePrefillLoading(true);
+          setSurveyQuestions((data || []) as SurveyQuestion[]);
+        }
+        setQuestionsLoading(false);
+      }
+    };
+
+    loadQuestions();
+    return () => { cancelled = true; };
+  }, [questionReloadKey, resumeDNA, session?.access_token]);
+
+  useEffect(() => {
+    if (!resumeDNA || !user?.id || surveyQuestions.length === 0) return;
+    let cancelled = false;
+
+    const prefillCompletion = async () => {
+      const [responsesResult, ratingsResult, followsResult] = await Promise.all([
+        supabase.from("edna_responses").select("question_id, answer_text").eq("user_id", user.id),
+        supabase.from("media_ratings").select("media_title, media_type").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
+        supabase.from("room_follows").select("room_id").eq("user_id", user.id),
+      ]);
+      if (cancelled) return;
+
+      if (ratingsResult.error) console.error("[onboarding DNA titles]", ratingsResult.error);
+      const ratings = (ratingsResult.data || []) as { media_title: string; media_type: string }[];
+      const ratedTitles = Array.from(new Set(ratings.map((row) => row.media_title).filter(Boolean))).slice(0, 12);
+      const ratedFormats = Array.from(new Set(
+        ratings
+          .map((row) => FORMAT_FROM_MEDIA_TYPE[(row.media_type || "").toLowerCase()])
+          .filter((format): format is string => Boolean(format)),
+      ));
+      setExistingTitles(ratedTitles);
+
+      const answersByQuestion = new Map(
+        (responsesResult.data || []).map((row: { question_id: string; answer_text: string }) => [row.question_id, row.answer_text || ""]),
+      );
+      const questionFor = (order: number) => surveyQuestions.find((question) => question.display_order === order);
+      const typesQuestion = questionFor(2);
+      const loveQuestion = questionFor(4);
+      const driversQuestion = questionFor(5);
+
+      let selectedFormats = ratedFormats;
+      if (typesQuestion) {
+        const answer = answersByQuestion.get(typesQuestion.id) || "";
+        const storedFormats = mediaTypeOptions
+          .map((option) => option.id)
+          .filter((option) => answer.includes(option));
+        if (storedFormats.length > 0) selectedFormats = storedFormats;
+      }
+      setMediaTypes(selectedFormats);
+      if (loveQuestion) setLoveNote(stripTitleContext(answersByQuestion.get(loveQuestion.id) || ""));
+      if (driversQuestion) {
+        const answer = answersByQuestion.get(driversQuestion.id) || "";
+        setDrivers((driversQuestion.options || []).filter((option) => answer.includes(option)));
+      }
+      const followedRooms = (followsResult.data || [])
+        .map((row: { room_id: string }) => row.room_id)
+        .filter((roomId) => roomId in ROOM_GENRES);
+      setRooms(followedRooms);
+      if (selectedFormats.length === 0 || !followedRooms.some((roomId) => Boolean(ROOM_GENRES[roomId]))) {
+        setStep("interests");
+      }
+    };
+
+    prefillCompletion()
+      .catch((error) => console.error("[onboarding DNA prefill]", error))
+      .finally(() => {
+        if (!cancelled) setResumePrefillLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [resumeDNA, surveyQuestions, user?.id]);
+
+  useEffect(() => {
+    if (!isGenerating) return;
+    setGenerationProgress(74);
+    const interval = window.setInterval(() => {
+      setGenerationProgress((progress) => Math.min(progress + 3, 96));
+    }, 900);
+    return () => window.clearInterval(interval);
+  }, [isGenerating]);
+
   const toggleRoom = (id: string) =>
     setRooms((r) => (r.includes(id) ? r.filter((x) => x !== id) : [...r, id]));
   const toggleMediaType = (id: string) =>
     setMediaTypes((types) => (types.includes(id) ? types.filter((type) => type !== id) : [...types, id]));
+  const toggleDriver = (driver: string) =>
+    setDrivers((current) => (current.includes(driver) ? current.filter((item) => item !== driver) : [...current, driver]));
   const titleRows = mediaTypes.length > 0
     ? lovedRows.filter((row) => mediaTypes.includes(row.label))
     : lovedRows;
+  const hasMappableRoom = rooms.some((roomId) => Boolean(ROOM_GENRES[roomId]));
 
   const submitDebateStep = () => {
-    setStep("loved");
+    setStep("interests");
     if (!user?.id) return;
     if (vote && vote !== "both") {
       // Same write path as every other poll — dedup handled by unique constraint,
@@ -303,15 +488,21 @@ export default function OnboardingPage() {
           if (error && error.code !== "23505") console.error("[onboarding vote]", error);
         });
     }
-    if (rooms.length > 0) {
-      // Real follows — same rows as tapping Follow inside a room.
-      supabase
-        .from("room_follows")
-        .insert(rooms.map((room_id) => ({ user_id: user.id, room_id })))
-        .then(({ error }) => {
-          if (error && error.code !== "23505") console.error("[onboarding room follow]", error);
-        });
-    }
+  };
+
+  const submitInterestsStep = () => {
+    setStep(resumeDNA ? "love" : "loved");
+    if (!user?.id || rooms.length === 0) return;
+    // Real follows — same rows as tapping Follow inside a room.
+    supabase
+      .from("room_follows")
+      .upsert(rooms.map((room_id) => ({ user_id: user.id, room_id })), {
+        onConflict: "user_id,room_id",
+        ignoreDuplicates: true,
+      })
+      .then(({ error }) => {
+        if (error && error.code !== "23505") console.error("[onboarding room follow]", error);
+      });
   };
 
   const addLoved = (title: string) => {
@@ -331,9 +522,10 @@ export default function OnboardingPage() {
   const submitLoved = async () => {
     if (saving) return;
     setSaving(true);
-    // Show the reveal immediately — persistence runs in the background,
+    setExistingTitles(loved);
+    // Continue immediately — persistence runs in the background,
     // tracked in pendingSaves so finish() can wait for it.
-    setStep("reveal");
+    setStep("love");
     pendingSaves.current = (async () => {
     try {
       if (user?.id && loved.length > 0) {
@@ -442,10 +634,82 @@ export default function OnboardingPage() {
     })();
   };
 
+  const questionByOrder = (order: number) =>
+    surveyQuestions.find((question) => question.display_order === order);
+
+  const generateDNA = async () => {
+    if (isGenerating || !user?.id || !session?.access_token || drivers.length === 0) return;
+    if (mediaTypes.length === 0 || !hasMappableRoom) {
+      setStep("interests");
+      return;
+    }
+    setGenerationError(null);
+    setIsGenerating(true);
+    setStep("generating");
+
+    try {
+      if (pendingSaves.current) await pendingSaves.current;
+
+      const formatsQuestion = questionByOrder(2);
+      const genresQuestion = questionByOrder(3);
+      const loveQuestion = questionByOrder(4);
+      const driversQuestion = questionByOrder(5);
+      if (!formatsQuestion || !genresQuestion || !loveQuestion || !driversQuestion) {
+        throw new Error("DNA questions could not be loaded. Please try again.");
+      }
+
+      const roomGenres = Array.from(new Set(
+        rooms.map((roomId) => ROOM_GENRES[roomId]).filter((genre): genre is string => Boolean(genre)),
+      ));
+      const titlesForDNA = existingTitles.length > 0 ? existingTitles : loved;
+      const responseRows = [
+        { user_id: user.id, question_id: formatsQuestion.id, answer_text: mediaTypes.join(", ") },
+        { user_id: user.id, question_id: genresQuestion.id, answer_text: roomGenres.join(", ") },
+        { user_id: user.id, question_id: loveQuestion.id, answer_text: addTitleContext(loveNote, titlesForDNA) },
+        { user_id: user.id, question_id: driversQuestion.id, answer_text: drivers.join(", ") },
+      ];
+
+      const { error: responseError } = await supabase
+        .from("edna_responses")
+        .upsert(responseRows, { onConflict: "user_id,question_id" });
+      if (responseError) throw responseError;
+
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-dna-profile`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+      if (!response.ok) {
+        const detail = await response.text().catch(() => "");
+        throw new Error(detail || "We couldn't generate your DNA profile. Please try again.");
+      }
+
+      const profile = await response.json();
+      setGeneratedProfile(profile);
+      setGenerationProgress(100);
+      markDNA();
+      markOnboardingComplete(user.id);
+      fetch(`${SUPABASE_URL}/functions/v1/generate-media-recommendations`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      }).catch(() => {});
+      setStep("reveal");
+    } catch (error) {
+      console.error("[onboarding DNA generation]", error);
+      setGenerationError(error instanceof Error ? error.message : "We couldn't generate your DNA profile. Please try again.");
+      setStep("drivers");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const ProgressBar = ({ current }: { current: number }) => (
     <div className="pt-6 flex flex-col items-center">
       <div className="flex items-center gap-2">
-        {[0, 1].map((i) => (
+        {[0, 1, 2, 3, 4].map((i) => (
           <div
             key={i}
             className="h-1.5 rounded-full transition-all"
@@ -458,7 +722,7 @@ export default function OnboardingPage() {
         ))}
       </div>
       <p className="text-[11px] tracking-[0.2em] text-white/45 font-semibold mt-3">
-        PART {current + 1} OF 2
+        PART {current + 1} OF 5
       </p>
     </div>
   );
@@ -484,6 +748,13 @@ export default function OnboardingPage() {
       </div>
     );
 
+  if (resumeDNA && resumePrefillLoading)
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}>
+        <Loader2 className="w-8 h-8 text-purple-300 animate-spin" />
+      </div>
+    );
+
   if (step === "debate")
     return (
       <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
@@ -504,7 +775,7 @@ export default function OnboardingPage() {
               Help us determine your entertainment DNA
             </h1>
             <p className="text-center text-[14px] italic text-white/70 mt-3">
-              Answer these three quick questions
+              A quick first question
             </p>
           </div>
 
@@ -575,72 +846,6 @@ export default function OnboardingPage() {
               </button>
             </div>
 
-            <div className="mt-10">
-              <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600">STEP TWO</p>
-              <h2
-                className="text-[26px] leading-[1.15] font-black text-gray-900 mt-1.5"
-                style={{ fontFamily: "Poppins, sans-serif" }}
-              >
-                What’s in your rotation?
-              </h2>
-              <p className="text-[13px] text-gray-400 mt-2">
-                Pick all the ways you like to unwind, obsess, and keep up.
-              </p>
-              <div className="flex flex-wrap gap-2.5 mt-5">
-                {mediaTypeOptions.map((type) => {
-                  const on = mediaTypes.includes(type.id);
-                  const Icon = type.Icon;
-                  return (
-                    <button
-                      key={type.id}
-                      onClick={() => toggleMediaType(type.id)}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold border transition-all active:scale-95"
-                      style={{
-                        borderColor: on ? "#7c3aed" : "rgb(229,231,235)",
-                        background: on ? "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)" : "white",
-                        color: on ? "white" : "rgb(55,65,81)",
-                        boxShadow: on ? "0 4px 14px rgba(124,58,237,0.3)" : "none",
-                      }}
-                    >
-                      <Icon size={15} className={on ? "text-white" : "text-purple-600"} />
-                      {type.name}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-8">
-                <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600">STEP THREE</p>
-                <h3 className="text-[26px] leading-[1.15] font-black text-gray-900 mt-1.5" style={{ fontFamily: "Poppins, sans-serif" }}>
-                  And what pulls you in?
-                </h3>
-                <p className="text-[13px] text-gray-400 mt-2">
-                  Follow the conversations for your favorite topics — pick as many as you like.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2.5 mt-4">
-                {roomOptions.map((room) => {
-                  const on = rooms.includes(room.id);
-                  return (
-                    <button
-                      key={room.id}
-                      onClick={() => toggleRoom(room.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all active:scale-95"
-                      style={{
-                        border: on ? "1px solid #ddd6fe" : "1px solid transparent",
-                        background: on ? "#f5f3ff" : "#f8fafc",
-                        color: on ? "#6d28d9" : "#4b5563",
-                        boxShadow: "none",
-                      }}
-                    >
-                      {on && <Check size={12} strokeWidth={3} />}
-                      {room.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
             <div className="flex-1" />
             <button
               onClick={submitDebateStep}
@@ -655,10 +860,110 @@ export default function OnboardingPage() {
       </div>
     );
 
+  if (step === "interests")
+    return (
+      <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
+        <div className="w-full max-w-[430px] flex flex-col relative bg-white">
+          <div className="relative text-white px-6 pb-8 bg-gradient-to-r from-slate-900 via-purple-900 to-indigo-900">
+            <button
+              onClick={() => finish("/activity")}
+              className="absolute top-5 right-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
+            >
+              Skip
+            </button>
+            <ProgressBar current={1} />
+            <h1 className="text-center text-[26px] leading-[1.2] font-black mt-6" style={{ fontFamily: "Poppins, sans-serif" }}>
+              Help us determine your entertainment DNA
+            </h1>
+            <p className="text-center text-[14px] italic text-white/70 mt-3">
+              Tell us what keeps you coming back
+            </p>
+          </div>
+
+          <div className="flex-1 flex flex-col px-6 pt-8 pb-10">
+            <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600">STEP TWO</p>
+            <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mt-1.5" style={{ fontFamily: "Poppins, sans-serif" }}>
+              What’s in your rotation?
+            </h2>
+            <p className="text-[13px] text-gray-400 mt-2">
+              Pick all the ways you like to unwind, obsess, and keep up.
+            </p>
+            <div className="flex flex-wrap gap-2.5 mt-5">
+              {mediaTypeOptions.map((type) => {
+                const on = mediaTypes.includes(type.id);
+                const Icon = type.Icon;
+                return (
+                  <button
+                    key={type.id}
+                    onClick={() => toggleMediaType(type.id)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold border transition-all active:scale-95"
+                    style={{
+                      borderColor: on ? "#7c3aed" : "rgb(229,231,235)",
+                      background: on ? "linear-gradient(135deg,#6d28d9,#9333ea 45%,#d946ef)" : "white",
+                      color: on ? "white" : "rgb(55,65,81)",
+                      boxShadow: on ? "0 4px 14px rgba(124,58,237,0.3)" : "none",
+                    }}
+                  >
+                    <Icon size={15} className={on ? "text-white" : "text-purple-600"} />
+                    {type.name}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-8">
+              <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600">STEP THREE</p>
+              <h3 className="text-[26px] leading-[1.15] font-black text-gray-900 mt-1.5" style={{ fontFamily: "Poppins, sans-serif" }}>
+                And what pulls you in?
+              </h3>
+              <p className="text-[13px] text-gray-400 mt-2">
+                Follow the conversations for your favorite topics — pick as many as you like.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2.5 mt-4">
+              {roomOptions.map((room) => {
+                const on = rooms.includes(room.id);
+                return (
+                  <button
+                    key={room.id}
+                    onClick={() => toggleRoom(room.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all active:scale-95"
+                    style={{
+                      border: on ? "1px solid #ddd6fe" : "1px solid transparent",
+                      background: on ? "#f5f3ff" : "#f8fafc",
+                      color: on ? "#6d28d9" : "#4b5563",
+                    }}
+                  >
+                    {on && <Check size={12} strokeWidth={3} />}
+                    {room.name}
+                  </button>
+                );
+              })}
+            </div>
+            {rooms.length > 0 && !hasMappableRoom && (
+              <p className="mt-3 text-[12px] font-medium text-purple-600">
+                Add one more topic to help shape your Entertainment DNA. Sports can stay selected.
+              </p>
+            )}
+
+            <div className="flex-1" />
+            <button
+              onClick={submitInterestsStep}
+              disabled={mediaTypes.length === 0 || !hasMappableRoom}
+              className="w-full py-3.5 rounded-full font-bold text-[15px] text-white mt-10 transition-all active:scale-95 disabled:opacity-40"
+              style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+
   if (step === "loved")
     return (
       <Shell>
-        <ProgressBar current={1} />
+        <ProgressBar current={2} />
         <div className="flex-1 flex flex-col px-5 pt-6 pb-8">
           <h1 className="text-center text-[22px] leading-[1.25] font-black" style={{ fontFamily: "Poppins, sans-serif" }}>
             Pick titles you’ve loved.
@@ -769,7 +1074,7 @@ export default function OnboardingPage() {
           <button
             onClick={() => {
               setLoved([]);
-              setStep("reveal");
+              setStep("love");
             }}
             className="mx-auto text-sm text-white/45 font-medium mt-4"
           >
@@ -820,82 +1125,259 @@ export default function OnboardingPage() {
       </Shell>
     );
 
-  return (
-    <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
-      <div className="w-full max-w-[430px] flex flex-col relative bg-white">
-        {/* Purple gradient hero */}
-        <div
-          className="relative px-6 pt-16 pb-10 flex flex-col items-center text-white"
-          style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}
-        >
-          <button
-            onClick={() => finish("/activity")}
-            className="absolute top-5 right-5 z-10 text-sm text-white/40 hover:text-white/70 transition-colors"
-          >
-            Skip
-          </button>
-          <div
-            className="w-24 h-24 rounded-3xl flex items-center justify-center"
-            style={{
-              background: "rgba(168,85,247,0.12)",
-              border: "1px solid rgba(168,85,247,0.4)",
-              boxShadow: "0 0 50px rgba(168,85,247,0.3)",
-            }}
-          >
-            <Dna size={44} className="text-purple-300" />
-          </div>
-          <div
-            className="mt-6 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-[0.15em] uppercase"
-            style={{ background: "rgba(168,85,247,0.18)", border: "1px solid rgba(168,85,247,0.5)", color: "#d8b4fe" }}
-          >
-            Level 1 DNA unlocked
-          </div>
-          <h2 className="text-2xl font-black mt-4 text-center" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Your Entertainment DNA has started forming.
-          </h2>
+  const titlesShapingDNA = existingTitles.length > 0 ? existingTitles : loved;
+  const driversQuestion = questionByOrder(5);
+
+  const dnaHeader = (progress: number, stepLabel: string, onBack?: () => void) => (
+    <div
+      className="px-5 pt-5 pb-6 text-white"
+      style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={onBack} className="text-sm text-white/60 hover:text-white transition-colors">
+          Back
+        </button>
+        <button onClick={() => finish("/activity")} className="text-xs text-white/70 hover:text-white">
+          Skip for now
+        </button>
+      </div>
+      <div className="flex items-center gap-4 mb-4">
+        <div className="w-14 h-14 rounded-full bg-purple-600/25 border border-purple-400/40 flex items-center justify-center shrink-0 shadow-lg shadow-purple-900/40">
+          <Dna className="text-purple-200" size={26} />
         </div>
+        <div className="min-w-0">
+          <p className="text-purple-300 text-[11px] font-semibold tracking-[0.15em] uppercase mb-0.5">
+            Finish building
+          </p>
+          <h1 className="text-2xl font-bold leading-tight" style={{ fontFamily: "Poppins, sans-serif" }}>
+            Your Entertainment DNA
+          </h1>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-2 rounded-full bg-white/15 overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${progress}%`, background: "linear-gradient(90deg, #a78bfa, #e879f9)" }}
+          />
+        </div>
+        <span className="text-sm text-purple-200 font-medium shrink-0">
+          <span className="text-white font-semibold">{progress}%</span> complete
+        </span>
+      </div>
+      <p className="text-white/50 text-xs mt-2">{stepLabel}</p>
+    </div>
+  );
 
-        {/* White body */}
-        <div className="flex-1 flex flex-col px-6 py-8">
-          <div className="w-full">
-            <div className="flex items-center justify-between text-[12px] font-semibold text-gray-500">
-              <span>Level 1</span>
-              <span>Full DNA profile</span>
-            </div>
-            <div className="mt-2 h-2.5 rounded-full overflow-hidden bg-gray-100">
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${Math.min(20 + loved.length * 2.5, 55)}%`,
-                  background: "linear-gradient(90deg, #7c3aed, #d946ef)",
-                }}
-              />
-            </div>
-            <p
-              className="text-[17px] font-semibold text-gray-800 mt-5 text-center leading-snug"
-              style={{ fontFamily: "Poppins, sans-serif" }}
-            >
-              Take the DNA quiz or add {Math.max(0, 30 - loved.length)} more titles to unlock your full archetype.
+  if ((step === "love" || step === "drivers") && questionLoadError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
+        <div className="max-w-[430px] w-full rounded-3xl bg-white p-7 text-center shadow-2xl">
+          <Dna className="mx-auto text-purple-600" size={38} />
+          <h1 className="mt-4 text-xl font-bold text-gray-900">Your DNA flow needs a quick retry</h1>
+          <p className="mt-2 text-sm text-gray-600">{questionLoadError}</p>
+          <button
+            onClick={() => setQuestionReloadKey((key) => key + 1)}
+            className="mt-6 w-full rounded-full py-3.5 font-bold text-white"
+            style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
+          >
+            Try again
+          </button>
+          <button onClick={() => finish("/activity")} className="mt-4 text-sm font-medium text-purple-700">
+            Skip for now
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if ((step === "love" || step === "drivers") && (questionsLoading || resumePrefillLoading)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}>
+        <Loader2 className="w-8 h-8 text-purple-300 animate-spin" />
+      </div>
+    );
+  }
+
+  if (step === "love")
+    return (
+      <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
+        <div className="w-full max-w-[430px] flex flex-col relative bg-white">
+          {dnaHeader(72, "Step 4 of 5 — Your taste is becoming clearer", () => {
+            if (resumeDNA) finish("/activity");
+            else setStep("loved");
+          })}
+          <div className="flex-1 px-5 pt-6 pb-4 bg-white">
+            <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">TELL US ANYTHING</p>
+            <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+              What do you love?
+            </h2>
+            <p className="text-[14px] text-gray-400 mt-1 mb-4">
+              Anything we missed? <span className="text-gray-300">(optional)</span>
             </p>
+            <div className="relative">
+              <textarea
+                value={loveNote}
+                onChange={(event) => setLoveNote(event.target.value)}
+                placeholder="Share anything you love..."
+                className="w-full p-4 bg-white border border-gray-200 rounded-2xl focus:border-purple-400 focus:outline-none min-h-[160px] resize-none text-gray-900 placeholder:text-gray-400 text-[15px]"
+                data-testid="dna-love-input"
+              />
+              <Feather size={16} className="absolute bottom-4 right-4 text-gray-400 pointer-events-none" />
+            </div>
+            {titlesShapingDNA.length > 0 && (
+              <div className="mt-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex-1 h-px bg-gray-200" />
+                  <p className="flex items-center gap-1.5 text-[14px] font-bold text-gray-900 shrink-0">
+                    <Sparkles size={14} className="text-purple-600" />
+                    Already shaping your DNA
+                  </p>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                    <Sparkles size={15} className="text-purple-600" />
+                  </span>
+                  {titlesShapingDNA.slice(0, 12).map((title) => (
+                    <span key={title} className="px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-800 text-[14px] font-medium">
+                      {title}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-5 flex items-center gap-3 bg-purple-50 rounded-2xl px-4 py-3.5">
+                  <Dna size={18} className="text-purple-600 shrink-0" />
+                  <p className="text-[14px] text-gray-800">This makes your DNA even more personal.</p>
+                </div>
+              </div>
+            )}
           </div>
-
-          <div className="pt-8">
+          <div className="px-5 pb-10 bg-white">
             <button
-              onClick={() => finish("/entertainment-dna")}
-              className="w-full py-4 rounded-full font-medium text-[17px] text-white active:scale-95 transition-transform"
+              onClick={() => setStep("drivers")}
+              className="w-full text-white font-semibold rounded-full py-3.5 text-base shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2"
               style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
             >
-              Take the DNA quiz
-            </button>
-            <button
-              onClick={() => finish("/activity")}
-              className="w-full py-3.5 rounded-full font-medium text-[16px] mt-3 text-purple-700 active:scale-95 transition-transform"
-              style={{ border: "1px solid rgba(124,58,237,0.45)", background: "white" }}
-            >
-              Skip to feed
+              Continue
+              <ArrowRight size={18} />
             </button>
           </div>
         </div>
+      </div>
+    );
+
+  if (step === "drivers")
+    return (
+      <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
+        <div className="w-full max-w-[430px] flex flex-col relative bg-white">
+          {dnaHeader(90, "Step 5 of 5 — Almost ready", () => setStep("love"))}
+          <div className="flex-1 px-5 pt-6 pb-4 bg-white">
+            <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">LAST QUESTION — ALMOST DONE</p>
+            <h2 className="text-[22px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
+              When you press play, what are you hoping for?
+            </h2>
+            <p className="text-[13px] text-gray-400 mt-1 mb-4">Select as many as you want.</p>
+            {generationError && (
+              <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {generationError}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2.5">
+              {(driversQuestion?.options || []).map((option, index) => {
+                const on = drivers.includes(option);
+                const Icon = driverIcon(option);
+                const isLastOdd = index === (driversQuestion?.options?.length || 0) - 1 && (driversQuestion?.options?.length || 0) % 2 === 1;
+                return (
+                  <button
+                    key={option}
+                    onClick={() => toggleDriver(option)}
+                    className={`relative flex items-center gap-3 px-3.5 py-3.5 rounded-2xl border text-left transition-all active:scale-95 ${isLastOdd ? "col-span-2" : ""}`}
+                    style={{
+                      borderColor: on ? "#7c3aed" : "rgb(229,231,235)",
+                      background: on ? "#f6f3fd" : "white",
+                    }}
+                  >
+                    {Icon && <Icon size={20} className="text-purple-600 shrink-0" />}
+                    <span className="text-[13px] font-medium text-gray-900 leading-snug">{option}</span>
+                    {on && (
+                      <span className="absolute right-3 top-3 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#6d28d9" }}>
+                        <Check size={12} className="text-white" strokeWidth={3} />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="px-5 pb-10 bg-white">
+            <button
+              onClick={generateDNA}
+              disabled={drivers.length === 0 || isGenerating}
+              className="w-full text-white font-semibold rounded-full py-4 text-base shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
+            >
+              Discover Your DNA
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+
+  if (step === "generating")
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
+        <div className="max-w-[430px] w-full bg-white rounded-3xl p-8 shadow-2xl text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+            <Dna className="text-white animate-spin" size={40} style={{ animationDuration: "3s" }} />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Discovering Your Entertainment DNA</h1>
+          <p className="text-gray-700 mb-6 text-lg font-medium animate-pulse">Crafting your DNA profile...</p>
+          <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4 overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 h-2.5 rounded-full transition-all duration-700"
+              style={{ width: `${generationProgress}%` }}
+            />
+          </div>
+          <p className="text-sm text-gray-600">This usually takes 30–60 seconds</p>
+        </div>
+      </div>
+    );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
+      <div className="max-w-[430px] w-full bg-white rounded-3xl p-7 shadow-2xl text-center">
+        <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-5">
+          <Dna className="text-white" size={40} />
+        </div>
+        <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 uppercase">Your Entertainment DNA</p>
+        <h1 className="text-3xl font-black text-gray-900 mt-2" style={{ fontFamily: "Poppins, sans-serif" }}>
+          {generatedProfile?.label || "Your DNA is ready"}
+        </h1>
+        {generatedProfile?.tagline && <p className="text-gray-600 mt-3 text-base">{generatedProfile.tagline}</p>}
+        {generatedProfile?.flavor_notes && generatedProfile.flavor_notes.length > 0 && (
+          <div className="mt-6 rounded-2xl bg-purple-50 p-4 text-left">
+            <p className="text-sm font-bold text-gray-900 flex items-center gap-2">
+              <Sparkles size={16} className="text-purple-600" />
+              Your Flavor Notes
+            </p>
+            <ul className="mt-2 space-y-1 text-sm text-gray-700">
+              {generatedProfile.flavor_notes.slice(0, 3).map((note) => <li key={note}>• {note}</li>)}
+            </ul>
+          </div>
+        )}
+        {generatedProfile?.profile_text && (
+          <p className="mt-5 text-sm leading-relaxed text-gray-700">{generatedProfile.profile_text}</p>
+        )}
+        <button
+          onClick={() => finish("/profile")}
+          className="w-full mt-7 py-3.5 rounded-full font-bold text-[15px] text-white transition-all active:scale-95"
+          style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
+        >
+          See my DNA profile
+        </button>
+        <button onClick={() => finish("/activity")} className="mt-4 text-sm font-medium text-purple-700">
+          Go to feed
+        </button>
       </div>
     </div>
   );

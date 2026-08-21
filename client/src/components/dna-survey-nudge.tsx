@@ -49,7 +49,7 @@ export function DnaSurveyNudge({ className = '' }: DnaSurveyNudgeProps) {
 
   const handleTakeSurvey = () => {
     dismissDnaNudge();
-    setLocation('/entertainment-dna');
+    setLocation('/onboarding?resume=dna');
   };
 
   if (!show) return null;
@@ -70,13 +70,13 @@ export function DnaSurveyNudge({ className = '' }: DnaSurveyNudgeProps) {
             Ready to supercharge your DNA?
           </h3>
           <p className="text-sm text-gray-600 mb-3">
-            You've been playing! Take a quick survey to unlock personalized insights and see how your taste compares to friends.
+            You've been playing! Finish building your Entertainment DNA to unlock personalized insights and see how your taste compares to friends.
           </p>
           <Button
             onClick={handleTakeSurvey}
             className="bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:from-blue-600 hover:via-purple-600 hover:to-purple-700 text-white text-sm py-2 px-4 rounded-lg"
           >
-            Take the DNA Survey
+            Finish My DNA
           </Button>
         </div>
       </div>

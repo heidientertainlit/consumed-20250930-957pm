@@ -225,7 +225,7 @@ export function DnaMomentFeaturedCard() {
       </div>
 
       {/* Footer */}
-      <Link href="/entertainment-dna">
+      <Link href="/profile">
         <div className="border-t border-gray-100 px-4 py-2.5 flex items-center justify-center gap-1.5 hover:bg-gray-50 transition-colors cursor-pointer">
           <Sparkles className="w-3 h-3 text-violet-500" />
           <span className="text-xs text-violet-600 font-medium">See your Entertainment DNA</span>

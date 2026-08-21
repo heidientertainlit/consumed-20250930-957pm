@@ -235,7 +235,7 @@ function ExpandedCard({ state, streak, dnaProfile, triviaStats, rankData, onClos
   const pointsSub = triviaStats?.points != null ? 'all time' : 'Play to unlock';
 
   const ctaLabel = state <= 2
-    ? "Take the DNA quiz →"
+    ? "Finish your Entertainment DNA →"
     : state === 5
     ? "View full Entertainment DNA →"
     : "See your full Entertainment DNA →";
@@ -343,7 +343,7 @@ export function EntertainmentDNAStrip() {
 
   const handleNavigate = () => {
     setExpanded(false);
-    setLocation(state <= 2 ? '/entertainment-dna' : state >= 4 ? '/dna' : '/play');
+    setLocation(state <= 2 ? '/onboarding?resume=dna' : state >= 4 ? '/dna' : '/play');
   };
 
   return (

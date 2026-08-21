@@ -2465,7 +2465,7 @@ export function DailyHeroSection() {
                                   : (dnaStats?.label ?? 'Building your DNA…')}
                               </span>
                             </div>
-                            <Link href="/entertainment-dna">
+                            <Link href="/profile">
                               <span className="text-[10px] text-purple-300 flex items-center gap-0.5 flex-shrink-0 ml-2">
                                 View DNA <ArrowRight size={9} />
                               </span>

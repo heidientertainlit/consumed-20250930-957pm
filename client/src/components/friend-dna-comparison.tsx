@@ -358,7 +358,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
     const itemsNeeded = Math.max(0, 30 - friend.itemCount);
     const message = friend.hasSurvey 
       ? `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on consumed, but you need to log ${itemsNeeded} more items first. Let's see how compatible our taste is! ${appUrl}`
-      : `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on consumed! Complete the DNA survey and log 30 items so we can see how compatible our taste is! ${appUrl}`;
+      : `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on consumed! Complete your Entertainment DNA and log 30 items so we can see how compatible our taste is! ${appUrl}`;
     
     if (navigator.share) {
       try {
@@ -406,7 +406,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
           {!hasSurvey ? (
             <div className="w-full max-w-xs">
               <p className="text-sm text-purple-600 font-medium">
-                Complete the DNA survey to start unlocking
+                Complete your Entertainment DNA to start unlocking
               </p>
             </div>
           ) : (
@@ -781,7 +781,7 @@ export function FriendDNACompareButton({
         disabled
         className="opacity-60"
         data-testid="button-compare-dna-locked"
-        title={!hasSurvey ? 'Finish the DNA survey to unlock' : `Track ${itemsNeeded} more items to unlock`}
+        title={!hasSurvey ? 'Finish your Entertainment DNA to unlock' : `Track ${itemsNeeded} more items to unlock`}
       >
         <Lock size={14} className="mr-2" />
         Compare DNA

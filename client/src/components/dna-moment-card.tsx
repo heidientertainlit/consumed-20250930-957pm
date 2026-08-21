@@ -399,7 +399,7 @@ export function DnaMomentCard({ slot = 0 }: { slot?: number } = {}) {
         })}
       </div>
       
-      <Link href="/entertainment-dna">
+      <Link href="/profile">
         <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-gray-100 cursor-pointer hover:opacity-80 transition-opacity">
           <Sparkles className="w-3.5 h-3.5 text-teal-500" />
           <span className="text-xs text-gray-600 font-medium">See your Entertainment DNA profile</span>

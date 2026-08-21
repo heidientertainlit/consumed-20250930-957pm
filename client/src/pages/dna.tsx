@@ -372,7 +372,7 @@ export default function DnaPage() {
     const itemsNeeded = Math.max(0, 10 - friend.itemCount);
     const message = friend.hasSurvey 
       ? `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on Consumed, but you need to log ${itemsNeeded} more items first. Let's see how compatible our taste is! ${APP_BASE}`
-      : `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on Consumed! Complete the DNA survey and log 10 items so we can see how compatible our taste is! ${APP_BASE}`;
+      : `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on Consumed! Complete your Entertainment DNA and log 10 items so we can see how compatible our taste is! ${APP_BASE}`;
     
     if (navigator.share) {
       try {
@@ -452,7 +452,7 @@ export default function DnaPage() {
                       Share Results
                     </Button>
                     <Button
-                      onClick={() => setLocation('/entertainment-dna')}
+                      onClick={() => setLocation('/onboarding?resume=dna')}
                       size="sm"
                       className="flex-1 bg-white/20 text-white hover:bg-white/30 text-xs font-semibold"
                     >
@@ -473,7 +473,7 @@ export default function DnaPage() {
                     </div>
                     <div className="flex gap-2">
                       <Button
-                        onClick={() => setLocation('/entertainment-dna')}
+                        onClick={() => setLocation('/onboarding?resume=dna')}
                         size="sm"
                         className="bg-white text-purple-600 hover:bg-white/90 text-xs font-semibold"
                       >
@@ -681,17 +681,17 @@ export default function DnaPage() {
                   <h3 className="font-semibold text-gray-900 text-sm mb-1">Comparison Locked</h3>
                   <p className="text-gray-500 text-xs mb-3">
                     {!hasSurvey 
-                      ? "Complete the DNA survey to unlock comparisons" 
+                      ? "Complete your Entertainment DNA to unlock comparisons"
                       : `Log ${Math.max(0, 10 - itemCount)} more items to unlock`
                     }
                   </p>
                   {!hasSurvey && (
                     <Button
-                      onClick={() => setLocation('/entertainment-dna')}
+                      onClick={() => setLocation('/onboarding?resume=dna')}
                       size="sm"
                       className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
                     >
-                      Take DNA Survey
+                      Finish My DNA
                     </Button>
                   )}
                 </div>

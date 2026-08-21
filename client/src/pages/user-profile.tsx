@@ -910,7 +910,7 @@ export default function UserProfile() {
     const itemsNeeded = Math.max(0, 10 - friend.itemCount);
     const message = friend.hasSurvey
       ? `Hey ${friend.user_name}! I want to compare our Entertainment DNA on Consumed, but you need to log ${itemsNeeded} more items first. ${APP_BASE}`
-      : `Hey ${friend.user_name}! I want to compare our Entertainment DNA on Consumed! Complete the DNA survey and log 10 items so we can see how compatible our taste is! ${APP_BASE}`;
+      : `Hey ${friend.user_name}! I want to compare our Entertainment DNA on Consumed! Complete your Entertainment DNA and log 10 items so we can see how compatible our taste is! ${APP_BASE}`;
     if (navigator.share) {
       try { await navigator.share({ title: 'Compare our Entertainment DNA!', text: message }); }
       catch { await navigator.clipboard.writeText(message); toast({ title: "Copied!", description: "Share message copied to clipboard" }); }
@@ -2423,7 +2423,7 @@ export default function UserProfile() {
       setIsAuthModalOpen(true);
       return;
     }
-    setLocation('/entertainment-dna');
+    setLocation('/onboarding?resume=dna');
   };
 
   // Survey navigation functions
@@ -3784,10 +3784,10 @@ export default function UserProfile() {
                 <h3 className="text-white font-bold mb-1">Complete Your DNA</h3>
                 <p className="text-white/70 text-xs mb-4">Answer a few questions to unlock your Entertainment DNA profile</p>
                 <button
-                  onClick={() => setLocation('/entertainment-dna')}
+                  onClick={() => setLocation('/onboarding?resume=dna')}
                   className="px-5 py-2.5 rounded-full text-sm font-semibold text-purple-700 bg-white hover:bg-white/90 transition-colors"
                 >
-                  Take the Quiz
+                  Finish My DNA
                 </button>
               </div>
             )}
@@ -3804,12 +3804,12 @@ export default function UserProfile() {
                     <h3 className="font-semibold text-gray-900 text-sm mb-1">Comparison Locked</h3>
                     <p className="text-gray-500 text-xs mb-3">
                       {dnaProfileStatus !== 'has_profile'
-                        ? "Complete the DNA survey to unlock comparisons"
+                        ? "Complete your Entertainment DNA to unlock comparisons"
                         : `Log ${Math.max(0, 10 - dnaItemCount)} more items to unlock`}
                     </p>
                     {dnaProfileStatus !== 'has_profile' && (
-                      <Button onClick={() => setLocation('/entertainment-dna')} size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs">
-                        Take DNA Survey
+                      <Button onClick={() => setLocation('/onboarding?resume=dna')} size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs">
+                        Finish My DNA
                       </Button>
                     )}
                   </div>
@@ -4237,7 +4237,7 @@ export default function UserProfile() {
               {!dnaCanCompare ? (
                 <p className="text-xs text-gray-500">
                   {dnaProfileStatus !== 'has_profile'
-                    ? 'Complete the DNA survey to unlock friend comparisons.'
+                    ? 'Complete your Entertainment DNA to unlock friend comparisons.'
                     : `Log ${Math.max(0, 10 - dnaItemCount)} more items to unlock friend comparisons.`}
                 </p>
               ) : isLoadingDnaFriends ? (
@@ -4279,7 +4279,7 @@ export default function UserProfile() {
                               {friend.isEligible
                                 ? 'Ready to compare'
                                 : !friend.hasSurvey
-                                  ? 'Needs DNA survey'
+                                  ? 'Needs Entertainment DNA'
                                   : `${Math.max(0, 10 - friend.itemCount)} more items needed`}
                             </p>
                           </div>

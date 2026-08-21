@@ -503,14 +503,14 @@ export default function Search() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white/80 text-[13px] font-medium tracking-tight">You've added {totalItemsAdded} titles.</p>
-                    <p className="text-white/30 text-[11px]">Take the DNA Quiz to unlock your entertainment profile.</p>
+                    <p className="text-white/30 text-[11px]">Finish your Entertainment DNA to unlock your entertainment profile.</p>
                   </div>
                 </div>
                 <Link
-                  href="/entertainment-dna"
+                  href="/onboarding?resume=dna"
                   className="mt-2 ml-10 inline-flex items-center gap-1.5 text-purple-400/80 text-[11px] font-medium hover:text-purple-400 transition-colors"
                 >
-                  <Sparkles size={10} /> Take the Quiz
+                  <Sparkles size={10} /> Finish My DNA
                 </Link>
               </div>
             ) : (
