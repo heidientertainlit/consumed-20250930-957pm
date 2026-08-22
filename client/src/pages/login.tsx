@@ -6,63 +6,8 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { IdentityFace } from "@/components/feed-identity-hero";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Mail, Lock, User, AtSign, Flame, Tv, Headphones, BookOpen, BarChart3, TrendingUp } from "lucide-react";
-
-const TYPE_STYLES: Record<string, { badge: typeof Flame; badgeBg: string; statIcon: typeof Flame }> = {
-  movie: { badge: Flame, badgeBg: "bg-orange-500", statIcon: TrendingUp },
-  tv: { badge: Tv, badgeBg: "bg-purple-600", statIcon: TrendingUp },
-  book: { badge: BookOpen, badgeBg: "bg-purple-600", statIcon: BarChart3 },
-  podcast: { badge: Headphones, badgeBg: "bg-purple-600", statIcon: BarChart3 },
-};
-
-const TYPE_HOOKS: Record<string, string[]> = {
-  movie: [
-    "Is the ending brilliant or a cop-out?",
-    "Overrated or a masterpiece? Fans are split",
-    "The final scene has everyone talking",
-  ],
-  tv: [
-    "Everyone's debating the latest episode",
-    "Worth the binge? Opinions are heated",
-    "That twist has group chats blowing up",
-  ],
-  book: [
-    "Readers can't agree on this one",
-    "Book clubs are arguing about the ending",
-    "Is the hype real? Readers are split",
-  ],
-  podcast: [
-    "This week's episode sparked a debate",
-    "Listeners have strong opinions on this one",
-    "The take everyone's reacting to",
-  ],
-};
-
-function assignHooks(items: { title: string; type: string }[]): Record<string, string> {
-  const used = new Set<string>();
-  const result: Record<string, string> = {};
-  for (const item of items) {
-    const hooks = TYPE_HOOKS[item.type] ?? TYPE_HOOKS.movie;
-    let hash = 0;
-    for (let i = 0; i < item.title.length; i++) hash = (hash * 31 + item.title.charCodeAt(i)) >>> 0;
-    let pick = hooks[hash % hooks.length];
-    for (let step = 0; used.has(pick) && step < hooks.length; step++) {
-      pick = hooks[(hash + step + 1) % hooks.length];
-    }
-    used.add(pick);
-    result[item.title] = pick;
-  }
-  return result;
-}
-
-const FALLBACK_TRENDING = [
-  { title: "The Odyssey", image: "https://image.tmdb.org/t/p/w300/5rhTDKUhPYvpdQIijFIs5VoWsON.jpg", type: "movie", stat: "Users are talking about" },
-  { title: "A Knight of the Seven Kingdoms", image: "https://image.tmdb.org/t/p/w300/k8yARbD9iYn2nRX2HvsopfKDN2r.jpg", type: "tv", stat: "Friends are watching" },
-  { title: "Stolen in Death", image: "https://books.google.com/books/content?id=ECFYEQAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api", type: "book", stat: "Readers recommend" },
-  { title: "The Daily", image: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts221/v4/ab/64/66/ab6466a9-9a7d-e20e-7a3d-bc5be37d29ce/mza_15084852813176276273.jpg/300x300bb.png", type: "podcast", stat: "#1 podcast" },
-];
+import { Eye, EyeOff, Mail, Lock, User, AtSign } from "lucide-react";
 import { SiApple, SiGoogle } from "react-icons/si";
-import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { isOnboardingComplete } from "@/components/route-guards";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -84,33 +29,6 @@ export default function LoginPage() {
   const { user, session, loading, signIn, signUp, resetPassword } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-
-  const { data: trendingData } = useQuery({
-    queryKey: ["trending-content"],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("trending-content");
-      if (error) throw error;
-      return data as { items: { title: string; image: string; type: string; stat: string }[] };
-    },
-    staleTime: 60 * 60 * 1000,
-    retry: 1,
-  });
-  const trendingItems =
-    trendingData?.items &&
-    trendingData.items.length >= 4 &&
-    trendingData.items.some((i) => i.type === "podcast")
-      ? trendingData.items
-      : FALLBACK_TRENDING;
-
-  const itemHooks = assignHooks(trendingItems);
-
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCarouselIndex((prev) => prev + 1);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     if (!loading && user) {
@@ -350,57 +268,6 @@ export default function LoginPage() {
               </p>
               <IdentityFace size={30} />
             </div>
-          </div>
-        </div>
-
-        <div className="mb-5">
-          <div className="space-y-2">
-            {[0, 1].map((offset) => {
-              const idx = (carouselIndex + offset) % trendingItems.length;
-              const item = trendingItems[idx];
-              const style = TYPE_STYLES[item.type] ?? TYPE_STYLES.movie;
-              const Badge = style.badge;
-              const StatIcon = style.statIcon;
-              return (
-                <div
-                  key={item.title}
-                  className="flex items-center gap-3 py-2 px-3 bg-white/[0.05] border border-white/10 rounded-2xl animate-in fade-in slide-in-from-right-4 duration-500"
-                >
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-14 h-11 object-cover rounded-lg flex-shrink-0"
-                    loading="lazy"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white leading-snug truncate">{item.title}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <StatIcon className="h-3 w-3 text-purple-400 flex-shrink-0" />
-                      <p className="text-xs text-gray-400 truncate">{itemHooks[item.title]}</p>
-                    </div>
-                  </div>
-                  <div className="flex-shrink-0 flex items-center gap-1 border border-white/15 rounded-full px-2 py-0.5">
-                    <Badge className="h-3 w-3 text-purple-300" />
-                    <span className="text-[10px] font-medium text-gray-300">
-                      {item.type === "tv" ? "TV" : item.type.charAt(0).toUpperCase() + item.type.slice(1)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex items-center justify-center gap-3 mt-2.5">
-            <div className="flex items-center gap-1.5">
-              {trendingItems.map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    i === carouselIndex % trendingItems.length ? "w-4 bg-purple-400" : "w-1.5 bg-white/20"
-                  }`}
-                />
-              ))}
-            </div>
-            <p className="text-xs text-purple-400 font-medium">439 more conversations</p>
           </div>
         </div>
 
