@@ -59,10 +59,12 @@ const COMPOSER_MODES: { id: ComposerMode; label: string; Icon: typeof Star }[] =
   { id: "poll", label: "Poll", Icon: BarChart3 },
 ];
 
-function typeLabel(type?: string): string {
+function typeLabel(type?: string, mediaSubtype?: string): string {
   const t = (type || "").toLowerCase();
   if (t === "tv") return "TV Series";
   if (t === "book_series") return "Book Series";
+  if (t === "music" && mediaSubtype === "album") return "Album";
+  if (t === "music" && (mediaSubtype === "song" || mediaSubtype === "track")) return "Song";
   if (!t) return "";
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
@@ -541,7 +543,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                 <div className="min-w-0">
                   <p className="font-bold text-gray-900 line-clamp-2">{selectedMedia.title}</p>
                   <p className="text-xs text-gray-500">
-                    {typeLabel(selectedMedia.type)}{selectedMedia.year ? ` • ${selectedMedia.year}` : ""}
+                    {typeLabel(selectedMedia.type, selectedMedia.media_subtype)}{selectedMedia.year ? ` • ${selectedMedia.year}` : ""}
                   </p>
                   <button
                     onClick={() => { setStep("search"); setSelectedMedia(null); }}

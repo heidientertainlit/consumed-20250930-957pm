@@ -25,13 +25,16 @@ const TYPE_PILLS: { value: string; label: string; Icon: typeof Tv; beta?: boolea
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
-function typeLabel(type?: string): string {
+function typeLabel(type?: string, mediaSubtype?: string): string {
   switch (type) {
     case "tv": return "TV Series";
     case "movie": return "Movie";
     case "book": return "Book";
     case "book_series": return "Book Series";
-    case "music": return "Music";
+    case "music":
+      if (mediaSubtype === "album") return "Album";
+      if (mediaSubtype === "song" || mediaSubtype === "track") return "Song";
+      return "Music";
     case "podcast": return "Podcast";
     case "youtube": return "YouTube";
     default: return type ? type.charAt(0).toUpperCase() + type.slice(1) : "";
@@ -219,7 +222,7 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900 text-sm line-clamp-1">{r.title}</p>
                     <p className="text-xs text-gray-500">
-                      {typeLabel(r.type)}{r.year ? ` • ${r.year}` : ""}
+                      {typeLabel(r.type, r.media_subtype)}{r.year ? ` • ${r.year}` : ""}
                     </p>
                     {r.creator && r.creator !== "Unknown Author" && <p className="text-xs text-gray-400 truncate">{r.creator}</p>}
                   </div>

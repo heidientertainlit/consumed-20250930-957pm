@@ -2416,6 +2416,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       }) === index;
     });
     const conversationParticipants = uniqueConversationParticipants.slice(0, 3);
+    const conversationPeopleCount = uniqueConversationParticipants.length;
+    const conversationLabel = conversationPeopleCount > 0
+      ? `${conversationPeopleCount} ${conversationPeopleCount === 1 ? 'person' : 'people'} talking`
+      : `${conversationCount} ${conversationCount === 1 ? 'reply' : 'replies'}`;
 
     return (
       <>
@@ -2668,51 +2672,49 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           )}
 
-          {/* Conversation preview — keeps discussion separate from the rating card */}
-          <button
-            type="button"
-            className={`mx-4 mb-2 mt-3 w-[calc(100%_-_2rem)] rounded-2xl border px-3.5 py-3 text-left transition-colors ${
-              replyOpen
-                ? 'border-violet-300 bg-violet-50'
-                : 'border-violet-100 bg-violet-50/70 hover:bg-violet-50'
-            }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              setReplyOpen(true);
-              setTimeout(() => {
-                const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
-                el?.focus();
-              }, 50);
-            }}
-            aria-label={conversationCount > 0 ? 'Add your take to the conversation' : 'Add your take'}
-          >
-            <span className="flex items-center gap-2">
-              <span className="flex -space-x-1.5 flex-shrink-0">
-                {conversationParticipants.length > 0 ? conversationParticipants.map((comment: any, index: number) => {
-                  const participantName = comment.user?.displayName || comment.user?.username || comment.username || 'User';
-                  return (
-                    <span
-                      key={comment.id || index}
-                      className="w-6 h-6 rounded-full border-2 border-violet-50 bg-violet-400 flex items-center justify-center overflow-hidden text-[9px] font-bold text-white"
-                    >
-                      {comment.user?.avatar ? (
-                        <img src={comment.user.avatar} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        participantName[0]?.toUpperCase() || '?'
-                      )}
-                    </span>
-                  );
-                }) : (
-                  <span className="w-6 h-6 rounded-full border-2 border-violet-50 bg-violet-200 flex items-center justify-center">
-                    <MessageCircle size={12} className="text-violet-600" />
-                  </span>
-                )}
+          {/* Conversation preview appears once a discussion exists */}
+          {conversationCount > 0 && (
+            <button
+              type="button"
+              className={`mx-4 mb-2 mt-3 w-[calc(100%_-_2rem)] rounded-2xl border px-3.5 py-3 text-left transition-colors ${
+                replyOpen
+                  ? 'border-violet-300 bg-violet-50'
+                  : 'border-violet-100 bg-violet-50/70 hover:bg-violet-50'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setReplyOpen(true);
+                setTimeout(() => {
+                  const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
+                  el?.focus();
+                }, 50);
+              }}
+              aria-label={`Join the conversation with ${conversationCount} ${conversationCount === 1 ? 'reply' : 'replies'}`}
+            >
+              <span className="flex items-center gap-2">
+                <span className="flex -space-x-1.5 flex-shrink-0">
+                  {conversationParticipants.map((comment: any, index: number) => {
+                    const participantName = comment.user?.displayName || comment.user?.username || comment.username || 'User';
+                    return (
+                      <span
+                        key={comment.id || index}
+                        className="w-6 h-6 rounded-full border-2 border-violet-50 bg-violet-400 flex items-center justify-center overflow-hidden text-[9px] font-bold text-white"
+                      >
+                        {comment.user?.avatar ? (
+                          <img src={comment.user.avatar} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          participantName[0]?.toUpperCase() || '?'
+                        )}
+                      </span>
+                    );
+                  })}
+                </span>
+                <span className="text-[14px] font-medium text-gray-600">
+                  {conversationLabel}
+                </span>
               </span>
-              <span className="text-[14px] font-medium text-gray-600">
-                Add your take
-              </span>
-            </span>
-          </button>
+            </button>
+          )}
 
           {/* YOUR TURN — inline star rater appears above the action row */}
           {isOtherUser && session?.access_token && showInlineRater && !ratingSubmitted && (
