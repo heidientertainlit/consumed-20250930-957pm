@@ -777,7 +777,7 @@ export default function OnboardingPage() {
           Skip for now
         </button>
       </div>
-      <div className="flex items-center justify-center gap-2.5 text-center">
+      <div className="flex items-center justify-center gap-2.5 text-center -translate-x-3">
         <Dna className="text-purple-200" size={25} />
         <h1 className="text-2xl font-bold leading-tight" style={{ fontFamily: "Poppins, sans-serif" }}>
           Building your DNA
@@ -1141,7 +1141,7 @@ export default function OnboardingPage() {
           Skip for now
         </button>
       </div>
-      <div className="flex items-center justify-center gap-2.5 text-center">
+      <div className="flex items-center justify-center gap-2.5 text-center -translate-x-3">
         <Dna className="text-purple-200" size={25} />
         <h1 className="text-2xl font-bold leading-tight" style={{ fontFamily: "Poppins, sans-serif" }}>
           Building your DNA
