@@ -711,7 +711,10 @@ export default function OnboardingPage() {
   const ONBOARDING_PROGRESS = [
     { context: "Step 1 of 5" },
     { context: "Step 2 of 5 — Your taste is taking shape" },
-    { context: "Step 3 of 5 — Every pick shapes your Entertainment DNA" },
+    {
+      context:
+        "Step 3 of 5 — Every pick shapes your Entertainment DNA. Choose at least 3. The more you pick, the better we’ll understand your taste.",
+    },
   ];
 
   const ProgressBar = ({ current, tone = "dark" }: { current: number; tone?: "dark" | "light" }) => {
@@ -985,11 +988,8 @@ export default function OnboardingPage() {
           </div>
 
           <div className="flex-1 flex flex-col px-5 pt-5 pb-8 bg-white">
-            <p className="text-center text-[13px] text-gray-500">
-              Choose at least 3. The more you pick, the better we’ll understand your taste.
-            </p>
             <div
-              className={`mx-auto mt-5 flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all ${
+              className={`mx-auto mt-1 flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all ${
                 loved.length >= 3
                   ? "border-purple-200 bg-purple-50 text-purple-700"
                   : "border-gray-200 bg-gray-50 text-gray-600"
