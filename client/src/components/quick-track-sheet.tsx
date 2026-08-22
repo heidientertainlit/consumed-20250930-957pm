@@ -95,6 +95,9 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
   // "React to this title (optional)" composer
   const [composerMode, setComposerMode] = useState<ComposerMode>("rate");
   const [rating, setRating] = useState(0);
+  const [ratingPreview, setRatingPreview] = useState(0);
+  const ratingTrackRef = useRef<HTMLDivElement>(null);
+  const ratingPreviewRef = useRef(0);
   const [takeText, setTakeText] = useState("");
   const [predQuestion, setPredQuestion] = useState("");
   const [predOptions, setPredOptions] = useState<string[]>(["", ""]);
@@ -111,12 +114,31 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     importReqId.current++; // invalidate any in-flight import result
     setIsImporting(false); setImportResult(null); setImportError(null);
     setComposerMode("rate");
-    setRating(0); setTakeText("");
+    setRating(0); setRatingPreview(0); ratingPreviewRef.current = 0; setTakeText("");
     setPredQuestion(""); setPredOptions(["", ""]);
     setPollQuestion(""); setPollOptions(["", ""]);
   };
 
   const handleClose = () => { reset(); onClose(); };
+
+  const previewRatingAt = (clientX: number) => {
+    if (!ratingTrackRef.current) return;
+    const rect = ratingTrackRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+    const starWidth = rect.width / 5;
+    const starIndex = Math.min(4, Math.floor(x / starWidth));
+    const withinStar = (x % starWidth) / starWidth;
+    const value = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
+    const roundedValue = Math.round(value * 2) / 2;
+    ratingPreviewRef.current = roundedValue;
+    setRatingPreview(roundedValue);
+  };
+
+  const commitDraggedRating = () => {
+    if (ratingPreviewRef.current > 0) setRating(ratingPreviewRef.current);
+    ratingPreviewRef.current = 0;
+    setRatingPreview(0);
+  };
 
   useEffect(() => {
     if (selectedMedia?.type === "tv" && selectedMedia.external_id) {
@@ -660,9 +682,34 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                   <div className="p-3.5 space-y-3">
                     <div>
                       <p className="text-sm font-semibold text-gray-700">What would you rate it? <span className="text-gray-400 font-normal">(optional)</span></p>
-                      <div className="flex items-center gap-1.5 mt-1.5" role="group" aria-label="Rating">
+                      <div
+                        ref={ratingTrackRef}
+                        className="flex items-center gap-1.5 mt-1.5 w-fit touch-none select-none cursor-pointer"
+                        role="group"
+                        aria-label="Rating"
+                        onPointerDown={(event) => {
+                          event.currentTarget.setPointerCapture(event.pointerId);
+                          previewRatingAt(event.clientX);
+                        }}
+                        onPointerMove={(event) => {
+                          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                            previewRatingAt(event.clientX);
+                          }
+                        }}
+                        onPointerUp={(event) => {
+                          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                            event.currentTarget.releasePointerCapture(event.pointerId);
+                          }
+                          commitDraggedRating();
+                        }}
+                        onPointerCancel={() => {
+                          ratingPreviewRef.current = 0;
+                          setRatingPreview(0);
+                        }}
+                      >
                         {[1, 2, 3, 4, 5].map((star) => {
-                          const fillWidth = rating >= star ? "100%" : rating >= star - 0.5 ? "50%" : "0%";
+                          const displayRating = ratingPreview || rating;
+                          const fillWidth = displayRating >= star ? "100%" : displayRating >= star - 0.5 ? "50%" : "0%";
                           return (
                             <div key={star} className="relative h-9 w-9">
                               <Star size={30} className="absolute inset-0 m-auto text-gray-300" />
