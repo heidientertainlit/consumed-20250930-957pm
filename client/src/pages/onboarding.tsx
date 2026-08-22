@@ -778,8 +778,8 @@ export default function OnboardingPage() {
         </button>
       </div>
       <div className="flex items-center justify-center gap-2.5 text-center -translate-x-3">
-        <Dna className="text-purple-200" size={25} />
-        <h1 className="text-2xl font-bold leading-tight" style={{ fontFamily: "Poppins, sans-serif" }}>
+        <Dna className="text-purple-200" size={20} />
+        <h1 className="text-purple-200 text-[11px] font-semibold tracking-[0.15em] uppercase">
           Building your DNA
         </h1>
       </div>
@@ -1142,8 +1142,8 @@ export default function OnboardingPage() {
         </button>
       </div>
       <div className="flex items-center justify-center gap-2.5 text-center -translate-x-3">
-        <Dna className="text-purple-200" size={25} />
-        <h1 className="text-2xl font-bold leading-tight" style={{ fontFamily: "Poppins, sans-serif" }}>
+        <Dna className="text-purple-200" size={20} />
+        <h1 className="text-purple-200 text-[11px] font-semibold tracking-[0.15em] uppercase">
           Building your DNA
         </h1>
       </div>
