@@ -736,20 +736,6 @@ export default function OnboardingPage() {
     );
   };
 
-  const Shell = ({ children }: { children: React.ReactNode }) => (
-    <div className="min-h-screen w-full flex items-stretch justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900">
-      <div className="w-full max-w-[430px] flex flex-col text-white relative bg-gradient-to-b from-slate-900/60 via-purple-950/40 to-purple-900/50">
-        <button
-          onClick={() => finish("/activity")}
-          className="absolute top-5 right-5 z-10 text-sm text-white/40 hover:text-white/70 transition-colors"
-        >
-          Skip
-        </button>
-        {children}
-      </div>
-    </div>
-  );
-
   if (authLoading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900">
@@ -975,23 +961,34 @@ export default function OnboardingPage() {
 
   if (step === "loved")
     return (
-      <Shell>
-        <button
-          onClick={() => setStep("interests")}
-          className="absolute top-5 left-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
-        >
-          Back
-        </button>
-        <div className="flex-1 flex flex-col px-5 pt-6 pb-8">
-          <h1 className="text-center text-[22px] leading-[1.25] font-black" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Pick titles you’ve loved.
-          </h1>
-          <p className="text-center text-[13px] text-white/60 mt-2">
-            Choose at least 3. The more you pick, the better we’ll understand your taste.
-          </p>
-          <ProgressBar current={2} />
+      <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
+        <div className="w-full max-w-[430px] flex flex-col relative bg-white">
+          <div className="relative text-white px-5 pb-8 bg-gradient-to-r from-slate-950 via-purple-950 to-indigo-950">
+            <button
+              onClick={() => setStep("interests")}
+              className="absolute top-5 left-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
+            >
+              Back
+            </button>
+            <button
+              onClick={() => finish("/activity")}
+              className="absolute top-5 right-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
+            >
+              Skip
+            </button>
+            <h1 className="text-center text-[24px] leading-[1.25] font-black pt-16" style={{ fontFamily: "Poppins, sans-serif" }}>
+              Pick titles you’ve loved.
+            </h1>
+            <div className="mt-6">
+              <ProgressBar current={2} />
+            </div>
+          </div>
 
-          <div className="flex flex-col items-center mt-5">
+          <div className="flex-1 flex flex-col px-5 pt-5 pb-8 bg-white">
+            <p className="text-center text-[13px] text-gray-500">
+              Choose at least 3. The more you pick, the better we’ll understand your taste.
+            </p>
+            <div className="flex flex-col items-center mt-5">
             <div className="flex items-center gap-2">
               {Array.from({ length: 10 }).map((_, i) => {
                 const filled = i < Math.min(loved.length, 10);
@@ -1000,30 +997,30 @@ export default function OnboardingPage() {
                     key={i}
                     className="w-3 h-3 rounded-full transition-all"
                     style={{
-                      background: filled ? "#a855f7" : "rgba(255,255,255,0.15)",
+                      background: filled ? "#a855f7" : "#e5e7eb",
                       boxShadow: filled ? "0 0 8px rgba(168,85,247,0.7)" : "none",
                     }}
                   />
                 );
               })}
             </div>
-            <p className="text-sm font-bold text-white/80 mt-2.5">
+            <p className="text-sm font-bold text-gray-900 mt-2.5">
               {Math.min(loved.length, 10)} / 10 selected
-              {loved.length >= 3 && <span className="text-purple-300"> ✓</span>}
+              {loved.length >= 3 && <span className="text-purple-600"> ✓</span>}
             </p>
-            <p className="text-[12px] text-white/55 mt-1">
+            <p className="text-[12px] text-gray-500 mt-1">
               {loved.length < 3
                 ? "Every pick shapes your Entertainment DNA."
                 : "Keep going to make your Entertainment DNA even better."}
             </p>
           </div>
 
-          <div className="mt-5 space-y-4">
+            <div className="mt-5 space-y-4">
             {titleRows.map((row) => {
               const visible = row.items;
               return (
                 <div key={row.label}>
-                  <p className="text-[12px] font-bold tracking-wide text-white/70 uppercase mb-2">
+                  <p className="text-[12px] font-bold tracking-wide text-gray-500 uppercase mb-2">
                     {row.label}
                   </p>
                   <div className="relative -mx-5">
@@ -1042,7 +1039,7 @@ export default function OnboardingPage() {
                           style={{
                             width: 104,
                             aspectRatio: "2/3",
-                            borderColor: added ? "#a855f7" : "rgba(255,255,255,0.1)",
+                            borderColor: added ? "#a855f7" : "#e5e7eb",
                             boxShadow: added ? "0 0 16px rgba(168,85,247,0.45)" : "none",
                             opacity: added ? 0.85 : 1,
                           }}
@@ -1072,9 +1069,9 @@ export default function OnboardingPage() {
                     {/* Swipe hint: right-edge fade + chevron */}
                     <div
                       className="pointer-events-none absolute inset-y-0 right-0 w-12 flex items-center justify-end pr-1"
-                      style={{ background: "linear-gradient(to left, rgba(10,6,24,0.9), rgba(10,6,24,0))" }}
+                       style={{ background: "linear-gradient(to left, rgba(255,255,255,0.98), rgba(255,255,255,0))" }}
                     >
-                      <ChevronRight size={18} className="text-white/60" />
+                      <ChevronRight size={18} className="text-purple-500" />
                     </div>
                   </div>
                 </div>
@@ -1085,7 +1082,7 @@ export default function OnboardingPage() {
           <button
             onClick={submitLoved}
             disabled={loved.length < 3 || saving}
-            className="w-full py-3.5 rounded-full font-bold text-[15px] mt-4 transition-all active:scale-95 disabled:opacity-40"
+            className="w-full py-3.5 rounded-full font-bold text-[15px] text-white mt-4 transition-all active:scale-95 disabled:opacity-40"
             style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
           >
             {saving ? "Saving..." : "Continue"}
@@ -1095,14 +1092,14 @@ export default function OnboardingPage() {
               setLoved([]);
               setStep("love");
             }}
-            className="mx-auto text-sm text-white/45 font-medium mt-4"
+            className="mx-auto text-sm text-gray-500 font-medium mt-4"
           >
             None of these — I'll do it later
           </button>
-          <p className="text-center text-[12px] text-white/40 mt-2">
+          <p className="text-center text-[12px] text-gray-400 mt-2">
             Pick at least 3. You can always add more later.
           </p>
-        </div>
+          </div>
 
         {showTenPrompt && (
           <div
@@ -1141,7 +1138,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-      </Shell>
+        </div>
+      </div>
     );
 
   const titlesShapingDNA = existingTitles.length > 0 ? existingTitles : loved;
