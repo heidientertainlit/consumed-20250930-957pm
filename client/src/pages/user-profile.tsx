@@ -4570,11 +4570,16 @@ export default function UserProfile() {
                   {openFilter === 'type' && (
                     <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[120px]">
                       {[
-                        { value: 'all', label: 'All Types' },
+                        { value: 'all', label: 'All Media' },
                         { value: 'movie', label: 'Movies', icon: Film },
-                        { value: 'tv', label: 'TV', icon: Tv },
+                        { value: 'tv', label: 'TV Shows', icon: Tv },
                         { value: 'book', label: 'Books', icon: BookOpen },
+                        { value: 'book_series', label: 'Book Series', icon: BookOpen },
                         { value: 'music', label: 'Music', icon: Music },
+                        { value: 'podcast', label: 'Podcasts', icon: Mic },
+                        { value: 'game', label: 'Gaming', icon: Gamepad2 },
+                        { value: 'sports', label: 'Sports', icon: Trophy },
+                        { value: 'youtube', label: 'YouTube', icon: Youtube },
                       ].map(({ value, label, icon: Icon }) => (
                         <button key={value} onClick={() => { setMediaHistoryType(value); setOpenFilter(null); }}
                           className={`w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-gray-100 ${mediaHistoryType === value ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
