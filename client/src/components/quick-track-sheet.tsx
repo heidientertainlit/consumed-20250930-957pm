@@ -654,28 +654,50 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                 </div>
               </div>
 
-              {/* Take + optional rating — matches the main composer */}
+              {/* Optional rating and reaction */}
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-2">Add a reaction <span className="text-gray-400 font-normal">(optional)</span></p>
                 <div className="rounded-2xl border border-gray-200 overflow-hidden">
                   <div className="p-3.5 space-y-3">
-                    <textarea
-                      value={takeText}
-                      onChange={(e) => setTakeText(e.target.value)}
-                      placeholder="What do you think?"
-                      rows={3}
-                      className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      data-testid="quick-track-take"
-                    />
                     <div>
                       <p className="text-sm font-semibold text-gray-700">What would you rate it? <span className="text-gray-400 font-normal">(optional)</span></p>
-                      <div className="flex items-center gap-1.5 mt-1.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button key={star} onClick={() => setRating(rating === star ? 0 : star)} className="p-0.5" data-testid={`quick-track-star-${star}`}>
-                            <Star size={30} className={rating >= star ? "text-purple-500" : "text-gray-300"} fill={rating >= star ? "currentColor" : "none"} />
-                          </button>
-                        ))}
+                      <div className="flex items-center gap-1.5 mt-1.5" role="group" aria-label="Rating">
+                        {[1, 2, 3, 4, 5].map((star) => {
+                          const fillWidth = rating >= star ? "100%" : rating >= star - 0.5 ? "50%" : "0%";
+                          return (
+                            <div key={star} className="relative h-9 w-9">
+                              <Star size={30} className="absolute inset-0 m-auto text-gray-300" />
+                              <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: fillWidth }}>
+                                <Star size={30} className="absolute text-purple-500" style={{ left: 3, top: 3 }} fill="currentColor" />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setRating(rating === star - 0.5 ? 0 : star - 0.5)}
+                                className="absolute inset-y-0 left-0 z-10 w-1/2"
+                                aria-label={`Rate ${star - 0.5} out of 5`}
+                                data-testid={`quick-track-star-${star}-half`}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setRating(rating === star ? 0 : star)}
+                                className="absolute inset-y-0 right-0 z-10 w-1/2"
+                                aria-label={`Rate ${star} out of 5`}
+                                data-testid={`quick-track-star-${star}`}
+                              />
+                            </div>
+                          );
+                        })}
                       </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700 mb-2">Add a reaction <span className="text-gray-400 font-normal">(optional)</span></p>
+                      <textarea
+                        value={takeText}
+                        onChange={(e) => setTakeText(e.target.value)}
+                        placeholder="What do you think?"
+                        rows={3}
+                        className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        data-testid="quick-track-take"
+                      />
                     </div>
                   </div>
                 </div>
