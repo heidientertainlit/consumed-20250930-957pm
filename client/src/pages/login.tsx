@@ -340,8 +340,7 @@ export default function LoginPage() {
             />
           </div>
           <h1
-            className="text-white text-lg font-medium mb-2 leading-tight"
-            style={{ fontFamily: "'Fraunces', serif" }}
+            className="font-fraunces text-white text-lg font-medium mb-2 leading-tight"
           >
             Where entertainment comes together,
             <br />
