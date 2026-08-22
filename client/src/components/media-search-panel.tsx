@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Search, Loader2, X, Sparkles,
-  Tv, Film, BookOpen, Music, Mic, Youtube,
+  Tv, Film, BookOpen, Music, Mic, Youtube, Gamepad2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
@@ -13,13 +13,14 @@ import { useAuth } from "@/lib/auth";
  * one single implementation. Change it here, it changes everywhere.
  */
 
-const TYPE_PILLS: { value: string; label: string; Icon: typeof Tv }[] = [
+const TYPE_PILLS: { value: string; label: string; Icon: typeof Tv; beta?: boolean }[] = [
   { value: "tv", label: "TV", Icon: Tv },
   { value: "movie", label: "Movie", Icon: Film },
   { value: "book", label: "Book", Icon: BookOpen },
   { value: "music", label: "Music", Icon: Music },
   { value: "podcast", label: "Podcast", Icon: Mic },
   { value: "youtube", label: "YouTube", Icon: Youtube },
+  { value: "game", label: "Gaming", Icon: Gamepad2, beta: true },
 ];
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
@@ -125,7 +126,7 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search movies, shows, books…"
+            placeholder="Search movies, shows, books, games…"
             autoFocus={autoFocus}
             className="w-full pl-11 pr-10 py-3 border border-gray-200 rounded-2xl bg-gray-50 text-base text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             data-testid="media-search-input"
@@ -148,7 +149,7 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
             >
               All
             </button>
-            {TYPE_PILLS.map(({ value, label, Icon }) => {
+            {TYPE_PILLS.map(({ value, label, Icon, beta }) => {
               const active = mediaTypeFilter === value;
               return (
                 <button
@@ -160,6 +161,15 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
                 >
                   <Icon size={14} />
                   {label}
+                  {beta && (
+                    <span
+                      className={`rounded-full px-1 py-px text-[8px] font-bold uppercase tracking-wide ${
+                        active ? "bg-white/20 text-white" : "bg-purple-100 text-purple-600"
+                      }`}
+                    >
+                      Beta
+                    </span>
+                  )}
                 </button>
               );
             })}
