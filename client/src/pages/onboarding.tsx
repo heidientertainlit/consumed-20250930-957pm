@@ -711,7 +711,7 @@ export default function OnboardingPage() {
   const ONBOARDING_PROGRESS = [
     { context: "Step 1 of 5" },
     { context: "Step 2 of 5 — Your taste is taking shape" },
-    { context: "Step 3 of 5 — Your favorites are taking shape" },
+    { context: "Step 3 of 5 — Every pick shapes your Entertainment DNA" },
   ];
 
   const ProgressBar = ({ current, tone = "dark" }: { current: number; tone?: "dark" | "light" }) => {
@@ -988,32 +988,20 @@ export default function OnboardingPage() {
             <p className="text-center text-[13px] text-gray-500">
               Choose at least 3. The more you pick, the better we’ll understand your taste.
             </p>
-            <div className="flex flex-col items-center mt-5">
-            <div className="flex items-center gap-2">
-              {Array.from({ length: 10 }).map((_, i) => {
-                const filled = i < Math.min(loved.length, 10);
-                return (
-                  <div
-                    key={i}
-                    className="w-3 h-3 rounded-full transition-all"
-                    style={{
-                      background: filled ? "#a855f7" : "#e5e7eb",
-                      boxShadow: filled ? "0 0 8px rgba(168,85,247,0.7)" : "none",
-                    }}
-                  />
-                );
-              })}
+            <div
+              className={`mx-auto mt-5 flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all ${
+                loved.length >= 3
+                  ? "border-purple-200 bg-purple-50 text-purple-700"
+                  : "border-gray-200 bg-gray-50 text-gray-600"
+              }`}
+            >
+              {loved.length >= 3 && <Check size={15} strokeWidth={3} />}
+              <span>
+                {loved.length >= 3
+                  ? `${loved.length} ${loved.length === 1 ? "title" : "titles"} picked`
+                  : `${loved.length} of 3 titles picked`}
+              </span>
             </div>
-            <p className="text-sm font-bold text-gray-900 mt-2.5">
-              {Math.min(loved.length, 10)} / 10 selected
-              {loved.length >= 3 && <span className="text-purple-600"> ✓</span>}
-            </p>
-            <p className="text-[12px] text-gray-500 mt-1">
-              {loved.length < 3
-                ? "Every pick shapes your Entertainment DNA."
-                : "Keep going to make your Entertainment DNA even better."}
-            </p>
-          </div>
 
             <div className="mt-5 space-y-4">
             {titleRows.map((row) => {
