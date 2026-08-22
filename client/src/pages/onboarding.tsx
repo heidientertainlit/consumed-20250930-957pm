@@ -713,22 +713,28 @@ export default function OnboardingPage() {
     }
   };
 
-  const ONBOARDING_PROGRESS = [
-    { context: "Step 1 of 5" },
-    { context: "Step 2 of 5 — Your taste is taking shape" },
+  const ONBOARDING_PROGRESS: Array<{ lead: string; detail?: string }> = [
+    { lead: "Step 1 of 5" },
+    { lead: "Step 2 of 5 — Your taste is taking shape" },
     {
-      context:
-        "Step 3 of 5 — Every pick shapes your Entertainment DNA. Choose at least 3. The more you pick, the better we’ll understand your taste.",
+      lead: "Step 3 of 5 — Every pick shapes your Entertainment DNA.",
+      detail: "Choose at least 3. The more you pick, the better we’ll understand your taste.",
     },
   ];
 
   const ProgressBar = ({ current, tone = "dark" }: { current: number; tone?: "dark" | "light" }) => {
     const progress = ONBOARDING_PROGRESS[current];
     const light = tone === "light";
+    const progressLabel = [progress.lead, progress.detail].filter(Boolean).join(" ");
     return (
       <div className="flex flex-col items-center">
-        <p className={light ? "text-center text-[13px] text-gray-500" : "text-center text-[13px] text-white/55"}>{progress.context}</p>
-        <div className="flex items-center gap-2 mt-3" aria-label={`Onboarding ${progress.context}`}>
+        <p className={light ? "text-center text-[13px] text-gray-500" : "text-center text-[13px] text-white/55"}>
+          <span className={current === 2 ? (light ? "font-bold text-gray-700" : "font-bold text-white/80") : undefined}>
+            {progress.lead}
+          </span>
+          {progress.detail && <> {progress.detail}</>}
+        </p>
+        <div className="flex items-center gap-2 mt-3" aria-label={`Onboarding ${progressLabel}`}>
           {[0, 1, 2, 3, 4].map((index) => (
             <span
               key={index}
@@ -771,12 +777,12 @@ export default function OnboardingPage() {
               Skip
             </button>
             <h1
-              className="text-center text-[26px] leading-[1.2] font-black pt-16"
+              className="text-center text-[26px] leading-[1.2] font-black pt-[72px]"
               style={{ fontFamily: "Poppins, sans-serif" }}
             >
               Help us determine your entertainment DNA
             </h1>
-            <div className="mt-6">
+            <div className="mt-4">
               <ProgressBar current={0} />
             </div>
           </div>
@@ -879,10 +885,10 @@ export default function OnboardingPage() {
             >
               Skip
             </button>
-            <h1 className="text-center text-[26px] leading-[1.2] font-black pt-16" style={{ fontFamily: "Poppins, sans-serif" }}>
+            <h1 className="text-center text-[26px] leading-[1.2] font-black pt-[72px]" style={{ fontFamily: "Poppins, sans-serif" }}>
               Help us determine your entertainment DNA
             </h1>
-            <div className="mt-6">
+            <div className="mt-4">
               <ProgressBar current={1} />
             </div>
           </div>
@@ -984,10 +990,10 @@ export default function OnboardingPage() {
             >
               Skip
             </button>
-            <h1 className="text-center text-[24px] leading-[1.25] font-black pt-16" style={{ fontFamily: "Poppins, sans-serif" }}>
+            <h1 className="text-center text-[24px] leading-[1.25] font-black pt-[72px]" style={{ fontFamily: "Poppins, sans-serif" }}>
               Pick titles you’ve loved.
             </h1>
-            <div className="mt-6">
+            <div className="mt-4">
               <ProgressBar current={2} />
             </div>
           </div>
@@ -1008,7 +1014,7 @@ export default function OnboardingPage() {
               </span>
             </div>
 
-            <div className="mt-4 space-y-4">
+            <div className="mt-2 space-y-4">
             {titleRows.map((row) => {
               const visible = row.items;
               return (
