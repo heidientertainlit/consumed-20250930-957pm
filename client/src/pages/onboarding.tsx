@@ -750,6 +750,48 @@ export default function OnboardingPage() {
     );
   };
 
+  const OnboardingHero = ({
+    currentStep,
+    onBack,
+  }: {
+    currentStep: 1 | 2 | 3;
+    onBack?: () => void;
+  }) => (
+    <div
+      className="px-5 pt-5 pb-6 text-white"
+      style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        {onBack ? (
+          <button onClick={onBack} className="text-sm text-white/60 hover:text-white transition-colors">
+            Back
+          </button>
+        ) : (
+          <span aria-hidden="true" />
+        )}
+        <button onClick={() => finish("/activity")} className="text-xs text-white/70 hover:text-white">
+          Skip for now
+        </button>
+      </div>
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 rounded-full bg-purple-600/25 border border-purple-400/40 flex items-center justify-center shrink-0 shadow-lg shadow-purple-900/40">
+          <Dna className="text-purple-200" size={26} />
+        </div>
+        <div className="min-w-0">
+          <p className="text-purple-300 text-[11px] font-semibold tracking-[0.15em] uppercase mb-0.5">
+            Building your DNA
+          </p>
+          <h1 className="text-2xl font-bold leading-tight" style={{ fontFamily: "Poppins, sans-serif" }}>
+            Your Entertainment DNA
+          </h1>
+        </div>
+      </div>
+      <div className="mt-6">
+        <ProgressBar current={currentStep - 1} />
+      </div>
+    </div>
+  );
+
   if (authLoading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900">
@@ -768,24 +810,7 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
-          {/* Gradient hero header */}
-          <div className="relative text-white px-6 pb-10 bg-gradient-to-r from-slate-950 via-purple-950 to-indigo-950">
-            <button
-              onClick={() => finish("/activity")}
-              className="absolute top-5 right-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
-            >
-              Skip
-            </button>
-            <h1
-              className="text-center text-[26px] leading-[1.2] font-black pt-24"
-              style={{ fontFamily: "Poppins, sans-serif" }}
-            >
-              Help us determine your entertainment DNA
-            </h1>
-            <div className="mt-4">
-              <ProgressBar current={0} />
-            </div>
-          </div>
+          <OnboardingHero currentStep={1} />
 
           {/* White body */}
           <div className="flex-1 flex flex-col px-6 pt-8 pb-10">
@@ -872,26 +897,7 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
-          <div className="relative text-white px-6 pb-10 bg-gradient-to-r from-slate-950 via-purple-950 to-indigo-950">
-            <button
-              onClick={() => setStep("debate")}
-              className="absolute top-5 left-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
-            >
-              Back
-            </button>
-            <button
-              onClick={() => finish("/activity")}
-              className="absolute top-5 right-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
-            >
-              Skip
-            </button>
-            <h1 className="text-center text-[26px] leading-[1.2] font-black pt-24" style={{ fontFamily: "Poppins, sans-serif" }}>
-              Help us determine your entertainment DNA
-            </h1>
-            <div className="mt-4">
-              <ProgressBar current={1} />
-            </div>
-          </div>
+          <OnboardingHero currentStep={2} onBack={() => setStep("debate")} />
 
           <div className="flex-1 flex flex-col px-6 pt-8 pb-10">
             <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600">STEP TWO</p>
@@ -977,26 +983,7 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
-          <div className="relative text-white px-5 pb-8 bg-gradient-to-r from-slate-950 via-purple-950 to-indigo-950">
-            <button
-              onClick={() => setStep("interests")}
-              className="absolute top-5 left-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
-            >
-              Back
-            </button>
-            <button
-              onClick={() => finish("/activity")}
-              className="absolute top-5 right-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
-            >
-              Skip
-            </button>
-            <h1 className="text-center text-[24px] leading-[1.25] font-black pt-24" style={{ fontFamily: "Poppins, sans-serif" }}>
-              Pick titles you’ve loved.
-            </h1>
-            <div className="mt-4">
-              <ProgressBar current={2} />
-            </div>
-          </div>
+          <OnboardingHero currentStep={3} onBack={() => setStep("interests")} />
 
           <div className="flex-1 flex flex-col px-5 pt-3 pb-8 bg-white">
             <div
