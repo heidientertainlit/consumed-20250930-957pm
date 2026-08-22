@@ -471,9 +471,14 @@ export default function OnboardingPage() {
   const toggleDriver = (driver: string) =>
     setDrivers((current) => (current.includes(driver) ? current.filter((item) => item !== driver) : [...current, driver]));
   const titleRows = mediaTypes.length > 0
-    ? [...lovedRows].sort(
-        (left, right) => Number(mediaTypes.includes(right.label)) - Number(mediaTypes.includes(left.label)),
-      )
+    ? [...lovedRows].sort((left, right) => {
+        const leftRank = mediaTypes.indexOf(left.label);
+        const rightRank = mediaTypes.indexOf(right.label);
+        if (leftRank === -1 && rightRank === -1) return 0;
+        if (leftRank === -1) return 1;
+        if (rightRank === -1) return -1;
+        return leftRank - rightRank;
+      })
     : lovedRows;
   const hasMappableRoom = rooms.some((roomId) => Boolean(ROOM_GENRES[roomId]));
 
@@ -722,7 +727,7 @@ export default function OnboardingPage() {
     const light = tone === "light";
     return (
       <div className="flex flex-col items-center">
-        <p className={light ? "text-[13px] text-gray-500" : "text-[13px] text-white/55"}>{progress.context}</p>
+        <p className={light ? "text-center text-[13px] text-gray-500" : "text-center text-[13px] text-white/55"}>{progress.context}</p>
         <div className="flex items-center gap-2 mt-3" aria-label={`Onboarding ${progress.context}`}>
           {[0, 1, 2, 3, 4].map((index) => (
             <span
@@ -987,7 +992,7 @@ export default function OnboardingPage() {
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col px-5 pt-5 pb-8 bg-white">
+          <div className="flex-1 flex flex-col px-5 pt-3 pb-8 bg-white">
             <div
               className={`mx-auto mt-1 flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all ${
                 loved.length >= 3
@@ -1003,7 +1008,7 @@ export default function OnboardingPage() {
               </span>
             </div>
 
-            <div className="mt-5 space-y-4">
+            <div className="mt-4 space-y-4">
             {titleRows.map((row) => {
               const visible = row.items;
               return (
