@@ -1036,8 +1036,7 @@ export default function Leaderboard() {
                   'from-violet-500 to-purple-500'
                 )}
                 
-                {/* Gamers — hidden for now, will bring back later */}
-                {false && renderCategoryCard(
+                {renderCategoryCard(
                   'Gamers',
                   Gamepad2,
                   leaderboardData?.categories?.games,
