@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import { IdentityFace } from "@/components/feed-identity-hero";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock, User, AtSign, Flame, Tv, Headphones, BookOpen, BarChart3, TrendingUp } from "lucide-react";
 
@@ -339,13 +340,17 @@ export default function LoginPage() {
               className="h-14 w-auto"
             />
           </div>
-          <h1
-            className="font-fraunces text-white text-lg font-medium mb-2 leading-tight"
-          >
-            Where entertainment comes together,
-            <br />
-            <span className="italic">so we can too.</span>
-          </h1>
+          <div className="font-fraunces text-white mb-2">
+            <h1 className="font-fraunces text-[23px] font-medium leading-[1.05] whitespace-nowrap">
+              Where entertainment comes together,
+            </h1>
+            <div className="mt-1 flex items-center justify-center gap-2">
+              <p className="font-fraunces text-[23px] italic font-medium leading-[1.05]">
+                so we can too.
+              </p>
+              <IdentityFace size={30} />
+            </div>
+          </div>
         </div>
 
         <div className="mb-5">
