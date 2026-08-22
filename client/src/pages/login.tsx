@@ -251,12 +251,13 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-b from-[#09060f] via-[#180d2d] to-[#32194f] overflow-y-auto flex flex-col">
       <div className="max-w-md w-full mx-auto px-4 flex-1 pb-10">
         <div className="text-center mb-8 mt-24">
-          <div className="flex justify-center mb-2">
+          <div className="flex items-center justify-center gap-3 mb-2">
             <img
               src="/consumed-logo-new.png"
               alt="Consumed"
               className="h-14 w-auto"
             />
+            <IdentityFace size={32} />
           </div>
           <div className="font-fraunces text-white mb-2">
             <h1 className="font-fraunces text-[17px] font-normal leading-[1.15] whitespace-nowrap">
@@ -266,7 +267,6 @@ export default function LoginPage() {
               <p className="font-fraunces text-[17px] italic font-normal leading-[1.15]">
                 so we can too.
               </p>
-              <IdentityFace size={30} />
             </div>
           </div>
         </div>
