@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { ArrowRight, Check, ChevronRight, CircleUser, Dna, Eye, Feather, Gamepad2, Heart, HeartHandshake, HelpCircle, Home, Leaf, Loader2, Mic, Music, Palette, Plane, Rocket, Search, Sparkles, Trophy, Tv, Users, Video, Wand2, Youtube, Zap, Clapperboard, Smile, Skull, Crown, Drama, BookOpen } from "lucide-react";
 import { markOnboardingComplete } from "@/components/route-guards";
@@ -350,6 +350,10 @@ export default function OnboardingPage() {
   const [showTenPrompt, setShowTenPrompt] = useState(false);
   const [tenPromptShown, setTenPromptShown] = useState(false);
   const pendingSaves = useRef<Promise<void> | null>(null);
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [step]);
 
   const finish = async (route: string) => {
     markOnboardingComplete(user?.id);
@@ -778,11 +782,8 @@ export default function OnboardingPage() {
           <Dna className="text-purple-200" size={26} />
         </div>
         <div className="min-w-0">
-          <p className="text-purple-300 text-[11px] font-semibold tracking-[0.15em] uppercase mb-0.5">
-            Building your DNA
-          </p>
           <h1 className="text-2xl font-bold leading-tight" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Your Entertainment DNA
+            Building your DNA
           </h1>
         </div>
       </div>
@@ -1149,11 +1150,8 @@ export default function OnboardingPage() {
           <Dna className="text-purple-200" size={26} />
         </div>
         <div className="min-w-0">
-          <p className="text-purple-300 text-[11px] font-semibold tracking-[0.15em] uppercase mb-0.5">
-            Finish building
-          </p>
           <h1 className="text-2xl font-bold leading-tight" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Your Entertainment DNA
+            Building your DNA
           </h1>
         </div>
       </div>
