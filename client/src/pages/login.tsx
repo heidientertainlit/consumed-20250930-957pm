@@ -26,7 +26,7 @@ export default function LoginPage() {
   const [justSignedUp, setJustSignedUp] = useState(false);
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
-  const { user, session, loading, signIn, signUp, resetPassword } = useAuth();
+  const { user, session, loading, signIn, signUp, signInWithOAuth, resetPassword } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -208,12 +208,17 @@ export default function LoginPage() {
   const inputClasses = "w-full h-12 bg-gray-100/80 border-0 rounded-full px-12 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:bg-white transition-all";
   const labelClasses = "text-sm font-medium text-gray-600 ml-1";
 
-  // UI-only for now — real OAuth gets wired in after Apple/Google provider config is done.
-  const handleOAuth = (provider: 'apple' | 'google') => {
-    toast({
-      title: "Almost there",
-      description: `${provider === 'apple' ? 'Apple' : 'Google'} sign-in isn't connected yet — coming soon.`,
-    });
+  const handleOAuth = async (provider: 'apple' | 'google') => {
+    setSubmitting(true);
+    const { error } = await signInWithOAuth(provider);
+    if (error) {
+      toast({
+        title: `${provider === 'apple' ? 'Apple' : 'Google'} sign-in failed`,
+        description: error.message,
+        variant: "destructive",
+      });
+      setSubmitting(false);
+    }
   };
 
   const renderSocialButtons = (context: 'signin' | 'signup') => (
@@ -229,6 +234,7 @@ export default function LoginPage() {
       <button
         type="button"
         onClick={() => handleOAuth('apple')}
+        disabled={submitting}
         className="w-full h-12 flex items-center justify-center gap-2 bg-black text-white rounded-full text-sm font-semibold hover:bg-black/90 transition-all"
         data-testid={`button-${context}-apple`}
       >
@@ -238,6 +244,7 @@ export default function LoginPage() {
       <button
         type="button"
         onClick={() => handleOAuth('google')}
+        disabled={submitting}
         className="w-full h-12 flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 rounded-full text-sm font-semibold hover:bg-gray-50 transition-all"
         data-testid={`button-${context}-google`}
       >

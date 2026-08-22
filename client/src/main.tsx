@@ -15,7 +15,7 @@ initPostHog();
 if (Capacitor.isNativePlatform()) {
   console.log("[RESET-DEBUG] main.tsx: isNativePlatform = true, registering appUrlOpen listener");
   CapApp.addListener("appUrlOpen", ({ url }) => {
-    console.log("[RESET-DEBUG] appUrlOpen fired! Full URL:", url);
+    console.log("[AUTH-DEBUG] appUrlOpen fired");
 
     const hashIndex = url.indexOf("#");
     if (hashIndex === -1) {
@@ -31,16 +31,14 @@ if (Capacitor.isNativePlatform()) {
 
     console.log("[RESET-DEBUG] Parsed hash params — type:", type, "| has access_token:", !!accessToken, "| has refresh_token:", !!refreshToken);
 
-    if (type === "recovery" && accessToken && refreshToken) {
-      console.log("[RESET-DEBUG] Recovery URL confirmed — saving to localStorage");
-      localStorage.setItem(
-        "pendingRecovery",
-        JSON.stringify({ accessToken, refreshToken })
-      );
-      localStorage.setItem("pendingRoute", "/reset-password");
-      console.log("[RESET-DEBUG] localStorage written: pendingRecovery + pendingRoute=/reset-password");
+    if (accessToken && refreshToken) {
+      const storageKey = type === "recovery" ? "pendingRecovery" : "pendingOAuthSession";
+      const pendingRoute = type === "recovery" ? "/reset-password" : "/activity";
+      localStorage.setItem(storageKey, JSON.stringify({ accessToken, refreshToken }));
+      localStorage.setItem("pendingRoute", pendingRoute);
+      console.log("[AUTH-DEBUG] Stored pending auth callback for app startup");
     } else {
-      console.log("[RESET-DEBUG] Not a recovery URL (type was not 'recovery' or tokens missing), skipping");
+      console.log("[AUTH-DEBUG] Auth callback tokens missing, skipping");
     }
   });
 } else {

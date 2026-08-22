@@ -6,6 +6,8 @@ import { identifyUser, resetUser, trackEvent } from './posthog'
 import { Capacitor } from "@capacitor/core"
 import OneSignal from "onesignal-cordova-plugin"
 
+type OAuthProvider = 'apple' | 'google'
+
 interface AuthContextType {
   user: User | null
   session: Session | null
@@ -17,6 +19,7 @@ interface AuthContextType {
     metadata?: { firstName?: string; lastName?: string; username?: string }
   ) => Promise<{ error: any; data?: any }>
   signOut: () => Promise<{ error: any }>
+  signInWithOAuth: (provider: OAuthProvider) => Promise<{ error: any }>
   resetPassword: (email: string) => Promise<{ error: any }>
   updatePassword: (newPassword: string) => Promise<{ error: any }>
 }
@@ -167,6 +170,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error }
   }
 
+  const signInWithOAuth = async (provider: OAuthProvider) => {
+    // Browser sign-in must return to the exact current origin so previews and
+    // production work without separate code paths. Native uses the published
+    // app URL, which is handled by CapacitorDeepLinkHandler.
+    const appUrl = (import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com').replace(/\/$/, '')
+    const redirectOrigin = Capacitor.isNativePlatform() ? appUrl : window.location.origin
+    const redirectTo = `${redirectOrigin}/login`
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo },
+    })
+    return { error }
+  }
+
   const resetPassword = async (email: string) => {
     // IMPORTANT: Never use window.location.origin as fallback here.
     // On iOS Capacitor the origin is 'https://localhost', which Supabase
@@ -197,6 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signIn,
       signUp,
       signOut,
+        signInWithOAuth,
       resetPassword,
       updatePassword,
     }}>

@@ -121,11 +121,36 @@ function PendingRouteHandler() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    const route = localStorage.getItem("pendingRoute");
-    if (route) {
-      localStorage.removeItem("pendingRoute");
-      setLocation(route);
-    }
+    const restorePendingAuthAndRoute = async () => {
+      const pendingOAuthRaw = localStorage.getItem("pendingOAuthSession");
+      if (pendingOAuthRaw) {
+        localStorage.removeItem("pendingOAuthSession");
+        try {
+          const { accessToken, refreshToken } = JSON.parse(pendingOAuthRaw);
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) {
+            console.error("[AUTH-DEBUG] Failed to restore pending OAuth session");
+            localStorage.removeItem("pendingRoute");
+            return;
+          }
+        } catch {
+          console.error("[AUTH-DEBUG] Invalid pending OAuth session");
+          localStorage.removeItem("pendingRoute");
+          return;
+        }
+      }
+
+      const route = localStorage.getItem("pendingRoute");
+      if (route) {
+        localStorage.removeItem("pendingRoute");
+        setLocation(route);
+      }
+    };
+
+    void restorePendingAuthAndRoute();
   }, [setLocation]);
 
   return null;
@@ -156,7 +181,7 @@ function CapacitorDeepLinkHandler() {
     console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: mounted, registering appUrlOpen listener (warm-start backup)");
 
     const handleAppUrlOpen = async ({ url }: { url: string }) => {
-      console.log("[RESET-DEBUG] CapacitorDeepLinkHandler appUrlOpen fired! URL:", url);
+      console.log("[AUTH-DEBUG] CapacitorDeepLinkHandler appUrlOpen fired");
       const hashIndex = url.indexOf('#');
       if (hashIndex === -1) {
         console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: no hash, ignoring");
@@ -170,11 +195,17 @@ function CapacitorDeepLinkHandler() {
       const refreshToken = params.get('refresh_token');
       console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: type:", type, "has tokens:", !!accessToken, !!refreshToken);
 
-      if (type === 'recovery' && accessToken && refreshToken) {
-        console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: calling setSession()");
+      if (accessToken && refreshToken) {
+        console.log("[AUTH-DEBUG] CapacitorDeepLinkHandler: calling setSession()");
         const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-        console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: setSession result — error:", error);
-        setLocation('/reset-password');
+        console.log("[AUTH-DEBUG] CapacitorDeepLinkHandler: setSession result — error:", error);
+        if (!error) {
+          if (type !== 'recovery') {
+            localStorage.removeItem("pendingOAuthSession");
+            localStorage.removeItem("pendingRoute");
+          }
+          setLocation(type === 'recovery' ? '/reset-password' : '/activity');
+        }
       }
     };
 

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
+import { useAuth } from '@/lib/auth'
 import { Eye, EyeOff } from 'lucide-react'
 import { SiApple, SiGoogle } from 'react-icons/si'
 
@@ -24,6 +25,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
   const [showSignInPassword, setShowSignInPassword] = useState(false)
   const [showSignUpPassword, setShowSignUpPassword] = useState(false)
   const { toast } = useToast()
+  const { signInWithOAuth: oauthSignIn } = useAuth()
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -101,12 +103,17 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
     }
   }
 
-  // UI-only for now — real OAuth gets wired in after Apple/Google provider config is done.
-  const handleOAuth = (provider: 'apple' | 'google') => {
-    toast({
-      title: "Almost there",
-      description: `${provider === 'apple' ? 'Apple' : 'Google'} sign-in isn't connected yet — coming soon.`,
-    })
+  const handleOAuth = async (provider: 'apple' | 'google') => {
+    setIsLoading(true)
+    const { error } = await oauthSignIn(provider)
+    if (error) {
+      toast({
+        title: `${provider === 'apple' ? 'Apple' : 'Google'} sign-in failed`,
+        description: error.message,
+        variant: "destructive",
+      })
+      setIsLoading(false)
+    }
   }
 
   const renderSocialButtons = (context: 'signin' | 'signup') => (
@@ -115,6 +122,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         type="button"
         variant="outline"
         onClick={() => handleOAuth('apple')}
+        disabled={isLoading}
         className="w-full bg-black text-white hover:bg-black/90 hover:text-white border-black"
         data-testid={`button-${context}-apple`}
       >
@@ -125,6 +133,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         type="button"
         variant="outline"
         onClick={() => handleOAuth('google')}
+        disabled={isLoading}
         className="w-full bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 border-gray-300"
         data-testid={`button-${context}-google`}
       >
