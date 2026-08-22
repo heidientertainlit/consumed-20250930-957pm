@@ -341,11 +341,11 @@ export default function LoginPage() {
             />
           </div>
           <div className="font-fraunces text-white mb-2">
-            <h1 className="font-fraunces text-[23px] font-medium leading-[1.05] whitespace-nowrap">
+            <h1 className="font-fraunces text-[20px] font-normal leading-[1.1] whitespace-nowrap">
               Where entertainment comes together,
             </h1>
             <div className="mt-1 flex items-center justify-center gap-2">
-              <p className="font-fraunces text-[23px] italic font-medium leading-[1.05]">
+              <p className="font-fraunces text-[20px] italic font-normal leading-[1.1]">
                 so we can too.
               </p>
               <IdentityFace size={30} />
