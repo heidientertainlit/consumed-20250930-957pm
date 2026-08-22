@@ -877,6 +877,12 @@ export default function OnboardingPage() {
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
           <div className="relative text-white px-6 pb-10 bg-gradient-to-r from-slate-950 via-purple-950 to-indigo-950">
             <button
+              onClick={() => setStep("debate")}
+              className="absolute top-5 left-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
+            >
+              Back
+            </button>
+            <button
               onClick={() => finish("/activity")}
               className="absolute top-5 right-5 z-10 text-sm text-white/60 hover:text-white transition-colors"
             >
@@ -885,12 +891,9 @@ export default function OnboardingPage() {
             <h1 className="text-center text-[26px] leading-[1.2] font-black pt-16" style={{ fontFamily: "Poppins, sans-serif" }}>
               Help us determine your entertainment DNA
             </h1>
-            <p className="text-center text-[14px] italic text-white/70 mt-3">
-              Tell us what keeps you coming back
-            </p>
-          </div>
-          <div className="px-6 py-4 bg-[#fbfaff] border-b border-purple-100">
-            <ProgressBar current={1} tone="light" />
+            <div className="mt-6">
+              <ProgressBar current={1} />
+            </div>
           </div>
 
           <div className="flex-1 flex flex-col px-6 pt-8 pb-10">
