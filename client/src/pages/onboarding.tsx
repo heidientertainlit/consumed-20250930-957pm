@@ -777,13 +777,25 @@ export default function OnboardingPage() {
           Skip for now
         </button>
       </div>
-      <div className="flex items-center justify-center gap-2.5 text-center -translate-x-3">
-        <Dna className="text-purple-200" size={20} />
-        <h1 className="text-purple-200 text-[11px] font-semibold tracking-[0.15em] uppercase">
-          Building your DNA
-        </h1>
-      </div>
-      <div className="mt-3">
+      {currentStep === 1 ? (
+        <div className="flex flex-col items-center text-center">
+          <Dna className="text-purple-200 mb-3" size={28} />
+          <h1 className="text-[26px] leading-[1.15] font-bold" style={{ fontFamily: "Poppins, sans-serif" }}>
+            Let’s get to know your taste.
+          </h1>
+          <p className="max-w-[300px] mt-2 text-[13px] leading-relaxed text-white/65">
+            A few quick choices will help build your Entertainment DNA.
+          </p>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center gap-2.5 text-center -translate-x-3">
+          <Dna className="text-purple-200" size={20} />
+          <h1 className="text-purple-200 text-[11px] font-semibold tracking-[0.15em] uppercase">
+            Building your DNA
+          </h1>
+        </div>
+      )}
+      <div className={currentStep === 1 ? "mt-5" : "mt-3"}>
         <ProgressBar current={currentStep - 1} />
       </div>
     </div>
