@@ -140,7 +140,7 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
 
         <div>
           <p className="text-xs font-semibold text-gray-500 mb-2">Filter by media type</p>
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             <button
               onClick={() => setMediaTypeFilter(null)}
               className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
