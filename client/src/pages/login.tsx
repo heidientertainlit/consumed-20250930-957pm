@@ -339,8 +339,10 @@ export default function LoginPage() {
               className="h-14 w-auto"
             />
           </div>
-          <h1 className="text-white text-lg font-serif mb-2 leading-tight whitespace-nowrap">
-            Entertainment is better, shared.
+          <h1 className="text-white text-lg font-serif mb-2 leading-tight">
+            Where entertainment comes together,
+            <br />
+            so we can too.
           </h1>
         </div>
 
