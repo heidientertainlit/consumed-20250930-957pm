@@ -146,6 +146,26 @@
 }
 
 @layer utilities {
+  @keyframes identity-face-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-3px);
+    }
+  }
+
+  .identity-face-float {
+    animation: identity-face-float 3.2s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .identity-face-float {
+      animation: none;
+    }
+  }
+
   /* Form text override with !important */
   .form-text-black {
     color: #000 !important;
