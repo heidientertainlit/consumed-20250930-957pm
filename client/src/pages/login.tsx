@@ -248,9 +248,9 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#171028] to-[#241740] overflow-y-auto flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-[#09060f] via-[#180d2d] to-[#32194f] overflow-y-auto flex flex-col">
       <div className="max-w-md w-full mx-auto px-4 flex-1 pb-10">
-        <div className="text-center mb-6 mt-12">
+        <div className="text-center mb-8 mt-24">
           <div className="flex justify-center mb-2">
             <img
               src="/consumed-logo-new.png"
