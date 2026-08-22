@@ -196,10 +196,30 @@ const formatUsername = (username?: string): string => {
   return clean || 'User';
 };
 
+const formatMediaTypeLabel = (type: string | undefined | null): string => {
+  const normalized = (type || '').toLowerCase().trim();
+  const labels: Record<string, string> = {
+    movie: 'Movie',
+    tv: 'TV',
+    book: 'Book',
+    book_series: 'Book Series',
+    music: 'Music',
+    podcast: 'Podcast',
+    game: 'Gaming',
+    sports: 'Sports',
+    youtube: 'YouTube',
+  };
+
+  return labels[normalized] || (type || '');
+};
+
 // Normalize media type for URL construction — prevents TV show IDs hitting the movie endpoint
 const normalizeMediaType = (type: string | undefined | null): string => {
   const t = (type || '').toLowerCase().trim();
   if (t === 'tv' || t === 'tv show' || t === 'tv_show' || t === 'tvshow' || t === 'series' || t === 'television') return 'tv';
+  if (t === 'game' || t === 'gaming') return 'game';
+  if (t === 'book series' || t === 'book-series') return 'book_series';
+  if (['movie', 'book', 'book_series', 'music', 'podcast', 'sports', 'youtube'].includes(t)) return t;
   return 'movie';
 };
 
@@ -1789,7 +1809,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     if (t === 'tv show') return 'tv';
     return t;
   })();
-  const mediaTypeLabel = mediaTypeNorm === 'tv' ? 'TV' : mediaTypeNorm === 'movie' ? 'Movie' : mediaTypeNorm === 'book' ? 'Book' : mediaTypeNorm === 'music' ? 'Music' : mediaTypeNorm === 'podcast' ? 'Podcast' : mediaTypeNorm === 'game' ? 'Game' : mediaTypeNorm === 'youtube' ? 'YouTube' : null;
+  const mediaTypeLabel = mediaTypeNorm ? formatMediaTypeLabel(mediaTypeNorm) : null;
   const seenItLabel = (() => {
     if (mediaTypeNorm === 'music') return { idle: 'Heard it', done: 'Heard!' };
     if (mediaTypeNorm === 'podcast') return { idle: 'Listened', done: 'Listened!' };
@@ -3889,7 +3909,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
     if (t === 'tv show') return 'tv';
     return t;
   })();
-  const spMediaTypeLabel = spMediaTypeNorm === 'tv' ? 'TV' : spMediaTypeNorm === 'movie' ? 'Movie' : spMediaTypeNorm === 'book' ? 'Book' : spMediaTypeNorm === 'music' ? 'Music' : spMediaTypeNorm === 'podcast' ? 'Podcast' : spMediaTypeNorm === 'game' ? 'Game' : null;
+  const spMediaTypeLabel = spMediaTypeNorm ? formatMediaTypeLabel(spMediaTypeNorm) : null;
   const spSeenItLabel = (() => {
     if (spMediaTypeNorm === 'music') return { idle: 'Heard it', done: 'Heard!' };
     if (spMediaTypeNorm === 'podcast') return { idle: 'Listened', done: 'Listened!' };
@@ -4576,7 +4596,7 @@ function CurrentlyConsumingFeedCard({
                     <span className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
                   </Link>
                   {post.mediaType && (
-                    <span className="text-xs px-2 py-0.5 rounded-full border border-purple-200 text-purple-500">{post.mediaType}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full border border-purple-200 text-purple-500">{formatMediaTypeLabel(post.mediaType)}</span>
                   )}
                 </div>
                 {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
@@ -4641,7 +4661,7 @@ function CurrentlyConsumingFeedCard({
                 {media.creator && (
                   <p className="text-xs text-gray-600 mb-0.5">by {media.creator}</p>
                 )}
-                <p className="text-xs text-gray-500 capitalize mb-2">{media.mediaType}</p>
+                <p className="text-xs text-gray-500 mb-2">{formatMediaTypeLabel(media.mediaType)}</p>
                 
                 {/* Compact actions */}
                 <MediaCardActions media={media} session={session} />
@@ -8935,7 +8955,7 @@ export default function Feed() {
                           <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-sm text-gray-900 line-clamp-2">{highlightedPost.mediaItems[0].title}</h3>
                             {highlightedPost.mediaItems[0].mediaType && (
-                              <p className="text-xs text-gray-500 capitalize">{highlightedPost.mediaItems[0].mediaType}</p>
+                              <p className="text-xs text-gray-500">{formatMediaTypeLabel(highlightedPost.mediaItems[0].mediaType)}</p>
                             )}
                             {highlightedPost.rating && highlightedPost.rating > 0 && (
                               <div className="flex items-center gap-0.5 mt-1">
@@ -9823,7 +9843,7 @@ export default function Feed() {
                               />
                               <div>
                                 <p className="font-medium text-gray-900">{post.mediaItems[0].title}</p>
-                                <p className="text-xs text-gray-500 capitalize">{post.mediaItems[0].mediaType}</p>
+                                <p className="text-xs text-gray-500">{formatMediaTypeLabel(post.mediaItems[0].mediaType)}</p>
                               </div>
                             </div>
                           )}
@@ -10557,8 +10577,8 @@ export default function Feed() {
                                       by {media.creator}
                                     </div>
                                   )}
-                                  <div className="text-gray-500 text-xs capitalize mb-2">
-                                    {media.mediaType}
+                                  <div className="text-gray-500 text-xs mb-2">
+                                    {formatMediaTypeLabel(media.mediaType)}
                                   </div>
                                 </div>
                                 {/* Actions - Add, Share, Available On */}
@@ -10690,8 +10710,8 @@ export default function Feed() {
                                       by {media.creator}
                                     </div>
                                   )}
-                                  <div className="text-gray-500 text-xs capitalize mb-2">
-                                    {media.mediaType}
+                                  <div className="text-gray-500 text-xs mb-2">
+                                    {formatMediaTypeLabel(media.mediaType)}
                                   </div>
                                 </div>
                                 {/* Quick Actions - inline with content */}
@@ -10817,8 +10837,8 @@ export default function Feed() {
                                     by {post.mediaItems[0].creator}
                                   </div>
                                 )}
-                                <div className="text-gray-500 text-xs capitalize mb-2">
-                                  {post.mediaItems[0].mediaType}
+                                <div className="text-gray-500 text-xs mb-2">
+                                  {formatMediaTypeLabel(post.mediaItems[0].mediaType)}
                                 </div>
                               </div>
                               {/* Platform badges and actions inline */}

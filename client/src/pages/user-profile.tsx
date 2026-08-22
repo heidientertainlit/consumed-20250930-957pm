@@ -2947,9 +2947,12 @@ export default function UserProfile() {
       movie: 0,
       tv: 0,
       book: 0,
+      book_series: 0,
       music: 0,
       podcast: 0,
-      game: 0
+      game: 0,
+      sports: 0,
+      youtube: 0
     };
 
     allItems.forEach(item => {
@@ -3027,12 +3030,30 @@ export default function UserProfile() {
       case 'movie': return <Film size={16} className="text-purple-600" />;
       case 'tv': return <Tv size={16} className="text-pink-600" />;
       case 'book': return <BookOpen size={16} className="text-cyan-600" />;
+      case 'book_series': return <BookOpen size={16} className="text-cyan-600" />;
       case 'music': return <Music size={16} className="text-green-600" />;
       case 'podcast': return <Headphones size={16} className="text-blue-600" />;
       case 'game': return <Gamepad2 size={16} className="text-orange-600" />;
+      case 'sports': return <Trophy size={16} className="text-amber-600" />;
       case 'youtube': return <Youtube size={16} className="text-red-600" />;
       default: return <Play size={16} className="text-gray-600" />;
     }
+  };
+
+  const getMediaTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      movie: 'Movie',
+      tv: 'TV',
+      book: 'Book',
+      book_series: 'Book Series',
+      music: 'Music',
+      podcast: 'Podcast',
+      game: 'Gaming',
+      sports: 'Sports',
+      youtube: 'YouTube',
+    };
+
+    return labels[type?.toLowerCase()] || type;
   };
 
   // Calculate "Mostly Into" - top 2 media types by count
@@ -3041,10 +3062,12 @@ export default function UserProfile() {
       movie: 'Movies',
       tv: 'TV',
       book: 'Books',
+      book_series: 'Book Series',
       music: 'Music',
       podcast: 'Podcasts',
       youtube: 'YouTube',
-      game: 'Games'
+      game: 'Gaming',
+      sports: 'Sports'
     };
     
     const sortedTypes = Object.entries(mediaTypeCounts)
@@ -4745,7 +4768,7 @@ export default function UserProfile() {
                           <h4 className="font-medium text-sm text-gray-900 truncate">{item.title}</h4>
                           <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
                             {getMediaIcon(item.media_type)}
-                            <span className="capitalize">{item.media_type}</span>
+                            <span>{getMediaTypeLabel(item.media_type)}</span>
                             <span>•</span>
                             <span>{item.listName}</span>
                           </div>
