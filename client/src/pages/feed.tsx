@@ -2416,12 +2416,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       }) === index;
     });
     const conversationParticipants = uniqueConversationParticipants.slice(0, 3);
-    const conversationPeopleCount = uniqueConversationParticipants.length;
-    const conversationLabel = conversationPeopleCount > 0
-      ? `${conversationPeopleCount} ${conversationPeopleCount === 1 ? 'person' : 'people'} talking`
-      : conversationCount > 0
-        ? `${conversationCount} ${conversationCount === 1 ? 'reply' : 'replies'}`
-        : 'Start the conversation';
 
     return (
       <>
@@ -2690,7 +2684,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 el?.focus();
               }, 50);
             }}
-            aria-label={conversationCount > 0 ? `Join the conversation with ${conversationCount} replies` : 'Start the conversation'}
+            aria-label={conversationCount > 0 ? 'Add your take to the conversation' : 'Add your take'}
           >
             <span className="flex items-center gap-2">
               <span className="flex -space-x-1.5 flex-shrink-0">
@@ -2714,16 +2708,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </span>
                 )}
               </span>
-              <span className="text-[12px] font-medium text-gray-600">
-                {conversationLabel}
+              <span className="text-[14px] font-medium text-gray-600">
+                Add your take
               </span>
-              <span className="ml-auto inline-flex items-center gap-1 text-violet-600">
-                <MessageCircle size={16} />
-                {conversationCount > 0 && <span className="text-[12px] font-semibold">{conversationCount}</span>}
-              </span>
-            </span>
-            <span className="block mt-2 text-[13px] italic text-gray-500">
-              {conversationCount > 0 ? 'Join the conversation…' : 'What did you think?'}
             </span>
           </button>
 
