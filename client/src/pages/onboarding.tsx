@@ -777,17 +777,13 @@ export default function OnboardingPage() {
           Skip for now
         </button>
       </div>
-      <div className="flex items-center gap-4">
-        <div className="w-14 h-14 rounded-full bg-purple-600/25 border border-purple-400/40 flex items-center justify-center shrink-0 shadow-lg shadow-purple-900/40">
-          <Dna className="text-purple-200" size={26} />
-        </div>
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold leading-tight" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Building your DNA
-          </h1>
-        </div>
+      <div className="flex flex-col items-center text-center">
+        <Dna className="text-purple-200 mb-2" size={28} />
+        <h1 className="text-2xl font-bold leading-tight" style={{ fontFamily: "Poppins, sans-serif" }}>
+          Building your DNA
+        </h1>
       </div>
-      <div className="mt-6">
+      <div className="mt-3">
         <ProgressBar current={currentStep - 1} />
       </div>
     </div>
@@ -1145,17 +1141,13 @@ export default function OnboardingPage() {
           Skip for now
         </button>
       </div>
-      <div className="flex items-center gap-4 mb-4">
-        <div className="w-14 h-14 rounded-full bg-purple-600/25 border border-purple-400/40 flex items-center justify-center shrink-0 shadow-lg shadow-purple-900/40">
-          <Dna className="text-purple-200" size={26} />
-        </div>
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold leading-tight" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Building your DNA
-          </h1>
-        </div>
+      <div className="flex flex-col items-center text-center">
+        <Dna className="text-purple-200 mb-2" size={28} />
+        <h1 className="text-2xl font-bold leading-tight" style={{ fontFamily: "Poppins, sans-serif" }}>
+          Building your DNA
+        </h1>
       </div>
-      <p className="text-white/50 text-xs">{stepLabel}</p>
+      <p className="text-white/50 text-xs mt-3 text-center">{stepLabel}</p>
       <div className="flex items-center gap-2 mt-3" aria-label={stepLabel}>
         {[1, 2, 3, 4, 5].map((stepNumber) => (
           <span
