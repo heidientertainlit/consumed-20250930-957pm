@@ -777,7 +777,7 @@ export default function OnboardingPage() {
               Skip
             </button>
             <h1
-              className="text-center text-[26px] leading-[1.2] font-black pt-[72px]"
+              className="text-center text-[26px] leading-[1.2] font-black pt-20"
               style={{ fontFamily: "Poppins, sans-serif" }}
             >
               Help us determine your entertainment DNA
@@ -885,7 +885,7 @@ export default function OnboardingPage() {
             >
               Skip
             </button>
-            <h1 className="text-center text-[26px] leading-[1.2] font-black pt-[72px]" style={{ fontFamily: "Poppins, sans-serif" }}>
+            <h1 className="text-center text-[26px] leading-[1.2] font-black pt-20" style={{ fontFamily: "Poppins, sans-serif" }}>
               Help us determine your entertainment DNA
             </h1>
             <div className="mt-4">
@@ -990,7 +990,7 @@ export default function OnboardingPage() {
             >
               Skip
             </button>
-            <h1 className="text-center text-[24px] leading-[1.25] font-black pt-[72px]" style={{ fontFamily: "Poppins, sans-serif" }}>
+            <h1 className="text-center text-[24px] leading-[1.25] font-black pt-20" style={{ fontFamily: "Poppins, sans-serif" }}>
               Pick titles you’ve loved.
             </h1>
             <div className="mt-4">
