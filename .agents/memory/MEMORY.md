@@ -23,3 +23,4 @@
 - [Room Explore genre discovery](room-explore-genre-discovery.md) — room-explore uses explicit per-tag genre config + example-seed recommendations (NOT fuzzy keyword, which pulled cartoons); never media-search (title matcher).
 - [YouTube leaderboard scoring](youtube-leaderboard-scoring.md) — YouTube is a full consumption leaderboard category and participates in overall rank, not a standalone-only board.
 - [Mobile star rating gestures](mobile-star-rating-gestures.md) — reuse the feed rater’s touch-move and half-star button pattern; pointer capture is unreliable inside portaled sheets.
+- [Rated feed card structure](rated-feed-card-structure.md) — keep the compact media/rating card primary; conversation preview and social actions form a distinct layer beneath it.

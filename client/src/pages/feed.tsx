@@ -2407,6 +2407,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     const hasContent = !!(post.content && post.content.trim());
     const hasRating = (post.rating || 0) > 0;
     const mediaCreator = (post as any)._rawPost?.mediaItems?.[0]?.creator || (post as any).mediaCreator || '';
+    const conversationCount = Math.max(post.comments || 0, comments.length);
+    const uniqueConversationParticipants = comments.filter((comment: any, index: number, allComments: any[]) => {
+      const participantKey = comment.user?.id || comment.userId || comment.user?.username || comment.username || comment.id;
+      return allComments.findIndex((candidate: any) => {
+        const candidateKey = candidate.user?.id || candidate.userId || candidate.user?.username || candidate.username || candidate.id;
+        return candidateKey === participantKey;
+      }) === index;
+    });
+    const conversationParticipants = uniqueConversationParticipants.slice(0, 3);
+    const conversationPeopleCount = uniqueConversationParticipants.length;
+    const conversationLabel = conversationPeopleCount > 0
+      ? `${conversationPeopleCount} ${conversationPeopleCount === 1 ? 'person' : 'people'} talking`
+      : conversationCount > 0
+        ? `${conversationCount} ${conversationCount === 1 ? 'reply' : 'replies'}`
+        : 'Start the conversation';
 
     return (
       <>
@@ -2616,7 +2631,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   ) : null}
                 </div>
                 <div className="flex items-center gap-0.5 flex-shrink-0 self-start">
-                  {currentUserId && post.user?.id !== currentUserId && hasContent && (
+                  {currentUserId && post.user?.id !== currentUserId && (
                     <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-500 transition-colors p-1 rounded-full hover:bg-orange-50" title="Report review"><Flag size={13} /></button>
                   )}
                   {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
@@ -2659,8 +2674,58 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           )}
 
-          {/* light divider between review and actions */}
-          <div className={`mb-3 ${relatedRatings.length > 0 ? 'mt-1.5' : 'mt-4'}`} />
+          {/* Conversation preview — keeps discussion separate from the rating card */}
+          <button
+            type="button"
+            className={`mx-4 mb-2 mt-3 w-[calc(100%_-_2rem)] rounded-2xl border px-3.5 py-3 text-left transition-colors ${
+              replyOpen
+                ? 'border-violet-300 bg-violet-50'
+                : 'border-violet-100 bg-violet-50/70 hover:bg-violet-50'
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setReplyOpen(true);
+              setTimeout(() => {
+                const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
+                el?.focus();
+              }, 50);
+            }}
+            aria-label={conversationCount > 0 ? `Join the conversation with ${conversationCount} replies` : 'Start the conversation'}
+          >
+            <span className="flex items-center gap-2">
+              <span className="flex -space-x-1.5 flex-shrink-0">
+                {conversationParticipants.length > 0 ? conversationParticipants.map((comment: any, index: number) => {
+                  const participantName = comment.user?.displayName || comment.user?.username || comment.username || 'User';
+                  return (
+                    <span
+                      key={comment.id || index}
+                      className="w-6 h-6 rounded-full border-2 border-violet-50 bg-violet-400 flex items-center justify-center overflow-hidden text-[9px] font-bold text-white"
+                    >
+                      {comment.user?.avatar ? (
+                        <img src={comment.user.avatar} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        participantName[0]?.toUpperCase() || '?'
+                      )}
+                    </span>
+                  );
+                }) : (
+                  <span className="w-6 h-6 rounded-full border-2 border-violet-50 bg-violet-200 flex items-center justify-center">
+                    <MessageCircle size={12} className="text-violet-600" />
+                  </span>
+                )}
+              </span>
+              <span className="text-[12px] font-medium text-gray-600">
+                {conversationLabel}
+              </span>
+              <span className="ml-auto inline-flex items-center gap-1 text-violet-600">
+                <MessageCircle size={16} />
+                {conversationCount > 0 && <span className="text-[12px] font-semibold">{conversationCount}</span>}
+              </span>
+            </span>
+            <span className="block mt-2 text-[13px] italic text-gray-500">
+              {conversationCount > 0 ? 'Join the conversation…' : 'What did you think?'}
+            </span>
+          </button>
 
           {/* YOUR TURN — inline star rater appears above the action row */}
           {isOtherUser && session?.access_token && showInlineRater && !ratingSubmitted && (
@@ -2706,7 +2771,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )}
 
           {/* ── Action row: YouTube-style compact pills, tucked up near the content ── */}
-          <div className="flex items-center justify-start gap-2 px-4 pb-3" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-start gap-1 px-4 pb-3" onClick={(e) => e.stopPropagation()}>
             {/* Like / dislike — grouped with a divider, no background */}
             <div className="flex items-center">
               <button
@@ -2762,6 +2827,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 }}
                 className="flex items-center gap-1.5 px-3.5 py-1.5 active:scale-95 transition-transform"
               >
+                <MessageCircle size={14} className="text-gray-600" />
                 <span className="text-[12px] text-gray-600 font-medium">Reply</span>
               </button>
             )}
@@ -2782,8 +2848,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               className="flex items-center gap-1.5 px-3.5 py-1.5 active:scale-95 transition-transform"
               onClick={(e) => { e.stopPropagation(); setShareCardOpen(true); }}
             >
+              <Share2 size={14} className="text-gray-600" />
               <span className="text-[12px] text-gray-600 font-medium">Share</span>
-              <ArrowRight size={12} className="text-gray-600" />
             </button>
         </div>
 
@@ -2879,9 +2945,20 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                                     const parts = (rName || '').trim().split(/\s+/);
                                     return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
                                   })()}{r.created_at ? ` · ${timeAgo(r.created_at)}` : ''}</span>
-                                  {currentUserId === (r.user?.id || r.userId) && (
+                                  {currentUserId === (r.user?.id || r.userId) ? (
                                     <button onClick={(e) => { e.stopPropagation(); deleteComment(r.id); }} className="ml-auto text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={11} /></button>
-                                  )}
+                                  ) : currentUserId ? (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setReportCommentTarget({ id: r.id, userId: r.user?.id || r.userId || '', userName: rName });
+                                      }}
+                                      className="ml-auto text-gray-300 hover:text-orange-500 transition-colors"
+                                      title="Report reply"
+                                    >
+                                      <Flag size={11} />
+                                    </button>
+                                  ) : null}
                                 </div>
                               </div>
                             );
@@ -2961,8 +3038,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           onClose={() => setReportPostOpen(false)}
           contentType="post"
           contentId={post.id}
-          reportedUserId={post.userId}
-          reportedUserName={post.userName}
+          reportedUserId={post.userId || post.user?.id || ''}
+          reportedUserName={post.userName || post.user?.username || ''}
         />
         <ReportSheet
           isOpen={!!reportCommentTarget}
