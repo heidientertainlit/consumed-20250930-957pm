@@ -260,11 +260,11 @@ export default function LoginPage() {
             <IdentityFace size={46} variant="outline" className="identity-face-float" />
           </div>
           <div className="font-fraunces text-white mb-2">
-            <h1 className="font-fraunces text-[16px] font-normal leading-[1.1] whitespace-nowrap">
+            <h1 className="font-fraunces text-[14px] font-normal leading-[1.1] whitespace-nowrap">
               Where entertainment comes together,
             </h1>
             <div className="mt-0 flex items-center justify-center gap-2">
-              <p className="font-fraunces text-[16px] italic font-normal leading-[1.1]">
+              <p className="font-fraunces text-[14px] italic font-normal leading-[1.1]">
                 so we can too.
               </p>
             </div>
