@@ -782,12 +782,9 @@ export default function OnboardingPage() {
             >
               Help us determine your entertainment DNA
             </h1>
-            <p className="text-center text-[14px] italic text-white/70 mt-3">
-              Let’s get to know you
-            </p>
-          </div>
-          <div className="px-6 py-4 bg-[#fbfaff] border-b border-purple-100">
-            <ProgressBar current={0} tone="light" />
+            <div className="mt-6">
+              <ProgressBar current={0} />
+            </div>
           </div>
 
           {/* White body */}
