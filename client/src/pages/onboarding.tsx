@@ -781,10 +781,12 @@ export default function OnboardingPage() {
         <div className="flex flex-col items-center text-center">
           <Dna className="text-purple-200 mb-3" size={28} />
           <h1 className="text-[26px] leading-[1.15] font-bold" style={{ fontFamily: "Poppins, sans-serif" }}>
-            Build Your Entertainment DNA
+            Building Your
+            <br />
+            Entertainment DNA
           </h1>
           <p className="max-w-[300px] mt-2 text-[13px] leading-relaxed text-white/65">
-            A few quick picks will help us get to know your taste.
+            A few picks help us learn your taste.
           </p>
         </div>
       ) : (
