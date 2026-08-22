@@ -654,27 +654,26 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
 
               {/* status / list — the primary "where does this go?" step */}
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-2">Add to a list</p>
-                <div className="space-y-2">
+                <p className="text-sm font-semibold text-gray-700">Add to a list</p>
+                <p className="text-xs text-gray-500 mt-0.5 mb-2.5">Save it for later to watch, read, listen, or play.</p>
+                <div className="grid grid-cols-3 gap-2">
                   {LIST_CHOICES.map((s) => {
                     const active = selectedList === s.id;
                     return (
                       <button
                         key={s.id}
                         onClick={() => setSelectedList(s.id)}
-                        className={`w-full flex items-center gap-3 py-3 px-3 rounded-2xl border text-left transition-colors ${
-                          active ? "border-purple-500 bg-purple-50" : "border-gray-100 hover:border-purple-200"
+                        aria-label={`${s.label}: ${s.desc}`}
+                        className={`relative min-h-[58px] flex flex-col items-center justify-center gap-1 px-1.5 rounded-2xl border text-center transition-colors ${
+                          active ? "border-purple-500 bg-purple-50 text-purple-800" : "border-gray-200 bg-white text-gray-700 hover:border-purple-200"
                         }`}
                         data-testid={`quick-track-status-${s.id}`}
                       >
-                        <div className={`w-10 h-10 rounded-full ${s.bg} flex items-center justify-center flex-shrink-0`}>
+                        <div className={`w-7 h-7 rounded-full ${s.bg} flex items-center justify-center`}>
                           {s.icon}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 text-sm">{s.label}</p>
-                          <p className="text-xs text-gray-400">{s.desc}</p>
-                        </div>
-                        {active && <Check size={18} className="text-purple-600 flex-shrink-0" />}
+                        <span className="font-semibold text-xs leading-tight">{s.label}</span>
+                        {active && <Check size={14} className="absolute top-1.5 right-1.5 text-purple-600" />}
                       </button>
                     );
                   })}
