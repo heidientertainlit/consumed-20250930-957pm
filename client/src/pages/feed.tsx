@@ -2848,7 +2848,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               className="flex items-center gap-1.5 px-3.5 py-1.5 active:scale-95 transition-transform"
               onClick={(e) => { e.stopPropagation(); setShareCardOpen(true); }}
             >
-              <Share2 size={14} className="text-gray-600" />
+              <Forward size={15} className="text-gray-600" strokeWidth={1.9} />
               <span className="text-[12px] text-gray-600 font-medium">Share</span>
             </button>
         </div>
