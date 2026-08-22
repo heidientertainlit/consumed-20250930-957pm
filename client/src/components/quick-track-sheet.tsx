@@ -98,7 +98,6 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
   const [ratingPreview, setRatingPreview] = useState(0);
   const ratingTrackRef = useRef<HTMLDivElement>(null);
   const ratingPreviewRef = useRef(0);
-  const ratingInteractionRef = useRef<"mouse" | "touch" | null>(null);
   const [takeText, setTakeText] = useState("");
   const [predQuestion, setPredQuestion] = useState("");
   const [predOptions, setPredOptions] = useState<string[]>(["", ""]);
@@ -115,7 +114,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     importReqId.current++; // invalidate any in-flight import result
     setIsImporting(false); setImportResult(null); setImportError(null);
     setComposerMode("rate");
-    setRating(0); setRatingPreview(0); ratingPreviewRef.current = 0; ratingInteractionRef.current = null; setTakeText("");
+    setRating(0); setRatingPreview(0); ratingPreviewRef.current = 0; setTakeText("");
     setPredQuestion(""); setPredOptions(["", ""]);
     setPollQuestion(""); setPollOptions(["", ""]);
   };
@@ -139,7 +138,11 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
     if (ratingPreviewRef.current > 0) setRating(ratingPreviewRef.current);
     ratingPreviewRef.current = 0;
     setRatingPreview(0);
-    ratingInteractionRef.current = null;
+  };
+
+  const setRatingPreviewValue = (value: number) => {
+    ratingPreviewRef.current = value;
+    setRatingPreview(value);
   };
 
   useEffect(() => {
@@ -687,57 +690,19 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                       <div
                         ref={ratingTrackRef}
                         className="flex items-center gap-1.5 mt-1.5 w-fit touch-none select-none cursor-pointer"
-                        role="slider"
+                        role="group"
                         aria-label="Rating"
-                        aria-valuemin={0}
-                        aria-valuemax={5}
-                        aria-valuenow={ratingPreview || rating}
-                        aria-valuetext={`${ratingPreview || rating || 0} out of 5 stars`}
-                        tabIndex={0}
-                        onKeyDown={(event) => {
-                          if (event.key === "ArrowRight" || event.key === "ArrowUp") {
-                            event.preventDefault();
-                            setRating((value) => Math.min(5, value + 0.5));
-                          }
-                          if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
-                            event.preventDefault();
-                            setRating((value) => Math.max(0, value - 0.5));
-                          }
-                        }}
-                        onMouseDown={(event) => {
-                          ratingInteractionRef.current = "mouse";
-                          previewRatingAt(event.clientX);
-                        }}
-                        onMouseMove={(event) => {
-                          if (ratingInteractionRef.current === "mouse") {
-                            previewRatingAt(event.clientX);
-                          }
-                        }}
-                        onMouseUp={() => {
-                          if (ratingInteractionRef.current === "mouse") {
-                            commitDraggedRating();
-                          }
-                        }}
-                        onTouchStart={(event) => {
-                          ratingInteractionRef.current = "touch";
-                          previewRatingAt(event.touches[0].clientX);
-                        }}
+                        onMouseLeave={() => setRatingPreviewValue(0)}
                         onTouchMove={(event) => {
                           event.stopPropagation();
-                          if (ratingInteractionRef.current === "touch") {
-                            previewRatingAt(event.touches[0].clientX);
-                          }
+                          previewRatingAt(event.touches[0].clientX);
                         }}
                         onTouchEnd={(event) => {
                           event.stopPropagation();
-                          if (ratingInteractionRef.current === "touch") {
-                            commitDraggedRating();
-                          }
+                          commitDraggedRating();
                         }}
                         onTouchCancel={() => {
-                          ratingPreviewRef.current = 0;
-                          setRatingPreview(0);
-                          ratingInteractionRef.current = null;
+                          setRatingPreviewValue(0);
                         }}
                       >
                         {[1, 2, 3, 4, 5].map((star) => {
@@ -749,6 +714,28 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
                               <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: fillWidth }}>
                                 <Star size={30} className="absolute text-purple-500" style={{ left: 3, top: 3 }} fill="currentColor" />
                               </div>
+                              <button
+                                type="button"
+                                className="absolute inset-y-0 left-0 z-10 w-1/2"
+                                onMouseEnter={() => setRatingPreviewValue(star - 0.5)}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setRating(star - 0.5);
+                                  setRatingPreviewValue(0);
+                                }}
+                                aria-label={`Rate ${star - 0.5} out of 5`}
+                              />
+                              <button
+                                type="button"
+                                className="absolute inset-y-0 right-0 z-10 w-1/2"
+                                onMouseEnter={() => setRatingPreviewValue(star)}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setRating(star);
+                                  setRatingPreviewValue(0);
+                                }}
+                                aria-label={`Rate ${star} out of 5`}
+                              />
                             </div>
                           );
                         })}
