@@ -518,11 +518,12 @@ serve(async (req) => {
         tv: 10,
         music: 1,
         podcast: 3,
-        game: 5
+        game: 5,
+        youtube: 2
       };
 
       // Calculate points per user per category
-      const pointsMap: Record<string, { books: number; movies: number; tv: number; music: number; podcasts: number; games: number; reviews: number; total: number }> = {};
+      const pointsMap: Record<string, { books: number; movies: number; tv: number; music: number; podcasts: number; games: number; youtube: number; reviews: number; total: number }> = {};
       
       (listItems || []).forEach((item: any) => {
         // Apply date filter if set
@@ -531,7 +532,7 @@ serve(async (req) => {
         }
         
         if (!pointsMap[item.user_id]) {
-          pointsMap[item.user_id] = { books: 0, movies: 0, tv: 0, music: 0, podcasts: 0, games: 0, reviews: 0, total: 0 };
+          pointsMap[item.user_id] = { books: 0, movies: 0, tv: 0, music: 0, podcasts: 0, games: 0, youtube: 0, reviews: 0, total: 0 };
         }
         
         const mediaType = (item.media_type || '').toLowerCase();
@@ -543,6 +544,7 @@ serve(async (req) => {
         else if (mediaType === 'music') pointsMap[item.user_id].music += pts;
         else if (mediaType === 'podcast') pointsMap[item.user_id].podcasts += pts;
         else if (mediaType === 'game') pointsMap[item.user_id].games += pts;
+        else if (mediaType === 'youtube') pointsMap[item.user_id].youtube += pts;
         
         // Add review points if has notes
         if (item.notes && item.notes.trim().length > 0) {
@@ -636,6 +638,17 @@ serve(async (req) => {
             user_id, 
             score: data.games,
             detail: `${data.games.toLocaleString()} pts`
+          }))
+      );
+
+      // YouTube - show points
+      results.youtube = formatEntries(
+        Object.entries(pointsMap)
+          .filter(([_, data]) => data.youtube > 0)
+          .map(([user_id, data]) => ({
+            user_id,
+            score: data.youtube,
+            detail: `${data.youtube.toLocaleString()} pts`
           }))
       );
 

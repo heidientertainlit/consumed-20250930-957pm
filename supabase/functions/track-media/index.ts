@@ -204,6 +204,7 @@ serve(async (req) => {
       if (t === 'music') return 'music';
       if (t === 'podcast') return 'podcast';
       if (t === 'game') return 'game';
+      if (t === 'youtube') return 'youtube';
       return null; // unknown or missing type — don't guess
     };
     const mediaType = normalizeMediaType(rawMediaType);

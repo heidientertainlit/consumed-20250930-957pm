@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
-import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp, Award, Dices, Flame, MessageCircle, MessagesSquare } from "lucide-react";
+import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, Youtube, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp, Award, Dices, Flame, MessageCircle, MessagesSquare } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
@@ -35,6 +35,7 @@ interface LeaderboardData {
     music?: LeaderboardEntry[];
     podcasts?: LeaderboardEntry[];
     games?: LeaderboardEntry[];
+    youtube?: LeaderboardEntry[];
     total_consumption?: LeaderboardEntry[];
   };
   currentUserId: string;
@@ -1043,6 +1044,15 @@ export default function Leaderboard() {
                   'Games',
                   'No games tracked yet',
                   'from-emerald-500 to-teal-500'
+                )}
+
+                {renderCategoryCard(
+                  'YouTube Trackers',
+                  Youtube,
+                  leaderboardData?.categories?.youtube,
+                  'YouTube',
+                  'No YouTube tracked yet',
+                  'from-red-600 to-rose-500'
                 )}
               </div>
             </TabsContent>

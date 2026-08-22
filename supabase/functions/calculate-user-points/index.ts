@@ -101,6 +101,7 @@ serve(async (req) => {
     const music = listItems.filter(item => item.media_type === 'music');
     const podcasts = listItems.filter(item => item.media_type === 'podcast');
     const games = listItems.filter(item => item.media_type === 'game');
+    const youtube = listItems.filter(item => item.media_type === 'youtube');
     
     // Count items with reviews (notes field)
     const reviews = listItems.filter(item => item.notes && item.notes.trim().length > 0);
@@ -241,9 +242,10 @@ serve(async (req) => {
     const musicPoints = music.length * 1;
     const podcastPoints = podcasts.length * 3;
     const gamePoints = games.length * 5;
+    const youtubePoints = youtube.length * 2;
     const reviewPoints = reviews.length * 10;
 
-    const allTimePoints = bookPoints + moviePoints + tvPoints + musicPoints + podcastPoints + gamePoints + reviewPoints + predictionPoints + triviaPoints + pollPoints + betsPoints + friendPoints + referralPoints + engagementPoints;
+    const allTimePoints = bookPoints + moviePoints + tvPoints + musicPoints + podcastPoints + gamePoints + youtubePoints + reviewPoints + predictionPoints + triviaPoints + pollPoints + betsPoints + friendPoints + referralPoints + engagementPoints;
 
     // Calculate global rank by counting users with more points
     // Use service role for cross-user queries
@@ -276,6 +278,7 @@ serve(async (req) => {
           case 'music': userPointsMap[item.user_id] += 1; break;
           case 'podcast': userPointsMap[item.user_id] += 3; break;
           case 'game': userPointsMap[item.user_id] += 5; break;
+          case 'youtube': userPointsMap[item.user_id] += 2; break;
         }
         
         // Add review points
@@ -348,6 +351,7 @@ serve(async (req) => {
         music: musicPoints,
         podcasts: podcastPoints,
         games: gamePoints,
+        youtube: youtubePoints,
         reviews: reviewPoints,
         predictions: predictionPoints,
         trivia: triviaPoints,
@@ -364,6 +368,7 @@ serve(async (req) => {
         music: music.length,
         podcasts: podcasts.length,
         games: games.length,
+        youtube: youtube.length,
         reviews: reviews.length,
         predictions: predictionCount,
         trivia: triviaCount,

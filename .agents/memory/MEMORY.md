@@ -21,3 +21,4 @@
 - [Baseline template polls](play-baseline-polls.md) — every media/room Play tab gets 3 template polls stamped via ensure-* fns; play_context column scopes media/room polls (partner_tag reserved for partners).
 - [Goodreads/Letterboxd import](import-media.md) — insert-only, fail-closed dedupe, time-budgeted poster enrichment; never let enrichment time out the import.
 - [Room Explore genre discovery](room-explore-genre-discovery.md) — room-explore uses explicit per-tag genre config + example-seed recommendations (NOT fuzzy keyword, which pulled cartoons); never media-search (title matcher).
+- [YouTube leaderboard scoring](youtube-leaderboard-scoring.md) — YouTube is a full consumption leaderboard category and participates in overall rank, not a standalone-only board.
