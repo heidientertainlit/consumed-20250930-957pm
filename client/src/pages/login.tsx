@@ -257,7 +257,7 @@ export default function LoginPage() {
               alt="Consumed"
               className="h-14 w-auto"
             />
-            <IdentityFace size={32} />
+            <IdentityFace size={46} variant="outline" />
           </div>
           <div className="font-fraunces text-white mb-2">
             <h1 className="font-fraunces text-[17px] font-normal leading-[1.15] whitespace-nowrap">
