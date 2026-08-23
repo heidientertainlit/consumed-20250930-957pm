@@ -25,3 +25,4 @@
 - [Mobile star rating gestures](mobile-star-rating-gestures.md) — reuse the feed rater’s touch-move and half-star button pattern; pointer capture is unreliable inside portaled sheets.
 - [Rated feed card structure](rated-feed-card-structure.md) — keep the compact media/rating card primary; conversation preview and social actions form a distinct layer beneath it.
 - [Supabase OAuth callbacks](supabase-oauth-callbacks.md) — OAuth returns through /login; native universal-link sessions must be restored on both warm and cold app launches.
+- [Apple OAuth credential rotation](apple-oauth-credential-rotation.md) — Supabase uses a signed Apple client-secret JWT that expires after 180 days; rotate it before expiry.
