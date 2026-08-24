@@ -8,6 +8,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { useLocation } from "wouter";
+import { formatFeedName } from "@/lib/feed-name";
 
 interface PredictionOption {
   option: string;
@@ -483,7 +484,7 @@ export default function CollaborativePredictionCard({
                 className="text-sm font-medium text-purple-800 hover:text-purple-900 transition-colors block"
                 data-testid="link-prediction-creator"
               >
-                {creator.username}
+                {formatFeedName(undefined, creator.username)}
               </button>
             )}
           </div>
@@ -616,7 +617,7 @@ export default function CollaborativePredictionCard({
               <div key={comment.id} className="text-sm group">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="font-semibold text-gray-900">{comment.username}</p>
+                    <p className="font-semibold text-gray-900">{formatFeedName(undefined, comment.username)}</p>
                     <p className="text-gray-700">{comment.content}</p>
                   </div>
                   {comment.user_id === session?.user?.id && (

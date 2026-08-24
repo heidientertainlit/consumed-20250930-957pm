@@ -18,6 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import CommentsSection from "@/components/comments-section";
+import { formatFeedName } from "@/lib/feed-name";
 
 interface RankItemWithVotes {
   id: string;
@@ -279,7 +280,9 @@ export default function RankFeedCard({
           <div>
             <Link href={`/user/${author.id}`}>
               <span className="text-sm font-medium text-gray-900 hover:text-purple-600 cursor-pointer">
-                {author.display_name ? author.display_name : `@${author.user_name}`}
+                {author.display_name
+                  ? formatFeedName(author.display_name, author.user_name)
+                  : `@${author.user_name}`}
               </span>
             </Link>
             <span className="text-xs text-gray-500 ml-2">shared a ranked list</span>

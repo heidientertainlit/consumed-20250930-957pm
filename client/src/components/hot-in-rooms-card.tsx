@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
 import { ChevronRight, Flame, MessageCircle, Star, StarHalf, ThumbsDown, ThumbsUp, Film } from "lucide-react";
+import { formatFeedName } from "@/lib/feed-name";
 
 type RoomTake = {
   id: string;
@@ -93,7 +94,7 @@ export function HotInRoomsCard({ slot = 0 }: { slot?: number }) {
   if (!take || !take.pool) return null;
 
   const author = Array.isArray(take.users) ? take.users[0] : take.users;
-  const authorName = author?.display_name || author?.user_name || "Someone";
+  const authorName = formatFeedName(author?.display_name, author?.user_name);
   const quote = (take.body?.trim() || take.title?.trim() || "").slice(0, 175);
   const hasMedia = !!take.media_title;
   const vote = myVote?.vote || 0;

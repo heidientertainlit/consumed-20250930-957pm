@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Heart, MessageCircle, ChevronLeft, ChevronRight, Star, Plus, CheckCircle, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
+import { formatFeedName } from "@/lib/feed-name";
 
 interface MediaItem {
   id: string;
@@ -132,12 +133,12 @@ export default function ActivityCarouselCard({
                 {activity.user.avatar ? (
                   <img src={activity.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                 ) : (
-                  activity.user.displayName?.[0]?.toUpperCase() || activity.user.username?.[0]?.toUpperCase() || '?'
+                  formatFeedName(activity.user.displayName, activity.user.username)[0]?.toUpperCase()
                 )}
               </div>
               <div>
                 <span className="font-semibold text-gray-900">
-                  {activity.user.displayName || activity.user.username}
+                  {formatFeedName(activity.user.displayName, activity.user.username)}
                 </span>
                 <span className="text-gray-500 ml-1">{getSummaryText()}</span>
                 <div className="text-xs text-gray-400">

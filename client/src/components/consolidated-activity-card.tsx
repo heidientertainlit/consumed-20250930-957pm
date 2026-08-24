@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { Heart, MessageCircle, ChevronRight, Star, Trash2, Dices, ThumbsUp, ThumbsDown } from "lucide-react";
+import { formatFeedName } from "@/lib/feed-name";
 
 interface MediaItem {
   id: string;
@@ -90,7 +91,7 @@ export default function ConsolidatedActivityCard({
   };
 
   const getHeaderText = () => {
-    const displayName = activity.user.displayName || activity.user.username;
+    const displayName = formatFeedName(activity.user.displayName, activity.user.username);
     const showUsername = activity.user.username && activity.user.displayName && activity.user.username !== activity.user.displayName;
     
     const actionText = (() => {
@@ -156,7 +157,7 @@ export default function ConsolidatedActivityCard({
               {activity.user.avatar ? (
                 <img src={activity.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
               ) : (
-                (activity.user.displayName?.[0] || activity.user.username?.[0] || '?').toUpperCase()
+                formatFeedName(activity.user.displayName, activity.user.username)[0].toUpperCase()
               )}
             </div>
           </Link>
@@ -294,7 +295,7 @@ export default function ConsolidatedActivityCard({
         href={`/user/${activity.user.id}?tab=lists`}
         className="text-sm text-purple-300 hover:text-white font-medium flex items-center gap-1 mb-4"
       >
-        See more of {activity.user.displayName || activity.user.username}'s lists <ChevronRight size={14} />
+        See more of {formatFeedName(activity.user.displayName, activity.user.username)}'s lists <ChevronRight size={14} />
       </Link>
 
       {/* Footer - Likes, Comments & Date */}

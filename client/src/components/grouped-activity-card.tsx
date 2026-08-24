@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Users, Dices, ChevronDown, Film, Tv, BookOpen, Music, Gamepad2, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatFeedName } from "@/lib/feed-name";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,48 +19,12 @@ interface GroupedUser {
   postId?: string;
 }
 
-const formatUsername = (username: string): string => {
-  if (!username) return 'Unknown';
-  let clean = username;
-  
-  // Handle email-style usernames with + (e.g., "thinkhp+jordanrivers24")
-  if (clean.includes('+')) {
-    clean = clean.split('+').pop() || clean;
-    // For + style emails, also remove trailing numbers and format
-    clean = clean.replace(/\d+$/, '');
-    // Capitalize first letter
-    clean = clean.charAt(0).toUpperCase() + clean.slice(1);
-  }
-  
-  // Remove @ and domain if email
-  if (clean.includes('@')) {
-    clean = clean.split('@')[0];
-  }
-  
-  return clean || 'User';
-};
-
 const getAvatarInitial = (displayName?: string, username?: string): string => {
-  if (displayName && displayName.trim() && displayName !== username) {
-    return displayName.charAt(0).toUpperCase();
-  }
-  
-  if (username) {
-    const formatted = formatUsername(username);
-    return formatted.charAt(0).toUpperCase();
-  }
-  
-  return '?';
+  return formatFeedName(displayName, username).charAt(0).toUpperCase();
 };
 
-const getDisplayName = (_displayName?: string, username?: string): string => {
-  // Always use formatted username for consistency across the app
-  if (username) {
-    return formatUsername(username);
-  }
-  
-  return 'Unknown';
-};
+const getDisplayName = (displayName?: string, username?: string): string =>
+  formatFeedName(displayName, username);
 
 interface GroupedMedia {
   id: string;

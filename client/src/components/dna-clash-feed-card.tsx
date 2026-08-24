@@ -4,6 +4,7 @@ import { Zap, MessageCircle, Send, Trash2, MoreHorizontal, ChevronRight, Play } 
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { formatFeedName } from "@/lib/feed-name";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -141,7 +142,7 @@ export default function DnaClashFeedCard({
         const usersMap = new Map((usersData || []).map((u: any) => [u.id, u]));
         setVoters(data.map((row: any) => {
           const u = usersMap.get(row.user_id);
-          const name = u?.display_name || u?.user_name || 'User';
+          const name = formatFeedName(u?.display_name, u?.user_name);
           return { userId: row.user_id, prediction: row.prediction, displayName: name, initials: mkInitials(name) };
         }));
       }
@@ -254,9 +255,9 @@ export default function DnaClashFeedCard({
   const pct1 = total > 0 ? Math.round((v1 / total) * 100) : 50;
   const pct2 = 100 - pct1;
   const commentCount = commentsData?.comments?.length ?? 0;
-  const winnerName = pct1 >= pct2 ? user1.displayName.split(' ')[0] : user2.displayName.split(' ')[0];
-  const name1 = user1.displayName.split(' ')[0];
-  const name2 = user2.displayName.split(' ')[0];
+  const name1 = formatFeedName(user1.displayName, user1.username);
+  const name2 = formatFeedName(user2.displayName, user2.username);
+  const winnerName = pct1 >= pct2 ? name1 : name2;
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 mb-4">
@@ -437,7 +438,7 @@ export default function DnaClashFeedCard({
           <div className="flex flex-col gap-1.5 mb-2">
             {[{ u: user1, pct: pct1, color: '#a855f7', voted: voted === user1.username }, { u: user2, pct: pct2, color: '#ec4899', voted: voted === user2.username }].map(({ u, pct, color, voted: isVoted }) => (
               <div key={u.username} className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold w-14 truncate shrink-0 text-gray-600">{u.displayName.split(' ')[0]}</span>
+                <span className="text-[11px] font-semibold w-14 truncate shrink-0 text-gray-600">{formatFeedName(u.displayName, u.username)}</span>
                 <div className="flex-1 h-2 rounded-full overflow-hidden bg-gray-100">
                   <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: color }} />
                 </div>
@@ -467,7 +468,7 @@ export default function DnaClashFeedCard({
                 style={{ background: i === 0 ? '#a855f7' : '#ec4899', zIndex: i === 0 ? 2 : 1 }}>
                 {u.avatar
                   ? <img src={u.avatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  : u.initials?.slice(0, 1) || u.displayName[0]}
+                  : u.initials?.slice(0, 1) || formatFeedName(u.displayName, u.username)[0]}
               </div>
             ))}
           </div>
@@ -513,7 +514,7 @@ export default function DnaClashFeedCard({
               const sideVoters = voters.filter(v => v.prediction === user.username);
               return (
                 <div key={user.username} className="flex-1">
-                  <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color }}>{user.displayName.split(' ')[0]}</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color }}>{formatFeedName(user.displayName, user.username)}</p>
                   {sideVoters.length === 0 ? (
                     <p className="text-gray-400 text-[10px]">No votes yet</p>
                   ) : (
@@ -524,7 +525,7 @@ export default function DnaClashFeedCard({
                             style={{ background: color }}>
                             {v.initials.slice(0, 1)}
                           </div>
-                          <span className="text-[11px] text-gray-700 truncate">{v.displayName}</span>
+                           <span className="text-[11px] text-gray-700 truncate">{formatFeedName(v.displayName)}</span>
                         </div>
                       ))}
                     </div>
@@ -546,10 +547,10 @@ export default function DnaClashFeedCard({
               {commentsData.comments.map((c: any) => (
                 <div key={c.id} className="flex items-start gap-2 group">
                   <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-bold bg-purple-400">
-                    {(c.username || '?').slice(0, 1).toUpperCase()}
+                    {formatFeedName(undefined, c.username).slice(0, 1).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-purple-600 text-[11px] font-semibold mr-1.5">{c.username}</span>
+                    <span className="text-purple-600 text-[11px] font-semibold mr-1.5">{formatFeedName(undefined, c.username)}</span>
                     <span className="text-gray-800 text-[13px] break-words leading-snug">{c.content}</span>
                   </div>
                   {c.user_id === activeSession?.user?.id && (

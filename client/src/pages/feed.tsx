@@ -64,6 +64,7 @@ import { supabase } from "@/lib/supabase";
 import { apiRequest, queryClient as globalQueryClient } from "@/lib/queryClient";
 import { renderMentions } from "@/lib/mentions";
 import { copyLink, shareLink } from "@/lib/share";
+import { formatFeedName } from "@/lib/feed-name";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { GameMomentCard } from "@/components/game-moment-card";
 import { SocialProofCard, buildGameMomentSocialProof, buildLeaderboardSocialProof } from "@/components/social-proof-card";
@@ -579,7 +580,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                   {/* Takes — visible, tap a take to reply to it */}
                   <div className="mt-1 divide-y divide-gray-100">
                     {g.topTakes.map((t: any, i: number) => {
-                      const n = t.user?.displayName || t.user?.username || '?';
+                      const n = formatFeedName(t.user?.displayName, t.user?.username);
                       const takeId = t.id || `take-${i}`;
                       const isActive = activeTakeId === takeId;
                       const hasText = !!(t.content && t.content.trim());
@@ -655,7 +656,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                               {(threadReplies[t.id] || []).length > 0 && (
                                 <div className="mt-2 space-y-2 border-l-2 border-gray-100 pl-2.5">
                                   {(threadReplies[t.id] || []).map((c: any) => {
-                                    const cn = c.users?.display_name || c.users?.user_name || '?';
+                                    const cn = formatFeedName(c.users?.display_name, c.users?.user_name);
                                     const cWhen = takeTimeAgo(c.created_at);
                                     return (
                                       <div key={c.id} className="flex gap-1.5">
@@ -2048,7 +2049,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </Link>
             <div>
               <Link href={`/user/${post.user?.id}`}>
-                <span className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+                <span className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer">{formatFeedName(post.user?.displayName, post.user?.username)}</span>
               </Link>
               {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
                 <p className="text-[10px] text-gray-400 leading-none">@{post.user.username}</p>
@@ -2155,7 +2156,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {comments.slice(0, 3).map((c: any, idx: number) => (
                   <div key={c.id} className={`px-4 py-3 bg-white ${idx < Math.min(comments.length, 3) - 1 ? 'border-b border-gray-200' : ''}`}>
                     <div className="flex items-baseline justify-between mb-1">
-                      <span className="text-xs font-bold text-gray-900">{c.user?.displayName || c.user?.username || c.username || 'User'}</span>
+                      <span className="text-xs font-bold text-gray-900">{formatFeedName(c.user?.displayName, c.user?.username || c.username)}</span>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] text-gray-400">{c.created_at ? timeAgo(c.created_at) : ''}</span>
                         {(currentUserId === (c.user?.id || c.userId) || currentUserId === post.userId) && (
@@ -2184,7 +2185,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       <div className="mt-2 ml-1 pl-3 border-l-2 border-violet-100 space-y-2">
                         {c.replies.map((r: any) => (
                           <div key={r.id} className="py-1">
-                            <span className="text-[11px] font-bold text-gray-800">{r.user?.displayName || r.user?.username || r.username || 'User'}</span>
+                            <span className="text-[11px] font-bold text-gray-800">{formatFeedName(r.user?.displayName, r.user?.username || r.username)}</span>
                             <p className="text-xs text-gray-500 leading-relaxed mt-0.5">{r.content}</p>
                           </div>
                         ))}
@@ -2234,7 +2235,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </Link>
             <div>
               <Link href={`/user/${post.user?.id}`}>
-                <span className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+                <span className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer">{formatFeedName(post.user?.displayName, post.user?.username)}</span>
               </Link>
               {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
                 <p className="text-[10px] text-gray-400 leading-none">@{post.user.username}</p>
@@ -2335,7 +2336,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {comments.slice(0, 3).map((c: any, idx: number) => (
                   <div key={c.id} className={`px-4 py-3 bg-white ${idx < Math.min(comments.length, 3) - 1 ? 'border-b border-gray-200' : ''}`}>
                     <div className="flex items-baseline justify-between mb-1">
-                      <span className="text-xs font-bold text-gray-900">{c.user?.displayName || c.user?.username || c.username || 'User'}</span>
+                      <span className="text-xs font-bold text-gray-900">{formatFeedName(c.user?.displayName, c.user?.username || c.username)}</span>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] text-gray-400">{c.created_at ? timeAgo(c.created_at) : ''}</span>
                         {(currentUserId === (c.user?.id || c.userId) || currentUserId === post.userId) && (
@@ -2364,7 +2365,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       <div className="mt-2 ml-1 pl-3 border-l-2 border-violet-100 space-y-2">
                         {c.replies.map((r: any) => (
                           <div key={r.id} className="py-1">
-                            <span className="text-[11px] font-bold text-gray-800">{r.user?.displayName || r.user?.username || r.username || 'User'}</span>
+                            <span className="text-[11px] font-bold text-gray-800">{formatFeedName(r.user?.displayName, r.user?.username || r.username)}</span>
                             <p className="text-xs text-gray-500 leading-relaxed mt-0.5">{r.content}</p>
                           </div>
                         ))}
@@ -2402,7 +2403,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   // ── Full-bleed poster card for rating / review / thought posts ───────────
   if (isRatingPost) {
-    const displayName = post.user?.displayName || post.user?.username || 'Someone';
+    const displayName = formatFeedName(post.user?.displayName, post.user?.username);
     const hasPoster = !!(post.mediaImage && post.mediaImage.startsWith('http'));
     const hasContent = !!(post.content && post.content.trim());
     const hasRating = (post.rating || 0) > 0;
@@ -2618,10 +2619,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <p
                     className={`text-[12px] font-normal text-gray-400 leading-tight truncate ${post.user?.id ? 'cursor-pointer hover:text-gray-600' : ''}`}
                     onClick={(e) => { if (post.user?.id) { e.stopPropagation(); setLocation(`/user/${post.user.id}`); } }}
-                  >— {(() => {
-                    const parts = (displayName || '').trim().split(/\s+/);
-                    return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
-                  })()}</p>
+                  >— {formatFeedName(post.user?.displayName, post.user?.username)}</p>
                   {isOtherUser && tasteAlignment !== null ? (
                     <p className="text-[12px] text-violet-600 font-medium leading-tight"><span className="font-semibold">{tasteAlignment}%</span> aligned with you</p>
                   ) : isOtherUser && alignmentNudge && !ratingSubmitted ? (
@@ -2654,7 +2652,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 <div className="rounded-xl border border-gray-100 bg-white overflow-hidden mb-1">
                   {relatedRatings.map((r) => (
                     <div key={r.userId} className="flex items-center gap-2.5 px-3 py-2.5 border-b border-gray-50 last:border-0">
-                      <span className="text-xs font-medium text-gray-700 flex-shrink-0 w-24 truncate">{r.displayName}</span>
+                      <span className="text-xs font-medium text-gray-700 flex-shrink-0 w-24 truncate">{formatFeedName(r.displayName, r.userName)}</span>
                       <div className="flex items-center gap-0.5 flex-shrink-0">
                         {[1,2,3,4,5].map(s => (
                           <Star key={s} size={11} className={s <= Math.round(r.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
@@ -2694,7 +2692,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               <span className="flex items-center gap-2">
                 <span className="flex -space-x-1.5 flex-shrink-0">
                   {conversationParticipants.map((comment: any, index: number) => {
-                    const participantName = comment.user?.displayName || comment.user?.username || comment.username || 'User';
+                    const participantName = formatFeedName(comment.user?.displayName, comment.user?.username || comment.username);
                     return (
                       <span
                         key={comment.id || index}
@@ -2880,7 +2878,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {comments.length > 0 && (
             <div className="px-4 pt-1 pb-2 divide-y divide-gray-100">
               {(showAllComments ? comments : comments.slice(0, 2)).map((c: any) => {
-                const cName = c.user?.displayName || c.user?.username || c.username || 'User';
+                const cName = formatFeedName(c.user?.displayName, c.user?.username || c.username);
                 const isReplying = replyingToId === c.id;
                 return (
                   <div key={c.id} className="flex gap-2.5 py-3 first:pt-2">
@@ -2892,15 +2890,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       <p className="text-[15px] text-gray-900 leading-snug">{c.content}</p>
                       {/* Name · time — quiet, under the text */}
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[12px] text-gray-400">— {(() => {
-                          const parts = (cName || '').trim().split(/\s+/);
-                          return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
-                        })()}{c.created_at ? `  ·  ${timeAgo(c.created_at)}` : ''}</span>
+                        <span className="text-[12px] text-gray-400">— {cName}{c.created_at ? `  ·  ${timeAgo(c.created_at)}` : ''}</span>
                         <div className="ml-auto flex items-center gap-1">
                           {currentUserId === (c.user?.id || c.userId) ? (
                             <button onClick={(e) => { e.stopPropagation(); deleteComment(c.id); }} className="text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
                           ) : currentUserId ? (
-                            <button onClick={(e) => { e.stopPropagation(); setReportCommentTarget({ id: c.id, userId: c.user?.id || c.userId || '', userName: cName }); }} className="text-gray-300 hover:text-orange-500 transition-colors" title="Report comment"><Flag size={12} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); setReportCommentTarget({ id: c.id, userId: c.user?.id || c.userId || '', userName: c.user?.username || c.username || 'User' }); }} className="text-gray-300 hover:text-orange-500 transition-colors" title="Report comment"><Flag size={12} /></button>
                           ) : null}
                         </div>
                       </div>
@@ -2925,22 +2920,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       {c.replies?.length > 0 && (
                         <div className="mt-2 pl-3 border-l-2 border-gray-100 space-y-2">
                           {c.replies.map((r: any) => {
-                            const rName = r.user?.displayName || r.user?.username || r.username || 'User';
+                            const rName = formatFeedName(r.user?.displayName, r.user?.username || r.username);
                             return (
                               <div key={r.id} className="pt-1">
                                 <p className="text-[14px] text-gray-800 leading-snug">{r.content}</p>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[11px] text-gray-500">— {(() => {
-                                    const parts = (rName || '').trim().split(/\s+/);
-                                    return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
-                                  })()}{r.created_at ? ` · ${timeAgo(r.created_at)}` : ''}</span>
+                                  <span className="text-[11px] text-gray-500">— {rName}{r.created_at ? ` · ${timeAgo(r.created_at)}` : ''}</span>
                                   {currentUserId === (r.user?.id || r.userId) ? (
                                     <button onClick={(e) => { e.stopPropagation(); deleteComment(r.id); }} className="ml-auto text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={11} /></button>
                                   ) : currentUserId ? (
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setReportCommentTarget({ id: r.id, userId: r.user?.id || r.userId || '', userName: rName });
+                                        setReportCommentTarget({ id: r.id, userId: r.user?.id || r.userId || '', userName: r.user?.username || r.username || 'User' });
                                       }}
                                       className="ml-auto text-gray-300 hover:text-orange-500 transition-colors"
                                       title="Report reply"
@@ -3046,7 +3038,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           mediaType={post.mediaType}
           rating={post.rating != null ? Number(post.rating) : null}
           review={post.content}
-          displayName={post.user?.displayName || post.user?.username || 'A Consumed fan'}
+          displayName={formatFeedName(post.user?.displayName, post.user?.username)}
         />
       </>
     );
@@ -3127,7 +3119,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {post.user && (
                   <div className="mb-0.5">
                     <Link href={`/user/${post.user.id || ''}`}>
-                      <p className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer leading-snug">{post.user.displayName || post.user.username}</p>
+                      <p className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer leading-snug">{formatFeedName(post.user.displayName, post.user.username)}</p>
                     </Link>
                   </div>
                 )}
@@ -3165,7 +3157,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 ) : null}
                 {tasteAlignment !== null && isOtherUser && (
                   <p className="text-sm font-semibold text-violet-600 mt-1.5">
-                    You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
+                    You're {tasteAlignment}% aligned with {formatFeedName(post.user?.displayName, post.user?.username)}'s taste
                   </p>
                 )}
                 {/* Other raters */}
@@ -3188,7 +3180,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       <div className="flex flex-col gap-1.5">
                         {relatedRatings.map(r => (
                           <div key={r.userId} className="flex items-center justify-between">
-                            <span className="text-sm text-gray-500 truncate">{r.displayName || r.userName}</span>
+                            <span className="text-sm text-gray-500 truncate">{formatFeedName(r.displayName, r.userName)}</span>
                             <div className="flex items-center gap-0.5 flex-shrink-0">
                               {[1,2,3,4,5].map(s => {
                                 if (s <= Math.floor(r.rating)) return <Star key={s} size={11} className="text-yellow-400 fill-yellow-400" />;
@@ -3215,7 +3207,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {!showComments && !loadingComments && comments.length > 0 && (
                 <div className="pl-2 mb-2 space-y-2">
                   {comments.slice(0, 2).map((c: any) => {
-                    const cName = c.user?.displayName || c.user?.username || c.username || 'User';
+                    const cName = formatFeedName(c.user?.displayName, c.user?.username || c.username);
                     const initials = cName[0]?.toUpperCase();
                     return (
                       <div key={c.id} className="flex gap-2.5">
@@ -3278,7 +3270,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {posterEl ?? posterFallback}
               <div className="min-w-0 flex-1">
                 {(() => {
-                  const cardDisplayName = post.user?.displayName || post.user?.username || 'Someone';
+                  const cardDisplayName = formatFeedName(post.user?.displayName, post.user?.username);
                   const isSeries = post.externalId?.startsWith('series-');
                   return (
                     <>
@@ -3330,7 +3322,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             // No poster: header above content
             <div>
               {(() => {
-                const cardDisplayName = post.user?.displayName || post.user?.username || 'Someone';
+                const cardDisplayName = formatFeedName(post.user?.displayName, post.user?.username);
                 return (
                   <div className="flex items-start mb-3">
                     <div className="flex-1 min-w-0">
@@ -3381,7 +3373,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <div className="flex flex-col gap-1.5 mb-1.5">
                     {relatedRatings.map(r => (
                       <div key={r.userId} className="flex items-center justify-end gap-2">
-                        <span className="text-sm text-gray-500">{r.displayName || r.userName}</span>
+                        <span className="text-sm text-gray-500">{formatFeedName(r.displayName, r.userName)}</span>
                         <div className="flex items-center gap-0.5 flex-shrink-0">
                           {[1,2,3,4,5].map(s => {
                             if (s <= Math.floor(r.rating)) return <Star key={s} size={11} className="text-yellow-400 fill-yellow-400" />;
@@ -3488,7 +3480,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
               <Users size={14} className="text-violet-500 flex-shrink-0" />
               <p className="text-xs text-gray-500">
-                You're <span className="font-bold text-violet-600">{tasteAlignment}%</span> aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
+                You're <span className="font-bold text-violet-600">{tasteAlignment}%</span> aligned with {formatFeedName(post.user?.displayName, post.user?.username)}'s taste
               </p>
             </div>
           </div>
@@ -3520,7 +3512,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         ) : (
           <div className="space-y-1">
             {comments.map((c: any) => {
-              const cName = c.user?.displayName || c.user?.username || c.username || 'User';
+              const cName = formatFeedName(c.user?.displayName, c.user?.username || c.username);
               const cInitial = cName[0]?.toUpperCase();
               const isReplying = replyingToId === c.id;
               return (
@@ -3581,7 +3573,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     {c.replies?.length > 0 && (
                       <div className="mt-2 pl-3 border-l-2 border-gray-100 space-y-2">
                         {c.replies.map((r: any) => {
-                          const rName = r.user?.displayName || r.user?.username || r.username || 'User';
+                          const rName = formatFeedName(r.user?.displayName, r.user?.username || r.username);
                           return (
                             <div key={r.id} className="flex gap-2 pt-1">
                               <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-300 to-blue-300 flex items-center justify-center text-white text-[9px] font-bold overflow-hidden flex-shrink-0">
@@ -3665,7 +3657,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
 }) {
   const [isSpoilerRevealed, setIsSpoilerRevealed] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const displayName = post.user?.displayName || post.user?.username || 'Someone';
+  const displayName = formatFeedName(post.user?.displayName, post.user?.username);
   const rawUsername = post.user?.username || '';
   const avatarLetter = (displayName || rawUsername)[0]?.toUpperCase() || '?';
 
@@ -4213,7 +4205,8 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                 {loadingComments ? <p className="text-xs text-gray-400 text-center py-2">Loading...</p> : comments.length === 0 ? <p className="text-xs text-gray-400 text-center py-2">No comments yet</p> : (
                   <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto mb-2">
                     {comments.slice(0, 5).map((comment: any) => {
-                      const commenterName = comment.user?.username || comment.user?.displayName || 'User';
+                      const commenterName = formatFeedName(comment.user?.displayName, comment.user?.username);
+                      const commenterUsername = comment.user?.username || 'User';
                       const isLikedByMe = localLikedComments.has(String(comment.id)) || comment.likedByCurrentUser;
                       const likeCount = comment.likesCount || 0;
                       return (
@@ -4223,12 +4216,12 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs font-semibold text-gray-800">{commenterName}</span>
                               <span className="text-[10px] text-gray-400">{timeAgo(comment.createdAt)}</span>
-                              {currentUserId && comment.user?.id === currentUserId && onDeleteComment ? <button onClick={() => { onDeleteComment(String(comment.id), post.id); setComments(prev => prev.filter(c => c.id !== comment.id)); }} className="text-gray-400 hover:text-red-500 ml-auto p-1"><Trash2 size={12} /></button> : currentUserId && comment.user?.id && comment.user.id !== currentUserId ? <button onClick={() => setReportCommentLocal({ commentId: String(comment.id), userId: comment.user.id, userName: comment.user.username || commenterName })} className="text-gray-300 hover:text-orange-500 transition-colors ml-auto p-1" title="Report comment"><Flag size={12} /></button> : null}
+                              {currentUserId && comment.user?.id === currentUserId && onDeleteComment ? <button onClick={() => { onDeleteComment(String(comment.id), post.id); setComments(prev => prev.filter(c => c.id !== comment.id)); }} className="text-gray-400 hover:text-red-500 ml-auto p-1"><Trash2 size={12} /></button> : currentUserId && comment.user?.id && comment.user.id !== currentUserId ? <button onClick={() => setReportCommentLocal({ commentId: String(comment.id), userId: comment.user.id, userName: commenterUsername })} className="text-gray-300 hover:text-orange-500 transition-colors ml-auto p-1" title="Report comment"><Flag size={12} /></button> : null}
                             </div>
                             <p className="text-xs text-gray-600 leading-tight mb-1">{comment.content}</p>
                             <div className="flex items-center gap-3">
                               <button onClick={() => handleCommentLike(String(comment.id), likeCount)} className={`flex items-center gap-1 transition-colors ${isLikedByMe ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}><Heart size={12} fill={isLikedByMe ? 'currentColor' : 'none'} />{likeCount > 0 && <span className="text-[10px]">{likeCount}</span>}</button>
-                              <button onClick={() => handleReplyTo(String(comment.id), commenterName)} className="flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors"><MessageCircle size={12} /><span className="text-[10px]">Reply</span></button>
+                              <button onClick={() => handleReplyTo(String(comment.id), commenterUsername)} className="flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors"><MessageCircle size={12} /><span className="text-[10px]">Reply</span></button>
                             </div>
                           </div>
                         </div>
@@ -4398,7 +4391,8 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
               {loadingComments ? <p className="text-xs text-gray-400 text-center py-2">Loading...</p> : comments.length === 0 ? <p className="text-xs text-gray-400 text-center py-2">No comments yet</p> : (
                 <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto mb-2">
                   {comments.slice(0, 5).map((comment: any) => {
-                    const commenterName = comment.user?.username || comment.user?.displayName || 'User';
+                    const commenterName = formatFeedName(comment.user?.displayName, comment.user?.username);
+                    const commenterUsername = comment.user?.username || 'User';
                     const isLikedByMe = localLikedComments.has(String(comment.id)) || comment.likedByCurrentUser;
                     const likeCount = comment.likesCount || 0;
                     return (
@@ -4408,12 +4402,12 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs font-semibold text-gray-800">{commenterName}</span>
                             <span className="text-[10px] text-gray-400">{timeAgo(comment.createdAt)}</span>
-                            {currentUserId && comment.user?.id === currentUserId && onDeleteComment ? <button onClick={() => { onDeleteComment(String(comment.id), post.id); setComments(prev => prev.filter(c => c.id !== comment.id)); }} className="text-gray-400 hover:text-red-500 ml-auto p-1"><Trash2 size={12} /></button> : currentUserId && comment.user?.id && comment.user.id !== currentUserId ? <button onClick={() => setReportCommentLocal({ commentId: String(comment.id), userId: comment.user.id, userName: comment.user.username || commenterName })} className="text-gray-300 hover:text-orange-500 transition-colors ml-auto p-1" title="Report comment"><Flag size={12} /></button> : null}
+                            {currentUserId && comment.user?.id === currentUserId && onDeleteComment ? <button onClick={() => { onDeleteComment(String(comment.id), post.id); setComments(prev => prev.filter(c => c.id !== comment.id)); }} className="text-gray-400 hover:text-red-500 ml-auto p-1"><Trash2 size={12} /></button> : currentUserId && comment.user?.id && comment.user.id !== currentUserId ? <button onClick={() => setReportCommentLocal({ commentId: String(comment.id), userId: comment.user.id, userName: commenterUsername })} className="text-gray-300 hover:text-orange-500 transition-colors ml-auto p-1" title="Report comment"><Flag size={12} /></button> : null}
                           </div>
                           <p className="text-xs text-gray-600 leading-tight mb-1">{comment.content}</p>
                           <div className="flex items-center gap-3">
                             <button onClick={() => handleCommentLike(String(comment.id), likeCount)} className={`flex items-center gap-1 transition-colors ${isLikedByMe ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}><Heart size={12} fill={isLikedByMe ? 'currentColor' : 'none'} />{likeCount > 0 && <span className="text-[10px]">{likeCount}</span>}</button>
-                            <button onClick={() => handleReplyTo(String(comment.id), commenterName)} className="flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors"><MessageCircle size={12} /><span className="text-[10px]">Reply</span></button>
+                            <button onClick={() => handleReplyTo(String(comment.id), commenterUsername)} className="flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors"><MessageCircle size={12} /><span className="text-[10px]">Reply</span></button>
                           </div>
                         </div>
                       </div>
@@ -4634,7 +4628,7 @@ function CurrentlyConsumingFeedCard({
       });
   }, [media.externalId, media.externalSource, session?.user?.id, isOwnPost]);
   
-  const displayName = post.user?.displayName || post.user?.username;
+  const displayName = formatFeedName(post.user?.displayName, post.user?.username);
   
   return (
     <>
@@ -4659,7 +4653,7 @@ function CurrentlyConsumingFeedCard({
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <Link href={`/user/${post.user?.id}`}>
-                    <span className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+                    <span className="text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer">{formatFeedName(post.user?.displayName, post.user?.username)}</span>
                   </Link>
                   {post.mediaType && (
                     <span className="text-xs px-2 py-0.5 rounded-full border border-purple-200 text-purple-500">{formatMediaTypeLabel(post.mediaType)}</span>
@@ -4793,7 +4787,7 @@ function CurrentlyConsumingFeedCard({
                 onClick={() => onBet(
                   post.id, 
                   media.title, 
-                  post.user?.displayName || formatUsername(post.user?.username),
+                  formatFeedName(post.user?.displayName, post.user?.username),
                   post.user?.id || '',
                   media.externalId,
                   media.externalSource,
@@ -6408,7 +6402,7 @@ export default function Feed() {
                 )}
                 <div className="flex-1">
                   <Link href={`/user/${postUser?.id}`}>
-                    <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">{postUser?.displayName || postUser?.username}</span>
+                    <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">{formatFeedName(postUser?.displayName, postUser?.username)}</span>
                   </Link>
                   {postUser?.username && postUser?.displayName && postUser.username !== postUser.displayName && (
                     <p className="text-xs text-gray-400 leading-tight">@{postUser.username}</p>
@@ -6632,7 +6626,7 @@ export default function Feed() {
                   <div>
                     <Link href={`/user/${rawPost.user.id}`}>
                       <span className="text-sm font-medium text-gray-900 hover:text-purple-600 cursor-pointer">
-                        {rawPost.user.displayName || rawPost.user.username}
+                        {formatFeedName(rawPost.user.displayName, rawPost.user.username)}
                       </span>
                     </Link>
                     <span className="text-xs text-gray-500 ml-2">shared a ranked list</span>
@@ -8849,7 +8843,7 @@ export default function Feed() {
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">What's Happening</p>
               <div className="space-y-0.5">
               {whatHappeningPosts.map((post: any) => {
-                const name = post.user?.displayName || post.user?.username || 'Someone';
+                const name = formatFeedName(post.user?.displayName, post.user?.username);
                 // Media title lives in mediaItems[0].title — post.mediaTitle is not a field social-feed sets
                 const mediaTitle = post.mediaItems?.[0]?.title || post.mediaTitle || '';
                 return (
@@ -8990,7 +8984,7 @@ export default function Feed() {
                         <div className="min-w-0 flex-1">
                           <Link href={`/user/${highlightedPost.user.id}`}>
                             <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">
-                              {highlightedPost.user.displayName || highlightedPost.user.username}
+                              {formatFeedName(highlightedPost.user.displayName, highlightedPost.user.username)}
                             </span>
                           </Link>
                           {highlightedPost.user.username && highlightedPost.user.displayName && highlightedPost.user.username !== highlightedPost.user.displayName && (
@@ -9516,7 +9510,7 @@ export default function Feed() {
                   // Format activity text with points emphasis for games
                   const formatActivityText = (activity: any) => {
                     const points = getPointsForAction(activity.action, activity.rating);
-                    const name = activity.user?.displayName || formatUsername(activity.user?.username);
+                    const name = formatFeedName(activity.user?.displayName, activity.user?.username);
                     
                     // Game activities - show scoring
                     if (activity.action === 'trivia' || activity.action === 'scored') {
@@ -9759,7 +9753,7 @@ export default function Feed() {
                                 <div>
                                   <Link href={`/user/${post.user.id}`}>
                                     <span className="text-sm font-medium text-gray-900 hover:text-purple-600 cursor-pointer">
-                                      {post.user.displayName || post.user.username}
+                                      {formatFeedName(post.user.displayName, post.user.username)}
                                     </span>
                                   </Link>
                                   <span className="text-xs text-gray-500 ml-2">shared a ranked list</span>
@@ -9839,7 +9833,7 @@ export default function Feed() {
                             setActiveBetPost({
                               postId: postId,
                               mediaTitle: media.title,
-                              userName: targetUser?.displayName || formatUsername(targetUser?.username),
+                              userName: formatFeedName(targetUser?.displayName, targetUser?.username),
                               targetUserId: userId,
                               externalId: media.externalId,
                               externalSource: media.externalSource,
@@ -9878,7 +9872,7 @@ export default function Feed() {
                               )}
                               <div className="flex-1 min-w-0">
                                 <Link href={`/user/${post.user?.id}`}>
-                                  <span className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">{post.user?.displayName || formatUsername(post.user?.username)}</span>
+                                  <span className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">{formatFeedName(post.user?.displayName, post.user?.username)}</span>
                                 </Link>
                                 {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
                                   <p className="text-xs text-gray-400 leading-tight">@{post.user.username}</p>
@@ -10056,7 +10050,7 @@ export default function Feed() {
                                   </Link>
                                   <Link href={`/user/${post.user.id}`}>
                                     <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">
-                                      {post.user.username}
+                                      {formatFeedName(post.user.displayName, post.user.username)}
                                     </span>
                                   </Link>
                                 </div>
@@ -10164,7 +10158,7 @@ export default function Feed() {
                                     className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                     data-testid={`link-user-${post.user.id}`}
                                   >
-                                    {post.user.username}
+                                    {formatFeedName(post.user.displayName, post.user.username)}
                                   </Link>
                                   <span className="text-gray-500"> added to → </span>
                                   <Link 
@@ -10192,7 +10186,7 @@ export default function Feed() {
                                     className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                     data-testid={`link-user-${post.user.id}`}
                                   >
-                                    {post.user.username}
+                                    {formatFeedName(post.user.displayName, post.user.username)}
                                   </Link>
                                   <span className="text-gray-500"> {actionText}</span>
                                 </p>
@@ -10207,7 +10201,7 @@ export default function Feed() {
                                   className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                   data-testid={`link-user-${post.user.id}`}
                                 >
-                                  {post.user.username}
+                                  {formatFeedName(post.user.displayName, post.user.username)}
                                 </Link>
                                 <span className="text-gray-500"> rated {post.mediaItems[0].title}</span>
                                 {listData && (
@@ -10237,7 +10231,7 @@ export default function Feed() {
                                     className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                     data-testid={`link-user-${post.user.id}`}
                                   >
-                                    {post.user.username}
+                                    {formatFeedName(post.user.displayName, post.user.username)}
                                   </Link>
                                   <span className="text-gray-500"> added {post.mediaItems[0].title}</span>
                                 </p>
@@ -10252,7 +10246,7 @@ export default function Feed() {
                                   className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                   data-testid={`link-user-${post.user.id}`}
                                 >
-                                  {post.user.username}
+                                  {formatFeedName(post.user.displayName, post.user.username)}
                                 </Link>
                                 <span className="text-gray-500"> added thoughts about {post.mediaItems[0].title}</span>
                               </p>
@@ -10268,7 +10262,7 @@ export default function Feed() {
                                     className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                     data-testid={`link-user-${post.user.id}`}
                                   >
-                                    {post.user.username}
+                                    {formatFeedName(post.user.displayName, post.user.username)}
                                   </Link>
                                   <span className="text-gray-500"> hit the leaderboard</span>
                                 </p>
@@ -10285,7 +10279,7 @@ export default function Feed() {
                                     className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                     data-testid={`link-user-${post.user.id}`}
                                   >
-                                    {post.user.username}
+                                    {formatFeedName(post.user.displayName, post.user.username)}
                                   </Link>
                                   <span className="text-gray-500"> added {post.content}</span>
                                 </p>
@@ -10299,7 +10293,7 @@ export default function Feed() {
                                   className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                   data-testid={`link-user-${post.user.id}`}
                                 >
-                                  {post.user.username}
+                                  {formatFeedName(post.user.displayName, post.user.username)}
                                 </Link>
                                 <span className="text-gray-500"> shared a thought</span>
                               </p>
@@ -10311,7 +10305,7 @@ export default function Feed() {
                                 className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                 data-testid={`link-user-${post.user.id}`}
                               >
-                                {post.user.username}
+                                {formatFeedName(post.user.displayName, post.user.username)}
                               </Link>
                             );
                           }
@@ -10368,7 +10362,7 @@ export default function Feed() {
                                             className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                             data-testid={`link-user-${displayUser.userId}`}
                                           >
-                                            {displayUser.username}
+                                            {formatFeedName(displayUser.displayName, displayUser.username)}
                                           </Link>
                                           <span className="text-gray-500"> added to → </span>
                                           <Link 
@@ -10387,7 +10381,7 @@ export default function Feed() {
                                           className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                           data-testid={`link-user-${displayUser.userId}`}
                                         >
-                                          {displayUser.username}
+                                          {formatFeedName(displayUser.displayName, displayUser.username)}
                                         </Link>
                                         <span className="text-gray-500"> {post.content || `added ${post.mediaItems[0].title}`}</span>
                                       </p>
@@ -10401,7 +10395,7 @@ export default function Feed() {
                                           className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                           data-testid={`link-user-${displayUser.userId}`}
                                         >
-                                          {displayUser.username}
+                                          {formatFeedName(displayUser.displayName, displayUser.username)}
                                         </Link>
                                         <span className="text-gray-500"> rated {post.mediaItems[0].title}</span>
                                         {listData && (
@@ -10426,7 +10420,7 @@ export default function Feed() {
                                           className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                           data-testid={`link-user-${displayUser.userId}`}
                                         >
-                                          {displayUser.username}
+                                          {formatFeedName(displayUser.displayName, displayUser.username)}
                                         </Link>
                                         <span className="text-gray-500"> added {post.mediaItems[0].title}</span>
                                       </p>
@@ -10442,7 +10436,7 @@ export default function Feed() {
                                             className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                             data-testid={`link-user-${displayUser.userId}`}
                                           >
-                                            {displayUser.username}
+                                            {formatFeedName(displayUser.displayName, displayUser.username)}
                                           </Link>
                                           <span className="text-gray-500"> hit the leaderboard</span>
                                         </p>
@@ -10456,7 +10450,7 @@ export default function Feed() {
                                           className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                           data-testid={`link-user-${displayUser.userId}`}
                                         >
-                                          {displayUser.username}
+                                          {formatFeedName(displayUser.displayName, displayUser.username)}
                                         </Link>
                                         <span className="text-gray-500"> added thoughts</span>
                                       </p>
@@ -10468,7 +10462,7 @@ export default function Feed() {
                                         className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                                         data-testid={`link-user-${displayUser.userId}`}
                                       >
-                                        {displayUser.username}
+                                        {formatFeedName(displayUser.displayName, displayUser.username)}
                                       </Link>
                                     );
                                   }
@@ -10935,7 +10929,7 @@ export default function Feed() {
                           
                           if (!userId || !username) return null;
                           
-                          const displayName = userDisplayName || username.replace(/consumed|IsConsumed/gi, '').trim() || username;
+                          const displayName = formatFeedName(userDisplayName, username);
                           
                           return (
                             <Link
@@ -11069,7 +11063,7 @@ export default function Feed() {
                           const isBettableList = listTitle === 'currently' || listTitle === 'want to';
                           const hasMedia = post.mediaItems && post.mediaItems.length > 0;
                           const isOwnPost = currentAppUserId && post.user?.id === currentAppUserId;
-                          const userName = post.user?.displayName || formatUsername(post.user?.username);
+                          const userName = formatFeedName(post.user?.displayName, post.user?.username);
                           
                           // Only show bet button for other users' posts (can't bet on your own)
                           if (isBettableList && hasMedia && !activeInlineRating && !isOwnPost) {

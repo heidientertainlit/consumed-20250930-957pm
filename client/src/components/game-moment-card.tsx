@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { CheckCircle, XCircle, Trophy, Vote, Zap, Flag } from "lucide-react";
 import { ReportSheet } from "@/components/report-sheet";
+import { formatFeedName } from "@/lib/feed-name";
 
 interface GameMomentCardProps {
   post: {
@@ -72,8 +73,11 @@ export function GameMomentCard({ post }: GameMomentCardProps) {
 
   const moment = parseMomentData(content);
 
-  const avatarInitial = (userObj?.displayName || userObj?.display_name || userObj?.username || '?')[0]?.toUpperCase();
-  const displayName = userObj?.displayName || userObj?.display_name || userObj?.username || 'Someone';
+  const displayName = formatFeedName(
+    userObj?.displayName || userObj?.display_name,
+    userObj?.username,
+  );
+  const avatarInitial = displayName[0]?.toUpperCase();
 
   const answerPillClass = moment.isCorrect === true
     ? 'bg-green-100 text-green-700 border border-green-200'

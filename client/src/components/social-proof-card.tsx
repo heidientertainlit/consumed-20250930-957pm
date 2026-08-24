@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'wouter';
 import { ChevronRight, Play, Check, X, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { formatFeedName } from '@/lib/feed-name';
 
 export type SocialProofVariant =
   | 'wrong_answer'
@@ -135,16 +136,17 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
     );
   }
 
-  const displayName = card.user.displayName || card.user.username || '';
+  const rawDisplayName = card.user.displayName || card.user.username || '';
+  const displayName = formatFeedName(card.user.displayName, card.user.username);
 
   const renderHeadline = () => {
-    const idx = displayName ? card.headline.indexOf(displayName) : -1;
+    const idx = rawDisplayName ? card.headline.indexOf(rawDisplayName) : -1;
     if (idx === -1) return <>{card.headline}</>;
     return (
       <>
         {card.headline.slice(0, idx)}
         <span>{displayName}</span>
-        {card.headline.slice(idx + displayName.length)}
+        {card.headline.slice(idx + rawDisplayName.length)}
       </>
     );
   };
@@ -217,7 +219,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
             {/* Poll attribution footnote — collapsed state */}
             {hasInlinePoll && card.user && (
               <p className="text-xs text-gray-400 text-center mt-2.5 leading-snug">
-                {card.user.displayName?.split(' ')[0] || card.user.username}
+                {formatFeedName(card.user.displayName, card.user.username)}
                 {card.userAnswer ? ` picked "${card.userAnswer}"` : ' already voted'}
                 {card.highlight ? ` · ${card.highlight}` : ''}
               </p>
@@ -328,7 +330,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
                 {/* Attribution footnote — expanded state */}
                 {card.user && (
                   <p className="text-xs text-gray-400 pt-1 leading-snug">
-                    {card.user.displayName?.split(' ')[0] || card.user.username}
+                    {formatFeedName(card.user.displayName, card.user.username)}
                     {card.userAnswer ? ` picked "${card.userAnswer}"` : ' already voted'}
                     {card.highlight ? ` · ${card.highlight}` : ''}
                   </p>
@@ -382,7 +384,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
             {/* Poll: attribution footnote below the button */}
             {card.variant === 'vote_cast' && card.user && (
               <p className="text-xs text-gray-400 mt-2.5 leading-snug">
-                {card.user.displayName?.split(' ')[0] || card.user.username}
+                {formatFeedName(card.user.displayName, card.user.username)}
                 {card.userAnswer ? ` picked "${card.userAnswer}"` : ' already voted'}
                 {card.highlight ? ` · ${card.highlight}` : ''}
               </p>
@@ -418,7 +420,7 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
   const voteCounts: Record<string, number> | undefined = gm?.vote_counts;
 
   const user = post.user;
-  const name = user?.displayName || user?.username || 'Someone';
+  const name = formatFeedName(user?.displayName, user?.username);
 
   const agreementText = (agreementPct !== null && totalVotes > 0)
     ? `${agreementPct}% of players agree · ${totalVotes} vote${totalVotes !== 1 ? 's' : ''}`

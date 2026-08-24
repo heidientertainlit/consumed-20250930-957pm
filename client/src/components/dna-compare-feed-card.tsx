@@ -5,6 +5,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { Dna, ArrowRight, Users, X, ChevronLeft, ChevronDown, Loader2, Share2, CheckCircle2, Heart, Zap, Download } from "lucide-react";
+import { formatFeedName } from "@/lib/feed-name";
 
 /* ── types ─────────────────────────────────────────── */
 interface OverlapUser {
@@ -75,7 +76,7 @@ function initials(name: string) {
 }
 
 function FriendAvatar({ friend, size = 40 }: { friend: Friend; size?: number }) {
-  const label = friend.display_name || friend.user_name;
+  const label = formatFeedName(friend.display_name, friend.user_name);
   return (
     <div
       className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500"
@@ -218,7 +219,7 @@ export function CompareSheet({
     }
   }
 
-  const friendLabel = (f: Friend) => f.display_name || f.user_name;
+  const friendLabel = (f: Friend) => formatFeedName(f.display_name, f.user_name);
 
   return createPortal(
     <div
@@ -539,7 +540,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
             const genres: string[] = Array.isArray(fd.favorite_genres) ? fd.favorite_genres : [];
             const pct = cmpMap.get(fd.user_id)!;
             const info = friendUsers.find((u: any) => u.id === fd.user_id);
-            const displayName = info?.display_name || info?.user_name || 'Friend';
+            const displayName = formatFeedName(info?.display_name, info?.user_name);
             const shared = genres.filter((g: string) => myGenreSet.has(g.toLowerCase()));
             return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id, sharedGenres: shared };
           })
@@ -668,7 +669,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                 onClick={() => {
                   setShareMenuOpen(false);
                   if (!featured) return;
-                  const text = `I'm ${featured.pct}% aligned with ${featured.displayName} on Consumed! Check your Entertainment DNA 🧬`;
+                  const text = `I'm ${featured.pct}% aligned with ${formatFeedName(featured.displayName)} on Consumed! Check your Entertainment DNA 🧬`;
                   const url = (import.meta.env.VITE_APP_URL as string) || window.location.origin;
                   if (navigator.share) {
                     navigator.share({ title: 'My Entertainment DNA', text, url }).catch(() => {});
@@ -732,7 +733,10 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                   <div className="rounded-full flex items-center justify-center font-black text-white text-[15px] shadow"
                     style={{ width: 52, height: 52, background: '#8b5cf6' }}>
                     {session?.user?.user_metadata?.display_name
-                      ? initials(session.user.user_metadata.display_name)
+                      ? initials(formatFeedName(
+                          session.user.user_metadata.display_name,
+                          session.user.user_metadata.user_name,
+                        ))
                       : (user?.email?.[0] ?? 'Y').toUpperCase()}
                   </div>
                 </div>
@@ -750,14 +754,19 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
               <div className="flex w-full max-w-[300px] px-2 mt-2">
                 <div className="flex flex-col items-center" style={{ width: 100 }}>
                   <span className="text-[13px] font-bold text-gray-900 text-center">
-                    {(session?.user?.user_metadata?.display_name ?? 'You').split(' ')[0]}
+                    {session?.user?.user_metadata?.display_name
+                      ? formatFeedName(
+                          session.user.user_metadata.display_name,
+                          session.user.user_metadata.user_name,
+                        )
+                      : 'You'}
                   </span>
                   {myLabel && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight line-clamp-2">{myLabel}</span>}
                 </div>
                 <div className="flex-1" />
                 <div className="flex flex-col items-center" style={{ width: 100 }}>
                   <span className="text-[13px] font-bold text-gray-900 text-center">
-                    {featured.displayName.split(' ')[0]}
+                    {formatFeedName(featured.displayName)}
                   </span>
                   {featured.label && <span className="text-[10px] text-blue-500 font-medium text-center leading-tight line-clamp-2">{featured.label}</span>}
                 </div>
@@ -842,7 +851,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
               <div className="mt-2 flex flex-col gap-1.5 pl-1">
                 {overlaps.map((u) => (
                   <div key={u.displayName} className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-gray-700 flex-1">{u.displayName.split(' ')[0]}</span>
+                    <span className="text-[11px] font-semibold text-gray-700 flex-1">{formatFeedName(u.displayName)}</span>
                     {u.pct != null && u.pct > 0 && (
                       <span className="text-purple-500 text-[10px] font-bold">{u.pct}%</span>
                     )}
@@ -914,9 +923,12 @@ export function DnaComparePostCard({ item }: { item: any }) {
 
   const poster = item.user;
   const posterId: string = item.user_id || poster?.id || poster?.user_id || '';
-  const posterName = (poster?.displayName || poster?.display_name || poster?.username || poster?.user_name || 'Someone') as string;
+  const posterName = formatFeedName(
+    poster?.displayName || poster?.display_name,
+    poster?.username || poster?.user_name,
+  );
   const matchScore = cmp.match_score || 0;
-  const friendName = (cmp.friend_name || 'a friend') as string;
+  const friendName = cmp.friend_name ? formatFeedName(cmp.friend_name) : 'a friend';
   const sharedGenres: string[] = cmp.shared_genres || [];
 
   // Fetch poster's friend alignments for the right column
@@ -954,7 +966,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
           .filter((fd: any) => cmpMap.has(fd.user_id))
           .map((fd: any, i: number) => {
             const info = Array.isArray(friendUsers) ? friendUsers.find((u: any) => u.id === fd.user_id) : null;
-            const displayName = info?.display_name || info?.user_name || 'Friend';
+            const displayName = formatFeedName(info?.display_name, info?.user_name);
             return { displayName, pct: cmpMap.get(fd.user_id)!, color: AVATAR_COLORS[i % AVATAR_COLORS.length], userId: fd.user_id };
           })
           .filter((u: any) => u.displayName !== friendName)
@@ -1066,12 +1078,12 @@ export function DnaComparePostCard({ item }: { item: any }) {
           {/* Names row — aligned under each avatar */}
           <div className="flex w-full" style={{ width: 240, marginTop: 2 }}>
             <div className="flex flex-col items-center gap-0.5" style={{ width: 108 }}>
-              <span className="text-[13px] font-bold text-gray-800 uppercase tracking-wide text-center">{posterName.split(' ')[0]}</span>
+               <span className="text-[13px] font-bold text-gray-800 uppercase tracking-wide text-center">{posterName}</span>
               {cmp.your_dna_label && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight">{cmp.your_dna_label}</span>}
             </div>
             <div style={{ flex: 1 }} />
             <div className="flex flex-col items-center gap-0.5" style={{ width: 108 }}>
-              <span className="text-[13px] font-bold text-gray-800 uppercase tracking-wide text-center">{friendName.split(' ')[0]}</span>
+               <span className="text-[13px] font-bold text-gray-800 uppercase tracking-wide text-center">{friendName}</span>
               {cmp.friend_dna_label && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight">{cmp.friend_dna_label}</span>}
             </div>
           </div>
@@ -1141,7 +1153,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
               <div className="mt-2 flex flex-col gap-1.5 pl-1">
                 {posterOverlaps.map((u) => (
                   <div key={u.displayName} className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-gray-700 flex-1">{u.displayName}</span>
+                    <span className="text-[11px] font-semibold text-gray-700 flex-1">{formatFeedName(u.displayName)}</span>
                     {u.pct != null && u.pct > 0 && (
                       <span className="text-purple-500 text-[10px] font-bold">{u.pct}%</span>
                     )}
