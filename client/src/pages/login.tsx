@@ -11,6 +11,7 @@ import { SiApple, SiGoogle } from "react-icons/si";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { isOnboardingComplete } from "@/components/route-guards";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { getLastLoginMethod, lastLoginMethodLabels } from "@/lib/last-login-method";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -26,6 +27,7 @@ export default function LoginPage() {
   const [justSignedUp, setJustSignedUp] = useState(false);
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [lastLoginMethod] = useState(getLastLoginMethod);
   const { user, session, loading, signIn, signUp, signInWithOAuth, resetPassword } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -239,7 +241,7 @@ export default function LoginPage() {
         data-testid={`button-${context}-apple`}
       >
         <SiApple className="h-4 w-4" />
-        Continue with Apple
+        Continue with Apple{context === 'signin' && lastLoginMethod === 'apple' ? ' (last used)' : ''}
       </button>
       <button
         type="button"
@@ -249,7 +251,7 @@ export default function LoginPage() {
         data-testid={`button-${context}-google`}
       >
         <SiGoogle className="h-4 w-4 text-[#4285F4]" />
-        Continue with Google
+        Continue with Google{context === 'signin' && lastLoginMethod === 'google' ? ' (last used)' : ''}
       </button>
     </div>
   );
@@ -298,6 +300,14 @@ export default function LoginPage() {
             </TabsList>
             
             <TabsContent value="signin">
+              {lastLoginMethod && (
+                <div
+                  className="mb-4 rounded-full bg-purple-50 px-4 py-2 text-center text-xs font-medium text-purple-700"
+                  data-testid="last-login-method"
+                >
+                  Last time, you signed in with {lastLoginMethodLabels[lastLoginMethod]}
+                </div>
+              )}
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-1.5">
                   <div className="relative">
@@ -354,7 +364,11 @@ export default function LoginPage() {
                   disabled={submitting}
                   data-testid="button-signin"
                 >
-                  {submitting ? "Signing in..." : "Sign In"}
+                  {submitting
+                    ? "Signing in..."
+                    : lastLoginMethod === "email"
+                      ? "Sign In with Email (last used)"
+                      : "Sign In"}
                 </Button>
               </form>
               {renderSocialButtons('signin')}

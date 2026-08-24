@@ -5,6 +5,7 @@ import { sessionTracker } from './sessionTracker'
 import { identifyUser, resetUser, trackEvent } from './posthog'
 import { Capacitor } from "@capacitor/core"
 import OneSignal from "onesignal-cordova-plugin"
+import { rememberLastLoginMethod, rememberLastLoginMethodFromUser } from "./last-login-method"
 
 type OAuthProvider = 'apple' | 'google'
 
@@ -63,6 +64,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
 
       if (session?.user?.id) {
+        if (window.location.pathname !== '/reset-password') {
+          rememberLastLoginMethodFromUser(session.user)
+        }
         sessionTracker.startSession(session.user.id)
 
         supabase
@@ -92,6 +96,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false)
 
         if (event === 'SIGNED_IN' && session?.user?.id) {
+          if (window.location.pathname !== '/reset-password') {
+            rememberLastLoginMethodFromUser(session.user)
+          }
           sessionTracker.startSession(session.user.id)
 
           supabase
@@ -143,6 +150,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       password,
     })
+    if (!error) {
+      rememberLastLoginMethod('email')
+    }
     return { error }
   }
 

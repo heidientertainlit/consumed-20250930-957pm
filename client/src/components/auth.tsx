@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/lib/auth'
 import { Eye, EyeOff } from 'lucide-react'
 import { SiApple, SiGoogle } from 'react-icons/si'
+import { getLastLoginMethod, lastLoginMethodLabels } from '@/lib/last-login-method'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -24,18 +25,16 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
   const [activeTab, setActiveTab] = useState('signin')
   const [showSignInPassword, setShowSignInPassword] = useState(false)
   const [showSignUpPassword, setShowSignUpPassword] = useState(false)
+  const [lastLoginMethod] = useState(getLastLoginMethod)
   const { toast } = useToast()
-  const { signInWithOAuth: oauthSignIn } = useAuth()
+  const { signIn, signInWithOAuth: oauthSignIn } = useAuth()
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const { error } = await signIn(email, password)
 
       if (error) {
         toast({
@@ -46,7 +45,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         return
       }
 
-      if (data.user) {
+      if (!error) {
         toast({
           title: "Welcome back!",
           description: "You've been signed in successfully.",
@@ -127,7 +126,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         data-testid={`button-${context}-apple`}
       >
         <SiApple className="h-4 w-4 mr-2" />
-        Continue with Apple
+        Continue with Apple{context === 'signin' && lastLoginMethod === 'apple' ? ' (last used)' : ''}
       </Button>
       <Button
         type="button"
@@ -138,7 +137,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         data-testid={`button-${context}-google`}
       >
         <SiGoogle className="h-4 w-4 mr-2 text-[#4285F4]" />
-        Continue with Google
+        Continue with Google{context === 'signin' && lastLoginMethod === 'google' ? ' (last used)' : ''}
       </Button>
       <div className="relative py-1">
         <div className="absolute inset-0 flex items-center">
@@ -184,6 +183,14 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {lastLoginMethod && (
+                  <div
+                    className="rounded-md bg-purple-50 px-3 py-2 text-center text-xs font-medium text-purple-700"
+                    data-testid="last-login-method"
+                  >
+                    Last time, you signed in with {lastLoginMethodLabels[lastLoginMethod]}
+                  </div>
+                )}
                 {renderSocialButtons('signin')}
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
