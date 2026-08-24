@@ -89,7 +89,7 @@ const TABS = ["Discuss", "Play", "Explore"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function NewRoom() {
-  const params = useParams<{ id: string }>();
+  const params = useParams<{ id: string; takeId?: string }>();
   const roomId = params.id;
   const [, setLocation] = useLocation();
   const search = useSearch();
@@ -210,15 +210,49 @@ export default function NewRoom() {
   const takesKey = takes.map((take) => take.id).join(",");
 
   // A Hot in Rooms moment can target a precise thread, not merely the room.
+  // Do not depend on the room's general list query: open the carried take
+  // immediately, then fetch that exact row when necessary.
   useEffect(() => {
-    const takeId = new URLSearchParams(search).get("take");
+    const takeId = params.takeId || new URLSearchParams(search || window.location.search).get("take");
     if (!takeId || openedDeepLinkedTake.current === takeId) return;
-    const target = takes.find((take) => take.id === takeId);
-    if (target) {
+
+    const listedTake = takes.find((take) => take.id === takeId);
+    if (listedTake) {
       openedDeepLinkedTake.current = takeId;
-      setActiveTake(target);
+      setActiveTake(listedTake);
+      return;
     }
-  }, [search, takesKey]);
+
+    try {
+      const cachedTake = JSON.parse(sessionStorage.getItem(`room-thread:${takeId}`) || "null");
+      if (cachedTake?.id === takeId && cachedTake?.room_id === roomId) {
+        openedDeepLinkedTake.current = takeId;
+        setActiveTake(cachedTake);
+        sessionStorage.removeItem(`room-thread:${takeId}`);
+        return;
+      }
+    } catch {
+      sessionStorage.removeItem(`room-thread:${takeId}`);
+    }
+
+    if (!token || !roomId) return;
+    let cancelled = false;
+    void (async () => {
+      const { data, error } = await supabase
+        .from("room_takes")
+        .select("*, users:user_id(id, display_name, user_name)")
+        .eq("id", takeId)
+        .eq("room_id", roomId)
+        .maybeSingle();
+      if (!cancelled && !error && data) {
+        openedDeepLinkedTake.current = takeId;
+        setActiveTake(data);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [params.takeId, search, takesKey, roomId, token]);
 
   // ── Follow state ─────────────────────────────────────────────────────
   const { data: followData, refetch: refetchFollow } = useQuery({

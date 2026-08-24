@@ -97,7 +97,14 @@ export function HotInRoomsCard({ slot = 0 }: { slot?: number }) {
   const quote = (take.body?.trim() || take.title?.trim() || "").slice(0, 175);
   const hasMedia = !!take.media_title;
   const vote = myVote?.vote || 0;
-  const navigateToThread = () => setLocation(`/room/${take.room_id}?take=${take.id}`);
+  const navigateToThread = () => {
+    try {
+      sessionStorage.setItem(`room-thread:${take.id}`, JSON.stringify(take));
+    } catch {
+      // The room page also fetches the take directly when storage is unavailable.
+    }
+    setLocation(`/room/${take.room_id}/conversation/${take.id}`);
+  };
 
   const react = async (direction: 1 | -1, event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();

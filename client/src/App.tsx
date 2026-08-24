@@ -384,6 +384,14 @@ function Router() {
             </RoomsGuard>
           </Route>
 
+          <Route path="/room/:id/conversation/:takeId">
+            <RoomsGuard>
+              <ProtectedRoute>
+                <NewRoom />
+              </ProtectedRoute>
+            </RoomsGuard>
+          </Route>
+
           <Route path="/room/:id">
             <RoomsGuard>
               <ProtectedRoute>
