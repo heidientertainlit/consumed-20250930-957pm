@@ -6,7 +6,7 @@ description: How rooms are modeled and which page renders them; the single-templ
 # Rooms = one template for ALL rooms
 
 - A "room" is a `pools` row. Genre/topic is identified by `pools.room_category` ('genre'|'media'|'platform') + `series_tag` (e.g. True Crime: room_category='genre', series_tag='true-crime').
-- `/room/:id` and `/room/:id/conversation/:takeId` render `client/src/pages/new-room.tsx` (`NewRoom`). The conversation route must open that exact take and its replies, even if the general room-takes list is empty. The older `pool-detail.tsx` is **retired from routing but kept on disk** as a reference for patterns (vote/composer/notify). Don't delete it without asking.
+- `/room/:id` and `/room/:id/conversation/:takeId` render `client/src/pages/new-room.tsx` (`NewRoom`). The conversation route keeps the full room page visible, scrolls to and highlights that exact take, and expands its replies inline—even if the general room-takes list is empty. The older `pool-detail.tsx` is **retired from routing but kept on disk** as a reference for patterns (vote/composer/notify). Don't delete it without asking.
 
 **Why:** Product decision — ONE room template for every room, no media-specific room variants. New page replaced the old live room.
 

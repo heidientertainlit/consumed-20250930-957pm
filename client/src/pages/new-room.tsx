@@ -350,12 +350,25 @@ export default function NewRoom() {
   }, [takes]);
 
   const sortedTakes = useMemo(() => {
-    const arr = [...takes];
+    const arr = activeTake && !takes.some((take) => take.id === activeTake.id)
+      ? [activeTake, ...takes]
+      : [...takes];
     if (sort === "new") arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     else if (sort === "replies") arr.sort((a, b) => (b.reply_count || 0) - (a.reply_count || 0));
     else arr.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
     return arr;
-  }, [takes, sort]);
+  }, [takes, activeTake, sort]);
+
+  useEffect(() => {
+    if (!activeTake?.id) return;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(`room-conversation-${activeTake.id}`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [activeTake?.id]);
 
   // ── Explore: genre-based discovery via room-explore ──────────────────
   const exploreTag = pool?.series_tag || pool?.name || "";
@@ -961,7 +974,11 @@ export default function NewRoom() {
               const g = dbToDisplay(t.tag);
               const agreed = hasAgreed(t.id);
               return (
-              <div key={t.id}>
+              <div
+                key={t.id}
+                id={`room-conversation-${t.id}`}
+                className={activeTake?.id === t.id ? "rounded-2xl bg-purple-50/60 px-3 -mx-3 ring-1 ring-purple-100" : ""}
+              >
                 {ti > 0 && <div className="w-full h-[1px] bg-gray-100" />}
                 {flagged.includes(t.id) ? (
                   <div className="flex items-center gap-2 py-4 text-[13px] text-gray-500">
@@ -1048,6 +1065,16 @@ export default function NewRoom() {
                   </div>
                 </div>
                 )}
+                {activeTake?.id === t.id && (
+                  <ThreadSheet
+                    take={activeTake}
+                    currentUserId={currentUserId}
+                    myVotes={myVotes}
+                    onClose={() => setActiveTake(null)}
+                    onChanged={() => { refetchTakes(); refetchMyVotes(); }}
+                    logRoomEvent={logRoomEvent}
+                  />
+                )}
               </div>
               );
             })}
@@ -1056,18 +1083,6 @@ export default function NewRoom() {
         )}
 
       </div>
-
-      {/* ── Thread view ── */}
-      {activeTake && (
-        <ThreadSheet
-          take={activeTake}
-          currentUserId={currentUserId}
-          myVotes={myVotes}
-          onClose={() => setActiveTake(null)}
-          onChanged={() => { refetchTakes(); refetchMyVotes(); }}
-          logRoomEvent={logRoomEvent}
-        />
-      )}
 
       <QuickAddListSheet
         isOpen={!!addMedia}
@@ -1243,9 +1258,6 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
   const [replyText, setReplyText] = useState("");
   const [replying, setReplying] = useState(false);
   const [hiddenReplies, setHiddenReplies] = useState<string[]>([]);
-  const g = dbToDisplay(take.tag);
-  const TagIcon = g?.icon;
-
   const { data: repliesData, refetch: refetchReplies } = useQuery({
     queryKey: ["take-replies", take.id],
     queryFn: async () => {
@@ -1308,48 +1320,13 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white lg:bg-black/40 flex flex-col">
-      <div className="max-w-md w-full mx-auto flex flex-col h-full lg:max-w-2xl lg:bg-white lg:shadow-2xl">
-        {/* header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
-          <button onClick={onClose} className="p-1 -ml-1 active:scale-90 transition-transform"><ChevronLeft size={24} className="text-gray-700" /></button>
-          <p className="text-[15px] font-bold text-gray-900">Conversation</p>
-        </div>
-
-        {/* scrollable content */}
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          {g && TagIcon && (
-            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold mb-2" style={{ background: g.bg, color: g.fg }}>
-              <TagIcon size={12} /> {g.label}
-            </span>
-          )}
-          <p className="text-[19px] font-extrabold text-gray-900 leading-snug">{take.title}</p>
-          {take.body && <p className="text-[15px] text-gray-600 leading-relaxed mt-2">{take.body}</p>}
-          {take.media_title && (
-            <div className="mt-3 flex items-center gap-2.5 bg-gray-50 border border-gray-200 rounded-xl p-2">
-              {take.media_image_url && <img src={take.media_image_url} alt="" className="w-9 h-12 object-cover rounded flex-shrink-0" />}
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-gray-800 truncate">{take.media_title}</p>
-                {take.media_creator && <p className="text-[11px] text-gray-400 truncate">{take.media_creator}</p>}
-                {take.rating > 0 && (
-                  <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600">
-                    <Star size={12} className="fill-yellow-400 text-yellow-400" /> {Number(take.rating).toFixed(1)}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-          <p className="text-[12px] text-gray-400 mt-2">{nameOf(take.users)} · {timeAgo(take.created_at)}</p>
-          <div className="flex items-center gap-4 text-[13px] text-gray-500 mt-3">
-            <span className="flex items-center gap-1"><Users size={14} /> {take.upvotes || 0} agree</span>
-            <span className="flex items-center gap-1"><MessageCircle size={14} /> {take.reply_count || 0} replies</span>
-          </div>
-
-          <div className="border-t border-gray-100 my-4" />
-
-          <p className="text-[13px] font-bold uppercase tracking-wider text-gray-500 mb-3">Replies</p>
+    <div className="border-t border-purple-100 pb-4 pt-3">
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Replies</p>
+        <button onClick={onClose} className="text-[12px] font-semibold text-purple-600">Collapse</button>
+      </div>
           {replies.length === 0 ? (
-            <p className="text-[14px] text-gray-400 py-4">No replies yet — be the first.</p>
+            <p className="text-[13px] text-gray-400 py-2">No replies yet — be the first.</p>
           ) : (
             <div>
               {replies.map((r: any, ri: number) => {
@@ -1383,10 +1360,8 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
               })}
             </div>
           )}
-        </div>
 
-        {/* reply composer */}
-        <div className="border-t border-gray-100 px-3 py-3 flex items-center gap-2">
+        <div className="mt-2 flex items-center gap-2">
           <input
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
@@ -1399,7 +1374,6 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
             {replying ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
           </button>
         </div>
-      </div>
     </div>
   );
 }
