@@ -83,7 +83,7 @@ serve(async (req) => {
 
   const [friendDnaRes, friendUsersRes, cmp1Res, cmp2Res] = await Promise.all([
     admin.from('dna_profiles').select('user_id,favorite_genres,label').in('user_id', friendIds),
-    admin.from('users').select('id,display_name,user_name').in('id', friendIds),
+    admin.from('users').select('id,display_name,user_name,first_name,last_name').in('id', friendIds),
     admin.from('dna_comparisons').select('user_id_2,match_score').eq('user_id_1', userId),
     admin.from('dna_comparisons').select('user_id_1,match_score').eq('user_id_2', userId),
   ]);

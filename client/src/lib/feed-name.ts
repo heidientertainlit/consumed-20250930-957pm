@@ -5,8 +5,11 @@
 export function formatFeedName(
   displayName?: string | null,
   username?: string | null,
+  firstName?: string | null,
+  lastName?: string | null,
 ): string {
-  const preferred = displayName?.trim();
+  const structuredName = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(" ");
+  const preferred = structuredName || displayName?.trim();
   if (preferred) {
     const parts = preferred.split(/\s+/).filter(Boolean);
     if (parts.length === 1) return parts[0];

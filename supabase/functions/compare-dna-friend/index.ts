@@ -207,7 +207,7 @@ serve(async (req) => {
       // Get friend's display name
       const { data: friendUser } = await supabaseClient
         .from('users')
-        .select('display_name, user_name')
+        .select('display_name, user_name, first_name, last_name')
         .eq('id', friend_id)
         .single();
 
@@ -383,7 +383,10 @@ Only include media types where you have good recommendations. It's fine to have 
 
       return new Response(JSON.stringify({
         ...comparisonData,
-        friend_name: friendUser?.display_name || friendUser?.user_name || 'Friend',
+        friend_name: [friendUser?.first_name, friendUser?.last_name].filter(Boolean).join(' ')
+          || friendUser?.display_name
+          || friendUser?.user_name
+          || 'Friend',
         friend_dna_label: friendProfileRes.data?.label,
         friend_dna_tagline: friendProfileRes.data?.tagline,
         your_dna_label: userProfileRes.data?.label,

@@ -29,6 +29,8 @@ interface Friend {
   id: string;
   user_name: string;
   display_name?: string;
+  first_name?: string;
+  last_name?: string;
   avatar?: string;
 }
 
@@ -76,7 +78,12 @@ function initials(name: string) {
 }
 
 function FriendAvatar({ friend, size = 40 }: { friend: Friend; size?: number }) {
-  const label = formatFeedName(friend.display_name, friend.user_name);
+  const label = formatFeedName(
+    friend.display_name,
+    friend.user_name,
+    friend.first_name,
+    friend.last_name,
+  );
   return (
     <div
       className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500"
@@ -160,7 +167,7 @@ export function CompareSheet({
 
         // Get friend users
         const usersRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/users?id=in.(${friendIds.join(",")})&select=id,user_name,display_name,avatar`,
+          `${SUPABASE_URL}/rest/v1/users?id=in.(${friendIds.join(",")})&select=id,user_name,display_name,first_name,last_name,avatar`,
           { headers }
         );
         const usersData: Friend[] = await usersRes.json();
@@ -219,7 +226,12 @@ export function CompareSheet({
     }
   }
 
-  const friendLabel = (f: Friend) => formatFeedName(f.display_name, f.user_name);
+  const friendLabel = (f: Friend) => formatFeedName(
+    f.display_name,
+    f.user_name,
+    f.first_name,
+    f.last_name,
+  );
 
   return createPortal(
     <div
@@ -437,7 +449,14 @@ export function CompareSheet({
                         post_type: "dna_compare",
                         content: JSON.stringify({
                           match_score: result.match_score,
-                          friend_name: result.friend_name || selected?.display_name || selected?.user_name || "a friend",
+                          friend_name: selected
+                            ? formatFeedName(
+                                selected.display_name,
+                                selected.user_name,
+                                selected.first_name,
+                                selected.last_name,
+                              )
+                            : result.friend_name || "a friend",
                           friend_id: selected?.id,
                           friend_dna_label: result.friend_dna_label || null,
                           your_dna_label: result.your_dna_label || null,
@@ -540,7 +559,12 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
             const genres: string[] = Array.isArray(fd.favorite_genres) ? fd.favorite_genres : [];
             const pct = cmpMap.get(fd.user_id)!;
             const info = friendUsers.find((u: any) => u.id === fd.user_id);
-            const displayName = formatFeedName(info?.display_name, info?.user_name);
+            const displayName = formatFeedName(
+              info?.display_name,
+              info?.user_name,
+              info?.first_name,
+              info?.last_name,
+            );
             const shared = genres.filter((g: string) => myGenreSet.has(g.toLowerCase()));
             return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id, sharedGenres: shared };
           })
@@ -917,6 +941,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
   const [posterOverlaps, setPosterOverlaps] = useState<OverlapUser[]>([]);
   const [postOthersExpanded, setPostOthersExpanded] = useState(false);
   const [postSharedTitles, setPostSharedTitles] = useState<string[]>([]);
+  const [resolvedFriendName, setResolvedFriendName] = useState<string | null>(null);
 
   let cmp: any = {};
   try { cmp = JSON.parse(item.content || '{}'); } catch {}
@@ -928,7 +953,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
     poster?.username || poster?.user_name,
   );
   const matchScore = cmp.match_score || 0;
-  const friendName = cmp.friend_name ? formatFeedName(cmp.friend_name) : 'a friend';
+  const friendName = resolvedFriendName || (cmp.friend_name ? formatFeedName(cmp.friend_name) : 'a friend');
   const sharedGenres: string[] = cmp.shared_genres || [];
 
   // Fetch poster's friend alignments for the right column
@@ -953,6 +978,20 @@ export function DnaComparePostCard({ item }: { item: any }) {
         const cmp2: any[] = data?.cmp2 ?? [];
         if (friendDnas.length === 0) return;
 
+        const friendId: string | null = cmp?.friend_id || null;
+        const friendInfo = friendId
+          ? friendUsers.find((candidate: any) => candidate.id === friendId)
+          : null;
+        const exactFriendName = friendInfo
+          ? formatFeedName(
+              friendInfo.display_name,
+              friendInfo.user_name,
+              friendInfo.first_name,
+              friendInfo.last_name,
+            )
+          : friendName;
+        if (friendInfo) setResolvedFriendName(exactFriendName);
+
         // Build map of friendId → best real match_score from dna_comparisons
         const cmpMap = new Map<string, number>();
         const addToCmpMap = (fid: string, score: number) => {
@@ -966,10 +1005,15 @@ export function DnaComparePostCard({ item }: { item: any }) {
           .filter((fd: any) => cmpMap.has(fd.user_id))
           .map((fd: any, i: number) => {
             const info = Array.isArray(friendUsers) ? friendUsers.find((u: any) => u.id === fd.user_id) : null;
-            const displayName = formatFeedName(info?.display_name, info?.user_name);
+            const displayName = formatFeedName(
+              info?.display_name,
+              info?.user_name,
+              info?.first_name,
+              info?.last_name,
+            );
             return { displayName, pct: cmpMap.get(fd.user_id)!, color: AVATAR_COLORS[i % AVATAR_COLORS.length], userId: fd.user_id };
           })
-          .filter((u: any) => u.displayName !== friendName)
+          .filter((u: any) => u.displayName !== exactFriendName)
           .sort((a: any, b: any) => b.pct - a.pct);
 
         const overlaps = scored.slice(0, 5).map((r: any) => ({
@@ -978,7 +1022,6 @@ export function DnaComparePostCard({ item }: { item: any }) {
         setPosterOverlaps(overlaps);
 
         // friend_id is stored directly in the post content JSON — no name matching needed
-        const friendId: string | null = cmp?.friend_id || null;
         if (friendId && posterId) {
           try {
             const [posterRatingsRes, friendRatingsRes] = await Promise.all([

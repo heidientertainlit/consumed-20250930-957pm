@@ -9,6 +9,8 @@ Feed-visible human names use first name plus last initial (for example, “Heidi
 
 Raw usernames remain unchanged for explicit `@username` labels, profile pages, profile navigation, report/moderation payloads, IDs, keys, and backend calls. If someone wants the username, they can open that person’s profile.
 
+Identity reads for feed surfaces must include `first_name` and `last_name` and prioritize them over `display_name`; some older user rows store a username-like value in `display_name`.
+
 **Why:** Mixed usernames and real-name formats made the feed feel inconsistent. The display change must remain presentation-only so identity links and backend behavior are not destabilized.
 
-**How to apply:** Use the shared feed-name formatter only for visible feed copy. Never format a value before using it as a route parameter, handle, lookup key, report target, or API/database value.
+**How to apply:** Select first/last names anywhere a feed card resolves users, then pass them to the shared feed-name formatter for visible copy. Never format a value before using it as a route parameter, handle, lookup key, report target, or API/database value.

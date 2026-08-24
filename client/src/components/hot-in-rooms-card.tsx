@@ -18,7 +18,12 @@ type RoomTake = {
   media_type: string | null;
   media_creator: string | null;
   media_image_url: string | null;
-  users: { display_name?: string | null; user_name?: string | null } | null;
+  users: {
+    display_name?: string | null;
+    user_name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+  } | null;
   pool: { id: string; name: string } | null;
 };
 
@@ -49,7 +54,7 @@ export function HotInRoomsCard({ slot = 0 }: { slot?: number }) {
 
       const { data, error } = await supabase
         .from("room_takes")
-        .select("id, room_id, title, body, upvotes, reply_count, created_at, rating, media_title, media_type, media_creator, media_image_url, users:user_id(display_name, user_name), pool:pools!room_id!inner(id, name)")
+        .select("id, room_id, title, body, upvotes, reply_count, created_at, rating, media_title, media_type, media_creator, media_image_url, users:user_id(display_name, user_name, first_name, last_name), pool:pools!room_id!inner(id, name)")
         .in("room_id", roomIds)
         .gte("created_at", since)
         .order("upvotes", { ascending: false })
@@ -94,7 +99,12 @@ export function HotInRoomsCard({ slot = 0 }: { slot?: number }) {
   if (!take || !take.pool) return null;
 
   const author = Array.isArray(take.users) ? take.users[0] : take.users;
-  const authorName = formatFeedName(author?.display_name, author?.user_name);
+  const authorName = formatFeedName(
+    author?.display_name,
+    author?.user_name,
+    author?.first_name,
+    author?.last_name,
+  );
   const quote = (take.body?.trim() || take.title?.trim() || "").slice(0, 175);
   const hasMedia = !!take.media_title;
   const vote = myVote?.vote || 0;

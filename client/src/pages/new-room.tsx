@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { APP_BASE } from "@/lib/share";
+import { formatFeedName } from "@/lib/feed-name";
 import { formatDistanceToNow } from "date-fns";
 
 const MEDIA_TYPE_META: Record<string, { label: string; Icon: any }> = {
@@ -68,8 +69,13 @@ const dbToDisplay = dbTagToDisplay;
 
 const AVATAR_COLORS = ["#f59e0b", "#a855f7", "#22d3ee", "#10b981", "#ef4d65", "#3b6df6"];
 const initialOf = (u: any) =>
-  (u?.display_name || u?.user_name || "?").trim().charAt(0).toUpperCase();
-const nameOf = (u: any) => u?.display_name || u?.user_name || "Someone";
+  nameOf(u).trim().charAt(0).toUpperCase();
+const nameOf = (u: any) => formatFeedName(
+  u?.display_name,
+  u?.user_name,
+  u?.first_name,
+  u?.last_name,
+);
 const timeAgo = (s: string) => {
   try { return formatDistanceToNow(new Date(s), { addSuffix: true }); } catch { return ""; }
 };
@@ -198,7 +204,7 @@ export default function NewRoom() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("room_takes")
-        .select("*, users:user_id(id, display_name, user_name)")
+        .select("*, users:user_id(id, display_name, user_name, first_name, last_name)")
         .eq("room_id", roomId)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -240,7 +246,7 @@ export default function NewRoom() {
     void (async () => {
       const { data, error } = await supabase
         .from("room_takes")
-        .select("*, users:user_id(id, display_name, user_name)")
+        .select("*, users:user_id(id, display_name, user_name, first_name, last_name)")
         .eq("id", takeId)
         .eq("room_id", roomId)
         .maybeSingle();
@@ -505,7 +511,7 @@ export default function NewRoom() {
         rating,
         ...mediaFields,
       })
-      .select("*, users:user_id(id, display_name, user_name)")
+      .select("*, users:user_id(id, display_name, user_name, first_name, last_name)")
       .single();
     if (error) {
       toast({ title: "Could not post", description: error.message, variant: "destructive" });
@@ -1115,7 +1121,7 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
     queryFn: async () => {
       const { data, error } = await supabase
         .from("room_take_replies")
-        .select("*, users:user_id(id, display_name, user_name)")
+        .select("*, users:user_id(id, display_name, user_name, first_name, last_name)")
         .eq("take_id", take.id)
         .order("upvotes", { ascending: false });
       if (error) throw error;
@@ -1263,7 +1269,7 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
     queryFn: async () => {
       const { data, error } = await supabase
         .from("room_take_replies")
-        .select("*, users:user_id(id, display_name, user_name)")
+        .select("*, users:user_id(id, display_name, user_name, first_name, last_name)")
         .eq("take_id", take.id)
         .order("upvotes", { ascending: false });
       if (error) throw error;
