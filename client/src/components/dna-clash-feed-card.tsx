@@ -137,12 +137,17 @@ export default function DnaClashFeedCard({
       if (voterIds.length > 0) {
         const { data: usersData } = await supabase
           .from('users')
-          .select('id, display_name, user_name')
+          .select('id, display_name, user_name, first_name, last_name')
           .in('id', voterIds);
         const usersMap = new Map((usersData || []).map((u: any) => [u.id, u]));
         setVoters(data.map((row: any) => {
           const u = usersMap.get(row.user_id);
-          const name = formatFeedName(u?.display_name, u?.user_name);
+          const name = formatFeedName(
+            u?.display_name,
+            u?.user_name,
+            u?.first_name,
+            u?.last_name,
+          );
           return { userId: row.user_id, prediction: row.prediction, displayName: name, initials: mkInitials(name) };
         }));
       }
@@ -337,7 +342,7 @@ export default function DnaClashFeedCard({
                 style={{ background: '#a855f7' }}>
                 {user1.avatar
                   ? <img src={user1.avatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  : user1.initials || name1[0]}
+                  : mkInitials(name1)}
               </div>
               {/* Verified dot */}
               <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-purple-500 border-2 border-white flex items-center justify-center">
@@ -368,7 +373,7 @@ export default function DnaClashFeedCard({
                 style={{ background: '#ec4899' }}>
                 {user2.avatar
                   ? <img src={user2.avatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  : user2.initials || name2[0]}
+                  : mkInitials(name2)}
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-pink-500 border-2 border-white flex items-center justify-center">
                 <span className="text-white text-[8px] font-black">✓</span>

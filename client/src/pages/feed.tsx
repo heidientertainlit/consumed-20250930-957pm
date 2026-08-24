@@ -1572,7 +1572,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         const filtered = ratings.filter((r: any) => r.user_id !== primaryUserId && r.user_id !== currentId);
         if (filtered.length === 0) return;
         const ids = filtered.map((r: any) => r.user_id);
-        const { data: users } = await supabase.from('users').select('id, user_name, display_name').in('id', ids);
+        const { data: users } = await supabase
+          .from('users')
+          .select('id, user_name, display_name, first_name, last_name')
+          .in('id', ids);
         const userMap: Record<string, any> = {};
         (users || []).forEach((u: any) => { userMap[u.id] = u; });
         // Also fetch review content from social_posts for these users + same media
@@ -1589,7 +1592,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         setRelatedRatings(filtered.map((r: any) => ({
           userId: r.user_id,
           userName: userMap[r.user_id]?.user_name || '',
-          displayName: userMap[r.user_id]?.display_name || userMap[r.user_id]?.user_name || 'User',
+          displayName: formatFeedName(
+            userMap[r.user_id]?.display_name,
+            userMap[r.user_id]?.user_name,
+            userMap[r.user_id]?.first_name,
+            userMap[r.user_id]?.last_name,
+          ),
           rating: Number(r.rating),
           content: contentMap[r.user_id],
         })));
@@ -7744,7 +7752,48 @@ export default function Feed() {
         .is('partner_tag', null)
         .is('play_context', null)
         .order('created_at', { ascending: false });
-      return data || [];
+      const pools = data || [];
+      const participantIds = [...new Set(
+        pools.flatMap((pool: any) =>
+          (Array.isArray(pool.options) ? pool.options : [])
+            .map((option: any) => option.userId || option.user_id)
+            .filter(Boolean),
+        ),
+      )];
+      if (participantIds.length === 0) return pools;
+
+      const { data: participants } = await supabase
+        .from('users')
+        .select('id, user_name, display_name, first_name, last_name, avatar')
+        .in('id', participantIds);
+      const participantMap = new Map((participants || []).map((participant: any) => [participant.id, participant]));
+
+      return pools.map((pool: any) => ({
+        ...pool,
+        options: (Array.isArray(pool.options) ? pool.options : []).map((option: any) => {
+          const participant = participantMap.get(option.userId || option.user_id) as any;
+          if (!participant) return option;
+          const displayName = formatFeedName(
+            participant.display_name,
+            participant.user_name,
+            participant.first_name,
+            participant.last_name,
+          );
+          return {
+            ...option,
+            displayName,
+            username: participant.user_name || option.username || option.label,
+            initials: displayName
+              .split(/\s+/)
+              .map((part: string) => part[0])
+              .join('')
+              .replace(/\./g, '')
+              .slice(0, 2)
+              .toUpperCase(),
+            avatar: participant.avatar || option.avatar || null,
+          };
+        }),
+      }));
     },
     enabled: !!session?.access_token,
     refetchOnWindowFocus: false,
