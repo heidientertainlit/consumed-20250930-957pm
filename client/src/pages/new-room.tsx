@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, useSearch } from "wouter";
 import { StarRater } from "@/components/star-rater";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -92,6 +92,7 @@ export default function NewRoom() {
   const params = useParams<{ id: string }>();
   const roomId = params.id;
   const [, setLocation] = useLocation();
+  const search = useSearch();
   const { session } = useAuth();
   const currentUserId = session?.user?.id ?? null;
   const token = session?.access_token ?? "";
@@ -107,6 +108,7 @@ export default function NewRoom() {
   const [copied, setCopied] = useState(false);
   const [optimisticFollowing, setOptimisticFollowing] = useState<boolean | null>(null);
   const [activeTake, setActiveTake] = useState<any | null>(null);
+  const openedDeepLinkedTake = useRef<string | null>(null);
   const [descExpanded, setDescExpanded] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
 
@@ -205,6 +207,18 @@ export default function NewRoom() {
     enabled: !!roomId && !!token,
   });
   const takes: any[] = takesData || [];
+  const takesKey = takes.map((take) => take.id).join(",");
+
+  // A Hot in Rooms moment can target a precise thread, not merely the room.
+  useEffect(() => {
+    const takeId = new URLSearchParams(search).get("take");
+    if (!takeId || openedDeepLinkedTake.current === takeId) return;
+    const target = takes.find((take) => take.id === takeId);
+    if (target) {
+      openedDeepLinkedTake.current = takeId;
+      setActiveTake(target);
+    }
+  }, [search, takesKey]);
 
   // ── Follow state ─────────────────────────────────────────────────────
   const { data: followData, refetch: refetchFollow } = useQuery({
