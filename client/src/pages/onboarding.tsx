@@ -939,7 +939,7 @@ export default function OnboardingPage() {
 
   const ONBOARDING_PROGRESS: Array<{ lead: string; detail?: string }> = [
     { lead: "Step 1 of 5" },
-    { lead: "Step 2 of 5 — Your taste is taking shape" },
+    { lead: "Step 2 of 5" },
     {
       lead: "Step 3 of 5 — Pick at least 3 favorites",
     },
@@ -1503,7 +1503,7 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
-          {dnaHeader(4, "Step 4 of 5 — Your taste is becoming clearer", () => {
+          {dnaHeader(4, "Step 4 of 5", () => {
             if (resumeDNA && hasExistingProfile) leaveForNow();
             else goToStep("loved");
           })}
@@ -1512,10 +1512,7 @@ export default function OnboardingPage() {
             <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
               What do you love?
             </h2>
-            <p className="text-[14px] text-gray-400 mt-1 mb-4">
-              Anything goes. Tell us what keeps you consumed.
-            </p>
-            <div className="relative">
+            <div className="relative mt-4">
               <textarea
                 value={loveNote}
                 onChange={(event) => setLoveNote(event.target.value)}
