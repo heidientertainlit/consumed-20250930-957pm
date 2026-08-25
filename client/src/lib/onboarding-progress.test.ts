@@ -56,8 +56,6 @@ test("first-time setup cannot skip title selection because of a retake URL or mi
   const firstTimeState = {
     hasExistingProfile: false,
     resumeDNA: true,
-    resumeRequested: true,
-    isNewAccount: true,
     hasFormats: true,
     hasGenres: true,
     hasLoveResponse: false,
@@ -78,14 +76,24 @@ test("only an existing DNA profile gets the retake shortcut", () => {
   assert.equal(resolveOnboardingResumeStep({
     hasExistingProfile: true,
     resumeDNA: true,
-    resumeRequested: true,
-    isNewAccount: false,
     draftStep: null,
     hasFormats: true,
     hasGenres: true,
     hasLoveResponse: true,
     hasDriverResponse: true,
   }), "love");
+});
+
+test("an incomplete account with no canonical progress starts at the beginning regardless of age", () => {
+  assert.equal(resolveOnboardingResumeStep({
+    hasExistingProfile: false,
+    resumeDNA: false,
+    draftStep: null,
+    hasFormats: false,
+    hasGenres: false,
+    hasLoveResponse: false,
+    hasDriverResponse: false,
+  }), "debate");
 });
 
 test("completion clears progress and prompt dismissal", () => {

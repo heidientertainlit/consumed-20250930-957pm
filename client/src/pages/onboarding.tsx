@@ -416,7 +416,6 @@ export default function OnboardingPage() {
   const { user, session, loading: authLoading } = useAuth();
   const { markDNA } = useFirstSessionHooks();
   const resumeDNA = useRef(new URLSearchParams(window.location.search).get("resume") === "dna").current;
-  const resumeRequested = useRef(new URLSearchParams(window.location.search).has("resume")).current;
   const [step, setStep] = useState<Step>("debate");
   const [vote, setVote] = useState<string | null | undefined>(undefined);
   const [rooms, setRooms] = useState<string[]>([]);
@@ -597,14 +596,10 @@ export default function OnboardingPage() {
       const hasLoveResponse = Boolean(loveQuestion && answersByQuestion.has(loveQuestion.id));
       const hasDriverResponse = Boolean(driversQuestion && answersByQuestion.has(driversQuestion.id));
       const draft = loadOnboardingProgress(user.id);
-      const createdAt = new Date(user.created_at).getTime();
-      const isNewAccount = Date.now() - createdAt < 10 * 60 * 1000;
 
       const nextStep = resolveOnboardingResumeStep({
         hasExistingProfile: Boolean(profileResult.data),
         resumeDNA,
-        resumeRequested,
-        isNewAccount,
         draftStep: draft?.step,
         hasFormats,
         hasGenres,
@@ -626,7 +621,7 @@ export default function OnboardingPage() {
         if (!cancelled) setResumePrefillLoading(false);
       });
     return () => { cancelled = true; };
-  }, [progressReloadKey, resumeDNA, resumeRequested, setLocation, surveyQuestions, user?.created_at, user?.id]);
+  }, [progressReloadKey, resumeDNA, setLocation, surveyQuestions, user?.id]);
 
   useEffect(() => {
     if (!isGenerating) return;

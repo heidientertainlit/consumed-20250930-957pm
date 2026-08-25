@@ -1,6 +1,7 @@
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import {
   isOnboardingComplete,
   markOnboardingComplete,
@@ -29,8 +30,6 @@ export type { OnboardingResumeStep, OnboardingProgress };
 interface RouteGuardProps {
   children: React.ReactNode;
 }
-
-const NEW_USER_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 
 export function ProtectedRoute({ children }: RouteGuardProps) {
   const { user, loading } = useAuth();
@@ -75,20 +74,38 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!loading && user) {
-      const onboardingDone = isOnboardingComplete(user.id);
-      if (onboardingDone) {
-        setLocation('/activity');
-      } else {
-        const createdAt = new Date(user.created_at).getTime();
-        const isNewUser = Date.now() - createdAt < NEW_USER_WINDOW_MS;
-        if (isNewUser && !isOnboardingPromptDismissed(user.id)) {
-          setLocation('/onboarding');
-        } else {
-          setLocation('/activity');
-        }
+    if (loading || !user) return;
+    let cancelled = false;
+
+    const redirectAuthenticatedUser = async () => {
+      const { data: dnaProfile, error } = await supabase
+        .from("dna_profiles")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+
+      if (dnaProfile) markOnboardingComplete(user.id);
+      const shouldOnboard =
+        (error || !dnaProfile) && !isOnboardingPromptDismissed(user.id);
+
+      if (shouldOnboard) {
+        sessionStorage.removeItem("returnUrl");
+        setLocation("/onboarding");
+        return;
       }
-    }
+
+      const returnUrl = sessionStorage.getItem("returnUrl");
+      if (returnUrl) {
+        sessionStorage.removeItem("returnUrl");
+        setLocation(returnUrl);
+      } else {
+        setLocation("/activity");
+      }
+    };
+
+    void redirectAuthenticatedUser();
+    return () => { cancelled = true; };
   }, [user, loading, setLocation]);
 
   if (loading || user) {

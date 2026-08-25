@@ -13,8 +13,6 @@ export interface OnboardingProgress {
 export function resolveOnboardingResumeStep({
   hasExistingProfile,
   resumeDNA,
-  resumeRequested,
-  isNewAccount,
   draftStep,
   hasFormats,
   hasGenres,
@@ -23,8 +21,6 @@ export function resolveOnboardingResumeStep({
 }: {
   hasExistingProfile: boolean;
   resumeDNA: boolean;
-  resumeRequested: boolean;
-  isNewAccount: boolean;
   draftStep?: OnboardingResumeStep | null;
   hasFormats: boolean;
   hasGenres: boolean;
@@ -35,9 +31,10 @@ export function resolveOnboardingResumeStep({
   if (isExistingDNARetake) return "love";
 
   if (!hasFormats || !hasGenres) {
-    return draftStep === "debate" || (!draftStep && isNewAccount && !resumeRequested)
-      ? "debate"
-      : "interests";
+    // Account age is not progress. With no canonical answers and no saved
+    // draft, every incomplete user starts at the beginning.
+    if (!draftStep || draftStep === "debate") return "debate";
+    return "interests";
   }
 
   // First-time setup must include title selection. Only a saved later step

@@ -88,11 +88,14 @@ export function FeedIdentityHero() {
 
 
   const secondaries = (dna?.secondary_archetypes || []).slice(0, 2).map(toArchetypeName);
+  const isFirstTimeIdentity = !dna?.label && tracked === 0;
 
   // Split the archetype label into a small leading "The" and the main words,
   // colouring the final word with the purple gradient (e.g. The / Emotional / Binger).
   const headline = dna?.label
-    || (displayName ? `Welcome back ${displayName}` : "Welcome back");
+    || (isFirstTimeIdentity
+      ? (displayName ? `Welcome to Consumed, ${displayName}` : "Welcome to Consumed")
+      : (displayName ? `Welcome back ${displayName}` : "Welcome back"));
   const headlineWords = headline.trim().split(/\s+/);
   const hasPrefix = headlineWords[0]?.toLowerCase() === "the" && headlineWords.length > 2;
   const prefix = hasPrefix ? headlineWords[0] : null;
@@ -205,7 +208,7 @@ export function FeedIdentityHero() {
             >
               <Dna size={16} className="text-purple-300 shrink-0" />
               <span className="flex-1 text-[12.5px] leading-snug" style={{ color: "rgba(255,255,255,0.85)" }}>
-                <span className="font-bold">Finish your Entertainment DNA</span>
+                <span className="font-bold">{isFirstTimeIdentity ? "Discover your Entertainment DNA" : "Finish your Entertainment DNA"}</span>
                 <span style={{ color: "rgba(255,255,255,0.55)" }}> to unlock your full Entertainment DNA</span>
               </span>
               <span className="text-purple-300 text-xs font-bold shrink-0">Start →</span>

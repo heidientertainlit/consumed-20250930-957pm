@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock, User, AtSign } from "lucide-react";
 import { SiApple, SiGoogle } from "react-icons/si";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { isOnboardingComplete, resetOnboardingState } from "@/components/route-guards";
+import { resetOnboardingState } from "@/components/route-guards";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { getLastLoginMethod, lastLoginMethodLabels } from "@/lib/last-login-method";
 
@@ -24,35 +24,12 @@ export default function LoginPage() {
   const [resetEmail, setResetEmail] = useState("");
   const [resetting, setResetting] = useState(false);
   const [resetSent, setResetSent] = useState(false);
-  const [justSignedUp, setJustSignedUp] = useState(false);
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const [lastLoginMethod] = useState(getLastLoginMethod);
   const { user, session, loading, signIn, signUp, signInWithOAuth, resetPassword } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (!loading && user) {
-      // Detect brand-new accounts by creation time, not just local state —
-      // the auth event can fire before setJustSignedUp lands, which used to
-      // race past onboarding straight to the saved returnUrl.
-      const createdAt = new Date(user.created_at).getTime();
-      const isNewUser = Date.now() - createdAt < 10 * 60 * 1000;
-      if (justSignedUp || (isNewUser && !isOnboardingComplete(user.id))) {
-        sessionStorage.removeItem('returnUrl');
-        setLocation('/onboarding');
-        return;
-      }
-      const returnUrl = sessionStorage.getItem('returnUrl');
-      if (returnUrl) {
-        sessionStorage.removeItem('returnUrl');
-        setLocation(returnUrl);
-      } else {
-        setLocation('/activity');
-      }
-    }
-  }, [user, loading, justSignedUp, setLocation]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,7 +150,6 @@ export default function LoginPage() {
       // Clear any stale user-scoped onboarding state so new users always start cleanly.
       resetOnboardingState(data?.user?.id);
       localStorage.removeItem('consumed_onboarding_completed');
-      setJustSignedUp(true);
       setSubmitting(false);
     }
   };
