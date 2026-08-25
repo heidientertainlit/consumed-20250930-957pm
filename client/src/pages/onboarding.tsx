@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowRight, Check, ChevronRight, CircleUser, Dna, Eye, Feather, Gamepad2, Heart, HeartHandshake, HelpCircle, Home, Leaf, Loader2, Mic, Music, Palette, Plane, Rocket, Search, Sparkles, Trophy, Tv, Users, Video, Wand2, Youtube, Zap, Clapperboard, Smile, Skull, Crown, Drama, BookOpen } from "lucide-react";
+import { ArrowRight, Check, ChevronRight, CircleUser, Dna, Eye, Feather, Gamepad2, Heart, HeartHandshake, HelpCircle, Home, Leaf, Loader2, Mic, Music, Palette, Plane, Rocket, Search, Share2, Sparkles, Trophy, Tv, Users, Video, Wand2, Youtube, Zap, Clapperboard, Smile, Skull, Crown, Drama, BookOpen } from "lucide-react";
 import {
   dismissOnboardingPrompt,
   loadOnboardingProgress,
@@ -10,6 +10,7 @@ import {
   type OnboardingResumeStep,
 } from "@/components/route-guards";
 import { useFirstSessionHooks } from "@/components/first-session-hooks";
+import { DnaShareExperience } from "@/components/dna-share-experience";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 
@@ -445,6 +446,7 @@ export default function OnboardingPage() {
   } | null>(null);
   const [showTenPrompt, setShowTenPrompt] = useState(false);
   const [tenPromptShown, setTenPromptShown] = useState(false);
+  const [showDnaShare, setShowDnaShare] = useState(false);
   const pendingSaves = useRef<Promise<void> | null>(null);
 
   useLayoutEffect(() => {
@@ -1679,6 +1681,13 @@ export default function OnboardingPage() {
           <p className="mt-5 text-left text-sm leading-relaxed text-gray-700">{generatedProfile.profile_text}</p>
         )}
         <button
+          onClick={() => setShowDnaShare(true)}
+          className="w-full mt-6 py-3 rounded-full border border-purple-200 bg-purple-50 font-semibold text-[14px] text-purple-700 transition-all active:scale-95 flex items-center justify-center gap-2"
+        >
+          <Share2 size={16} />
+          Share your DNA
+        </button>
+        <button
           onClick={() => completeAndNavigate("/activity")}
           className="w-full mt-7 py-3.5 rounded-full font-bold text-[15px] text-white transition-all active:scale-95"
           style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
@@ -1692,6 +1701,9 @@ export default function OnboardingPage() {
           See my full DNA profile
         </button>
       </div>
+      {showDnaShare && user?.id && (
+        <DnaShareExperience userId={user.id} onClose={() => setShowDnaShare(false)} />
+      )}
     </div>
   );
 }
