@@ -928,7 +928,7 @@ export default function OnboardingPage() {
           <p className="max-w-[310px] mt-3 text-[13px] leading-relaxed text-white/70">
             What you consume tells a story about you.
             <br />
-            What does yours say about you? Let&apos;s find out.
+            Ready to see yours?
           </p>
         </div>
       ) : (
