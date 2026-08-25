@@ -941,7 +941,7 @@ export default function OnboardingPage() {
     { lead: "Step 1 of 5" },
     { lead: "Step 2 of 5 — Your taste is taking shape" },
     {
-      lead: "Step 3 of 5 — Every pick shapes your Entertainment DNA.",
+      lead: "Step 3 of 5 — Pick at least 3 favorites",
     },
   ];
 
@@ -1271,9 +1271,6 @@ export default function OnboardingPage() {
           <OnboardingHero currentStep={3} onBack={() => goToStep("interests")} />
 
           <div className="flex-1 flex flex-col px-5 pt-3 pb-8 bg-white">
-            <p className="mx-auto mt-1 mb-3 max-w-[320px] text-center text-[13px] leading-relaxed text-gray-400">
-              Choose at least 3. The more you pick, the better we&apos;ll understand your taste.
-            </p>
             <div
               className={`mx-auto mt-1 flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all ${
                 loved.length >= 3
