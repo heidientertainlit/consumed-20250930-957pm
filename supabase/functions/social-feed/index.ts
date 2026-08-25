@@ -628,7 +628,7 @@ serve(async (req) => {
           usersError = regularResult.error;
           console.log('Regular users query result:', { data: regularResult.data?.length, error: regularResult.error });
         }
-        
+
         // If users table didn't return enough results, try profiles table
         const missingUserIds = userIds.filter(id => !users.find(u => u.id === id));
         if (missingUserIds.length > 0) {
