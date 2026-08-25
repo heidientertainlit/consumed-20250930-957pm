@@ -27,3 +27,4 @@
 - [Supabase OAuth callbacks](supabase-oauth-callbacks.md) — OAuth returns through /login; native universal-link sessions must be restored on both warm and cold app launches.
 - [Apple OAuth credential rotation](apple-oauth-credential-rotation.md) — Supabase uses a signed Apple client-secret JWT that expires after 180 days; rotate it before expiry.
 - [Feed identity labels](feed-identity-labels.md) — feed-visible names use first name + last initial; usernames remain raw only as handles, routes, profile identity, and backend identifiers.
+- [Resumable onboarding state](resumable-onboarding-state.md) — DNA profile is completion; canonical answers/activity reconcile resume, while local storage only caches step and prompt dismissal.

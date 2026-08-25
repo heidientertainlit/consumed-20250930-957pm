@@ -1,7 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { ArrowRight, Check, ChevronRight, CircleUser, Dna, Eye, Feather, Gamepad2, Heart, HeartHandshake, HelpCircle, Home, Leaf, Loader2, Mic, Music, Palette, Plane, Rocket, Search, Sparkles, Trophy, Tv, Users, Video, Wand2, Youtube, Zap, Clapperboard, Smile, Skull, Crown, Drama, BookOpen } from "lucide-react";
-import { markOnboardingComplete } from "@/components/route-guards";
+import {
+  dismissOnboardingPrompt,
+  loadOnboardingProgress,
+  markOnboardingComplete,
+  saveOnboardingProgress,
+  type OnboardingResumeStep,
+} from "@/components/route-guards";
 import { useFirstSessionHooks } from "@/components/first-session-hooks";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
@@ -324,7 +330,8 @@ export default function OnboardingPage() {
   const { user, session, loading: authLoading } = useAuth();
   const { markDNA } = useFirstSessionHooks();
   const resumeDNA = useRef(new URLSearchParams(window.location.search).get("resume") === "dna").current;
-  const [step, setStep] = useState<Step>(() => (resumeDNA ? "love" : "debate"));
+  const resumeRequested = useRef(new URLSearchParams(window.location.search).has("resume")).current;
+  const [step, setStep] = useState<Step>("debate");
   const [vote, setVote] = useState<string | null | undefined>(undefined);
   const [rooms, setRooms] = useState<string[]>([]);
   const [mediaTypes, setMediaTypes] = useState<string[]>([]);
@@ -336,8 +343,12 @@ export default function OnboardingPage() {
   const [questionsLoading, setQuestionsLoading] = useState(true);
   const [questionLoadError, setQuestionLoadError] = useState<string | null>(null);
   const [questionReloadKey, setQuestionReloadKey] = useState(0);
-  const [resumePrefillLoading, setResumePrefillLoading] = useState(resumeDNA);
+  const [resumePrefillLoading, setResumePrefillLoading] = useState(true);
+  const [progressLoadError, setProgressLoadError] = useState<string | null>(null);
+  const [progressReloadKey, setProgressReloadKey] = useState(0);
+  const [hasExistingProfile, setHasExistingProfile] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(74);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -355,8 +366,7 @@ export default function OnboardingPage() {
     window.scrollTo(0, 0);
   }, [step]);
 
-  const finish = async (route: string) => {
-    markOnboardingComplete(user?.id);
+  const waitForPendingSaves = async () => {
     // Ensure background onboarding writes (ratings, list adds) land before the
     // next page fetches them — e.g. the DNA completion prefill is one-shot.
     if (pendingSaves.current) {
@@ -365,7 +375,28 @@ export default function OnboardingPage() {
         new Promise((r) => setTimeout(r, 6000)),
       ]).catch(() => {});
     }
+  };
+
+  const completeAndNavigate = async (route: string) => {
+    markOnboardingComplete(user?.id);
+    await waitForPendingSaves();
     setLocation(route);
+  };
+
+  const leaveForNow = async (route = "/activity") => {
+    if (!progressLoadError && !questionLoadError) {
+      const resumableStep: OnboardingResumeStep =
+        step === "generating" || step === "reveal" ? "drivers" : step;
+      saveOnboardingProgress(user?.id, resumableStep, { preserveCompletion: hasExistingProfile });
+    }
+    dismissOnboardingPrompt(user?.id);
+    await waitForPendingSaves();
+    setLocation(route);
+  };
+
+  const goToStep = (nextStep: OnboardingResumeStep) => {
+    saveOnboardingProgress(user?.id, nextStep, { preserveCompletion: hasExistingProfile });
+    setStep(nextStep);
   };
 
   useEffect(() => {
@@ -381,14 +412,21 @@ export default function OnboardingPage() {
         .in("display_order", [2, 3, 4, 5])
         .order("display_order", { ascending: true });
       if (!cancelled) {
-        if (error) {
+        const loadedQuestions = (data || []) as SurveyQuestion[];
+        const hasRequiredQuestions = [2, 3, 4, 5].every((order) =>
+          loadedQuestions.some((question) => question.display_order === order),
+        );
+        if (error || !hasRequiredQuestions) {
           console.error("[onboarding DNA questions]", error);
-          setQuestionLoadError("We couldn't load your DNA questions. Please try again.");
+          setQuestionLoadError(
+            error
+              ? "We couldn't load your DNA questions. Please try again."
+              : "Your DNA questions aren't available right now. Please try again.",
+          );
           setSurveyQuestions([]);
           setResumePrefillLoading(false);
         } else {
-          if (resumeDNA) setResumePrefillLoading(true);
-          setSurveyQuestions((data || []) as SurveyQuestion[]);
+          setSurveyQuestions(loadedQuestions);
         }
         setQuestionsLoading(false);
       }
@@ -396,35 +434,55 @@ export default function OnboardingPage() {
 
     loadQuestions();
     return () => { cancelled = true; };
-  }, [questionReloadKey, resumeDNA, session?.access_token]);
+  }, [questionReloadKey, session?.access_token]);
 
   useEffect(() => {
-    if (!resumeDNA || !user?.id || surveyQuestions.length === 0) return;
+    if (!user?.id || surveyQuestions.length === 0) return;
     let cancelled = false;
 
     const prefillCompletion = async () => {
-      const [responsesResult, ratingsResult, followsResult] = await Promise.all([
+      setProgressLoadError(null);
+      const [responsesResult, ratingsResult, trackedResult, followsResult, profileResult] = await Promise.all([
         supabase.from("edna_responses").select("question_id, answer_text").eq("user_id", user.id),
         supabase.from("media_ratings").select("media_title, media_type").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
+        supabase.from("list_items").select("title, media_type").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
         supabase.from("room_follows").select("room_id").eq("user_id", user.id),
+        supabase.from("dna_profiles").select("user_id").eq("user_id", user.id).maybeSingle(),
       ]);
       if (cancelled) return;
 
+      if (profileResult.error) throw profileResult.error;
+      if (profileResult.data && !resumeDNA) {
+        markOnboardingComplete(user.id);
+        setLocation("/profile");
+        return;
+      }
+      setHasExistingProfile(Boolean(profileResult.data));
+
+      if (responsesResult.error) throw responsesResult.error;
       if (ratingsResult.error) console.error("[onboarding DNA titles]", ratingsResult.error);
+      if (trackedResult.error) console.error("[onboarding tracked titles]", trackedResult.error);
+      if (followsResult.error) console.error("[onboarding room follows]", followsResult.error);
       const ratings = (ratingsResult.data || []) as { media_title: string; media_type: string }[];
-      const ratedTitles = Array.from(new Set(ratings.map((row) => row.media_title).filter(Boolean))).slice(0, 12);
+      const tracked = (trackedResult.data || []) as { title: string; media_type: string }[];
+      const activityTitles = Array.from(new Set([
+        ...ratings.map((row) => row.media_title),
+        ...tracked.map((row) => row.title),
+      ].filter(Boolean))).slice(0, 12);
       const ratedFormats = Array.from(new Set(
-        ratings
+        [...ratings, ...tracked.map((row) => ({ media_title: row.title, media_type: row.media_type }))]
           .map((row) => FORMAT_FROM_MEDIA_TYPE[(row.media_type || "").toLowerCase()])
           .filter((format): format is string => Boolean(format)),
       ));
-      setExistingTitles(ratedTitles);
+      setExistingTitles(activityTitles);
+      setLoved(activityTitles.filter((title) => allLovedItems.some((item) => item.title === title)));
 
       const answersByQuestion = new Map(
         (responsesResult.data || []).map((row: { question_id: string; answer_text: string }) => [row.question_id, row.answer_text || ""]),
       );
       const questionFor = (order: number) => surveyQuestions.find((question) => question.display_order === order);
       const typesQuestion = questionFor(2);
+      const genresQuestion = questionFor(3);
       const loveQuestion = questionFor(4);
       const driversQuestion = questionFor(5);
 
@@ -446,18 +504,47 @@ export default function OnboardingPage() {
         .map((row: { room_id: string }) => row.room_id)
         .filter((roomId) => roomId in ROOM_GENRES);
       setRooms(followedRooms);
-      if (selectedFormats.length === 0 || !followedRooms.some((roomId) => Boolean(ROOM_GENRES[roomId]))) {
-        setStep("interests");
+      const hasFormats = selectedFormats.length > 0;
+      const storedGenres = genresQuestion ? answersByQuestion.get(genresQuestion.id)?.trim() : "";
+      const hasGenres = Boolean(storedGenres) || followedRooms.some((roomId) => Boolean(ROOM_GENRES[roomId]));
+      const hasLoveResponse = Boolean(loveQuestion && answersByQuestion.has(loveQuestion.id));
+      const hasDriverResponse = Boolean(driversQuestion && answersByQuestion.has(driversQuestion.id));
+      const draft = loadOnboardingProgress(user.id);
+      const createdAt = new Date(user.created_at).getTime();
+      const isNewAccount = Date.now() - createdAt < 10 * 60 * 1000;
+
+      let nextStep: OnboardingResumeStep;
+      if (profileResult.data && resumeDNA) {
+        nextStep = "love";
+      } else if (!hasFormats || !hasGenres) {
+        nextStep = !resumeDNA && (draft?.step === "debate" || (!draft && isNewAccount && !resumeRequested))
+          ? "debate"
+          : "interests";
+      } else if (draft?.step === "loved" && !resumeDNA) {
+        nextStep = "loved";
+      } else if (!hasLoveResponse) {
+        nextStep = "love";
+      } else if (!hasDriverResponse) {
+        nextStep = "drivers";
+      } else {
+        nextStep = "drivers";
       }
+      saveOnboardingProgress(user.id, nextStep, { preserveCompletion: Boolean(profileResult.data) });
+      setStep(nextStep);
     };
 
     prefillCompletion()
-      .catch((error) => console.error("[onboarding DNA prefill]", error))
+      .catch((error) => {
+        console.error("[onboarding DNA prefill]", error);
+        if (!cancelled) {
+          setProgressLoadError("We couldn't load your saved setup progress. Nothing has been changed.");
+        }
+      })
       .finally(() => {
         if (!cancelled) setResumePrefillLoading(false);
       });
     return () => { cancelled = true; };
-  }, [resumeDNA, surveyQuestions, user?.id]);
+  }, [progressReloadKey, resumeDNA, resumeRequested, setLocation, surveyQuestions, user?.created_at, user?.id]);
 
   useEffect(() => {
     if (!isGenerating) return;
@@ -485,9 +572,19 @@ export default function OnboardingPage() {
       })
     : lovedRows;
   const hasMappableRoom = rooms.some((roomId) => Boolean(ROOM_GENRES[roomId]));
+  const questionByOrder = (order: number) =>
+    surveyQuestions.find((question) => question.display_order === order);
+
+  const persistResponses = async (rows: Array<{ question_id: string; answer_text: string }>) => {
+    if (!user?.id) throw new Error("You need to be signed in to save onboarding.");
+    const { error } = await supabase
+      .from("edna_responses")
+      .upsert(rows.map((row) => ({ ...row, user_id: user.id })), { onConflict: "user_id,question_id" });
+    if (error) throw error;
+  };
 
   const submitDebateStep = () => {
-    setStep("interests");
+    goToStep("interests");
     if (!user?.id) return;
     if (vote && vote !== "both") {
       // Same write path as every other poll — dedup handled by unique constraint,
@@ -501,19 +598,40 @@ export default function OnboardingPage() {
     }
   };
 
-  const submitInterestsStep = () => {
-    setStep(resumeDNA ? "love" : "loved");
-    if (!user?.id || rooms.length === 0) return;
-    // Real follows — same rows as tapping Follow inside a room.
-    supabase
-      .from("room_follows")
-      .upsert(rooms.map((room_id) => ({ user_id: user.id, room_id })), {
-        onConflict: "user_id,room_id",
-        ignoreDuplicates: true,
-      })
-      .then(({ error }) => {
-        if (error && error.code !== "23505") console.error("[onboarding room follow]", error);
-      });
+  const submitInterestsStep = async () => {
+    if (saving || !user?.id) return;
+    const formatsQuestion = questionByOrder(2);
+    const genresQuestion = questionByOrder(3);
+    if (!formatsQuestion || !genresQuestion) {
+      setSaveError("We couldn't load your setup questions. Please try again.");
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const roomGenres = Array.from(new Set(
+        rooms.map((roomId) => ROOM_GENRES[roomId]).filter((genre): genre is string => Boolean(genre)),
+      ));
+      const [followResult] = await Promise.all([
+        supabase
+          .from("room_follows")
+          .upsert(rooms.map((room_id) => ({ user_id: user.id, room_id })), {
+            onConflict: "user_id,room_id",
+            ignoreDuplicates: true,
+          }),
+        persistResponses([
+          { question_id: formatsQuestion.id, answer_text: mediaTypes.join(", ") },
+          { question_id: genresQuestion.id, answer_text: roomGenres.join(", ") },
+        ]),
+      ]);
+      if (followResult.error && followResult.error.code !== "23505") throw followResult.error;
+      goToStep(resumeDNA ? "love" : "loved");
+    } catch (error) {
+      console.error("[onboarding interests]", error);
+      setSaveError("We couldn't save those choices. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addLoved = (title: string) => {
@@ -535,8 +653,8 @@ export default function OnboardingPage() {
     setSaving(true);
     setExistingTitles(loved);
     // Continue immediately — persistence runs in the background,
-    // tracked in pendingSaves so finish() can wait for it.
-    setStep("love");
+    // tracked in pendingSaves so navigation can wait for it.
+    goToStep("love");
     pendingSaves.current = (async () => {
     try {
       if (user?.id && loved.length > 0) {
@@ -645,8 +763,29 @@ export default function OnboardingPage() {
     })();
   };
 
-  const questionByOrder = (order: number) =>
-    surveyQuestions.find((question) => question.display_order === order);
+  const submitLoveStep = async () => {
+    if (saving) return;
+    const loveQuestion = questionByOrder(4);
+    if (!loveQuestion) {
+      setSaveError("We couldn't load this DNA question. Please try again.");
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const titlesForDNA = existingTitles.length > 0 ? existingTitles : loved;
+      await persistResponses([{
+        question_id: loveQuestion.id,
+        answer_text: addTitleContext(loveNote, titlesForDNA),
+      }]);
+      goToStep("drivers");
+    } catch (error) {
+      console.error("[onboarding love]", error);
+      setSaveError("We couldn't save that answer. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const generateDNA = async () => {
     if (isGenerating || !user?.id || !session?.access_token || drivers.length === 0) return;
@@ -656,6 +795,7 @@ export default function OnboardingPage() {
     }
     setGenerationError(null);
     setIsGenerating(true);
+    saveOnboardingProgress(user.id, "drivers", { preserveCompletion: hasExistingProfile });
     setStep("generating");
 
     try {
@@ -773,7 +913,7 @@ export default function OnboardingPage() {
         ) : (
           <span aria-hidden="true" />
         )}
-        <button onClick={() => finish("/activity")} className="text-xs text-white/70 hover:text-white">
+        <button onClick={() => leaveForNow()} className="text-xs text-white/70 hover:text-white">
           Skip for now
         </button>
       </div>
@@ -810,10 +950,58 @@ export default function OnboardingPage() {
       </div>
     );
 
-  if (resumeDNA && resumePrefillLoading)
+  if (resumePrefillLoading)
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}>
         <Loader2 className="w-8 h-8 text-purple-300 animate-spin" />
+      </div>
+    );
+
+  if (progressLoadError)
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
+        <div className="max-w-[430px] w-full rounded-3xl bg-white p-7 text-center shadow-2xl">
+          <Dna className="mx-auto text-purple-600" size={38} />
+          <h1 className="mt-4 text-xl font-bold text-gray-900">We couldn't restore your setup yet</h1>
+          <p className="mt-2 text-sm text-gray-600">{progressLoadError}</p>
+          <button
+            onClick={() => {
+              setResumePrefillLoading(true);
+              setProgressReloadKey((key) => key + 1);
+            }}
+            className="mt-6 w-full rounded-full py-3.5 font-bold text-white"
+            style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
+          >
+            Try again
+          </button>
+          <button onClick={() => leaveForNow()} className="mt-4 text-sm font-medium text-purple-700">
+            Back to activity
+          </button>
+        </div>
+      </div>
+    );
+
+  if (questionLoadError)
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
+        <div className="max-w-[430px] w-full rounded-3xl bg-white p-7 text-center shadow-2xl">
+          <Dna className="mx-auto text-purple-600" size={38} />
+          <h1 className="mt-4 text-xl font-bold text-gray-900">Your DNA flow needs a quick retry</h1>
+          <p className="mt-2 text-sm text-gray-600">{questionLoadError}</p>
+          <button
+            onClick={() => {
+              setResumePrefillLoading(true);
+              setQuestionReloadKey((key) => key + 1);
+            }}
+            className="mt-6 w-full rounded-full py-3.5 font-bold text-white"
+            style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
+          >
+            Try again
+          </button>
+          <button onClick={() => leaveForNow()} className="mt-4 text-sm font-medium text-purple-700">
+            Skip for now
+          </button>
+        </div>
       </div>
     );
 
@@ -908,7 +1096,7 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
-          <OnboardingHero currentStep={2} onBack={() => setStep("debate")} />
+          <OnboardingHero currentStep={2} onBack={() => goToStep("debate")} />
 
           <div className="flex-1 flex flex-col px-6 pt-8 pb-10">
             <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600">STEP TWO</p>
@@ -975,15 +1163,20 @@ export default function OnboardingPage() {
                 Add one more topic to help shape your Entertainment DNA. Sports can stay selected.
               </p>
             )}
+            {saveError && (
+              <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700">
+                {saveError}
+              </p>
+            )}
 
             <div className="flex-1" />
             <button
               onClick={submitInterestsStep}
-              disabled={mediaTypes.length === 0 || !hasMappableRoom}
+              disabled={mediaTypes.length === 0 || !hasMappableRoom || saving}
               className="w-full py-3.5 rounded-full font-bold text-[15px] text-white mt-10 transition-all active:scale-95 disabled:opacity-40"
               style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
             >
-              Continue
+              {saving ? "Saving..." : "Continue"}
             </button>
           </div>
         </div>
@@ -994,7 +1187,7 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
-          <OnboardingHero currentStep={3} onBack={() => setStep("interests")} />
+          <OnboardingHero currentStep={3} onBack={() => goToStep("interests")} />
 
           <div className="flex-1 flex flex-col px-5 pt-3 pb-8 bg-white">
             <div
@@ -1087,7 +1280,7 @@ export default function OnboardingPage() {
           <button
             onClick={() => {
               setLoved([]);
-              setStep("love");
+              goToStep("love");
             }}
             className="mx-auto text-sm text-gray-500 font-medium mt-4"
           >
@@ -1151,7 +1344,7 @@ export default function OnboardingPage() {
         <button onClick={onBack} className="text-sm text-white/60 hover:text-white transition-colors">
           Back
         </button>
-        <button onClick={() => finish("/activity")} className="text-xs text-white/70 hover:text-white">
+        <button onClick={() => leaveForNow()} className="text-xs text-white/70 hover:text-white">
           Skip for now
         </button>
       </div>
@@ -1177,28 +1370,6 @@ export default function OnboardingPage() {
     </div>
   );
 
-  if ((step === "love" || step === "drivers") && questionLoadError) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
-        <div className="max-w-[430px] w-full rounded-3xl bg-white p-7 text-center shadow-2xl">
-          <Dna className="mx-auto text-purple-600" size={38} />
-          <h1 className="mt-4 text-xl font-bold text-gray-900">Your DNA flow needs a quick retry</h1>
-          <p className="mt-2 text-sm text-gray-600">{questionLoadError}</p>
-          <button
-            onClick={() => setQuestionReloadKey((key) => key + 1)}
-            className="mt-6 w-full rounded-full py-3.5 font-bold text-white"
-            style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
-          >
-            Try again
-          </button>
-          <button onClick={() => finish("/activity")} className="mt-4 text-sm font-medium text-purple-700">
-            Skip for now
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   if ((step === "love" || step === "drivers") && (questionsLoading || resumePrefillLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}>
@@ -1212,8 +1383,8 @@ export default function OnboardingPage() {
       <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
           {dnaHeader(4, "Step 4 of 5 — Your taste is becoming clearer", () => {
-            if (resumeDNA) finish("/activity");
-            else setStep("loved");
+            if (resumeDNA) leaveForNow();
+            else goToStep("loved");
           })}
           <div className="flex-1 px-5 pt-6 pb-4 bg-white">
             <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">TELL US ANYTHING</p>
@@ -1233,6 +1404,11 @@ export default function OnboardingPage() {
               />
               <Feather size={16} className="absolute bottom-4 right-4 text-gray-400 pointer-events-none" />
             </div>
+            {saveError && (
+              <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700">
+                {saveError}
+              </p>
+            )}
             {titlesShapingDNA.length > 0 && (
               <div className="mt-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -1262,11 +1438,12 @@ export default function OnboardingPage() {
           </div>
           <div className="px-5 pb-10 bg-white">
             <button
-              onClick={() => setStep("drivers")}
+              onClick={submitLoveStep}
+              disabled={saving}
               className="w-full text-white font-semibold rounded-full py-3.5 text-base shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2"
               style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
             >
-              Continue
+              {saving ? "Saving..." : "Continue"}
               <ArrowRight size={18} />
             </button>
           </div>
@@ -1278,7 +1455,7 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
-          {dnaHeader(5, "Step 5 of 5 — Almost ready", () => setStep("love"))}
+          {dnaHeader(5, "Step 5 of 5 — Almost ready", () => goToStep("love"))}
           <div className="flex-1 px-5 pt-6 pb-4 bg-white">
             <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">LAST QUESTION — ALMOST DONE</p>
             <h2 className="text-[22px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
@@ -1377,13 +1554,13 @@ export default function OnboardingPage() {
           <p className="mt-5 text-sm leading-relaxed text-gray-700">{generatedProfile.profile_text}</p>
         )}
         <button
-          onClick={() => finish("/profile")}
+          onClick={() => completeAndNavigate("/profile")}
           className="w-full mt-7 py-3.5 rounded-full font-bold text-[15px] text-white transition-all active:scale-95"
           style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
         >
           See my DNA profile
         </button>
-        <button onClick={() => finish("/activity")} className="mt-4 text-sm font-medium text-purple-700">
+        <button onClick={() => completeAndNavigate("/activity")} className="mt-4 text-sm font-medium text-purple-700">
           Go to feed
         </button>
       </div>

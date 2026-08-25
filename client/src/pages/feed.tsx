@@ -18,7 +18,7 @@ import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
 import { DnaMomentCard } from "@/components/dna-moment-card";
 import { HotInRoomsCard } from "@/components/hot-in-rooms-card";
 import { FeedIdentityHero, IdentityFace } from "@/components/feed-identity-hero";
-import { isOnboardingComplete, markOnboardingComplete } from "@/components/route-guards";
+import { OnboardingResumePrompt } from "@/components/onboarding-resume-prompt";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import CastApprovalCard from "@/components/cast-approval-card";
 
@@ -5415,19 +5415,6 @@ export default function Feed() {
   const { session, user, loading: authLoading } = useAuth();
   // GUEST MODE: auth finished loading and there's no session → browsing as guest
   const isGuestMode = !authLoading && !session;
-  // Safety net: the feed is no longer wrapped in ProtectedRoute (guests allowed),
-  // so replicate its new-user onboarding redirect here for logged-in users.
-  useEffect(() => {
-    if (!authLoading && user && !isOnboardingComplete(user.id)) {
-      const createdAt = new Date(user.created_at).getTime();
-      const isNewUser = Date.now() - createdAt < 10 * 60 * 1000;
-      if (isNewUser) {
-        setLocation('/onboarding');
-      } else {
-        markOnboardingComplete(user.id);
-      }
-    }
-  }, [authLoading, user]);
   // Stable user ID that never resets to null once resolved. currentAppUserId (module-level)
   // resets on HMR reloads; session.user.id / user.id may be null on the very first render
   // before Supabase restores the session. Using a ref ensures the value is locked in as soon
@@ -8883,6 +8870,7 @@ export default function Feed() {
       )}
 
       <div className="max-w-4xl mx-auto px-4 pt-5 pb-6" data-feed-content>
+        {!isGuestMode && <OnboardingResumePrompt userId={user?.id} />}
 
         {/* ── What's Happening ── */}
         {/* HIDDEN for now — soft-hidden via `false &&`. Change `false` back to remove the flag and restore. */}

@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock, User, AtSign } from "lucide-react";
 import { SiApple, SiGoogle } from "react-icons/si";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { isOnboardingComplete } from "@/components/route-guards";
+import { isOnboardingComplete, resetOnboardingState } from "@/components/route-guards";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { getLastLoginMethod, lastLoginMethodLabels } from "@/lib/last-login-method";
 
@@ -159,7 +159,8 @@ export default function LoginPage() {
         localStorage.removeItem('consumed_referrer');
       }
       
-      // Clear any stale onboarding flag so new users always see onboarding
+      // Clear any stale user-scoped onboarding state so new users always start cleanly.
+      resetOnboardingState(data?.user?.id);
       localStorage.removeItem('consumed_onboarding_completed');
       setJustSignedUp(true);
       setSubmitting(false);
