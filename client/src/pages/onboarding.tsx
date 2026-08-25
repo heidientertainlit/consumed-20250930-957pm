@@ -403,6 +403,13 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawv
 
 type Step = "debate" | "interests" | "loved" | "love" | "drivers" | "generating" | "reveal";
 
+const DNA_HEADER_MESSAGES: Record<number, string> = {
+  2: "Great! Your DNA is taking shape.",
+  3: "Getting closer to your DNA.",
+  4: "Your DNA is coming into focus.",
+  5: "Your DNA is almost ready.",
+};
+
 export default function OnboardingPage() {
   const [, setLocation] = useLocation();
   const { user, session, loading: authLoading } = useAuth();
@@ -1004,14 +1011,14 @@ export default function OnboardingPage() {
           </p>
         </div>
       ) : (
-        <div className="flex items-center justify-center gap-2.5 text-center -translate-x-3">
-          <Dna className="text-purple-200" size={20} />
-          <h1 className="text-purple-200 text-[11px] font-semibold tracking-[0.15em]">
-            Your DNA is taking shape
+        <div className="flex flex-col items-center text-center">
+          <Dna className="text-purple-200 mb-3" size={28} />
+          <h1 className="max-w-[340px] text-[26px] leading-[1.15] font-bold" style={{ fontFamily: "Poppins, sans-serif" }}>
+            {DNA_HEADER_MESSAGES[currentStep]}
           </h1>
         </div>
       )}
-      <div className={currentStep === 1 ? "mt-5" : "mt-3"}>
+      <div className="mt-5">
         <ProgressBar current={currentStep - 1} />
       </div>
     </div>
@@ -1465,10 +1472,10 @@ export default function OnboardingPage() {
           Skip for now
         </button>
       </div>
-      <div className="flex items-center justify-center gap-2.5 text-center -translate-x-3">
-        <Dna className="text-purple-200" size={20} />
-        <h1 className="text-purple-200 text-[11px] font-semibold tracking-[0.15em]">
-          Your DNA is taking shape
+      <div className="flex flex-col items-center text-center">
+        <Dna className="text-purple-200 mb-3" size={28} />
+        <h1 className="max-w-[340px] text-[26px] leading-[1.15] font-bold" style={{ fontFamily: "Poppins, sans-serif" }}>
+          {DNA_HEADER_MESSAGES[currentStep]}
         </h1>
       </div>
       <p className="text-white/50 text-xs mt-3 text-center">{stepLabel}</p>
