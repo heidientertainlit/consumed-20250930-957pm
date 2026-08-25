@@ -10,6 +10,44 @@ export interface OnboardingProgress {
   updatedAt: string;
 }
 
+export function resolveOnboardingResumeStep({
+  hasExistingProfile,
+  resumeDNA,
+  resumeRequested,
+  isNewAccount,
+  draftStep,
+  hasFormats,
+  hasGenres,
+  hasLoveResponse,
+  hasDriverResponse,
+}: {
+  hasExistingProfile: boolean;
+  resumeDNA: boolean;
+  resumeRequested: boolean;
+  isNewAccount: boolean;
+  draftStep?: OnboardingResumeStep | null;
+  hasFormats: boolean;
+  hasGenres: boolean;
+  hasLoveResponse: boolean;
+  hasDriverResponse: boolean;
+}): OnboardingResumeStep {
+  const isExistingDNARetake = resumeDNA && hasExistingProfile;
+  if (isExistingDNARetake) return "love";
+
+  if (!hasFormats || !hasGenres) {
+    return draftStep === "debate" || (!draftStep && isNewAccount && !resumeRequested)
+      ? "debate"
+      : "interests";
+  }
+
+  // First-time setup must include title selection. Only a saved later step
+  // proves the user already advanced beyond it.
+  if (draftStep !== "love" && draftStep !== "drivers") return "loved";
+  if (!hasLoveResponse) return "love";
+  if (!hasDriverResponse) return "drivers";
+  return "drivers";
+}
+
 function scopedKey(key: string, userId?: string | null): string {
   return userId ? `${key}:${userId}` : key;
 }

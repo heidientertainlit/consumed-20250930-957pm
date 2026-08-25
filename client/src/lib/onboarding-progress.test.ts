@@ -7,6 +7,7 @@ import {
   loadOnboardingProgress,
   markOnboardingComplete,
   resetOnboardingState,
+  resolveOnboardingResumeStep,
   saveOnboardingProgress,
 } from "./onboarding-progress";
 
@@ -49,6 +50,42 @@ test("completed retakes preserve completion while saving an editable step", () =
 
   assert.equal(isOnboardingComplete("alice"), true);
   assert.equal(loadOnboardingProgress("alice")?.step, "love");
+});
+
+test("first-time setup cannot skip title selection because of a retake URL or missing draft", () => {
+  const firstTimeState = {
+    hasExistingProfile: false,
+    resumeDNA: true,
+    resumeRequested: true,
+    isNewAccount: true,
+    hasFormats: true,
+    hasGenres: true,
+    hasLoveResponse: false,
+    hasDriverResponse: false,
+  };
+
+  assert.equal(
+    resolveOnboardingResumeStep({ ...firstTimeState, draftStep: "interests" }),
+    "loved",
+  );
+  assert.equal(
+    resolveOnboardingResumeStep({ ...firstTimeState, draftStep: null }),
+    "loved",
+  );
+});
+
+test("only an existing DNA profile gets the retake shortcut", () => {
+  assert.equal(resolveOnboardingResumeStep({
+    hasExistingProfile: true,
+    resumeDNA: true,
+    resumeRequested: true,
+    isNewAccount: false,
+    draftStep: null,
+    hasFormats: true,
+    hasGenres: true,
+    hasLoveResponse: true,
+    hasDriverResponse: true,
+  }), "love");
 });
 
 test("completion clears progress and prompt dismissal", () => {

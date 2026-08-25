@@ -9,6 +9,7 @@ import {
   dismissOnboardingPrompt,
   isOnboardingPromptDismissed,
   resetOnboardingState,
+  resolveOnboardingResumeStep,
   type OnboardingResumeStep,
   type OnboardingProgress,
 } from "@/lib/onboarding-progress";
@@ -21,6 +22,7 @@ export {
   dismissOnboardingPrompt,
   isOnboardingPromptDismissed,
   resetOnboardingState,
+  resolveOnboardingResumeStep,
 };
 export type { OnboardingResumeStep, OnboardingProgress };
 

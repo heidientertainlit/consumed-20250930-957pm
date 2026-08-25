@@ -5,6 +5,7 @@ import {
   dismissOnboardingPrompt,
   loadOnboardingProgress,
   markOnboardingComplete,
+  resolveOnboardingResumeStep,
   saveOnboardingProgress,
   type OnboardingResumeStep,
 } from "@/components/route-guards";
@@ -513,22 +514,17 @@ export default function OnboardingPage() {
       const createdAt = new Date(user.created_at).getTime();
       const isNewAccount = Date.now() - createdAt < 10 * 60 * 1000;
 
-      let nextStep: OnboardingResumeStep;
-      if (profileResult.data && resumeDNA) {
-        nextStep = "love";
-      } else if (!hasFormats || !hasGenres) {
-        nextStep = !resumeDNA && (draft?.step === "debate" || (!draft && isNewAccount && !resumeRequested))
-          ? "debate"
-          : "interests";
-      } else if (draft?.step === "loved" && !resumeDNA) {
-        nextStep = "loved";
-      } else if (!hasLoveResponse) {
-        nextStep = "love";
-      } else if (!hasDriverResponse) {
-        nextStep = "drivers";
-      } else {
-        nextStep = "drivers";
-      }
+      const nextStep = resolveOnboardingResumeStep({
+        hasExistingProfile: Boolean(profileResult.data),
+        resumeDNA,
+        resumeRequested,
+        isNewAccount,
+        draftStep: draft?.step,
+        hasFormats,
+        hasGenres,
+        hasLoveResponse,
+        hasDriverResponse,
+      });
       saveOnboardingProgress(user.id, nextStep, { preserveCompletion: Boolean(profileResult.data) });
       setStep(nextStep);
     };
@@ -625,7 +621,7 @@ export default function OnboardingPage() {
         ]),
       ]);
       if (followResult.error && followResult.error.code !== "23505") throw followResult.error;
-      goToStep(resumeDNA ? "love" : "loved");
+      goToStep(resumeDNA && hasExistingProfile ? "love" : "loved");
     } catch (error) {
       console.error("[onboarding interests]", error);
       setSaveError("We couldn't save those choices. Please try again.");
@@ -1388,7 +1384,7 @@ export default function OnboardingPage() {
       <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
           {dnaHeader(4, "Step 4 of 5 — Your taste is becoming clearer", () => {
-            if (resumeDNA) leaveForNow();
+            if (resumeDNA && hasExistingProfile) leaveForNow();
             else goToStep("loved");
           })}
           <div className="flex-1 px-6 pt-6 pb-4 bg-white">
