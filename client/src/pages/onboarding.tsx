@@ -1512,6 +1512,10 @@ export default function OnboardingPage() {
             <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
               What do you love?
             </h2>
+            <div className="mt-4 flex items-center gap-3 rounded-2xl bg-purple-50 px-4 py-3.5">
+              <Dna size={18} className="shrink-0 text-purple-600" />
+              <p className="text-[14px] text-gray-800">This makes your DNA even more accurate and personalized.</p>
+            </div>
             <div className="relative mt-4">
               <textarea
                 value={loveNote}
@@ -1522,6 +1526,9 @@ export default function OnboardingPage() {
               />
               <Feather size={16} className="absolute bottom-4 right-4 text-gray-400 pointer-events-none" />
             </div>
+            <p className="mt-2 text-[12px] leading-relaxed text-gray-400">
+              <span className="font-semibold text-gray-500">Need ideas?</span> Your comfort show. A movie you&apos;ll defend forever. A book you couldn&apos;t put down. An album on repeat. Your team. Your current obsession.
+            </p>
             {mediaTitleSuggestions.length > 0 && (
               <div className="mt-4">
                 <p className="text-[12px] font-semibold text-gray-500 mb-2">Suggestions based on your picks</p>
@@ -1548,9 +1555,6 @@ export default function OnboardingPage() {
                 </div>
               </div>
             )}
-            <p className="mt-2 text-[12px] leading-relaxed text-gray-400">
-              <span className="font-semibold text-gray-500">Need ideas?</span> Your comfort show. A movie you&apos;ll defend forever. A book you couldn&apos;t put down. An album on repeat. Your team. Your current obsession.
-            </p>
             {saveError && (
               <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700">
                 {saveError}
@@ -1575,10 +1579,6 @@ export default function OnboardingPage() {
                       {title}
                     </span>
                   ))}
-                </div>
-                <div className="mt-5 flex items-center gap-3 bg-purple-50 rounded-2xl px-4 py-3.5">
-                  <Dna size={18} className="text-purple-600 shrink-0" />
-                  <p className="text-[14px] text-gray-800">This makes your DNA even more personal.</p>
                 </div>
               </div>
             )}
