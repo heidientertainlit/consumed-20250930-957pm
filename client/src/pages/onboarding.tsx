@@ -1571,14 +1571,6 @@ export default function OnboardingPage() {
               {saving ? "Saving..." : "Continue"}
               <ArrowRight size={18} />
             </button>
-            <button
-              type="button"
-              onClick={submitLoveStep}
-              disabled={saving}
-              className="w-full mt-4 text-sm font-semibold text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-50"
-            >
-              Skip to next page
-            </button>
           </div>
         </div>
       </div>
