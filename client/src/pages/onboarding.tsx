@@ -1676,7 +1676,7 @@ export default function OnboardingPage() {
           </div>
         )}
         {generatedProfile?.profile_text && (
-          <p className="mt-5 text-sm leading-relaxed text-gray-700">{generatedProfile.profile_text}</p>
+          <p className="mt-5 text-left text-sm leading-relaxed text-gray-700">{generatedProfile.profile_text}</p>
         )}
         <button
           onClick={() => completeAndNavigate("/activity")}
