@@ -376,6 +376,18 @@ const TITLE_SUGGESTION_ALIASES: Record<string, string[]> = {
 const normalizeSuggestionText = (value: string) =>
   value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
+const suggestionGenreTerms = (genre: string) => [
+  normalizeSuggestionText(genre),
+  ...(TITLE_SUGGESTION_ALIASES[genre] || []).map(normalizeSuggestionText),
+];
+
+const suggestionGenresOverlap = (first: string, second: string) =>
+  suggestionGenreTerms(first).some((firstTerm) =>
+    suggestionGenreTerms(second).some((secondTerm) =>
+      firstTerm === secondTerm || firstTerm.includes(secondTerm) || secondTerm.includes(firstTerm),
+    ),
+  );
+
 const titleSuggestionCatalog: TitleSuggestion[] = [
   ...DNA_TITLE_SUGGESTIONS,
   ...lovedRows.flatMap((row) =>
@@ -1405,24 +1417,36 @@ export default function OnboardingPage() {
     .join(" ");
   const normalizedSelectedTopics = normalizeSuggestionText(selectedTopicText);
   const alreadyShapingTitles = new Set(titlesShapingDNA.map((title) => normalizeSuggestionText(title)));
+  const shapingGenres = Array.from(new Set(
+    titlesShapingDNA.flatMap((title) => {
+      const catalogMatch = titleSuggestionCatalog.find((suggestion) => suggestion.title === title);
+      return TITLE_GENRES[title] || catalogMatch?.genres || [];
+    }),
+  ));
   const mediaTitleSuggestions = (() => {
     if (mediaTypes.length === 0) return [];
 
     const candidates = titleSuggestionCatalog
       .filter((suggestion) => mediaTypes.includes(suggestion.format))
       .filter((suggestion) => !alreadyShapingTitles.has(normalizeSuggestionText(suggestion.title)));
-    const genreMatches = candidates.filter((suggestion) =>
-      suggestion.genres.some((genre) => {
-        const normalizedGenre = normalizeSuggestionText(genre);
-        const aliases = TITLE_SUGGESTION_ALIASES[genre] || [normalizedGenre];
-        return [normalizedGenre, ...aliases]
-          .some((alias) => normalizedSelectedTopics.includes(normalizeSuggestionText(alias)));
-      }),
-    );
+    const scoredCandidates = candidates.map((suggestion, index) => {
+      const topicScore = suggestion.genres.some((genre) =>
+        suggestionGenreTerms(genre).some((term) => normalizedSelectedTopics.includes(term)),
+      ) ? 3 : 0;
+      const dnaSimilarityScore = suggestion.genres.reduce(
+        (score, genre) => score + (shapingGenres.some((shapingGenre) => suggestionGenresOverlap(genre, shapingGenre)) ? 4 : 0),
+        0,
+      );
+      return { suggestion, score: topicScore + dnaSimilarityScore, index };
+    });
+    const relevantCandidates = scoredCandidates.filter(({ score }) => score > 0);
 
     // Prefer titles matching the selected topics, but keep useful format-based
     // suggestions visible when the curated genre set has no exact match.
-    return (genreMatches.length > 0 ? genreMatches : candidates).slice(0, 6);
+    return (relevantCandidates.length > 0 ? relevantCandidates : scoredCandidates)
+      .sort((left, right) => right.score - left.score || left.index - right.index)
+      .slice(0, 6)
+      .map(({ suggestion }) => suggestion);
   })();
   const driversQuestion = questionByOrder(5);
 
@@ -1512,7 +1536,7 @@ export default function OnboardingPage() {
                             : suggestion.title;
                         });
                       }}
-                      className="rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 text-[12px] font-medium text-purple-700 transition-colors hover:bg-purple-100 active:scale-95"
+                      className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-[12px] font-medium text-gray-600 transition-colors hover:bg-gray-100 active:scale-95"
                       data-testid="dna-title-suggestion"
                     >
                       + {suggestion.title}
