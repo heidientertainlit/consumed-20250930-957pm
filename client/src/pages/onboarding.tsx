@@ -1526,12 +1526,12 @@ export default function OnboardingPage() {
               />
               <Feather size={16} className="absolute bottom-4 right-4 text-gray-400 pointer-events-none" />
             </div>
-            <p className="mt-2 text-[12px] leading-relaxed text-gray-400">
+            <p className="ml-2 mt-2 text-[12px] leading-relaxed text-gray-400">
               <span className="font-semibold text-gray-500">Need ideas?</span> Your comfort show. A movie you&apos;ll defend forever. A book you couldn&apos;t put down. An album on repeat. Your team. Your current obsession.
             </p>
             {mediaTitleSuggestions.length > 0 && (
               <div className="mt-4">
-                <p className="text-[12px] font-semibold text-gray-500 mb-2">Suggestions based on your picks</p>
+                <p className="ml-2 text-[12px] font-semibold text-gray-500 mb-2">Suggestions based on your picks</p>
                 <div className="flex flex-wrap gap-2">
                   {mediaTitleSuggestions.map((suggestion) => (
                     <button
@@ -1559,28 +1559,6 @@ export default function OnboardingPage() {
               <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700">
                 {saveError}
               </p>
-            )}
-            {titlesShapingDNA.length > 0 && (
-              <div className="mt-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex-1 h-px bg-gray-200" />
-                  <p className="flex items-center gap-1.5 text-[14px] font-bold text-gray-900 shrink-0">
-                    <Sparkles size={14} className="text-purple-600" />
-                    Already shaping your DNA
-                  </p>
-                  <div className="flex-1 h-px bg-gray-200" />
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-                    <Sparkles size={15} className="text-purple-600" />
-                  </span>
-                  {titlesShapingDNA.slice(0, 12).map((title) => (
-                    <span key={title} className="px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-800 text-[14px] font-medium">
-                      {title}
-                    </span>
-                  ))}
-                </div>
-              </div>
             )}
           </div>
           <div className="px-6 pb-10 bg-white">
