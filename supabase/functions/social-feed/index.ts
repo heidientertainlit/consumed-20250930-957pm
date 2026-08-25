@@ -7,6 +7,14 @@ const corsHeaders = {
   'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
 };
 
+function feedDisplayName(profile: any): string {
+  const firstName = profile?.first_name?.trim();
+  const lastName = profile?.last_name?.trim();
+  if (firstName && lastName) return `${firstName} ${lastName}`;
+  if (firstName) return firstName;
+  return profile?.display_name || profile?.user_name || 'Unknown';
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -603,7 +611,7 @@ serve(async (req) => {
         console.log('Querying users with IDs:', validUserIds.slice(0, 3));
         let result = await supabaseAdmin
           .from('users')
-          .select('id, user_name, display_name, email, avatar, is_persona')
+          .select('id, user_name, display_name, first_name, last_name, email, avatar, is_persona')
           .in('id', validUserIds);
         users = result.data || [];
         usersError = result.error;
@@ -614,7 +622,7 @@ serve(async (req) => {
           console.log('Admin client returned 0 users, trying regular client');
           const regularResult = await supabase
             .from('users')
-            .select('id, user_name, display_name, email, avatar, is_persona')
+            .select('id, user_name, display_name, first_name, last_name, email, avatar, is_persona')
             .in('id', validUserIds);
           users = regularResult.data || [];
           usersError = regularResult.error;
@@ -1070,7 +1078,7 @@ serve(async (req) => {
             user: {
               id: post.user_id,
               username: postUser.user_name || 'Unknown',
-              displayName: postUser.display_name || postUser.user_name || 'Unknown',
+               displayName: feedDisplayName(postUser),
               avatar: postUser.avatar || '',
               email: postUser.email || '',
               is_persona: (postUser as any).is_persona || false
@@ -1148,7 +1156,7 @@ serve(async (req) => {
               postId: post.id,
               userId: post.user_id,
               username: postUser.user_name || 'Unknown',
-              displayName: postUser.display_name || postUser.user_name || 'Unknown',
+               displayName: feedDisplayName(postUser),
               avatar: postUser.avatar || '',
               email: postUser.email || '',
               is_persona: (postUser as any).is_persona || false,
@@ -1203,7 +1211,7 @@ serve(async (req) => {
             user: {
               id: post.user_id,
               username: postUser.user_name || 'Unknown',
-              displayName: postUser.display_name || postUser.user_name || 'Unknown',
+               displayName: feedDisplayName(postUser),
               avatar: postUser.avatar || '',
               email: postUser.email || '',
               is_persona: (postUser as any).is_persona || false
@@ -1252,7 +1260,7 @@ serve(async (req) => {
           user: {
             id: post.user_id,
             username: postUser.user_name || 'Unknown',
-            displayName: postUser.display_name || postUser.user_name || 'Unknown',
+             displayName: feedDisplayName(postUser),
             avatar: postUser.avatar || '',
             is_persona: (postUser as any).is_persona || false
           },
@@ -1351,13 +1359,13 @@ serve(async (req) => {
           creator: {
             id: pred.origin_user_id,
             username: creatorUser.user_name || 'Unknown',
-            displayName: creatorUser.display_name || creatorUser.user_name || 'Unknown',
+             displayName: feedDisplayName(creatorUser),
             avatar: creatorUser.avatar || ''
           },
           invitedFriend: invitedUser ? {
             id: pred.invited_user_id,
             username: invitedUser.user_name || 'Unknown',
-            displayName: invitedUser.display_name || invitedUser.user_name || 'Unknown'
+             displayName: feedDisplayName(invitedUser)
           } : null,
           timestamp: pred.created_at,
           likes: pred.likes_count || 0,
