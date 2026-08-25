@@ -12,8 +12,6 @@ import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
 import RoomComposer, { DISCUSSION_TAGS } from "@/components/room-composer";
-import { Capacitor } from "@capacitor/core";
-import { Keyboard } from "@capacitor/keyboard";
 
 type MediaFilter = "all" | "tv" | "movie" | "book" | "podcast" | "music" | "game" | "youtube";
 
@@ -215,22 +213,6 @@ export default function FeedComposerBar({
   const [, setLocation] = useLocation();
 
   const [isOpen, setIsOpen] = useState(pageMode || startExpanded);
-  const [isNativeKeyboardOpen, setIsNativeKeyboardOpen] = useState(false);
-  useEffect(() => {
-    if (!pageMode || !Capacitor.isNativePlatform()) return;
-
-    const showListener = Keyboard.addListener("keyboardWillShow", () => {
-      setIsNativeKeyboardOpen(true);
-    });
-    const hideListener = Keyboard.addListener("keyboardDidHide", () => {
-      setIsNativeKeyboardOpen(false);
-    });
-
-    return () => {
-      void showListener.then((listener) => listener.remove()).catch(() => {});
-      void hideListener.then((listener) => listener.remove()).catch(() => {});
-    };
-  }, [pageMode]);
   const PLACEHOLDERS = ["Your take...", "Thoughts?", "What's your next move?"];
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   useEffect(() => {
@@ -1250,7 +1232,7 @@ export default function FeedComposerBar({
             </div>
           </div>
         )}
-        {pageMode && !isNativeKeyboardOpen && <Navigation hideTopBar inline />}
+        {pageMode && <Navigation hideTopBar inline />}
         </div>,
         document.body
       )}
