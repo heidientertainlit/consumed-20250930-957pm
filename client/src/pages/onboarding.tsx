@@ -935,7 +935,6 @@ export default function OnboardingPage() {
     { lead: "Step 2 of 5 — Your taste is taking shape" },
     {
       lead: "Step 3 of 5 — Every pick shapes your Entertainment DNA.",
-      detail: "Choose at least 3. The more you pick, the better we’ll understand your taste.",
     },
   ];
 
@@ -1007,8 +1006,8 @@ export default function OnboardingPage() {
       ) : (
         <div className="flex items-center justify-center gap-2.5 text-center -translate-x-3">
           <Dna className="text-purple-200" size={20} />
-          <h1 className="text-purple-200 text-[11px] font-semibold tracking-[0.15em] uppercase">
-            Building your DNA
+          <h1 className="text-purple-200 text-[11px] font-semibold tracking-[0.15em]">
+            Your DNA is taking shape
           </h1>
         </div>
       )}
@@ -1265,6 +1264,9 @@ export default function OnboardingPage() {
           <OnboardingHero currentStep={3} onBack={() => goToStep("interests")} />
 
           <div className="flex-1 flex flex-col px-5 pt-3 pb-8 bg-white">
+            <p className="mx-auto mt-1 mb-3 max-w-[320px] text-center text-[13px] leading-relaxed text-gray-400">
+              Choose at least 3. The more you pick, the better we&apos;ll understand your taste.
+            </p>
             <div
               className={`mx-auto mt-1 flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all ${
                 loved.length >= 3
@@ -1465,8 +1467,8 @@ export default function OnboardingPage() {
       </div>
       <div className="flex items-center justify-center gap-2.5 text-center -translate-x-3">
         <Dna className="text-purple-200" size={20} />
-        <h1 className="text-purple-200 text-[11px] font-semibold tracking-[0.15em] uppercase">
-          Building your DNA
+        <h1 className="text-purple-200 text-[11px] font-semibold tracking-[0.15em]">
+          Your DNA is taking shape
         </h1>
       </div>
       <p className="text-white/50 text-xs mt-3 text-center">{stepLabel}</p>
