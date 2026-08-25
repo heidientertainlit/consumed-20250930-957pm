@@ -121,7 +121,7 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
     : searchResults;
 
   return (
-    <>
+    <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
       <div className="px-5 pt-1 pb-2 space-y-3">
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -180,7 +180,10 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 pb-4 min-h-0">
+      <div
+        className="flex-1 overflow-y-auto overscroll-contain px-5 pt-0 min-h-0 [-webkit-overflow-scrolling:touch]"
+        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))" }}
+      >
         {isSearching && (
           <div className="flex justify-center py-6"><Loader2 className="animate-spin text-purple-500" size={24} /></div>
         )}
@@ -232,6 +235,6 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
           </>
         )}
       </div>
-    </>
+    </div>
   );
 }

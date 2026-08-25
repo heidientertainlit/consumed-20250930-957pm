@@ -168,7 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data: {
           first_name: metadata?.firstName || '',
           last_name: metadata?.lastName || '',
-          user_name: metadata?.username || email.split('@')[0]
+          user_name: metadata?.username?.trim().toLowerCase() || email.split('@')[0].toLowerCase(),
         }
       }
     })

@@ -2,6 +2,7 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { hasConfirmedProfileIdentity } from "@/lib/profile-identity";
 import {
   isOnboardingComplete,
   markOnboardingComplete,
@@ -33,10 +34,13 @@ interface RouteGuardProps {
 
 export function ProtectedRoute({ children }: RouteGuardProps) {
   const { user, loading } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+    setReady(false);
+
     if (!loading && !user) {
       const fullPath = window.location.pathname + window.location.search + window.location.hash;
       if (fullPath !== '/login') {
@@ -47,9 +51,33 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
     }
 
     if (!loading && user) {
-      setReady(true);
+      if (location.startsWith("/onboarding")) {
+        setReady(true);
+        return;
+      }
+
+      void Promise.all([
+        supabase
+          .from("users")
+          .select("identity_confirmed_at")
+          .eq("id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("dna_profiles")
+          .select("user_id")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]).then(([identityResult, dnaResult]) => {
+          if (cancelled) return;
+          if (hasConfirmedProfileIdentity(identityResult.data) || dnaResult.data) {
+            setReady(true);
+          } else {
+            setLocation("/onboarding");
+          }
+        });
     }
-  }, [user, loading, setLocation]);
+    return () => { cancelled = true; };
+  }, [user, loading, location, setLocation]);
 
   if (loading || !ready) {
     return (
@@ -69,6 +97,51 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
   return <>{children}</>;
 }
 
+export function IdentityAwareRoute({ children }: RouteGuardProps) {
+  const { user, loading } = useAuth();
+  const [location, setLocation] = useLocation();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (loading) {
+      setReady(false);
+      return;
+    }
+    if (!user) {
+      setReady(true);
+      return;
+    }
+    if (location.startsWith("/onboarding")) {
+      setReady(true);
+      return;
+    }
+
+    setReady(false);
+    void Promise.all([
+      supabase.from("users").select("identity_confirmed_at").eq("id", user.id).maybeSingle(),
+      supabase.from("dna_profiles").select("user_id").eq("user_id", user.id).maybeSingle(),
+    ]).then(([identityResult, dnaResult]) => {
+      if (cancelled) return;
+      if (hasConfirmedProfileIdentity(identityResult.data) || dnaResult.data) {
+        setReady(true);
+      } else {
+        setLocation("/onboarding");
+      }
+    });
+    return () => { cancelled = true; };
+  }, [user, loading, location, setLocation]);
+
+  if (loading || !ready) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  return <>{children}</>;
+}
+
 export function PublicOnlyRoute({ children }: RouteGuardProps) {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -78,16 +151,16 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
     let cancelled = false;
 
     const redirectAuthenticatedUser = async () => {
-      const { data: dnaProfile, error } = await supabase
-        .from("dna_profiles")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const [identityResult, dnaResult] = await Promise.all([
+        supabase.from("users").select("identity_confirmed_at").eq("id", user.id).maybeSingle(),
+        supabase.from("dna_profiles").select("user_id").eq("user_id", user.id).maybeSingle(),
+      ]);
       if (cancelled) return;
 
+      const dnaProfile = dnaResult.data;
       if (dnaProfile) markOnboardingComplete(user.id);
-      const shouldOnboard =
-        (error || !dnaProfile) && !isOnboardingPromptDismissed(user.id);
+      const hasIdentity = hasConfirmedProfileIdentity(identityResult.data);
+      const shouldOnboard = !dnaProfile && !hasIdentity;
 
       if (shouldOnboard) {
         sessionStorage.removeItem("returnUrl");

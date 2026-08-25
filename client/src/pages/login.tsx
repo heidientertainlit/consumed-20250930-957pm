@@ -53,6 +53,16 @@ export default function LoginPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!firstName.trim() || !lastName.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter your first and last name.",
+        variant: "destructive",
+      });
+      setSubmitting(false);
+      return;
+    }
     
     if (!username || username.trim() === '') {
       toast({
@@ -64,8 +74,9 @@ export default function LoginPage() {
       return;
     }
 
-    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-    if (!usernameRegex.test(username.trim())) {
+    const normalizedUsername = username.trim().replace(/^@+/, "").toLowerCase();
+    const usernameRegex = /^[a-z0-9_]{3,20}$/;
+    if (!usernameRegex.test(normalizedUsername)) {
       toast({
         title: "Invalid Username",
         description: "Username must be 3-20 characters and contain only letters, numbers, and underscores (no spaces).",
@@ -91,7 +102,7 @@ export default function LoginPage() {
     const { error, data } = await signUp(normalizedEmail, password, {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      username: username.trim()
+      username: normalizedUsername
     });
     
     if (error) {

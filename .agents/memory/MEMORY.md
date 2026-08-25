@@ -23,8 +23,10 @@
 - [Room Explore genre discovery](room-explore-genre-discovery.md) — room-explore uses explicit per-tag genre config + example-seed recommendations (NOT fuzzy keyword, which pulled cartoons); never media-search (title matcher).
 - [YouTube leaderboard scoring](youtube-leaderboard-scoring.md) — YouTube is a full consumption leaderboard category and participates in overall rank, not a standalone-only board.
 - [Mobile star rating gestures](mobile-star-rating-gestures.md) — reuse the feed rater’s touch-move and half-star button pattern; pointer capture is unreliable inside portaled sheets.
+- [iOS keyboard viewport sizing](ios-keyboard-viewport-sizing.md) — size portaled sheets from the shared visible viewport; avoid double keyboard offsets when Capacitor already resizes the webview.
 - [Rated feed card structure](rated-feed-card-structure.md) — keep the compact media/rating card primary; conversation preview and social actions form a distinct layer beneath it.
 - [Supabase OAuth callbacks](supabase-oauth-callbacks.md) — OAuth returns through /login; native universal-link sessions must be restored on both warm and cold app launches.
 - [Apple OAuth credential rotation](apple-oauth-credential-rotation.md) — Supabase uses a signed Apple client-secret JWT that expires after 180 days; rotate it before expiry.
 - [Feed identity labels](feed-identity-labels.md) — feed-visible names use first name + last initial; usernames remain raw only as handles, routes, profile identity, and backend identifiers.
 - [Resumable onboarding state](resumable-onboarding-state.md) — DNA profile is completion; canonical answers/activity reconcile resume, while local storage only caches step and prompt dismissal.
+- [Canonical profile identity](canonical-profile-identity.md) — first-time users confirm names + unique handle before DNA; trust server-managed confirmation, never Auth metadata or email-derived handles.

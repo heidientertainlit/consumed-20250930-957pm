@@ -14,7 +14,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "./lib/auth";
-import { ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
+import { IdentityAwareRoute, ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
 import { FeatureFlagsProvider, useFeatureFlags } from "@/lib/feature-flags";
 
 // Pages
@@ -296,7 +296,9 @@ function Router() {
 
           {/* Home feed is guest-accessible — Feed handles logged-out (guest) mode itself */}
           <Route path="/">
-            <Feed />
+            <IdentityAwareRoute>
+              <Feed />
+            </IdentityAwareRoute>
           </Route>
 
           <Route path="/quick-log">
@@ -323,7 +325,9 @@ function Router() {
 
           {/* Guest-accessible like "/" */}
           <Route path="/activity">
-            <Feed />
+            <IdentityAwareRoute>
+              <Feed />
+            </IdentityAwareRoute>
           </Route>
 
           <Route path="/notifications">
@@ -380,7 +384,9 @@ function Router() {
 
           <Route path="/room/join/:code">
             <RoomsGuard>
-              <PoolJoinPage />
+              <ProtectedRoute>
+                <PoolJoinPage />
+              </ProtectedRoute>
             </RoomsGuard>
           </Route>
 

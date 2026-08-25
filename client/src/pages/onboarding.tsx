@@ -13,6 +13,11 @@ import { useFirstSessionHooks } from "@/components/first-session-hooks";
 import { DnaShareExperience } from "@/components/dna-share-experience";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
+import {
+  hasConfirmedProfileIdentity,
+  normalizeUsername,
+  USERNAME_PATTERN,
+} from "@/lib/profile-identity";
 
 const DEBATE_POOL_ID = "9d861d7f-2afc-40a8-b132-a78626739347";
 
@@ -446,11 +451,173 @@ export default function OnboardingPage() {
   const [showTenPrompt, setShowTenPrompt] = useState(false);
   const [tenPromptShown, setTenPromptShown] = useState(false);
   const [showDnaShare, setShowDnaShare] = useState(false);
+  const [identityLoading, setIdentityLoading] = useState(true);
+  const [identityRequired, setIdentityRequired] = useState(false);
+  const [identityFirstName, setIdentityFirstName] = useState("");
+  const [identityLastName, setIdentityLastName] = useState("");
+  const [identityUsername, setIdentityUsername] = useState("");
+  const [identityUsernameStatus, setIdentityUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+  const [identityError, setIdentityError] = useState<string | null>(null);
+  const [identitySaving, setIdentitySaving] = useState(false);
   const pendingSaves = useRef<Promise<void> | null>(null);
+  const usernameCheckRequest = useRef(0);
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
   }, [step]);
+
+  useEffect(() => {
+    if (authLoading || !user?.id) return;
+    let cancelled = false;
+
+    const loadIdentity = async () => {
+      const [profileResult, dnaResult] = await Promise.all([
+        supabase
+          .from("users")
+          .select("first_name, last_name, user_name, identity_confirmed_at")
+          .eq("id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("dna_profiles")
+          .select("user_id")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
+      if (cancelled) return;
+
+      if (dnaResult.data || hasConfirmedProfileIdentity(profileResult.data)) {
+        setIdentityRequired(false);
+        setIdentityLoading(false);
+        return;
+      }
+
+      const metadata = user.user_metadata || {};
+      const fullName = String(metadata.full_name || metadata.name || "").trim().split(/\s+/);
+      const firstName = String(
+        profileResult.data?.first_name
+        || metadata.first_name
+        || metadata.given_name
+        || fullName[0]
+        || "",
+      ).trim();
+      const lastName = String(
+        profileResult.data?.last_name
+        || metadata.last_name
+        || metadata.family_name
+        || fullName.slice(1).join(" ")
+        || "",
+      ).trim();
+      const suggestedUsername = normalizeUsername(
+        profileResult.data?.user_name
+        || metadata.user_name
+        || user.email?.split("@")[0]
+        || "",
+      );
+
+      setIdentityFirstName(firstName);
+      setIdentityLastName(lastName);
+      setIdentityUsername(suggestedUsername);
+      setIdentityRequired(true);
+      setIdentityLoading(false);
+    };
+
+    void loadIdentity().catch((error) => {
+      console.error("[onboarding identity]", error);
+      if (!cancelled) {
+        setIdentityRequired(true);
+        setIdentityLoading(false);
+        setIdentityError("We couldn't load your profile details. You can still enter them below.");
+      }
+    });
+    return () => { cancelled = true; };
+  }, [authLoading, user]);
+
+  useEffect(() => {
+    if (!identityRequired || !session?.access_token) return;
+    const username = normalizeUsername(identityUsername);
+    if (!USERNAME_PATTERN.test(username)) {
+      setIdentityUsernameStatus("idle");
+      return;
+    }
+
+    const requestId = ++usernameCheckRequest.current;
+    setIdentityUsernameStatus("checking");
+    const timeout = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/complete-profile`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ action: "check", username }),
+        });
+        if (requestId !== usernameCheckRequest.current) return;
+        setIdentityUsernameStatus(response.ok ? "available" : "taken");
+      } catch {
+        if (requestId === usernameCheckRequest.current) setIdentityUsernameStatus("idle");
+      }
+    }, 350);
+    return () => window.clearTimeout(timeout);
+  }, [identityRequired, identityUsername, session?.access_token]);
+
+  const submitIdentity = async () => {
+    if (identitySaving || !session?.access_token) return;
+    const firstName = identityFirstName.trim();
+    const lastName = identityLastName.trim();
+    const username = normalizeUsername(identityUsername);
+    if (!firstName || !lastName) {
+      setIdentityError("Please enter your first and last name.");
+      return;
+    }
+    if (!USERNAME_PATTERN.test(username)) {
+      setIdentityError("Username must be 3-20 characters using only letters, numbers, and underscores.");
+      return;
+    }
+
+    setIdentitySaving(true);
+    setIdentityError(null);
+    try {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/complete-profile`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          username,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (response.status === 409) setIdentityUsernameStatus("taken");
+        throw new Error(result.error || "We couldn't save your profile.");
+      }
+
+      const { error: metadataSyncError } = await supabase.auth.updateUser({
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+          user_name: username,
+          display_name: `${firstName} ${lastName}`,
+        },
+      });
+      if (metadataSyncError) {
+        console.warn("[onboarding identity metadata sync]", metadataSyncError);
+      }
+      setIdentityUsername(username);
+      setIdentityUsernameStatus("available");
+      setIdentityRequired(false);
+      saveOnboardingProgress(user?.id, "debate");
+      setStep("debate");
+    } catch (error) {
+      setIdentityError(error instanceof Error ? error.message : "We couldn't save your profile. Please try again.");
+    } finally {
+      setIdentitySaving(false);
+    }
+  };
 
   const waitForPendingSaves = async () => {
     // Ensure background onboarding writes (ratings, list adds) land before the
@@ -1021,10 +1188,111 @@ export default function OnboardingPage() {
     </div>
   );
 
-  if (authLoading)
+  if (authLoading || identityLoading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900">
         <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+
+  if (identityRequired)
+    return (
+      <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
+        <div className="w-full max-w-[430px] flex flex-col bg-white">
+          <div
+            className="px-6 pt-12 pb-10 text-white text-center"
+            style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}
+          >
+            <CircleUser className="mx-auto text-purple-200" size={38} />
+            <h1 className="mt-4 text-[28px] leading-tight font-bold" style={{ fontFamily: "Poppins, sans-serif" }}>
+              First, let’s set up your profile
+            </h1>
+            <p className="mx-auto mt-3 max-w-[320px] text-sm leading-relaxed text-white/70">
+              Your name and username help friends recognize and find you on Consumed.
+            </p>
+          </div>
+
+          <div className="flex-1 px-6 py-8">
+            <div className="grid grid-cols-2 gap-3">
+              <label className="text-sm font-semibold text-gray-700">
+                First name
+                <input
+                  value={identityFirstName}
+                  onChange={(event) => setIdentityFirstName(event.target.value)}
+                  autoComplete="given-name"
+                  maxLength={50}
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-base text-gray-900 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                  data-testid="onboarding-first-name"
+                />
+              </label>
+              <label className="text-sm font-semibold text-gray-700">
+                Last name
+                <input
+                  value={identityLastName}
+                  onChange={(event) => setIdentityLastName(event.target.value)}
+                  autoComplete="family-name"
+                  maxLength={50}
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-base text-gray-900 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                  data-testid="onboarding-last-name"
+                />
+              </label>
+            </div>
+
+            <label className="mt-6 block text-sm font-semibold text-gray-700">
+              Username
+              <div className="relative mt-2">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">@</span>
+                <input
+                  value={identityUsername}
+                  onChange={(event) => {
+                    setIdentityUsername(normalizeUsername(event.target.value));
+                    setIdentityError(null);
+                  }}
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  maxLength={20}
+                  className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-8 pr-3 text-base text-gray-900 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                  data-testid="onboarding-username"
+                />
+              </div>
+            </label>
+            <div className="mt-2 min-h-5 text-xs">
+              {identityUsernameStatus === "checking" && <span className="text-gray-500">Checking availability…</span>}
+              {identityUsernameStatus === "available" && <span className="font-semibold text-green-600">@{normalizeUsername(identityUsername)} is available</span>}
+              {identityUsernameStatus === "taken" && <span className="font-semibold text-red-600">That username is already taken</span>}
+              {identityUsernameStatus === "idle" && (
+                <span className="text-gray-400">3–20 letters, numbers, or underscores</span>
+              )}
+            </div>
+
+            {identityError && (
+              <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700">
+                {identityError}
+              </p>
+            )}
+
+            <button
+              onClick={submitIdentity}
+              disabled={
+                identitySaving
+                || !identityFirstName.trim()
+                || !identityLastName.trim()
+                || !USERNAME_PATTERN.test(normalizeUsername(identityUsername))
+                || identityUsernameStatus === "checking"
+                || identityUsernameStatus === "taken"
+              }
+              className="mt-8 w-full rounded-full py-3.5 text-[15px] font-bold text-white transition-all active:scale-95 disabled:opacity-40"
+              style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
+              data-testid="save-onboarding-identity"
+            >
+              {identitySaving ? "Saving profile…" : "Continue"}
+            </button>
+            <p className="mt-3 text-center text-xs text-gray-400">
+              You can update your name later. Your username is your unique handle.
+            </p>
+          </div>
+        </div>
       </div>
     );
 

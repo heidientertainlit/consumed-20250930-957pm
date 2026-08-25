@@ -10,6 +10,7 @@ import {
   resolveOnboardingResumeStep,
   saveOnboardingProgress,
 } from "./onboarding-progress";
+import { hasConfirmedProfileIdentity, normalizeUsername } from "./profile-identity";
 
 class MemoryStorage {
   private values = new Map<string, string>();
@@ -23,6 +24,12 @@ const storage = new MemoryStorage();
 Object.assign(globalThis, { localStorage: storage });
 
 test.beforeEach(() => storage.clear());
+
+test("profile identity requires names plus a confirmed username", () => {
+  assert.equal(normalizeUsername("  @Heidi_33 "), "heidi_33");
+  assert.equal(hasConfirmedProfileIdentity({ identity_confirmed_at: "2026-08-25T22:30:00Z" }), true);
+  assert.equal(hasConfirmedProfileIdentity({ identity_confirmed_at: null }), false);
+});
 
 test("keeps progress isolated per user and rejects malformed steps", () => {
   saveOnboardingProgress("alice", "love");

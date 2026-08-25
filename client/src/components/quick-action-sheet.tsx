@@ -1634,7 +1634,18 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   return (
     <>
     <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <SheetContent side="bottom" className="rounded-t-3xl !bg-white flex flex-col overflow-hidden p-0 !shadow-none !border-0 !outline-none" style={{ backgroundColor: 'white', height: '92svh', boxShadow: 'none', border: 'none' }}>
+      <SheetContent
+        side="bottom"
+        className="rounded-t-3xl !bg-white flex flex-col overflow-hidden p-0 !shadow-none !border-0 !outline-none"
+        style={{
+          backgroundColor: "white",
+          bottom: "var(--keyboard-bottom-offset, 0px)",
+          height: "min(92svh, calc(var(--visible-viewport-height, 100dvh) - 8px))",
+          maxHeight: "calc(var(--visible-viewport-height, 100dvh) - 8px)",
+          boxShadow: "none",
+          border: "none",
+        }}
+      >
         {/* ── Drag handle ── */}
         <div className="flex-shrink-0 pt-3 pb-1 flex items-center justify-center">
           <div className="w-10 h-1 rounded-full bg-gray-200" />
@@ -1649,7 +1660,13 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
 
     {/* ── Media search modal ── */}
     <Dialog open={isMediaModalOpen} onOpenChange={(open) => { setIsMediaModalOpen(open); if (!open) { setSearchQuery(""); setSearchResults([]); setMediaTypeFilter(null); } }}>
-      <DialogContent className="rounded-2xl !bg-white w-[calc(100vw-2rem)] max-w-md flex flex-col gap-3" style={{ maxHeight: '80vh' }}>
+      <DialogContent
+        className="rounded-2xl !bg-white w-[calc(100vw-2rem)] max-w-md flex flex-col min-h-0 overflow-hidden gap-3"
+        style={{
+          top: "calc(var(--visible-viewport-height, 100dvh) / 2)",
+          maxHeight: "min(80vh, calc(var(--visible-viewport-height, 100dvh) - 16px))",
+        }}
+      >
         <DialogHeader className="pb-0">
           <DialogTitle className="text-base font-semibold text-gray-900">Add media</DialogTitle>
         </DialogHeader>
@@ -1702,7 +1719,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           <p className="text-xs text-purple-600 px-1 pb-1">Showing results for "{correctedQuery}"</p>
         )}
         {searchResults.length > 0 && (
-          <div className="overflow-y-auto border border-gray-100 rounded-xl flex-1 min-h-0">
+          <div
+            className="overflow-y-auto overscroll-contain border border-gray-100 rounded-xl flex-1 min-h-0 [-webkit-overflow-scrolling:touch]"
+            style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))" }}
+          >
             {(mediaTypeFilter
               ? searchResults.filter(r => r.type === mediaTypeFilter || (mediaTypeFilter === 'book' && r.type === 'book_series'))
               : searchResults
