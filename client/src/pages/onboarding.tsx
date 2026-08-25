@@ -1680,26 +1680,28 @@ export default function OnboardingPage() {
         {generatedProfile?.profile_text && (
           <p className="mt-5 text-left text-sm leading-relaxed text-gray-700">{generatedProfile.profile_text}</p>
         )}
-        <button
-          onClick={() => setShowDnaShare(true)}
-          className="w-full mt-6 py-3 rounded-full border border-purple-200 bg-purple-50 font-semibold text-[14px] text-purple-700 transition-all active:scale-95 flex items-center justify-center gap-2"
-        >
-          <Share2 size={16} />
-          Share your DNA
-        </button>
-        <button
-          onClick={() => completeAndNavigate("/activity")}
-          className="w-full mt-7 py-3.5 rounded-full font-bold text-[15px] text-white transition-all active:scale-95"
-          style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
-        >
-          See what my friends are consuming
-        </button>
-        <button
-          onClick={() => completeAndNavigate("/profile")}
-          className="w-full mt-3.5 py-3.5 rounded-full border border-purple-200 bg-white font-bold text-[15px] text-purple-700 transition-all active:scale-95"
-        >
-          See my full DNA profile
-        </button>
+        <div className="mt-7 flex flex-col gap-3.5">
+          <button
+            onClick={() => completeAndNavigate("/activity")}
+            className="w-full py-3.5 rounded-full font-bold text-[15px] text-white transition-all active:scale-95"
+            style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
+          >
+            See what my friends are consuming
+          </button>
+          <button
+            onClick={() => completeAndNavigate("/profile")}
+            className="w-full py-3.5 rounded-full border border-purple-200 bg-white font-bold text-[15px] text-purple-700 transition-all active:scale-95"
+          >
+            See my full DNA profile
+          </button>
+          <button
+            onClick={() => setShowDnaShare(true)}
+            className="w-full py-3 rounded-full border border-purple-200 bg-purple-50 font-semibold text-[14px] text-purple-700 transition-all active:scale-95 flex items-center justify-center gap-2"
+          >
+            <Share2 size={16} />
+            Share your DNA
+          </button>
+        </div>
       </div>
       {showDnaShare && user?.id && (
         <DnaShareExperience userId={user.id} onClose={() => setShowDnaShare(false)} />
