@@ -1,7 +1,11 @@
 PODS:
   - Capacitor (8.0.1):
     - CapacitorCordova
+  - CapacitorApp (8.1.0):
+    - Capacitor
   - CapacitorCordova (8.0.1)
+  - CapacitorKeyboard (8.0.1):
+    - Capacitor
   - CordovaPluginsStatic (7.4.5):
     - CapacitorCordova
     - OneSignalXCFramework (= 5.4.1)
@@ -54,7 +58,9 @@ PODS:
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
   - CordovaPluginsStatic (from `../capacitor-cordova-ios-plugins`)
 
 SPEC REPOS:
@@ -64,17 +70,23 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Capacitor:
     :path: "../../node_modules/@capacitor/ios"
+  CapacitorApp:
+    :path: "../../node_modules/@capacitor/app"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
+  CapacitorKeyboard:
+    :path: "../../node_modules/@capacitor/keyboard"
   CordovaPluginsStatic:
     :path: "../capacitor-cordova-ios-plugins"
 
 SPEC CHECKSUMS:
   Capacitor: ff35b0f66370b84aa238251b35b91886a3207c16
+  CapacitorApp: 449ffe26375e96f8aaaee625ac6e01e5c57c8650
   CapacitorCordova: 0d65b9bb74e995dcecb9463f34f1af2aba6f955c
+  CapacitorKeyboard: 867eb4b3c901d9bb5c3d0c93b546185d52484e19
   CordovaPluginsStatic: 1762246ad73a4724e566fa1d9bf83cc24351d70b
   OneSignalXCFramework: 0b85a8d949247f80809a9d5598200cc263591129
 
-PODFILE CHECKSUM: 289fe2617e7d18ebeee80819fca75064b3ad7dcb
+PODFILE CHECKSUM: 2f02fbb4a72e364884247a11a5942b752c78743d
 
 COCOAPODS: 1.16.2
