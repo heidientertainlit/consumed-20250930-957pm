@@ -1394,7 +1394,7 @@ export default function OnboardingPage() {
               What do you love?
             </h2>
             <p className="text-[14px] text-gray-400 mt-1 mb-4">
-              Tell us about the things you love. <span className="text-gray-300">(optional)</span>
+              Anything goes. Tell us what keeps you consumed.
             </p>
             <div className="relative">
               <textarea
@@ -1407,7 +1407,7 @@ export default function OnboardingPage() {
               <Feather size={16} className="absolute bottom-4 right-4 text-gray-400 pointer-events-none" />
             </div>
             <p className="mt-2 text-[12px] leading-relaxed text-gray-400">
-              <span className="font-semibold text-gray-500">Ex:</span> comfort shows you watch on repeat, your top 5 movies, an album you can&apos;t live without, or your favorite sports team.
+              <span className="font-semibold text-gray-500">Need ideas?</span> Your comfort show. A movie you&apos;ll defend forever. A book you couldn&apos;t put down. An album on repeat. Your team. Your current obsession.
             </p>
             {saveError && (
               <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-medium text-red-700">
