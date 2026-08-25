@@ -97,10 +97,21 @@ export default function LoginPage() {
       setSubmitting(false);
       return;
     }
+
+    const normalizedEmail = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      setSubmitting(false);
+      return;
+    }
     
     setSubmitting(true);
     
-    const { error, data } = await signUp(email, password, {
+    const { error, data } = await signUp(normalizedEmail, password, {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       username: username.trim()
@@ -376,7 +387,7 @@ export default function LoginPage() {
             </TabsContent>
             
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-3">
+              <form onSubmit={handleSignUp} noValidate className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -386,6 +397,7 @@ export default function LoginPage() {
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       required
+                      autoComplete="given-name"
                       placeholder="First name"
                       data-testid="input-signup-firstname"
                       className={inputClasses}
@@ -399,6 +411,7 @@ export default function LoginPage() {
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       required
+                      autoComplete="family-name"
                       placeholder="Last name"
                       data-testid="input-signup-lastname"
                       className={inputClasses}
@@ -413,6 +426,7 @@ export default function LoginPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
+                    autoComplete="username"
                     placeholder="Username"
                     data-testid="input-signup-username"
                     className={inputClasses}
@@ -427,6 +441,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    autoComplete="email"
                     placeholder="Email address"
                     data-testid="input-signup-email"
                     className={inputClasses}
@@ -440,6 +455,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    autoComplete="new-password"
                     placeholder="Password"
                     data-testid="input-signup-password"
                     className={inputClasses + " pr-12"}
