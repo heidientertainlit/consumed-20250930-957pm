@@ -322,6 +322,71 @@ const TITLE_GENRES: Record<string, string[]> = {
   "eternal sunshine": ["Pop", "R&B"],
 };
 
+type TitleSuggestion = {
+  title: string;
+  format: string;
+  genres: string[];
+};
+
+// Real titles used as prompts when a user's selected format + topic does not
+// have enough matches in the smaller curated title rows above.
+const DNA_TITLE_SUGGESTIONS: TitleSuggestion[] = [
+  { title: "Making a Murderer", format: "TV Shows", genres: ["True Crime", "Documentaries"] },
+  { title: "The Jinx", format: "TV Shows", genres: ["True Crime", "Documentaries"] },
+  { title: "The Tinder Swindler", format: "Movies", genres: ["True Crime", "Documentaries"] },
+  { title: "American Murder: The Family Next Door", format: "Movies", genres: ["True Crime", "Documentaries"] },
+  { title: "Abducted in Plain Sight", format: "Movies", genres: ["True Crime", "Documentaries"] },
+  { title: "Free Solo", format: "Movies", genres: ["Documentaries", "Sports"] },
+  { title: "Icarus", format: "Movies", genres: ["Documentaries", "Sports"] },
+  { title: "The Last Dance", format: "TV Shows", genres: ["Documentaries", "Sports"] },
+  { title: "Mad Max: Fury Road", format: "Movies", genres: ["Action", "Thriller"] },
+  { title: "John Wick", format: "Movies", genres: ["Action", "Thriller"] },
+  { title: "The Dark Knight", format: "Movies", genres: ["Action", "Drama"] },
+  { title: "The Bourne Identity", format: "Movies", genres: ["Action", "Thriller"] },
+  { title: "Reacher", format: "TV Shows", genres: ["Action", "Thriller"] },
+  { title: "The Boys", format: "TV Shows", genres: ["Action", "Drama"] },
+  { title: "The Hunger Games", format: "Books", genres: ["Action", "Drama"] },
+  { title: "Elden Ring", format: "Gaming", genres: ["Action", "Fantasy"] },
+  { title: "Red Dead Redemption 2", format: "Gaming", genres: ["Action", "Drama"] },
+  { title: "Pride and Prejudice", format: "Books", genres: ["Romance", "Drama"] },
+  { title: "Normal People", format: "TV Shows", genres: ["Romance", "Drama"] },
+  { title: "Little Women", format: "Movies", genres: ["Drama", "Romance"] },
+  { title: "Blade Runner 2049", format: "Movies", genres: ["Sci-Fi", "Drama"] },
+  { title: "The Expanse", format: "TV Shows", genres: ["Sci-Fi", "Drama"] },
+  { title: "The Lord of the Rings: The Fellowship of the Ring", format: "Movies", genres: ["Fantasy", "Action"] },
+  { title: "The Girl with the Dragon Tattoo", format: "Books", genres: ["Mystery", "Thriller"] },
+  { title: "Bridesmaids", format: "Movies", genres: ["Comedy"] },
+  { title: "Schitt's Creek", format: "TV Shows", genres: ["Comedy"] },
+  { title: "Hereditary", format: "Movies", genres: ["Horror"] },
+  { title: "The Conjuring", format: "Movies", genres: ["Horror"] },
+  { title: "In Cold Blood", format: "Books", genres: ["True Crime", "Nonfiction"] },
+  { title: "Sapiens", format: "Books", genres: ["Nonfiction"] },
+];
+
+const TITLE_SUGGESTION_ALIASES: Record<string, string[]> = {
+  "Romance": ["romance", "rom com", "chick lit"],
+  "Sci-Fi": ["sci fi", "science fiction"],
+  "Documentaries": ["documentaries", "documentary", "docs", "nonfiction"],
+  "Sports": ["sports", "sports talk"],
+  "True Crime": ["true crime"],
+  "Thriller": ["thriller", "thrillers", "mystery"],
+  "Mystery": ["mystery"],
+};
+
+const normalizeSuggestionText = (value: string) =>
+  value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+const titleSuggestionCatalog: TitleSuggestion[] = [
+  ...DNA_TITLE_SUGGESTIONS,
+  ...lovedRows.flatMap((row) =>
+    row.items.map((item) => ({
+      title: item.title,
+      format: row.label,
+      genres: TITLE_GENRES[item.title] || [],
+    })),
+  ),
+];
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
 type Step = "debate" | "interests" | "loved" | "love" | "drivers" | "generating" | "reveal";
@@ -1331,9 +1396,34 @@ export default function OnboardingPage() {
     );
 
   const titlesShapingDNA = existingTitles.length > 0 ? existingTitles : loved;
-  const genreSuggestions = roomOptions
-    .filter((room) => rooms.includes(room.id))
-    .map((room) => room.name);
+  const selectedTopicText = rooms
+    .flatMap((roomId) => {
+      const room = roomOptions.find((option) => option.id === roomId);
+      return [room?.name, ROOM_GENRES[roomId]];
+    })
+    .filter((topic): topic is string => Boolean(topic))
+    .join(" ");
+  const normalizedSelectedTopics = normalizeSuggestionText(selectedTopicText);
+  const alreadyShapingTitles = new Set(titlesShapingDNA.map((title) => normalizeSuggestionText(title)));
+  const mediaTitleSuggestions = (() => {
+    if (mediaTypes.length === 0) return [];
+
+    const candidates = titleSuggestionCatalog
+      .filter((suggestion) => mediaTypes.includes(suggestion.format))
+      .filter((suggestion) => !alreadyShapingTitles.has(normalizeSuggestionText(suggestion.title)));
+    const genreMatches = candidates.filter((suggestion) =>
+      suggestion.genres.some((genre) => {
+        const normalizedGenre = normalizeSuggestionText(genre);
+        const aliases = TITLE_SUGGESTION_ALIASES[genre] || [normalizedGenre];
+        return [normalizedGenre, ...aliases]
+          .some((alias) => normalizedSelectedTopics.includes(normalizeSuggestionText(alias)));
+      }),
+    );
+
+    // Prefer titles matching the selected topics, but keep useful format-based
+    // suggestions visible when the curated genre set has no exact match.
+    return (genreMatches.length > 0 ? genreMatches : candidates).slice(0, 6);
+  })();
   const driversQuestion = questionByOrder(5);
 
   const dnaHeader = (currentStep: number, stepLabel: string, onBack?: () => void) => (
@@ -1405,26 +1495,27 @@ export default function OnboardingPage() {
               />
               <Feather size={16} className="absolute bottom-4 right-4 text-gray-400 pointer-events-none" />
             </div>
-            {genreSuggestions.length > 0 && (
+            {mediaTitleSuggestions.length > 0 && (
               <div className="mt-4">
-                <p className="text-[12px] font-semibold text-gray-500 mb-2">Based on your picks</p>
+                <p className="text-[12px] font-semibold text-gray-500 mb-2">Suggestions based on your picks</p>
                 <div className="flex flex-wrap gap-2">
-                  {genreSuggestions.map((suggestion) => (
+                  {mediaTitleSuggestions.map((suggestion) => (
                     <button
-                      key={suggestion}
+                      key={`${suggestion.format}-${suggestion.title}`}
                       type="button"
                       onClick={() => {
                         setLoveNote((current) => {
-                          if (current.toLowerCase().includes(suggestion.toLowerCase())) return current;
+                          if (current.toLowerCase().includes(suggestion.title.toLowerCase())) return current;
                           const trimmed = current.trimEnd();
                           return trimmed
-                            ? `${trimmed}${/[.!?]$/.test(trimmed) ? " " : ", "}${suggestion}`
-                            : suggestion;
+                            ? `${trimmed}${/[.!?]$/.test(trimmed) ? " " : ", "}${suggestion.title}`
+                            : suggestion.title;
                         });
                       }}
                       className="rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 text-[12px] font-medium text-purple-700 transition-colors hover:bg-purple-100 active:scale-95"
+                      data-testid="dna-title-suggestion"
                     >
-                      + {suggestion}
+                      + {suggestion.title}
                     </button>
                   ))}
                 </div>
