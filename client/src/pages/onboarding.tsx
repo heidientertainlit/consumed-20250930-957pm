@@ -1335,6 +1335,9 @@ export default function OnboardingPage() {
     );
 
   const titlesShapingDNA = existingTitles.length > 0 ? existingTitles : loved;
+  const genreSuggestions = roomOptions
+    .filter((room) => rooms.includes(room.id))
+    .map((room) => room.name);
   const driversQuestion = questionByOrder(5);
 
   const dnaHeader = (currentStep: number, stepLabel: string, onBack?: () => void) => (
@@ -1357,7 +1360,7 @@ export default function OnboardingPage() {
         </h1>
       </div>
       <p className="text-white/50 text-xs mt-3 text-center">{stepLabel}</p>
-      <div className="flex items-center gap-2 mt-3" aria-label={stepLabel}>
+      <div className="flex items-center justify-center gap-2 mt-3" aria-label={stepLabel}>
         {[1, 2, 3, 4, 5].map((stepNumber) => (
           <span
             key={stepNumber}
@@ -1388,7 +1391,7 @@ export default function OnboardingPage() {
             if (resumeDNA) leaveForNow();
             else goToStep("loved");
           })}
-          <div className="flex-1 px-5 pt-6 pb-4 bg-white">
+          <div className="flex-1 px-6 pt-6 pb-4 bg-white">
             <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 mb-1.5">TELL US ANYTHING</p>
             <h2 className="text-[26px] leading-[1.15] font-black text-gray-900 mb-1" style={{ fontFamily: "Poppins, sans-serif" }}>
               What do you love?
@@ -1406,6 +1409,31 @@ export default function OnboardingPage() {
               />
               <Feather size={16} className="absolute bottom-4 right-4 text-gray-400 pointer-events-none" />
             </div>
+            {genreSuggestions.length > 0 && (
+              <div className="mt-4">
+                <p className="text-[12px] font-semibold text-gray-500 mb-2">Based on your picks</p>
+                <div className="flex flex-wrap gap-2">
+                  {genreSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => {
+                        setLoveNote((current) => {
+                          if (current.toLowerCase().includes(suggestion.toLowerCase())) return current;
+                          const trimmed = current.trimEnd();
+                          return trimmed
+                            ? `${trimmed}${/[.!?]$/.test(trimmed) ? " " : ", "}${suggestion}`
+                            : suggestion;
+                        });
+                      }}
+                      className="rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 text-[12px] font-medium text-purple-700 transition-colors hover:bg-purple-100 active:scale-95"
+                    >
+                      + {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <p className="mt-2 text-[12px] leading-relaxed text-gray-400">
               <span className="font-semibold text-gray-500">Need ideas?</span> Your comfort show. A movie you&apos;ll defend forever. A book you couldn&apos;t put down. An album on repeat. Your team. Your current obsession.
             </p>
@@ -1441,7 +1469,7 @@ export default function OnboardingPage() {
               </div>
             )}
           </div>
-          <div className="px-5 pb-10 bg-white">
+          <div className="px-6 pb-10 bg-white">
             <button
               onClick={submitLoveStep}
               disabled={saving}
