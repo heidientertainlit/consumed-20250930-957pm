@@ -1679,14 +1679,17 @@ export default function OnboardingPage() {
           <p className="mt-5 text-sm leading-relaxed text-gray-700">{generatedProfile.profile_text}</p>
         )}
         <button
-          onClick={() => completeAndNavigate("/profile")}
+          onClick={() => completeAndNavigate("/activity")}
           className="w-full mt-7 py-3.5 rounded-full font-bold text-[15px] text-white transition-all active:scale-95"
           style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
         >
-          See my DNA profile
+          See what my friends are consuming
         </button>
-        <button onClick={() => completeAndNavigate("/activity")} className="mt-4 text-sm font-medium text-purple-700">
-          Go to feed
+        <button
+          onClick={() => completeAndNavigate("/profile")}
+          className="w-full mt-3.5 py-3.5 rounded-full border border-purple-200 bg-white font-bold text-[15px] text-purple-700 transition-all active:scale-95"
+        >
+          See my full DNA profile
         </button>
       </div>
     </div>
