@@ -2,7 +2,10 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { hasConfirmedProfileIdentity } from "@/lib/profile-identity";
+import {
+  loadProfileIdentity,
+  type ResolvedProfileIdentity,
+} from "@/lib/profile-identity-resolver";
 import {
   isOnboardingComplete,
   markOnboardingComplete,
@@ -32,141 +35,153 @@ interface RouteGuardProps {
   children: React.ReactNode;
 }
 
-export function ProtectedRoute({ children }: RouteGuardProps) {
-  const { user, loading } = useAuth();
-  const [location, setLocation] = useLocation();
-  const [ready, setReady] = useState(false);
+function IdentityLoading({ label = "Loading..." }: { label?: string }) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <div className="text-white text-sm mt-4">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function IdentityLoadError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center px-6">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl">
+        <h1 className="text-xl font-bold text-gray-900">We couldn't load your profile</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Please try again. We won't send you through setup until we can verify your profile.
+        </p>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-6 w-full rounded-full bg-purple-600 py-3 text-sm font-bold text-white"
+        >
+          Try again
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function useResolvedIdentity(skip = false) {
+  const { user, session, loading } = useAuth();
+  const [identity, setIdentity] = useState<ResolvedProfileIdentity | null>(null);
+  const [identityError, setIdentityError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    setReady(false);
-
-    if (!loading && !user) {
-      const fullPath = window.location.pathname + window.location.search + window.location.hash;
-      if (fullPath !== '/login') {
-        sessionStorage.setItem('returnUrl', fullPath);
-      }
-      setLocation('/login');
+    if (loading || !user || !session?.access_token || skip) {
+      setIdentity(null);
+      setIdentityError(false);
       return;
     }
 
-    if (!loading && user) {
-      if (location.startsWith("/onboarding")) {
-        setReady(true);
-        return;
-      }
-
-      void supabase
-        .from("users")
-        .select("identity_confirmed_at")
-        .eq("id", user.id)
-        .maybeSingle()
-        .then((identityResult) => {
-          if (cancelled) return;
-          if (hasConfirmedProfileIdentity(identityResult.data)) {
-            setReady(true);
-          } else {
-            sessionStorage.setItem(
-              "identityReturnUrl",
-              window.location.pathname + window.location.search + window.location.hash,
-            );
-            setLocation("/onboarding");
-          }
-        });
-    }
+    setIdentity(null);
+    setIdentityError(false);
+    void loadProfileIdentity(user, session.access_token, { force: retryKey > 0 })
+      .then((result) => {
+        if (!cancelled) setIdentity(result);
+      })
+      .catch((error) => {
+        console.error("[identity route guard]", error);
+        if (!cancelled) setIdentityError(true);
+      });
     return () => { cancelled = true; };
-  }, [user, loading, location, setLocation]);
+  }, [loading, retryKey, session?.access_token, skip, user]);
 
-  if (loading || !ready) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <div className="text-white text-sm mt-4">Loading...</div>
-        </div>
-      </div>
-    );
+  return {
+    user,
+    loading,
+    identity,
+    identityError,
+    retryIdentity: () => setRetryKey((key) => key + 1),
+  };
+}
+
+export function ProtectedRoute({ children }: RouteGuardProps) {
+  const [location, setLocation] = useLocation();
+  const onOnboarding = location.startsWith("/onboarding");
+  const { user, loading, identity, identityError, retryIdentity } = useResolvedIdentity(onOnboarding);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      const fullPath = window.location.pathname + window.location.search + window.location.hash;
+      if (fullPath !== "/login") sessionStorage.setItem("returnUrl", fullPath);
+      setLocation("/login");
+      return;
+    }
+    if (!onOnboarding && identity && !identity.complete) {
+      sessionStorage.setItem(
+        "identityReturnUrl",
+        window.location.pathname + window.location.search + window.location.hash,
+      );
+      setLocation("/onboarding");
+    }
+  }, [identity, loading, onOnboarding, setLocation, user]);
+
+  if (loading || (!onOnboarding && user && !identity && !identityError)) {
+    return <IdentityLoading />;
   }
+  if (identityError) return <IdentityLoadError onRetry={retryIdentity} />;
 
   if (!user) {
     return null;
   }
 
+  if (!onOnboarding && !identity?.complete) return <IdentityLoading />;
   return <>{children}</>;
 }
 
 export function IdentityAwareRoute({ children }: RouteGuardProps) {
-  const { user, loading } = useAuth();
-  const [location, setLocation] = useLocation();
-  const [ready, setReady] = useState(false);
+  const [, setLocation] = useLocation();
+  const { user, loading, identity, identityError, retryIdentity } = useResolvedIdentity();
 
   useEffect(() => {
-    let cancelled = false;
-    if (loading) {
-      setReady(false);
-      return;
+    if (!loading && user && identity && !identity.complete) {
+      sessionStorage.setItem(
+        "identityReturnUrl",
+        window.location.pathname + window.location.search + window.location.hash,
+      );
+      setLocation("/onboarding");
     }
-    if (!user) {
-      setReady(true);
-      return;
-    }
-    if (location.startsWith("/onboarding")) {
-      setReady(true);
-      return;
-    }
+  }, [identity, loading, setLocation, user]);
 
-    setReady(false);
-    void supabase
-      .from("users")
-      .select("identity_confirmed_at")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then((identityResult) => {
-      if (cancelled) return;
-      if (hasConfirmedProfileIdentity(identityResult.data)) {
-        setReady(true);
-      } else {
-        sessionStorage.setItem(
-          "identityReturnUrl",
-          window.location.pathname + window.location.search + window.location.hash,
-        );
-        setLocation("/onboarding");
-      }
-    });
-    return () => { cancelled = true; };
-  }, [user, loading, location, setLocation]);
-
-  if (loading || !ready) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (loading || (user && !identity && !identityError)) return <IdentityLoading />;
+  if (identityError) return <IdentityLoadError onRetry={retryIdentity} />;
+  if (user && !identity?.complete) return <IdentityLoading />;
   return <>{children}</>;
 }
 
 export function PublicOnlyRoute({ children }: RouteGuardProps) {
-  const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
+  const { user, loading, identity, identityError, retryIdentity } = useResolvedIdentity();
+  const [redirectError, setRedirectError] = useState(false);
 
   useEffect(() => {
-    if (loading || !user) return;
+    if (loading || !user || !identity) return;
     let cancelled = false;
 
     const redirectAuthenticatedUser = async () => {
-      const [identityResult, dnaResult] = await Promise.all([
-        supabase.from("users").select("identity_confirmed_at").eq("id", user.id).maybeSingle(),
-        supabase.from("dna_profiles").select("user_id").eq("user_id", user.id).maybeSingle(),
-      ]);
+      const dnaResult = await supabase
+        .from("dna_profiles")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
       if (cancelled) return;
+      if (dnaResult.error) {
+        setRedirectError(true);
+        return;
+      }
 
       const dnaProfile = dnaResult.data;
       if (dnaProfile) markOnboardingComplete(user.id);
-      const hasIdentity = hasConfirmedProfileIdentity(identityResult.data);
-      const shouldOnboard = !hasIdentity;
 
-      if (shouldOnboard) {
+      if (!identity.complete) {
         sessionStorage.removeItem("returnUrl");
         setLocation("/onboarding");
         return;
@@ -183,18 +198,15 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
 
     void redirectAuthenticatedUser();
     return () => { cancelled = true; };
-  }, [user, loading, setLocation]);
+  }, [identity, loading, setLocation, user]);
 
-  if (loading || user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <div className="text-white text-sm mt-4">{loading ? "Loading..." : "Redirecting..."}</div>
-        </div>
-      </div>
-    );
+  if (identityError || redirectError) {
+    return <IdentityLoadError onRetry={() => {
+      setRedirectError(false);
+      retryIdentity();
+    }} />;
   }
+  if (loading || user) return <IdentityLoading label={loading ? "Loading..." : "Redirecting..."} />;
 
   return <>{children}</>;
 }

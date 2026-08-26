@@ -27,23 +27,53 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await authClient.auth.getUser();
     if (userError || !user?.email) return json({ error: "Unauthorized" }, 401);
 
-    const body = await req.json().catch(() => ({}));
-    const username = normalizeUsername(body.username);
-    if (!/^[a-z0-9_]{3,20}$/.test(username)) {
-      return json({ error: "Username must be 3-20 characters using only letters, numbers, and underscores." }, 400);
-    }
-
     const admin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
+    const body = await req.json().catch(() => ({}));
     const { data: existingProfile, error: lookupError } = await admin
       .from("users")
-      .select("id, user_name, identity_confirmed_at")
+      .select("id, first_name, last_name, user_name, identity_confirmed_at")
       .eq("id", user.id)
       .maybeSingle();
     if (lookupError) throw lookupError;
+
+    if (body.action === "confirm-existing") {
+      const existingUsername = normalizeUsername(existingProfile?.user_name);
+      const firstName = String(existingProfile?.first_name || "").trim();
+      const lastName = String(existingProfile?.last_name || "").trim();
+      if (
+        !existingProfile
+        || !firstName
+        || !lastName
+        || !/^[a-z0-9_]{3,20}$/.test(existingUsername)
+      ) {
+        return json({ error: "Your profile is missing required identity details." }, 422);
+      }
+      if (!existingProfile.identity_confirmed_at) {
+        const { error: confirmationError } = await admin
+          .from("users")
+          .update({ identity_confirmed_at: new Date().toISOString() })
+          .eq("id", user.id);
+        if (confirmationError) throw confirmationError;
+      }
+      return json({
+        available: true,
+        profile: {
+          first_name: firstName,
+          last_name: lastName,
+          user_name: existingUsername,
+          identity_confirmed_at: existingProfile.identity_confirmed_at || new Date().toISOString(),
+        },
+      });
+    }
+
+    const username = normalizeUsername(body.username);
+    if (!/^[a-z0-9_]{3,20}$/.test(username)) {
+      return json({ error: "Username must be 3-20 characters using only letters, numbers, and underscores." }, 400);
+    }
     if (
       existingProfile?.identity_confirmed_at
       && normalizeUsername(existingProfile.user_name) !== username
@@ -110,6 +140,7 @@ serve(async (req) => {
         first_name: firstName,
         last_name: lastName,
         user_name: username,
+        identity_confirmed_at: profileFields.identity_confirmed_at,
       },
     });
   } catch (error) {

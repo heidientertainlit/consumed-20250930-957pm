@@ -14,10 +14,13 @@ import { DnaShareExperience } from "@/components/dna-share-experience";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import {
-  hasConfirmedProfileIdentity,
   normalizeUsername,
   USERNAME_PATTERN,
 } from "@/lib/profile-identity";
+import {
+  cacheCompletedProfileIdentity,
+  loadProfileIdentity,
+} from "@/lib/profile-identity-resolver";
 
 const DEBATE_POOL_ID = "9d861d7f-2afc-40a8-b132-a78626739347";
 
@@ -460,6 +463,10 @@ export default function OnboardingPage() {
   const [identityError, setIdentityError] = useState<string | null>(null);
   const [identitySaving, setIdentitySaving] = useState(false);
   const [identityHasExistingDna, setIdentityHasExistingDna] = useState(false);
+  const [identityNeedsFirstName, setIdentityNeedsFirstName] = useState(false);
+  const [identityNeedsLastName, setIdentityNeedsLastName] = useState(false);
+  const [identityNeedsUsername, setIdentityNeedsUsername] = useState(false);
+  const [identityProvider, setIdentityProvider] = useState<"email" | "google" | "apple" | "unknown">("unknown");
   const [identityLookupError, setIdentityLookupError] = useState<string | null>(null);
   const [identityLookupRetryKey, setIdentityLookupRetryKey] = useState(0);
   const pendingSaves = useRef<Promise<void> | null>(null);
@@ -470,16 +477,14 @@ export default function OnboardingPage() {
   }, [step]);
 
   useEffect(() => {
-    if (authLoading || !user?.id) return;
+    if (authLoading || !user?.id || !session?.access_token) return;
     let cancelled = false;
 
     const loadIdentity = async () => {
-      const [profileResult, dnaResult] = await Promise.all([
-        supabase
-          .from("users")
-          .select("first_name, last_name, user_name, identity_confirmed_at")
-          .eq("id", user.id)
-          .maybeSingle(),
+      const [resolvedIdentity, dnaResult] = await Promise.all([
+        loadProfileIdentity(user, session.access_token, {
+          force: identityLookupRetryKey > 0,
+        }),
         supabase
           .from("dna_profiles")
           .select("user_id")
@@ -487,7 +492,7 @@ export default function OnboardingPage() {
           .maybeSingle(),
       ]);
       if (cancelled) return;
-      if (profileResult.error || dnaResult.error) {
+      if (dnaResult.error) {
         setIdentityRequired(false);
         setIdentityLookupError("We couldn't verify your existing profile yet. Please try again so we don't restart any completed setup.");
         setIdentityLoading(false);
@@ -496,38 +501,19 @@ export default function OnboardingPage() {
       setIdentityLookupError(null);
       setIdentityHasExistingDna(Boolean(dnaResult.data));
 
-      if (hasConfirmedProfileIdentity(profileResult.data)) {
+      if (resolvedIdentity.complete) {
         setIdentityRequired(false);
         setIdentityLoading(false);
         return;
       }
 
-      const metadata = user.user_metadata || {};
-      const fullName = String(metadata.full_name || metadata.name || "").trim().split(/\s+/);
-      const firstName = String(
-        profileResult.data?.first_name
-        || metadata.first_name
-        || metadata.given_name
-        || fullName[0]
-        || "",
-      ).trim();
-      const lastName = String(
-        profileResult.data?.last_name
-        || metadata.last_name
-        || metadata.family_name
-        || fullName.slice(1).join(" ")
-        || "",
-      ).trim();
-      const suggestedUsername = normalizeUsername(
-        profileResult.data?.user_name
-        || metadata.user_name
-        || user.email?.split("@")[0]
-        || "",
-      );
-
-      setIdentityFirstName(firstName);
-      setIdentityLastName(lastName);
-      setIdentityUsername(suggestedUsername);
+      setIdentityFirstName(resolvedIdentity.defaults.firstName);
+      setIdentityLastName(resolvedIdentity.defaults.lastName);
+      setIdentityUsername(resolvedIdentity.defaults.username);
+      setIdentityNeedsFirstName(resolvedIdentity.defaults.missingFirstName);
+      setIdentityNeedsLastName(resolvedIdentity.defaults.missingLastName);
+      setIdentityNeedsUsername(resolvedIdentity.defaults.missingUsername);
+      setIdentityProvider(resolvedIdentity.provider);
       setIdentityRequired(true);
       setIdentityLoading(false);
     };
@@ -535,13 +521,13 @@ export default function OnboardingPage() {
     void loadIdentity().catch((error) => {
       console.error("[onboarding identity]", error);
       if (!cancelled) {
-        setIdentityRequired(true);
+        setIdentityRequired(false);
         setIdentityLoading(false);
-        setIdentityError("We couldn't load your profile details. You can still enter them below.");
+        setIdentityLookupError("We couldn't verify your existing profile yet. Please try again so we don't restart any completed setup.");
       }
     });
     return () => { cancelled = true; };
-  }, [authLoading, identityLookupRetryKey, user]);
+  }, [authLoading, identityLookupRetryKey, session?.access_token, user]);
 
   useEffect(() => {
     if (!identityRequired || !session?.access_token) return;
@@ -573,7 +559,7 @@ export default function OnboardingPage() {
   }, [identityRequired, identityUsername, session?.access_token]);
 
   const submitIdentity = async () => {
-    if (identitySaving || !session?.access_token) return;
+    if (identitySaving || !session?.access_token || !user) return;
     const firstName = identityFirstName.trim();
     const lastName = identityLastName.trim();
     const username = normalizeUsername(identityUsername);
@@ -606,6 +592,12 @@ export default function OnboardingPage() {
         if (response.status === 409) setIdentityUsernameStatus("taken");
         throw new Error(result.error || "We couldn't save your profile.");
       }
+      cacheCompletedProfileIdentity(user, {
+        first_name: firstName,
+        last_name: lastName,
+        user_name: username,
+        identity_confirmed_at: result.profile?.identity_confirmed_at || new Date().toISOString(),
+      });
 
       const { error: metadataSyncError } = await supabase.auth.updateUser({
         data: {
@@ -1242,23 +1234,32 @@ export default function OnboardingPage() {
 
   if (identityRequired)
     return (
-      <div className="min-h-screen w-full flex items-stretch justify-center bg-white">
-        <div className="w-full max-w-[430px] flex flex-col bg-white">
-          <div
-            className="px-6 pt-12 pb-10 text-white text-center"
-            style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}
-          >
-            <CircleUser className="mx-auto text-purple-200" size={38} />
-            <h1 className="mt-4 text-[28px] leading-tight font-bold" style={{ fontFamily: "Poppins, sans-serif" }}>
-              First, let’s set up your profile
+      <div
+        className="min-h-screen w-full flex items-center justify-center px-5 py-8 text-white"
+        style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}
+      >
+        <div className="w-full max-w-[430px]">
+          <div className="text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-purple-300/30 bg-purple-400/10">
+              <Sparkles className="text-purple-200" size={28} />
+            </div>
+            <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.22em] text-purple-200">
+              Welcome to Consumed
+            </p>
+            <h1 className="mt-2 text-[28px] leading-tight font-bold" style={{ fontFamily: "Poppins, sans-serif" }}>
+              {identityNeedsUsername ? "Choose your username" : "Finish your profile"}
             </h1>
-            <p className="mx-auto mt-3 max-w-[320px] text-sm leading-relaxed text-white/70">
-              Your name and username help friends recognize and find you on Consumed.
+            <p className="mx-auto mt-3 max-w-[330px] text-sm leading-relaxed text-white/70">
+              {identityNeedsUsername
+                ? "This is how friends will find you before you discover your Entertainment DNA."
+                : "We just need the missing details below before you discover your Entertainment DNA."}
             </p>
           </div>
 
-          <div className="flex-1 px-6 py-8">
-            <div className="grid grid-cols-2 gap-3">
+          <div className="mt-8 rounded-3xl border border-white/10 bg-white p-6 text-gray-900 shadow-2xl">
+            {(identityNeedsFirstName || identityNeedsLastName) && (
+              <div className={`grid gap-3 ${identityNeedsFirstName && identityNeedsLastName ? "grid-cols-2" : "grid-cols-1"}`}>
+              {identityNeedsFirstName && (
               <label className="text-sm font-semibold text-gray-700">
                 First name
                 <input
@@ -1270,6 +1271,8 @@ export default function OnboardingPage() {
                   data-testid="onboarding-first-name"
                 />
               </label>
+              )}
+              {identityNeedsLastName && (
               <label className="text-sm font-semibold text-gray-700">
                 Last name
                 <input
@@ -1281,9 +1284,12 @@ export default function OnboardingPage() {
                   data-testid="onboarding-last-name"
                 />
               </label>
+              )}
             </div>
+            )}
 
-            <label className="mt-6 block text-sm font-semibold text-gray-700">
+            {identityNeedsUsername && (
+            <label className={`${identityNeedsFirstName || identityNeedsLastName ? "mt-6" : ""} block text-sm font-semibold text-gray-700`}>
               Username
               <div className="relative mt-2">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">@</span>
@@ -1302,6 +1308,8 @@ export default function OnboardingPage() {
                 />
               </div>
             </label>
+            )}
+            {identityNeedsUsername && (
             <div className="mt-2 min-h-5 text-xs">
               {identityUsernameStatus === "checking" && <span className="text-gray-500">Checking availability…</span>}
               {identityUsernameStatus === "available" && <span className="font-semibold text-green-600">@{normalizeUsername(identityUsername)} is available</span>}
@@ -1310,6 +1318,7 @@ export default function OnboardingPage() {
                 <span className="text-gray-400">3–20 letters, numbers, or underscores</span>
               )}
             </div>
+            )}
 
             {identityError && (
               <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700">
@@ -1324,8 +1333,8 @@ export default function OnboardingPage() {
                 || !identityFirstName.trim()
                 || !identityLastName.trim()
                 || !USERNAME_PATTERN.test(normalizeUsername(identityUsername))
-                || identityUsernameStatus === "checking"
-                || identityUsernameStatus === "taken"
+                || (identityNeedsUsername && identityUsernameStatus === "checking")
+                || (identityNeedsUsername && identityUsernameStatus === "taken")
               }
               className="mt-8 w-full rounded-full py-3.5 text-[15px] font-bold text-white transition-all active:scale-95 disabled:opacity-40"
               style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
@@ -1334,7 +1343,9 @@ export default function OnboardingPage() {
               {identitySaving ? "Saving profile…" : "Continue"}
             </button>
             <p className="mt-3 text-center text-xs text-gray-400">
-              You can update your name later. Your username is your unique handle.
+              {identityProvider === "apple"
+                ? "Apple may only share your name once. You can update your name later."
+                : "You can update your name later. Your username is your unique handle."}
             </p>
           </div>
         </div>

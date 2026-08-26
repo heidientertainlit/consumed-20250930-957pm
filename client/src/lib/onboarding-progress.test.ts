@@ -10,7 +10,18 @@ import {
   resolveOnboardingResumeStep,
   saveOnboardingProgress,
 } from "./onboarding-progress";
-import { hasConfirmedProfileIdentity, normalizeUsername } from "./profile-identity";
+import {
+  getIdentityProvider,
+  getProfileIdentityDefaults,
+  hasCompleteProfileIdentity,
+  hasConfirmedProfileIdentity,
+  isCorrectableProfileCompletionStatus,
+  normalizeUsername,
+} from "./profile-identity";
+import {
+  ProfileCompletionError,
+  resolveKnownProfileIdentity,
+} from "./profile-identity-resolution";
 
 class MemoryStorage {
   private values = new Map<string, string>();
@@ -25,10 +36,112 @@ Object.assign(globalThis, { localStorage: storage });
 
 test.beforeEach(() => storage.clear());
 
-test("profile identity requires names plus a confirmed username", () => {
+test("profile identity distinguishes canonical completeness from confirmation", () => {
   assert.equal(normalizeUsername("  @Heidi_33 "), "heidi_33");
   assert.equal(hasConfirmedProfileIdentity({ identity_confirmed_at: "2026-08-25T22:30:00Z" }), true);
   assert.equal(hasConfirmedProfileIdentity({ identity_confirmed_at: null }), false);
+  assert.equal(hasCompleteProfileIdentity({
+    first_name: "Heidi",
+    last_name: "N",
+    user_name: "Heidi_33",
+  }), true);
+  assert.equal(hasCompleteProfileIdentity({
+    first_name: "Heidi",
+    last_name: "",
+    user_name: "heidi_33",
+  }), false);
+});
+
+test("email metadata can restore verified signup identity without a second form", () => {
+  const user = {
+    email: "heidi@example.com",
+    app_metadata: { provider: "email" },
+    user_metadata: {
+      first_name: "Heidi",
+      last_name: "Nelson",
+      user_name: "heidi_33",
+    },
+  };
+  assert.equal(getIdentityProvider(user), "email");
+  assert.deepEqual(getProfileIdentityDefaults(user, null), {
+    firstName: "Heidi",
+    lastName: "Nelson",
+    username: "heidi_33",
+    hasCanonicalUsername: false,
+    hasMetadataUsername: true,
+    missingFirstName: false,
+    missingLastName: false,
+    missingUsername: true,
+  });
+});
+
+test("Google and Apple accounts still need an app username", () => {
+  const google = {
+    email: "person@gmail.com",
+    app_metadata: { provider: "google" },
+    user_metadata: { full_name: "Taylor Swift" },
+  };
+  const apple = {
+    email: "relay@privaterelay.appleid.com",
+    identities: [{ provider: "apple" }],
+    user_metadata: {},
+  };
+
+  assert.equal(getIdentityProvider(google), "google");
+  assert.deepEqual(getProfileIdentityDefaults(google, null), {
+    firstName: "Taylor",
+    lastName: "Swift",
+    username: "person",
+    hasCanonicalUsername: false,
+    hasMetadataUsername: false,
+    missingFirstName: false,
+    missingLastName: false,
+    missingUsername: true,
+  });
+  assert.equal(getIdentityProvider(apple), "apple");
+  assert.equal(getProfileIdentityDefaults(apple, null).missingFirstName, true);
+  assert.equal(getProfileIdentityDefaults(apple, null).missingLastName, true);
+  assert.equal(getProfileIdentityDefaults(apple, null).missingUsername, true);
+});
+
+test("correctable profile completion responses are distinguished from outages", () => {
+  assert.equal(isCorrectableProfileCompletionStatus(400), true);
+  assert.equal(isCorrectableProfileCompletionStatus(409), true);
+  assert.equal(isCorrectableProfileCompletionStatus(422), true);
+  assert.equal(isCorrectableProfileCompletionStatus(500), false);
+  assert.equal(isCorrectableProfileCompletionStatus(503), false);
+});
+
+test("duplicate email signup username reaches editable onboarding after login", async () => {
+  const user = {
+    email: "new@example.com",
+    app_metadata: { provider: "email" },
+    user_metadata: {
+      first_name: "New",
+      last_name: "Person",
+      user_name: "already_taken",
+    },
+  };
+  const attemptedBodies: Record<string, unknown>[] = [];
+  const result = await resolveKnownProfileIdentity(
+    user,
+    null,
+    async (body) => {
+      attemptedBodies.push(body);
+      throw new ProfileCompletionError("That username is already taken.", 409);
+    },
+  );
+
+  assert.deepEqual(attemptedBodies, [{
+    first_name: "New",
+    last_name: "Person",
+    username: "already_taken",
+  }]);
+  assert.equal(result.complete, false);
+  assert.equal(result.defaults.firstName, "New");
+  assert.equal(result.defaults.lastName, "Person");
+  assert.equal(result.defaults.username, "already_taken");
+  assert.equal(result.defaults.missingUsername, true);
 });
 
 test("keeps progress isolated per user and rejects malformed steps", () => {
