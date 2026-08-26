@@ -8,6 +8,7 @@ import { ChevronLeft, Send, Loader2, CheckCircle } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 interface SurveyQuestion {
   id: number;
@@ -36,11 +37,6 @@ export default function FeedbackSurveyPage() {
     queryKey: ['/api/survey-questions'],
     queryFn: async () => {
       try {
-        const { createClient } = await import('@supabase/supabase-js');
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
         const { data, error } = await supabase
           .from('beta_survey_questions')
           .select('*')
@@ -59,11 +55,6 @@ export default function FeedbackSurveyPage() {
 
   const submitMutation = useMutation({
     mutationFn: async () => {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
       const surveyResponses = questions.map(q => ({
         question_id: q.id,
         question_text: q.question_text,

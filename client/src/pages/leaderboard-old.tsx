@@ -7,6 +7,7 @@ import { Trophy, Medal, Award, Gamepad2, Book, Headphones, Music, Film, Tv, Targ
 import { useAuth } from "@/lib/auth";
 import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 import {
   Dialog,
   DialogContent,
@@ -59,11 +60,6 @@ const fetchChallengeLeaderboards = async (session: any) => {
   if (!session?.access_token) {
     throw new Error('No authentication token available');
   }
-
-  const { createClient } = await import('@supabase/supabase-js');
-  const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
-  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   // Fetch all long-form trivia challenges (20+ questions)
   const { data: challenges, error: challengesError } = await supabase
