@@ -1639,9 +1639,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
         className="rounded-t-3xl !bg-white flex flex-col overflow-hidden p-0 !shadow-none !border-0 !outline-none"
         style={{
           backgroundColor: "white",
-          bottom: "var(--keyboard-bottom-offset, 0px)",
-          height: "min(92svh, calc(var(--visible-viewport-height, 100dvh) - 8px))",
-          maxHeight: "calc(var(--visible-viewport-height, 100dvh) - 8px)",
+          height: "92svh",
           boxShadow: "none",
           border: "none",
         }}
@@ -1663,8 +1661,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
       <DialogContent
         className="rounded-2xl !bg-white w-[calc(100vw-2rem)] max-w-md flex flex-col min-h-0 overflow-hidden gap-3"
         style={{
-          top: "calc(var(--visible-viewport-height, 100dvh) / 2)",
-          maxHeight: "min(80vh, calc(var(--visible-viewport-height, 100dvh) - 16px))",
+          maxHeight: "80vh",
         }}
       >
         <DialogHeader className="pb-0">

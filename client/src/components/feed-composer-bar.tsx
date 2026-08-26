@@ -793,13 +793,7 @@ export default function FeedComposerBar({
           <div className="absolute inset-0 bg-black/65" onClick={resetForm} />
 
           {/* ── Composer card (matches the media-detail composer) ── */}
-          <div
-            className="absolute left-4 right-4 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]"
-            style={{
-              top: "var(--keyboard-sheet-top, 16%)",
-              maxHeight: "calc(var(--visible-viewport-height, 100dvh) - var(--keyboard-sheet-top, 16%) - 8px)",
-            }}
-          >
+          <div className="absolute left-4 right-4" style={{ top: '16%' }}>
             <div className="flex items-center justify-end mb-2 px-1">
               <button
                 onClick={resetForm}
@@ -923,10 +917,7 @@ export default function FeedComposerBar({
                                 <X size={15} className="text-gray-400" />
                               </button>
                             </div>
-                            <div
-                              className="h-80 min-h-0 overflow-hidden flex flex-col"
-                              style={{ maxHeight: "max(10rem, calc(var(--visible-viewport-height, 100dvh) - 14rem))" }}
-                            >
+                            <div className="max-h-80 overflow-y-auto flex flex-col">
                               <MediaSearchPanel
                                 onSelect={(r: any) => {
                                   const externalSource = r.external_source === 'openai' ? 'openlibrary' : (r.external_source || 'tmdb');
