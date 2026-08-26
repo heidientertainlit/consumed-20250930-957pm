@@ -44,7 +44,13 @@ const moderate = async (input: string) => {
 };
 
 async function topicSuggestions() {
-  const out: { topic: string; summary: string; source: string; url: string; publishedAt: string | null }[] = [];
+  const out: { topic: string; summary: string; source: string; url: string; publishedAt: string | null }[] = [{
+    topic: "Is there a responsible documentary or reliable YouTube channel covering the Lindsay Clancy trial—and how can viewers tell credible reporting from speculation?",
+    summary: "Use current WBUR courtroom reporting as a starting point to compare documentary, livestream, and YouTube coverage without debating guilt or recounting harm.",
+    source: "WBUR",
+    url: "https://www.wbur.org/news/2026/08/25/massachusetts-lindsay-clancy-testimony-ending",
+    publishedAt: "2026-08-25T00:00:00.000Z",
+  }];
   const tmdb = Deno.env.get("TMDB_API_KEY");
   const nyt = Deno.env.get("NYT_API_KEY");
   const requests: Promise<void>[] = [];
