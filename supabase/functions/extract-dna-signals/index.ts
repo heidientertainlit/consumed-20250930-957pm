@@ -105,22 +105,29 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // ── Resolve target user ──────────────────────────────────────────────────
-    let userId: string | null = null;
-
+    // ── Resolve and authorize target user ────────────────────────────────────
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) return err('Missing authorization header', 401);
+    const bearerToken = authHeader.slice('Bearer '.length);
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const isServiceRole = bearerToken === serviceRoleKey;
+    let requestedUserId: string | null = null;
     const bodyText = await req.text().catch(() => '');
     if (bodyText) {
       try {
         const body = JSON.parse(bodyText);
-        if (body.user_id) userId = body.user_id;
+        if (body.user_id) requestedUserId = body.user_id;
       } catch (_) { /* ok */ }
     }
 
-    if (!userId) {
-      const authHeader = req.headers.get('Authorization');
-      if (!authHeader) return err('Missing authorization header', 401);
-      const { data: { user }, error: authErr } = await svc.auth.getUser(authHeader.replace('Bearer ', ''));
+    let userId: string;
+    if (isServiceRole) {
+      if (!requestedUserId) return err('Service calls must include user_id', 400);
+      userId = requestedUserId;
+    } else {
+      const { data: { user }, error: authErr } = await svc.auth.getUser(bearerToken);
       if (authErr || !user) return err('Unauthorized', 401);
+      if (requestedUserId && requestedUserId !== user.id) return err('Cannot extract signals for another user', 403);
       userId = user.id;
     }
 
@@ -425,6 +432,11 @@ serve(async (req) => {
       const { error: insertErr } = await svc.from('user_dna_signals').insert(toInsert);
       if (insertErr) throw insertErr;
     }
+
+    const { error: tribeRefreshError } = await svc.rpc('refresh_people_tribe_memberships', {
+      target_user_id: userId,
+    });
+    if (tribeRefreshError) throw tribeRefreshError;
 
     return ok({
       success: true,

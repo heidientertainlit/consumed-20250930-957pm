@@ -775,7 +775,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
                 { type: "link", href: "/activity", label: "Now", icon: Zap, fillWhenActive: true, testid: "nav-activity", active: location === "/activity" },
                 { type: "link", href: "/play", label: "Play", icon: Brain, fillWhenActive: false, testid: "nav-play", active: location.startsWith("/play") },
                 { type: "add" },
-                { type: "link", href: "/rooms", label: "Rooms", icon: MessageCircle, fillWhenActive: false, testid: "nav-rooms", active: location === "/rooms" || location.startsWith("/room/") },
+                { type: "link", href: "/people", label: "People", icon: Users, fillWhenActive: false, testid: "nav-people", active: location === "/people" || location.startsWith("/friends") },
                 { type: "link", href: "/profile", label: "DNA", icon: Dna, fillWhenActive: false, testid: "nav-me", active: location === "/profile" },
               ];
               return items.map((item) => {

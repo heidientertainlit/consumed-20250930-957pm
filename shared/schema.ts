@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, integer, timestamp, boolean, jsonb, serial, real, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, decimal, integer, timestamp, boolean, jsonb, serial, real, uuid, primaryKey, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -968,6 +968,55 @@ export const roomFollows = pgTable("room_follows", {
   roomId: varchar("room_id").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// People Tribes are independent interest groups derived from Entertainment DNA.
+// They intentionally do not reference Rooms, room follows, or room conversations.
+export const peopleTribes = pgTable("people_tribes", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  coverImageUrl: text("cover_image_url"),
+  accentColor: text("accent_color").notNull().default("#6d4bc3"),
+  signalValues: text("signal_values").array().notNull().default(sql`'{}'::text[]`),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const peopleTribeMembers = pgTable("people_tribe_members", {
+  tribeId: uuid("tribe_id").notNull().references(() => peopleTribes.id, { onDelete: "cascade" }),
+  // The live users.id column is UUID; its FK is enforced by the SQL migration.
+  // shared.users predates that live type, so declaring the reference here would encode a false varchar FK.
+  userId: uuid("user_id").notNull(),
+  affinityScore: decimal("affinity_score", { precision: 6, scale: 5 }).notNull().default("0"),
+  membershipSource: text("membership_source").notNull().default("dna_signal"),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.tribeId, table.userId] }),
+}));
+
+export const peopleTribeInterests = pgTable("people_tribe_interests", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tribeId: uuid("tribe_id").notNull().references(() => peopleTribes.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  mediaType: text("media_type"),
+  creator: text("creator"),
+  imageUrl: text("image_url"),
+  externalId: text("external_id"),
+  externalSource: text("external_source"),
+  rank: integer("rank").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  tribeTitleUnique: uniqueIndex("people_tribe_interests_tribe_title_unique").on(table.tribeId, table.title),
+}));
+
+export const insertPeopleTribeSchema = createInsertSchema(peopleTribes).omit({ id: true, createdAt: true, updatedAt: true });
+export type PeopleTribe = typeof peopleTribes.$inferSelect;
+export type InsertPeopleTribe = z.infer<typeof insertPeopleTribeSchema>;
+export type PeopleTribeMember = typeof peopleTribeMembers.$inferSelect;
+export type PeopleTribeInterest = typeof peopleTribeInterests.$inferSelect;
 
 // Search feedback — logged when users can't find what they're searching for
 export const searchFeedback = pgTable("search_feedback", {

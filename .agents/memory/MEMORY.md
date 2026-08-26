@@ -31,3 +31,4 @@
 - [Resumable onboarding state](resumable-onboarding-state.md) — DNA profile is completion; canonical answers/activity reconcile resume, while local storage only caches step and prompt dismissal.
 - [Canonical profile identity](canonical-profile-identity.md) — email signup completes silently; OAuth chooses an app username and supplies only missing names; established profiles never repeat setup or DNA.
 - [Admin persona room conversations](admin-persona-room-conversations.md) — keep drafts private; bind sourced prompts server-side; exact-deficit persona creation requires a lock; publish only through a service-only transaction.
+- [People Tribes independence](people-tribes-independence.md) — Tribes are a separate People-domain model; never implement them by renaming or reusing Rooms, pools, follows, or conversations.
