@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Navigation from "@/components/navigation";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
+import { ReportSheet } from "@/components/report-sheet";
 import RoomComposer, { dbTagToDisplay } from "@/components/room-composer";
 import RoomPlay from "@/components/room-play";
 import { useAuth } from "@/lib/auth";
@@ -93,6 +94,12 @@ function SectionHeader({ title, action, onAction }: { title: string; action?: st
 
 const TABS = ["Discuss", "Play", "Explore"] as const;
 type Tab = (typeof TABS)[number];
+type RoomReportTarget = {
+  contentType: "post" | "comment";
+  contentId: string;
+  reportedUserId?: string;
+  reportedUserName?: string;
+};
 
 export default function NewRoom() {
   const params = useParams<{ id: string; takeId?: string }>();
@@ -110,9 +117,10 @@ export default function NewRoom() {
   const [posting, setPosting] = useState(false);
   const [sort] = useState<"hot" | "new" | "replies">("hot");
   const [menuFor, setMenuFor] = useState<string | null>(null);
-  const [flagged, setFlagged] = useState<string[]>([]);
+  const [reportTarget, setReportTarget] = useState<RoomReportTarget | null>(null);
   const [copied, setCopied] = useState(false);
   const [optimisticFollowing, setOptimisticFollowing] = useState<boolean | null>(null);
+  const [followUpdating, setFollowUpdating] = useState(false);
   const [activeTake, setActiveTake] = useState<any | null>(null);
   const openedDeepLinkedTake = useRef<string | null>(null);
   const [descExpanded, setDescExpanded] = useState(false);
@@ -265,11 +273,13 @@ export default function NewRoom() {
     queryKey: ["room-follow", roomId, currentUserId],
     queryFn: async () => {
       if (!currentUserId || !roomId) return { following: false, count: 0 };
-      const [{ count }, { data: mine }] = await Promise.all([
+      const [countResult, mineResult] = await Promise.all([
         supabase.from("room_follows").select("*", { count: "exact", head: true }).eq("room_id", roomId),
         supabase.from("room_follows").select("id").eq("room_id", roomId).eq("user_id", currentUserId).maybeSingle(),
       ]);
-      return { following: !!mine, count: count || 0 };
+      if (countResult.error) throw countResult.error;
+      if (mineResult.error) throw mineResult.error;
+      return { following: !!mineResult.data, count: countResult.count || 0 };
     },
     enabled: !!roomId && !!currentUserId,
   });
@@ -351,9 +361,13 @@ export default function NewRoom() {
     const wk = Date.now() - 7 * 864e5;
     return takes
       .filter((t) => new Date(t.created_at).getTime() >= wk)
-      .sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0))
+      .sort((a, b) => {
+        const heat = (take: any) => ((take.upvotes || 0) * 2) + ((take.reply_count || 0) * 3);
+        return heat(b) - heat(a) || new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      })
       .slice(0, 6);
   }, [takes]);
+  const hotTake = trending[0] ?? null;
 
   const sortedTakes = useMemo(() => {
     const arr = activeTake && !takes.some((take) => take.id === activeTake.id)
@@ -362,8 +376,8 @@ export default function NewRoom() {
     if (sort === "new") arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     else if (sort === "replies") arr.sort((a, b) => (b.reply_count || 0) - (a.reply_count || 0));
     else arr.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
-    return arr;
-  }, [takes, activeTake, sort]);
+    return arr.filter((take) => take.id !== hotTake?.id);
+  }, [takes, activeTake, sort, hotTake?.id]);
 
   useEffect(() => {
     if (!activeTake?.id) return;
@@ -457,17 +471,28 @@ export default function NewRoom() {
   // ── Handlers ─────────────────────────────────────────────────────────
   const handleFollow = async () => {
     if (!currentUserId) { toast({ title: "Sign in to follow rooms" }); return; }
+    if (followUpdating) return;
     const next = !isFollowing;
+    setFollowUpdating(true);
     setOptimisticFollowing(next);
-    if (next) {
-      await supabase.from("room_follows").insert({ room_id: roomId, user_id: currentUserId });
-      logRoomEvent("room_follow");
-    } else {
-      await supabase.from("room_follows").delete().eq("room_id", roomId).eq("user_id", currentUserId);
-      logRoomEvent("room_unfollow");
+    try {
+      const result = next
+        ? await supabase.from("room_follows").insert({ room_id: roomId, user_id: currentUserId })
+        : await supabase.from("room_follows").delete().eq("room_id", roomId).eq("user_id", currentUserId);
+      if (result.error) throw result.error;
+      void logRoomEvent(next ? "room_follow" : "room_unfollow");
+      await refetchFollow();
+    } catch (error: any) {
+      setOptimisticFollowing(serverFollowing);
+      toast({
+        title: next ? "Could not follow room" : "Could not unfollow room",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setOptimisticFollowing(null);
+      setFollowUpdating(false);
     }
-    await refetchFollow();
-    setOptimisticFollowing(null);
   };
 
   const handleCopyInvite = () => {
@@ -585,7 +610,12 @@ export default function NewRoom() {
   };
 
   const followerCount = followData?.count ?? 0;
-  const memberLabel = members.length > 0 ? `${members.length} member${members.length === 1 ? "" : "s"}` : `${followerCount} follower${followerCount === 1 ? "" : "s"}`;
+  const visibleFollowerCount = followerCount + (
+    optimisticFollowing !== null && optimisticFollowing !== serverFollowing
+      ? optimisticFollowing ? 1 : -1
+      : 0
+  );
+  const memberLabel = `${Math.max(0, visibleFollowerCount)} member${visibleFollowerCount === 1 ? "" : "s"}`;
   const avatarUsers = (members.length > 0 ? members.map((m) => m.users) : []).filter(Boolean).slice(0, 3);
 
   if (!roomId) return null;
@@ -622,7 +652,8 @@ export default function NewRoom() {
                 <div className="flex items-center gap-2.5">
                   <button
                     onClick={handleFollow}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-semibold active:scale-95 transition-all"
+                    disabled={followUpdating}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-semibold active:scale-95 transition-all disabled:opacity-70"
                     style={isFollowing
                       ? { background: "rgba(124,58,237,0.35)", border: "1px solid rgba(168,85,247,0.6)", color: "#e9d5ff" }
                       : { background: ACCENT, color: "#fff" }}
@@ -960,15 +991,16 @@ export default function NewRoom() {
 
           <div className="px-4 pt-4">
             {/* Hot conversation */}
-            {trending.length > 0 && (
+            {hotTake && (
               <HotConversationCard
-                take={trending[0]}
-                agreed={hasAgreed(trending[0].id)}
-                onAgree={() => handleAgree(trending[0])}
+                take={hotTake}
+                agreed={hasAgreed(hotTake.id)}
+                onAgree={() => handleAgree(hotTake)}
                 currentUserId={currentUserId}
                 myVotes={myVotes}
                 onChanged={() => { refetchTakes(); refetchMyVotes(); }}
                 logRoomEvent={logRoomEvent}
+                onReport={setReportTarget}
               />
             )}
 
@@ -986,12 +1018,6 @@ export default function NewRoom() {
                 className={activeTake?.id === t.id ? "rounded-2xl bg-purple-50/60 px-3 -mx-3 ring-1 ring-purple-100" : ""}
               >
                 {ti > 0 && <div className="w-full h-[1px] bg-gray-100" />}
-                {flagged.includes(t.id) ? (
-                  <div className="flex items-center gap-2 py-4 text-[13px] text-gray-500">
-                    <Flag size={15} className="text-gray-400" />
-                    <span>Thanks — this conversation has been reported for review.</span>
-                  </div>
-                ) : (
                 <div className="flex gap-3 py-4">
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
@@ -1055,8 +1081,11 @@ export default function NewRoom() {
                                 <Trash2 size={16} /> Delete post
                               </button>
                             )}
-                            <button onClick={() => { setFlagged((f) => [...f, t.id]); setMenuFor(null); }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-red-600 active:bg-gray-50">
-                              <Flag size={16} /> Flag as inappropriate
+                            <button onClick={() => {
+                              setReportTarget({ contentType: "post", contentId: t.id, reportedUserId: t.user_id, reportedUserName: nameOf(t.users) });
+                              setMenuFor(null);
+                            }} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-red-600 active:bg-gray-50">
+                              <Flag size={16} /> Report post
                             </button>
                             <button onClick={() => setMenuFor(null)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-gray-700 active:bg-gray-50">
                               <EyeOff size={16} className="text-gray-400" /> Not interested
@@ -1070,7 +1099,6 @@ export default function NewRoom() {
                     </div>
                   </div>
                 </div>
-                )}
                 {activeTake?.id === t.id && (
                   <ThreadSheet
                     take={activeTake}
@@ -1079,6 +1107,7 @@ export default function NewRoom() {
                     onClose={() => setActiveTake(null)}
                     onChanged={() => { refetchTakes(); refetchMyVotes(); }}
                     logRoomEvent={logRoomEvent}
+                    onReport={setReportTarget}
                   />
                 )}
               </div>
@@ -1096,12 +1125,23 @@ export default function NewRoom() {
         media={addMedia}
         elevated
       />
+      {reportTarget && (
+        <ReportSheet
+          key={`${reportTarget.contentType}-${reportTarget.contentId}`}
+          isOpen
+          onClose={() => setReportTarget(null)}
+          contentType={reportTarget.contentType}
+          contentId={reportTarget.contentId}
+          reportedUserId={reportTarget.reportedUserId}
+          reportedUserName={reportTarget.reportedUserName}
+        />
+      )}
     </div>
   );
 }
 
 // ── Hot Conversation — inline thread on the room page ──────────────────
-function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, onChanged, logRoomEvent }: {
+function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, onChanged, logRoomEvent, onReport }: {
   take: any;
   agreed: boolean;
   onAgree: () => void;
@@ -1109,6 +1149,7 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
   myVotes: any[];
   onChanged: () => void;
   logRoomEvent: (action_type: string, metadata?: Record<string, any>) => Promise<void>;
+  onReport: (target: RoomReportTarget) => void;
 }) {
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -1205,6 +1246,11 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
           <ThumbsDown size={13} strokeWidth={1.75} />
         </button>
         <button onClick={() => setReplyOpen((v) => !v)} className="text-[12px] font-semibold text-gray-500 hover:text-violet-500 transition-colors">Reply</button>
+        {currentUserId && take.user_id !== currentUserId && (
+          <button onClick={() => onReport({ contentType: "post", contentId: take.id, reportedUserId: take.user_id, reportedUserName: nameOf(take.users) })} className="ml-auto text-gray-400 hover:text-orange-500 transition-colors" aria-label="Report post" title="Report post">
+            <Flag size={13} />
+          </button>
+        )}
       </div>
       {/* Replies — right here in the card */}
       {replies.length > 0 && (
@@ -1223,7 +1269,7 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
                     {currentUserId && r.user_id === currentUserId ? (
                       <button onClick={() => handleReplyDelete(r)} className="text-gray-300 hover:text-red-400 transition-colors" aria-label="Delete reply"><Trash2 size={12} /></button>
                     ) : currentUserId ? (
-                      <button onClick={() => setHiddenReplies((h) => [...h, r.id])} className="text-gray-300 hover:text-orange-500 transition-colors" title="Flag reply" aria-label="Flag reply"><Flag size={12} /></button>
+                      <button onClick={() => onReport({ contentType: "comment", contentId: r.id, reportedUserId: r.user_id, reportedUserName: nameOf(r.users) })} className="text-gray-300 hover:text-orange-500 transition-colors" title="Report reply" aria-label="Report reply"><Flag size={12} /></button>
                     ) : null}
                   </span>
                 </div>
@@ -1253,13 +1299,14 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
 }
 
 // ── Thread (take detail + replies) ─────────────────────────────────────
-function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoomEvent }: {
+function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoomEvent, onReport }: {
   take: any;
   currentUserId: string | null;
   myVotes: any[];
   onClose: () => void;
   onChanged: () => void;
   logRoomEvent: (action_type: string, metadata?: Record<string, any>) => Promise<void>;
+  onReport: (target: RoomReportTarget) => void;
 }) {
   const [replyText, setReplyText] = useState("");
   const [replying, setReplying] = useState(false);
@@ -1358,7 +1405,7 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
                       {currentUserId && r.user_id === currentUserId ? (
                         <button onClick={() => handleReplyDelete(r)} className="text-gray-300 hover:text-red-400 transition-colors" aria-label="Delete reply"><Trash2 size={13} /></button>
                       ) : currentUserId ? (
-                        <button onClick={() => setHiddenReplies((h) => [...h, r.id])} className="text-gray-300 hover:text-orange-500 transition-colors" title="Flag reply" aria-label="Flag reply"><Flag size={13} /></button>
+                        <button onClick={() => onReport({ contentType: "comment", contentId: r.id, reportedUserId: r.user_id, reportedUserName: nameOf(r.users) })} className="text-gray-300 hover:text-orange-500 transition-colors" title="Report reply" aria-label="Report reply"><Flag size={13} /></button>
                       ) : null}
                     </div>
                   </div>
