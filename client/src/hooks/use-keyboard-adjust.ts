@@ -16,17 +16,6 @@ export function useKeyboardAdjust() {
       // Silently ignore if plugin unavailable
     });
 
-    const scrollFocusedIntoView = () => {
-      const el = document.activeElement as HTMLElement | null;
-      if (!el) return;
-      const tag = el.tagName;
-      if (tag !== "INPUT" && tag !== "TEXTAREA" && el.contentEditable !== "true") return;
-
-      setTimeout(() => {
-        el.scrollIntoView({ block: "center", behavior: "smooth" });
-      }, 80);
-    };
-
     const updateKeyboardMetrics = () => {
       const viewport = window.visualViewport;
       const measuredVisibleHeight = viewport?.height ?? window.innerHeight;
@@ -91,14 +80,11 @@ export function useKeyboardAdjust() {
       window.visualViewport.addEventListener("scroll", updateKeyboardMetrics);
     }
 
-    document.addEventListener("focusin", scrollFocusedIntoView);
-
     return () => {
       if (window.visualViewport) {
         window.visualViewport.removeEventListener("resize", updateKeyboardMetrics);
         window.visualViewport.removeEventListener("scroll", updateKeyboardMetrics);
       }
-      document.removeEventListener("focusin", scrollFocusedIntoView);
       void showListener.then((listener) => listener.remove()).catch(() => {});
       void hideListener.then((listener) => listener.remove()).catch(() => {});
       root.removeAttribute("data-native-keyboard-open");
