@@ -22,8 +22,6 @@ import { useFeatureFlags } from "@/lib/feature-flags";
 import { QuickActionSheet } from "./quick-action-sheet";
 import { QuickAddListSheet } from "./quick-add-list-sheet";
 import { SaveMediaSheet } from "./save-media-sheet";
-import { Capacitor } from "@capacitor/core";
-import { Keyboard } from "@capacitor/keyboard";
 
 interface NavigationProps {
   onTrackConsumption?: () => void;
@@ -54,23 +52,6 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
   const { user, session } = useAuth();
   const { roomsEnabled } = useFeatureFlags();
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
-  const [isNativeKeyboardOpen, setIsNativeKeyboardOpen] = useState(false);
-
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-
-    const showListener = Keyboard.addListener("keyboardWillShow", () => {
-      setIsNativeKeyboardOpen(true);
-    });
-    const hideListener = Keyboard.addListener("keyboardDidHide", () => {
-      setIsNativeKeyboardOpen(false);
-    });
-
-    return () => {
-      void showListener.then((listener) => listener.remove()).catch(() => {});
-      void hideListener.then((listener) => listener.remove()).catch(() => {});
-    };
-  }, []);
 
   const { data: navAvatar } = useQuery<string | null>({
     queryKey: ['nav-avatar', user?.id],
@@ -783,8 +764,8 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
         )}
       </div>
 
-      {!isNativeKeyboardOpen && ((navEl) => (inline ? navEl : createPortal(navEl, document.body)))(
-        <nav className={`fixed bottom-0 left-0 right-0 ${inline ? 'z-[10]' : 'z-[9999]'}`} style={{ background: '#F6F6F7', borderTop: '1px solid #E5E5E8', WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 -1px 6px rgba(0,0,0,0.04)' }}>
+      {((navEl) => (inline ? navEl : createPortal(navEl, document.body)))(
+        <nav className={`app-bottom-nav fixed bottom-0 left-0 right-0 ${inline ? 'z-[10]' : 'z-[9999]'}`} style={{ background: '#F6F6F7', borderTop: '1px solid #E5E5E8', WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden', boxShadow: '0 -1px 6px rgba(0,0,0,0.04)' }}>
           <div className="flex justify-around items-start px-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 12px), 12px)', paddingTop: '6px' }}>
             {(() => {
               type NavItem =

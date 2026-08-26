@@ -116,6 +116,13 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  /* Keep the native bottom nav mounted during keyboard transitions.
+     Removing it from the React tree causes portaled sheets to visibly jump. */
+  html[data-native-keyboard-open="true"] .app-bottom-nav {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
   /* Force bottom navigation to stay fixed at bottom on iOS Safari */
   nav[class*="fixed bottom-0"] {
     position: fixed !important;

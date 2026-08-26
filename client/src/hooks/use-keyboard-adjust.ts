@@ -54,7 +54,6 @@ export function useKeyboardAdjust() {
       if (keyboardHeight > 0 || reportedKeyboardHeight > 0) {
         root.dataset.nativeKeyboardOpen = "true";
         root.style.setProperty("--keyboard-sheet-top", "max(env(safe-area-inset-top, 0px), 8px)");
-        scrollFocusedIntoView();
       } else {
         root.removeAttribute("data-native-keyboard-open");
         root.style.setProperty("--keyboard-sheet-top", "12%");
