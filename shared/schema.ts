@@ -460,6 +460,46 @@ export const roomTakeVotes = pgTable("room_take_votes", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Private admin staging for true-crime persona conversation generation.
+export const adminRoomConversationRuns = pgTable("admin_room_conversation_runs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  roomId: uuid("room_id").notNull().references(() => pools.id, { onDelete: "cascade" }),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  topic: text("topic").notNull(),
+  sourceAttribution: jsonb("source_attribution").notNull(),
+  status: text("status").notNull().default("draft"),
+  publishedTakeId: uuid("published_take_id").references(() => roomTakes.id),
+  approvedBy: uuid("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const adminRoomConversationDrafts = pgTable("admin_room_conversation_drafts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  runId: uuid("run_id").notNull().references(() => adminRoomConversationRuns.id, { onDelete: "cascade" }),
+  clientId: text("client_id").notNull(),
+  participantId: uuid("participant_id").notNull().references(() => users.id),
+  parentClientId: text("parent_client_id"),
+  body: text("body").notNull(),
+  position: integer("position").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const adminRoomTopicSuggestions = pgTable("admin_room_topic_suggestions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  roomId: uuid("room_id").notNull().references(() => pools.id, { onDelete: "cascade" }),
+  topic: text("topic").notNull(),
+  summary: text("summary").notNull().default(""),
+  sourceName: text("source_name").notNull(),
+  sourceUrl: text("source_url").notNull(),
+  publishedAt: timestamp("published_at"),
+  fetchedAt: timestamp("fetched_at").defaultNow().notNull(),
+  safety: text("safety").notNull().default("Safety-screened"),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,

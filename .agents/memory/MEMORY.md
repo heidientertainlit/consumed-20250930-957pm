@@ -30,3 +30,4 @@
 - [Feed identity labels](feed-identity-labels.md) — feed-visible names use first name + last initial; usernames remain raw only as handles, routes, profile identity, and backend identifiers.
 - [Resumable onboarding state](resumable-onboarding-state.md) — DNA profile is completion; canonical answers/activity reconcile resume, while local storage only caches step and prompt dismissal.
 - [Canonical profile identity](canonical-profile-identity.md) — email signup completes silently; OAuth chooses an app username and supplies only missing names; established profiles never repeat setup or DNA.
+- [Admin persona room conversations](admin-persona-room-conversations.md) — keep drafts private; bind sourced prompts server-side; exact-deficit persona creation requires a lock; publish only through a service-only transaction.

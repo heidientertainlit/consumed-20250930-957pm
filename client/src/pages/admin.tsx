@@ -3,9 +3,18 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna, DoorOpen, Download } from "lucide-react";
+import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna, DoorOpen, Download, MessageSquareText } from "lucide-react";
 
 const TOOLS = [
+  {
+    path: "/admin/room-conversations",
+    icon: MessageSquareText,
+    title: "True Crime Conversation",
+    description: "Turn sourced trending stories into a reviewed 20-persona True Crime room conversation before publishing.",
+    color: "from-violet-900/40 to-violet-800/20 border-violet-700/40",
+    iconColor: "text-violet-400",
+    iconBg: "bg-violet-900/50",
+  },
   {
     path: "/admin/todays-play",
     icon: Gamepad2,
