@@ -286,9 +286,13 @@ Deno.serve(async (req) => {
     } else if (source === 'youtube') {
       const youtubeKey = Deno.env.get('YOUTUBE_API_KEY');
       const isChannelId = /^UC[\w-]{22}$/.test(externalId);
-      if (isChannelId) {
+      const isChannelHandle = /^@[A-Za-z0-9._-]+$/.test(externalId);
+      if (isChannelId || isChannelHandle) {
+        const channelLookup = isChannelHandle
+          ? `forHandle=${encodeURIComponent(externalId)}`
+          : `id=${encodeURIComponent(externalId)}`;
         const chResponse = await fetch(
-          `https://www.googleapis.com/youtube/v3/channels?id=${externalId}&part=snippet,statistics&key=${youtubeKey}`
+          `https://www.googleapis.com/youtube/v3/channels?${channelLookup}&part=snippet,statistics&key=${youtubeKey}`
         );
         if (chResponse.ok) {
           const chData = await chResponse.json();
@@ -301,6 +305,7 @@ Deno.serve(async (req) => {
                 ? `${Math.floor(subs / 1000)}K subscribers`
                 : `${subs} subscribers`;
             mediaDetails = {
+              externalId: channel.id,
               title: channel.snippet.title,
               type: 'YouTube',
               media_subtype: 'channel',
@@ -318,7 +323,7 @@ Deno.serve(async (req) => {
                 {
                   name: 'YouTube',
                   logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/159px-YouTube_full-color_icon_%282017%29.svg.png',
-                  url: `https://www.youtube.com/channel/${externalId}`
+                  url: `https://www.youtube.com/channel/${channel.id}`
                 }
               ]
             };
@@ -326,7 +331,7 @@ Deno.serve(async (req) => {
         }
         // fall through to shared response handling below
       }
-      const response = (isChannelId && mediaDetails)
+      const response = ((isChannelId || isChannelHandle) && mediaDetails)
         ? { ok: false } as Response
         : await fetch(
             `https://www.googleapis.com/youtube/v3/videos?id=${externalId}&part=snippet,contentDetails,statistics&key=${youtubeKey}`
@@ -338,6 +343,7 @@ Deno.serve(async (req) => {
         
         if (video) {
           mediaDetails = {
+            externalId: video.id,
             title: video.snippet.title,
             type: 'YouTube',
             media_subtype: 'video',

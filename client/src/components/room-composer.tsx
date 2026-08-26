@@ -56,6 +56,7 @@ interface RoomComposerProps {
   // Rendered in the footer where the tag row used to be (e.g. a compact
   // optional star-rating row). Shown above the Post button row.
   footerExtra?: React.ReactNode;
+  onBodyChange?: (body: string) => void;
 }
 
 export default function RoomComposer({
@@ -72,6 +73,7 @@ export default function RoomComposer({
   hideTitle = false,
   hideTags = false,
   footerExtra,
+  onBodyChange,
 }: RoomComposerProps) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -87,6 +89,7 @@ export default function RoomComposer({
     if (ok !== false) {
       setTitle("");
       setBody("");
+      onBodyChange?.("");
       setTag(defaultTag);
     }
   };
@@ -107,7 +110,10 @@ export default function RoomComposer({
         <textarea
           rows={bodyRows}
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={(e) => {
+            setBody(e.target.value);
+            onBodyChange?.(e.target.value);
+          }}
           placeholder={bodyPlaceholder}
           className="w-full resize-none border-0 outline-none bg-transparent text-[15px] text-gray-700 placeholder:text-gray-400"
         />

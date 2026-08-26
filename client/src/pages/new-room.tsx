@@ -13,6 +13,13 @@ import Navigation from "@/components/navigation";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { ReportSheet } from "@/components/report-sheet";
 import RoomComposer, { dbTagToDisplay } from "@/components/room-composer";
+import RoomMediaPicker, { resolveYouTubeAttachment } from "@/components/room-media-picker";
+import RoomMediaAttachment, {
+  roomMediaAttachmentFromRecord,
+  roomMediaAttachmentToDatabaseFields,
+  roomMediaHref,
+  type RoomMediaAttachment as RoomMediaAttachmentValue,
+} from "@/components/room-media-attachment";
 import RoomPlay from "@/components/room-play";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -81,6 +88,27 @@ const timeAgo = (s: string) => {
   try { return formatDistanceToNow(new Date(s), { addSuffix: true }); } catch { return ""; }
 };
 
+function LinkifiedText({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/(https?:\/\/[^\s]+)/gi).map((part, index) => (
+        /^https?:\/\//i.test(part) ? (
+          <a
+            key={`${part}-${index}`}
+            href={part}
+            target="_blank"
+            rel="noreferrer"
+            className="relative z-10 pointer-events-auto text-purple-600 underline decoration-purple-300 underline-offset-2 break-all"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {part}
+          </a>
+        ) : part
+      ))}
+    </>
+  );
+}
+
 function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
     <div className="flex items-center justify-between px-5 mb-3">
@@ -100,6 +128,29 @@ type RoomReportTarget = {
   reportedUserId?: string;
   reportedUserName?: string;
 };
+
+function useAutoYouTubeAttachment(
+  text: string,
+  media: RoomMediaAttachmentValue | null,
+  onMedia: (media: RoomMediaAttachmentValue) => void,
+  token: string,
+) {
+  useEffect(() => {
+    if (!token || media || !/youtu(?:\.be|be\.com)/i.test(text)) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void resolveYouTubeAttachment(text, token)
+        .then((resolved) => {
+          if (!cancelled && resolved) onMedia(resolved);
+        })
+        .catch(() => undefined);
+    }, 250);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [text, media, onMedia, token]);
+}
 
 export default function NewRoom() {
   const params = useParams<{ id: string; takeId?: string }>();
@@ -127,62 +178,16 @@ export default function NewRoom() {
   const [showComposer, setShowComposer] = useState(false);
 
   // ── Composer media + rating (same composer experience as feed/media pages) ──
-  const [composerMedia, setComposerMedia] = useState<any | null>(null);
-  const [inlineSearchOpen, setInlineSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [composerMedia, setComposerMedia] = useState<RoomMediaAttachmentValue | null>(null);
+  const [composerBody, setComposerBody] = useState("");
   const [ratingValue, setRatingValue] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
 
-  const searchReqIdRoom = useRef(0);
-  const [correctedQuery, setCorrectedQuery] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!searchQuery.trim()) { setSearchResults([]); setCorrectedQuery(null); return; }
-    const t = setTimeout(async () => {
-      const reqId = ++searchReqIdRoom.current;
-      setIsSearching(true);
-      setCorrectedQuery(null);
-      const runSearch = async (q: string): Promise<any[]> => {
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/media-search`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ query: q, include_book_series: true }),
-        });
-        const data = await res.json();
-        return data?.results || [];
-      };
-      try {
-        let results = await runSearch(searchQuery);
-        let corrected: string | null = null;
-        // No results? Try a one-shot spelling correction and retry.
-        if (results.length === 0 && searchQuery.trim().length >= 4) {
-          try {
-            const fixRes = await fetch(`${SUPABASE_URL}/functions/v1/spell-fix`, {
-              method: "POST",
-              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-              body: JSON.stringify({ query: searchQuery }),
-            });
-            const fix = fixRes.ok ? await fixRes.json() : { corrected: null };
-            if (fix.corrected) {
-              const retried = await runSearch(fix.corrected);
-              if (retried.length > 0) { results = retried; corrected = fix.corrected; }
-            }
-          } catch { /* best-effort */ }
-        }
-        if (reqId === searchReqIdRoom.current) { setSearchResults(results); setCorrectedQuery(corrected); }
-      } catch (_) { if (reqId === searchReqIdRoom.current) setSearchResults([]); }
-      finally { if (reqId === searchReqIdRoom.current) setIsSearching(false); }
-    }, 400);
-    return () => clearTimeout(t);
-  }, [searchQuery, token]);
+  useAutoYouTubeAttachment(composerBody, composerMedia, setComposerMedia, token);
 
   const resetComposerExtras = () => {
     setComposerMedia(null);
-    setInlineSearchOpen(false);
-    setSearchQuery("");
-    setSearchResults([]);
+    setComposerBody("");
     setRatingValue(0);
     setHoverRating(0);
   };
@@ -517,14 +522,7 @@ export default function NewRoom() {
     try {
     const dbTag = tag || "discussion";
     const rating = composerMedia && ratingValue > 0 ? ratingValue : null;
-    const mediaFields = composerMedia ? {
-      media_title: composerMedia.title,
-      media_type: (composerMedia.type || composerMedia.mediaType) === "book_series" ? "book" : (composerMedia.type || composerMedia.mediaType || null),
-      media_creator: composerMedia.creator || composerMedia.author || composerMedia.artist || null,
-      media_image_url: composerMedia.image_url || composerMedia.poster_url || composerMedia.image || null,
-      media_external_id: composerMedia.external_id || composerMedia.id || null,
-      media_external_source: composerMedia.external_source || composerMedia.source || "tmdb",
-    } : {};
+    const mediaFields = roomMediaAttachmentToDatabaseFields(composerMedia);
     const { data: newTake, error } = await supabase
       .from("room_takes")
       .insert({
@@ -570,13 +568,22 @@ export default function NewRoom() {
           user_id: currentUserId,
           media_external_id: mediaFields.media_external_id,
           media_external_source: mediaFields.media_external_source || "tmdb",
+          media_title: mediaFields.media_title || composerMedia?.title || "Untitled",
+          media_type: mediaFields.media_type || "movie",
           rating,
         }, { onConflict: "user_id,media_external_id,media_external_source" });
       } catch (e) {
         console.error("[room rating]", e);
       }
     }
-    logRoomEvent("room_post", { take_id: newTake?.id, tag: dbTag });
+    logRoomEvent("room_post", {
+      take_id: newTake?.id,
+      tag: dbTag,
+      media_type: mediaFields.media_type,
+      media_external_source: mediaFields.media_external_source,
+      media_external_id: mediaFields.media_external_id,
+      media_subtype: mediaFields.media_subtype,
+    });
     await refetchTakes();
     resetComposerExtras();
     toast({ title: "Posted!" });
@@ -865,21 +872,6 @@ export default function NewRoom() {
           <div className="px-3 py-3 border-b border-gray-100">
             {showComposer ? (
               <div>
-                {/* Selected media chip */}
-                {composerMedia && (
-                  <div className="mb-2 flex items-center gap-2 bg-white rounded-2xl p-2 border border-gray-200 shadow-sm">
-                    {(composerMedia.image_url || composerMedia.poster_url || composerMedia.image) && (
-                      <img src={composerMedia.image_url || composerMedia.poster_url || composerMedia.image} alt="" className="w-8 h-11 object-cover rounded flex-shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-800 truncate">{composerMedia.title}</p>
-                      {composerMedia.creator && <p className="text-[10px] text-gray-400 truncate">{composerMedia.creator}</p>}
-                    </div>
-                    <button onClick={() => { setComposerMedia(null); setRatingValue(0); setHoverRating(0); }} className="text-gray-300 hover:text-red-400 p-1">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
                 <RoomComposer
                   hideTags
                   hideTitle
@@ -897,81 +889,21 @@ export default function NewRoom() {
                     return ok;
                   }}
                   posting={posting}
+                  onBodyChange={setComposerBody}
                   footerExtra={<StarRater value={ratingValue} onChange={setRatingValue} />}
                   renderExtra={() => (
-                    <>
-                      {!composerMedia && (
-                        <div className="mt-3">
-                          {!inlineSearchOpen ? (
-                            <button
-                              type="button"
-                              onClick={() => setInlineSearchOpen(true)}
-                              className="inline-flex items-center gap-1.5 py-1.5 text-[13px] font-semibold text-purple-600 hover:text-purple-700"
-                            >
-                              <Plus size={15} /> Add media
-                            </button>
-                          ) : (
-                            <div className="rounded-xl border border-gray-200 overflow-hidden">
-                              <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 bg-gray-50">
-                                <Search size={15} className="text-gray-400 flex-shrink-0" />
-                                <input
-                                  autoFocus
-                                  value={searchQuery}
-                                  onChange={(e) => setSearchQuery(e.target.value)}
-                                  placeholder="Search movies, shows, books…"
-                                  className="flex-1 text-sm text-gray-800 placeholder:text-gray-400 bg-transparent outline-none"
-                                />
-                                {isSearching ? (
-                                  <Loader2 size={14} className="text-gray-400 animate-spin flex-shrink-0" />
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => { setInlineSearchOpen(false); setSearchQuery(""); setSearchResults([]); }}
-                                    aria-label="Close search"
-                                  >
-                                    <X size={15} className="text-gray-400" />
-                                  </button>
-                                )}
-                              </div>
-                              {searchQuery && (
-                                <div className="max-h-56 overflow-y-auto">
-                                  {correctedQuery && !isSearching && searchResults.length > 0 && (
-                                    <p className="px-3 pt-2 text-[11px] text-purple-600">Showing results for "{correctedQuery}"</p>
-                                  )}
-                                  {!isSearching && searchResults.length === 0 && (
-                                    <p className="text-center text-xs text-gray-400 py-6">No results for "{searchQuery}"</p>
-                                  )}
-                                  {searchResults.map((r: any, i: number) => {
-                                    const img = r.image_url || r.poster_url || r.image;
-                                    return (
-                                      <button
-                                        key={i}
-                                        type="button"
-                                        onClick={() => {
-                                          setComposerMedia({ ...r, external_source: r.external_source === 'openai' ? 'openlibrary' : (r.external_source || 'tmdb') });
-                                          setInlineSearchOpen(false);
-                                          setSearchQuery("");
-                                          setSearchResults([]);
-                                        }}
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 text-left"
-                                      >
-                                        {img && <img src={img} alt="" className="w-8 h-11 object-cover rounded flex-shrink-0" />}
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-sm font-semibold text-gray-800 truncate">{r.title}</p>
-                                          <p className="text-[11px] text-gray-400 truncate">
-                                            {r.type || ""}{r.year ? ` · ${r.year}` : ""}{r.creator ? ` · ${r.creator}` : ""}
-                                          </p>
-                                        </div>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </>
+                    <RoomMediaPicker
+                      value={composerMedia}
+                      onChange={(media) => {
+                        setComposerMedia(media);
+                        if (!media) {
+                          setRatingValue(0);
+                          setHoverRating(0);
+                        }
+                      }}
+                      token={token}
+                      className="mt-3"
+                    />
                   )}
                 />
                 <button onClick={() => { setShowComposer(false); resetComposerExtras(); }} className="mt-2 text-[13px] font-medium text-gray-400 px-2 active:text-gray-600">Cancel</button>
@@ -997,6 +929,7 @@ export default function NewRoom() {
                 agreed={hasAgreed(hotTake.id)}
                 onAgree={() => handleAgree(hotTake)}
                 currentUserId={currentUserId}
+                token={token}
                 myVotes={myVotes}
                 onChanged={() => { refetchTakes(); refetchMyVotes(); }}
                 logRoomEvent={logRoomEvent}
@@ -1033,23 +966,31 @@ export default function NewRoom() {
                         <span className="ml-1 px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase rounded-sm shrink-0" style={{ background: g.bg, color: g.fg }}>{g.label}</span>
                       )}
                     </div>
-                    <button onClick={() => setActiveTake(t)} className="block w-full text-left">
-                      <p className="text-gray-800 text-[14px] leading-relaxed mt-0.5">{t.title}</p>
-                      {t.body && <p className="text-gray-500 text-[13px] leading-relaxed mt-0.5 line-clamp-2">{t.body}</p>}
+                    <div className="relative block w-full text-left">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTake(t)}
+                        className="absolute inset-0 z-0 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-500"
+                        aria-label={`Open conversation: ${t.title}`}
+                      />
+                      <div className="relative z-[1] pointer-events-none">
+                        <p className="text-gray-800 text-[14px] leading-relaxed mt-0.5"><LinkifiedText text={t.title} /></p>
+                        {t.body && <p className="text-gray-500 text-[13px] leading-relaxed mt-0.5 line-clamp-2"><LinkifiedText text={t.body} /></p>}
+                      </div>
                       {t.media_title && (
-                        <div className="mt-2 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl p-1.5">
-                          {t.media_image_url && <img src={t.media_image_url} alt="" className="w-7 h-10 object-cover rounded flex-shrink-0" />}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[12px] font-semibold text-gray-800 truncate">{t.media_title}</p>
-                            {t.rating > 0 && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-600">
-                                <Star size={11} className="fill-yellow-400 text-yellow-400" /> {Number(t.rating).toFixed(1)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                        <RoomMediaAttachment
+                          media={roomMediaAttachmentFromRecord(t)!}
+                          compact
+                          className="relative z-10 mt-2"
+                          href={roomMediaHref(roomMediaAttachmentFromRecord(t)!)}
+                          trailing={t.rating > 0 ? (
+                            <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-gray-600">
+                              <Star size={11} className="fill-yellow-400 text-yellow-400" /> {Number(t.rating).toFixed(1)}
+                            </span>
+                          ) : undefined}
+                        />
                       )}
-                    </button>
+                    </div>
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-4 text-gray-400">
                         <div className="flex items-center gap-2">
@@ -1103,6 +1044,7 @@ export default function NewRoom() {
                   <ThreadSheet
                     take={activeTake}
                     currentUserId={currentUserId}
+                    token={token}
                     myVotes={myVotes}
                     onClose={() => setActiveTake(null)}
                     onChanged={() => { refetchTakes(); refetchMyVotes(); }}
@@ -1141,11 +1083,12 @@ export default function NewRoom() {
 }
 
 // ── Hot Conversation — inline thread on the room page ──────────────────
-function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, onChanged, logRoomEvent, onReport }: {
+function HotConversationCard({ take, agreed, onAgree, currentUserId, token, myVotes, onChanged, logRoomEvent, onReport }: {
   take: any;
   agreed: boolean;
   onAgree: () => void;
   currentUserId: string | null;
+  token: string;
   myVotes: any[];
   onChanged: () => void;
   logRoomEvent: (action_type: string, metadata?: Record<string, any>) => Promise<void>;
@@ -1153,9 +1096,11 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
 }) {
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
+  const [replyMedia, setReplyMedia] = useState<RoomMediaAttachmentValue | null>(null);
   const [replying, setReplying] = useState(false);
   const [hiddenReplies, setHiddenReplies] = useState<string[]>([]);
   const hg = dbToDisplay(take.tag);
+  useAutoYouTubeAttachment(replyText, replyMedia, setReplyMedia, token);
 
   const { data: repliesData, refetch: refetchReplies } = useQuery({
     queryKey: ["hot-take-replies", take.id],
@@ -1173,17 +1118,25 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
   const replies: any[] = (repliesData || []).filter((r: any) => !hiddenReplies.includes(r.id));
 
   const handleReply = async () => {
-    if (!replyText.trim() || !currentUserId) return;
+    if ((!replyText.trim() && !replyMedia) || !currentUserId) return;
     setReplying(true);
     await supabase.from("room_take_replies").insert({
       take_id: take.id,
       parent_reply_id: null,
       user_id: currentUserId,
-      content: replyText.trim(),
+      content: replyText.trim() || `Shared ${replyMedia?.title}`,
+      ...roomMediaAttachmentToDatabaseFields(replyMedia),
     });
     await supabase.from("room_takes").update({ reply_count: (take.reply_count || 0) + 1 }).eq("id", take.id);
-    logRoomEvent("room_reply", { take_id: take.id });
+    logRoomEvent("room_reply", {
+      take_id: take.id,
+      media_type: replyMedia?.type || replyMedia?.mediaType || null,
+      media_external_source: replyMedia?.externalSource || replyMedia?.external_source || null,
+      media_external_id: replyMedia?.externalId || replyMedia?.external_id || null,
+      media_subtype: replyMedia?.mediaSubtype || replyMedia?.media_subtype || null,
+    });
     setReplyText("");
+    setReplyMedia(null);
     setReplying(false);
     setReplyOpen(false);
     refetchReplies();
@@ -1230,11 +1183,20 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
           Hot Conversation
         </span>
       </div>
-      <p className="text-[15px] font-semibold text-gray-900 leading-snug">{take.title}</p>
+      <p className="text-[15px] font-semibold text-gray-900 leading-snug"><LinkifiedText text={take.title} /></p>
       {take.body && (
         <div className="bg-white/70 rounded-xl p-3 mt-2.5 text-[13px] leading-relaxed text-gray-600 border border-purple-100/50">
-          <span className="font-semibold text-gray-900">{nameOf(take.users)}:</span> {take.body}
+          <span className="font-semibold text-gray-900">{nameOf(take.users)}:</span>{" "}
+          <LinkifiedText text={take.body} />
         </div>
+      )}
+      {take.media_title && (
+        <RoomMediaAttachment
+          media={roomMediaAttachmentFromRecord(take)!}
+          compact
+          className="mt-2.5"
+          href={roomMediaHref(roomMediaAttachmentFromRecord(take)!)}
+        />
       )}
       {/* Action row — thumbs + reply, same as everywhere else */}
       <div className="flex items-center gap-5 mt-3 text-gray-400">
@@ -1259,7 +1221,15 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
             const voted = myReplyVote(r.id)?.vote === 1;
             return (
               <div key={r.id}>
-                <p className="text-[14px] text-gray-800 leading-snug">{r.content}</p>
+                <p className="text-[14px] text-gray-800 leading-snug"><LinkifiedText text={r.content} /></p>
+                {r.media_title && (
+                  <RoomMediaAttachment
+                    media={roomMediaAttachmentFromRecord(r)!}
+                    compact
+                    className="mt-1.5"
+                    href={roomMediaHref(roomMediaAttachmentFromRecord(r)!)}
+                  />
+                )}
                 <div className="flex items-center gap-4 mt-0.5">
                   <span className="text-[11px] text-gray-400">— {nameOf(r.users)} · {timeAgo(r.created_at)}</span>
                   <button onClick={() => handleReplyUpvote(r)} className="flex items-center gap-1 text-[11px] font-medium active:scale-95 transition-transform" style={voted ? { color: ACCENT } : { color: "#9ca3af" }}>
@@ -1279,19 +1249,30 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
         </div>
       )}
       {(replyOpen || replies.length > 0) && (
-        <div className="mt-3 flex items-center gap-2">
-          <input
-            autoFocus={replyOpen}
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleReply(); } }}
-            placeholder={currentUserId ? "Join the conversation…" : "Sign in to reply"}
+        <div className="mt-3">
+          <div className="flex items-center gap-2">
+            <input
+              autoFocus={replyOpen}
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleReply(); } }}
+              placeholder={currentUserId ? "Join the conversation…" : "Sign in to reply"}
+              disabled={!currentUserId || replying}
+              className="flex-1 rounded-full bg-white border border-purple-100 px-4 py-2 text-[13px] outline-none focus:border-purple-300 disabled:opacity-60"
+            />
+            <button onClick={handleReply} disabled={(!replyText.trim() && !replyMedia) || replying} className="w-8 h-8 rounded-full flex items-center justify-center text-white disabled:opacity-40" style={{ background: ACCENT }}>
+              {replying ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+            </button>
+          </div>
+          <RoomMediaPicker
+            value={replyMedia}
+            onChange={setReplyMedia}
+            token={token}
+            compact
+            triggerLabel="Add media to reply"
+            className="mt-2"
             disabled={!currentUserId || replying}
-            className="flex-1 rounded-full bg-white border border-purple-100 px-4 py-2 text-[13px] outline-none focus:border-purple-300 disabled:opacity-60"
           />
-          <button onClick={handleReply} disabled={!replyText.trim() || replying} className="w-8 h-8 rounded-full flex items-center justify-center text-white disabled:opacity-40" style={{ background: ACCENT }}>
-            {replying ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-          </button>
         </div>
       )}
     </div>
@@ -1299,9 +1280,10 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, myVotes, on
 }
 
 // ── Thread (take detail + replies) ─────────────────────────────────────
-function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoomEvent, onReport }: {
+function ThreadSheet({ take, currentUserId, token, myVotes, onClose, onChanged, logRoomEvent, onReport }: {
   take: any;
   currentUserId: string | null;
+  token: string;
   myVotes: any[];
   onClose: () => void;
   onChanged: () => void;
@@ -1309,8 +1291,10 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
   onReport: (target: RoomReportTarget) => void;
 }) {
   const [replyText, setReplyText] = useState("");
+  const [replyMedia, setReplyMedia] = useState<RoomMediaAttachmentValue | null>(null);
   const [replying, setReplying] = useState(false);
   const [hiddenReplies, setHiddenReplies] = useState<string[]>([]);
+  useAutoYouTubeAttachment(replyText, replyMedia, setReplyMedia, token);
   const { data: repliesData, refetch: refetchReplies } = useQuery({
     queryKey: ["take-replies", take.id],
     queryFn: async () => {
@@ -1336,17 +1320,25 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
   };
 
   const handleReply = async () => {
-    if (!replyText.trim() || !currentUserId) return;
+    if ((!replyText.trim() && !replyMedia) || !currentUserId) return;
     setReplying(true);
     await supabase.from("room_take_replies").insert({
       take_id: take.id,
       parent_reply_id: null,
       user_id: currentUserId,
-      content: replyText.trim(),
+      content: replyText.trim() || `Shared ${replyMedia?.title}`,
+      ...roomMediaAttachmentToDatabaseFields(replyMedia),
     });
     await supabase.from("room_takes").update({ reply_count: (take.reply_count || 0) + 1 }).eq("id", take.id);
-    logRoomEvent("room_reply", { take_id: take.id });
+    logRoomEvent("room_reply", {
+      take_id: take.id,
+      media_type: replyMedia?.type || replyMedia?.mediaType || null,
+      media_external_source: replyMedia?.externalSource || replyMedia?.external_source || null,
+      media_external_id: replyMedia?.externalId || replyMedia?.external_id || null,
+      media_subtype: replyMedia?.mediaSubtype || replyMedia?.media_subtype || null,
+    });
     setReplyText("");
+    setReplyMedia(null);
     setReplying(false);
     refetchReplies();
     onChanged();
@@ -1397,7 +1389,15 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
                       <span className="font-bold text-[13px] text-gray-900">{nameOf(r.users)}</span>
                       <span className="text-gray-400 text-[12px]">· {timeAgo(r.created_at)}</span>
                     </div>
-                    <p className="text-[14px] text-gray-800 leading-relaxed mt-0.5">{r.content}</p>
+                    <p className="text-[14px] text-gray-800 leading-relaxed mt-0.5"><LinkifiedText text={r.content} /></p>
+                    {r.media_title && (
+                      <RoomMediaAttachment
+                        media={roomMediaAttachmentFromRecord(r)!}
+                        compact
+                        className="mt-1.5"
+                        href={roomMediaHref(roomMediaAttachmentFromRecord(r)!)}
+                      />
+                    )}
                     <div className="flex items-center gap-4 mt-1.5">
                       <button onClick={() => handleReplyUpvote(r)} className="flex items-center gap-1.5 text-[12px] font-medium active:scale-95 transition-transform" style={voted ? { color: ACCENT } : { color: "#9ca3af" }}>
                         <ThumbsUp size={13} strokeWidth={voted ? 2.5 : 1.75} /> {(r.upvotes || 0) > 0 ? r.upvotes : ""}
@@ -1414,18 +1414,29 @@ function ThreadSheet({ take, currentUserId, myVotes, onClose, onChanged, logRoom
             </div>
           )}
 
-        <div className="mt-2 flex items-center gap-2">
-          <input
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleReply(); } }}
-            placeholder={currentUserId ? "Add a reply…" : "Sign in to reply"}
+        <div className="mt-2">
+          <div className="flex items-center gap-2">
+            <input
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleReply(); } }}
+              placeholder={currentUserId ? "Add a reply…" : "Sign in to reply"}
+              disabled={!currentUserId || replying}
+              className="flex-1 rounded-full bg-gray-100 px-4 py-2.5 text-[14px] outline-none disabled:opacity-60"
+            />
+            <button onClick={handleReply} disabled={(!replyText.trim() && !replyMedia) || replying} className="w-10 h-10 rounded-full flex items-center justify-center text-white disabled:opacity-40" style={{ background: ACCENT }}>
+              {replying ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+            </button>
+          </div>
+          <RoomMediaPicker
+            value={replyMedia}
+            onChange={setReplyMedia}
+            token={token}
+            compact
+            triggerLabel="Add media to reply"
+            className="mt-2"
             disabled={!currentUserId || replying}
-            className="flex-1 rounded-full bg-gray-100 px-4 py-2.5 text-[14px] outline-none disabled:opacity-60"
           />
-          <button onClick={handleReply} disabled={!replyText.trim() || replying} className="w-10 h-10 rounded-full flex items-center justify-center text-white disabled:opacity-40" style={{ background: ACCENT }}>
-            {replying ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-          </button>
         </div>
     </div>
   );
