@@ -38,6 +38,19 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
+    const { data: existingProfile, error: lookupError } = await admin
+      .from("users")
+      .select("id, user_name, identity_confirmed_at")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (lookupError) throw lookupError;
+    if (
+      existingProfile?.identity_confirmed_at
+      && normalizeUsername(existingProfile.user_name) !== username
+    ) {
+      return json({ error: "Usernames cannot be changed after profile setup." }, 400);
+    }
+
     const { data: conflict, error: conflictError } = await admin
       .from("users")
       .select("id")
@@ -63,13 +76,6 @@ serve(async (req) => {
       display_name: displayName,
       identity_confirmed_at: new Date().toISOString(),
     };
-    const { data: existingProfile, error: lookupError } = await admin
-      .from("users")
-      .select("id")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (lookupError) throw lookupError;
-
     const profileResult = existingProfile
       ? await admin.from("users").update(profileFields).eq("id", user.id)
       : await admin.from("users").insert({

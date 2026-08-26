@@ -113,6 +113,34 @@ export default function LoginPage() {
       });
       setSubmitting(false);
     } else {
+      // Email/password signup already asks the user to explicitly choose these
+      // fields. Canonically confirm them now when Supabase returns a session;
+      // email-verification flows will confirm on first login instead.
+      if (data?.session?.access_token) {
+        try {
+          const profileResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/complete-profile`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${data.session.access_token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                first_name: firstName.trim(),
+                last_name: lastName.trim(),
+                username: normalizedUsername,
+              }),
+            },
+          );
+          if (!profileResponse.ok) {
+            console.warn("[signup profile confirmation]", await profileResponse.text());
+          }
+        } catch (profileError) {
+          console.warn("[signup profile confirmation]", profileError);
+        }
+      }
+
       // Identify new user in Customer.io for email journey
       console.log('Sign up data:', { userId: data?.user?.id, email: data?.user?.email });
       if (data?.user?.id && data?.user?.email) {

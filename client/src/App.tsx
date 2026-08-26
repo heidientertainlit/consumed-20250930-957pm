@@ -413,7 +413,9 @@ function Router() {
           </Route>
 
           <Route path="/play/binge-battle/accept/:battleId">
-            <PlayBingeBattleAccept />
+            <IdentityAwareRoute>
+              <PlayBingeBattleAccept />
+            </IdentityAwareRoute>
           </Route>
 
           <Route path="/play/binge-battle">
@@ -484,7 +486,9 @@ function Router() {
           </Route>
 
           <Route path="/play/awards/:slug">
-            <AwardsPredictions />
+            <IdentityAwareRoute>
+              <AwardsPredictions />
+            </IdentityAwareRoute>
           </Route>
 
           <Route path="/awards">
@@ -492,7 +496,9 @@ function Router() {
           </Route>
 
           <Route path="/awards/:eventId">
-            <AwardsPredictions />
+            <IdentityAwareRoute>
+              <AwardsPredictions />
+            </IdentityAwareRoute>
           </Route>
 
           <Route path="/awards/:eventId/ballot">

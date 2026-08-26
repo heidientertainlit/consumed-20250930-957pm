@@ -56,22 +56,20 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
         return;
       }
 
-      void Promise.all([
-        supabase
-          .from("users")
-          .select("identity_confirmed_at")
-          .eq("id", user.id)
-          .maybeSingle(),
-        supabase
-          .from("dna_profiles")
-          .select("user_id")
-          .eq("user_id", user.id)
-          .maybeSingle(),
-      ]).then(([identityResult, dnaResult]) => {
+      void supabase
+        .from("users")
+        .select("identity_confirmed_at")
+        .eq("id", user.id)
+        .maybeSingle()
+        .then((identityResult) => {
           if (cancelled) return;
-          if (hasConfirmedProfileIdentity(identityResult.data) || dnaResult.data) {
+          if (hasConfirmedProfileIdentity(identityResult.data)) {
             setReady(true);
           } else {
+            sessionStorage.setItem(
+              "identityReturnUrl",
+              window.location.pathname + window.location.search + window.location.hash,
+            );
             setLocation("/onboarding");
           }
         });
@@ -118,14 +116,20 @@ export function IdentityAwareRoute({ children }: RouteGuardProps) {
     }
 
     setReady(false);
-    void Promise.all([
-      supabase.from("users").select("identity_confirmed_at").eq("id", user.id).maybeSingle(),
-      supabase.from("dna_profiles").select("user_id").eq("user_id", user.id).maybeSingle(),
-    ]).then(([identityResult, dnaResult]) => {
+    void supabase
+      .from("users")
+      .select("identity_confirmed_at")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then((identityResult) => {
       if (cancelled) return;
-      if (hasConfirmedProfileIdentity(identityResult.data) || dnaResult.data) {
+      if (hasConfirmedProfileIdentity(identityResult.data)) {
         setReady(true);
       } else {
+        sessionStorage.setItem(
+          "identityReturnUrl",
+          window.location.pathname + window.location.search + window.location.hash,
+        );
         setLocation("/onboarding");
       }
     });
@@ -160,7 +164,7 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
       const dnaProfile = dnaResult.data;
       if (dnaProfile) markOnboardingComplete(user.id);
       const hasIdentity = hasConfirmedProfileIdentity(identityResult.data);
-      const shouldOnboard = !dnaProfile && !hasIdentity;
+      const shouldOnboard = !hasIdentity;
 
       if (shouldOnboard) {
         sessionStorage.removeItem("returnUrl");

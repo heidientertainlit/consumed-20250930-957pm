@@ -1851,41 +1851,45 @@ export default function UserProfile() {
       });
       return;
     }
+    const firstName = editFirstName.trim();
+    const lastName = editLastName.trim();
+    if (!firstName || !lastName) {
+      toast({
+        title: "Name required",
+        description: "Please enter your first and last name.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsSavingProfile(true);
     try {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(
-        import.meta.env.VITE_SUPABASE_URL,
-        import.meta.env.VITE_SUPABASE_ANON_KEY
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/complete-profile`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            first_name: firstName,
+            last_name: lastName,
+            username: editUsername,
+          }),
+        },
       );
-
-      // Update users table (only first/last name - username is permanent)
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          first_name: editFirstName || null,
-          last_name: editLastName || null
-        })
-        .eq('id', user.id);
-
-      if (updateError) {
-        console.error('Update error:', updateError);
-        toast({
-          title: "Update Failed",
-          description: "Failed to update profile. Please try again.",
-          variant: "destructive"
-        });
-        setIsSavingProfile(false);
-        return;
-      }
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Failed to update profile.");
 
       // Update local state with new profile data (keep existing username)
-      setUserProfileData({
+      setUserProfileData((current: any) => ({
+        ...current,
         user_name: editUsername,
-        first_name: editFirstName || null,
-        last_name: editLastName || null
-      });
+        first_name: firstName,
+        last_name: lastName,
+        display_name: `${firstName} ${lastName}`,
+      }));
 
       // Success!
       toast({
@@ -1899,8 +1903,8 @@ export default function UserProfile() {
     } catch (error) {
       console.error('Save profile error:', error);
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: "Update Failed",
+        description: error instanceof Error ? error.message : "Failed to update profile. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -5481,6 +5485,25 @@ export default function UserProfile() {
             </div>
 
             <div className="space-y-4">
+              {/* Account Email */}
+              <div>
+                <Label htmlFor="account-email" className="text-sm font-medium text-black mb-2 block">
+                  Email
+                </Label>
+                <Input
+                  id="account-email"
+                  type="email"
+                  value={user?.email || ""}
+                  disabled
+                  readOnly
+                  className="w-full bg-gray-100 text-gray-600 border-gray-300 cursor-not-allowed"
+                  data-testid="input-account-email"
+                />
+                <p className="text-xs text-gray-600 mt-1">
+                  This is the email associated with your sign-in and cannot be changed here.
+                </p>
+              </div>
+
               {/* First Name */}
               <div>
                 <Label htmlFor="first-name" className="text-sm font-medium text-black mb-2 block">
@@ -5499,7 +5522,7 @@ export default function UserProfile() {
               {/* Last Name */}
               <div>
                 <Label htmlFor="last-name" className="text-sm font-medium text-black mb-2 block">
-                  Last Name <span className="text-black font-normal">(optional)</span>
+                  Last Name
                 </Label>
                 <Input
                   id="last-name"
@@ -5545,7 +5568,7 @@ export default function UserProfile() {
                 <Button
                   onClick={handleSaveProfile}
                   className="flex-1 bg-purple-600 text-white hover:bg-purple-700"
-                  disabled={isSavingProfile}
+                  disabled={isSavingProfile || !editFirstName.trim() || !editLastName.trim()}
                   data-testid="button-save-profile"
                 >
                   {isSavingProfile ? (

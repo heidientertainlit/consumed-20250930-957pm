@@ -29,4 +29,4 @@
 - [Apple OAuth credential rotation](apple-oauth-credential-rotation.md) — Supabase uses a signed Apple client-secret JWT that expires after 180 days; rotate it before expiry.
 - [Feed identity labels](feed-identity-labels.md) — feed-visible names use first name + last initial; usernames remain raw only as handles, routes, profile identity, and backend identifiers.
 - [Resumable onboarding state](resumable-onboarding-state.md) — DNA profile is completion; canonical answers/activity reconcile resume, while local storage only caches step and prompt dismissal.
-- [Canonical profile identity](canonical-profile-identity.md) — first-time users confirm names + unique handle before DNA; trust server-managed confirmation, never Auth metadata or email-derived handles.
+- [Canonical profile identity](canonical-profile-identity.md) — every account explicitly confirms names + unique handle once; trust server confirmation, never metadata, email prefixes, or DNA completion.

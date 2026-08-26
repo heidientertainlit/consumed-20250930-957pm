@@ -459,6 +459,9 @@ export default function OnboardingPage() {
   const [identityUsernameStatus, setIdentityUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
   const [identityError, setIdentityError] = useState<string | null>(null);
   const [identitySaving, setIdentitySaving] = useState(false);
+  const [identityHasExistingDna, setIdentityHasExistingDna] = useState(false);
+  const [identityLookupError, setIdentityLookupError] = useState<string | null>(null);
+  const [identityLookupRetryKey, setIdentityLookupRetryKey] = useState(0);
   const pendingSaves = useRef<Promise<void> | null>(null);
   const usernameCheckRequest = useRef(0);
 
@@ -484,8 +487,16 @@ export default function OnboardingPage() {
           .maybeSingle(),
       ]);
       if (cancelled) return;
+      if (profileResult.error || dnaResult.error) {
+        setIdentityRequired(false);
+        setIdentityLookupError("We couldn't verify your existing profile yet. Please try again so we don't restart any completed setup.");
+        setIdentityLoading(false);
+        return;
+      }
+      setIdentityLookupError(null);
+      setIdentityHasExistingDna(Boolean(dnaResult.data));
 
-      if (dnaResult.data || hasConfirmedProfileIdentity(profileResult.data)) {
+      if (hasConfirmedProfileIdentity(profileResult.data)) {
         setIdentityRequired(false);
         setIdentityLoading(false);
         return;
@@ -530,7 +541,7 @@ export default function OnboardingPage() {
       }
     });
     return () => { cancelled = true; };
-  }, [authLoading, user]);
+  }, [authLoading, identityLookupRetryKey, user]);
 
   useEffect(() => {
     if (!identityRequired || !session?.access_token) return;
@@ -610,6 +621,17 @@ export default function OnboardingPage() {
       setIdentityUsername(username);
       setIdentityUsernameStatus("available");
       setIdentityRequired(false);
+      if (identityHasExistingDna) {
+        markOnboardingComplete(user?.id);
+        const returnUrl = sessionStorage.getItem("identityReturnUrl");
+        sessionStorage.removeItem("identityReturnUrl");
+        setLocation(
+          returnUrl && !returnUrl.startsWith("/login") && !returnUrl.startsWith("/onboarding")
+            ? returnUrl
+            : "/activity",
+        );
+        return;
+      }
       saveOnboardingProgress(user?.id, "debate");
       setStep("debate");
     } catch (error) {
@@ -1192,6 +1214,29 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900">
         <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+
+  if (identityLookupError)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900 px-6">
+        <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl">
+          <CircleUser className="mx-auto text-purple-600" size={36} />
+          <h1 className="mt-4 text-xl font-bold text-gray-900">We couldn't load your profile</h1>
+          <p className="mt-2 text-sm leading-relaxed text-gray-600">{identityLookupError}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setIdentityLookupError(null);
+              setIdentityLoading(true);
+              setIdentityLookupRetryKey((key) => key + 1);
+            }}
+            className="mt-6 w-full rounded-full bg-purple-600 py-3 text-sm font-bold text-white"
+            data-testid="retry-identity-lookup"
+          >
+            Try again
+          </button>
+        </div>
       </div>
     );
 

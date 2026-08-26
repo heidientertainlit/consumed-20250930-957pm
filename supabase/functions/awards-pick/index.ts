@@ -13,6 +13,19 @@ serve(async (req) => {
   }
 
   try {
+    const authClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: req.headers.get("Authorization") || "" } } },
+    );
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -24,6 +37,25 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "user_id, category_id, and nominee_id are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (user_id !== user.id) {
+      return new Response(
+        JSON.stringify({ error: "You can only submit your own predictions" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const { data: profile, error: profileError } = await supabaseClient
+      .from("users")
+      .select("identity_confirmed_at")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profileError) throw profileError;
+    if (!profile?.identity_confirmed_at) {
+      return new Response(
+        JSON.stringify({ error: "Complete profile setup before submitting predictions" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
