@@ -30,12 +30,13 @@ export async function resolveKnownProfileIdentity(
   user: IdentityUserLike,
   initialProfile: ProfileIdentity | null,
   completeProfile: (body: Record<string, unknown>) => Promise<ProfileIdentity>,
+  options: { hasExistingDna?: boolean } = {},
 ): Promise<ResolvedProfileIdentityCore> {
   let profile = initialProfile;
   const provider = getIdentityProvider(user);
   let defaults = getProfileIdentityDefaults(user, profile);
 
-  if (hasConfirmedProfileIdentity(profile)) {
+  if (hasConfirmedProfileIdentity(profile) || options.hasExistingDna) {
     return { complete: true, profile, provider, defaults };
   }
 

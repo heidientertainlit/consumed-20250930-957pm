@@ -144,6 +144,31 @@ test("duplicate email signup username reaches editable onboarding after login", 
   assert.equal(result.defaults.missingUsername, true);
 });
 
+test("completed DNA keeps a legacy profile with missing names out of identity setup", async () => {
+  let completionAttempted = false;
+  const result = await resolveKnownProfileIdentity(
+    {
+      email: "legacy@example.com",
+      app_metadata: { provider: "email" },
+      user_metadata: {},
+    },
+    {
+      first_name: "Legacy Display Name",
+      last_name: null,
+      user_name: "legacy_user",
+      identity_confirmed_at: null,
+    },
+    async () => {
+      completionAttempted = true;
+      throw new Error("Established DNA users must not enter profile completion.");
+    },
+    { hasExistingDna: true },
+  );
+
+  assert.equal(result.complete, true);
+  assert.equal(completionAttempted, false);
+});
+
 test("keeps progress isolated per user and rejects malformed steps", () => {
   saveOnboardingProgress("alice", "love");
   saveOnboardingProgress("bob", "drivers");

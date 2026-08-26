@@ -57,17 +57,26 @@ async function resolveIdentity(
   user: User,
   accessToken: string,
 ): Promise<ResolvedProfileIdentity> {
-  const profileResult = await supabase
-    .from("users")
-    .select("first_name, last_name, user_name, identity_confirmed_at")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [profileResult, dnaResult] = await Promise.all([
+    supabase
+      .from("users")
+      .select("first_name, last_name, user_name, identity_confirmed_at")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("dna_profiles")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  ]);
   if (profileResult.error) throw profileResult.error;
+  if (dnaResult.error) throw dnaResult.error;
 
   return resolveKnownProfileIdentity(
     user,
     profileResult.data as ProfileIdentity | null,
     (body) => completeProfile(accessToken, body),
+    { hasExistingDna: Boolean(dnaResult.data) },
   );
 }
 

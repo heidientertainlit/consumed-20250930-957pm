@@ -469,6 +469,7 @@ export default function OnboardingPage() {
   const [identityProvider, setIdentityProvider] = useState<"email" | "google" | "apple" | "unknown">("unknown");
   const [identityLookupError, setIdentityLookupError] = useState<string | null>(null);
   const [identityLookupRetryKey, setIdentityLookupRetryKey] = useState(0);
+  const [identityResolvedUserId, setIdentityResolvedUserId] = useState<string | null>(null);
   const pendingSaves = useRef<Promise<void> | null>(null);
   const usernameCheckRequest = useRef(0);
 
@@ -479,6 +480,9 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (authLoading || !user?.id || !session?.access_token) return;
     let cancelled = false;
+    setIdentityLoading(true);
+    setIdentityRequired(false);
+    setIdentityLookupError(null);
 
     const loadIdentity = async () => {
       const [resolvedIdentity, dnaResult] = await Promise.all([
@@ -495,6 +499,7 @@ export default function OnboardingPage() {
       if (dnaResult.error) {
         setIdentityRequired(false);
         setIdentityLookupError("We couldn't verify your existing profile yet. Please try again so we don't restart any completed setup.");
+        setIdentityResolvedUserId(user.id);
         setIdentityLoading(false);
         return;
       }
@@ -503,6 +508,7 @@ export default function OnboardingPage() {
 
       if (resolvedIdentity.complete) {
         setIdentityRequired(false);
+        setIdentityResolvedUserId(user.id);
         setIdentityLoading(false);
         return;
       }
@@ -515,6 +521,7 @@ export default function OnboardingPage() {
       setIdentityNeedsUsername(resolvedIdentity.defaults.missingUsername);
       setIdentityProvider(resolvedIdentity.provider);
       setIdentityRequired(true);
+      setIdentityResolvedUserId(user.id);
       setIdentityLoading(false);
     };
 
@@ -522,6 +529,7 @@ export default function OnboardingPage() {
       console.error("[onboarding identity]", error);
       if (!cancelled) {
         setIdentityRequired(false);
+        setIdentityResolvedUserId(user.id);
         setIdentityLoading(false);
         setIdentityLookupError("We couldn't verify your existing profile yet. Please try again so we don't restart any completed setup.");
       }
@@ -1202,7 +1210,7 @@ export default function OnboardingPage() {
     </div>
   );
 
-  if (authLoading || identityLoading)
+  if (authLoading || identityLoading || identityResolvedUserId !== user?.id)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900">
         <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
