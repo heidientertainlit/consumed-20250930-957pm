@@ -70,6 +70,19 @@ export default function AdminRoomConversationsPage() {
   const [working, setWorking] = useState<"preview" | "publish" | null>(null);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [publishApproval, setPublishApproval] = useState(false);
+  const [generationStartedAt, setGenerationStartedAt] = useState<number | null>(null);
+  const [generationSeconds, setGenerationSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!generationStartedAt) {
+      setGenerationSeconds(0);
+      return;
+    }
+    const update = () => setGenerationSeconds(Math.floor((Date.now() - generationStartedAt) / 1000));
+    update();
+    const interval = window.setInterval(update, 1000);
+    return () => window.clearInterval(interval);
+  }, [generationStartedAt]);
 
   const { data: currentProfile, isLoading: profileLoading } = useQuery({
     queryKey: ["admin-profile-check", user?.id],
@@ -134,7 +147,9 @@ export default function AdminRoomConversationsPage() {
     if (!prompt && !starter) { toast({ title: "Choose a starter", description: "Select a sourced suggestion or write a custom starter.", variant: "destructive" }); return; }
     if (prompt && customError) { toast({ title: "Custom starter needs revision", description: customError, variant: "destructive" }); return; }
     setWorking("preview");
+    setGenerationStartedAt(Date.now());
     setPublishedUrl(null);
+    toast({ title: "Private preview started", description: "Generating and safety-checking 20 messages. This may take up to two minutes." });
     try {
       let people = assembleQuery.data?.personas ?? [];
       const currentDeficit = Math.max(0, 20 - people.length);
@@ -165,7 +180,10 @@ export default function AdminRoomConversationsPage() {
       setPublishApproval(false);
     } catch (error: any) {
       toast({ title: "Could not generate preview", description: error.message, variant: "destructive" });
-    } finally { setWorking(null); }
+    } finally {
+      setWorking(null);
+      setGenerationStartedAt(null);
+    }
   }
 
   async function publish() {
@@ -199,7 +217,12 @@ export default function AdminRoomConversationsPage() {
         <div className="mt-4"><label className="text-xs uppercase tracking-wider text-gray-400">Or write a custom safe starter</label><Textarea value={customStarter} onChange={e => { setCustomStarter(e.target.value); setSelectedStarter(""); }} placeholder="Ask a specific, respectful True Crime discussion question…" className="mt-2 bg-gray-950 border-gray-700 min-h-[84px]" maxLength={500} />{customError ? <p className="text-xs text-red-400 mt-1">{customError}</p> : customStarter && <p className="text-xs text-emerald-400 mt-1"><ShieldCheck className="inline mr-1" size={12} />Ready for server safety review</p>}</div>
       </section>
       <section className="rounded-2xl border border-gray-800 bg-gray-900 p-5 mb-5"><div className="flex items-start gap-3"><Users className="text-purple-300 mt-0.5" size={19} /><div><h2 className="font-semibold">2. Assemble participants automatically</h2><p className="text-sm text-gray-400 mt-1">The service selects 20 interested, distinct personas—no manual persona selection.</p></div></div>{personaDeficit !== null && personaDeficit > 0 && <div className="mt-4 rounded-xl border border-amber-700/50 bg-amber-950/30 p-4"><p className="font-medium text-amber-200">Approval required: {personaDeficit} persona{personaDeficit === 1 ? "" : "s"} must be created.</p><p className="text-sm text-amber-100/70 mt-1">Only exactly this deficit will be created, then the service will assemble 20 participants.</p><label className="mt-3 flex gap-2 text-sm text-gray-200"><input type="checkbox" checked={approval} onChange={e => setApproval(e.target.checked)} /> I approve creation of exactly {personaDeficit} persona{personaDeficit === 1 ? "" : "s"}.</label></div>}
-        <Button onClick={generatePreview} disabled={working !== null || (!!personaDeficit && !approval)} className="mt-5 bg-purple-600 hover:bg-purple-700">{working === "preview" ? <><Loader2 className="animate-spin mr-2" size={15} />Building preview…</> : <><Sparkles className="mr-2" size={15} />{preview ? "Regenerate private preview" : "Generate private preview"}</>}</Button></section>
+        <Button onClick={generatePreview} disabled={working !== null || (!!personaDeficit && !approval)} className="mt-5 bg-purple-600 hover:bg-purple-700">{working === "preview" ? <><Loader2 className="animate-spin mr-2" size={15} />Building preview…</> : <><Sparkles className="mr-2" size={15} />{preview ? "Regenerate private preview" : "Generate private preview"}</>}</Button>
+        {working === "preview" && <div role="status" aria-live="polite" className="mt-4 rounded-xl border border-purple-700/50 bg-purple-950/30 p-4">
+          <div className="flex items-center gap-2 font-medium text-purple-200"><Loader2 className="animate-spin" size={16} />Generating private preview</div>
+          <p className="mt-1 text-sm text-gray-300">Creating and safety-checking 20 distinct persona messages. Nothing is public.</p>
+          <p className="mt-2 text-xs text-gray-500">Elapsed: {generationSeconds}s · Please keep this page open for up to two minutes.</p>
+        </div>}</section>
       {preview && <section className="rounded-2xl border border-purple-700/40 bg-gray-900 p-5"><div className="flex flex-wrap justify-between gap-3 mb-5"><div><h2 className="font-semibold">3. Private conversation preview</h2><p className="text-sm text-gray-400">Opening post and ordered nested replies. Nothing is public yet.</p></div><span className={`rounded-full px-3 py-1 text-xs border ${participantCount === 20 ? "text-emerald-300 bg-emerald-900/30 border-emerald-700/40" : "text-amber-200 bg-amber-900/30 border-amber-700/40"}`}><Users className="inline mr-1" size={12} />{participantCount} distinct participants {participantCount === 20 ? <CheckCircle2 className="inline ml-1" size={12} /> : ""}</span></div>{preview.sources.length > 0 && <div className="rounded-xl border border-gray-800 bg-gray-950/70 p-3 mb-3"><p className="text-xs uppercase tracking-wide text-gray-400 mb-2">Starter provenance</p>{preview.sources.map((source, index) => <div key={`${source.source}-${index}`} className="text-xs text-gray-400">{source.url ? <a href={source.url} target="_blank" rel="noreferrer" className="text-purple-300 hover:underline">{source.source} <ExternalLink className="inline" size={10} /></a> : source.source}{source.publishedAt && <span> · published {new Date(source.publishedAt).toLocaleDateString()}</span>}{source.safety && <span className="text-emerald-400"> · {source.safety}</span>}</div>)}</div>}<div className="rounded-xl bg-purple-950/30 border border-purple-800/40 p-4 mb-3"><p className="text-xs uppercase text-purple-300 font-semibold mb-2">Opening post</p><p className="text-xs text-purple-200 mb-2">{preview.opening_persona_name}{preview.opening_handle && ` @${preview.opening_handle}`}</p><p className="text-sm leading-relaxed text-gray-100">{preview.opening_post}</p></div><div className="space-y-2">{[...preview.replies].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((reply, i) => <ReplyRow key={reply.id || `${reply.handle}-${i}`} reply={reply} index={i} depth={reply.id ? replyDepths.get(reply.id) ?? 0 : 0} />)}</div><div className="mt-5 pt-5 border-t border-gray-800"><label className="flex items-start gap-2 text-sm text-gray-200 mb-4"><input type="checkbox" checked={publishApproval} onChange={event => setPublishApproval(event.target.checked)} className="mt-1 accent-emerald-500" /> I reviewed this complete 20-person conversation and approve publishing it to the True Crime room.</label><div className="flex flex-wrap gap-3"><Button onClick={generatePreview} disabled={working !== null} variant="outline" className="border-gray-700"><RefreshCw className="mr-2" size={15} />Regenerate</Button><Button onClick={publish} disabled={working !== null || participantCount !== 20 || !publishApproval || !!publishedUrl} className="bg-emerald-600 hover:bg-emerald-700">{working === "publish" ? <Loader2 className="animate-spin mr-2" size={15} /> : <CheckCircle2 className="mr-2" size={15} />}Publish approved conversation</Button></div></div>{participantCount !== 20 && <p className="text-xs text-amber-300 mt-3">Publishing is locked until the preview contains 20 distinct participants.</p>}{publishedUrl && <a href={publishedUrl} className="mt-4 inline-flex items-center gap-2 text-sm text-emerald-300 hover:underline">View published True Crime room <ExternalLink size={14} /></a>}</section>}
     </>}</main></div>;
 }
