@@ -294,15 +294,51 @@ serve(async req => {
       if (error) throw error;
       if ((people || []).length !== 20) return response({ error: "Every participant must be an existing persona" }, 422);
       const key = Deno.env.get("OPENAI_API_KEY"); if (!key) return response({ error: "OpenAI is not configured" }, 503);
-      const prompt = `Write a safe discussion of this completed-media topic: ${topic}. Never describe graphic harm, speculate about active cases, accuse people, or discuss minors. Return JSON {messages:[{client_id,participant_id,parent_client_id,body}]}; exactly 20 messages, first root then 19 replies, each listed participant exactly once. body 1-1200 chars. Participant ids: ${JSON.stringify(people)}`;
-      const openai = await fetch("https://api.openai.com/v1/chat/completions", { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, body: JSON.stringify({ model: "gpt-4o-mini", response_format: { type: "json_object" }, messages: [{ role: "system", content: "Return valid JSON only." }, { role: "user", content: prompt }] }) });
-      if (!openai.ok) throw new Error(`OpenAI generation failed (${openai.status})`);
-      const parsed = JSON.parse((await openai.json()).choices?.[0]?.message?.content || "{}");
-      const messages = parsed.messages;
-      const validation = validateMessages(messages, ids);
-      if (!validation.ok) return response({ error: `Generated preview failed validation: ${validation.error}` }, 422);
-      const moderation = await moderate(messages.map((message: any) => message.body).join("\n\n"));
-      if (!moderation.ok) return response({ error: moderation.error }, 422);
+      const prompt = `Write a safe discussion about finding and evaluating trustworthy media coverage for this topic: ${topic}
+
+The conversation must stay entirely about documentaries, YouTube channels, courtroom livestreams, journalists, sourcing, and how viewers can assess credibility. Do not recount the underlying events. Do not mention victims, family members, methods, evidence details, guilt, diagnoses, or unverified claims. Do not debate the legal case itself. Participants may recommend checking established local reporting, official court streams, publication dates, corrections, primary-source links, and transparent editorial standards.
+
+Return JSON {messages:[{client_id,participant_id,parent_client_id,body}]}; exactly 20 messages, first root then 19 replies, each listed participant exactly once. Each body must be 1-1200 characters. Participant ids: ${JSON.stringify(people)}`;
+      let messages: any[] | null = null;
+      let lastFailure = "The model did not return a valid safe conversation";
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const openai = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            response_format: { type: "json_object" },
+            messages: [
+              { role: "system", content: "Return valid JSON only. Follow all media-only safety limits exactly." },
+              { role: "user", content: `${prompt}\nThis is attempt ${attempt + 1}. Keep every message focused on media literacy and viewing options.` },
+            ],
+          }),
+        });
+        if (!openai.ok) {
+          lastFailure = `OpenAI generation failed (${openai.status})`;
+          continue;
+        }
+        let candidate: any[] = [];
+        try {
+          candidate = JSON.parse((await openai.json()).choices?.[0]?.message?.content || "{}").messages;
+        } catch {
+          lastFailure = "The model returned malformed JSON";
+          continue;
+        }
+        const validation = validateMessages(candidate, ids);
+        if (!validation.ok) {
+          lastFailure = validation.error;
+          continue;
+        }
+        const moderation = await moderate(candidate.map((message: any) => message.body).join("\n\n"));
+        if (!moderation.ok) {
+          lastFailure = moderation.error;
+          continue;
+        }
+        messages = candidate;
+        break;
+      }
+      if (!messages) return response({ error: `Could not produce a safe media-coverage preview after 3 attempts: ${lastFailure}` }, 422);
       const { data: run, error: runError } = await db.from("admin_room_conversation_runs").insert({ room_id: roomId, created_by: user.id, topic, source_attribution: sources }).select("id").single();
       if (runError) throw runError;
       const { error: draftError } = await db.from("admin_room_conversation_drafts").insert(messages.map((m: any, position: number) => ({ run_id: run.id, client_id: m.client_id, participant_id: m.participant_id, parent_client_id: m.parent_client_id || null, body: m.body.trim(), position })));

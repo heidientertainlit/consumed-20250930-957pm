@@ -22,7 +22,19 @@ type PublishResponse = { runId?: string; takeId?: string; status?: string };
 
 async function roomConversations<T>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke("admin-room-conversations", { body });
-  if (error) throw error;
+  if (error) {
+    let message = error.message;
+    const context = (error as any).context;
+    if (context instanceof Response) {
+      try {
+        const payload = await context.clone().json();
+        message = payload?.error || message;
+      } catch {
+        // Keep the SDK error when the response body is not JSON.
+      }
+    }
+    throw new Error(message);
+  }
   if (data?.error) throw new Error(data.error);
   return data as T;
 }
