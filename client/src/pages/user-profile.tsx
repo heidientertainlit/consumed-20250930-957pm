@@ -1331,17 +1331,6 @@ export default function UserProfile() {
 
     setIsLoadingFollowedCreators(true);
     try {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(
-        import.meta.env.VITE_SUPABASE_URL,
-        import.meta.env.VITE_SUPABASE_ANON_KEY,
-        {
-          global: {
-            headers: { Authorization: `Bearer ${session.access_token}` }
-          }
-        }
-      );
-
       const { data, error } = await supabase
         .from('followed_creators')
         .select('*')
@@ -1514,19 +1503,6 @@ export default function UserProfile() {
     }
 
     try {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(
-        import.meta.env.VITE_SUPABASE_URL,
-        import.meta.env.VITE_SUPABASE_ANON_KEY,
-        {
-          global: {
-            headers: {
-              Authorization: `Bearer ${session.access_token}`
-            }
-          }
-        }
-      );
-
       // Check if they're already friends (accepted status)
       const { data: friendships, error: friendsError } = await supabase
         .from('friendships')
@@ -1609,12 +1585,6 @@ export default function UserProfile() {
       if (!session?.access_token || !viewingUserId) return;
 
       try {
-        const { createClient } = await import('@supabase/supabase-js');
-        const supabase = createClient(
-          import.meta.env.VITE_SUPABASE_URL,
-          import.meta.env.VITE_SUPABASE_ANON_KEY
-        );
-
         // Retry logic for newly created users
         let retries = 3;
         let data = null;
@@ -2109,11 +2079,6 @@ export default function UserProfile() {
 
     setIsLoadingPredictions(true);
     try {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
       const { data, error } = await supabase
         .from('user_predictions')
         .select(`
