@@ -2174,7 +2174,9 @@ export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
               <div className={`flex items-start justify-between ${front ? 'mb-4' : ''}`}>
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-1.5">
-                    <Gamepad2 size={embedded ? 13 : front ? 15 : 13} className={embedded ? "text-purple-400" : "text-cyan-200"} />
+                    {!embedded && (
+                      <Gamepad2 size={front ? 15 : 13} className="text-cyan-200" />
+                    )}
                     <span
                       className={`${embedded ? 'text-[11px]' : front ? 'text-[13px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] ${embedded ? '' : 'text-cyan-100/90'}`}
                       style={embedded ? { color: "rgba(192,160,255,0.9)" } : undefined}
@@ -2240,7 +2242,11 @@ export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
                 {front ? (
                   <span className={`${embedded ? 'px-6 py-2.5 text-base rounded-full' : 'px-5 py-2 text-sm rounded-xl'} text-white font-semibold inline-flex items-center gap-2`} style={{ background: embedded ? 'linear-gradient(135deg, #9354e9, #6333bd)' : 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', border: embedded ? 'none' : '1px solid rgba(255,255,255,0.3)' }}>
                     {isTriviaDay ? (playCompleted ? 'Share' : 'Play') : (callCompleted ? 'Share' : 'Weigh In')}
-                    <ArrowRight size={embedded ? 16 : 13} strokeWidth={2} />
+                    {embedded && isTriviaDay && !playCompleted ? (
+                      <Gamepad2 size={16} strokeWidth={2} />
+                    ) : (
+                      <ArrowRight size={embedded ? 16 : 13} strokeWidth={2} />
+                    )}
                   </span>
                 ) : (
                   <span className="text-white text-[11px] font-semibold px-3 py-1.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)' }}>
