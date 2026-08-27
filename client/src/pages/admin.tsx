@@ -3,14 +3,14 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna, DoorOpen, Download, MessageSquareText } from "lucide-react";
+import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna, Download, MessageSquareText } from "lucide-react";
 
 const TOOLS = [
   {
     path: "/admin/room-conversations",
     icon: MessageSquareText,
     title: "True Crime Conversation",
-    description: "Turn sourced trending stories into a reviewed 20-persona True Crime room conversation before publishing.",
+    description: "Turn sourced trending stories into a reviewed 20-persona True Crime conversation before publishing.",
     color: "from-violet-900/40 to-violet-800/20 border-violet-700/40",
     iconColor: "text-violet-400",
     iconBg: "bg-violet-900/50",
@@ -68,15 +68,6 @@ const TOOLS = [
     color: "from-purple-900/40 to-purple-800/20 border-purple-700/40",
     iconColor: "text-purple-400",
     iconBg: "bg-purple-900/50",
-  },
-  {
-    path: "/admin/rooms",
-    icon: DoorOpen,
-    title: "Room Builder",
-    description: "Create official Consumed rooms — genre communities, media show rooms, and partner rooms. Add members, set genre pills, and manage all rooms.",
-    color: "from-rose-900/40 to-rose-800/20 border-rose-700/40",
-    iconColor: "text-rose-400",
-    iconBg: "bg-rose-900/50",
   },
   {
     path: "/admin/exports",

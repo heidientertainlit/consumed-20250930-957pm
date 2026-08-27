@@ -551,33 +551,24 @@ export default function MediaDetail() {
     enabled: !!params?.source && !!params?.id
   });
 
-  // Look up any public room linked to this media by series_tag or name match
-  const { data: linkedRoom } = useQuery({
-    queryKey: ['media-room', mediaItem?.title],
+  // Historical conversations are discoverable by an exact media title/type pair.
+  // Exact equality avoids broad title fragments accidentally surfacing unrelated takes.
+  const { data: mediaConversations = [] } = useQuery({
+    queryKey: ['media-conversations', mediaItem?.title, mediaItem?.media_type, params?.type],
     queryFn: async () => {
-      if (!mediaItem?.title) return null;
-      const title = mediaItem.title.toLowerCase().trim();
-      const { data } = await supabase
-        .from('pools')
-        .select('id, name, series_tag, media_image, partner_logo_url, is_public')
-        .eq('pool_type', 'room')
-        .eq('is_public', true)
-        .ilike('series_tag', `%${title}%`)
-        .limit(1)
-        .maybeSingle();
-      if (data) return data;
-      // Fallback: match on room name itself
-      const { data: byName } = await supabase
-        .from('pools')
-        .select('id, name, series_tag, media_image, partner_logo_url, is_public')
-        .eq('pool_type', 'room')
-        .eq('is_public', true)
-        .ilike('name', `%${title}%`)
-        .limit(1)
-        .maybeSingle();
-      return byName || null;
+      if (!mediaItem?.title) return [];
+      const mediaType = mediaItem.media_type || mediaItem.type || params?.type;
+      let query = supabase.from('room_takes')
+        .select('id, title, body, reply_count, upvotes, media_title, media_type, users:user_id(display_name, user_name)')
+        .eq('media_title', mediaItem.title)
+        .order('created_at', { ascending: false })
+        .limit(6);
+      if (mediaType) query = query.eq('media_type', mediaType);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
     },
-    enabled: !!mediaItem?.title,
+    enabled: !!mediaItem?.title && !!session?.access_token,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -2091,31 +2082,18 @@ export default function MediaDetail() {
           </div>
           )}
 
-        {/* Fan Room Banner */}
-        {linkedRoom && (
-          <button
-            onClick={() => setLocation(`/pools/${linkedRoom.id}`)}
-            className="w-full flex items-center gap-3 bg-gradient-to-r from-purple-700 to-purple-500 rounded-2xl p-4 shadow-sm text-left mb-4 active:opacity-90"
-          >
-            {(linkedRoom.media_image || linkedRoom.partner_logo_url) && (
-              <img
-                src={linkedRoom.media_image || linkedRoom.partner_logo_url}
-                alt={linkedRoom.name}
-                className="w-12 h-12 rounded-xl object-cover flex-shrink-0 shadow"
-              />
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-semibold text-sm leading-tight mb-0.5">
-                Fan of {mediaItem.title}?
-              </p>
-              <p className="text-purple-200 text-xs leading-snug line-clamp-1">
-                Join the room and dive even deeper →
-              </p>
+        {mediaConversations.length > 0 && (
+          <section className="mb-4 rounded-2xl border border-violet-100 bg-violet-50/60 p-4">
+            <h2 className="text-sm font-bold text-violet-950">Conversations about {mediaItem.title}</h2>
+            <div className="mt-2 space-y-2">
+              {mediaConversations.map((conversation: any) => (
+                <button key={conversation.id} onClick={() => setLocation(`/conversation/${conversation.id}`)} className="w-full rounded-xl bg-white px-3 py-2 text-left shadow-sm hover:bg-violet-50">
+                  <p className="line-clamp-1 text-sm font-semibold text-slate-800">{conversation.title || conversation.body}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{conversation.reply_count || 0} replies · {conversation.upvotes || 0} votes</p>
+                </button>
+              ))}
             </div>
-            <div className="flex-shrink-0 bg-white/20 rounded-xl px-3 py-1.5">
-              <span className="text-white text-xs font-bold">Join</span>
-            </div>
-          </button>
+          </section>
         )}
 
         {/* Content sections */}

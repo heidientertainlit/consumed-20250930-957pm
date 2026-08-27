@@ -141,9 +141,19 @@ export function NotificationBell() {
     // Close dropdown before navigating
     setOpen(false);
 
-    // For notifications with action_url, use it directly
+    // Historical Room links are retired. Preserve direct thread destinations,
+    // while sending broad Room notifications to Activity.
+    const legacyThread = notification.action_url?.match(/^\/room\/[^/]+\/conversation\/([^/?#]+)/);
+    if (legacyThread) {
+      setLocation(`/conversation/${legacyThread[1]}`);
+      return;
+    }
+    if (notification.type.startsWith('room_')) {
+      setLocation('/activity');
+      return;
+    }
     if (notification.action_url) {
-      setLocation(notification.action_url);
+      setLocation(notification.action_url.startsWith('/room') || notification.action_url.startsWith('/rooms') ? '/activity' : notification.action_url);
       return;
     }
 
@@ -176,11 +186,8 @@ export function NotificationBell() {
       case 'room_joined':
       case 'room_added':
       case 'room_new_question':
-        if (notification.list_id) {
-          setLocation(`/room/${notification.list_id}`);
-        } else {
-          setLocation('/rooms');
-        }
+      case 'room_new_post':
+        setLocation('/activity');
         break;
 
       case 'friend_request':

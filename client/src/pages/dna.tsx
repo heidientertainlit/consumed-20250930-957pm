@@ -159,43 +159,6 @@ export default function DnaPage() {
     staleTime: 60000,
   });
 
-  // Genre rooms matched to this user's DNA favorite_genres
-  const { data: genreRooms = [] } = useQuery({
-    queryKey: ['genre-rooms-dna', user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('pools')
-        .select('id, name, description, series_tag, media_type, media_image, accent_color, is_official')
-        .eq('room_category', 'genre')
-        .eq('is_public', true)
-        .eq('status', 'open')
-        .order('created_at', { ascending: false });
-      return data ?? [];
-    },
-    enabled: !!user?.id && !!(dnaProfile?.favorite_genres?.length),
-    staleTime: 300000,
-  });
-
-  const { data: myRoomIds } = useQuery({
-    queryKey: ['my-pool-ids', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return new Set<string>();
-      const { data } = await supabase.from('pool_members').select('pool_id').eq('user_id', user.id);
-      return new Set((data ?? []).map((r: any) => r.pool_id));
-    },
-    enabled: !!user?.id,
-    staleTime: 60000,
-  });
-
-  function slugify(s: string) {
-    return s.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  }
-
-  const userGenreSlugs = new Set((dnaProfile?.favorite_genres ?? []).map((g: string) => slugify(g)));
-  const matchedGenreRooms = genreRooms.filter((r: any) => r.series_tag && userGenreSlugs.has(r.series_tag));
-  const otherGenreRooms = genreRooms.filter((r: any) => !r.series_tag || !userGenreSlugs.has(r.series_tag));
-  const rankedGenreRooms = [...matchedGenreRooms, ...otherGenreRooms];
-
   const eligibleFriends = friends.filter((f: any) => f.isEligible);
   const almostEligibleFriends = friends.filter((f: any) => !f.isEligible && f.itemCount > 0);
   const selectedFriend = friends.find((f: any) => f.id === selectedFriendId);

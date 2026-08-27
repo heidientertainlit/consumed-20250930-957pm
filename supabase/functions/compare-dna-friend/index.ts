@@ -47,6 +47,49 @@ serve(async (req) => {
         });
       }
 
+      if (friend_id === user.id) {
+        return new Response(JSON.stringify({ error: 'You cannot compare DNA with yourself' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // A comparison is not a profile lookup.  Only accepted friends, or people
+      // explicitly opted into discovery and sharing a real taste signal, qualify.
+      // Check blocks in both directions before reading or returning cache data.
+      const [targetUserResult, targetProfileResult, relationResult, blockResult, targetListsResult] = await Promise.all([
+        supabaseClient.from('users').select('id,is_persona,people_discoverable').eq('id', friend_id).maybeSingle(),
+        supabaseClient.from('dna_profiles').select('id,is_private').eq('user_id', friend_id).maybeSingle(),
+        supabaseClient.from('friendships').select('id').eq('status', 'accepted')
+          .or(`and(user_id.eq.${user.id},friend_id.eq.${friend_id}),and(user_id.eq.${friend_id},friend_id.eq.${user.id})`).limit(1).maybeSingle(),
+        supabaseClient.from('user_blocks').select('id')
+          .or(`and(blocker_id.eq.${user.id},blocked_id.eq.${friend_id}),and(blocker_id.eq.${friend_id},blocked_id.eq.${user.id})`).limit(1).maybeSingle(),
+        supabaseClient.from('lists').select('id').eq('user_id', friend_id),
+      ]);
+      const eligibilityError = targetUserResult.error || targetProfileResult.error || relationResult.error || blockResult.error || targetListsResult.error;
+      if (eligibilityError) {
+        console.error('Failed to check DNA comparison eligibility:', eligibilityError);
+        return new Response(JSON.stringify({ error: 'Could not verify DNA comparison eligibility' }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const targetUser = targetUserResult.data;
+      const targetProfile = targetProfileResult.data;
+      const relation = relationResult.data;
+      const block = blockResult.data;
+      const targetLists = targetListsResult.data;
+      let targetItemCount = 0;
+      if (targetLists?.length) {
+        const { count } = await supabaseClient.from('list_items').select('*', { count: 'exact', head: true })
+          .in('list_id', targetLists.map((list: any) => list.id));
+        targetItemCount = count || 0;
+      }
+      const isFriend = !!relation;
+      if (!targetUser || targetUser.is_persona || !!block || !targetProfile || targetItemCount < 10 || (!isFriend && (!targetUser.people_discoverable || targetProfile.is_private))) {
+        return new Response(JSON.stringify({ error: 'This person is not eligible for DNA comparison' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       // Calculate user's DNA level from logged items
       // Get all lists for user and count items
       const { data: userLists } = await supabaseClient
@@ -128,6 +171,20 @@ serve(async (req) => {
 
       let userSignals = userSignalsRes.data || [];
       let friendSignals = friendSignalsRes.data || [];
+
+      // Discoverable people must actually be a signal-based candidate; this
+      // prevents an arbitrary public account ID from becoming comparable.
+      if (!isFriend) {
+        const mine = new Set(userSignals.filter((s: any) => s.signal_type !== 'engagement')
+          .map((s: any) => `${s.signal_type}:${s.signal_value}`));
+        const hasSharedSignal = friendSignals.some((s: any) => s.signal_type !== 'engagement' &&
+          mine.has(`${s.signal_type}:${s.signal_value}`));
+        if (!hasSharedSignal) {
+          return new Response(JSON.stringify({ error: 'This person is not an eligible discovery match' }), {
+            status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+      }
 
       // If signals are missing, try to extract them on the fly
       if (userSignals.length === 0 || friendSignals.length === 0) {
@@ -364,9 +421,12 @@ Only include media types where you have good recommendations. It's fine to have 
       }
 
       // Cache the comparison (expires in 24 hours)
+      // Store every pair in one deterministic orientation.  This avoids a
+      // second cache row when the other person opens the same comparison.
+      const [userId1, userId2] = user.id < friend_id ? [user.id, friend_id] : [friend_id, user.id];
       const comparisonData = {
-        user_id_1: user.id,
-        user_id_2: friend_id,
+        user_id_1: userId1,
+        user_id_2: userId2,
         match_score: normalizedScore,
         shared_genres: sharedGenres.slice(0, 10),
         shared_creators: sharedCreators.slice(0, 10),
@@ -377,6 +437,14 @@ Only include media types where you have good recommendations. It's fine to have 
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       };
 
+      // Old callers wrote requester-first rows. Remove only the opposite
+      // orientation for this pair before the canonical upsert; this leaves any
+      // canonical row intact and is safe with the existing pair uniqueness rule.
+      await supabaseClient
+        .from('dna_comparisons')
+        .delete()
+        .eq('user_id_1', userId2)
+        .eq('user_id_2', userId1);
       await supabaseClient
         .from('dna_comparisons')
         .upsert(comparisonData, { onConflict: 'user_id_1,user_id_2' });

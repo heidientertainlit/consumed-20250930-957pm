@@ -164,27 +164,26 @@ const lovedRows: {
 
 const allLovedItems = lovedRows.flatMap((r) => r.items);
 
-// Real rooms from the pools table — tapping a pill follows the room (room_follows)
-const roomOptions = [
-  { id: "eb529882-4a66-496d-97f2-bf9981692968", name: "True Crime", Icon: Search },
-  { id: "c73774e0-c54c-44ed-8b14-ae0e3b076ddc", name: "Reality", Icon: Tv },
-  { id: "a776d7dd-8206-4381-b847-17ff6f1e0d67", name: "Heartwarming", Icon: Heart },
-  { id: "9e424f35-cd99-43ff-b695-d0ae89747b5a", name: "Action & Thriller", Icon: Zap },
-  { id: "47182919-da7a-41bb-9688-50ec11561e53", name: "Rom-Com", Icon: Clapperboard },
-  { id: "58841101-ce10-46d7-9241-f7d52a11f630", name: "Fantasy", Icon: Wand2 },
-  { id: "b32722af-0a76-4df3-9fa2-a94a7e3046fb", name: "Comedy", Icon: Smile },
-  { id: "3e0a4b3d-e211-44c7-9633-4a6a5a9206de", name: "Sports Talk & Docs", Icon: Trophy },
-  { id: "6ce32c55-b1ab-42ce-8e5c-6cf530e3e58b", name: "Horror", Icon: Skull },
-  { id: "0ab28a57-065e-4d7a-8bd2-09af8c3be7d9", name: "Mystery", Icon: HelpCircle },
-  { id: "cdd6dffe-70d2-45af-80b1-55e1f30ae6a5", name: "Period Drama", Icon: Crown },
-  { id: "58db44eb-d82d-4173-85d9-c4c4e288d77b", name: "Sci-Fi", Icon: Rocket },
-  { id: "41c7f7bb-faeb-4780-956e-f77f7f4adf64", name: "Documentaries", Icon: Video },
-  { id: "d7db8196-b5df-4354-944f-44c0b9857780", name: "Animation", Icon: Palette },
-  { id: "f7f22b7c-2e3b-470e-ac60-d4ee9601b16b", name: "Drama", Icon: Drama },
-  { id: "51432489-35b9-468a-a0fb-7648a7d588e3", name: "Romance", Icon: HeartHandshake },
-  { id: "dd89be31-9f46-47b9-848d-7519be038176", name: "Lifestyle", Icon: Home },
-  { id: "4792cc12-15c9-4ea3-bf50-19abfbab49de", name: "Nonfiction", Icon: BookOpen },
-  { id: "e227edc9-bcb1-4828-8360-374a9792a636", name: "Self Help", Icon: Leaf },
+const topicOptions = [
+  { id: "true-crime", name: "True Crime", genre: "True Crime", Icon: Search },
+  { id: "reality", name: "Reality", genre: "Reality", Icon: Tv },
+  { id: "heartwarming", name: "Heartwarming", genre: "Romance", Icon: Heart },
+  { id: "action-thriller", name: "Action & Thriller", genre: "Action", Icon: Zap },
+  { id: "rom-com", name: "Rom-Com", genre: "Rom-com/chick-lit", Icon: Clapperboard },
+  { id: "fantasy", name: "Fantasy", genre: "Fantasy", Icon: Wand2 },
+  { id: "comedy", name: "Comedy", genre: "Comedy", Icon: Smile },
+  { id: "sports-talk-docs", name: "Sports Talk & Docs", Icon: Trophy },
+  { id: "horror", name: "Horror", genre: "Horror", Icon: Skull },
+  { id: "mystery", name: "Mystery", genre: "Mystery/Thriller", Icon: HelpCircle },
+  { id: "period-drama", name: "Period Drama", genre: "Historical", Icon: Crown },
+  { id: "sci-fi", name: "Sci-Fi", genre: "Science Fiction", Icon: Rocket },
+  { id: "documentaries", name: "Documentaries", genre: "Documentaries", Icon: Video },
+  { id: "animation", name: "Animation", genre: "Animation", Icon: Palette },
+  { id: "drama", name: "Drama", genre: "Drama", Icon: Drama },
+  { id: "romance", name: "Romance", genre: "Romance", Icon: HeartHandshake },
+  { id: "lifestyle", name: "Lifestyle", genre: "Lifestyle (Home Reno, Food, Travel)", Icon: Home },
+  { id: "nonfiction", name: "Nonfiction", genre: "Nonfiction", Icon: BookOpen },
+  { id: "self-help", name: "Self Help", genre: "Self Help", Icon: Leaf },
 ];
 
 const mediaTypeOptions = [
@@ -216,27 +215,6 @@ const addTitleContext = (answer: string, titles: string[]) => {
   return [note, `${TITLE_CONTEXT_LABEL} ${titles.join(", ")}`].filter(Boolean).join("\n\n");
 };
 
-const ROOM_GENRES: Record<string, string | undefined> = {
-  "eb529882-4a66-496d-97f2-bf9981692968": "True Crime",
-  "c73774e0-c54c-44ed-8b14-ae0e3b076ddc": "Reality",
-  "a776d7dd-8206-4381-b847-17ff6f1e0d67": "Romance",
-  "9e424f35-cd99-43ff-b695-d0ae89747b5a": "Action",
-  "47182919-da7a-41bb-9688-50ec11561e53": "Rom-com/chick-lit",
-  "58841101-ce10-46d7-9241-f7d52a11f630": "Fantasy",
-  "b32722af-0a76-4df3-9fa2-a94a7e3046fb": "Comedy",
-  "3e0a4b3d-e211-44c7-9633-4a6a5a9206de": undefined,
-  "6ce32c55-b1ab-42ce-8e5c-6cf530e3e58b": "Horror",
-  "0ab28a57-065e-4d7a-8bd2-09af8c3be7d9": "Mystery/Thriller",
-  "cdd6dffe-70d2-45af-80b1-55e1f30ae6a5": "Historical",
-  "58db44eb-d82d-4173-85d9-c4c4e288d77b": "Science Fiction",
-  "41c7f7bb-faeb-4780-956e-f77f7f4adf64": "Documentaries",
-  "d7db8196-b5df-4354-944f-44c0b9857780": "Animation",
-  "f7f22b7c-2e3b-470e-ac60-d4ee9601b16b": "Drama",
-  "51432489-35b9-468a-a0fb-7648a7d588e3": "Romance",
-  "dd89be31-9f46-47b9-848d-7519be038176": "Lifestyle (Home Reno, Food, Travel)",
-  "4792cc12-15c9-4ea3-bf50-19abfbab49de": "Nonfiction",
-  "e227edc9-bcb1-4828-8360-374a9792a636": "Self Help",
-};
 
 const DRIVER_ICONS: { match: string; Icon: typeof Tv }[] = [
   { match: "feel something", Icon: Heart },
@@ -426,7 +404,7 @@ export default function OnboardingPage() {
   const resumeDNA = useRef(new URLSearchParams(window.location.search).get("resume") === "dna").current;
   const [step, setStep] = useState<Step>("debate");
   const [vote, setVote] = useState<string | null | undefined>(undefined);
-  const [rooms, setRooms] = useState<string[]>([]);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [mediaTypes, setMediaTypes] = useState<string[]>([]);
   const [loved, setLoved] = useState<string[]>([]);
   const [existingTitles, setExistingTitles] = useState<string[]>([]);
@@ -717,11 +695,10 @@ export default function OnboardingPage() {
 
     const prefillCompletion = async () => {
       setProgressLoadError(null);
-      const [responsesResult, ratingsResult, trackedResult, followsResult, profileResult] = await Promise.all([
+      const [responsesResult, ratingsResult, trackedResult, profileResult] = await Promise.all([
         supabase.from("edna_responses").select("question_id, answer_text").eq("user_id", user.id),
         supabase.from("media_ratings").select("media_title, media_type").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
         supabase.from("list_items").select("title, media_type").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
-        supabase.from("room_follows").select("room_id").eq("user_id", user.id),
         supabase.from("dna_profiles").select("user_id").eq("user_id", user.id).maybeSingle(),
       ]);
       if (cancelled) return;
@@ -737,7 +714,6 @@ export default function OnboardingPage() {
       if (responsesResult.error) throw responsesResult.error;
       if (ratingsResult.error) console.error("[onboarding DNA titles]", ratingsResult.error);
       if (trackedResult.error) console.error("[onboarding tracked titles]", trackedResult.error);
-      if (followsResult.error) console.error("[onboarding room follows]", followsResult.error);
       const ratings = (ratingsResult.data || []) as { media_title: string; media_type: string }[];
       const tracked = (trackedResult.data || []) as { title: string; media_type: string }[];
       const activityTitles = Array.from(new Set([
@@ -775,13 +751,13 @@ export default function OnboardingPage() {
         const answer = answersByQuestion.get(driversQuestion.id) || "";
         setDrivers((driversQuestion.options || []).filter((option) => answer.includes(option)));
       }
-      const followedRooms = (followsResult.data || [])
-        .map((row: { room_id: string }) => row.room_id)
-        .filter((roomId) => roomId in ROOM_GENRES);
-      setRooms(followedRooms);
       const hasFormats = selectedFormats.length > 0;
-      const storedGenres = genresQuestion ? answersByQuestion.get(genresQuestion.id)?.trim() : "";
-      const hasGenres = Boolean(storedGenres) || followedRooms.some((roomId) => Boolean(ROOM_GENRES[roomId]));
+      const storedGenres = genresQuestion ? answersByQuestion.get(genresQuestion.id)?.trim() || "" : "";
+      const prefilledTopics = topicOptions
+        .filter((topic) => topic.genre && storedGenres.split(",").map((genre) => genre.trim()).includes(topic.genre))
+        .map((topic) => topic.id);
+      setSelectedTopics(prefilledTopics);
+      const hasGenres = Boolean(storedGenres);
       const hasLoveResponse = Boolean(loveQuestion && answersByQuestion.has(loveQuestion.id));
       const hasDriverResponse = Boolean(driversQuestion && answersByQuestion.has(driversQuestion.id));
       const draft = loadOnboardingProgress(user.id);
@@ -821,8 +797,8 @@ export default function OnboardingPage() {
     return () => window.clearInterval(interval);
   }, [isGenerating]);
 
-  const toggleRoom = (id: string) =>
-    setRooms((r) => (r.includes(id) ? r.filter((x) => x !== id) : [...r, id]));
+  const toggleTopic = (id: string) =>
+    setSelectedTopics((topics) => (topics.includes(id) ? topics.filter((topic) => topic !== id) : [...topics, id]));
   const toggleMediaType = (id: string) =>
     setMediaTypes((types) => (types.includes(id) ? types.filter((type) => type !== id) : [...types, id]));
   const toggleDriver = (driver: string) =>
@@ -837,7 +813,7 @@ export default function OnboardingPage() {
         return leftRank - rightRank;
       })
     : lovedRows;
-  const hasMappableRoom = rooms.some((roomId) => Boolean(ROOM_GENRES[roomId]));
+  const hasSelectedGenre = selectedTopics.some((topicId) => Boolean(topicOptions.find((topic) => topic.id === topicId)?.genre));
   const questionByOrder = (order: number) =>
     surveyQuestions.find((question) => question.display_order === order);
 
@@ -875,22 +851,13 @@ export default function OnboardingPage() {
     setSaving(true);
     setSaveError(null);
     try {
-      const roomGenres = Array.from(new Set(
-        rooms.map((roomId) => ROOM_GENRES[roomId]).filter((genre): genre is string => Boolean(genre)),
+      const selectedGenres = Array.from(new Set(
+        selectedTopics.map((topicId) => topicOptions.find((topic) => topic.id === topicId)?.genre).filter((genre): genre is string => Boolean(genre)),
       ));
-      const [followResult] = await Promise.all([
-        supabase
-          .from("room_follows")
-          .upsert(rooms.map((room_id) => ({ user_id: user.id, room_id })), {
-            onConflict: "user_id,room_id",
-            ignoreDuplicates: true,
-          }),
-        persistResponses([
-          { question_id: formatsQuestion.id, answer_text: mediaTypes.join(", ") },
-          { question_id: genresQuestion.id, answer_text: roomGenres.join(", ") },
-        ]),
+      await persistResponses([
+        { question_id: formatsQuestion.id, answer_text: mediaTypes.join(", ") },
+        { question_id: genresQuestion.id, answer_text: selectedGenres.join(", ") },
       ]);
-      if (followResult.error && followResult.error.code !== "23505") throw followResult.error;
       goToStep(resumeDNA && hasExistingProfile ? "love" : "loved");
     } catch (error) {
       console.error("[onboarding interests]", error);
@@ -1055,7 +1022,7 @@ export default function OnboardingPage() {
 
   const generateDNA = async () => {
     if (isGenerating || !user?.id || !session?.access_token || drivers.length === 0) return;
-    if (mediaTypes.length === 0 || !hasMappableRoom) {
+    if (mediaTypes.length === 0 || !hasSelectedGenre) {
       setStep("interests");
       return;
     }
@@ -1075,13 +1042,13 @@ export default function OnboardingPage() {
         throw new Error("DNA questions could not be loaded. Please try again.");
       }
 
-      const roomGenres = Array.from(new Set(
-        rooms.map((roomId) => ROOM_GENRES[roomId]).filter((genre): genre is string => Boolean(genre)),
+      const selectedGenres = Array.from(new Set(
+        selectedTopics.map((topicId) => topicOptions.find((topic) => topic.id === topicId)?.genre).filter((genre): genre is string => Boolean(genre)),
       ));
       const titlesForDNA = existingTitles.length > 0 ? existingTitles : loved;
       const responseRows = [
         { user_id: user.id, question_id: formatsQuestion.id, answer_text: mediaTypes.join(", ") },
-        { user_id: user.id, question_id: genresQuestion.id, answer_text: roomGenres.join(", ") },
+        { user_id: user.id, question_id: genresQuestion.id, answer_text: selectedGenres.join(", ") },
         { user_id: user.id, question_id: loveQuestion.id, answer_text: addTitleContext(loveNote, titlesForDNA) },
         { user_id: user.id, question_id: driversQuestion.id, answer_text: drivers.join(", ") },
       ];
@@ -1545,16 +1512,16 @@ export default function OnboardingPage() {
                 And what pulls you in?
               </h3>
               <p className="text-[13px] text-gray-400 mt-2">
-                Follow the conversations for your favorite topics — pick as many as you like.
+                Pick the topics that pull you in — choose as many as you like.
               </p>
             </div>
             <div className="flex flex-wrap gap-2.5 mt-4">
-              {roomOptions.map((room) => {
-                const on = rooms.includes(room.id);
+              {topicOptions.map((topic) => {
+                const on = selectedTopics.includes(topic.id);
                 return (
                   <button
-                    key={room.id}
-                    onClick={() => toggleRoom(room.id)}
+                    key={topic.id}
+                    onClick={() => toggleTopic(topic.id)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all active:scale-95"
                     style={{
                       border: on ? "1px solid #ddd6fe" : "1px solid transparent",
@@ -1563,12 +1530,12 @@ export default function OnboardingPage() {
                     }}
                   >
                     {on && <Check size={12} strokeWidth={3} />}
-                    {room.name}
+                    {topic.name}
                   </button>
                 );
               })}
             </div>
-            {rooms.length > 0 && !hasMappableRoom && (
+            {selectedTopics.length > 0 && !hasSelectedGenre && (
               <p className="mt-3 text-[12px] font-medium text-purple-600">
                 Add one more topic to help shape your Entertainment DNA. Sports can stay selected.
               </p>
@@ -1582,7 +1549,7 @@ export default function OnboardingPage() {
             <div className="flex-1" />
             <button
               onClick={submitInterestsStep}
-              disabled={mediaTypes.length === 0 || !hasMappableRoom || saving}
+              disabled={mediaTypes.length === 0 || !hasSelectedGenre || saving}
               className="w-full py-3.5 rounded-full font-bold text-[15px] text-white mt-10 transition-all active:scale-95 disabled:opacity-40"
               style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
             >
@@ -1743,10 +1710,10 @@ export default function OnboardingPage() {
     );
 
   const titlesShapingDNA = existingTitles.length > 0 ? existingTitles : loved;
-  const selectedTopicText = rooms
-    .flatMap((roomId) => {
-      const room = roomOptions.find((option) => option.id === roomId);
-      return [room?.name, ROOM_GENRES[roomId]];
+  const selectedTopicText = selectedTopics
+    .flatMap((topicId) => {
+      const topic = topicOptions.find((option) => option.id === topicId);
+      return [topic?.name, topic?.genre];
     })
     .filter((topic): topic is string => Boolean(topic))
     .join(" ");

@@ -40,6 +40,11 @@ export class MemStorage implements IStorage {
       email: "john@example.com",
       points: 1250,
       totalWinnings: 0,
+      referredBy: null,
+      referralRewarded: false,
+      isPersona: false,
+      personaConfig: null,
+      peopleDiscoverable: true,
       createdAt: new Date(),
     };
     this.users.set(defaultUser.id, defaultUser);
@@ -92,6 +97,11 @@ export class MemStorage implements IStorage {
       id,
       points: 0,
       totalWinnings: 0,
+      referredBy: insertUser.referredBy ?? null,
+      referralRewarded: insertUser.referralRewarded ?? false,
+      isPersona: insertUser.isPersona ?? false,
+      personaConfig: insertUser.personaConfig ?? null,
+      peopleDiscoverable: insertUser.peopleDiscoverable ?? true,
       createdAt: new Date(),
     };
     this.users.set(id, user);

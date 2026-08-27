@@ -74,6 +74,10 @@ args = "Deploy: generate-trivia-polls"
 task = "workflow.run"
 args = "Deploy: generate-dna-moments"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Deploy: people-affinity"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -156,6 +160,17 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx supabase functions deploy generate-dna-moments --project-ref mahpgcogwpawvviapqza --use-api"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Deploy: people-affinity"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx supabase functions deploy people-affinity --project-ref mahpgcogwpawvviapqza --use-api"
 
 [workflows.workflow.metadata]
 outputType = "console"

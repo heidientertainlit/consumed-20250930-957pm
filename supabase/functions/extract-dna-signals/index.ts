@@ -433,11 +433,6 @@ serve(async (req) => {
       if (insertErr) throw insertErr;
     }
 
-    const { error: tribeRefreshError } = await svc.rpc('refresh_people_tribe_memberships', {
-      target_user_id: userId,
-    });
-    if (tribeRefreshError) throw tribeRefreshError;
-
     return ok({
       success: true,
       user_id: userId,

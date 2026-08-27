@@ -746,7 +746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch { next(); }
   });
 
-  // Pool (Room) join link: /pool/join/:code or /room/join/:code
+  // Pool join link preview.
   const poolJoinHandler = async (req: any, res: any, next: any) => {
     try {
       const { code } = req.params;
@@ -769,7 +769,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch { next(); }
   };
   app.get('/pool/join/:code', poolJoinHandler);
-  app.get('/room/join/:code', poolJoinHandler);
 
   const httpServer = createServer(app);
   return httpServer;

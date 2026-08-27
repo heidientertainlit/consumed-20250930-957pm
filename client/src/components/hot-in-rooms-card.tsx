@@ -6,9 +6,8 @@ import { useLocation } from "wouter";
 import { ChevronRight, Flame, MessageCircle, Star, StarHalf, ThumbsDown, ThumbsUp, Film } from "lucide-react";
 import { formatFeedName } from "@/lib/feed-name";
 
-type RoomTake = {
+type ConversationTake = {
   id: string;
-  room_id: string;
   title: string | null;
   body: string | null;
   upvotes: number | null;
@@ -24,7 +23,6 @@ type RoomTake = {
     first_name?: string | null;
     last_name?: string | null;
   } | null;
-  pool: { id: string; name: string } | null;
 };
 
 const mediaLabel = (type?: string | null) => {
@@ -32,7 +30,7 @@ const mediaLabel = (type?: string | null) => {
   return type ? labels[type.toLowerCase()] || type : "";
 };
 
-/** A media-led conversation moment, limited to rooms the viewer follows. */
+/** A media-led conversation moment from recent visible conversations. */
 export function HotInRoomsCard({ slot = 0 }: { slot?: number }) {
   const { session } = useAuth();
   const [, setLocation] = useLocation();
@@ -40,40 +38,20 @@ export function HotInRoomsCard({ slot = 0 }: { slot?: number }) {
   const userId = session?.user?.id;
 
   const { data: hotTakes } = useQuery({
-    queryKey: ["hot-in-rooms", userId],
+    queryKey: ["hot-conversations", userId],
     queryFn: async () => {
       const since = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
-      const { data: follows, error: followsError } = await supabase
-        .from("room_follows")
-        .select("room_id")
-        .eq("user_id", userId!);
-      if (followsError) throw followsError;
-
-      const roomIds = Array.from(new Set((follows || []).map((follow) => follow.room_id)));
-      if (roomIds.length === 0) return [];
-
       const { data, error } = await supabase
         .from("room_takes")
-        .select("id, room_id, title, body, upvotes, reply_count, created_at, rating, media_title, media_type, media_creator, media_image_url, users:user_id(display_name, user_name, first_name, last_name), pool:pools!room_id!inner(id, name)")
-        .in("room_id", roomIds)
+        .select("id, title, body, upvotes, reply_count, created_at, rating, media_title, media_type, media_creator, media_image_url, users:user_id(display_name, user_name, first_name, last_name)")
         .gte("created_at", since)
         .order("upvotes", { ascending: false })
         .order("reply_count", { ascending: false })
         .limit(100);
       if (error) throw error;
 
-      const byRoom = new Map<string, RoomTake & { heat: number }>();
-      for (const item of data || []) {
-        const raw = item as any;
-        const pool = Array.isArray(raw.pool) ? raw.pool[0] : raw.pool;
-        if (!pool) continue;
-        const heat = (raw.upvotes || 0) * 2 + (raw.reply_count || 0) * 3;
-        if (heat < 1) continue;
-        const take = { ...raw, pool, heat } as RoomTake & { heat: number };
-        const previous = byRoom.get(take.room_id);
-        if (!previous || take.heat > previous.heat) byRoom.set(take.room_id, take);
-      }
-      return Array.from(byRoom.values()).sort((a, b) => b.heat - a.heat);
+      return (data || []).map((item: any) => ({ ...item, heat: (item.upvotes || 0) * 2 + (item.reply_count || 0) * 3 }))
+        .filter((item: any) => item.heat > 0).sort((a: any, b: any) => b.heat - a.heat);
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
@@ -81,7 +59,7 @@ export function HotInRoomsCard({ slot = 0 }: { slot?: number }) {
 
   const take = hotTakes?.[slot];
   const { data: myVote } = useQuery({
-    queryKey: ["hot-in-rooms-vote", userId, take?.id],
+    queryKey: ["hot-conversations-vote", userId, take?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("room_take_votes")
@@ -96,7 +74,7 @@ export function HotInRoomsCard({ slot = 0 }: { slot?: number }) {
     enabled: !!userId && !!take?.id,
   });
 
-  if (!take || !take.pool) return null;
+  if (!take) return null;
 
   const author = Array.isArray(take.users) ? take.users[0] : take.users;
   const authorName = formatFeedName(
@@ -110,11 +88,11 @@ export function HotInRoomsCard({ slot = 0 }: { slot?: number }) {
   const vote = myVote?.vote || 0;
   const navigateToThread = () => {
     try {
-      sessionStorage.setItem(`room-thread:${take.id}`, JSON.stringify(take));
+      sessionStorage.setItem(`conversation:${take.id}`, JSON.stringify(take));
     } catch {
       // The room page also fetches the take directly when storage is unavailable.
     }
-    setLocation(`/room/${take.room_id}/conversation/${take.id}`);
+    setLocation(`/conversation/${take.id}`);
   };
 
   const react = async (direction: 1 | -1, event: MouseEvent<HTMLButtonElement>) => {
@@ -134,22 +112,21 @@ export function HotInRoomsCard({ slot = 0 }: { slot?: number }) {
         : Promise.resolve({ error: null }),
     ]);
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["hot-in-rooms", userId] }),
-      queryClient.invalidateQueries({ queryKey: ["hot-in-rooms-vote", userId, take.id] }),
+      queryClient.invalidateQueries({ queryKey: ["hot-conversations", userId] }),
+      queryClient.invalidateQueries({ queryKey: ["hot-conversations-vote", userId, take.id] }),
     ]);
   };
 
   return (
     <article
       className={`group overflow-hidden rounded-[22px] border border-violet-100 bg-[#fdfbff] shadow-[0_12px_30px_rgba(69,38,116,0.09)] transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.99] ${hasMedia ? "" : "border-l-4 border-l-violet-500"}`}
-      data-testid={`card-hot-in-rooms-${slot}`}
+      data-testid={`card-hot-conversation-${slot}`}
     >
       <button onClick={navigateToThread} className="block w-full text-left">
         <div className="flex items-center gap-2 px-4 pt-4">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100/80 px-2.5 py-1 text-[11px] font-bold tracking-[0.01em] text-violet-700">
-            <Flame className="h-3.5 w-3.5" fill="currentColor" /> From a room you follow
+             <Flame className="h-3.5 w-3.5" fill="currentColor" /> Hot conversation
           </span>
-          <span className="max-w-[42%] truncate text-[12px] font-bold text-slate-500">{take.pool.name}</span>
         </div>
 
         <div className={`px-4 pb-4 pt-4 ${hasMedia ? "flex gap-4" : ""}`}>

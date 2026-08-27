@@ -26,7 +26,6 @@ import AdminRanksPage from "@/pages/admin-ranks";
 import AdminDnaMomentsPage from "@/pages/admin-dna-moments";
 import AdminDailyCallPage from "@/pages/admin-daily-call";
 import AdminTodaysPlayPage from "@/pages/admin-todays-play";
-import AdminRoomsPage from "@/pages/admin-rooms";
 import AdminRoomConversationsPage from "@/pages/admin-room-conversations";
 import AdminExportsPage from "@/pages/admin-exports";
 import Feed from "@/pages/feed";
@@ -59,6 +58,7 @@ import UserProfile from "@/pages/user-profile";
 import MediaDetail from "@/pages/media-detail";
 import ListDetail from "@/pages/list-detail";
 import PostDetail from "@/pages/post-detail";
+import ConversationPage from "@/pages/conversation";
 import CreateRank from "@/pages/create-rank";
 import RankDetail from "@/pages/rank-detail";
 import EdnaSharePage from "@/pages/edna-share";
@@ -84,16 +84,12 @@ import PublicProfilePage from "@/pages/public-profile";
 import FeedbackSurvey from "@/pages/feedback-survey";
 import CastSharePage from "@/pages/cast-share";
 
-import PoolsPage from "@/pages/pools";
-import PoolDetailPage from "@/pages/pool-detail";
-import PoolJoinPage from "@/pages/pool-join";
 
 import PrivacyPolicy from "@/pages/privacy-policy";
 import TermsOfService from "@/pages/terms-of-service";
 import ResponsibleGaming from "@/pages/responsible-gaming";
 import ProfileByUsername from "@/pages/profile-by-username";
 import AddMediaPage from "@/pages/add-media-page";
-import NewRoom from "@/pages/new-room";
 
 // Simple redirect component for wouter
 function RedirectTo({ to }: { to: string }) {
@@ -220,10 +216,6 @@ function CapacitorDeepLinkHandler() {
 
 const ADMIN_USER_ID = "88bfb2a0-e8ce-4081-b731-2a49567ff093";
 
-function RoomsGuard({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
-}
-
 function Router() {
   useKeyboardAdjust();
 
@@ -348,12 +340,6 @@ function Router() {
             </ProtectedRoute>
           </Route>
 
-          <Route path="/new-room">
-            <ProtectedRoute>
-              <NewRoom />
-            </ProtectedRoute>
-          </Route>
-
           <Route path="/search">
             <ProtectedRoute>
               <AiSearch />
@@ -382,36 +368,15 @@ function Router() {
             </ProtectedRoute>
           </Route>
 
-          <Route path="/rooms">
-            <RoomsGuard>
-              <ProtectedRoute>
-                <PoolsPage />
-              </ProtectedRoute>
-            </RoomsGuard>
-          </Route>
-
-          <Route path="/room/join/:code">
-            <RoomsGuard>
-              <ProtectedRoute>
-                <PoolJoinPage />
-              </ProtectedRoute>
-            </RoomsGuard>
-          </Route>
-
           <Route path="/room/:id/conversation/:takeId">
-            <RoomsGuard>
-              <ProtectedRoute>
-                <NewRoom />
-              </ProtectedRoute>
-            </RoomsGuard>
+            {params => <RedirectTo to={`/conversation/${params.takeId}`} />}
           </Route>
 
+          <Route path="/rooms"><RedirectTo to="/people" /></Route>
+          <Route path="/new-room"><RedirectTo to="/activity" /></Route>
+          <Route path="/room/join/:code"><RedirectTo to="/activity" /></Route>
           <Route path="/room/:id">
-            <RoomsGuard>
-              <ProtectedRoute>
-                <NewRoom />
-              </ProtectedRoute>
-            </RoomsGuard>
+            <RedirectTo to="/activity" />
           </Route>
 
           <Route path="/play">
@@ -569,6 +534,12 @@ function Router() {
             </ProtectedRoute>
           </Route>
 
+          <Route path="/conversation/:takeId">
+            <ProtectedRoute>
+              <ConversationPage />
+            </ProtectedRoute>
+          </Route>
+
           <Route path="/list/:id">
             <ListDetail />
           </Route>
@@ -679,11 +650,6 @@ function Router() {
             </ProtectedRoute>
           </Route>
 
-          <Route path="/admin/rooms">
-            <ProtectedRoute>
-              <AdminRoomsPage />
-            </ProtectedRoute>
-          </Route>
           <Route path="/admin/room-conversations">
             <ProtectedRoute>
               <AdminRoomConversationsPage />
