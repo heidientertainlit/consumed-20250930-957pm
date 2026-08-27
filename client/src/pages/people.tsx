@@ -197,20 +197,14 @@ export default function PeoplePage() {
             key={id}
             onClick={() => setTab(id)}
             aria-current={mode === id ? "page" : undefined}
-            className={`relative flex min-h-[66px] min-w-0 flex-1 items-center justify-center gap-2 px-1 text-[11px] font-semibold transition-colors sm:text-[14px] ${
+            className={`relative flex min-h-[84px] min-w-0 flex-1 flex-col items-center justify-center gap-1.5 px-1 py-3 text-[11px] font-semibold transition-colors sm:text-[14px] ${
               mode === id
                 ? "text-[#d3a6ff] after:absolute after:inset-x-0 after:-bottom-px after:h-[3px] after:rounded-full after:bg-[#a855f7]"
                 : "text-white/65 hover:text-white"
             }`}
           >
-            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border ${
-              mode === id
-                ? "border-violet-400/45 bg-violet-500/20 text-[#d3a6ff]"
-                : "border-white/10 bg-white/[.06] text-white/65"
-            }`}>
-              <Icon size={22} strokeWidth={1.7} />
-            </span>
-            <span className="leading-tight">{label}</span>
+            <Icon size={24} strokeWidth={1.7} />
+            <span className="max-w-full leading-tight">{label}</span>
           </button>
         ))}
       </nav>
