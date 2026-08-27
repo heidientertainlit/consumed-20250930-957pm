@@ -118,8 +118,8 @@ export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'ligh
     const count = (activityData?.totalPlayers ?? 0) + 50;
     if (!activityData || activityData.totalPlayers === 0) return null;
     return (
-      <div className="flex items-center">
-        <p className="text-[11px] text-white/70 leading-tight">{count} people have guessed today</p>
+      <div className="mt-1 flex items-center">
+        <p className="text-[11px] italic leading-tight text-white/50">{count} people have guessed today</p>
       </div>
     );
   }
