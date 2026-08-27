@@ -118,9 +118,7 @@ async function affinityRequest(token: string, body: Record<string, unknown>): Pr
   });
   if (!response.ok) throw new Error("Affinity results are taking a moment.");
   const result = await response.json();
-  return body.action === "set-discoverable"
-    ? { discoverable: typeof result === "boolean" ? result : result?.discoverable } as AffinityResponse
-    : normalizeAffinity(result);
+  return normalizeAffinity(result);
 }
 
 function Evidence({ person }: { person: AffinityPerson }) {
@@ -159,7 +157,7 @@ export default function PeoplePage() {
   });
 
   const tribesQuery = useQuery({
-    queryKey: ["people-affinity", "v2", user?.id],
+    queryKey: ["people-affinity", "v3", user?.id],
     enabled: !!user?.id && mode === "tribes",
     staleTime: 1000 * 60 * 5,
     queryFn: () => affinityRequest(session!.access_token, { action: "load", batch_size: 5 }),
@@ -167,7 +165,7 @@ export default function PeoplePage() {
 
   const moreMutation = useMutation({
     mutationFn: () => affinityRequest(session!.access_token, { action: "more", cursor: tribesQuery.data?.next_cursor, batch_size: 5 }),
-    onSuccess: (next) => queryClient.setQueryData(["people-affinity", "v2", user?.id], (old: AffinityResponse | undefined) => {
+    onSuccess: (next) => queryClient.setQueryData(["people-affinity", "v3", user?.id], (old: AffinityResponse | undefined) => {
       return old ? { ...old, ...next } : next;
     }),
   });
@@ -176,11 +174,6 @@ export default function PeoplePage() {
     automaticMoreStarted.current = user?.id || null;
     moreMutation.mutate();
   }, [mode, tribesQuery.status, tribesQuery.data?.has_more, user?.id]);
-
-  const discoverableMutation = useMutation({
-    mutationFn: (discoverable: boolean) => affinityRequest(session!.access_token, { action: "set-discoverable", discoverable }),
-    onSuccess: (result) => queryClient.setQueryData(["people-affinity", "v2", user?.id], (old: AffinityResponse | undefined) => old ? { ...old, discoverable: result.discoverable } : result),
-  });
 
   const creatorsQuery = useQuery({
     queryKey: ["people-followed-creators", user?.id],
@@ -264,7 +257,7 @@ export default function PeoplePage() {
                </div>
             </button>;
           })}</div>}
-           {affinity?.ready && <><div className="surface mt-4 px-4 py-3 flex items-center gap-3"><div className="flex-1 min-w-0"><p className="text-sm font-black">Appear in affinity discovery</p><p className="text-xs text-[#766c76] mt-0.5">People can find your taste here. Friends can still compare with you either way.</p>{discoverableMutation.isError && <p className="text-[11px] font-bold text-[#b04f56] mt-1">Couldn’t update privacy. Try again.</p>}</div><button role="switch" aria-checked={affinity.discoverable === true} disabled={discoverableMutation.isPending || affinity.discoverable == null} onClick={() => discoverableMutation.mutate(affinity.discoverable !== true)} className={`relative h-6 w-11 rounded-full shrink-0 transition-colors disabled:opacity-50 ${affinity.discoverable === true ? "bg-[#6547b8]" : "bg-[#cfc4c5]"}`}><span className={`absolute top-1 h-4 w-4 rounded-full bg-[#fffaf2] shadow-sm transition-transform ${affinity.discoverable === true ? "translate-x-6" : "translate-x-1"}`} /></button></div><div className="mt-4 flex items-center justify-between rounded-2xl bg-[#eee8df] px-4 py-3 text-xs text-[#766c76]"><span>{moreMutation.isPending ? "Finding more matches…" : (affinity.compared_now || 0) > 0 ? `${affinity.compared_now} new people compared` : "Affinity updates as your DNA grows."}</span>{affinity.has_more && !moreMutation.isPending && <button onClick={() => moreMutation.mutate()} className="font-black text-[#6547b8] flex items-center gap-1">Find more people<RefreshCw size={13} /></button>}</div></>}
+           {affinity?.ready && <div className="mt-4 flex items-center justify-between rounded-2xl bg-[#eee8df] px-4 py-3 text-xs text-[#766c76]"><span>{moreMutation.isPending ? "Finding more matches…" : (affinity.compared_now || 0) > 0 ? `${affinity.compared_now} new people compared` : "Affinity updates as your DNA grows."}</span>{affinity.has_more && !moreMutation.isPending && <button onClick={() => moreMutation.mutate()} className="font-black text-[#6547b8] flex items-center gap-1">Find more people<RefreshCw size={13} /></button>}</div>}
         </>}
       </section>}
 

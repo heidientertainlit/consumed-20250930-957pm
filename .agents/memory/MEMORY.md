@@ -34,4 +34,5 @@
 - [People Tribes independence](people-tribes-independence.md) — Tribes are a separate People-domain model; never implement them by renaming or reusing Rooms, pools, follows, or conversations.
 - [Affinity query bounds](affinity-query-bounds.md) — count tracked items through chunked, paginated list_items.user_id queries; never expand hundreds of list IDs into one PostgREST URL.
 - [Friend-gated profiles](friend-gated-profiles.md) — Tribes may preview affinity matches, but full member DNA and consumption profiles require an accepted friendship.
+- [Automatic affinity discovery](affinity-discovery-default.md) — eligible public profiles join discovery automatically; friends rank first, then similar new people; private/blocked remain excluded.
 - [Avatar upload consistency](avatar-upload-consistency.md) — avatar writes are server-authoritative and concurrency-guarded; never overwrite the currently referenced Storage object from the client.

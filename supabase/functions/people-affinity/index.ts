@@ -93,17 +93,11 @@ serve(async (req) => {
     if (authError || !user) return json({ error: "Unauthorized" }, 401);
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") return json({ error: "A JSON request body is required" }, 400);
-    if (!["load", "more", "set-discoverable"].includes(body.action)) return json({ error: "action must be load, more, or set-discoverable" }, 400);
+    if (!["load", "more"].includes(body.action)) return json({ error: "action must be load or more" }, 400);
 
-    const { data: me, error: meError } = await db.from("users").select("id,people_discoverable").eq("id", user.id).maybeSingle();
+    const { data: me, error: meError } = await db.from("users").select("id").eq("id", user.id).maybeSingle();
     if (meError || !me) return json({ error: `Could not load your account: ${meError?.message || "account not found"}` }, 500);
     const myId = me.id;
-    if (body.action === "set-discoverable") {
-      if (typeof body.discoverable !== "boolean") return json({ error: "discoverable must be a boolean" }, 400);
-      const { data, error } = await db.from("users").update({ people_discoverable: body.discoverable }).eq("id", myId).select("people_discoverable").single();
-      if (error || !data) return json({ error: `Could not update discovery preference: ${error?.message || "no account returned"}` }, 500);
-      return json({ discoverable: data.people_discoverable });
-    }
     const [{ data: myProfile, error: profileError }, mySignalsResult] = await Promise.all([
       db.from("dna_profiles").select("id,label,tagline").eq("user_id", myId).maybeSingle(),
       db.from("user_dna_signals").select("signal_type,signal_value,strength").eq("user_id", myId),
@@ -127,7 +121,7 @@ serve(async (req) => {
       ready: !!myProfile && myCount >= 10,
     };
     if (!readiness.ready) {
-      return json({ ready: false, readiness, discoverable: me.people_discoverable, bands: serializeBands(emptyBandPeople()), compared_now: 0, has_more: false, next_cursor: null });
+      return json({ ready: false, readiness, discoverable: true, bands: serializeBands(emptyBandPeople()), compared_now: 0, has_more: false, next_cursor: null });
     }
 
     const [{ data: friendRows, error: friendsError }, { data: blockRows, error: blocksError }, { data: signalRows, error: signalsError }] = await Promise.all([
@@ -145,11 +139,11 @@ serve(async (req) => {
       .sort((a, b) => (shortlistScores.get(b)! - shortlistScores.get(a)!) || a.localeCompare(b)).slice(0, 100);
     const candidateIds = [...new Set([...friends, ...discoveryIds])].filter((id) => id !== myId && !blocked.has(id));
     if (!candidateIds.length) {
-      return json({ ready: true, readiness, discoverable: me.people_discoverable, bands: serializeBands(emptyBandPeople()), compared_now: 0, has_more: false, next_cursor: null });
+      return json({ ready: true, readiness, discoverable: true, bands: serializeBands(emptyBandPeople()), compared_now: 0, has_more: false, next_cursor: null });
     }
 
     const [{ data: people, error: peopleError }, { data: profiles, error: profilesError }] = await Promise.all([
-      db.from("users").select("id,user_name,display_name,first_name,last_name,avatar,people_discoverable,is_persona").in("id", candidateIds),
+      db.from("users").select("id,user_name,display_name,first_name,last_name,avatar,is_persona").in("id", candidateIds),
       db.from("dna_profiles").select("user_id,label,tagline,is_private").in("user_id", candidateIds),
     ]);
     if (peopleError || profilesError) return json({ error: `Could not load candidate profiles: ${(peopleError || profilesError)?.message}` }, 500);
@@ -160,7 +154,7 @@ serve(async (req) => {
       return profile
         && counts.get(person.id)! >= 10
         && !person.is_persona
-        && (friends.has(person.id) || (person.people_discoverable && !profile.is_private));
+        && (friends.has(person.id) || !profile.is_private);
     });
     const ordered = eligible.sort((a: any, b: any) =>
       Number(friends.has(b.id)) - Number(friends.has(a.id))
@@ -242,7 +236,7 @@ serve(async (req) => {
     return json({
       ready: true,
       readiness,
-      discoverable: me.people_discoverable,
+      discoverable: true,
       bands: serializeBands(result),
       compared_now: comparedNow,
       has_more: hasMore,
