@@ -13,6 +13,7 @@ export type ProfilePhotoSource = {
   image: HTMLImageElement
   width: number
   height: number
+  objectUrl: string
 }
 
 export function validateProfilePhoto(file: File): string | null {
@@ -41,12 +42,12 @@ export function loadProfilePhoto(file: File): Promise<ProfilePhotoSource> {
     const image = new Image()
 
     image.onload = () => {
-      URL.revokeObjectURL(url)
       if (!image.naturalWidth || !image.naturalHeight) {
+        URL.revokeObjectURL(url)
         reject(new Error("This image could not be read."))
         return
       }
-      resolve({ image, width: image.naturalWidth, height: image.naturalHeight })
+      resolve({ image, width: image.naturalWidth, height: image.naturalHeight, objectUrl: url })
     }
     image.onerror = () => {
       URL.revokeObjectURL(url)

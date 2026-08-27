@@ -50,6 +50,12 @@ export function ProfilePhotoEditor({
   const [error, setError] = React.useState<string | null>(null)
   const [preparing, setPreparing] = React.useState(false)
 
+  React.useEffect(() => {
+    return () => {
+      if (source?.objectUrl) URL.revokeObjectURL(source.objectUrl)
+    }
+  }, [source])
+
   const minimumScale = React.useMemo(
     () => source ? cropSize / Math.min(source.width, source.height) : 1,
     [cropSize, source],
@@ -174,7 +180,7 @@ export function ProfilePhotoEditor({
       {source && <div className="mt-5 space-y-4">
         <div ref={cropAreaRef} className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-lg bg-black touch-none select-none"
           onPointerDown={startDrag} onPointerMove={drag} onPointerUp={stopDrag} onPointerCancel={stopDrag} aria-label="Photo crop area. Drag the image to position it.">
-          <img src={source.image.src} alt="" draggable={false} className="pointer-events-none absolute max-w-none"
+          <img src={source.objectUrl} alt="" draggable={false} className="pointer-events-none absolute max-w-none"
             style={{ width: source.width * scale, height: source.height * scale, left: `calc(50% + ${offset.x}px)`, top: `calc(50% + ${offset.y}px)`, transform: "translate(-50%, -50%)" }} />
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 border-2 border-white/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
         </div>
