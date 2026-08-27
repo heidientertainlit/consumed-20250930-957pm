@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Dna,
   Heart,
+  Info,
   LockKeyhole,
   Music2,
   RefreshCw,
@@ -48,11 +49,17 @@ type AffinityResponse = {
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 const bandMeta = [
-  { id: "your-people", label: "Your People", min: 80, max: 100, feeling: "They just get it.", color: "#db7657", tint: "#fff0e8" },
-  { id: "same-wavelength", label: "Same Wavelength", min: 60, max: 79, feeling: "A lot in common.", color: "#7b63c9", tint: "#f1edff" },
-  { id: "common-ground", label: "Common Ground", min: 40, max: 59, feeling: "Some overlap. Some surprises.", color: "#c59a45", tint: "#fbf4dc" },
-  { id: "wildcards", label: "Wildcards", min: 0, max: 39, feeling: "Things could get interesting.", color: "#3d9277", tint: "#e7f5ef" },
+  { id: "your-people", label: "Your People", min: 80, max: 100, feeling: "They just get it.", color: "#c4a0ff", tint: "#f1edff" },
+  { id: "same-wavelength", label: "Your Orbit", min: 60, max: 79, feeling: "A lot in common.", color: "#c4a0ff", tint: "#f1edff" },
+  { id: "common-ground", label: "Common Ground", min: 40, max: 59, feeling: "Some shared favorites.", color: "#c4a0ff", tint: "#f1edff" },
+  { id: "wildcards", label: "Wildcards", min: 0, max: 39, feeling: "Different tastes, new takes.", color: "#c4a0ff", tint: "#f1edff" },
 ];
+const bandGradients: Record<string, string> = {
+  "your-people": "linear-gradient(135deg, #302452 0%, #1c1630 100%)",
+  "same-wavelength": "linear-gradient(135deg, #3b2b62 0%, #2c204d 100%)",
+  "common-ground": "linear-gradient(135deg, #514078 0%, #3e3165 100%)",
+  wildcards: "linear-gradient(135deg, #684f96 0%, #513a80 100%)",
+};
 
 const nameFor = (person: any) =>
   person?.display_name || [person?.first_name, person?.last_name].filter(Boolean).join(" ") || person?.user_name || "A Consumed member";
@@ -167,7 +174,7 @@ export default function PeoplePage() {
   const creators = creatorsQuery.data || [];
   const affinity = tribesQuery.data;
   const activeBand = affinity?.bands?.find((band) => band.id === selectedBand);
-  const tabs = [{ id: "tribes" as const, label: "Tribes", Icon: UsersRound }, { id: "friends" as const, label: "Friends", Icon: Users }, { id: "creators" as const, label: "Artists", Icon: Music2 }];
+  const tabs = [{ id: "tribes" as const, label: "Tribes", Icon: UsersRound }, { id: "friends" as const, label: "Friends", Icon: Users }, { id: "creators" as const, label: "Artists & Creators", Icon: Music2 }];
   const setTab = (next: Mode) => { setMode(next); setSelectedBand(null); };
 
   return <div className="min-h-[100dvh] pb-24 bg-gray-100 text-[#29233b]">
@@ -177,39 +184,30 @@ export default function PeoplePage() {
         <h1 className="text-[28px] font-black tracking-[-0.04em] text-[#29233b]">People</h1>
         <p className="mt-1 text-sm text-[#766f80]">Find the people who get what you’re into.</p>
       </header>
-      <nav className="mt-5 flex gap-1 rounded-xl border border-gray-200 bg-gray-200/80 p-1 shadow-sm" aria-label="People sections">{tabs.map(({ id, label, Icon }) => <button key={id} onClick={() => setTab(id)} className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border px-2.5 py-2 text-[13px] font-semibold transition-colors ${mode === id ? "border-violet-300 bg-white text-violet-700 shadow-sm" : "border-transparent text-gray-600 hover:bg-white/60 hover:text-gray-800"}`}><Icon size={15} strokeWidth={2.2} />{label}</button>)}</nav>
+      <nav className="mt-5 flex border-b border-gray-300" aria-label="People sections">{tabs.map(({ id, label, Icon }) => <button key={id} onClick={() => setTab(id)} className={`relative flex min-w-0 flex-1 items-center justify-center gap-1.5 px-1 pb-3 pt-1 text-[11px] font-semibold transition-colors sm:text-[13px] ${mode === id ? "text-violet-700 after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-violet-600" : "text-gray-600 hover:text-gray-800"}`}><Icon size={15} strokeWidth={2} />{label}</button>)}</nav>
 
       {mode === "friends" && <section className="mt-7 animate-in fade-in duration-300"><div className="flex items-end justify-between gap-4 mb-4"><div><p className="eyebrow">Your circle</p><h2 className="section-title">People who know your taste</h2></div><Link href="/friends" className="text-sm font-black text-[#6547b8] flex items-center gap-1">Manage <ArrowUpRight size={15} /></Link></div>{friendsQuery.isLoading ? <div className="grid sm:grid-cols-2 gap-3">{[1,2,3,4].map((item) => <div key={item} className="h-24 rounded-2xl bg-[#e9e0d5] animate-pulse" />)}</div> : friendsQuery.isError ? <div className="surface p-6 text-sm">We couldn’t load your people. <button className="font-black text-[#6547b8]" onClick={() => friendsQuery.refetch()}>Try again</button></div> : friends.length ? <div className="grid sm:grid-cols-2 gap-3">{friends.map((friendship: any) => { const friend = friendship.friend || friendship.users || friendship; const match = friendship.dna_match ?? friendship.match_percentage; return <Link key={friendship.id || friend.id} href={`/user/${friend.id || friendship.friend_id}`} className="surface group p-4 flex items-center gap-3 hover:border-violet-200 transition-colors"><Avatar person={friend} /><div className="min-w-0 flex-1"><p className="font-black truncate">{nameFor(friend)}</p><p className="text-xs text-[#81747a] truncate">{friend.user_name ? `@${friend.user_name}` : "View their Entertainment DNA"}</p></div>{typeof match === "number" ? <span className="text-xs font-black text-[#6547b8] bg-[#eee8ff] px-2 py-1 rounded-lg">{Math.round(match)}% match</span> : <ChevronRight className="text-[#b5aab1]" size={18} />}</Link> })}</div> : <div className="surface border-dashed p-9 text-center"><Dna size={28} className="mx-auto text-[#775cc4] mb-3" /><h3 className="font-black text-lg">Your taste is ready for company.</h3><p className="text-sm text-[#766c76] max-w-sm mx-auto mt-1">Connect with friends and give your shared favorites somewhere to land.</p><Link href="/friends" className="inline-flex mt-5 rounded-xl bg-[#30234f] px-4 py-2.5 text-sm font-black text-white">Find friends</Link></div>}</section>}
 
       {mode === "tribes" && <section className="mt-7 animate-in fade-in duration-300">
-        {activeBand ? <BandDetail band={activeBand} onBack={() => setSelectedBand(null)} /> : <><div className="mb-5"><p className="eyebrow">Personalized affinity</p><h2 className="section-title">Find your people</h2><p className="text-sm text-[#766c76] mt-1 max-w-lg">Not genre groups. These bands reflect how closely your Entertainment DNA lines up with real people.</p></div>
-          {tribesQuery.isLoading ? <div className="grid gap-3 sm:grid-cols-2">{[1,2,3,4].map((item) => <div key={item} className="h-40 rounded-[24px] bg-[#e9e0d5] animate-pulse" />)}</div> : tribesQuery.isError ? <div className="surface p-7 text-sm">Your affinity map couldn’t load. <button className="font-black text-[#6547b8]" onClick={() => tribesQuery.refetch()}>Try again</button></div> : !affinity?.ready ? <div className="surface p-9 text-center"><LockKeyhole size={28} className="mx-auto text-[#775cc4] mb-3" /><h3 className="font-black text-lg">Your people are still taking shape.</h3><p className="text-sm text-[#766c76] max-w-sm mx-auto mt-1">{affinity?.readiness?.items_needed ? `Add ${affinity.readiness.items_needed} more titles to unlock personalized affinity.` : "Complete your Entertainment DNA to unlock personalized affinity."}</p><Link href="/me" className="inline-flex mt-5 rounded-xl bg-[#30234f] px-4 py-2.5 text-sm font-black text-white">Build your DNA</Link></div> : <div className="grid gap-3 sm:grid-cols-2">{(affinity.bands || []).map((band) => {
+        {activeBand ? <BandDetail band={activeBand} onBack={() => setSelectedBand(null)} /> : <><div className="mb-4 flex items-start justify-between"><div><p className="text-[11px] font-black uppercase tracking-[.18em] text-[#766f80]">Your Tribes</p><p className="mt-1 text-xs text-[#8a8390]">Based on your Entertainment DNA</p></div><Info size={17} className="mt-0.5 text-[#8a8390]" /></div>
+          {tribesQuery.isLoading ? <div className="grid gap-3">{[1,2,3,4].map((item) => <div key={item} className="h-32 rounded-2xl bg-[#d9d1e5] animate-pulse" />)}</div> : tribesQuery.isError ? <div className="surface p-7 text-sm">Your affinity map couldn’t load. <button className="font-black text-[#6547b8]" onClick={() => tribesQuery.refetch()}>Try again</button></div> : !affinity?.ready ? <div className="surface p-9 text-center"><LockKeyhole size={28} className="mx-auto text-[#775cc4] mb-3" /><h3 className="font-black text-lg">Your people are still taking shape.</h3><p className="text-sm text-[#766c76] max-w-sm mx-auto mt-1">{affinity?.readiness?.items_needed ? `Add ${affinity.readiness.items_needed} more titles to unlock personalized affinity.` : "Complete your Entertainment DNA to unlock personalized affinity."}</p><Link href="/me" className="inline-flex mt-5 rounded-xl bg-[#30234f] px-4 py-2.5 text-sm font-black text-white">Build your DNA</Link></div> : <div className="grid gap-3">{(affinity.bands || []).map((band) => {
             const visiblePeople = [...band.people]
               .sort((a, b) => Number(Boolean((b as any).profile_image_url || b.avatar_url || (b as any).avatar)) - Number(Boolean((a as any).profile_image_url || a.avatar_url || (a as any).avatar)))
-              .slice(0, 4);
+               .slice(0, 3);
             const remaining = Math.max(0, band.people.length - visiblePeople.length);
-            return <button key={band.id} onClick={() => setSelectedBand(band.id)} className="group relative min-h-40 w-full overflow-hidden rounded-2xl border border-violet-100 bg-white p-5 text-left shadow-sm transition-colors hover:border-violet-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6547b8] focus-visible:ring-offset-2">
-              <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full opacity-[.09]" style={{ background: band.color }} />
-              <div className="relative flex h-full flex-col">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <UsersRound size={17} strokeWidth={2.6} style={{ color: band.color }} />
-                      <h3 className="text-lg font-black tracking-[-.025em]">{band.label}</h3>
-                      {band.id === "your-people" && <Sparkles size={15} style={{ color: band.color }} />}
-                    </div>
-                    <p className="mt-1 text-xs font-black" style={{ color: band.color }}>{band.min}–{band.max}% match</p>
-                    <p className="mt-1.5 text-sm text-[#655d69]">{band.feeling}</p>
-                  </div>
-                </div>
-                <div className="mt-auto flex min-h-10 items-end justify-between gap-3 pt-4">
-                  {band.people.length > 0 ? <div className="flex items-center">
-                    <div className="flex -space-x-2.5">{visiblePeople.map((person) => <span key={person.id} className="rounded-full border-2 border-white shadow-sm"><Avatar person={person} size="sm" /></span>)}</div>
-                    {remaining > 0 && <span className="-ml-2.5 flex h-9 min-w-9 items-center justify-center rounded-full border-2 border-white px-1.5 text-[10px] font-black shadow-sm" style={{ background: band.color, color: "#fff" }}>+{remaining}</span>}
-                  </div> : <p className="text-xs font-bold text-[#837982]">No matches here yet</p>}
-                  {band.people.length > 0 && <p className="text-xs font-black" style={{ color: band.color }}>{band.people.length} {band.people.length === 1 ? "person" : "people"}</p>}
-                </div>
-              </div>
+             return <button key={band.id} onClick={() => setSelectedBand(band.id)} className="group relative w-full overflow-hidden rounded-2xl border border-white/10 p-4 text-left text-white shadow-[0_8px_20px_rgba(43,28,77,.14)] transition-transform active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2" style={{ background: bandGradients[band.id] || bandGradients.wildcards }}>
+               <div className="flex items-center gap-4">
+                 <div className="min-w-0 flex-1">
+                   <h3 className="text-base font-black tracking-[-.02em]">{band.label}</h3>
+                   <p className="mt-0.5 text-xs font-bold text-[#c4a0ff]">{band.min}–{band.max}% match</p>
+                   <p className="mt-1 text-xs text-white/65">{band.feeling}</p>
+                 </div>
+                 <div className="flex max-w-[48%] flex-col items-end gap-1.5">
+                   {visiblePeople.length ? visiblePeople.map((person) => <span key={person.id} className="flex max-w-full items-center gap-1.5 text-[11px] font-semibold text-white/80"><span className="scale-[.67] -my-1 -mr-1 origin-right"><Avatar person={person} size="sm" /></span><span className="truncate">{nameFor(person)}</span></span>) : <span className="text-[11px] text-white/45">No matches yet</span>}
+                   {remaining > 0 && <span className="text-[10px] font-bold text-[#c4a0ff]">+{remaining} more</span>}
+                 </div>
+                 <ChevronRight size={18} className="shrink-0 text-[#c4a0ff]" />
+               </div>
             </button>;
           })}</div>}
            {affinity?.ready && <><div className="surface mt-4 px-4 py-3 flex items-center gap-3"><div className="flex-1 min-w-0"><p className="text-sm font-black">Appear in affinity discovery</p><p className="text-xs text-[#766c76] mt-0.5">People can find your taste here. Friends can still compare with you either way.</p>{discoverableMutation.isError && <p className="text-[11px] font-bold text-[#b04f56] mt-1">Couldn’t update privacy. Try again.</p>}</div><button role="switch" aria-checked={affinity.discoverable === true} disabled={discoverableMutation.isPending || affinity.discoverable == null} onClick={() => discoverableMutation.mutate(affinity.discoverable !== true)} className={`relative h-6 w-11 rounded-full shrink-0 transition-colors disabled:opacity-50 ${affinity.discoverable === true ? "bg-[#6547b8]" : "bg-[#cfc4c5]"}`}><span className={`absolute top-1 h-4 w-4 rounded-full bg-[#fffaf2] shadow-sm transition-transform ${affinity.discoverable === true ? "translate-x-6" : "translate-x-1"}`} /></button></div><div className="mt-4 flex items-center justify-between rounded-2xl bg-[#eee8df] px-4 py-3 text-xs text-[#766c76]"><span>{moreMutation.isPending ? "Finding more matches…" : (affinity.compared_now || 0) > 0 ? `${affinity.compared_now} new people compared` : "Affinity updates as your DNA grows."}</span>{affinity.has_more && !moreMutation.isPending && <button onClick={() => moreMutation.mutate()} className="font-black text-[#6547b8] flex items-center gap-1">Find more people<RefreshCw size={13} /></button>}</div></>}
