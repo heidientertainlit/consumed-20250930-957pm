@@ -2056,9 +2056,10 @@ export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
     }
   }, [isTriviaDay, playCompleted, hasTodaysPlay, callCompleted, hasDailyCall]);
 
-  // First question preview (truncated)
+  // Keep the full question available; the compact standalone card applies its
+  // own visual clamp, while the embedded Play hero should show it completely.
   const firstQPreview = readyQuestions[0]?.title
-    ? truncateWords(readyQuestions[0].title, 30)
+    ? readyQuestions[0].title
     : 'Think you know your stuff?';
 
   // Daily call preview (truncated)
@@ -2229,7 +2230,7 @@ export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
                     <p className={`text-white/90 ${front ? 'text-xl font-bold' : 'text-[13px] font-semibold'} leading-snug line-clamp-3`}>{callAnswer}</p>
                   </>
                 ) : (
-                  <p className={`text-white ${embedded && front ? 'text-[23px] sm:text-[26px] line-clamp-4 text-balance' : front ? 'text-xl line-clamp-3' : 'text-[13px] line-clamp-3'} font-bold leading-[1.2] tracking-[-0.025em] drop-shadow-sm`}>
+                  <p className={`text-white ${embedded && front ? 'text-[23px] sm:text-[26px] text-balance' : front ? 'text-xl line-clamp-3' : 'text-[13px] line-clamp-3'} font-bold leading-[1.2] tracking-[-0.025em] drop-shadow-sm`}>
                     {isOpinionDay ? callPreview : firstQPreview}
                   </p>
                 )}
