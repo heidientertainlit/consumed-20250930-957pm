@@ -57,6 +57,7 @@ import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
 import { DnaShareExperience } from "@/components/dna-share-experience";
 import { ReportSheet } from "@/components/report-sheet";
+import { ProfilePhotoEditor } from "@/components/profile-photo-editor";
 
 const DNA_ARCHETYPE_MAP: Record<string, { displayName: string; oneLiner: string }> = {
   theory_crafter:     { displayName: 'The Theory Crafter',      oneLiner: "You don't just watch. You build cases." },
@@ -148,6 +149,7 @@ export default function UserProfile() {
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isSavingProfilePhoto, setIsSavingProfilePhoto] = useState(false);
 
   // Add Friend states
   const [isAddFriendModalOpen, setIsAddFriendModalOpen] = useState(false);
@@ -1590,7 +1592,7 @@ export default function UserProfile() {
         while (retries > 0 && !data) {
           const result = await supabase
             .from('users')
-            .select('user_name, first_name, last_name')
+            .select('user_name, first_name, last_name, display_name, avatar')
             .eq('id', viewingUserId)
             .single();
 
@@ -1886,6 +1888,81 @@ export default function UserProfile() {
       });
     } finally {
       setIsSavingProfile(false);
+    }
+  };
+
+  const refreshAvatarConsumers = async () => {
+    if (!user?.id) return;
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['nav-avatar', user.id] }),
+      queryClient.invalidateQueries({ queryKey: ['people-affinity'] }),
+      queryClient.invalidateQueries({ queryKey: ['people-friends'] }),
+      queryClient.invalidateQueries({ queryKey: ['friends'] }),
+      queryClient.invalidateQueries({ queryKey: ['pending-requests'] }),
+      queryClient.invalidateQueries({ queryKey: ['user-search'] }),
+      queryClient.invalidateQueries({ queryKey: ['who-reacted'] }),
+      queryClient.invalidateQueries({ queryKey: ['leaderboard-feed'] }),
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] }),
+    ]);
+  };
+
+  const saveAvatarRequest = async (body: FormData | { action: "remove-avatar" }) => {
+    if (!session?.access_token) throw new Error("You must be logged in to change your photo.");
+    const isFormData = body instanceof FormData;
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/complete-profile`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          ...(!isFormData ? { "Content-Type": "application/json" } : {}),
+        },
+        body: isFormData ? body : JSON.stringify(body),
+      },
+    );
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "We couldn't update your profile photo.");
+    return result as { avatar_url: string | null };
+  };
+
+  const handleProfilePhotoUpload = async (photo: Blob) => {
+    if (!user?.id) throw new Error("You must be logged in to change your photo.");
+    setIsSavingProfilePhoto(true);
+    try {
+      const formData = new FormData();
+      formData.set("action", "upload-avatar");
+      formData.set("photo", photo, photo.type === "image/jpeg" ? "profile.jpg" : "profile.webp");
+      const { avatar_url: avatarUrl } = await saveAvatarRequest(formData);
+      setUserProfileData((current: any) => ({ ...current, avatar: avatarUrl }));
+      await supabase.auth.refreshSession();
+      await refreshAvatarConsumers();
+      toast({ title: "Profile photo updated", description: "Your new photo is now visible across Consumed." });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "We couldn't upload your photo.";
+      toast({ title: "Photo upload failed", description: message, variant: "destructive" });
+      throw new Error(message);
+    } finally {
+      setIsSavingProfilePhoto(false);
+    }
+  };
+
+  const handleProfilePhotoRemove = async () => {
+    if (!user?.id) return;
+    setIsSavingProfilePhoto(true);
+    try {
+      await saveAvatarRequest({ action: "remove-avatar" });
+      setUserProfileData((current: any) => ({ ...current, avatar: null }));
+      await supabase.auth.refreshSession();
+      await refreshAvatarConsumers();
+      toast({ title: "Profile photo removed" });
+    } catch (error) {
+      toast({
+        title: "Couldn't remove photo",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingProfilePhoto(false);
     }
   };
 
@@ -3092,9 +3169,17 @@ export default function UserProfile() {
         <Navigation roomyTopBar />
         <main className="mx-auto max-w-lg px-4 pt-8">
           <section className="rounded-3xl border border-violet-100 bg-white px-6 py-9 text-center shadow-sm">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-violet-50 text-violet-600">
-              <Lock size={26} />
-            </div>
+            {userProfileData?.avatar ? (
+              <img
+                src={userProfileData.avatar}
+                alt=""
+                className="mx-auto h-20 w-20 rounded-full border-4 border-white object-cover shadow-lg"
+              />
+            ) : (
+              <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-violet-50 text-violet-600">
+                <Lock size={26} />
+              </div>
+            )}
             <h1 className="mt-5 text-2xl font-bold tracking-tight text-[#211b31]">{displayName}</h1>
             {handle && <p className="mt-1 text-sm text-gray-500">@{handle}</p>}
             <h2 className="mt-7 text-lg font-bold text-[#211b31]">Their profile is for friends</h2>
@@ -3154,7 +3239,15 @@ export default function UserProfile() {
 
             {/* Name + handle + share */}
             <div className="relative flex items-start justify-between mb-5">
-              <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-3">
+                {userProfileData?.avatar && (
+                  <img
+                    src={userProfileData.avatar}
+                    alt=""
+                    className="h-12 w-12 shrink-0 rounded-full border-2 border-white/20 object-cover shadow-lg"
+                  />
+                )}
+                <div className="min-w-0">
                 <h1 className="text-lg font-bold text-white leading-tight truncate">
                   {userProfileData?.first_name && userProfileData?.last_name
                     ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
@@ -3185,6 +3278,7 @@ export default function UserProfile() {
                       <span className="text-[9px]">Edit profile</span>
                     </button>
                   )}
+                </div>
                 </div>
               </div>
               <button
@@ -5492,13 +5586,14 @@ export default function UserProfile() {
       {/* Edit Profile Modal */}
       {isEditProfileOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90dvh] overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-black">Edit Profile</h2>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsEditProfileOpen(false)}
+                disabled={isSavingProfile || isSavingProfilePhoto}
                 className="h-8 w-8 p-0"
                 data-testid="button-close-edit-profile"
               >
@@ -5507,6 +5602,15 @@ export default function UserProfile() {
             </div>
 
             <div className="space-y-4">
+              <ProfilePhotoEditor
+                currentUrl={userProfileData?.avatar || user?.user_metadata?.avatar_url}
+                displayName={`${editFirstName} ${editLastName}`.trim() || editUsername || "You"}
+                saving={isSavingProfilePhoto}
+                onUpload={handleProfilePhotoUpload}
+                onRemove={handleProfilePhotoRemove}
+                className="border-b border-gray-200 pb-5"
+              />
+
               {/* Account Email */}
               <div>
                 <Label htmlFor="account-email" className="text-sm font-medium text-black mb-2 block">
@@ -5582,7 +5686,7 @@ export default function UserProfile() {
                   variant="outline"
                   onClick={() => setIsEditProfileOpen(false)}
                   className="flex-1"
-                  disabled={isSavingProfile}
+                  disabled={isSavingProfile || isSavingProfilePhoto}
                   data-testid="button-cancel-edit"
                 >
                   Cancel
@@ -5590,7 +5694,7 @@ export default function UserProfile() {
                 <Button
                   onClick={handleSaveProfile}
                   className="flex-1 bg-purple-600 text-white hover:bg-purple-700"
-                  disabled={isSavingProfile || !editFirstName.trim() || !editLastName.trim()}
+                  disabled={isSavingProfile || isSavingProfilePhoto || !editFirstName.trim() || !editLastName.trim()}
                   data-testid="button-save-profile"
                 >
                   {isSavingProfile ? (

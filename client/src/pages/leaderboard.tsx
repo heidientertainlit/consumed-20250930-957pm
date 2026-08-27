@@ -148,6 +148,7 @@ export default function Leaderboard() {
     user_id: string;
     display_name: string;
     username: string;
+    avatar_url: string | null;
     picks_count: number;
     correct_count: number;
   }
@@ -289,16 +290,9 @@ export default function Leaderboard() {
         
         const userIds = Object.keys(userPickCounts);
         
-        // Get user profiles - try both profiles and users tables
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, display_name, username, avatar_url')
-          .in('id', userIds);
-        
-        // Also check users table for display info (user_name is the column name)
         const { data: users } = await supabase
           .from('users')
-          .select('id, user_name')
+          .select('id, user_name, display_name, first_name, last_name, avatar')
           .in('id', userIds);
         
         // If friends scope, filter to friends only
@@ -320,16 +314,17 @@ export default function Leaderboard() {
         
         const entries: AwardsLeaderEntry[] = filteredUserIds
           .map(userId => {
-            const profile = profiles?.find(p => p.id === userId);
             const user = users?.find((u: any) => u.id === userId);
-            // Use best available display name: profile > user_name from users table
-            const displayName = profile?.display_name || user?.user_name || 
-              profile?.username || 'Player';
-            const username = profile?.username || user?.user_name || 'player';
+            const displayName = user?.display_name
+              || `${user?.first_name || ''} ${user?.last_name || ''}`.trim()
+              || user?.user_name
+              || 'Player';
+            const username = user?.user_name || 'player';
             return {
               user_id: userId,
               display_name: displayName,
               username: username,
+              avatar_url: user?.avatar || null,
               picks_count: userPickCounts[userId] || 0,
               correct_count: 0, // TODO: Calculate after results
             };
@@ -436,6 +431,15 @@ export default function Leaderboard() {
                     </div>
                   ) : (
                     <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
+                  )}
+                </div>
+                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-purple-100">
+                  {entry.avatar_url ? (
+                    <img src={entry.avatar_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-xs font-bold text-purple-700">
+                      {(entry.display_name || entry.username || "?").slice(0, 1).toUpperCase()}
+                    </span>
                   )}
                 </div>
 
@@ -899,6 +903,15 @@ export default function Leaderboard() {
                                         <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>{index + 1}</div>
                                       ) : (
                                         <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
+                                      )}
+                                    </div>
+                                    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-purple-100">
+                                      {entry.avatar_url ? (
+                                        <img src={entry.avatar_url} alt="" className="h-full w-full object-cover" />
+                                      ) : (
+                                        <span className="flex h-full w-full items-center justify-center text-xs font-bold text-purple-700">
+                                          {entry.display_name.slice(0, 1).toUpperCase()}
+                                        </span>
                                       )}
                                     </div>
                                     <Link href={`/user/${entry.user_id}`} className="flex-1 min-w-0">

@@ -95,8 +95,12 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
                         href={`/user/${searchUser.id}`}
                         className="flex items-center space-x-3 flex-1 min-w-0 cursor-pointer"
                       >
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(168,85,247,0.2)" }}>
-                          <User size={16} className="text-purple-300" />
+                        <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: "rgba(168,85,247,0.2)" }}>
+                          {searchUser.avatar
+                            ? <img src={searchUser.avatar} alt="" className="h-full w-full object-cover" />
+                            : <span className="text-xs font-bold text-purple-200">
+                                {`${searchUser.first_name?.[0] || searchUser.user_name?.[0] || "?"}${searchUser.last_name?.[0] || ""}`.toUpperCase()}
+                              </span>}
                         </div>
                         <div className="min-w-0">
                           <div className="text-sm font-medium text-white truncate">{displayName}</div>
@@ -159,8 +163,12 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
               {pendingData.requests.map((request: any) => (
                 <div key={request.id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <div className="flex items-center space-x-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(168,85,247,0.2)" }}>
-                      <User size={16} className="text-purple-300" />
+                    <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: "rgba(168,85,247,0.2)" }}>
+                      {request.users?.avatar
+                        ? <img src={request.users.avatar} alt="" className="h-full w-full object-cover" />
+                        : <span className="text-xs font-bold text-purple-200">
+                            {`${request.users?.first_name?.[0] || request.users?.user_name?.[0] || "?"}${request.users?.last_name?.[0] || ""}`.toUpperCase()}
+                          </span>}
                     </div>
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-white truncate">

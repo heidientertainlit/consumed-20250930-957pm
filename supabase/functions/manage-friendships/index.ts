@@ -132,7 +132,7 @@ serve(async (req) => {
           const friendIds = friendships.map(f => f.friend_id);
           const { data: users, error: usersError } = await supabase
             .from('users')
-            .select('id, user_name, email, first_name, last_name')
+            .select('id, user_name, email, first_name, last_name, display_name, avatar')
             .in('id', friendIds);
 
           if (usersError) {
@@ -179,7 +179,7 @@ serve(async (req) => {
           const userIds = friendships.map(f => f.user_id);
           const { data: users, error: usersError } = await supabase
             .from('users')
-            .select('id, user_name, email, first_name, last_name')
+            .select('id, user_name, email, first_name, last_name, display_name, avatar')
             .in('id', userIds);
 
           if (usersError) {

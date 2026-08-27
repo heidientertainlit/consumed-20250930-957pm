@@ -807,15 +807,24 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
                 }
                 const Icon = item.icon;
                 const active = item.active;
+                const showProfilePhoto = item.href === "/profile" && Boolean(navAvatar);
                 return (
                   <Link key={item.href} href={item.href} className="flex flex-col items-center justify-start flex-1" data-testid={item.testid} aria-label={item.label}>
                     <div className={`flex items-center justify-center transition-all ${active ? "w-8 h-8 rounded-full bg-gradient-to-br from-purple-800 to-purple-950 shadow-sm" : "h-8"}`}>
-                      <Icon
-                        size={active ? 18 : 22}
-                        className={active ? "text-white" : "text-gray-600"}
-                        strokeWidth={active ? 2.4 : 1.6}
-                        {...(active && item.fillWhenActive ? { fill: "currentColor" } : {})}
-                      />
+                      {showProfilePhoto ? (
+                        <img
+                          src={navAvatar!}
+                          alt=""
+                          className={`${active ? "h-6 w-6" : "h-7 w-7"} rounded-full border border-white/80 object-cover`}
+                        />
+                      ) : (
+                        <Icon
+                          size={active ? 18 : 22}
+                          className={active ? "text-white" : "text-gray-600"}
+                          strokeWidth={active ? 2.4 : 1.6}
+                          {...(active && item.fillWhenActive ? { fill: "currentColor" } : {})}
+                        />
+                      )}
                     </div>
                     <span className={`text-[10px] mt-0.5 ${active ? "text-purple-800 font-semibold" : "text-gray-500"}`}>{item.label}</span>
                   </Link>

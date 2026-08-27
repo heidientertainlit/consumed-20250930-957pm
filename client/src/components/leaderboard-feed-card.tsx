@@ -89,9 +89,9 @@ export default function LeaderboardFeedCard({ className, variant = 'trivia' }: L
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
       const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('id, username, avatar_url')
-        .eq('auth_id', user.id)
+        .from('users')
+        .select('id, user_name, avatar')
+        .eq('id', user.id)
         .single();
       return profile;
     },

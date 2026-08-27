@@ -13,6 +13,7 @@ interface LeaderboardEntry {
   user_id: string;
   username: string;
   display_name: string;
+  avatar_url?: string | null;
   score: number;
   rank: number;
   detail?: string;
@@ -97,9 +98,9 @@ serve(async (req) => {
     // Get all users for name mapping (include first_name, last_name for proper display names)
     const { data: allUsers } = await supabase
       .from('users')
-      .select('id, user_name, display_name, first_name, last_name');
+      .select('id, user_name, display_name, first_name, last_name, avatar');
     
-    const userMap: Record<string, { username: string; display_name: string }> = {};
+    const userMap: Record<string, { username: string; display_name: string; avatar_url: string | null }> = {};
     (allUsers || []).forEach((u: any) => {
       // Build display name similar to profile page: first_name + last_name, then fallback to display_name, then user_name
       let displayName = 'Unknown';
@@ -115,7 +116,8 @@ serve(async (req) => {
       
       userMap[u.id] = { 
         username: u.user_name || 'unknown', 
-        display_name: displayName
+        display_name: displayName,
+        avatar_url: u.avatar || null,
       };
     });
 
@@ -143,6 +145,7 @@ serve(async (req) => {
           user_id: e.user_id,
           username: userMap[e.user_id]?.username || 'unknown',
           display_name: userMap[e.user_id]?.display_name || 'Unknown',
+          avatar_url: userMap[e.user_id]?.avatar_url || null,
           score: e.score,
           rank: i + 1,
           detail: e.detail

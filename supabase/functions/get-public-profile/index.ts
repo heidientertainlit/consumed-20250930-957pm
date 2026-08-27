@@ -28,8 +28,8 @@ Deno.serve(async (req) => {
 
     // Get user profile
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, display_name, username, avatar_url')
+      .from('users')
+      .select('id, display_name, user_name, avatar')
       .eq('id', userId)
       .single();
 
@@ -103,8 +103,8 @@ Deno.serve(async (req) => {
     const publicProfile = {
       id: profile.id,
       display_name: profile.display_name,
-      username: profile.username,
-      avatar_url: profile.avatar_url,
+      username: profile.user_name,
+      avatar_url: profile.avatar,
       total_points: pointsData?.total_points || 0,
       items_logged: itemsLogged || 0,
       global_rank: rankData || null,
