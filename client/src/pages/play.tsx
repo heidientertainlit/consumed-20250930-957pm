@@ -75,7 +75,13 @@ interface RankEntry {
   rank: number;
 }
 
-function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
+function RankWidget({
+  onNavigate,
+  insideHero = false,
+}: {
+  onNavigate: (path: string) => void;
+  insideHero?: boolean;
+}) {
   const [entries, setEntries] = useState<RankEntry[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -109,7 +115,10 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
 
   if (loading) {
     return (
-      <div className="mt-4 h-[112px] animate-pulse rounded-2xl border border-[#e4ddd8] bg-[#f0ece7] p-3 shadow-[0_4px_12px_rgba(37,20,66,0.05)]" />
+      <div className={insideHero
+        ? "mt-4 h-[90px] animate-pulse border-t border-white/10 bg-white/[0.025]"
+        : "mt-4 h-[112px] animate-pulse rounded-2xl border border-[#e4ddd8] bg-[#f0ece7] p-3 shadow-[0_4px_12px_rgba(37,20,66,0.05)]"
+      } />
     );
   }
 
@@ -121,14 +130,28 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
   const below = myIndex < entries.length - 1 ? entries[myIndex + 1] : null;
 
   const Row = ({ entry, isMe }: { entry: RankEntry; isMe?: boolean }) => (
-    <div className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 ${isMe ? 'border-[#c9a6fb] bg-[#fffcfa] shadow-[0_1px_3px_rgba(81,34,133,0.06)]' : 'border-transparent'}`}>
-      <span className={`w-7 shrink-0 text-right text-xs font-bold ${isMe ? 'text-[#5920a3]' : 'text-[#8c8790]'}`}>
+    <div className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 ${
+      insideHero
+        ? isMe
+          ? 'border-white/15 bg-white/[0.07]'
+          : 'border-transparent'
+        : isMe
+          ? 'border-[#c9a6fb] bg-[#fffcfa] shadow-[0_1px_3px_rgba(81,34,133,0.06)]'
+          : 'border-transparent'
+    }`}>
+      <span className={`w-7 shrink-0 text-right text-xs font-bold ${
+        insideHero ? (isMe ? 'text-[#c4a0ff]' : 'text-white/35') : (isMe ? 'text-[#5920a3]' : 'text-[#8c8790]')
+      }`}>
         #{entry.rank}
       </span>
-      <span className={`flex-1 truncate text-[13px] font-semibold ${isMe ? 'text-[#23172e]' : 'text-[#5f5862]'}`}>
+      <span className={`flex-1 truncate text-[13px] font-semibold ${
+        insideHero ? (isMe ? 'text-white' : 'text-white/55') : (isMe ? 'text-[#23172e]' : 'text-[#5f5862]')
+      }`}>
         {isMe ? 'You' : (entry.display_name || entry.username)}
       </span>
-      <span className={`shrink-0 text-xs font-semibold ${isMe ? 'text-[#5920a3]' : 'text-[#8c8790]'}`}>
+      <span className={`shrink-0 text-xs font-semibold ${
+        insideHero ? (isMe ? 'text-[#c4a0ff]' : 'text-white/35') : (isMe ? 'text-[#5920a3]' : 'text-[#8c8790]')
+      }`}>
         {entry.score.toLocaleString()} pts
       </span>
     </div>
@@ -137,7 +160,10 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
   return (
     <button
       onClick={() => onNavigate('/leaderboard')}
-      className="mt-4 w-full rounded-2xl border border-[#e3deda] bg-[#faf7f4] p-1.5 text-left shadow-[0_5px_14px_rgba(42,24,64,0.07)] transition-transform duration-150 active:scale-[0.985]"
+      className={insideHero
+        ? "mt-4 w-full border-t border-white/10 pt-3 text-left transition-opacity active:opacity-80"
+        : "mt-4 w-full rounded-2xl border border-[#e3deda] bg-[#faf7f4] p-1.5 text-left shadow-[0_5px_14px_rgba(42,24,64,0.07)] transition-transform duration-150 active:scale-[0.985]"
+      }
     >
       <div className="space-y-0.5">
         {above && <Row entry={above} />}
@@ -145,8 +171,8 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
         {below && <Row entry={below} />}
       </div>
       <div className="mt-2 flex items-center justify-end gap-1 pr-2 pb-0.5">
-        <span className="text-[11px] font-semibold text-[#5920a3]">Full leaderboard</span>
-        <ArrowRight size={12} className="text-[#5920a3]" />
+        <span className={insideHero ? "text-[11px] font-medium text-white/50" : "text-[11px] font-semibold text-[#5920a3]"}>Full leaderboard</span>
+        <ArrowRight size={12} className={insideHero ? "text-white/45" : "text-[#5920a3]"} />
       </div>
     </button>
   );
@@ -169,9 +195,9 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
         >
           <div className="relative z-10">
             <DailyHeroSection embedded />
+            <RankWidget onNavigate={setLocation} insideHero />
           </div>
         </section>
-        <RankWidget onNavigate={setLocation} />
 
         <section className="pt-5">
           <p className="mb-2.5 px-0.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#87808f]">
