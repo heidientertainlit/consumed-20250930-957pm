@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
-import { Plus, MessageSquarePlus, Flame, Dna, Trophy, Library, Forward } from "lucide-react";
+import { ArrowRight, Flame, Dna, Trophy, Library, Forward } from "lucide-react";
 import FeedComposerBar from "@/components/feed-composer-bar";
 import { QuickTrackSheet } from "@/components/quick-track-sheet";
 import { DnaShareExperience } from "@/components/dna-share-experience";
@@ -319,18 +319,19 @@ export function HeroCTAButtons() {
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => setTrackOpen(true)}
-          className="flex items-center justify-center gap-2 py-2 rounded-full font-semibold text-[13px] text-white active:scale-95 transition-transform"
-          style={{ background: "linear-gradient(135deg, #6d28d9 0%, #9333ea 45%, #d946ef 100%)" }}
+          className="flex min-h-10 items-center justify-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold text-violet-700 transition-transform active:scale-95"
+          style={{ background: "rgba(109,40,217,0.1)", backdropFilter: "blur(6px)", border: "1px solid rgba(109,40,217,0.25)", boxShadow: "0 1px 3px rgba(76,29,149,0.08)" }}
         >
-          <Plus size={15} />
           Add media
+          <ArrowRight size={13} strokeWidth={2} />
         </button>
         <button
           onClick={() => setComposerOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-full border border-violet-200 bg-white py-2 text-[13px] font-semibold text-violet-700 shadow-sm transition-transform active:scale-95"
+          className="flex min-h-10 items-center justify-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold text-violet-700 transition-transform active:scale-95"
+          style={{ background: "rgba(109,40,217,0.1)", backdropFilter: "blur(6px)", border: "1px solid rgba(109,40,217,0.25)", boxShadow: "0 1px 3px rgba(76,29,149,0.08)" }}
         >
-          <MessageSquarePlus size={15} />
           Share a take
+          <ArrowRight size={13} strokeWidth={2} />
         </button>
       </div>
 
