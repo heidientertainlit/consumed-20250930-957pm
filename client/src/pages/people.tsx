@@ -81,7 +81,7 @@ function Avatar({ person, size = "md" }: { person: any; size?: "sm" | "md" | "lg
 function AvatarStack({ people, dark = false }: { people: AffinityPerson[]; dark?: boolean }) {
   const shown = people.slice(0, 4);
   if (!shown.length) return <span className={`grid h-9 w-9 place-items-center rounded-full text-[10px] font-black ${dark ? "bg-white/10 text-white/60" : "bg-[#eee8ff] text-[#6547b8]"}`}>?</span>;
-  return <div className="flex shrink-0 items-center pl-1" aria-label={`${people.length} affinity matches`}>
+  return <div className="flex shrink-0 items-center" aria-label={`${people.length} affinity matches`}>
     {shown.map((person, index) => {
       const src = person.profile_image_url || person.avatar_url || person.avatar;
       return src ? (
