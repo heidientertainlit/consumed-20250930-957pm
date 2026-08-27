@@ -109,7 +109,7 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
 
   if (loading) {
     return (
-      <div className="mt-5 h-[88px] animate-pulse rounded-2xl border border-white/10 bg-gradient-to-br from-[#17131f] to-[#2b1742] p-4" />
+      <div className="mt-5 h-[88px] animate-pulse rounded-xl border border-gray-200 bg-gray-200/80 p-4 shadow-sm" />
     );
   }
 
@@ -121,14 +121,14 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
   const below = myIndex < entries.length - 1 ? entries[myIndex + 1] : null;
 
   const Row = ({ entry, isMe }: { entry: RankEntry; isMe?: boolean }) => (
-    <div className={`flex items-center gap-3 py-1.5 px-3 rounded-xl ${isMe ? 'bg-purple-600/20 border border-purple-500/30' : ''}`}>
-      <span className={`text-xs font-bold w-7 text-right shrink-0 ${isMe ? 'text-purple-300' : 'text-white/40'}`}>
+    <div className={`flex items-center gap-3 rounded-lg border px-3 py-1.5 ${isMe ? 'border-violet-300 bg-white shadow-sm' : 'border-transparent'}`}>
+      <span className={`w-7 shrink-0 text-right text-xs font-bold ${isMe ? 'text-violet-700' : 'text-gray-400'}`}>
         #{entry.rank}
       </span>
-      <span className={`flex-1 text-sm font-medium truncate ${isMe ? 'text-white' : 'text-white/60'}`}>
+      <span className={`flex-1 truncate text-sm font-medium ${isMe ? 'text-gray-950' : 'text-gray-600'}`}>
         {isMe ? 'You' : (entry.display_name || entry.username)}
       </span>
-      <span className={`text-xs font-semibold shrink-0 ${isMe ? 'text-purple-300' : 'text-white/40'}`}>
+      <span className={`shrink-0 text-xs font-semibold ${isMe ? 'text-violet-700' : 'text-gray-400'}`}>
         {entry.score.toLocaleString()} pts
       </span>
     </div>
@@ -137,7 +137,7 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
   return (
     <button
       onClick={() => onNavigate('/leaderboard')}
-      className="mt-5 w-full rounded-2xl border border-white/10 bg-gradient-to-br from-[#17131f] to-[#2b1742] p-3 text-left shadow-sm transition-transform active:scale-95"
+      className="mt-5 w-full rounded-xl border border-gray-200 bg-gray-200/80 p-2 text-left shadow-sm transition-transform active:scale-95"
     >
       <div className="space-y-0.5">
         {above && <Row entry={above} />}
@@ -145,8 +145,8 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
         {below && <Row entry={below} />}
       </div>
       <div className="flex items-center justify-end gap-1 mt-2.5 pr-1">
-        <span className="text-[11px] text-white/60">Full leaderboard</span>
-        <ArrowRight size={11} className="text-white/60" />
+        <span className="text-[11px] font-semibold text-violet-700">Full leaderboard</span>
+        <ArrowRight size={11} className="text-violet-700" />
       </div>
     </button>
   );
@@ -159,22 +159,29 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
     <div className="min-h-screen bg-gray-50">
       <Navigation roomyTopBar />
 
-      {/* Light page canvas with self-contained dark activity cards */}
-      <div className="bg-gray-50 px-4 pt-6 pb-6">
-        <h1
-          className="text-center text-2xl font-bold text-gray-950"
-          style={{ fontFamily: "Poppins, sans-serif" }}
-        >
-          Play
-        </h1>
-        <div className="mt-4">
-          <DailyHeroSection />
-        </div>
+      {/* People-style composed hero with a quieter leaderboard panel below */}
+      <div className="mx-auto max-w-4xl bg-gray-50 px-4 pb-5 pt-6">
+        <section className="relative overflow-hidden rounded-[30px] bg-[#2d2347] px-5 py-6 text-white shadow-sm">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full border-[18px] border-violet-300/5" />
+          <div className="relative">
+            <p className="mb-2 text-[11px] font-black uppercase tracking-[.22em] text-[#ded4ff]">Play something daily</p>
+            <h1
+              className="text-3xl font-bold tracking-tight"
+              style={{ fontFamily: "Poppins, sans-serif" }}
+            >
+              Play
+            </h1>
+            <p className="mt-2 text-sm text-[#ddd5e9]">Make your pick, build your streak, and see where you rank.</p>
+            <div className="mt-5">
+              <DailyHeroSection />
+            </div>
+          </div>
+        </section>
         <RankWidget onNavigate={setLocation} />
       </div>
 
       {/* Light section — game modes */}
-      <div className="bg-gray-50 px-4 pt-5 pb-28 space-y-5">
+      <div className="mx-auto max-w-4xl space-y-5 bg-gray-50 px-4 pb-28 pt-3">
         {/* Game Modes */}
         <div>
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
