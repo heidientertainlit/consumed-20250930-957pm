@@ -392,7 +392,7 @@ export default function Search() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#08080d] via-[#0f0f1a] via-[#1a1530] to-[#2d1f4e] pb-24">
-      <Navigation />
+      <Navigation roomyTopBar />
 
       <div className="max-w-xl mx-auto px-4 pt-5">
 

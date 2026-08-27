@@ -157,7 +157,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0f' }}>
-      <Navigation />
+      <Navigation roomyTopBar />
 
       {/* Dark hero — heading + rank widget */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] px-4 pt-6 pb-6">

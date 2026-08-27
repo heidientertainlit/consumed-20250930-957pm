@@ -250,7 +250,7 @@ export function FeedIdentityHero() {
         </div>
 
         {/* CTAs below the card */}
-        <div className="mt-3">
+        <div className="mt-5">
           <HeroCTAButtons />
         </div>
       </div>

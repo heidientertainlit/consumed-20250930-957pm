@@ -3077,7 +3077,7 @@ export default function UserProfile() {
   return (
     <>
       <div className="min-h-screen bg-white pb-20">
-        <Navigation onTrackConsumption={handleTrackConsumption} />
+        <Navigation onTrackConsumption={handleTrackConsumption} roomyTopBar />
 
         {/* ── Hero — dark DNA card ── */}
         <div style={{ background: 'linear-gradient(180deg, #0d0221 0%, #1a0535 100%)' }}>

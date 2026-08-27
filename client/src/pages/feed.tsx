@@ -8783,7 +8783,7 @@ export default function Feed() {
     <GuestGate enabled={isGuestMode}>
     <div className="min-h-screen bg-gray-100 pb-32">
       <div id="feed-page">
-      <Navigation onTrackConsumption={handleTrackConsumption} topBarTone="purple" />
+      <Navigation onTrackConsumption={handleTrackConsumption} topBarTone="purple" roomyTopBar />
 
       {/* Guest banner — visible only when browsing logged-out */}
       {isGuestMode && (
@@ -8856,7 +8856,7 @@ export default function Feed() {
       {/* Header Section — identity hero + DNA moment need a logged-in user, hidden for guests */}
       {!isGuestMode && (
         <div className="bg-gray-100">
-          <div className="max-w-4xl mx-auto px-4 pt-2">
+          <div className="max-w-4xl mx-auto px-4 pt-6">
             
             {/* Composer Trigger - dark hero zone */}
             <div>
@@ -8869,7 +8869,7 @@ export default function Feed() {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto px-4 pt-3 pb-6" data-feed-content>
+      <div className="max-w-4xl mx-auto px-4 pt-4 pb-6" data-feed-content>
         {!isGuestMode && <OnboardingResumePrompt userId={user?.id} />}
 
         {/* ── What's Happening ── */}
