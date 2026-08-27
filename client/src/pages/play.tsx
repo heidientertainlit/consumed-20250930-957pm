@@ -109,7 +109,7 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
 
   if (loading) {
     return (
-      <div className="mt-5 rounded-2xl bg-white/5 border border-white/10 p-4 animate-pulse h-[88px]" />
+      <div className="mt-5 h-[88px] animate-pulse rounded-2xl border border-white/10 bg-gradient-to-br from-[#17131f] to-[#2b1742] p-4" />
     );
   }
 
@@ -137,7 +137,7 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
   return (
     <button
       onClick={() => onNavigate('/leaderboard')}
-      className="w-full mt-5 rounded-2xl bg-white/5 border border-white/10 p-3 text-left active:scale-95 transition-transform"
+      className="mt-5 w-full rounded-2xl border border-white/10 bg-gradient-to-br from-[#17131f] to-[#2b1742] p-3 text-left shadow-sm transition-transform active:scale-95"
     >
       <div className="space-y-0.5">
         {above && <Row entry={above} />}
@@ -156,13 +156,13 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0f' }}>
+    <div className="min-h-screen bg-gray-50">
       <Navigation roomyTopBar />
 
-      {/* Dark hero — heading + rank widget */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] px-4 pt-6 pb-6">
+      {/* Light page canvas with self-contained dark activity cards */}
+      <div className="bg-gray-50 px-4 pt-6 pb-6">
         <h1
-          className="text-2xl font-bold text-white text-center"
+          className="text-center text-2xl font-bold text-gray-950"
           style={{ fontFamily: "Poppins, sans-serif" }}
         >
           Play
