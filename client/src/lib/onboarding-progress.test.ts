@@ -19,6 +19,7 @@ import {
   normalizeUsername,
 } from "./profile-identity";
 import {
+  allowsLegacyDnaIdentityBypass,
   ProfileCompletionError,
   resolveKnownProfileIdentity,
 } from "./profile-identity-resolution";
@@ -162,11 +163,35 @@ test("completed DNA keeps a legacy profile with missing names out of identity se
       completionAttempted = true;
       throw new Error("Established DNA users must not enter profile completion.");
     },
-    { hasExistingDna: true },
+    { allowLegacyDnaBypass: true },
   );
 
   assert.equal(result.complete, true);
   assert.equal(completionAttempted, false);
+});
+
+test("newly generated DNA cannot bypass incomplete identity", async () => {
+  const result = await resolveKnownProfileIdentity(
+    {
+      email: "new-oauth@example.com",
+      app_metadata: { provider: "google" },
+      user_metadata: { full_name: "New Person" },
+    },
+    null,
+    async () => {
+      throw new Error("No automatic completion expected for OAuth.");
+    },
+    { allowLegacyDnaBypass: false },
+  );
+
+  assert.equal(result.complete, false);
+  assert.equal(result.defaults.missingUsername, true);
+});
+
+test("only pre-rollout DNA rows receive the legacy identity bypass", () => {
+  assert.equal(allowsLegacyDnaIdentityBypass(null), false);
+  assert.equal(allowsLegacyDnaIdentityBypass({ requires_identity_customization: true }), false);
+  assert.equal(allowsLegacyDnaIdentityBypass({ requires_identity_customization: false }), true);
 });
 
 test("keeps progress isolated per user and rejects malformed steps", () => {

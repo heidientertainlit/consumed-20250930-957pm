@@ -6,6 +6,7 @@ import {
   type ProfileIdentity,
 } from "@/lib/profile-identity";
 import {
+  allowsLegacyDnaIdentityBypass,
   ProfileCompletionError,
   resolveKnownProfileIdentity,
 } from "@/lib/profile-identity-resolution";
@@ -65,7 +66,7 @@ async function resolveIdentity(
       .maybeSingle(),
     supabase
       .from("dna_profiles")
-      .select("user_id")
+      .select("user_id, requires_identity_customization")
       .eq("user_id", user.id)
       .maybeSingle(),
   ]);
@@ -76,7 +77,9 @@ async function resolveIdentity(
     user,
     profileResult.data as ProfileIdentity | null,
     (body) => completeProfile(accessToken, body),
-    { hasExistingDna: Boolean(dnaResult.data) },
+    {
+      allowLegacyDnaBypass: allowsLegacyDnaIdentityBypass(dnaResult.data),
+    },
   );
 }
 

@@ -257,6 +257,12 @@ serve(async (req) => {
       throw profileResult.error;
     }
 
+    const { error: dnaIdentityError } = await admin
+      .from("dna_profiles")
+      .update({ requires_identity_customization: false })
+      .eq("user_id", user.id);
+    if (dnaIdentityError) throw dnaIdentityError;
+
     const { error: metadataError } = await admin.auth.admin.updateUserById(user.id, {
       user_metadata: {
         ...user.user_metadata,

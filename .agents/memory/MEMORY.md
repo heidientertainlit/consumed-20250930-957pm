@@ -28,7 +28,7 @@
 - [Supabase OAuth callbacks](supabase-oauth-callbacks.md) — OAuth returns through /login; native universal-link sessions must be restored on both warm and cold app launches.
 - [Apple OAuth credential rotation](apple-oauth-credential-rotation.md) — Supabase uses a signed Apple client-secret JWT that expires after 180 days; rotate it before expiry.
 - [Feed identity labels](feed-identity-labels.md) — feed-visible names use first name + last initial; usernames remain raw only as handles, routes, profile identity, and backend identifiers.
-- [Resumable onboarding state](resumable-onboarding-state.md) — DNA profile is completion; canonical answers/activity reconcile resume, while local storage only caches step and prompt dismissal.
+- [Resumable onboarding state](resumable-onboarding-state.md) — new DNA requires post-reveal identity via a durable marker; legacy DNA bypass is explicit, never inferred from account age.
 - [Canonical profile identity](canonical-profile-identity.md) — email signup completes silently; OAuth chooses an app username and supplies only missing names; established profiles never repeat setup or DNA.
 - [Admin persona room conversations](admin-persona-room-conversations.md) — keep drafts private; bind sourced prompts server-side; exact-deficit persona creation requires a lock; publish only through a service-only transaction.
 - [People Tribes independence](people-tribes-independence.md) — Tribes are a separate People-domain model; never implement them by renaming or reusing Rooms, pools, follows, or conversations.

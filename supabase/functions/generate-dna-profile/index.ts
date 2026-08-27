@@ -231,7 +231,8 @@ Synthesize their answers into psychological insights. Make it feel like you trul
             label: generatedProfile.label,
             tagline: generatedProfile.tagline,
             flavor_notes: generatedProfile.flavorNotes,
-            is_private: false
+            is_private: false,
+            requires_identity_customization: true
           })
           .select()
           .single();

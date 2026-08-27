@@ -26,17 +26,23 @@ export class ProfileCompletionError extends Error {
   }
 }
 
+export function allowsLegacyDnaIdentityBypass(
+  dnaProfile: { requires_identity_customization?: boolean | null } | null,
+): boolean {
+  return Boolean(dnaProfile && dnaProfile.requires_identity_customization === false);
+}
+
 export async function resolveKnownProfileIdentity(
   user: IdentityUserLike,
   initialProfile: ProfileIdentity | null,
   completeProfile: (body: Record<string, unknown>) => Promise<ProfileIdentity>,
-  options: { hasExistingDna?: boolean } = {},
+  options: { allowLegacyDnaBypass?: boolean } = {},
 ): Promise<ResolvedProfileIdentityCore> {
   let profile = initialProfile;
   const provider = getIdentityProvider(user);
   let defaults = getProfileIdentityDefaults(user, profile);
 
-  if (hasConfirmedProfileIdentity(profile) || options.hasExistingDna) {
+  if (hasConfirmedProfileIdentity(profile) || options.allowLegacyDnaBypass) {
     return { complete: true, profile, provider, defaults };
   }
 

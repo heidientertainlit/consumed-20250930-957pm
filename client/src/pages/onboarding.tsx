@@ -1,6 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent } from "react";
 import { useLocation } from "wouter";
-import { ArrowRight, Check, ChevronRight, CircleUser, Dna, Eye, Feather, Gamepad2, Heart, HeartHandshake, HelpCircle, Home, Leaf, Loader2, Mic, Music, Palette, Plane, Rocket, Search, Share2, Sparkles, Trophy, Tv, Users, Video, Wand2, Youtube, Zap, Clapperboard, Smile, Skull, Crown, Drama, BookOpen } from "lucide-react";
+import { ArrowRight, Camera, Check, ChevronRight, CircleUser, Dna, Eye, Feather, Gamepad2, Heart, HeartHandshake, HelpCircle, Home, Leaf, Loader2, Mic, Music, Palette, Plane, Rocket, Search, Share2, Sparkles, Trophy, Tv, Users, Video, Wand2, Youtube, Zap, Clapperboard, Smile, Skull, Crown, Drama, BookOpen } from "lucide-react";
 import {
   dismissOnboardingPrompt,
   loadOnboardingProgress,
@@ -21,6 +21,7 @@ import {
   cacheCompletedProfileIdentity,
   loadProfileIdentity,
 } from "@/lib/profile-identity-resolver";
+import { loadProfilePhoto, renderProfilePhoto, validateProfilePhoto } from "@/lib/profile-photo";
 
 const DEBATE_POOL_ID = "9d861d7f-2afc-40a8-b132-a78626739347";
 
@@ -388,7 +389,7 @@ const titleSuggestionCatalog: TitleSuggestion[] = [
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
-type Step = "debate" | "interests" | "loved" | "love" | "drivers" | "generating" | "reveal";
+type Step = "debate" | "interests" | "loved" | "love" | "drivers" | "generating" | "reveal" | "customize";
 
 const DNA_HEADER_MESSAGES: Record<number, string> = {
   2: "Great! Your DNA is taking shape.",
@@ -436,6 +437,7 @@ export default function OnboardingPage() {
   const [identityRequired, setIdentityRequired] = useState(false);
   const [identityFirstName, setIdentityFirstName] = useState("");
   const [identityLastName, setIdentityLastName] = useState("");
+  const [identityNameInput, setIdentityNameInput] = useState("");
   const [identityUsername, setIdentityUsername] = useState("");
   const [identityUsernameStatus, setIdentityUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
   const [identityError, setIdentityError] = useState<string | null>(null);
@@ -448,6 +450,12 @@ export default function OnboardingPage() {
   const [identityLookupError, setIdentityLookupError] = useState<string | null>(null);
   const [identityLookupRetryKey, setIdentityLookupRetryKey] = useState(0);
   const [identityResolvedUserId, setIdentityResolvedUserId] = useState<string | null>(null);
+  const [identityAvatarUrl, setIdentityAvatarUrl] = useState<string | null>(null);
+  const [identityPhotoBlob, setIdentityPhotoBlob] = useState<Blob | null>(null);
+  const [identityPhotoPreparing, setIdentityPhotoPreparing] = useState(false);
+  const identityPhotoInputRef = useRef<HTMLInputElement>(null);
+  const identityPreviewUrlRef = useRef<string | null>(null);
+  const identityPhotoRequestRef = useRef(0);
   const pendingSaves = useRef<Promise<void> | null>(null);
   const usernameCheckRequest = useRef(0);
 
@@ -463,7 +471,7 @@ export default function OnboardingPage() {
     setIdentityLookupError(null);
 
     const loadIdentity = async () => {
-      const [resolvedIdentity, dnaResult] = await Promise.all([
+      const [resolvedIdentity, dnaResult, avatarResult] = await Promise.all([
         loadProfileIdentity(user, session.access_token, {
           force: identityLookupRetryKey > 0,
         }),
@@ -472,6 +480,7 @@ export default function OnboardingPage() {
           .select("user_id")
           .eq("user_id", user.id)
           .maybeSingle(),
+        supabase.from("users").select("avatar").eq("id", user.id).maybeSingle(),
       ]);
       if (cancelled) return;
       if (dnaResult.error) {
@@ -483,6 +492,11 @@ export default function OnboardingPage() {
       }
       setIdentityLookupError(null);
       setIdentityHasExistingDna(Boolean(dnaResult.data));
+      setIdentityFirstName(resolvedIdentity.defaults.firstName);
+      setIdentityLastName(resolvedIdentity.defaults.lastName);
+      setIdentityNameInput(`${resolvedIdentity.defaults.firstName} ${resolvedIdentity.defaults.lastName}`.trim());
+      setIdentityUsername(resolvedIdentity.defaults.username);
+      setIdentityAvatarUrl(avatarResult.data?.avatar || null);
 
       if (resolvedIdentity.complete) {
         setIdentityRequired(false);
@@ -491,9 +505,6 @@ export default function OnboardingPage() {
         return;
       }
 
-      setIdentityFirstName(resolvedIdentity.defaults.firstName);
-      setIdentityLastName(resolvedIdentity.defaults.lastName);
-      setIdentityUsername(resolvedIdentity.defaults.username);
       setIdentityNeedsFirstName(resolvedIdentity.defaults.missingFirstName);
       setIdentityNeedsLastName(resolvedIdentity.defaults.missingLastName);
       setIdentityNeedsUsername(resolvedIdentity.defaults.missingUsername);
@@ -516,7 +527,7 @@ export default function OnboardingPage() {
   }, [authLoading, identityLookupRetryKey, session?.access_token, user]);
 
   useEffect(() => {
-    if (!identityRequired || !session?.access_token) return;
+    if ((!identityRequired && step !== "customize") || !session?.access_token) return;
     const username = normalizeUsername(identityUsername);
     if (!USERNAME_PATTERN.test(username)) {
       setIdentityUsernameStatus("idle");
@@ -542,9 +553,49 @@ export default function OnboardingPage() {
       }
     }, 350);
     return () => window.clearTimeout(timeout);
-  }, [identityRequired, identityUsername, session?.access_token]);
+  }, [identityRequired, identityUsername, session?.access_token, step]);
 
-  const submitIdentity = async () => {
+  useEffect(() => () => {
+    identityPhotoRequestRef.current += 1;
+    if (identityPreviewUrlRef.current) URL.revokeObjectURL(identityPreviewUrlRef.current);
+  }, []);
+
+  const chooseIdentityPhoto = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const validation = validateProfilePhoto(file);
+    if (validation) {
+      setIdentityError(validation);
+      return;
+    }
+    setIdentityPhotoPreparing(true);
+    setIdentityError(null);
+    const requestId = ++identityPhotoRequestRef.current;
+    let sourceObjectUrl: string | null = null;
+    try {
+      const source = await loadProfilePhoto(file);
+      sourceObjectUrl = source.objectUrl;
+      const cropSize = 512;
+      const scale = cropSize / Math.min(source.width, source.height);
+      const blob = await renderProfilePhoto(source.image, { scale, x: 0, y: 0, cropSize });
+      if (requestId !== identityPhotoRequestRef.current) return;
+      if (identityPreviewUrlRef.current) URL.revokeObjectURL(identityPreviewUrlRef.current);
+      const previewUrl = URL.createObjectURL(blob);
+      identityPreviewUrlRef.current = previewUrl;
+      setIdentityPhotoBlob(blob);
+      setIdentityAvatarUrl(previewUrl);
+    } catch (error) {
+      if (requestId === identityPhotoRequestRef.current) {
+        setIdentityError(error instanceof Error ? error.message : "This photo could not be prepared.");
+      }
+    } finally {
+      if (sourceObjectUrl) URL.revokeObjectURL(sourceObjectUrl);
+      if (requestId === identityPhotoRequestRef.current) setIdentityPhotoPreparing(false);
+    }
+  };
+
+  const submitIdentity = async (destination = "/people", uploadPhoto = true) => {
     if (identitySaving || !session?.access_token || !user) return;
     const firstName = identityFirstName.trim();
     const lastName = identityLastName.trim();
@@ -578,6 +629,19 @@ export default function OnboardingPage() {
         if (response.status === 409) setIdentityUsernameStatus("taken");
         throw new Error(result.error || "We couldn't save your profile.");
       }
+      if (identityPhotoBlob && uploadPhoto) {
+        const form = new FormData();
+        form.set("action", "upload-avatar");
+        form.set("photo", identityPhotoBlob, "profile.webp");
+        const photoResponse = await fetch(`${SUPABASE_URL}/functions/v1/complete-profile`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: form,
+        });
+        const photoResult = await photoResponse.json().catch(() => ({}));
+        if (!photoResponse.ok) throw new Error(photoResult.error || "We couldn't save your profile photo.");
+        setIdentityAvatarUrl(photoResult.avatar_url || null);
+      }
       cacheCompletedProfileIdentity(user, {
         first_name: firstName,
         last_name: lastName,
@@ -599,6 +663,12 @@ export default function OnboardingPage() {
       setIdentityUsername(username);
       setIdentityUsernameStatus("available");
       setIdentityRequired(false);
+      if (step === "customize") {
+        markOnboardingComplete(user.id);
+        await waitForPendingSaves();
+        setLocation(destination);
+        return;
+      }
       if (identityHasExistingDna) {
         markOnboardingComplete(user?.id);
         const returnUrl = sessionStorage.getItem("identityReturnUrl");
@@ -639,7 +709,7 @@ export default function OnboardingPage() {
   const leaveForNow = async (route = "/activity") => {
     if (!progressLoadError && !questionLoadError) {
       const resumableStep: OnboardingResumeStep =
-        step === "generating" || step === "reveal" ? "drivers" : step;
+        step === "generating" || step === "reveal" || step === "customize" ? "drivers" : step;
       saveOnboardingProgress(user?.id, resumableStep, { preserveCompletion: hasExistingProfile });
     }
     dismissOnboardingPrompt(user?.id);
@@ -1075,7 +1145,7 @@ export default function OnboardingPage() {
       setGeneratedProfile(profile);
       setGenerationProgress(100);
       markDNA();
-      markOnboardingComplete(user.id);
+      if (!identityRequired) markOnboardingComplete(user.id);
       fetch(`${SUPABASE_URL}/functions/v1/generate-media-recommendations`, {
         method: "GET",
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -1207,65 +1277,67 @@ export default function OnboardingPage() {
       </div>
     );
 
-  if (identityRequired)
+  if ((identityRequired && identityHasExistingDna) || step === "customize") {
+    const fullName = `${identityFirstName} ${identityLastName}`.trim();
+    const cardName = identityFirstName.trim() || "Your name";
+    const cardInitials = fullName
+      ? fullName.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()
+      : "?";
     return (
       <div
-        className="min-h-screen w-full flex items-center justify-center px-5 py-8 text-white"
+        className="min-h-screen w-full flex items-center justify-center px-5 py-8"
         style={{ background: "linear-gradient(135deg, #0f0a2e 0%, #2e1065 55%, #4c1d95 100%)" }}
       >
         <div className="w-full max-w-[430px]">
-          <div className="text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-purple-300/30 bg-purple-400/10">
-              <Sparkles className="text-purple-200" size={28} />
-            </div>
-            <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.22em] text-purple-200">
-              Welcome to Consumed
-            </p>
+          <div className="text-center text-white">
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-purple-200">Make it yours</p>
             <h1 className="mt-2 text-[28px] leading-tight font-bold" style={{ fontFamily: "Poppins, sans-serif" }}>
-              {identityNeedsUsername ? "Choose your username" : "Finish your profile"}
+              Put your name to your DNA.
             </h1>
-            <p className="mx-auto mt-3 max-w-[330px] text-sm leading-relaxed text-white/70">
-              {identityNeedsUsername
-                ? "This is how friends will find you before you discover your Entertainment DNA."
-                : "We just need the missing details below before you discover your Entertainment DNA."}
-            </p>
           </div>
 
-          <div className="mt-8 rounded-3xl border border-white/10 bg-white p-6 text-gray-900 shadow-2xl">
-            {(identityNeedsFirstName || identityNeedsLastName) && (
-              <div className={`grid gap-3 ${identityNeedsFirstName && identityNeedsLastName ? "grid-cols-2" : "grid-cols-1"}`}>
-              {identityNeedsFirstName && (
-              <label className="text-sm font-semibold text-gray-700">
-                First name
-                <input
-                  value={identityFirstName}
-                  onChange={(event) => setIdentityFirstName(event.target.value)}
-                  autoComplete="given-name"
-                  maxLength={50}
-                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-base text-gray-900 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
-                  data-testid="onboarding-first-name"
-                />
-              </label>
-              )}
-              {identityNeedsLastName && (
-              <label className="text-sm font-semibold text-gray-700">
-                Last name
-                <input
-                  value={identityLastName}
-                  onChange={(event) => setIdentityLastName(event.target.value)}
-                  autoComplete="family-name"
-                  maxLength={50}
-                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-base text-gray-900 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
-                  data-testid="onboarding-last-name"
-                />
-              </label>
-              )}
+          <div className="mt-6 rounded-3xl border border-white/10 bg-white p-5 text-gray-900 shadow-2xl">
+            <div className="flex items-center gap-4 rounded-2xl border border-purple-100 bg-gradient-to-br from-purple-50 to-white p-4 shadow-sm">
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-md">
+                {identityAvatarUrl ? (
+                  <img src={identityAvatarUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center text-lg font-black">{cardInitials}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-lg font-black text-gray-900">{cardName}</p>
+                <p className="mt-0.5 truncate text-sm font-semibold text-purple-600">
+                  {generatedProfile?.label || "Your Entertainment DNA"}
+                </p>
+                <p className="mt-1 truncate text-xs text-gray-400">
+                  @{normalizeUsername(identityUsername) || "yourusername"}
+                </p>
+              </div>
             </div>
-            )}
 
-            {identityNeedsUsername && (
-            <label className={`${identityNeedsFirstName || identityNeedsLastName ? "mt-6" : ""} block text-sm font-semibold text-gray-700`}>
-              Username
+            <label className="mt-6 block text-sm font-semibold text-gray-700">
+              What should people call you?
+              <input
+                value={identityNameInput}
+                onChange={(event) => {
+                  const nextName = event.target.value.replace(/\s{2,}/g, " ");
+                  setIdentityNameInput(nextName);
+                  const parts = nextName.trim().split(/\s+/);
+                  setIdentityFirstName(parts.shift() || "");
+                  setIdentityLastName(parts.join(" "));
+                  setIdentityError(null);
+                }}
+                autoComplete="name"
+                maxLength={100}
+                placeholder="First and last name"
+                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-base text-gray-900 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                data-testid="onboarding-name"
+              />
+            </label>
+
+            <label className="mt-5 block text-sm font-semibold text-gray-700">
+              Choose a username
               <div className="relative mt-2">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">@</span>
                 <input
@@ -1283,8 +1355,6 @@ export default function OnboardingPage() {
                 />
               </div>
             </label>
-            )}
-            {identityNeedsUsername && (
             <div className="mt-2 min-h-5 text-xs">
               {identityUsernameStatus === "checking" && <span className="text-gray-500">Checking availability…</span>}
               {identityUsernameStatus === "available" && <span className="font-semibold text-green-600">@{normalizeUsername(identityUsername)} is available</span>}
@@ -1293,7 +1363,26 @@ export default function OnboardingPage() {
                 <span className="text-gray-400">3–20 letters, numbers, or underscores</span>
               )}
             </div>
-            )}
+
+            <div className="mt-5">
+              <p className="text-sm font-semibold text-gray-700">Profile photo <span className="font-normal text-gray-400">(optional)</span></p>
+              <button
+                type="button"
+                onClick={() => identityPhotoInputRef.current?.click()}
+                disabled={identityPhotoPreparing || identitySaving}
+                className="mt-2 inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-4 py-2.5 text-sm font-semibold text-purple-700 disabled:opacity-50"
+              >
+                {identityPhotoPreparing ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+                {identityAvatarUrl ? "Change photo" : "Add photo"}
+              </button>
+              <input
+                ref={identityPhotoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                className="sr-only"
+                onChange={chooseIdentityPhoto}
+              />
+            </div>
 
             {identityError && (
               <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700">
@@ -1302,7 +1391,7 @@ export default function OnboardingPage() {
             )}
 
             <button
-              onClick={submitIdentity}
+              onClick={() => submitIdentity("/people", true)}
               disabled={
                 identitySaving
                 || !identityFirstName.trim()
@@ -1315,17 +1404,20 @@ export default function OnboardingPage() {
               style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
               data-testid="save-onboarding-identity"
             >
-              {identitySaving ? "Saving profile…" : "Continue"}
+              {identitySaving ? "Making it yours…" : <>Find my people <ArrowRight size={17} className="inline" /></>}
             </button>
-            <p className="mt-3 text-center text-xs text-gray-400">
-              {identityProvider === "apple"
-                ? "Apple may only share your name once. You can update your name later."
-                : "You can update your name later. Your username is your unique handle."}
-            </p>
+            <button
+              type="button"
+              onClick={() => identityRequired ? submitIdentity("/activity", false) : completeAndNavigate("/activity")}
+              className="mx-auto mt-4 block text-xs font-medium text-gray-400 hover:text-gray-600"
+            >
+              Skip for now
+            </button>
           </div>
         </div>
       </div>
     );
+  }
 
   if (resumePrefillLoading)
     return (
@@ -1951,7 +2043,15 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
-      <div className="max-w-[430px] w-full bg-white rounded-3xl p-7 shadow-2xl text-center">
+      <div className="relative max-w-[430px] w-full bg-white rounded-3xl p-7 shadow-2xl text-center">
+        <button
+          type="button"
+          onClick={() => setShowDnaShare(true)}
+          className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-purple-50 text-purple-600 transition-colors hover:bg-purple-100"
+          aria-label="Share your DNA"
+        >
+          <Share2 size={17} />
+        </button>
         <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-5">
           <Dna className="text-white" size={40} />
         </div>
@@ -1974,26 +2074,13 @@ export default function OnboardingPage() {
         {generatedProfile?.profile_text && (
           <p className="mt-5 text-left text-sm leading-relaxed text-gray-700">{generatedProfile.profile_text}</p>
         )}
-        <div className="mt-7 flex flex-col gap-3.5">
+        <div className="mt-7">
           <button
-            onClick={() => completeAndNavigate("/activity")}
+            onClick={() => setStep("customize")}
             className="w-full py-3.5 rounded-full font-bold text-[15px] text-white transition-all active:scale-95"
             style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
           >
-            See what my friends are consuming
-          </button>
-          <button
-            onClick={() => completeAndNavigate("/profile")}
-            className="w-full py-3.5 rounded-full border border-purple-200 bg-white font-bold text-[15px] text-purple-700 transition-all active:scale-95"
-          >
-            See my full DNA profile
-          </button>
-          <button
-            onClick={() => setShowDnaShare(true)}
-            className="w-full py-3 rounded-full border border-purple-200 bg-purple-50 font-semibold text-[14px] text-purple-700 transition-all active:scale-95 flex items-center justify-center gap-2"
-          >
-            <Share2 size={16} />
-            Share your DNA
+            Make your DNA yours <ArrowRight size={17} className="ml-1 inline" />
           </button>
         </div>
       </div>

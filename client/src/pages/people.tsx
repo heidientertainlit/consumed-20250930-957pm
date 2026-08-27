@@ -32,6 +32,8 @@ type AffinityPerson = {
   first_name?: string;
   last_name?: string;
   avatar_url?: string;
+  profile_image_url?: string;
+  avatar?: string;
   match_score?: number;
   is_friend?: boolean;
   shared_titles?: Array<{ title?: string; name?: string } | string>;
@@ -53,13 +55,13 @@ type AffinityResponse = {
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 const bandMeta = [
-  { id: "your-people", label: "Your People", min: 80, max: 100, feeling: "They just get it.", color: "#c4a0ff", tint: "#f1edff" },
+  { id: "your-people", label: "Your People", min: 80, max: 100, feeling: "They just get it.", color: "#7447db", tint: "#f0eaff" },
   { id: "same-wavelength", label: "Your Orbit", min: 60, max: 79, feeling: "A lot in common.", color: "#c4a0ff", tint: "#f1edff" },
   { id: "common-ground", label: "Common Ground", min: 40, max: 59, feeling: "Some shared favorites.", color: "#c4a0ff", tint: "#f1edff" },
   { id: "wildcards", label: "Wildcards", min: 0, max: 39, feeling: "Different tastes, new takes.", color: "#c4a0ff", tint: "#f1edff" },
 ];
 const bandGradients: Record<string, string> = {
-  "your-people": "linear-gradient(135deg, #302452 0%, #1c1630 100%)",
+  "your-people": "linear-gradient(125deg, #42116f 0%, #8b286a 45%, #315db6 100%)",
   "same-wavelength": "linear-gradient(135deg, #3b2b62 0%, #2c204d 100%)",
   "common-ground": "linear-gradient(135deg, #514078 0%, #3e3165 100%)",
   wildcards: "linear-gradient(135deg, #684f96 0%, #513a80 100%)",
@@ -74,6 +76,22 @@ function Avatar({ person, size = "md" }: { person: any; size?: "sm" | "md" | "lg
   const dimensions = size === "lg" ? "w-14 h-14 text-lg" : size === "sm" ? "w-9 h-9 text-[10px]" : "w-11 h-11 text-sm";
   return src ? <img src={src} alt="" className={`${dimensions} rounded-full object-cover bg-[#ded7ff]`} /> :
     <span className={`${dimensions} rounded-full shrink-0 bg-[#eee8ff] text-[#6048a1] font-black flex items-center justify-center`}>{initials(nameFor(person))}</span>;
+}
+
+function AvatarStack({ people, dark = false }: { people: AffinityPerson[]; dark?: boolean }) {
+  const shown = people.slice(0, 4);
+  if (!shown.length) return <span className={`grid h-9 w-9 place-items-center rounded-full text-[10px] font-black ${dark ? "bg-white/10 text-white/60" : "bg-[#eee8ff] text-[#6547b8]"}`}>?</span>;
+  return <div className="flex items-center pl-1" aria-label={`${people.length} affinity matches`}>
+    {shown.map((person, index) => {
+      const src = person.profile_image_url || person.avatar_url || person.avatar;
+      return src ? (
+        <img key={person.id || `${nameFor(person)}-${index}`} src={src} alt="" className={`h-9 w-9 rounded-full object-cover ${index ? "-ml-2.5" : ""} ${dark ? "ring-2 ring-[#62226e]" : "ring-2 ring-[#fcfbfd]"}`} />
+      ) : (
+        <span key={person.id || `${nameFor(person)}-${index}`} className={`grid h-9 w-9 place-items-center rounded-full text-[10px] font-black ${index ? "-ml-2.5" : ""} ${dark ? "bg-[#d59aff] text-[#35154a] ring-2 ring-[#62226e]" : "bg-[#eee8ff] text-[#6048a1] ring-2 ring-[#fcfbfd]"}`}>{initials(nameFor(person))}</span>
+      );
+    })}
+    {people.length > shown.length && <span className={`-ml-2.5 grid h-9 min-w-9 place-items-center rounded-full px-1 text-[10px] font-black ${dark ? "bg-white/15 text-white ring-2 ring-[#3860af]" : "bg-[#302452] text-white ring-2 ring-[#fcfbfd]"}`}>+{people.length - shown.length}</span>}
+  </div>;
 }
 
 function normalizeAffinity(data: any): AffinityResponse {
@@ -218,9 +236,9 @@ export default function PeoplePage() {
              const visibleNames = band.people.slice(0, 3).map(nameFor);
              const hasMore = band.people.length > visibleNames.length;
              const BandIcon = band.id === "your-people" ? Smile : band.id === "same-wavelength" ? Orbit : band.id === "common-ground" ? Atom : Sparkles;
-              if (index > 0) return <button key={band.id} onClick={() => setSelectedBand(band.id)} className="group flex h-[92px] w-full items-center gap-3 rounded-[20px] border border-[#e4dfe8] bg-[#fcfbfd] px-4 text-left shadow-[0_3px_9px_rgba(34,25,55,.055)] transition-transform active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2">
+               if (index > 0) return <button key={band.id} onClick={() => setSelectedBand(band.id)} className="group flex min-h-[102px] w-full items-center gap-3 rounded-[20px] border border-[#e4dfe8] bg-[#fcfbfd] px-4 text-left shadow-[0_3px_9px_rgba(34,25,55,.055)] transition-transform active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2">
                 <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#594091] to-[#302452] text-[#d3a6ff] shadow-[0_5px_11px_rgba(34,25,55,.16)]"><BandIcon size={30} strokeWidth={1.45} /></span>
-                <span className="min-w-0 flex-1"><span className="block text-[10px] font-black uppercase tracking-[.16em] text-violet-700">{band.label}</span><span className="mt-1 block text-[18px] font-bold leading-none text-[#29233b]">{band.min}–{band.max}% match</span><span className="mt-1 block text-[11px] text-[#817789]">{band.people.length} {band.people.length === 1 ? "person" : "people"}</span></span>
+                  <span className="min-w-0 flex-1"><span className="block text-[10px] font-black uppercase tracking-[.16em] text-violet-700">{band.label}</span><span className="mt-1 block text-[18px] font-bold leading-none text-[#29233b]">{band.min}–{band.max}% match</span>{band.people.length ? <span className="mt-1 flex items-center gap-2"><AvatarStack people={band.people} /><span className="truncate text-[11px] text-[#817789]">{visibleNames.join(", ")}</span></span> : <span className="mt-1 block text-[11px] text-[#817789]">0 people</span>}</span>
                 <ChevronRight size={18} className="shrink-0 text-[#766f80]" />
               </button>;
               return <button key={band.id} onClick={() => setSelectedBand(band.id)} className="group relative min-h-[172px] w-full overflow-hidden rounded-[24px] border border-white/[.14] px-5 py-5 text-left text-white shadow-[0_14px_30px_rgba(43,28,77,.24),inset_0_1px_0_rgba(255,255,255,.08)] transition-transform active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2" style={{ background: bandGradients[band.id] || bandGradients.wildcards }}>
@@ -237,10 +255,11 @@ export default function PeoplePage() {
                    </div>
                     <ChevronRight size={24} className="shrink-0 text-white/85" />
                  </div>
-                  <div className="mt-3 border-t border-white/10 pt-3">
-                    <p className="truncate text-[12px] font-medium text-white/60">
-                     {visibleNames.length ? `${visibleNames.join(", ")}${hasMore ? ", …" : ""}` : "No matches yet"}
-                   </p>
+                   <div className="mt-3 flex items-center gap-3 border-t border-white/10 pt-3">
+                     {band.people.length > 0 && <AvatarStack people={band.people} dark />}
+                     <p className="truncate text-[12px] font-medium text-white/70">
+                      {visibleNames.length ? `${visibleNames.join(", ")}${hasMore ? ", …" : ""}` : "0 people"}
+                     </p>
                  </div>
                </div>
             </button>;
@@ -257,5 +276,7 @@ export default function PeoplePage() {
 
 function BandDetail({ band, onBack }: { band: AffinityBand; onBack: () => void }) {
   const ranked = [...band.people].sort((a, b) => Number(b.match_score || 0) - Number(a.match_score || 0));
-  return <div><button onClick={onBack} className="flex items-center gap-2 text-sm font-black text-[#6547b8] mb-5 hover:-translate-x-0.5 transition-transform"><ArrowLeft size={17} />All affinity bands</button><div className="rounded-[28px] p-6 sm:p-8 mb-5" style={{ background: band.tint }}><div className="flex items-start gap-4"><div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: `${band.color}22`, color: band.color }}><Sparkles size={27} /></div><div><p className="eyebrow" style={{ color: band.color }}>Your people</p><h2 className="text-3xl font-black tracking-[-.05em]">{band.label}</h2><p className="font-black mt-1" style={{ color: band.color }}>{band.min}–{band.max}% match</p><p className="text-sm text-[#766c76] mt-2">{band.feeling}</p></div></div></div>{ranked.length ? <div className="space-y-3">{ranked.map((person) => <article key={person.id} className="surface p-4 sm:p-5"><div className="flex items-center gap-3"><Avatar person={person} /><div className="flex-1 min-w-0"><div className="flex items-center gap-2 flex-wrap"><p className="font-black truncate">{nameFor(person)}</p>{person.is_friend ? <span className="rounded-full bg-[#e5f3eb] px-2 py-0.5 text-[10px] font-black text-[#32765b]">Friend</span> : <span className="rounded-full bg-[#eee8ff] px-2 py-0.5 text-[10px] font-black text-[#6547b8]">Potential match</span>}</div><p className="text-xs text-[#81747a]">{person.user_name ? `@${person.user_name}` : "Consumed member"}</p></div>{typeof person.match_score === "number" && <span className="text-lg font-black" style={{ color: band.color }}>{Math.round(person.match_score)}%</span>}<Link href={`/user/${person.id}`} aria-label={`View ${nameFor(person)}`} className="rounded-xl border border-[#d6c8db] px-3 py-2 text-xs font-black text-[#6547b8] hover:bg-[#f1edff]">View</Link></div><Evidence person={person} />{typeof person.insights === "object" && !Array.isArray(person.insights) && person.insights.compatibilityLine && <p className="text-xs italic text-[#766c76] mt-3">“{String(person.insights.compatibilityLine)}”</p>}</article>)}</div> : <div className="surface border-dashed p-9 text-center"><UsersRound size={28} className="mx-auto text-[#775cc4] mb-3" /><h3 className="font-black">No people in this range yet</h3><p className="text-sm text-[#766c76] mt-1">As more DNA gets compared, this band will fill with real possibilities.</p></div>}</div>;
+  const isYourPeople = band.id === "your-people";
+  const detailBackground = isYourPeople ? "linear-gradient(125deg, #f1ddff 0%, #f3ddec 43%, #d9e5ff 100%)" : band.tint;
+  return <div><button onClick={onBack} className="flex items-center gap-2 text-sm font-black text-[#6547b8] mb-5 hover:-translate-x-0.5 transition-transform"><ArrowLeft size={17} />All affinity bands</button><div className="rounded-[28px] p-6 sm:p-8 mb-5" style={{ background: detailBackground }}><div className="flex items-start gap-4"><div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: isYourPeople ? "rgba(96,45,159,.14)" : `${band.color}22`, color: band.color }}><Sparkles size={27} /></div><div><p className="eyebrow" style={{ color: band.color }}>Your people</p><h2 className="text-3xl font-black tracking-[-.05em]">{band.label}</h2><p className="font-black mt-1" style={{ color: band.color }}>{band.min}–{band.max}% match</p><p className="text-sm text-[#766c76] mt-2">{band.feeling}</p></div></div>{ranked.length > 0 && <div className="mt-5"><AvatarStack people={ranked} /><p className="mt-2 text-xs font-bold text-[#66556b]">A shared constellation of favorites.</p></div>}</div>{ranked.length ? <div className="space-y-3">{ranked.map((person) => <article key={person.id} className="surface p-4 sm:p-5"><div className="flex items-center gap-3"><Avatar person={person} /><div className="flex-1 min-w-0"><div className="flex items-center gap-2 flex-wrap"><p className="font-black truncate">{nameFor(person)}</p>{person.is_friend ? <span className="rounded-full bg-[#e5f3eb] px-2 py-0.5 text-[10px] font-black text-[#32765b]">Friend</span> : <span className="rounded-full bg-[#eee8ff] px-2 py-0.5 text-[10px] font-black text-[#6547b8]">Potential match</span>}</div><p className="text-xs text-[#81747a]">{person.user_name ? `@${person.user_name}` : "Consumed member"}</p></div>{typeof person.match_score === "number" && <span className="text-lg font-black" style={{ color: band.color }}>{Math.round(person.match_score)}%</span>}<Link href={`/user/${person.id}`} aria-label={`View ${nameFor(person)}`} className="rounded-xl border border-[#d6c8db] px-3 py-2 text-xs font-black text-[#6547b8] hover:bg-[#f1edff]">View</Link></div><Evidence person={person} />{typeof person.insights === "object" && !Array.isArray(person.insights) && person.insights.compatibilityLine && <p className="text-xs italic text-[#766c76] mt-3">“{String(person.insights.compatibilityLine)}”</p>}</article>)}</div> : <div className="surface border-dashed p-9 text-center"><UsersRound size={28} className="mx-auto text-[#775cc4] mb-3" /><h3 className="font-black">No people in this range yet</h3><p className="text-sm text-[#766c76] mt-1">As more DNA gets compared, this band will fill with real possibilities.</p></div>}</div>;
 }

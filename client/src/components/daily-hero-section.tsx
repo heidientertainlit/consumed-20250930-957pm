@@ -2179,16 +2179,16 @@ export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
                     )}
                     <span
                       className={`${embedded ? 'text-[11px]' : front ? 'text-[13px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] ${embedded ? '' : 'text-cyan-100/90'}`}
-                      style={embedded ? { color: "rgba(192,160,255,0.9)" } : undefined}
+                      style={embedded ? { color: "rgba(255,255,255,0.94)" } : undefined}
                     >
                       Today's Play
                     </span>
                     {embedded && (
-                      <Gamepad2 size={13} className="text-purple-400" />
+                      <Gamepad2 size={13} className="text-white/75" />
                     )}
                   </div>
                   {front && (
-                    <div className="ml-0.5">
+                    <div>
                       <TodaysPlayNudge variant="subtle" />
                     </div>
                   )}

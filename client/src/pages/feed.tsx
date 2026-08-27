@@ -2615,9 +2615,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               )}
 
               {/* Reviewer */}
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2.5 mt-2">
                 <div
-                  className="w-5 h-5 rounded-full overflow-hidden bg-violet-500 text-white text-[8px] font-bold flex items-center justify-center shrink-0"
+                  className="w-6 h-6 rounded-full overflow-hidden bg-violet-500 text-white text-[9px] font-bold flex items-center justify-center shrink-0 ring-1 ring-violet-100"
                   aria-hidden="true"
                 >
                   {(post.user as any)?.avatar ? (
@@ -2628,11 +2628,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 </div>
                 <div className="flex-1 min-w-0">
                   <p
-                    className={`text-[12px] font-normal text-gray-400 leading-tight truncate ${post.user?.id ? 'cursor-pointer hover:text-gray-600' : ''}`}
+                    className={`text-[13px] font-semibold text-gray-700 leading-tight truncate ${post.user?.id ? 'cursor-pointer hover:text-violet-700' : ''}`}
                     onClick={(e) => { if (post.user?.id) { e.stopPropagation(); setLocation(`/user/${post.user.id}`); } }}
-                  >— {formatFeedName(post.user?.displayName, post.user?.username)}</p>
+                  >{formatFeedName(post.user?.displayName, post.user?.username)}</p>
                   {isOtherUser && tasteAlignment !== null ? (
-                    <p className="text-[12px] text-violet-600 font-medium leading-tight"><span className="font-semibold">{tasteAlignment}%</span> aligned with you</p>
+                    <p className="mt-0.5 text-[11px] text-violet-600 font-medium leading-tight"><span className="font-bold">{tasteAlignment}%</span> aligned with you</p>
                   ) : isOtherUser && alignmentNudge && !ratingSubmitted ? (
                     <p className="text-[11px] text-gray-400 leading-tight">Rate 10 things to see your alignment</p>
                   ) : null}
