@@ -2173,8 +2173,11 @@ export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
               <div className={`flex items-start justify-between ${front ? 'mb-4' : ''}`}>
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-1.5">
-                    <Gamepad2 size={front ? 15 : 13} className="text-cyan-200" />
-                    <span className={`${front ? 'text-[13px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-cyan-100/90`}>
+                    <Gamepad2 size={front ? 15 : 13} className={embedded ? "text-purple-400" : "text-cyan-200"} />
+                    <span
+                      className={`${front ? 'text-[13px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] ${embedded ? '' : 'text-cyan-100/90'}`}
+                      style={embedded ? { color: "rgba(192,160,255,0.9)" } : undefined}
+                    >
                       Today's Play
                     </span>
                   </div>
