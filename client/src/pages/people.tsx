@@ -186,8 +186,12 @@ export default function PeoplePage() {
 
   return <div className="min-h-[100dvh] pb-24 bg-gray-100 text-[#29233b]">
     <Navigation roomyTopBar />
-    <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-3 sm:pt-6">
-      <nav className="flex border-b border-gray-300" aria-label="People sections">
+    <main className="max-w-5xl mx-auto px-4 sm:px-6">
+      <nav
+        className="-mx-4 flex border-b border-white/10 px-4 sm:-mx-6 sm:px-6"
+        style={{ background: "linear-gradient(180deg, #130b25 0%, #2c2150 100%)" }}
+        aria-label="People sections"
+      >
         {tabs.map(({ id, label, Icon }) => (
           <button
             key={id}
@@ -195,14 +199,14 @@ export default function PeoplePage() {
             aria-current={mode === id ? "page" : undefined}
             className={`relative flex min-h-[66px] min-w-0 flex-1 items-center justify-center gap-2 px-1 text-[11px] font-semibold transition-colors sm:text-[14px] ${
               mode === id
-                ? "text-violet-700 after:absolute after:inset-x-0 after:-bottom-px after:h-[3px] after:rounded-full after:bg-violet-700"
-                : "text-[#625c67] hover:text-[#29233b]"
+                ? "text-[#d3a6ff] after:absolute after:inset-x-0 after:-bottom-px after:h-[3px] after:rounded-full after:bg-[#a855f7]"
+                : "text-white/65 hover:text-white"
             }`}
           >
             <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border ${
               mode === id
-                ? "border-violet-200 bg-violet-100 text-violet-700"
-                : "border-[#e5e0e8] bg-white/70 text-[#625c67]"
+                ? "border-violet-400/45 bg-violet-500/20 text-[#d3a6ff]"
+                : "border-white/10 bg-white/[.06] text-white/65"
             }`}>
               <Icon size={22} strokeWidth={1.7} />
             </span>
