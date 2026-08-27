@@ -120,7 +120,7 @@ export function FeedIdentityHero() {
 
   return (
     <>
-      <div className="pt-3">
+      <div>
         {/* ── Identity card ── */}
         <div
           className="relative overflow-hidden rounded-3xl p-6"
@@ -250,7 +250,7 @@ export function FeedIdentityHero() {
         </div>
 
         {/* CTAs below the card */}
-        <div className="mt-6">
+        <div className="mt-3">
           <HeroCTAButtons />
         </div>
       </div>
