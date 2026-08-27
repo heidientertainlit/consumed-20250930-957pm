@@ -173,7 +173,10 @@ export default function PeoplePage() {
   return <div className="min-h-[100dvh] pb-24 bg-gray-100 text-[#29233b]">
     <Navigation roomyTopBar />
     <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
-      <section className="relative overflow-hidden rounded-[30px] bg-[#2d2347] px-6 py-8 sm:px-10 sm:py-11 text-[#fff9f0]">
+      <section
+        className="relative overflow-hidden rounded-[30px] px-6 py-8 text-[#fff9f0] sm:px-10 sm:py-11"
+        style={{ background: "linear-gradient(155deg, #302452 0%, #1c1630 100%)" }}
+      >
         <svg aria-hidden="true" viewBox="0 0 100 100" className="pointer-events-none absolute -right-24 -top-10 h-56 w-56 rotate-[-9deg] text-[#c6b8ff] opacity-[.08] sm:-right-28 sm:-top-12 sm:h-64 sm:w-64" style={{ filter: "drop-shadow(0 0 10px rgba(168, 139, 236, .16))" }}>
           <circle cx="50" cy="50" r="43" fill="none" stroke="currentColor" strokeWidth="3.5" />
           <path d="M28 48 q7 -8 14 0" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />

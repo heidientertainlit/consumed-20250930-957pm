@@ -161,7 +161,10 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
 
       {/* People-style composed hero with a quieter leaderboard panel below */}
       <div className="mx-auto max-w-4xl bg-gray-50 px-4 pb-5 pt-6">
-        <section className="relative overflow-hidden rounded-[30px] bg-[#2d2347] px-6 py-7 text-white shadow-sm">
+        <section
+          className="relative overflow-hidden rounded-[30px] px-6 py-7 text-white shadow-sm"
+          style={{ background: "linear-gradient(155deg, #302452 0%, #1c1630 100%)" }}
+        >
           <div className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full border-[18px] border-violet-300/5" />
           <div className="relative">
             <DailyHeroSection embedded />
