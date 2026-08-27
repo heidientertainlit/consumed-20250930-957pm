@@ -561,14 +561,6 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                     <span className="text-[11.5px] text-gray-500 truncate">
                       <span className="font-medium text-gray-700">{g.title}</span> · {g.talkingCount} people talking
                     </span>
-                    {topGlimpse && (() => {
-                      const agree = (topGlimpse.likes || topGlimpse.likes_count || 0) + (takeReactions[topGlimpse.id] === 'up' ? 1 : 0);
-                      return (
-                        <span className="flex items-center gap-2 shrink-0 ml-auto text-[11px] text-gray-500 font-medium">
-                          <span className="flex items-center gap-0.5"><Check size={12} strokeWidth={2.5} className={takeReactions[topGlimpse.id] === 'up' ? 'text-green-600' : ''} /> {agree}</span>
-                        </span>
-                      );
-                    })()}
                   </div>
                 </div>
               </button>
