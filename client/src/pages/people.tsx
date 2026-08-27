@@ -105,7 +105,7 @@ function Evidence({ person }: { person: AffinityPerson }) {
 export default function PeoplePage() {
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
-  const [mode, setMode] = useState<Mode>("friends");
+  const [mode, setMode] = useState<Mode>("tribes");
   const [selectedBand, setSelectedBand] = useState<string | null>(null);
   const automaticMoreStarted = useRef<string | null>(null);
 
@@ -167,24 +167,16 @@ export default function PeoplePage() {
   const creators = creatorsQuery.data || [];
   const affinity = tribesQuery.data;
   const activeBand = affinity?.bands?.find((band) => band.id === selectedBand);
-  const tabs = [{ id: "friends" as const, label: "Friends", Icon: Users }, { id: "tribes" as const, label: "Tribes", Icon: UsersRound }, { id: "creators" as const, label: "Artists", Icon: Music2 }];
+  const tabs = [{ id: "tribes" as const, label: "Tribes", Icon: UsersRound }, { id: "friends" as const, label: "Friends", Icon: Users }, { id: "creators" as const, label: "Artists", Icon: Music2 }];
   const setTab = (next: Mode) => { setMode(next); setSelectedBand(null); };
 
   return <div className="min-h-[100dvh] pb-24 bg-gray-100 text-[#29233b]">
     <Navigation roomyTopBar />
     <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
-      <section
-        className="relative overflow-hidden rounded-[30px] px-6 py-8 text-[#fff9f0] sm:px-10 sm:py-11"
-        style={{ background: "linear-gradient(155deg, #302452 0%, #1c1630 100%)" }}
-      >
-        <svg aria-hidden="true" viewBox="0 0 100 100" className="pointer-events-none absolute -right-24 -top-10 h-56 w-56 rotate-[-9deg] text-[#c6b8ff] opacity-[.08] sm:-right-28 sm:-top-12 sm:h-64 sm:w-64" style={{ filter: "drop-shadow(0 0 10px rgba(168, 139, 236, .16))" }}>
-          <circle cx="50" cy="50" r="43" fill="none" stroke="currentColor" strokeWidth="3.5" />
-          <path d="M28 48 q7 -8 14 0" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M58 48 q7 -8 14 0" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M34 62 q16 14 32 0" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-        </svg>
-        <div className="relative max-w-xl"><p className="text-[11px] tracking-[.22em] uppercase text-[#ded4ff] font-black mb-3">Your taste, in company</p><h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.08]">People make your Entertainment DNA matter.</h1><p className="mt-4 text-sm sm:text-base leading-relaxed text-[#ddd5e9] max-w-md">Find the familiar edges of your taste — and the surprising ones worth following.</p></div>
-      </section>
+      <header>
+        <h1 className="text-[28px] font-black tracking-[-0.04em] text-[#29233b]">People</h1>
+        <p className="mt-1 text-sm text-[#766f80]">Find the people who get what you’re into.</p>
+      </header>
       <nav className="mt-5 flex gap-1 rounded-xl border border-gray-200 bg-gray-200/80 p-1 shadow-sm" aria-label="People sections">{tabs.map(({ id, label, Icon }) => <button key={id} onClick={() => setTab(id)} className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border px-2.5 py-2 text-[13px] font-semibold transition-colors ${mode === id ? "border-violet-300 bg-white text-violet-700 shadow-sm" : "border-transparent text-gray-600 hover:bg-white/60 hover:text-gray-800"}`}><Icon size={15} strokeWidth={2.2} />{label}</button>)}</nav>
 
       {mode === "friends" && <section className="mt-7 animate-in fade-in duration-300"><div className="flex items-end justify-between gap-4 mb-4"><div><p className="eyebrow">Your circle</p><h2 className="section-title">People who know your taste</h2></div><Link href="/friends" className="text-sm font-black text-[#6547b8] flex items-center gap-1">Manage <ArrowUpRight size={15} /></Link></div>{friendsQuery.isLoading ? <div className="grid sm:grid-cols-2 gap-3">{[1,2,3,4].map((item) => <div key={item} className="h-24 rounded-2xl bg-[#e9e0d5] animate-pulse" />)}</div> : friendsQuery.isError ? <div className="surface p-6 text-sm">We couldn’t load your people. <button className="font-black text-[#6547b8]" onClick={() => friendsQuery.refetch()}>Try again</button></div> : friends.length ? <div className="grid sm:grid-cols-2 gap-3">{friends.map((friendship: any) => { const friend = friendship.friend || friendship.users || friendship; const match = friendship.dna_match ?? friendship.match_percentage; return <Link key={friendship.id || friend.id} href={`/user/${friend.id || friendship.friend_id}`} className="surface group p-4 flex items-center gap-3 hover:border-violet-200 transition-colors"><Avatar person={friend} /><div className="min-w-0 flex-1"><p className="font-black truncate">{nameFor(friend)}</p><p className="text-xs text-[#81747a] truncate">{friend.user_name ? `@${friend.user_name}` : "View their Entertainment DNA"}</p></div>{typeof match === "number" ? <span className="text-xs font-black text-[#6547b8] bg-[#eee8ff] px-2 py-1 rounded-lg">{Math.round(match)}% match</span> : <ChevronRight className="text-[#b5aab1]" size={18} />}</Link> })}</div> : <div className="surface border-dashed p-9 text-center"><Dna size={28} className="mx-auto text-[#775cc4] mb-3" /><h3 className="font-black text-lg">Your taste is ready for company.</h3><p className="text-sm text-[#766c76] max-w-sm mx-auto mt-1">Connect with friends and give your shared favorites somewhere to land.</p><Link href="/friends" className="inline-flex mt-5 rounded-xl bg-[#30234f] px-4 py-2.5 text-sm font-black text-white">Find friends</Link></div>}</section>}
