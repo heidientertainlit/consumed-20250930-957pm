@@ -183,7 +183,32 @@ export default function PeoplePage() {
   return <div className="min-h-[100dvh] pb-24 bg-gray-100 text-[#29233b]">
     <Navigation roomyTopBar />
     <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
-      <nav className="flex border-b border-gray-300" aria-label="People sections">{tabs.map(({ id, label, Icon }) => <button key={id} onClick={() => setTab(id)} className={`relative flex min-h-[64px] min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-t-xl px-1 pb-3 pt-2 text-[11px] font-semibold transition-all sm:text-[13px] ${mode === id ? "text-violet-700 after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-violet-600" : "text-gray-600 hover:bg-white/35 hover:text-gray-800"}`}><Icon size={17} strokeWidth={2} />{label}</button>)}</nav>
+      <header className="mb-7">
+        <h1 className="text-[38px] font-black leading-none tracking-[-.045em] text-[#171328] sm:text-[44px]">People</h1>
+        <p className="mt-4 text-[17px] leading-snug text-[#716b79] sm:text-[19px]">Find your people through what you love.</p>
+      </header>
+
+      <nav className="grid grid-cols-3 gap-2 sm:gap-6" aria-label="People sections">
+        {tabs.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={`relative flex min-w-0 flex-col items-center pb-3 text-center font-semibold transition-colors ${
+              mode === id ? "text-violet-700" : "text-[#56515d] hover:text-[#29233b]"
+            }`}
+          >
+            <span className={`grid h-[78px] w-[78px] place-items-center rounded-[20px] border transition-colors sm:h-[92px] sm:w-[92px] ${
+              mode === id
+                ? "border-violet-200 bg-[#f3edff] shadow-[0_5px_16px_rgba(102,71,184,.08)]"
+                : "border-white/70 bg-white/45"
+            }`}>
+              <Icon size={34} strokeWidth={1.8} />
+            </span>
+            <span className="mt-3 min-h-[34px] text-[13px] leading-tight sm:text-[15px]">{label}</span>
+            {mode === id && <span className="absolute bottom-0 h-1 w-12 rounded-full bg-violet-700" />}
+          </button>
+        ))}
+      </nav>
 
       {mode === "friends" && <section className="mt-7 animate-in fade-in duration-300"><div className="flex items-end justify-between gap-4 mb-4"><div><p className="eyebrow">Your circle</p><h2 className="section-title">People who know your taste</h2></div><Link href="/friends" className="text-sm font-black text-[#6547b8] flex items-center gap-1">Manage <ArrowUpRight size={15} /></Link></div>{friendsQuery.isLoading ? <div className="grid sm:grid-cols-2 gap-3">{[1,2,3,4].map((item) => <div key={item} className="h-24 rounded-2xl bg-[#e9e0d5] animate-pulse" />)}</div> : friendsQuery.isError ? <div className="surface p-6 text-sm">We couldn’t load your people. <button className="font-black text-[#6547b8]" onClick={() => friendsQuery.refetch()}>Try again</button></div> : friends.length ? <div className="grid sm:grid-cols-2 gap-3">{friends.map((friendship: any) => { const friend = friendship.friend || friendship.users || friendship; const match = friendship.dna_match ?? friendship.match_percentage; return <Link key={friendship.id || friend.id} href={`/user/${friend.id || friendship.friend_id}`} className="surface group p-4 flex items-center gap-3 hover:border-violet-200 transition-colors"><Avatar person={friend} /><div className="min-w-0 flex-1"><p className="font-black truncate">{nameFor(friend)}</p><p className="text-xs text-[#81747a] truncate">{friend.user_name ? `@${friend.user_name}` : "View their Entertainment DNA"}</p></div>{typeof match === "number" ? <span className="text-xs font-black text-[#6547b8] bg-[#eee8ff] px-2 py-1 rounded-lg">{Math.round(match)}% match</span> : <ChevronRight className="text-[#b5aab1]" size={18} />}</Link> })}</div> : <div className="surface border-dashed p-9 text-center"><Dna size={28} className="mx-auto text-[#775cc4] mb-3" /><h3 className="font-black text-lg">Your taste is ready for company.</h3><p className="text-sm text-[#766c76] max-w-sm mx-auto mt-1">Connect with friends and give your shared favorites somewhere to land.</p><Link href="/friends" className="inline-flex mt-5 rounded-xl bg-[#30234f] px-4 py-2.5 text-sm font-black text-white">Find friends</Link></div>}</section>}
 
