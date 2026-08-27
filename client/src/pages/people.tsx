@@ -4,14 +4,17 @@ import { Link } from "wouter";
 import {
   ArrowLeft,
   ArrowUpRight,
+  Atom,
   ChevronRight,
   Dna,
   Heart,
   Info,
   LockKeyhole,
   Music2,
+  Orbit,
   RefreshCw,
   Sparkles,
+  Smile,
   Users,
   UsersRound,
 } from "lucide-react";
@@ -180,21 +183,21 @@ export default function PeoplePage() {
   return <div className="min-h-[100dvh] pb-24 bg-gray-100 text-[#29233b]">
     <Navigation roomyTopBar />
     <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
-      <header>
-        <h1 className="text-[28px] font-black tracking-[-0.04em] text-[#29233b]">People</h1>
-        <p className="mt-1 text-sm text-[#766f80]">Find the people who get what you’re into.</p>
-      </header>
-      <nav className="mt-5 flex border-b border-gray-300" aria-label="People sections">{tabs.map(({ id, label, Icon }) => <button key={id} onClick={() => setTab(id)} className={`relative flex min-w-0 flex-1 items-center justify-center gap-1.5 px-1 pb-3 pt-1 text-[11px] font-semibold transition-colors sm:text-[13px] ${mode === id ? "text-violet-700 after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-violet-600" : "text-gray-600 hover:text-gray-800"}`}><Icon size={15} strokeWidth={2} />{label}</button>)}</nav>
+      <nav className="flex border-b border-gray-300" aria-label="People sections">{tabs.map(({ id, label, Icon }) => <button key={id} onClick={() => setTab(id)} className={`relative flex min-w-0 flex-1 items-center justify-center gap-1.5 px-1 pb-3 pt-1 text-[11px] font-semibold transition-colors sm:text-[13px] ${mode === id ? "text-violet-700 after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-violet-600" : "text-gray-600 hover:text-gray-800"}`}><Icon size={15} strokeWidth={2} />{label}</button>)}</nav>
 
       {mode === "friends" && <section className="mt-7 animate-in fade-in duration-300"><div className="flex items-end justify-between gap-4 mb-4"><div><p className="eyebrow">Your circle</p><h2 className="section-title">People who know your taste</h2></div><Link href="/friends" className="text-sm font-black text-[#6547b8] flex items-center gap-1">Manage <ArrowUpRight size={15} /></Link></div>{friendsQuery.isLoading ? <div className="grid sm:grid-cols-2 gap-3">{[1,2,3,4].map((item) => <div key={item} className="h-24 rounded-2xl bg-[#e9e0d5] animate-pulse" />)}</div> : friendsQuery.isError ? <div className="surface p-6 text-sm">We couldn’t load your people. <button className="font-black text-[#6547b8]" onClick={() => friendsQuery.refetch()}>Try again</button></div> : friends.length ? <div className="grid sm:grid-cols-2 gap-3">{friends.map((friendship: any) => { const friend = friendship.friend || friendship.users || friendship; const match = friendship.dna_match ?? friendship.match_percentage; return <Link key={friendship.id || friend.id} href={`/user/${friend.id || friendship.friend_id}`} className="surface group p-4 flex items-center gap-3 hover:border-violet-200 transition-colors"><Avatar person={friend} /><div className="min-w-0 flex-1"><p className="font-black truncate">{nameFor(friend)}</p><p className="text-xs text-[#81747a] truncate">{friend.user_name ? `@${friend.user_name}` : "View their Entertainment DNA"}</p></div>{typeof match === "number" ? <span className="text-xs font-black text-[#6547b8] bg-[#eee8ff] px-2 py-1 rounded-lg">{Math.round(match)}% match</span> : <ChevronRight className="text-[#b5aab1]" size={18} />}</Link> })}</div> : <div className="surface border-dashed p-9 text-center"><Dna size={28} className="mx-auto text-[#775cc4] mb-3" /><h3 className="font-black text-lg">Your taste is ready for company.</h3><p className="text-sm text-[#766c76] max-w-sm mx-auto mt-1">Connect with friends and give your shared favorites somewhere to land.</p><Link href="/friends" className="inline-flex mt-5 rounded-xl bg-[#30234f] px-4 py-2.5 text-sm font-black text-white">Find friends</Link></div>}</section>}
 
       {mode === "tribes" && <section className="mt-7 animate-in fade-in duration-300">
-        {activeBand ? <BandDetail band={activeBand} onBack={() => setSelectedBand(null)} /> : <><div className="mb-4 flex items-start justify-between"><div><p className="text-[11px] font-black uppercase tracking-[.18em] text-[#766f80]">Your Tribes</p><p className="mt-1 text-xs text-[#8a8390]">Based on your Entertainment DNA</p></div><Info size={17} className="mt-0.5 text-[#8a8390]" /></div>
+        {activeBand ? <BandDetail band={activeBand} onBack={() => setSelectedBand(null)} /> : <><div className="mb-4 flex items-start justify-between gap-4"><div><p className="text-[11px] font-black uppercase tracking-[.18em] text-[#766f80]">Your Tribes</p><p className="mt-1 max-w-md text-sm leading-relaxed text-[#766f80]">Find the people who get what you’re into based on your Entertainment DNA.</p></div><Info size={17} className="mt-0.5 shrink-0 text-[#8a8390]" /></div>
           {tribesQuery.isLoading ? <div className="grid gap-3">{[1,2,3,4].map((item) => <div key={item} className="h-32 rounded-2xl bg-[#d9d1e5] animate-pulse" />)}</div> : tribesQuery.isError ? <div className="surface p-7 text-sm">Your affinity map couldn’t load. <button className="font-black text-[#6547b8]" onClick={() => tribesQuery.refetch()}>Try again</button></div> : !affinity?.ready ? <div className="surface p-9 text-center"><LockKeyhole size={28} className="mx-auto text-[#775cc4] mb-3" /><h3 className="font-black text-lg">Your people are still taking shape.</h3><p className="text-sm text-[#766c76] max-w-sm mx-auto mt-1">{affinity?.readiness?.items_needed ? `Add ${affinity.readiness.items_needed} more titles to unlock personalized affinity.` : "Complete your Entertainment DNA to unlock personalized affinity."}</p><Link href="/me" className="inline-flex mt-5 rounded-xl bg-[#30234f] px-4 py-2.5 text-sm font-black text-white">Build your DNA</Link></div> : <div className="grid gap-3">{(affinity.bands || []).map((band) => {
              const visibleNames = band.people.slice(0, 3).map(nameFor);
              const hasMore = band.people.length > visibleNames.length;
+             const BandIcon = band.id === "your-people" ? Smile : band.id === "same-wavelength" ? Orbit : band.id === "common-ground" ? Atom : Sparkles;
              return <button key={band.id} onClick={() => setSelectedBand(band.id)} className="group relative h-[112px] w-full overflow-hidden rounded-2xl border border-white/10 px-4 py-3.5 text-left text-white shadow-[0_6px_16px_rgba(43,28,77,.12)] transition-transform active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2" style={{ background: bandGradients[band.id] || bandGradients.wildcards }}>
-               <div className="flex h-full items-center gap-4">
+               <div className="flex h-full items-center gap-3">
+                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-black/10 text-[#c987ff] shadow-[inset_0_0_18px_rgba(196,128,255,.12)]">
+                   <BandIcon size={24} strokeWidth={1.7} />
+                 </span>
                  <div className="min-w-0 flex-1">
                    <h3 className="text-base font-black tracking-[-.02em]">{band.label}</h3>
                    <p className="mt-0.5 text-xs font-bold text-[#c4a0ff]">{band.min}–{band.max}% match</p>
