@@ -177,35 +177,39 @@ export default function PeoplePage() {
   const creators = creatorsQuery.data || [];
   const affinity = tribesQuery.data;
   const activeBand = affinity?.bands?.find((band) => band.id === selectedBand);
-  const tabs = [{ id: "tribes" as const, label: "Tribes", Icon: UsersRound }, { id: "friends" as const, label: "Friends", Icon: Users }, { id: "creators" as const, label: "Artists & Creators", Icon: Music2 }];
+  const tabs = [
+    { id: "tribes" as const, label: "Tribes", description: "Find your closest taste matches", Icon: UsersRound, iconStyle: "border-violet-200 bg-violet-50 text-violet-700" },
+    { id: "friends" as const, label: "Friends", description: "See the people you know", Icon: Users, iconStyle: "border-indigo-200 bg-indigo-50 text-indigo-600" },
+    { id: "creators" as const, label: "Artists & Creators", description: "Follow the people behind what you love", Icon: Music2, iconStyle: "border-orange-200 bg-orange-50 text-orange-600" },
+  ];
   const setTab = (next: Mode) => { setMode(next); setSelectedBand(null); };
 
   return <div className="min-h-[100dvh] pb-24 bg-gray-100 text-[#29233b]">
     <Navigation roomyTopBar />
     <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
       <header className="mb-7">
-        <h1 className="text-[32px] font-bold leading-[1.08] tracking-tight text-[#171328]">People</h1>
+        <h1 className="text-[32px] font-semibold leading-[1.08] tracking-tight text-[#171328]">People</h1>
         <p className="mt-2 text-[14px] font-medium leading-snug text-[#716b79]">Find your people through what you love.</p>
       </header>
 
-      <nav className="grid grid-cols-3 gap-2 sm:gap-6" aria-label="People sections">
-        {tabs.map(({ id, label, Icon }) => (
+      <nav className="space-y-2.5" aria-label="People sections">
+        {tabs.map(({ id, label, description, Icon, iconStyle }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`relative flex min-w-0 flex-col items-center pb-3 text-center font-semibold transition-colors ${
-              mode === id ? "text-violet-700" : "text-[#56515d] hover:text-[#29233b]"
+            aria-current={mode === id ? "page" : undefined}
+            className={`flex w-full items-center gap-3 rounded-[18px] border bg-white p-2.5 text-left shadow-[0_2px_7px_rgba(34,25,55,.06)] transition-all active:scale-[.99] ${
+              mode === id ? "border-violet-200 ring-1 ring-violet-100" : "border-[#e7e1df] hover:border-violet-100"
             }`}
           >
-            <span className={`grid h-[78px] w-[78px] place-items-center rounded-[20px] border transition-colors sm:h-[92px] sm:w-[92px] ${
-              mode === id
-                ? "border-violet-200 bg-[#f3edff] shadow-[0_5px_16px_rgba(102,71,184,.08)]"
-                : "border-white/70 bg-white/45"
-            }`}>
-              <Icon size={34} strokeWidth={1.8} />
+            <span className={`grid h-14 w-14 shrink-0 place-items-center rounded-[15px] border ${iconStyle}`}>
+              <Icon size={27} strokeWidth={1.8} />
             </span>
-            <span className="mt-3 min-h-[34px] text-[13px] leading-tight sm:text-[15px]">{label}</span>
-            {mode === id && <span className="absolute bottom-0 h-1 w-12 rounded-full bg-violet-700" />}
+            <span className="min-w-0 flex-1">
+              <span className={`block text-[15px] font-bold leading-tight ${mode === id ? "text-violet-700" : "text-[#251f31]"}`}>{label}</span>
+              <span className="mt-1 block truncate text-[12px] leading-tight text-[#817a83]">{description}</span>
+            </span>
+            <ChevronRight size={18} className={mode === id ? "text-violet-500" : "text-gray-300"} />
           </button>
         ))}
       </nav>
