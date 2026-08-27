@@ -504,6 +504,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
         className="sticky top-0 z-50"
         style={{
           paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)',
+          paddingBottom: topBarTone === "purple" ? '6px' : undefined,
           display: hideTopBar ? 'none' : undefined,
           background: topBarTone === "purple"
             ? 'linear-gradient(to right, #21183b, #332052, #4a246b)'
