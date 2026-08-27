@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { DailyHeroSection } from "@/components/daily-hero-section";
 import { supabase } from "@/lib/supabase";
-import { Target, Brain, Vote, BarChart2, UserPlus, Trophy, ChevronRight, ArrowRight, Layers, Zap } from "lucide-react";
+import { Brain, Vote, BarChart2, ChevronRight, ArrowRight, Smile } from "lucide-react";
 
 const gameModes = [
   {
@@ -11,8 +11,8 @@ const gameModes = [
     label: "Trivia",
     description: "Think you know it? Prove it.",
     icon: Brain,
-    color: "bg-purple-50 border-purple-100",
-    iconColor: "text-purple-600",
+    color: "bg-[#f7f0ff] border-[#eadbff]",
+    iconColor: "text-[#6929c4]",
     href: "/play/trivia",
   },
   {
@@ -20,8 +20,8 @@ const gameModes = [
     label: "Cast Your Vote",
     description: "Pick your side. See who agrees.",
     icon: Vote,
-    color: "bg-blue-50 border-blue-100",
-    iconColor: "text-blue-500",
+    color: "bg-[#f1efff] border-[#e0dcff]",
+    iconColor: "text-[#5f35c9]",
     href: "/play/polls",
   },
   {
@@ -29,8 +29,8 @@ const gameModes = [
     label: "Debate the Rank",
     description: "Rank your favorites. See who agrees.",
     icon: BarChart2,
-    color: "bg-amber-50 border-amber-100",
-    iconColor: "text-amber-500",
+    color: "bg-[#fff2e9] border-[#fde4d4]",
+    iconColor: "text-[#db6a25]",
     href: "/play/ranks",
   },
   // HIDDEN: Cast a Friend — temporarily hidden while redesigning
@@ -109,7 +109,7 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
 
   if (loading) {
     return (
-      <div className="mt-5 h-[88px] animate-pulse rounded-xl border border-gray-200 bg-gray-200/80 p-4 shadow-sm" />
+      <div className="mt-6 h-[132px] animate-pulse rounded-2xl border border-[#e4ddd8] bg-[#f0ece7] p-4 shadow-[0_4px_12px_rgba(37,20,66,0.05)]" />
     );
   }
 
@@ -121,14 +121,14 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
   const below = myIndex < entries.length - 1 ? entries[myIndex + 1] : null;
 
   const Row = ({ entry, isMe }: { entry: RankEntry; isMe?: boolean }) => (
-    <div className={`flex items-center gap-3 rounded-lg border px-3 py-1.5 ${isMe ? 'border-violet-300 bg-white shadow-sm' : 'border-transparent'}`}>
-      <span className={`w-7 shrink-0 text-right text-xs font-bold ${isMe ? 'text-violet-700' : 'text-gray-400'}`}>
+    <div className={`flex items-center gap-3 rounded-xl border px-4 py-2.5 ${isMe ? 'border-[#c9a6fb] bg-[#fffcfa] shadow-[0_1px_3px_rgba(81,34,133,0.06)]' : 'border-transparent'}`}>
+      <span className={`w-8 shrink-0 text-right text-sm font-bold ${isMe ? 'text-[#5920a3]' : 'text-[#8c8790]'}`}>
         #{entry.rank}
       </span>
-      <span className={`flex-1 truncate text-sm font-medium ${isMe ? 'text-gray-950' : 'text-gray-600'}`}>
+      <span className={`flex-1 truncate text-[15px] font-semibold ${isMe ? 'text-[#23172e]' : 'text-[#5f5862]'}`}>
         {isMe ? 'You' : (entry.display_name || entry.username)}
       </span>
-      <span className={`shrink-0 text-xs font-semibold ${isMe ? 'text-violet-700' : 'text-gray-400'}`}>
+      <span className={`shrink-0 text-sm font-semibold ${isMe ? 'text-[#5920a3]' : 'text-[#8c8790]'}`}>
         {entry.score.toLocaleString()} pts
       </span>
     </div>
@@ -137,16 +137,16 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
   return (
     <button
       onClick={() => onNavigate('/leaderboard')}
-      className="mt-5 w-full rounded-xl border border-gray-200 bg-gray-200/80 p-2 text-left shadow-sm transition-transform active:scale-95"
+      className="mt-6 w-full rounded-2xl border border-[#e3deda] bg-[#faf7f4] p-2 text-left shadow-[0_5px_14px_rgba(42,24,64,0.07)] transition-transform duration-150 active:scale-[0.985]"
     >
       <div className="space-y-0.5">
         {above && <Row entry={above} />}
         <Row entry={me} isMe />
         {below && <Row entry={below} />}
       </div>
-      <div className="flex items-center justify-end gap-1 mt-2.5 pr-1">
-        <span className="text-[11px] font-semibold text-violet-700">Full leaderboard</span>
-        <ArrowRight size={11} className="text-violet-700" />
+      <div className="mt-3 flex items-center justify-end gap-1.5 pr-2">
+        <span className="text-[13px] font-semibold text-[#5920a3]">Full leaderboard</span>
+        <ArrowRight size={14} className="text-[#5920a3]" />
       </div>
     </button>
   );
@@ -154,54 +154,55 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
 
 export default function PlayPage({ initialTab }: { initialTab?: string }) {
   const [, setLocation] = useLocation();
+  void initialTab;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-[100dvh] bg-[#fbf8f5]">
       <Navigation roomyTopBar />
 
-      {/* People-style composed hero with a quieter leaderboard panel below */}
-      <div className="mx-auto max-w-4xl bg-gray-50 px-4 pb-5 pt-6">
+      <main className="mx-auto max-w-[720px] px-4 pb-28 pt-5 sm:px-6 sm:pt-7">
         <section
-          className="relative overflow-hidden rounded-3xl p-6 text-white"
+          className="relative isolate overflow-hidden rounded-[30px] border border-[#56358e] px-5 py-4 text-white shadow-[0_18px_38px_rgba(48,21,91,0.16)] sm:px-7"
           style={{
-            background: "linear-gradient(155deg, #302452 0%, #1c1630 100%)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "0 10px 40px rgba(124,58,237,0.12)",
+            background: "radial-gradient(circle at 75% 46%, rgba(139,74,248,0.3), transparent 23%), linear-gradient(135deg, #28104f 0%, #170a35 54%, #100625 100%)",
           }}
         >
-          <div className="relative">
+          <div className="pointer-events-none absolute right-[-24px] top-[76px] z-0 flex h-[160px] w-[160px] items-center justify-center rounded-full border-[3px] border-[#bc80ff] opacity-90 shadow-[0_0_28px_rgba(174,91,255,0.6)] sm:right-9 sm:h-[176px] sm:w-[176px]">
+            <Smile size={104} strokeWidth={1.5} className="text-[#c181ff]" />
+          </div>
+          <div className="relative z-10">
             <DailyHeroSection embedded />
           </div>
         </section>
         <RankWidget onNavigate={setLocation} />
-      </div>
 
-      {/* Light section — game modes */}
-      <div className="mx-auto max-w-4xl space-y-5 bg-gray-50 px-4 pb-28 pt-3">
-        {/* Game Modes */}
-        <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-            Choose a Mode
+        <section className="pt-6">
+          <p className="mb-3 px-0.5 text-xs font-bold uppercase tracking-[0.16em] text-[#87808f]">
+            More ways to play
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-3">
             {gameModes.map((mode) => {
               const Icon = mode.icon;
               return (
                 <button
                   key={mode.id}
                   onClick={() => setLocation(mode.href)}
-                  className={`relative flex flex-col items-start p-4 rounded-2xl border ${mode.color} text-left active:scale-95 transition-transform`}
+                  className="group relative flex w-full items-center gap-4 rounded-2xl border border-[#e4dfda] bg-[#fdfaf7] p-3 text-left shadow-[0_3px_8px_rgba(44,26,61,0.05)] transition-[transform,box-shadow] duration-150 active:scale-[0.985] active:shadow-none"
                 >
-                  <Icon size={26} className={`${mode.iconColor} mb-3`} />
-                  <p className="text-gray-900 font-semibold text-sm leading-tight">{mode.label}</p>
-                  <p className="text-gray-500 text-xs mt-0.5 leading-tight">{mode.description}</p>
-                  <ChevronRight size={14} className="absolute top-4 right-4 text-gray-300" />
+                  <span className={`grid h-[62px] w-[62px] shrink-0 place-items-center rounded-xl border ${mode.color}`}>
+                    <Icon size={29} strokeWidth={1.8} className={mode.iconColor} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[18px] font-bold leading-tight tracking-[-0.025em] text-[#22172d]">{mode.label}</span>
+                    <span className="mt-1 block text-sm leading-tight text-[#77707b]">{mode.description}</span>
+                  </span>
+                  <ChevronRight size={23} strokeWidth={1.5} className="mr-1 shrink-0 text-[#706a73] transition-transform duration-150 group-active:translate-x-0.5" />
                 </button>
               );
             })}
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }
