@@ -2238,7 +2238,7 @@ export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
 
               <div className={`flex items-center justify-between ${front ? 'mt-3' : 'mt-0'}`}>
                 {front ? (
-                  <span className={`${embedded ? 'px-6 py-2.5 text-base rounded-full' : 'px-5 py-2 text-sm rounded-xl'} text-white font-semibold inline-flex items-center gap-2`} style={{ background: embedded ? 'linear-gradient(135deg, #9354e9, #6333bd)' : 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                  <span className={`${embedded ? 'px-6 py-2.5 text-base rounded-full' : 'px-5 py-2 text-sm rounded-xl'} text-white font-semibold inline-flex items-center gap-2`} style={{ background: embedded ? 'linear-gradient(135deg, #9354e9, #6333bd)' : 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', border: embedded ? 'none' : '1px solid rgba(255,255,255,0.3)' }}>
                     {isTriviaDay ? (playCompleted ? 'Share' : 'Play') : (callCompleted ? 'Share' : 'Weigh In')}
                     <ArrowRight size={embedded ? 16 : 13} strokeWidth={2} />
                   </span>
