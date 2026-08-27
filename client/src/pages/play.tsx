@@ -164,7 +164,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
         <section
           className="relative isolate overflow-hidden rounded-[30px] border border-[#56358e] px-5 py-4 text-white shadow-[0_18px_38px_rgba(48,21,91,0.16)] sm:px-7"
           style={{
-            background: "radial-gradient(circle at 75% 46%, rgba(139,74,248,0.3), transparent 23%), linear-gradient(135deg, #28104f 0%, #170a35 54%, #100625 100%)",
+            background: "linear-gradient(155deg, #302452 0%, #1c1630 100%)",
           }}
         >
           <div className="relative z-10">

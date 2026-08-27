@@ -2229,7 +2229,7 @@ export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
                     <p className={`text-white/90 ${front ? 'text-xl font-bold' : 'text-[13px] font-semibold'} leading-snug line-clamp-3`}>{callAnswer}</p>
                   </>
                 ) : (
-                  <p className={`text-white ${embedded && front ? 'text-[23px] sm:text-[26px]' : front ? 'text-xl' : 'text-[13px]'} font-bold leading-[1.2] tracking-[-0.025em] drop-shadow-sm line-clamp-3`}>
+                  <p className={`text-white ${embedded && front ? 'text-[23px] sm:text-[26px] line-clamp-4 text-balance' : front ? 'text-xl line-clamp-3' : 'text-[13px] line-clamp-3'} font-bold leading-[1.2] tracking-[-0.025em] drop-shadow-sm`}>
                     {isOpinionDay ? callPreview : firstQPreview}
                   </p>
                 )}
