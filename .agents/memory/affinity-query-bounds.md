@@ -3,8 +3,8 @@ name: Affinity query bounds
 description: PostgREST request-size and pagination constraints for People affinity candidate readiness.
 ---
 
-Count tracked items for affinity readiness by querying `list_items.user_id` in small user chunks and paginating every chunk through the API row cap. Never resolve every list and place hundreds of list IDs into one `.in()` filter.
+Maintain tracked-item readiness as an incrementally updated projection. Candidate discovery must use a stable keyset cursor, and social member previews must be counted and capped in the database rather than materialized in an edge function.
 
-**Why:** A high-activity account produced an oversized PostgREST URL with hundreds of UUIDs; the edge runtime failed at the transport layer before PostgREST could answer. Unpaginated selects also silently cap rows and undercount readiness.
+**Why:** High-activity accounts previously produced oversized PostgREST requests, while whole-population counting and member materialization made every page request scale with global data instead of the requested page.
 
-**How to apply:** Keep filter URLs bounded, paginate result sets used for counts, and use direct ownership columns when they exist instead of expanding an intermediate relation.
+**How to apply:** Update readiness counts on tracking writes; read the projection for thresholds; use friend-first keyset pagination with a small lookahead; return only aggregate counts and capped privacy-safe previews.

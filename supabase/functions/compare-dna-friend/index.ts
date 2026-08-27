@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { AFFINITY_ALGORITHM_VERSION, scoreAffinitySignals } from '../_shared/affinity-score.ts';
+import { canAccessDnaComparison } from '../_shared/comparison-access.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -53,19 +55,18 @@ serve(async (req) => {
         });
       }
 
-      // A comparison is not a profile lookup.  Only accepted friends, or people
-      // explicitly opted into discovery and sharing a real taste signal, qualify.
-      // Check blocks in both directions before reading or returning cache data.
-      const [targetUserResult, targetProfileResult, relationResult, blockResult, targetListsResult] = await Promise.all([
+      // A comparison is not a profile lookup. Check blocks in both directions
+      // before reading or returning cache data.
+      const [targetUserResult, targetProfileResult, relationResult, blockResult, targetEligibilityResult] = await Promise.all([
         supabaseClient.from('users').select('id,is_persona,people_discoverable').eq('id', friend_id).maybeSingle(),
         supabaseClient.from('dna_profiles').select('id,is_private').eq('user_id', friend_id).maybeSingle(),
         supabaseClient.from('friendships').select('id').eq('status', 'accepted')
           .or(`and(user_id.eq.${user.id},friend_id.eq.${friend_id}),and(user_id.eq.${friend_id},friend_id.eq.${user.id})`).limit(1).maybeSingle(),
         supabaseClient.from('user_blocks').select('id')
           .or(`and(blocker_id.eq.${user.id},blocked_id.eq.${friend_id}),and(blocker_id.eq.${friend_id},blocked_id.eq.${user.id})`).limit(1).maybeSingle(),
-        supabaseClient.from('lists').select('id').eq('user_id', friend_id),
+        supabaseClient.from('people_affinity_eligibility').select('tracked_items').eq('user_id', friend_id).maybeSingle(),
       ]);
-      const eligibilityError = targetUserResult.error || targetProfileResult.error || relationResult.error || blockResult.error || targetListsResult.error;
+      const eligibilityError = targetUserResult.error || targetProfileResult.error || relationResult.error || blockResult.error || targetEligibilityResult.error;
       if (eligibilityError) {
         console.error('Failed to check DNA comparison eligibility:', eligibilityError);
         return new Response(JSON.stringify({ error: 'Could not verify DNA comparison eligibility' }), {
@@ -76,45 +77,49 @@ serve(async (req) => {
       const targetProfile = targetProfileResult.data;
       const relation = relationResult.data;
       const block = blockResult.data;
-      const targetLists = targetListsResult.data;
-      let targetItemCount = 0;
-      if (targetLists?.length) {
-        const { count } = await supabaseClient.from('list_items').select('*', { count: 'exact', head: true })
-          .in('list_id', targetLists.map((list: any) => list.id));
-        targetItemCount = count || 0;
-      }
       const isFriend = !!relation;
-      if (!targetUser || targetUser.is_persona || !!block || !targetProfile || targetItemCount < 10 || (!isFriend && (!targetUser.people_discoverable || targetProfile.is_private))) {
+      let hasDiscoveryRelationship = false;
+      if (!isFriend && targetUser && !targetUser.is_persona && !block && targetProfile && !targetProfile.is_private
+        && targetUser.people_discoverable && Number(targetEligibilityResult.data?.tracked_items || 0) >= 10) {
+        const { data: discoveryComparison, error: discoveryError } = await supabaseClient
+          .from('dna_comparisons')
+          .select('user_id_1')
+          .or(`and(user_id_1.eq.${user.id},user_id_2.eq.${friend_id}),and(user_id_1.eq.${friend_id},user_id_2.eq.${user.id})`)
+          .contains('insights', { algorithm_version: AFFINITY_ALGORITHM_VERSION })
+          .limit(1)
+          .maybeSingle();
+        if (discoveryError) {
+          console.error('Failed to verify discovery relationship:', discoveryError);
+          return new Response(JSON.stringify({ error: 'Could not verify DNA comparison eligibility' }), {
+            status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        hasDiscoveryRelationship = !!discoveryComparison;
+      }
+      const canCompare = canAccessDnaComparison({
+        targetExists: !!targetUser,
+        targetHasProfile: !!targetProfile,
+        targetEligible: Number(targetEligibilityResult.data?.tracked_items || 0) >= 10,
+        targetIsPersona: !!targetUser?.is_persona,
+        blocked: !!block,
+        isFriend,
+        targetIsPrivate: !!targetProfile?.is_private,
+        targetIsDiscoverable: !!targetUser?.people_discoverable,
+        hasDiscoveryRelationship,
+      });
+      if (!canCompare) {
         return new Response(JSON.stringify({ error: 'This person is not eligible for DNA comparison' }), {
           status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      // Calculate user's DNA level from logged items
-      // Get all lists for user and count items
-      const { data: userLists } = await supabaseClient
-        .from('lists')
-        .select('id')
-        .eq('user_id', user.id);
-
-      let itemCount = 0;
-      if (userLists && userLists.length > 0) {
-        const listIds = userLists.map((l: any) => l.id);
-        const { count } = await supabaseClient
-          .from('list_items')
-          .select('*', { count: 'exact', head: true })
-          .in('list_id', listIds);
-        itemCount = count || 0;
-      }
-
-      // Check if user has completed DNA survey
-      const { data: userDnaProfile } = await supabaseClient
-        .from('dna_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+      const [{ data: userDnaProfile }, { data: userEligibility }] = await Promise.all([
+        supabaseClient.from('dna_profiles').select('id').eq('user_id', user.id).maybeSingle(),
+        supabaseClient.from('people_affinity_eligibility').select('tracked_items').eq('user_id', user.id).maybeSingle(),
+      ]);
 
       const hasSurvey = !!userDnaProfile;
+      const itemCount = Number(userEligibility?.tracked_items || 0);
 
       // DNA Level system (2 levels):
       // Level 0: No survey completed
@@ -147,7 +152,7 @@ serve(async (req) => {
         .gte('expires_at', new Date().toISOString())
         .single();
 
-      if (cachedComparison) {
+      if (cachedComparison?.insights?.algorithm_version === AFFINITY_ALGORITHM_VERSION) {
         return new Response(JSON.stringify({
           ...cachedComparison,
           from_cache: true
@@ -171,20 +176,6 @@ serve(async (req) => {
 
       let userSignals = userSignalsRes.data || [];
       let friendSignals = friendSignalsRes.data || [];
-
-      // Discoverable people must actually be a signal-based candidate; this
-      // prevents an arbitrary public account ID from becoming comparable.
-      if (!isFriend) {
-        const mine = new Set(userSignals.filter((s: any) => s.signal_type !== 'engagement')
-          .map((s: any) => `${s.signal_type}:${s.signal_value}`));
-        const hasSharedSignal = friendSignals.some((s: any) => s.signal_type !== 'engagement' &&
-          mine.has(`${s.signal_type}:${s.signal_value}`));
-        if (!hasSharedSignal) {
-          return new Response(JSON.stringify({ error: 'This person is not an eligible discovery match' }), {
-            status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        }
-      }
 
       // If signals are missing, try to extract them on the fly
       if (userSignals.length === 0 || friendSignals.length === 0) {
@@ -269,46 +260,12 @@ serve(async (req) => {
         .single();
 
       // Calculate match score
-      const userSignalMap = new Map(userSignals.map((s: any) => [`${s.signal_type}:${s.signal_value}`, s.strength]));
-      const friendSignalMap = new Map(friendSignals.map((s: any) => [`${s.signal_type}:${s.signal_value}`, s.strength]));
-
-      let matchScore = 0;
-      let totalWeight = 0;
-      const sharedGenres: string[] = [];
-      const sharedCreators: string[] = [];
-      const userUnique: string[] = [];
-      const friendUnique: string[] = [];
-
-      // Compare signals
-      for (const [key, strength] of userSignalMap) {
-        const [type, value] = key.split(':');
-        if (friendSignalMap.has(key)) {
-          const friendStrength = friendSignalMap.get(key) || 0;
-          const similarity = 1 - Math.abs(Number(strength) - Number(friendStrength));
-          matchScore += similarity * Number(strength);
-          totalWeight += Number(strength);
-
-          if (type === 'genre') sharedGenres.push(value);
-          if (type === 'creator') sharedCreators.push(value);
-        } else {
-          if (Number(strength) > 0.5) {
-            userUnique.push(`${type}: ${value}`);
-          }
-        }
-      }
-
-      // Find friend's unique signals
-      for (const [key, strength] of friendSignalMap) {
-        if (!userSignalMap.has(key) && Number(strength) > 0.5) {
-          const [type, value] = key.split(':');
-          friendUnique.push(`${type}: ${value}`);
-        }
-      }
-
-      // Normalize match score to 0-100
-      const normalizedScore = totalWeight > 0 
-        ? Math.round((matchScore / totalWeight) * 100)
-        : 50;
+      const affinityEvidence = scoreAffinitySignals(userSignals, friendSignals);
+      const normalizedScore = affinityEvidence.match_score;
+      const sharedGenres = affinityEvidence.shared_genres;
+      const sharedCreators = affinityEvidence.shared_creators;
+      const userUnique = affinityEvidence.differences.user_unique;
+      const friendUnique = affinityEvidence.differences.friend_unique;
 
       // Get shared LOVED titles - only items rated 4-5 stars OR in Favorites list
       // "Loved" = rating >= 4 OR in a Favorites list
@@ -370,7 +327,7 @@ serve(async (req) => {
 
       // Generate AI insights
       const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-      let insights: any = {};
+      let insights: any = { algorithm_version: AFFINITY_ALGORITHM_VERSION };
 
       if (openaiApiKey) {
         const insightPrompt = `Given two users' entertainment DNA comparison:
@@ -423,7 +380,10 @@ Only include media types where you have good recommendations. It's fine to have 
 
           if (openaiResponse.ok) {
             const data = await openaiResponse.json();
-            insights = JSON.parse(data.choices[0].message.content);
+            insights = {
+              ...JSON.parse(data.choices[0].message.content),
+              algorithm_version: AFFINITY_ALGORITHM_VERSION,
+            };
           }
         } catch (e) {
           console.error('OpenAI insights error:', e);

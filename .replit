@@ -76,7 +76,7 @@ args = "Deploy: generate-dna-moments"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Deploy: people-affinity"
+args = "Deploy: People"
 
 [[workflows.workflow]]
 name = "Start application"
@@ -165,12 +165,12 @@ args = "npx supabase functions deploy generate-dna-moments --project-ref mahpgco
 outputType = "console"
 
 [[workflows.workflow]]
-name = "Deploy: people-affinity"
+name = "Deploy: People"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx supabase functions deploy people-affinity --project-ref mahpgcogwpawvviapqza --use-api"
+args = "npx supabase functions deploy people-affinity --project-ref mahpgcogwpawvviapqza --use-api && npx supabase functions deploy people-tribes --project-ref mahpgcogwpawvviapqza --use-api && npx supabase functions deploy compare-dna-friend --project-ref mahpgcogwpawvviapqza --use-api"
 
 [workflows.workflow.metadata]
 outputType = "console"

@@ -979,3 +979,74 @@ export const searchFeedback = pgTable("search_feedback", {
   note: text("note"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Named, multi-signal People communities. These are independent from Rooms.
+export const peopleTribes = pgTable("people_tribes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  identityStatement: text("identity_statement").notNull(),
+  accentColor: text("accent_color").notNull(),
+  accentColor2: text("accent_color_2").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const peopleTribeSignals = pgTable("people_tribe_signals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tribeId: uuid("tribe_id").notNull().references(() => peopleTribes.id, { onDelete: "cascade" }),
+  signalGroup: text("signal_group").notNull(),
+  signalType: text("signal_type").notNull(),
+  signalValue: text("signal_value").notNull(),
+  displayLabel: text("display_label").notNull(),
+  weight: decimal("weight", { precision: 5, scale: 4 }).notNull().default("1"),
+  minStrength: decimal("min_strength", { precision: 5, scale: 4 }).notNull().default("0"),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export const peopleTribeMedia = pgTable("people_tribe_media", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tribeId: uuid("tribe_id").notNull().references(() => peopleTribes.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  mediaType: text("media_type").notNull(),
+  creator: text("creator"),
+  imageUrl: text("image_url"),
+  externalId: text("external_id"),
+  externalSource: text("external_source"),
+  editorialReason: text("editorial_reason"),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export const peopleTribeRecommendations = pgTable("people_tribe_recommendations", {
+  tribeId: uuid("tribe_id").notNull().references(() => peopleTribes.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  fitScore: integer("fit_score").notNull(),
+  matchedGroups: text("matched_groups").array().notNull().default(sql`'{}'::text[]`),
+  evidence: jsonb("evidence").notNull().default(sql`'[]'::jsonb`),
+  algorithmVersion: text("algorithm_version").notNull(),
+  computedAt: timestamp("computed_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  primary: primaryKey({ columns: [table.tribeId, table.userId] }),
+}));
+
+export const peopleTribeMembers = pgTable("people_tribe_members", {
+  tribeId: uuid("tribe_id").notNull().references(() => peopleTribes.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("active"),
+  membershipSource: text("membership_source").notNull().default("user_join"),
+  joinScore: integer("join_score"),
+  joinedAt: timestamp("joined_at", { withTimezone: true }).defaultNow().notNull(),
+  leftAt: timestamp("left_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  primary: primaryKey({ columns: [table.tribeId, table.userId] }),
+}));
+
+export const peopleAffinityEligibility = pgTable("people_affinity_eligibility", {
+  userId: varchar("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  trackedItems: integer("tracked_items").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
