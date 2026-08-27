@@ -180,7 +180,7 @@ export default function PeoplePage() {
           <path d="M58 48 q7 -8 14 0" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
           <path d="M34 62 q16 14 32 0" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
         </svg>
-        <div className="relative max-w-xl"><p className="text-[11px] tracking-[.22em] uppercase text-[#ded4ff] font-black mb-3">Your taste, in company</p><h1 className="text-3xl sm:text-5xl font-black tracking-[-.06em] leading-[.96]">People make your Entertainment DNA matter.</h1><p className="mt-4 text-sm sm:text-base leading-relaxed text-[#ddd5e9] max-w-md">Find the familiar edges of your taste — and the surprising ones worth following.</p></div>
+        <div className="relative max-w-xl"><p className="text-[11px] tracking-[.22em] uppercase text-[#ded4ff] font-black mb-3">Your taste, in company</p><h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.08]">People make your Entertainment DNA matter.</h1><p className="mt-4 text-sm sm:text-base leading-relaxed text-[#ddd5e9] max-w-md">Find the familiar edges of your taste — and the surprising ones worth following.</p></div>
       </section>
       <nav className="mt-5 flex gap-1.5 p-1.5 bg-[#e9e0d5] rounded-2xl overflow-x-auto" aria-label="People sections">{tabs.map(({ id, label, Icon }) => <button key={id} onClick={() => setTab(id)} className={`shrink-0 flex-1 min-w-max flex justify-center items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-black transition-all ${mode === id ? "bg-[#fffaf2] text-[#392860] shadow-sm" : "text-[#81747a] hover:text-[#392860]"}`}><Icon size={16} />{label}</button>)}</nav>
 
