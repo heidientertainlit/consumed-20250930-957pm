@@ -174,7 +174,12 @@ export default function PeoplePage() {
     <Navigation />
     <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
       <section className="relative overflow-hidden rounded-[30px] bg-[#2d2347] px-6 py-8 sm:px-10 sm:py-11 text-[#fff9f0]">
-        <div className="absolute -right-14 -top-16 h-52 w-52 rounded-full bg-[#db7657]" /><div className="absolute right-14 -bottom-24 h-52 w-52 rounded-full border-[24px] border-[#9c8bdf] opacity-60" />
+        <svg aria-hidden="true" viewBox="0 0 100 100" className="pointer-events-none absolute -right-24 -top-10 h-56 w-56 rotate-[-9deg] text-[#c6b8ff] opacity-[.08] sm:-right-28 sm:-top-12 sm:h-64 sm:w-64" style={{ filter: "drop-shadow(0 0 10px rgba(168, 139, 236, .16))" }}>
+          <circle cx="50" cy="50" r="43" fill="none" stroke="currentColor" strokeWidth="3.5" />
+          <path d="M28 48 q7 -8 14 0" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+          <path d="M58 48 q7 -8 14 0" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+          <path d="M34 62 q16 14 32 0" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+        </svg>
         <div className="relative max-w-xl"><p className="text-[11px] tracking-[.22em] uppercase text-[#ded4ff] font-black mb-3">Your taste, in company</p><h1 className="text-3xl sm:text-5xl font-black tracking-[-.06em] leading-[.96]">People make your Entertainment DNA matter.</h1><p className="mt-4 text-sm sm:text-base leading-relaxed text-[#ddd5e9] max-w-md">Find the familiar edges of your taste — and the surprising ones worth following.</p></div>
       </section>
       <nav className="mt-5 flex gap-1.5 p-1.5 bg-[#e9e0d5] rounded-2xl overflow-x-auto" aria-label="People sections">{tabs.map(({ id, label, Icon }) => <button key={id} onClick={() => setTab(id)} className={`shrink-0 flex-1 min-w-max flex justify-center items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-black transition-all ${mode === id ? "bg-[#fffaf2] text-[#392860] shadow-sm" : "text-[#81747a] hover:text-[#392860]"}`}><Icon size={16} />{label}</button>)}</nav>
