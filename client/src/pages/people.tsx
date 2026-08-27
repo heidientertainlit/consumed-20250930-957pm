@@ -170,7 +170,7 @@ export default function PeoplePage() {
   const tabs = [{ id: "friends" as const, label: "Friends", Icon: Users }, { id: "tribes" as const, label: "Tribes", Icon: UsersRound }, { id: "creators" as const, label: "Artists & Creators", Icon: Music2 }];
   const setTab = (next: Mode) => { setMode(next); setSelectedBand(null); };
 
-  return <div className="min-h-[100dvh] pb-24 bg-[#f7f1e9] text-[#29233b]">
+  return <div className="min-h-[100dvh] pb-24 bg-[#fbf9f6] text-[#29233b]">
     <Navigation />
     <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
       <section className="relative overflow-hidden rounded-[30px] bg-[#2d2347] px-6 py-8 sm:px-10 sm:py-11 text-[#fff9f0]">
