@@ -156,15 +156,13 @@ export default function UserProfile() {
   const [isSearchingFriends, setIsSearchingFriends] = useState(false);
   const [isSendingRequest, setIsSendingRequest] = useState(false);
   const [friendshipStatus, setFriendshipStatus] = useState<'none' | 'friends' | 'pending_sent' | 'pending_received' | 'loading'>('loading');
+  const canViewProfile = isOwnProfile || friendshipStatus === 'friends';
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isProfileOptionsOpen, setIsProfileOptionsOpen] = useState(false);
   const [isReportUserOpen, setIsReportUserOpen] = useState(false);
   const [isBlockConfirmOpen, setIsBlockConfirmOpen] = useState(false);
   const [isBlocking, setIsBlocking] = useState(false);
-
-  // Public profile - no restrictions for viewing
-  const canViewProfile = true; // Always true for now - will add privacy settings later
 
   // Entertainment DNA states
   const [dnaProfileStatus, setDnaProfileStatus] = useState<'loading' | 'no_profile' | 'has_profile' | 'generating'>('loading');
@@ -1507,8 +1505,7 @@ export default function UserProfile() {
       const { data: friendships, error: friendsError } = await supabase
         .from('friendships')
         .select('*')
-        .eq('user_id', user?.id)
-        .eq('friend_id', viewingUserId)
+        .or(`and(user_id.eq.${user?.id},friend_id.eq.${viewingUserId}),and(user_id.eq.${viewingUserId},friend_id.eq.${user?.id})`)
         .eq('status', 'accepted');
 
       if (friendsError) {
@@ -1688,28 +1685,38 @@ export default function UserProfile() {
     }
   }, [isOwnProfile, viewingUserId, activeSection]);
 
-  // Fetch profile data - accessible to everyone (public profiles)
-  // Wait until route is resolved before fetching to prevent wrong data
+  // Resolve friendship before loading another member's private profile content.
   useEffect(() => {
     if (session?.access_token && viewingUserId && !isRouteResolving) {
-      // Pass viewingUserId explicitly to avoid stale closure issues
-      fetchDnaProfile();
-      fetchUserLists(viewingUserId);
-      fetchUserRanks(viewingUserId);
-      fetchUserStats();
-      fetchUserPoints();
-      fetchUserPredictions();
-      fetchHighlights();
-      fetchBadges();
-      fetchDnaLevel();
       if (isOwnProfile) {
+        fetchDnaProfile();
+        fetchUserLists(viewingUserId);
+        fetchUserRanks(viewingUserId);
+        fetchUserStats();
+        fetchUserPoints();
+        fetchUserPredictions();
+        fetchHighlights();
+        fetchBadges();
+        fetchDnaLevel();
         fetchFollowedCreators();
-      }
-      if (!isOwnProfile) {
+      } else {
         checkFriendshipStatus();
       }
     }
-  }, [session?.access_token, viewingUserId, isRouteResolving]);
+  }, [session?.access_token, viewingUserId, isRouteResolving, isOwnProfile]);
+
+  useEffect(() => {
+    if (!session?.access_token || !viewingUserId || isOwnProfile || friendshipStatus !== 'friends') return;
+    fetchDnaProfile();
+    fetchUserLists(viewingUserId);
+    fetchUserRanks(viewingUserId);
+    fetchUserStats();
+    fetchUserPoints();
+    fetchUserPredictions();
+    fetchHighlights();
+    fetchBadges();
+    fetchDnaLevel();
+  }, [session?.access_token, viewingUserId, isOwnProfile, friendshipStatus]);
 
   // Refresh lists when media is tracked from anywhere (e.g. nav "+" button)
   useEffect(() => {
@@ -3070,6 +3077,56 @@ export default function UserProfile() {
           <Loader2 className="animate-spin text-purple-600 mx-auto mb-4" size={32} />
           <p className="text-gray-600">Loading profile...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (!canViewProfile) {
+    const displayName = userProfileData?.first_name && userProfileData?.last_name
+      ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
+      : userProfileData?.first_name || userProfileData?.user_name || 'Consumed member';
+    const handle = userProfileData?.user_name;
+
+    return (
+      <div className="min-h-screen bg-gray-100 pb-24">
+        <Navigation roomyTopBar />
+        <main className="mx-auto max-w-lg px-4 pt-8">
+          <section className="rounded-3xl border border-violet-100 bg-white px-6 py-9 text-center shadow-sm">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-violet-50 text-violet-600">
+              <Lock size={26} />
+            </div>
+            <h1 className="mt-5 text-2xl font-bold tracking-tight text-[#211b31]">{displayName}</h1>
+            {handle && <p className="mt-1 text-sm text-gray-500">@{handle}</p>}
+            <h2 className="mt-7 text-lg font-bold text-[#211b31]">Their profile is for friends</h2>
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-gray-500">
+              Connect to see their Entertainment DNA, ratings, lists, and what they’re consuming.
+            </p>
+
+            <div className="mt-6 flex justify-center">
+              {friendshipStatus === 'loading' ? (
+                <Button disabled className="rounded-full bg-gray-200 px-6 text-gray-500">
+                  <Loader2 size={17} className="mr-2 animate-spin" /> Checking connection
+                </Button>
+              ) : friendshipStatus === 'pending_sent' ? (
+                <Button disabled className="rounded-full bg-gray-200 px-6 text-gray-600">
+                  <Clock size={17} className="mr-2" /> Request Pending
+                </Button>
+              ) : friendshipStatus === 'pending_received' ? (
+                <Button onClick={() => setLocation('/friends')} className="rounded-full bg-violet-700 px-6 text-white hover:bg-violet-800">
+                  <Users size={17} className="mr-2" /> Review Friend Request
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => viewingUserId && sendFriendRequest(viewingUserId)}
+                  disabled={isSendingRequest || !viewingUserId}
+                  className="rounded-full bg-violet-700 px-6 text-white hover:bg-violet-800"
+                >
+                  <Users size={17} className="mr-2" /> {isSendingRequest ? 'Sending…' : 'Add Friend'}
+                </Button>
+              )}
+            </div>
+          </section>
+        </main>
       </div>
     );
   }

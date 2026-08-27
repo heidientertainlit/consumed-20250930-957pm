@@ -33,3 +33,4 @@
 - [Admin persona room conversations](admin-persona-room-conversations.md) — keep drafts private; bind sourced prompts server-side; exact-deficit persona creation requires a lock; publish only through a service-only transaction.
 - [People Tribes independence](people-tribes-independence.md) — Tribes are a separate People-domain model; never implement them by renaming or reusing Rooms, pools, follows, or conversations.
 - [Affinity query bounds](affinity-query-bounds.md) — count tracked items through chunked, paginated list_items.user_id queries; never expand hundreds of list IDs into one PostgREST URL.
+- [Friend-gated profiles](friend-gated-profiles.md) — Tribes may preview affinity matches, but full member DNA and consumption profiles require an accepted friendship.
