@@ -48,27 +48,38 @@ function scoreSignals(left: any[], right: any[]) {
 
 async function trackedCounts(db: any, ids: string[]) {
   if (!ids.length) return new Map<string, number>();
-  const { data: lists, error: listsError } = await db.from("lists").select("id,user_id").in("user_id", ids);
-  if (listsError) throw new Error(`Could not load tracked lists: ${listsError.message}`);
   const output = new Map(ids.map((id) => [id, 0]));
-  if (!lists?.length) return output;
-  const { data: items, error: itemsError } = await db.from("list_items").select("list_id").in("list_id", lists.map((x: any) => x.id));
-  if (itemsError) throw new Error(`Could not load tracked items: ${itemsError.message}`);
-  const owner = new Map(lists.map((x: any) => [String(x.id), x.user_id]));
-  for (const item of items || []) output.set(owner.get(String(item.list_id)), (output.get(owner.get(String(item.list_id))) || 0) + 1);
+  // Keep each PostgREST URL bounded and page through the server's row cap.
+  // list_items already carries user_id, so resolving hundreds of list IDs first
+  // only makes the request larger without improving the count.
+  for (let start = 0; start < ids.length; start += 25) {
+    const userIds = ids.slice(start, start + 25);
+    for (let offset = 0; ; offset += 1000) {
+      const { data: items, error: itemsError } = await db.from("list_items")
+        .select("user_id")
+        .in("user_id", userIds)
+        .range(offset, offset + 999);
+      if (itemsError) throw new Error(`Could not load tracked items: ${itemsError.message}`);
+      for (const item of items || []) output.set(item.user_id, (output.get(item.user_id) || 0) + 1);
+      if ((items || []).length < 1000) break;
+    }
+  }
   return output;
 }
 
 async function sharedTitles(db: any, a: string, b: string) {
-  const { data, error } = await db.from("list_items").select("user_id,title,media_type,rating,list_id").in("user_id", [a, b]);
+  const { data, error } = await db.from("media_ratings")
+    .select("user_id,media_title,media_type,rating")
+    .in("user_id", [a, b])
+    .gte("rating", 4);
   if (error) throw new Error(`Could not load shared titles: ${error.message}`);
   const loved = new Map<string, Map<string, any>>();
-  for (const item of data || []) if (Number(item.rating) >= 4 && item.title) {
+  for (const item of data || []) if (item.media_title) {
     if (!loved.has(item.user_id)) loved.set(item.user_id, new Map());
-    loved.get(item.user_id)!.set(item.title.toLowerCase(), item);
+    loved.get(item.user_id)!.set(item.media_title.toLowerCase(), item);
   }
   const left = loved.get(a) || new Map(), right = loved.get(b) || new Map();
-  return [...right].filter(([title]) => left.has(title)).slice(0, 10).map(([, item]) => ({ title: item.title, media_type: item.media_type }));
+  return [...right].filter(([title]) => left.has(title)).slice(0, 10).map(([, item]) => ({ title: item.media_title, media_type: item.media_type }));
 }
 
 serve(async (req) => {

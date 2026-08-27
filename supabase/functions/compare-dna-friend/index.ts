@@ -333,21 +333,31 @@ serve(async (req) => {
         .filter((l: any) => l.title?.toLowerCase().includes('did not finish'))
         .map((l: any) => l.id));
 
-      // Get items with ratings
-      const [userItemsRes, friendItemsRes] = await Promise.all([
-        supabaseClient.from('list_items').select('title, media_type, list_id, rating').eq('user_id', user.id),
-        supabaseClient.from('list_items').select('title, media_type, list_id, rating').eq('user_id', friend_id)
+      const [userItemsRes, friendItemsRes, userRatingsRes, friendRatingsRes] = await Promise.all([
+        supabaseClient.from('list_items').select('title, media_type, list_id').eq('user_id', user.id),
+        supabaseClient.from('list_items').select('title, media_type, list_id').eq('user_id', friend_id),
+        supabaseClient.from('media_ratings').select('media_title, media_type, rating').eq('user_id', user.id).gte('rating', 4),
+        supabaseClient.from('media_ratings').select('media_title, media_type, rating').eq('user_id', friend_id).gte('rating', 4)
       ]);
+      const titleError = userItemsRes.error || friendItemsRes.error || userRatingsRes.error || friendRatingsRes.error;
+      if (titleError) throw new Error(`Could not load shared title evidence: ${titleError.message}`);
 
-      // Helper to check if item is "loved" (4-5 stars OR in favorites, NOT in DNF)
-      const isLoved = (item: any, favListIds: Set<number>, dnfListIds: Set<number>) => {
-        if (dnfListIds.has(item.list_id)) return false;
-        return (item.rating && item.rating >= 4) || favListIds.has(item.list_id);
+      const lovedItems = (items: any[], ratings: any[], favListIds: Set<any>, dnfListIds: Set<any>) => {
+        const loved = new Map<string, { title: string; media_type?: string }>();
+        for (const item of items) {
+          if (item.title && favListIds.has(item.list_id) && !dnfListIds.has(item.list_id)) {
+            loved.set(item.title.toLowerCase(), { title: item.title, media_type: item.media_type });
+          }
+        }
+        for (const rating of ratings) {
+          if (rating.media_title) {
+            loved.set(rating.media_title.toLowerCase(), { title: rating.media_title, media_type: rating.media_type });
+          }
+        }
+        return [...loved.values()];
       };
-
-      // Get loved items for each user
-      const userLovedItems = (userItemsRes.data || []).filter((i: any) => isLoved(i, userFavListIds, userDnfListIds));
-      const friendLovedItems = (friendItemsRes.data || []).filter((i: any) => isLoved(i, friendFavListIds, friendDnfListIds));
+      const userLovedItems = lovedItems(userItemsRes.data || [], userRatingsRes.data || [], userFavListIds, userDnfListIds);
+      const friendLovedItems = lovedItems(friendItemsRes.data || [], friendRatingsRes.data || [], friendFavListIds, friendDnfListIds);
 
       // Create lookup of user's loved titles
       const userLovedTitles = new Set(userLovedItems.map((i: any) => i.title.toLowerCase()));

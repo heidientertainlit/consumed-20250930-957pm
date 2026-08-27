@@ -130,7 +130,7 @@ export default function PeoplePage() {
   });
 
   const tribesQuery = useQuery({
-    queryKey: ["people-affinity", user?.id],
+    queryKey: ["people-affinity", "v2", user?.id],
     enabled: !!user?.id && mode === "tribes",
     staleTime: 1000 * 60 * 5,
     queryFn: () => affinityRequest(session!.access_token, { action: "load", batch_size: 5 }),
@@ -138,7 +138,7 @@ export default function PeoplePage() {
 
   const moreMutation = useMutation({
     mutationFn: () => affinityRequest(session!.access_token, { action: "more", cursor: tribesQuery.data?.next_cursor, batch_size: 5 }),
-    onSuccess: (next) => queryClient.setQueryData(["people-affinity", user?.id], (old: AffinityResponse | undefined) => {
+    onSuccess: (next) => queryClient.setQueryData(["people-affinity", "v2", user?.id], (old: AffinityResponse | undefined) => {
       return old ? { ...old, ...next } : next;
     }),
   });
@@ -150,7 +150,7 @@ export default function PeoplePage() {
 
   const discoverableMutation = useMutation({
     mutationFn: (discoverable: boolean) => affinityRequest(session!.access_token, { action: "set-discoverable", discoverable }),
-    onSuccess: (result) => queryClient.setQueryData(["people-affinity", user?.id], (old: AffinityResponse | undefined) => old ? { ...old, discoverable: result.discoverable } : result),
+    onSuccess: (result) => queryClient.setQueryData(["people-affinity", "v2", user?.id], (old: AffinityResponse | undefined) => old ? { ...old, discoverable: result.discoverable } : result),
   });
 
   const creatorsQuery = useQuery({
