@@ -195,22 +195,25 @@ export default function PeoplePage() {
              const BandIcon = band.id === "your-people" ? Smile : band.id === "same-wavelength" ? Orbit : band.id === "common-ground" ? Atom : Sparkles;
              return <button key={band.id} onClick={() => setSelectedBand(band.id)} className="group relative h-[132px] w-full overflow-hidden rounded-[20px] border border-white/[.14] px-4 py-4 text-left text-white shadow-[0_10px_24px_rgba(43,28,77,.16),inset_0_1px_0_rgba(255,255,255,.08)] transition-transform active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2" style={{ background: bandGradients[band.id] || bandGradients.wildcards }}>
                <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-               <div className="flex h-full items-center gap-3">
-                 <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-black/[.1] text-[#d18bff] shadow-[inset_0_0_22px_rgba(196,128,255,.16),0_0_18px_rgba(159,80,255,.1)]">
-                   <BandIcon size={30} strokeWidth={1.6} />
-                 </span>
-                 <div className="min-w-0 flex-1">
-                   <h3 className="text-[18px] font-black leading-tight tracking-[-.025em]">{band.label}</h3>
-                   <p className="mt-1 text-[14px] font-bold leading-tight text-[#c4a0ff]">{band.min}–{band.max}% match</p>
-                   <p className="mt-1.5 text-[13px] leading-snug text-white/60">{band.feeling}</p>
+               <div className="flex h-full flex-col">
+                 <div className="flex min-h-0 flex-1 items-center gap-3">
+                   <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-black/[.1] text-[#d18bff] shadow-[inset_0_0_22px_rgba(196,128,255,.16),0_0_18px_rgba(159,80,255,.1)]">
+                     <BandIcon size={30} strokeWidth={1.6} />
+                   </span>
+                   <div className="min-w-0 flex-1">
+                     <h3 className="text-[18px] font-black leading-tight tracking-[-.025em]">{band.label}</h3>
+                     <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
+                       <p className="text-[14px] font-bold leading-tight text-[#c4a0ff]">{band.min}–{band.max}% match</p>
+                       <p className="text-[13px] leading-snug text-white/60">{band.feeling}</p>
+                     </div>
+                   </div>
+                   <ChevronRight size={18} className="shrink-0 text-[#c4a0ff]" />
                  </div>
-                 <div className="h-14 w-px shrink-0 bg-white/10" />
-                 <div className="w-[31%] min-w-0 text-right">
-                   <p className="text-[11px] font-medium leading-relaxed text-white/60 line-clamp-3">
+                 <div className="mt-2 border-t border-white/10 pt-2">
+                   <p className="truncate text-[11px] font-medium text-white/55">
                      {visibleNames.length ? `${visibleNames.join(", ")}${hasMore ? ", …" : ""}` : "No matches yet"}
                    </p>
                  </div>
-                 <ChevronRight size={18} className="shrink-0 text-[#c4a0ff]" />
                </div>
             </button>;
           })}</div>}
