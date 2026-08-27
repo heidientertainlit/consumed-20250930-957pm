@@ -1501,7 +1501,7 @@ function DailyCallOverlay({
 // ─────────────────────────────────────────────
 // Main export — renders both cards side by side
 // ─────────────────────────────────────────────
-export function DailyHeroSection() {
+export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
   const { user, session } = useAuth();
   const [, setLocation] = useLocation();
 
@@ -2094,8 +2094,10 @@ export function DailyHeroSection() {
 
             return (
               <div
-                className="w-full rounded-xl text-left overflow-hidden cursor-pointer"
-                style={{ background: 'linear-gradient(160deg,#1a1230 0%,#160f2a 60%,#0f0d1e 100%)', border: '1px solid rgba(160,120,255,0.2)' }}
+                className={`w-full text-left overflow-hidden cursor-pointer ${embedded ? '' : 'rounded-xl'}`}
+                style={embedded
+                  ? { background: 'transparent', border: 'none' }
+                  : { background: 'linear-gradient(160deg,#1a1230 0%,#160f2a 60%,#0f0d1e 100%)', border: '1px solid rgba(160,120,255,0.2)' }}
                 onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallOverlay(true)}
               >
                 {/* Card content */}
@@ -2129,7 +2131,9 @@ export function DailyHeroSection() {
       ) : (
         /* ══ PRE-GAME: Deck-layered cards — front + back peek, swap when one is done ══ */
         (() => {
-          const frontPosClass = "relative w-full rounded-2xl p-5 flex flex-col justify-between min-h-[170px] text-left";
+          const frontPosClass = embedded
+            ? "relative w-full px-1 py-1 flex flex-col justify-between min-h-[170px] text-left"
+            : "relative w-full rounded-2xl p-5 flex flex-col justify-between min-h-[170px] text-left";
           const backPosClass  = "absolute top-0 left-0 right-0 rounded-2xl p-4 flex flex-col justify-between min-h-[170px] text-left";
 
           const clampedDrag = isDragging ? Math.max(-90, Math.min(90, dragOffset * 0.45)) : 0;
@@ -2137,7 +2141,7 @@ export function DailyHeroSection() {
             transform: clampedDrag !== 0 ? `translateX(${clampedDrag}px)` : 'none',
             transformOrigin: 'top right' as const,
             zIndex: 10,
-            boxShadow: '0 14px 36px rgba(0,0,0,0.7)',
+            boxShadow: embedded ? 'none' : '0 14px 36px rgba(0,0,0,0.7)',
             transition: isDragging ? 'none' : 'transform 0.28s cubic-bezier(0.34,1.56,0.64,1)',
           };
           const backPosStyle = {
@@ -2162,7 +2166,7 @@ export function DailyHeroSection() {
               }}
               className={front ? frontPosClass : backPosClass}
               style={{
-                background: 'linear-gradient(160deg,#312e81 0%,#1d4ed8 35%,#0284c7 65%,#0e7490 100%)',
+                background: embedded ? 'transparent' : 'linear-gradient(160deg,#312e81 0%,#1d4ed8 35%,#0284c7 65%,#0e7490 100%)',
                 ...(front ? frontPosStyle : backPosStyle),
               }}
             >

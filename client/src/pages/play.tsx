@@ -161,20 +161,10 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
 
       {/* People-style composed hero with a quieter leaderboard panel below */}
       <div className="mx-auto max-w-4xl bg-gray-50 px-4 pb-5 pt-6">
-        <section className="relative overflow-hidden rounded-[30px] bg-[#2d2347] px-5 py-6 text-white shadow-sm">
+        <section className="relative overflow-hidden rounded-[30px] bg-[#2d2347] px-6 py-7 text-white shadow-sm">
           <div className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full border-[18px] border-violet-300/5" />
           <div className="relative">
-            <p className="mb-2 text-[11px] font-black uppercase tracking-[.22em] text-[#ded4ff]">Play something daily</p>
-            <h1
-              className="text-3xl font-bold tracking-tight"
-              style={{ fontFamily: "Poppins, sans-serif" }}
-            >
-              Play
-            </h1>
-            <p className="mt-2 text-sm text-[#ddd5e9]">Make your pick, build your streak, and see where you rank.</p>
-            <div className="mt-5">
-              <DailyHeroSection />
-            </div>
+            <DailyHeroSection embedded />
           </div>
         </section>
         <RankWidget onNavigate={setLocation} />
