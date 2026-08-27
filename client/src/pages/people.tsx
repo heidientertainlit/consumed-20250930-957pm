@@ -81,7 +81,7 @@ function Avatar({ person, size = "md" }: { person: any; size?: "sm" | "md" | "lg
 function AvatarStack({ people, dark = false }: { people: AffinityPerson[]; dark?: boolean }) {
   const shown = people.slice(0, 4);
   if (!shown.length) return <span className={`grid h-9 w-9 place-items-center rounded-full text-[10px] font-black ${dark ? "bg-white/10 text-white/60" : "bg-[#eee8ff] text-[#6547b8]"}`}>?</span>;
-  return <div className="flex items-center pl-1" aria-label={`${people.length} affinity matches`}>
+  return <div className="flex shrink-0 items-center pl-1" aria-label={`${people.length} affinity matches`}>
     {shown.map((person, index) => {
       const src = person.profile_image_url || person.avatar_url || person.avatar;
       return src ? (
@@ -236,9 +236,9 @@ export default function PeoplePage() {
              const visibleNames = band.people.slice(0, 3).map(nameFor);
              const hasMore = band.people.length > visibleNames.length;
              const BandIcon = band.id === "your-people" ? Smile : band.id === "same-wavelength" ? Orbit : band.id === "common-ground" ? Atom : Sparkles;
-               if (index > 0) return <button key={band.id} onClick={() => setSelectedBand(band.id)} className="group flex min-h-[102px] w-full items-center gap-3 rounded-[20px] border border-[#e4dfe8] bg-[#fcfbfd] px-4 text-left shadow-[0_3px_9px_rgba(34,25,55,.055)] transition-transform active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2">
+                if (index > 0) return <button key={band.id} onClick={() => setSelectedBand(band.id)} className="group flex min-h-[102px] w-full min-w-0 items-center gap-3 overflow-hidden rounded-[20px] border border-[#e4dfe8] bg-[#fcfbfd] px-4 text-left shadow-[0_3px_9px_rgba(34,25,55,.055)] transition-transform active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2">
                 <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#594091] to-[#302452] text-[#d3a6ff] shadow-[0_5px_11px_rgba(34,25,55,.16)]"><BandIcon size={30} strokeWidth={1.45} /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-[10px] font-black uppercase tracking-[.16em] text-violet-700">{band.label}</span><span className="mt-1 block text-[18px] font-bold leading-none text-[#29233b]">{band.min}–{band.max}% match</span>{band.people.length ? <span className="mt-1 flex items-center gap-2"><AvatarStack people={band.people} /><span className="truncate text-[11px] text-[#817789]">{visibleNames.join(", ")}</span></span> : <span className="mt-1 block text-[11px] text-[#817789]">0 people</span>}</span>
+                  <span className="min-w-0 flex-1 overflow-hidden"><span className="block text-[10px] font-black uppercase tracking-[.16em] text-violet-700">{band.label}</span><span className="mt-1 block text-[18px] font-bold leading-none text-[#29233b]">{band.min}–{band.max}% match</span>{band.people.length ? <span className="mt-1 flex min-w-0 items-center gap-2 overflow-hidden"><AvatarStack people={band.people} /><span className="min-w-0 flex-1 truncate text-[11px] text-[#817789]">{visibleNames.join(", ")}</span></span> : <span className="mt-1 block text-[11px] text-[#817789]">0 people</span>}</span>
                 <ChevronRight size={18} className="shrink-0 text-[#766f80]" />
               </button>;
               return <button key={band.id} onClick={() => setSelectedBand(band.id)} className="group relative min-h-[172px] w-full overflow-hidden rounded-[24px] border border-white/[.14] px-5 py-5 text-left text-white shadow-[0_14px_30px_rgba(43,28,77,.24),inset_0_1px_0_rgba(255,255,255,.08)] transition-transform active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2" style={{ background: bandGradients[band.id] || bandGradients.wildcards }}>
@@ -255,9 +255,9 @@ export default function PeoplePage() {
                    </div>
                     <ChevronRight size={24} className="shrink-0 text-white/85" />
                  </div>
-                   <div className="mt-3 flex items-center gap-3 border-t border-white/10 pt-3">
+                   <div className="mt-3 flex min-w-0 items-center gap-3 overflow-hidden border-t border-white/10 pt-3">
                      {band.people.length > 0 && <AvatarStack people={band.people} dark />}
-                     <p className="truncate text-[12px] font-medium text-white/70">
+                     <p className="min-w-0 flex-1 truncate text-[12px] font-medium text-white/70">
                       {visibleNames.length ? `${visibleNames.join(", ")}${hasMore ? ", …" : ""}` : "0 people"}
                      </p>
                  </div>

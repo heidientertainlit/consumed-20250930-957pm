@@ -5695,8 +5695,42 @@ export default function Feed() {
 
   const ugcPosts: UGCPost[] = (() => {
     const isAutoGen = (text: string) => !text || text.startsWith('Added ') || text.startsWith('"Added ') || /^"?Added .+ to .+"?$/i.test(text);
-    const pool: UGCPost[] = filterByCategory(socialPosts || [])
+    const sourcePosts = filterByCategory(socialPosts || []);
+    const mediaAuthorKey = (post: any) => {
+      const media = post.mediaItems?.[0];
+      const userId = post.user?.id || post.creator?.id || "";
+      const source = media?.externalSource || media?.external_source || post.media_external_source || "";
+      const externalId = media?.externalId || media?.external_id || post.media_external_id || "";
+      const title = media?.title || post.mediaTitle || post.media_title || "";
+      const mediaKey = source && externalId ? `${source}:${externalId}` : String(title).trim().toLowerCase();
+      return userId && mediaKey ? `${userId}|${mediaKey}` : "";
+    };
+    const companionRatingByPostId = new Map<string, number>();
+    const mergedRatingPostIds = new Set<string>();
+    const ratingOnlyPosts = sourcePosts.filter((post: any) =>
+      Number(post.rating) > 0 && !(post.content || "").trim()
+    );
+    sourcePosts.forEach((post: any) => {
+      if (Number(post.rating) > 0 || !(post.content || "").trim()) return;
+      const key = mediaAuthorKey(post);
+      if (!key) return;
+      const postTime = new Date(post.createdAt || post.created_at || post.timestamp || 0).getTime();
+      const companion = ratingOnlyPosts
+        .filter((candidate: any) => mediaAuthorKey(candidate) === key)
+        .map((candidate: any) => ({
+          post: candidate,
+          distance: Math.abs(postTime - new Date(candidate.createdAt || candidate.created_at || candidate.timestamp || 0).getTime()),
+        }))
+        .filter(({ distance }) => Number.isFinite(distance) && distance <= 15 * 60 * 1000)
+        .sort((a, b) => a.distance - b.distance)[0]?.post;
+      if (!companion) return;
+      companionRatingByPostId.set(post.id, Number(companion.rating));
+      mergedRatingPostIds.add(companion.id);
+    });
+
+    const pool: UGCPost[] = sourcePosts
       .filter((p: any) => {
+        if (mergedRatingPostIds.has(p.id)) return false;
         // Only require a valid user ID — username may be missing for some users and
         // that should not silently drop their posts from the feed.
         const hasUser = !!(p.user?.id);
@@ -5739,6 +5773,7 @@ export default function Feed() {
       .map((p: any): UGCPost => {
         let postType: UGCPost['type'] = 'general';
         const content = (p.content || '').trim();
+        const resolvedRating = Number(p.rating) > 0 ? Number(p.rating) : companionRatingByPostId.get(p.id);
         if (p.type === 'binge_battle') postType = 'binge_battle';
         else if (p.type === 'game_moment') postType = 'game_moment';
         else if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') postType = 'ask_for_rec';
@@ -5752,8 +5787,8 @@ export default function Feed() {
         else if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) postType = 'finished';
         else if ((p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review' || p.type === 'rate_review' || p.post_type === 'rate_review') && content) postType = 'review';
         else if (p.type === 'thought' || p.post_type === 'thought') postType = 'thought';
-        else if (p.rating && p.rating > 0 && content.length > 20) postType = 'review';
-        else if (p.rating && p.rating > 0) postType = 'rating';
+        else if (resolvedRating && content.length > 20) postType = 'review';
+        else if (resolvedRating) postType = 'rating';
         else postType = 'thought';
 
         const media = p.mediaItems?.[0];
@@ -5775,7 +5810,7 @@ export default function Feed() {
           user: { id: userObj?.id || '', username: userObj?.username || '', displayName: userObj?.displayName || userObj?.display_name || '', avatar: userObj?.avatar_url || userObj?.avatarUrl || userObj?.avatar || '', is_persona: userObj?.is_persona || false },
           content: (postType === 'poll' || postType === 'predict') ? ((p as any).question || content) : content,
           mediaTitle: ((media?.title || (p as any).mediaTitle || (p as any).media_title) || '') + ((p as any).media_season_number ? ` · S${(p as any).media_season_number}${(p as any).media_episode_number ? ` E${(p as any).media_episode_number}` : ''}` : '') || null, mediaType: media?.mediaType || media?.type || (p as any).media_type, mediaImage: mediaImg, externalId: eid, externalSource: src,
-          rating: p.rating, containsSpoilers: p.containsSpoilers || false, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
+          rating: resolvedRating, containsSpoilers: p.containsSpoilers || false, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
           fire_votes: p.fire_votes || 0, ice_votes: p.ice_votes || 0,
           options: (p as any).options || [], optionVotes: (p as any).optionVotes || [], timestamp: p.createdAt || p.created_at || p.timestamp, pollId: (p as any).poolId || p.id,
           userHasVoted: (p as any).userHasAnswered || false,
