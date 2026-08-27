@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
-import { ArrowRight, Flame, Dna, Trophy, Library, Forward } from "lucide-react";
+import { Plus, MessageSquare, Flame, Dna, Trophy, Library, Forward } from "lucide-react";
 import FeedComposerBar from "@/components/feed-composer-bar";
 import { QuickTrackSheet } from "@/components/quick-track-sheet";
 import { DnaShareExperience } from "@/components/dna-share-experience";
@@ -316,22 +316,21 @@ export function HeroCTAButtons() {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="mx-2 grid grid-cols-2 gap-3">
         <button
           onClick={() => setTrackOpen(true)}
-          className="flex min-h-10 items-center justify-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold text-violet-700 transition-transform active:scale-95"
-          style={{ background: "rgba(109,40,217,0.1)", backdropFilter: "blur(6px)", border: "1px solid rgba(109,40,217,0.25)", boxShadow: "0 1px 3px rgba(76,29,149,0.08)" }}
+          className="flex min-h-10 items-center justify-center gap-2 rounded-3xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition-transform active:scale-95"
+          style={{ background: "linear-gradient(135deg, #4c1d95 0%, #6d28d9 55%, #7c3aed 100%)" }}
         >
+          <Plus size={16} strokeWidth={2} />
           Add media
-          <ArrowRight size={13} strokeWidth={2} />
         </button>
         <button
           onClick={() => setComposerOpen(true)}
-          className="flex min-h-10 items-center justify-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold text-violet-700 transition-transform active:scale-95"
-          style={{ background: "rgba(109,40,217,0.1)", backdropFilter: "blur(6px)", border: "1px solid rgba(109,40,217,0.25)", boxShadow: "0 1px 3px rgba(76,29,149,0.08)" }}
+          className="flex min-h-10 items-center justify-center gap-2 rounded-3xl border border-violet-300 bg-white/70 px-4 py-2 text-sm font-semibold text-violet-700 shadow-sm transition-transform active:scale-95"
         >
+          <MessageSquare size={15} strokeWidth={2} />
           Share a take
-          <ArrowRight size={13} strokeWidth={2} />
         </button>
       </div>
 
