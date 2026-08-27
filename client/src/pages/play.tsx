@@ -109,7 +109,7 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
 
   if (loading) {
     return (
-      <div className="mt-6 h-[132px] animate-pulse rounded-2xl border border-[#e4ddd8] bg-[#f0ece7] p-4 shadow-[0_4px_12px_rgba(37,20,66,0.05)]" />
+      <div className="mt-4 h-[112px] animate-pulse rounded-2xl border border-[#e4ddd8] bg-[#f0ece7] p-3 shadow-[0_4px_12px_rgba(37,20,66,0.05)]" />
     );
   }
 
@@ -121,14 +121,14 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
   const below = myIndex < entries.length - 1 ? entries[myIndex + 1] : null;
 
   const Row = ({ entry, isMe }: { entry: RankEntry; isMe?: boolean }) => (
-    <div className={`flex items-center gap-3 rounded-xl border px-4 py-2.5 ${isMe ? 'border-[#c9a6fb] bg-[#fffcfa] shadow-[0_1px_3px_rgba(81,34,133,0.06)]' : 'border-transparent'}`}>
-      <span className={`w-8 shrink-0 text-right text-sm font-bold ${isMe ? 'text-[#5920a3]' : 'text-[#8c8790]'}`}>
+    <div className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 ${isMe ? 'border-[#c9a6fb] bg-[#fffcfa] shadow-[0_1px_3px_rgba(81,34,133,0.06)]' : 'border-transparent'}`}>
+      <span className={`w-7 shrink-0 text-right text-xs font-bold ${isMe ? 'text-[#5920a3]' : 'text-[#8c8790]'}`}>
         #{entry.rank}
       </span>
-      <span className={`flex-1 truncate text-[15px] font-semibold ${isMe ? 'text-[#23172e]' : 'text-[#5f5862]'}`}>
+      <span className={`flex-1 truncate text-[13px] font-semibold ${isMe ? 'text-[#23172e]' : 'text-[#5f5862]'}`}>
         {isMe ? 'You' : (entry.display_name || entry.username)}
       </span>
-      <span className={`shrink-0 text-sm font-semibold ${isMe ? 'text-[#5920a3]' : 'text-[#8c8790]'}`}>
+      <span className={`shrink-0 text-xs font-semibold ${isMe ? 'text-[#5920a3]' : 'text-[#8c8790]'}`}>
         {entry.score.toLocaleString()} pts
       </span>
     </div>
@@ -137,16 +137,16 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
   return (
     <button
       onClick={() => onNavigate('/leaderboard')}
-      className="mt-6 w-full rounded-2xl border border-[#e3deda] bg-[#faf7f4] p-2 text-left shadow-[0_5px_14px_rgba(42,24,64,0.07)] transition-transform duration-150 active:scale-[0.985]"
+      className="mt-4 w-full rounded-2xl border border-[#e3deda] bg-[#faf7f4] p-1.5 text-left shadow-[0_5px_14px_rgba(42,24,64,0.07)] transition-transform duration-150 active:scale-[0.985]"
     >
       <div className="space-y-0.5">
         {above && <Row entry={above} />}
         <Row entry={me} isMe />
         {below && <Row entry={below} />}
       </div>
-      <div className="mt-3 flex items-center justify-end gap-1.5 pr-2">
-        <span className="text-[13px] font-semibold text-[#5920a3]">Full leaderboard</span>
-        <ArrowRight size={14} className="text-[#5920a3]" />
+      <div className="mt-2 flex items-center justify-end gap-1 pr-2 pb-0.5">
+        <span className="text-[11px] font-semibold text-[#5920a3]">Full leaderboard</span>
+        <ArrowRight size={12} className="text-[#5920a3]" />
       </div>
     </button>
   );
@@ -160,9 +160,9 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
     <div className="min-h-[100dvh] bg-[#fbf8f5]">
       <Navigation roomyTopBar />
 
-      <main className="mx-auto max-w-[720px] px-4 pb-28 pt-5 sm:px-6 sm:pt-7">
+      <main className="mx-auto max-w-[680px] px-4 pb-28 pt-4 sm:px-6 sm:pt-6">
         <section
-          className="relative isolate overflow-hidden rounded-[30px] border border-[#56358e] px-5 py-4 text-white shadow-[0_18px_38px_rgba(48,21,91,0.16)] sm:px-7"
+          className="relative isolate overflow-hidden rounded-[26px] border border-[#56358e] px-4 py-3 text-white shadow-[0_14px_30px_rgba(48,21,91,0.14)] sm:px-6"
           style={{
             background: "linear-gradient(155deg, #302452 0%, #1c1630 100%)",
           }}
@@ -173,27 +173,27 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
         </section>
         <RankWidget onNavigate={setLocation} />
 
-        <section className="pt-6">
-          <p className="mb-3 px-0.5 text-xs font-bold uppercase tracking-[0.16em] text-[#87808f]">
+        <section className="pt-5">
+          <p className="mb-2.5 px-0.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#87808f]">
             More ways to play
           </p>
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {gameModes.map((mode) => {
               const Icon = mode.icon;
               return (
                 <button
                   key={mode.id}
                   onClick={() => setLocation(mode.href)}
-                  className="group relative flex w-full items-center gap-4 rounded-2xl border border-[#e4dfda] bg-[#fdfaf7] p-3 text-left shadow-[0_3px_8px_rgba(44,26,61,0.05)] transition-[transform,box-shadow] duration-150 active:scale-[0.985] active:shadow-none"
+                  className="group relative flex w-full items-center gap-3 rounded-2xl border border-[#e4dfda] bg-[#fdfaf7] p-2.5 text-left shadow-[0_3px_8px_rgba(44,26,61,0.05)] transition-[transform,box-shadow] duration-150 active:scale-[0.985] active:shadow-none"
                 >
-                  <span className={`grid h-[62px] w-[62px] shrink-0 place-items-center rounded-xl border ${mode.color}`}>
-                    <Icon size={29} strokeWidth={1.8} className={mode.iconColor} />
+                  <span className={`grid h-[54px] w-[54px] shrink-0 place-items-center rounded-xl border ${mode.color}`}>
+                    <Icon size={25} strokeWidth={1.8} className={mode.iconColor} />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[18px] font-bold leading-tight tracking-[-0.025em] text-[#22172d]">{mode.label}</span>
-                    <span className="mt-1 block text-sm leading-tight text-[#77707b]">{mode.description}</span>
+                    <span className="block text-base font-bold leading-tight tracking-[-0.02em] text-[#22172d]">{mode.label}</span>
+                    <span className="mt-0.5 block text-[13px] leading-tight text-[#77707b]">{mode.description}</span>
                   </span>
-                  <ChevronRight size={23} strokeWidth={1.5} className="mr-1 shrink-0 text-[#706a73] transition-transform duration-150 group-active:translate-x-0.5" />
+                  <ChevronRight size={20} strokeWidth={1.5} className="mr-0.5 shrink-0 text-[#706a73] transition-transform duration-150 group-active:translate-x-0.5" />
                 </button>
               );
             })}

@@ -2133,7 +2133,7 @@ export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
         /* ══ PRE-GAME: Deck-layered cards — front + back peek, swap when one is done ══ */
         (() => {
           const frontPosClass = embedded
-            ? "relative w-full px-1 py-2 flex flex-col justify-between min-h-[245px] text-left"
+            ? "relative w-full px-1 py-1 flex flex-col justify-between min-h-[220px] text-left"
             : "relative w-full rounded-2xl p-5 flex flex-col justify-between min-h-[170px] text-left";
           const backPosClass  = "absolute top-0 left-0 right-0 rounded-2xl p-4 flex flex-col justify-between min-h-[170px] text-left";
 
@@ -2230,7 +2230,7 @@ export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
                     <p className={`text-white/90 ${front ? 'text-xl font-bold' : 'text-[13px] font-semibold'} leading-snug line-clamp-3`}>{callAnswer}</p>
                   </>
                 ) : (
-                  <p className={`text-white ${embedded && front ? 'text-[23px] sm:text-[26px] text-balance' : front ? 'text-xl line-clamp-3' : 'text-[13px] line-clamp-3'} font-bold leading-[1.2] tracking-[-0.025em] drop-shadow-sm`}>
+                  <p className={`text-white ${embedded && front ? 'w-full text-[20px] sm:text-[22px] text-balance' : front ? 'text-xl line-clamp-3' : 'text-[13px] line-clamp-3'} font-bold leading-[1.22] tracking-[-0.02em] drop-shadow-sm`}>
                     {isOpinionDay ? callPreview : firstQPreview}
                   </p>
                 )}
@@ -2238,9 +2238,9 @@ export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
 
               <div className={`flex items-center justify-between ${front ? 'mt-3' : 'mt-0'}`}>
                 {front ? (
-                  <span className={`${embedded ? 'px-5 py-2 text-sm' : 'px-5 py-2 text-sm'} text-white font-semibold rounded-xl inline-flex items-center gap-1.5`} style={{ background: embedded ? 'linear-gradient(135deg, #9354e9, #6333bd)' : 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                  <span className={`${embedded ? 'px-6 py-2.5 text-base rounded-full' : 'px-5 py-2 text-sm rounded-xl'} text-white font-semibold inline-flex items-center gap-2`} style={{ background: embedded ? 'linear-gradient(135deg, #9354e9, #6333bd)' : 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.3)' }}>
                     {isTriviaDay ? (playCompleted ? 'Share' : 'Play') : (callCompleted ? 'Share' : 'Weigh In')}
-                    <ArrowRight size={13} strokeWidth={2} />
+                    <ArrowRight size={embedded ? 16 : 13} strokeWidth={2} />
                   </span>
                 ) : (
                   <span className="text-white text-[11px] font-semibold px-3 py-1.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)' }}>
