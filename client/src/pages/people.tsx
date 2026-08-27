@@ -199,8 +199,8 @@ export default function PeoplePage() {
             aria-current={mode === id ? "page" : undefined}
             className={`relative flex min-h-[84px] min-w-0 flex-1 flex-col items-center justify-center gap-1.5 px-1 py-3 text-[11px] font-semibold transition-colors sm:text-[14px] ${
               mode === id
-                ? "text-[#d3a6ff] after:absolute after:inset-x-0 after:-bottom-px after:h-[3px] after:rounded-full after:bg-[#a855f7]"
-                : "text-white/65 hover:text-white"
+                ? "text-white after:absolute after:inset-x-0 after:-bottom-px after:h-[3px] after:rounded-full after:bg-white"
+                : "text-white/70 hover:text-white"
             }`}
           >
             <Icon size={24} strokeWidth={1.7} />
