@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef as useReactRef } from "react";
+import { useState, useEffect, useRef as useReactRef, type CSSProperties } from "react";
 import html2canvas from "html2canvas";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
@@ -13,6 +13,7 @@ interface OverlapUser {
   initials: string;
   color: string;
   pct?: number;
+  avatarUrl?: string | null;
 }
 
 interface CompareUser {
@@ -23,6 +24,7 @@ interface CompareUser {
   tagline: string;
   label?: string;
   userId?: string;
+  avatarUrl?: string | null;
 }
 
 interface Friend {
@@ -94,6 +96,35 @@ function FriendAvatar({ friend, size = 40 }: { friend: Friend; size?: number }) 
       ) : (
         initials(label)
       )}
+    </div>
+  );
+}
+
+function ProfileAvatar({
+  avatarUrl,
+  label,
+  fallback,
+  color,
+  size,
+  className = "",
+  style,
+}: {
+  avatarUrl?: string | null;
+  label: string;
+  fallback: string;
+  color: string;
+  size: number;
+  className?: string;
+  style?: CSSProperties;
+}) {
+  return (
+    <div
+      className={`rounded-full overflow-hidden shrink-0 flex items-center justify-center font-black text-white ${className}`}
+      style={{ width: size, height: size, background: color, fontSize: Math.round(size * 0.26), ...style }}
+    >
+      {avatarUrl
+        ? <img src={avatarUrl} alt={label} crossOrigin="anonymous" className="w-full h-full object-cover" />
+        : fallback}
     </div>
   );
 }
@@ -510,6 +541,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
   const [differTitles, setDifferTitles] = useState<{ myTitle: string; friendTitle: string } | null>(null);
   const [sharedGenresFromDna, setSharedGenresFromDna] = useState<string[]>([]);
   const [othersExpanded, setOthersExpanded] = useState(true);
+  const [myAvatar, setMyAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     // Wait for auth to finish loading; skip if not logged in
@@ -530,6 +562,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         }
 
         const myDna = data?.myDna;
+        setMyAvatar(data?.myUser?.avatar ?? null);
         const friendDnas: any[] = data?.friendDnas ?? [];
         const friendUsers: any[] = data?.friendUsers ?? [];
         const cmp1: any[] = data?.cmp1 ?? [];
@@ -566,7 +599,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
               info?.last_name,
             );
             const shared = genres.filter((g: string) => myGenreSet.has(g.toLowerCase()));
-            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id, sharedGenres: shared };
+            return { displayName, pct, color: AVATAR_COLORS[i % AVATAR_COLORS.length], label: fd.label || null, userId: fd.user_id, sharedGenres: shared, avatarUrl: info?.avatar ?? null };
           })
           .sort((a: any, b: any) => b.pct - a.pct);
 
@@ -587,6 +620,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           tagline: buildTagline(top.pct, firstName),
           label: top.label,
           userId: top.userId,
+          avatarUrl: top.avatarUrl,
         });
 
         const overlapItems = rest.slice(0, 5).map((r: any) => ({
@@ -594,6 +628,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           initials: initials(r.displayName),
           color: r.color,
           pct: r.pct,
+          avatarUrl: r.avatarUrl,
         }));
         setDynOverlaps(overlapItems);
       } catch (err) {
@@ -754,24 +789,26 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
               {/* Avatars joined by dashed line with DNA strand in the middle */}
               <div className="flex items-center w-full max-w-[300px] mt-5 px-2">
                 <div className="flex flex-col items-center" style={{ width: 100 }}>
-                  <div className="rounded-full flex items-center justify-center font-black text-white text-[15px] shadow"
-                    style={{ width: 52, height: 52, background: '#8b5cf6' }}>
-                    {session?.user?.user_metadata?.display_name
+                  <ProfileAvatar
+                    size={52}
+                    color="#8b5cf6"
+                    avatarUrl={myAvatar}
+                    label="Your profile photo"
+                    className="shadow"
+                    fallback={session?.user?.user_metadata?.display_name
                       ? initials(formatFeedName(
                           session.user.user_metadata.display_name,
                           session.user.user_metadata.user_name,
                         ))
                       : (user?.email?.[0] ?? 'Y').toUpperCase()}
-                  </div>
+                  />
                 </div>
                 <div className="flex-1 border-t-2 border-dashed border-gray-200" />
                 <Dna size={18} className="text-violet-500 shrink-0 mx-1.5" />
                 <div className="flex-1 border-t-2 border-dashed border-gray-200" />
                 <div className="flex flex-col items-center" style={{ width: 100 }}>
-                  <div className="rounded-full flex items-center justify-center font-black text-white text-[15px] shadow"
-                    style={{ width: 52, height: 52, background: '#3b82f6' }}>
-                    {featured.initials}
-                  </div>
+                  <ProfileAvatar size={52} color="#3b82f6" avatarUrl={featured.avatarUrl}
+                    label={featured.displayName} fallback={featured.initials} className="shadow" />
                 </div>
               </div>
               {/* Names + archetypes under each avatar */}
@@ -854,13 +891,12 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
               {/* Stacked avatar circles */}
               <div className="flex items-center" style={{ marginRight: 2 }}>
                 {overlaps.slice(0, 4).map((u, i) => (
-                  <div
+                  <ProfileAvatar
                     key={u.displayName}
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-white font-black border-2 border-white shadow-sm"
-                    style={{ fontSize: 8, background: u.color, marginLeft: i === 0 ? 0 : -6, zIndex: 10 - i }}
-                  >
-                    {u.initials}
-                  </div>
+                    size={24} color={u.color} avatarUrl={u.avatarUrl} label={u.displayName}
+                    fallback={u.initials} className="border-2 border-white shadow-sm"
+                    style={{ marginLeft: i === 0 ? 0 : -6, zIndex: 10 - i }}
+                  />
                 ))}
                 {overlaps.length > 4 && (
                   <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold border-2 border-white" style={{ fontSize: 8, marginLeft: -6 }}>
@@ -942,6 +978,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
   const [postOthersExpanded, setPostOthersExpanded] = useState(false);
   const [postSharedTitles, setPostSharedTitles] = useState<string[]>([]);
   const [resolvedFriendName, setResolvedFriendName] = useState<string | null>(null);
+  const [resolvedFriendAvatar, setResolvedFriendAvatar] = useState<string | null>(null);
 
   let cmp: any = {};
   try { cmp = JSON.parse(item.content || '{}'); } catch {}
@@ -952,6 +989,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
     poster?.displayName || poster?.display_name,
     poster?.username || poster?.user_name,
   );
+  const posterAvatar = poster?.avatar || poster?.avatar_url || null;
   const matchScore = cmp.match_score || 0;
   const friendName = resolvedFriendName || (cmp.friend_name ? formatFeedName(cmp.friend_name) : 'a friend');
   const sharedGenres: string[] = cmp.shared_genres || [];
@@ -990,7 +1028,10 @@ export function DnaComparePostCard({ item }: { item: any }) {
               friendInfo.last_name,
             )
           : friendName;
-        if (friendInfo) setResolvedFriendName(exactFriendName);
+        if (friendInfo) {
+          setResolvedFriendName(exactFriendName);
+          setResolvedFriendAvatar(friendInfo.avatar ?? null);
+        }
 
         // Build map of friendId → best real match_score from dna_comparisons
         const cmpMap = new Map<string, number>();
@@ -1011,13 +1052,13 @@ export function DnaComparePostCard({ item }: { item: any }) {
               info?.first_name,
               info?.last_name,
             );
-            return { displayName, pct: cmpMap.get(fd.user_id)!, color: AVATAR_COLORS[i % AVATAR_COLORS.length], userId: fd.user_id };
+            return { displayName, pct: cmpMap.get(fd.user_id)!, color: AVATAR_COLORS[i % AVATAR_COLORS.length], userId: fd.user_id, avatarUrl: info?.avatar ?? null };
           })
           .filter((u: any) => u.displayName !== exactFriendName)
           .sort((a: any, b: any) => b.pct - a.pct);
 
         const overlaps = scored.slice(0, 5).map((r: any) => ({
-          displayName: r.displayName, initials: initials(r.displayName), color: r.color, pct: r.pct,
+          displayName: r.displayName, initials: initials(r.displayName), color: r.color, pct: r.pct, avatarUrl: r.avatarUrl,
         }));
         setPosterOverlaps(overlaps);
 
@@ -1086,10 +1127,9 @@ export function DnaComparePostCard({ item }: { item: any }) {
           <div style={{ position: 'relative', width: 240, height: 110 }}>
             {/* Left avatar — behind ring */}
             <div style={{ position: 'absolute', left: 4, top: 'calc(50% - 35px)', zIndex: 1 }}>
-              <div className="rounded-full flex items-center justify-center font-black text-white border-2 border-white"
-                style={{ width: 70, height: 70, background: '#8b5cf6', fontSize: 18, boxShadow: '0 2px 8px rgba(139,92,246,0.35)' }}>
-                {initials(posterName)}
-              </div>
+              <ProfileAvatar size={70} color="#8b5cf6" avatarUrl={posterAvatar} label={posterName}
+                fallback={initials(posterName)} className="border-2 border-white"
+                style={{ boxShadow: '0 2px 8px rgba(139,92,246,0.35)' }} />
             </div>
             {/* Ring — centered, white bg covers avatar edges */}
             {(() => {
@@ -1112,10 +1152,9 @@ export function DnaComparePostCard({ item }: { item: any }) {
             })()}
             {/* Right avatar — behind ring */}
             <div style={{ position: 'absolute', right: 4, top: 'calc(50% - 35px)', zIndex: 1 }}>
-              <div className="rounded-full flex items-center justify-center font-black text-white border-2 border-white"
-                style={{ width: 70, height: 70, background: '#a855f7', fontSize: 18, boxShadow: '0 2px 8px rgba(168,85,247,0.35)' }}>
-                {initials(friendName)}
-              </div>
+              <ProfileAvatar size={70} color="#a855f7" avatarUrl={resolvedFriendAvatar} label={friendName}
+                fallback={initials(friendName)} className="border-2 border-white"
+                style={{ boxShadow: '0 2px 8px rgba(168,85,247,0.35)' }} />
             </div>
           </div>
           {/* Names row — aligned under each avatar */}
@@ -1175,13 +1214,12 @@ export function DnaComparePostCard({ item }: { item: any }) {
             >
               <div className="flex items-center">
                 {posterOverlaps.slice(0, 4).map((u, i) => (
-                  <div
+                  <ProfileAvatar
                     key={u.displayName}
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-white font-black border-2 border-white shadow-sm"
-                    style={{ fontSize: 8, background: u.color, marginLeft: i === 0 ? 0 : -6, zIndex: 10 - i }}
-                  >
-                    {u.initials}
-                  </div>
+                    size={24} color={u.color} avatarUrl={u.avatarUrl} label={u.displayName}
+                    fallback={u.initials} className="border-2 border-white shadow-sm"
+                    style={{ marginLeft: i === 0 ? 0 : -6, zIndex: 10 - i }}
+                  />
                 ))}
                 {posterOverlaps.length > 4 && (
                   <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold border-2 border-white" style={{ fontSize: 8, marginLeft: -6 }}>

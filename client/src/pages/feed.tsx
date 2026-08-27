@@ -1566,7 +1566,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         const ids = filtered.map((r: any) => r.user_id);
         const { data: users } = await supabase
           .from('users')
-          .select('id, user_name, display_name, first_name, last_name')
+          .select('id, user_name, display_name, first_name, last_name, avatar')
           .in('id', ids);
         const userMap: Record<string, any> = {};
         (users || []).forEach((u: any) => { userMap[u.id] = u; });
@@ -1590,6 +1590,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             userMap[r.user_id]?.first_name,
             userMap[r.user_id]?.last_name,
           ),
+          avatar: userMap[r.user_id]?.avatar || undefined,
           rating: Number(r.rating),
           content: contentMap[r.user_id],
         })));
@@ -2613,8 +2614,18 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 <p className="text-[15px] font-normal text-gray-700 leading-snug mt-1.5">"{post.content}"</p>
               )}
 
-              {/* Reviewer — gray "— First L." byline under the quote, no avatar */}
+              {/* Reviewer */}
               <div className="flex items-center gap-2 mt-1">
+                <div
+                  className="w-5 h-5 rounded-full overflow-hidden bg-violet-500 text-white text-[8px] font-bold flex items-center justify-center shrink-0"
+                  aria-hidden="true"
+                >
+                  {(post.user as any)?.avatar ? (
+                    <img src={(post.user as any).avatar} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    formatFeedName(post.user?.displayName, post.user?.username).split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase()
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p
                     className={`text-[12px] font-normal text-gray-400 leading-tight truncate ${post.user?.id ? 'cursor-pointer hover:text-gray-600' : ''}`}

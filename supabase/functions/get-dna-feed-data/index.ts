@@ -57,7 +57,7 @@ serve(async (req) => {
 
   const userId = targetUserId || user.id;
 
-  const [fsRes, myDnaRes] = await Promise.all([
+  const [fsRes, myDnaRes, myUserRes] = await Promise.all([
     admin.from('friendships')
       .select('user_id,friend_id')
       .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
@@ -66,30 +66,36 @@ serve(async (req) => {
       .select('favorite_genres,label')
       .eq('user_id', userId)
       .single(),
+    admin.from('users')
+      .select('id,display_name,user_name,first_name,last_name,avatar')
+      .eq('id', userId)
+      .single(),
   ]);
 
   const friendships: any[] = fsRes.data ?? [];
   const myDna = myDnaRes.data ?? null;
+  const myUser = myUserRes.data ?? null;
 
   const friendIds = [...new Set(
     friendships.map((f: any) => f.user_id === userId ? f.friend_id : f.user_id)
   )].filter((id: string) => id !== userId);
 
   if (!friendIds.length) {
-    return new Response(JSON.stringify({ myDna, friendDnas: [], friendUsers: [], cmp1: [], cmp2: [] }), {
+    return new Response(JSON.stringify({ myDna, myUser, friendDnas: [], friendUsers: [], cmp1: [], cmp2: [] }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 
   const [friendDnaRes, friendUsersRes, cmp1Res, cmp2Res] = await Promise.all([
     admin.from('dna_profiles').select('user_id,favorite_genres,label').in('user_id', friendIds),
-    admin.from('users').select('id,display_name,user_name,first_name,last_name').in('id', friendIds),
+    admin.from('users').select('id,display_name,user_name,first_name,last_name,avatar').in('id', friendIds),
     admin.from('dna_comparisons').select('user_id_2,match_score').eq('user_id_1', userId),
     admin.from('dna_comparisons').select('user_id_1,match_score').eq('user_id_2', userId),
   ]);
 
   return new Response(JSON.stringify({
     myDna,
+    myUser,
     friendDnas: friendDnaRes.data ?? [],
     friendUsers: friendUsersRes.data ?? [],
     cmp1: cmp1Res.data ?? [],
