@@ -327,8 +327,7 @@ export function HeroCTAButtons() {
         </button>
         <button
           onClick={() => setComposerOpen(true)}
-          className="flex items-center justify-center gap-2 py-2 rounded-full font-semibold text-[13px] text-white active:scale-95 transition-transform"
-          style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)" }}
+          className="flex items-center justify-center gap-2 rounded-full border border-violet-200 bg-white py-2 text-[13px] font-semibold text-violet-700 shadow-sm transition-transform active:scale-95"
         >
           <MessageSquarePlus size={15} />
           Share a take
