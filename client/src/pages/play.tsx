@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { DailyHeroSection } from "@/components/daily-hero-section";
 import { supabase } from "@/lib/supabase";
-import { Brain, Vote, BarChart2, ChevronRight, ArrowRight, Smile } from "lucide-react";
+import { Brain, Vote, BarChart2, ChevronRight, ArrowRight } from "lucide-react";
 
 const gameModes = [
   {
@@ -167,9 +167,6 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
             background: "radial-gradient(circle at 75% 46%, rgba(139,74,248,0.3), transparent 23%), linear-gradient(135deg, #28104f 0%, #170a35 54%, #100625 100%)",
           }}
         >
-          <div className="pointer-events-none absolute right-[-24px] top-[76px] z-0 flex h-[160px] w-[160px] items-center justify-center rounded-full border-[3px] border-[#bc80ff] opacity-90 shadow-[0_0_28px_rgba(174,91,255,0.6)] sm:right-9 sm:h-[176px] sm:w-[176px]">
-            <Smile size={104} strokeWidth={1.5} className="text-[#c181ff]" />
-          </div>
           <div className="relative z-10">
             <DailyHeroSection embedded />
           </div>
