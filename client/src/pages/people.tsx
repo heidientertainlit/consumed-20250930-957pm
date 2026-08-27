@@ -193,7 +193,7 @@ export default function PeoplePage() {
               .sort((a, b) => Number(Boolean((b as any).profile_image_url || b.avatar_url || (b as any).avatar)) - Number(Boolean((a as any).profile_image_url || a.avatar_url || (a as any).avatar)))
               .slice(0, 4);
             const remaining = Math.max(0, band.people.length - visiblePeople.length);
-            return <button key={band.id} onClick={() => setSelectedBand(band.id)} className="group relative min-h-40 w-full overflow-hidden rounded-[24px] border p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6547b8] focus-visible:ring-offset-2" style={{ background: band.tint, borderColor: `${band.color}32` }}>
+            return <button key={band.id} onClick={() => setSelectedBand(band.id)} className="group relative min-h-40 w-full overflow-hidden rounded-[24px] border bg-white p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6547b8] focus-visible:ring-offset-2" style={{ borderColor: `${band.color}32` }}>
               <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full opacity-[.09]" style={{ background: band.color }} />
               <div className="relative flex h-full flex-col">
                 <div className="flex items-start justify-between gap-3">
@@ -209,8 +209,8 @@ export default function PeoplePage() {
                 </div>
                 <div className="mt-auto flex min-h-10 items-end justify-between gap-3 pt-4">
                   {band.people.length > 0 ? <div className="flex items-center">
-                    <div className="flex -space-x-2.5">{visiblePeople.map((person) => <span key={person.id} className="rounded-full border-2 shadow-sm" style={{ borderColor: band.tint }}><Avatar person={person} size="sm" /></span>)}</div>
-                    {remaining > 0 && <span className="-ml-2.5 flex h-9 min-w-9 items-center justify-center rounded-full border-2 px-1.5 text-[10px] font-black shadow-sm" style={{ background: band.color, borderColor: band.tint, color: "#fff" }}>+{remaining}</span>}
+                    <div className="flex -space-x-2.5">{visiblePeople.map((person) => <span key={person.id} className="rounded-full border-2 border-white shadow-sm"><Avatar person={person} size="sm" /></span>)}</div>
+                    {remaining > 0 && <span className="-ml-2.5 flex h-9 min-w-9 items-center justify-center rounded-full border-2 border-white px-1.5 text-[10px] font-black shadow-sm" style={{ background: band.color, color: "#fff" }}>+{remaining}</span>}
                   </div> : <p className="text-xs font-bold text-[#837982]">No matches here yet</p>}
                   {band.people.length > 0 && <p className="text-xs font-black" style={{ color: band.color }}>{band.people.length} {band.people.length === 1 ? "person" : "people"}</p>}
                 </div>
@@ -223,7 +223,7 @@ export default function PeoplePage() {
 
       {mode === "creators" && <section className="mt-7 animate-in fade-in duration-300"><div className="mb-4"><p className="eyebrow">The people behind the work</p><h2 className="section-title">Artists & Creators</h2></div>{creatorsQuery.isLoading ? <div className="h-28 rounded-2xl bg-[#e9e0d5] animate-pulse mb-4" /> : creators.length > 0 ? <div className="surface p-5 mb-5"><p className="font-black mb-4">You follow</p><div className="flex gap-4 overflow-x-auto pb-1">{creators.map((creator: any) => <div key={`${creator.external_source}-${creator.external_id}`} className="w-20 shrink-0 text-center"><Avatar person={{ display_name: creator.creator_name, avatar_url: creator.creator_image }} size="lg" /><p className="text-xs font-black mt-2 line-clamp-2">{creator.creator_name}</p><p className="text-[10px] text-[#8a8089] truncate">{creator.creator_role}</p></div>)}</div></div> : <div className="surface border-dashed p-5 mb-5 flex gap-3"><Heart className="text-[#c96172] shrink-0" size={21} /><p className="text-sm text-[#766c76]">You haven’t followed any creators yet. Start with a few whose work helps define your taste.</p></div>}<FollowCreatorsCard dismissible={false} /></section>}
     </main>
-    <style>{`.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.18em;font-weight:900;color:#9a6671}.section-title{font-size:1.5rem;font-weight:900;letter-spacing:-.04em}.surface{border:1px solid #dfd5c9;background:#fffaf2;border-radius:22px}`}</style>
+    <style>{`.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.18em;font-weight:900;color:#9a6671}.section-title{font-size:1.5rem;font-weight:900;letter-spacing:-.04em}.surface{border:1px solid #dfd5c9;background:#fff;border-radius:22px}`}</style>
   </div>;
 }
 
