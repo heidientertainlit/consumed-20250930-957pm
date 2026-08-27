@@ -197,13 +197,13 @@ export default function PeoplePage() {
                <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                <div className="flex h-full flex-col">
                  <div className="flex min-h-0 flex-1 items-center gap-3">
-                   <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-black/[.1] text-[#d18bff] shadow-[inset_0_0_24px_rgba(196,128,255,.18),0_0_20px_rgba(159,80,255,.12)]">
-                     <BandIcon size={35} strokeWidth={1.55} />
+                   <span className="grid h-16 w-16 shrink-0 place-items-center text-[#d18bff] drop-shadow-[0_0_10px_rgba(191,104,255,.35)]">
+                     <BandIcon size={42} strokeWidth={1.45} />
                    </span>
                    <div className="min-w-0 flex-1">
                      <h3 className="text-[18px] font-black leading-tight tracking-[-.025em]">{band.label}</h3>
                      <p className="mt-1 text-[14px] font-bold leading-tight text-[#c4a0ff]">{band.min}–{band.max}% match</p>
-                     <p className="mt-1.5 text-[11px] italic leading-snug text-white/55">{band.feeling}</p>
+                     <p className="mt-1.5 text-[9px] italic leading-snug text-white/50">{band.feeling}</p>
                    </div>
                    <ChevronRight size={18} className="shrink-0 text-[#c4a0ff]" />
                  </div>
