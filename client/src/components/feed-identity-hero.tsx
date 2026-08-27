@@ -125,7 +125,7 @@ export function FeedIdentityHero() {
         <div
           className="relative overflow-hidden rounded-3xl p-6"
           style={{
-            background: "linear-gradient(155deg, rgba(48,36,82,0.65) 0%, rgba(28,22,48,0.55) 100%)",
+            background: "linear-gradient(155deg, #302452 0%, #1c1630 100%)",
             border: "1px solid rgba(255,255,255,0.1)",
             boxShadow: "0 10px 40px rgba(124,58,237,0.12)",
           }}

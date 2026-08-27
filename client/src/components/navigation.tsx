@@ -27,6 +27,7 @@ interface NavigationProps {
   onTrackConsumption?: () => void;
   hideTopBar?: boolean;
   inline?: boolean;
+  topBarTone?: "default" | "purple";
 }
 
 interface MediaResult {
@@ -47,7 +48,7 @@ interface UserResult {
   email?: string;
 }
 
-export default function Navigation({ onTrackConsumption, hideTopBar, inline }: NavigationProps) {
+export default function Navigation({ onTrackConsumption, hideTopBar, inline, topBarTone = "default" }: NavigationProps) {
   const [location, setLocation] = useLocation();
   const { user, session } = useAuth();
   const { roomsEnabled } = useFeatureFlags();
@@ -504,7 +505,9 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline }: N
         style={{
           paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)',
           display: hideTopBar ? 'none' : undefined,
-          background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)',
+          background: topBarTone === "purple"
+            ? 'linear-gradient(to right, #21183b, #332052, #4a246b)'
+            : 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)',
         }}
       >
         <div className="flex justify-between items-center h-11 px-4 gap-2 min-w-0">
