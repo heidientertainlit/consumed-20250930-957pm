@@ -2183,6 +2183,9 @@ export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
                     >
                       Today's Play
                     </span>
+                    {embedded && (
+                      <Gamepad2 size={13} className="text-purple-400" />
+                    )}
                   </div>
                   {front && (
                     <div className="ml-0.5">
@@ -2241,12 +2244,8 @@ export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
               <div className={`flex items-center justify-between ${front ? 'mt-3' : 'mt-0'}`}>
                 {front ? (
                   <span className={`${embedded ? 'px-6 py-2.5 text-base rounded-full' : 'px-5 py-2 text-sm rounded-xl'} text-white font-semibold inline-flex items-center gap-2`} style={{ background: embedded ? 'linear-gradient(135deg, #9354e9, #6333bd)' : 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', border: embedded ? 'none' : '1px solid rgba(255,255,255,0.3)' }}>
-                    {isTriviaDay ? (playCompleted ? 'Share' : 'Play') : (callCompleted ? 'Share' : 'Weigh In')}
-                    {embedded && isTriviaDay && !playCompleted ? (
-                      <Gamepad2 size={16} strokeWidth={2} />
-                    ) : (
-                      <ArrowRight size={embedded ? 16 : 13} strokeWidth={2} />
-                    )}
+                    {isTriviaDay ? (playCompleted ? 'Share' : embedded ? 'Answer now' : 'Play') : (callCompleted ? 'Share' : 'Weigh In')}
+                    <ArrowRight size={embedded ? 16 : 13} strokeWidth={2} />
                   </span>
                 ) : (
                   <span className="text-white text-[11px] font-semibold px-3 py-1.5 rounded-full inline-flex items-center gap-1" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)' }}>
