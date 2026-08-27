@@ -178,28 +178,34 @@ export default function PeoplePage() {
   const affinity = tribesQuery.data;
   const activeBand = affinity?.bands?.find((band) => band.id === selectedBand);
   const tabs = [
-    { id: "tribes" as const, label: "Tribes", Icon: UsersRound },
+    { id: "tribes" as const, label: "Tribes", Icon: Atom },
     { id: "friends" as const, label: "Friends", Icon: Users },
-    { id: "creators" as const, label: "Artists & Creators", Icon: Music2 },
+    { id: "creators" as const, label: "Artists & Creators", Icon: Sparkles },
   ];
   const setTab = (next: Mode) => { setMode(next); setSelectedBand(null); };
 
   return <div className="min-h-[100dvh] pb-24 bg-gray-100 text-[#29233b]">
     <Navigation roomyTopBar />
-    <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
+    <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-3 sm:pt-6">
       <nav className="flex border-b border-gray-300" aria-label="People sections">
         {tabs.map(({ id, label, Icon }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
             aria-current={mode === id ? "page" : undefined}
-            className={`relative flex min-h-[72px] min-w-0 flex-1 items-center justify-center gap-2 px-1 text-[11px] font-semibold transition-colors sm:text-[14px] ${
+            className={`relative flex min-h-[66px] min-w-0 flex-1 items-center justify-center gap-2 px-1 text-[11px] font-semibold transition-colors sm:text-[14px] ${
               mode === id
                 ? "text-violet-700 after:absolute after:inset-x-0 after:-bottom-px after:h-[3px] after:rounded-full after:bg-violet-700"
                 : "text-[#625c67] hover:text-[#29233b]"
             }`}
           >
-            <Icon size={21} strokeWidth={1.8} />
+            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border ${
+              mode === id
+                ? "border-violet-200 bg-violet-100 text-violet-700"
+                : "border-[#e5e0e8] bg-white/70 text-[#625c67]"
+            }`}>
+              <Icon size={22} strokeWidth={1.7} />
+            </span>
             <span className="leading-tight">{label}</span>
           </button>
         ))}
