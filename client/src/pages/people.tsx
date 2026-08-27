@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { ArrowLeft, ArrowUpRight, Check, ChevronRight, Dna, LockKeyhole, Share2 } from "lucide-react";
 import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
@@ -29,8 +29,7 @@ type TribesResponse = { readiness: Affinity["readiness"]; tribes: Tribe[] };
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 const bands = [
-  { id: "your-people", label: "80–100", min: 80, max: 100, note: "Closest overlap" },
-  { id: "same-wavelength", label: "60–79", min: 60, max: 79, note: "Strong overlap" },
+  { id: "your-people", label: "60–100", min: 60, max: 100, note: "Strong overlap" },
   { id: "common-ground", label: "40–59", min: 40, max: 59, note: "Shared ground" },
   { id: "wildcards", label: "Under 40", min: 0, max: 39, note: "Different angles" },
 ] as const;
@@ -89,8 +88,9 @@ export default function PeoplePage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const automaticMatchBatches = useRef(0);
-  const [location, setLocation] = useLocation();
-  const params = useMemo(() => new URLSearchParams(location.split("?")[1] || ""), [location]);
+  const [, setLocation] = useLocation();
+  const search = useSearch();
+  const params = useMemo(() => new URLSearchParams(search), [search]);
   const tabParam = params.get("tab");
   const tab: Tab = tabParam === "friends" || tabParam === "tribes" || tabParam === "creators" ? tabParam : "matches";
   const selectedSlug = params.get("tribe");
@@ -98,7 +98,7 @@ export default function PeoplePage() {
   const setTribe = (slug?: string) => setLocation(slug ? `/people?tab=tribes&tribe=${encodeURIComponent(slug)}` : "/people?tab=tribes");
 
   const affinityQuery = useQuery({
-    queryKey: ["people-affinity-v5", user?.id], enabled: !!session?.access_token && tab === "matches",
+    queryKey: ["people-affinity-v6", user?.id], enabled: !!session?.access_token && tab === "matches",
     queryFn: () => functionRequest<Affinity>("people-affinity", session!.access_token, { action: "load", batch_size: 25 }), staleTime: 60_000,
   });
   const tribesQuery = useQuery({
@@ -107,7 +107,7 @@ export default function PeoplePage() {
   });
   const moreMatches = useMutation({
     mutationFn: () => functionRequest<Affinity>("people-affinity", session!.access_token, { action: "more", cursor: affinityQuery.data?.next_cursor, batch_size: 25 }),
-    onSuccess: (next) => queryClient.setQueryData<Affinity>(["people-affinity-v5", user?.id], (old) => {
+    onSuccess: (next) => queryClient.setQueryData<Affinity>(["people-affinity-v6", user?.id], (old) => {
       if (!old) return next;
       const mergedBands = bands.map((definition) => {
         const previous = old.bands?.find((band) => band.id === definition.id)?.people || [];

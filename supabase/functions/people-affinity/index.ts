@@ -11,13 +11,12 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 const pair = (a: string, b: string) => a < b ? [a, b] : [b, a];
 const BAND_DEFINITIONS = [
-  { id: "your-people", label: "80–100%", min: 80, max: 100, feeling: "Closest matches" },
-  { id: "same-wavelength", label: "60–79%", min: 60, max: 79, feeling: "Strong overlap" },
+  { id: "your-people", label: "60–100%", min: 60, max: 100, feeling: "Strong overlap" },
   { id: "common-ground", label: "40–59%", min: 40, max: 59, feeling: "Some common ground" },
   { id: "wildcards", label: "Under 40%", min: 0, max: 39, feeling: "Different perspectives" },
 ] as const;
 const emptyBandPeople = () => ({
-  "your-people": [] as any[], "same-wavelength": [] as any[],
+  "your-people": [] as any[],
   "common-ground": [] as any[], wildcards: [] as any[],
 });
 const serializeBands = (people: ReturnType<typeof emptyBandPeople>) =>
@@ -157,7 +156,7 @@ serve(async (req) => {
     for (const person of ordered) {
       const c = comparisons.get(person.id); if (!c) continue;
       const score = Number(c.match_score);
-      const key = score >= 80 ? "your-people" : score >= 60 ? "same-wavelength" : score >= 40 ? "common-ground" : "wildcards";
+      const key = score >= 60 ? "your-people" : score >= 40 ? "common-ground" : "wildcards";
       result[key].push({
         id: person.id,
         user_name: person.user_name,
