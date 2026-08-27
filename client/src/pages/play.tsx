@@ -186,19 +186,23 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
     <div className="min-h-[100dvh] bg-[#fbf8f5]">
       <Navigation roomyTopBar />
 
-      <main className="mx-auto max-w-[680px] px-4 pb-28 pt-4 sm:px-6 sm:pt-6">
-        <section
-          className="relative isolate overflow-hidden rounded-[26px] border border-[#56358e] px-4 py-3 text-white shadow-[0_14px_30px_rgba(48,21,91,0.14)] sm:px-6"
-          style={{
-            background: "linear-gradient(155deg, #302452 0%, #1c1630 100%)",
-          }}
-        >
-          <div className="relative z-10">
-            <DailyHeroSection embedded />
-            <RankWidget onNavigate={setLocation} insideHero />
-          </div>
-        </section>
+      <div style={{ background: "linear-gradient(180deg, #130b25 0%, #2c2150 100%)" }}>
+        <div className="mx-auto max-w-[680px] px-4 pb-6 pt-4 sm:px-6 sm:pt-6">
+          <section
+            className="relative isolate overflow-hidden rounded-[26px] border border-white/10 px-4 py-3 text-white shadow-[0_14px_30px_rgba(10,4,24,0.24)] sm:px-6"
+            style={{
+              background: "linear-gradient(155deg, #302452 0%, #1c1630 100%)",
+            }}
+          >
+            <div className="relative z-10">
+              <DailyHeroSection embedded />
+              <RankWidget onNavigate={setLocation} insideHero />
+            </div>
+          </section>
+        </div>
+      </div>
 
+      <main className="mx-auto max-w-[680px] px-4 pb-28 sm:px-6">
         <section className="pt-5">
           <p className="mb-2.5 px-0.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#87808f]">
             More ways to play
