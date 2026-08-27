@@ -184,8 +184,8 @@ export default function PeoplePage() {
     <Navigation roomyTopBar />
     <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
       <header className="mb-7">
-        <h1 className="text-[38px] font-black leading-none tracking-[-.045em] text-[#171328] sm:text-[44px]">People</h1>
-        <p className="mt-4 text-[17px] leading-snug text-[#716b79] sm:text-[19px]">Find your people through what you love.</p>
+        <h1 className="text-[32px] font-bold leading-[1.08] tracking-tight text-[#171328]">People</h1>
+        <p className="mt-2 text-[14px] font-medium leading-snug text-[#716b79]">Find your people through what you love.</p>
       </header>
 
       <nav className="grid grid-cols-3 gap-2 sm:gap-6" aria-label="People sections">
