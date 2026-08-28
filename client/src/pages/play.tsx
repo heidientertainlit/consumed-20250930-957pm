@@ -139,7 +139,7 @@ function RankWidget({
           ? 'border-[#c9a6fb] bg-[#fffcfa] shadow-[0_1px_3px_rgba(81,34,133,0.06)]'
           : 'border-transparent'
     }`}>
-      <span className={`w-7 shrink-0 text-right font-serif text-sm font-medium ${
+      <span className={`w-7 shrink-0 text-right text-xs font-bold ${
         insideHero ? (isMe ? 'text-[#c4a0ff]' : 'text-white/35') : (isMe ? 'text-[#5920a3]' : 'text-[#8c8790]')
       }`}>
         #{entry.rank}
@@ -152,7 +152,7 @@ function RankWidget({
       <span className={`shrink-0 text-xs font-semibold ${
         insideHero ? (isMe ? 'text-[#c4a0ff]' : 'text-white/35') : (isMe ? 'text-[#5920a3]' : 'text-[#8c8790]')
       }`}>
-        <span className="font-serif text-sm font-medium">{entry.score.toLocaleString()}</span> pts
+        {entry.score.toLocaleString()} pts
       </span>
     </div>
   );
