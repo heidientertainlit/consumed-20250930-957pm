@@ -100,27 +100,24 @@ export default function PeoplePage() {
   const selectedSlug = params.get("tribe");
   const setTab = (next: Tab) => setLocation(`/people?tab=${next}`);
   const setTribe = (slug?: string) => setLocation(slug ? `/people?tab=tribes&tribe=${encodeURIComponent(slug)}` : "/people?tab=tribes");
-  const openPerson = (person: Person) => {
+  const openPerson = async (person: Person) => {
     if (person.is_friend) {
       setLocation(`/user/${person.id}`);
       return;
     }
-    setSelectedPerson(person);
-  };
-  useEffect(() => {
-    if (!selectedPerson || !user?.id) return;
-    let active = true;
-    setRelationshipStatus("loading");
-    supabase
+    if (!user?.id) return;
+    const { data } = await supabase
       .from("friendships")
       .select("status")
-      .or(`and(user_id.eq.${user.id},friend_id.eq.${selectedPerson.id}),and(user_id.eq.${selectedPerson.id},friend_id.eq.${user.id})`)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (active) setRelationshipStatus(data?.status === "pending" ? "pending" : "none");
-      });
-    return () => { active = false; };
-  }, [selectedPerson?.id, user?.id]);
+      .or(`and(user_id.eq.${user.id},friend_id.eq.${person.id}),and(user_id.eq.${person.id},friend_id.eq.${user.id})`)
+      .maybeSingle();
+    if (data?.status === "accepted") {
+      setLocation(`/user/${person.id}`);
+      return;
+    }
+    setRelationshipStatus(data?.status === "pending" ? "pending" : "none");
+    setSelectedPerson(person);
+  };
   const sendFriendRequest = async () => {
     if (!selectedPerson || !session?.access_token) return;
     setIsSendingRequest(true);
