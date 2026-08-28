@@ -166,11 +166,11 @@ export function FeedIdentityHero() {
             <div className="flex-1 min-w-0">
               <h1 className={`${dna?.label ? "font-fraunces font-semibold" : "font-bold"} tracking-tight leading-[1.08]`}>
                 {prefix && (
-                  <span className="block text-[22px]" style={{ color: "rgba(255,255,255,0.9)" }}>
+                  <span className={`${dna?.label ? "font-fraunces" : ""} block text-[22px]`} style={{ color: "rgba(255,255,255,0.9)" }}>
                     {prefix}
                   </span>
                 )}
-                <span className="block text-[32px] text-white">
+                <span className={`${dna?.label ? "font-fraunces" : ""} block text-[32px] text-white`}>
                   {mainWords.join(" ")}
                 </span>
               </h1>
