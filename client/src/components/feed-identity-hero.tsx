@@ -225,9 +225,9 @@ export function FeedIdentityHero() {
                 <div className="flex min-w-[72px] flex-col items-start text-left">
                   <div className="flex items-center gap-1.5">
                     <s.Icon size={13} color={s.color} {...(s.Icon === Flame ? { fill: s.color } : {})} />
-                    <p className="whitespace-nowrap text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>{s.label}</p>
+                    <p className="font-serif text-[25px] font-medium leading-none tracking-[-.04em] text-white">{s.value}</p>
                   </div>
-                  <p className="mt-1.5 font-serif text-[25px] font-medium leading-none tracking-[-.04em] text-white">{s.value}</p>
+                  <p className="mt-1.5 whitespace-nowrap text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>{s.label}</p>
                 </div>
               );
               const borderStyle = idx > 0 ? { borderLeft: "1px solid rgba(255,255,255,0.08)" } : {};
