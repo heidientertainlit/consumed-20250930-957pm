@@ -360,7 +360,7 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
   if (!query.data?.readiness?.ready) return <div className="mt-7"><Readiness readiness={query.data?.readiness} /></div>;
   if (selected) return <TribeDetail tribe={selected} onBack={() => onSelect()} membership={membership} />;
   const tribes = query.data?.tribes || [];
-  return <section className="mt-7"><div className="mb-5"><p className="text-sm text-[#6e6475]">DNA can recommend. You decide where you belong.</p><h2 className="mt-1 text-xl font-bold tracking-[-.035em]">Tribes</h2></div>
+  return <section className="mt-7"><div className="mb-5"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Tribes</p><h2 className="mt-2 text-[22px] font-bold tracking-[-.035em] text-[#30203f]">Where your DNA fits.</h2><p className="mt-1 text-sm leading-5 text-[#746b78]">Find communities built around the things you love together.</p></div>
     {!tribes.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">There are no Tribes to recommend right now.</div> :
       <div className="grid gap-4">{tribes.map((tribe, index) => {
         const icons = [Sparkles, Heart, Moon, Leaf];
