@@ -3751,12 +3751,30 @@ export default function UserProfile() {
           <div className="px-4 py-4 space-y-4">
             {dnaProfileStatus === 'has_profile' && dnaProfile ? (
               <>
+                {dnaProfile.current_era && (
+                  <div className="relative min-h-[116px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-[#f5f0fa] px-5 py-5 shadow-sm">
+                    <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-[#ede3f6]" />
+                    <div className="pointer-events-none absolute -right-10 -top-14 h-52 w-52 rounded-full bg-[#d9c4e9]" />
+                    <div className="pointer-events-none absolute -right-5 -top-8 h-40 w-40 rounded-full bg-[#a77ac7]" />
+                    <div className="pointer-events-none absolute right-0 top-0 h-28 w-28 rounded-full bg-[#63318c]" />
+                    <div className="pointer-events-none absolute right-[-38px] top-[18px] h-24 w-24 rounded-full border border-white/50" />
+                    <div className="relative z-10 max-w-[62%]">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#4d3b58]">Current Era</p>
+                      <div className="mt-4 flex items-center gap-3 text-[#7435ad]">
+                        <Sparkles size={25} strokeWidth={1.7} className="shrink-0" />
+                        <p className="text-xl font-semibold leading-tight">
+                          {dnaProfile.current_era.replace(/_era$/, '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {/* Mostly Into + Recently shaping your DNA */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
                   <div className="grid grid-cols-2 gap-4">
                     {/* Mostly Into */}
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Mostly Into</h3>
+                      <h3 className="mb-3 text-[10px] font-medium uppercase tracking-[0.16em] text-[#685873]">Mostly Into</h3>
                       {dnaGenreSignals.length > 0 ? (() => {
                         const total = dnaGenreSignals.reduce((s: number, g: any) => s + g.source_count, 0) || 1;
                         const top = dnaGenreSignals.slice(0, 3);
@@ -3786,7 +3804,7 @@ export default function UserProfile() {
                     </div>
                     {/* Recently shaping your DNA */}
                     <div>
-                      <h3 className="text-[13px] font-semibold text-purple-600 mb-3">Recently shaping your DNA</h3>
+                      <h3 className="mb-3 text-[10px] font-medium uppercase tracking-[0.16em] text-[#685873]">Recently shaping your DNA</h3>
                       {(() => {
                         const items = currentlyList?.items?.slice(0, 3) || [];
                         if (items.length === 0) return <p className="text-xs text-gray-400">Nothing in progress</p>;
@@ -3819,9 +3837,9 @@ export default function UserProfile() {
                   </div>
                 </div>
 
-                {/* Your DNA Journey + Current Era */}
+                {/* Your DNA Journey */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div>
                     {/* Journey */}
                     <div>
                       <h3 className="text-xs font-bold text-gray-900 mb-3">Your DNA Journey</h3>
@@ -3871,40 +3889,6 @@ export default function UserProfile() {
                       })() : (
                         <p className="text-xs text-gray-400">No journey yet</p>
                       )}
-                    </div>
-                    {/* Current Era */}
-                    <div>
-                      <h3 className="text-xs font-bold text-gray-900 mb-3">Current Era</h3>
-                      {dnaProfile.current_era && (
-                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-purple-700 bg-purple-50 border border-purple-100 rounded-full px-3 py-1.5">
-                          <Sparkles size={11} className="text-purple-400 flex-shrink-0" />
-                          {dnaProfile.current_era.replace(/_era$/, '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                        </span>
-                      )}
-                      {(() => {
-                        const items = currentlyList?.items?.slice(0, 3) || [];
-                        if (items.length === 0) return null;
-                        return (
-                          <div className="mt-3">
-                            <p className="text-[10px] text-gray-400 mb-1.5">Influenced by</p>
-                            <div className="space-y-1.5">
-                              {items.map((item: any) => (
-                                <div
-                                  key={item.id}
-                                  className="flex items-center justify-between gap-2 cursor-pointer"
-                                  onClick={() => {
-                                    const id = (item.external_id || '').toString().replace(/^\//, '');
-                                    if (id) setLocation(`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${id}`);
-                                  }}
-                                >
-                                  <span className="text-xs text-gray-700 truncate">{item.title}</span>
-                                  <ChevronRight size={13} className="text-gray-300 flex-shrink-0" />
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })()}
                     </div>
                   </div>
                 </div>
@@ -4201,11 +4185,29 @@ export default function UserProfile() {
 
             {dnaProfileStatus === 'has_profile' && dnaProfile && (
               <>
+                {dnaProfile.current_era && (
+                  <div className="relative min-h-[116px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-[#f5f0fa] px-5 py-5 shadow-sm">
+                    <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-[#ede3f6]" />
+                    <div className="pointer-events-none absolute -right-10 -top-14 h-52 w-52 rounded-full bg-[#d9c4e9]" />
+                    <div className="pointer-events-none absolute -right-5 -top-8 h-40 w-40 rounded-full bg-[#a77ac7]" />
+                    <div className="pointer-events-none absolute right-0 top-0 h-28 w-28 rounded-full bg-[#63318c]" />
+                    <div className="pointer-events-none absolute right-[-38px] top-[18px] h-24 w-24 rounded-full border border-white/50" />
+                    <div className="relative z-10 max-w-[62%]">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#4d3b58]">Current Era</p>
+                      <div className="mt-4 flex items-center gap-3 text-[#7435ad]">
+                        <Sparkles size={25} strokeWidth={1.7} className="shrink-0" />
+                        <p className="text-xl font-semibold leading-tight">
+                          {dnaProfile.current_era.replace(/_era$/, '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {/* Mostly Into + Recently shaping their DNA */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Mostly Into</h3>
+                      <h3 className="mb-3 text-[10px] font-medium uppercase tracking-[0.16em] text-[#685873]">Mostly Into</h3>
                       {dnaGenreSignals.length > 0 ? (() => {
                         const total = dnaGenreSignals.reduce((sum: number, g: any) => sum + g.source_count, 0) || 1;
                         const top = dnaGenreSignals.slice(0, 3);
@@ -4234,7 +4236,7 @@ export default function UserProfile() {
                       )}
                     </div>
                     <div>
-                      <h3 className="text-[13px] font-semibold text-purple-600 mb-3">Recently shaping their DNA</h3>
+                      <h3 className="mb-3 text-[10px] font-medium uppercase tracking-[0.16em] text-[#685873]">Recently shaping their DNA</h3>
                       {(() => {
                         const items = currentlyList?.items?.slice(0, 3) || [];
                         if (items.length === 0) return <p className="text-xs text-gray-400">Nothing in progress</p>;
@@ -4267,9 +4269,9 @@ export default function UserProfile() {
                   </div>
                 </div>
 
-                {/* DNA Journey + Current Era */}
+                {/* DNA Journey */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div>
                     <div>
                       <h3 className="text-xs font-bold text-gray-900 mb-3">DNA Journey</h3>
                       {dnaSnapshots.length > 0 ? (() => {
@@ -4318,39 +4320,6 @@ export default function UserProfile() {
                       })() : (
                         <p className="text-xs text-gray-400">No journey yet</p>
                       )}
-                    </div>
-                    <div>
-                      <h3 className="text-xs font-bold text-gray-900 mb-3">Current Era</h3>
-                      {dnaProfile.current_era && (
-                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-purple-700 bg-purple-50 border border-purple-100 rounded-full px-3 py-1.5">
-                          <Sparkles size={11} className="text-purple-400 flex-shrink-0" />
-                          {dnaProfile.current_era.replace(/_era$/, '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                        </span>
-                      )}
-                      {(() => {
-                        const items = currentlyList?.items?.slice(0, 3) || [];
-                        if (items.length === 0) return null;
-                        return (
-                          <div className="mt-3">
-                            <p className="text-[10px] text-gray-400 mb-1.5">Influenced by</p>
-                            <div className="space-y-1.5">
-                              {items.map((item: any) => (
-                                <div
-                                  key={item.id}
-                                  className="flex items-center justify-between gap-2 cursor-pointer"
-                                  onClick={() => {
-                                    const id = (item.external_id || '').toString().replace(/^\//, '');
-                                    if (id) setLocation(`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${id}`);
-                                  }}
-                                >
-                                  <span className="text-xs text-gray-700 truncate">{item.title}</span>
-                                  <ChevronRight size={13} className="text-gray-300 flex-shrink-0" />
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })()}
                     </div>
                   </div>
                 </div>
