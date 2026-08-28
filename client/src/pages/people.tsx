@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
-import { ArrowLeft, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, LockKeyhole, Share2, Users } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, LockKeyhole, Share2, Sparkles, Users } from "lucide-react";
 import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
 import FriendsManager from "@/components/friends-manager";
@@ -317,16 +317,41 @@ export default function PeoplePage() {
 }
 
 function Matches({ query, more, onSelectPerson, onInvite }: { query: ReturnType<typeof useQuery<Affinity>>; more: ReturnType<typeof useMutation<Affinity, Error, void>>; onSelectPerson: (person: Person) => void; onInvite: () => void }) {
-  if (query.isLoading) return <div className="mt-7 space-y-3">{[1, 2, 3, 4].map((item) => <div key={item} className="h-[66px] animate-pulse rounded-xl bg-[#e6e0e7]" />)}</div>;
+  if (query.isLoading) return <div className="mt-7 space-y-3"><div className="h-5 w-48 animate-pulse rounded bg-[#e6e0e7]" />{[1, 2].map((item) => <div key={item} className="h-[252px] animate-pulse rounded-[22px] bg-[#e6e0e7]" />)}<div className="h-28 animate-pulse rounded-xl bg-[#e6e0e7]" /></div>;
   if (query.isError) return <ErrorState onRetry={() => query.refetch()} />;
   const data = query.data;
   if (!data?.ready) return <div className="mt-7"><Readiness readiness={data?.readiness} onInvite={onInvite} /></div>;
   const ordered = bands.map((definition) => ({ ...definition, people: data.bands?.find((band) => band.id === definition.id)?.people || [] })).filter((band) => band.people.length);
+  const featured = ordered.flatMap((band) => band.people.map((person) => ({ person, band }))).sort((a, b) => (b.person.match_score || 0) - (a.person.match_score || 0)).slice(0, 2);
+  const featuredIds = new Set(featured.map(({ person }) => person.id));
+  const remaining = ordered.map((band) => ({ ...band, people: band.people.filter((person) => !featuredIds.has(person.id)) })).filter((band) => band.people.length);
   return <section className="mt-7"><div className="mb-5 flex items-end justify-between gap-4"><div><h2 className="text-xl font-semibold tracking-[-.02em]">See who gets you.</h2><p className="mt-1 max-w-xl text-sm leading-5 text-[#6e6475]">Discover people based on what you both watch, read, listen to, play, and love.</p></div>{data.compared_now ? <span className="shrink-0 text-xs font-semibold text-[#79618f]">{data.compared_now} newly compared</span> : null}</div>
     {!ordered.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">No comparisons to show yet. Your matches will arrive as more people build their DNA.</div> :
-      <div className="divide-y divide-[#dfd8e1] border-y border-[#dfd8e1]">{ordered.map((band) => <div key={band.id} className="py-5"><div className="mb-2 flex items-baseline justify-between"><h3 className="text-[11px] font-bold uppercase tracking-[.15em] text-[#65457b]">{band.label}%</h3><span className="text-xs text-[#857a8b]">{band.note}</span></div>{band.people.map((person) => <MatchRow key={person.id} person={person} onSelect={onSelectPerson} />)}</div>)}</div>}
+      <>
+        {featured.length > 0 && <div className="mb-9"><div className="mb-3 flex items-center gap-2"><Sparkles size={15} className="text-[#65457b]" /><div><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">Your best matches</h3><p className="text-xs text-[#7d7382]">People with the most in common right now.</p></div></div><div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person, band }, index) => <FeaturedMatch key={person.id} person={person} band={band} index={index} onSelect={onSelectPerson} />)}</div></div>}
+        {remaining.length > 0 && <div><div className="mb-3 flex items-end justify-between"><div><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">More to explore</h3><p className="mt-0.5 text-xs text-[#7d7382]">Every overlap is a place to start.</p></div></div><div className="divide-y divide-[#dfd8e1] border-y border-[#dfd8e1]">{remaining.map((band) => <div key={band.id} className="py-5"><div className="mb-2 flex items-baseline justify-between"><h3 className="text-[11px] font-bold uppercase tracking-[.15em] text-[#65457b]">{band.label}%</h3><span className="text-xs text-[#857a8b]">{band.note}</span></div>{band.people.map((person) => <MatchRow key={person.id} person={person} onSelect={onSelectPerson} />)}</div>)}</div></div>}
+      </>}
     {data.has_more && <button disabled={more.isPending} onClick={() => more.mutate()} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#503574] disabled:opacity-50">Compare more people <ChevronRight size={16} /></button>}
   </section>;
+}
+
+function FeaturedMatch({ person, band, index, onSelect }: { person: Person; band: { label: string; note: string }; index: number; onSelect: (person: Person) => void }) {
+  const shared = (person.shared_titles || []).map((item) => typeof item === "string" ? item : item.title || item.name).filter((title): title is string => Boolean(title)).slice(0, 3);
+  const fallbackEvidence = [person.shared_genres?.[0], person.shared_creators?.[0]].filter((item): item is string => Boolean(item));
+  const tiles = shared.length ? shared : fallbackEvidence;
+  const totalShared = (person.shared_titles?.length || 0) + (person.shared_genres?.length || 0) + (person.shared_creators?.length || 0);
+  const surface = index % 2 ? "from-[#f1eaf2] via-[#fbf8f7] to-[#eee7f1]" : "from-[#eee6f4] via-[#fbf9fa] to-[#f1e9ee]";
+  return <button type="button" onClick={() => onSelect(person)} className={`group relative overflow-hidden rounded-[22px] border border-[#ddd4e0] bg-gradient-to-br ${surface} p-4 text-left shadow-[0_7px_18px_rgba(54,36,71,.06)] transition duration-300 hover:-translate-y-0.5 hover:border-[#bca8c7] hover:shadow-[0_12px_25px_rgba(54,36,71,.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#624183] focus-visible:ring-offset-2`}>
+    <span className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-[#d9cae5]/35" />
+    <div className="relative flex items-start gap-3"><Avatar person={person} /><div className="min-w-0 flex-1"><div className="flex min-w-0 items-center gap-2"><p className="truncate text-[15px] font-bold text-[#2c2038]">{nameFor(person)}</p><span className={`shrink-0 text-[10px] font-bold ${person.is_friend ? "text-[#356454]" : "text-[#786384]"}`}>{person.is_friend ? "Friend" : "New"}</span></div><p className="mt-0.5 truncate text-xs text-[#776d7d]">{evidenceFor(person)}</p></div><div className="text-right"><p className="font-serif text-3xl leading-none tracking-[-.06em] text-[#4f2d73]">{Math.round(person.match_score || 0)}%</p><span className="mt-1 inline-block rounded-full bg-[#5b387f] px-2 py-1 text-[8px] font-bold uppercase tracking-[.11em] text-white">{band.note}</span></div></div>
+    <div className="relative mt-5"><p className="mb-2 text-[11px] font-bold uppercase tracking-[.12em] text-[#67447c]">You both love</p>{tiles.length ? <div className="flex gap-2">{tiles.map((title, tileIndex) => <SharedTitleTile key={`${title}-${tileIndex}`} title={title} index={tileIndex} />)}{totalShared > tiles.length && <div className="flex aspect-[4/5] w-[64px] shrink-0 flex-col items-center justify-center rounded-xl bg-[#e7dfee] text-[#583875]"><span className="text-lg font-bold">+{totalShared - tiles.length}</span><span className="text-[9px] font-semibold">more</span></div>}</div> : <div className="rounded-xl border border-[#dfd6e2] bg-white/60 px-3 py-4 text-xs text-[#756b79]">Your taste profiles were compared across media.</div>}</div>
+    <div className="relative mt-4 flex items-center justify-between border-t border-[#dcd2df] pt-3 text-xs font-semibold text-[#614276]"><span>{totalShared ? `${totalShared} thing${totalShared === 1 ? "" : "s"} in common` : "Taste profile compared"}</span><ChevronRight size={16} className="transition-transform duration-200 group-hover:translate-x-0.5" /></div>
+  </button>;
+}
+
+function SharedTitleTile({ title, index }: { title: string; index: number }) {
+  const covers = ["from-[#61417b] to-[#b36d84]", "from-[#3d6074] to-[#83a3a0]", "from-[#9a5b60] to-[#ddaa7d]"];
+  return <div className={`relative aspect-[4/5] w-[64px] shrink-0 overflow-hidden rounded-xl bg-gradient-to-br ${covers[index % covers.length]} p-2 shadow-sm`}><span className="absolute inset-x-0 top-0 h-px bg-white/50" /><p className="line-clamp-4 pt-1 text-[10px] font-bold leading-[1.15] tracking-[-.02em] text-white [text-shadow:0_1px_8px_rgba(37,22,48,.35)]">{title}</p></div>;
 }
 
 function MatchRow({ person, onSelect }: { person: Person; onSelect: (person: Person) => void }) {
