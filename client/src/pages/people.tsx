@@ -255,7 +255,7 @@ export default function PeoplePage() {
       <header className="pt-6 sm:pt-8">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#765480]">People</p>
-          <h1 className="mt-1 text-[32px] font-medium leading-[1.05] tracking-[-.025em] text-[#251738] sm:text-4xl">Taste, in company.</h1>
+          <h1 className="mt-1 text-[28px] font-medium leading-[1.05] tracking-[-.025em] text-[#251738] sm:text-3xl">Taste, in company.</h1>
         </div>
         <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-[#dfd5e5] bg-[#eee8f3] px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
