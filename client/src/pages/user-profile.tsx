@@ -3391,38 +3391,50 @@ export default function UserProfile() {
             <div className="relative my-5 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
 
             {/* Stats — 3-column row */}
-            <div className="relative grid grid-cols-3 gap-2 mb-5">
+            <div className="relative mb-5 grid grid-cols-3">
               {/* Points */}
               <button
                 onClick={() => setLocation('/points')}
-                className="flex flex-col items-center text-center transition-all active:scale-95"
+                className="flex justify-center text-left transition-all active:scale-95"
                 data-testid="points-breakdown-link"
               >
-                <Trophy size={15} className="text-amber-400 mb-1" />
-                <span className="font-serif text-base font-medium text-white leading-none">
-                  {isLoadingPoints ? '…' : (userPoints?.all_time || 0).toLocaleString()}
+                <span className="flex w-[84px] flex-col items-start">
+                  <span className="flex items-center gap-2">
+                    <Trophy size={22} className="text-amber-400" />
+                    <span className="font-serif text-[25px] font-medium leading-none tracking-[-.04em] text-white">
+                      {isLoadingPoints ? '…' : (userPoints?.all_time || 0).toLocaleString()}
+                    </span>
+                  </span>
+                  <span className="mt-1.5 text-[8px] font-bold uppercase tracking-[.12em]" style={{ color: 'rgba(255,255,255,0.68)' }}>Points</span>
                 </span>
-                <span className="text-[10px] leading-tight mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>pts</span>
               </button>
 
               {/* Leaderboard */}
               <Link href="/leaderboard">
-                <div className="flex flex-col items-center text-center cursor-pointer transition-all active:scale-95">
-                  <Medal size={15} className="text-purple-300 mb-1" />
-                  <span className="font-serif text-base font-medium text-white leading-none">
-                    {userRank ? `#${userRank.global}` : '—'}
+                <div className="flex justify-center border-l border-white/10 text-left cursor-pointer transition-all active:scale-95">
+                  <span className="flex w-[84px] flex-col items-start">
+                    <span className="flex items-center gap-2">
+                      <Medal size={22} className="text-purple-300" />
+                      <span className="font-serif text-[25px] font-medium leading-none tracking-[-.04em] text-white">
+                        {userRank ? `#${userRank.global}` : '—'}
+                      </span>
+                    </span>
+                    <span className="mt-1.5 text-[8px] font-bold uppercase tracking-[.12em]" style={{ color: 'rgba(255,255,255,0.68)' }}>Leaderboard</span>
                   </span>
-                  <span className="text-[10px] leading-tight mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>leaderboard</span>
                 </div>
               </Link>
 
               {/* Tracked */}
-              <div className="flex flex-col items-center text-center">
-                <BarChart3 size={15} className="text-violet-300 mb-1" />
-                <span className="font-serif text-base font-medium text-white leading-none">
-                  {!isOwnProfile && friendshipStatus !== 'friends' ? '—' : totalItemsLogged}
+              <div className="flex justify-center border-l border-white/10 text-left">
+                <span className="flex w-[84px] flex-col items-start">
+                  <span className="flex items-center gap-2">
+                    <BarChart3 size={22} className="text-violet-300" />
+                    <span className="font-serif text-[25px] font-medium leading-none tracking-[-.04em] text-white">
+                      {!isOwnProfile && friendshipStatus !== 'friends' ? '—' : totalItemsLogged}
+                    </span>
+                  </span>
+                  <span className="mt-1.5 text-[8px] font-bold uppercase tracking-[.12em]" style={{ color: 'rgba(255,255,255,0.68)' }}>Tracked</span>
                 </span>
-                <span className="text-[10px] leading-tight mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>tracked</span>
               </div>
             </div>
 
