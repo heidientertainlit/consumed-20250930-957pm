@@ -3168,6 +3168,15 @@ export default function UserProfile() {
       <div className="min-h-screen bg-gray-100 pb-24">
         <Navigation roomyTopBar />
         <main className="mx-auto max-w-lg px-4 pt-8">
+          <button
+            type="button"
+            onClick={() => setLocation('/people')}
+            className="mb-4 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+            aria-label="Back to People"
+          >
+            <ChevronLeft size={18} />
+            Back to People
+          </button>
           <section className="rounded-3xl border border-violet-100 bg-white px-6 py-9 text-center shadow-sm">
             {userProfileData?.avatar ? (
               <img
