@@ -38,4 +38,3 @@
 - [Friend-gated profiles](friend-gated-profiles.md) — Tribes may preview affinity matches, but full member DNA and consumption profiles require an accepted friendship.
 - [Automatic affinity discovery](affinity-discovery-default.md) — eligible public profiles join discovery automatically; friends rank first, then similar new people; private/blocked remain excluded.
 - [Avatar upload consistency](avatar-upload-consistency.md) — avatar writes are server-authoritative and concurrency-guarded; never overwrite the currently referenced Storage object from the client.
-- [Typography override specificity](typography-override-specificity.md) — global typography targets every element; apply alternate font classes to nested text spans, not only their parent heading.
