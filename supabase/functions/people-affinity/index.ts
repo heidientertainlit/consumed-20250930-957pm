@@ -11,9 +11,9 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 const pair = (a: string, b: string) => a < b ? [a, b] : [b, a];
 const BAND_DEFINITIONS = [
-  { id: "your-people", label: "60–100%", min: 60, max: 100, feeling: "Strong overlap" },
-  { id: "common-ground", label: "40–59%", min: 40, max: 59, feeling: "Some common ground" },
-  { id: "wildcards", label: "Under 40%", min: 0, max: 39, feeling: "Different perspectives" },
+  { id: "your-people", label: "65–100%", min: 65, max: 100, feeling: "Your People" },
+  { id: "common-ground", label: "35–64%", min: 35, max: 64, feeling: "Common Ground" },
+  { id: "wildcards", label: "0–34%", min: 0, max: 34, feeling: "Different Vibes" },
 ] as const;
 const emptyBandPeople = () => ({
   "your-people": [] as any[],
@@ -156,7 +156,7 @@ serve(async (req) => {
     for (const person of ordered) {
       const c = comparisons.get(person.id); if (!c) continue;
       const score = Number(c.match_score);
-      const key = score >= 60 ? "your-people" : score >= 40 ? "common-ground" : "wildcards";
+      const key = score >= 65 ? "your-people" : score >= 35 ? "common-ground" : "wildcards";
       result[key].push({
         id: person.id,
         user_name: person.user_name,
