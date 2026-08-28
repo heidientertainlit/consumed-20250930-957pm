@@ -489,7 +489,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-2 p-3 border border-violet-100">
       <div className="flex items-center gap-1.5 mb-1 px-1">
         <Flame size={15} className="text-orange-500 fill-orange-500 shrink-0" />
-        <span className="now-editorial-kicker text-[13px] font-semibold text-violet-600 truncate">{single ? 'People are talking' : 'Trending Takes'}</span>
+        <span className="text-[13px] font-semibold text-violet-600 truncate">{single ? 'People are talking' : 'Trending Takes'}</span>
         {!single && <span className="text-[11px] text-gray-400 font-medium ml-auto">Trending now</span>}
       </div>
 
@@ -514,7 +514,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="now-editorial-title text-[18px] font-bold text-gray-900 leading-snug cursor-pointer" onClick={() => onOpenMedia(g)}>{g.title}</p>
+                    <p className="text-[18px] font-bold text-gray-900 leading-snug cursor-pointer" onClick={() => onOpenMedia(g)}>{g.title}</p>
                     <p className="text-[11.5px] text-gray-500 mt-0.5">
                       {extScores[g.key] && <><span className="font-semibold text-gray-700">{extScores[g.key]}</span> · </>}{g.talkingCount} people talking
                     </p>
@@ -551,7 +551,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                 <div className="flex-1 min-w-0">
                   {/* Take is the headline */}
                   {topGlimpse ? (
-                    <p className="now-editorial-take text-[14px] font-normal text-gray-800 leading-snug line-clamp-3">
+                    <p className="text-[14px] font-normal text-gray-800 leading-snug line-clamp-3">
                       "{topGlimpse.content}"
                     </p>
                   ) : (
@@ -589,7 +589,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                                   className="block w-full text-left"
                                   onClick={() => { setActiveTakeId(isActive ? null : takeId); setReplyOpenId(null); setCommentText(''); }}
                                 >
-                                  <p className={`now-editorial-take text-[15px] text-gray-900 leading-snug ${isActive ? '' : 'line-clamp-3'}`}>{t.content}</p>
+                                  <p className={`text-[15px] text-gray-900 leading-snug ${isActive ? '' : 'line-clamp-3'}`}>{t.content}</p>
                                 </button>
                               ) : t.rating ? (
                                 <button
@@ -8821,8 +8821,7 @@ export default function Feed() {
   return (
     <GuestGate enabled={isGuestMode}>
     <div className="min-h-screen bg-gray-100 pb-32">
-      {/* Typography experiment is intentionally scoped to Now. Remove this class to revert. */}
-      <div id="feed-page" className="now-serif-trial">
+      <div id="feed-page">
       <Navigation onTrackConsumption={handleTrackConsumption} topBarTone="purple" roomyTopBar />
 
       {/* Guest banner — visible only when browsing logged-out */}
