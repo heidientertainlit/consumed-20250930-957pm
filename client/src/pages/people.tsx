@@ -255,7 +255,7 @@ export default function PeoplePage() {
       <header className="pt-6 sm:pt-8">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#765480]">People</p>
-          <h1 className="mt-1 font-serif text-[32px] leading-none tracking-[-.045em] text-[#251738] sm:text-4xl">Taste, in company.</h1>
+          <h1 className="mt-1 text-[32px] font-semibold leading-none tracking-[-.045em] text-[#251738] sm:text-4xl">Taste, in company.</h1>
         </div>
         <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-[#dfd5e5] bg-[#eee8f3] px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -322,7 +322,7 @@ function Matches({ query, more, onSelectPerson, onInvite }: { query: ReturnType<
   const data = query.data;
   if (!data?.ready) return <div className="mt-7"><Readiness readiness={data?.readiness} onInvite={onInvite} /></div>;
   const ordered = bands.map((definition) => ({ ...definition, people: data.bands?.find((band) => band.id === definition.id)?.people || [] })).filter((band) => band.people.length);
-  return <section className="mt-7"><div className="mb-5 flex items-end justify-between"><div><p className="text-sm text-[#6e6475]">Compatibility, without the performance.</p><h2 className="mt-1 text-xl font-bold tracking-[-.035em]">People with a real overlap</h2></div>{data.compared_now ? <span className="text-xs font-semibold text-[#79618f]">{data.compared_now} newly compared</span> : null}</div>
+  return <section className="mt-7"><div className="mb-5 flex items-end justify-between gap-4"><div><h2 className="text-xl font-bold tracking-[-.035em]">See who gets you.</h2><p className="mt-1 max-w-xl text-sm leading-5 text-[#6e6475]">Discover people based on what you both watch, read, listen to, play, and love.</p></div>{data.compared_now ? <span className="shrink-0 text-xs font-semibold text-[#79618f]">{data.compared_now} newly compared</span> : null}</div>
     {!ordered.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">No comparisons to show yet. Your matches will arrive as more people build their DNA.</div> :
       <div className="divide-y divide-[#dfd8e1] border-y border-[#dfd8e1]">{ordered.map((band) => <div key={band.id} className="py-5"><div className="mb-2 flex items-baseline justify-between"><h3 className="text-[11px] font-bold uppercase tracking-[.15em] text-[#65457b]">{band.label}%</h3><span className="text-xs text-[#857a8b]">{band.note}</span></div>{band.people.map((person) => <MatchRow key={person.id} person={person} onSelect={onSelectPerson} />)}</div>)}</div>}
     {data.has_more && <button disabled={more.isPending} onClick={() => more.mutate()} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#503574] disabled:opacity-50">Compare more people <ChevronRight size={16} /></button>}
