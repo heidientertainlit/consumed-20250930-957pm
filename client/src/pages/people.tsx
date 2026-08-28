@@ -98,7 +98,7 @@ export default function PeoplePage() {
   const setTribe = (slug?: string) => setLocation(slug ? `/people?tab=tribes&tribe=${encodeURIComponent(slug)}` : "/people?tab=tribes");
 
   const affinityQuery = useQuery({
-    queryKey: ["people-affinity-v7", user?.id], enabled: !!session?.access_token && tab === "matches",
+    queryKey: ["people-affinity-v9", user?.id], enabled: !!session?.access_token && tab === "matches",
     queryFn: () => functionRequest<Affinity>("people-affinity", session!.access_token, { action: "load", batch_size: 25 }), staleTime: 60_000,
   });
   const tribesQuery = useQuery({
@@ -107,7 +107,7 @@ export default function PeoplePage() {
   });
   const moreMatches = useMutation({
     mutationFn: () => functionRequest<Affinity>("people-affinity", session!.access_token, { action: "more", cursor: affinityQuery.data?.next_cursor, batch_size: 25 }),
-    onSuccess: (next) => queryClient.setQueryData<Affinity>(["people-affinity-v7", user?.id], (old) => {
+    onSuccess: (next) => queryClient.setQueryData<Affinity>(["people-affinity-v9", user?.id], (old) => {
       if (!old) return next;
       const mergedBands = bands.map((definition) => {
         const previous = old.bands?.find((band) => band.id === definition.id)?.people || [];

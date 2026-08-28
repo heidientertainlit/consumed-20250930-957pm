@@ -1,4 +1,4 @@
-export const AFFINITY_ALGORITHM_VERSION = "sparse-weighted-jaccard-v3";
+export const AFFINITY_ALGORITHM_VERSION = "dense-overlap-jaccard-v4";
 
 export type AffinitySignal = {
   signal_type: string;
@@ -25,6 +25,7 @@ export function scoreAffinitySignals(left: AffinitySignal[], right: AffinitySign
   let intersection = 0;
   let union = 0;
   let hasSubstantiveOverlap = false;
+  let substantiveOverlapCount = 0;
   const shared_genres: string[] = [];
   const shared_creators: string[] = [];
   const user_unique: string[] = [];
@@ -41,7 +42,10 @@ export function scoreAffinitySignals(left: AffinitySignal[], right: AffinitySign
     union += Math.max(leftStrength, rightStrength) * weight;
 
     if (leftStrength > 0 && rightStrength > 0) {
-      if (type !== "media_type") hasSubstantiveOverlap = true;
+      if (type !== "media_type") {
+        hasSubstantiveOverlap = true;
+        substantiveOverlapCount += 1;
+      }
       if (type === "genre") shared_genres.push(value);
       if (type === "creator") shared_creators.push(value);
     } else if (leftStrength >= 0.15) {
@@ -55,7 +59,10 @@ export function scoreAffinitySignals(left: AffinitySignal[], right: AffinitySign
   // DNA vectors are intentionally sparse and high-dimensional. Calibrate a
   // genuine title/genre/creator intersection while leaving media-type-only
   // overlap on the unadjusted low scale.
-  const calibratedScore = hasSubstantiveOverlap ? Math.pow(rawScore, 0.35) : rawScore;
+  const overlapDensityBonus = Math.min(0.2, Math.max(0, substantiveOverlapCount - 2) * 0.02);
+  const calibratedScore = hasSubstantiveOverlap
+    ? Math.min(1, Math.pow(rawScore, 0.45) + overlapDensityBonus)
+    : rawScore;
   return {
     match_score: Math.round(calibratedScore * 100),
     shared_genres: shared_genres.slice(0, 10),

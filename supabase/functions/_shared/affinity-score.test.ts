@@ -22,7 +22,14 @@ test("disjoint profiles score zero instead of defaulting to 50", () => {
 test("non-shared interests lower otherwise strong overlap", () => {
   const left = [signal("genre", "drama", 1), signal("genre", "comedy", 1)];
   const right = [signal("genre", "drama", 1), signal("genre", "horror", 1)];
-  assert.equal(scoreAffinitySignals(left, right).match_score, 68);
+  assert.equal(scoreAffinitySignals(left, right).match_score, 61);
+});
+
+test("dense substantive overlap can reach the top tier despite long-tail differences", () => {
+  const shared = Array.from({ length: 12 }, (_, index) => signal("genre", `shared-${index}`, 1));
+  const left = [...shared, ...Array.from({ length: 20 }, (_, index) => signal("show", `left-${index}`, 1))];
+  const right = [...shared, ...Array.from({ length: 20 }, (_, index) => signal("show", `right-${index}`, 1))];
+  assert.ok(scoreAffinitySignals(left, right).match_score >= 65);
 });
 
 test("broad media type overlap is deliberately low weight", () => {
