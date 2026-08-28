@@ -109,7 +109,7 @@ export function FeedIdentityHero() {
   };
 
   const stats: { Icon: typeof Flame; color: string; value: string; label: string; href?: string; onClick?: () => void }[] = [
-    { Icon: Flame, color: "#fb923c", value: String(streak), label: "Play streak", href: "/play?open=todays-play" },
+    { Icon: Flame, color: "#fb923c", value: String(streak), label: "Play Streak", href: "/play?open=todays-play" },
   ];
   if (globalRank) stats.push({ Icon: Trophy, color: "#fbbf24", value: `#${globalRank}`, label: "Leaderboard", href: "/leaderboard" });
   stats.push({ Icon: Library, color: "#a78bfa", value: tracked.toLocaleString(), label: "Tracked" });
@@ -227,7 +227,7 @@ export function FeedIdentityHero() {
                     <s.Icon size={22} color={s.color} {...(s.Icon === Flame ? { fill: s.color } : {})} />
                     <p className="font-serif text-[25px] font-medium leading-none tracking-[-.04em] text-white">{s.value}</p>
                   </div>
-                  <p className="mt-1.5 whitespace-nowrap text-left font-serif text-[11px] font-normal tracking-normal" style={{ color: "rgba(255,255,255,0.5)" }}>{s.label}</p>
+                  <p className="mt-1.5 whitespace-nowrap text-left font-serif text-[11px] font-light tracking-normal" style={{ color: "rgba(255,255,255,0.5)" }}>{s.label}</p>
                 </div>
               );
               const borderStyle = idx > 0 ? { borderLeft: "1px solid rgba(255,255,255,0.08)" } : {};
