@@ -150,6 +150,37 @@
   .font-fraunces {
     font-family: 'Fraunces', Georgia, serif !important;
   }
+
+  /*
+   * NOW EDITORIAL TYPE TRIAL
+   * Scoped exclusively to the Now feed (`#feed-page.now-serif-trial`).
+   * Revert path: remove `now-serif-trial` from feed.tsx, or remove this block.
+   * Controls, metadata, names, navigation, and feed density intentionally retain
+   * the established Plus Jakarta Sans / Poppins system.
+   */
+  #feed-page.now-serif-trial .now-editorial-kicker,
+  #feed-page.now-serif-trial .now-editorial-title,
+  #feed-page.now-serif-trial .now-editorial-take {
+    font-family: 'Fraunces', Georgia, serif !important;
+    font-optical-sizing: auto;
+  }
+
+  #feed-page.now-serif-trial .now-editorial-kicker {
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+
+  #feed-page.now-serif-trial .now-editorial-title {
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+  }
+
+  #feed-page.now-serif-trial .now-editorial-take {
+    font-weight: 400;
+    letter-spacing: -0.012em;
+    line-height: 1.35;
+  }
 }
 
 @layer utilities {

@@ -71,3 +71,10 @@ id = "G5uVBTSL0n8TGcj8kmH7U"
 uri = "file://consumed_master.csv"
 type = "table"
 title = "Consumed Master — Anonymous, One Row Per User"
+
+[[outputs]]
+id = "q6zgh5CwONKrZZjn75egw"
+uri = "file://screenshots/now-serif-trial.jpg"
+type = "image"
+title = "Now page serif typography trial"
+description = "A reversible preview using serif accents only for Trending Takes editorial text while keeping navigation, controls, names, and metadata in the existing sans-serif system."
