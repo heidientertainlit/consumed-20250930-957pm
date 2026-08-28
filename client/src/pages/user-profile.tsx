@@ -3399,7 +3399,7 @@ export default function UserProfile() {
                 data-testid="points-breakdown-link"
               >
                 <Trophy size={15} className="text-amber-400 mb-1" />
-                <span className="text-base font-bold text-white leading-none">
+                <span className="font-serif text-base font-medium text-white leading-none">
                   {isLoadingPoints ? '…' : (userPoints?.all_time || 0).toLocaleString()}
                 </span>
                 <span className="text-[10px] leading-tight mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>pts</span>
@@ -3409,7 +3409,7 @@ export default function UserProfile() {
               <Link href="/leaderboard">
                 <div className="flex flex-col items-center text-center cursor-pointer transition-all active:scale-95">
                   <Medal size={15} className="text-purple-300 mb-1" />
-                  <span className="text-base font-bold text-white leading-none">
+                  <span className="font-serif text-base font-medium text-white leading-none">
                     {userRank ? `#${userRank.global}` : '—'}
                   </span>
                   <span className="text-[10px] leading-tight mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>leaderboard</span>
@@ -3419,7 +3419,7 @@ export default function UserProfile() {
               {/* Tracked */}
               <div className="flex flex-col items-center text-center">
                 <BarChart3 size={15} className="text-violet-300 mb-1" />
-                <span className="text-base font-bold text-white leading-none">
+                <span className="font-serif text-base font-medium text-white leading-none">
                   {!isOwnProfile && friendshipStatus !== 'friends' ? '—' : totalItemsLogged}
                 </span>
                 <span className="text-[10px] leading-tight mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>tracked</span>
