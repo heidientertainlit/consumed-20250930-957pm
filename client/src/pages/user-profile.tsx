@@ -4673,66 +4673,6 @@ export default function UserProfile() {
         {/* All My Media Section (own profile only) */}
         {activeSection === 'all-media' && isOwnProfile && (
           <div className="px-4 pt-4 mb-8">
-            {/* Lists glimpse */}
-            <section className="relative mb-7 overflow-hidden rounded-[1.75rem] border border-[#e4dce8] bg-[#fffdfb] px-4 py-5 shadow-[0_14px_35px_rgba(58,40,72,0.07)] sm:px-5">
-              <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-[#c7a9df]" />
-              <div className="relative mb-4 flex items-end justify-between gap-3">
-                <div>
-                  <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#80659c]">Your shelves</p>
-                  <h4 className="flex items-center gap-2 text-lg font-semibold tracking-[-0.02em] text-[#322442]">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e9ddfb] text-[#7143a6]"><List size={14} /></span>
-                    Lists
-                  </h4>
-                </div>
-                <button
-                  onClick={() => setActiveSection('lists')}
-                  className="group flex items-center gap-1 rounded-full bg-white/80 px-3 py-1.5 text-xs font-semibold text-[#68418f] ring-1 ring-[#ded4ee] transition hover:bg-white hover:text-[#4d2376]"
-                >
-                  Browse
-                  <ChevronRight size={13} className="transition-transform group-hover:translate-x-0.5" />
-                </button>
-              </div>
-              {primaryMediaLists.length > 0 ? (
-                <div className="relative grid gap-2">
-                  {primaryMediaLists.map((list: any) => {
-                    const itemCount = list.items?.length ?? list.item_count ?? 0;
-                    const isCurrently = list.title === 'Currently';
-                    const isFinished = list.title === 'Completed' || list.title === 'Finished';
-                    const isWantTo = list.title === 'Want to Watch' || list.title === 'Want To';
-                    return (
-                      <button
-                        key={list.id}
-                        type="button"
-                        className="group flex min-w-0 items-center justify-between rounded-2xl border border-[#eee9ef] bg-white px-3 py-2.5 text-left transition duration-200 hover:-translate-y-px hover:border-[#d9c9ef] hover:shadow-[0_8px_18px_rgba(74,45,112,0.08)] active:translate-y-0"
-                        onClick={() => {
-                          const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
-                          setLocation(`/list/${listSlug}`);
-                        }}
-                        data-testid={`link-own-list-${list.id}`}
-                      >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                            isCurrently ? 'bg-[#dbeafe] text-[#3566ad]' : isFinished ? 'bg-[#e6f4ec] text-[#3e8062]' : isWantTo ? 'bg-[#f0e4fb] text-[#7a42a8]' : 'bg-[#eee8f8] text-[#7653a2]'
-                          }`}>
-                            {isWantTo ? <Play size={14} fill="currentColor" /> :
-                             isCurrently ? <Clock size={14} /> :
-                             isFinished ? <Trophy size={14} /> :
-                             <List size={14} />}
-                          </div>
-                          <span className="truncate text-sm font-semibold text-[#40334d]">{getDisplayTitle(list.title)}</span>
-                        </div>
-                        <div className="ml-3 flex shrink-0 items-center gap-2">
-                          <span className="min-w-7 rounded-full bg-[#f2edf8] px-2 py-0.5 text-center text-[11px] font-bold tabular-nums text-[#705887]">{itemCount}</span>
-                          <ChevronRight size={15} className="text-[#a28cb9] transition-transform group-hover:translate-x-0.5" />
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="relative py-3 text-center text-xs text-[#806f8e]">No lists yet. Your next favorite belongs somewhere.</p>
-              )}
-            </section>
             <section className="overflow-hidden rounded-[1.75rem] border border-[#e4dde6] bg-white shadow-[0_16px_36px_rgba(55,35,79,0.07)]">
               <div className="border-b border-[#ece5e8] bg-[#fffaf7] px-4 pb-5 pt-5 sm:px-5">
                 <div className="mb-4 flex items-start justify-between gap-3">
@@ -4753,6 +4693,75 @@ export default function UserProfile() {
                 <Plus size={16} className="transition-transform group-hover:rotate-90" />
                 Add Media
               </button>
+              </div>
+              <div className="px-4 pt-4 sm:px-5">
+                <div className="relative overflow-hidden rounded-2xl border border-[#dacbe9] bg-[#f4eef9] px-4 py-4">
+                  <div className="pointer-events-none absolute -right-5 -top-6 h-24 w-24 rounded-full border-[14px] border-[#e5d6f2] opacity-80" />
+                  <p className="relative text-[10px] font-bold uppercase tracking-[0.16em] text-[#816994]">
+                    The Record <span className="px-1 text-[#b09abb]">•</span> {getPeriodHeading()}
+                  </p>
+                  <div className="mt-1.5 flex items-end gap-2">
+                    <span className="font-serif text-[40px] font-bold leading-none text-[#422653]">
+                      {filteredMediaHistory.length}
+                    </span>
+                    <span className="pb-1 text-sm font-medium text-[#6c5276]">
+                      {filteredMediaHistory.length === 1 ? "matching entry" : "matching entries"}
+                    </span>
+                  </div>
+                  <div className="relative mt-4 grid grid-cols-4 gap-x-2 gap-y-3 border-t border-[#dfd1ea] pt-4">
+                    {[
+                      { val: mediaTypeCounts.movie, label: 'Movies', color: 'text-pink-600' },
+                      { val: mediaTypeCounts.tv, label: 'TV', color: 'text-blue-600' },
+                      { val: mediaTypeCounts.book + mediaTypeCounts.book_series, label: 'Books', color: 'text-cyan-600' },
+                      { val: mediaTypeCounts.music, label: 'Music', color: 'text-green-600' },
+                      { val: mediaTypeCounts.podcast, label: 'Podcasts', color: 'text-indigo-600' },
+                      { val: mediaTypeCounts.game, label: 'Games', color: 'text-orange-600' },
+                      { val: mediaTypeCounts.youtube, label: 'YouTube', color: 'text-red-600' },
+                      { val: mediaTypeCounts.sports, label: 'Sports', color: 'text-emerald-600' },
+                    ].filter(({ val }) => val > 0).map(({ val, label, color }) => (
+                      <div key={label} className="text-center">
+                        <p className={`font-serif text-xl font-bold leading-none ${color}`}>{val}</p>
+                        <p className="mt-1 text-[10px] leading-tight text-[#8f8098]">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {(averageRating !== null || pageProgressItems.length > 0) && (
+                    <div className="relative mt-4 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[#dfd1ea] pt-3 text-xs text-[#725c80]">
+                      {averageRating !== null && <span className="inline-flex items-center gap-1">{averageRating.toFixed(1)} average <Star size={11} fill="currentColor" /></span>}
+                      {pageProgressItems.length > 0 && <span>{pagesLogged} current pages{knownPages > 0 ? ` of ${knownPages} known` : ""}</span>}
+                    </div>
+                  )}
+                </div>
+                <div className="mt-4 border-b border-[#ece5e8] pb-4">
+                  <div className="mb-2.5 flex items-center justify-between gap-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#96869f]">Browse by list</p>
+                    <button onClick={() => setActiveSection('lists')} className="flex items-center gap-0.5 text-[11px] font-semibold text-[#76528d]">
+                      View lists <ChevronRight size={12} />
+                    </button>
+                  </div>
+                  <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-hide">
+                    {primaryMediaLists.map((list: any) => {
+                      const filterValue = list.title === 'All' ? 'all' : list.title;
+                      const isActive = mediaHistoryList === filterValue;
+                      const itemCount = list.items?.length ?? list.item_count ?? 0;
+                      return (
+                        <button
+                          key={list.id}
+                          type="button"
+                          onClick={() => setMediaHistoryList(filterValue)}
+                          className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                            isActive
+                              ? 'bg-[#68418f] text-white shadow-sm'
+                              : 'border border-[#e3dce7] bg-[#fffdfb] text-[#685b70] hover:border-[#cdbbdd]'
+                          }`}
+                        >
+                          {getDisplayTitle(list.title)}
+                          <span className={isActive ? 'text-white/70' : 'text-[#a394aa]'}>{itemCount}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
               {/* Filters */}
               <div className="px-4 pb-5 pt-4 sm:px-5">
@@ -4901,43 +4910,6 @@ export default function UserProfile() {
                   className="w-full rounded-xl border border-[#e4ddea] bg-[#faf8fc] py-2.5 pl-10 pr-3 text-sm text-[#3d3048] placeholder:text-[#aa9eaf] focus:outline-none focus:ring-2 focus:ring-[#c9ade5]"
                   data-testid="input-history-search"
                 />
-              </div>
-              <div className="relative mb-5 overflow-hidden rounded-2xl border border-[#dacbe9] bg-[#f4eef9] px-4 py-4">
-                <div className="pointer-events-none absolute -right-5 -top-6 h-24 w-24 rounded-full border-[14px] border-[#e5d6f2] opacity-80" />
-                <p className="relative text-[10px] font-bold uppercase tracking-[0.16em] text-[#816994]">
-                  The Record <span className="px-1 text-[#b09abb]">•</span> {getPeriodHeading()}
-                </p>
-                <div className="mt-1.5 flex items-end gap-2">
-                  <span className="font-serif text-[40px] font-bold leading-none text-[#422653]">
-                    {filteredMediaHistory.length}
-                  </span>
-                  <span className="pb-1 text-sm font-medium text-[#6c5276]">
-                    {filteredMediaHistory.length === 1 ? "matching entry" : "matching entries"}
-                  </span>
-                </div>
-                <div className="relative mt-4 grid grid-cols-4 gap-x-2 gap-y-3 border-t border-[#dfd1ea] pt-4">
-                  {[
-                    { val: mediaTypeCounts.movie, label: 'Movies', color: 'text-pink-600' },
-                    { val: mediaTypeCounts.tv, label: 'TV', color: 'text-blue-600' },
-                    { val: mediaTypeCounts.book + mediaTypeCounts.book_series, label: 'Books', color: 'text-cyan-600' },
-                    { val: mediaTypeCounts.music, label: 'Music', color: 'text-green-600' },
-                    { val: mediaTypeCounts.podcast, label: 'Podcasts', color: 'text-indigo-600' },
-                    { val: mediaTypeCounts.game, label: 'Games', color: 'text-orange-600' },
-                    { val: mediaTypeCounts.youtube, label: 'YouTube', color: 'text-red-600' },
-                    { val: mediaTypeCounts.sports, label: 'Sports', color: 'text-emerald-600' },
-                  ].filter(({ val }) => val > 0).map(({ val, label, color }) => (
-                    <div key={label} className="text-center">
-                      <p className={`font-serif text-xl font-bold leading-none ${color}`}>{val}</p>
-                      <p className="mt-1 text-[10px] leading-tight text-[#8f8098]">{label}</p>
-                    </div>
-                  ))}
-                </div>
-                {(averageRating !== null || pageProgressItems.length > 0) && (
-                  <div className="relative mt-4 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[#dfd1ea] pt-3 text-xs text-[#725c80]">
-                  {averageRating !== null && <span className="inline-flex items-center gap-1">{averageRating.toFixed(1)} average <Star size={11} fill="currentColor" /></span>}
-                  {pageProgressItems.length > 0 && <span>{pagesLogged} current pages{knownPages > 0 ? ` of ${knownPages} known` : ""}</span>}
-                  </div>
-                )}
               </div>
               </div>
               <div className="px-4 pb-5 sm:px-5">
