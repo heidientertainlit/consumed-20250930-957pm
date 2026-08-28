@@ -249,7 +249,7 @@ export default function PeoplePage() {
   const selectedTribe = tribesQuery.data?.tribes.find((tribe) => tribe.slug === selectedSlug);
   const tabs: Array<{ id: Tab; label: string }> = [{ id: "matches", label: "Matches" }, { id: "friends", label: "Friends" }, { id: "tribes", label: "Tribes" }, { id: "creators", label: "Artists & Creators" }];
 
-  return <div className="min-h-[100dvh] bg-[#f5f2f4] pb-24 text-[#271d3a]">
+  return <div className="min-h-[100dvh] bg-[#fbf8f5] pb-24 text-[#271d3a]">
     <Navigation roomyTopBar />
     <main className="mx-auto max-w-5xl px-4 sm:px-6">
       <header className="pt-6 sm:pt-8">
@@ -334,12 +334,11 @@ function Matches({ query, more, onSelectPerson, onInvite }: { query: ReturnType<
   </section>;
 }
 
-function FeaturedMatch({ person, band, index, onSelect }: { person: Person; band: { label: string; note: string }; index: number; onSelect: (person: Person) => void }) {
+function FeaturedMatch({ person, band, onSelect }: { person: Person; band: { label: string; note: string }; index: number; onSelect: (person: Person) => void }) {
   const shared = (person.shared_titles || []).map((item) => typeof item === "string" ? { title: item } : { ...item, title: item.title || item.name }).filter((item): item is { title: string; image_url?: string | null; media_type?: string } => Boolean(item.title));
   const posters = shared.filter((item) => Boolean(item.image_url)).slice(0, 3);
   const totalShared = (person.shared_titles?.length || 0) + (person.shared_genres?.length || 0) + (person.shared_creators?.length || 0);
-  const surface = index % 2 ? "from-[#f1eaf2] via-[#fbf8f7] to-[#eee7f1]" : "from-[#eee6f4] via-[#fbf9fa] to-[#f1e9ee]";
-  return <button type="button" onClick={() => onSelect(person)} className={`group relative overflow-hidden rounded-[22px] border border-[#ddd4e0] bg-gradient-to-br ${surface} p-4 text-left shadow-[0_7px_18px_rgba(54,36,71,.06)] transition duration-300 hover:-translate-y-0.5 hover:border-[#bca8c7] hover:shadow-[0_12px_25px_rgba(54,36,71,.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#624183] focus-visible:ring-offset-2`}>
+  return <button type="button" onClick={() => onSelect(person)} className="group relative overflow-hidden rounded-[22px] border border-[#e1dadd] bg-[#fffdfb] p-4 text-left shadow-[0_6px_18px_rgba(65,49,55,.055)] transition duration-300 hover:-translate-y-0.5 hover:border-[#cbbfc6] hover:shadow-[0_11px_24px_rgba(65,49,55,.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#624183] focus-visible:ring-offset-2">
     <div className="relative flex items-start gap-3"><Avatar person={person} /><div className="min-w-0 flex-1"><div className="flex min-w-0 items-center gap-2"><p className="truncate text-[15px] font-bold text-[#2c2038]">{nameFor(person)}</p><span className={`shrink-0 text-[10px] font-bold ${person.is_friend ? "text-[#356454]" : "text-[#786384]"}`}>{person.is_friend ? "Friend" : "New"}</span></div><p className="mt-0.5 truncate text-xs text-[#776d7d]">{evidenceFor(person)}</p></div><div className="text-right"><p className="font-serif text-3xl leading-none tracking-[-.06em] text-[#4f2d73]">{Math.round(person.match_score || 0)}%</p><span className="mt-1 inline-block rounded-full bg-[#5b387f] px-2 py-1 text-[8px] font-bold uppercase tracking-[.11em] text-white">{band.note}</span></div></div>
     <div className="relative mt-5"><p className="mb-2 text-[11px] font-bold uppercase tracking-[.12em] text-[#67447c]">You both love</p>{posters.length ? <div className="flex gap-2">{posters.map((item, tileIndex) => <SharedTitleTile key={`${item.title}-${tileIndex}`} item={item} />)}{totalShared > posters.length && <div className="flex aspect-[4/5] w-[64px] shrink-0 flex-col items-center justify-center rounded-xl bg-[#e7dfee] text-[#583875]"><span className="text-lg font-bold">+{totalShared - posters.length}</span><span className="text-[9px] font-semibold">more</span></div>}</div> : <p className="line-clamp-2 text-xs leading-5 text-[#756b79]">{shared.slice(0, 3).map((item) => item.title).join(" · ") || "Your taste profiles were compared across media."}</p>}</div>
     <div className="relative mt-4 flex items-center justify-between border-t border-[#dcd2df] pt-3 text-xs font-semibold text-[#614276]"><span>{totalShared ? `${totalShared} thing${totalShared === 1 ? "" : "s"} in common` : "Taste profile compared"}</span><ChevronRight size={16} className="transition-transform duration-200 group-hover:translate-x-0.5" /></div>
