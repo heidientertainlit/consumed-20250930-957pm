@@ -3819,27 +3819,6 @@ export default function UserProfile() {
                   </div>
                 </div>
 
-                {/* Stats */}
-                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                  <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.14em] text-purple-600">What Shapes Your DNA</p>
-                  <div className="grid grid-cols-4 gap-x-2 gap-y-3">
-                    {[
-                      { val: totalItemsLogged, label: 'Titles Tracked', color: 'text-purple-700' },
-                      { val: canonicalMediaTypeCounts.movie, label: 'Movies tracked', color: 'text-pink-600' },
-                      { val: canonicalMediaTypeCounts.tv, label: 'TV tracked', color: 'text-blue-600' },
-                      { val: canonicalMediaTypeCounts.book + canonicalMediaTypeCounts.book_series, label: 'Books tracked', color: 'text-cyan-600' },
-                      { val: canonicalMediaTypeCounts.music, label: 'Music tracked', color: 'text-green-600' },
-                      { val: canonicalMediaTypeCounts.podcast, label: 'Podcasts tracked', color: 'text-indigo-600' },
-                      { val: canonicalMediaTypeCounts.game, label: 'Games tracked', color: 'text-orange-600' },
-                    ].map(({ val, label, color }) => (
-                      <div key={label} className="text-center">
-                        <p className={`font-serif text-xl font-bold ${color}`}>{val}</p>
-                        <p className="text-gray-400 text-[10px] mt-0.5 leading-tight">{label}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Your DNA Journey + Current Era */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
                   <div className="grid grid-cols-2 gap-4">
@@ -4285,27 +4264,6 @@ export default function UserProfile() {
                         );
                       })()}
                     </div>
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-                  <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.14em] text-purple-600">What Shapes Their DNA</p>
-                  <div className="grid grid-cols-4 gap-x-2 gap-y-3">
-                    {[
-                      { val: totalItemsLogged, label: 'Titles Tracked', color: 'text-purple-700' },
-                      { val: canonicalMediaTypeCounts.movie, label: 'Movies tracked', color: 'text-pink-600' },
-                      { val: canonicalMediaTypeCounts.tv, label: 'TV tracked', color: 'text-blue-600' },
-                      { val: canonicalMediaTypeCounts.book + canonicalMediaTypeCounts.book_series, label: 'Books tracked', color: 'text-cyan-600' },
-                      { val: canonicalMediaTypeCounts.music, label: 'Music tracked', color: 'text-green-600' },
-                      { val: canonicalMediaTypeCounts.podcast, label: 'Podcasts tracked', color: 'text-indigo-600' },
-                      { val: canonicalMediaTypeCounts.game, label: 'Games tracked', color: 'text-orange-600' },
-                    ].map(({ val, label, color }) => (
-                      <div key={label} className="text-center">
-                        <p className={`font-serif text-xl font-bold ${color}`}>{val}</p>
-                        <p className="text-gray-400 text-[10px] mt-0.5 leading-tight">{label}</p>
-                      </div>
-                    ))}
                   </div>
                 </div>
 
@@ -4957,13 +4915,29 @@ export default function UserProfile() {
                     {filteredMediaHistory.length === 1 ? "matching entry" : "matching entries"}
                   </span>
                 </div>
-                <div className="relative mt-3 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[#dfd1ea] pt-3 text-xs text-[#725c80]">
-                  {Object.entries(mediaTypeCounts).filter(([, count]) => Number(count) > 0).map(([type, count]) => (
-                    <span key={type}>{Number(count)} {getMediaTypeLabel(type).toLowerCase()}</span>
+                <div className="relative mt-4 grid grid-cols-4 gap-x-2 gap-y-3 border-t border-[#dfd1ea] pt-4">
+                  {[
+                    { val: mediaTypeCounts.movie, label: 'Movies', color: 'text-pink-600' },
+                    { val: mediaTypeCounts.tv, label: 'TV', color: 'text-blue-600' },
+                    { val: mediaTypeCounts.book + mediaTypeCounts.book_series, label: 'Books', color: 'text-cyan-600' },
+                    { val: mediaTypeCounts.music, label: 'Music', color: 'text-green-600' },
+                    { val: mediaTypeCounts.podcast, label: 'Podcasts', color: 'text-indigo-600' },
+                    { val: mediaTypeCounts.game, label: 'Games', color: 'text-orange-600' },
+                    { val: mediaTypeCounts.youtube, label: 'YouTube', color: 'text-red-600' },
+                    { val: mediaTypeCounts.sports, label: 'Sports', color: 'text-emerald-600' },
+                  ].filter(({ val }) => val > 0).map(({ val, label, color }) => (
+                    <div key={label} className="text-center">
+                      <p className={`font-serif text-xl font-bold leading-none ${color}`}>{val}</p>
+                      <p className="mt-1 text-[10px] leading-tight text-[#8f8098]">{label}</p>
+                    </div>
                   ))}
+                </div>
+                {(averageRating !== null || pageProgressItems.length > 0) && (
+                  <div className="relative mt-4 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[#dfd1ea] pt-3 text-xs text-[#725c80]">
                   {averageRating !== null && <span className="inline-flex items-center gap-1">{averageRating.toFixed(1)} average <Star size={11} fill="currentColor" /></span>}
                   {pageProgressItems.length > 0 && <span>{pagesLogged} current pages{knownPages > 0 ? ` of ${knownPages} known` : ""}</span>}
-                </div>
+                  </div>
+                )}
               </div>
               </div>
               <div className="px-4 pb-5 sm:px-5">
