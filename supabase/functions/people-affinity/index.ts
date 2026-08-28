@@ -45,7 +45,7 @@ async function trackedCounts(db: any, ids: string[]) {
 
 async function sharedTitles(db: any, a: string, b: string) {
   const { data, error } = await db.from("media_ratings")
-    .select("user_id,media_title,media_type,rating")
+    .select("user_id,media_title,media_type,media_external_id,media_external_source,rating")
     .in("user_id", [a, b])
     .gte("rating", 4);
   if (error) throw new Error(`Could not load shared titles: ${error.message}`);
@@ -55,7 +55,12 @@ async function sharedTitles(db: any, a: string, b: string) {
     loved.get(item.user_id)!.set(item.media_title.toLowerCase(), item);
   }
   const left = loved.get(a) || new Map(), right = loved.get(b) || new Map();
-  return [...right].filter(([title]) => left.has(title)).slice(0, 10).map(([, item]) => ({ title: item.media_title, media_type: item.media_type }));
+  return [...right].filter(([title]) => left.has(title)).slice(0, 10).map(([, item]) => ({
+    title: item.media_title,
+    media_type: item.media_type,
+    external_id: item.media_external_id,
+    external_source: item.media_external_source,
+  }));
 }
 
 serve(async (req) => {
@@ -152,6 +157,32 @@ serve(async (req) => {
         comparedNow += 1;
       }));
     }
+    const featuredPosterPeople = ordered
+      .filter((person: any) => comparisons.has(person.id))
+      .sort((a: any, b: any) => Number(comparisons.get(b.id)?.match_score || 0) - Number(comparisons.get(a.id)?.match_score || 0))
+      .slice(0, 2);
+    const sharedTitleValues = [...new Set(
+      featuredPosterPeople
+        .map((person: any) => comparisons.get(person.id))
+        .flatMap((comparison: any) => comparison.shared_titles || [])
+        .map((item: any) => typeof item === "string" ? item : item.title)
+        .filter(Boolean),
+    )];
+    const sharedImageByTitle = new Map<string, string>();
+    if (sharedTitleValues.length) {
+      const { data: sharedMedia, error: sharedMediaError } = await db
+        .from("list_items")
+        .select("title,image_url")
+        .in("user_id", [myId, ...featuredPosterPeople.map((person: any) => person.id)])
+        .in("title", sharedTitleValues)
+        .not("image_url", "is", null);
+      if (sharedMediaError) throw new Error(`Could not load shared title artwork: ${sharedMediaError.message}`);
+      for (const item of sharedMedia || []) {
+        if (item.title && item.image_url && !sharedImageByTitle.has(item.title.toLowerCase())) {
+          sharedImageByTitle.set(item.title.toLowerCase(), item.image_url);
+        }
+      }
+    }
     const result = emptyBandPeople();
     for (const person of ordered) {
       const c = comparisons.get(person.id); if (!c) continue;
@@ -169,7 +200,13 @@ serve(async (req) => {
         match_score: score,
         is_friend: !!person.is_friend,
         relationship: person.is_friend ? "friend" : "discovery",
-        shared_titles: c.shared_titles || [],
+        shared_titles: (c.shared_titles || []).map((item: any) => {
+          const normalized = typeof item === "string" ? { title: item } : item;
+          return {
+            ...normalized,
+            image_url: normalized.title ? sharedImageByTitle.get(normalized.title.toLowerCase()) || null : null,
+          };
+        }),
         shared_genres: c.shared_genres || [],
         shared_creators: c.shared_creators || [],
         differences: c.differences || {},
