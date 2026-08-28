@@ -127,6 +127,7 @@ export default function LoginPage() {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
+                action: "initialize-profile",
                 first_name: firstName.trim(),
                 last_name: lastName.trim(),
                 username: normalizedUsername,

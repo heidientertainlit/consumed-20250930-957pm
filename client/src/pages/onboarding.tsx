@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent } from "react";
 import { useLocation } from "wouter";
-import { ArrowRight, Camera, Check, ChevronRight, CircleUser, Dna, Eye, Feather, Gamepad2, Heart, HeartHandshake, HelpCircle, Home, Leaf, Loader2, Mic, Music, Palette, Plane, Rocket, Search, Share2, Sparkles, Trophy, Tv, Users, Video, Wand2, Youtube, Zap, Clapperboard, Smile, Skull, Crown, Drama, BookOpen } from "lucide-react";
+import { ArrowRight, Camera, Check, ChevronRight, CircleUser, Dna, Eye, Feather, Forward, Gamepad2, Heart, HeartHandshake, HelpCircle, Home, Leaf, Loader2, Mic, Music, Palette, Plane, Rocket, Search, Sparkles, Trophy, Tv, Users, Video, Wand2, Youtube, Zap, Clapperboard, Smile, Skull, Crown, Drama, BookOpen } from "lucide-react";
 import {
   dismissOnboardingPrompt,
   loadOnboardingProgress,
@@ -438,7 +438,7 @@ export default function OnboardingPage() {
   const [identityFirstName, setIdentityFirstName] = useState("");
   const [identityLastName, setIdentityLastName] = useState("");
   const [identityBirthDate, setIdentityBirthDate] = useState("");
-  const [identityNameInput, setIdentityNameInput] = useState("");
+  const [identityGender, setIdentityGender] = useState<"male" | "female" | "">("");
   const [identityUsername, setIdentityUsername] = useState("");
   const [identityUsernameStatus, setIdentityUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
   const [identityError, setIdentityError] = useState<string | null>(null);
@@ -482,7 +482,7 @@ export default function OnboardingPage() {
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase.from("users").select("avatar").eq("id", user.id).maybeSingle(),
-        supabase.from("user_private_details").select("birth_date").eq("user_id", user.id).maybeSingle(),
+        supabase.from("user_private_details").select("birth_date, gender").eq("user_id", user.id).maybeSingle(),
       ]);
       if (cancelled) return;
       if (dnaResult.error) {
@@ -496,10 +496,10 @@ export default function OnboardingPage() {
       setIdentityHasExistingDna(Boolean(dnaResult.data));
       setIdentityFirstName(resolvedIdentity.defaults.firstName);
       setIdentityLastName(resolvedIdentity.defaults.lastName);
-      setIdentityNameInput(`${resolvedIdentity.defaults.firstName} ${resolvedIdentity.defaults.lastName}`.trim());
       setIdentityUsername(resolvedIdentity.defaults.username);
       setIdentityAvatarUrl(avatarResult.data?.avatar || null);
       setIdentityBirthDate(privateDetailsResult.data?.birth_date || "");
+      setIdentityGender(privateDetailsResult.data?.gender || "");
 
       if (resolvedIdentity.complete) {
         setIdentityRequired(false);
@@ -611,6 +611,10 @@ export default function OnboardingPage() {
       setIdentityError("Please enter your birthday.");
       return;
     }
+    if (identityGender !== "male" && identityGender !== "female") {
+      setIdentityError("Please select male or female.");
+      return;
+    }
     const birthDate = new Date(`${identityBirthDate}T00:00:00`);
     const today = new Date();
     today.setHours(23, 59, 59, 999);
@@ -637,6 +641,7 @@ export default function OnboardingPage() {
           last_name: lastName,
           username,
           birth_date: identityBirthDate,
+          gender: identityGender,
         }),
       });
       const result = await response.json().catch(() => ({}));
@@ -1331,25 +1336,38 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <label className="mt-6 block text-sm font-semibold text-gray-700">
-              What should people call you?
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <label className="block text-sm font-semibold text-gray-700">
+              First name
               <input
-                value={identityNameInput}
+                value={identityFirstName}
                 onChange={(event) => {
-                  const nextName = event.target.value.replace(/\s{2,}/g, " ");
-                  setIdentityNameInput(nextName);
-                  const parts = nextName.trim().split(/\s+/);
-                  setIdentityFirstName(parts.shift() || "");
-                  setIdentityLastName(parts.join(" "));
+                  setIdentityFirstName(event.target.value);
                   setIdentityError(null);
                 }}
-                autoComplete="name"
-                maxLength={100}
-                placeholder="First and last name"
+                autoComplete="given-name"
+                maxLength={50}
+                placeholder="First name"
                 className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-base text-gray-900 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
-                data-testid="onboarding-name"
+                data-testid="onboarding-first-name"
               />
-            </label>
+              </label>
+              <label className="block text-sm font-semibold text-gray-700">
+              Last name
+                <input
+                  value={identityLastName}
+                  onChange={(event) => {
+                    setIdentityLastName(event.target.value);
+                    setIdentityError(null);
+                  }}
+                  autoComplete="family-name"
+                  maxLength={50}
+                  placeholder="Last name"
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-base text-gray-900 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                  data-testid="onboarding-last-name"
+                />
+              </label>
+            </div>
 
             <label className="mt-5 block text-sm font-semibold text-gray-700">
               Choose a username
@@ -1395,6 +1413,31 @@ export default function OnboardingPage() {
               />
             </label>
 
+            <fieldset className="mt-5">
+              <legend className="text-sm font-semibold text-gray-700">Gender</legend>
+              <div className="mt-2 grid grid-cols-2 gap-3">
+                {(["female", "male"] as const).map((gender) => (
+                  <button
+                    key={gender}
+                    type="button"
+                    onClick={() => {
+                      setIdentityGender(gender);
+                      setIdentityError(null);
+                    }}
+                    className={`rounded-xl border px-3 py-3 text-sm font-semibold capitalize transition-colors ${
+                      identityGender === gender
+                        ? "border-purple-500 bg-purple-50 text-purple-700 ring-2 ring-purple-100"
+                        : "border-gray-200 bg-white text-gray-700"
+                    }`}
+                    aria-pressed={identityGender === gender}
+                    data-testid={`onboarding-gender-${gender}`}
+                  >
+                    {gender}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
             <div className="mt-5">
               <p className="text-sm font-semibold text-gray-700">Profile photo <span className="font-normal text-gray-400">(optional)</span></p>
               <button
@@ -1422,12 +1465,13 @@ export default function OnboardingPage() {
             )}
 
             <button
-              onClick={() => submitIdentity("/people", true)}
+              onClick={() => submitIdentity("/activity", true)}
               disabled={
                 identitySaving
                 || !identityFirstName.trim()
                 || !identityLastName.trim()
                 || !identityBirthDate
+                || !identityGender
                 || !USERNAME_PATTERN.test(normalizeUsername(identityUsername))
                 || (identityNeedsUsername && identityUsernameStatus === "checking")
                 || (identityNeedsUsername && identityUsernameStatus === "taken")
@@ -1436,7 +1480,7 @@ export default function OnboardingPage() {
               style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
               data-testid="save-onboarding-identity"
             >
-              {identitySaving ? "Making it yours…" : <>Find my people <ArrowRight size={17} className="inline" /></>}
+              {identitySaving ? "Making it yours…" : <>See what everyone’s consuming <ArrowRight size={17} className="inline" /></>}
             </button>
             <button
               type="button"
@@ -2082,7 +2126,7 @@ export default function OnboardingPage() {
           className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-purple-50 text-purple-600 transition-colors hover:bg-purple-100"
           aria-label="Share your DNA"
         >
-          <Share2 size={17} />
+          <Forward size={18} strokeWidth={2.2} />
         </button>
         <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-5">
           <Dna className="text-white" size={40} />

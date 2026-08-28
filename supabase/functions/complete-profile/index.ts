@@ -234,6 +234,30 @@ serve(async (req) => {
     if (!firstName || !lastName || firstName.length > 50 || lastName.length > 50) {
       return json({ error: "First and last name are required and must be 50 characters or fewer." }, 400);
     }
+    if (body.action === "initialize-profile") {
+      const displayName = `${firstName} ${lastName}`.trim();
+      const profileFields = {
+        user_name: username,
+        first_name: firstName,
+        last_name: lastName,
+        display_name: displayName,
+      };
+      const profileResult = existingProfile
+        ? await admin.from("users").update(profileFields).eq("id", user.id)
+        : await admin.from("users").insert({
+            id: user.id,
+            email: user.email,
+            ...profileFields,
+          });
+      if (profileResult.error) {
+        if (profileResult.error.code === "23505") {
+          return json({ available: false, error: "That username is already taken." }, 409);
+        }
+        throw profileResult.error;
+      }
+      return json({ initialized: true });
+    }
+
     const birthDate = String(body.birth_date || "").trim();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
       return json({ error: "A valid birthday is required." }, 400);
@@ -246,10 +270,14 @@ serve(async (req) => {
     ) {
       return json({ error: "A valid birthday is required." }, 400);
     }
+    const gender = String(body.gender || "").trim().toLowerCase();
+    if (gender !== "male" && gender !== "female") {
+      return json({ error: "Please select male or female." }, 400);
+    }
 
     const { error: privateDetailsError } = await admin
       .from("user_private_details")
-      .upsert({ user_id: user.id, birth_date: birthDate }, { onConflict: "user_id" });
+      .upsert({ user_id: user.id, birth_date: birthDate, gender }, { onConflict: "user_id" });
     if (privateDetailsError) throw privateDetailsError;
 
     const displayName = `${firstName} ${lastName}`.trim();
