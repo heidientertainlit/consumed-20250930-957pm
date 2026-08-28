@@ -164,7 +164,7 @@ export function FeedIdentityHero() {
           {/* Headline + avatar */}
           <div className="relative flex items-center gap-4">
             <div className="flex-1 min-w-0">
-              <h1 className="font-bold tracking-tight leading-[1.08]">
+              <h1 className={`${dna?.label ? "font-fraunces font-semibold" : "font-bold"} tracking-tight leading-[1.08]`}>
                 {prefix && (
                   <span className="block text-[22px]" style={{ color: "rgba(255,255,255,0.9)" }}>
                     {prefix}
