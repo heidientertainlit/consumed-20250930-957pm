@@ -158,6 +158,7 @@ export default function UserProfile() {
   const [isSearchingFriends, setIsSearchingFriends] = useState(false);
   const [isSendingRequest, setIsSendingRequest] = useState(false);
   const [friendshipStatus, setFriendshipStatus] = useState<'none' | 'friends' | 'pending_sent' | 'pending_received' | 'loading'>('loading');
+  const [friendshipCheckedUserId, setFriendshipCheckedUserId] = useState<string | null>(null);
   const canViewProfile = isOwnProfile || friendshipStatus === 'friends';
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
@@ -1499,9 +1500,13 @@ export default function UserProfile() {
   const checkFriendshipStatus = async () => {
     if (!session?.access_token || !viewingUserId || isOwnProfile) {
       setFriendshipStatus('none');
+      setFriendshipCheckedUserId(viewingUserId || null);
       return;
     }
 
+    const checkedUserId = viewingUserId;
+    setFriendshipStatus('loading');
+    setFriendshipCheckedUserId(null);
     try {
       // Check if they're already friends (accepted status)
       const { data: friendships, error: friendsError } = await supabase
@@ -1560,6 +1565,8 @@ export default function UserProfile() {
     } catch (error) {
       console.error('Error checking friendship status:', error);
       setFriendshipStatus('none');
+    } finally {
+      setFriendshipCheckedUserId(checkedUserId);
     }
   };
 
@@ -1637,6 +1644,7 @@ export default function UserProfile() {
     setHighlights([]);
     setUserBadges([]);
     setFriendshipStatus('loading');
+    setFriendshipCheckedUserId(null);
   }, [viewingUserId]);
 
   // Viewer's own compare eligibility (survey + items) when viewing a friend
@@ -3148,6 +3156,17 @@ export default function UserProfile() {
 
   // Show loading screen while route is resolving to prevent flash of wrong profile
   if (isRouteResolving) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin text-purple-600 mx-auto mb-4" size={32} />
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isOwnProfile && (friendshipStatus === 'loading' || friendshipCheckedUserId !== viewingUserId)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
