@@ -16,7 +16,9 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
   const { toast } = useToast();
 
   const {
+    friendsData,
     pendingData,
+    isLoadingFriends,
     useUserSearch,
     sendRequestMutation,
     acceptRequestMutation,
@@ -60,6 +62,7 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
   };
 
   return (
+    <>
     <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(165deg, #4c2a85 0%, #3b3f9e 50%, #2f6bc4 100%)", border: "1px solid rgba(140,170,255,0.25)" }}>
       {/* Find Friends — title + search */}
       <div className="p-4 pb-1">
@@ -226,5 +229,58 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
         <ChevronRight size={18} className="text-gray-400 shrink-0" />
       </button>
     </div>
+    <section className="mt-7">
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <div>
+          <h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">Your friends</h3>
+          <p className="mt-0.5 text-xs text-[#7d7382]">The people you’re connected with.</p>
+        </div>
+        {!isLoadingFriends && friendsData?.friends?.length > 0 && (
+          <span className="text-xs font-semibold text-[#79618f]">{friendsData.friends.length}</span>
+        )}
+      </div>
+
+      {isLoadingFriends ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map((item) => <div key={item} className="h-[62px] animate-pulse rounded-xl bg-[#e6e0e7]" />)}
+        </div>
+      ) : friendsData?.friends?.length ? (
+        <div className="divide-y divide-[#e2dce4] border-y border-[#e2dce4]">
+          {friendsData.friends.map((friendship: any) => {
+            const friend = friendship.friend;
+            if (!friend) return null;
+            const first = friend.first_name?.trim();
+            const last = friend.last_name?.trim();
+            const displayName = first
+              ? `${first}${last ? ` ${last[0].toUpperCase()}.` : ""}`
+              : friend.display_name || friend.user_name || "Consumed member";
+            const avatarInitials = `${first?.[0] || friend.user_name?.[0] || "?"}${last?.[0] || ""}`.toUpperCase();
+            return (
+              <Link
+                key={friendship.id}
+                href={`/user/${friend.id}`}
+                className="group flex min-h-[66px] items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-[#ece6ee]"
+              >
+                <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[#e5dff3] text-xs font-bold text-[#4c3972]">
+                  {friend.avatar
+                    ? <img src={friend.avatar} alt="" className="h-full w-full object-cover" />
+                    : avatarInitials}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold text-[#30263a]">{displayName}</span>
+                  {friend.user_name && <span className="mt-0.5 block truncate text-xs text-[#817686]">@{friend.user_name}</span>}
+                </span>
+                <ChevronRight size={17} className="shrink-0 text-[#8b7e91] transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-6 text-sm text-[#746b7b]">
+          Your accepted friends will appear here.
+        </div>
+      )}
+    </section>
+    </>
   );
 }
