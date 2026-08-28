@@ -222,7 +222,7 @@ export function FeedIdentityHero() {
           <div className="relative grid grid-cols-3">
             {stats.map((s, idx) => {
               const inner = (
-                <div className="flex min-w-[72px] flex-col items-start text-left">
+                <div className="flex w-[84px] flex-col items-start text-left">
                   <div className="flex items-center justify-start gap-2">
                     <s.Icon size={22} color={s.color} {...(s.Icon === Flame ? { fill: s.color } : {})} />
                     <p className="font-serif text-[25px] font-medium leading-none tracking-[-.04em] text-white">{s.value}</p>
