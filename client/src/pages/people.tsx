@@ -252,7 +252,22 @@ export default function PeoplePage() {
   return <div className="min-h-[100dvh] bg-[#f5f2f4] pb-24 text-[#271d3a]">
     <Navigation roomyTopBar />
     <main className="mx-auto max-w-5xl px-4 sm:px-6">
-      <header className="pt-6 sm:pt-8"><div className="flex items-end justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#765480]">People</p><h1 className="mt-1 font-serif text-[32px] leading-none tracking-[-.045em] text-[#251738] sm:text-4xl">Taste, in company.</h1></div><button onClick={copyInvite} className="mb-0.5 inline-flex h-9 items-center gap-2 rounded-full border border-[#d8cfdf] bg-[#fbf9fa] px-3 text-xs font-bold text-[#543d72] transition hover:border-[#9472a2] hover:bg-[#eee8f3]"><Share2 size={14} /> Invite</button></div>
+      <header className="pt-6 sm:pt-8">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#765480]">People</p>
+          <h1 className="mt-1 font-serif text-[32px] leading-none tracking-[-.045em] text-[#251738] sm:text-4xl">Taste, in company.</h1>
+        </div>
+        <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-[#dfd5e5] bg-[#eee8f3] px-4 py-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-[#5b3e78]"><Users size={15} /></span>
+            <p className="text-xs font-semibold leading-4 text-[#594a61] sm:text-sm">
+              Invite friends to compare your Entertainment DNA.
+            </p>
+          </div>
+          <button onClick={copyInvite} className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-[#533576] px-3.5 text-xs font-bold text-white transition hover:bg-[#432a61]">
+            <Share2 size={14} /> Invite
+          </button>
+        </div>
         <nav className="mt-5 flex overflow-x-auto border-b border-[#dcd5df]" aria-label="People sections">{tabs.map((item) => <button key={item.id} onClick={() => setTab(item.id)} className={`relative shrink-0 px-4 py-2.5 text-[13px] font-bold transition-colors first:pl-0 ${tab === item.id ? "text-[#4b2f70] after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-[#523177] first:after:left-0" : "text-[#827887] hover:text-[#493659]"}`}>{item.label}</button>)}</nav>
       </header>
 
