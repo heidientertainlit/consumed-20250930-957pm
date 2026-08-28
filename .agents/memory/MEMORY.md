@@ -6,6 +6,7 @@
 - [DNA Compare card scoring](dna-compare-scoring.md) — dna_comparisons.match_score is authoritative; Jaccard genre overlap is fallback only. Never rank by Jaccard alone.
 - [Affinity score calibration](affinity-score-calibration.md) — reward dense substantive overlap without inflating sparse coincidences; validate live score distribution before changing tier boundaries.
 - [Supabase builder has no .catch](supabase-builder-catch.md) — supabase query/rpc builders define .then() but NOT .catch()/.finally(); `.rpc().catch()` throws AND the query never runs. Use `await` for side-effects.
+- [Supabase service key mismatch](supabase-service-key-mismatch.md) — the workspace service-role credential targets a different project than the app; do not use it for app-project diagnostics.
 - [TanStack Query v5 refetchInterval](tanstack-refetchinterval-v5.md) — the callback receives the Query object, not data; read `query.state.data`, else polling silently never fires.
 - [media-search type param](media-search-type-param.md) — edge fn reads `type` not `media_type`; callers sending `media_type` (Track/quick-action sheets) get no server filter. No `game` source exists.
 - [media_ratings writes](media-ratings-writes.md) — inserts need media_title + media_type (NOT NULL) or they fail silently; "tracked" counts list_items, not ratings.
