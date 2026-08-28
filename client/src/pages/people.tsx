@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
-import { ArrowLeft, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, LockKeyhole, Share2, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Heart, Leaf, Loader2, LockKeyhole, Moon, Share2, Sparkles, Users } from "lucide-react";
 import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
 import FriendsManager from "@/components/friends-manager";
@@ -362,7 +362,40 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
   const tribes = query.data?.tribes || [];
   return <section className="mt-7"><div className="mb-5"><p className="text-sm text-[#6e6475]">DNA can recommend. You decide where you belong.</p><h2 className="mt-1 text-xl font-bold tracking-[-.035em]">Tribes</h2></div>
     {!tribes.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">There are no Tribes to recommend right now.</div> :
-      <div className="grid gap-3 sm:grid-cols-2">{tribes.map((tribe) => <button key={tribe.slug} onClick={() => onSelect(tribe.slug)} className="group min-h-[176px] rounded-2xl border border-[#ded6e2] bg-[#fbf9fa] p-5 text-left transition hover:-translate-y-0.5 hover:border-[#ae95b9]"><div className="flex items-start justify-between gap-3"><span className="h-2 w-10 rounded-full" style={{ background: `linear-gradient(90deg, ${tribe.accent_color || "#6d4b91"}, ${tribe.accent_color_2 || "#5474a5"})` }} /><span className="text-xs font-bold text-[#65457b]">{tribe.fit_score}% fit</span></div><h3 className="mt-5 text-lg font-bold tracking-[-.03em]">{tribe.name}</h3><p className="mt-1 line-clamp-2 text-sm leading-5 text-[#706777]">{tribe.identity_statement || tribe.description}</p><div className="mt-4 flex items-center justify-between"><span className="text-xs font-semibold text-[#817686]">{tribe.is_member ? "Member" : tribe.recommended ? "Recommended" : `${tribe.member_count} members`}</span><ChevronRight size={16} className="text-[#765680] transition group-hover:translate-x-0.5" /></div></button>)}</div>}
+      <div className="grid gap-4">{tribes.map((tribe, index) => {
+        const icons = [Sparkles, Heart, Moon, Leaf];
+        const TribeIcon = icons[index % icons.length];
+        const accent = tribe.accent_color || ["#ee9a45", "#e43b8d", "#8661c5", "#7da649"][index % 4];
+        const evidence = tribe.evidence.map((item) => item.label || item.value || item.group).filter(Boolean).slice(0, 2);
+        const featuredMedia = tribe.media[0];
+        return <button
+          key={tribe.slug}
+          onClick={() => onSelect(tribe.slug)}
+          className="group relative overflow-hidden rounded-[20px] border border-[#e4dedb] border-l-[3px] bg-[#fffdfb] px-4 py-5 text-left shadow-[0_7px_18px_rgba(65,49,55,.055)] transition duration-300 hover:-translate-y-0.5 hover:border-[#cfc4c0] hover:shadow-[0_11px_24px_rgba(65,49,55,.09)] sm:px-6"
+          style={{ borderLeftColor: accent }}
+        >
+          <div className="flex items-start gap-3.5">
+            <TribeIcon size={27} strokeWidth={1.8} className="mt-0.5 shrink-0" style={{ color: accent }} />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#281e34] sm:text-[27px]">{tribe.name}</h3>
+                <span className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[.04em]" style={{ color: accent, backgroundColor: `${accent}17` }}>{tribe.fit_score}% match</span>
+              </div>
+              <p className="mt-2 max-w-xl line-clamp-2 text-sm leading-5 text-[#716971]">{tribe.identity_statement || tribe.description}</p>
+            </div>
+          </div>
+          <div className="mt-5 flex items-center gap-2 overflow-hidden">
+            {featuredMedia && <span className="inline-flex min-w-0 shrink items-center gap-2 rounded-full bg-[#f2efed] py-1.5 pl-1.5 pr-3 text-xs font-semibold text-[#39313f]">
+              {featuredMedia.image_url && <img src={featuredMedia.image_url} alt="" className="h-7 w-7 shrink-0 rounded-lg object-cover" />}
+              <span className="truncate">{featuredMedia.title}</span>
+            </span>}
+            {evidence.map((label) => <span key={label} className="hidden shrink-0 rounded-full bg-[#f2efed] px-3 py-2 text-xs font-semibold text-[#443a49] min-[390px]:inline-flex">{label}</span>)}
+            <span className="ml-auto grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#ded8d5] bg-white text-[#573876] shadow-sm transition-transform group-hover:translate-x-0.5">
+              <ArrowRight size={19} />
+            </span>
+          </div>
+        </button>;
+      })}</div>}
   </section>;
 }
 
