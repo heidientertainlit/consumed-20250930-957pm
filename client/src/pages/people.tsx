@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
-import { ArrowLeft, ArrowUpRight, Check, ChevronRight, Dna, LockKeyhole, Share2 } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, LockKeyhole, Share2, Users } from "lucide-react";
 import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
 import FriendsManager from "@/components/friends-manager";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { APP_BASE } from "@/lib/share";
@@ -88,6 +89,9 @@ export default function PeoplePage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const automaticMatchBatches = useRef(0);
+  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [relationshipStatus, setRelationshipStatus] = useState<"loading" | "none" | "pending">("none");
+  const [isSendingRequest, setIsSendingRequest] = useState(false);
   const [, setLocation] = useLocation();
   const search = useSearch();
   const params = useMemo(() => new URLSearchParams(search), [search]);
@@ -96,6 +100,51 @@ export default function PeoplePage() {
   const selectedSlug = params.get("tribe");
   const setTab = (next: Tab) => setLocation(`/people?tab=${next}`);
   const setTribe = (slug?: string) => setLocation(slug ? `/people?tab=tribes&tribe=${encodeURIComponent(slug)}` : "/people?tab=tribes");
+  const openPerson = (person: Person) => {
+    if (person.is_friend) {
+      setLocation(`/user/${person.id}`);
+      return;
+    }
+    setSelectedPerson(person);
+  };
+  useEffect(() => {
+    if (!selectedPerson || !user?.id) return;
+    let active = true;
+    setRelationshipStatus("loading");
+    supabase
+      .from("friendships")
+      .select("status")
+      .or(`and(user_id.eq.${user.id},friend_id.eq.${selectedPerson.id}),and(user_id.eq.${selectedPerson.id},friend_id.eq.${user.id})`)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setRelationshipStatus(data?.status === "pending" ? "pending" : "none");
+      });
+    return () => { active = false; };
+  }, [selectedPerson?.id, user?.id]);
+  const sendFriendRequest = async () => {
+    if (!selectedPerson || !session?.access_token) return;
+    setIsSendingRequest(true);
+    try {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/manage-friendships`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sendRequest", friendId: selectedPerson.id }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok && !String(result?.error || "").toLowerCase().includes("already")) {
+        throw new Error(result?.error || "Unable to send friend request.");
+      }
+      setSelectedPerson(null);
+      toast({
+        title: response.ok ? "Request sent" : "Request already pending",
+        description: response.ok ? `Your request to ${nameFor(selectedPerson)} is on its way.` : "You already sent this person a friend request.",
+      });
+    } catch (error) {
+      toast({ title: "Couldn’t send request", description: error instanceof Error ? error.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setIsSendingRequest(false);
+    }
+  };
 
   const affinityQuery = useQuery({
     queryKey: ["people-affinity-v9", user?.id], enabled: !!session?.access_token && tab === "matches",
@@ -159,15 +208,52 @@ export default function PeoplePage() {
         <nav className="mt-5 flex overflow-x-auto border-b border-[#dcd5df]" aria-label="People sections">{tabs.map((item) => <button key={item.id} onClick={() => setTab(item.id)} className={`relative shrink-0 px-4 py-2.5 text-[13px] font-bold transition-colors first:pl-0 ${tab === item.id ? "text-[#4b2f70] after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-[#523177] first:after:left-0" : "text-[#827887] hover:text-[#493659]"}`}>{item.label}</button>)}</nav>
       </header>
 
-      {tab === "matches" && <Matches query={affinityQuery} more={moreMatches} />}
+      {tab === "matches" && <Matches query={affinityQuery} more={moreMatches} onSelectPerson={openPerson} />}
       {tab === "friends" && <Friends userId={user?.id} />}
       {tab === "tribes" && <Tribes query={tribesQuery} selected={selectedTribe} onSelect={setTribe} membership={membership} />}
       {tab === "creators" && <Creators query={creatorsQuery} />}
     </main>
+    <Dialog open={!!selectedPerson} onOpenChange={(open) => !open && setSelectedPerson(null)}>
+      <DialogContent className="w-[calc(100%-2rem)] max-w-sm rounded-3xl border-violet-100 px-6 py-9 text-center">
+        <DialogHeader className="items-center">
+          {selectedPerson && <Avatar person={selectedPerson} />}
+          <DialogTitle className="pt-3 text-2xl font-bold tracking-tight text-[#211b31]">
+            {selectedPerson ? nameFor(selectedPerson) : "Consumed member"}
+          </DialogTitle>
+          {selectedPerson?.user_name && <p className="text-sm text-gray-500">@{selectedPerson.user_name}</p>}
+          <DialogDescription className="pt-5 text-center">
+            <span className="block text-lg font-bold text-[#211b31]">Their profile is for friends</span>
+            <span className="mt-2 block text-sm leading-relaxed text-gray-500">
+              Connect to see their Entertainment DNA, ratings, lists, and what they’re consuming.
+            </span>
+          </DialogDescription>
+        </DialogHeader>
+        <div className="mt-2 flex justify-center">
+          {relationshipStatus === "loading" ? (
+            <button disabled className="inline-flex items-center rounded-full bg-gray-200 px-6 py-2.5 text-sm font-bold text-gray-500">
+              <Loader2 size={17} className="mr-2 animate-spin" /> Checking connection
+            </button>
+          ) : relationshipStatus === "pending" ? (
+            <button onClick={() => setSelectedPerson(null)} className="inline-flex items-center rounded-full bg-gray-200 px-6 py-2.5 text-sm font-bold text-gray-600">
+              <Clock size={17} className="mr-2" /> Request Pending
+            </button>
+          ) : (
+            <button
+              onClick={sendFriendRequest}
+              disabled={isSendingRequest}
+              className="inline-flex items-center rounded-full bg-violet-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-violet-800 disabled:opacity-60"
+            >
+              {isSendingRequest ? <Loader2 size={17} className="mr-2 animate-spin" /> : <Users size={17} className="mr-2" />}
+              {isSendingRequest ? "Sending…" : "Add Friend"}
+            </button>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   </div>;
 }
 
-function Matches({ query, more }: { query: ReturnType<typeof useQuery<Affinity>>; more: ReturnType<typeof useMutation<Affinity, Error, void>> }) {
+function Matches({ query, more, onSelectPerson }: { query: ReturnType<typeof useQuery<Affinity>>; more: ReturnType<typeof useMutation<Affinity, Error, void>>; onSelectPerson: (person: Person) => void }) {
   if (query.isLoading) return <div className="mt-7 space-y-3">{[1, 2, 3, 4].map((item) => <div key={item} className="h-[66px] animate-pulse rounded-xl bg-[#e6e0e7]" />)}</div>;
   if (query.isError) return <ErrorState onRetry={() => query.refetch()} />;
   const data = query.data;
@@ -175,13 +261,13 @@ function Matches({ query, more }: { query: ReturnType<typeof useQuery<Affinity>>
   const ordered = bands.map((definition) => ({ ...definition, people: data.bands?.find((band) => band.id === definition.id)?.people || [] })).filter((band) => band.people.length);
   return <section className="mt-7"><div className="mb-5 flex items-end justify-between"><div><p className="text-sm text-[#6e6475]">Compatibility, without the performance.</p><h2 className="mt-1 text-xl font-bold tracking-[-.035em]">People with a real overlap</h2></div>{data.compared_now ? <span className="text-xs font-semibold text-[#79618f]">{data.compared_now} newly compared</span> : null}</div>
     {!ordered.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">No comparisons to show yet. Your matches will arrive as more people build their DNA.</div> :
-      <div className="divide-y divide-[#dfd8e1] border-y border-[#dfd8e1]">{ordered.map((band) => <div key={band.id} className="py-5"><div className="mb-2 flex items-baseline justify-between"><h3 className="text-[11px] font-bold uppercase tracking-[.15em] text-[#65457b]">{band.label}%</h3><span className="text-xs text-[#857a8b]">{band.note}</span></div>{band.people.map((person) => <MatchRow key={person.id} person={person} />)}</div>)}</div>}
+      <div className="divide-y divide-[#dfd8e1] border-y border-[#dfd8e1]">{ordered.map((band) => <div key={band.id} className="py-5"><div className="mb-2 flex items-baseline justify-between"><h3 className="text-[11px] font-bold uppercase tracking-[.15em] text-[#65457b]">{band.label}%</h3><span className="text-xs text-[#857a8b]">{band.note}</span></div>{band.people.map((person) => <MatchRow key={person.id} person={person} onSelect={onSelectPerson} />)}</div>)}</div>}
     {data.has_more && <button disabled={more.isPending} onClick={() => more.mutate()} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#503574] disabled:opacity-50">Compare more people <ChevronRight size={16} /></button>}
   </section>;
 }
 
-function MatchRow({ person }: { person: Person }) {
-  return <Link href={`/user/${person.id}`} className="group flex min-h-[62px] items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-[#ece6ee]"><Avatar person={person} small /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-bold">{nameFor(person)}</p><span className={`shrink-0 text-[10px] font-bold ${person.is_friend ? "text-[#356454]" : "text-[#786384]"}`}>{person.is_friend ? "Friend" : "New"}</span></div><p className="truncate text-xs text-[#7d7382]">{evidenceFor(person)}</p></div><span className="font-serif text-lg text-[#4b2d75]">{Math.round(person.match_score || 0)}%</span></Link>;
+function MatchRow({ person, onSelect }: { person: Person; onSelect: (person: Person) => void }) {
+  return <button type="button" onClick={() => onSelect(person)} className="group flex min-h-[62px] w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-[#ece6ee]"><Avatar person={person} small /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-bold">{nameFor(person)}</p><span className={`shrink-0 text-[10px] font-bold ${person.is_friend ? "text-[#356454]" : "text-[#786384]"}`}>{person.is_friend ? "Friend" : "New"}</span></div><p className="truncate text-xs text-[#7d7382]">{evidenceFor(person)}</p></div><span className="font-serif text-lg text-[#4b2d75]">{Math.round(person.match_score || 0)}%</span></button>;
 }
 
 function Friends({ userId }: { userId?: string }) {
