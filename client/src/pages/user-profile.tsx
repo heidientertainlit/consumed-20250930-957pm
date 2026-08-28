@@ -3833,7 +3833,7 @@ export default function UserProfile() {
                       { val: canonicalMediaTypeCounts.game, label: 'Games tracked', color: 'text-orange-600' },
                     ].map(({ val, label, color }) => (
                       <div key={label} className="text-center">
-                        <p className={`text-xl font-black ${color}`}>{val}</p>
+                        <p className={`font-serif text-xl font-bold ${color}`}>{val}</p>
                         <p className="text-gray-400 text-[10px] mt-0.5 leading-tight">{label}</p>
                       </div>
                     ))}
@@ -4302,7 +4302,7 @@ export default function UserProfile() {
                       { val: canonicalMediaTypeCounts.game, label: 'Games tracked', color: 'text-orange-600' },
                     ].map(({ val, label, color }) => (
                       <div key={label} className="text-center">
-                        <p className={`text-xl font-black ${color}`}>{val}</p>
+                        <p className={`font-serif text-xl font-bold ${color}`}>{val}</p>
                         <p className="text-gray-400 text-[10px] mt-0.5 leading-tight">{label}</p>
                       </div>
                     ))}
