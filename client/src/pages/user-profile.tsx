@@ -3821,6 +3821,7 @@ export default function UserProfile() {
 
                 {/* Stats */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                  <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.14em] text-purple-600">What Shapes Your DNA</p>
                   <div className="grid grid-cols-4 gap-x-2 gap-y-3">
                     {[
                       { val: totalItemsLogged, label: 'Titles Tracked', color: 'text-purple-700' },
@@ -4289,6 +4290,7 @@ export default function UserProfile() {
 
                 {/* Stats */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                  <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.14em] text-purple-600">What Shapes Their DNA</p>
                   <div className="grid grid-cols-4 gap-x-2 gap-y-3">
                     {[
                       { val: totalItemsLogged, label: 'Titles Tracked', color: 'text-purple-700' },
@@ -4945,14 +4947,14 @@ export default function UserProfile() {
               <div className="relative mb-5 overflow-hidden rounded-2xl border border-[#dacbe9] bg-[#f4eef9] px-4 py-4">
                 <div className="pointer-events-none absolute -right-5 -top-6 h-24 w-24 rounded-full border-[14px] border-[#e5d6f2] opacity-80" />
                 <p className="relative text-[10px] font-bold uppercase tracking-[0.16em] text-[#816994]">
-                  {getPeriodHeading()}
+                  The Record <span className="px-1 text-[#b09abb]">•</span> {getPeriodHeading()}
                 </p>
                 <div className="mt-1.5 flex items-end gap-2">
                   <span className="font-serif text-[40px] font-bold leading-none text-[#422653]">
                     {filteredMediaHistory.length}
                   </span>
                   <span className="pb-1 text-sm font-medium text-[#6c5276]">
-                    {filteredMediaHistory.length === 1 ? "title tracked" : "titles tracked"}
+                    {filteredMediaHistory.length === 1 ? "matching entry" : "matching entries"}
                   </span>
                 </div>
                 <div className="relative mt-3 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[#dfd1ea] pt-3 text-xs text-[#725c80]">
@@ -4984,7 +4986,7 @@ export default function UserProfile() {
                 <div className="space-y-4">
                   {Object.entries(historyGroups).map(([group, items]) => (
                     <section key={group}>
-                      <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9a8d80]">Tracked in {group}</p>
+                      <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9a8d80]">{group}</p>
                       <div className="space-y-2">
                   {items.map((item: any, index: number) => (
                     <div
