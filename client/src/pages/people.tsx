@@ -214,7 +214,7 @@ export default function PeoplePage() {
       {tab === "creators" && <Creators query={creatorsQuery} />}
     </main>
     <Dialog open={!!selectedPerson} onOpenChange={(open) => !open && setSelectedPerson(null)}>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-sm rounded-3xl border-violet-100 px-6 py-9 text-center">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-sm rounded-3xl border-violet-100 bg-white px-6 py-9 text-center text-[#211b31] shadow-2xl">
         <DialogHeader className="items-center">
           {selectedPerson && <Avatar person={selectedPerson} />}
           <DialogTitle className="pt-3 text-2xl font-bold tracking-tight text-[#211b31]">
