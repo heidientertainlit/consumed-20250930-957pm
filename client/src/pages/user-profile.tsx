@@ -3593,12 +3593,12 @@ export default function UserProfile() {
         {/* Section navigation (only for own profile) */}
         {isOwnProfile && (
         <div className="bg-white px-4">
-          <div className="flex overflow-x-auto border-b border-[#dcd5df] scrollbar-hide">
+          <div className="flex w-full border-b border-[#dcd5df]">
             <button
               onClick={() => setActiveSection('dna')}
-              className={`relative shrink-0 px-4 py-2.5 text-[13px] font-bold whitespace-nowrap transition-colors first:pl-0 ${
+              className={`relative flex-1 px-5 py-3.5 text-center text-[15px] font-bold whitespace-nowrap transition-colors ${
                 activeSection === 'dna'
-                  ? 'text-[#4b2f70] after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-[#523177] first:after:left-0'
+                  ? 'text-[#38214f] after:absolute after:inset-x-5 after:bottom-0 after:h-[3px] after:rounded-t-full after:bg-[#5b3185]'
                   : 'text-[#827887] hover:text-[#493659]'
               }`}
               data-testid="nav-dna-profile"
@@ -3607,9 +3607,9 @@ export default function UserProfile() {
             </button>
             <button
               onClick={() => setActiveSection('all-media')}
-              className={`relative shrink-0 px-4 py-2.5 text-[13px] font-bold whitespace-nowrap transition-colors ${
+              className={`relative flex-1 px-5 py-3.5 text-center text-[15px] font-bold whitespace-nowrap transition-colors ${
                 activeSection === 'all-media'
-                  ? 'text-[#4b2f70] after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-[#523177]'
+                  ? 'text-[#38214f] after:absolute after:inset-x-5 after:bottom-0 after:h-[3px] after:rounded-t-full after:bg-[#5b3185]'
                   : 'text-[#827887] hover:text-[#493659]'
               }`}
               data-testid="nav-all-media"
@@ -3623,12 +3623,12 @@ export default function UserProfile() {
         {/* Section Navigation for Friend Profiles */}
         {!isOwnProfile && friendshipStatus === 'friends' && (
           <div className="bg-white px-4">
-            <div className="flex overflow-x-auto border-b border-[#dcd5df] scrollbar-hide">
+            <div className="flex w-full border-b border-[#dcd5df]">
               <button
                 onClick={() => setActiveSection('dna')}
-                className={`relative shrink-0 px-4 py-2.5 text-[13px] font-bold whitespace-nowrap transition-colors first:pl-0 ${
+                className={`relative flex-1 px-5 py-3.5 text-center text-[15px] font-bold whitespace-nowrap transition-colors ${
                   activeSection === 'dna'
-                    ? 'text-[#4b2f70] after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-[#523177] first:after:left-0'
+                    ? 'text-[#38214f] after:absolute after:inset-x-5 after:bottom-0 after:h-[3px] after:rounded-t-full after:bg-[#5b3185]'
                     : 'text-[#827887] hover:text-[#493659]'
                 }`}
                 data-testid="tab-friend-dna"
@@ -3637,9 +3637,9 @@ export default function UserProfile() {
               </button>
               <button
                 onClick={() => setActiveSection('their-media')}
-                className={`relative shrink-0 px-4 py-2.5 text-[13px] font-bold whitespace-nowrap transition-colors ${
+                className={`relative flex-1 px-5 py-3.5 text-center text-[15px] font-bold whitespace-nowrap transition-colors ${
                   activeSection === 'their-media'
-                    ? 'text-[#4b2f70] after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-[#523177]'
+                    ? 'text-[#38214f] after:absolute after:inset-x-5 after:bottom-0 after:h-[3px] after:rounded-t-full after:bg-[#5b3185]'
                     : 'text-[#827887] hover:text-[#493659]'
                 }`}
                 data-testid="tab-friend-media"
