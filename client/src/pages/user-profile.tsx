@@ -4727,7 +4727,7 @@ export default function UserProfile() {
                   </div>
                   {(averageRating !== null || pageProgressItems.length > 0) && (
                     <div className="relative mt-4 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[#dfd1ea] pt-3 text-xs text-[#725c80]">
-                      {averageRating !== null && <span className="inline-flex items-center gap-1">{averageRating.toFixed(1)} average <Star size={11} fill="currentColor" /></span>}
+                      {averageRating !== null && <span className="inline-flex items-center gap-1">{averageRating.toFixed(1)} average rating given <Star size={11} fill="currentColor" /></span>}
                       {pageProgressItems.length > 0 && <span>{pagesLogged} current pages{knownPages > 0 ? ` of ${knownPages} known` : ""}</span>}
                     </div>
                   )}
@@ -4765,7 +4765,7 @@ export default function UserProfile() {
               </div>
               {/* Filters */}
               <div className="px-4 pb-5 pt-4 sm:px-5">
-              <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#96869f]">Refine your library</p>
+              <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#96869f]">Explore your stats</p>
               <div className="flex flex-wrap gap-2 mb-4">
                 <div className="relative">
                   <button
