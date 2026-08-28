@@ -78,6 +78,7 @@ export function ProgressTracker({
             progress: newProgress,
             total: newTotal,
             progress_mode: newMode,
+            client_event_id: crypto.randomUUID(),
           }),
         }
       );
@@ -161,6 +162,7 @@ export function ProgressTracker({
           body: JSON.stringify({
             item_id: itemId,
             target_list: targetList,
+            client_event_id: crypto.randomUUID(),
           }),
         }
       );

@@ -661,7 +661,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
         await fetch(`${supabaseUrl}/functions/v1/update-item-progress`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ item_id: items[0].id, progress, progress_total: total, progress_mode: progressMode === 'minutes' ? 'percent' : progressMode }),
+          body: JSON.stringify({ item_id: items[0].id, progress, progress_total: total, progress_mode: progressMode === 'minutes' ? 'percent' : progressMode, client_event_id: crypto.randomUUID() }),
         });
         queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
         queryClient.invalidateQueries({ queryKey: ['lists-containing-media'] });

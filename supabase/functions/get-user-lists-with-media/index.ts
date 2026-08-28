@@ -206,6 +206,7 @@ serve(async (req) => {
       const filteredSystemLists = (userSystemLists || [])
         .filter(list => {
           if (!requiredSystemLists.includes(list.title)) return false;
+          if (isViewingOtherUser && list.is_private) return false;
           if (seenTitles.has(list.title)) return false;
           seenTitles.add(list.title);
           return true;
@@ -254,6 +255,7 @@ serve(async (req) => {
         const seenAfterBackfill = new Set();
         systemLists = (updatedSystemLists || []).filter(list => {
           if (!requiredSystemLists.includes(list.title)) return false;
+          if (isViewingOtherUser && list.is_private) return false;
           if (seenAfterBackfill.has(list.title)) return false;
           seenAfterBackfill.add(list.title);
           return true;
@@ -273,7 +275,9 @@ serve(async (req) => {
           .order('title');
         
         if (!customListsError && userCustomLists) {
-          customLists = userCustomLists;
+          customLists = isViewingOtherUser
+            ? userCustomLists.filter((list: any) => !list.is_private)
+            : userCustomLists;
           console.log("Custom lists loaded:", customLists.length);
         } else if (customListsError) {
           console.error('Error fetching custom lists (non-fatal):', customListsError);
@@ -283,7 +287,7 @@ serve(async (req) => {
       }
 
       // Fetch collaborative lists (lists where user is a collaborator)
-      if (appUser?.id) {
+      if (appUser?.id && !isViewingOtherUser) {
         try {
           const { data: collaborativeLists, error: collabError } = await supabase
             .from('list_collaborators')
@@ -308,13 +312,37 @@ serve(async (req) => {
       }
     }
 
+    // Service-role friend reads must be restricted before the virtual "All"
+    // collection is constructed, otherwise private-list items leak there.
+    let visibleListIds: string[] | null = null;
+    if (isViewingOtherUser && targetUserId) {
+      const { data: visibleLists, error: visibleListsError } = await queryClient
+        .from('lists')
+        .select('id, is_private')
+        .eq('user_id', targetUserId);
+      if (visibleListsError) {
+        throw new Error('Failed to fetch visible lists');
+      }
+      visibleListIds = (visibleLists || [])
+        .filter((list: any) => !list.is_private)
+        .map((list: any) => list.id);
+    }
+
     // Get user's media items
     let userItems = [];
     if (targetUserId) {
-      const { data: items, error: itemsError } = await queryClient
+      let itemsQuery: any = queryClient
         .from('list_items')
         .select('*')
         .eq('user_id', targetUserId);
+      if (isViewingOtherUser) {
+        itemsQuery = visibleListIds?.length
+          ? itemsQuery.in('list_id', visibleListIds)
+          : null;
+      }
+      const { data: items, error: itemsError } = itemsQuery
+        ? await itemsQuery
+        : { data: [], error: null };
       
       console.log('list_items query result:', { itemCount: items?.length, error: itemsError });
       
@@ -328,7 +356,7 @@ serve(async (req) => {
 
       // Fetch items for collaborative lists (items belong to list owner, not collaborator)
       const collabListIds = customLists.filter((l: any) => l.isCollaborative).map((l: any) => l.id);
-      if (collabListIds.length > 0) {
+      if (!isViewingOtherUser && collabListIds.length > 0) {
         try {
           const { data: collabItems, error: collabItemsError } = await queryClient
             .from('list_items')
@@ -349,15 +377,19 @@ serve(async (req) => {
       // Fetch user's ratings from media_ratings table
       const { data: ratings, error: ratingsError } = await queryClient
         .from('media_ratings')
-        .select('media_external_id, media_external_source, rating')
-        .eq('user_id', targetUserId);
+        .select('id, media_external_id, media_external_source, rating, updated_at')
+        .eq('user_id', targetUserId)
+        .order('updated_at', { ascending: false })
+        .order('id', { ascending: false });
       
       if (!ratingsError && ratings) {
         // Create a lookup map for ratings by external_id + external_source
         const ratingsMap = new Map();
         ratings.forEach((r: any) => {
           const key = `${r.media_external_source}-${r.media_external_id}`;
-          ratingsMap.set(key, r.rating);
+          if (!ratingsMap.has(key) && Number.isFinite(Number(r.rating))) {
+            ratingsMap.set(key, Number(r.rating));
+          }
         });
         
         // Attach ratings to items
@@ -365,7 +397,7 @@ serve(async (req) => {
           if (item.external_id && item.external_source) {
             const key = `${item.external_source}-${item.external_id}`;
             const rating = ratingsMap.get(key);
-            return { ...item, user_rating: rating || null };
+            return { ...item, user_rating: rating ?? null };
           }
           return { ...item, user_rating: null };
         });
@@ -397,6 +429,7 @@ serve(async (req) => {
       title: list.title,
       items: itemsByListId[list.id] || [],
       isCustom: true,
+      is_private: list.is_private,
       isPrivate: list.is_private,
       isCollaborative: list.isCollaborative || false,
       owner_id: list.owner_id || targetUserId
@@ -410,8 +443,10 @@ serve(async (req) => {
       is_default: true
     };
 
-    // Assemble final lists — custom lists hidden from UI intentionally
-    const finalLists = [allList, ...listsWithItems];
+    // Include every real list so My Media can preserve complete list membership
+    // while deduplicating its history. The virtual All list remains first for
+    // backwards-compatible consumers.
+    const finalLists = [allList, ...listsWithItems, ...customListsWithItems];
     
     console.log("Returning final lists:", finalLists.map(l => `${l.title} (${l.items.length} items)`));
 

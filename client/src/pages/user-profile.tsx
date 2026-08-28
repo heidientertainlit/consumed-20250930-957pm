@@ -245,8 +245,12 @@ export default function UserProfile() {
 
   // Media History filters
   const [mediaHistorySearch, setMediaHistorySearch] = useState("");
-  const [mediaHistoryYear, setMediaHistoryYear] = useState("all");
-  const [mediaHistoryMonth, setMediaHistoryMonth] = useState("all");
+  const [mediaHistoryDate, setMediaHistoryDate] = useState<"anytime" | "this-month" | "last-month" | "select-month" | "this-year" | "select-year">("anytime");
+  const [mediaHistorySelectedMonth, setMediaHistorySelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [mediaHistorySelectedYear, setMediaHistorySelectedYear] = useState(String(new Date().getFullYear()));
   const [mediaHistoryType, setMediaHistoryType] = useState("all");
   const [mediaHistoryRating, setMediaHistoryRating] = useState("all");
   const [mediaHistoryList, setMediaHistoryList] = useState("all");
@@ -1111,6 +1115,7 @@ export default function UserProfile() {
             progress,
             progress_total: total,
             progress_mode: mode,
+            client_event_id: crypto.randomUUID(),
           }),
         }
       );
@@ -1143,6 +1148,7 @@ export default function UserProfile() {
           body: JSON.stringify({
             item_id: itemId,
             target_list: targetList,
+            client_event_id: crypto.randomUUID(),
           }),
         }
       );
@@ -2889,29 +2895,24 @@ export default function UserProfile() {
   };
 
 
-  // Aggregate all media items from all lists for media history
+  // One canonical record per tracked item. Keep every list membership while deduping.
   const getAllMediaItems = () => {
-    const allItems: any[] = [];
-    const seenItems = new Set<string>(); // Track unique items by media_id
-    
-    // Skip the virtual "All" list — it contains duplicates of every item and would
-    // overwrite the real listName before the specific lists (Currently, Finished, etc.) run.
-    userLists.filter((list: any) => list.title !== 'All').forEach(list => {
-      if (list.items) {
-        list.items.forEach((item: any) => {
-          const uniqueKey = item.media_id || `${item.title}-${item.media_type}-${item.creator}`;
-          if (!seenItems.has(uniqueKey)) {
-            seenItems.add(uniqueKey);
-            allItems.push({
-              ...item,
-              listName: list.title
-            });
+    const byKey = new Map<string, any>();
+    userLists.filter((list: any) => list.title !== 'All').forEach((list: any) => {
+      (list.items || []).forEach((item: any) => {
+        const uniqueKey = item.media_id || `${item.external_source || ""}:${item.external_id || ""}:${item.media_type}:${item.title}:${item.creator || ""}`;
+        const existing = byKey.get(uniqueKey);
+        if (existing) {
+          if (!existing.listNames.includes(list.title)) existing.listNames.push(list.title);
+          if (new Date(item.created_at || 0).getTime() > new Date(existing.created_at || 0).getTime()) {
+            Object.assign(existing, item, { listNames: existing.listNames });
           }
-        });
-      }
+        } else {
+          byKey.set(uniqueKey, { ...item, listNames: [list.title] });
+        }
+      });
     });
-    // Sort by created_at descending (newest first)
-    return allItems.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return Array.from(byKey.values()).sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   };
 
   const SYSTEM_LIST_TITLES = ['Currently', 'Finished', 'Did Not Finish', 'Favorites', 'Want To'];
@@ -2921,7 +2922,20 @@ export default function UserProfile() {
     if (!session?.access_token) return;
     setMovingItemId(itemId);
     setOpenMoveDropdown(null);
+    const targetListRecord = userLists.find((list: any) => list.id === newListId);
+    const systemTargetKeys: Record<string, string> = {
+      Currently: "currently",
+      Finished: "finished",
+      "Did Not Finish": "dnf",
+      Favorites: "favorites",
+      "Want To": "queue",
+    };
+    const targetKey = targetListRecord ? systemTargetKeys[targetListRecord.title] : undefined;
     try {
+      if (targetKey) {
+        moveToListMutation.mutate({ itemId, targetList: targetKey, listName: targetListRecord.title });
+        return;
+      }
       const res = await fetch(
         `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/list_items?id=eq.${itemId}`,
         {
@@ -2943,7 +2957,7 @@ export default function UserProfile() {
       }
     } catch {
       toast({ description: 'Failed to move item', variant: 'destructive' });
-    } finally {
+      } finally {
       setMovingItemId(null);
     }
   };
@@ -2952,10 +2966,11 @@ export default function UserProfile() {
   const currentlyList = userLists.find(list => list.title === 'Currently');
   const currentlyConsuming = currentlyList?.items || [];
 
-  // Filter media history based on search and filters
+  const isInSelectedMonth = (date: Date, value: string) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}` === value;
+
+  // Filter media history based on the same canonical records used for the summary.
   const getFilteredMediaHistory = () => {
     const allItems = getAllMediaItems();
-
     return allItems.filter(item => {
       // Search filter
       if (mediaHistorySearch.trim()) {
@@ -2971,39 +2986,36 @@ export default function UserProfile() {
         if (item.media_type?.toLowerCase() !== mediaHistoryType) return false;
       }
 
-      // Year filter
-      if (mediaHistoryYear !== 'all') {
-        const itemYear = new Date(item.created_at).getFullYear();
-        if (itemYear.toString() !== mediaHistoryYear) return false;
+      const itemDate = new Date(item.created_at);
+      const now = new Date();
+      if (mediaHistoryDate === "this-month" && !isInSelectedMonth(itemDate, `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`)) return false;
+      if (mediaHistoryDate === "last-month") {
+        const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        if (!isInSelectedMonth(itemDate, `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, "0")}`)) return false;
       }
-
-      // Month filter
-      if (mediaHistoryMonth !== 'all') {
-        const itemMonth = new Date(item.created_at).getMonth();
-        const monthNumber = parseInt(mediaHistoryMonth);
-        if (itemMonth !== monthNumber) return false;
-      }
+      if (mediaHistoryDate === "select-month" && !isInSelectedMonth(itemDate, mediaHistorySelectedMonth)) return false;
+      if (mediaHistoryDate === "this-year" && itemDate.getFullYear() !== now.getFullYear()) return false;
+      if (mediaHistoryDate === "select-year" && itemDate.getFullYear().toString() !== mediaHistorySelectedYear) return false;
 
       // Rating filter
       if (mediaHistoryRating !== 'all') {
         const ratingValue = parseFloat(mediaHistoryRating);
-        const itemRating = item.rating || 0;
+        const itemRating = Number(item.user_rating ?? 0);
         // Match items with rating >= selected value and < next value
         if (itemRating < ratingValue || itemRating >= ratingValue + 1) return false;
       }
 
       // List filter
       if (mediaHistoryList !== 'all') {
-        if (item.listName !== mediaHistoryList) return false;
+        if (!item.listNames?.includes(mediaHistoryList)) return false;
       }
 
       return true;
     });
   };
 
-  // Get media type counts for summary display
-  const getMediaTypeCounts = () => {
-    const allItems = getAllMediaItems();
+  // Get media type counts for summary display, from the exact filtered result set.
+  const getMediaTypeCounts = (items: any[]) => {
     const counts: any = {
       movie: 0,
       tv: 0,
@@ -3016,7 +3028,7 @@ export default function UserProfile() {
       youtube: 0
     };
 
-    allItems.forEach(item => {
+    items.forEach((item: any) => {
       if (counts.hasOwnProperty(item.media_type)) {
         counts[item.media_type]++;
       }
@@ -3025,8 +3037,19 @@ export default function UserProfile() {
     return counts;
   };
 
-  const mediaTypeCounts = getMediaTypeCounts();
   const filteredMediaHistory = getFilteredMediaHistory();
+  const mediaTypeCounts = getMediaTypeCounts(filteredMediaHistory);
+  const canonicalMediaTypeCounts = getMediaTypeCounts(getAllMediaItems());
+  const ratedItems = filteredMediaHistory.filter(item => item.user_rating !== null && item.user_rating !== undefined && String(item.user_rating).trim() !== "" && Number.isFinite(Number(item.user_rating)));
+  const averageRating = ratedItems.length ? ratedItems.reduce((sum, item) => sum + Number(item.user_rating), 0) / ratedItems.length : null;
+  const pageProgressItems = filteredMediaHistory.filter(item => item.media_type === "book" && item.progress_mode === "page" && Number.isFinite(Number(item.progress)));
+  const pagesLogged = pageProgressItems.reduce((sum, item) => sum + Math.max(0, Number(item.progress)), 0);
+  const knownPages = pageProgressItems.reduce((sum, item) => sum + (Number.isFinite(Number(item.progress_total ?? item.total)) ? Math.max(0, Number(item.progress_total ?? item.total)) : 0), 0);
+  const historyGroups = filteredMediaHistory.reduce((groups: Record<string, any[]>, item: any) => {
+    const key = new Date(item.created_at).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    (groups[key] ||= []).push(item);
+    return groups;
+  }, {});
 
   // Filter label helpers
   const getTypeLabel = () => {
@@ -3034,9 +3057,33 @@ export default function UserProfile() {
     return labels[mediaHistoryType] || 'Media Type';
   };
   
-  const getYearLabel = () => mediaHistoryYear === 'all' ? 'Year' : mediaHistoryYear;
-  
-  const getRatingLabel = () => mediaHistoryRating === 'all' ? 'Rating' : `${mediaHistoryRating}★`;
+  const getDateLabel = () => {
+    if (mediaHistoryDate === "anytime") return "Date";
+    if (mediaHistoryDate === "this-month") return "This month";
+    if (mediaHistoryDate === "last-month") return "Last month";
+    if (mediaHistoryDate === "this-year") return "This year";
+    if (mediaHistoryDate === "select-year") return mediaHistorySelectedYear;
+    return new Date(`${mediaHistorySelectedMonth}-01T12:00:00`).toLocaleDateString(undefined, { month: "short", year: "numeric" });
+  };
+
+  const getPeriodHeading = () => {
+    const now = new Date();
+    if (mediaHistoryDate === "this-month") {
+      return now.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    }
+    if (mediaHistoryDate === "last-month") {
+      return new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        .toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    }
+    if (mediaHistoryDate === "select-month") {
+      return new Date(`${mediaHistorySelectedMonth}-01T12:00:00`)
+        .toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    }
+    if (mediaHistoryDate === "this-year") return String(now.getFullYear());
+    if (mediaHistoryDate === "select-year") return mediaHistorySelectedYear;
+    return "All time";
+  };
+  const getRatingLabel = () => mediaHistoryRating === 'all' ? 'Rating' : `${mediaHistoryRating}+`;
 
   // Years array for filter dropdown
   const years = Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() - i).toString());
@@ -3131,7 +3178,7 @@ export default function UserProfile() {
       sports: 'Sports'
     };
     
-    const sortedTypes = Object.entries(mediaTypeCounts)
+    const sortedTypes = Object.entries(canonicalMediaTypeCounts)
       .filter(([_, count]) => (count as number) > 0)
       .sort((a, b) => (b[1] as number) - (a[1] as number))
       .slice(0, 2)
@@ -3151,8 +3198,8 @@ export default function UserProfile() {
 
   const availableYears = getAvailableYears();
 
-  // Calculate total items logged from the 'All' list (which contains all unique items)
-  const totalItemsLogged = userLists.find(list => list.id === 'all')?.items?.length || 0;
+  // Use the same canonical deduplication as My Media so profile totals agree.
+  const totalItemsLogged = getAllMediaItems().length;
 
   // Show loading screen while route is resolving to prevent flash of wrong profile
   if (isRouteResolving) {
@@ -3774,12 +3821,12 @@ export default function UserProfile() {
                   <div className="grid grid-cols-4 gap-x-2 gap-y-3">
                     {[
                       { val: totalItemsLogged, label: 'Titles Tracked', color: 'text-purple-700' },
-                      { val: userStats?.moviesWatched ?? 0, label: 'Movies', color: 'text-pink-600' },
-                      { val: userStats?.tvShowsWatched ?? 0, label: 'TV', color: 'text-blue-600' },
-                      { val: userStats?.booksRead ?? 0, label: 'Books', color: 'text-cyan-600' },
-                      { val: `${userStats?.musicHours ?? 0}h`, label: 'Music', color: 'text-green-600' },
-                      { val: `${userStats?.podcastHours ?? 0}h`, label: 'Pods', color: 'text-indigo-600' },
-                      { val: userStats?.gamesPlayed ?? 0, label: 'Games', color: 'text-orange-600' },
+                      { val: canonicalMediaTypeCounts.movie, label: 'Movies tracked', color: 'text-pink-600' },
+                      { val: canonicalMediaTypeCounts.tv, label: 'TV tracked', color: 'text-blue-600' },
+                      { val: canonicalMediaTypeCounts.book + canonicalMediaTypeCounts.book_series, label: 'Books tracked', color: 'text-cyan-600' },
+                      { val: canonicalMediaTypeCounts.music, label: 'Music tracked', color: 'text-green-600' },
+                      { val: canonicalMediaTypeCounts.podcast, label: 'Podcasts tracked', color: 'text-indigo-600' },
+                      { val: canonicalMediaTypeCounts.game, label: 'Games tracked', color: 'text-orange-600' },
                     ].map(({ val, label, color }) => (
                       <div key={label} className="text-center">
                         <p className={`text-xl font-black ${color}`}>{val}</p>
@@ -4242,12 +4289,12 @@ export default function UserProfile() {
                   <div className="grid grid-cols-4 gap-x-2 gap-y-3">
                     {[
                       { val: totalItemsLogged, label: 'Titles Tracked', color: 'text-purple-700' },
-                      { val: userStats?.moviesWatched ?? 0, label: 'Movies', color: 'text-pink-600' },
-                      { val: userStats?.tvShowsWatched ?? 0, label: 'TV', color: 'text-blue-600' },
-                      { val: userStats?.booksRead ?? 0, label: 'Books', color: 'text-cyan-600' },
-                      { val: `${userStats?.musicHours ?? 0}h`, label: 'Music', color: 'text-green-600' },
-                      { val: `${userStats?.podcastHours ?? 0}h`, label: 'Pods', color: 'text-indigo-600' },
-                      { val: userStats?.gamesPlayed ?? 0, label: 'Games', color: 'text-orange-600' },
+                      { val: canonicalMediaTypeCounts.movie, label: 'Movies tracked', color: 'text-pink-600' },
+                      { val: canonicalMediaTypeCounts.tv, label: 'TV tracked', color: 'text-blue-600' },
+                      { val: canonicalMediaTypeCounts.book + canonicalMediaTypeCounts.book_series, label: 'Books tracked', color: 'text-cyan-600' },
+                      { val: canonicalMediaTypeCounts.music, label: 'Music tracked', color: 'text-green-600' },
+                      { val: canonicalMediaTypeCounts.podcast, label: 'Podcasts tracked', color: 'text-indigo-600' },
+                      { val: canonicalMediaTypeCounts.game, label: 'Games tracked', color: 'text-orange-600' },
                     ].map(({ val, label, color }) => (
                       <div key={label} className="text-center">
                         <p className={`text-xl font-black ${color}`}>{val}</p>
@@ -4762,31 +4809,34 @@ export default function UserProfile() {
                   )}
                 </div>
                 <div className="relative">
-                  <button
-                    onClick={() => setOpenFilter(openFilter === 'year' ? null : 'year')}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                      mediaHistoryYear !== 'all' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                    }`}
-                  >
-                    <Calendar size={12} />
-                    {mediaHistoryYear === 'all' ? 'Year' : mediaHistoryYear}
-                    <ChevronRight size={12} className={`transition-transform ${openFilter === 'year' ? 'rotate-90' : ''}`} />
+                  <button onClick={() => setOpenFilter(openFilter === 'year' ? null : 'year')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${mediaHistoryDate !== 'anytime' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'}`}>
+                    <Calendar size={12} />{getDateLabel()}<ChevronRight size={12} className={`transition-transform ${openFilter === 'year' ? 'rotate-90' : ''}`} />
                   </button>
                   {openFilter === 'year' && (
-                    <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[100px] max-h-48 overflow-y-auto">
-                      <button onClick={() => { setMediaHistoryYear('all'); setOpenFilter(null); }}
-                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryYear === 'all' ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
-                        All Years
-                      </button>
-                      {Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() - i).toString()).map((year) => (
-                        <button key={year} onClick={() => { setMediaHistoryYear(year); setOpenFilter(null); }}
-                          className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryYear === year ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
-                          {year}
-                        </button>
+                    <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[150px]">
+                      {[
+                        ["anytime", "Anytime"], ["this-month", "This month"], ["last-month", "Last month"],
+                        ["select-month", "Select month"], ["this-year", "This year"], ["select-year", "Select year"]
+                      ].map(([value, label]) => (
+                        <button key={value} onClick={() => { setMediaHistoryDate(value as typeof mediaHistoryDate); setOpenFilter(null); }}
+                          className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryDate === value ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>{label}</button>
                       ))}
                     </div>
                   )}
                 </div>
+                {mediaHistoryDate === "select-month" && (
+                  <div className="flex items-center gap-1 rounded-full border border-purple-200 bg-purple-50 px-2 py-1">
+                    <button aria-label="Previous month" className="p-0.5 text-purple-600" onClick={() => { const d = new Date(`${mediaHistorySelectedMonth}-01T12:00:00`); d.setMonth(d.getMonth() - 1); setMediaHistorySelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); }}><ChevronLeft size={13} /></button>
+                    <span className="text-xs font-medium text-purple-700 min-w-[72px] text-center">{getDateLabel()}</span>
+                    <button aria-label="Next month" className="p-0.5 text-purple-600" onClick={() => { const d = new Date(`${mediaHistorySelectedMonth}-01T12:00:00`); d.setMonth(d.getMonth() + 1); setMediaHistorySelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); }}><ChevronRight size={13} /></button>
+                  </div>
+                )}
+                {mediaHistoryDate === "select-year" && (
+                  <select value={mediaHistorySelectedYear} onChange={e => setMediaHistorySelectedYear(e.target.value)} className="rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs text-purple-700">
+                    {Array.from({ length: 10 }, (_, i) => String(new Date().getFullYear() - i)).map(year => <option key={year}>{year}</option>)}
+                  </select>
+                )}
                 <div className="relative">
                   <button
                     onClick={() => setOpenFilter(openFilter === 'rating' ? null : 'rating')}
@@ -4794,7 +4844,7 @@ export default function UserProfile() {
                       mediaHistoryRating !== 'all' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                     }`}
                   >
-                    ⭐ {mediaHistoryRating === 'all' ? 'Rating' : `${mediaHistoryRating}★`}
+                    <Star size={12} fill="currentColor" /> {mediaHistoryRating === 'all' ? 'Rating' : `${mediaHistoryRating}+`}
                     <ChevronRight size={12} className={`transition-transform ${openFilter === 'rating' ? 'rotate-90' : ''}`} />
                   </button>
                   {openFilter === 'rating' && (
@@ -4806,7 +4856,7 @@ export default function UserProfile() {
                       {[5, 4, 3, 2, 1].map((rating) => (
                         <button key={rating} onClick={() => { setMediaHistoryRating(rating.toString()); setOpenFilter(null); }}
                           className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryRating === rating.toString() ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
-                          {'⭐'.repeat(rating)}
+                          <span className="flex items-center gap-1">{rating} <Star size={11} fill="currentColor" /></span>
                         </button>
                       ))}
                     </div>
@@ -4840,13 +4890,14 @@ export default function UserProfile() {
                   )}
                 </div>
                 {/* Reset filters — only visible when any filter is active */}
-                {(mediaHistoryType !== 'all' || mediaHistoryYear !== 'all' || mediaHistoryRating !== 'all' || mediaHistoryList !== 'all') && (
+                {(mediaHistoryType !== 'all' || mediaHistoryDate !== 'anytime' || mediaHistoryRating !== 'all' || mediaHistoryList !== 'all' || mediaHistorySearch) && (
                   <button
                     onClick={() => {
                       setMediaHistoryType('all');
-                      setMediaHistoryYear('all');
+                       setMediaHistoryDate('anytime');
                       setMediaHistoryRating('all');
                       setMediaHistoryList('all');
+                       setMediaHistorySearch('');
                       setOpenFilter(null);
                     }}
                     className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-500 border border-gray-300 hover:bg-gray-100 transition-colors flex items-center gap-1"
@@ -4868,6 +4919,26 @@ export default function UserProfile() {
                   data-testid="input-history-search"
                 />
               </div>
+              <div className="mb-4 rounded-2xl bg-[#fbf5ec] border border-[#eadfce] px-4 py-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8b8175]">
+                  {getPeriodHeading()}
+                </p>
+                <div className="mt-1.5 flex items-end gap-2">
+                  <span className="font-serif text-[38px] font-bold leading-none text-[#3f2c4d]">
+                    {filteredMediaHistory.length}
+                  </span>
+                  <span className="pb-1 text-sm font-medium text-[#6c6258]">
+                    {filteredMediaHistory.length === 1 ? "title tracked" : "titles tracked"}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[#eadfce] pt-3 text-xs text-[#6c6258]">
+                  {Object.entries(mediaTypeCounts).filter(([, count]) => Number(count) > 0).map(([type, count]) => (
+                    <span key={type}>{Number(count)} {getMediaTypeLabel(type).toLowerCase()}</span>
+                  ))}
+                  {averageRating !== null && <span className="inline-flex items-center gap-1">{averageRating.toFixed(1)} average <Star size={11} fill="currentColor" /></span>}
+                  {pageProgressItems.length > 0 && <span>{pagesLogged} current pages{knownPages > 0 ? ` of ${knownPages} known` : ""}</span>}
+                </div>
+              </div>
               {isLoadingLists ? (
                 <div className="space-y-2">
                   {[1, 2, 3].map((n) => (
@@ -4884,8 +4955,12 @@ export default function UserProfile() {
                   <p className="text-xs text-gray-400 mt-1">Start tracking media to see your history here</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {filteredMediaHistory.map((item: any, index: number) => (
+                <div className="space-y-4">
+                  {Object.entries(historyGroups).map(([group, items]) => (
+                    <section key={group}>
+                      <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9a8d80]">Tracked in {group}</p>
+                      <div className="space-y-2">
+                  {items.map((item: any, index: number) => (
                     <div
                       key={`${item.id}-${index}`}
                       className="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:border-purple-300 transition-colors"
@@ -4919,9 +4994,17 @@ export default function UserProfile() {
                             {getMediaIcon(item.media_type)}
                             <span>{getMediaTypeLabel(item.media_type)}</span>
                             <span>•</span>
-                            <span>{item.listName}</span>
+                            <span>{item.listNames?.join(" · ")}</span>
                           </div>
-                          <p className="text-xs text-gray-400 mt-0.5">{new Date(item.created_at).toLocaleDateString()}</p>
+                           <p className="text-xs text-gray-400 mt-0.5">Tracked {new Date(item.created_at).toLocaleDateString()}</p>
+                           <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
+                             {item.user_rating !== null && item.user_rating !== undefined && (
+                               <span className="inline-flex items-center gap-1 text-amber-700"><Star size={10} fill="currentColor" /> {Number(item.user_rating).toFixed(1)}</span>
+                             )}
+                             {item.progress_mode === "page" && Number.isFinite(Number(item.progress)) && (
+                               <span>{item.progress_total ?? item.total ? `${item.progress} of ${item.progress_total ?? item.total} pages` : `${item.progress} pages logged`}</span>
+                             )}
+                           </div>
                         </div>
                         {isOwnProfile && (
                           <div className="relative flex-shrink-0">
@@ -4943,7 +5026,7 @@ export default function UserProfile() {
                               <div className="absolute right-0 top-8 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[160px]">
                                 <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide px-3 pt-1.5 pb-1">Move to</p>
                                 {systemLists
-                                  .filter((l: any) => l.title !== item.listName)
+                                  .filter((l: any) => !item.listNames?.includes(l.title))
                                   .map((l: any) => (
                                     <button
                                       key={l.id}
@@ -4962,6 +5045,9 @@ export default function UserProfile() {
                         )}
                       </div>
                     </div>
+                  ))}
+                      </div>
+                    </section>
                   ))}
                 </div>
               )}

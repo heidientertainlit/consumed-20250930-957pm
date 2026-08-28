@@ -48,7 +48,8 @@ serve(async (req) => {
     appUser = appUserData;
     const userId = appUser.id;
 
-    const { item_id, target_list } = await req.json();
+    const { item_id, target_list, client_event_id, event_id, idempotency_key } = await req.json();
+    const clientEventId = client_event_id ?? event_id ?? idempotency_key ?? null;
 
     if (!item_id) {
       throw new Error('item_id is required');
@@ -56,6 +57,10 @@ serve(async (req) => {
 
     if (!target_list) {
       throw new Error('target_list is required');
+    }
+    if (clientEventId !== null &&
+      (typeof clientEventId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clientEventId))) {
+      throw new Error('client_event_id must be a UUID');
     }
 
     // Map list names to list types for lookup - use ilike patterns for flexible matching
@@ -114,71 +119,25 @@ serve(async (req) => {
       throw new Error(`Target list "${listConfig.title}" not found`);
     }
 
-    // Get the item being moved to check for duplicates
-    const { data: sourceItem, error: sourceError } = await supabaseClient
-      .from('list_items')
-      .select('id, external_id, external_source, list_id')
-      .eq('id', item_id)
-      .eq('user_id', userId)
-      .single();
-
-    if (sourceError || !sourceItem) {
-      console.error('Error finding source item:', sourceError);
-      throw new Error('Item not found');
-    }
-
-    // Check if already in target list
-    if (sourceItem.list_id === targetListData.id) {
-      return new Response(JSON.stringify({ success: true, message: 'Item already in target list' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      });
-    }
-
-    // Check if this media already exists in the target list (duplicate check)
-    const { data: existingInTarget } = await supabaseClient
-      .from('list_items')
-      .select('id')
-      .eq('list_id', targetListData.id)
-      .eq('external_id', sourceItem.external_id)
-      .eq('external_source', sourceItem.external_source)
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    let data;
-    let error;
-
-    if (existingInTarget) {
-      // Media already exists in target list - just delete the source item
-      const deleteResult = await supabaseClient
-        .from('list_items')
-        .delete()
-        .eq('id', item_id)
-        .eq('user_id', userId);
-      
-      error = deleteResult.error;
-      data = { deleted: true, message: 'Duplicate removed, item exists in target list' };
-    } else {
-      // No duplicate - update the item's list_id
-      const updateResult = await supabaseClient
-        .from('list_items')
-        .update({ 
-          list_id: targetListData.id,
-          progress: target_list === 'finished' ? 100 : 0,
-          progress_mode: 'percent'
-        })
-        .eq('id', item_id)
-        .eq('user_id', userId)
-        .select()
-        .single();
-      
-      data = updateResult.data;
-      error = updateResult.error;
-    }
+    // The RPC checks receipts before it looks up the source item, so a retry
+    // still succeeds after a duplicate-target move deleted that source row.
+    const { data: moveResult, error } = await supabaseClient.rpc('move_list_item_with_completion', {
+      p_item_id: item_id,
+      p_target_list_id: targetListData.id,
+      p_mark_completed: target_list === 'finished',
+      p_client_event_id: clientEventId,
+    });
 
     if (error) {
       console.error('Error moving item:', error);
       throw error;
+    }
+    const data = moveResult?.data ?? moveResult;
+    if (moveResult?.already_in_target) {
+      return new Response(JSON.stringify({ success: true, message: 'Item already in target list', data }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
     }
 
     return new Response(JSON.stringify({ success: true, data }), {

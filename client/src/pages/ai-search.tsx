@@ -104,6 +104,7 @@ export default function AISearch() {
             progress,
             progress_total: total,
             progress_mode: mode,
+            client_event_id: crypto.randomUUID(),
           }),
         }
       );
@@ -136,6 +137,7 @@ export default function AISearch() {
           body: JSON.stringify({
             item_id: itemId,
             target_list: targetList,
+            client_event_id: crypto.randomUUID(),
           }),
         }
       );

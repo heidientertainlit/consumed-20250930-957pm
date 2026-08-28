@@ -82,10 +82,11 @@ serve(async (req) => {
     const { searchParams } = new URL(req.url);
     const targetUserId = searchParams.get('user_id') || appUser.id;
 
-    // Get all user's list items
+    // Completed titles are the source of consumption counts.  Keep the
+    // Finished-list fallback for records created before completed_at existed.
     const { data: listItems, error: itemsError } = await supabase
       .from('list_items')
-      .select('media_type, created_at, notes')
+      .select('id, list_id, media_type, title, creator, external_id, external_source, completed_at')
       .eq('user_id', targetUserId);
 
     if (itemsError) {
@@ -96,51 +97,66 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Found ${listItems?.length || 0} list items for user`);
+    const [{ data: userLists, error: listsError }, { data: progressEvents, error: eventsError }, { data: ratings, error: ratingsError }] = await Promise.all([
+      supabase.from('lists').select('id, title, is_default').eq('user_id', targetUserId),
+      supabase.from('media_progress_events').select('occurred_at').eq('user_id', targetUserId),
+      supabase.from('media_ratings')
+        .select('id, media_external_id, media_external_source, media_title, media_type, rating, updated_at')
+        .eq('user_id', targetUserId)
+        .order('updated_at', { ascending: false })
+        .order('id', { ascending: false }),
+    ]);
+    if (listsError || eventsError || ratingsError) {
+      console.error('Error fetching media history:', { listsError, eventsError, ratingsError });
+      return new Response(JSON.stringify({ error: 'Failed to fetch user media history' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
-    // Count by media type
-    const mediaCounts = {
-      movie: 0,
-      tv: 0,
-      book: 0,
-      music: 0,
-      podcast: 0,
-      game: 0
+    const finishedListIds = new Set((userLists || [])
+      .filter((list: any) => list.is_default && list.title?.trim().toLowerCase() === 'finished')
+      .map((list: any) => list.id));
+    const normalizeType = (value: unknown) => {
+      const type = String(value || '').trim().toLowerCase();
+      if (['tv', 'tv show', 'tv_show', 'series'].includes(type)) return 'tv';
+      if (['game', 'games', 'gaming', 'video game', 'video_game'].includes(type)) return 'game';
+      if (['movie', 'movies', 'film'].includes(type)) return 'movie';
+      if (['book series', 'book_series'].includes(type)) return 'book_series';
+      if (['book', 'books'].includes(type)) return 'book';
+      if (['music', 'album', 'albums', 'song', 'songs'].includes(type)) return 'music';
+      if (['podcast', 'podcasts'].includes(type)) return 'podcast';
+      if (['sports', 'sport'].includes(type)) return 'sports';
+      if (['youtube', 'you tube', 'video'].includes(type)) return 'youtube';
+      return 'other';
+    };
+    const titleIdentity = (item: any) => {
+      const type = normalizeType(item.media_type);
+      if (item.external_id) return `${type}|${String(item.external_source || '').trim().toLowerCase()}|${String(item.external_id).trim()}`;
+      return `${type}|title|${String(item.title || '').trim().toLowerCase()}|${String(item.creator || '').trim().toLowerCase()}`;
     };
 
-    listItems?.forEach(item => {
-      const mediaType = item.media_type?.toLowerCase();
-      if (mediaType && mediaCounts.hasOwnProperty(mediaType)) {
-        mediaCounts[mediaType]++;
+    const trackedTitles = new Map<string, string>();
+    const completedTitles = new Map<string, string>();
+    for (const item of listItems || []) {
+      trackedTitles.set(titleIdentity(item), normalizeType(item.media_type));
+      if (item.completed_at || finishedListIds.has(item.list_id)) {
+        completedTitles.set(titleIdentity(item), normalizeType(item.media_type));
       }
+    }
+    const emptyMediaCounts = (): Record<string, number> => ({
+      movie: 0, tv: 0, book: 0, book_series: 0, music: 0, podcast: 0,
+      game: 0, sports: 0, youtube: 0, other: 0
     });
+    const trackedMediaCounts = emptyMediaCounts();
+    const completedMediaCounts = emptyMediaCounts();
+    for (const type of trackedTitles.values()) trackedMediaCounts[type]++;
+    for (const type of completedTitles.values()) completedMediaCounts[type]++;
 
-    // Calculate estimated hours (rough estimates based on media type)
-    const estimatedHours = {
-      movies: mediaCounts.movie * 2, // 2 hours per movie
-      tvShows: mediaCounts.tv * 10, // 10 hours per TV show (rough average)
-      books: mediaCounts.book * 8, // 8 hours per book
-      music: mediaCounts.music * 0.5, // 30 minutes per music item
-      podcasts: mediaCounts.podcast * 1, // 1 hour per podcast
-      games: mediaCounts.game * 20 // 20 hours per game
-    };
-
-    const totalHours = Object.values(estimatedHours).reduce((sum, hours) => sum + hours, 0);
-
-    // Calculate activity streak (days with activity in last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const recentItems = listItems?.filter(item => 
-      new Date(item.created_at) >= thirtyDaysAgo
-    ) || [];
-
-    // Get unique days with activity
-    const activeDays = new Set(
-      recentItems.map(item => 
-        new Date(item.created_at).toDateString()
-      )
-    );
+    // Progress events are dated server records, rather than list creation time.
+    const activeDays = new Set((progressEvents || []).map((event: any) =>
+      new Date(event.occurred_at).toDateString()
+    ));
 
     // Calculate consecutive days from today backwards
     let streak = 0;
@@ -158,19 +174,42 @@ serve(async (req) => {
       }
     }
 
-    // Mock average rating for now (would need ratings table)
-    const avgRating = listItems && listItems.length > 0 ? 4.2 : 0;
+    // media_ratings is canonical; collapse duplicate legacy rows by identity and
+    // retain the newest row. Ratings are numeric, so 0.5-star values are exact.
+    const canonicalRatings = new Map<string, number>();
+    for (const rating of ratings || []) {
+      const identity = titleIdentity({
+        media_type: rating.media_type,
+        external_source: rating.media_external_source,
+        external_id: rating.media_external_id,
+        title: rating.media_title,
+      });
+      if (!canonicalRatings.has(identity) && Number.isFinite(Number(rating.rating))) {
+        canonicalRatings.set(identity, Number(rating.rating));
+      }
+    }
+    const avgRating = canonicalRatings.size
+      ? Array.from(canonicalRatings.values()).reduce((sum, rating) => sum + rating, 0) / canonicalRatings.size
+      : 0;
 
     const stats = {
-      moviesWatched: mediaCounts.movie,
-      tvShowsWatched: mediaCounts.tv,
-      booksRead: mediaCounts.book,
-      musicHours: Math.round(estimatedHours.music),
-      podcastHours: Math.round(estimatedHours.podcasts),
-      gamesPlayed: mediaCounts.game,
-      totalHours: Math.round(totalHours),
-      averageRating: avgRating,
-      dayStreak: streak
+      moviesWatched: completedMediaCounts.movie,
+      tvShowsWatched: completedMediaCounts.tv,
+      booksRead: completedMediaCounts.book + completedMediaCounts.book_series,
+      // Duration is not stored for every supported source. Never invent hours.
+      musicHours: 0,
+      podcastHours: 0,
+      gamesPlayed: completedMediaCounts.game,
+      totalHours: 0,
+      averageRating: Math.round(avgRating * 100) / 100,
+      dayStreak: streak,
+      completedItems: completedTitles.size,
+      musicCompleted: completedMediaCounts.music,
+      podcastsCompleted: completedMediaCounts.podcast,
+      otherCompleted: completedMediaCounts.other,
+      trackedMediaCounts,
+      completedMediaCounts,
+      mediaCounts: completedMediaCounts
     };
 
     console.log('Returning user stats:', stats);

@@ -296,6 +296,7 @@ export default function CollectionsPage() {
             progress,
             total,
             progress_mode: mode,
+            client_event_id: crypto.randomUUID(),
           }),
         }
       );
@@ -328,6 +329,7 @@ export default function CollectionsPage() {
           body: JSON.stringify({
             item_id: itemId,
             target_list: targetList,
+            client_event_id: crypto.randomUUID(),
           }),
         }
       );

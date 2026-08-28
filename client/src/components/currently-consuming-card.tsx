@@ -118,6 +118,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
             progress: item.progress || 0,
             total: bookPageCount,
             progress_mode: 'page',
+            client_event_id: crypto.randomUUID(),
           }),
         }).catch(() => {}); // fire-and-forget, non-critical
       }

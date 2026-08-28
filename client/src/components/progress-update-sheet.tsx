@@ -169,7 +169,7 @@ export function ProgressUpdateSheet({
       const res = await fetch(`${SUPABASE_URL}/functions/v1/update-item-progress`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ item_id: itemId, progress, progress_total: total, progress_mode: mode }),
+        body: JSON.stringify({ item_id: itemId, progress, progress_total: total, progress_mode: mode, client_event_id: crypto.randomUUID() }),
       });
       if (!res.ok) throw new Error('Failed to update progress');
       return res.json();

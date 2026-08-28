@@ -33,6 +33,7 @@ serve(async (req) => {
     const body = await req.json();
     const { item_id, progress, progress_mode } = body;
     const total = body.progress_total ?? body.total;
+    const clientEventId = body.client_event_id ?? body.event_id ?? body.idempotency_key ?? null;
 
     if (!item_id) {
       throw new Error('item_id is required');
@@ -40,6 +41,16 @@ serve(async (req) => {
 
     if (progress === undefined || progress === null) {
       throw new Error('progress is required');
+    }
+    if (!Number.isInteger(progress)) {
+      throw new Error('progress must be an integer');
+    }
+    if (total !== undefined && total !== null && (!Number.isInteger(total) || total < 0)) {
+      throw new Error('total must be a non-negative integer');
+    }
+    if (clientEventId !== null &&
+      (typeof clientEventId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clientEventId))) {
+      throw new Error('client_event_id must be a UUID');
     }
 
     const validModes = ['percent', 'page', 'episode', 'track'];
@@ -57,21 +68,14 @@ serve(async (req) => {
       }
     }
 
-    const updateData: any = { progress };
-    if (total !== undefined && total !== null) {
-      updateData.total = total;
-    }
-    if (progress_mode !== undefined && progress_mode !== null) {
-      updateData.progress_mode = progress_mode;
-    }
-
     const { data, error } = await supabaseClient
-      .from('list_items')
-      .update(updateData)
-      .eq('id', item_id)
-      .eq('user_id', user.id)
-      .select()
-      .single();
+      .rpc('record_list_item_progress', {
+        p_item_id: item_id,
+        p_progress: progress,
+        p_total: total ?? null,
+        p_progress_mode: progress_mode ?? null,
+        p_client_event_id: clientEventId,
+      });
 
     if (error) {
       console.error('Error updating progress:', error);

@@ -870,7 +870,7 @@ export default function MediaDetail() {
       const res = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-item-progress', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ item_id: currentlyItem.id, progress, total, progress_mode: mode }),
+        body: JSON.stringify({ item_id: currentlyItem.id, progress, total, progress_mode: mode, client_event_id: crypto.randomUUID() }),
       });
       if (!res.ok) throw new Error('Failed to update progress');
       return res.json();
