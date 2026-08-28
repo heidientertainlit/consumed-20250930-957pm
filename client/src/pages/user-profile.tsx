@@ -4711,45 +4711,65 @@ export default function UserProfile() {
         {activeSection === 'all-media' && isOwnProfile && (
           <div className="px-4 mb-8">
             {/* Lists glimpse */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mb-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <List size={14} className="text-purple-600" />
-                Lists
-              </h4>
+            <section className="relative mb-7 overflow-hidden rounded-[1.75rem] border border-[#ded4ee] bg-[#f8f5ff] px-4 py-5 shadow-[0_14px_35px_rgba(74,45,112,0.08)] sm:px-5">
+              <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-[#e4d5ff] opacity-70 blur-2xl" />
+              <div className="pointer-events-none absolute bottom-0 left-12 h-12 w-44 rounded-full bg-[#f2d9ed] opacity-70 blur-2xl" />
+              <div className="relative mb-4 flex items-end justify-between gap-3">
+                <div>
+                  <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#80659c]">Your shelves</p>
+                  <h4 className="flex items-center gap-2 text-lg font-semibold tracking-[-0.02em] text-[#322442]">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e9ddfb] text-[#7143a6]"><List size={14} /></span>
+                    Lists
+                  </h4>
+                </div>
+                <button
+                  onClick={() => setActiveSection('lists')}
+                  className="group flex items-center gap-1 rounded-full bg-white/80 px-3 py-1.5 text-xs font-semibold text-[#68418f] ring-1 ring-[#ded4ee] transition hover:bg-white hover:text-[#4d2376]"
+                >
+                  Browse
+                  <ChevronRight size={13} className="transition-transform group-hover:translate-x-0.5" />
+                </button>
+              </div>
               {userLists && userLists.length > 0 ? (
-                <div className="space-y-2">
+                <div className="relative grid gap-2">
                   {(showAllOwnLists ? userLists : userLists.slice(0, 4)).map((list: any) => {
                     const itemCount = list.items?.length ?? list.item_count ?? 0;
+                    const isCurrently = list.title === 'Currently';
+                    const isFinished = list.title === 'Completed' || list.title === 'Finished';
+                    const isWantTo = list.title === 'Want to Watch' || list.title === 'Want To';
                     return (
-                      <div
+                      <button
                         key={list.id}
-                        className="flex items-center justify-between py-1.5 px-2 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                        type="button"
+                        className="group flex min-w-0 items-center justify-between rounded-2xl border border-transparent bg-white/70 px-3 py-2.5 text-left transition duration-200 hover:-translate-y-px hover:border-[#d9c9ef] hover:bg-white hover:shadow-[0_8px_18px_rgba(74,45,112,0.08)] active:translate-y-0"
                         onClick={() => {
                           const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
                           setLocation(`/list/${listSlug}`);
                         }}
                         data-testid={`link-own-list-${list.id}`}
                       >
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-gradient-to-br from-purple-100 to-blue-100 rounded flex items-center justify-center">
-                            {list.title === 'Want to Watch' || list.title === 'Want To' ? <Play className="text-purple-600" size={12} /> :
-                             list.title === 'Currently' ? <Clock className="text-blue-600" size={12} /> :
-                             list.title === 'Completed' || list.title === 'Finished' ? <Trophy className="text-green-600" size={12} /> :
-                             <List className="text-purple-600" size={12} />}
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                            isCurrently ? 'bg-[#dbeafe] text-[#3566ad]' : isFinished ? 'bg-[#e6f4ec] text-[#3e8062]' : isWantTo ? 'bg-[#f0e4fb] text-[#7a42a8]' : 'bg-[#eee8f8] text-[#7653a2]'
+                          }`}>
+                            {isWantTo ? <Play size={14} fill="currentColor" /> :
+                             isCurrently ? <Clock size={14} /> :
+                             isFinished ? <Trophy size={14} /> :
+                             <List size={14} />}
                           </div>
-                          <span className="text-sm font-medium text-gray-800">{list.title}</span>
+                          <span className="truncate text-sm font-semibold text-[#40334d]">{getDisplayTitle(list.title)}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs text-gray-500">{itemCount}</span>
-                          <ChevronRight size={14} className="text-gray-400" />
+                        <div className="ml-3 flex shrink-0 items-center gap-2">
+                          <span className="min-w-7 rounded-full bg-[#f2edf8] px-2 py-0.5 text-center text-[11px] font-bold tabular-nums text-[#705887]">{itemCount}</span>
+                          <ChevronRight size={15} className="text-[#a28cb9] transition-transform group-hover:translate-x-0.5" />
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
                   {userLists.length > 4 && (
                     <button
                       onClick={() => setShowAllOwnLists(v => !v)}
-                      className="text-xs text-purple-600 font-medium w-full text-center pt-1 hover:text-purple-700"
+                      className="mt-1 text-xs font-bold text-[#7143a6] transition hover:text-[#4f2379]"
                       data-testid="button-toggle-own-lists"
                     >
                       {showAllOwnLists ? 'Show less' : `See all ${userLists.length} lists`}
@@ -4757,24 +4777,34 @@ export default function UserProfile() {
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-gray-500 text-center py-2">No lists yet</p>
+                <p className="relative py-3 text-center text-xs text-[#806f8e]">No lists yet. Your next favorite belongs somewhere.</p>
               )}
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <Film size={14} className="text-purple-600" />
-                All My Media
-              </h4>
+            </section>
+            <section className="overflow-hidden rounded-[1.75rem] border border-[#e1d9e9] bg-[#fcfbfd] shadow-[0_16px_36px_rgba(55,35,79,0.07)]">
+              <div className="border-b border-[#eae3f0] bg-[linear-gradient(115deg,#f5effd_0%,#fff9fb_57%,#f5f0fb_100%)] px-4 pb-5 pt-5 sm:px-5">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#8c719c]">The record</p>
+                    <h4 className="flex items-center gap-2 text-xl font-semibold tracking-[-0.03em] text-[#332440]">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8dafa] text-[#7143a6]"><Film size={15} /></span>
+                      All My Media
+                    </h4>
+                  </div>
+                  <span className="mt-1 rounded-full border border-[#e1d2ee] bg-white/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#79558f]">Living library</span>
+                </div>
               {/* Add Media — full-width button above filters */}
               <button
                 onClick={() => setLocation('/add')}
-                className="w-full flex items-center justify-center gap-1.5 px-5 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-sm font-medium hover:bg-blue-100 active:scale-95 transition-all mb-4"
+                className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-[#5e318a] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_18px_rgba(94,49,138,0.22)] transition hover:bg-[#4c2077] active:scale-[0.98]"
               >
-                <Plus size={16} />
+                <Plus size={16} className="transition-transform group-hover:rotate-90" />
                 Add Media
               </button>
+              </div>
               {/* Filters */}
-              <div className="flex flex-wrap gap-2 mb-3">
+              <div className="px-4 pb-5 pt-4 sm:px-5">
+              <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#96869f]">Refine your library</p>
+              <div className="flex flex-wrap gap-2 mb-4">
                 <div className="relative">
                   <button
                     onClick={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
@@ -4908,30 +4938,31 @@ export default function UserProfile() {
                 )}
               </div>
               {/* Search */}
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+              <div className="relative mb-5">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9c8ba8]" size={15} />
                 <input
                   type="text"
                   placeholder="Search media history..."
                   value={mediaHistorySearch}
                   onChange={(e) => setMediaHistorySearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                  className="w-full rounded-xl border border-[#e4ddea] bg-[#faf8fc] py-2.5 pl-10 pr-3 text-sm text-[#3d3048] placeholder:text-[#aa9eaf] focus:outline-none focus:ring-2 focus:ring-[#c9ade5]"
                   data-testid="input-history-search"
                 />
               </div>
-              <div className="mb-4 rounded-2xl bg-[#fbf5ec] border border-[#eadfce] px-4 py-4">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8b8175]">
+              <div className="relative mb-5 overflow-hidden rounded-2xl border border-[#dacbe9] bg-[#f4eef9] px-4 py-4">
+                <div className="pointer-events-none absolute -right-5 -top-6 h-24 w-24 rounded-full border-[14px] border-[#e5d6f2] opacity-80" />
+                <p className="relative text-[10px] font-bold uppercase tracking-[0.16em] text-[#816994]">
                   {getPeriodHeading()}
                 </p>
                 <div className="mt-1.5 flex items-end gap-2">
-                  <span className="font-serif text-[38px] font-bold leading-none text-[#3f2c4d]">
+                  <span className="font-serif text-[40px] font-bold leading-none text-[#422653]">
                     {filteredMediaHistory.length}
                   </span>
-                  <span className="pb-1 text-sm font-medium text-[#6c6258]">
+                  <span className="pb-1 text-sm font-medium text-[#6c5276]">
                     {filteredMediaHistory.length === 1 ? "title tracked" : "titles tracked"}
                   </span>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[#eadfce] pt-3 text-xs text-[#6c6258]">
+                <div className="relative mt-3 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[#dfd1ea] pt-3 text-xs text-[#725c80]">
                   {Object.entries(mediaTypeCounts).filter(([, count]) => Number(count) > 0).map(([type, count]) => (
                     <span key={type}>{Number(count)} {getMediaTypeLabel(type).toLowerCase()}</span>
                   ))}
@@ -4939,6 +4970,8 @@ export default function UserProfile() {
                   {pageProgressItems.length > 0 && <span>{pagesLogged} current pages{knownPages > 0 ? ` of ${knownPages} known` : ""}</span>}
                 </div>
               </div>
+              </div>
+              <div className="px-4 pb-5 sm:px-5">
               {isLoadingLists ? (
                 <div className="space-y-2">
                   {[1, 2, 3].map((n) => (
@@ -5051,7 +5084,8 @@ export default function UserProfile() {
                   ))}
                 </div>
               )}
-            </div>
+              </div>
+            </section>
 
           </div>
         )}
