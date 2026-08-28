@@ -40,3 +40,4 @@
 - [Avatar upload consistency](avatar-upload-consistency.md) — avatar writes are server-authoritative and concurrency-guarded; never overwrite the currently referenced Storage object from the client.
 - [Tribe fit calibration](tribe-fit-calibration.md) — preserve strict evidence scoring, but present qualifying Tribe recommendations in an intuitive 70–100% range.
 - [My Media history semantics](my-media-history-semantics.md) — tracked dates are not completion dates; keep tracked/completed separate and never invent hours or past progress.
+- [Fixed media lists](fixed-media-lists.md) — only All + five system lists are supported; legacy custom lists remain read-only and cannot be new destinations.

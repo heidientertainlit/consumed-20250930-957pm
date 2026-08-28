@@ -929,7 +929,7 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
 
   // Add to list mutation
   const addToListMutation = useMutation({
-    mutationFn: async ({ listType, isCustom }: { listType: string; isCustom?: boolean }) => {
+    mutationFn: async ({ listType }: { listType: string }) => {
       if (!session?.access_token) {
         throw new Error('Not authenticated');
       }
@@ -943,21 +943,13 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
         externalSource: media.externalSource
       };
 
-      const url = isCustom 
-        ? `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/add-to-custom-list`
-        : `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/track-media`;
-
-      const body = isCustom
-        ? { media: mediaData, customListId: listType }
-        : { media: mediaData, listType };
-
-      const response = await fetch(url, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/track-media`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ media: mediaData, listType }),
       });
       
       if (!response.ok) {
@@ -1033,8 +1025,6 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
   const listsData = userLists?.lists || userLists || [];
   const listsArray = Array.isArray(listsData) ? listsData : [];
   // Filter out 'All' list from the dropdown (only for viewing, not for adding)
-  const defaultLists = listsArray.filter((list: any) => list.is_default && list.title !== 'All');
-  const customLists = listsArray.filter((list: any) => !list.is_default);
 
   const displayedPlatforms = platforms.slice(0, 2);
   const remainingCount = platforms.length - displayedPlatforms.length;

@@ -298,7 +298,6 @@ export default function UserProfile() {
   const listsRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState<string>('dna');
-  const [showAllOwnLists, setShowAllOwnLists] = useState(false);
   const [viewerHasSurvey, setViewerHasSurvey] = useState(false);
   const [viewerItemCount, setViewerItemCount] = useState(0);
   const initialSectionSet = useRef(false);
@@ -2917,6 +2916,10 @@ export default function UserProfile() {
 
   const SYSTEM_LIST_TITLES = ['Currently', 'Finished', 'Did Not Finish', 'Favorites', 'Want To'];
   const systemLists = userLists.filter((l: any) => SYSTEM_LIST_TITLES.includes(l.title));
+  const PRIMARY_MEDIA_LIST_ORDER = ['All', 'Currently', 'Want To', 'Finished', 'Did Not Finish', 'Favorites'];
+  const primaryMediaLists = PRIMARY_MEDIA_LIST_ORDER
+    .map(title => userLists.find((list: any) => list.title === title))
+    .filter(Boolean);
 
   const moveItemToList = async (itemId: string, newListId: string) => {
     if (!session?.access_token) return;
@@ -4660,7 +4663,7 @@ export default function UserProfile() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {userLists
+                  {primaryMediaLists
                     .filter((list: any) => list.title.toLowerCase().includes(listSearch.toLowerCase()))
                     .map((list: any) => (
                     <div
@@ -4709,11 +4712,10 @@ export default function UserProfile() {
 
         {/* All My Media Section (own profile only) */}
         {activeSection === 'all-media' && isOwnProfile && (
-          <div className="px-4 mb-8">
+          <div className="px-4 pt-4 mb-8">
             {/* Lists glimpse */}
-            <section className="relative mb-7 overflow-hidden rounded-[1.75rem] border border-[#ded4ee] bg-[#f8f5ff] px-4 py-5 shadow-[0_14px_35px_rgba(74,45,112,0.08)] sm:px-5">
-              <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-[#e4d5ff] opacity-70 blur-2xl" />
-              <div className="pointer-events-none absolute bottom-0 left-12 h-12 w-44 rounded-full bg-[#f2d9ed] opacity-70 blur-2xl" />
+            <section className="relative mb-7 overflow-hidden rounded-[1.75rem] border border-[#e4dce8] bg-[#fffdfb] px-4 py-5 shadow-[0_14px_35px_rgba(58,40,72,0.07)] sm:px-5">
+              <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-[#c7a9df]" />
               <div className="relative mb-4 flex items-end justify-between gap-3">
                 <div>
                   <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#80659c]">Your shelves</p>
@@ -4730,9 +4732,9 @@ export default function UserProfile() {
                   <ChevronRight size={13} className="transition-transform group-hover:translate-x-0.5" />
                 </button>
               </div>
-              {userLists && userLists.length > 0 ? (
+              {primaryMediaLists.length > 0 ? (
                 <div className="relative grid gap-2">
-                  {(showAllOwnLists ? userLists : userLists.slice(0, 4)).map((list: any) => {
+                  {primaryMediaLists.map((list: any) => {
                     const itemCount = list.items?.length ?? list.item_count ?? 0;
                     const isCurrently = list.title === 'Currently';
                     const isFinished = list.title === 'Completed' || list.title === 'Finished';
@@ -4741,7 +4743,7 @@ export default function UserProfile() {
                       <button
                         key={list.id}
                         type="button"
-                        className="group flex min-w-0 items-center justify-between rounded-2xl border border-transparent bg-white/70 px-3 py-2.5 text-left transition duration-200 hover:-translate-y-px hover:border-[#d9c9ef] hover:bg-white hover:shadow-[0_8px_18px_rgba(74,45,112,0.08)] active:translate-y-0"
+                        className="group flex min-w-0 items-center justify-between rounded-2xl border border-[#eee9ef] bg-white px-3 py-2.5 text-left transition duration-200 hover:-translate-y-px hover:border-[#d9c9ef] hover:shadow-[0_8px_18px_rgba(74,45,112,0.08)] active:translate-y-0"
                         onClick={() => {
                           const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
                           setLocation(`/list/${listSlug}`);
@@ -4766,22 +4768,13 @@ export default function UserProfile() {
                       </button>
                     );
                   })}
-                  {userLists.length > 4 && (
-                    <button
-                      onClick={() => setShowAllOwnLists(v => !v)}
-                      className="mt-1 text-xs font-bold text-[#7143a6] transition hover:text-[#4f2379]"
-                      data-testid="button-toggle-own-lists"
-                    >
-                      {showAllOwnLists ? 'Show less' : `See all ${userLists.length} lists`}
-                    </button>
-                  )}
                 </div>
               ) : (
                 <p className="relative py-3 text-center text-xs text-[#806f8e]">No lists yet. Your next favorite belongs somewhere.</p>
               )}
             </section>
-            <section className="overflow-hidden rounded-[1.75rem] border border-[#e1d9e9] bg-[#fcfbfd] shadow-[0_16px_36px_rgba(55,35,79,0.07)]">
-              <div className="border-b border-[#eae3f0] bg-[linear-gradient(115deg,#f5effd_0%,#fff9fb_57%,#f5f0fb_100%)] px-4 pb-5 pt-5 sm:px-5">
+            <section className="overflow-hidden rounded-[1.75rem] border border-[#e4dde6] bg-white shadow-[0_16px_36px_rgba(55,35,79,0.07)]">
+              <div className="border-b border-[#ece5e8] bg-[#fffaf7] px-4 pb-5 pt-5 sm:px-5">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
                     <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#8c719c]">The record</p>
@@ -4910,7 +4903,7 @@ export default function UserProfile() {
                         className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryList === 'all' ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
                         All Lists
                       </button>
-                      {userLists.filter((l: any) => l.title !== 'All').map((list: any) => (
+                      {primaryMediaLists.filter((l: any) => l.title !== 'All').map((list: any) => (
                         <button key={list.id} onClick={() => { setMediaHistoryList(list.title); setOpenFilter(null); }}
                           className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryList === list.title ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
                           {list.title}

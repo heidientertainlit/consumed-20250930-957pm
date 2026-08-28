@@ -613,20 +613,11 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
     ));
     
     if (!isSystemList) {
-      await fetch(`${supabaseUrl}/functions/v1/add-to-custom-list`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          media: mediaData, 
-          customListId: listId, 
-          skip_social_post: skipSocialPost,
-          rewatchCount: rewatchNum > 1 ? rewatchNum : null,
-          ...(dnfData && { dnf_reason: dnfData.reason, dnf_other_reason: dnfData.otherReason }),
-        }),
-      });
-    } else {
-      let listType = isSystemListById ? listId.toLowerCase() : (selectedList?.title?.toLowerCase().replace(/\s+/g, '_') || 'finished');
-      await fetch(`${supabaseUrl}/functions/v1/track-media`, {
+      throw new Error('Choose one of the available system lists');
+    }
+
+    const listType = isSystemListById ? listId.toLowerCase() : (selectedList?.title?.toLowerCase().replace(/\s+/g, '_') || 'finished');
+    await fetch(`${supabaseUrl}/functions/v1/track-media`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -636,8 +627,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
           rewatchCount: rewatchNum > 1 ? rewatchNum : null,
           ...(dnfData && { dnf_reason: dnfData.reason, dnf_other_reason: dnfData.otherReason }),
         }),
-      });
-    }
+    });
   };
   
   // Helper function for quick add (directly adds media to list from "+" button)

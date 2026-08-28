@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
-import CreateListDialog from "@/components/create-list-dialog";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,6 @@ export default function Track() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const [isCreateListDialogOpen, setIsCreateListDialogOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
@@ -243,13 +241,7 @@ export default function Track() {
         throw new Error("Authentication required");
       }
 
-      // Check if this is a custom list by looking for it in customLists
-      const isCustomList = customLists.some((list: any) => list.id === listType);
-      
-      // Use different endpoint based on whether it's a custom list or system list
-      const endpoint = isCustomList 
-        ? "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list"
-        : "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media";
+      const endpoint = "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media";
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -269,7 +261,7 @@ export default function Track() {
           },
           rating: null,
           review: null,
-          ...(isCustomList ? { customListId: listType } : { listType: listType }),
+          listType,
         }),
       });
 
@@ -438,10 +430,8 @@ export default function Track() {
     });
   };
 
-  // Build filter options dynamically: system lists + custom lists
+  // Fixed system list model
   const systemListTitles = ["All", "Currently", "Want To", "Finished", "Did Not Finish", "Favorites"];
-  const customLists = userLists.filter((list: any) => list.isCustom) || [];
-  const filterOptions = [...systemListTitles, ...customLists.map((list: any) => list.title)];
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -565,34 +555,8 @@ export default function Track() {
                   </SelectItem>
                 ))}
                 
-                {/* Custom Lists Separator */}
-                {customLists.length > 0 && (
-                  <div className="px-2 py-2 text-xs text-gray-500 font-semibold border-t mt-2 pt-2">
-                    MY CUSTOM LISTS
-                  </div>
-                )}
-                
-                {/* Custom Lists */}
-                {customLists.map((list: any) => (
-                  <SelectItem key={list.id} value={list.title} className="text-black hover:bg-gray-100 text-lg py-4 pl-6">
-                    <div className="flex items-center">
-                      <List className="text-purple-600 mr-2" size={16} />
-                      {list.title}
-                    </div>
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
-            
-            {/* Create New List Button */}
-            <Button
-              onClick={() => setIsCreateListDialogOpen(true)}
-              className="w-full sm:w-auto h-16 px-6 bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center"
-              data-testid="button-create-list"
-            >
-              <Plus size={20} className="mr-2" />
-              <span>Create List</span>
-            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -606,6 +570,7 @@ export default function Track() {
               </div>
             ) : (
               userLists
+                .filter((list: any) => systemListTitles.includes(list.title))
                 .filter((list: any) => selectedFilter === "All" || list.title === selectedFilter)
                 .map((list: any) => (
                   <div
@@ -632,8 +597,6 @@ export default function Track() {
                       {list.title === "Want To" && "Media you want to consume later"}
                       {list.title === "Favorites" && "Your all-time favorite media"}
                       {list.title === "All Media" && "All tracked media items"}
-                      {!["Currently", "Finished", "Did Not Finish", "Want To", "Favorites", "All Media"].includes(list.title) &&
-                        (list.description || "Your custom list")}
                     </p>
                     <div className="text-2xl font-bold text-purple-800">{list.items?.length || 0}</div>
                     <div className="text-xs text-gray-500">items</div>
@@ -776,27 +739,6 @@ export default function Track() {
                             Add to Favorites
                           </DropdownMenuItem>
                           
-                          {/* Custom Lists */}
-                          {customLists.length > 0 && (
-                            <>
-                              <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold border-t border-gray-700 mt-1 pt-2">
-                                MY CUSTOM LISTS
-                              </div>
-                              {customLists.map((list: any) => (
-                                <DropdownMenuItem
-                                  key={list.id}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleAddRecommendation(rec, list.id);
-                                  }}
-                                  className="cursor-pointer text-white hover:bg-gray-800"
-                                  disabled={addRecommendationMutation.isPending}
-                                >
-                                  Add to {list.title}
-                                </DropdownMenuItem>
-                              ))}
-                            </>
-                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                       
@@ -1046,10 +988,6 @@ export default function Track() {
       </Dialog>
 
       {/* Create List Dialog */}
-      <CreateListDialog
-        open={isCreateListDialogOpen}
-        onOpenChange={setIsCreateListDialogOpen}
-      />
 
 
     </div>

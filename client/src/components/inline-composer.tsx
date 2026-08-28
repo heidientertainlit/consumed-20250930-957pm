@@ -305,7 +305,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
     setSearchResults([]);
   };
 
-  // PRESERVED: handleTrackToList - calls track-media or add-to-custom-list edge functions
+  // Track media to one of the fixed system lists.
   const handleTrackToList = async (media: any, listIdOrType: number | string) => {
     if (!session?.access_token) {
       toast({
@@ -319,8 +319,6 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
     try {
       const list = userLists.find((l: any) => l.id === listIdOrType);
       if (!list) throw new Error("List not found");
-
-      const isCustom = list.isCustom === true;
 
       // Determine external source/ID
       let externalSource = media.external_source || media.source || 'tmdb';
@@ -344,11 +342,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
         externalSource
       };
 
-      // Use different endpoints for custom vs default lists
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      const url = isCustom 
-        ? `${supabaseUrl}/functions/v1/add-to-custom-list`
-        : `${supabaseUrl}/functions/v1/track-media`;
 
       // Extract list type from list object
       let listType = list.type;
@@ -362,17 +356,13 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
         else listType = 'queue';
       }
 
-      const body = isCustom
-        ? { media: mediaData, customListId: listIdOrType, rewatchCount: rewatchCount > 1 ? rewatchCount : null }
-        : { media: mediaData, listType, rewatchCount: rewatchCount > 1 ? rewatchCount : null };
-
-      const response = await fetch(url, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/track-media`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ media: mediaData, listType, rewatchCount: rewatchCount > 1 ? rewatchCount : null }),
       });
 
       if (!response.ok) {

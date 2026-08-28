@@ -168,33 +168,9 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
     }
   };
   
-  // Fetch user's lists
-  const { data: userListsData } = useQuery<any>({
-    queryKey: ['user-lists-with-media'],
-    queryFn: async () => {
-      if (!session?.access_token) return null;
-
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-user-lists-with-media`, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch user lists');
-      }
-
-      return response.json();
-    },
-    enabled: !!session?.access_token,
-  });
-
-  const lists = userListsData?.lists || [];
-  
   // Add to list mutation
   const addToListMutation = useMutation({
-    mutationFn: async ({ listType, isCustom }: { listType: string; isCustom?: boolean }) => {
+    mutationFn: async ({ listType }: { listType: string }) => {
       if (!session?.access_token) {
         throw new Error('Not authenticated');
       }
@@ -226,25 +202,15 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         item,
         mediaData,
         listType,
-        isCustom,
       });
 
-      // Use different endpoints for custom vs default lists
-      const url = isCustom 
-        ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-to-custom-list`
-        : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-media`;
-
-      const body = isCustom
-        ? { media: mediaData, customListId: listType }
-        : { media: mediaData, listType };
-
-      const response = await fetch(url, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-media`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ media: mediaData, listType }),
       });
       
       if (!response.ok) {
@@ -253,8 +219,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
           status: response.status,
           statusText: response.statusText,
           error: errorData,
-          url,
-          body,
+          listType,
         });
         throw new Error(errorData.error || errorData.message || 'Failed to add to list');
       }
@@ -317,9 +282,9 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
     },
   });
   
-  const handleAddToList = (listType: string, isCustom = false, e?: React.MouseEvent) => {
+  const handleAddToList = (listType: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    addToListMutation.mutate({ listType, isCustom });
+    addToListMutation.mutate({ listType });
   };
   
   const handleRateClick = (stars: number) => {
@@ -482,7 +447,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                     <button
                       key={listItem.title}
                       onClick={() => {
-                        handleAddToList(listItem.title, false);
+                        handleAddToList(listItem.title);
                         setShowListMenu(false);
                       }}
                       disabled={addToListMutation.isPending}
@@ -499,36 +464,6 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                   ))}
                 </div>
                 
-                {/* Custom Lists */}
-                {lists.filter((list: any) => list.isCustom).length > 0 && (
-                  <>
-                    <div className="border-t border-gray-100 mx-4 my-2" />
-                    <p className="text-xs text-gray-400 font-semibold px-4 py-2 uppercase tracking-wide">Your Lists</p>
-                    <div className="px-4 pb-4 space-y-1">
-                      {lists
-                        .filter((list: any) => list.isCustom)
-                        .map((list: any) => (
-                          <button
-                            key={list.id}
-                            onClick={() => {
-                              handleAddToList(list.id, true);
-                              setShowListMenu(false);
-                            }}
-                            disabled={addToListMutation.isPending}
-                            className="w-full p-3 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
-                          >
-                            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              <Folder className="text-purple-600" size={20} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-gray-900">{list.title}</p>
-                              <p className="text-sm text-gray-500 hidden sm:block">Custom list</p>
-                            </div>
-                          </button>
-                        ))}
-                    </div>
-                  </>
-                )}
               </div>
             </>
             , document.body)}

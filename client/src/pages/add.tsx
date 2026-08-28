@@ -11,7 +11,6 @@ import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { QuickAddModal } from "@/components/quick-add-modal";
-import CreateListDialog from "@/components/create-list-dialog";
 import { supabase } from "@/lib/supabase";
 
 function AnimatedWord() {
@@ -132,7 +131,6 @@ export default function Search() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isFullAddModalOpen, setIsFullAddModalOpen] = useState(false);
-  const [isCreateListOpen, setIsCreateListOpen] = useState(false);
   const [fullAddMedia, setFullAddMedia] = useState<any>(null);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -874,11 +872,6 @@ export default function Search() {
           setQuickAddMedia(null);
         }}
         media={quickAddMedia}
-      />
-
-      <CreateListDialog
-        open={isCreateListOpen}
-        onOpenChange={setIsCreateListOpen}
       />
 
       <QuickAddModal

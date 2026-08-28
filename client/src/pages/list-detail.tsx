@@ -1042,8 +1042,8 @@ export default function ListDetail() {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-4">
         
-        {/* Prominent Add Button */}
-        {!sharedUserId && session && (
+        {/* Legacy custom lists remain available for viewing only. */}
+        {!sharedUserId && session && !listData?.isCustom && (
           <button
             onClick={() => setIsTrackModalOpen(true)}
             className="w-full flex items-center justify-center gap-2 py-3 mb-3 rounded-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white font-semibold text-sm transition-all shadow-md"
@@ -1201,7 +1201,7 @@ export default function ListDetail() {
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
+            onDragEnd={listData?.isCustom ? undefined : handleDragEnd}
           >
             <SortableContext
               items={localItems.map(item => item.id)}
@@ -1230,9 +1230,9 @@ export default function ListDetail() {
                     <SortableListItem
                       key={item.id}
                       item={item}
-                      onRemove={handleRemoveItem}
-                      onMove={!sharedUserId ? (item) => setMoveItem(item) : undefined}
-                      isOwner={!sharedUserId}
+                      onRemove={listData?.isCustom ? undefined : handleRemoveItem}
+                      onMove={!sharedUserId && !listData?.isCustom ? (item) => setMoveItem(item) : undefined}
+                      isOwner={!sharedUserId && !listData?.isCustom}
                     />
                   ))}
                 {localItems.length === 0 && (
@@ -1279,7 +1279,7 @@ export default function ListDetail() {
                   key={item.id} 
                   className="bg-white rounded-lg border border-gray-200 hover:border-purple-400 hover:shadow-lg transition-all relative group overflow-hidden"
                 >
-                  <Button
+                  {!listData?.isCustom && <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveItem(item.id)}
@@ -1287,7 +1287,7 @@ export default function ListDetail() {
                     data-testid={`button-remove-grid-${item.id}`}
                   >
                     <Trash2 size={12} />
-                  </Button>
+                  </Button>}
 
                   {isClickable ? (
                     <Link href={mediaUrl!}>

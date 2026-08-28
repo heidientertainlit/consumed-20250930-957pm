@@ -229,33 +229,7 @@ export default function CollectionsPage() {
   // Create list mutation
   const createListMutation = useMutation({
     mutationFn: async () => {
-      if (!session?.access_token || !newListName.trim()) return;
-      
-      const response = await fetch(
-        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/create-custom-list',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: newListName.trim(),
-            visibility: newListVisibility,
-            items: newListItems.map(item => ({
-              title: item.title,
-              mediaType: item.type || item.media_type,
-              creator: item.creator,
-              imageUrl: item.poster_url || item.image_url,
-              externalId: item.external_id,
-              externalSource: item.external_source,
-            })),
-          }),
-        }
-      );
-      
-      if (!response.ok) throw new Error('Failed to create list');
-      return response.json();
+      throw new Error('Custom lists are no longer available');
     },
     onSuccess: (data) => {
       const listTitle = newListName.trim();
@@ -1215,24 +1189,6 @@ export default function CollectionsPage() {
               <div className="text-left flex-1">
                 <p className="font-semibold text-gray-900 text-base">Add Media</p>
                 <p className="text-sm text-gray-500 mt-0.5">Track, rate, or add something to a list</p>
-              </div>
-            </button>
-            
-            {/* Create List */}
-            <button
-              onClick={() => {
-                setIsLibraryActionOpen(false);
-                setIsCreateListOpen(true);
-              }}
-              className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors"
-              data-testid="library-action-create-list"
-            >
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
-                <List className="text-white" size={24} />
-              </div>
-              <div className="text-left flex-1">
-                <p className="font-semibold text-gray-900 text-base">Create List</p>
-                <p className="text-sm text-gray-500 mt-0.5">Organize your media into custom lists</p>
               </div>
             </button>
             

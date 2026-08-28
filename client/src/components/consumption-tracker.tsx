@@ -8,13 +8,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Search, X, List, Star, MessageCircle } from "lucide-react";
 import { InsertConsumptionLog } from "@shared/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { AuthModal } from "./auth-modal";
 import { useToast } from "@/hooks/use-toast";
-import CustomListSubmenu from "./custom-list-submenu";
-import CreateListDialog from "./create-list-dialog";
 import { JustTrackedSheet } from "./just-tracked-sheet";
 
 interface ConsumptionTrackerProps {
@@ -22,8 +20,6 @@ interface ConsumptionTrackerProps {
   onClose: () => void;
   defaultListType?: string; // Auto-select this list when provided
   targetRankId?: string; // When provided, add media to this rank instead of list
-  targetListDisplayName?: string; // Display name for custom lists (e.g., "Family")
-  targetCustomListId?: string; // ID for custom lists (e.g., list ID for "Family")
 }
 
 interface MediaResult {
@@ -39,14 +35,13 @@ interface MediaResult {
   page_count?: number;
 }
 
-export default function ConsumptionTracker({ isOpen, onClose, defaultListType, targetRankId, targetListDisplayName, targetCustomListId }: ConsumptionTrackerProps) {
+export default function ConsumptionTracker({ isOpen, onClose, defaultListType, targetRankId }: ConsumptionTrackerProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(["All Media"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<MediaResult | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showCreateListDialog, setShowCreateListDialog] = useState(false);
   const [showJustTracked, setShowJustTracked] = useState(false);
   const [justTrackedMedia, setJustTrackedMedia] = useState<MediaResult | null>(null);
   const [rating, setRating] = useState<number>(0);
@@ -163,21 +158,14 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
   }, [searchQuery, selectedCategories]);
 
   const trackMediaMutation = useMutation({
-    mutationFn: async (mediaData: MediaResult & { listType?: string; isCustomList?: boolean }) => {
+    mutationFn: async (mediaData: MediaResult & { listType?: string }) => {
       if (!session?.access_token) {
         throw new Error("Authentication required");
       }
 
-      // If targetCustomListId is provided, use custom list endpoint
-      const useCustomList = !!targetCustomListId || mediaData.isCustomList || false;
-      const listType = targetCustomListId || mediaData.listType || 'all';
-      
-      // Choose endpoint based on custom list flag
-      const endpoint = useCustomList 
-        ? "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list"
-        : "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media";
+      const listType = mediaData.listType || 'all';
 
-      const response = await fetch(endpoint, {
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -197,11 +185,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
           rating: rating > 0 ? rating : null,
           review: review.trim() || null,
           rewatchCount: rewatchCount > 1 ? rewatchCount : null,
-          // Send appropriate parameter based on list type
-          ...(useCustomList 
-            ? { customListId: listType } 
-            : { listType: listType }
-          ),
+          listType,
         }),
       });
 
@@ -305,7 +289,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
     },
   });
 
-  const handleAddMedia = (listType?: string, isCustom: boolean = false) => {
+  const handleAddMedia = (listType?: string) => {
     if (!selectedMedia) return;
 
     // Check if user is authenticated
@@ -324,7 +308,6 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
     const mediaWithList = {
       ...selectedMedia,
       listType: listType || 'all', // Default to 'all' for Quick Add
-      isCustomList: isCustom
     };
 
     trackMediaMutation.mutate(mediaWithList);
@@ -686,14 +669,6 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
                   >
                     Favorites
                   </DropdownMenuItem>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <CustomListSubmenu
-                    onSelectList={(listId, listTitle, isCustom) => handleAddMedia(listId, isCustom)}
-                    onCreateList={() => setShowCreateListDialog(true)}
-                    disabled={!selectedMedia || trackMediaMutation.isPending}
-                  />
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -704,11 +679,6 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
       <AuthModal
         open={showAuthModal}
         onOpenChange={setShowAuthModal}
-      />
-      
-      <CreateListDialog
-        open={showCreateListDialog}
-        onOpenChange={setShowCreateListDialog}
       />
     </Dialog>
 

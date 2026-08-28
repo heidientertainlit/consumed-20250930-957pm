@@ -13,7 +13,6 @@ import MentionInput from "@/components/mention-input";
 import { shareLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 import { useDnaArchetype } from "@/hooks/use-dna-archetype";
-import CreateListDialog from "@/components/create-list-dialog";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { ReportButton } from "@/components/report-button";
@@ -59,7 +58,6 @@ export default function MediaDetail() {
   const [mediaTab, setMediaTab] = useState<'takes' | 'play' | 'explore'>('takes');
   const [showConversations, setShowConversations] = useState(false);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
-  const [showCreateListDialog, setShowCreateListDialog] = useState(false);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
@@ -731,26 +729,6 @@ export default function MediaDetail() {
     staleTime: 1000 * 60 * 30, // Cache for 30 minutes
   });
 
-  // Fetch user's lists (including custom lists)
-  const { data: userListsData } = useQuery({
-    queryKey: ['user-lists-with-media'],
-    queryFn: async () => {
-      if (!session?.access_token) return null;
-
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
-        headers: {
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch lists');
-      return response.json();
-    },
-    enabled: !!session?.access_token,
-  });
-
-  const customLists = userListsData?.lists?.filter((list: any) => list.isCustom) || [];
-
   // Query to find which lists contain this media item
   const { data: listsContainingMedia = [] } = useQuery({
     queryKey: ['lists-containing-media', params?.source, params?.id],
@@ -969,47 +947,32 @@ export default function MediaDetail() {
 
   // Mutation for adding current media to lists
   const addMediaToListMutation = useMutation({
-    mutationFn: async ({ listType, isCustom, skipSocialPost }: { listType: string; isCustom?: boolean; skipSocialPost?: boolean }) => {
+    mutationFn: async ({ listType, skipSocialPost }: { listType: string; skipSocialPost?: boolean }) => {
       if (!session?.access_token || !mediaItem) {
         throw new Error("Authentication required");
       }
 
-      const endpoint = isCustom 
-        ? "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list"
-        : "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media";
-
-      const body = isCustom
-        ? {
-            listId: listType,
-            title: mediaItem.title,
-            type: mediaItem.type || params?.type,
-            creator: mediaItem.creator,
-            image_url: resolvedImageUrl,
-            media_type: mediaItem.type || params?.type,
-          }
-        : {
-            media: {
-              title: mediaItem.title,
-              mediaType: mediaItem.type || params?.type,
-              creator: mediaItem.creator,
-              imageUrl: resolvedImageUrl,
-              externalId: params?.id,
-              externalSource: params?.source,
-              description: mediaItem.description || null
-            },
-            rating: null,
-            review: null,
-            listType: listType,
-            skip_social_post: skipSocialPost ?? false
-          };
-
-      const response = await fetch(endpoint, {
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          media: {
+            title: mediaItem.title,
+            mediaType: mediaItem.type || params?.type,
+            creator: mediaItem.creator,
+            imageUrl: resolvedImageUrl,
+            externalId: params?.id,
+            externalSource: params?.source,
+            description: mediaItem.description || null
+          },
+          rating: null,
+          review: null,
+          listType,
+          skip_social_post: skipSocialPost ?? false
+        }),
       });
 
       if (!response.ok) {
@@ -1102,8 +1065,7 @@ export default function MediaDetail() {
 
       if (composeSelectedList) {
         addMediaToListMutation.mutate({ 
-          listType: composeSelectedList.isCustom ? composeSelectedList.id! : composeSelectedList.name, 
-          isCustom: composeSelectedList.isCustom,
+          listType: composeSelectedList.name,
           skipSocialPost: true  // compose handler already created its own social post above
         });
       }
@@ -1129,8 +1091,8 @@ export default function MediaDetail() {
     }
   };
 
-  const handleAddMediaToList = (listType: string, isCustom: boolean = false) => {
-    addMediaToListMutation.mutate({ listType, isCustom });
+  const handleAddMediaToList = (listType: string) => {
+    addMediaToListMutation.mutate({ listType });
   };
 
   if (isLoading) {
@@ -2284,16 +2246,6 @@ export default function MediaDetail() {
 
         </div>
       </div>
-      
-      <CreateListDialog 
-        open={showCreateListDialog} 
-        onOpenChange={(open) => {
-          setShowCreateListDialog(open);
-          if (!open) {
-            queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
-          }
-        }}
-      />
       
       <QuickAddModal
         isOpen={isQuickAddOpen}

@@ -333,11 +333,10 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
   });
 
   const systemLists = userListsData?.lists?.filter((list: any) => list.is_default) || [];
-  const customLists = userListsData?.lists?.filter((list: any) => !list.is_default) || [];
 
   // Add to list mutation
   const addToListMutation = useMutation({
-    mutationFn: async ({ media, listType, isCustom }: { media: MediaResult; listType: string; isCustom?: boolean }) => {
+    mutationFn: async ({ media, listType }: { media: MediaResult; listType: string }) => {
       if (!session?.access_token) {
         throw new Error('Not authenticated');
       }
@@ -351,21 +350,13 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
         externalSource: media.external_source || 'tmdb'
       };
 
-      const url = isCustom 
-        ? 'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list'
-        : 'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media';
-
-      const body = isCustom
-        ? { media: mediaData, customListId: listType }
-        : { media: mediaData, listType };
-
-      const response = await fetch(url, {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ media: mediaData, listType }),
       });
       
       if (!response.ok) {
@@ -484,9 +475,9 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
     setLocation(`/user/${userId}`);
   };
 
-  const handleAddToList = (media: MediaResult, listType: string, isCustom: boolean, e?: React.MouseEvent) => {
+  const handleAddToList = (media: MediaResult, listType: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    addToListMutation.mutate({ media, listType, isCustom });
+    addToListMutation.mutate({ media, listType });
   };
 
   const handleSendFriendRequest = (userId: string, e: React.MouseEvent) => {
