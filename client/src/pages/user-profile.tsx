@@ -3398,7 +3398,7 @@ export default function UserProfile() {
                 className="flex justify-center text-left transition-all active:scale-95"
                 data-testid="points-breakdown-link"
               >
-                <span className="flex w-[84px] flex-col items-start">
+                <span className="flex w-[84px] -translate-x-2 flex-col items-start">
                   <span className="flex items-center gap-2">
                     <Trophy size={22} className="text-amber-400" />
                     <span className="font-serif text-[25px] font-medium leading-none tracking-[-.04em] text-white">
@@ -3412,7 +3412,7 @@ export default function UserProfile() {
               {/* Leaderboard */}
               <Link href="/leaderboard">
                 <div className="flex justify-center border-l border-white/10 text-left cursor-pointer transition-all active:scale-95">
-                  <span className="flex w-[84px] flex-col items-start">
+                  <span className="flex w-[84px] translate-x-2 flex-col items-start">
                     <span className="flex items-center gap-2">
                       <Medal size={22} className="text-purple-300" />
                       <span className="font-serif text-[25px] font-medium leading-none tracking-[-.04em] text-white">
