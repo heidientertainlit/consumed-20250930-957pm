@@ -222,12 +222,12 @@ export function FeedIdentityHero() {
           <div className="relative grid grid-cols-3">
             {stats.map((s, idx) => {
               const inner = (
-                <div className="flex flex-col items-start text-left">
+                <div className="flex min-w-[72px] flex-col items-start text-left">
                   <div className="flex items-center gap-1.5">
-                    <s.Icon size={15} color={s.color} {...(s.Icon === Flame ? { fill: s.color } : {})} />
-                    <p className="font-serif text-[21px] font-medium leading-none tracking-[-.03em] text-white">{s.value}</p>
+                    <s.Icon size={13} color={s.color} {...(s.Icon === Flame ? { fill: s.color } : {})} />
+                    <p className="whitespace-nowrap text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>{s.label}</p>
                   </div>
-                  <p className="text-[11px] mt-0.5 whitespace-nowrap" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</p>
+                  <p className="mt-1.5 font-serif text-[25px] font-medium leading-none tracking-[-.04em] text-white">{s.value}</p>
                 </div>
               );
               const borderStyle = idx > 0 ? { borderLeft: "1px solid rgba(255,255,255,0.08)" } : {};
