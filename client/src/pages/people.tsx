@@ -371,8 +371,7 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
         return <button
           key={tribe.slug}
           onClick={() => onSelect(tribe.slug)}
-          className="group relative overflow-hidden rounded-[20px] border border-[#e4dedb] border-l-[3px] bg-[#fffdfb] px-4 py-5 text-left shadow-[0_7px_18px_rgba(65,49,55,.055)] transition duration-300 hover:-translate-y-0.5 hover:border-[#cfc4c0] hover:shadow-[0_11px_24px_rgba(65,49,55,.09)] sm:px-6"
-          style={{ borderLeftColor: accent }}
+          className="group relative overflow-hidden rounded-[20px] border border-[#e4dedb] bg-[#fffdfb] px-4 py-5 text-left shadow-[0_7px_18px_rgba(65,49,55,.055)] transition duration-300 hover:-translate-y-0.5 hover:border-[#cfc4c0] hover:shadow-[0_11px_24px_rgba(65,49,55,.09)] sm:px-6"
         >
           <div className="flex items-start gap-3.5">
             <TribeIcon size={27} strokeWidth={1.8} className="mt-0.5 shrink-0" style={{ color: accent }} />
