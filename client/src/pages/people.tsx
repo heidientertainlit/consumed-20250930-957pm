@@ -73,14 +73,65 @@ async function functionRequest<T>(path: "people-affinity" | "people-tribes", tok
   return response.json();
 }
 
-function Readiness({ readiness }: { readiness?: Affinity["readiness"] }) {
+function Readiness({ readiness, onInvite }: { readiness?: Affinity["readiness"]; onInvite: () => void }) {
   const count = readiness?.tracked_items ?? readiness?.item_count ?? 0;
   const needed = readiness?.items_needed ?? Math.max(0, 10 - count);
-  return <section className="rounded-[22px] border border-[#ded7e9] bg-[#f4f0f5] p-5 sm:p-6">
-    <div className="flex items-start gap-3"><span className="grid h-9 w-9 place-items-center rounded-full bg-[#ded5ef] text-[#4c3972]"><LockKeyhole size={16} /></span>
-      <div><p className="text-sm font-bold text-[#271d3a]">Build a sharper read on your taste</p><p className="mt-1 text-sm leading-5 text-[#746b7b]">{needed > 0 ? `Track ${needed} more ${needed === 1 ? "item" : "items"} to unlock this.` : "Complete your DNA profile to unlock this."}</p></div></div>
-    <div className="mt-5"><div className="mb-2 flex justify-between text-[11px] font-bold uppercase tracking-[.12em] text-[#756985]"><span>Tracked items</span><span>{Math.min(count, 10)} / 10</span></div><div className="h-1.5 overflow-hidden rounded-full bg-[#ddd7e0]"><div className="h-full rounded-full bg-[#5b4389] transition-all duration-500" style={{ width: `${Math.min(100, count * 10)}%` }} /></div></div>
-    <Link href="/me" className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-[#513879]">Add to your DNA <ArrowUpRight size={15} /></Link>
+  const examples = [
+    { score: 86, label: "Your People", detail: "Same comfort shows + music taste", color: "from-[#6d3da2] to-[#a855a7]" },
+    { score: 58, label: "Common Ground", detail: "3 shared favorites across TV + books", color: "from-[#7f5f91] to-[#b48a9d]" },
+    { score: 27, label: "Different Vibes", detail: "Opposite genres, one surprise overlap", color: "from-[#817887] to-[#aba2ac]" },
+  ];
+  return <section>
+    <div className="text-center">
+      <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-[#e8def1] text-[#553878]"><Dna size={20} /></span>
+      <h2 className="mt-4 text-xl font-bold tracking-[-.035em] text-[#271d3a]">See how your taste connects</h2>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#746b7b]">
+        DNA comparisons reveal where you and another person overlap—and where your tastes take different paths.
+      </p>
+    </div>
+
+    <div className="mt-6 space-y-3" aria-label="Example DNA comparisons">
+      {examples.map((example) => (
+        <div key={example.label} className="relative overflow-hidden rounded-[18px] border border-[#ded7e9] bg-white p-4 shadow-[0_4px_16px_rgba(53,35,69,.04)]">
+          <span className="absolute right-3 top-3 rounded-full bg-[#f4eff6] px-2 py-1 text-[9px] font-bold uppercase tracking-[.12em] text-[#806e88]">Example</span>
+          <div className="flex items-center gap-3">
+            <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br ${example.color} text-sm font-black text-white`}>
+              {example.score}%
+            </div>
+            <div className="min-w-0 pr-14">
+              <p className="text-sm font-bold text-[#2b2135]">{example.label}</p>
+              <p className="mt-1 truncate text-xs text-[#796f7e]">{example.detail}</p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div className="mt-6 rounded-[22px] border border-[#ded7e9] bg-[#f4f0f5] p-5 sm:p-6">
+      <div className="flex items-start gap-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#ded5ef] text-[#4c3972]"><LockKeyhole size={16} /></span>
+        <div>
+          <p className="text-sm font-bold text-[#271d3a]">Unlock your real comparisons</p>
+          <p className="mt-1 text-sm leading-5 text-[#746b7b]">
+            {needed > 0
+              ? `Track ${needed} more ${needed === 1 ? "item" : "items"} to sharpen your DNA. Invite friends now so you’ll have people to compare with.`
+              : "Invite friends to compare your DNA, then keep tracking to discover more matches."}
+          </p>
+        </div>
+      </div>
+      <div className="mt-5">
+        <div className="mb-2 flex justify-between text-[11px] font-bold uppercase tracking-[.12em] text-[#756985]"><span>Your DNA progress</span><span>{Math.min(count, 10)} / 10 tracked</span></div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-[#ddd7e0]"><div className="h-full rounded-full bg-[#5b4389] transition-all duration-500" style={{ width: `${Math.min(100, count * 10)}%` }} /></div>
+      </div>
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <button type="button" onClick={onInvite} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#513879] px-3 py-3 text-sm font-bold text-white transition hover:bg-[#412c62]">
+          <Share2 size={15} /> Invite friends
+        </button>
+        <Link href="/add" className="inline-flex items-center justify-center gap-1 rounded-full border border-[#cfc3d8] bg-white px-3 py-3 text-sm font-bold text-[#513879] transition hover:bg-[#faf7fb]">
+          Track more <ArrowUpRight size={15} />
+        </Link>
+      </div>
+    </div>
   </section>;
 }
 
@@ -205,7 +256,7 @@ export default function PeoplePage() {
         <nav className="mt-5 flex overflow-x-auto border-b border-[#dcd5df]" aria-label="People sections">{tabs.map((item) => <button key={item.id} onClick={() => setTab(item.id)} className={`relative shrink-0 px-4 py-2.5 text-[13px] font-bold transition-colors first:pl-0 ${tab === item.id ? "text-[#4b2f70] after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-[#523177] first:after:left-0" : "text-[#827887] hover:text-[#493659]"}`}>{item.label}</button>)}</nav>
       </header>
 
-      {tab === "matches" && <Matches query={affinityQuery} more={moreMatches} onSelectPerson={openPerson} />}
+      {tab === "matches" && <Matches query={affinityQuery} more={moreMatches} onSelectPerson={openPerson} onInvite={copyInvite} />}
       {tab === "friends" && <Friends userId={user?.id} />}
       {tab === "tribes" && <Tribes query={tribesQuery} selected={selectedTribe} onSelect={setTribe} membership={membership} />}
       {tab === "creators" && <Creators query={creatorsQuery} />}
@@ -250,11 +301,11 @@ export default function PeoplePage() {
   </div>;
 }
 
-function Matches({ query, more, onSelectPerson }: { query: ReturnType<typeof useQuery<Affinity>>; more: ReturnType<typeof useMutation<Affinity, Error, void>>; onSelectPerson: (person: Person) => void }) {
+function Matches({ query, more, onSelectPerson, onInvite }: { query: ReturnType<typeof useQuery<Affinity>>; more: ReturnType<typeof useMutation<Affinity, Error, void>>; onSelectPerson: (person: Person) => void; onInvite: () => void }) {
   if (query.isLoading) return <div className="mt-7 space-y-3">{[1, 2, 3, 4].map((item) => <div key={item} className="h-[66px] animate-pulse rounded-xl bg-[#e6e0e7]" />)}</div>;
   if (query.isError) return <ErrorState onRetry={() => query.refetch()} />;
   const data = query.data;
-  if (!data?.ready) return <div className="mt-7"><Readiness readiness={data?.readiness} /></div>;
+  if (!data?.ready) return <div className="mt-7"><Readiness readiness={data?.readiness} onInvite={onInvite} /></div>;
   const ordered = bands.map((definition) => ({ ...definition, people: data.bands?.find((band) => band.id === definition.id)?.people || [] })).filter((band) => band.people.length);
   return <section className="mt-7"><div className="mb-5 flex items-end justify-between"><div><p className="text-sm text-[#6e6475]">Compatibility, without the performance.</p><h2 className="mt-1 text-xl font-bold tracking-[-.035em]">People with a real overlap</h2></div>{data.compared_now ? <span className="text-xs font-semibold text-[#79618f]">{data.compared_now} newly compared</span> : null}</div>
     {!ordered.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">No comparisons to show yet. Your matches will arrive as more people build their DNA.</div> :
