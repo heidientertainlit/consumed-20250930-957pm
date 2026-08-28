@@ -8,7 +8,7 @@ const cors = {
 };
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
-const ALGORITHM_VERSION = "tribe-weighted-groups-v1";
+const ALGORITHM_VERSION = "tribe-weighted-groups-v2-calibrated";
 
 function scoreTribe(signals: any[], definitions: any[]) {
   const userSignals = new Map(signals
@@ -39,12 +39,19 @@ function scoreTribe(signals: any[], definitions: any[]) {
   const raw = totalWeight ? contribution / totalWeight : 0;
   // Reward breadth, but never manufacture a recommendation from one dimension.
   const breadth = Math.min(1, matchedGroups.size / 3);
-  const fitScore = Math.max(0, Math.min(100, Math.round((raw * 0.72 + breadth * 0.28) * 100)));
+  const baseScore = Math.max(0, Math.min(100, Math.round((raw * 0.72 + breadth * 0.28) * 100)));
+  const recommended = matchedGroups.size >= 2 && baseScore >= 24;
+  // The base score is intentionally strict because it measures coverage across
+  // every defining signal. Once a Tribe clears the recommendation threshold,
+  // calibrate the user-facing percentage into the intuitive 70–100% range.
+  const fitScore = recommended
+    ? Math.round(70 + ((baseScore - 24) / 76) * 30)
+    : baseScore;
   return {
     fit_score: fitScore,
     matched_groups: [...matchedGroups],
     evidence: evidence.sort((a, b) => b.contribution - a.contribution).slice(0, 6),
-    recommended: matchedGroups.size >= 2 && fitScore >= 24,
+    recommended,
   };
 }
 
