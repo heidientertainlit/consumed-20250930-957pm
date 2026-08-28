@@ -56,6 +56,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   const [hoveredRating, setHoveredRating] = useState<number>(0);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const [similarRecs, setSimilarRecs] = useState<SimilarRec[]>([]);
+  const [recommendationToAdd, setRecommendationToAdd] = useState<SimilarRec | null>(null);
   const [addedListId, setAddedListId] = useState<string | null>(null);
   const [addingRecId, setAddingRecId] = useState<string | null>(null);
   const [addedRecIds, setAddedRecIds] = useState<Set<string>>(new Set());
@@ -125,6 +126,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     setSelectedRating(0);
     setHoveredRating(0);
     setSimilarRecs([]);
+    setRecommendationToAdd(null);
     setAddedListId(null);
     setAddingRecId(null);
     setAddedRecIds(new Set());
@@ -136,7 +138,13 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     onClose();
   };
 
-  const effectiveMedia = media || inlineSelectedMedia;
+  const effectiveMedia = recommendationToAdd ? {
+    title: recommendationToAdd.title,
+    mediaType: recommendationToAdd.type,
+    imageUrl: recommendationToAdd.imageUrl,
+    externalId: recommendationToAdd.id,
+    externalSource: recommendationToAdd.externalSource,
+  } : media || inlineSelectedMedia;
 
   const isWantToList = (listName: string) => {
     const lower = listName.toLowerCase();
@@ -370,7 +378,10 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
       
       setAddedListName(listName);
       setAddedListId(actualListId);
-      if (isWantToList(listName) && effectiveMedia?.mediaType) {
+      if (recommendationToAdd) {
+        setAddedRecIds(prev => new Set(prev).add(recommendationToAdd.id));
+        setStep('just-tracked');
+      } else if (isWantToList(listName) && effectiveMedia?.mediaType) {
         const hasRecs = await fetchSimilarRecs(effectiveMedia.mediaType, effectiveMedia.externalId);
         if (hasRecs) {
           setStep('similar');
@@ -584,7 +595,6 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
               <div className="space-y-2">
                 {similarRecs.map((rec) => {
                   const isAdded = addedRecIds.has(rec.id);
-                  const isBusy = addingRecId === rec.id;
                   return (
                     <div key={rec.id} className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-2">
                       {rec.imageUrl ? (
@@ -597,13 +607,16 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
                         <p className="text-[11px] text-gray-400 capitalize">{rec.type}</p>
                       </div>
                       <button
-                        onClick={() => !isAdded && !isBusy && handleAddRecToList(rec)}
-                        disabled={isAdded || isBusy}
+                        onClick={() => {
+                          if (isAdded) return;
+                          setRecommendationToAdd(rec);
+                          setStep('select-list');
+                        }}
+                        disabled={isAdded}
                         className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${isAdded ? 'bg-green-100' : 'bg-purple-600'}`}
+                        aria-label={isAdded ? `${rec.title} added` : `Choose a list for ${rec.title}`}
                       >
-                        {isBusy ? (
-                          <Loader2 size={14} className="animate-spin text-white" />
-                        ) : isAdded ? (
+                        {isAdded ? (
                           <Check size={14} className="text-green-600" />
                         ) : (
                           <Plus size={14} className="text-white" />
@@ -725,8 +738,8 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
             <DrawerTitle className="text-lg font-semibold text-gray-900 text-center">
               Add to List
             </DrawerTitle>
-            {media ? (
-              <p className="text-sm text-gray-500 mt-1 text-center">{media.title}</p>
+            {effectiveMedia ? (
+              <p className="text-sm text-gray-500 mt-1 text-center">{effectiveMedia.title}</p>
             ) : (
               <div className="mt-2 relative">
                 {inlineSelectedMedia ? (
@@ -834,13 +847,13 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
         isOpen={step === 'just-tracked' && isOpen}
         elevated={elevated}
         onClose={handleClose}
-        media={media ? {
-          title: media.title,
-          mediaType: media.mediaType,
-          imageUrl: media.imageUrl,
-          externalId: media.externalId,
-          externalSource: media.externalSource,
-          creator: media.creator,
+        media={effectiveMedia ? {
+          title: effectiveMedia.title,
+          mediaType: effectiveMedia.mediaType,
+          imageUrl: effectiveMedia.imageUrl,
+          externalId: effectiveMedia.externalId,
+          externalSource: effectiveMedia.externalSource,
+          creator: effectiveMedia.creator,
         } : null}
         listName={addedListName}
         onDropHotTake={onOpenHotTakeComposer && media ? () => {
