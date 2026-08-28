@@ -437,6 +437,7 @@ export default function OnboardingPage() {
   const [identityRequired, setIdentityRequired] = useState(false);
   const [identityFirstName, setIdentityFirstName] = useState("");
   const [identityLastName, setIdentityLastName] = useState("");
+  const [identityBirthDate, setIdentityBirthDate] = useState("");
   const [identityNameInput, setIdentityNameInput] = useState("");
   const [identityUsername, setIdentityUsername] = useState("");
   const [identityUsernameStatus, setIdentityUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
@@ -471,7 +472,7 @@ export default function OnboardingPage() {
     setIdentityLookupError(null);
 
     const loadIdentity = async () => {
-      const [resolvedIdentity, dnaResult, avatarResult] = await Promise.all([
+      const [resolvedIdentity, dnaResult, avatarResult, privateDetailsResult] = await Promise.all([
         loadProfileIdentity(user, session.access_token, {
           force: identityLookupRetryKey > 0,
         }),
@@ -481,6 +482,7 @@ export default function OnboardingPage() {
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase.from("users").select("avatar").eq("id", user.id).maybeSingle(),
+        supabase.from("user_private_details").select("birth_date").eq("user_id", user.id).maybeSingle(),
       ]);
       if (cancelled) return;
       if (dnaResult.error) {
@@ -497,6 +499,7 @@ export default function OnboardingPage() {
       setIdentityNameInput(`${resolvedIdentity.defaults.firstName} ${resolvedIdentity.defaults.lastName}`.trim());
       setIdentityUsername(resolvedIdentity.defaults.username);
       setIdentityAvatarUrl(avatarResult.data?.avatar || null);
+      setIdentityBirthDate(privateDetailsResult.data?.birth_date || "");
 
       if (resolvedIdentity.complete) {
         setIdentityRequired(false);
@@ -604,6 +607,17 @@ export default function OnboardingPage() {
       setIdentityError("Please enter your first and last name.");
       return;
     }
+    if (!identityBirthDate) {
+      setIdentityError("Please enter your birthday.");
+      return;
+    }
+    const birthDate = new Date(`${identityBirthDate}T00:00:00`);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    if (Number.isNaN(birthDate.getTime()) || birthDate > today) {
+      setIdentityError("Please enter a valid birthday.");
+      return;
+    }
     if (!USERNAME_PATTERN.test(username)) {
       setIdentityError("Username must be 3-20 characters using only letters, numbers, and underscores.");
       return;
@@ -622,6 +636,7 @@ export default function OnboardingPage() {
           first_name: firstName,
           last_name: lastName,
           username,
+          birth_date: identityBirthDate,
         }),
       });
       const result = await response.json().catch(() => ({}));
@@ -1364,6 +1379,22 @@ export default function OnboardingPage() {
               )}
             </div>
 
+            <label className="mt-5 block text-sm font-semibold text-gray-700">
+              Birthday
+              <input
+                type="date"
+                value={identityBirthDate}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(event) => {
+                  setIdentityBirthDate(event.target.value);
+                  setIdentityError(null);
+                }}
+                autoComplete="bday"
+                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-base text-gray-900 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                data-testid="onboarding-birthday"
+              />
+            </label>
+
             <div className="mt-5">
               <p className="text-sm font-semibold text-gray-700">Profile photo <span className="font-normal text-gray-400">(optional)</span></p>
               <button
@@ -1396,6 +1427,7 @@ export default function OnboardingPage() {
                 identitySaving
                 || !identityFirstName.trim()
                 || !identityLastName.trim()
+                || !identityBirthDate
                 || !USERNAME_PATTERN.test(normalizeUsername(identityUsername))
                 || (identityNeedsUsername && identityUsernameStatus === "checking")
                 || (identityNeedsUsername && identityUsernameStatus === "taken")

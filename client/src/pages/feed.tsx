@@ -2626,6 +2626,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     formatFeedName(post.user?.displayName, post.user?.username).split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase()
                   )}
                 </div>
+                <span className="-mx-1 text-[13px] font-semibold text-gray-500" aria-hidden="true">–</span>
                 <div className="flex-1 min-w-0">
                   <p
                     className={`text-[13px] font-semibold text-gray-700 leading-tight truncate ${post.user?.id ? 'cursor-pointer hover:text-violet-700' : ''}`}

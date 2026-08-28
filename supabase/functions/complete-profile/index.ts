@@ -234,6 +234,23 @@ serve(async (req) => {
     if (!firstName || !lastName || firstName.length > 50 || lastName.length > 50) {
       return json({ error: "First and last name are required and must be 50 characters or fewer." }, 400);
     }
+    const birthDate = String(body.birth_date || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+      return json({ error: "A valid birthday is required." }, 400);
+    }
+    const parsedBirthDate = new Date(`${birthDate}T00:00:00.000Z`);
+    if (
+      Number.isNaN(parsedBirthDate.getTime())
+      || parsedBirthDate.toISOString().slice(0, 10) !== birthDate
+      || birthDate > new Date().toISOString().slice(0, 10)
+    ) {
+      return json({ error: "A valid birthday is required." }, 400);
+    }
+
+    const { error: privateDetailsError } = await admin
+      .from("user_private_details")
+      .upsert({ user_id: user.id, birth_date: birthDate }, { onConflict: "user_id" });
+    if (privateDetailsError) throw privateDetailsError;
 
     const displayName = `${firstName} ${lastName}`.trim();
     const profileFields = {
