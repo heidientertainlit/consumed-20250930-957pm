@@ -1327,7 +1327,7 @@ export default function OnboardingPage() {
               </div>
               <div className="min-w-0">
                 <p className="truncate text-lg font-black text-gray-900">{cardName}</p>
-                <p className="mt-0.5 truncate text-sm font-semibold text-purple-600">
+                <p className="font-fraunces mt-0.5 truncate text-sm font-semibold text-purple-600">
                   {generatedProfile?.label || "Your Entertainment DNA"}
                 </p>
                 <p className="mt-1 truncate text-xs text-gray-400">
@@ -2132,7 +2132,7 @@ export default function OnboardingPage() {
           <Dna className="text-white" size={40} />
         </div>
         <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 uppercase">Your Entertainment DNA</p>
-        <h1 className="text-3xl font-black text-gray-900 mt-2" style={{ fontFamily: "Poppins, sans-serif" }}>
+        <h1 className="font-fraunces text-3xl font-semibold text-gray-900 mt-2">
           {generatedProfile?.label || "Your DNA is ready"}
         </h1>
         {generatedProfile?.tagline && <p className="text-gray-600 mt-3 text-base">{generatedProfile.tagline}</p>}
