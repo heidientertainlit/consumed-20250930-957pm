@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
-import { ArrowLeft, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, LockKeyhole, Share2, Sparkles, Users } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, LockKeyhole, Share2, Users } from "lucide-react";
 import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
 import FriendsManager from "@/components/friends-manager";
@@ -324,10 +324,10 @@ function Matches({ query, more, onSelectPerson, onInvite }: { query: ReturnType<
   const featured = ordered.flatMap((band) => band.people.map((person) => ({ person, band }))).sort((a, b) => (b.person.match_score || 0) - (a.person.match_score || 0)).slice(0, 2);
   const featuredIds = new Set(featured.map(({ person }) => person.id));
   const remaining = ordered.map((band) => ({ ...band, people: band.people.filter((person) => !featuredIds.has(person.id)) })).filter((band) => band.people.length);
-  return <section className="mt-7"><div className="mb-5 flex items-end justify-between gap-4"><div><h2 className="text-xl font-semibold tracking-[-.02em]">See who gets you.</h2><p className="mt-1 max-w-xl text-sm leading-5 text-[#6e6475]">Discover people based on what you both watch, read, listen to, play, and love.</p></div>{data.compared_now ? <span className="shrink-0 text-xs font-semibold text-[#79618f]">{data.compared_now} newly compared</span> : null}</div>
+  return <section className="mt-7">
     {!ordered.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">No comparisons to show yet. Your matches will arrive as more people build their DNA.</div> :
       <>
-        {featured.length > 0 && <div className="mb-9"><div className="mb-3 flex items-center gap-2"><Sparkles size={15} className="text-[#65457b]" /><div><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">Your best matches</h3><p className="text-xs text-[#7d7382]">People with the most in common right now.</p></div></div><div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person, band }, index) => <FeaturedMatch key={person.id} person={person} band={band} index={index} onSelect={onSelectPerson} />)}</div></div>}
+        {featured.length > 0 && <div className="mb-9"><div className="mb-3 flex items-start gap-2"><Dna size={16} className="mt-0.5 shrink-0 text-[#65457b]" /><div><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">Your best matches</h3><p className="mt-0.5 max-w-xl text-xs leading-5 text-[#7d7382]">Discover people based on what you both watch, read, listen to, play, and love.</p></div></div><div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person, band }, index) => <FeaturedMatch key={person.id} person={person} band={band} index={index} onSelect={onSelectPerson} />)}</div></div>}
         {remaining.length > 0 && <div><div className="mb-3 flex items-end justify-between"><div><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">More to explore</h3><p className="mt-0.5 text-xs text-[#7d7382]">Every overlap is a place to start.</p></div></div><div className="divide-y divide-[#dfd8e1] border-y border-[#dfd8e1]">{remaining.map((band) => <div key={band.id} className="py-5"><div className="mb-2 flex items-baseline justify-between"><h3 className="text-[11px] font-bold uppercase tracking-[.15em] text-[#65457b]">{band.label}%</h3><span className="text-xs text-[#857a8b]">{band.note}</span></div>{band.people.map((person) => <MatchRow key={person.id} person={person} onSelect={onSelectPerson} />)}</div>)}</div></div>}
       </>}
     {data.has_more && <button disabled={more.isPending} onClick={() => more.mutate()} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#503574] disabled:opacity-50">Compare more people <ChevronRight size={16} /></button>}
