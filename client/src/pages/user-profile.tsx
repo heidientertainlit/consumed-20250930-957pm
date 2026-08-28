@@ -3756,7 +3756,7 @@ export default function UserProfile() {
                   <div className="grid grid-cols-2 gap-4">
                     {/* Mostly Into */}
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Mostly Into</h3>
+                        <h3 className="text-sm font-semibold text-gray-900 mb-3">Mostly Into</h3>
                       {dnaGenreSignals.length > 0 ? (() => {
                         const total = dnaGenreSignals.reduce((s: number, g: any) => s + g.source_count, 0) || 1;
                         const top = dnaGenreSignals.slice(0, 3);
@@ -4673,15 +4673,12 @@ export default function UserProfile() {
         {/* All My Media Section (own profile only) */}
         {activeSection === 'all-media' && isOwnProfile && (
           <div className="px-4 pt-4 mb-8">
-            <section className="overflow-hidden rounded-[1.75rem] border border-[#e4dde6] bg-white shadow-[0_16px_36px_rgba(55,35,79,0.07)]">
-              <div className="border-b border-[#ece5e8] bg-[#fffaf7] px-4 pb-5 pt-5 sm:px-5">
+            <section className="overflow-hidden rounded-[1.75rem] border border-[#e4dde6] bg-white/90 shadow-[0_16px_36px_rgba(55,35,79,0.07)]">
+              <div className="border-b border-[#ece5e8] bg-[#fffaf7]/90 px-4 pb-5 pt-5 sm:px-5">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
-                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#8c719c]">The record</p>
-                    <h4 className="flex items-center gap-2 text-xl font-semibold tracking-[-0.03em] text-[#332440]">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8dafa] text-[#7143a6]"><Film size={15} /></span>
-                      All My Media
-                    </h4>
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#8c719c]">Your personal record</p>
+                    <h4 className="text-[27px] font-semibold tracking-[-0.05em] text-[#332440]">My Media</h4>
                   </div>
                   <span className="mt-1 rounded-full border border-[#e1d2ee] bg-white/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#79558f]">Living library</span>
                 </div>
@@ -4698,14 +4695,14 @@ export default function UserProfile() {
                 <div className="relative overflow-hidden rounded-2xl border border-[#dacbe9] bg-[#f4eef9] px-4 py-4">
                   <div className="pointer-events-none absolute -right-5 -top-6 h-24 w-24 rounded-full border-[14px] border-[#e5d6f2] opacity-80" />
                   <p className="relative text-[10px] font-bold uppercase tracking-[0.16em] text-[#816994]">
-                    The Record <span className="px-1 text-[#b09abb]">•</span> {getPeriodHeading()}
+                    Everything you've watched, read, listened to & played
                   </p>
                   <div className="mt-1.5 flex items-end gap-2">
                     <span className="font-serif text-[40px] font-bold leading-none text-[#422653]">
-                      {filteredMediaHistory.length}
+                      {totalItemsLogged}
                     </span>
                     <span className="pb-1 text-sm font-medium text-[#6c5276]">
-                      {filteredMediaHistory.length === 1 ? "matching entry" : "matching entries"}
+                      {totalItemsLogged === 1 ? "title in your library" : "titles in your library"}
                     </span>
                   </div>
                   <div className="relative mt-4 grid grid-cols-4 gap-x-2 gap-y-3 border-t border-[#dfd1ea] pt-4">
@@ -4732,9 +4729,9 @@ export default function UserProfile() {
                     </div>
                   )}
                 </div>
-                <div className="mt-4 border-b border-[#ece5e8] pb-4">
+                  <div className="mt-4 border-b border-[#ece5e8] pb-4">
                   <div className="mb-2.5 flex items-center justify-between gap-3">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#96869f]">Browse by list</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#96869f]">Your lists</p>
                     <button onClick={() => setActiveSection('lists')} className="flex items-center gap-0.5 text-[11px] font-semibold text-[#76528d]">
                       View lists <ChevronRight size={12} />
                     </button>
@@ -4765,7 +4762,7 @@ export default function UserProfile() {
               </div>
               {/* Filters */}
               <div className="px-4 pb-5 pt-4 sm:px-5">
-              <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#96869f]">Explore your stats</p>
+              <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#96869f]">Filter & sort</p>
               <div className="flex flex-wrap gap-2 mb-4">
                 <div className="relative">
                   <button
@@ -4904,7 +4901,7 @@ export default function UserProfile() {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9c8ba8]" size={15} />
                 <input
                   type="text"
-                  placeholder="Search media history..."
+                  placeholder="Search your media..."
                   value={mediaHistorySearch}
                   onChange={(e) => setMediaHistorySearch(e.target.value)}
                   className="w-full rounded-xl border border-[#e4ddea] bg-[#faf8fc] py-2.5 pl-10 pr-3 text-sm text-[#3d3048] placeholder:text-[#aa9eaf] focus:outline-none focus:ring-2 focus:ring-[#c9ade5]"
@@ -4937,7 +4934,7 @@ export default function UserProfile() {
                   {items.map((item: any, index: number) => (
                     <div
                       key={`${item.id}-${index}`}
-                      className="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:border-purple-300 transition-colors"
+                      className="profile-media-row rounded-xl border border-transparent bg-[#fbf9fc] p-3"
                       data-testid={`history-item-${index}`}
                     >
                       <div className="flex items-center gap-3">
