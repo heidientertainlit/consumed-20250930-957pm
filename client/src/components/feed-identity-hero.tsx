@@ -225,7 +225,7 @@ export function FeedIdentityHero() {
                 <div className="flex flex-col items-start text-left">
                   <div className="flex items-center gap-1.5">
                     <s.Icon size={15} color={s.color} {...(s.Icon === Flame ? { fill: s.color } : {})} />
-                    <p className="text-[17px] font-bold text-white">{s.value}</p>
+                    <p className="font-serif text-[21px] font-medium leading-none tracking-[-.03em] text-white">{s.value}</p>
                   </div>
                   <p className="text-[11px] mt-0.5 whitespace-nowrap" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</p>
                 </div>
