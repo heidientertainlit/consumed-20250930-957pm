@@ -111,21 +111,24 @@ function Avatar({ person, small = false }: { person: Person; small?: boolean }) 
 }
 
 function AvatarStack({ people }: { people: Person[] }) {
-  const peopleWithImages = people
-    .filter((person) => Boolean(person.profile_image_url || person.avatar_url || person.avatar))
-    .slice(0, 4);
+  const previewPeople = people.slice(0, 4);
+  if (!previewPeople.length) return null;
 
-  if (!peopleWithImages.length) return null;
-
-  return <div className="flex items-center">{peopleWithImages.map((person, index) => {
+  return <div className="flex items-center">{previewPeople.map((person, index) => {
     const src = person.profile_image_url || person.avatar_url || person.avatar;
-    return <img
-      key={person.id}
-      src={src}
-      alt=""
-      className={`h-8 w-8 shrink-0 rounded-full border-2 border-[#fffdfb] object-cover ${index ? "-ml-2" : ""}`}
-      onError={(event) => { event.currentTarget.style.display = "none"; }}
-    />;
+    return src
+      ? <img
+          key={person.id}
+          src={src}
+          alt={nameFor(person)}
+          className={`h-8 w-8 shrink-0 rounded-full border-2 border-[#fffdfb] bg-[#e5dff3] object-cover ${index ? "-ml-2" : ""}`}
+        />
+      : <span
+          key={person.id}
+          className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 border-[#fffdfb] bg-[#e5dff3] text-[9px] font-bold text-[#4c3972] ${index ? "-ml-2" : ""}`}
+        >
+          {initials(nameFor(person))}
+        </span>;
   })}</div>;
 }
 
@@ -136,6 +139,43 @@ async function functionRequest<T>(path: "people-affinity" | "people-tribes", tok
     throw new Error(error?.error || "This section is unavailable right now.");
   }
   return response.json();
+}
+
+async function hydrateTribeMediaImages(data: TribesResponse, token: string): Promise<TribesResponse> {
+  const missing = data.tribes.flatMap((tribe) =>
+    tribe.media
+      .filter((item) => item.title?.trim() && !item.image_url)
+      .map((item) => ({ title: item.title.trim(), mediaType: item.media_type?.trim() || "", id: item.id }))
+  );
+  const unique = [...new Map(missing.map((item) => [`${item.mediaType.toLowerCase()}:${item.title.toLowerCase()}`, item])).values()];
+  const resolvedEntries = await Promise.all(unique.map(async (item) => {
+    try {
+      const params = new URLSearchParams({ q: item.title, limit: "5" });
+      if (item.mediaType) params.set("type", item.mediaType);
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/media-search?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) return [item.id, ""] as const;
+      const payload = await response.json();
+      const results = Array.isArray(payload?.results) ? payload.results : Array.isArray(payload) ? payload : [];
+      const normalizedTitle = item.title.toLowerCase().replace(/[^a-z0-9]+/g, "");
+      const match = results.find((result: any) =>
+        String(result?.title || result?.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "") === normalizedTitle
+      ) || results[0];
+      const image = match?.poster_url || match?.image || match?.image_url || match?.cover_url || "";
+      return [item.id, String(image)] as const;
+    } catch {
+      return [item.id, ""] as const;
+    }
+  }));
+  const imagesById = new Map(resolvedEntries.filter(([, image]) => Boolean(image)));
+  return {
+    ...data,
+    tribes: data.tribes.map((tribe) => ({
+      ...tribe,
+      media: tribe.media.map((item) => ({ ...item, image_url: item.image_url || imagesById.get(item.id) || undefined })),
+    })),
+  };
 }
 
 function Readiness({ readiness, onInvite }: { readiness?: Affinity["readiness"]; onInvite: () => void }) {
@@ -264,8 +304,11 @@ export default function PeoplePage() {
     queryFn: () => functionRequest<Affinity>("people-affinity", session!.access_token, { action: "load", batch_size: 25 }), staleTime: 60_000,
   });
   const tribesQuery = useQuery({
-    queryKey: ["people-tribes-v2", user?.id], enabled: !!session?.access_token,
-    queryFn: () => functionRequest<TribesResponse>("people-tribes", session!.access_token, { action: "load" }), staleTime: 60_000,
+    queryKey: ["people-tribes-v3", user?.id], enabled: !!session?.access_token,
+    queryFn: async () => hydrateTribeMediaImages(
+      await functionRequest<TribesResponse>("people-tribes", session!.access_token, { action: "load" }),
+      session!.access_token,
+    ), staleTime: 60_000,
   });
   const moreMatches = useMutation({
     mutationFn: () => functionRequest<Affinity>("people-affinity", session!.access_token, { action: "more", cursor: affinityQuery.data?.next_cursor, batch_size: 25 }),
@@ -299,7 +342,7 @@ export default function PeoplePage() {
   }, [affinityQuery.data?.has_more, affinityQuery.data?.next_cursor, moreMatches.isPending]);
   const membership = useMutation({
     mutationFn: ({ slug, joined }: { slug: string; joined: boolean }) => functionRequest<TribesResponse>("people-tribes", session!.access_token, { action: joined ? "leave" : "join", slug }),
-    onSuccess: (data) => queryClient.setQueryData(["people-tribes-v2", user?.id], data),
+    onSuccess: async (data) => queryClient.setQueryData(["people-tribes-v3", user?.id], await hydrateTribeMediaImages(data, session!.access_token)),
     onError: (error: Error) => toast({ title: "Couldn’t update membership", description: error.message }),
   });
   const creatorsQuery = useQuery({
