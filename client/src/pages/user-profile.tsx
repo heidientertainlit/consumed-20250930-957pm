@@ -3086,40 +3086,6 @@ export default function UserProfile() {
     if (mediaHistoryDate === "select-year") return mediaHistorySelectedYear;
     return "All time";
   };
-  const getCurrentEraExpression = (era: string | null | undefined) => {
-    const normalized = (era || '').toLowerCase();
-    if (normalized.includes('psychological') || normalized.includes('thriller')) {
-      return { words: ['Cerebral', 'Tense', 'Haunting'], contrasts: ['Mystery over certainty', 'Complexity over comfort'] };
-    }
-    if (normalized.includes('mystery') || normalized.includes('crime')) {
-      return { words: ['Curious', 'Sharp', 'Suspenseful'], contrasts: ['Questions over answers', 'Clues over coincidence'] };
-    }
-    if (normalized.includes('comfort') || normalized.includes('cozy') || normalized.includes('nostalgia')) {
-      return { words: ['Warm', 'Familiar', 'Restorative'], contrasts: ['Comfort over chaos', 'Familiarity over novelty'] };
-    }
-    if (normalized.includes('romance')) {
-      return { words: ['Tender', 'Hopeful', 'Intimate'], contrasts: ['Connection over distance', 'Feeling over restraint'] };
-    }
-    if (normalized.includes('fantasy')) {
-      return { words: ['Wondrous', 'Epic', 'Escapist'], contrasts: ['Wonder over realism', 'Possibility over limits'] };
-    }
-    if (normalized.includes('horror') || normalized.includes('dark')) {
-      return { words: ['Dark', 'Visceral', 'Unsettling'], contrasts: ['Dread over safety', 'The unknown over the ordinary'] };
-    }
-    if (normalized.includes('comedy')) {
-      return { words: ['Playful', 'Witty', 'Bright'], contrasts: ['Delight over seriousness', 'Surprise over predictability'] };
-    }
-    if (normalized.includes('action') || normalized.includes('adventure')) {
-      return { words: ['Bold', 'Kinetic', 'Fearless'], contrasts: ['Momentum over stillness', 'Risk over routine'] };
-    }
-    if (normalized.includes('science') || normalized.includes('sci_fi') || normalized.includes('sci-fi')) {
-      return { words: ['Speculative', 'Vast', 'Provocative'], contrasts: ['Possibility over convention', 'Wonder over certainty'] };
-    }
-    if (normalized.includes('drama')) {
-      return { words: ['Intimate', 'Complex', 'Moving'], contrasts: ['Feeling over spectacle', 'Nuance over simplicity'] };
-    }
-    return { words: ['Curious', 'Immersive', 'Distinctive'], contrasts: ['Discovery over familiarity', 'Feeling over formula'] };
-  };
   const getRatingLabel = () => mediaHistoryRating === 'all' ? 'Rating' : `${mediaHistoryRating}+`;
 
   // Years array for filter dropdown
@@ -3236,7 +3202,26 @@ export default function UserProfile() {
   const availableYears = getAvailableYears();
 
   // Use the same canonical deduplication as My Media so profile totals agree.
-  const totalItemsLogged = getAllMediaItems().length;
+  const allDnaItems = getAllMediaItems();
+  const totalItemsLogged = allDnaItems.length;
+  const recentDnaItems = allDnaItems.slice(0, 10);
+  const recentDnaTypeCounts = getMediaTypeCounts(recentDnaItems);
+  const [dominantRecentType, dominantRecentCount] = Object.entries(recentDnaTypeCounts)
+    .sort((a, b) => Number(b[1]) - Number(a[1]))[0] || ['movie', 0];
+  const dnaTypeLabels: Record<string, string> = {
+    movie: 'movies', tv: 'TV', book: 'books', book_series: 'book series',
+    music: 'music', podcast: 'podcasts', game: 'games', sports: 'sports', youtube: 'YouTube',
+  };
+  const dominantRecentLabel = dnaTypeLabels[dominantRecentType] || dominantRecentType;
+  const recentDominantShare = recentDnaItems.length ? Number(dominantRecentCount) / recentDnaItems.length : 0;
+  const usualDominantCount = allDnaItems.filter((item: any) => item.media_type === dominantRecentType).length;
+  const usualDominantShare = allDnaItems.length ? usualDominantCount / allDnaItems.length : 0;
+  const dominantLift = usualDominantShare > 0 ? recentDominantShare / usualDominantShare : 0;
+  const fiveStarDnaItems = allDnaItems.filter((item: any) => Number(item.user_rating) === 5);
+  const fiveStarDominantPercent = fiveStarDnaItems.length
+    ? Math.round((fiveStarDnaItems.filter((item: any) => item.media_type === dominantRecentType).length / fiveStarDnaItems.length) * 100)
+    : null;
+  const recentDnaTypeVariety = Object.values(recentDnaTypeCounts).filter((count) => Number(count) > 0).length;
 
   // Show loading screen while route is resolving to prevent flash of wrong profile
   if (isRouteResolving) {
@@ -3785,30 +3770,41 @@ export default function UserProfile() {
           <div className="px-4 py-4 space-y-4">
             {dnaProfileStatus === 'has_profile' && dnaProfile ? (
               <>
-                {dnaProfile.current_era && (
-                  <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-[#f7f3fa] px-5 py-5 shadow-sm">
+                <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-[#f7f3fa] px-5 py-5 shadow-sm">
                     <svg className="pointer-events-none absolute -right-5 top-2 h-[205px] w-[150px] text-[#75409e] opacity-[0.28]" viewBox="0 0 150 220" fill="none" aria-hidden="true">
                       <path d="M30 5C112 40 112 75 30 110C-52 145 -52 180 30 215" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
                       <path d="M120 5C38 40 38 75 120 110C202 145 202 180 120 215" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
                       <path d="M48 18H102M65 37H85M67 183H83M48 202H102M31 72H119M32 148H118M27 110H123" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                     </svg>
-                    <div className="relative z-10 max-w-[72%]">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#4d3b58]">Current Era</p>
-                      <p className="mt-3 text-xl font-semibold leading-tight text-[#7435ad]">
-                        {dnaProfile.current_era.replace(/_era$/, '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                      </p>
-                      <p className="mt-3 text-[9px] font-medium uppercase tracking-[0.13em] text-[#755c85]">
-                        {getCurrentEraExpression(dnaProfile.current_era).words.join(' · ')}
-                      </p>
-                      <div className="mt-5 border-t border-[#ded2e7] pt-3">
-                        <p className="text-[9px] font-medium uppercase tracking-[0.17em] text-[#88768f]">Maybe a little…</p>
-                        {getCurrentEraExpression(dnaProfile.current_era).contrasts.map((line) => (
-                          <p key={line} className="mt-1 font-serif text-[13px] italic leading-snug text-[#51405c]">{line}</p>
-                        ))}
+                    <div className="relative z-10">
+                      <div className="max-w-[67%]">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#6d5878]">Maybe right now…</p>
+                        <p className="mt-3 font-serif text-[21px] font-medium leading-[1.18] text-[#422653]">Easy answers just aren't that interesting.</p>
+                      </div>
+                      <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#ded2e7] pt-4">
+                        <div>
+                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">{dominantRecentCount} OF {recentDnaItems.length}</p>
+                          <p className="mt-1 text-[9px] leading-tight text-[#776982]">recent picks are {dominantRecentLabel}</p>
+                        </div>
+                        <div>
+                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">
+                            {dominantLift >= 1.05 ? `${dominantLift.toFixed(1)}×` : '#1'}
+                          </p>
+                          <p className="mt-1 text-[9px] leading-tight text-[#776982]">
+                            {dominantLift >= 1.05 ? `more ${dominantRecentLabel} than usual` : `${dominantRecentLabel} lately`}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">
+                            {fiveStarDominantPercent !== null ? `${fiveStarDominantPercent}%` : recentDnaTypeVariety}
+                          </p>
+                          <p className="mt-1 text-[9px] leading-tight text-[#776982]">
+                            {fiveStarDominantPercent !== null ? `of 5★ picks are ${dominantRecentLabel}` : `formats in the last ${recentDnaItems.length}`}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                )}
                 {/* Mostly Into + Recently shaping your DNA */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
                   <div className="grid grid-cols-2 gap-4">
@@ -4225,30 +4221,41 @@ export default function UserProfile() {
 
             {dnaProfileStatus === 'has_profile' && dnaProfile && (
               <>
-                {dnaProfile.current_era && (
-                  <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-[#f7f3fa] px-5 py-5 shadow-sm">
+                <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-[#f7f3fa] px-5 py-5 shadow-sm">
                     <svg className="pointer-events-none absolute -right-5 top-2 h-[205px] w-[150px] text-[#75409e] opacity-[0.28]" viewBox="0 0 150 220" fill="none" aria-hidden="true">
                       <path d="M30 5C112 40 112 75 30 110C-52 145 -52 180 30 215" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
                       <path d="M120 5C38 40 38 75 120 110C202 145 202 180 120 215" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
                       <path d="M48 18H102M65 37H85M67 183H83M48 202H102M31 72H119M32 148H118M27 110H123" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                     </svg>
-                    <div className="relative z-10 max-w-[72%]">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#4d3b58]">Current Era</p>
-                      <p className="mt-3 text-xl font-semibold leading-tight text-[#7435ad]">
-                        {dnaProfile.current_era.replace(/_era$/, '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                      </p>
-                      <p className="mt-3 text-[9px] font-medium uppercase tracking-[0.13em] text-[#755c85]">
-                        {getCurrentEraExpression(dnaProfile.current_era).words.join(' · ')}
-                      </p>
-                      <div className="mt-5 border-t border-[#ded2e7] pt-3">
-                        <p className="text-[9px] font-medium uppercase tracking-[0.17em] text-[#88768f]">Maybe a little…</p>
-                        {getCurrentEraExpression(dnaProfile.current_era).contrasts.map((line) => (
-                          <p key={line} className="mt-1 font-serif text-[13px] italic leading-snug text-[#51405c]">{line}</p>
-                        ))}
+                    <div className="relative z-10">
+                      <div className="max-w-[67%]">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#6d5878]">Maybe right now…</p>
+                        <p className="mt-3 font-serif text-[21px] font-medium leading-[1.18] text-[#422653]">Easy answers just aren't that interesting.</p>
+                      </div>
+                      <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#ded2e7] pt-4">
+                        <div>
+                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">{dominantRecentCount} OF {recentDnaItems.length}</p>
+                          <p className="mt-1 text-[9px] leading-tight text-[#776982]">recent picks are {dominantRecentLabel}</p>
+                        </div>
+                        <div>
+                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">
+                            {dominantLift >= 1.05 ? `${dominantLift.toFixed(1)}×` : '#1'}
+                          </p>
+                          <p className="mt-1 text-[9px] leading-tight text-[#776982]">
+                            {dominantLift >= 1.05 ? `more ${dominantRecentLabel} than usual` : `${dominantRecentLabel} lately`}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">
+                            {fiveStarDominantPercent !== null ? `${fiveStarDominantPercent}%` : recentDnaTypeVariety}
+                          </p>
+                          <p className="mt-1 text-[9px] leading-tight text-[#776982]">
+                            {fiveStarDominantPercent !== null ? `of their 5★ picks are ${dominantRecentLabel}` : `formats in their last ${recentDnaItems.length}`}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                )}
                 {/* Mostly Into + Recently shaping their DNA */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
                   <div className="grid grid-cols-2 gap-4">
