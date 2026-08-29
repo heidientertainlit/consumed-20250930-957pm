@@ -2413,11 +2413,18 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         return candidateKey === participantKey;
       }) === index;
     });
-    const conversationParticipants = uniqueConversationParticipants.slice(0, 3);
     const conversationPeopleCount = uniqueConversationParticipants.length;
     const conversationLabel = conversationPeopleCount > 0
       ? `${conversationPeopleCount} ${conversationPeopleCount === 1 ? 'person' : 'people'} talking`
       : `${conversationCount} ${conversationCount === 1 ? 'reply' : 'replies'}`;
+    const flattenConversation = (items: any[]): any[] =>
+      items.flatMap((comment: any) => [comment, ...flattenConversation(comment.replies || [])]);
+    const latestReply = flattenConversation(comments)
+      .sort((a: any, b: any) => new Date(b.createdAt || b.created_at || 0).getTime() - new Date(a.createdAt || a.created_at || 0).getTime())[0];
+    const latestReplyName = latestReply
+      ? formatFeedName(latestReply.user?.displayName, latestReply.user?.username || latestReply.username)
+      : '';
+    const remainingReplyCount = Math.max(0, conversationCount - 1);
 
     return (
       <>
@@ -2697,28 +2704,36 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               }}
               aria-label={`Join the conversation with ${conversationCount} ${conversationCount === 1 ? 'reply' : 'replies'}`}
             >
-              <span className="flex items-center gap-2">
-                <span className="flex -space-x-1.5 flex-shrink-0">
-                  {conversationParticipants.map((comment: any, index: number) => {
-                    const participantName = formatFeedName(comment.user?.displayName, comment.user?.username || comment.username);
-                    return (
-                      <span
-                        key={comment.id || index}
-                        className="w-6 h-6 rounded-full border-2 border-violet-50 bg-violet-400 flex items-center justify-center overflow-hidden text-[9px] font-bold text-white"
-                      >
-                        {comment.user?.avatar ? (
-                          <img src={comment.user.avatar} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          participantName[0]?.toUpperCase() || '?'
+              {latestReply ? (
+                <span className="block">
+                  <span className="flex items-start gap-2.5">
+                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-400 text-[11px] font-bold text-white">
+                      {latestReply.user?.avatar ? (
+                        <img src={latestReply.user.avatar} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        latestReplyName[0]?.toUpperCase() || '?'
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-baseline gap-1.5">
+                        <span className="truncate text-[13px] font-semibold text-gray-800">{latestReplyName}</span>
+                        {latestReply.user?.username && (
+                          <span className="truncate text-[11px] text-gray-400">@{formatUsername(latestReply.user.username)}</span>
                         )}
+                        <span className="ml-auto shrink-0 text-[10px] text-gray-400">{timeAgo(latestReply.createdAt || latestReply.created_at)}</span>
                       </span>
-                    );
-                  })}
+                      <span className="mt-0.5 block line-clamp-2 text-[13px] leading-snug text-gray-700">{latestReply.content}</span>
+                    </span>
+                  </span>
+                  {remainingReplyCount > 0 && (
+                    <span className="-mx-3.5 -mb-3 mt-2 block border-t border-violet-100 px-3.5 py-2 text-[12px] font-semibold text-violet-600">
+                      View {remainingReplyCount} more {remainingReplyCount === 1 ? 'reply' : 'replies'} →
+                    </span>
+                  )}
                 </span>
-                <span className="text-[14px] font-medium text-gray-600">
-                  {conversationLabel}
-                </span>
-              </span>
+              ) : (
+                <span className="text-[14px] font-medium text-gray-600">{conversationLabel}</span>
+              )}
             </button>
           )}
 
@@ -8350,7 +8365,7 @@ export default function Feed() {
       if (ids.length > 0) {
         const { data: users } = await supabase
           .from('users')
-          .select('id, display_name, user_name, first_name, last_name')
+          .select('id, display_name, user_name, first_name, last_name, avatar')
           .in('id', ids);
         if (users && users.length > 0) {
           const userMap = new Map(users.map((u: any) => [u.id, u]));
@@ -8361,6 +8376,7 @@ export default function Feed() {
                 ? `${dbUser.first_name} ${dbUser.last_name}`.trim()
                 : dbUser.first_name || null;
               c.user.displayName = fullName || dbUser.display_name || dbUser.user_name || c.user.username;
+              c.user.avatar = dbUser.avatar || '';
             }
             applyNames(c.replies || []);
           });
