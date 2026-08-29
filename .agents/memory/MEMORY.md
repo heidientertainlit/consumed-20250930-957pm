@@ -41,3 +41,4 @@
 - [Tribe fit calibration](tribe-fit-calibration.md) — preserve strict evidence scoring, but present qualifying Tribe recommendations in an intuitive 70–100% range.
 - [My Media history semantics](my-media-history-semantics.md) — tracked dates are not completion dates; keep tracked/completed separate and never invent hours or past progress.
 - [Fixed media lists](fixed-media-lists.md) — only All + five system lists are supported; legacy custom lists remain read-only and cannot be new destinations.
+- [Taste group presentation](taste-group-presentation.md) — present Tribes as unnamed groups connected by recognizable media, simple types, people, and match strength.

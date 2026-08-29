@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Heart, Leaf, Loader2, LockKeyhole, Moon, Sparkles, Star, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, LockKeyhole, Share2, Sparkles, Star, Users } from "lucide-react";
 import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
 import FriendsManager from "@/components/friends-manager";
@@ -409,58 +409,46 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
   const tribes = query.data?.tribes || [];
   return <section id="tribe-list" className="mt-7 scroll-mt-4">
     <div className="mb-5">
-      <p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Tribes</p>
-      <h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Where your DNA fits.</h2>
-      <p className="mt-1 text-sm leading-5 text-[#746b78]">Find communities built around the things you love together.</p>
+      <p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Taste groups</p>
+      <h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">People who like what you like.</h2>
+      <p className="mt-1 text-sm leading-5 text-[#746b78]">Explore groups connected by the media they have in common.</p>
     </div>
-    {!isReady && <div className="mb-5 rounded-[18px] border border-[#ded7e9] bg-[#f4f0f5] p-4"><p className="text-sm font-bold text-[#342642]">Explore every Tribe now</p><p className="mt-1 text-sm leading-5 text-[#746b7b]">Track {query.data?.readiness?.items_needed || 10} more {(query.data?.readiness?.items_needed || 10) === 1 ? "item" : "items"} to reveal your personal fit and join the communities that match your taste.</p><Link href="/add" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#513879]">Track more <ArrowUpRight size={15} /></Link></div>}
-    {!tribes.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">There are no Tribes to recommend right now.</div> :
+    {!isReady && <div className="mb-5 rounded-[18px] border border-[#ded7e9] bg-[#f4f0f5] p-4"><p className="text-sm font-bold text-[#342642]">Explore taste groups now</p><p className="mt-1 text-sm leading-5 text-[#746b7b]">Track {query.data?.readiness?.items_needed || 10} more {(query.data?.readiness?.items_needed || 10) === 1 ? "item" : "items"} to reveal which groups share the most with you.</p><Link href="/add" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#513879]">Track more <ArrowUpRight size={15} /></Link></div>}
+    {!tribes.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">There are no taste groups to recommend right now.</div> :
       <div className="grid gap-4">{tribes.map((tribe, index) => {
-        const icons = [Sparkles, Heart, Moon, Leaf];
-        const TribeIcon = icons[index % icons.length];
         const accent = tribe.accent_color || ["#ee9a45", "#e43b8d", "#8661c5", "#7da649"][index % 4];
-        const cleanPillLabel = (value: unknown) =>
-          String(value || "").replace(/[\u200B-\u200D\u2060\uFEFF]/g, "").trim();
-        const pillLabels = tribe.evidence
-          .map((item) => cleanPillLabel(item.label || item.value || item.group))
-          .filter((label) => /[\p{L}\p{N}]/u.test(label))
-          .slice(0, 2);
+        const media = tribe.media.filter((item) => item.title?.trim()).slice(0, 4);
+        const typeLabels = Array.from(new Set(media.map((item) => item.media_type?.trim()).filter(Boolean)))
+          .slice(0, 3)
+          .map((type) => type === "tv" ? "TV" : `${type![0].toUpperCase()}${type!.slice(1)}`);
         return <button
           key={tribe.slug}
           onClick={() => onSelect(tribe.slug)}
           className="group relative overflow-hidden rounded-[20px] border border-[#d8cce1] bg-[#fffdfb] px-4 py-5 text-left shadow-[0_7px_18px_rgba(65,49,55,.065)] transition duration-300 hover:-translate-y-0.5 hover:border-[#b99fcd] hover:shadow-[0_12px_28px_rgba(91,49,133,.15)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#755294] focus-visible:ring-offset-2 sm:px-6"
         >
-          <div className="flex items-start gap-3.5">
-            <span
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border shadow-sm"
-              style={{ color: accent, backgroundColor: `${accent}1f`, borderColor: `${accent}38`, filter: "saturate(1.15)" }}
-            >
-              <TribeIcon size={23} strokeWidth={2} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#281e34] sm:text-[27px]">{tribe.name}</h3>
-                {isReady && <span className="shrink-0 rounded-full border border-[#cdb8dc] bg-[#eee3f6] px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[.04em] text-[#633683]">{tribe.fit_score}% match</span>}
-              </div>
-              <p className="mt-2 max-w-xl line-clamp-2 text-sm leading-5 text-[#716971]">{tribe.identity_statement || tribe.description}</p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#7a6982]">Taste group</p>
+              <h3 className="mt-1 font-serif text-[24px] font-medium leading-[1.08] tracking-[-.035em] text-[#281e34] sm:text-[27px]">People with taste like yours</h3>
             </div>
+            {isReady && <span className="shrink-0 rounded-full border border-[#cdb8dc] bg-[#eee3f6] px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[.04em] text-[#633683]">{tribe.fit_score}% match</span>}
           </div>
-          <div className="mt-5 flex items-center gap-2 overflow-hidden">
-            {pillLabels.map((label, pillIndex) => <span
-              key={`${label}-${pillIndex}`}
-              className={`min-w-0 shrink rounded-full bg-[#eee8f4] px-3 py-2 text-xs font-semibold text-[#503d63] ${pillIndex > 0 ? "hidden min-[390px]:inline-flex" : "inline-flex"}`}
-            >
-              <span className="truncate">{label}</span>
-            </span>)}
-            <span className="ml-auto grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#603782] text-white shadow-[0_4px_12px_rgba(96,55,130,.24)] transition group-hover:translate-x-0.5 group-hover:bg-[#4f2c70]">
-              <ArrowRight size={19} />
-            </span>
+          {media.length > 0 && <div className="mt-4 flex gap-2">
+            {media.map((item, mediaIndex) => <div key={`${item.id}-${mediaIndex}`} className="relative aspect-[4/5] w-[58px] shrink-0 overflow-hidden rounded-lg bg-[#ddd6e0] shadow-sm">
+              {item.image_url
+                ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" />
+                : <div className="flex h-full items-end p-2 text-[9px] font-bold leading-tight text-white" style={{ background: `linear-gradient(145deg, ${accent}, ${tribe.accent_color_2 || "#4d6e9b"})` }}>{item.title}</div>}
+            </div>)}
+          </div>}
+          <div className="mt-4 flex items-center gap-2">
+            {typeLabels.map((label) => <span key={label} className="rounded-full bg-[#eee8f4] px-2.5 py-1.5 text-[11px] font-semibold text-[#5b466d]">{label}</span>)}
+            <span className="ml-auto grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#603782] text-white shadow-[0_4px_12px_rgba(96,55,130,.24)] transition group-hover:translate-x-0.5 group-hover:bg-[#4f2c70]"><ArrowRight size={19} /></span>
           </div>
           {tribe.members.length > 0 && <div className="mt-4 flex items-center gap-3 border-t border-[#e6e0df] pt-4">
             {tribe.members.some((person) => Boolean(person.profile_image_url || person.avatar_url || person.avatar))
               ? <AvatarStack people={tribe.members} />
               : <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#eee7f5] text-[#68458a]"><Users size={14} /></span>}
-            <span className="text-xs font-semibold text-[#746b78]">{tribe.member_count} {tribe.member_count === 1 ? "person" : "people"} in this Tribe</span>
+            <span className="text-xs font-semibold text-[#746b78]">{tribe.member_count} {tribe.member_count === 1 ? "person" : "people"} with related taste</span>
           </div>}
         </button>;
       })}</div>}
@@ -469,13 +457,25 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
 
 function TribeDetail({ tribe, onBack, membership, personalized }: { tribe: Tribe; onBack: () => void; membership: ReturnType<typeof useMutation<TribesResponse, Error, { slug: string; joined: boolean }>>; personalized: boolean }) {
   const { toast } = useToast();
-  const share = async () => { const url = `${APP_BASE}/people?tab=tribes&tribe=${encodeURIComponent(tribe.slug)}`; try { if (typeof navigator.share === "function") await navigator.share({ title: tribe.name, text: `Take a look at the ${tribe.name} Tribe on Consumed.`, url }); else await navigator.clipboard.writeText(url); toast({ title: typeof navigator.share === "function" ? "Share sheet opened" : "Tribe link copied" }); } catch { /* intentional cancellation */ } };
-  const labels = tribe.evidence.slice(0, 4).map((item) => item.label || item.value || item.group).filter(Boolean);
-  return <section className="mt-7"><button onClick={onBack} className="mb-5 inline-flex items-center gap-1 text-sm font-bold text-[#543d72]"><ArrowLeft size={16} /> All Tribes</button>
-    <div className="overflow-hidden rounded-[22px] border border-[#ded4e1] bg-[#ece6ec]"><div className="p-6 sm:p-8" style={{ background: `linear-gradient(125deg, ${tribe.accent_color || "#745386"}22, ${tribe.accent_color_2 || "#4d6e9b"}35)` }}><div className="flex items-start justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#65457b]">{tribe.is_member ? "Your Tribe" : personalized ? "Recommended community" : "Explore this Tribe"}</p><h2 className="mt-2 font-serif text-4xl tracking-[-.05em]">{tribe.name}</h2><p className="mt-3 max-w-xl text-sm leading-6 text-[#5f5665]">{tribe.identity_statement || tribe.description}</p></div>{personalized && <span className="rounded-full bg-[#fbf9fa]/70 px-3 py-1.5 text-xs font-bold text-[#4e356a]">{tribe.fit_score}% fit</span>}</div>
-      <div className="mt-6 flex flex-wrap gap-2">{personalized && <button disabled={membership.isPending} onClick={() => membership.mutate({ slug: tribe.slug, joined: tribe.is_member })} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${tribe.is_member ? "border border-[#bdb0c4] bg-[#fbf9fa] text-[#4e3d58]" : "bg-[#4f3373] text-[#faf8fb] hover:bg-[#432965]"}`}>{tribe.is_member && <Check size={15} />}{membership.isPending ? "Updating…" : tribe.is_member ? "Leave Tribe" : "Join Tribe"}</button>}<button onClick={share} className="inline-flex items-center gap-2 rounded-full border border-[#bdb0c4] bg-[#fbf9fa]/80 px-4 py-2 text-sm font-bold text-[#503c61]"><Share2 size={15} /> Share</button></div></div>
-      <div className="grid gap-6 bg-[#fbf9fa] p-6 sm:grid-cols-2 sm:p-8"><div><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">{personalized ? "Why you fit" : "What defines this Tribe"}</h3>{personalized && labels.length ? <ul className="mt-3 space-y-2">{labels.map((label) => <li key={label} className="flex gap-2 text-sm text-[#605766]"><Dna size={15} className="mt-0.5 shrink-0 text-[#66447c]" />{label}</li>)}</ul> : <p className="mt-3 text-sm text-[#746b7b]">{personalized ? "Your tracked taste connects with the signals that define this Tribe." : "Track 10 titles to reveal how your taste connects with this community."}</p>}</div><div><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">Member preview</h3>{tribe.members.length ? <div className="mt-3 flex items-center gap-3"><AvatarStack people={tribe.members} /><span className="text-sm text-[#6f6574]">{tribe.member_count} {tribe.member_count === 1 ? "member" : "members"}</span></div> : <p className="mt-3 text-sm text-[#746b7b]">Membership is taking shape.</p>}</div></div>
-      {tribe.media.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#f6f3f5] p-6 sm:p-8"><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">In the mix</h3><div className="mt-4 flex gap-3 overflow-x-auto pb-1">{tribe.media.slice(0, 6).map((item, index) => <article key={item.id} className="w-28 shrink-0"><div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-[#ddd6e0]">{item.image_url ? <img src={item.image_url} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full flex-col justify-between p-3 text-white" style={{ background: `linear-gradient(145deg, ${tribe.accent_color || "#745386"}, ${tribe.accent_color_2 || "#4d6e9b"})` }}><span className="text-[9px] font-bold uppercase tracking-[.14em] text-white/65">{item.media_type}</span><span className="font-serif text-xl text-white/90">0{index + 1}</span></div>}</div><p className="mt-2 line-clamp-2 text-xs font-bold">{item.title}</p>{item.creator && <p className="truncate text-[11px] text-[#7b7180]">{item.creator}</p>}</article>)}</div></div>}
+  const mediaTypes = Array.from(new Set(tribe.media.map((item) => item.media_type?.trim()).filter(Boolean)))
+    .slice(0, 4)
+    .map((type) => type === "tv" ? "TV" : `${type![0].toUpperCase()}${type!.slice(1)}`);
+  const share = async () => {
+    const url = `${APP_BASE}/people?tab=tribes&tribe=${encodeURIComponent(tribe.slug)}`;
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: "People with taste like yours", text: "Take a look at this taste group on Consumed.", url });
+      } else {
+        await navigator.clipboard.writeText(url);
+      }
+      toast({ title: typeof navigator.share === "function" ? "Share sheet opened" : "Group link copied" });
+    } catch { /* intentional cancellation */ }
+  };
+  return <section className="mt-7"><button onClick={onBack} className="mb-5 inline-flex items-center gap-1 text-sm font-bold text-[#543d72]"><ArrowLeft size={16} /> All taste groups</button>
+    <div className="overflow-hidden rounded-[22px] border border-[#ded4e1] bg-[#ece6ec]"><div className="p-6 sm:p-8" style={{ background: `linear-gradient(125deg, ${tribe.accent_color || "#745386"}22, ${tribe.accent_color_2 || "#4d6e9b"}35)` }}><div className="flex items-start justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#65457b]">{tribe.is_member ? "Your taste group" : personalized ? "Recommended taste group" : "Explore this group"}</p><h2 className="mt-2 font-serif text-4xl tracking-[-.05em]">People with taste like yours</h2><p className="mt-3 max-w-xl text-sm leading-6 text-[#5f5665]">See the media and people that connect this group.</p></div>{personalized && <span className="rounded-full bg-[#fbf9fa]/70 px-3 py-1.5 text-xs font-bold text-[#4e356a]">{tribe.fit_score}% match</span>}</div>
+      <div className="mt-6 flex flex-wrap gap-2">{personalized && <button disabled={membership.isPending} onClick={() => membership.mutate({ slug: tribe.slug, joined: tribe.is_member })} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${tribe.is_member ? "border border-[#bdb0c4] bg-[#fbf9fa] text-[#4e3d58]" : "bg-[#4f3373] text-[#faf8fb] hover:bg-[#432965]"}`}>{tribe.is_member && <Check size={15} />}{membership.isPending ? "Updating…" : tribe.is_member ? "Leave group" : "Join group"}</button>}<button onClick={share} className="inline-flex items-center gap-2 rounded-full border border-[#bdb0c4] bg-[#fbf9fa]/80 px-4 py-2 text-sm font-bold text-[#503c61]"><Share2 size={15} /> Share</button></div></div>
+      <div className="grid gap-6 bg-[#fbf9fa] p-6 sm:grid-cols-2 sm:p-8"><div><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">What they’re into</h3>{mediaTypes.length ? <div className="mt-3 flex flex-wrap gap-2">{mediaTypes.map((label) => <span key={label} className="rounded-full bg-[#eee8f4] px-3 py-2 text-xs font-semibold text-[#5b466d]">{label}</span>)}</div> : <p className="mt-3 text-sm text-[#746b7b]">Add more media to reveal the types this group shares.</p>}</div><div><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">People in this group</h3>{tribe.members.length ? <div className="mt-3 flex items-center gap-3"><AvatarStack people={tribe.members} /><span className="text-sm text-[#6f6574]">{tribe.member_count} {tribe.member_count === 1 ? "person" : "people"}</span></div> : <p className="mt-3 text-sm text-[#746b7b]">This group is taking shape.</p>}</div></div>
+      {tribe.media.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#f6f3f5] p-6 sm:p-8"><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">Media that connects this group</h3><div className="mt-4 flex gap-3 overflow-x-auto pb-1">{tribe.media.slice(0, 6).map((item, index) => <article key={item.id} className="w-28 shrink-0"><div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-[#ddd6e0]">{item.image_url ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full flex-col justify-between p-3 text-white" style={{ background: `linear-gradient(145deg, ${tribe.accent_color || "#745386"}, ${tribe.accent_color_2 || "#4d6e9b"})` }}><span className="text-[9px] font-bold uppercase tracking-[.14em] text-white/65">{item.media_type}</span><span className="font-serif text-xl text-white/90">0{index + 1}</span></div>}</div><p className="mt-2 line-clamp-2 text-xs font-bold">{item.title}</p>{item.creator && <p className="truncate text-[11px] text-[#7b7180]">{item.creator}</p>}</article>)}</div></div>}
     </div>
   </section>;
 }
