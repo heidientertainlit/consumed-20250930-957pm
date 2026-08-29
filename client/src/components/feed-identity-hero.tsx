@@ -327,7 +327,8 @@ export function HeroCTAButtons() {
         </button>
         <button
           onClick={() => setComposerOpen(true)}
-          className="flex min-h-10 items-center justify-center gap-2 rounded-2xl border border-violet-300 bg-white/70 px-4 py-2 text-sm font-semibold text-violet-700 shadow-sm transition-transform active:scale-95"
+          className="flex min-h-10 items-center justify-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition-transform active:scale-95"
+          style={{ background: "linear-gradient(135deg, #c026d3 0%, #db2777 52%, #f97316 100%)" }}
         >
           <MessageSquare size={15} strokeWidth={2} />
           Share a take
