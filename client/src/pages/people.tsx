@@ -565,7 +565,7 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
 }
 
 function Friends({ query, more, onSelectPerson, onInvite, userId }: { query: ReturnType<typeof useQuery<Affinity>>; more: ReturnType<typeof useMutation<Affinity, Error, void>>; onSelectPerson: (person: Person) => void; onInvite: () => void; userId?: string }) {
-  if (query.isLoading) return <section className="mt-7"><FriendsHeader /><div className="space-y-3">{[1, 2].map((item) => <div key={item} className="h-[252px] animate-pulse rounded-[22px] bg-[#e6e0e7]" />)}<div className="h-28 animate-pulse rounded-xl bg-[#e6e0e7]" /></div></section>;
+  if (query.isLoading) return <section className="mt-7"><FriendsHeader />{userId && <div className="mb-10"><FriendsManager userId={userId} /></div>}<div className="space-y-3"><div className="h-5 w-36 animate-pulse rounded bg-[#e6e0e7]" />{[1, 2].map((item) => <div key={item} className="h-[252px] animate-pulse rounded-[22px] bg-[#e6e0e7]" />)}</div></section>;
   const data = query.data;
   if (query.isError) return <section className="mt-7"><FriendsHeader /><ErrorState onRetry={() => query.refetch()} />{userId && <div className="mt-8"><FriendsManager userId={userId} /></div>}</section>;
   if (!data?.ready) return <section className="mt-7"><FriendsHeader /><Readiness readiness={data?.readiness} onInvite={onInvite} />{userId && <div className="mt-9 border-t border-[#e3dce5] pt-7"><FriendsManager userId={userId} /></div>}</section>;
