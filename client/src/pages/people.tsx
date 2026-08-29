@@ -81,6 +81,11 @@ const groupConnectionKind = (tribe: Tribe, allowOverall = true) => {
   const dominantType = rankedTypes[0]?.[0] || "";
   const dominantShare = total ? (rankedTypes[0]?.[1] || 0) / total : 0;
   if (allowOverall && rankedTypes.length >= 2 && dominantShare <= 0.6) return "overall";
+  const distinctiveFormat = ["podcasts", "youtube"].find((format) =>
+    rankedTypes.some(([type]) => type === format)
+    || tribe.evidence.some((item) => item.type === "media_type" && normalizedGroupMediaType(item.value) === format)
+  );
+  if (distinctiveFormat) return distinctiveFormat;
   const strongestEvidence = tribe.evidence.slice(0, 3);
   const genreEvidenceCount = strongestEvidence.filter((item) =>
     `${item.group || ""} ${item.type || ""}`.toLowerCase().includes("genre")
