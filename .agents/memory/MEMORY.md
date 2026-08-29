@@ -43,3 +43,4 @@
 - [Fixed media lists](fixed-media-lists.md) — only All + five system lists are supported; legacy custom lists remain read-only and cannot be new destinations.
 - [Taste group presentation](taste-group-presentation.md) — present Tribes as unnamed groups connected by recognizable media, simple types, people, and match strength.
 - [Friends and matches](friends-matches.md) — individual relationships share one Friends destination; preserve premium match discovery while keeping accepted friends and management distinct.
+- [Preview webview registration](preview-webview-registration.md) — if port 5000 and proxy are healthy but Preview is unreachable, explicitly re-register the workflow as a port-5000 webview.
