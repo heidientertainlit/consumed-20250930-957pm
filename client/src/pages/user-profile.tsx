@@ -3219,6 +3219,18 @@ export default function UserProfile() {
     ? Math.round((fiveStarDnaItems.filter((item: any) => item.media_type === dominantRecentType).length / fiveStarDnaItems.length) * 100)
     : null;
   const recentDnaTypeVariety = Object.values(recentDnaTypeCounts).filter((count) => Number(count) > 0).length;
+  const favoriteDnaItems = (userLists.find((list: any) => list.title === 'Favorites')?.items || [])
+    .slice()
+    .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+  const lovedLatelyKeys = new Set<string>();
+  const lovedLatelyItems = [...favoriteDnaItems, ...allDnaItems.filter((item: any) => Number(item.user_rating) >= 4.5)]
+    .filter((item: any) => {
+      const key = item.media_id || `${item.external_source || ''}:${item.external_id || ''}:${item.media_type}:${item.title}`;
+      if (lovedLatelyKeys.has(key)) return false;
+      lovedLatelyKeys.add(key);
+      return true;
+    })
+    .slice(0, 3);
 
   // Show loading screen while route is resolving to prevent flash of wrong profile
   if (isRouteResolving) {
@@ -3793,7 +3805,7 @@ export default function UserProfile() {
                       </div>
                     </div>
                   </div>
-                {/* Mostly Into + Recently shaping your DNA */}
+                {/* Mostly Into + Loved Lately */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
                   <div className="grid grid-cols-2 gap-4">
                     {/* Mostly Into */}
@@ -3826,12 +3838,12 @@ export default function UserProfile() {
                         <p className="text-xs text-gray-400">Not enough data yet</p>
                       )}
                     </div>
-                    {/* Recently shaping your DNA */}
+                    {/* Loved Lately */}
                     <div>
-                      <h3 className="mb-3 text-[10px] font-medium uppercase tracking-[0.16em] text-[#685873]">Recently shaping your DNA</h3>
+                      <h3 className="mb-3 text-[10px] font-medium uppercase tracking-[0.16em] text-[#685873]">Loved Lately</h3>
                       {(() => {
-                        const items = currentlyList?.items?.slice(0, 3) || [];
-                        if (items.length === 0) return <p className="text-xs text-gray-400">Nothing in progress</p>;
+                        const items = lovedLatelyItems;
+                        if (items.length === 0) return <p className="text-xs text-gray-400">No recent favorites yet</p>;
                         return (
                           <div className="space-y-2.5">
                             {items.map((item: any) => (
@@ -4235,7 +4247,7 @@ export default function UserProfile() {
                       </div>
                     </div>
                   </div>
-                {/* Mostly Into + Recently shaping their DNA */}
+                {/* Mostly Into + Loved Lately */}
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -4268,10 +4280,10 @@ export default function UserProfile() {
                       )}
                     </div>
                     <div>
-                      <h3 className="mb-3 text-[10px] font-medium uppercase tracking-[0.16em] text-[#685873]">Recently shaping their DNA</h3>
+                      <h3 className="mb-3 text-[10px] font-medium uppercase tracking-[0.16em] text-[#685873]">Loved Lately</h3>
                       {(() => {
-                        const items = currentlyList?.items?.slice(0, 3) || [];
-                        if (items.length === 0) return <p className="text-xs text-gray-400">Nothing in progress</p>;
+                        const items = lovedLatelyItems;
+                        if (items.length === 0) return <p className="text-xs text-gray-400">No recent favorites yet</p>;
                         return (
                           <div className="space-y-2.5">
                             {items.map((item: any) => (
