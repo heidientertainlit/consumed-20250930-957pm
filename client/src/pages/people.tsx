@@ -214,7 +214,7 @@ export default function PeoplePage() {
     queryFn: () => functionRequest<Affinity>("people-affinity", session!.access_token, { action: "load", batch_size: 25 }), staleTime: 60_000,
   });
   const tribesQuery = useQuery({
-    queryKey: ["people-tribes-v2", user?.id], enabled: !!session?.access_token && tab === "tribes",
+    queryKey: ["people-tribes-v2", user?.id], enabled: !!session?.access_token,
     queryFn: () => functionRequest<TribesResponse>("people-tribes", session!.access_token, { action: "load" }), staleTime: 60_000,
   });
   const moreMatches = useMutation({
@@ -264,10 +264,6 @@ export default function PeoplePage() {
   const selectedTribe = tribesQuery.data?.tribes.find((tribe) => tribe.slug === selectedSlug);
   const tabs: Array<{ id: Tab; label: string }> = [{ id: "matches", label: "Matches" }, { id: "friends", label: "Friends" }, { id: "tribes", label: "Tribes" }, { id: "creators", label: "Artists & Creators" }];
   const headerTribes = tribesQuery.data?.tribes || [];
-  const tribesReady = Boolean(tribesQuery.data?.readiness?.ready);
-  const closestTribe = tribesReady
-    ? [...headerTribes].sort((a, b) => b.fit_score - a.fit_score)[0]
-    : undefined;
   const headerMembers = headerTribes
     .flatMap((tribe) => tribe.members)
     .filter((person, index, people) =>
@@ -279,35 +275,23 @@ export default function PeoplePage() {
     <Navigation roomyTopBar />
     <header className="-mt-px bg-[linear-gradient(135deg,#0b0713_0%,#1b0a31_50%,#35125b_100%)] text-white shadow-[0_10px_28px_rgba(41,16,71,.18)]">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
-        {tab !== "tribes" && <div className="flex items-center justify-between gap-3 pt-5">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/15 bg-white/10 text-violet-200"><Users size={15} /></span>
-            <p className="text-xs font-semibold leading-4 text-white/70 sm:text-sm">
-              Find people and communities shaped by what you love.
-            </p>
+        <div className="relative overflow-hidden pb-7 pt-6 sm:pb-9 sm:pt-8">
+          <div className="pointer-events-none absolute -right-8 top-5 h-32 w-32 rounded-full border border-violet-400/40 shadow-[0_0_35px_rgba(168,85,247,.28)] sm:right-8 sm:h-40 sm:w-40">
+            <div className="grid h-full w-full place-items-center">
+              <Users size={42} strokeWidth={1.25} className="text-violet-300 drop-shadow-[0_0_12px_rgba(192,132,252,.75)]" />
+            </div>
           </div>
-          <button onClick={copyInvite} className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-violet-300/25 bg-violet-500/25 px-3.5 text-xs font-bold text-white shadow-sm transition hover:bg-violet-500/35">
-            <Share2 size={14} /> Invite
-          </button>
-        </div>}
-        <nav className={`flex overflow-x-auto border-b border-white/15 ${tab === "tribes" ? "pt-2" : "mt-4"}`} aria-label="People sections">{tabs.map((item) => <button key={item.id} onClick={() => setTab(item.id)} className={`relative shrink-0 px-4 py-3 text-[13px] font-bold transition-colors first:pl-0 ${tab === item.id ? "text-white after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-violet-400 first:after:left-0" : "text-white/55 hover:text-white/85"}`}>{item.label}</button>)}</nav>
-        {tab === "tribes" && !selectedTribe && (
-          <div className="relative overflow-hidden py-7 sm:py-9">
-            <div className="pointer-events-none absolute -right-8 top-4 h-32 w-32 rounded-full border border-violet-400/40 shadow-[0_0_35px_rgba(168,85,247,.28)] sm:right-8 sm:h-40 sm:w-40">
-              <div className="grid h-full w-full place-items-center">
-                <Dna size={44} strokeWidth={1.25} className="text-violet-300 drop-shadow-[0_0_12px_rgba(192,132,252,.75)]" />
-              </div>
-            </div>
-            <div className="relative max-w-[72%] sm:max-w-xl">
-              <p className="text-[10px] font-bold uppercase tracking-[.2em] text-violet-300">Tribes</p>
-              <h1 className="mt-2 font-serif text-[32px] font-medium leading-[.98] tracking-[-.045em] text-white sm:text-[42px]">
-                Where your DNA<br />finds its people.
-              </h1>
-              <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">The stories you love can lead you to people who feel the same way.</p>
-            </div>
-            <div className="relative mt-5 flex min-h-9 items-center gap-3">
+          <div className="relative max-w-[72%] sm:max-w-xl">
+            <p className="text-[10px] font-bold uppercase tracking-[.2em] text-violet-300">People</p>
+            <h1 className="mt-2 font-serif text-[32px] font-medium leading-[.98] tracking-[-.045em] text-white sm:text-[42px]">
+              Find the people<br />who get it.
+            </h1>
+            <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Connect through the stories, sounds, and worlds you can’t stop thinking about.</p>
+          </div>
+          <div className="relative mt-5 flex items-center justify-between gap-4">
+            <div className="flex min-h-9 min-w-0 items-center gap-3">
               {headerMembers.length > 0
-                ? <div className="flex items-center">{headerMembers.map((person, index) => {
+                ? <div className="flex shrink-0 items-center">{headerMembers.map((person, index) => {
                     const src = person.profile_image_url || person.avatar_url || person.avatar;
                     return <img
                       key={person.id}
@@ -317,31 +301,18 @@ export default function PeoplePage() {
                       onError={(event) => { event.currentTarget.style.display = "none"; }}
                     />;
                   })}</div>
-                : <span className="grid h-9 w-9 place-items-center rounded-full border border-violet-300/25 bg-white/10 text-violet-200"><Users size={16} /></span>}
-              <p className="text-xs leading-4 text-white/65">
-                {tribesQuery.isLoading
-                  ? "Finding communities for you…"
-                  : <><strong className="block font-bold text-white">{headerTribes.length} {headerTribes.length === 1 ? "Tribe" : "Tribes"} {tribesReady ? "found" : "to explore"}</strong>{closestTribe ? `${closestTribe.fit_score}% fit with ${closestTribe.name}` : "Track 10 items to reveal your closest fit"}</>}
+                : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-violet-300/25 bg-white/10 text-violet-200"><Users size={16} /></span>}
+              <p className="min-w-0 text-xs leading-4 text-white/65">
+                <strong className="block truncate font-bold text-white">{headerTribes.length ? `${headerTribes.length} communities to explore` : "Your people are here"}</strong>
+                Matches, friends, Tribes, and creators
               </p>
             </div>
-            <div className="relative mt-5 grid max-w-md grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => closestTribe ? setTribe(closestTribe.slug) : setLocation("/add")}
-                className="rounded-full bg-[linear-gradient(135deg,#7c3aed,#a855f7)] px-4 py-3 text-xs font-bold text-white shadow-[0_6px_18px_rgba(126,34,206,.32)] transition active:scale-[.98]"
-              >
-                {closestTribe ? "See My Closest Tribe" : "Find My Fit"}
-              </button>
-              <button
-                type="button"
-                onClick={() => document.getElementById("tribe-list")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                className="rounded-full border border-white/20 bg-white/5 px-4 py-3 text-xs font-bold text-white transition hover:bg-white/10 active:scale-[.98]"
-              >
-                Explore All
-              </button>
-            </div>
+            <button onClick={copyInvite} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-[linear-gradient(135deg,#7c3aed,#a855f7)] px-4 text-xs font-bold text-white shadow-[0_6px_18px_rgba(126,34,206,.28)] transition active:scale-[.98]">
+              <Share2 size={14} /> Invite
+            </button>
           </div>
-        )}
+        </div>
+        <nav className="flex overflow-x-auto border-t border-white/15" aria-label="People sections">{tabs.map((item) => <button key={item.id} onClick={() => setTab(item.id)} className={`relative shrink-0 px-4 py-3.5 text-[13px] font-bold transition-colors first:pl-0 ${tab === item.id ? "text-white after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-violet-400 first:after:left-0" : "text-white/55 hover:text-white/85"}`}>{item.label}</button>)}</nav>
       </div>
     </header>
     <main className="mx-auto max-w-5xl px-4 sm:px-6">
@@ -439,7 +410,12 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
   const isReady = Boolean(query.data?.readiness?.ready);
   if (selected) return <TribeDetail tribe={selected} onBack={() => onSelect()} membership={membership} personalized={isReady} />;
   const tribes = query.data?.tribes || [];
-  return <section id="tribe-list" className="mt-5 scroll-mt-4">
+  return <section id="tribe-list" className="mt-7 scroll-mt-4">
+    <div className="mb-5">
+      <p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Tribes</p>
+      <h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Where your DNA fits.</h2>
+      <p className="mt-1 text-sm leading-5 text-[#746b78]">Find communities built around the things you love together.</p>
+    </div>
     {!isReady && <div className="mb-5 rounded-[18px] border border-[#ded7e9] bg-[#f4f0f5] p-4"><p className="text-sm font-bold text-[#342642]">Explore every Tribe now</p><p className="mt-1 text-sm leading-5 text-[#746b7b]">Track {query.data?.readiness?.items_needed || 10} more {(query.data?.readiness?.items_needed || 10) === 1 ? "item" : "items"} to reveal your personal fit and join the communities that match your taste.</p><Link href="/add" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#513879]">Track more <ArrowUpRight size={15} /></Link></div>}
     {!tribes.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">There are no Tribes to recommend right now.</div> :
       <div className="grid gap-4">{tribes.map((tribe, index) => {
