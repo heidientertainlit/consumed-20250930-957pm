@@ -2971,6 +2971,11 @@ export default function UserProfile() {
   const currentlyConsuming = currentlyList?.items || [];
 
   const isInSelectedMonth = (date: Date, value: string) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}` === value;
+  const getMediaHistoryDate = (item: any) => {
+    if (!item.completed_at) return null;
+    const completedDate = new Date(item.completed_at);
+    return Number.isNaN(completedDate.getTime()) ? null : completedDate;
+  };
 
   // Filter media history based on the same canonical records used for the summary.
   const getFilteredMediaHistory = () => {
@@ -2990,16 +2995,19 @@ export default function UserProfile() {
         if (item.media_type?.toLowerCase() !== mediaHistoryType) return false;
       }
 
-      const itemDate = new Date(item.created_at);
-      const now = new Date();
-      if (mediaHistoryDate === "this-month" && !isInSelectedMonth(itemDate, `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`)) return false;
-      if (mediaHistoryDate === "last-month") {
-        const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        if (!isInSelectedMonth(itemDate, `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, "0")}`)) return false;
+      if (mediaHistoryDate !== "anytime") {
+        const itemDate = getMediaHistoryDate(item);
+        if (!itemDate) return false;
+        const now = new Date();
+        if (mediaHistoryDate === "this-month" && !isInSelectedMonth(itemDate, `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`)) return false;
+        if (mediaHistoryDate === "last-month") {
+          const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          if (!isInSelectedMonth(itemDate, `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, "0")}`)) return false;
+        }
+        if (mediaHistoryDate === "select-month" && !isInSelectedMonth(itemDate, mediaHistorySelectedMonth)) return false;
+        if (mediaHistoryDate === "this-year" && itemDate.getFullYear() !== now.getFullYear()) return false;
+        if (mediaHistoryDate === "select-year" && itemDate.getFullYear().toString() !== mediaHistorySelectedYear) return false;
       }
-      if (mediaHistoryDate === "select-month" && !isInSelectedMonth(itemDate, mediaHistorySelectedMonth)) return false;
-      if (mediaHistoryDate === "this-year" && itemDate.getFullYear() !== now.getFullYear()) return false;
-      if (mediaHistoryDate === "select-year" && itemDate.getFullYear().toString() !== mediaHistorySelectedYear) return false;
 
       // Rating filter
       if (mediaHistoryRating !== 'all') {
