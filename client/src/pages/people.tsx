@@ -459,7 +459,7 @@ export default function PeoplePage() {
 }
 
 function Friends({ query, more, onSelectPerson, onInvite, userId }: { query: ReturnType<typeof useQuery<Affinity>>; more: ReturnType<typeof useMutation<Affinity, Error, void>>; onSelectPerson: (person: Person) => void; onInvite: () => void; userId?: string }) {
-  if (query.isLoading) return <section className="mt-7"><div className="mb-5"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Friends</p><h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Your people.</h2><p className="mt-1 text-sm leading-5 text-[#746b78]">Find new connections through your taste and keep up with the friends already in your circle.</p></div><div className="space-y-3">{[1, 2].map((item) => <div key={item} className="h-[252px] animate-pulse rounded-[22px] bg-[#e6e0e7]" />)}<div className="h-28 animate-pulse rounded-xl bg-[#e6e0e7]" /></div></section>;
+  if (query.isLoading) return <section className="mt-7"><FriendsHeader /><div className="space-y-3">{[1, 2].map((item) => <div key={item} className="h-[252px] animate-pulse rounded-[22px] bg-[#e6e0e7]" />)}<div className="h-28 animate-pulse rounded-xl bg-[#e6e0e7]" /></div></section>;
   const data = query.data;
   if (query.isError) return <section className="mt-7"><FriendsHeader /><ErrorState onRetry={() => query.refetch()} />{userId && <div className="mt-8"><FriendsManager userId={userId} /></div>}</section>;
   if (!data?.ready) return <section className="mt-7"><FriendsHeader /><Readiness readiness={data?.readiness} onInvite={onInvite} />{userId && <div className="mt-9 border-t border-[#e3dce5] pt-7"><FriendsManager userId={userId} /></div>}</section>;
@@ -479,7 +479,7 @@ function Friends({ query, more, onSelectPerson, onInvite, userId }: { query: Ret
   const remaining = discoverable.map((band) => ({ ...band, people: band.people.filter((person) => !featuredIds.has(person.id)) })).filter((band) => band.id !== "wildcards" && band.people.length);
   return <section className="mt-7">
     <FriendsHeader />
-    {userId && <div className="mb-10"><div className="mb-3"><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">Your circle</h3><p className="mt-0.5 text-xs text-[#7d7382]">Search, review requests, invite people, and find your closest friends.</p></div><FriendsManager userId={userId} matchScores={friendMatchScores} featuredFriend={closestFriend} /></div>}
+    {userId && <div className="mb-10"><FriendsManager userId={userId} matchScores={friendMatchScores} featuredFriend={closestFriend} /></div>}
     <div className="mb-9 border-t border-[#e2dbe5] pt-7">
       <div className="mb-3"><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#65457b]">Potential new friends with similar taste</p><p className="mt-1 max-w-xl text-xs leading-4 text-[#7d7382]">People outside your circle with the strongest Entertainment DNA overlap.</p></div>
       {featured.length > 0 ? <div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person, band }, index) => <FeaturedMatch key={person.id} person={person} band={band} index={index} onSelect={onSelectPerson} />)}</div> : <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-7 text-sm text-[#746b7b]"><p className="font-bold text-[#3b2c47]">No new taste matches yet.</p><p className="mt-1 leading-5">We’ll add compatible people here as more members build their Entertainment DNA.</p></div>}
@@ -490,7 +490,7 @@ function Friends({ query, more, onSelectPerson, onInvite, userId }: { query: Ret
 }
 
 function FriendsHeader() {
-  return <div className="mb-5"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Friends</p><h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Your people.</h2><p className="mt-1 text-sm leading-5 text-[#746b78]">Find new connections through your taste and keep up with the friends already in your circle.</p></div>;
+  return <div className="mb-5"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Friends & Matches</p><h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Your circle.</h2><p className="mt-1 text-sm leading-5 text-[#746b78]">Friends you know. People you might want to.</p></div>;
 }
 
 function FeaturedMatch({ person, band, onSelect }: { person: Person; band: { label: string; note: string }; index: number; onSelect: (person: Person) => void }) {
