@@ -1,7 +1,7 @@
 import FollowCreatorsCard from "@/components/follow-creators-card";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Star, X, Search, Loader2, ArrowLeft, ArrowRight, MessageSquarePlus, ChevronRight } from "lucide-react";
+import { Plus, Star, X, Search, Loader2, ArrowLeft, ArrowRight, MessageSquarePlus, ChevronRight, Upload } from "lucide-react";
 import MediaSearchPanel from "@/components/media-search-panel";
 import { supabase } from "@/lib/supabase";
 import { StarRater } from "@/components/star-rater";
@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
+import { QuickTrackSheet } from "@/components/quick-track-sheet";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
 import RoomComposer, { DISCUSSION_TAGS } from "@/components/room-composer";
@@ -220,6 +221,7 @@ export default function FeedComposerBar({
     return () => clearInterval(t);
   }, []);
   const [showMediaSearch, setShowMediaSearch] = useState(pageMode);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [searchSlideIn, setSearchSlideIn] = useState(pageMode);
   const [inlineSearchOpen, setInlineSearchOpen] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
@@ -995,6 +997,17 @@ export default function FeedComposerBar({
 
               {/* ── Content area (white sheet in pageMode) ── */}
               <div className={pageMode ? 'bg-white min-h-screen pt-5 pb-24' : ''}>
+              {pageMode && !searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setIsImportOpen(true)}
+                  className="mx-5 mb-6 flex w-[calc(100%-2.5rem)] items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-300 py-3.5 text-sm font-medium text-gray-500 transition-colors hover:border-purple-300 hover:text-purple-600"
+                  data-testid="add-page-import-open"
+                >
+                  <Upload size={16} />
+                  Import from Goodreads or Letterboxd
+                </button>
+              )}
 
               {/* ── Pre-search: poster grid sections ── */}
               {!searchQuery && (
@@ -1243,6 +1256,13 @@ export default function FeedComposerBar({
         media={quickAddMedia}
         elevated={pageMode}
       />
+      {isImportOpen && (
+        <QuickTrackSheet
+          isOpen
+          initialStep="import"
+          onClose={() => setIsImportOpen(false)}
+        />
+      )}
     </>
   );
 }

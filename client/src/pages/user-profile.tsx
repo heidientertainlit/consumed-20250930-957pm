@@ -3805,7 +3805,7 @@ export default function UserProfile() {
           <div className="px-4 py-4 space-y-4">
             {dnaProfileStatus === 'has_profile' && dnaProfile ? (
               <>
-                <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-[#f7f3fa] px-5 py-5 shadow-sm">
+                <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-white px-5 py-5 shadow-sm">
                     <div className="relative z-10">
                       <div className="max-w-full">
                         <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#6d5878]">Maybe right now…</p>
@@ -4240,7 +4240,7 @@ export default function UserProfile() {
 
             {dnaProfileStatus === 'has_profile' && dnaProfile && (
               <>
-                <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-[#f7f3fa] px-5 py-5 shadow-sm">
+                <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-white px-5 py-5 shadow-sm">
                     <div className="relative z-10">
                       <div className="max-w-full">
                         <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#6d5878]">Maybe right now…</p>

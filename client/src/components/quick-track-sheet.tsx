@@ -26,6 +26,7 @@ export interface TrackDetailsMedia {
 interface QuickTrackSheetProps {
   isOpen: boolean;
   onClose: () => void;
+  initialStep?: Step;
 }
 
 const TYPE_PILLS: { value: string; label: string; Icon: typeof Tv }[] = [
@@ -69,11 +70,11 @@ function typeLabel(type?: string, mediaSubtype?: string): string {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
+export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: QuickTrackSheetProps) {
   const { session } = useAuth();
   const { toast } = useToast();
 
-  const [step, setStep] = useState<Step>("search");
+  const [step, setStep] = useState<Step>(initialStep);
   // Typo rescue: when a search returns zero results we ask spell-fix for a
   // corrected title and quietly retry with it (media-search is untouched).
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
@@ -107,7 +108,7 @@ export function QuickTrackSheet({ isOpen, onClose }: QuickTrackSheetProps) {
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
 
   const reset = () => {
-    setStep("search");
+    setStep(initialStep);
     setSelectedMedia(null);
     setSelectedList("queue");
     setSeasons([]); setEpisodes([]);
