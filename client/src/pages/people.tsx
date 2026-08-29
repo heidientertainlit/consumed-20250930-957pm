@@ -327,7 +327,7 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
   const search = useSearch();
   const params = useMemo(() => new URLSearchParams(search), [search]);
   const tabParam = params.get("tab");
-  const tab: Tab = tabParam === "tribes" || tabParam === "creators" ? tabParam : "friends";
+  const tab: Tab = initialTribeId ? "tribes" : tabParam === "tribes" || tabParam === "creators" ? tabParam : "friends";
   const selectedSlug = params.get("tribe");
   const setTab = (next: Tab) => setLocation(`/people?tab=${next}`);
   const setTribe = (id?: string) => setLocation(id ? `/people/tribes/${encodeURIComponent(id)}` : "/people?tab=tribes");
