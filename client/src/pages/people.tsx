@@ -387,14 +387,19 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
         return <button
           key={tribe.slug}
           onClick={() => onSelect(tribe.slug)}
-          className="group relative overflow-hidden rounded-[20px] border border-[#e4dedb] bg-[#fffdfb] px-4 py-5 text-left shadow-[0_7px_18px_rgba(65,49,55,.055)] transition duration-300 hover:-translate-y-0.5 hover:border-[#bfa9d0] hover:shadow-[0_12px_28px_rgba(91,49,133,.14)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#755294] focus-visible:ring-offset-2 sm:px-6"
+          className="group relative overflow-hidden rounded-[20px] border border-[#d8cce1] bg-[#fffdfb] px-4 py-5 text-left shadow-[0_7px_18px_rgba(65,49,55,.065)] transition duration-300 hover:-translate-y-0.5 hover:border-[#b99fcd] hover:shadow-[0_12px_28px_rgba(91,49,133,.15)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#755294] focus-visible:ring-offset-2 sm:px-6"
         >
           <div className="flex items-start gap-3.5">
-            <TribeIcon size={27} strokeWidth={1.9} className="mt-0.5 shrink-0" style={{ color: accent, filter: "saturate(1.18)" }} />
+            <span
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border shadow-sm"
+              style={{ color: accent, backgroundColor: `${accent}1f`, borderColor: `${accent}38`, filter: "saturate(1.15)" }}
+            >
+              <TribeIcon size={23} strokeWidth={2} />
+            </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-3">
                 <h3 className="font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#281e34] sm:text-[27px]">{tribe.name}</h3>
-                {isReady && <span className="shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[.04em]" style={{ color: accent, backgroundColor: `${accent}22`, borderColor: `${accent}35`, filter: "saturate(1.12)" }}>{tribe.fit_score}% match</span>}
+                {isReady && <span className="shrink-0 rounded-full border border-[#cdb8dc] bg-[#eee3f6] px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[.04em] text-[#633683]">{tribe.fit_score}% match</span>}
               </div>
               <p className="mt-2 max-w-xl line-clamp-2 text-sm leading-5 text-[#716971]">{tribe.identity_statement || tribe.description}</p>
             </div>
@@ -404,7 +409,7 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
               <span className="truncate">{featuredMedia.title}</span>
             </span>}
             {evidence.map((label) => <span key={label} className="hidden shrink-0 rounded-full bg-[#eee8f4] px-3 py-2 text-xs font-semibold text-[#5b466d] min-[390px]:inline-flex">{label}</span>)}
-            <span className="ml-auto grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#d4c5e2] bg-[#f1eaf7] text-[#643a86] shadow-sm transition group-hover:translate-x-0.5 group-hover:bg-[#e9ddf3]">
+            <span className="ml-auto grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#603782] text-white shadow-[0_4px_12px_rgba(96,55,130,.24)] transition group-hover:translate-x-0.5 group-hover:bg-[#4f2c70]">
               <ArrowRight size={19} />
             </span>
           </div>
