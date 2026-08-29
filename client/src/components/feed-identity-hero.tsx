@@ -312,7 +312,7 @@ export function HeroCTAButtons() {
 
   return (
     <>
-      <div className="mx-2 grid grid-cols-2 gap-1 rounded-full border border-[#dfd4e6] bg-[#f3eef5] p-1 shadow-[inset_0_1px_2px_rgba(76,44,98,.06)]">
+      <div className="mx-2 grid grid-cols-2 gap-3">
         <button
           onClick={() => setTrackOpen(true)}
           className="flex min-h-10 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-white transition-transform active:scale-[.98]"
@@ -326,7 +326,7 @@ export function HeroCTAButtons() {
         </button>
         <button
           onClick={() => setComposerOpen(true)}
-          className="flex min-h-10 items-center justify-center gap-2 rounded-full bg-white/55 px-4 py-2 text-sm font-semibold text-[#4d3261] transition active:scale-[.98] active:bg-white/75"
+          className="flex min-h-10 items-center justify-center gap-2 rounded-full border border-[#d9cce2] bg-white px-4 py-2 text-sm font-semibold text-[#4d3261] shadow-[0_3px_10px_rgba(76,44,98,.08)] transition active:scale-[.98] active:bg-[#f8f4fa]"
         >
           <MessageSquare size={15} strokeWidth={2} />
           Share a take
