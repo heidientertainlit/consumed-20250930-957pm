@@ -424,6 +424,7 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
           .filter((label) => label.length > 0)
           .slice(0, 2);
         const featuredMedia = tribe.media[0];
+        const featuredMediaTitle = String(featuredMedia?.title || "").trim();
         return <button
           key={tribe.slug}
           onClick={() => onSelect(tribe.slug)}
@@ -445,8 +446,8 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
             </div>
           </div>
           <div className="mt-5 flex items-center gap-2 overflow-hidden">
-            {featuredMedia && <span className="inline-flex min-w-0 shrink items-center rounded-full bg-[#eee8f4] px-3 py-2 text-xs font-semibold text-[#503d63]">
-              <span className="truncate">{featuredMedia.title}</span>
+            {featuredMediaTitle && <span className="inline-flex min-w-0 shrink items-center rounded-full bg-[#eee8f4] px-3 py-2 text-xs font-semibold text-[#503d63]">
+              <span className="truncate">{featuredMediaTitle}</span>
             </span>}
             {evidence.map((label) => <span key={label} className="hidden shrink-0 rounded-full bg-[#eee8f4] px-3 py-2 text-xs font-semibold text-[#5b466d] min-[390px]:inline-flex">{label}</span>)}
             <span className="ml-auto grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#603782] text-white shadow-[0_4px_12px_rgba(96,55,130,.24)] transition group-hover:translate-x-0.5 group-hover:bg-[#4f2c70]">
