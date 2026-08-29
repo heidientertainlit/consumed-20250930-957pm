@@ -522,7 +522,7 @@ function Tribes({ query, selected, onSelect, membership, relatedPeople }: { quer
     <div className="mb-5">
       <p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Tribes</p>
       <h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Where your DNA fits.</h2>
-      <p className="mt-1 text-sm leading-5 text-[#746b78]">Find communities built around the things you love together.</p>
+      <p className="mt-1 text-sm leading-5 text-[#746b78]">Find communities built around what you love — and discover what to watch, read, play, and talk about next.</p>
     </div>
     {!isReady && <div className="mb-5 rounded-[18px] border border-[#ded7e9] bg-[#f4f0f5] p-4"><p className="text-sm font-bold text-[#342642]">Explore taste groups now</p><p className="mt-1 text-sm leading-5 text-[#746b7b]">Track {query.data?.readiness?.items_needed || 10} more {(query.data?.readiness?.items_needed || 10) === 1 ? "item" : "items"} to reveal which groups share the most with you.</p><Link href="/add" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#513879]">Track more <ArrowUpRight size={15} /></Link></div>}
     {!displayTribes.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">There are no taste groups to recommend right now.</div> :
