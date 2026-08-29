@@ -6,6 +6,17 @@ import { initPostHog } from "./lib/posthog";
 import { Capacitor } from "@capacitor/core";
 import { App as CapApp } from "@capacitor/app";
 
+// Replit's public development proxy does not accept an explicit :5000 port.
+// Normalize stale preview URLs before the SPA adds them to navigation history.
+if (
+  !Capacitor.isNativePlatform() &&
+  window.location.hostname.endsWith(".replit.dev") &&
+  window.location.port === "5000"
+) {
+  const canonicalUrl = `${window.location.protocol}//${window.location.hostname}${window.location.pathname}${window.location.search}${window.location.hash}`;
+  window.location.replace(canonicalUrl);
+}
+
 initPostHog();
 
 // Register the appUrlOpen listener HERE — before React renders — so we never
