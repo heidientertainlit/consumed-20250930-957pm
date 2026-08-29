@@ -3805,11 +3805,11 @@ export default function UserProfile() {
           <div className="px-4 py-4 space-y-4">
             {dnaProfileStatus === 'has_profile' && dnaProfile ? (
               <>
-                <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-white px-5 py-5 shadow-sm">
+                <div className="relative min-h-[210px] overflow-hidden rounded-2xl bg-white px-5 py-5">
                     <div className="relative z-10">
                       <div className="max-w-full">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#6d5878]">Maybe right now…</p>
-                        <p className="mt-3 text-[21px] font-bold leading-[1.18] text-[#422653]">Easy answers just aren't that interesting.</p>
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#55217f]">Maybe right now…</p>
+                        <p className="mt-4 max-w-[340px] text-[29px] font-bold leading-[1.16] tracking-[-0.035em] text-[#171129]">Easy answers just aren't that interesting.</p>
                       </div>
                       <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#ded2e7] pt-4">
                         <div>
@@ -4240,11 +4240,11 @@ export default function UserProfile() {
 
             {dnaProfileStatus === 'has_profile' && dnaProfile && (
               <>
-                <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-white px-5 py-5 shadow-sm">
+                <div className="relative min-h-[210px] overflow-hidden rounded-2xl bg-white px-5 py-5">
                     <div className="relative z-10">
                       <div className="max-w-full">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#6d5878]">Maybe right now…</p>
-                        <p className="mt-3 text-[21px] font-bold leading-[1.18] text-[#422653]">Easy answers just aren't that interesting.</p>
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#55217f]">Maybe right now…</p>
+                        <p className="mt-4 max-w-[340px] text-[29px] font-bold leading-[1.16] tracking-[-0.035em] text-[#171129]">Easy answers just aren't that interesting.</p>
                       </div>
                       <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#ded2e7] pt-4">
                         <div>
@@ -4707,12 +4707,12 @@ export default function UserProfile() {
                   Your entertainment,<br />all in one place.
                 </h4>
 
-                <div className="mt-8 flex items-end gap-2">
+                <div className="mt-6 flex items-end gap-2">
                   <span className="font-serif text-[46px] font-bold leading-none text-[#55217f]">{allMediaItems.length}</span>
                   <span className="pb-1 text-base font-medium text-[#51475b]">titles</span>
                 </div>
 
-                <div className="mt-7 grid grid-cols-4 gap-x-3 gap-y-5">
+                <div className="mt-6 grid grid-cols-4 gap-x-3 gap-y-5">
                   {[
                     { val: canonicalMediaTypeCounts.movie, label: 'Movies', icon: Film, color: 'text-[#7a24ad]' },
                     { val: canonicalMediaTypeCounts.tv, label: 'TV Shows', icon: Tv, color: 'text-[#dc2482]' },
@@ -4734,7 +4734,7 @@ export default function UserProfile() {
                 </div>
 
               {/* Filters */}
-              <div className="pt-8">
+              <div className="mt-6 border-t border-[#e8e1eb] pt-6">
               <p className="mb-3 text-[11px] font-normal uppercase tracking-[0.2em] text-[#75677e]">Find &amp; explore your media</p>
               <div className="mb-4 flex items-center gap-2.5">
                 <div className="relative min-w-0 flex-1">
