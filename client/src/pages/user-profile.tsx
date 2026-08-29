@@ -3350,7 +3350,7 @@ export default function UserProfile() {
 
   return (
     <>
-      <div className="min-h-screen bg-white pb-20">
+      <div className="min-h-screen bg-[#fbf8f5] pb-20">
         <Navigation onTrackConsumption={handleTrackConsumption} roomyTopBar />
 
         {/* ── Hero — dark DNA card ── */}
@@ -3696,7 +3696,7 @@ export default function UserProfile() {
 
         {/* Section navigation (only for own profile) */}
         {isOwnProfile && (
-        <div className="bg-white px-4">
+        <div className="bg-[#fbf8f5] px-4">
           <div className="flex w-full border-b border-[#dcd5df]">
             <button
               onClick={() => setActiveSection('dna')}
@@ -3726,7 +3726,7 @@ export default function UserProfile() {
 
         {/* Section Navigation for Friend Profiles */}
         {!isOwnProfile && friendshipStatus === 'friends' && (
-          <div className="bg-white px-4">
+          <div className="bg-[#fbf8f5] px-4">
             <div className="flex w-full border-b border-[#dcd5df]">
               <button
                 onClick={() => setActiveSection('dna')}
@@ -4691,7 +4691,7 @@ export default function UserProfile() {
         {/* All My Media Section (own profile only) */}
         {activeSection === 'all-media' && isOwnProfile && (
           <div className="px-4 pt-4 mb-8">
-            <section className="overflow-hidden bg-white">
+            <section className="overflow-hidden bg-[#fbf8f5]">
               <div className="px-4 pb-2 pt-5 sm:px-5">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#55217f]">My Media</p>
