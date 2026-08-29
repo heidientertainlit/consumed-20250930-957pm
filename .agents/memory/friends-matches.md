@@ -9,4 +9,4 @@ Matches and Friends belong in one Friends destination. Lead with search, request
 
 **How to apply:** Keep People navigation to Friends, Tribes, and Creators. The Friends experience must retain search, invites, incoming-request actions, pending states, current friends, and affinity discovery. Do not make users scroll through the full friend list before potential matches; provide an explicit expand control. Legacy Matches links should resolve to Friends.
 
-Use text-only People tabs with a purple active underline rather than a segmented pill. The visible labels are “Friends & Matches,” “Tribes,” and “Artists & Creators”; the longer labels need the lighter treatment and equal breathing room.
+Use text-only tabs with a purple active underline rather than segmented pills on both People and DNA. People labels are “Friends & Matches,” “Tribes,” and “Artists & Creators”; DNA uses the same treatment for “My DNA” and “Compare.”

@@ -365,30 +365,30 @@ export default function DnaPage() {
           <h2 className="text-white text-xl font-semibold tracking-tight">Entertainment DNA</h2>
           <p className="text-white/50 text-sm mt-1">Discover what your entertainment<br />says about you.</p>
 
-          <div className="flex gap-2 justify-center pt-4 pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        </div>
+        <div className="bg-[#fbf8f5] px-4 pt-4 sm:px-6">
+          <nav className="mx-auto flex max-w-7xl border-b border-[#ded5e3]" aria-label="DNA sections">
             <button
               onClick={() => setActiveTab('dna')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+              className={`relative flex min-w-0 flex-1 items-center justify-center whitespace-nowrap px-2 pb-3 pt-1 text-[11px] font-bold transition-colors sm:text-[13px] ${
                 activeTab === 'dna'
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
-                  : 'bg-white/10 text-white/70 border border-white/20 hover:border-purple-400'
+                  ? 'text-[#5b168f] after:absolute after:inset-x-2 after:-bottom-px after:h-[3px] after:rounded-t-full after:bg-[linear-gradient(90deg,#5b168f,#8a35be)]'
+                  : 'text-[#776c7c] hover:text-[#34213f]'
               }`}
             >
-              <Dna size={14} />
               My DNA
             </button>
             <button
               onClick={() => setActiveTab('compare')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+              className={`relative flex min-w-0 flex-1 items-center justify-center whitespace-nowrap px-2 pb-3 pt-1 text-[11px] font-bold transition-colors sm:text-[13px] ${
                 activeTab === 'compare'
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
-                  : 'bg-white/10 text-white/70 border border-white/20 hover:border-purple-400'
+                  ? 'text-[#5b168f] after:absolute after:inset-x-2 after:-bottom-px after:h-[3px] after:rounded-t-full after:bg-[linear-gradient(90deg,#5b168f,#8a35be)]'
+                  : 'text-[#776c7c] hover:text-[#34213f]'
               }`}
             >
-              <Users size={14} />
               Compare
             </button>
-          </div>
+          </nav>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 pt-4 pb-6 space-y-4">
