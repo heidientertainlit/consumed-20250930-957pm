@@ -3696,28 +3696,30 @@ export default function UserProfile() {
 
         {/* Section navigation (only for own profile) */}
         {isOwnProfile && (
-        <div className="bg-[#fbf8f5] px-4">
-          <div className="flex w-full border-b border-[#dcd5df]">
+        <div className="bg-[#fbf8f5] px-4 pb-1 pt-3">
+          <div className="flex w-full rounded-full border border-[#e2d9e8] bg-[#f3eef5] p-0.5 shadow-[inset_0_1px_2px_rgba(76,44,98,.05)]">
             <button
               onClick={() => setActiveSection('dna')}
-              className={`relative flex-1 px-5 py-3.5 text-center text-[15px] font-bold whitespace-nowrap transition-colors ${
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-center text-[13px] font-bold whitespace-nowrap transition-all ${
                 activeSection === 'dna'
-                  ? 'text-[#38214f] after:absolute after:inset-x-5 after:bottom-0 after:h-[3px] after:rounded-t-full after:bg-[#5b3185]'
-                  : 'text-[#827887] hover:text-[#493659]'
+                  ? 'bg-[linear-gradient(135deg,#5b168f,#7c2bb7)] text-white shadow-[0_5px_14px_rgba(91,22,143,.25)]'
+                  : 'text-[#34213f] hover:bg-white/55'
               }`}
               data-testid="nav-dna-profile"
             >
+              <Dna size={16} strokeWidth={2} className={activeSection === 'dna' ? 'text-white' : 'text-[#69358d]'} />
               DNA
             </button>
             <button
               onClick={() => setActiveSection('all-media')}
-              className={`relative flex-1 px-5 py-3.5 text-center text-[15px] font-bold whitespace-nowrap transition-colors ${
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-center text-[13px] font-bold whitespace-nowrap transition-all ${
                 activeSection === 'all-media'
-                  ? 'text-[#38214f] after:absolute after:inset-x-5 after:bottom-0 after:h-[3px] after:rounded-t-full after:bg-[#5b3185]'
-                  : 'text-[#827887] hover:text-[#493659]'
+                  ? 'bg-[linear-gradient(135deg,#5b168f,#7c2bb7)] text-white shadow-[0_5px_14px_rgba(91,22,143,.25)]'
+                  : 'text-[#34213f] hover:bg-white/55'
               }`}
               data-testid="nav-all-media"
             >
+              <List size={16} strokeWidth={2} className={activeSection === 'all-media' ? 'text-white' : 'text-[#69358d]'} />
               My Media
             </button>
           </div>
@@ -3726,28 +3728,30 @@ export default function UserProfile() {
 
         {/* Section Navigation for Friend Profiles */}
         {!isOwnProfile && friendshipStatus === 'friends' && (
-          <div className="bg-[#fbf8f5] px-4">
-            <div className="flex w-full border-b border-[#dcd5df]">
+          <div className="bg-[#fbf8f5] px-4 pb-1 pt-3">
+            <div className="flex w-full rounded-full border border-[#e2d9e8] bg-[#f3eef5] p-0.5 shadow-[inset_0_1px_2px_rgba(76,44,98,.05)]">
               <button
                 onClick={() => setActiveSection('dna')}
-                className={`relative flex-1 px-5 py-3.5 text-center text-[15px] font-bold whitespace-nowrap transition-colors ${
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-center text-[13px] font-bold whitespace-nowrap transition-all ${
                   activeSection === 'dna'
-                    ? 'text-[#38214f] after:absolute after:inset-x-5 after:bottom-0 after:h-[3px] after:rounded-t-full after:bg-[#5b3185]'
-                    : 'text-[#827887] hover:text-[#493659]'
+                    ? 'bg-[linear-gradient(135deg,#5b168f,#7c2bb7)] text-white shadow-[0_5px_14px_rgba(91,22,143,.25)]'
+                    : 'text-[#34213f] hover:bg-white/55'
                 }`}
                 data-testid="tab-friend-dna"
               >
+                <Dna size={16} strokeWidth={2} className={activeSection === 'dna' ? 'text-white' : 'text-[#69358d]'} />
                 DNA
               </button>
               <button
                 onClick={() => setActiveSection('their-media')}
-                className={`relative flex-1 px-5 py-3.5 text-center text-[15px] font-bold whitespace-nowrap transition-colors ${
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-center text-[13px] font-bold whitespace-nowrap transition-all ${
                   activeSection === 'their-media'
-                    ? 'text-[#38214f] after:absolute after:inset-x-5 after:bottom-0 after:h-[3px] after:rounded-t-full after:bg-[#5b3185]'
-                    : 'text-[#827887] hover:text-[#493659]'
+                    ? 'bg-[linear-gradient(135deg,#5b168f,#7c2bb7)] text-white shadow-[0_5px_14px_rgba(91,22,143,.25)]'
+                    : 'text-[#34213f] hover:bg-white/55'
                 }`}
                 data-testid="tab-friend-media"
               >
+                <List size={16} strokeWidth={2} className={activeSection === 'their-media' ? 'text-white' : 'text-[#69358d]'} />
                 Their Media
               </button>
             </div>

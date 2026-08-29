@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Heart, Leaf, Loader2, LockKeyhole, Moon, Share2, Sparkles, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Heart, Leaf, Loader2, LockKeyhole, Moon, Share2, Sparkles, Star, Users } from "lucide-react";
 import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
 import FriendsManager from "@/components/friends-manager";
@@ -262,7 +262,12 @@ export default function PeoplePage() {
     try { if (typeof navigator.share === "function") await navigator.share({ title: "Join me on Consumed", text: "Compare your cross-media taste with me on Consumed.", url }); else await navigator.clipboard.writeText(url); toast({ title: "Invite ready", description: typeof navigator.share === "function" ? "Share sheet opened." : "Invite link copied." }); } catch { /* intentional cancellation */ }
   };
   const selectedTribe = tribesQuery.data?.tribes.find((tribe) => tribe.slug === selectedSlug);
-  const tabs: Array<{ id: Tab; label: string }> = [{ id: "matches", label: "Matches" }, { id: "friends", label: "Friends" }, { id: "tribes", label: "Tribes" }, { id: "creators", label: "Artists & Creators" }];
+  const tabs: Array<{ id: Tab; label: string; Icon: typeof Dna }> = [
+    { id: "matches", label: "Matches", Icon: Dna },
+    { id: "friends", label: "Friends", Icon: Users },
+    { id: "tribes", label: "Tribes", Icon: Sparkles },
+    { id: "creators", label: "Creators", Icon: Star },
+  ];
   const headerTribes = tribesQuery.data?.tribes || [];
   const headerMembers = headerTribes
     .flatMap((tribe) => tribe.members)
@@ -314,18 +319,19 @@ export default function PeoplePage() {
         </div>
       </div>
     </header>
-    <div className="bg-[#fbf8f5] px-4 sm:px-6">
-      <nav className="mx-auto flex max-w-5xl overflow-x-auto border-b border-[#dcd5df]" aria-label="People sections">
-        {tabs.map((item) => <button
-          key={item.id}
-          onClick={() => setTab(item.id)}
-          className={`relative shrink-0 px-4 py-3.5 text-[13px] font-bold whitespace-nowrap transition-colors first:pl-0 ${
-            tab === item.id
-              ? "text-[#38214f] after:absolute after:inset-x-3 after:bottom-0 after:h-[3px] after:rounded-t-full after:bg-[#5b3185] first:after:left-0"
-              : "text-[#827887] hover:text-[#493659]"
+    <div className="bg-[#fbf8f5] px-4 pb-1 pt-4 sm:px-6">
+      <nav className="mx-auto flex max-w-5xl overflow-x-auto rounded-full border border-[#e2d9e8] bg-[#f3eef5] p-1 shadow-[inset_0_1px_2px_rgba(76,44,98,.05)]" aria-label="People sections">
+        {tabs.map(({ id, label, Icon }) => <button
+          key={id}
+          onClick={() => setTab(id)}
+          className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-2 py-3 text-[12px] font-bold transition-all sm:text-[13px] ${
+            tab === id
+              ? "bg-[linear-gradient(135deg,#5b168f,#7c2bb7)] text-white shadow-[0_5px_14px_rgba(91,22,143,.25)]"
+              : "text-[#34213f] hover:bg-white/55"
           }`}
         >
-          {item.label}
+          <Icon size={17} strokeWidth={2} className={tab === id ? "text-white" : "text-[#69358d]"} />
+          {label}
         </button>)}
       </nav>
     </div>
