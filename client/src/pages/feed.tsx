@@ -17,7 +17,7 @@ import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
 import { DnaMomentCard } from "@/components/dna-moment-card";
 import { HotInRoomsCard } from "@/components/hot-in-rooms-card";
-import { FeedIdentityHero, IdentityFace } from "@/components/feed-identity-hero";
+import { FeedIdentityHero, HeroCTAButtons, IdentityFace } from "@/components/feed-identity-hero";
 import { OnboardingResumePrompt } from "@/components/onboarding-resume-prompt";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import CastApprovalCard from "@/components/cast-approval-card";
@@ -8894,6 +8894,14 @@ export default function Feed() {
 
             </div>
             
+          </div>
+        </div>
+      )}
+
+      {!isGuestMode && (
+        <div className="bg-[#fbf8f5]">
+          <div className="mx-auto max-w-4xl px-4 pt-4">
+            <HeroCTAButtons />
           </div>
         </div>
       )}

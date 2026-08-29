@@ -249,10 +249,6 @@ export function FeedIdentityHero() {
           </div>
         </div>
 
-        {/* CTAs below the card */}
-        <div className="mt-5">
-          <HeroCTAButtons />
-        </div>
       </div>
 
       {shareOpen && user?.id && (
