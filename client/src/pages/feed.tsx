@@ -2624,6 +2624,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     className={`text-[13px] font-semibold text-gray-700 leading-tight truncate ${post.user?.id ? 'cursor-pointer hover:text-violet-700' : ''}`}
                     onClick={(e) => { if (post.user?.id) { e.stopPropagation(); setLocation(`/user/${post.user.id}`); } }}
                   >{formatFeedName(post.user?.displayName, post.user?.username)}</p>
+                  {post.user?.username && (
+                    <p className="mt-0.5 truncate text-[10px] font-medium leading-tight text-gray-400">@{formatUsername(post.user.username)}</p>
+                  )}
                   {isOtherUser && tasteAlignment !== null ? (
                     <p className="mt-0.5 text-[11px] text-violet-600 font-medium leading-tight"><span className="font-bold">{tasteAlignment}%</span> aligned with you</p>
                   ) : isOtherUser && alignmentNudge && !ratingSubmitted ? (
