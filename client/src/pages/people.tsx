@@ -289,9 +289,9 @@ export default function PeoplePage() {
               className="mt-2 text-[28px] leading-[1.12] tracking-[-.02em] text-white"
               style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
             >
-              Find the people<br />who get it.
+              Entertainment is better<br />with your people.
             </h1>
-            <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Connect through the stories, sounds, and worlds you can’t stop thinking about.</p>
+            <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Find the people, communities, and creators connected by what you love.</p>
           </div>
         </div>
       </div>
