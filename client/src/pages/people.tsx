@@ -288,7 +288,10 @@ export default function PeoplePage() {
           </div>
           <div className="relative max-w-[72%] sm:max-w-xl">
             <p className="text-[10px] font-bold uppercase tracking-[.2em] text-violet-300">People</p>
-            <h1 className="mt-2 text-[32px] font-semibold leading-[1.08] tracking-tight text-white">
+            <h1
+              className="mt-2 text-[32px] leading-[1.08] tracking-tight text-white"
+              style={{ fontFamily: "Poppins, sans-serif", fontWeight: 700 }}
+            >
               Find the people<br />who get it.
             </h1>
             <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Connect through the stories, sounds, and worlds you can’t stop thinking about.</p>
