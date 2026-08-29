@@ -5,6 +5,7 @@ const ratings = [
   { media_title: 'Emma', media_type: 'movie', rating: 5, genres: ['romance', 'period drama', 'comedy'] },
   { media_title: 'Sense and Sensibility', media_type: 'movie', rating: 5, genres: ['romance', 'period drama', 'drama'] },
   { media_title: 'Downton Abbey', media_type: 'tv', rating: 4.5, genres: ['period drama', 'drama'] },
+  { media_title: 'Ever After', media_type: 'movie', rating: 4.5, genres: ['romance', 'period drama'] },
   { media_title: 'Saw X', media_type: 'movie', rating: 1, genres: ['horror', 'thriller'] },
   { media_title: 'Hostel', media_type: 'movie', rating: 1.5, genres: ['horror', 'thriller'] },
 ];
@@ -18,6 +19,12 @@ assert.ok(poor.score <= 30, `expected poor match, got ${poor.score}`);
 
 const unknown = scoreMediaMatchV2({ ratings, mediaGenres: [], mediaType: 'movie' });
 assert.equal(unknown.score, null);
+
+const sparseFamily = scoreMediaMatchV2({ ratings: [
+  ...ratings,
+  { media_title: 'Tangled', media_type: 'movie', rating: 4, genres: ['family', 'adventure'] },
+], mediaGenres: ['romance', 'adventure', 'comedy', 'family'], mediaType: 'movie' });
+assert.equal(sparseFamily.score, null, `expected sparse family evidence to hide the score, got ${sparseFamily.score}`);
 
 const repeat = scoreMediaMatchV2({ ratings, mediaGenres: ['romance', 'period drama'], mediaType: 'movie' });
 assert.deepEqual(repeat, strong);

@@ -57,7 +57,7 @@ serve(async (req) => {
     if (scorer_version === 'v2') {
       const source = String(external_source);
       const id = String(external_id);
-      const v2CacheSource = `v2:${source}`;
+      const v2CacheSource = `v2.1:${source}`;
       const { data: ownRating, error: ownRatingError } = await admin
         .from('media_ratings')
         .select('rating')

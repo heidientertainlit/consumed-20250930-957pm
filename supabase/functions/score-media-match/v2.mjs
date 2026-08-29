@@ -41,14 +41,18 @@ export function scoreMediaMatchV2({ ratings = [], mediaGenres = [], mediaType })
   for (const rating of ratings) {
     const preference = ratingPreference(rating.rating);
     const genres = unique(rating.genres);
-    for (const genre of genres) {
-      const current = genreRatings.get(genre) || { total: 0, weight: 0, count: 0 };
-      current.total += preference;
-      current.weight += 1;
-      current.count += 1;
-      genreRatings.set(genre, current);
-    }
     const type = normalize(rating.media_type);
+    // A movie match must be grounded primarily in movie ratings, a book match
+    // in book ratings, etc. Cross-media genre labels are too broad to prove fit.
+    if (type === candidateType) {
+      for (const genre of genres) {
+        const current = genreRatings.get(genre) || { total: 0, weight: 0, count: 0 };
+        current.total += preference;
+        current.weight += 1;
+        current.count += 1;
+        genreRatings.set(genre, current);
+      }
+    }
     if (type) {
       const current = typeRatings.get(type) || { total: 0, weight: 0, count: 0 };
       current.total += preference;
@@ -56,7 +60,7 @@ export function scoreMediaMatchV2({ ratings = [], mediaGenres = [], mediaType })
       current.count += 1;
       typeRatings.set(type, current);
     }
-    const similarity = overlap(candidateGenres, genres);
+    const similarity = type === candidateType ? overlap(candidateGenres, genres) : 0;
     if (similarity > 0) similarRatings.push({ similarity, preference, title: rating.media_title });
   }
 
@@ -84,12 +88,18 @@ export function scoreMediaMatchV2({ ratings = [], mediaGenres = [], mediaType })
 
   const substantive = evidence.filter((item) => item.kind !== 'media type');
   const weight = evidence.reduce((sum, item) => sum + item.weight, 0);
-  const confidence = clamp(substantive.reduce((sum, item) => sum + item.weight, 0) / 6, 0, 1);
-  if (candidateGenres.length === 0 || substantive.length === 0 || confidence < 0.22) {
+  const genreCoverage = candidateGenres.map((genre) => genreRatings.get(genre)?.count || 0);
+  const minimumGenreEvidence = candidateGenres.length === 1 ? 3 : 2;
+  const allGenresSupported = genreCoverage.length > 0
+    && genreCoverage.every((count) => count >= minimumGenreEvidence);
+  const confidence = allGenresSupported
+    ? clamp(Math.min(...genreCoverage) / 5, 0, 1)
+    : 0;
+  if (candidateGenres.length === 0 || substantive.length === 0 || !allGenresSupported || confidence < 0.4) {
     return {
       score: null,
       confidence: Math.round(confidence * 100),
-      reason: 'Not enough verified evidence for a reliable match.',
+      reason: 'Not enough same-format rating evidence across this title’s genres.',
       evidence: [],
     };
   }
