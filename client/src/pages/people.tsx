@@ -274,13 +274,13 @@ export default function PeoplePage() {
       <div className="mx-auto max-w-5xl px-6 sm:px-8">
         <div className="relative pb-7 pt-6 sm:pb-9 sm:pt-8">
           <div
-            className="pointer-events-none absolute -right-20 top-2 h-44 w-44 rounded-full border-2 border-violet-400/55 sm:-right-24 sm:h-52 sm:w-52"
+            className="pointer-events-none absolute -right-20 top-2 h-44 w-44 rounded-full border-[3px] border-violet-400/60 sm:-right-24 sm:h-52 sm:w-52"
             style={{
-              background: "radial-gradient(circle at 38% 38%, rgba(139,92,246,.22), rgba(43,18,76,.34) 58%, rgba(20,9,35,.18) 100%)",
-              boxShadow: "0 0 34px rgba(168,85,247,.48), 0 0 72px rgba(126,34,206,.24), inset 0 0 30px rgba(192,132,252,.18)",
+              background: "radial-gradient(circle at 38% 38%, rgba(139,92,246,.11), rgba(43,18,76,.17) 58%, rgba(20,9,35,.08) 100%)",
+              boxShadow: "0 0 8px rgba(216,180,254,.72), 0 0 22px rgba(168,85,247,.4), inset 0 0 18px rgba(192,132,252,.12)",
             }}
           >
-            <div className="absolute -inset-5 rounded-full bg-[radial-gradient(circle,rgba(168,85,247,.16),transparent_68%)]" />
+            <div className="absolute -inset-4 rounded-full bg-[radial-gradient(circle,rgba(168,85,247,.08),transparent_68%)]" />
             <div className="relative grid h-full w-full place-items-center">
               <Users size={48} strokeWidth={1.35} className="text-violet-300 drop-shadow-[0_0_8px_rgba(216,180,254,1)]" />
             </div>
