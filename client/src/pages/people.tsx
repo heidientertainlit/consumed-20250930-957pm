@@ -277,7 +277,7 @@ export default function PeoplePage() {
           className="relative overflow-hidden rounded-3xl border border-white/10 px-6 py-6 shadow-[0_10px_40px_rgba(22,10,38,.24)] sm:px-8 sm:py-8"
           style={{ background: "linear-gradient(155deg, #302452 0%, #1c1630 100%)" }}
         >
-          <div className="pointer-events-none absolute right-2 top-3 opacity-80 sm:right-5 sm:top-5">
+          <div className="pointer-events-none absolute right-5 top-3 opacity-80 sm:right-8 sm:top-5">
             <IdentityFace
               size={96}
               content={<Users size={30} strokeWidth={1.35} className="text-violet-300" />}
