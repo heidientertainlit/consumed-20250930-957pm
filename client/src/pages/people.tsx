@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, H
 import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
 import FriendsManager from "@/components/friends-manager";
+import { IdentityFace } from "@/components/feed-identity-hero";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -269,21 +270,18 @@ export default function PeoplePage() {
     { id: "creators", label: "Creators", Icon: Star },
   ];
   return <div className="min-h-[100dvh] bg-[#fbf8f5] pb-24 text-[#271d3a]">
-    <Navigation roomyTopBar />
-    <header className="relative -mt-px overflow-hidden bg-[linear-gradient(135deg,#0b0713_0%,#1b0a31_50%,#35125b_100%)] text-white shadow-[0_10px_28px_rgba(41,16,71,.18)]">
-      <div className="mx-auto max-w-5xl px-6 sm:px-8">
-        <div className="relative pb-7 pt-6 sm:pb-9 sm:pt-8">
-          <div
-            className="pointer-events-none absolute -right-20 top-2 h-44 w-44 rounded-full border-[3px] border-violet-400/60 sm:-right-24 sm:h-52 sm:w-52"
-            style={{
-              background: "radial-gradient(circle at 38% 38%, rgba(139,92,246,.11), rgba(43,18,76,.17) 58%, rgba(20,9,35,.08) 100%)",
-              boxShadow: "0 0 8px rgba(216,180,254,.72), 0 0 22px rgba(168,85,247,.4), inset 0 0 18px rgba(192,132,252,.12)",
-            }}
-          >
-            <div className="absolute -inset-4 rounded-full bg-[radial-gradient(circle,rgba(168,85,247,.08),transparent_68%)]" />
-            <div className="relative grid h-full w-full place-items-center">
-              <Users size={48} strokeWidth={1.35} className="text-violet-300 drop-shadow-[0_0_8px_rgba(216,180,254,1)]" />
-            </div>
+    <Navigation roomyTopBar topBarTone="purple" />
+    <header className="relative -mt-px bg-[linear-gradient(to_right,#21183b,#332052,#4a246b)] px-4 pb-6 pt-5 text-white shadow-[0_10px_28px_rgba(41,16,71,.18)] sm:px-6 sm:pb-8 sm:pt-6">
+      <div className="mx-auto max-w-5xl">
+        <div
+          className="relative overflow-hidden rounded-3xl border border-white/10 px-6 py-6 shadow-[0_10px_40px_rgba(22,10,38,.24)] sm:px-8 sm:py-8"
+          style={{ background: "linear-gradient(155deg, #302452 0%, #1c1630 100%)" }}
+        >
+          <div className="pointer-events-none absolute right-2 top-3 opacity-80 sm:right-5 sm:top-5">
+            <IdentityFace
+              size={96}
+              content={<Users size={30} strokeWidth={1.35} className="text-violet-300" />}
+            />
           </div>
           <div className="relative max-w-[72%] sm:max-w-xl">
             <p className="text-[10px] font-bold uppercase tracking-[.2em] text-violet-300">People</p>
