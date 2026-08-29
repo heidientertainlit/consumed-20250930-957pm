@@ -113,6 +113,7 @@ export function useFriendsManagement() {
       queryClient.invalidateQueries({ queryKey: ['friends'] });
       queryClient.invalidateQueries({ queryKey: ['people-friends'] });
       queryClient.invalidateQueries({ queryKey: ['pending-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['people-affinity-v9'] });
       toast({
         title: "Friend Request Sent",
         description: "Your friend request has been sent!",
@@ -161,6 +162,7 @@ export function useFriendsManagement() {
       queryClient.invalidateQueries({ queryKey: ['pending-requests'] });
       queryClient.invalidateQueries({ queryKey: ['friends'] });
       queryClient.invalidateQueries({ queryKey: ['people-friends'] });
+      queryClient.invalidateQueries({ queryKey: ['people-affinity-v9'] });
       toast({
         title: "Friend Request Accepted",
         description: "You are now friends!",
@@ -196,6 +198,7 @@ export function useFriendsManagement() {
       queryClient.invalidateQueries({ queryKey: ['pending-requests'] });
       queryClient.invalidateQueries({ queryKey: ['friends'] });
       queryClient.invalidateQueries({ queryKey: ['people-friends'] });
+      queryClient.invalidateQueries({ queryKey: ['people-affinity-v9'] });
       toast({
         title: "Request Rejected",
         description: "Friend request has been declined.",

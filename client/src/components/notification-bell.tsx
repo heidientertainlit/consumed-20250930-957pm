@@ -191,14 +191,14 @@ export function NotificationBell() {
         break;
 
       case 'friend_request':
-        setLocation('/friends');
+        setLocation('/people?tab=friends');
         break;
 
       case 'friend_accepted':
         if (notification.triggered_by_user_id) {
           setLocation(`/user/${notification.triggered_by_user_id}`);
         } else {
-          setLocation('/friends');
+          setLocation('/people?tab=friends');
         }
         break;
 

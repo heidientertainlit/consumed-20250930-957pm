@@ -12,7 +12,7 @@ import { supabase } from "@/lib/supabase";
 import { APP_BASE } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 
-type Tab = "matches" | "friends" | "tribes" | "creators";
+type Tab = "friends" | "tribes" | "creators";
 type Person = {
   id: string; user_name?: string; display_name?: string; first_name?: string; last_name?: string;
   avatar_url?: string; profile_image_url?: string; avatar?: string; match_score?: number; is_friend?: boolean;
@@ -257,7 +257,7 @@ export default function PeoplePage() {
   const search = useSearch();
   const params = useMemo(() => new URLSearchParams(search), [search]);
   const tabParam = params.get("tab");
-  const tab: Tab = tabParam === "friends" || tabParam === "tribes" || tabParam === "creators" ? tabParam : "matches";
+  const tab: Tab = tabParam === "tribes" || tabParam === "creators" ? tabParam : "friends";
   const selectedSlug = params.get("tribe");
   const setTab = (next: Tab) => setLocation(`/people?tab=${next}`);
   const setTribe = (slug?: string) => setLocation(slug ? `/people?tab=tribes&tribe=${encodeURIComponent(slug)}` : "/people?tab=tribes");
@@ -305,7 +305,7 @@ export default function PeoplePage() {
   };
 
   const affinityQuery = useQuery({
-    queryKey: ["people-affinity-v9", user?.id], enabled: !!session?.access_token && (tab === "matches" || tab === "tribes"),
+    queryKey: ["people-affinity-v9", user?.id], enabled: !!session?.access_token && (tab === "friends" || tab === "tribes"),
     queryFn: () => functionRequest<Affinity>("people-affinity", session!.access_token, { action: "load", batch_size: 25 }), staleTime: 60_000,
   });
   const tribesQuery = useQuery({
@@ -365,7 +365,6 @@ export default function PeoplePage() {
     .filter((person, index, all) => all.findIndex((candidate) => candidate.id === person.id) === index)
     .sort((a, b) => Number(Boolean(b.profile_image_url || b.avatar_url || b.avatar)) - Number(Boolean(a.profile_image_url || a.avatar_url || a.avatar)));
   const tabs: Array<{ id: Tab; label: string; Icon: typeof Dna }> = [
-    { id: "matches", label: "Matches", Icon: Dna },
     { id: "friends", label: "Friends", Icon: Users },
     { id: "tribes", label: "Tribes", Icon: Sparkles },
     { id: "creators", label: "Creators", Icon: Star },
@@ -415,8 +414,7 @@ export default function PeoplePage() {
     </div>
     <main className="mx-auto max-w-5xl px-4 sm:px-6">
 
-      {tab === "matches" && <Matches query={affinityQuery} more={moreMatches} onSelectPerson={openPerson} onInvite={copyInvite} />}
-      {tab === "friends" && <Friends userId={user?.id} />}
+      {tab === "friends" && <Friends query={affinityQuery} more={moreMatches} onSelectPerson={openPerson} onInvite={copyInvite} userId={user?.id} />}
       {tab === "tribes" && <Tribes query={tribesQuery} selected={selectedTribe} onSelect={setTribe} membership={membership} relatedPeople={relatedPeople} />}
       {tab === "creators" && <Creators query={creatorsQuery} />}
     </main>
@@ -460,23 +458,28 @@ export default function PeoplePage() {
   </div>;
 }
 
-function Matches({ query, more, onSelectPerson, onInvite }: { query: ReturnType<typeof useQuery<Affinity>>; more: ReturnType<typeof useMutation<Affinity, Error, void>>; onSelectPerson: (person: Person) => void; onInvite: () => void }) {
-  if (query.isLoading) return <div className="mt-7 space-y-3"><div className="h-5 w-48 animate-pulse rounded bg-[#e6e0e7]" />{[1, 2].map((item) => <div key={item} className="h-[252px] animate-pulse rounded-[22px] bg-[#e6e0e7]" />)}<div className="h-28 animate-pulse rounded-xl bg-[#e6e0e7]" /></div>;
-  if (query.isError) return <ErrorState onRetry={() => query.refetch()} />;
+function Friends({ query, more, onSelectPerson, onInvite, userId }: { query: ReturnType<typeof useQuery<Affinity>>; more: ReturnType<typeof useMutation<Affinity, Error, void>>; onSelectPerson: (person: Person) => void; onInvite: () => void; userId?: string }) {
+  if (query.isLoading) return <section className="mt-7"><div className="mb-5"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Friends</p><h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Your people.</h2><p className="mt-1 text-sm leading-5 text-[#746b78]">Find new connections through your taste and keep up with the friends already in your circle.</p></div><div className="space-y-3">{[1, 2].map((item) => <div key={item} className="h-[252px] animate-pulse rounded-[22px] bg-[#e6e0e7]" />)}<div className="h-28 animate-pulse rounded-xl bg-[#e6e0e7]" /></div></section>;
   const data = query.data;
-  if (!data?.ready) return <div className="mt-7"><Readiness readiness={data?.readiness} onInvite={onInvite} /></div>;
+  if (query.isError) return <section className="mt-7"><FriendsHeader /><ErrorState onRetry={() => query.refetch()} />{userId && <div className="mt-8"><FriendsManager userId={userId} /></div>}</section>;
+  if (!data?.ready) return <section className="mt-7"><FriendsHeader /><Readiness readiness={data?.readiness} onInvite={onInvite} />{userId && <div className="mt-9 border-t border-[#e3dce5] pt-7"><FriendsManager userId={userId} /></div>}</section>;
   const ordered = bands.map((definition) => ({ ...definition, people: data.bands?.find((band) => band.id === definition.id)?.people || [] })).filter((band) => band.people.length);
-  const featured = ordered.flatMap((band) => band.people.map((person) => ({ person, band }))).sort((a, b) => (b.person.match_score || 0) - (a.person.match_score || 0)).slice(0, 2);
+  const discoverable = ordered.map((band) => ({ ...band, people: band.people.filter((person) => !person.is_friend) })).filter((band) => band.people.length);
+  const featured = discoverable.flatMap((band) => band.people.map((person) => ({ person, band }))).sort((a, b) => (b.person.match_score || 0) - (a.person.match_score || 0)).slice(0, 2);
   const featuredIds = new Set(featured.map(({ person }) => person.id));
-  const remaining = ordered.map((band) => ({ ...band, people: band.people.filter((person) => !featuredIds.has(person.id)) })).filter((band) => band.people.length);
+  const remaining = discoverable.map((band) => ({ ...band, people: band.people.filter((person) => !featuredIds.has(person.id)) })).filter((band) => band.people.length);
   return <section className="mt-7">
-    {!ordered.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]"><p className="font-bold text-[#3b2c47]">No community matches yet.</p><p className="mt-1 leading-5">We’ll add compatible people here as more members build their Entertainment DNA. Your matches do not depend on having friends in the app.</p><button type="button" onClick={onInvite} className="mt-4 inline-flex items-center gap-2 font-bold text-[#503574]"><Share2 size={15} /> Invite someone you know</button></div> :
-      <>
-        {featured.length > 0 && <div className="mb-9"><div className="mb-3"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Matches</p><h3 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Who likes what you like?</h3><p className="mt-0.5 max-w-xl text-xs leading-4 text-[#7d7382]">See who shares similar Entertainment DNA.</p></div><div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person, band }, index) => <FeaturedMatch key={person.id} person={person} band={band} index={index} onSelect={onSelectPerson} />)}</div></div>}
-        {remaining.length > 0 && <div><div className="mb-3 flex items-end justify-between"><div><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">More to explore</h3><p className="mt-0.5 text-xs text-[#7d7382]">Every overlap is a place to start.</p></div></div><div className="divide-y divide-[#dfd8e1] border-y border-[#dfd8e1]">{remaining.map((band) => <div key={band.id} className="py-5"><div className="mb-2 flex items-baseline justify-between"><h3 className="text-[11px] font-bold uppercase tracking-[.15em] text-[#65457b]">{band.label}%</h3><span className="text-xs text-[#857a8b]">{band.note}</span></div>{band.people.map((person) => <MatchRow key={person.id} person={person} onSelect={onSelectPerson} />)}</div>)}</div></div>}
-      </>}
+    <FriendsHeader />
+    {featured.length > 0 && <div className="mb-9"><div className="mb-3"><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#65457b]">Top matches</p><p className="mt-1 max-w-xl text-xs leading-4 text-[#7d7382]">People with the strongest Entertainment DNA overlap who you haven’t connected with yet.</p></div><div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person, band }, index) => <FeaturedMatch key={person.id} person={person} band={band} index={index} onSelect={onSelectPerson} />)}</div></div>}
+    {!discoverable.length && <div className="mb-9 rounded-xl border border-dashed border-[#d6ceda] px-5 py-7 text-sm text-[#746b7b]"><p className="font-bold text-[#3b2c47]">No new taste matches yet.</p><p className="mt-1 leading-5">We’ll add compatible people here as more members build their Entertainment DNA.</p></div>}
+    {userId && <div className="mb-9"><div className="mb-3"><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">Your circle</h3><p className="mt-0.5 text-xs text-[#7d7382]">Search, invite, manage requests, and keep up with your friends.</p></div><FriendsManager userId={userId} /></div>}
+    {remaining.length > 0 && <div><div className="mb-3 flex items-end justify-between"><div><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">More people to explore</h3><p className="mt-0.5 text-xs text-[#7d7382]">Every overlap is a place to start.</p></div></div><div className="divide-y divide-[#dfd8e1] border-y border-[#dfd8e1]">{remaining.map((band) => <div key={band.id} className="py-5"><div className="mb-2 flex items-baseline justify-between"><h3 className="text-[11px] font-bold uppercase tracking-[.15em] text-[#65457b]">{band.label}%</h3><span className="text-xs text-[#857a8b]">{band.note}</span></div>{band.people.map((person) => <MatchRow key={person.id} person={person} onSelect={onSelectPerson} />)}</div>)}</div></div>}
     {data.has_more && <button disabled={more.isPending} onClick={() => more.mutate()} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#503574] disabled:opacity-50">Compare more people <ChevronRight size={16} /></button>}
   </section>;
+}
+
+function FriendsHeader() {
+  return <div className="mb-5"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Friends</p><h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Your people.</h2><p className="mt-1 text-sm leading-5 text-[#746b78]">Find new connections through your taste and keep up with the friends already in your circle.</p></div>;
 }
 
 function FeaturedMatch({ person, band, onSelect }: { person: Person; band: { label: string; note: string }; index: number; onSelect: (person: Person) => void }) {
@@ -496,10 +499,6 @@ function SharedTitleTile({ item }: { item: { title: string; image_url?: string |
 
 function MatchRow({ person, onSelect }: { person: Person; onSelect: (person: Person) => void }) {
   return <button type="button" onClick={() => onSelect(person)} className="group flex min-h-[62px] w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-[#ece6ee]"><Avatar person={person} small /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-bold">{nameFor(person)}</p><span className={`shrink-0 text-[10px] font-bold ${person.is_friend ? "text-[#356454]" : "text-[#786384]"}`}>{person.is_friend ? "Friend" : "New"}</span></div><p className="truncate text-xs text-[#7d7382]">{evidenceFor(person)}</p></div><span className="font-serif text-lg text-[#4b2d75]">{Math.round(person.match_score || 0)}%</span></button>;
-}
-
-function Friends({ userId }: { userId?: string }) {
-  return <section className="mt-7"><div className="mb-5"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Friends</p><h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Your circle.</h2><p className="mt-1 text-sm leading-5 text-[#746b78]">Find people you know and keep up with the friends you chose to keep close.</p></div>{userId && <FriendsManager userId={userId} />}</section>;
 }
 
 function Tribes({ query, selected, onSelect, membership, relatedPeople }: { query: ReturnType<typeof useQuery<TribesResponse>>; selected?: Tribe; onSelect: (slug?: string) => void; membership: ReturnType<typeof useMutation<TribesResponse, Error, { slug: string; joined: boolean }>>; relatedPeople: Person[] }) {

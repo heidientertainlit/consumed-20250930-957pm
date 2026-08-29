@@ -3329,7 +3329,7 @@ export default function UserProfile() {
                   <Clock size={17} className="mr-2" /> Request Pending
                 </Button>
               ) : friendshipStatus === 'pending_received' ? (
-                <Button onClick={() => setLocation('/friends')} className="rounded-full bg-violet-700 px-6 text-white hover:bg-violet-800">
+                <Button onClick={() => setLocation('/people?tab=friends')} className="rounded-full bg-violet-700 px-6 text-white hover:bg-violet-800">
                   <Users size={17} className="mr-2" /> Review Friend Request
                 </Button>
               ) : (
@@ -3661,7 +3661,7 @@ export default function UserProfile() {
                     </Button>
                   ) : friendshipStatus === 'pending_received' ? (
                     <Button 
-                      onClick={() => setLocation('/friends')}
+                      onClick={() => setLocation('/people?tab=friends')}
                       className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
                       data-testid="button-accept-request"
                     >

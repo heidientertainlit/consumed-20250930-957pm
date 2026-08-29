@@ -51,7 +51,6 @@ import PlayHighStakes from "@/pages/play-high-stakes";
 import PlayRanks from "@/pages/play-ranks";
 import PlayCast from "@/pages/play-cast";
 
-import Friends from "@/pages/friends";
 import People from "@/pages/people";
 import CreatorProfile from "@/pages/creator-profile";
 import UserProfile from "@/pages/user-profile";
@@ -325,7 +324,7 @@ function Router() {
           </Route>
 
           <Route path="/notifications">
-            <RedirectTo to="/friends" />
+            <RedirectTo to="/people?tab=friends" />
           </Route>
 
           <Route path="/friendsupdates">
@@ -357,9 +356,7 @@ function Router() {
           </Route>
 
           <Route path="/friends">
-            <ProtectedRoute>
-              <Friends />
-            </ProtectedRoute>
+            <RedirectTo to="/people?tab=friends" />
           </Route>
 
           <Route path="/people">

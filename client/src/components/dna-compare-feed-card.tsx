@@ -926,7 +926,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
         <div className="px-4 pb-3">
           {noFriends && !featuredProp ? (
             <button
-              onClick={() => setLocation("/friends")}
+              onClick={() => setLocation("/people?tab=friends")}
               className="w-full py-2 rounded-full bg-gray-100 text-gray-700 font-semibold text-[13px] hover:bg-gray-200 transition-colors text-center"
             >
               Add or invite friends →

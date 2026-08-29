@@ -42,3 +42,4 @@
 - [My Media history semantics](my-media-history-semantics.md) — tracked dates are not completion dates; keep tracked/completed separate and never invent hours or past progress.
 - [Fixed media lists](fixed-media-lists.md) — only All + five system lists are supported; legacy custom lists remain read-only and cannot be new destinations.
 - [Taste group presentation](taste-group-presentation.md) — present Tribes as unnamed groups connected by recognizable media, simple types, people, and match strength.
+- [Friends and matches](friends-matches.md) — individual relationships share one Friends destination; preserve premium match discovery while keeping accepted friends and management distinct.
