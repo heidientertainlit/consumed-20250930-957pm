@@ -312,9 +312,23 @@ export default function PeoplePage() {
             </button>
           </div>
         </div>
-        <nav className="flex overflow-x-auto border-t border-white/15" aria-label="People sections">{tabs.map((item) => <button key={item.id} onClick={() => setTab(item.id)} className={`relative shrink-0 px-4 py-3.5 text-[13px] font-bold transition-colors first:pl-0 ${tab === item.id ? "text-white after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-violet-400 first:after:left-0" : "text-white/55 hover:text-white/85"}`}>{item.label}</button>)}</nav>
       </div>
     </header>
+    <div className="bg-[#fbf8f5] px-4 sm:px-6">
+      <nav className="mx-auto flex max-w-5xl overflow-x-auto border-b border-[#dcd5df]" aria-label="People sections">
+        {tabs.map((item) => <button
+          key={item.id}
+          onClick={() => setTab(item.id)}
+          className={`relative shrink-0 px-4 py-3.5 text-[13px] font-bold whitespace-nowrap transition-colors first:pl-0 ${
+            tab === item.id
+              ? "text-[#38214f] after:absolute after:inset-x-3 after:bottom-0 after:h-[3px] after:rounded-t-full after:bg-[#5b3185] first:after:left-0"
+              : "text-[#827887] hover:text-[#493659]"
+          }`}
+        >
+          {item.label}
+        </button>)}
+      </nav>
+    </div>
     <main className="mx-auto max-w-5xl px-4 sm:px-6">
 
       {tab === "matches" && <Matches query={affinityQuery} more={moreMatches} onSelectPerson={openPerson} onInvite={copyInvite} />}
