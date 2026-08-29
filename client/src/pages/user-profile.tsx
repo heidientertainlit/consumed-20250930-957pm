@@ -4674,26 +4674,26 @@ export default function UserProfile() {
           <div className="px-4 pt-4 mb-8">
             <section className="overflow-hidden bg-white">
               <div className="px-4 pb-2 pt-5 sm:px-5">
-                <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-[#55217f]">My Media</p>
-                <div className="flex items-start justify-between gap-4">
-                  <h4 className="max-w-[235px] text-[29px] font-bold leading-[1.16] tracking-[-0.035em] text-[#171129]">
-                    Your entertainment,<br />all in one place.
-                  </h4>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#55217f]">My Media</p>
                   <button
                     onClick={() => setLocation('/add')}
-                    className="mt-1 flex shrink-0 items-center justify-center gap-2 rounded-full border border-[#9f75bd] bg-white px-4 py-2.5 text-sm font-bold text-[#55217f] transition hover:bg-[#faf6fc] active:scale-[0.98]"
+                    className="flex shrink-0 items-center justify-center gap-1.5 rounded-full border border-[#9f75bd] bg-white px-4 py-2 text-sm font-bold text-[#55217f] transition hover:bg-[#faf6fc] active:scale-[0.98]"
                   >
-                    <Plus size={20} />
+                    <Plus size={18} />
                     Add Media
                   </button>
                 </div>
+                <h4 className="max-w-[340px] text-[29px] font-bold leading-[1.16] tracking-[-0.035em] text-[#171129]">
+                  Your entertainment,<br />all in one place.
+                </h4>
 
                 <div className="mt-8 flex items-end gap-2">
                   <span className="font-serif text-[46px] font-bold leading-none text-[#55217f]">{allMediaItems.length}</span>
                   <span className="pb-1 text-base font-medium text-[#51475b]">titles</span>
                 </div>
 
-                <div className="mt-7 grid grid-cols-6 gap-2">
+                <div className="mt-7 grid grid-cols-3 gap-x-4 gap-y-5 sm:grid-cols-6 sm:gap-2">
                   {[
                     { val: canonicalMediaTypeCounts.movie, label: 'Movies', icon: Film, color: 'text-[#7a24ad]' },
                     { val: canonicalMediaTypeCounts.tv, label: 'TV Shows', icon: Tv, color: 'text-[#dc2482]' },
@@ -4717,8 +4717,9 @@ export default function UserProfile() {
                   </div>
                 </div>
 
-                <div className="mt-7">
-                <div className="mt-4 border-b border-[#ece5e8] pb-4">
+                <div className="mt-8">
+                <div className="border-b border-[#ece5e8] pb-4">
+                  <p className="mb-3 text-[11px] font-normal uppercase tracking-[0.2em] text-[#75677e]">Lists</p>
                   <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 scrollbar-hide">
                     {primaryMediaLists.map((list: any) => {
                       const filterValue = list.title === 'All' ? 'all' : list.title;
@@ -4729,7 +4730,7 @@ export default function UserProfile() {
                           key={list.id}
                           type="button"
                           onClick={() => setMediaHistoryList(filterValue)}
-                          className={`flex min-w-[92px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-full px-4 py-2.5 text-xs font-semibold transition ${
+                          className={`flex min-w-[108px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-full px-5 py-3 text-xs font-semibold transition ${
                             isActive
                               ? 'bg-[#68418f] text-white shadow-[0_6px_14px_rgba(104,65,143,0.2)]'
                               : 'bg-[#f8f5f9] text-[#34283d] hover:bg-[#f0e9f4]'
