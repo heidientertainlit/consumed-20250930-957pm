@@ -171,10 +171,14 @@ async function functionRequest<T>(path: "people-affinity" | "people-tribes", tok
 async function hydrateTribeMediaImages(data: TribesResponse, token: string): Promise<TribesResponse> {
   const missing = data.tribes.flatMap((tribe) =>
     tribe.media
-      .filter((item) => item.title?.trim() && !item.image_url)
-      .map((item) => ({ title: item.title.trim(), mediaType: item.media_type?.trim() || "", id: item.id }))
+      .filter((item) => item.title?.trim() && (!item.image_url || !item.external_id || !item.external_source))
+      .map((item) => ({
+        title: item.title.trim(),
+        mediaType: item.media_type?.trim() || "",
+        key: `${item.media_type?.trim().toLowerCase() || ""}:${item.title.trim().toLowerCase()}`,
+      }))
   );
-  const unique = [...new Map(missing.map((item) => [`${item.mediaType.toLowerCase()}:${item.title.toLowerCase()}`, item])).values()];
+  const unique = [...new Map(missing.map((item) => [item.key, item])).values()];
   const resolvedEntries = await Promise.all(unique.map(async (item) => {
     try {
       const params = new URLSearchParams({ query: item.title });
@@ -182,25 +186,38 @@ async function hydrateTribeMediaImages(data: TribesResponse, token: string): Pro
       const response = await fetch(`${SUPABASE_URL}/functions/v1/media-search?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) return [item.id, ""] as const;
+      if (!response.ok) return [item.key, null] as const;
       const payload = await response.json();
       const results = Array.isArray(payload?.results) ? payload.results : Array.isArray(payload) ? payload : [];
       const normalizedTitle = item.title.toLowerCase().replace(/[^a-z0-9]+/g, "");
       const match = results.find((result: any) =>
         String(result?.title || result?.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "") === normalizedTitle
       ) || results[0];
-      const image = match?.poster_url || match?.image || match?.image_url || match?.cover_url || "";
-      return [item.id, String(image)] as const;
+      if (!match) return [item.key, null] as const;
+      return [item.key, {
+        image_url: String(match.poster_url || match.image || match.image_url || match.cover_url || ""),
+        external_id: String(match.external_id || match.id || ""),
+        external_source: String(match.external_source || match.source || ""),
+      }] as const;
     } catch {
-      return [item.id, ""] as const;
+      return [item.key, null] as const;
     }
   }));
-  const imagesById = new Map(resolvedEntries.filter(([, image]) => Boolean(image)));
+  const resolvedByKey = new Map(resolvedEntries.filter(([, resolved]) => Boolean(resolved)));
   return {
     ...data,
     tribes: data.tribes.map((tribe) => ({
       ...tribe,
-      media: tribe.media.map((item) => ({ ...item, image_url: item.image_url || imagesById.get(item.id) || undefined })),
+      media: tribe.media.map((item) => {
+        const key = `${item.media_type?.trim().toLowerCase() || ""}:${item.title.trim().toLowerCase()}`;
+        const resolved = resolvedByKey.get(key);
+        return {
+          ...item,
+          image_url: item.image_url || resolved?.image_url || undefined,
+          external_id: item.external_id || resolved?.external_id || undefined,
+          external_source: item.external_source || resolved?.external_source || undefined,
+        };
+      }),
     })),
   };
 }
@@ -631,11 +648,15 @@ function Tribes({ query, selected, onSelect, membership, relatedPeople }: { quer
         const typeLabels = Array.from(new Set(media.map((item) => item.media_type?.trim()).filter(Boolean)))
           .slice(0, 3)
           .map((type) => mediaTypeLabel(type));
+        const matchedTypeLabels = tribe.evidence
+          .filter((item) => (item.type || "").toLowerCase() === "media_type")
+          .map((item) => mediaTypeLabel(item.value || item.label || ""))
+          .filter(Boolean);
         const genreLabels = tribe.evidence
           .filter((item) => `${item.group || ""} ${item.type || ""}`.toLowerCase().includes("genre"))
           .map((item) => item.value || item.label || "")
           .filter(Boolean);
-        const affinityTags = Array.from(new Set([...typeLabels, ...genreLabels])).slice(0, 3);
+        const affinityTags = Array.from(new Set(isReady ? [...matchedTypeLabels, ...genreLabels] : typeLabels)).slice(0, 3);
         const positioning = groupAffinityPositioning(tribe, tribe.slug === overallTribeSlug);
         const cardPeople = tribe.members.length
           ? tribe.members.slice(0, 4)
@@ -652,7 +673,7 @@ function Tribes({ query, selected, onSelect, membership, relatedPeople }: { quer
             <h3 className={`${isReady ? "mt-2" : ""} font-serif text-[20px] font-medium leading-[1.16] tracking-[-.025em] text-[#281e34] sm:text-[22px]`}>{positioning.title}</h3>
             <p className="mt-2 text-sm leading-5 text-[#746b78]">{positioning.line}</p>
           </div>
-          {media.length > 0 && <div className="mt-4 flex gap-2">
+          {!isReady && media.length > 0 && <div className="mt-4 flex gap-2">
             {media.map((item, mediaIndex) => <div key={`${item.id}-${mediaIndex}`} className="relative aspect-[4/5] w-[58px] shrink-0 overflow-hidden rounded-lg bg-[#ddd6e0] shadow-sm">
               {item.image_url
                 ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" />
@@ -698,7 +719,7 @@ function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: 
     <div className="overflow-hidden rounded-[22px] border border-[#ded4e1] bg-[#ece6ec]"><div className="p-6 sm:p-8" style={{ background: `linear-gradient(125deg, ${tribe.accent_color || "#745386"}22, ${tribe.accent_color_2 || "#4d6e9b"}35)` }}><div>{personalized && <TribeLabel>{Math.round(tribe.fit_score)}% overlap</TribeLabel>}<h2 className={`${personalized ? "mt-3" : ""} max-w-xl font-serif text-3xl font-medium leading-[1.08] tracking-[-.04em] text-[#30203f] sm:text-4xl`}>{positioning.title}</h2><p className="mt-4 max-w-xl text-sm leading-5 text-[#5f5665]">{positioning.line}</p></div>
       <div className="mt-6 flex flex-wrap gap-2">{personalized && <button disabled={membership.isPending} onClick={() => membership.mutate({ slug: tribe.slug, joined: tribe.is_member })} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${tribe.is_member ? "border border-[#bdb0c4] bg-[#fbf9fa] text-[#4e3d58]" : "bg-[#4f3373] text-[#faf8fb] hover:bg-[#432965]"}`}>{tribe.is_member && <Check size={15} />}{membership.isPending ? "Updating…" : tribe.is_member ? "Following" : "Follow group"}</button>}<button onClick={share} className="inline-flex items-center gap-2 rounded-full border border-[#bdb0c4] bg-[#fbf9fa]/80 px-4 py-2 text-sm font-bold text-[#503c61]"><Share2 size={15} /> Share</button></div></div>
       <div className="bg-[#fbf9fa] p-6 sm:p-8">
-        {connectionMedia.length > 0 && <><TribeLabel>Some of what connects you</TribeLabel><MediaShelf media={connectionMedia} tribe={tribe} /></>}
+        {!personalized && connectionMedia.length > 0 && <><TribeLabel>Examples from this group</TribeLabel><MediaShelf media={connectionMedia} tribe={tribe} /></>}
       </div>
       {lovedMedia.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#f6f3f5] p-6 sm:p-8"><TribeLabel>Loved by this group</TribeLabel><p className="mt-2 text-sm text-[#746b7b]">Things you haven’t consumed yet that people with this taste rate highly.</p><MediaShelf media={lovedMedia} tribe={tribe} metric="loved" /></div>}
       {trendingMedia.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#fbf9fa] p-6 sm:p-8"><TribeLabel>Trending with this group</TribeLabel><p className="mt-2 text-sm text-[#746b7b]">What people with this taste have been tracking and discussing lately.</p><MediaShelf media={trendingMedia} tribe={tribe} metric="trending" /></div>}
