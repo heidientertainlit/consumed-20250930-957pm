@@ -4,7 +4,7 @@ description: How the feed "% match" badge is scored and calibrated (score-media-
 ---
 - Media matching has an isolated, reversible v2 test path; v1 remains available and its cache is preserved.
 - **Rule:** v2 scores only from signed rating-derived genre evidence. Never treat raw DNA signal strength as positive preference; tracked, followed, or engaged-with media is not proof the user liked it.
-- Broad cross-media genre overlap is not sufficient evidence. Genre scoring must be grounded in ratings from the same media format, and every candidate genre needs repeated support or the badge stays hidden.
+- Broad cross-media genre overlap is not sufficient evidence. Ground genre scoring in the same media format; require repeated support for core genres and direct support for audience/format-defining traits, but do not gate on every incidental catalog tag.
 - **Why:** title-recognition scoring produced confident matches with no defensible connection to the user's demonstrated taste.
 - **How to apply:** actual ratings always suppress predictions; weak or missing verified evidence returns no badge. Keep archetype, People, Friends, and Tribe scoring unchanged while media v2 is evaluated.
 - V2 uses canonical media genres and a short, version-separated cache. Its lease acquisition, completion, and release must remain atomically fenced so feed fan-out cannot duplicate work or overwrite a newer result.

@@ -10,6 +10,18 @@ const normalize = (value) => String(value || '')
 
 const unique = (values) => [...new Set((values || []).map(normalize).filter(Boolean))];
 
+const REQUIRED_CONTEXT_GENRES = new Set([
+  'animation',
+  'children',
+  'childrens',
+  'documentary',
+  'family',
+  'juvenile fiction',
+  'juvenile nonfiction',
+  'musical',
+  'young adult',
+]);
+
 const ratingPreference = (rating) => {
   const value = Number(rating);
   if (value >= 5) return 1;
@@ -90,16 +102,28 @@ export function scoreMediaMatchV2({ ratings = [], mediaGenres = [], mediaType })
   const weight = evidence.reduce((sum, item) => sum + item.weight, 0);
   const genreCoverage = candidateGenres.map((genre) => genreRatings.get(genre)?.count || 0);
   const minimumGenreEvidence = candidateGenres.length === 1 ? 3 : 2;
-  const allGenresSupported = genreCoverage.length > 0
-    && genreCoverage.every((count) => count >= minimumGenreEvidence);
-  const confidence = allGenresSupported
-    ? clamp(Math.min(...genreCoverage) / 5, 0, 1)
+  const supportedGenreCounts = genreCoverage.filter((count) => count >= minimumGenreEvidence);
+  const requiredSupportedGenres = candidateGenres.length === 1 ? 1 : Math.min(2, candidateGenres.length);
+  const hasCoreSupport = supportedGenreCounts.length >= requiredSupportedGenres;
+  const hasRequiredContextSupport = candidateGenres.every((genre, index) =>
+    !REQUIRED_CONTEXT_GENRES.has(genre) || genreCoverage[index] >= 2
+  );
+  const confidence = hasCoreSupport && hasRequiredContextSupport
+    ? clamp(
+      supportedGenreCounts
+        .sort((a, b) => b - a)
+        .slice(0, requiredSupportedGenres)
+        .reduce((sum, count) => sum + Math.min(count, 5), 0)
+        / (requiredSupportedGenres * 5),
+      0,
+      1,
+    )
     : 0;
-  if (candidateGenres.length === 0 || substantive.length === 0 || !allGenresSupported || confidence < 0.4) {
+  if (candidateGenres.length === 0 || substantive.length === 0 || !hasCoreSupport || !hasRequiredContextSupport || confidence < 0.4) {
     return {
       score: null,
       confidence: Math.round(confidence * 100),
-      reason: 'Not enough same-format rating evidence across this title’s genres.',
+      reason: 'Not enough same-format rating evidence for this title’s defining traits.',
       evidence: [],
     };
   }
@@ -114,7 +138,7 @@ export function scoreMediaMatchV2({ ratings = [], mediaGenres = [], mediaType })
   const reason = negative.length && (!positive.length || score < 50)
     ? `Your ratings suggest ${negative.map((item) => item.label).join(' and ')} may not fit your taste.`
     : positive.length
-      ? `Grounded in your ratings and DNA for ${positive.map((item) => item.label).join(' and ')}.`
+      ? `Grounded in your ratings for ${positive.map((item) => item.label).join(' and ')}.`
       : 'Your evidence is mixed for this title.';
 
   return {

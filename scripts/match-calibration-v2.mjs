@@ -26,6 +26,17 @@ const sparseFamily = scoreMediaMatchV2({ ratings: [
 ], mediaGenres: ['romance', 'adventure', 'comedy', 'family'], mediaType: 'movie' });
 assert.equal(sparseFamily.score, null, `expected sparse family evidence to hide the score, got ${sparseFamily.score}`);
 
+const supportedCoreWithIncidentalTags = scoreMediaMatchV2({
+  ratings: [
+    { media_title: 'Romance One', media_type: 'book', rating: 5, genres: ['romance', 'contemporary'] },
+    { media_title: 'Romance Two', media_type: 'book', rating: 4.5, genres: ['romance', 'contemporary'] },
+    { media_title: 'Romance Three', media_type: 'book', rating: 5, genres: ['romance'] },
+  ],
+  mediaGenres: ['romance', 'contemporary', 'women', 'multiple timelines'],
+  mediaType: 'book',
+});
+assert.ok(supportedCoreWithIncidentalTags.score >= 70, `expected supported core genres to score despite incidental tags, got ${supportedCoreWithIncidentalTags.score}`);
+
 const repeat = scoreMediaMatchV2({ ratings, mediaGenres: ['romance', 'period drama'], mediaType: 'movie' });
 assert.deepEqual(repeat, strong);
 
