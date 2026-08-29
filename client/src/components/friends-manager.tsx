@@ -352,7 +352,7 @@ function ClosestFriendCard({ friend }: { friend: Person }) {
       <p className="mt-1 text-xs text-[#7d7382]">The friend whose Entertainment DNA feels most like yours.</p>
     </div>
     <Link
-      href={`/dna?tab=compare&friend=${encodeURIComponent(friend.id)}`}
+      href={`/user/${encodeURIComponent(friend.id)}`}
       className="group block overflow-hidden rounded-[22px] border border-[#d9cedf] bg-[#fffdfb] p-4 shadow-[0_8px_22px_rgba(65,49,55,.075)] transition hover:-translate-y-0.5 hover:border-[#bea9cc] hover:shadow-[0_12px_28px_rgba(81,49,111,.13)]"
     >
       <div className="flex items-start gap-3">
@@ -374,7 +374,7 @@ function ClosestFriendCard({ friend }: { friend: Person }) {
       </div>}
       <div className="mt-4 flex items-center justify-between border-t border-[#dcd2df] pt-3 text-xs font-semibold text-[#614276]">
         <span>{totalShared ? `${totalShared} thing${totalShared === 1 ? "" : "s"} in common` : "View your DNA comparison"}</span>
-        <span className="inline-flex items-center gap-1">Compare DNA <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" /></span>
+        <span className="inline-flex items-center gap-1">View profile <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" /></span>
       </div>
     </Link>
   </section>;

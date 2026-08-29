@@ -326,9 +326,9 @@ export function HeroCTAButtons() {
       <div className="mx-2 grid grid-cols-2 gap-3">
         <button
           onClick={() => setTrackOpen(true)}
-          className="flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-[#4b2868] shadow-[0_7px_18px_rgba(12,6,25,.24)] transition active:scale-[.98] active:bg-[#f5eff8]"
+          className="flex min-h-11 items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_55%,#2563eb_100%)] px-4 py-2 text-sm font-bold text-white shadow-[0_7px_20px_rgba(50,42,180,.38)] transition active:scale-[.98] active:brightness-95"
           style={{
-            border: "1px solid rgba(255,255,255,.9)",
+            border: "1px solid rgba(196,181,253,.45)",
           }}
         >
           <Plus size={16} strokeWidth={2} />
