@@ -8,9 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 
 interface FriendsManagerProps {
   userId: string;
+  matchScores?: Record<string, number>;
 }
 
-export default function FriendsManager({ userId }: FriendsManagerProps) {
+export default function FriendsManager({ userId, matchScores = {} }: FriendsManagerProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [requestsOpen, setRequestsOpen] = useState(false);
   const { toast } = useToast();
@@ -247,6 +248,7 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
           {friendsData.friends.map((friendship: any) => {
             const friend = friendship.friend;
             if (!friend) return null;
+            const matchScore = matchScores[friend.id];
             const first = friend.first_name?.trim();
             const last = friend.last_name?.trim();
             const displayName = first
@@ -254,22 +256,30 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
               : friend.display_name || friend.user_name || "Consumed member";
             const avatarInitials = `${first?.[0] || friend.user_name?.[0] || "?"}${last?.[0] || ""}`.toUpperCase();
             return (
-              <Link
+              <div
                 key={friendship.id}
-                href={`/user/${friend.id}`}
                 className="group flex min-h-[66px] items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-[#ece6ee]"
               >
-                <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[#e5dff3] text-xs font-bold text-[#4c3972]">
-                  {friend.avatar
-                    ? <img src={friend.avatar} alt="" className="h-full w-full object-cover" />
-                    : avatarInitials}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold text-[#30263a]">{displayName}</span>
-                  {friend.user_name && <span className="mt-0.5 block truncate text-xs text-[#817686]">@{friend.user_name}</span>}
-                </span>
-                <ChevronRight size={17} className="shrink-0 text-[#8b7e91] transition-transform group-hover:translate-x-0.5" />
-              </Link>
+                <Link href={`/user/${friend.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[#e5dff3] text-xs font-bold text-[#4c3972]">
+                    {friend.avatar
+                      ? <img src={friend.avatar} alt="" className="h-full w-full object-cover" />
+                      : avatarInitials}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold text-[#30263a]">{displayName}</span>
+                    {friend.user_name && <span className="mt-0.5 block truncate text-xs text-[#817686]">@{friend.user_name}</span>}
+                  </span>
+                </Link>
+                <Link
+                  href={`/dna?tab=compare&friend=${encodeURIComponent(friend.id)}`}
+                  className={`shrink-0 rounded-full font-bold transition ${matchScore != null
+                    ? "bg-[#e9dff2] px-3 py-1.5 text-xs text-[#5b3777] hover:bg-[#ddcde9]"
+                    : "border border-[#cbbdd4] px-3 py-1.5 text-[10px] uppercase tracking-[.08em] text-[#684d7b] hover:bg-[#f2ecf5]"}`}
+                >
+                  {matchScore != null ? `${matchScore}% match` : "Compare DNA"}
+                </Link>
+              </div>
             );
           })}
         </div>

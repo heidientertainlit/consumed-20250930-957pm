@@ -94,18 +94,18 @@ const groupConnectionKind = (tribe: Tribe, allowOverall = true) => {
   if (["books", "movies", "shows", "music", "podcasts", "games", "youtube"].includes(dominantType)) return dominantType;
   return "general";
 };
-const groupConnectionHeadline = (tribe: Tribe, allowOverall = true) => {
+const groupEmotionalPositioning = (tribe: Tribe, allowOverall = true) => {
   const kind = groupConnectionKind(tribe, allowOverall);
-  if (kind === "overall") return "People who have similar taste overall";
-  if (kind === "books") return "People who like the same books you do";
-  if (kind === "movies") return "People who like the same movies you do";
-  if (kind === "shows") return "People who like the same shows you do";
-  if (kind === "music") return "People who like the same music you do";
-  if (kind === "podcasts") return "People who like the same podcasts you do";
-  if (kind === "games") return "People who like the same games you do";
-  if (kind === "youtube") return "People who like the same YouTube content you do";
-  if (kind === "genres") return "People who like the same genres you do";
-  return "People who like the same things you do";
+  if (kind === "overall") return { label: "A lot in common", line: "You like a lot of the same things." };
+  if (kind === "books") return { label: "Your book people", line: "Books are where you connect." };
+  if (kind === "movies") return { label: "Same movie language", line: "You’re drawn to the same kinds of stories." };
+  if (kind === "shows") return { label: "Same comfort zone", line: "You keep coming back to the same favorites." };
+  if (kind === "music") return { label: "On the same wavelength", line: "The same sounds stay with you." };
+  if (kind === "podcasts") return { label: "Same conversation", line: "You listen for the same voices and ideas." };
+  if (kind === "games") return { label: "Same kind of player", line: "You play for many of the same reasons." };
+  if (kind === "youtube") return { label: "Same rabbit holes", line: "You get pulled into the same corners of YouTube." };
+  if (kind === "genres") return { label: "Same obsession", line: "You all have a thing for the same kinds of stories." };
+  return { label: "One big thing in common", line: "You may be different everywhere else. But not here." };
 };
 
 function Avatar({ person, small = false }: { person: Person; small?: boolean }) {
@@ -464,6 +464,11 @@ function Friends({ query, more, onSelectPerson, onInvite, userId }: { query: Ret
   if (query.isError) return <section className="mt-7"><FriendsHeader /><ErrorState onRetry={() => query.refetch()} />{userId && <div className="mt-8"><FriendsManager userId={userId} /></div>}</section>;
   if (!data?.ready) return <section className="mt-7"><FriendsHeader /><Readiness readiness={data?.readiness} onInvite={onInvite} />{userId && <div className="mt-9 border-t border-[#e3dce5] pt-7"><FriendsManager userId={userId} /></div>}</section>;
   const ordered = bands.map((definition) => ({ ...definition, people: data.bands?.find((band) => band.id === definition.id)?.people || [] })).filter((band) => band.people.length);
+  const friendMatchScores = Object.fromEntries(
+    ordered.flatMap((band) => band.people)
+      .filter((person) => person.is_friend && person.match_score != null)
+      .map((person) => [person.id, Math.round(person.match_score || 0)])
+  );
   const discoverable = ordered.map((band) => ({ ...band, people: band.people.filter((person) => !person.is_friend) })).filter((band) => band.people.length);
   const featured = discoverable.flatMap((band) => band.people.map((person) => ({ person, band }))).sort((a, b) => (b.person.match_score || 0) - (a.person.match_score || 0)).slice(0, 2);
   const featuredIds = new Set(featured.map(({ person }) => person.id));
@@ -472,7 +477,7 @@ function Friends({ query, more, onSelectPerson, onInvite, userId }: { query: Ret
     <FriendsHeader />
     {featured.length > 0 && <div className="mb-9"><div className="mb-3"><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#65457b]">Top matches</p><p className="mt-1 max-w-xl text-xs leading-4 text-[#7d7382]">People with the strongest Entertainment DNA overlap who you haven’t connected with yet.</p></div><div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person, band }, index) => <FeaturedMatch key={person.id} person={person} band={band} index={index} onSelect={onSelectPerson} />)}</div></div>}
     {!discoverable.length && <div className="mb-9 rounded-xl border border-dashed border-[#d6ceda] px-5 py-7 text-sm text-[#746b7b]"><p className="font-bold text-[#3b2c47]">No new taste matches yet.</p><p className="mt-1 leading-5">We’ll add compatible people here as more members build their Entertainment DNA.</p></div>}
-    {userId && <div className="mb-9"><div className="mb-3"><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">Your circle</h3><p className="mt-0.5 text-xs text-[#7d7382]">Search, invite, manage requests, and keep up with your friends.</p></div><FriendsManager userId={userId} /></div>}
+    {userId && <div className="mb-9"><div className="mb-3"><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">Your circle</h3><p className="mt-0.5 text-xs text-[#7d7382]">Search, invite, manage requests, and keep up with your friends.</p></div><FriendsManager userId={userId} matchScores={friendMatchScores} /></div>}
     {remaining.length > 0 && <div><div className="mb-3 flex items-end justify-between"><div><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">More people to explore</h3><p className="mt-0.5 text-xs text-[#7d7382]">Every overlap is a place to start.</p></div></div><div className="divide-y divide-[#dfd8e1] border-y border-[#dfd8e1]">{remaining.map((band) => <div key={band.id} className="py-5"><div className="mb-2 flex items-baseline justify-between"><h3 className="text-[11px] font-bold uppercase tracking-[.15em] text-[#65457b]">{band.label}%</h3><span className="text-xs text-[#857a8b]">{band.note}</span></div>{band.people.map((person) => <MatchRow key={person.id} person={person} onSelect={onSelectPerson} />)}</div>)}</div></div>}
     {data.has_more && <button disabled={more.isPending} onClick={() => more.mutate()} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#503574] disabled:opacity-50">Compare more people <ChevronRight size={16} /></button>}
   </section>;
@@ -531,7 +536,7 @@ function Tribes({ query, selected, onSelect, membership, relatedPeople }: { quer
         const typeLabels = Array.from(new Set(media.map((item) => item.media_type?.trim()).filter(Boolean)))
           .slice(0, 3)
           .map((type) => mediaTypeLabel(type));
-        const connectionHeadline = groupConnectionHeadline(tribe, tribe.slug === overallTribeSlug);
+        const emotional = groupEmotionalPositioning(tribe, tribe.slug === overallTribeSlug);
         const cardPeople = tribe.members.length
           ? tribe.members.slice(0, 4)
           : relatedPeople.length
@@ -544,8 +549,8 @@ function Tribes({ query, selected, onSelect, membership, relatedPeople }: { quer
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#704d84]">{isReady ? `${Math.round(tribe.fit_score)}% match` : "Explore this group"}</p>
-              <h3 className="mt-1 font-serif text-[24px] font-medium leading-[1.08] tracking-[-.035em] text-[#281e34] sm:text-[27px]">{connectionHeadline}</h3>
+              <p className="text-sm font-bold uppercase tracking-[.055em] text-[#281e34]">{isReady ? `${Math.round(tribe.fit_score)}% — ${emotional.label}` : emotional.label}</p>
+              <h3 className="mt-2 font-serif text-[22px] font-normal italic leading-[1.18] tracking-[-.025em] text-[#5d5062] sm:text-[24px]">{emotional.line}</h3>
             </div>
           </div>
           {media.length > 0 && <div className="mt-4 flex gap-2">
@@ -572,7 +577,7 @@ function Tribes({ query, selected, onSelect, membership, relatedPeople }: { quer
 
 function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: { tribe: Tribe; onBack: () => void; membership: ReturnType<typeof useMutation<TribesResponse, Error, { slug: string; joined: boolean }>>; personalized: boolean; allowOverall: boolean }) {
   const { toast } = useToast();
-  const connectionHeadline = groupConnectionHeadline(tribe, allowOverall);
+  const emotional = groupEmotionalPositioning(tribe, allowOverall);
   const mediaTypes = Array.from(new Set(tribe.media.map((item) => normalizedGroupMediaType(item.media_type)).filter(Boolean)))
     .slice(0, 4)
     .map((type) => mediaTypeLabel(type));
@@ -588,7 +593,7 @@ function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: 
     } catch { /* intentional cancellation */ }
   };
   return <section className="mt-7"><button onClick={onBack} className="mb-5 inline-flex items-center gap-1 text-sm font-bold text-[#543d72]"><ArrowLeft size={16} /> All taste groups</button>
-    <div className="overflow-hidden rounded-[22px] border border-[#ded4e1] bg-[#ece6ec]"><div className="p-6 sm:p-8" style={{ background: `linear-gradient(125deg, ${tribe.accent_color || "#745386"}22, ${tribe.accent_color_2 || "#4d6e9b"}35)` }}><div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#65457b]">{personalized ? `${Math.round(tribe.fit_score)}% match` : "Explore this group"}</p><h2 className="mt-2 font-serif text-4xl tracking-[-.05em]">{connectionHeadline}</h2><p className="mt-3 max-w-xl text-sm leading-6 text-[#5f5665]">See the media and people that connect this group.</p></div>
+    <div className="overflow-hidden rounded-[22px] border border-[#ded4e1] bg-[#ece6ec]"><div className="p-6 sm:p-8" style={{ background: `linear-gradient(125deg, ${tribe.accent_color || "#745386"}22, ${tribe.accent_color_2 || "#4d6e9b"}35)` }}><div><p className="text-sm font-bold uppercase tracking-[.055em] text-[#30203f]">{personalized ? `${Math.round(tribe.fit_score)}% — ${emotional.label}` : emotional.label}</p><h2 className="mt-3 max-w-xl font-serif text-3xl italic leading-[1.08] tracking-[-.04em] text-[#514557] sm:text-4xl">{emotional.line}</h2><p className="mt-4 max-w-xl text-sm leading-6 text-[#5f5665]">See the media and people behind the connection.</p></div>
       <div className="mt-6 flex flex-wrap gap-2">{personalized && <button disabled={membership.isPending} onClick={() => membership.mutate({ slug: tribe.slug, joined: tribe.is_member })} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${tribe.is_member ? "border border-[#bdb0c4] bg-[#fbf9fa] text-[#4e3d58]" : "bg-[#4f3373] text-[#faf8fb] hover:bg-[#432965]"}`}>{tribe.is_member && <Check size={15} />}{membership.isPending ? "Updating…" : tribe.is_member ? "Leave group" : "Join group"}</button>}<button onClick={share} className="inline-flex items-center gap-2 rounded-full border border-[#bdb0c4] bg-[#fbf9fa]/80 px-4 py-2 text-sm font-bold text-[#503c61]"><Share2 size={15} /> Share</button></div></div>
       <div className="grid gap-6 bg-[#fbf9fa] p-6 sm:grid-cols-2 sm:p-8"><div><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">What they’re into</h3>{mediaTypes.length ? <div className="mt-3 flex flex-wrap gap-2">{mediaTypes.map((label) => <span key={label} className="rounded-full bg-[#eee8f4] px-3 py-2 text-xs font-semibold text-[#5b466d]">{label}</span>)}</div> : <p className="mt-3 text-sm text-[#746b7b]">Add more media to reveal the types this group shares.</p>}</div><div><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">People in this group</h3>{tribe.members.length ? <div className="mt-3 flex items-center gap-3"><AvatarStack people={tribe.members} /><span className="text-sm text-[#6f6574]">{tribe.member_count} {tribe.member_count === 1 ? "person" : "people"}</span></div> : <p className="mt-3 text-sm text-[#746b7b]">This group is taking shape.</p>}</div></div>
       {tribe.media.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#f6f3f5] p-6 sm:p-8"><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">Media that connects this group</h3><div className="mt-4 flex gap-3 overflow-x-auto pb-1">{tribe.media.slice(0, 6).map((item, index) => <article key={item.id} className="w-28 shrink-0"><div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-[#ddd6e0]">{item.image_url ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full flex-col justify-between p-3 text-white" style={{ background: `linear-gradient(145deg, ${tribe.accent_color || "#745386"}, ${tribe.accent_color_2 || "#4d6e9b"})` }}><span className="text-[9px] font-bold uppercase tracking-[.14em] text-white/65">{item.media_type}</span><span className="font-serif text-xl text-white/90">0{index + 1}</span></div>}</div><p className="mt-2 line-clamp-2 text-xs font-bold">{item.title}</p>{item.creator && <p className="truncate text-[11px] text-[#7b7180]">{item.creator}</p>}</article>)}</div></div>}
