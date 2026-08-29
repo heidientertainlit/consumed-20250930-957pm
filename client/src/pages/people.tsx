@@ -300,7 +300,7 @@ export default function PeoplePage() {
   };
 
   const affinityQuery = useQuery({
-    queryKey: ["people-affinity-v9", user?.id], enabled: !!session?.access_token && tab === "matches",
+    queryKey: ["people-affinity-v9", user?.id], enabled: !!session?.access_token && (tab === "matches" || tab === "tribes"),
     queryFn: () => functionRequest<Affinity>("people-affinity", session!.access_token, { action: "load", batch_size: 25 }), staleTime: 60_000,
   });
   const tribesQuery = useQuery({
@@ -355,6 +355,10 @@ export default function PeoplePage() {
     try { if (typeof navigator.share === "function") await navigator.share({ title: "Join me on Consumed", text: "Compare your cross-media taste with me on Consumed.", url }); else await navigator.clipboard.writeText(url); toast({ title: "Invite ready", description: typeof navigator.share === "function" ? "Share sheet opened." : "Invite link copied." }); } catch { /* intentional cancellation */ }
   };
   const selectedTribe = tribesQuery.data?.tribes.find((tribe) => tribe.slug === selectedSlug);
+  const relatedPeople = (affinityQuery.data?.bands || [])
+    .flatMap((band) => band.people)
+    .filter((person, index, all) => all.findIndex((candidate) => candidate.id === person.id) === index)
+    .sort((a, b) => Number(Boolean(b.profile_image_url || b.avatar_url || b.avatar)) - Number(Boolean(a.profile_image_url || a.avatar_url || a.avatar)));
   const tabs: Array<{ id: Tab; label: string; Icon: typeof Dna }> = [
     { id: "matches", label: "Matches", Icon: Dna },
     { id: "friends", label: "Friends", Icon: Users },
@@ -408,7 +412,7 @@ export default function PeoplePage() {
 
       {tab === "matches" && <Matches query={affinityQuery} more={moreMatches} onSelectPerson={openPerson} onInvite={copyInvite} />}
       {tab === "friends" && <Friends userId={user?.id} />}
-      {tab === "tribes" && <Tribes query={tribesQuery} selected={selectedTribe} onSelect={setTribe} membership={membership} />}
+      {tab === "tribes" && <Tribes query={tribesQuery} selected={selectedTribe} onSelect={setTribe} membership={membership} relatedPeople={relatedPeople} />}
       {tab === "creators" && <Creators query={creatorsQuery} />}
     </main>
     <Dialog open={!!selectedPerson} onOpenChange={(open) => !open && setSelectedPerson(null)}>
@@ -493,7 +497,7 @@ function Friends({ userId }: { userId?: string }) {
   return <section className="mt-7"><div className="mb-5"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Friends</p><h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Your circle.</h2><p className="mt-1 text-sm leading-5 text-[#746b78]">Find people you know and keep up with the friends you chose to keep close.</p></div>{userId && <FriendsManager userId={userId} />}</section>;
 }
 
-function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<typeof useQuery<TribesResponse>>; selected?: Tribe; onSelect: (slug?: string) => void; membership: ReturnType<typeof useMutation<TribesResponse, Error, { slug: string; joined: boolean }>> }) {
+function Tribes({ query, selected, onSelect, membership, relatedPeople }: { query: ReturnType<typeof useQuery<TribesResponse>>; selected?: Tribe; onSelect: (slug?: string) => void; membership: ReturnType<typeof useMutation<TribesResponse, Error, { slug: string; joined: boolean }>>; relatedPeople: Person[] }) {
   if (query.isLoading) return <div className="mt-7 grid gap-3 sm:grid-cols-2">{[1, 2, 3, 4].map((item) => <div key={item} className="h-44 animate-pulse rounded-2xl bg-[#e6e0e7]" />)}</div>;
   if (query.isError) return <div className="mt-7"><ErrorState onRetry={() => query.refetch()} /></div>;
   const isReady = Boolean(query.data?.readiness?.ready);
@@ -524,6 +528,11 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
           .slice(0, 3)
           .map((type) => mediaTypeLabel(type));
         const connectionHeadline = groupConnectionHeadline(tribe, tribe.slug === overallTribeSlug);
+        const cardPeople = tribe.members.length
+          ? tribe.members.slice(0, 4)
+          : relatedPeople.length
+            ? Array.from({ length: Math.min(4, relatedPeople.length) }, (_, offset) => relatedPeople[(index * 2 + offset) % relatedPeople.length])
+            : [];
         return <button
           key={tribe.slug}
           onClick={() => onSelect(tribe.slug)}
@@ -546,11 +555,11 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
             {typeLabels.map((label) => <span key={label} className="rounded-full bg-[#eee8f4] px-2.5 py-1.5 text-[11px] font-semibold text-[#5b466d]">{label}</span>)}
             <span className="ml-auto grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#603782] text-white shadow-[0_4px_12px_rgba(96,55,130,.24)] transition group-hover:translate-x-0.5 group-hover:bg-[#4f2c70]"><ArrowRight size={19} /></span>
           </div>
-          {tribe.members.length > 0 && <div className="mt-4 flex items-center gap-3 border-t border-[#e6e0df] pt-4">
-            {tribe.members.some((person) => Boolean(person.profile_image_url || person.avatar_url || person.avatar))
-              ? <AvatarStack people={tribe.members} />
-              : <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#eee7f5] text-[#68458a]"><Users size={14} /></span>}
-            <span className="text-xs font-semibold text-[#746b78]">{tribe.member_count} {tribe.member_count === 1 ? "person" : "people"} with related taste</span>
+          {cardPeople.length > 0 && <div className="mt-4 flex items-center gap-3 border-t border-[#e6e0df] pt-4">
+            <AvatarStack people={cardPeople} />
+            <span className="text-xs font-semibold text-[#746b78]">
+              {tribe.member_count > 0 ? `${tribe.member_count} ${tribe.member_count === 1 ? "person" : "people"} in this group` : "People with related taste"}
+            </span>
           </div>}
         </button>;
       })}</div>}
