@@ -683,7 +683,8 @@ function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: 
   const groupPeople = (tribe.people?.length ? tribe.people : tribe.members).slice(0, 8);
   const recentTakes = (tribe.recent_takes || []).slice(0, 3);
   const share = async () => {
-    const url = `${APP_BASE}/people/tribes/${encodeURIComponent(tribe.id)}`;
+    const previewKind = groupConnectionKind(tribe, allowOverall);
+    const url = `${APP_BASE}/people/tribes/${encodeURIComponent(tribe.id)}?preview=${encodeURIComponent(previewKind)}`;
     try {
       if (typeof navigator.share === "function") {
         await navigator.share({ title: "People with taste like yours", text: "Take a look at this taste group on Consumed.", url });
@@ -701,14 +702,41 @@ function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: 
       </div>
       {lovedMedia.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#f6f3f5] p-6 sm:p-8"><TribeLabel>Loved by this group</TribeLabel><p className="mt-2 text-sm text-[#746b7b]">Things you haven’t consumed yet that people with this taste rate highly.</p><MediaShelf media={lovedMedia} tribe={tribe} metric="loved" /></div>}
       {trendingMedia.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#fbf9fa] p-6 sm:p-8"><TribeLabel>Trending with this group</TribeLabel><p className="mt-2 text-sm text-[#746b7b]">What people with this taste have been tracking and discussing lately.</p><MediaShelf media={trendingMedia} tribe={tribe} metric="trending" /></div>}
-      {recentTakes.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#f6f3f5] p-6 sm:p-8"><TribeLabel>What they’re talking about</TribeLabel><div className="mt-4 space-y-3">{recentTakes.map((take) => <Link key={take.id} href={`/post/${encodeURIComponent(take.id)}`} className="block rounded-2xl border border-[#e1d9e3] bg-white p-4 shadow-sm"><div className="flex items-center gap-2">{take.author.avatar_url ? <img src={take.author.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" /> : <span className="grid h-7 w-7 place-items-center rounded-full bg-[#e5dff3] text-[9px] font-bold text-[#4c3972]">{initials(take.author.display_name)}</span>}<span className="text-xs font-bold text-[#3b2c47]">{take.author.display_name}</span></div>{take.media?.title && <p className="mt-3 text-xs font-bold uppercase tracking-[.08em] text-[#67447c]">{take.media.title}</p>}<p className="mt-1 line-clamp-3 text-sm leading-5 text-[#544b58]">“{take.content}”</p><p className="mt-3 text-xs font-semibold text-[#85798b]">♥ {take.likes_count || 0} · {take.comments_count || 0} replies</p></Link>)}</div></div>}
+      {recentTakes.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#f6f3f5] p-6 sm:p-8"><TribeLabel>What they’re talking about</TribeLabel><div className="mt-4 space-y-3">{recentTakes.map((take) => {
+        const mediaHref = mediaDetailHref(take.media);
+        return <article key={take.id} className="rounded-2xl border border-[#e1d9e3] bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-2">{take.author.avatar_url ? <img src={take.author.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" /> : <span className="grid h-7 w-7 place-items-center rounded-full bg-[#e5dff3] text-[9px] font-bold text-[#4c3972]">{initials(take.author.display_name)}</span>}<span className="text-xs font-bold text-[#3b2c47]">{take.author.display_name}</span></div>
+          {take.media?.title && (mediaHref
+            ? <Link href={mediaHref} className="mt-3 block text-xs font-bold uppercase tracking-[.08em] text-[#67447c] hover:underline focus:outline-none focus-visible:underline">{take.media.title}</Link>
+            : <p className="mt-3 text-xs font-bold uppercase tracking-[.08em] text-[#67447c]">{take.media.title}</p>)}
+          <Link href={`/post/${encodeURIComponent(take.id)}`} className="block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#67447c]">
+            <p className="mt-1 line-clamp-3 text-sm leading-5 text-[#544b58]">“{take.content}”</p>
+            <p className="mt-3 text-xs font-semibold text-[#85798b]">♥ {take.likes_count || 0} · {take.comments_count || 0} replies</p>
+          </Link>
+        </article>;
+      })}</div></div>}
       {groupPeople.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#fbf9fa] p-6 sm:p-8"><TribeLabel>People in this group</TribeLabel><div className="mt-4 grid gap-2">{groupPeople.slice(0, 5).map((person) => <Link key={person.id} href={`/user/${encodeURIComponent(person.id)}`} className="flex items-center gap-3 rounded-xl border border-[#e5dee7] bg-white p-3"><Avatar person={person} /><span className="min-w-0 flex-1 truncate text-sm font-bold text-[#342642]">{nameFor(person)}</span>{person.match_score != null && <span className="font-serif text-lg text-[#583875]">{Math.round(person.match_score)}%</span>}</Link>)}</div></div>}
     </div>
   </section>;
 }
 
+function mediaDetailHref(item?: TribeMedia) {
+  const mediaId = item?.external_id?.trim();
+  const mediaSource = item?.external_source?.trim();
+  const mediaType = normalizedGroupMediaType(item?.media_type) === "shows" ? "tv" : (item?.media_type || "movie").trim().toLowerCase();
+  return mediaId && mediaSource
+    ? `/media/${encodeURIComponent(mediaType)}/${encodeURIComponent(mediaSource)}/${mediaId.split("/").map(encodeURIComponent).join("/")}`
+    : "";
+}
+
 function MediaShelf({ media, tribe, metric }: { media: TribeMedia[]; tribe: Tribe; metric?: "loved" | "trending" }) {
-  return <div className="mt-4 flex gap-3 overflow-x-auto pb-1">{media.map((item, index) => <article key={`${item.id || item.external_source || item.title}-${index}`} className="w-28 shrink-0"><div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-[#ddd6e0]">{item.image_url ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full flex-col justify-between p-3 text-white" style={{ background: `linear-gradient(145deg, ${tribe.accent_color || "#745386"}, ${tribe.accent_color_2 || "#4d6e9b"})` }}><span className="text-[9px] font-bold uppercase tracking-[.14em] text-white/65">{item.media_type}</span><span className="font-serif text-xl text-white/90">0{index + 1}</span></div>}</div><p className="mt-2 line-clamp-2 text-xs font-bold">{item.title}</p>{metric === "loved" && <p className="mt-1 text-[10px] font-semibold text-[#6f5a7d]">{item.like_percent != null ? `${item.like_percent}% liked it` : ""}{item.like_percent != null && item.avg_rating != null ? " · " : ""}{item.avg_rating != null ? `${item.avg_rating} ★` : ""}</p>}{metric === "trending" && item.people_count != null && <p className="mt-1 text-[10px] font-semibold text-[#6f5a7d]">{item.people_count} {item.people_count === 1 ? "person" : "people"} lately</p>}{!metric && item.creator && <p className="truncate text-[11px] text-[#7b7180]">{item.creator}</p>}</article>)}</div>;
+  return <div className="mt-4 flex gap-3 overflow-x-auto pb-1">{media.map((item, index) => {
+    const href = mediaDetailHref(item);
+    const card = <article className="w-28 shrink-0"><div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-[#ddd6e0]">{item.image_url ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full flex-col justify-between p-3 text-white" style={{ background: `linear-gradient(145deg, ${tribe.accent_color || "#745386"}, ${tribe.accent_color_2 || "#4d6e9b"})` }}><span className="text-[9px] font-bold uppercase tracking-[.14em] text-white/65">{item.media_type}</span><span className="font-serif text-xl text-white/90">0{index + 1}</span></div>}</div><p className="mt-2 line-clamp-2 text-xs font-bold">{item.title}</p>{metric === "loved" && <p className="mt-1 text-[10px] font-semibold text-[#6f5a7d]">{item.like_percent != null ? `${item.like_percent}% liked it` : ""}{item.like_percent != null && item.avg_rating != null ? " · " : ""}{item.avg_rating != null ? `${item.avg_rating} ★` : ""}</p>}{metric === "trending" && item.people_count != null && <p className="mt-1 text-[10px] font-semibold text-[#6f5a7d]">{item.people_count} {item.people_count === 1 ? "person" : "people"} lately</p>}{!metric && item.creator && <p className="truncate text-[11px] text-[#7b7180]">{item.creator}</p>}</article>;
+    return href
+      ? <Link key={`${item.id || item.external_source || item.title}-${index}`} href={href} className="block shrink-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#67447c]">{card}</Link>
+      : <div key={`${item.id || item.external_source || item.title}-${index}`}>{card}</div>;
+  })}</div>;
 }
 
 function Creators({ query }: { query: ReturnType<typeof useQuery<any[]>> }) {
