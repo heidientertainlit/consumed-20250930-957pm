@@ -63,17 +63,14 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
 
   return (
     <>
-    <div className="overflow-hidden rounded-[20px] border border-[#e4dedb] bg-[#fffdfb] shadow-[0_7px_18px_rgba(65,49,55,.055)]">
-      {/* Find Friends — title + search */}
-      <div className="p-4 pb-1">
-        <h4 className="mb-1 text-base font-bold tracking-[-.02em] text-[#30203f]">Find friends</h4>
-        <p className="mb-3 text-xs text-[#7d7382]">Search the Consumed community by name or username.</p>
-
+    <div className="mb-6">
+      {/* People search */}
+      <div>
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8b7e91]" size={17} />
           <input
             type="text"
-            placeholder="Search people"
+            placeholder="Search people and friends"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-xl border border-[#ded7e1] bg-[#f7f4f6] py-2.5 pl-10 pr-4 text-sm text-[#30203f] placeholder-[#9a909e] focus:outline-none focus:ring-2 focus:ring-[#765394]/35"
@@ -135,13 +132,14 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
           </div>
         )}
       </div>
+    </div>
 
+    <div className="overflow-hidden rounded-[20px] border border-[#e4dedb] bg-[#fffdfb] shadow-[0_7px_18px_rgba(65,49,55,.055)]">
       {/* Friend Requests row */}
       <button
         type="button"
         onClick={() => setRequestsOpen((o) => !o)}
         className="w-full flex items-center gap-3 px-4 py-4 text-left"
-        style={{ borderTop: "1px solid #e5dfe7" }}
         data-testid="row-friend-requests"
       >
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#eee8f2] text-[#5b3e78]"><Users size={17} /></span>
