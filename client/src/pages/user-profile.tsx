@@ -3213,10 +3213,7 @@ export default function UserProfile() {
     music: 'music', podcast: 'podcasts', game: 'games', sports: 'sports', youtube: 'YouTube',
   };
   const dominantRecentLabel = dnaTypeLabels[dominantRecentType] || dominantRecentType;
-  const recentDominantShare = recentDnaItems.length ? Number(dominantRecentCount) / recentDnaItems.length : 0;
-  const usualDominantCount = allDnaItems.filter((item: any) => item.media_type === dominantRecentType).length;
-  const usualDominantShare = allDnaItems.length ? usualDominantCount / allDnaItems.length : 0;
-  const dominantLift = usualDominantShare > 0 ? recentDominantShare / usualDominantShare : 0;
+  const recentHighlyRatedCount = recentDnaItems.filter((item: any) => Number(item.user_rating) >= 4).length;
   const fiveStarDnaItems = allDnaItems.filter((item: any) => Number(item.user_rating) === 5);
   const fiveStarDominantPercent = fiveStarDnaItems.length
     ? Math.round((fiveStarDnaItems.filter((item: any) => item.media_type === dominantRecentType).length / fiveStarDnaItems.length) * 100)
@@ -3772,29 +3769,25 @@ export default function UserProfile() {
               <>
                 <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-[#f7f3fa] px-5 py-5 shadow-sm">
                     <div className="relative z-10">
-                      <div className="max-w-[67%]">
+                      <div className="max-w-full">
                         <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#6d5878]">Maybe right now…</p>
                         <p className="mt-3 text-[21px] font-medium leading-[1.18] text-[#422653]">Easy answers just aren't that interesting.</p>
                       </div>
                       <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#ded2e7] pt-4">
                         <div>
                           <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">{dominantRecentCount} OF {recentDnaItems.length}</p>
-                          <p className="mt-1 text-[9px] leading-tight text-[#776982]">recent picks are {dominantRecentLabel}</p>
+                          <p className="mt-1 text-[9px] leading-tight text-[#776982]">Recent picks that are {dominantRecentLabel}.</p>
                         </div>
                         <div>
-                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">
-                            {dominantLift >= 1.05 ? `${dominantLift.toFixed(1)}×` : '#1'}
-                          </p>
-                          <p className="mt-1 text-[9px] leading-tight text-[#776982]">
-                            {dominantLift >= 1.05 ? `more ${dominantRecentLabel} than usual` : `${dominantRecentLabel} lately`}
-                          </p>
+                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">{recentHighlyRatedCount} OF {recentDnaItems.length}</p>
+                          <p className="mt-1 text-[9px] leading-tight text-[#776982]">Recent picks rated 4★+.</p>
                         </div>
                         <div>
                           <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">
                             {fiveStarDominantPercent !== null ? `${fiveStarDominantPercent}%` : recentDnaTypeVariety}
                           </p>
                           <p className="mt-1 text-[9px] leading-tight text-[#776982]">
-                            {fiveStarDominantPercent !== null ? `of 5★ picks are ${dominantRecentLabel}` : `formats in the last ${recentDnaItems.length}`}
+                            {fiveStarDominantPercent !== null ? `Share of 5★ picks that are ${dominantRecentLabel}.` : `Formats in the last ${recentDnaItems.length}.`}
                           </p>
                         </div>
                       </div>
@@ -4218,29 +4211,25 @@ export default function UserProfile() {
               <>
                 <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-[#f7f3fa] px-5 py-5 shadow-sm">
                     <div className="relative z-10">
-                      <div className="max-w-[67%]">
+                      <div className="max-w-full">
                         <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#6d5878]">Maybe right now…</p>
                         <p className="mt-3 text-[21px] font-medium leading-[1.18] text-[#422653]">Easy answers just aren't that interesting.</p>
                       </div>
                       <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#ded2e7] pt-4">
                         <div>
                           <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">{dominantRecentCount} OF {recentDnaItems.length}</p>
-                          <p className="mt-1 text-[9px] leading-tight text-[#776982]">recent picks are {dominantRecentLabel}</p>
+                          <p className="mt-1 text-[9px] leading-tight text-[#776982]">Recent picks that are {dominantRecentLabel}.</p>
                         </div>
                         <div>
-                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">
-                            {dominantLift >= 1.05 ? `${dominantLift.toFixed(1)}×` : '#1'}
-                          </p>
-                          <p className="mt-1 text-[9px] leading-tight text-[#776982]">
-                            {dominantLift >= 1.05 ? `more ${dominantRecentLabel} than usual` : `${dominantRecentLabel} lately`}
-                          </p>
+                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">{recentHighlyRatedCount} OF {recentDnaItems.length}</p>
+                          <p className="mt-1 text-[9px] leading-tight text-[#776982]">Recent picks rated 4★+.</p>
                         </div>
                         <div>
                           <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">
                             {fiveStarDominantPercent !== null ? `${fiveStarDominantPercent}%` : recentDnaTypeVariety}
                           </p>
                           <p className="mt-1 text-[9px] leading-tight text-[#776982]">
-                            {fiveStarDominantPercent !== null ? `of their 5★ picks are ${dominantRecentLabel}` : `formats in their last ${recentDnaItems.length}`}
+                            {fiveStarDominantPercent !== null ? `Share of their 5★ picks that are ${dominantRecentLabel}.` : `Formats in their last ${recentDnaItems.length}.`}
                           </p>
                         </div>
                       </div>
