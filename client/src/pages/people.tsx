@@ -71,6 +71,13 @@ const normalizedGroupMediaType = (type?: string) => {
   return value;
 };
 const groupConnectionKind = (tribe: Tribe, allowOverall = true) => {
+  const evidenceText = tribe.evidence
+    .map((item) => `${item.group || ""} ${item.type || ""} ${item.label || ""}`.toLowerCase())
+    .join(" ");
+  if (/\bratings?\b|\bscoring\b|\bscore pattern\b/.test(evidenceText)) return "ratings";
+  if (/\bcomfort\b|\brewatch\b|\breread\b/.test(evidenceText)) return "comfort";
+  if (/\brecent\b|\bcurrently\b|\blately\b|\bcurrent interest\b/.test(evidenceText)) return "recent";
+  if (tribe.evidence.some((item) => ["title", "titles", "media_title"].includes((item.type || "").toLowerCase()))) return "titles";
   const counts = new Map<string, number>();
   tribe.media.forEach((item) => {
     const type = normalizedGroupMediaType(item.media_type);
@@ -94,19 +101,24 @@ const groupConnectionKind = (tribe: Tribe, allowOverall = true) => {
   if (["books", "movies", "shows", "music", "podcasts", "games", "youtube"].includes(dominantType)) return dominantType;
   return "general";
 };
-const groupEmotionalPositioning = (tribe: Tribe, allowOverall = true) => {
+const groupAffinityPositioning = (tribe: Tribe, allowOverall = true) => {
   const kind = groupConnectionKind(tribe, allowOverall);
-  if (kind === "overall") return { label: "A lot in common", line: "You like a lot of the same things." };
-  if (kind === "books") return { label: "Your book people", line: "Books are where you connect." };
-  if (kind === "movies") return { label: "Same movie language", line: "You’re drawn to the same kinds of stories." };
-  if (kind === "shows") return { label: "Same comfort zone", line: "You keep coming back to the same favorites." };
-  if (kind === "music") return { label: "On the same wavelength", line: "The same sounds stay with you." };
-  if (kind === "podcasts") return { label: "Same conversation", line: "You listen for the same voices and ideas." };
-  if (kind === "games") return { label: "Same kind of player", line: "You play for many of the same reasons." };
-  if (kind === "youtube") return { label: "Same rabbit holes", line: "You get pulled into the same corners of YouTube." };
-  if (kind === "genres") return { label: "Same obsession", line: "You all have a thing for the same kinds of stories." };
-  return { label: "One big thing in common", line: "You may be different everywhere else. But not here." };
+  if (kind === "overall") return { title: "People who share your taste across entertainment", line: "You overlap across shows, books, movies, and more." };
+  if (kind === "books") return { title: "People who share your taste in books", line: "You may be different elsewhere. Books are where you connect." };
+  if (kind === "movies") return { title: "People who share your taste in movies", line: "You’re drawn to many of the same films and stories." };
+  if (kind === "shows") return { title: "People who share your taste in TV", line: "The same shows keep pulling you in." };
+  if (kind === "music") return { title: "People who share your taste in music", line: "You come back to many of the same artists and sounds." };
+  if (kind === "podcasts") return { title: "People who share your taste in podcasts", line: "You listen for many of the same voices and ideas." };
+  if (kind === "games") return { title: "People who share your taste in games", line: "You’re drawn to many of the same ways to play." };
+  if (kind === "youtube") return { title: "People who share your taste on YouTube", line: "You follow many of the same creators and rabbit holes." };
+  if (kind === "genres") return { title: "People who love the same genres", line: "The same kinds of stories and worlds keep finding you." };
+  if (kind === "titles") return { title: "People who love the same titles", line: "Specific favorites are what connect this group." };
+  if (kind === "ratings") return { title: "People who rate things like you do", line: "Your highs, lows, and in-betweens follow a similar pattern." };
+  if (kind === "comfort") return { title: "People with similar comfort favorites", line: "You return to many of the same familiar favorites." };
+  if (kind === "recent") return { title: "People who are into what you’re into lately", line: "Your current interests are moving in the same direction." };
+  return { title: "People who are into what you’re into", line: "A specific part of your entertainment taste connects this group." };
 };
+const compactCount = (count: number) => new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(count);
 
 function Avatar({ person, small = false }: { person: Person; small?: boolean }) {
   const src = person.profile_image_url || person.avatar_url || person.avatar;
@@ -599,11 +611,16 @@ function Tribes({ query, selected, onSelect, membership, relatedPeople }: { quer
     {!displayTribes.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">There are no taste groups to recommend right now.</div> :
       <div className="grid gap-4">{displayTribes.map((tribe, index) => {
         const accent = tribe.accent_color || ["#ee9a45", "#e43b8d", "#8661c5", "#7da649"][index % 4];
-        const media = tribe.media.filter((item) => item.title?.trim()).slice(0, 4);
+        const media = tribe.media.filter((item) => item.title?.trim()).slice(0, 3);
         const typeLabels = Array.from(new Set(media.map((item) => item.media_type?.trim()).filter(Boolean)))
           .slice(0, 3)
           .map((type) => mediaTypeLabel(type));
-        const emotional = groupEmotionalPositioning(tribe, tribe.slug === overallTribeSlug);
+        const genreLabels = tribe.evidence
+          .filter((item) => `${item.group || ""} ${item.type || ""}`.toLowerCase().includes("genre"))
+          .map((item) => item.value || item.label || "")
+          .filter(Boolean);
+        const affinityTags = Array.from(new Set([...typeLabels, ...genreLabels])).slice(0, 3);
+        const positioning = groupAffinityPositioning(tribe, tribe.slug === overallTribeSlug);
         const cardPeople = tribe.members.length
           ? tribe.members.slice(0, 4)
           : relatedPeople.length
@@ -614,11 +631,10 @@ function Tribes({ query, selected, onSelect, membership, relatedPeople }: { quer
           onClick={() => onSelect(tribe.slug)}
           className="group relative overflow-hidden rounded-[20px] border border-[#d8cce1] bg-[#fffdfb] px-4 py-5 text-left shadow-[0_7px_18px_rgba(65,49,55,.065)] transition duration-300 hover:-translate-y-0.5 hover:border-[#b99fcd] hover:shadow-[0_12px_28px_rgba(91,49,133,.15)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#755294] focus-visible:ring-offset-2 sm:px-6"
         >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[.055em] text-[#281e34]">{isReady ? `${Math.round(tribe.fit_score)}% — ${emotional.label}` : emotional.label}</p>
-              <h3 className="mt-2 font-serif text-[22px] font-normal italic leading-[1.18] tracking-[-.025em] text-[#5d5062] sm:text-[24px]">{emotional.line}</h3>
-            </div>
+          <div>
+            {isReady && <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#67447c]">{Math.round(tribe.fit_score)}% overlap</p>}
+            <h3 className={`${isReady ? "mt-2" : ""} font-serif text-[20px] font-medium leading-[1.16] tracking-[-.025em] text-[#281e34] sm:text-[22px]`}>{positioning.title}</h3>
+            <p className="mt-2 text-sm leading-5 text-[#746b78]">{positioning.line}</p>
           </div>
           {media.length > 0 && <div className="mt-4 flex gap-2">
             {media.map((item, mediaIndex) => <div key={`${item.id}-${mediaIndex}`} className="relative aspect-[4/5] w-[58px] shrink-0 overflow-hidden rounded-lg bg-[#ddd6e0] shadow-sm">
@@ -627,16 +643,16 @@ function Tribes({ query, selected, onSelect, membership, relatedPeople }: { quer
                 : <div className="flex h-full items-end p-2 text-[9px] font-bold leading-tight text-white" style={{ background: `linear-gradient(145deg, ${accent}, ${tribe.accent_color_2 || "#4d6e9b"})` }}>{item.title}</div>}
             </div>)}
           </div>}
-          <div className="mt-4 flex items-center gap-2">
-            {typeLabels.map((label) => <span key={label} className="rounded-full bg-[#eee8f4] px-2.5 py-1.5 text-[11px] font-semibold text-[#5b466d]">{label}</span>)}
-            <span className="ml-auto grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#603782] text-white shadow-[0_4px_12px_rgba(96,55,130,.24)] transition group-hover:translate-x-0.5 group-hover:bg-[#4f2c70]"><ArrowRight size={19} /></span>
+          {affinityTags.length > 0 && <p className="mt-3 text-[11px] font-semibold text-[#685b70]">{affinityTags.join(" · ")}</p>}
+          <div className="mt-4 border-t border-[#e6e0df] pt-4">
+            <div className="flex items-center gap-3">
+              {cardPeople.length > 0 && <AvatarStack people={cardPeople} />}
+              <span className="text-xs font-semibold text-[#746b78]">
+                {tribe.member_count > 0 ? `${compactCount(tribe.member_count)} ${tribe.member_count === 1 ? "person" : "people"} in this group` : "People with related taste"}
+              </span>
+            </div>
+            <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#5b367b]">See what they’re into <ArrowRight size={16} className="transition group-hover:translate-x-0.5" /></span>
           </div>
-          {cardPeople.length > 0 && <div className="mt-4 flex items-center gap-3 border-t border-[#e6e0df] pt-4">
-            <AvatarStack people={cardPeople} />
-            <span className="text-xs font-semibold text-[#746b78]">
-              {tribe.member_count > 0 ? `${tribe.member_count} ${tribe.member_count === 1 ? "person" : "people"} in this group` : "People with related taste"}
-            </span>
-          </div>}
         </button>;
       })}</div>}
   </section>;
@@ -644,7 +660,7 @@ function Tribes({ query, selected, onSelect, membership, relatedPeople }: { quer
 
 function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: { tribe: Tribe; onBack: () => void; membership: ReturnType<typeof useMutation<TribesResponse, Error, { slug: string; joined: boolean }>>; personalized: boolean; allowOverall: boolean }) {
   const { toast } = useToast();
-  const emotional = groupEmotionalPositioning(tribe, allowOverall);
+  const positioning = groupAffinityPositioning(tribe, allowOverall);
   const mediaTypes = Array.from(new Set(tribe.media.map((item) => normalizedGroupMediaType(item.media_type)).filter(Boolean)))
     .slice(0, 4)
     .map((type) => mediaTypeLabel(type));
@@ -660,7 +676,7 @@ function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: 
     } catch { /* intentional cancellation */ }
   };
   return <section className="mt-7"><button onClick={onBack} className="mb-5 inline-flex items-center gap-1 text-sm font-bold text-[#543d72]"><ArrowLeft size={16} /> All taste groups</button>
-    <div className="overflow-hidden rounded-[22px] border border-[#ded4e1] bg-[#ece6ec]"><div className="p-6 sm:p-8" style={{ background: `linear-gradient(125deg, ${tribe.accent_color || "#745386"}22, ${tribe.accent_color_2 || "#4d6e9b"}35)` }}><div><p className="text-sm font-bold uppercase tracking-[.055em] text-[#30203f]">{personalized ? `${Math.round(tribe.fit_score)}% — ${emotional.label}` : emotional.label}</p><h2 className="mt-3 max-w-xl font-serif text-3xl italic leading-[1.08] tracking-[-.04em] text-[#514557] sm:text-4xl">{emotional.line}</h2><p className="mt-4 max-w-xl text-sm leading-6 text-[#5f5665]">See the media and people behind the connection.</p></div>
+    <div className="overflow-hidden rounded-[22px] border border-[#ded4e1] bg-[#ece6ec]"><div className="p-6 sm:p-8" style={{ background: `linear-gradient(125deg, ${tribe.accent_color || "#745386"}22, ${tribe.accent_color_2 || "#4d6e9b"}35)` }}><div>{personalized && <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#67447c]">{Math.round(tribe.fit_score)}% overlap</p>}<h2 className={`${personalized ? "mt-3" : ""} max-w-xl font-serif text-3xl font-medium leading-[1.08] tracking-[-.04em] text-[#30203f] sm:text-4xl`}>{positioning.title}</h2><p className="mt-4 max-w-xl text-sm leading-6 text-[#5f5665]">{positioning.line}</p></div>
       <div className="mt-6 flex flex-wrap gap-2">{personalized && <button disabled={membership.isPending} onClick={() => membership.mutate({ slug: tribe.slug, joined: tribe.is_member })} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${tribe.is_member ? "border border-[#bdb0c4] bg-[#fbf9fa] text-[#4e3d58]" : "bg-[#4f3373] text-[#faf8fb] hover:bg-[#432965]"}`}>{tribe.is_member && <Check size={15} />}{membership.isPending ? "Updating…" : tribe.is_member ? "Leave group" : "Join group"}</button>}<button onClick={share} className="inline-flex items-center gap-2 rounded-full border border-[#bdb0c4] bg-[#fbf9fa]/80 px-4 py-2 text-sm font-bold text-[#503c61]"><Share2 size={15} /> Share</button></div></div>
       <div className="grid gap-6 bg-[#fbf9fa] p-6 sm:grid-cols-2 sm:p-8"><div><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">What they’re into</h3>{mediaTypes.length ? <div className="mt-3 flex flex-wrap gap-2">{mediaTypes.map((label) => <span key={label} className="rounded-full bg-[#eee8f4] px-3 py-2 text-xs font-semibold text-[#5b466d]">{label}</span>)}</div> : <p className="mt-3 text-sm text-[#746b7b]">Add more media to reveal the types this group shares.</p>}</div><div><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">People in this group</h3>{tribe.members.length ? <div className="mt-3 flex items-center gap-3"><AvatarStack people={tribe.members} /><span className="text-sm text-[#6f6574]">{tribe.member_count} {tribe.member_count === 1 ? "person" : "people"}</span></div> : <p className="mt-3 text-sm text-[#746b7b]">This group is taking shape.</p>}</div></div>
       {tribe.media.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#f6f3f5] p-6 sm:p-8"><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">Media that connects this group</h3><div className="mt-4 flex gap-3 overflow-x-auto pb-1">{tribe.media.slice(0, 6).map((item, index) => <article key={item.id} className="w-28 shrink-0"><div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-[#ddd6e0]">{item.image_url ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full flex-col justify-between p-3 text-white" style={{ background: `linear-gradient(145deg, ${tribe.accent_color || "#745386"}, ${tribe.accent_color_2 || "#4d6e9b"})` }}><span className="text-[9px] font-bold uppercase tracking-[.14em] text-white/65">{item.media_type}</span><span className="font-serif text-xl text-white/90">0{index + 1}</span></div>}</div><p className="mt-2 line-clamp-2 text-xs font-bold">{item.title}</p>{item.creator && <p className="truncate text-[11px] text-[#7b7180]">{item.creator}</p>}</article>)}</div></div>}
