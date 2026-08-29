@@ -266,21 +266,39 @@ export default function PeoplePage() {
 
   return <div className="min-h-[100dvh] bg-[#fbf8f5] pb-24 text-[#271d3a]">
     <Navigation roomyTopBar />
-    <main className="mx-auto max-w-5xl px-4 sm:px-6">
-      <header className="pt-6 sm:pt-8">
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#ded9d5] bg-[#efedeb] px-4 py-3">
+    <header className="-mt-px bg-[linear-gradient(135deg,#0b0713_0%,#1b0a31_50%,#35125b_100%)] text-white shadow-[0_10px_28px_rgba(41,16,71,.18)]">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
+        <div className="flex items-center justify-between gap-3 pt-5">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-[#5b3e78]"><Users size={15} /></span>
-            <p className="text-xs font-semibold leading-4 text-[#594a61] sm:text-sm">
-              Discover people who share your taste. Invite friends for private comparisons.
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/15 bg-white/10 text-violet-200"><Users size={15} /></span>
+            <p className="text-xs font-semibold leading-4 text-white/70 sm:text-sm">
+              Find people and communities shaped by what you love.
             </p>
           </div>
-          <button onClick={copyInvite} className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-[#533576] px-3.5 text-xs font-bold text-white transition hover:bg-[#432a61]">
+          <button onClick={copyInvite} className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-violet-300/25 bg-violet-500/25 px-3.5 text-xs font-bold text-white shadow-sm transition hover:bg-violet-500/35">
             <Share2 size={14} /> Invite
           </button>
         </div>
-        <nav className="mt-5 flex overflow-x-auto border-b border-[#dcd5df]" aria-label="People sections">{tabs.map((item) => <button key={item.id} onClick={() => setTab(item.id)} className={`relative shrink-0 px-4 py-2.5 text-[13px] font-bold transition-colors first:pl-0 ${tab === item.id ? "text-[#4b2f70] after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-[#523177] first:after:left-0" : "text-[#827887] hover:text-[#493659]"}`}>{item.label}</button>)}</nav>
-      </header>
+        <nav className="mt-4 flex overflow-x-auto border-b border-white/15" aria-label="People sections">{tabs.map((item) => <button key={item.id} onClick={() => setTab(item.id)} className={`relative shrink-0 px-4 py-3 text-[13px] font-bold transition-colors first:pl-0 ${tab === item.id ? "text-white after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-violet-400 first:after:left-0" : "text-white/55 hover:text-white/85"}`}>{item.label}</button>)}</nav>
+        {tab === "tribes" && !selectedTribe && (
+          <div className="relative overflow-hidden py-7 sm:py-9">
+            <div className="pointer-events-none absolute -right-8 top-4 h-32 w-32 rounded-full border border-violet-400/40 shadow-[0_0_35px_rgba(168,85,247,.28)] sm:right-8 sm:h-40 sm:w-40">
+              <div className="grid h-full w-full place-items-center">
+                <Dna size={44} strokeWidth={1.25} className="text-violet-300 drop-shadow-[0_0_12px_rgba(192,132,252,.75)]" />
+              </div>
+            </div>
+            <div className="relative max-w-[72%] sm:max-w-xl">
+              <p className="text-[10px] font-bold uppercase tracking-[.2em] text-violet-300">Tribes</p>
+              <h1 className="mt-2 font-serif text-[32px] font-medium leading-[.98] tracking-[-.045em] text-white sm:text-[42px]">
+                Where your DNA<br />finds its people.
+              </h1>
+              <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Communities built around the things you love.</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </header>
+    <main className="mx-auto max-w-5xl px-4 sm:px-6">
 
       {tab === "matches" && <Matches query={affinityQuery} more={moreMatches} onSelectPerson={openPerson} onInvite={copyInvite} />}
       {tab === "friends" && <Friends userId={user?.id} />}
@@ -375,7 +393,7 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
   const isReady = Boolean(query.data?.readiness?.ready);
   if (selected) return <TribeDetail tribe={selected} onBack={() => onSelect()} membership={membership} personalized={isReady} />;
   const tribes = query.data?.tribes || [];
-  return <section className="mt-7"><div className="mb-5"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Tribes</p><h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Where your DNA fits.</h2><p className="mt-1 text-sm leading-5 text-[#746b78]">Find communities built around the things you love together.</p></div>
+  return <section className="mt-5">
     {!isReady && <div className="mb-5 rounded-[18px] border border-[#ded7e9] bg-[#f4f0f5] p-4"><p className="text-sm font-bold text-[#342642]">Explore every Tribe now</p><p className="mt-1 text-sm leading-5 text-[#746b7b]">Track {query.data?.readiness?.items_needed || 10} more {(query.data?.readiness?.items_needed || 10) === 1 ? "item" : "items"} to reveal your personal fit and join the communities that match your taste.</p><Link href="/add" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#513879]">Track more <ArrowUpRight size={15} /></Link></div>}
     {!tribes.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">There are no Tribes to recommend right now.</div> :
       <div className="grid gap-4">{tribes.map((tribe, index) => {
