@@ -183,6 +183,64 @@ async function hydrateTribeMediaImages(data: TribesResponse, token: string): Pro
   };
 }
 
+async function hydrateFriendSharedTitleImages(data: Affinity, token: string): Promise<Affinity> {
+  const friends = (data.bands || []).flatMap((band) => band.people).filter((person) => person.is_friend);
+  const missing = friends.flatMap((person) =>
+    (person.shared_titles || []).slice(0, 3).flatMap((item) => {
+      const title = typeof item === "string" ? item : item.title || item.name || "";
+      const mediaType = typeof item === "string" ? "" : item.media_type || "";
+      const imageUrl = typeof item === "string" ? "" : item.image_url || "";
+      return title.trim() && !imageUrl
+        ? [{ title: title.trim(), mediaType: mediaType.trim(), key: `${mediaType.toLowerCase()}:${title.toLowerCase()}` }]
+        : [];
+    })
+  );
+  const unique = [...new Map(missing.map((item) => [item.key, item])).values()];
+  if (!unique.length) return data;
+
+  const resolvedEntries = await Promise.all(unique.map(async (item) => {
+    try {
+      const params = new URLSearchParams({ query: item.title });
+      if (item.mediaType) params.set("type", item.mediaType);
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/media-search?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) return [item.key, ""] as const;
+      const payload = await response.json();
+      const results = Array.isArray(payload?.results) ? payload.results : Array.isArray(payload) ? payload : [];
+      const normalizedTitle = item.title.toLowerCase().replace(/[^a-z0-9]+/g, "");
+      const match = results.find((result: any) =>
+        String(result?.title || result?.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "") === normalizedTitle
+      ) || results[0];
+      const image = match?.poster_url || match?.image || match?.image_url || match?.cover_url || "";
+      return [item.key, String(image)] as const;
+    } catch {
+      return [item.key, ""] as const;
+    }
+  }));
+  const imagesByKey = new Map(resolvedEntries.filter(([, image]) => Boolean(image)));
+
+  return {
+    ...data,
+    bands: (data.bands || []).map((band) => ({
+      ...band,
+      people: band.people.map((person) => {
+        if (!person.is_friend) return person;
+        return {
+          ...person,
+          shared_titles: (person.shared_titles || []).map((item) => {
+            const title = typeof item === "string" ? item : item.title || item.name || "";
+            const mediaType = typeof item === "string" ? "" : item.media_type || "";
+            const image = imagesByKey.get(`${mediaType.toLowerCase()}:${title.toLowerCase()}`);
+            if (!image) return item;
+            return typeof item === "string" ? { title: item, image_url: image } : { ...item, image_url: item.image_url || image };
+          }),
+        };
+      }),
+    })),
+  };
+}
+
 function Readiness({ readiness, onInvite }: { readiness?: Affinity["readiness"]; onInvite: () => void }) {
   const count = readiness?.tracked_items ?? readiness?.item_count ?? 0;
   const needed = readiness?.items_needed ?? Math.max(0, 10 - count);
@@ -306,7 +364,10 @@ export default function PeoplePage() {
 
   const affinityQuery = useQuery({
     queryKey: ["people-affinity-v9", user?.id], enabled: !!session?.access_token && (tab === "friends" || tab === "tribes"),
-    queryFn: () => functionRequest<Affinity>("people-affinity", session!.access_token, { action: "load", batch_size: 25 }), staleTime: 60_000,
+    queryFn: async () => hydrateFriendSharedTitleImages(
+      await functionRequest<Affinity>("people-affinity", session!.access_token, { action: "load", batch_size: 25 }),
+      session!.access_token,
+    ), staleTime: 60_000,
   });
   const tribesQuery = useQuery({
     queryKey: ["people-tribes-v4", user?.id], enabled: !!session?.access_token,
