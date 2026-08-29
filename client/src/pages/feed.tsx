@@ -1214,7 +1214,7 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList, forceActionFirst, forceNormal, stackPosts, stackIndex, swipeProps }: {
+function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList, forceActionFirst, forceNormal, stackPosts, stackIndex, swipeProps, showFullName }: {
   post: UGCPost;
   onLike: (id: string) => void;
   isLiked: boolean;
@@ -1228,6 +1228,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   stackPosts?: any[];
   stackIndex?: number;
   swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode; animKey?: number; enterDir?: 'from-right' | 'from-left'; dragX?: number; getSwiped?: () => boolean; navigate?: (dir: 1 | -1) => void; totalPosts?: number };
+  showFullName?: boolean;
 }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
@@ -2397,6 +2398,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   // ── Full-bleed poster card for rating / review / thought posts ───────────
   if (isRatingPost) {
     const displayName = formatFeedName(post.user?.displayName, post.user?.username);
+    const reviewerDisplayName = showFullName
+      ? post.user?.displayName?.trim() || displayName
+      : displayName;
     const hasPoster = !!(post.mediaImage && post.mediaImage.startsWith('http'));
     const hasContent = !!(post.content && post.content.trim());
     const hasRating = (post.rating || 0) > 0;
@@ -2615,7 +2619,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   {(post.user as any)?.avatar ? (
                     <img src={(post.user as any).avatar} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    formatFeedName(post.user?.displayName, post.user?.username).split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase()
+                    reviewerDisplayName.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase()
                   )}
                 </div>
                 <span className="-mx-1 text-[13px] font-semibold text-gray-500" aria-hidden="true">–</span>
@@ -2623,10 +2627,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <p
                     className={`text-[13px] font-semibold text-gray-700 leading-tight truncate ${post.user?.id ? 'cursor-pointer hover:text-violet-700' : ''}`}
                     onClick={(e) => { if (post.user?.id) { e.stopPropagation(); setLocation(`/user/${post.user.id}`); } }}
-                  >{formatFeedName(post.user?.displayName, post.user?.username)}</p>
-                  {post.user?.username && (
-                    <p className="mt-0.5 truncate text-[10px] font-medium leading-tight text-gray-400">@{formatUsername(post.user.username)}</p>
-                  )}
+                  >{reviewerDisplayName}</p>
                   {isOtherUser && tasteAlignment !== null ? (
                     <p className="mt-0.5 text-[11px] text-violet-600 font-medium leading-tight"><span className="font-bold">{tasteAlignment}%</span> aligned with you</p>
                   ) : isOtherUser && alignmentNudge && !ratingSubmitted ? (
@@ -6359,6 +6360,7 @@ export default function Feed() {
               stackPosts={allPosts}
               stackIndex={idx}
               swipeProps={swipeProps}
+              showFullName={p.user?.id === (effectiveUserId || currentAppUserId) || friendIds.has(p.user?.id)}
             />
           )}
         />
@@ -6389,6 +6391,7 @@ export default function Feed() {
               stackPosts={allPosts}
               stackIndex={idx}
               swipeProps={swipeProps}
+              showFullName={p.user?.id === (effectiveUserId || currentAppUserId) || friendIds.has(p.user?.id)}
             />
           )}
         />
@@ -6507,6 +6510,7 @@ export default function Feed() {
               onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
               forceActionFirst={true}
               forceNormal={true}
+              showFullName={originalPost.user?.id === (effectiveUserId || currentAppUserId) || friendIds.has(originalPost.user?.id)}
             />
           </div>
         </TinderCard>
@@ -6709,6 +6713,7 @@ export default function Feed() {
             currentUserId={effectiveUserId || currentAppUserId || undefined}
             onDeletePost={handleDeletePost}
             onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+            showFullName={item.user?.id === (effectiveUserId || currentAppUserId) || friendIds.has(item.user?.id)}
           />
         </div>
       );
