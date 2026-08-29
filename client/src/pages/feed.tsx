@@ -75,6 +75,8 @@ import { TodaysPlayNudge } from "@/components/todays-play-nudge";
 import { WhatsYourMove } from "@/components/whats-your-move"; // kept for reference — not currently rendered
 import FeedComposerBar from "@/components/feed-composer-bar";
 
+const FEED_REVIEW_TEXT_CLASS = "text-[14px] font-normal leading-snug text-gray-800";
+
 interface SocialPost {
   id: string;
   type: string;
@@ -551,7 +553,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                 <div className="flex-1 min-w-0">
                   {/* Take is the headline */}
                   {topGlimpse ? (
-                    <p className="text-[14px] font-normal text-gray-800 leading-snug line-clamp-3">
+                    <p className={`${FEED_REVIEW_TEXT_CLASS} line-clamp-3`}>
                       "{topGlimpse.content}"
                     </p>
                   ) : (
@@ -2601,7 +2603,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
               {/* Review text — quote, under the reviewer block */}
               {hasContent && (
-                <p className="text-[15px] font-normal text-gray-700 leading-snug mt-1.5">"{post.content}"</p>
+                <p className={`${FEED_REVIEW_TEXT_CLASS} mt-1.5`}>"{post.content}"</p>
               )}
 
               {/* Reviewer */}
@@ -3153,7 +3155,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {/* Content text */}
                 {post.content ? (
                   <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
-                    <p className={`text-gray-700 text-[15px] leading-relaxed font-normal ${contentExpanded ? '' : 'line-clamp-4'}`}>{post.content}</p>
+                    <p className={`${FEED_REVIEW_TEXT_CLASS} ${contentExpanded ? '' : 'line-clamp-4'}`}>{post.content}</p>
                     {!contentExpanded && post.content.length > 120 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
                   </div>
                 ) : null}
@@ -3302,7 +3304,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       )}
                       {post.content ? (
                         <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mt-1">
-                          <p className={`text-gray-700 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-3'}`}>{post.content}</p>
+                          <p className={`${FEED_REVIEW_TEXT_CLASS} ${contentExpanded ? '' : 'line-clamp-3'}`}>{post.content}</p>
                           {!contentExpanded && post.content.length > 100 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
                         </div>
                       ) : (
@@ -3338,7 +3340,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {post.content && (
                 <div>
                   <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
-                    <p className={`text-gray-800 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
+                    <p className={`${FEED_REVIEW_TEXT_CLASS} ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
                     {!contentExpanded && post.content.length > 100 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
                   </div>
                   {currentUserId && post.user?.id !== currentUserId && (
