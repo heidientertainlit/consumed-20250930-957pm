@@ -3930,7 +3930,7 @@ export default function UserProfile() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-2 gap-2">
+                <div>
                   <div className="relative">
                     <button
                       onClick={() => setDnaShareMenuOpen(v => !v)}
@@ -3956,13 +3956,6 @@ export default function UserProfile() {
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => setDnaActiveTab(dnaActiveTab === 'compare' ? 'dna' : 'compare')}
-                    className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl border shadow-sm transition-colors ${dnaActiveTab === 'compare' ? 'bg-purple-600 border-purple-600' : 'bg-white border-gray-100 hover:bg-gray-50'}`}
-                  >
-                    <Users size={18} className={dnaActiveTab === 'compare' ? 'text-white' : 'text-purple-500'} />
-                    <span className={`text-[10px] font-semibold ${dnaActiveTab === 'compare' ? 'text-white' : 'text-gray-700'}`}>Compare DNA</span>
-                  </button>
                 </div>
 
                 {/* Because you're ... (recommendations) */}
@@ -4427,7 +4420,7 @@ export default function UserProfile() {
                     <span className="bg-gray-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">{dnaCompareFriends.length}</span>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 mt-0.5">Compare DNA or recommend something</p>
+                <p className="text-xs text-gray-500 mt-0.5">Recommend something they might love</p>
               </div>
               {!dnaCanCompare ? (
                 <p className="text-xs text-gray-500">
@@ -4478,7 +4471,7 @@ export default function UserProfile() {
                                   : `${Math.max(0, 10 - friend.itemCount)} more items needed`}
                             </p>
                           </div>
-                          <div className="flex flex-col items-stretch gap-1 flex-shrink-0 w-24">
+                          <div className="flex flex-col items-stretch gap-1 flex-shrink-0">
                             <Button
                               variant="outline"
                               size="sm"
@@ -4487,20 +4480,6 @@ export default function UserProfile() {
                               data-testid={`button-recommend-${friend.id}`}
                             >
                               Recommend
-                            </Button>
-                            <Button
-                              size="sm"
-                              disabled={!friend.isEligible}
-                              onClick={() => {
-                                setActiveSection('dna');
-                                setDnaActiveTab('compare');
-                                if (dnaSelectedFriendId !== friend.id) handleDnaSelectFriend(friend.id);
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                              }}
-                              className="bg-purple-600 hover:bg-purple-700 text-white text-[11px] h-6 px-2.5 rounded-full disabled:bg-gray-200 disabled:text-gray-400"
-                              data-testid={`button-compare-${friend.id}`}
-                            >
-                              Compare
                             </Button>
                           </div>
                         </div>
