@@ -61,7 +61,22 @@ function Avatar({ person, small = false }: { person: Person; small?: boolean }) 
 }
 
 function AvatarStack({ people }: { people: Person[] }) {
-  return <div className="flex items-center">{people.slice(0, 4).map((person, index) => <span key={person.id} className={index ? "-ml-2" : ""}><Avatar person={person} small /></span>)}</div>;
+  const peopleWithImages = people
+    .filter((person) => Boolean(person.profile_image_url || person.avatar_url || person.avatar))
+    .slice(0, 4);
+
+  if (!peopleWithImages.length) return null;
+
+  return <div className="flex items-center">{peopleWithImages.map((person, index) => {
+    const src = person.profile_image_url || person.avatar_url || person.avatar;
+    return <img
+      key={person.id}
+      src={src}
+      alt=""
+      className={`h-8 w-8 shrink-0 rounded-full border-2 border-[#fffdfb] object-cover ${index ? "-ml-2" : ""}`}
+      onError={(event) => { event.currentTarget.style.display = "none"; }}
+    />;
+  })}</div>;
 }
 
 async function functionRequest<T>(path: "people-affinity" | "people-tribes", token: string, body: Record<string, unknown>): Promise<T> {
