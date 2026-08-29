@@ -3045,6 +3045,22 @@ export default function UserProfile() {
   const mediaTypeCounts = getMediaTypeCounts(filteredMediaHistory);
   const allMediaItems = getAllMediaItems();
   const canonicalMediaTypeCounts = getMediaTypeCounts(allMediaItems);
+  const hasActiveMediaFilters =
+    mediaHistoryType !== 'all' ||
+    mediaHistoryDate !== 'anytime' ||
+    mediaHistoryRating !== 'all' ||
+    mediaHistoryList !== 'all' ||
+    Boolean(mediaHistorySearch.trim());
+  const filteredRatedItems = filteredMediaHistory.filter((item: any) =>
+    item.user_rating !== null &&
+    item.user_rating !== undefined &&
+    String(item.user_rating).trim() !== "" &&
+    Number.isFinite(Number(item.user_rating))
+  );
+  const filteredAverageRating = filteredRatedItems.length
+    ? filteredRatedItems.reduce((sum: number, item: any) => sum + Number(item.user_rating), 0) / filteredRatedItems.length
+    : null;
+  const filteredFormatCount = Object.entries(mediaTypeCounts).filter(([, count]) => Number(count) > 0).length;
   const ratedItems = filteredMediaHistory.filter(item => item.user_rating !== null && item.user_rating !== undefined && String(item.user_rating).trim() !== "" && Number.isFinite(Number(item.user_rating)));
   const averageRating = ratedItems.length ? ratedItems.reduce((sum, item) => sum + Number(item.user_rating), 0) / ratedItems.length : null;
   const pageProgressItems = filteredMediaHistory.filter(item => item.media_type === "book" && item.progress_mode === "page" && Number.isFinite(Number(item.progress)));
@@ -4711,7 +4727,7 @@ export default function UserProfile() {
 
               {/* Filters */}
               <div className="pt-8">
-              <p className="mb-3 text-[11px] font-normal uppercase tracking-[0.2em] text-[#75677e]">Dive deeper into your media</p>
+              <p className="mb-3 text-[11px] font-normal uppercase tracking-[0.2em] text-[#75677e]">Find &amp; explore your media</p>
               <div className="mb-4 flex items-center gap-2.5">
                 <div className="relative min-w-0 flex-1">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#7e6c8c]" size={17} />
@@ -4893,6 +4909,29 @@ export default function UserProfile() {
                   </button>
                 )}
               </div>
+              )}
+              {hasActiveMediaFilters && (
+                <div className="mb-4 rounded-2xl bg-[#f4eef9] px-4 py-3">
+                  <p className="text-[10px] font-normal uppercase tracking-[0.18em] text-[#806b8e]">
+                    {getPeriodHeading()} results
+                  </p>
+                  <div className="mt-2 grid grid-cols-3 gap-3">
+                    <div>
+                      <p className="font-serif text-2xl font-bold leading-none text-[#55217f]">{filteredMediaHistory.length}</p>
+                      <p className="mt-1 text-[10px] text-[#75677e]">Matching titles</p>
+                    </div>
+                    <div>
+                      <p className="font-serif text-2xl font-bold leading-none text-[#55217f]">{filteredFormatCount}</p>
+                      <p className="mt-1 text-[10px] text-[#75677e]">Formats</p>
+                    </div>
+                    <div>
+                      <p className="font-serif text-2xl font-bold leading-none text-[#55217f]">
+                        {filteredAverageRating !== null ? filteredAverageRating.toFixed(1) : '—'}
+                      </p>
+                      <p className="mt-1 text-[10px] text-[#75677e]">Average rating</p>
+                    </div>
+                  </div>
+                </div>
               )}
               </div>
               </div>
