@@ -3787,11 +3787,11 @@ export default function UserProfile() {
                       </div>
                       <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#ded2e7] pt-4">
                         <div>
-                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">{dominantRecentCount} OF {recentDnaItems.length}</p>
+                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">{dominantRecentCount}/{recentDnaItems.length}</p>
                           <p className="mt-1 text-[9px] leading-tight text-[#776982]">Recent picks that are {dominantRecentLabel}.</p>
                         </div>
                         <div>
-                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">{recentHighlyRatedCount} OF {recentDnaItems.length}</p>
+                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">{recentHighlyRatedCount}/{recentDnaItems.length}</p>
                           <p className="mt-1 text-[9px] leading-tight text-[#776982]">Recent picks rated 4★+.</p>
                         </div>
                         <div>
@@ -4222,11 +4222,11 @@ export default function UserProfile() {
                       </div>
                       <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#ded2e7] pt-4">
                         <div>
-                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">{dominantRecentCount} OF {recentDnaItems.length}</p>
+                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">{dominantRecentCount}/{recentDnaItems.length}</p>
                           <p className="mt-1 text-[9px] leading-tight text-[#776982]">Recent picks that are {dominantRecentLabel}.</p>
                         </div>
                         <div>
-                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">{recentHighlyRatedCount} OF {recentDnaItems.length}</p>
+                          <p className="font-serif text-lg font-bold leading-none text-[#6f35a0]">{recentHighlyRatedCount}/{recentDnaItems.length}</p>
                           <p className="mt-1 text-[9px] leading-tight text-[#776982]">Recent picks rated 4★+.</p>
                         </div>
                         <div>
