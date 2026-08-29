@@ -367,7 +367,7 @@ export default function PeoplePage() {
   const tabs: Array<{ id: Tab; label: string; Icon: typeof Dna }> = [
     { id: "friends", label: "Friends & Matches", Icon: Users },
     { id: "tribes", label: "Tribes", Icon: Sparkles },
-    { id: "creators", label: "Creators", Icon: Star },
+    { id: "creators", label: "Artists & Creators", Icon: Star },
   ];
   return <div className="min-h-[100dvh] bg-[#fbf8f5] pb-24 text-[#271d3a]">
     <Navigation roomyTopBar topBarTone="purple" />
@@ -608,7 +608,7 @@ function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: 
 }
 
 function Creators({ query }: { query: ReturnType<typeof useQuery<any[]>> }) {
-  return <section className="mt-7"><div className="mb-5"><p className="text-sm text-[#6e6475]">The people behind the work you return to.</p><h2 className="mt-1 text-xl font-bold tracking-[-.035em]">Artists & Creators</h2></div>{query.isLoading ? <div className="h-28 animate-pulse rounded-xl bg-[#e6e0e7]" /> : query.data?.length ? <div className="mb-5 flex gap-4 overflow-x-auto border-y border-[#ded7e1] py-4">{query.data.map((creator: any) => <div key={`${creator.external_source}-${creator.external_id}`} className="w-20 shrink-0 text-center">{creator.creator_image ? <img src={creator.creator_image} alt="" className="mx-auto h-12 w-12 rounded-full object-cover" /> : <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#e4ddec] text-xs font-bold text-[#57416f]">{initials(creator.creator_name)}</span>}<p className="mt-2 line-clamp-2 text-xs font-bold">{creator.creator_name}</p><p className="truncate text-[10px] text-[#827887]">{creator.creator_role}</p></div>)}</div> : null}<FollowCreatorsCard dismissible={false} /></section>;
+  return <section className="mt-7"><div className="mb-5"><h2 className="text-xl font-bold tracking-[-.035em]">Artists & Creators</h2><p className="mt-1 text-sm text-[#6e6475]">The people behind the work you return to.</p></div>{query.isLoading ? <div className="h-28 animate-pulse rounded-xl bg-[#e6e0e7]" /> : query.data?.length ? <div className="mb-5 flex gap-4 overflow-x-auto border-y border-[#ded7e1] py-4">{query.data.map((creator: any) => <div key={`${creator.external_source}-${creator.external_id}`} className="w-20 shrink-0 text-center">{creator.creator_image ? <img src={creator.creator_image} alt="" className="mx-auto h-12 w-12 rounded-full object-cover" /> : <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#e4ddec] text-xs font-bold text-[#57416f]">{initials(creator.creator_name)}</span>}<p className="mt-2 line-clamp-2 text-xs font-bold">{creator.creator_name}</p><p className="truncate text-[10px] text-[#827887]">{creator.creator_role}</p></div>)}</div> : null}<FollowCreatorsCard dismissible={false} /></section>;
 }
 
 function ErrorState({ onRetry }: { onRetry: () => void }) {
