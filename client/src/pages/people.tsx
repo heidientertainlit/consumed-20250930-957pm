@@ -315,7 +315,7 @@ function Readiness({ readiness, onInvite }: { readiness?: Affinity["readiness"];
   </section>;
 }
 
-export default function PeoplePage() {
+export default function PeoplePage({ initialTribeId }: { initialTribeId?: string } = {}) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -330,7 +330,7 @@ export default function PeoplePage() {
   const tab: Tab = tabParam === "tribes" || tabParam === "creators" ? tabParam : "friends";
   const selectedSlug = params.get("tribe");
   const setTab = (next: Tab) => setLocation(`/people?tab=${next}`);
-  const setTribe = (slug?: string) => setLocation(slug ? `/people?tab=tribes&tribe=${encodeURIComponent(slug)}` : "/people?tab=tribes");
+  const setTribe = (id?: string) => setLocation(id ? `/people/tribes/${encodeURIComponent(id)}` : "/people?tab=tribes");
   const openPerson = async (person: Person) => {
     if (person.is_friend) {
       setLocation(`/user/${person.id}`);
@@ -420,7 +420,13 @@ export default function PeoplePage() {
   }, [affinityQuery.data?.has_more, affinityQuery.data?.next_cursor, moreMatches.isPending]);
   const membership = useMutation({
     mutationFn: ({ slug, joined }: { slug: string; joined: boolean }) => functionRequest<TribesResponse>("people-tribes", session!.access_token, { action: joined ? "leave" : "join", slug }),
-    onSuccess: async (data) => queryClient.setQueryData(["people-tribes-v4", user?.id], await hydrateTribeMediaImages(data, session!.access_token)),
+    onSuccess: async (data, variables) => {
+      queryClient.setQueryData(["people-tribes-v4", user?.id], await hydrateTribeMediaImages(data, session!.access_token));
+      toast({
+        title: variables.joined ? "Group unfollowed" : "Following",
+        description: variables.joined ? "You’ll no longer get updates from this group." : "You’ll see more from this group in Now.",
+      });
+    },
     onError: (error: Error) => toast({ title: "Couldn’t update membership", description: error.message }),
   });
   const creatorsQuery = useQuery({
@@ -432,7 +438,7 @@ export default function PeoplePage() {
     const url = `${APP_BASE}/invite/${user.id}`;
     try { if (typeof navigator.share === "function") await navigator.share({ title: "Join me on Consumed", text: "Compare your cross-media taste with me on Consumed.", url }); else await navigator.clipboard.writeText(url); toast({ title: "Invite ready", description: typeof navigator.share === "function" ? "Share sheet opened." : "Invite link copied." }); } catch { /* intentional cancellation */ }
   };
-  const selectedTribe = tribesQuery.data?.tribes.find((tribe) => tribe.slug === selectedSlug);
+  const selectedTribe = tribesQuery.data?.tribes.find((tribe) => tribe.id === initialTribeId || tribe.slug === selectedSlug);
   const relatedPeople = (affinityQuery.data?.bands || [])
     .flatMap((band) => band.people)
     .filter((person, index, all) => all.findIndex((candidate) => candidate.id === person.id) === index)
@@ -627,8 +633,8 @@ function Tribes({ query, selected, onSelect, membership, relatedPeople }: { quer
             ? Array.from({ length: Math.min(4, relatedPeople.length) }, (_, offset) => relatedPeople[(index * 2 + offset) % relatedPeople.length])
             : [];
         return <button
-          key={tribe.slug}
-          onClick={() => onSelect(tribe.slug)}
+            key={tribe.slug}
+            onClick={() => onSelect(tribe.id)}
           className="group relative overflow-hidden rounded-[20px] border border-[#d8cce1] bg-[#fffdfb] px-4 py-5 text-left shadow-[0_7px_18px_rgba(65,49,55,.065)] transition duration-300 hover:-translate-y-0.5 hover:border-[#b99fcd] hover:shadow-[0_12px_28px_rgba(91,49,133,.15)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#755294] focus-visible:ring-offset-2 sm:px-6"
         >
           <div>
@@ -664,8 +670,10 @@ function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: 
   const mediaTypes = Array.from(new Set(tribe.media.map((item) => normalizedGroupMediaType(item.media_type)).filter(Boolean)))
     .slice(0, 4)
     .map((type) => mediaTypeLabel(type));
+  const connectionMedia = tribe.media.filter((item) => item.title?.trim()).slice(0, 3);
+  const discoveryMedia = tribe.media.filter((item) => item.title?.trim()).slice(3, 6);
   const share = async () => {
-    const url = `${APP_BASE}/people?tab=tribes&tribe=${encodeURIComponent(tribe.slug)}`;
+    const url = `${APP_BASE}/people/tribes/${encodeURIComponent(tribe.id)}`;
     try {
       if (typeof navigator.share === "function") {
         await navigator.share({ title: "People with taste like yours", text: "Take a look at this taste group on Consumed.", url });
@@ -677,11 +685,20 @@ function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: 
   };
   return <section className="mt-7"><button onClick={onBack} className="mb-5 inline-flex items-center gap-1 text-sm font-bold text-[#543d72]"><ArrowLeft size={16} /> All taste groups</button>
     <div className="overflow-hidden rounded-[22px] border border-[#ded4e1] bg-[#ece6ec]"><div className="p-6 sm:p-8" style={{ background: `linear-gradient(125deg, ${tribe.accent_color || "#745386"}22, ${tribe.accent_color_2 || "#4d6e9b"}35)` }}><div>{personalized && <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#67447c]">{Math.round(tribe.fit_score)}% overlap</p>}<h2 className={`${personalized ? "mt-3" : ""} max-w-xl font-serif text-3xl font-medium leading-[1.08] tracking-[-.04em] text-[#30203f] sm:text-4xl`}>{positioning.title}</h2><p className="mt-4 max-w-xl text-sm leading-6 text-[#5f5665]">{positioning.line}</p></div>
-      <div className="mt-6 flex flex-wrap gap-2">{personalized && <button disabled={membership.isPending} onClick={() => membership.mutate({ slug: tribe.slug, joined: tribe.is_member })} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${tribe.is_member ? "border border-[#bdb0c4] bg-[#fbf9fa] text-[#4e3d58]" : "bg-[#4f3373] text-[#faf8fb] hover:bg-[#432965]"}`}>{tribe.is_member && <Check size={15} />}{membership.isPending ? "Updating…" : tribe.is_member ? "Leave group" : "Join group"}</button>}<button onClick={share} className="inline-flex items-center gap-2 rounded-full border border-[#bdb0c4] bg-[#fbf9fa]/80 px-4 py-2 text-sm font-bold text-[#503c61]"><Share2 size={15} /> Share</button></div></div>
-      <div className="grid gap-6 bg-[#fbf9fa] p-6 sm:grid-cols-2 sm:p-8"><div><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">What they’re into</h3>{mediaTypes.length ? <div className="mt-3 flex flex-wrap gap-2">{mediaTypes.map((label) => <span key={label} className="rounded-full bg-[#eee8f4] px-3 py-2 text-xs font-semibold text-[#5b466d]">{label}</span>)}</div> : <p className="mt-3 text-sm text-[#746b7b]">Add more media to reveal the types this group shares.</p>}</div><div><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">People in this group</h3>{tribe.members.length ? <div className="mt-3 flex items-center gap-3"><AvatarStack people={tribe.members} /><span className="text-sm text-[#6f6574]">{tribe.member_count} {tribe.member_count === 1 ? "person" : "people"}</span></div> : <p className="mt-3 text-sm text-[#746b7b]">This group is taking shape.</p>}</div></div>
-      {tribe.media.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#f6f3f5] p-6 sm:p-8"><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">Media that connects this group</h3><div className="mt-4 flex gap-3 overflow-x-auto pb-1">{tribe.media.slice(0, 6).map((item, index) => <article key={item.id} className="w-28 shrink-0"><div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-[#ddd6e0]">{item.image_url ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full flex-col justify-between p-3 text-white" style={{ background: `linear-gradient(145deg, ${tribe.accent_color || "#745386"}, ${tribe.accent_color_2 || "#4d6e9b"})` }}><span className="text-[9px] font-bold uppercase tracking-[.14em] text-white/65">{item.media_type}</span><span className="font-serif text-xl text-white/90">0{index + 1}</span></div>}</div><p className="mt-2 line-clamp-2 text-xs font-bold">{item.title}</p>{item.creator && <p className="truncate text-[11px] text-[#7b7180]">{item.creator}</p>}</article>)}</div></div>}
+      <div className="mt-6 flex flex-wrap gap-2">{personalized && <button disabled={membership.isPending} onClick={() => membership.mutate({ slug: tribe.slug, joined: tribe.is_member })} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${tribe.is_member ? "border border-[#bdb0c4] bg-[#fbf9fa] text-[#4e3d58]" : "bg-[#4f3373] text-[#faf8fb] hover:bg-[#432965]"}`}>{tribe.is_member && <Check size={15} />}{membership.isPending ? "Updating…" : tribe.is_member ? "Following" : "Follow group"}</button>}<button onClick={share} className="inline-flex items-center gap-2 rounded-full border border-[#bdb0c4] bg-[#fbf9fa]/80 px-4 py-2 text-sm font-bold text-[#503c61]"><Share2 size={15} /> Share</button></div></div>
+      <div className="bg-[#fbf9fa] p-6 sm:p-8">
+        <h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">What connects you</h3>
+        {mediaTypes.length > 0 && <p className="mt-3 text-sm font-semibold text-[#66566f]">{mediaTypes.join(" · ")}</p>}
+        {connectionMedia.length > 0 && <><p className="mt-5 text-xs font-bold text-[#51405f]">Some of what connects you</p><MediaShelf media={connectionMedia} tribe={tribe} /></>}
+      </div>
+      {discoveryMedia.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#f6f3f5] p-6 sm:p-8"><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">Loved by this group</h3><p className="mt-2 text-sm text-[#746b7b]">More media this group’s collective taste points toward.</p><MediaShelf media={discoveryMedia} tribe={tribe} /></div>}
+      {(tribe.members.length > 0 || tribe.member_count > 0) && <div className="border-t border-[#e0d9e3] bg-[#fbf9fa] p-6 sm:p-8"><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">People in this group</h3>{tribe.members.length > 0 && <div className="mt-4 grid gap-2">{tribe.members.slice(0, 5).map((person) => <Link key={person.id} href={`/user/${encodeURIComponent(person.id)}`} className="flex items-center gap-3 rounded-xl border border-[#e5dee7] bg-white p-3"><Avatar person={person} /><span className="min-w-0 flex-1 truncate text-sm font-bold text-[#342642]">{nameFor(person)}</span>{person.match_score != null && <span className="font-serif text-lg text-[#583875]">{Math.round(person.match_score)}%</span>}</Link>)}</div>}<p className="mt-4 text-sm font-semibold text-[#6f6574]">{compactCount(tribe.member_count)} {tribe.member_count === 1 ? "person follows" : "people follow"} this group</p></div>}
     </div>
   </section>;
+}
+
+function MediaShelf({ media, tribe }: { media: TribeMedia[]; tribe: Tribe }) {
+  return <div className="mt-4 flex gap-3 overflow-x-auto pb-1">{media.map((item, index) => <article key={`${item.id}-${index}`} className="w-28 shrink-0"><div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-[#ddd6e0]">{item.image_url ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full flex-col justify-between p-3 text-white" style={{ background: `linear-gradient(145deg, ${tribe.accent_color || "#745386"}, ${tribe.accent_color_2 || "#4d6e9b"})` }}><span className="text-[9px] font-bold uppercase tracking-[.14em] text-white/65">{item.media_type}</span><span className="font-serif text-xl text-white/90">0{index + 1}</span></div>}</div><p className="mt-2 line-clamp-2 text-xs font-bold">{item.title}</p>{item.creator && <p className="truncate text-[11px] text-[#7b7180]">{item.creator}</p>}</article>)}</div>;
 }
 
 function Creators({ query }: { query: ReturnType<typeof useQuery<any[]>> }) {

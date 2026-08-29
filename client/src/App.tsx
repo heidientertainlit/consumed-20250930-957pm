@@ -359,6 +359,14 @@ function Router() {
             <RedirectTo to="/people?tab=friends" />
           </Route>
 
+          <Route path="/people/tribes/:tribeId">
+            {(params) => (
+              <ProtectedRoute>
+                <People initialTribeId={params.tribeId} />
+              </ProtectedRoute>
+            )}
+          </Route>
+
           <Route path="/people">
             <ProtectedRoute>
               <People />
