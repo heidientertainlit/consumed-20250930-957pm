@@ -3808,7 +3808,7 @@ export default function UserProfile() {
                 <div className="relative min-h-[210px] overflow-hidden rounded-2xl bg-white px-5 py-5">
                     <div className="relative z-10">
                       <div className="max-w-full">
-                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#55217f]">Maybe right now…</p>
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#55217f]">Your DNA might be hinting at…</p>
                         <h4 className="mt-4 max-w-[340px] text-[29px] font-bold leading-[1.16] tracking-[-0.035em] text-[#171129]">Easy answers just aren't that interesting.</h4>
                       </div>
                       <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#ded2e7] pt-4">
@@ -4243,7 +4243,7 @@ export default function UserProfile() {
                 <div className="relative min-h-[210px] overflow-hidden rounded-2xl bg-white px-5 py-5">
                     <div className="relative z-10">
                       <div className="max-w-full">
-                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#55217f]">Maybe right now…</p>
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#55217f]">Your DNA might be hinting at…</p>
                         <h4 className="mt-4 max-w-[340px] text-[29px] font-bold leading-[1.16] tracking-[-0.035em] text-[#171129]">Easy answers just aren't that interesting.</h4>
                       </div>
                       <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#ded2e7] pt-4">
