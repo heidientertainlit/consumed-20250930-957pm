@@ -8891,17 +8891,12 @@ export default function Feed() {
             <div>
 
               <FeedIdentityHero />
+              <div className="mt-4">
+                <HeroCTAButtons />
+              </div>
 
             </div>
             
-          </div>
-        </div>
-      )}
-
-      {!isGuestMode && (
-        <div className="bg-[#fbf8f5]">
-          <div className="mx-auto max-w-4xl px-4 pt-4">
-            <HeroCTAButtons />
           </div>
         </div>
       )}

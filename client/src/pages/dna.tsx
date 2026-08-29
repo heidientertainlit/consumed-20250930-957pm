@@ -370,22 +370,24 @@ export default function DnaPage() {
           <nav className="mx-auto flex max-w-7xl border-b border-[#ded5e3]" aria-label="DNA sections">
             <button
               onClick={() => setActiveTab('dna')}
-              className={`relative flex min-w-0 flex-1 items-center justify-center whitespace-nowrap px-2 pb-3 pt-1 text-[11px] font-bold transition-colors sm:text-[13px] ${
+              className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 whitespace-nowrap px-2 pb-3 pt-1 text-[10px] font-bold transition-colors sm:text-[12px] ${
                 activeTab === 'dna'
                   ? 'text-[#5b168f] after:absolute after:inset-x-2 after:-bottom-px after:h-[3px] after:rounded-t-full after:bg-[linear-gradient(90deg,#5b168f,#8a35be)]'
                   : 'text-[#776c7c] hover:text-[#34213f]'
               }`}
             >
+              <Dna size={17} strokeWidth={2} />
               My DNA
             </button>
             <button
               onClick={() => setActiveTab('compare')}
-              className={`relative flex min-w-0 flex-1 items-center justify-center whitespace-nowrap px-2 pb-3 pt-1 text-[11px] font-bold transition-colors sm:text-[13px] ${
+              className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 whitespace-nowrap px-2 pb-3 pt-1 text-[10px] font-bold transition-colors sm:text-[12px] ${
                 activeTab === 'compare'
                   ? 'text-[#5b168f] after:absolute after:inset-x-2 after:-bottom-px after:h-[3px] after:rounded-t-full after:bg-[linear-gradient(90deg,#5b168f,#8a35be)]'
                   : 'text-[#776c7c] hover:text-[#34213f]'
               }`}
             >
+              <Users size={17} strokeWidth={2} />
               Compare
             </button>
           </nav>

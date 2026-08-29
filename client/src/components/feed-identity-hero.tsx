@@ -326,10 +326,9 @@ export function HeroCTAButtons() {
       <div className="mx-2 grid grid-cols-2 gap-3">
         <button
           onClick={() => setTrackOpen(true)}
-          className="flex min-h-10 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-white transition-transform active:scale-[.98]"
+          className="flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-[#4b2868] shadow-[0_7px_18px_rgba(12,6,25,.24)] transition active:scale-[.98] active:bg-[#f5eff8]"
           style={{
-            background: "linear-gradient(135deg, #5b168f 0%, #7c2bb7 100%)",
-            boxShadow: "0 5px 14px rgba(91, 22, 143, 0.25)",
+            border: "1px solid rgba(255,255,255,.9)",
           }}
         >
           <Plus size={16} strokeWidth={2} />
@@ -337,7 +336,7 @@ export function HeroCTAButtons() {
         </button>
         <button
           onClick={() => setComposerOpen(true)}
-          className="flex min-h-10 items-center justify-center gap-2 rounded-full border border-[#d9cce2] bg-white px-4 py-2 text-sm font-semibold text-[#4d3261] shadow-[0_3px_10px_rgba(76,44,98,.08)] transition active:scale-[.98] active:bg-[#f8f4fa]"
+          className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-[0_5px_16px_rgba(12,6,25,.16)] backdrop-blur-sm transition active:scale-[.98] active:bg-white/15"
         >
           <MessageSquare size={15} strokeWidth={2} />
           Share a take

@@ -364,10 +364,10 @@ export default function PeoplePage() {
     .flatMap((band) => band.people)
     .filter((person, index, all) => all.findIndex((candidate) => candidate.id === person.id) === index)
     .sort((a, b) => Number(Boolean(b.profile_image_url || b.avatar_url || b.avatar)) - Number(Boolean(a.profile_image_url || a.avatar_url || a.avatar)));
-  const tabs: Array<{ id: Tab; label: string }> = [
-    { id: "friends", label: "Friends & Matches" },
-    { id: "tribes", label: "Tribes" },
-    { id: "creators", label: "Artists & Creators" },
+  const tabs: Array<{ id: Tab; label: string; Icon: typeof Dna }> = [
+    { id: "friends", label: "Friends & Matches", Icon: Users },
+    { id: "tribes", label: "Tribes", Icon: Sparkles },
+    { id: "creators", label: "Artists & Creators", Icon: Star },
   ];
   return <div className="min-h-[100dvh] bg-[#fbf8f5] pb-24 text-[#271d3a]">
     <Navigation roomyTopBar topBarTone="purple" />
@@ -398,15 +398,16 @@ export default function PeoplePage() {
     </header>
     <div className="bg-[#fbf8f5] px-4 pt-4 sm:px-6">
       <nav className="mx-auto flex max-w-5xl border-b border-[#ded5e3]" aria-label="People sections">
-        {tabs.map(({ id, label }) => <button
+        {tabs.map(({ id, label, Icon }) => <button
           key={id}
           onClick={() => setTab(id)}
-          className={`relative flex min-w-0 flex-1 items-center justify-center whitespace-nowrap px-2 pb-3 pt-1 text-[11px] font-bold transition-colors sm:text-[13px] ${
+          className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 whitespace-nowrap px-2 pb-3 pt-1 text-[10px] font-bold transition-colors sm:text-[12px] ${
             tab === id
               ? "text-[#5b168f] after:absolute after:inset-x-2 after:-bottom-px after:h-[3px] after:rounded-t-full after:bg-[linear-gradient(90deg,#5b168f,#8a35be)]"
               : "text-[#776c7c] hover:text-[#34213f]"
           }`}
         >
+          <Icon size={17} strokeWidth={2} />
           {label}
         </button>)}
       </nav>
