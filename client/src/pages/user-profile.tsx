@@ -3045,11 +3045,6 @@ export default function UserProfile() {
   const mediaTypeCounts = getMediaTypeCounts(filteredMediaHistory);
   const allMediaItems = getAllMediaItems();
   const canonicalMediaTypeCounts = getMediaTypeCounts(allMediaItems);
-  const additionalMediaTypeCount = [
-    canonicalMediaTypeCounts.game,
-    canonicalMediaTypeCounts.youtube,
-    canonicalMediaTypeCounts.sports,
-  ].filter((count) => count > 0).length;
   const ratedItems = filteredMediaHistory.filter(item => item.user_rating !== null && item.user_rating !== undefined && String(item.user_rating).trim() !== "" && Number.isFinite(Number(item.user_rating)));
   const averageRating = ratedItems.length ? ratedItems.reduce((sum, item) => sum + Number(item.user_rating), 0) / ratedItems.length : null;
   const pageProgressItems = filteredMediaHistory.filter(item => item.media_type === "book" && item.progress_mode === "page" && Number.isFinite(Number(item.progress)));
@@ -4693,14 +4688,17 @@ export default function UserProfile() {
                   <span className="pb-1 text-base font-medium text-[#51475b]">titles</span>
                 </div>
 
-                <div className="mt-7 grid grid-cols-3 gap-x-4 gap-y-5 sm:grid-cols-6 sm:gap-2">
+                <div className="mt-7 grid grid-cols-4 gap-x-3 gap-y-5">
                   {[
                     { val: canonicalMediaTypeCounts.movie, label: 'Movies', icon: Film, color: 'text-[#7a24ad]' },
                     { val: canonicalMediaTypeCounts.tv, label: 'TV Shows', icon: Tv, color: 'text-[#dc2482]' },
                     { val: canonicalMediaTypeCounts.book + canonicalMediaTypeCounts.book_series, label: 'Books', icon: BookOpen, color: 'text-[#2399bb]' },
                     { val: canonicalMediaTypeCounts.music, label: 'Music', icon: Music, color: 'text-[#30a047]' },
                     { val: canonicalMediaTypeCounts.podcast, label: 'Podcasts', icon: Mic, color: 'text-[#7429ad]' },
-                  ].map(({ val, label, icon: Icon, color }) => (
+                    { val: canonicalMediaTypeCounts.game, label: 'Games', icon: Gamepad2, color: 'text-[#e47724]' },
+                    { val: canonicalMediaTypeCounts.youtube, label: 'YouTube', icon: Youtube, color: 'text-[#d93636]' },
+                    { val: canonicalMediaTypeCounts.sports, label: 'Sports', icon: Trophy, color: 'text-[#238f69]' },
+                  ].filter(({ val }) => val > 0).map(({ val, label, icon: Icon, color }) => (
                     <div key={label} className="min-w-0 text-left">
                       <div className="flex items-center justify-start gap-1.5">
                         <Icon size={22} strokeWidth={2.3} className={color} />
@@ -4709,43 +4707,11 @@ export default function UserProfile() {
                       <p className="mt-1.5 truncate text-[11px] text-[#756b7d]">{label}</p>
                     </div>
                   ))}
-                  <div className="min-w-0 text-left">
-                    <div className="flex h-[27px] w-[45px] items-center justify-center rounded-full bg-[#f5f2f7] text-sm font-bold text-[#21182d]">
-                      +{additionalMediaTypeCount}
-                    </div>
-                    <p className="mt-1.5 text-[11px] text-[#756b7d]">More</p>
-                  </div>
                 </div>
 
-                <div className="mt-8">
-                <div className="border-b border-[#ece5e8] pb-4">
-                  <p className="mb-3 text-[11px] font-normal uppercase tracking-[0.2em] text-[#75677e]">Lists</p>
-                  <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 scrollbar-hide">
-                    {primaryMediaLists.map((list: any) => {
-                      const filterValue = list.title === 'All' ? 'all' : list.title;
-                      const isActive = mediaHistoryList === filterValue;
-                      const itemCount = list.items?.length ?? list.item_count ?? 0;
-                      return (
-                        <button
-                          key={list.id}
-                          type="button"
-                          onClick={() => setMediaHistoryList(filterValue)}
-                          className={`flex min-w-[108px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-full px-5 py-3 text-xs font-semibold transition ${
-                            isActive
-                              ? 'bg-[#68418f] text-white'
-                              : 'bg-[#f8f5f9] text-[#34283d] hover:bg-[#f0e9f4]'
-                          }`}
-                        >
-                          {getDisplayTitle(list.title)}
-                          <span className={`font-normal ${isActive ? 'text-white/75' : 'text-[#8f8098]'}`}>{itemCount}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
               {/* Filters */}
-              <div className="px-4 pb-5 pt-4 sm:px-5">
+              <div className="pt-8">
+              <p className="mb-3 text-[11px] font-normal uppercase tracking-[0.2em] text-[#75677e]">Dive deeper into your media</p>
               <div className="mb-4 flex items-center gap-2.5">
                 <div className="relative min-w-0 flex-1">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#7e6c8c]" size={17} />
@@ -4770,6 +4736,28 @@ export default function UserProfile() {
                   <SlidersHorizontal size={16} />
                   Filter
                 </button>
+              </div>
+              <div className="-mx-1 mb-4 flex gap-2.5 overflow-x-auto px-1 pb-1 scrollbar-hide">
+                {primaryMediaLists.map((list: any) => {
+                  const filterValue = list.title === 'All' ? 'all' : list.title;
+                  const isActive = mediaHistoryList === filterValue;
+                  const itemCount = list.items?.length ?? list.item_count ?? 0;
+                  return (
+                    <button
+                      key={list.id}
+                      type="button"
+                      onClick={() => setMediaHistoryList(filterValue)}
+                      className={`flex min-w-[108px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-full px-5 py-3 text-xs font-semibold transition ${
+                        isActive
+                          ? 'bg-[#68418f] text-white'
+                          : 'bg-[#f8f5f9] text-[#34283d] hover:bg-[#f0e9f4]'
+                      }`}
+                    >
+                      {getDisplayTitle(list.title)}
+                      <span className={`font-normal ${isActive ? 'text-white/75' : 'text-[#8f8098]'}`}>{itemCount}</span>
+                    </button>
+                  );
+                })}
               </div>
               {isMediaFiltersOpen && (
               <div className="mb-4 flex flex-wrap gap-2 rounded-2xl border border-[#eadff0] bg-[#fcf9fd] p-3">
