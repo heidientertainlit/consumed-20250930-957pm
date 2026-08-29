@@ -283,7 +283,7 @@ export default function PeoplePage() {
           </div>
           <div className="relative max-w-[72%] sm:max-w-xl">
             <p className="text-[10px] font-bold uppercase tracking-[.2em] text-violet-300">People</p>
-            <h1 className="mt-2 font-serif text-[32px] font-medium leading-[.98] tracking-[-.045em] text-white sm:text-[42px]">
+            <h1 className="mt-2 text-[32px] font-bold leading-[1.08] tracking-tight text-white">
               Find the people<br />who get it.
             </h1>
             <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Connect through the stories, sounds, and worlds you can’t stop thinking about.</p>
