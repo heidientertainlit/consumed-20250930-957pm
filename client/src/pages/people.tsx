@@ -268,20 +268,12 @@ export default function PeoplePage() {
     { id: "tribes", label: "Tribes", Icon: Sparkles },
     { id: "creators", label: "Creators", Icon: Star },
   ];
-  const headerTribes = tribesQuery.data?.tribes || [];
-  const headerMembers = headerTribes
-    .flatMap((tribe) => tribe.members)
-    .filter((person, index, people) =>
-      Boolean(person.profile_image_url || person.avatar_url || person.avatar)
-      && people.findIndex((candidate) => candidate.id === person.id) === index)
-    .slice(0, 4);
-
   return <div className="min-h-[100dvh] bg-[#fbf8f5] pb-24 text-[#271d3a]">
     <Navigation roomyTopBar />
     <header className="-mt-px bg-[linear-gradient(135deg,#0b0713_0%,#1b0a31_50%,#35125b_100%)] text-white shadow-[0_10px_28px_rgba(41,16,71,.18)]">
       <div className="mx-auto max-w-5xl px-6 sm:px-8">
         <div className="relative overflow-hidden pb-7 pt-6 sm:pb-9 sm:pt-8">
-          <div className="pointer-events-none absolute right-1 top-5 h-32 w-32 rounded-full border border-violet-400/40 shadow-[0_0_35px_rgba(168,85,247,.28)] sm:right-8 sm:h-40 sm:w-40">
+          <div className="pointer-events-none absolute -right-10 top-4 h-40 w-40 rounded-full border border-violet-400/40 shadow-[0_0_42px_rgba(168,85,247,.3)] sm:-right-12 sm:h-48 sm:w-48">
             <div className="grid h-full w-full place-items-center">
               <Users size={42} strokeWidth={1.25} className="text-violet-300 drop-shadow-[0_0_12px_rgba(192,132,252,.75)]" />
             </div>
@@ -296,27 +288,9 @@ export default function PeoplePage() {
             </h1>
             <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Connect through the stories, sounds, and worlds you can’t stop thinking about.</p>
           </div>
-          <div className="relative mt-5 flex items-center justify-between gap-4">
-            <div className="flex min-h-9 min-w-0 items-center gap-3">
-              {headerMembers.length > 0
-                ? <div className="flex shrink-0 items-center">{headerMembers.map((person, index) => {
-                    const src = person.profile_image_url || person.avatar_url || person.avatar;
-                    return <img
-                      key={person.id}
-                      src={src}
-                      alt=""
-                      className={`h-9 w-9 rounded-full border-2 border-[#1b0a31] object-cover ${index ? "-ml-2" : ""}`}
-                      onError={(event) => { event.currentTarget.style.display = "none"; }}
-                    />;
-                  })}</div>
-                : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-violet-300/25 bg-white/10 text-violet-200"><Users size={16} /></span>}
-              <p className="min-w-0 text-xs leading-4 text-white/65">
-                <strong className="block truncate font-bold text-white">{headerTribes.length ? `${headerTribes.length} communities to explore` : "Your people are here"}</strong>
-                Matches, friends, Tribes, and creators
-              </p>
-            </div>
-            <button onClick={copyInvite} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-[linear-gradient(135deg,#7c3aed,#a855f7)] px-4 text-xs font-bold text-white shadow-[0_6px_18px_rgba(126,34,206,.28)] transition active:scale-[.98]">
-              <Share2 size={14} /> Invite
+          <div className="relative mt-5">
+            <button onClick={copyInvite} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[linear-gradient(135deg,#7c3aed,#a855f7)] px-5 py-2.5 text-xs font-bold text-white shadow-[0_6px_18px_rgba(126,34,206,.28)] transition active:scale-[.98]">
+              <Share2 size={14} /> Invite a friend to compare DNA
             </button>
           </div>
         </div>
