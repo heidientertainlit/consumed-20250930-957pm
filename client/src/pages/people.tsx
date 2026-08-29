@@ -289,7 +289,7 @@ export default function PeoplePage() {
               className="mt-2 text-[28px] leading-[1.12] tracking-[-.02em] text-white"
               style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
             >
-              Entertainment is better<br />with your people.
+              Entertainment<br />is better with<br />your people.
             </h1>
             <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Find the people, communities, and creators connected by what you love.</p>
           </div>
