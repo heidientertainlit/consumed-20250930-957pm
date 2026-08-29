@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Heart, Leaf, Loader2, LockKeyhole, Moon, Share2, Sparkles, Star, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Heart, Leaf, Loader2, LockKeyhole, Moon, Sparkles, Star, Users } from "lucide-react";
 import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
 import FriendsManager from "@/components/friends-manager";
@@ -270,12 +270,19 @@ export default function PeoplePage() {
   ];
   return <div className="min-h-[100dvh] bg-[#fbf8f5] pb-24 text-[#271d3a]">
     <Navigation roomyTopBar />
-    <header className="-mt-px bg-[linear-gradient(135deg,#0b0713_0%,#1b0a31_50%,#35125b_100%)] text-white shadow-[0_10px_28px_rgba(41,16,71,.18)]">
+    <header className="relative -mt-px overflow-hidden bg-[linear-gradient(135deg,#0b0713_0%,#1b0a31_50%,#35125b_100%)] text-white shadow-[0_10px_28px_rgba(41,16,71,.18)]">
       <div className="mx-auto max-w-5xl px-6 sm:px-8">
-        <div className="relative overflow-hidden pb-7 pt-6 sm:pb-9 sm:pt-8">
-          <div className="pointer-events-none absolute -right-10 top-4 h-40 w-40 rounded-full border border-violet-400/40 shadow-[0_0_42px_rgba(168,85,247,.3)] sm:-right-12 sm:h-48 sm:w-48">
-            <div className="grid h-full w-full place-items-center">
-              <Users size={42} strokeWidth={1.25} className="text-violet-300 drop-shadow-[0_0_12px_rgba(192,132,252,.75)]" />
+        <div className="relative pb-7 pt-6 sm:pb-9 sm:pt-8">
+          <div
+            className="pointer-events-none absolute -right-20 top-2 h-44 w-44 rounded-full border-2 border-violet-400/55 sm:-right-24 sm:h-52 sm:w-52"
+            style={{
+              background: "radial-gradient(circle at 38% 38%, rgba(139,92,246,.22), rgba(43,18,76,.34) 58%, rgba(20,9,35,.18) 100%)",
+              boxShadow: "0 0 34px rgba(168,85,247,.48), 0 0 72px rgba(126,34,206,.24), inset 0 0 30px rgba(192,132,252,.18)",
+            }}
+          >
+            <div className="absolute -inset-5 rounded-full bg-[radial-gradient(circle,rgba(168,85,247,.16),transparent_68%)]" />
+            <div className="relative grid h-full w-full place-items-center">
+              <Users size={48} strokeWidth={1.35} className="text-violet-300 drop-shadow-[0_0_8px_rgba(216,180,254,1)]" />
             </div>
           </div>
           <div className="relative max-w-[72%] sm:max-w-xl">
@@ -287,11 +294,6 @@ export default function PeoplePage() {
               Find the people<br />who get it.
             </h1>
             <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Connect through the stories, sounds, and worlds you can’t stop thinking about.</p>
-          </div>
-          <div className="relative mt-5">
-            <button onClick={copyInvite} className="inline-flex min-h-9 items-center gap-2 rounded-full border border-violet-300/25 bg-white/[.07] px-4 py-2 text-xs font-semibold text-violet-100 transition hover:bg-white/[.11] active:scale-[.98]">
-              <Share2 size={13} /> Invite a friend
-            </button>
           </div>
         </div>
       </div>
