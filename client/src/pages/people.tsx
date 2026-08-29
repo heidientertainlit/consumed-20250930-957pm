@@ -150,7 +150,7 @@ async function hydrateTribeMediaImages(data: TribesResponse, token: string): Pro
   const unique = [...new Map(missing.map((item) => [`${item.mediaType.toLowerCase()}:${item.title.toLowerCase()}`, item])).values()];
   const resolvedEntries = await Promise.all(unique.map(async (item) => {
     try {
-      const params = new URLSearchParams({ q: item.title, limit: "5" });
+      const params = new URLSearchParams({ query: item.title });
       if (item.mediaType) params.set("type", item.mediaType);
       const response = await fetch(`${SUPABASE_URL}/functions/v1/media-search?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -304,7 +304,7 @@ export default function PeoplePage() {
     queryFn: () => functionRequest<Affinity>("people-affinity", session!.access_token, { action: "load", batch_size: 25 }), staleTime: 60_000,
   });
   const tribesQuery = useQuery({
-    queryKey: ["people-tribes-v3", user?.id], enabled: !!session?.access_token,
+    queryKey: ["people-tribes-v4", user?.id], enabled: !!session?.access_token,
     queryFn: async () => hydrateTribeMediaImages(
       await functionRequest<TribesResponse>("people-tribes", session!.access_token, { action: "load" }),
       session!.access_token,
@@ -342,7 +342,7 @@ export default function PeoplePage() {
   }, [affinityQuery.data?.has_more, affinityQuery.data?.next_cursor, moreMatches.isPending]);
   const membership = useMutation({
     mutationFn: ({ slug, joined }: { slug: string; joined: boolean }) => functionRequest<TribesResponse>("people-tribes", session!.access_token, { action: joined ? "leave" : "join", slug }),
-    onSuccess: async (data) => queryClient.setQueryData(["people-tribes-v3", user?.id], await hydrateTribeMediaImages(data, session!.access_token)),
+    onSuccess: async (data) => queryClient.setQueryData(["people-tribes-v4", user?.id], await hydrateTribeMediaImages(data, session!.access_token)),
     onError: (error: Error) => toast({ title: "Couldn’t update membership", description: error.message }),
   });
   const creatorsQuery = useQuery({
