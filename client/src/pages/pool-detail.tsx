@@ -3061,7 +3061,7 @@ export default function PoolDetailPage() {
   };
 
   return (
-    <div className="min-h-screen pb-28" style={{ backgroundColor: '#f4f4f8' }}>
+    <div className="min-h-screen pb-28" style={{ backgroundColor: '#fbf8f5' }}>
       {/* ── Unified gradient: nav bar + hero as one surface ── */}
       <div style={{ background: 'linear-gradient(160deg, #0a0a0f 0%, #12121f 40%, #2d1f4e 100%)' }}>
         <Navigation />

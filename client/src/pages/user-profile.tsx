@@ -3261,7 +3261,7 @@ export default function UserProfile() {
   // Show loading screen while route is resolving to prevent flash of wrong profile
   if (isRouteResolving) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#fbf8f5] flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="animate-spin text-purple-600 mx-auto mb-4" size={32} />
           <p className="text-gray-600">Loading profile...</p>
@@ -3272,7 +3272,7 @@ export default function UserProfile() {
 
   if (!isOwnProfile && (friendshipStatus === 'loading' || friendshipCheckedUserId !== viewingUserId)) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#fbf8f5] flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="animate-spin text-purple-600 mx-auto mb-4" size={32} />
           <p className="text-gray-600">Loading profile...</p>
@@ -3288,7 +3288,7 @@ export default function UserProfile() {
     const handle = userProfileData?.user_name;
 
     return (
-      <div className="min-h-screen bg-gray-100 pb-24">
+      <div className="min-h-screen bg-[#fbf8f5] pb-24">
         <Navigation roomyTopBar />
         <main className="mx-auto max-w-lg px-4 pt-8">
           <button

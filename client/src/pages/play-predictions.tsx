@@ -485,7 +485,7 @@ export default function PlayPredictionsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="min-h-screen bg-[#fbf8f5] pb-20">
         <Navigation onTrackConsumption={handleTrackConsumption} />
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="text-center py-20">
@@ -497,7 +497,7 @@ export default function PlayPredictionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-[#fbf8f5] pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
       {/* Hero Section — same gradient as nav bar for seamless look */}

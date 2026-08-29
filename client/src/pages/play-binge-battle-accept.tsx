@@ -122,7 +122,7 @@ export default function PlayBingeBattleAccept() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#f8f8fb] flex flex-col items-center justify-center px-6 gap-4">
+      <div className="min-h-screen bg-[#fbf8f5] flex flex-col items-center justify-center px-6 gap-4">
         <div className="w-14 h-14 rounded-2xl bg-purple-100 flex items-center justify-center">
           <Zap size={24} className="text-purple-600" />
         </div>
@@ -143,7 +143,7 @@ export default function PlayBingeBattleAccept() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8f8fb] flex items-center justify-center">
+      <div className="min-h-screen bg-[#fbf8f5] flex items-center justify-center">
         <Loader2 size={28} className="animate-spin text-purple-400" />
       </div>
     );
@@ -151,7 +151,7 @@ export default function PlayBingeBattleAccept() {
 
   if (error || !battle) {
     return (
-      <div className="min-h-screen bg-[#f8f8fb] flex flex-col items-center justify-center px-6 gap-4">
+      <div className="min-h-screen bg-[#fbf8f5] flex flex-col items-center justify-center px-6 gap-4">
         <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
           <AlertCircle size={24} className="text-red-500" />
         </div>
@@ -169,7 +169,7 @@ export default function PlayBingeBattleAccept() {
   const isCompleted = battle.status === "completed";
 
   return (
-    <div className="min-h-screen bg-[#f8f8fb] flex flex-col">
+    <div className="min-h-screen bg-[#fbf8f5] flex flex-col">
       <div className="flex items-center gap-3 px-4 pt-14 pb-3 bg-white border-b border-gray-100">
         <button onClick={() => setLocation("/play")} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
           <ChevronLeft size={16} className="text-gray-600" />

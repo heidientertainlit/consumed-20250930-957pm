@@ -424,7 +424,7 @@ export default function PlayChallengePage() {
 
   if (questionsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#fbf8f5] flex items-center justify-center">
         <div className="text-center">
           <Loader2 size={28} className="animate-spin text-purple-500 mx-auto mb-3" />
           <p className="text-gray-500 text-sm">Loading questions...</p>
@@ -435,7 +435,7 @@ export default function PlayChallengePage() {
 
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#fbf8f5]">
         <Navigation />
         <div className="px-4 pt-20 text-center">
           <p className="text-4xl mb-3">{config.fallbackEmoji}</p>
@@ -611,7 +611,7 @@ export default function PlayChallengePage() {
   const result = results[q.id];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#fbf8f5]">
       <Navigation />
 
       {/* Streak milestone banner */}

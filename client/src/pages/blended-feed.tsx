@@ -25,7 +25,7 @@ export default function BlendedFeed() {
   const [activeTab, setActiveTab] = useState<'for-you' | 'friends'>('for-you');
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="min-h-screen bg-[#fbf8f5] pb-32">
       <Navigation onTrackConsumption={() => {}} />
 
       {/* Header - Same energy as current feed */}

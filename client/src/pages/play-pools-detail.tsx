@@ -170,7 +170,7 @@ export default function PlayPoolsDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#fbf8f5]">
         <Navigation />
         <div className="bg-white px-4 pt-5 pb-4 flex items-center gap-3" style={{ borderBottom: "0.5px solid #f3f4f6" }}>
           <button onClick={() => setLocation("/play/pools")} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"><ChevronLeft size={14} className="text-gray-500" /></button>
@@ -184,7 +184,7 @@ export default function PlayPoolsDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[#fbf8f5] flex flex-col">
       <Navigation />
 
       {/* Header */}

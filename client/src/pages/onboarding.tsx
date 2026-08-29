@@ -1730,7 +1730,7 @@ export default function OnboardingPage() {
 
   if (step === "loved")
     return (
-      <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
+      <div className="min-h-screen w-full flex items-stretch justify-center bg-[#fbf8f5]">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
           <OnboardingHero currentStep={3} onBack={() => goToStep("interests")} />
 
@@ -1965,7 +1965,7 @@ export default function OnboardingPage() {
 
   if (step === "love")
     return (
-      <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
+      <div className="min-h-screen w-full flex items-stretch justify-center bg-[#fbf8f5]">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
           {dnaHeader(4, "Step 4 of 5", () => {
             if (resumeDNA && hasExistingProfile) leaveForNow();
@@ -2042,7 +2042,7 @@ export default function OnboardingPage() {
 
   if (step === "drivers")
     return (
-      <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
+      <div className="min-h-screen w-full flex items-stretch justify-center bg-[#fbf8f5]">
         <div className="w-full max-w-[430px] flex flex-col relative bg-white">
           {dnaHeader(5, "Step 5 of 5 — Almost ready", () => goToStep("love"))}
           <div className="flex-1 px-5 pt-6 pb-4 bg-white">

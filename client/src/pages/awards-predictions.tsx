@@ -641,7 +641,7 @@ export default function AwardsPredictions() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#fbf8f5] flex items-center justify-center">
         <div className="flex flex-col items-center">
           <Loader2 className="w-10 h-10 text-purple-600 animate-spin mb-4" />
           <p className="text-gray-500">Loading predictions...</p>
@@ -653,7 +653,7 @@ export default function AwardsPredictions() {
   // Error state
   if (error || !event) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#fbf8f5] flex items-center justify-center">
         <div className="text-center px-4">
           <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Awards Not Found</h1>
@@ -668,7 +668,7 @@ export default function AwardsPredictions() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-[#fbf8f5] pb-24">
       <Navigation />
       
       {/* Hero Header - Dark purple gradient matching app */}

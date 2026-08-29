@@ -638,7 +638,7 @@ export default function PlayBingeBattle() {
     }
 
     return (
-      <div className="min-h-screen bg-[#f8f8fb]">
+      <div className="min-h-screen bg-[#fbf8f5]">
         <Navigation />
         <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] px-4 pt-14 pb-6">
           <button onClick={() => setLocation("/play")} className="flex items-center gap-1.5 text-white/60 text-sm mb-4">
@@ -710,7 +710,7 @@ export default function PlayBingeBattle() {
   // --- View: New ---
   if (view === "new") {
     return (
-      <div className="min-h-screen bg-[#f8f8fb] flex flex-col">
+      <div className="min-h-screen bg-[#fbf8f5] flex flex-col">
         <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] px-4 pt-14 pb-5">
           <button onClick={() => setView("hub")} className="flex items-center gap-1.5 text-white/60 text-sm mb-4">
             <ChevronLeft size={16} /> Binge Battle
@@ -854,7 +854,7 @@ export default function PlayBingeBattle() {
     }
 
     return (
-      <div className="min-h-screen bg-[#f8f8fb] flex flex-col">
+      <div className="min-h-screen bg-[#fbf8f5] flex flex-col">
         <div className="flex items-center gap-3 px-4 pt-14 pb-3 bg-white border-b border-gray-100">
           <button onClick={() => setView("new")} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
             <ChevronLeft size={16} className="text-gray-600" />
@@ -916,7 +916,7 @@ export default function PlayBingeBattle() {
     const battle = currentBattle;
     if (!battle) {
       return (
-        <div className="min-h-screen bg-[#f8f8fb] flex items-center justify-center">
+        <div className="min-h-screen bg-[#fbf8f5] flex items-center justify-center">
           <Loader2 size={28} className="animate-spin text-purple-400" />
         </div>
       );
@@ -933,7 +933,7 @@ export default function PlayBingeBattle() {
 
     return (
       <>
-      <div className="min-h-screen bg-[#f8f8fb] flex flex-col">
+      <div className="min-h-screen bg-[#fbf8f5] flex flex-col">
         <div className="flex items-center gap-3 px-4 pt-14 pb-3 bg-white border-b border-gray-100">
           <button onClick={() => setView("hub")} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
             <ChevronLeft size={16} className="text-gray-600" />
@@ -1244,7 +1244,7 @@ export default function PlayBingeBattle() {
     }
 
     return (
-      <div className="min-h-screen bg-[#f8f8fb] flex flex-col">
+      <div className="min-h-screen bg-[#fbf8f5] flex flex-col">
         <div className="flex items-center gap-3 px-4 pt-14 pb-3 bg-white border-b border-gray-100">
           <button onClick={() => setView("hub")} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
             <ChevronLeft size={16} className="text-gray-600" />

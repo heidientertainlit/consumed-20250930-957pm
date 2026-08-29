@@ -77,7 +77,7 @@ export default function CreateRank() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#fbf8f5]">
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center gap-3">
           <button

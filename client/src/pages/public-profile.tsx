@@ -177,7 +177,7 @@ export default function PublicProfilePage() {
         <meta property="og:url" content={`${appUrl}/u/${userId}`} />
       </Helmet>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#fbf8f5]">
         <div className="bg-gradient-to-b from-purple-600 to-purple-800 text-white">
           <div className="max-w-2xl mx-auto px-4 py-8">
             <div className="text-center mb-6">

@@ -200,7 +200,7 @@ export default function PoolsPage() {
         </div>
       </div>
 
-      <div className="bg-gray-50 px-4 pt-4 space-y-5 min-h-screen lg:px-[max(1rem,calc((100%-56rem)/2))]">
+      <div className="bg-[#fbf8f5] px-4 pt-4 space-y-5 min-h-screen lg:px-[max(1rem,calc((100%-56rem)/2))]">
         {/* Search bar */}
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />

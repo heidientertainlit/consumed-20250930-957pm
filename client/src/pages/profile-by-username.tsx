@@ -28,7 +28,7 @@ export default function ProfileByUsername() {
 
   if (notFound) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#fbf8f5] flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 font-medium">User not found</p>
           <p className="text-sm text-gray-400 mt-1">@{username}</p>
@@ -38,7 +38,7 @@ export default function ProfileByUsername() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-[#fbf8f5] flex items-center justify-center">
       <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
     </div>
   );

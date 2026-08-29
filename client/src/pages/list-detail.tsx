@@ -917,7 +917,7 @@ export default function ListDetail() {
   // Show loading state instead of "List not found" during data fetch
   if (listsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="min-h-screen bg-[#fbf8f5] pb-20">
         <Navigation onTrackConsumption={() => {}} />
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="text-center">
@@ -939,7 +939,7 @@ export default function ListDetail() {
     });
     
     return (
-      <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="min-h-screen bg-[#fbf8f5] pb-20">
         <Navigation onTrackConsumption={() => {}} />
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="text-center">
@@ -966,7 +966,7 @@ export default function ListDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-[#fbf8f5] pb-20">
       <Navigation onTrackConsumption={() => {}} />
 
       {/* Compact Sticky Header */}

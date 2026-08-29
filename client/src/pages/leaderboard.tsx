@@ -537,7 +537,7 @@ export default function Leaderboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="min-h-screen bg-[#fbf8f5] pb-32">
       <Navigation />
 
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-5 px-4 -mt-px text-center">

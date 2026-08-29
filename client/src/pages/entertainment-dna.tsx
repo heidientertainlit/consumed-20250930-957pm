@@ -604,7 +604,7 @@ export default function EntertainmentDNAPage() {
 
 
   return (
-    <div className="min-h-screen w-full flex items-stretch justify-center bg-gray-100">
+    <div className="min-h-screen w-full flex items-stretch justify-center bg-[#fbf8f5]">
       <div className="w-full max-w-[430px] flex flex-col relative bg-white">
         {/* Dark purple gradient header */}
         <div

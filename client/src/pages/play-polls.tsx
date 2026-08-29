@@ -179,7 +179,7 @@ export default function PlayPollsPage() {
 
   if (isLoading || predictionsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="min-h-screen bg-[#fbf8f5] pb-20">
         <Navigation onTrackConsumption={() => setIsTrackModalOpen(true)} />
         <div className="flex items-center justify-center py-20">
           <div className="text-xl text-gray-500">Loading polls...</div>
@@ -189,7 +189,7 @@ export default function PlayPollsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-[#fbf8f5] pb-20">
       <Navigation onTrackConsumption={() => setIsTrackModalOpen(true)} />
 
       {/* Header */}

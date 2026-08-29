@@ -212,7 +212,7 @@ export default function LibraryAI() {
   };
   
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-[#fbf8f5] pb-20">
       <Navigation onTrackConsumption={() => {}} />
       
       <div className="max-w-7xl mx-auto px-4 py-6">

@@ -297,7 +297,7 @@ export default function PostDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-24">
+      <div className="min-h-screen bg-[#fbf8f5] pb-24">
         <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-gray-50 pb-6">
           <div className="max-w-lg mx-auto px-4 pt-4">
             <button onClick={() => window.history.back()} className="mb-4 flex items-center gap-2 text-gray-300 hover:text-white">
@@ -325,7 +325,7 @@ export default function PostDetail() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-24">
+      <div className="min-h-screen bg-[#fbf8f5] pb-24">
         <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-gray-50 pb-6">
           <div className="max-w-lg mx-auto px-4 pt-4">
             <button onClick={() => window.history.back()} className="mb-4 flex items-center gap-2 text-gray-300 hover:text-white">
@@ -352,7 +352,7 @@ export default function PostDetail() {
   const mediaItem = post.mediaItems?.[0];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-[#fbf8f5] pb-24">
       <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-gray-50 pb-6">
         <div className="max-w-lg mx-auto px-4 pt-4">
           <button onClick={() => window.history.back()} className="flex items-center gap-2 text-gray-300 hover:text-white">

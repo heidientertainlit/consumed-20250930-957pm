@@ -113,7 +113,7 @@ export default function PointsBreakdown() {
   }, [session?.access_token]);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-[#fbf8f5] pb-24">
       <Navigation onTrackConsumption={() => {}} />
 
       <div className="max-w-2xl mx-auto px-4 py-6">
