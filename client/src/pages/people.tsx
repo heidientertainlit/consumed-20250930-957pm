@@ -365,7 +365,7 @@ export default function PeoplePage() {
     .filter((person, index, all) => all.findIndex((candidate) => candidate.id === person.id) === index)
     .sort((a, b) => Number(Boolean(b.profile_image_url || b.avatar_url || b.avatar)) - Number(Boolean(a.profile_image_url || a.avatar_url || a.avatar)));
   const tabs: Array<{ id: Tab; label: string; Icon: typeof Dna }> = [
-    { id: "friends", label: "Friends", Icon: Users },
+    { id: "friends", label: "Friends & Matches", Icon: Users },
     { id: "tribes", label: "Tribes", Icon: Sparkles },
     { id: "creators", label: "Creators", Icon: Star },
   ];
