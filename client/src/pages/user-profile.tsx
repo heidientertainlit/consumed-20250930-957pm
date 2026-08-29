@@ -4701,16 +4701,16 @@ export default function UserProfile() {
                     { val: canonicalMediaTypeCounts.music, label: 'Music', icon: Music, color: 'text-[#30a047]' },
                     { val: canonicalMediaTypeCounts.podcast, label: 'Podcasts', icon: Mic, color: 'text-[#7429ad]' },
                   ].map(({ val, label, icon: Icon, color }) => (
-                    <div key={label} className="min-w-0 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
+                    <div key={label} className="min-w-0 text-left">
+                      <div className="flex items-center justify-start gap-1.5">
                         <Icon size={22} strokeWidth={2.3} className={color} />
                         <span className="text-base font-bold text-[#21182d]">{val}</span>
                       </div>
                       <p className="mt-1.5 truncate text-[11px] text-[#756b7d]">{label}</p>
                     </div>
                   ))}
-                  <div className="min-w-0 text-center">
-                    <div className="mx-auto flex h-[27px] w-[45px] items-center justify-center rounded-full bg-[#f5f2f7] text-sm font-bold text-[#21182d]">
+                  <div className="min-w-0 text-left">
+                    <div className="flex h-[27px] w-[45px] items-center justify-center rounded-full bg-[#f5f2f7] text-sm font-bold text-[#21182d]">
                       +{additionalMediaTypeCount}
                     </div>
                     <p className="mt-1.5 text-[11px] text-[#756b7d]">More</p>
@@ -4732,7 +4732,7 @@ export default function UserProfile() {
                           onClick={() => setMediaHistoryList(filterValue)}
                           className={`flex min-w-[108px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-full px-5 py-3 text-xs font-semibold transition ${
                             isActive
-                              ? 'bg-[#68418f] text-white shadow-[0_6px_14px_rgba(104,65,143,0.2)]'
+                              ? 'bg-[#68418f] text-white'
                               : 'bg-[#f8f5f9] text-[#34283d] hover:bg-[#f0e9f4]'
                           }`}
                         >
