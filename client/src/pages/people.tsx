@@ -289,8 +289,8 @@ export default function PeoplePage() {
           <div className="relative max-w-[72%] sm:max-w-xl">
             <p className="text-[10px] font-bold uppercase tracking-[.2em] text-violet-300">People</p>
             <h1
-              className="mt-2 text-[32px] leading-[1.08] tracking-tight text-white"
-              style={{ fontFamily: "Poppins, sans-serif", fontWeight: 700 }}
+              className="mt-2 text-[28px] leading-[1.12] tracking-[-.02em] text-white"
+              style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
             >
               Find the people<br />who get it.
             </h1>
