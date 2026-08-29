@@ -364,10 +364,10 @@ export default function PeoplePage() {
     .flatMap((band) => band.people)
     .filter((person, index, all) => all.findIndex((candidate) => candidate.id === person.id) === index)
     .sort((a, b) => Number(Boolean(b.profile_image_url || b.avatar_url || b.avatar)) - Number(Boolean(a.profile_image_url || a.avatar_url || a.avatar)));
-  const tabs: Array<{ id: Tab; label: string; Icon: typeof Dna }> = [
-    { id: "friends", label: "Friends & Matches", Icon: Users },
-    { id: "tribes", label: "Tribes", Icon: Sparkles },
-    { id: "creators", label: "Artists & Creators", Icon: Star },
+  const tabs: Array<{ id: Tab; label: string }> = [
+    { id: "friends", label: "Friends & Matches" },
+    { id: "tribes", label: "Tribes" },
+    { id: "creators", label: "Artists & Creators" },
   ];
   return <div className="min-h-[100dvh] bg-[#fbf8f5] pb-24 text-[#271d3a]">
     <Navigation roomyTopBar topBarTone="purple" />
@@ -396,18 +396,17 @@ export default function PeoplePage() {
         </div>
       </div>
     </header>
-    <div className="bg-[#fbf8f5] px-4 pb-1 pt-4 sm:px-6">
-      <nav className="mx-auto flex max-w-5xl overflow-x-auto rounded-full border border-[#e2d9e8] bg-[#f3eef5] p-1 shadow-[inset_0_1px_2px_rgba(76,44,98,.05)]" aria-label="People sections">
-        {tabs.map(({ id, label, Icon }) => <button
+    <div className="bg-[#fbf8f5] px-4 pt-4 sm:px-6">
+      <nav className="mx-auto flex max-w-5xl border-b border-[#ded5e3]" aria-label="People sections">
+        {tabs.map(({ id, label }) => <button
           key={id}
           onClick={() => setTab(id)}
-          className={`flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full py-3 text-[12px] font-bold transition-all sm:text-[13px] ${id === "friends" ? "flex-[1.3] px-3" : "flex-1 px-2"} ${
+          className={`relative flex min-w-0 flex-1 items-center justify-center whitespace-nowrap px-2 pb-3 pt-1 text-[11px] font-bold transition-colors sm:text-[13px] ${
             tab === id
-              ? "bg-[linear-gradient(135deg,#5b168f,#7c2bb7)] text-white shadow-[0_5px_14px_rgba(91,22,143,.25)]"
-              : "text-[#34213f] hover:bg-white/55"
+              ? "text-[#5b168f] after:absolute after:inset-x-2 after:-bottom-px after:h-[3px] after:rounded-t-full after:bg-[linear-gradient(90deg,#5b168f,#8a35be)]"
+              : "text-[#776c7c] hover:text-[#34213f]"
           }`}
         >
-          <Icon size={17} strokeWidth={2} className={tab === id ? "text-white" : "text-[#69358d]"} />
           {label}
         </button>)}
       </nav>

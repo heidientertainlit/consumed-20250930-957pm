@@ -8,3 +8,5 @@ Matches and Friends belong in one Friends destination. Lead with search, request
 **Why:** Matching is how users discover potential friends, not a separate long-term relationship type. Separate top-level tabs made People feel crowded and split one journey across two destinations.
 
 **How to apply:** Keep People navigation to Friends, Tribes, and Creators. The Friends experience must retain search, invites, incoming-request actions, pending states, current friends, and affinity discovery. Do not make users scroll through the full friend list before potential matches; provide an explicit expand control. Legacy Matches links should resolve to Friends.
+
+Use text-only People tabs with a purple active underline rather than a segmented pill. The visible labels are “Friends & Matches,” “Tribes,” and “Artists & Creators”; the longer labels need the lighter treatment and equal breathing room.
