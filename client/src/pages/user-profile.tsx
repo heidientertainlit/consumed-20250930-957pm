@@ -3771,7 +3771,7 @@ export default function UserProfile() {
                     <div className="relative z-10">
                       <div className="max-w-full">
                         <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#6d5878]">Maybe right now…</p>
-                        <p className="mt-3 text-[21px] font-medium leading-[1.18] text-[#422653]">Easy answers just aren't that interesting.</p>
+                        <p className="mt-3 text-[21px] font-bold leading-[1.18] text-[#422653]">Easy answers just aren't that interesting.</p>
                       </div>
                       <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#ded2e7] pt-4">
                         <div>
@@ -4213,7 +4213,7 @@ export default function UserProfile() {
                     <div className="relative z-10">
                       <div className="max-w-full">
                         <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#6d5878]">Maybe right now…</p>
-                        <p className="mt-3 text-[21px] font-medium leading-[1.18] text-[#422653]">Easy answers just aren't that interesting.</p>
+                        <p className="mt-3 text-[21px] font-bold leading-[1.18] text-[#422653]">Easy answers just aren't that interesting.</p>
                       </div>
                       <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#ded2e7] pt-4">
                         <div>
