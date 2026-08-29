@@ -43,12 +43,7 @@ async function trackedCounts(db: any, ids: string[]) {
   return output;
 }
 
-async function sharedTitles(db: any, a: string, b: string) {
-  const { data, error } = await db.from("media_ratings")
-    .select("user_id,media_title,media_type,media_external_id,media_external_source,rating")
-    .in("user_id", [a, b])
-    .gte("rating", 4);
-  if (error) throw new Error(`Could not load shared titles: ${error.message}`);
+function sharedTitles(data: any[], a: string, b: string) {
   const loved = new Map<string, Map<string, any>>();
   for (const item of data || []) if (item.media_title) {
     if (!loved.has(item.user_id)) loved.set(item.user_id, new Map());
@@ -141,21 +136,43 @@ serve(async (req) => {
     let comparedNow = 0;
     if (missing.length) {
       const signalIds = [myId, ...missing.map((p: any) => p.id)];
-      const { data: freshSignals, error: freshSignalsError } = await db.from("user_dna_signals").select("user_id,signal_type,signal_value,strength").in("user_id", signalIds);
-      if (freshSignalsError) return json({ error: `Could not load comparison signals: ${freshSignalsError.message}` }, 500);
+      const [freshSignalsResult, ratingsResult] = await Promise.all([
+        db.from("user_dna_signals").select("user_id,signal_type,signal_value,strength").in("user_id", signalIds),
+        db.from("media_ratings")
+          .select("user_id,media_title,media_type,media_external_id,media_external_source,rating")
+          .in("user_id", signalIds)
+          .gte("rating", 4),
+      ]);
+      if (freshSignalsResult.error) return json({ error: `Could not load comparison signals: ${freshSignalsResult.error.message}` }, 500);
+      if (ratingsResult.error) return json({ error: `Could not load shared titles: ${ratingsResult.error.message}` }, 500);
+      const freshSignals = freshSignalsResult.data || [];
       const grouped = new Map<string, any[]>(); for (const s of freshSignals || []) grouped.set(s.user_id, [...(grouped.get(s.user_id) || []), s]);
-      await Promise.all(missing.map(async (person: any) => {
+      const rows = missing.map((person: any) => {
         const evidence = scoreAffinitySignals(grouped.get(myId) || [], grouped.get(person.id) || []);
         const [user_id_1, user_id_2] = pair(myId, person.id);
-        const row = { user_id_1, user_id_2, ...evidence, shared_titles: await sharedTitles(db, myId, person.id), computed_at: new Date().toISOString(), expires_at: new Date(Date.now() + 86400000).toISOString() };
-        const { error: deleteError } = await db.from("dna_comparisons").delete().eq("user_id_1", user_id_2).eq("user_id_2", user_id_1);
-        if (deleteError) throw deleteError;
-        const { data: saved, error } = await db.from("dna_comparisons")
-          .upsert(row, { onConflict: "user_id_1,user_id_2" }).select().single();
-        if (error || !saved) throw new Error(`Could not save comparison: ${error?.message || "no comparison returned"}`);
-        comparisons.set(person.id, saved);
-        comparedNow += 1;
-      }));
+        return {
+          user_id_1,
+          user_id_2,
+          ...evidence,
+          shared_titles: sharedTitles(ratingsResult.data || [], myId, person.id),
+          computed_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 86400000).toISOString(),
+        };
+      });
+      const missingIds = missing.map((person: any) => person.id);
+      const [forwardDelete, reverseDelete] = await Promise.all([
+        db.from("dna_comparisons").delete().eq("user_id_1", myId).in("user_id_2", missingIds),
+        db.from("dna_comparisons").delete().in("user_id_1", missingIds).eq("user_id_2", myId),
+      ]);
+      if (forwardDelete.error || reverseDelete.error) throw forwardDelete.error || reverseDelete.error;
+      const { data: savedRows, error: saveError } = await db.from("dna_comparisons")
+        .upsert(rows, { onConflict: "user_id_1,user_id_2" })
+        .select();
+      if (saveError || !savedRows) throw new Error(`Could not save comparisons: ${saveError?.message || "no comparisons returned"}`);
+      for (const saved of savedRows) {
+        comparisons.set(saved.user_id_1 === myId ? saved.user_id_2 : saved.user_id_1, saved);
+      }
+      comparedNow = savedRows.length;
     }
     const featuredPosterPeople = ordered
       .filter((person: any) => comparisons.has(person.id))
