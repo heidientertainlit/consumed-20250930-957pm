@@ -17,7 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity, MessageSquarePlus, Trash2, Dna, Send, Check, Flag, Ban, Youtube } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity, MessageSquarePlus, Trash2, Dna, Send, Check, Flag, Ban, Youtube, SlidersHorizontal } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { getGameAlignment } from "@/lib/identity-feedback";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -254,6 +254,7 @@ export default function UserProfile() {
   const [mediaHistoryType, setMediaHistoryType] = useState("all");
   const [mediaHistoryRating, setMediaHistoryRating] = useState("all");
   const [mediaHistoryList, setMediaHistoryList] = useState("all");
+  const [isMediaFiltersOpen, setIsMediaFiltersOpen] = useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = useState<'year' | 'month' | 'type' | null>(null);
   const [showAllMediaHistory, setShowAllMediaHistory] = useState(false);
 
@@ -4725,13 +4726,7 @@ export default function UserProfile() {
                   )}
                 </div>
                 <div className="mt-4 border-b border-[#ece5e8] pb-4">
-                  <div className="mb-2.5 flex items-center justify-between gap-3">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#96869f]">Browse by list</p>
-                    <button onClick={() => setActiveSection('lists')} className="flex items-center gap-0.5 text-[11px] font-semibold text-[#76528d]">
-                      View lists <ChevronRight size={12} />
-                    </button>
-                  </div>
-                  <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-hide">
+                  <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-1 scrollbar-hide">
                     {primaryMediaLists.map((list: any) => {
                       const filterValue = list.title === 'All' ? 'all' : list.title;
                       const isActive = mediaHistoryList === filterValue;
@@ -4741,14 +4736,14 @@ export default function UserProfile() {
                           key={list.id}
                           type="button"
                           onClick={() => setMediaHistoryList(filterValue)}
-                          className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                          className={`flex min-w-[92px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-full px-4 py-2.5 text-xs font-semibold transition ${
                             isActive
-                              ? 'bg-[#68418f] text-white shadow-sm'
-                              : 'border border-[#e3dce7] bg-[#fffdfb] text-[#685b70] hover:border-[#cdbbdd]'
+                              ? 'bg-[#68418f] text-white shadow-[0_6px_14px_rgba(104,65,143,0.2)]'
+                              : 'bg-[#f8f5f9] text-[#34283d] hover:bg-[#f0e9f4]'
                           }`}
                         >
                           {getDisplayTitle(list.title)}
-                          <span className={isActive ? 'text-white/70' : 'text-[#a394aa]'}>{itemCount}</span>
+                          <span className={`font-normal ${isActive ? 'text-white/75' : 'text-[#8f8098]'}`}>{itemCount}</span>
                         </button>
                       );
                     })}
@@ -4757,8 +4752,33 @@ export default function UserProfile() {
               </div>
               {/* Filters */}
               <div className="px-4 pb-5 pt-4 sm:px-5">
-              <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#96869f]">Explore your stats</p>
-              <div className="flex flex-wrap gap-2 mb-4">
+              <div className="mb-4 flex items-center gap-2.5">
+                <div className="relative min-w-0 flex-1">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#7e6c8c]" size={17} />
+                  <input
+                    type="text"
+                    placeholder="Search your media..."
+                    value={mediaHistorySearch}
+                    onChange={(e) => setMediaHistorySearch(e.target.value)}
+                    className="w-full rounded-full border border-[#e4ddea] bg-[#faf8fc] py-3 pl-10 pr-3 text-sm text-[#3d3048] placeholder:text-[#aa9eaf] focus:outline-none focus:ring-2 focus:ring-[#c9ade5]"
+                    data-testid="input-history-search"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMediaFiltersOpen((open) => !open)}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-3 text-sm font-semibold transition ${
+                    isMediaFiltersOpen || mediaHistoryType !== 'all' || mediaHistoryDate !== 'anytime' || mediaHistoryRating !== 'all'
+                      ? 'border-[#68418f] bg-[#68418f] text-white'
+                      : 'border-[#9f7dbc] bg-white text-[#68418f]'
+                  }`}
+                >
+                  <SlidersHorizontal size={16} />
+                  Filter
+                </button>
+              </div>
+              {isMediaFiltersOpen && (
+              <div className="mb-4 flex flex-wrap gap-2 rounded-2xl border border-[#eadff0] bg-[#fcf9fd] p-3">
                 <div className="relative">
                   <button
                     onClick={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
@@ -4891,18 +4911,7 @@ export default function UserProfile() {
                   </button>
                 )}
               </div>
-              {/* Search */}
-              <div className="relative mb-5">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9c8ba8]" size={15} />
-                <input
-                  type="text"
-                  placeholder="Search media history..."
-                  value={mediaHistorySearch}
-                  onChange={(e) => setMediaHistorySearch(e.target.value)}
-                  className="w-full rounded-xl border border-[#e4ddea] bg-[#faf8fc] py-2.5 pl-10 pr-3 text-sm text-[#3d3048] placeholder:text-[#aa9eaf] focus:outline-none focus:ring-2 focus:ring-[#c9ade5]"
-                  data-testid="input-history-search"
-                />
-              </div>
+              )}
               </div>
               <div className="px-4 pb-5 sm:px-5">
               {isLoadingLists ? (
