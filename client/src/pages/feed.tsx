@@ -6362,6 +6362,7 @@ export default function Feed() {
           hidePeekCards={true}
           renderCard={(p: any, allPosts: any[], idx: number, swipeProps) => (
             <UGCGroupCard
+              key={p.id}
               post={p}
               onLike={handleLike}
               isLiked={likedPosts.has(p.id)}
@@ -6394,6 +6395,7 @@ export default function Feed() {
           hidePeekCards={true}
           renderCard={(p, allPosts, idx, swipeProps) => (
             <UGCGroupCard
+              key={p.id}
               post={p}
               onLike={handleLike}
               isLiked={likedPosts.has(p.id)}
