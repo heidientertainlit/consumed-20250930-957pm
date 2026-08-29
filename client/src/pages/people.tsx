@@ -289,8 +289,8 @@ export default function PeoplePage() {
             <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Connect through the stories, sounds, and worlds you can’t stop thinking about.</p>
           </div>
           <div className="relative mt-5">
-            <button onClick={copyInvite} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[linear-gradient(135deg,#7c3aed,#a855f7)] px-5 py-2.5 text-xs font-bold text-white shadow-[0_6px_18px_rgba(126,34,206,.28)] transition active:scale-[.98]">
-              <Share2 size={14} /> Invite a friend to compare DNA
+            <button onClick={copyInvite} className="inline-flex min-h-9 items-center gap-2 rounded-full border border-violet-300/25 bg-white/[.07] px-4 py-2 text-xs font-semibold text-violet-100 transition hover:bg-white/[.11] active:scale-[.98]">
+              <Share2 size={13} /> Invite a friend
             </button>
           </div>
         </div>
