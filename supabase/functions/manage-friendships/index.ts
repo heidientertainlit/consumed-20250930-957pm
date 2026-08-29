@@ -264,9 +264,36 @@ serve(async (req) => {
 
           console.log('Matched users count:', matchedUsers.length);
 
-          // Return all matched users (no filtering for existing relationships)
-          // This allows testing and finding users even if they have pending requests
-          return new Response(JSON.stringify({ users: matchedUsers }), {
+          const matchedIds = new Set(matchedUsers.map((user) => user.id));
+          const { data: relationships, error: relationshipsError } = await supabaseAdmin
+            .from('friendships')
+            .select('user_id, friend_id, status')
+            .or(`user_id.eq.${appUser.id},friend_id.eq.${appUser.id}`);
+
+          if (relationshipsError) {
+            console.error('Relationship status fetch error:', relationshipsError);
+          }
+
+          const relationshipByUser = new Map<string, { status: string; direction: 'incoming' | 'outgoing' }>();
+          (relationships || []).forEach((relationship) => {
+            const otherUserId = relationship.user_id === appUser.id ? relationship.friend_id : relationship.user_id;
+            if (!matchedIds.has(otherUserId)) return;
+            relationshipByUser.set(otherUserId, {
+              status: relationship.status,
+              direction: relationship.user_id === appUser.id ? 'outgoing' : 'incoming',
+            });
+          });
+
+          const usersWithRelationships = matchedUsers.map((user) => {
+            const relationship = relationshipByUser.get(user.id);
+            return {
+              ...user,
+              relationship_status: relationship?.status || null,
+              relationship_direction: relationship?.direction || null,
+            };
+          });
+
+          return new Response(JSON.stringify({ users: usersWithRelationships }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }

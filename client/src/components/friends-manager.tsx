@@ -14,6 +14,7 @@ interface FriendsManagerProps {
 export default function FriendsManager({ userId, matchScores = {} }: FriendsManagerProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [requestsOpen, setRequestsOpen] = useState(false);
+  const [showAllFriends, setShowAllFriends] = useState(false);
   const { toast } = useToast();
 
   const {
@@ -29,6 +30,14 @@ export default function FriendsManager({ userId, matchScores = {} }: FriendsMana
   const { data: searchResults, isLoading: searchLoading } = useUserSearch(searchQuery);
 
   const pendingCount = pendingData?.requests?.length || 0;
+  const sortedFriends = [...(friendsData?.friends || [])].sort((a: any, b: any) => {
+    const scoreDifference = (matchScores[b.friend?.id] ?? -1) - (matchScores[a.friend?.id] ?? -1);
+    if (scoreDifference) return scoreDifference;
+    const aName = a.friend?.display_name || a.friend?.user_name || "";
+    const bName = b.friend?.display_name || b.friend?.user_name || "";
+    return aName.localeCompare(bName);
+  });
+  const visibleFriends = showAllFriends ? sortedFriends : sortedFriends.slice(0, 5);
 
   const handleInviteFriends = async () => {
     if (!userId) return;
@@ -90,6 +99,9 @@ export default function FriendsManager({ userId, matchScores = {} }: FriendsMana
                                      (searchUser.first_name && searchUser.last_name ? `${searchUser.first_name} ${searchUser.last_name}` : '') ||
                                      searchUser.user_name ||
                                      'Unknown User';
+                  const isFriend = searchUser.relationship_status === "accepted";
+                  const isIncoming = searchUser.relationship_status === "pending" && searchUser.relationship_direction === "incoming";
+                  const isRequested = searchUser.relationship_status === "pending" && searchUser.relationship_direction === "outgoing";
                   return (
                     <div key={searchUser.id} className="flex items-center justify-between rounded-xl border border-[#e5dfe7] bg-white p-3">
                       <Link
@@ -108,15 +120,23 @@ export default function FriendsManager({ userId, matchScores = {} }: FriendsMana
                           <div className="truncate text-xs text-[#817686]">{searchUser.email}</div>
                         </div>
                       </Link>
-                      <Button
-                        onClick={() => sendRequestMutation.mutate(searchUser.id)}
-                        disabled={sendRequestMutation.isPending}
-                        className="shrink-0 rounded-full bg-[#5b387f] px-3.5 py-1.5 text-xs text-white hover:bg-[#4b2f70]"
-                        data-testid={`button-add-friend-${searchUser.id}`}
-                      >
-                        <UserPlus size={13} className="mr-1" />
-                        Add
-                      </Button>
+                       {isFriend ? (
+                         <span className="shrink-0 rounded-full bg-[#e4eee9] px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-[.08em] text-[#456b5c]">Friend</span>
+                       ) : isIncoming ? (
+                         <button type="button" onClick={() => setRequestsOpen(true)} className="shrink-0 rounded-full bg-[#f3e3ed] px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-[.08em] text-[#8b3f68]">Wants to connect</button>
+                       ) : isRequested ? (
+                         <span className="shrink-0 rounded-full bg-[#eee9f3] px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-[.08em] text-[#6f5d7d]">Requested</span>
+                       ) : (
+                         <Button
+                           onClick={() => sendRequestMutation.mutate(searchUser.id)}
+                           disabled={sendRequestMutation.isPending}
+                           className="shrink-0 rounded-full bg-[#5b387f] px-3.5 py-1.5 text-xs text-white hover:bg-[#4b2f70]"
+                           data-testid={`button-add-friend-${searchUser.id}`}
+                         >
+                           <UserPlus size={13} className="mr-1" />
+                           Add
+                         </Button>
+                       )}
                     </div>
                   );
                 })
@@ -173,10 +193,13 @@ export default function FriendsManager({ userId, matchScores = {} }: FriendsMana
                           </span>}
                     </div>
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-bold text-[#30263a]">
-                        {request.users?.first_name && request.users?.last_name
-                          ? `${request.users.first_name} ${request.users.last_name}`
-                          : request.users?.user_name || 'Unknown User'}
+                       <div className="flex min-w-0 items-center gap-1.5">
+                         <span className="truncate text-sm font-bold text-[#30263a]">
+                           {request.users?.first_name && request.users?.last_name
+                             ? `${request.users.first_name} ${request.users.last_name}`
+                             : request.users?.user_name || 'Unknown User'}
+                         </span>
+                         <span className="shrink-0 rounded-full bg-[#f3e3ed] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[.08em] text-[#8b3f68]">Wants to connect</span>
                       </div>
                       <div className="truncate text-xs text-[#817686]">@{request.users?.user_name}</div>
                     </div>
@@ -232,7 +255,7 @@ export default function FriendsManager({ userId, matchScores = {} }: FriendsMana
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
           <h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">Your friends</h3>
-          <p className="mt-0.5 text-xs text-[#7d7382]">The people you’re connected with.</p>
+          <p className="mt-0.5 text-xs text-[#7d7382]">Closest DNA matches first.</p>
         </div>
         {!isLoadingFriends && friendsData?.friends?.length > 0 && (
           <span className="text-xs font-semibold text-[#79618f]">{friendsData.friends.length}</span>
@@ -245,7 +268,7 @@ export default function FriendsManager({ userId, matchScores = {} }: FriendsMana
         </div>
       ) : friendsData?.friends?.length ? (
         <div className="divide-y divide-[#e2dce4] border-y border-[#e2dce4]">
-          {friendsData.friends.map((friendship: any) => {
+          {visibleFriends.map((friendship: any) => {
             const friend = friendship.friend;
             if (!friend) return null;
             const matchScore = matchScores[friend.id];
@@ -267,7 +290,10 @@ export default function FriendsManager({ userId, matchScores = {} }: FriendsMana
                       : avatarInitials}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold text-[#30263a]">{displayName}</span>
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span className="truncate text-sm font-bold text-[#30263a]">{displayName}</span>
+                      <span className="shrink-0 rounded-full bg-[#e4eee9] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[.08em] text-[#456b5c]">Friend</span>
+                    </span>
                     {friend.user_name && <span className="mt-0.5 block truncate text-xs text-[#817686]">@{friend.user_name}</span>}
                   </span>
                 </Link>
@@ -287,6 +313,16 @@ export default function FriendsManager({ userId, matchScores = {} }: FriendsMana
         <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-6 text-sm text-[#746b7b]">
           Your accepted friends will appear here.
         </div>
+      )}
+      {!isLoadingFriends && sortedFriends.length > 5 && (
+        <button
+          type="button"
+          onClick={() => setShowAllFriends((current) => !current)}
+          className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#5b387f]"
+        >
+          {showAllFriends ? "Show fewer friends" : `See all ${sortedFriends.length} friends`}
+          <ChevronDown size={14} className={`transition-transform ${showAllFriends ? "rotate-180" : ""}`} />
+        </button>
       )}
     </section>
     </>
