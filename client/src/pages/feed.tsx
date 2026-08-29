@@ -8810,7 +8810,7 @@ export default function Feed() {
 
   return (
     <GuestGate enabled={isGuestMode}>
-    <div className="min-h-screen bg-gray-100 pb-32">
+    <div className="min-h-screen bg-[#fbf8f5] pb-32">
       <div id="feed-page">
       <Navigation onTrackConsumption={handleTrackConsumption} topBarTone="purple" roomyTopBar />
 
