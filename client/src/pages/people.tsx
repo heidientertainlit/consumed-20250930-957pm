@@ -419,7 +419,10 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
         const icons = [Sparkles, Heart, Moon, Leaf];
         const TribeIcon = icons[index % icons.length];
         const accent = tribe.accent_color || ["#ee9a45", "#e43b8d", "#8661c5", "#7da649"][index % 4];
-        const evidence = tribe.evidence.map((item) => item.label || item.value || item.group).filter(Boolean).slice(0, 2);
+        const evidence = tribe.evidence
+          .map((item) => String(item.label || item.value || item.group || "").trim())
+          .filter((label) => label.length > 0)
+          .slice(0, 2);
         const featuredMedia = tribe.media[0];
         return <button
           key={tribe.slug}
