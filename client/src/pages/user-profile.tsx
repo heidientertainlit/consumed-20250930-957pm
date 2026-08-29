@@ -3354,7 +3354,7 @@ export default function UserProfile() {
         <Navigation onTrackConsumption={handleTrackConsumption} roomyTopBar />
 
         {/* ── Hero — dark DNA card ── */}
-        <div style={{ background: 'linear-gradient(180deg, #0d0221 0%, #1a0535 100%)' }}>
+        <div className="-mt-px" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
           <div className="max-w-4xl mx-auto px-4 pt-4 pb-5">
             <div
               ref={profileHeroRef}

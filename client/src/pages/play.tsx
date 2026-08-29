@@ -186,7 +186,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
     <div className="min-h-[100dvh] bg-[#fbf8f5]">
       <Navigation roomyTopBar />
 
-      <div style={{ background: "linear-gradient(180deg, #101b4a 0%, #31206c 100%)" }}>
+      <div className="-mt-px" style={{ background: "linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)" }}>
         <div className="mx-auto max-w-[680px] px-4 pb-6 pt-4 sm:px-6 sm:pt-6">
           <section
             className="relative isolate overflow-hidden rounded-[26px] border border-white/10 px-4 py-3 text-white shadow-[0_14px_30px_rgba(10,4,24,0.24)] sm:px-6"
