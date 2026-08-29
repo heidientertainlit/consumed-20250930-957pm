@@ -319,8 +319,11 @@ export function HeroCTAButtons() {
       <div className="mx-2 grid grid-cols-2 gap-3">
         <button
           onClick={() => setTrackOpen(true)}
-          className="flex min-h-10 items-center justify-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition-transform active:scale-95"
-          style={{ background: "linear-gradient(135deg, #4c1d95 0%, #6d28d9 55%, #7c3aed 100%)" }}
+          className="flex min-h-10 items-center justify-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white shadow-md transition-transform active:scale-95"
+          style={{
+            background: "linear-gradient(135deg, #5b21b6 0%, #7c3aed 55%, #9333ea 100%)",
+            boxShadow: "0 5px 14px rgba(109, 40, 217, 0.25)",
+          }}
         >
           <Plus size={16} strokeWidth={2} />
           Add media
@@ -328,7 +331,7 @@ export function HeroCTAButtons() {
         <button
           onClick={() => setComposerOpen(true)}
           className="flex min-h-10 items-center justify-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition-transform active:scale-95"
-          style={{ background: "linear-gradient(135deg, #c026d3 0%, #db2777 52%, #f97316 100%)" }}
+          style={{ background: "linear-gradient(135deg, #8b5cf6 0%, #4f46e5 100%)" }}
         >
           <MessageSquare size={15} strokeWidth={2} />
           Share a take
