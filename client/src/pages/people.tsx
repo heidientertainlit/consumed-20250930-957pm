@@ -54,9 +54,9 @@ const evidenceFor = (person: Person) => {
   return title || person.shared_genres?.[0] || person.shared_creators?.[0] || "Taste profile compared";
 };
 const mediaTypeLabel = (type?: string) => {
-  const value = type?.trim().toLowerCase();
+  const value = normalizedGroupMediaType(type);
   if (!value) return "";
-  if (value === "tv") return "TV";
+  if (value === "youtube") return "YouTube";
   return `${value[0].toUpperCase()}${value.slice(1)}`;
 };
 const groupMatchLevel = (score: number) => {
@@ -65,19 +65,48 @@ const groupMatchLevel = (score: number) => {
   if (score >= 70) return "Good match";
   return "Some overlap";
 };
+const normalizedGroupMediaType = (type?: string) => {
+  const value = type?.trim().toLowerCase() || "";
+  if (["book", "books"].includes(value)) return "books";
+  if (["movie", "movies", "film"].includes(value)) return "movies";
+  if (["tv", "show", "shows", "series"].includes(value)) return "shows";
+  if (["music", "track", "album", "artist"].includes(value)) return "music";
+  if (["podcast", "podcasts"].includes(value)) return "podcasts";
+  if (["game", "games"].includes(value)) return "games";
+  if (["youtube", "youtube_video", "youtube_channel", "video", "channel"].includes(value)) return "youtube";
+  return value;
+};
+const groupConnectionKind = (tribe: Tribe) => {
+  const counts = new Map<string, number>();
+  tribe.media.forEach((item) => {
+    const type = normalizedGroupMediaType(item.media_type);
+    if (type) counts.set(type, (counts.get(type) || 0) + 1);
+  });
+  const rankedTypes = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  const total = rankedTypes.reduce((sum, [, count]) => sum + count, 0);
+  const dominantType = rankedTypes[0]?.[0] || "";
+  const dominantShare = total ? (rankedTypes[0]?.[1] || 0) / total : 0;
+  if (rankedTypes.length >= 2 && dominantShare <= 0.6) return "overall";
+  const strongestEvidence = tribe.evidence.slice(0, 3);
+  const genreEvidenceCount = strongestEvidence.filter((item) =>
+    `${item.group || ""} ${item.type || ""}`.toLowerCase().includes("genre")
+  ).length;
+  if (strongestEvidence.length && genreEvidenceCount >= Math.ceil(strongestEvidence.length / 2)) return "genres";
+  if (["books", "movies", "shows", "music", "podcasts", "games", "youtube"].includes(dominantType)) return dominantType;
+  return "general";
+};
 const groupConnectionHeadline = (tribe: Tribe) => {
-  const types = Array.from(new Set(tribe.media.map((item) => item.media_type?.trim().toLowerCase()).filter(Boolean)));
-  const evidenceKinds = tribe.evidence.map((item) => `${item.group || ""} ${item.type || ""}`.toLowerCase()).join(" ");
-  if (types.length >= 2) return "People with similar taste across media";
-  const type = types[0] || "";
-  if (type === "book" || type === "books") return "People who like books you like";
-  if (type === "tv" || type === "show" || type === "shows") return "People who like shows you like";
-  if (type === "movie" || type === "movies" || type === "film") return "People who like movies you like";
-  if (type === "music" || type === "track" || type === "album") return "People who like music you like";
-  if (type === "podcast" || type === "podcasts") return "People who like podcasts you like";
-  if (type === "game" || type === "games") return "People who like games you like";
-  if (evidenceKinds.includes("genre")) return "People who like the same genres";
-  return "People who like what you like";
+  const kind = groupConnectionKind(tribe);
+  if (kind === "overall") return "People who have similar taste overall";
+  if (kind === "books") return "People who like the same books you do";
+  if (kind === "movies") return "People who like the same movies you do";
+  if (kind === "shows") return "People who like the same shows you do";
+  if (kind === "music") return "People who like the same music you do";
+  if (kind === "podcasts") return "People who like the same podcasts you do";
+  if (kind === "games") return "People who like the same games you do";
+  if (kind === "youtube") return "People who like the same YouTube content you do";
+  if (kind === "genres") return "People who like the same genres you do";
+  return "People who like the same things you do";
 };
 
 function Avatar({ person, small = false }: { person: Person; small?: boolean }) {
@@ -433,6 +462,13 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
   const isReady = Boolean(query.data?.readiness?.ready);
   if (selected) return <TribeDetail tribe={selected} onBack={() => onSelect()} membership={membership} personalized={isReady} />;
   const tribes = query.data?.tribes || [];
+  const displayTribes = tribes
+    .map((tribe, originalIndex) => ({ tribe, originalIndex }))
+    .sort((a, b) => {
+      const overallDifference = Number(groupConnectionKind(b.tribe) === "overall") - Number(groupConnectionKind(a.tribe) === "overall");
+      return overallDifference || a.originalIndex - b.originalIndex;
+    })
+    .map(({ tribe }) => tribe);
   return <section id="tribe-list" className="mt-7 scroll-mt-4">
     <div className="mb-5">
       <p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Taste groups</p>
@@ -440,8 +476,8 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
       <p className="mt-1 text-sm leading-5 text-[#746b78]">Explore groups connected by the media they have in common.</p>
     </div>
     {!isReady && <div className="mb-5 rounded-[18px] border border-[#ded7e9] bg-[#f4f0f5] p-4"><p className="text-sm font-bold text-[#342642]">Explore taste groups now</p><p className="mt-1 text-sm leading-5 text-[#746b7b]">Track {query.data?.readiness?.items_needed || 10} more {(query.data?.readiness?.items_needed || 10) === 1 ? "item" : "items"} to reveal which groups share the most with you.</p><Link href="/add" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#513879]">Track more <ArrowUpRight size={15} /></Link></div>}
-    {!tribes.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">There are no taste groups to recommend right now.</div> :
-      <div className="grid gap-4">{tribes.map((tribe, index) => {
+    {!displayTribes.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">There are no taste groups to recommend right now.</div> :
+      <div className="grid gap-4">{displayTribes.map((tribe, index) => {
         const accent = tribe.accent_color || ["#ee9a45", "#e43b8d", "#8661c5", "#7da649"][index % 4];
         const media = tribe.media.filter((item) => item.title?.trim()).slice(0, 4);
         const typeLabels = Array.from(new Set(media.map((item) => item.media_type?.trim()).filter(Boolean)))
@@ -486,9 +522,9 @@ function TribeDetail({ tribe, onBack, membership, personalized }: { tribe: Tribe
   const { toast } = useToast();
   const matchLevel = groupMatchLevel(tribe.fit_score);
   const connectionHeadline = groupConnectionHeadline(tribe);
-  const mediaTypes = Array.from(new Set(tribe.media.map((item) => item.media_type?.trim()).filter(Boolean)))
+  const mediaTypes = Array.from(new Set(tribe.media.map((item) => normalizedGroupMediaType(item.media_type)).filter(Boolean)))
     .slice(0, 4)
-    .map((type) => type === "tv" ? "TV" : `${type![0].toUpperCase()}${type!.slice(1)}`);
+    .map((type) => mediaTypeLabel(type));
   const share = async () => {
     const url = `${APP_BASE}/people?tab=tribes&tribe=${encodeURIComponent(tribe.slug)}`;
     try {
