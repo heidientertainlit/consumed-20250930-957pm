@@ -401,7 +401,7 @@ export default function PeoplePage() {
         {tabs.map(({ id, label, Icon }) => <button
           key={id}
           onClick={() => setTab(id)}
-          className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-2 py-3 text-[12px] font-bold transition-all sm:text-[13px] ${
+          className={`flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full py-3 text-[12px] font-bold transition-all sm:text-[13px] ${id === "friends" ? "flex-[1.3] px-3" : "flex-1 px-2"} ${
             tab === id
               ? "bg-[linear-gradient(135deg,#5b168f,#7c2bb7)] text-white shadow-[0_5px_14px_rgba(91,22,143,.25)]"
               : "text-[#34213f] hover:bg-white/55"
