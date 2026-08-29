@@ -21,11 +21,19 @@ export type Person = {
 type Band = { id: string; min: number; max: number; people: Person[] };
 type AffinityCursor = { friend: boolean; id: string };
 type Affinity = { ready?: boolean; readiness?: { ready?: boolean; has_dna_profile?: boolean; item_count?: number; tracked_items?: number; items_needed?: number; required_tracked_items?: number }; bands?: Band[]; compared_now?: number; has_more?: boolean; next_cursor?: AffinityCursor | null };
-type TribeMedia = { id: string; title: string; creator?: string; image_url?: string; media_type?: string; editorial_reason?: string };
+type TribeMedia = {
+  id?: string; title: string; creator?: string; image_url?: string; media_type?: string; editorial_reason?: string;
+  external_id?: string; external_source?: string; avg_rating?: number; like_percent?: number; people_count?: number; activity_count?: number;
+};
+type TribeTake = {
+  id: string; content: string; post_type?: string; created_at?: string; likes_count?: number; comments_count?: number;
+  media?: TribeMedia; author: { id: string; display_name: string; avatar_url?: string };
+};
 type Tribe = {
   id: string; slug: string; name: string; description?: string; identity_statement?: string; accent_color?: string; accent_color_2?: string;
   fit_score: number; evidence: Array<{ label?: string; group?: string; type?: string; value?: string }>; recommended: boolean; is_member: boolean;
-  member_count: number; members: Person[]; media: TribeMedia[];
+  member_count: number; members: Person[]; people?: Person[]; media: TribeMedia[];
+  loved_media?: TribeMedia[]; trending_media?: TribeMedia[]; recent_takes?: TribeTake[];
 };
 type TribesResponse = { readiness: Affinity["readiness"]; tribes: Tribe[] };
 
@@ -382,7 +390,7 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
     ), staleTime: 60_000,
   });
   const tribesQuery = useQuery({
-    queryKey: ["people-tribes-v4", user?.id], enabled: !!session?.access_token,
+    queryKey: ["people-tribes-v5", user?.id], enabled: !!session?.access_token,
     queryFn: async () => hydrateTribeMediaImages(
       await functionRequest<TribesResponse>("people-tribes", session!.access_token, { action: "load" }),
       session!.access_token,
@@ -421,7 +429,7 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
   const membership = useMutation({
     mutationFn: ({ slug, joined }: { slug: string; joined: boolean }) => functionRequest<TribesResponse>("people-tribes", session!.access_token, { action: joined ? "leave" : "join", slug }),
     onSuccess: async (data, variables) => {
-      queryClient.setQueryData(["people-tribes-v4", user?.id], await hydrateTribeMediaImages(data, session!.access_token));
+      queryClient.setQueryData(["people-tribes-v5", user?.id], await hydrateTribeMediaImages(data, session!.access_token));
       toast({
         title: variables.joined ? "Group unfollowed" : "Following",
         description: variables.joined ? "You’ll no longer get updates from this group." : "You’ll see more from this group in Now.",
@@ -671,7 +679,10 @@ function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: 
     .slice(0, 4)
     .map((type) => mediaTypeLabel(type));
   const connectionMedia = tribe.media.filter((item) => item.title?.trim()).slice(0, 3);
-  const discoveryMedia = tribe.media.filter((item) => item.title?.trim()).slice(3, 6);
+  const lovedMedia = (tribe.loved_media || []).filter((item) => item.title?.trim()).slice(0, 6);
+  const trendingMedia = (tribe.trending_media || []).filter((item) => item.title?.trim()).slice(0, 6);
+  const groupPeople = (tribe.people?.length ? tribe.people : tribe.members).slice(0, 8);
+  const recentTakes = (tribe.recent_takes || []).slice(0, 3);
   const share = async () => {
     const url = `${APP_BASE}/people/tribes/${encodeURIComponent(tribe.id)}`;
     try {
@@ -691,14 +702,16 @@ function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: 
         {mediaTypes.length > 0 && <p className="mt-3 text-sm font-semibold text-[#66566f]">{mediaTypes.join(" · ")}</p>}
         {connectionMedia.length > 0 && <><p className="mt-5 text-xs font-bold text-[#51405f]">Some of what connects you</p><MediaShelf media={connectionMedia} tribe={tribe} /></>}
       </div>
-      {discoveryMedia.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#f6f3f5] p-6 sm:p-8"><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">Loved by this group</h3><p className="mt-2 text-sm text-[#746b7b]">More media this group’s collective taste points toward.</p><MediaShelf media={discoveryMedia} tribe={tribe} /></div>}
-      {(tribe.members.length > 0 || tribe.member_count > 0) && <div className="border-t border-[#e0d9e3] bg-[#fbf9fa] p-6 sm:p-8"><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">People in this group</h3>{tribe.members.length > 0 && <div className="mt-4 grid gap-2">{tribe.members.slice(0, 5).map((person) => <Link key={person.id} href={`/user/${encodeURIComponent(person.id)}`} className="flex items-center gap-3 rounded-xl border border-[#e5dee7] bg-white p-3"><Avatar person={person} /><span className="min-w-0 flex-1 truncate text-sm font-bold text-[#342642]">{nameFor(person)}</span>{person.match_score != null && <span className="font-serif text-lg text-[#583875]">{Math.round(person.match_score)}%</span>}</Link>)}</div>}<p className="mt-4 text-sm font-semibold text-[#6f6574]">{compactCount(tribe.member_count)} {tribe.member_count === 1 ? "person follows" : "people follow"} this group</p></div>}
+      <div className="border-t border-[#e0d9e3] bg-[#f6f3f5] p-6 sm:p-8"><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">Loved by this group</h3><p className="mt-2 text-sm text-[#746b7b]">Things you haven’t consumed yet that people with this taste rate highly.</p>{lovedMedia.length > 0 ? <MediaShelf media={lovedMedia} tribe={tribe} metric="loved" /> : <p className="mt-4 rounded-xl bg-white px-4 py-5 text-sm leading-5 text-[#746b7b]">No unseen highly rated titles are available from this group yet.</p>}</div>
+      <div className="border-t border-[#e0d9e3] bg-[#fbf9fa] p-6 sm:p-8"><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">Trending with this group</h3><p className="mt-2 text-sm text-[#746b7b]">What people with this taste have been tracking and discussing lately.</p>{trendingMedia.length > 0 ? <MediaShelf media={trendingMedia} tribe={tribe} metric="trending" /> : <p className="mt-4 rounded-xl bg-[#f6f3f5] px-4 py-5 text-sm leading-5 text-[#746b7b]">There isn’t enough recent group activity to show a trend yet.</p>}</div>
+      <div className="border-t border-[#e0d9e3] bg-[#f6f3f5] p-6 sm:p-8"><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">What they’re talking about</h3>{recentTakes.length > 0 ? <div className="mt-4 space-y-3">{recentTakes.map((take) => <Link key={take.id} href={`/post/${encodeURIComponent(take.id)}`} className="block rounded-2xl border border-[#e1d9e3] bg-white p-4 shadow-sm"><div className="flex items-center gap-2">{take.author.avatar_url ? <img src={take.author.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" /> : <span className="grid h-7 w-7 place-items-center rounded-full bg-[#e5dff3] text-[9px] font-bold text-[#4c3972]">{initials(take.author.display_name)}</span>}<span className="text-xs font-bold text-[#3b2c47]">{take.author.display_name}</span></div>{take.media?.title && <p className="mt-3 text-xs font-bold uppercase tracking-[.08em] text-[#67447c]">{take.media.title}</p>}<p className="mt-1 line-clamp-3 text-sm leading-5 text-[#544b58]">“{take.content}”</p><p className="mt-3 text-xs font-semibold text-[#85798b]">♥ {take.likes_count || 0} · {take.comments_count || 0} replies</p></Link>)}</div> : <p className="mt-4 rounded-xl bg-white px-4 py-5 text-sm leading-5 text-[#746b7b]">No recent public takes from this group are available yet.</p>}</div>
+      <div className="border-t border-[#e0d9e3] bg-[#fbf9fa] p-6 sm:p-8"><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">People in this group</h3>{groupPeople.length > 0 ? <><div className="mt-4 grid gap-2">{groupPeople.slice(0, 5).map((person) => <Link key={person.id} href={`/user/${encodeURIComponent(person.id)}`} className="flex items-center gap-3 rounded-xl border border-[#e5dee7] bg-white p-3"><Avatar person={person} /><span className="min-w-0 flex-1 truncate text-sm font-bold text-[#342642]">{nameFor(person)}</span>{person.match_score != null && <span className="font-serif text-lg text-[#583875]">{Math.round(person.match_score)}%</span>}</Link>)}</div><p className="mt-4 text-sm font-semibold text-[#6f6574]">{compactCount(Math.max(tribe.member_count, groupPeople.length))} {Math.max(tribe.member_count, groupPeople.length) === 1 ? "person connects" : "people connect"} through this group</p></> : <p className="mt-4 rounded-xl bg-[#f6f3f5] px-4 py-5 text-sm leading-5 text-[#746b7b]">No public profiles from this group are available to show yet.</p>}</div>
     </div>
   </section>;
 }
 
-function MediaShelf({ media, tribe }: { media: TribeMedia[]; tribe: Tribe }) {
-  return <div className="mt-4 flex gap-3 overflow-x-auto pb-1">{media.map((item, index) => <article key={`${item.id}-${index}`} className="w-28 shrink-0"><div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-[#ddd6e0]">{item.image_url ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full flex-col justify-between p-3 text-white" style={{ background: `linear-gradient(145deg, ${tribe.accent_color || "#745386"}, ${tribe.accent_color_2 || "#4d6e9b"})` }}><span className="text-[9px] font-bold uppercase tracking-[.14em] text-white/65">{item.media_type}</span><span className="font-serif text-xl text-white/90">0{index + 1}</span></div>}</div><p className="mt-2 line-clamp-2 text-xs font-bold">{item.title}</p>{item.creator && <p className="truncate text-[11px] text-[#7b7180]">{item.creator}</p>}</article>)}</div>;
+function MediaShelf({ media, tribe, metric }: { media: TribeMedia[]; tribe: Tribe; metric?: "loved" | "trending" }) {
+  return <div className="mt-4 flex gap-3 overflow-x-auto pb-1">{media.map((item, index) => <article key={`${item.id || item.external_source || item.title}-${index}`} className="w-28 shrink-0"><div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-[#ddd6e0]">{item.image_url ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full flex-col justify-between p-3 text-white" style={{ background: `linear-gradient(145deg, ${tribe.accent_color || "#745386"}, ${tribe.accent_color_2 || "#4d6e9b"})` }}><span className="text-[9px] font-bold uppercase tracking-[.14em] text-white/65">{item.media_type}</span><span className="font-serif text-xl text-white/90">0{index + 1}</span></div>}</div><p className="mt-2 line-clamp-2 text-xs font-bold">{item.title}</p>{metric === "loved" && <p className="mt-1 text-[10px] font-semibold text-[#6f5a7d]">{item.like_percent != null ? `${item.like_percent}% liked it` : ""}{item.like_percent != null && item.avg_rating != null ? " · " : ""}{item.avg_rating != null ? `${item.avg_rating} ★` : ""}</p>}{metric === "trending" && item.people_count != null && <p className="mt-1 text-[10px] font-semibold text-[#6f5a7d]">{item.people_count} {item.people_count === 1 ? "person" : "people"} lately</p>}{!metric && item.creator && <p className="truncate text-[11px] text-[#7b7180]">{item.creator}</p>}</article>)}</div>;
 }
 
 function Creators({ query }: { query: ReturnType<typeof useQuery<any[]>> }) {

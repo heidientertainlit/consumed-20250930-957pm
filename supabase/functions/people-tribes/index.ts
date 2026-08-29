@@ -9,6 +9,182 @@ const cors = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 const ALGORITHM_VERSION = "tribe-weighted-groups-v2-calibrated";
+const normalize = (value: unknown) => String(value || "").trim().toLowerCase();
+const mediaKey = (item: any) => {
+  const source = normalize(item.media_external_source || item.external_source);
+  const id = normalize(item.media_external_id || item.external_id);
+  if (source && id) return `${source}:${id}`;
+  const type = normalize(item.media_type || item.type);
+  const title = normalize(item.media_title || item.title).replace(/[^a-z0-9]+/g, "");
+  return title ? `${type}:${title}` : "";
+};
+const mediaShape = (item: any, artwork = "") => ({
+  title: item.media_title || item.title || "",
+  media_type: item.media_type || item.type || "",
+  creator: item.media_creator || item.creator || "",
+  image_url: item.image_url || item.poster_url || artwork || "",
+  external_id: item.media_external_id || item.external_id || "",
+  external_source: item.media_external_source || item.external_source || "",
+});
+const safeName = (person: any) => {
+  const first = String(person.first_name || "").trim();
+  const last = String(person.last_name || "").trim();
+  return first ? `${first}${last ? ` ${last[0].toUpperCase()}.` : ""}` : person.display_name || person.user_name || "Consumed member";
+};
+
+async function buildTribePayoffs(db: any, viewerId: string, tribeIds: string[]) {
+  const empty = new Map(tribeIds.map((id) => [id, { people: [], loved_media: [], trending_media: [], recent_takes: [] }]));
+  if (!tribeIds.length) return empty;
+
+  const { data: recommendationRows, error: recommendationsError } = await db
+    .from("people_tribe_recommendations")
+    .select("tribe_id,user_id,fit_score")
+    .in("tribe_id", tribeIds)
+    .gte("fit_score", 70)
+    .neq("user_id", viewerId)
+    .order("fit_score", { ascending: false })
+    .limit(400);
+  if (recommendationsError) throw new Error(`Could not load Tribe people: ${recommendationsError.message}`);
+
+  const candidateIds = [...new Set((recommendationRows || []).map((row: any) => row.user_id))].slice(0, 100);
+  if (!candidateIds.length) return empty;
+
+  const [usersResult, profilesResult, blocksResult, friendshipsResult] = await Promise.all([
+    db.from("users").select("id,user_name,display_name,first_name,last_name,avatar,is_persona,people_discoverable").in("id", candidateIds),
+    db.from("dna_profiles").select("user_id,is_private").in("user_id", candidateIds),
+    db.from("user_blocks").select("blocker_id,blocked_id").or(`blocker_id.eq.${viewerId},blocked_id.eq.${viewerId}`),
+    db.from("friendships").select("user_id,friend_id,status").eq("status", "accepted").or(`user_id.eq.${viewerId},friend_id.eq.${viewerId}`),
+  ]);
+  const visibilityError = usersResult.error || profilesResult.error || blocksResult.error || friendshipsResult.error;
+  if (visibilityError) throw new Error(`Could not apply Tribe privacy rules: ${visibilityError.message}`);
+
+  const blocked = new Set((blocksResult.data || []).map((row: any) => row.blocker_id === viewerId ? row.blocked_id : row.blocker_id));
+  const friends = new Set((friendshipsResult.data || []).map((row: any) => row.user_id === viewerId ? row.friend_id : row.user_id));
+  const privacy = new Map((profilesResult.data || []).map((row: any) => [row.user_id, !!row.is_private]));
+  const users = new Map((usersResult.data || [])
+    .filter((person: any) => !person.is_persona && !blocked.has(person.id) && person.people_discoverable !== false && (!privacy.get(person.id) || friends.has(person.id)))
+    .map((person: any) => [person.id, person]));
+  const visibleIds = candidateIds.filter((id) => users.has(id));
+  if (!visibleIds.length) return empty;
+
+  const rowsByTribe = new Map<string, any[]>();
+  for (const row of recommendationRows || []) {
+    if (!users.has(row.user_id)) continue;
+    const rows = rowsByTribe.get(row.tribe_id) || [];
+    if (rows.length < 20) rows.push(row);
+    rowsByTribe.set(row.tribe_id, rows);
+  }
+  const boundedIds = [...new Set([...rowsByTribe.values()].flatMap((rows) => rows.map((row) => row.user_id)))].slice(0, 100);
+
+  const [listResult, ratingsResult, postsResult, viewerListResult, viewerRatingsResult] = await Promise.all([
+    db.from("list_items").select("*").in("user_id", boundedIds).limit(3000),
+    db.from("media_ratings").select("*").in("user_id", boundedIds).limit(3000),
+    db.from("social_posts").select("*").in("user_id", boundedIds).order("created_at", { ascending: false }).limit(500),
+    db.from("list_items").select("*").eq("user_id", viewerId).limit(2000),
+    db.from("media_ratings").select("*").eq("user_id", viewerId).limit(2000),
+  ]);
+  const contentError = listResult.error || ratingsResult.error || postsResult.error || viewerListResult.error || viewerRatingsResult.error;
+  if (contentError) throw new Error(`Could not load Tribe activity: ${contentError.message}`);
+
+  const consumed = new Set([...(viewerListResult.data || []), ...(viewerRatingsResult.data || [])].map(mediaKey).filter(Boolean));
+  const artworkByKey = new Map<string, string>();
+  for (const item of listResult.data || []) {
+    const key = mediaKey(item);
+    if (key && item.image_url && !artworkByKey.has(key)) artworkByKey.set(key, item.image_url);
+  }
+  const listsByUser = new Map<string, any[]>();
+  for (const item of listResult.data || []) listsByUser.set(item.user_id, [...(listsByUser.get(item.user_id) || []), item]);
+  const ratingsByUser = new Map<string, any[]>();
+  for (const item of ratingsResult.data || []) ratingsByUser.set(item.user_id, [...(ratingsByUser.get(item.user_id) || []), item]);
+  const postsByUser = new Map<string, any[]>();
+  for (const item of postsResult.data || []) postsByUser.set(item.user_id, [...(postsByUser.get(item.user_id) || []), item]);
+  const recentAfter = Date.now() - 30 * 86400000;
+
+  for (const tribeId of tribeIds) {
+    const groupRows = rowsByTribe.get(tribeId) || [];
+    const groupIds = groupRows.map((row) => row.user_id);
+    const people = groupRows.slice(0, 8).map((row) => {
+      const person = users.get(row.user_id);
+      return {
+        id: person.id,
+        user_name: person.user_name,
+        display_name: safeName(person),
+        first_name: person.first_name,
+        last_name: person.last_name,
+        avatar_url: person.avatar,
+        match_score: Number(row.fit_score || 0),
+      };
+    });
+
+    const ratingAggregates = new Map<string, any>();
+    for (const id of groupIds) {
+      for (const rating of ratingsByUser.get(id) || []) {
+        const key = mediaKey(rating);
+        if (!key || consumed.has(key) || !rating.media_title) continue;
+        const aggregate = ratingAggregates.get(key) || { item: rating, ratings: [], users: new Set<string>() };
+        aggregate.ratings.push(Number(rating.rating || 0));
+        aggregate.users.add(id);
+        ratingAggregates.set(key, aggregate);
+      }
+    }
+    const loved = [...ratingAggregates.entries()].map(([key, aggregate]) => {
+      const positive = aggregate.ratings.filter((rating: number) => rating >= 4).length;
+      const average = aggregate.ratings.reduce((sum: number, rating: number) => sum + rating, 0) / aggregate.ratings.length;
+      return {
+        ...mediaShape(aggregate.item, artworkByKey.get(key)),
+        avg_rating: Number(average.toFixed(1)),
+        like_percent: Math.round((positive / aggregate.ratings.length) * 100),
+        people_count: aggregate.users.size,
+      };
+    }).filter((item) => item.avg_rating >= 4)
+      .sort((a, b) => b.people_count - a.people_count || b.like_percent - a.like_percent || b.avg_rating - a.avg_rating)
+      .slice(0, 6);
+
+    const trendAggregates = new Map<string, any>();
+    for (const id of groupIds) {
+      const events = [
+        ...(listsByUser.get(id) || []).map((item) => ({ item, date: item.added_at || item.date_added || item.created_at })),
+        ...(postsByUser.get(id) || []).map((item) => ({ item, date: item.created_at })),
+      ];
+      for (const event of events) {
+        const timestamp = Date.parse(event.date || "");
+        const key = mediaKey(event.item);
+        if (!key || !timestamp || timestamp < recentAfter) continue;
+        const aggregate = trendAggregates.get(key) || { item: event.item, events: 0, users: new Set<string>(), newest: 0 };
+        aggregate.events += 1;
+        aggregate.users.add(id);
+        aggregate.newest = Math.max(aggregate.newest, timestamp);
+        trendAggregates.set(key, aggregate);
+      }
+    }
+    const trending = [...trendAggregates.entries()].map(([key, aggregate]) => ({
+      ...mediaShape(aggregate.item, artworkByKey.get(key)),
+      activity_count: aggregate.events,
+      people_count: aggregate.users.size,
+      latest_at: new Date(aggregate.newest).toISOString(),
+    })).filter((item) => item.title)
+      .sort((a, b) => b.people_count - a.people_count || b.activity_count - a.activity_count || Date.parse(b.latest_at) - Date.parse(a.latest_at))
+      .slice(0, 6);
+
+    const takes = groupIds.flatMap((id) => (postsByUser.get(id) || []).map((post) => ({ post, person: users.get(id) })))
+      .filter(({ post }) => String(post.content || "").trim() && post.visibility !== "private")
+      .sort((a, b) => Date.parse(b.post.created_at || "") - Date.parse(a.post.created_at || ""))
+      .slice(0, 3)
+      .map(({ post, person }) => ({
+        id: post.id,
+        content: post.content,
+        post_type: post.post_type,
+        created_at: post.created_at,
+        likes_count: Number(post.likes_count || 0),
+        comments_count: Number(post.comments_count || 0),
+        media: mediaShape(post, artworkByKey.get(mediaKey(post))),
+        author: { id: person.id, display_name: safeName(person), avatar_url: person.avatar || "" },
+      }));
+
+    empty.set(tribeId, { people, loved_media: loved, trending_media: trending, recent_takes: takes });
+  }
+  return empty;
+}
 
 function scoreTribe(signals: any[], definitions: any[]) {
   const userSignals = new Map(signals
@@ -156,10 +332,12 @@ serve(async (req) => {
     if (membershipError || summariesError) throw new Error(`Could not load Tribe members: ${(membershipError || summariesError).message}`);
     const ownMemberships = new Set((ownMembershipRows || []).map((row: any) => row.tribe_id));
     const summariesByTribe = new Map((memberSummaries || []).map((summary: any) => [summary.tribe_id, summary]));
+    const payoffsByTribe = readiness.ready ? await buildTribePayoffs(db, user.id, tribeIds) : new Map();
 
     const responseTribes = (tribes || []).map((tribe: any) => {
       const score = scores.get(tribe.id) || { fit_score: 0, matched_groups: [], evidence: [], recommended: false };
       const summary: any = summariesByTribe.get(tribe.id);
+      const payoff: any = payoffsByTribe.get(tribe.id) || { people: [], loved_media: [], trending_media: [], recent_takes: [] };
       const isMember = ownMemberships.has(tribe.id);
       return {
         id: tribe.id,
@@ -176,6 +354,10 @@ serve(async (req) => {
         is_member: isMember,
         member_count: Number(summary?.member_count || 0),
         members: Array.isArray(summary?.members) ? summary.members : [],
+        people: payoff.people,
+        loved_media: payoff.loved_media,
+        trending_media: payoff.trending_media,
+        recent_takes: payoff.recent_takes,
         media: (media || []).filter((item: any) => item.tribe_id === tribe.id).map((item: any) => ({
           id: item.id,
           title: item.title,

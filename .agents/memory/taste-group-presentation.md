@@ -14,3 +14,7 @@ Use **Follow group / Following**, not Join group. Following is a lightweight per
 Tribe detail links use stable `/people/tribes/{id}` paths. Continue resolving legacy `?tab=tribes&tribe={slug}` links, but do not expose generated-name slugs in new navigation or shares.
 
 **Why:** The group’s collective taste—not membership—is the product value, and stable IDs prevent discarded generated names from remaining in public URLs.
+
+Detail pages present the payoff in this order: what connects you, unseen group-loved media, recent group trends, public takes, then visible high-fit people. Keep each section visible with an honest empty state when real data is sparse.
+
+**How to apply:** Derive discovery and conversation content from bounded ratings, tracked media, and public posts by privacy-filtered high-fit users. Exclude the viewer’s consumed titles; never duplicate editorial covers or fabricate activity.
