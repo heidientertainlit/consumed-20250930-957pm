@@ -32,40 +32,35 @@ const safeName = (person: any) => {
   return first ? `${first}${last ? ` ${last[0].toUpperCase()}.` : ""}` : person.display_name || person.user_name || "Consumed member";
 };
 
-async function buildTribePayoffs(db: any, viewerId: string, tribeIds: string[]) {
+async function buildTribePayoffs(db: any, viewerId: string, tribeIds: string[], definitions: any[]) {
   const empty = new Map(tribeIds.map((id) => [id, { people: [], loved_media: [], trending_media: [], recent_takes: [] }]));
   if (!tribeIds.length) return empty;
 
-  const { data: recommendationRows, error: recommendationsError } = await db
-    .from("people_tribe_recommendations")
-    .select("tribe_id,user_id,fit_score")
-    .in("tribe_id", tribeIds)
-    .gte("fit_score", 70)
-    .neq("user_id", viewerId)
-    .order("fit_score", { ascending: false })
-    .limit(400);
-  if (recommendationsError) throw new Error(`Could not load Tribe people: ${recommendationsError.message}`);
-
-  const candidateIds = [...new Set((recommendationRows || []).map((row: any) => row.user_id))].slice(0, 100);
+  const { data: candidateRows, error: candidatesError } = await db.rpc("get_people_affinity_candidates", {
+    p_user_id: viewerId,
+    p_after_friend: null,
+    p_after_id: null,
+    p_limit: 51,
+  });
+  if (candidatesError) throw new Error(`Could not load Tribe people: ${candidatesError.message}`);
+  const candidateIds = [...new Set((candidateRows || []).map((row: any) => row.id))].slice(0, 50);
   if (!candidateIds.length) return empty;
 
-  const [usersResult, profilesResult, blocksResult, friendshipsResult] = await Promise.all([
-    db.from("users").select("id,user_name,display_name,first_name,last_name,avatar,is_persona,people_discoverable").in("id", candidateIds),
-    db.from("dna_profiles").select("user_id,is_private").in("user_id", candidateIds),
-    db.from("user_blocks").select("blocker_id,blocked_id").or(`blocker_id.eq.${viewerId},blocked_id.eq.${viewerId}`),
-    db.from("friendships").select("user_id,friend_id,status").eq("status", "accepted").or(`user_id.eq.${viewerId},friend_id.eq.${viewerId}`),
-  ]);
-  const visibilityError = usersResult.error || profilesResult.error || blocksResult.error || friendshipsResult.error;
-  if (visibilityError) throw new Error(`Could not apply Tribe privacy rules: ${visibilityError.message}`);
-
-  const blocked = new Set((blocksResult.data || []).map((row: any) => row.blocker_id === viewerId ? row.blocked_id : row.blocker_id));
-  const friends = new Set((friendshipsResult.data || []).map((row: any) => row.user_id === viewerId ? row.friend_id : row.user_id));
-  const privacy = new Map((profilesResult.data || []).map((row: any) => [row.user_id, !!row.is_private]));
-  const users = new Map((usersResult.data || [])
-    .filter((person: any) => !person.is_persona && !blocked.has(person.id) && person.people_discoverable !== false && (!privacy.get(person.id) || friends.has(person.id)))
-    .map((person: any) => [person.id, person]));
-  const visibleIds = candidateIds.filter((id) => users.has(id));
-  if (!visibleIds.length) return empty;
+  const { data: candidateSignals, error: signalsError } = await db.from("user_dna_signals")
+    .select("user_id,signal_type,signal_value,strength")
+    .in("user_id", candidateIds);
+  if (signalsError) throw new Error(`Could not score Tribe people: ${signalsError.message}`);
+  const signalsByUser = new Map<string, any[]>();
+  for (const signal of candidateSignals || []) signalsByUser.set(signal.user_id, [...(signalsByUser.get(signal.user_id) || []), signal]);
+  const users = new Map((candidateRows || []).map((person: any) => [person.id, person]));
+  const recommendationRows: any[] = [];
+  for (const person of candidateRows || []) {
+    for (const tribeId of tribeIds) {
+      const score = scoreTribe(signalsByUser.get(person.id) || [], definitions.filter((definition: any) => definition.tribe_id === tribeId));
+      if (score.recommended) recommendationRows.push({ tribe_id: tribeId, user_id: person.id, fit_score: score.fit_score });
+    }
+  }
+  recommendationRows.sort((a, b) => b.fit_score - a.fit_score || String(a.user_id).localeCompare(String(b.user_id)));
 
   const rowsByTribe = new Map<string, any[]>();
   for (const row of recommendationRows || []) {
@@ -332,7 +327,7 @@ serve(async (req) => {
     if (membershipError || summariesError) throw new Error(`Could not load Tribe members: ${(membershipError || summariesError).message}`);
     const ownMemberships = new Set((ownMembershipRows || []).map((row: any) => row.tribe_id));
     const summariesByTribe = new Map((memberSummaries || []).map((summary: any) => [summary.tribe_id, summary]));
-    const payoffsByTribe = readiness.ready ? await buildTribePayoffs(db, user.id, tribeIds) : new Map();
+    const payoffsByTribe = readiness.ready ? await buildTribePayoffs(db, user.id, tribeIds, definitions || []) : new Map();
 
     const responseTribes = (tribes || []).map((tribe: any) => {
       const score = scores.get(tribe.id) || { fit_score: 0, matched_groups: [], evidence: [], recommended: false };

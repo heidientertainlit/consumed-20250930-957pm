@@ -15,6 +15,6 @@ Tribe detail links use stable `/people/tribes/{id}` paths. Continue resolving le
 
 **Why:** The group’s collective taste—not membership—is the product value, and stable IDs prevent discarded generated names from remaining in public URLs.
 
-Detail pages present the payoff in this order: what connects you, unseen group-loved media, recent group trends, public takes, then visible high-fit people. Keep each section visible with an honest empty state when real data is sparse.
+Detail pages present the payoff in this order: shared connection media, unseen group-loved media, recent group trends, public takes, then visible high-fit people. Omit any payoff section that has no real records.
 
-**How to apply:** Derive discovery and conversation content from bounded ratings, tracked media, and public posts by privacy-filtered high-fit users. Exclude the viewer’s consumed titles; never duplicate editorial covers or fabricate activity.
+**How to apply:** Live-score privacy-filtered People candidates for each group, then derive discovery and conversation content from their bounded ratings, tracked media, and public posts. Exclude the viewer’s consumed titles; never duplicate editorial covers, show missing-data placeholders, or fabricate counts or activity.
