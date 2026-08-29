@@ -3771,15 +3771,10 @@ export default function UserProfile() {
             {dnaProfileStatus === 'has_profile' && dnaProfile ? (
               <>
                 <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-[#f7f3fa] px-5 py-5 shadow-sm">
-                    <svg className="pointer-events-none absolute -right-5 top-2 h-[205px] w-[150px] text-[#75409e] opacity-[0.28]" viewBox="0 0 150 220" fill="none" aria-hidden="true">
-                      <path d="M30 5C112 40 112 75 30 110C-52 145 -52 180 30 215" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-                      <path d="M120 5C38 40 38 75 120 110C202 145 202 180 120 215" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-                      <path d="M48 18H102M65 37H85M67 183H83M48 202H102M31 72H119M32 148H118M27 110H123" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
                     <div className="relative z-10">
                       <div className="max-w-[67%]">
                         <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#6d5878]">Maybe right now…</p>
-                        <p className="mt-3 font-serif text-[21px] font-medium leading-[1.18] text-[#422653]">Easy answers just aren't that interesting.</p>
+                        <p className="mt-3 text-[21px] font-medium leading-[1.18] text-[#422653]">Easy answers just aren't that interesting.</p>
                       </div>
                       <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#ded2e7] pt-4">
                         <div>
@@ -4222,15 +4217,10 @@ export default function UserProfile() {
             {dnaProfileStatus === 'has_profile' && dnaProfile && (
               <>
                 <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-[#d8cce4] bg-[#f7f3fa] px-5 py-5 shadow-sm">
-                    <svg className="pointer-events-none absolute -right-5 top-2 h-[205px] w-[150px] text-[#75409e] opacity-[0.28]" viewBox="0 0 150 220" fill="none" aria-hidden="true">
-                      <path d="M30 5C112 40 112 75 30 110C-52 145 -52 180 30 215" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-                      <path d="M120 5C38 40 38 75 120 110C202 145 202 180 120 215" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-                      <path d="M48 18H102M65 37H85M67 183H83M48 202H102M31 72H119M32 148H118M27 110H123" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
                     <div className="relative z-10">
                       <div className="max-w-[67%]">
                         <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#6d5878]">Maybe right now…</p>
-                        <p className="mt-3 font-serif text-[21px] font-medium leading-[1.18] text-[#422653]">Easy answers just aren't that interesting.</p>
+                        <p className="mt-3 text-[21px] font-medium leading-[1.18] text-[#422653]">Easy answers just aren't that interesting.</p>
                       </div>
                       <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#ded2e7] pt-4">
                         <div>
