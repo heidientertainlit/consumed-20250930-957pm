@@ -2,10 +2,11 @@
 name: Media match % scoring
 description: How the feed "% match" badge is scored and calibrated (score-media-match edge fn)
 ---
-- The feed card % match comes from the `score-media-match` edge fn (gpt-4o-mini, per-user cache in `media_match_scores`, 14-day TTL).
-- Callers (feed.tsx Rate & Review cards) send ONLY title/type — no genres/description — so the prompt must tell the model to use its own knowledge of recognized titles or famous favorites score absurdly low.
-- Calibration lives in the prompt: 0-4 no overlap (client hides badge when score < 5), 5-15 generic overlap, 70+ clear genre/tone kinship with loved titles. Don't add "be brutal" wording without the "use your own knowledge of the title" rule — that combo made Ever After score 40 for a period-romance lover.
-- **How to apply:** after any calibration change, redeploy the fn AND `DELETE FROM media_match_scores` (via Management API) or stale cached scores keep showing for up to 14 days.
-- Prompt now lives in shared `supabase/functions/score-media-match/prompt.mjs` (plain JS — no TS annotations), imported by both the edge fn and the guardrail.
+- Media matching has an isolated, reversible v2 test path; v1 remains available and its cache is preserved.
+- **Rule:** v2 scores only from signed rating-derived genre evidence. Never treat raw DNA signal strength as positive preference; tracked, followed, or engaged-with media is not proof the user liked it.
+- **Why:** title-recognition scoring produced confident matches with no defensible connection to the user's demonstrated taste.
+- **How to apply:** actual ratings always suppress predictions; weak or missing verified evidence returns no badge. Keep archetype, People, Friends, and Tribe scoring unchanged while media v2 is evaluated.
+- V2 uses canonical media genres and a short, version-separated cache. Its lease acquisition, completion, and release must remain atomically fenced so feed fan-out cannot duplicate work or overwrite a newer result.
+- V1 calibration remains in the AI prompt and its 14-day cache. Only clear v1 rows when intentionally recalibrating or retiring v1; never clear them merely to test v2.
 - **Deferred by user decision (Aug 2026): keep scoring personal-taste-only for now.** Inputs today: user's cross-media ratings, DNA profile, DNA signals + model's title knowledge. Deliberately NOT using community averages or taste-neighbor ("users like you") signals — too few real users; thin data would make scores feel random. **Revisit when many titles have ~5+ real-user ratings.** Agreed first step then: feed the title's Consumed avg/count + friends'/DNA-matches' ratings of that exact title into the prompt, adding guardrail cases before deploy. Full collaborative filtering only after real user growth.
 - **Drift guardrail:** `node scripts/match-calibration-check.mjs` scores a fixed golden set against the real prompt (needs OPENAI_API_KEY). Run it after ANY prompt change, before deploying. Lessons baked in: gpt-4o-mini snaps to round band edges (40/70) without explicit numeric anchors + "pick a precise integer"; and it treats absence of genre kinship as a dislike unless told "absence of evidence is NOT a dislike" with a mixed-fit anchor.

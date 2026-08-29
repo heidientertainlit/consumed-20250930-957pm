@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import MentionInput from "@/components/mention-input";
 import { shareLink } from "@/lib/share";
+import { MEDIA_MATCH_SCORER_VERSION } from "@/lib/media-match";
 import { useToast } from "@/hooks/use-toast";
 import { useDnaArchetype } from "@/hooks/use-dna-archetype";
 import { QuickAddModal } from "@/components/quick-add-modal";
@@ -776,6 +777,7 @@ export default function MediaDetail() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+             scorer_version: MEDIA_MATCH_SCORER_VERSION,
             external_source: params?.source,
             external_id: params?.id,
             media_type: params?.type,

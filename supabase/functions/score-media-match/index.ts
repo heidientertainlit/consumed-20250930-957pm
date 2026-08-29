@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { getOrResolveGenres } from '../_shared/genre-cache.ts';
+import { canonicalizeMany } from '../_shared/genre-taxonomy.ts';
 import { buildPrompt } from './prompt.mjs';
+import { scoreMediaMatchV2 } from './v2.mjs';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -37,6 +40,7 @@ serve(async (req) => {
     const creator = cap(body?.creator, 200);
     const description = cap(body?.description, 1000);
     const genres = Array.isArray(body?.genres) ? body.genres.slice(0, 8).map((g: unknown) => String(g).slice(0, 50)) : [];
+    const scorer_version = cap(body?.scorer_version, 10);
     if (!external_source || !external_id || !title) {
       return new Response(JSON.stringify({ error: 'external_source, external_id and title are required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -47,6 +51,195 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Deterministic v2 is opt-in while it is evaluated. Its cache is namespaced
+    // from v1 so the client can roll back without losing previous AI scores.
+    if (scorer_version === 'v2') {
+      const source = String(external_source);
+      const id = String(external_id);
+      const v2CacheSource = `v2:${source}`;
+      const { data: ownRating, error: ownRatingError } = await admin
+        .from('media_ratings')
+        .select('rating')
+        .eq('user_id', user.id)
+        .eq('media_external_source', source)
+        .eq('media_external_id', id)
+        .maybeSingle();
+      if (ownRatingError) throw ownRatingError;
+      if (ownRating) {
+        return new Response(JSON.stringify({
+          score: null,
+          rated: true,
+          rating: Number(ownRating.rating),
+          reason: 'Your actual rating replaces a predicted match.',
+          scorer_version: 'v2',
+          cached: false,
+        }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const readV2Cache = async () => {
+        const { data } = await admin
+          .from('media_match_scores')
+          .select('score, reason, created_at')
+          .eq('user_id', user.id)
+          .eq('external_source', v2CacheSource)
+          .eq('external_id', id)
+          .maybeSingle();
+        return data;
+      };
+      const cachedV2 = await readV2Cache();
+      const v2Age = cachedV2 ? Date.now() - new Date(cachedV2.created_at).getTime() : Infinity;
+      if (cachedV2?.score >= 0 && v2Age < 24 * 60 * 60 * 1000) {
+        let metadata: any = {};
+        try { metadata = JSON.parse(cachedV2.reason || '{}'); } catch { metadata = { reason: cachedV2.reason }; }
+        return new Response(JSON.stringify({
+          score: cachedV2.score,
+          ...metadata,
+          scorer_version: 'v2',
+          cached: true,
+        }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (cachedV2?.score < 0 && v2Age < 2 * 60 * 1000) {
+        return new Response(JSON.stringify({ score: null, pending: true, scorer_version: 'v2' }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const leaseToken = new Date().toISOString();
+      const reservation = {
+        user_id: user.id,
+        external_source: v2CacheSource,
+        external_id: id,
+        media_type: media_type || null,
+        score: -1,
+        reason: 'pending',
+        created_at: leaseToken,
+      };
+      let acquiredLease = false;
+      if (!cachedV2) {
+        const { error } = await admin.from('media_match_scores').insert(reservation);
+        if (!error) acquiredLease = true;
+        else if (error.code !== '23505') console.error('Failed to reserve v2 score slot:', error);
+      } else {
+        const { data, error } = await admin
+          .from('media_match_scores')
+          .update(reservation)
+          .eq('user_id', user.id)
+          .eq('external_source', v2CacheSource)
+          .eq('external_id', id)
+          .eq('score', cachedV2.score)
+          .eq('created_at', cachedV2.created_at)
+          .select('created_at');
+        if (error) console.error('Failed to renew v2 score lease:', error);
+        acquiredLease = Array.isArray(data) && data.length === 1;
+      }
+      if (!acquiredLease) {
+        return new Response(JSON.stringify({ score: null, pending: true, scorer_version: 'v2' }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const releaseV2Reservation = async () => {
+        await admin.from('media_match_scores').delete()
+          .eq('user_id', user.id)
+          .eq('external_source', v2CacheSource)
+          .eq('external_id', id)
+          .eq('score', -1)
+          .eq('created_at', leaseToken);
+      };
+
+      try {
+        const [{ data: ratingRows, error: ratingsError }, resolvedGenres] = await Promise.all([
+          admin
+            .from('media_ratings')
+            .select('media_external_id, media_external_source, media_title, media_type, rating, updated_at')
+            .eq('user_id', user.id)
+            .order('updated_at', { ascending: false })
+            .limit(200),
+          getOrResolveGenres(admin, source, id, media_type ? String(media_type) : null),
+        ]);
+        if (ratingsError) throw ratingsError;
+
+        const ratings = ratingRows || [];
+        const ratingIds = [...new Set(ratings.map((rating: any) => String(rating.media_external_id || '')).filter(Boolean))];
+        let genreRows: any[] = [];
+        if (ratingIds.length > 0) {
+          const { data, error } = await admin
+            .from('media_genres')
+            .select('external_source, external_id, canonical_genres')
+            .in('external_id', ratingIds);
+          if (error) console.error('Failed to load rating genres for v2 scorer:', error);
+          genreRows = data || [];
+        }
+        const genreMap = new Map(
+          genreRows.map((row: any) => [
+            `${row.external_source}:${row.external_id}`,
+            Array.isArray(row.canonical_genres) ? row.canonical_genres : [],
+          ])
+        );
+        const ratingsWithGenres = ratings.map((rating: any) => ({
+          ...rating,
+          genres: genreMap.get(`${rating.media_external_source}:${rating.media_external_id}`) || [],
+        }));
+        const targetGenres = resolvedGenres.length > 0 ? resolvedGenres : canonicalizeMany(genres);
+        const result = scoreMediaMatchV2({
+          ratings: ratingsWithGenres,
+          mediaGenres: targetGenres,
+          mediaType: media_type,
+        });
+        if (typeof result.score !== 'number') {
+          await releaseV2Reservation();
+          return new Response(JSON.stringify({
+            ...result,
+            scorer_version: 'v2',
+            cached: false,
+          }), {
+            status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const cacheMetadata = JSON.stringify({
+          reason: result.reason,
+          confidence: result.confidence,
+          evidence: result.evidence,
+        });
+        const { data: finalized, error: finalizeError } = await admin
+          .from('media_match_scores')
+          .update({
+          media_type: media_type || null,
+          score: result.score,
+          reason: cacheMetadata,
+          created_at: new Date().toISOString(),
+        })
+          .eq('user_id', user.id)
+          .eq('external_source', v2CacheSource)
+          .eq('external_id', id)
+          .eq('score', -1)
+          .eq('created_at', leaseToken)
+          .select('score');
+        if (finalizeError) throw finalizeError;
+        if (!Array.isArray(finalized) || finalized.length !== 1) {
+          return new Response(JSON.stringify({ score: null, pending: true, scorer_version: 'v2' }), {
+            status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        return new Response(JSON.stringify({
+          ...result,
+          scorer_version: 'v2',
+          cached: false,
+        }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } catch (error) {
+        await releaseV2Reservation();
+        throw error;
+      }
+    }
 
     // Cache hit? (score = -1 means another request is generating right now)
     const readCache = async () => {

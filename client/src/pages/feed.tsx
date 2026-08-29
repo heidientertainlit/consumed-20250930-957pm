@@ -65,6 +65,7 @@ import { apiRequest, queryClient as globalQueryClient } from "@/lib/queryClient"
 import { renderMentions } from "@/lib/mentions";
 import { copyLink, shareLink } from "@/lib/share";
 import { formatFeedName } from "@/lib/feed-name";
+import { MEDIA_MATCH_SCORER_VERSION } from "@/lib/media-match";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { GameMomentCard } from "@/components/game-moment-card";
 import { SocialProofCard, buildGameMomentSocialProof, buildLeaderboardSocialProof } from "@/components/social-proof-card";
@@ -1360,10 +1361,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           method: 'POST',
           headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            scorer_version: MEDIA_MATCH_SCORER_VERSION,
             external_source: extSource,
             external_id: extId,
             media_type: post.mediaType,
             title: post.mediaTitle,
+            creator: (post as any).mediaCreator || (post as any)._rawPost?.mediaItems?.[0]?.creator,
+            genres: (post as any).genres || (post as any)._rawPost?.mediaItems?.[0]?.genres || [],
+            description: (post as any).description || (post as any)._rawPost?.mediaItems?.[0]?.description,
           }),
         });
         if (!res.ok || cancelled) return;
