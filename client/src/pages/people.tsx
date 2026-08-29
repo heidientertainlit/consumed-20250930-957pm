@@ -114,8 +114,8 @@ function Readiness({ readiness, onInvite }: { readiness?: Affinity["readiness"];
           <p className="text-sm font-bold text-[#271d3a]">Unlock your real comparisons</p>
           <p className="mt-1 text-sm leading-5 text-[#746b7b]">
             {needed > 0
-              ? `Track ${needed} more ${needed === 1 ? "item" : "items"} to sharpen your DNA. Invite friends now so you’ll have people to compare with.`
-              : "Invite friends to compare your DNA, then keep tracking to discover more matches."}
+              ? `Track ${needed} more ${needed === 1 ? "item" : "items"} to unlock community DNA matches and personalized Tribes.`
+              : "Your DNA is ready to find taste matches across the Consumed community."}
           </p>
         </div>
       </div>
@@ -199,7 +199,7 @@ export default function PeoplePage() {
     queryFn: () => functionRequest<Affinity>("people-affinity", session!.access_token, { action: "load", batch_size: 25 }), staleTime: 60_000,
   });
   const tribesQuery = useQuery({
-    queryKey: ["people-tribes-v1", user?.id], enabled: !!session?.access_token && tab === "tribes",
+    queryKey: ["people-tribes-v2", user?.id], enabled: !!session?.access_token && tab === "tribes",
     queryFn: () => functionRequest<TribesResponse>("people-tribes", session!.access_token, { action: "load" }), staleTime: 60_000,
   });
   const moreMatches = useMutation({
@@ -234,7 +234,7 @@ export default function PeoplePage() {
   }, [affinityQuery.data?.has_more, affinityQuery.data?.next_cursor, moreMatches.isPending]);
   const membership = useMutation({
     mutationFn: ({ slug, joined }: { slug: string; joined: boolean }) => functionRequest<TribesResponse>("people-tribes", session!.access_token, { action: joined ? "leave" : "join", slug }),
-    onSuccess: (data) => queryClient.setQueryData(["people-tribes-v1", user?.id], data),
+    onSuccess: (data) => queryClient.setQueryData(["people-tribes-v2", user?.id], data),
     onError: (error: Error) => toast({ title: "Couldn’t update membership", description: error.message }),
   });
   const creatorsQuery = useQuery({
@@ -257,7 +257,7 @@ export default function PeoplePage() {
           <div className="flex min-w-0 items-center gap-3">
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-[#5b3e78]"><Users size={15} /></span>
             <p className="text-xs font-semibold leading-4 text-[#594a61] sm:text-sm">
-              Invite friends to compare your Entertainment DNA.
+              Discover people who share your taste. Invite friends for private comparisons.
             </p>
           </div>
           <button onClick={copyInvite} className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-[#533576] px-3.5 text-xs font-bold text-white transition hover:bg-[#432a61]">
@@ -322,7 +322,7 @@ function Matches({ query, more, onSelectPerson, onInvite }: { query: ReturnType<
   const featuredIds = new Set(featured.map(({ person }) => person.id));
   const remaining = ordered.map((band) => ({ ...band, people: band.people.filter((person) => !featuredIds.has(person.id)) })).filter((band) => band.people.length);
   return <section className="mt-7">
-    {!ordered.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">No comparisons to show yet. Your matches will arrive as more people build their DNA.</div> :
+    {!ordered.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]"><p className="font-bold text-[#3b2c47]">No community matches yet.</p><p className="mt-1 leading-5">We’ll add compatible people here as more members build their Entertainment DNA. Your matches do not depend on having friends in the app.</p><button type="button" onClick={onInvite} className="mt-4 inline-flex items-center gap-2 font-bold text-[#503574]"><Share2 size={15} /> Invite someone you know</button></div> :
       <>
         {featured.length > 0 && <div className="mb-9"><div className="mb-3"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Matches</p><h3 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Who likes what you like?</h3><p className="mt-0.5 max-w-xl text-xs leading-4 text-[#7d7382]">See who shares similar Entertainment DNA.</p></div><div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person, band }, index) => <FeaturedMatch key={person.id} person={person} band={band} index={index} onSelect={onSelectPerson} />)}</div></div>}
         {remaining.length > 0 && <div><div className="mb-3 flex items-end justify-between"><div><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">More to explore</h3><p className="mt-0.5 text-xs text-[#7d7382]">Every overlap is a place to start.</p></div></div><div className="divide-y divide-[#dfd8e1] border-y border-[#dfd8e1]">{remaining.map((band) => <div key={band.id} className="py-5"><div className="mb-2 flex items-baseline justify-between"><h3 className="text-[11px] font-bold uppercase tracking-[.15em] text-[#65457b]">{band.label}%</h3><span className="text-xs text-[#857a8b]">{band.note}</span></div>{band.people.map((person) => <MatchRow key={person.id} person={person} onSelect={onSelectPerson} />)}</div>)}</div></div>}
@@ -351,16 +351,17 @@ function MatchRow({ person, onSelect }: { person: Person; onSelect: (person: Per
 }
 
 function Friends({ userId }: { userId?: string }) {
-  return <section className="mt-7"><div className="mb-5"><p className="text-sm text-[#6e6475]">The people you chose to keep close.</p><h2 className="mt-1 text-xl font-bold tracking-[-.035em]">Your circle</h2></div>{userId && <FriendsManager userId={userId} />}</section>;
+  return <section className="mt-7"><div className="mb-5"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Friends</p><h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Your circle.</h2><p className="mt-1 text-sm leading-5 text-[#746b78]">Find people you know and keep up with the friends you chose to keep close.</p></div>{userId && <FriendsManager userId={userId} />}</section>;
 }
 
 function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<typeof useQuery<TribesResponse>>; selected?: Tribe; onSelect: (slug?: string) => void; membership: ReturnType<typeof useMutation<TribesResponse, Error, { slug: string; joined: boolean }>> }) {
   if (query.isLoading) return <div className="mt-7 grid gap-3 sm:grid-cols-2">{[1, 2, 3, 4].map((item) => <div key={item} className="h-44 animate-pulse rounded-2xl bg-[#e6e0e7]" />)}</div>;
   if (query.isError) return <div className="mt-7"><ErrorState onRetry={() => query.refetch()} /></div>;
-  if (!query.data?.readiness?.ready) return <div className="mt-7"><Readiness readiness={query.data?.readiness} /></div>;
-  if (selected) return <TribeDetail tribe={selected} onBack={() => onSelect()} membership={membership} />;
+  const isReady = Boolean(query.data?.readiness?.ready);
+  if (selected) return <TribeDetail tribe={selected} onBack={() => onSelect()} membership={membership} personalized={isReady} />;
   const tribes = query.data?.tribes || [];
   return <section className="mt-7"><div className="mb-5"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Tribes</p><h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Where your DNA fits.</h2><p className="mt-1 text-sm leading-5 text-[#746b78]">Find communities built around the things you love together.</p></div>
+    {!isReady && <div className="mb-5 rounded-[18px] border border-[#ded7e9] bg-[#f4f0f5] p-4"><p className="text-sm font-bold text-[#342642]">Explore every Tribe now</p><p className="mt-1 text-sm leading-5 text-[#746b7b]">Track {query.data?.readiness?.items_needed || 10} more {(query.data?.readiness?.items_needed || 10) === 1 ? "item" : "items"} to reveal your personal fit and join the communities that match your taste.</p><Link href="/add" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#513879]">Track more <ArrowUpRight size={15} /></Link></div>}
     {!tribes.length ? <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-8 text-sm text-[#746b7b]">There are no Tribes to recommend right now.</div> :
       <div className="grid gap-4">{tribes.map((tribe, index) => {
         const icons = [Sparkles, Heart, Moon, Leaf];
@@ -378,14 +379,13 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-3">
                 <h3 className="font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#281e34] sm:text-[27px]">{tribe.name}</h3>
-                <span className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[.04em]" style={{ color: accent, backgroundColor: `${accent}17` }}>{tribe.fit_score}% match</span>
+                {isReady && <span className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[.04em]" style={{ color: accent, backgroundColor: `${accent}17` }}>{tribe.fit_score}% match</span>}
               </div>
               <p className="mt-2 max-w-xl line-clamp-2 text-sm leading-5 text-[#716971]">{tribe.identity_statement || tribe.description}</p>
             </div>
           </div>
           <div className="mt-5 flex items-center gap-2 overflow-hidden">
-            {featuredMedia && <span className="inline-flex min-w-0 shrink items-center gap-2 rounded-full bg-[#f2efed] py-1.5 pl-1.5 pr-3 text-xs font-semibold text-[#39313f]">
-              {featuredMedia.image_url && <img src={featuredMedia.image_url} alt="" className="h-7 w-7 shrink-0 rounded-lg object-cover" />}
+            {featuredMedia && <span className="inline-flex min-w-0 shrink items-center rounded-full bg-[#f2efed] px-3 py-2 text-xs font-semibold text-[#39313f]">
               <span className="truncate">{featuredMedia.title}</span>
             </span>}
             {evidence.map((label) => <span key={label} className="hidden shrink-0 rounded-full bg-[#f2efed] px-3 py-2 text-xs font-semibold text-[#443a49] min-[390px]:inline-flex">{label}</span>)}
@@ -393,19 +393,20 @@ function Tribes({ query, selected, onSelect, membership }: { query: ReturnType<t
               <ArrowRight size={19} />
             </span>
           </div>
+          {tribe.members.length > 0 && <div className="mt-4 flex items-center gap-3 border-t border-[#e6e0df] pt-4"><AvatarStack people={tribe.members} /><span className="text-xs font-semibold text-[#746b78]">{tribe.member_count} {tribe.member_count === 1 ? "person" : "people"} in this Tribe</span></div>}
         </button>;
       })}</div>}
   </section>;
 }
 
-function TribeDetail({ tribe, onBack, membership }: { tribe: Tribe; onBack: () => void; membership: ReturnType<typeof useMutation<TribesResponse, Error, { slug: string; joined: boolean }>> }) {
+function TribeDetail({ tribe, onBack, membership, personalized }: { tribe: Tribe; onBack: () => void; membership: ReturnType<typeof useMutation<TribesResponse, Error, { slug: string; joined: boolean }>>; personalized: boolean }) {
   const { toast } = useToast();
   const share = async () => { const url = `${APP_BASE}/people?tab=tribes&tribe=${encodeURIComponent(tribe.slug)}`; try { if (typeof navigator.share === "function") await navigator.share({ title: tribe.name, text: `Take a look at the ${tribe.name} Tribe on Consumed.`, url }); else await navigator.clipboard.writeText(url); toast({ title: typeof navigator.share === "function" ? "Share sheet opened" : "Tribe link copied" }); } catch { /* intentional cancellation */ } };
   const labels = tribe.evidence.slice(0, 4).map((item) => item.label || item.value || item.group).filter(Boolean);
   return <section className="mt-7"><button onClick={onBack} className="mb-5 inline-flex items-center gap-1 text-sm font-bold text-[#543d72]"><ArrowLeft size={16} /> All Tribes</button>
-    <div className="overflow-hidden rounded-[22px] border border-[#ded4e1] bg-[#ece6ec]"><div className="p-6 sm:p-8" style={{ background: `linear-gradient(125deg, ${tribe.accent_color || "#745386"}22, ${tribe.accent_color_2 || "#4d6e9b"}35)` }}><div className="flex items-start justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#65457b]">{tribe.is_member ? "Your Tribe" : "Recommended community"}</p><h2 className="mt-2 font-serif text-4xl tracking-[-.05em]">{tribe.name}</h2><p className="mt-3 max-w-xl text-sm leading-6 text-[#5f5665]">{tribe.identity_statement || tribe.description}</p></div><span className="rounded-full bg-[#fbf9fa]/70 px-3 py-1.5 text-xs font-bold text-[#4e356a]">{tribe.fit_score}% fit</span></div>
-      <div className="mt-6 flex flex-wrap gap-2"><button disabled={membership.isPending} onClick={() => membership.mutate({ slug: tribe.slug, joined: tribe.is_member })} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${tribe.is_member ? "border border-[#bdb0c4] bg-[#fbf9fa] text-[#4e3d58]" : "bg-[#4f3373] text-[#faf8fb] hover:bg-[#432965]"}`}>{tribe.is_member && <Check size={15} />}{membership.isPending ? "Updating…" : tribe.is_member ? "Leave Tribe" : "Join Tribe"}</button><button onClick={share} className="inline-flex items-center gap-2 rounded-full border border-[#bdb0c4] bg-[#fbf9fa]/80 px-4 py-2 text-sm font-bold text-[#503c61]"><Share2 size={15} /> Share</button></div></div>
-      <div className="grid gap-6 bg-[#fbf9fa] p-6 sm:grid-cols-2 sm:p-8"><div><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">Why you fit</h3>{labels.length ? <ul className="mt-3 space-y-2">{labels.map((label) => <li key={label} className="flex gap-2 text-sm text-[#605766]"><Dna size={15} className="mt-0.5 shrink-0 text-[#66447c]" />{label}</li>)}</ul> : <p className="mt-3 text-sm text-[#746b7b]">Your profile has been compared across the signals that define this Tribe.</p>}</div><div><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">Member preview</h3>{tribe.members.length ? <div className="mt-3 flex items-center gap-3"><AvatarStack people={tribe.members} /><span className="text-sm text-[#6f6574]">{tribe.member_count} {tribe.member_count === 1 ? "member" : "members"}</span></div> : <p className="mt-3 text-sm text-[#746b7b]">Membership is taking shape.</p>}</div></div>
+    <div className="overflow-hidden rounded-[22px] border border-[#ded4e1] bg-[#ece6ec]"><div className="p-6 sm:p-8" style={{ background: `linear-gradient(125deg, ${tribe.accent_color || "#745386"}22, ${tribe.accent_color_2 || "#4d6e9b"}35)` }}><div className="flex items-start justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#65457b]">{tribe.is_member ? "Your Tribe" : personalized ? "Recommended community" : "Explore this Tribe"}</p><h2 className="mt-2 font-serif text-4xl tracking-[-.05em]">{tribe.name}</h2><p className="mt-3 max-w-xl text-sm leading-6 text-[#5f5665]">{tribe.identity_statement || tribe.description}</p></div>{personalized && <span className="rounded-full bg-[#fbf9fa]/70 px-3 py-1.5 text-xs font-bold text-[#4e356a]">{tribe.fit_score}% fit</span>}</div>
+      <div className="mt-6 flex flex-wrap gap-2">{personalized && <button disabled={membership.isPending} onClick={() => membership.mutate({ slug: tribe.slug, joined: tribe.is_member })} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${tribe.is_member ? "border border-[#bdb0c4] bg-[#fbf9fa] text-[#4e3d58]" : "bg-[#4f3373] text-[#faf8fb] hover:bg-[#432965]"}`}>{tribe.is_member && <Check size={15} />}{membership.isPending ? "Updating…" : tribe.is_member ? "Leave Tribe" : "Join Tribe"}</button>}<button onClick={share} className="inline-flex items-center gap-2 rounded-full border border-[#bdb0c4] bg-[#fbf9fa]/80 px-4 py-2 text-sm font-bold text-[#503c61]"><Share2 size={15} /> Share</button></div></div>
+      <div className="grid gap-6 bg-[#fbf9fa] p-6 sm:grid-cols-2 sm:p-8"><div><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">{personalized ? "Why you fit" : "What defines this Tribe"}</h3>{personalized && labels.length ? <ul className="mt-3 space-y-2">{labels.map((label) => <li key={label} className="flex gap-2 text-sm text-[#605766]"><Dna size={15} className="mt-0.5 shrink-0 text-[#66447c]" />{label}</li>)}</ul> : <p className="mt-3 text-sm text-[#746b7b]">{personalized ? "Your tracked taste connects with the signals that define this Tribe." : "Track 10 titles to reveal how your taste connects with this community."}</p>}</div><div><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">Member preview</h3>{tribe.members.length ? <div className="mt-3 flex items-center gap-3"><AvatarStack people={tribe.members} /><span className="text-sm text-[#6f6574]">{tribe.member_count} {tribe.member_count === 1 ? "member" : "members"}</span></div> : <p className="mt-3 text-sm text-[#746b7b]">Membership is taking shape.</p>}</div></div>
       {tribe.media.length > 0 && <div className="border-t border-[#e0d9e3] bg-[#f6f3f5] p-6 sm:p-8"><h3 className="text-[11px] font-bold uppercase tracking-[.16em] text-[#725581]">In the mix</h3><div className="mt-4 flex gap-3 overflow-x-auto pb-1">{tribe.media.slice(0, 6).map((item, index) => <article key={item.id} className="w-28 shrink-0"><div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-[#ddd6e0]">{item.image_url ? <img src={item.image_url} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full flex-col justify-between p-3 text-white" style={{ background: `linear-gradient(145deg, ${tribe.accent_color || "#745386"}, ${tribe.accent_color_2 || "#4d6e9b"})` }}><span className="text-[9px] font-bold uppercase tracking-[.14em] text-white/65">{item.media_type}</span><span className="font-serif text-xl text-white/90">0{index + 1}</span></div>}</div><p className="mt-2 line-clamp-2 text-xs font-bold">{item.title}</p>{item.creator && <p className="truncate text-[11px] text-[#7b7180]">{item.creator}</p>}</article>)}</div></div>}
     </div>
   </section>;

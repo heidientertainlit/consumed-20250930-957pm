@@ -3,8 +3,8 @@ name: People Tribes independence
 description: Product boundary between the new People/Tribes destination and the legacy Rooms system.
 ---
 
-Tribes are personalized affinity bands computed around the current user from persisted canonical DNA comparisons. Never rename, wrap, or reuse Rooms, pools, room follows, Room notifications, or Room conversations as Tribes, and do not create static Tribe memberships.
+Tribes are defined taste communities whose personalized fit is computed from tracked-content DNA signals. Show the Tribe catalog before personalization; unlock fit scores and membership after 10 tracked items. Friends and a completed DNA profile are not prerequisites.
 
-**Why:** Rooms are retired from user-facing discovery while their historical records remain intact. Static memberships would misrepresent a relationship that changes with each person's DNA, and default-on discovery would expose private affinity data without an affirmative choice.
+**Why:** People must provide value before a user's friends join. Rooms are retired from user-facing discovery while their historical records remain intact, and Tribe eligibility should reflect demonstrated taste rather than social graph size or onboarding state.
 
-**How to apply:** Use DNA signals only to shortlist candidates and persisted comparison scores as the displayed authority. Return cached bands first, bound new comparison work, keep non-friend discovery opt-in/default-off, and isolate all Room-domain data.
+**How to apply:** Score Tribe fit from canonical user DNA signals once tracking reaches the threshold. Keep member previews privacy-bounded, gate full non-friend profiles, and isolate all Room-domain data.

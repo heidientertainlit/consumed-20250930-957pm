@@ -84,11 +84,11 @@ serve(async (req) => {
       tracked_items: count,
       required_tracked_items: 10,
       items_needed: Math.max(0, 10 - count),
-      ready: !!profile && count >= 10,
+      ready: count >= 10,
     };
 
     if (action === "join" || action === "leave") {
-      if (!readiness.ready) return json({ error: "Build your DNA and track 10 items before joining a Tribe.", readiness }, 403);
+      if (!readiness.ready) return json({ error: "Track 10 items before joining a Tribe.", readiness }, 403);
       const slug = String(body?.slug || "").trim();
       if (!slug) return json({ error: "slug is required" }, 400);
       const { data: tribe, error: tribeError } = await db.from("people_tribes").select("id").eq("slug", slug).eq("is_active", true).maybeSingle();
