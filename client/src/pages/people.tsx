@@ -13,7 +13,7 @@ import { APP_BASE } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 
 type Tab = "friends" | "tribes" | "creators";
-type Person = {
+export type Person = {
   id: string; user_name?: string; display_name?: string; first_name?: string; last_name?: string;
   avatar_url?: string; profile_image_url?: string; avatar?: string; match_score?: number; is_friend?: boolean;
   shared_titles?: Array<{ title?: string; name?: string; image_url?: string | null; media_type?: string } | string>; shared_genres?: string[]; shared_creators?: string[];
@@ -469,13 +469,17 @@ function Friends({ query, more, onSelectPerson, onInvite, userId }: { query: Ret
       .filter((person) => person.is_friend && person.match_score != null)
       .map((person) => [person.id, Math.round(person.match_score || 0)])
   );
+  const closestFriend = ordered
+    .flatMap((band) => band.people)
+    .filter((person) => person.is_friend && person.match_score != null)
+    .sort((a, b) => (b.match_score || 0) - (a.match_score || 0))[0];
   const discoverable = ordered.map((band) => ({ ...band, people: band.people.filter((person) => !person.is_friend) })).filter((band) => band.people.length);
   const featured = discoverable.flatMap((band) => band.people.map((person) => ({ person, band }))).sort((a, b) => (b.person.match_score || 0) - (a.person.match_score || 0)).slice(0, 2);
   const featuredIds = new Set(featured.map(({ person }) => person.id));
   const remaining = discoverable.map((band) => ({ ...band, people: band.people.filter((person) => !featuredIds.has(person.id)) })).filter((band) => band.people.length);
   return <section className="mt-7">
     <FriendsHeader />
-    {userId && <div className="mb-10"><div className="mb-3"><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">Your circle</h3><p className="mt-0.5 text-xs text-[#7d7382]">Search, review requests, invite people, and find your closest friends.</p></div><FriendsManager userId={userId} matchScores={friendMatchScores} /></div>}
+    {userId && <div className="mb-10"><div className="mb-3"><h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">Your circle</h3><p className="mt-0.5 text-xs text-[#7d7382]">Search, review requests, invite people, and find your closest friends.</p></div><FriendsManager userId={userId} matchScores={friendMatchScores} featuredFriend={closestFriend} /></div>}
     <div className="mb-9 border-t border-[#e2dbe5] pt-7">
       <div className="mb-3"><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#65457b]">Potential new friends</p><p className="mt-1 max-w-xl text-xs leading-4 text-[#7d7382]">People outside your circle with the strongest Entertainment DNA overlap.</p></div>
       {featured.length > 0 ? <div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person, band }, index) => <FeaturedMatch key={person.id} person={person} band={band} index={index} onSelect={onSelectPerson} />)}</div> : <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-7 text-sm text-[#746b7b]"><p className="font-bold text-[#3b2c47]">No new taste matches yet.</p><p className="mt-1 leading-5">We’ll add compatible people here as more members build their Entertainment DNA.</p></div>}

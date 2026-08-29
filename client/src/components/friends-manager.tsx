@@ -5,13 +5,15 @@ import { Search, Check, UserPlus, X, Users, Plus, ChevronRight, ChevronDown, Use
 import { useFriendsManagement } from "@/hooks/use-friends-management";
 import { APP_BASE } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
+import type { Person } from "@/pages/people";
 
 interface FriendsManagerProps {
   userId: string;
   matchScores?: Record<string, number>;
+  featuredFriend?: Person;
 }
 
-export default function FriendsManager({ userId, matchScores = {} }: FriendsManagerProps) {
+export default function FriendsManager({ userId, matchScores = {}, featuredFriend }: FriendsManagerProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [requestsOpen, setRequestsOpen] = useState(false);
   const [showAllFriends, setShowAllFriends] = useState(false);
@@ -30,7 +32,7 @@ export default function FriendsManager({ userId, matchScores = {} }: FriendsMana
   const { data: searchResults, isLoading: searchLoading } = useUserSearch(searchQuery);
 
   const pendingCount = pendingData?.requests?.length || 0;
-  const sortedFriends = [...(friendsData?.friends || [])].sort((a: any, b: any) => {
+  const sortedFriends = [...(friendsData?.friends || [])].filter((friendship: any) => friendship.friend?.id !== featuredFriend?.id).sort((a: any, b: any) => {
     const scoreDifference = (matchScores[b.friend?.id] ?? -1) - (matchScores[a.friend?.id] ?? -1);
     if (scoreDifference) return scoreDifference;
     const aName = a.friend?.display_name || a.friend?.user_name || "";
@@ -251,11 +253,12 @@ export default function FriendsManager({ userId, matchScores = {} }: FriendsMana
         <ChevronRight size={18} className="shrink-0 text-[#8b7e91]" />
       </button>
     </div>
-    <section className="mt-7">
+    {featuredFriend && <ClosestFriendCard friend={featuredFriend} />}
+    {(!featuredFriend || sortedFriends.length > 0) && <section className="mt-7">
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
-          <h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">Your friends</h3>
-          <p className="mt-0.5 text-xs text-[#7d7382]">Closest DNA matches first.</p>
+           <h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">{featuredFriend ? "More friends" : "Your friends"}</h3>
+           <p className="mt-0.5 text-xs text-[#7d7382]">{featuredFriend ? "Everyone else in your circle." : "Closest DNA matches first."}</p>
         </div>
         {!isLoadingFriends && friendsData?.friends?.length > 0 && (
           <span className="text-xs font-semibold text-[#79618f]">{friendsData.friends.length}</span>
@@ -320,11 +323,59 @@ export default function FriendsManager({ userId, matchScores = {} }: FriendsMana
           onClick={() => setShowAllFriends((current) => !current)}
           className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#5b387f]"
         >
-          {showAllFriends ? "Show fewer friends" : `See all ${sortedFriends.length} friends`}
+          {showAllFriends ? "Show fewer friends" : `See all ${friendsData?.friends?.length || sortedFriends.length} friends`}
           <ChevronDown size={14} className={`transition-transform ${showAllFriends ? "rotate-180" : ""}`} />
         </button>
       )}
-    </section>
+    </section>}
     </>
   );
+}
+
+function ClosestFriendCard({ friend }: { friend: Person }) {
+  const first = friend.first_name?.trim();
+  const last = friend.last_name?.trim();
+  const displayName = first
+    ? `${first}${last ? ` ${last[0].toUpperCase()}.` : ""}`
+    : friend.display_name || friend.user_name || "Consumed member";
+  const avatar = friend.profile_image_url || friend.avatar_url || friend.avatar;
+  const avatarInitials = `${first?.[0] || friend.user_name?.[0] || "?"}${last?.[0] || ""}`.toUpperCase();
+  const shared = (friend.shared_titles || [])
+    .map((item) => typeof item === "string" ? { title: item } : { title: item.title || item.name || "", image_url: item.image_url })
+    .filter((item) => item.title);
+  const posters = shared.filter((item) => item.image_url).slice(0, 3);
+  const totalShared = shared.length + (friend.shared_genres?.length || 0) + (friend.shared_creators?.length || 0);
+
+  return <section className="mt-7">
+    <div className="mb-3">
+      <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#65457b]">Closest friend match</p>
+      <p className="mt-1 text-xs text-[#7d7382]">The friend whose Entertainment DNA feels most like yours.</p>
+    </div>
+    <Link
+      href={`/dna?tab=compare&friend=${encodeURIComponent(friend.id)}`}
+      className="group block overflow-hidden rounded-[22px] border border-[#d9cedf] bg-[#fffdfb] p-4 shadow-[0_8px_22px_rgba(65,49,55,.075)] transition hover:-translate-y-0.5 hover:border-[#bea9cc] hover:shadow-[0_12px_28px_rgba(81,49,111,.13)]"
+    >
+      <div className="flex items-start gap-3">
+        <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-[#e5dff3] text-sm font-bold text-[#4c3972]">
+          {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : avatarInitials}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[17px] font-bold text-[#2c2038]">{displayName}</p>
+          <span className="mt-1 inline-flex rounded-full bg-[#e4eee9] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[.09em] text-[#456b5c]">Friend with the closest taste</span>
+        </div>
+        <p className="shrink-0 font-serif text-3xl leading-none tracking-[-.06em] text-[#4f2d73]">{Math.round(friend.match_score || 0)}%</p>
+      </div>
+      {posters.length > 0 && <div className="mt-5">
+        <p className="mb-2 text-[11px] font-bold uppercase tracking-[.12em] text-[#67447c]">You both love</p>
+        <div className="flex gap-2">
+          {posters.map((item, index) => <div key={`${item.title}-${index}`} className="aspect-[4/5] w-[64px] shrink-0 overflow-hidden rounded-xl bg-[#ddd6e0] shadow-sm"><img src={item.image_url || ""} alt={item.title} className="h-full w-full object-cover" loading="lazy" /></div>)}
+          {totalShared > posters.length && <div className="flex aspect-[4/5] w-[64px] shrink-0 flex-col items-center justify-center rounded-xl bg-[#e7dfee] text-[#583875]"><span className="text-lg font-bold">+{totalShared - posters.length}</span><span className="text-[9px] font-semibold">more</span></div>}
+        </div>
+      </div>}
+      <div className="mt-4 flex items-center justify-between border-t border-[#dcd2df] pt-3 text-xs font-semibold text-[#614276]">
+        <span>{totalShared ? `${totalShared} thing${totalShared === 1 ? "" : "s"} in common` : "View your DNA comparison"}</span>
+        <span className="inline-flex items-center gap-1">Compare DNA <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" /></span>
+      </div>
+    </Link>
+  </section>;
 }
