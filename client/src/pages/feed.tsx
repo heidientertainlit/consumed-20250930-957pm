@@ -1641,6 +1641,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       hasFetched.current = false;
       setComments([]);
       setCommentsLoaded(false);
+      setShowComments(false);
+      setShowAllComments(false);
+      setReplyOpen(false);
     }
     const isRating = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought';
     if (!isRating || !post.id || hasFetched.current) return;
@@ -2758,23 +2761,15 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )}
 
           {/* Conversation preview appears once a discussion exists */}
-          {conversationCount > 0 && (
+          {commentsLoaded && conversationCount > 0 && !showComments && !replyOpen && (
             <button
               type="button"
-              className={`mx-4 mb-2 mt-3 w-[calc(100%_-_2rem)] rounded-2xl border px-3.5 py-3 text-left transition-colors ${
-                replyOpen
-                  ? 'border-violet-300 bg-violet-50'
-                  : 'border-violet-100 bg-violet-50/70 hover:bg-violet-50'
-              }`}
+              className="mx-4 mb-2 mt-3 w-[calc(100%_-_2rem)] rounded-2xl border border-violet-100 bg-violet-50/70 px-3.5 py-3 text-left transition-colors hover:bg-violet-50"
               onClick={(e) => {
                 e.stopPropagation();
-                setReplyOpen(true);
-                setTimeout(() => {
-                  const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
-                  el?.focus();
-                }, 50);
+                setShowComments(true);
               }}
-              aria-label={`Join the conversation with ${conversationCount} ${conversationCount === 1 ? 'reply' : 'replies'}`}
+              aria-label={`View ${conversationCount} ${conversationCount === 1 ? 'reply' : 'replies'}`}
             >
               {latestReply ? (
                 <span className="block">
@@ -2901,11 +2896,15 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setReplyOpen(v => !v);
-                  setTimeout(() => {
-                    const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
-                    el?.focus();
-                  }, 50);
+                  const nextOpen = !replyOpen;
+                  setReplyOpen(nextOpen);
+                  if (nextOpen) {
+                    setShowComments(true);
+                    setTimeout(() => {
+                      const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
+                      el?.focus();
+                    }, 50);
+                  }
                 }}
                 className="flex items-center gap-1.5 px-3.5 py-1.5 active:scale-95 transition-transform"
               >
@@ -2961,7 +2960,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         {/* ── Inline Comments section ── */}
         <div className="border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
           {/* Header — only shown when there are comments */}
-          {comments.length > 2 && (
+          {(showComments || replyOpen) && comments.length > 2 && (
             <div className="flex items-center justify-end px-4 pt-2">
               <button onClick={() => setShowAllComments(v => !v)} className="flex items-center gap-0.5 text-[10px] font-medium text-violet-500">
                 {showAllComments ? 'Less' : 'Newest'} <ChevronDown size={11} className={`transition-transform ${showAllComments ? 'rotate-180' : ''}`} />
@@ -2970,7 +2969,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )}
 
           {/* Comment list */}
-          {comments.length > 0 && (
+          {(showComments || replyOpen) && comments.length > 0 && (
             <div className="px-4 pt-1 pb-2 divide-y divide-gray-100">
               {(showAllComments ? comments : comments.slice(0, 2)).map((c: any) => {
                 const cName = formatFeedName(c.user?.displayName, c.user?.username || c.username);
