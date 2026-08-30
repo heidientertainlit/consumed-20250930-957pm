@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ShareImageSheet } from "@/components/share-image-sheet";
 import { supabase } from "@/lib/supabase";
 import { APP_BASE } from "@/lib/share";
+import { useLocation } from "wouter";
 
 interface DnaShareExperienceProps {
   userId: string;
@@ -25,9 +26,11 @@ interface ProfileBits {
  * Save to Share + Share buttons, and the in-app share sheet fallback.
  */
 export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps) {
+  const [, setLocation] = useLocation();
   const cardRef = useRef<HTMLDivElement>(null);
   const [profile, setProfile] = useState<ProfileBits | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
@@ -36,21 +39,31 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("dna_profiles")
-        .select("label, tagline, flavor_notes, profile_text")
-        .eq("user_id", userId)
-        .single();
-      if (cancelled) return;
-      if (data) {
-        setProfile({
-          title: data.label || "Entertainment Enthusiast",
-          description: data.tagline || "",
-          superpowers: data.flavor_notes || [],
-          meaning: data.profile_text || "",
-        });
+      try {
+        const { data, error } = await supabase
+          .from("dna_profiles")
+          .select("label, tagline, flavor_notes, profile_text")
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (cancelled) return;
+        if (error) {
+          console.error("Error loading DNA share profile:", error);
+          setLoadError(true);
+        } else if (data?.label) {
+          setProfile({
+            title: data.label,
+            description: data.tagline || "",
+            superpowers: data.flavor_notes || [],
+            meaning: data.profile_text || "",
+          });
+        }
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Error loading DNA share profile:", error);
+        setLoadError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [userId]);
@@ -116,9 +129,29 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
           </button>
         </div>
 
-        {loading || !profile ? (
+        {loading ? (
           <div className="flex items-center justify-center py-6">
             <Loader2 className="animate-spin text-white/80" size={24} />
+          </div>
+        ) : !profile ? (
+          <div className="py-3 text-center">
+            <p className="text-white font-semibold">
+              {loadError ? "We couldn’t load your Entertainment DNA." : "Finish your Entertainment DNA before sharing it."}
+            </p>
+            <p className="mt-1.5 text-sm text-white/65">
+              {loadError ? "Close this sheet and try again." : "Complete setup to unlock your archetype and share card."}
+            </p>
+            {!loadError && (
+              <Button
+                onClick={() => {
+                  onClose();
+                  setLocation("/onboarding?resume=dna");
+                }}
+                className="mt-5 w-full rounded-full bg-white text-purple-900 hover:bg-white/90"
+              >
+                Continue setup
+              </Button>
+            )}
           </div>
         ) : (
           <>

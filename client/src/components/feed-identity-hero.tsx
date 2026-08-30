@@ -152,10 +152,16 @@ export function FeedIdentityHero() {
               <Dna size={13} className="text-purple-400" />
             </div>
             <button
-              onClick={() => setShareOpen(true)}
+              onClick={() => {
+                if (dna?.label) {
+                  setShareOpen(true);
+                } else {
+                  setLocation("/onboarding?resume=dna");
+                }
+              }}
               className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform"
               style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
-              aria-label="Share your DNA"
+              aria-label={dna?.label ? "Share your DNA" : "Finish setting up your DNA"}
             >
               <Forward size={13} className="text-purple-300" />
             </button>
