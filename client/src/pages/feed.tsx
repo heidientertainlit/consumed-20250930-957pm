@@ -1641,10 +1641,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       setComments([]);
     }
     const isRating = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought';
-    if (!isRating || !post.id || hasFetched.current) return;
+    // Auth is restored asynchronously on a cold app load. Do not consume the
+    // one-shot fetch before the token exists, or the card is permanently left
+    // with only the numeric "1 reply" fallback until it is remounted.
+    if (!isRating || !post.id || !session?.access_token || hasFetched.current) return;
     hasFetched.current = true;
     fetchComments(post.id).then(data => setComments(data || []));
-  }, [post.id]);
+  }, [post.id, post.type, session?.access_token]);
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
