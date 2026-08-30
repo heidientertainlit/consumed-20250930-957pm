@@ -3,9 +3,18 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna, Download, MessageSquareText } from "lucide-react";
+import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna, Download, MessageSquareText, ReceiptText } from "lucide-react";
 
 const TOOLS = [
+  {
+    path: "/admin/import-ledger",
+    icon: ReceiptText,
+    title: "Media Import Ledger",
+    description: "Review import batches, reconciliation totals, points, and source status.",
+    color: "from-indigo-900/40 to-indigo-800/20 border-indigo-700/40",
+    iconColor: "text-indigo-400",
+    iconBg: "bg-indigo-900/50",
+  },
   {
     path: "/admin/room-conversations",
     icon: MessageSquareText,

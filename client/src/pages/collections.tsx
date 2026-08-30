@@ -563,7 +563,7 @@ export default function CollectionsPage() {
       formData.append('file', importFile);
       
       const response = await fetch(
-        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/import-media-history',
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/import-media',
         {
           method: 'POST',
           headers: {

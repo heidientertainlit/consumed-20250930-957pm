@@ -3128,7 +3128,7 @@ export default function UserProfile() {
       formData.append('file', importFile);
       
       const response = await fetch(
-        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/import-media-history',
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/import-media',
         {
           method: 'POST',
           headers: {
@@ -5856,7 +5856,7 @@ export default function UserProfile() {
             </DialogTitle>
             <DialogDescription className="text-gray-600 space-y-3">
               <div>
-                Import your entertainment history from Goodreads. Upload a CSV or ZIP file to get started.
+                Import your entertainment history from Netflix, Goodreads, or Letterboxd. Upload a CSV or ZIP file to get started.
                 <button
                   onClick={() => setIsHelpModalOpen(true)}
                   className="inline-flex items-center ml-1 text-blue-600 hover:text-blue-700 underline"
@@ -5891,7 +5891,7 @@ export default function UserProfile() {
                 />
               </label>
               <p className="text-xs text-gray-500 mt-2">
-                Supported: Goodreads (CSV or ZIP)
+                Supported: Netflix, Goodreads, Letterboxd (CSV or ZIP)
               </p>
             </div>
 
@@ -5964,6 +5964,15 @@ export default function UserProfile() {
                       Export your Goodreads data →
                     </a>
                   </p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <Film className="h-4 w-4 text-red-600" />
+                </div>
+                <div>
+                  <span className="font-medium text-gray-800">Netflix:</span>
+                  <p className="text-sm text-gray-600 mt-1">Go to Account → Security &amp; Privacy → Access personal information, then download your viewing history.</p>
                 </div>
               </li>
             </ul>

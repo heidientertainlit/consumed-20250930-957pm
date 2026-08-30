@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import ImportHistory, { receiptFromResponse } from "@/components/import-history";
 
 export default function Track() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
@@ -367,13 +368,15 @@ export default function Track() {
 
       const result = await response.json();
 
+      const receipt = receiptFromResponse(result);
       toast({
         title: "Import successful!",
-        description: `Imported ${result.imported} items${result.failed > 0 ? ` (${result.failed} failed)` : ''}`,
+        description: `Imported ${result.imported} items${result.failed > 0 ? ` (${result.failed} failed)` : ''}${receipt?.importedPoints ? ` · ${receipt.importedPoints} points added` : ""}${receipt?.batchId ? ` · Receipt ${receipt.batchId.slice(0, 8)}` : ""}`,
       });
 
       // Refresh lists
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      queryClient.invalidateQueries({ queryKey: ["media-import-batches"] });
 
       // Close modal and reset
       setIsUploadModalOpen(false);
@@ -886,6 +889,7 @@ export default function Track() {
                   </p>
                 </div>
               )}
+              <ImportHistory limit={4} />
             </div>
 
             <Button

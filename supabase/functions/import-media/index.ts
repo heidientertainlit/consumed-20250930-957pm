@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { resolveCanonicalMedia } from '../_shared/canonical-media.ts';
+import { IMPORT_POINT_WEIGHTS, importPointsForInserted, reconcileImportOutcomes } from '../_shared/import-ledger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +20,7 @@ interface MediaItem {
   searchTitle?: string;   // bare title without "(Year)" for lookups
   externalId?: string;
   externalSource?: string;
+  sourceRowIndex?: number;
 }
 
 // These IDs are returned only from rows inserted by this invocation. They are
@@ -31,6 +33,7 @@ interface InsertedListRow {
   creator?: string | null;
   external_id?: string | null;
   external_source?: string | null;
+  import_source_row_index?: number | null;
 }
 
 interface InsertedRatingRow {
@@ -39,6 +42,7 @@ interface InsertedRatingRow {
   media_type: string;
   media_external_id: string;
   media_external_source: string;
+  import_source_row_index?: number | null;
 }
 
 // Cache for TMDB lookups to avoid duplicate API calls
@@ -286,7 +290,8 @@ async function parseNetflix(csvText: string): Promise<MediaItem[]> {
       items.push({
         title: batch[j],
         mediaType,
-        listType: 'finished'
+        listType: 'finished',
+        sourceRowIndex: i + j + 1,
       });
     }
     
@@ -351,6 +356,7 @@ function parseGoodreads(csvText: string): MediaItem[] {
         listType: listType,
         externalId: catalogId || goodreadsId || undefined,
         externalSource: catalogId ? 'openlibrary' : goodreadsId ? 'goodreads' : undefined,
+        sourceRowIndex: i,
       });
     }
   }
@@ -409,6 +415,7 @@ function parseLetterboxd(csvText: string): MediaItem[] {
   const nameIdx = header.indexOf('name');
   const yearIdx = header.indexOf('year');
   const ratingIdx = header.indexOf('rating');
+  const uriIdx = header.findIndex((value) => value === 'letterboxd uri' || value === 'uri');
 
   console.log(`Letterboxd: header at line ${headerIdx}, name=${nameIdx}, year=${yearIdx}, rating=${ratingIdx}`);
 
@@ -418,6 +425,8 @@ function parseLetterboxd(csvText: string): MediaItem[] {
     if (!name || name === 'Name') continue;
     const year = fields[yearIdx] || '';
     const title = year ? `${name} (${year})` : name;
+    const letterboxdUri = uriIdx >= 0 ? String(fields[uriIdx] || '') : '';
+    const letterboxdId = letterboxdUri.match(/letterboxd\.com\/film\/([^/?#]+)/i)?.[1];
 
     // Letterboxd ratings are 0.5–5 stars; round half-stars to our 1–5 scale.
     let rating = 0;
@@ -433,6 +442,9 @@ function parseLetterboxd(csvText: string): MediaItem[] {
       mediaType: 'movie',
       listType: 'finished',
       rating,
+      externalId: letterboxdId || undefined,
+      externalSource: letterboxdId ? 'letterboxd' : undefined,
+      sourceRowIndex: i,
     });
   }
 
@@ -464,7 +476,28 @@ async function parseImportFile(content: string, filename: string): Promise<Media
   }
 }
 
+const IMPORT_POINTS = IMPORT_POINT_WEIGHTS;
+
+function importSource(filename: string, content?: string): string {
+  const lower = filename.toLowerCase();
+  if (lower.includes('goodreads')) return 'goodreads';
+  if (lower.includes('letterboxd')) return 'letterboxd';
+  const firstLine = (content || '').split('\n')[0]?.toLowerCase() || '';
+  if (firstLine.includes('title') && firstLine.includes('author')) return 'goodreads';
+  if (firstLine.includes('name') && firstLine.includes('year')) return 'letterboxd';
+  if (firstLine.includes('title') && (firstLine.includes('date') || firstLine.includes('profile'))) return 'netflix';
+  return 'unknown';
+}
+
+function safeImportFilename(filename: string): string {
+  const basename = String(filename || 'upload').split(/[\\/]/).pop() || 'upload';
+  return basename.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 160) || 'upload';
+}
+
 serve(async (req) => {
+  let importBatchId: string | null = null;
+  let ledgerAdmin: ReturnType<typeof createClient> | null = null;
+  let hasDurableRowLedger = false;
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -561,13 +594,32 @@ serve(async (req) => {
       });
     }
 
+    // Only the Edge Function service role writes the ledger. The bytes stay in
+    // memory solely long enough to hash and parse them.
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!serviceRoleKey) throw new Error('Import ledger is unavailable');
+    ledgerAdmin = createClient(Deno.env.get('SUPABASE_URL') ?? '', serviceRoleKey);
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let detectedSource = importSource(file.name, file.name.toLowerCase().endsWith('.zip') ? undefined : new TextDecoder('utf-8').decode(bytes));
+    const safeFilename = safeImportFilename(file.name);
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    const sha256 = Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+    const { data: receipt, error: receiptError } = await ledgerAdmin
+      .from('media_import_batches')
+      .insert({
+        user_id: appUser.id, original_filename: safeFilename, content_type: file.type || null,
+        file_size_bytes: file.size, sha256, source: detectedSource,
+        parser_version: '1', points_formula_version: 'current-v1', points_formula: IMPORT_POINTS,
+      })
+      .select('id').single();
+    if (receiptError || !receipt) throw new Error(`Could not create import receipt: ${receiptError?.message || 'unknown error'}`);
+    importBatchId = receipt.id;
+
     console.log('Import: Processing file:', file.name, file.type);
 
     // Read file content
-    const arrayBuffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    
     let mediaItems: MediaItem[] = [];
+    let sourceRows = 0;
     
     // Handle ZIP files
     if (file.name.endsWith('.zip')) {
@@ -577,11 +629,11 @@ serve(async (req) => {
         const zip = await JSZip.loadAsync(bytes);
         
         // Find and extract CSV files from ZIP
-        const csvFiles: string[] = [];
+        const csvFiles: Array<{ filename: string; content: string }> = [];
         for (const [filename, fileData] of Object.entries(zip.files)) {
           if (filename.endsWith('.csv') && !fileData.dir) {
             const content = await fileData.async('text');
-            csvFiles.push(content);
+            csvFiles.push({ filename, content });
           }
         }
         
@@ -590,10 +642,16 @@ serve(async (req) => {
         }
         
         // Parse all CSV files found in ZIP
-        for (const csvContent of csvFiles) {
-          const items = await parseImportFile(csvContent, file.name);
+        const archiveSources = new Set<string>();
+        for (const csvFile of csvFiles) {
+          sourceRows += csvFile.content.split('\n').slice(1).filter((line) => line.trim()).length;
+          const memberSource = importSource(csvFile.filename, csvFile.content);
+          if (memberSource !== 'unknown') archiveSources.add(memberSource);
+          const items = await parseImportFile(csvFile.content, csvFile.filename);
           mediaItems.push(...items);
         }
+        detectedSource = archiveSources.size === 1 ? [...archiveSources][0] : archiveSources.size > 1 ? 'mixed' : detectedSource;
+        await ledgerAdmin!.from('media_import_batches').update({ source: detectedSource }).eq('id', importBatchId);
       } catch (zipError) {
         console.error('ZIP extraction error:', zipError);
         throw new Error('Failed to extract CSV from ZIP file: ' + zipError.message);
@@ -602,14 +660,32 @@ serve(async (req) => {
       // Handle CSV files
       const decoder = new TextDecoder('utf-8');
       const csvContent = decoder.decode(bytes);
+      sourceRows = csvContent.split('\n').slice(1).filter((line) => line.trim()).length;
       mediaItems = await parseImportFile(csvContent, file.name);
     }
 
     console.log('Import: Parsed items:', mediaItems.length);
+    mediaItems.forEach((item, index) => { item.sourceRowIndex = index; });
+    const parsedMediaItems = [...mediaItems];
+    // Netflix intentionally rejects malformed viewing-activity entries. Keep
+    // that evidence on the receipt rather than allowing it to disappear.
+    sourceRows = Math.max(sourceRows, mediaItems.length);
+    const rejectedCount = Math.max(0, sourceRows - mediaItems.length);
+    const parsedTypeCounts = parsedMediaItems.reduce((counts, item) => {
+      counts[item.mediaType] = (counts[item.mediaType] || 0) + 1;
+      return counts;
+    }, {} as Record<string, number>);
+    await ledgerAdmin!.from('media_import_batches').update({
+      heartbeat_at: new Date().toISOString(), source_rows: sourceRows, parsed_rows: mediaItems.length,
+      rejected_count: rejectedCount, media_type_counts: parsedTypeCounts,
+    }).eq('id', importBatchId);
     const parsedRatingItems = mediaItems.filter((item) => Number(item.rating || 0) > 0);
 
     const MAX_ITEMS = 20000;
     if (mediaItems.length > MAX_ITEMS) {
+      await ledgerAdmin!.from('media_import_batches').update({
+        status: 'failed', error_summary: [`File has too many rows (limit ${MAX_ITEMS}).`], completed_at: new Date().toISOString(),
+      }).eq('id', importBatchId);
       return new Response(JSON.stringify({ error: `File has too many rows (limit ${MAX_ITEMS}).` }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -617,6 +693,9 @@ serve(async (req) => {
     }
 
     if (mediaItems.length === 0) {
+      await ledgerAdmin!.from('media_import_batches').update({
+        status: 'failed', error_summary: ['No valid items found in file.'], completed_at: new Date().toISOString(),
+      }).eq('id', importBatchId);
       return new Response(JSON.stringify({ 
         error: 'No valid items found in file. Please ensure the file contains properly formatted media data.' 
       }), {
@@ -642,44 +721,89 @@ serve(async (req) => {
     // ── Dedupe protection: skip anything this user already has (same title + type) ──
     // Re-importing the same export (or a fresh one months later) only adds new items.
     const existingKeys = new Set<string>();
+    const existingItemIds = new Map<string, string>();
     {
       const pageSize = 1000;
       for (let page = 0; ; page++) {
         const { data: existingItems, error: existErr } = await supabase
           .from('list_items')
-          .select('title, media_type')
+          .select('id, title, media_type')
           .eq('user_id', appUser.id)
           .range(page * pageSize, (page + 1) * pageSize - 1);
         if (existErr) {
           console.error('Import: existing items fetch error:', existErr.message);
+          await ledgerAdmin!.from('media_import_batches').update({
+            status: 'failed', error_summary: [existErr.message],
+            heartbeat_at: new Date().toISOString(), completed_at: new Date().toISOString(),
+          }).eq('id', importBatchId);
           return new Response(JSON.stringify({ error: 'Could not check your library for duplicates. Please try again.' }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
         for (const it of existingItems || []) {
-          existingKeys.add(`${(it.title || '').toLowerCase().trim()}::${(it.media_type || '').toLowerCase()}`);
+          const key = `${(it.title || '').toLowerCase().trim()}::${(it.media_type || '').toLowerCase()}`;
+          existingKeys.add(key);
+          existingItemIds.set(key, String(it.id));
         }
         if (!existingItems || existingItems.length < pageSize) break;
       }
     }
     const beforeDedupe = mediaItems.length;
+    const uniqueRows = new Set(mediaItems.map((item) =>
+      `${(item.title || '').toLowerCase().trim()}::${(item.mediaType || '').toLowerCase()}`
+    )).size;
     // Also dedupe within the file itself. A Letterboxd ZIP lists the same movie
     // in watched.csv (no rating) and ratings.csv (rated) — keep the rated copy.
     const keptByKey = new Map<string, MediaItem>();
+    const rowOutcomes = new Map<number, {
+      outcome: 'inserted' | 'skipped_existing' | 'skipped_duplicate' | 'failed';
+      error?: string;
+      listItemId?: string;
+      ratingId?: string;
+      ratingOutcome?: 'none' | 'pending' | 'inserted' | 'preserved' | 'duplicate' | 'unresolved';
+    }>();
     for (const item of mediaItems) {
       const key = `${(item.title || '').toLowerCase().trim()}::${(item.mediaType || '').toLowerCase()}`;
-      if (existingKeys.has(key)) continue;
+      if (existingKeys.has(key)) {
+        rowOutcomes.set(item.sourceRowIndex ?? 0, { outcome: 'skipped_existing', listItemId: existingItemIds.get(key) });
+        continue;
+      }
       const prev = keptByKey.get(key);
       if (!prev) {
         keptByKey.set(key, item);
       } else if ((item.rating || 0) > 0 && (prev.rating || 0) === 0) {
+        rowOutcomes.set(prev.sourceRowIndex ?? 0, { outcome: 'skipped_duplicate' });
         keptByKey.set(key, item);
+      } else {
+        rowOutcomes.set(item.sourceRowIndex ?? 0, { outcome: 'skipped_duplicate' });
       }
     }
     mediaItems = [...keptByKey.values()];
     const skippedCount = beforeDedupe - mediaItems.length;
     console.log('Import: Deduped', skippedCount, 'of', beforeDedupe);
+
+    // Persist every accepted source row before any media mutation. If execution
+    // stops later, pending rows plus stamped media provenance make the batch
+    // reconstructable rather than leaving an unexplained partial import.
+    const preliminaryLedgerRows = parsedMediaItems.map((item) => {
+      const outcome = rowOutcomes.get(item.sourceRowIndex ?? 0);
+      return {
+        batch_id: importBatchId,
+        source_row_index: item.sourceRowIndex ?? 0,
+        title: item.title,
+        media_type: item.mediaType,
+        outcome: outcome?.outcome || 'pending',
+        error_message: outcome?.error || null,
+        list_item_id: outcome?.listItemId || null,
+        rating_outcome: Number(item.rating || 0) > 0 ? 'pending' : 'none',
+      };
+    });
+    const { error: preliminaryLedgerError } = await ledgerAdmin!
+      .from('media_import_rows')
+      .upsert(preliminaryLedgerRows, { onConflict: 'batch_id,source_row_index' });
+    if (preliminaryLedgerError) throw new Error(`Could not initialize import row receipts: ${preliminaryLedgerError.message}`);
+    hasDurableRowLedger = true;
 
     // Insert items in batches (max 100 at a time)
     const batchSize = 100;
@@ -709,7 +833,9 @@ serve(async (req) => {
           external_id: item.externalId || null,
           // Matched items carry their real catalog source; unmatched keep the
           // legacy 'tmdb_verified' marker so auto-fix doesn't recheck them.
-          external_source: item.externalSource || 'tmdb_verified'
+          external_source: item.externalSource || 'tmdb_verified',
+          import_batch_id: importBatchId,
+          import_source_row_index: item.sourceRowIndex ?? 0,
         };
       });
 
@@ -722,10 +848,35 @@ serve(async (req) => {
         console.error('Import: Batch insert error:', error);
         errorCount += batch.length;
         errors.push(`Batch ${i / batchSize + 1}: ${error.message}`);
+        for (const item of batch) rowOutcomes.set(item.sourceRowIndex ?? 0, { outcome: 'failed', error: error.message });
       } else {
         successCount += data?.length || 0;
         for (const row of data || []) insertedRows.push(row as InsertedListRow);
+        const rowsBySourceIndex = new Map((data || []).map((row: any) => [Number(row.import_source_row_index), row]));
+        for (const item of batch) {
+          const row = rowsBySourceIndex.get(item.sourceRowIndex ?? 0);
+          rowOutcomes.set(item.sourceRowIndex ?? 0, row
+            ? { outcome: 'inserted', listItemId: String(row.id) }
+            : { outcome: 'failed', error: 'Insert returned no row' });
+        }
       }
+      const durableBatchOutcomes = batch.map((item) => {
+        const outcome = rowOutcomes.get(item.sourceRowIndex ?? 0)!;
+        return {
+          batch_id: importBatchId,
+          source_row_index: item.sourceRowIndex ?? 0,
+          title: item.title,
+          media_type: item.mediaType,
+          outcome: outcome.outcome,
+          error_message: outcome.error || null,
+          list_item_id: outcome.listItemId || null,
+          rating_outcome: Number(item.rating || 0) > 0 ? 'pending' : 'none',
+        };
+      });
+      const { error: durableBatchError } = await ledgerAdmin!
+        .from('media_import_rows')
+        .upsert(durableBatchOutcomes, { onConflict: 'batch_id,source_row_index' });
+      if (durableBatchError) throw new Error(`Could not persist import row outcomes: ${durableBatchError.message}`);
     }
 
     console.log('Import: Complete. Success:', successCount, 'Errors:', errorCount);
@@ -733,27 +884,50 @@ serve(async (req) => {
     // Imported stars are first-class user ratings, not list metadata. Reconcile
     // them even when every list item was skipped as an existing duplicate.
     const existingRatingKeys = new Set<string>();
+    const existingRatingIds = new Map<string, string>();
     {
       const pageSize = 1000;
       for (let page = 0; ; page++) {
         const { data: existingRatings, error: ratingsReadError } = await supabase
           .from('media_ratings')
-          .select('media_title, media_type')
+          .select('id, media_title, media_type')
           .eq('user_id', appUser.id)
           .range(page * pageSize, (page + 1) * pageSize - 1);
         if (ratingsReadError) throw ratingsReadError;
         for (const row of existingRatings || []) {
-          existingRatingKeys.add(`${normTitle(row.media_title)}::${String(row.media_type || '').toLowerCase()}`);
+          const key = `${normTitle(row.media_title)}::${String(row.media_type || '').toLowerCase()}`;
+          existingRatingKeys.add(key);
+          existingRatingIds.set(key, String(row.id));
         }
         if (!existingRatings || existingRatings.length < pageSize) break;
       }
     }
     const importedRatingRows: Record<string, unknown>[] = [];
     const queuedRatingKeys = new Set<string>();
+    let preservedRatingCount = 0;
+    let failedRatingCount = 0;
     for (const item of parsedRatingItems) {
-      if (!item.externalId || !item.externalSource) continue;
+      if (!item.externalId || !item.externalSource) {
+        failedRatingCount += 1;
+        const ledger = rowOutcomes.get(item.sourceRowIndex ?? 0);
+        if (ledger) ledger.ratingOutcome = 'unresolved';
+        continue;
+      }
       const titleKey = `${normTitle(item.title)}::${item.mediaType.toLowerCase()}`;
-      if (existingRatingKeys.has(titleKey) || queuedRatingKeys.has(titleKey)) continue;
+      if (existingRatingKeys.has(titleKey)) {
+        preservedRatingCount += 1;
+        const ledger = rowOutcomes.get(item.sourceRowIndex ?? 0);
+        if (ledger) {
+          ledger.ratingId = existingRatingIds.get(titleKey);
+          ledger.ratingOutcome = 'preserved';
+        }
+        continue;
+      }
+      if (queuedRatingKeys.has(titleKey)) {
+        const ledger = rowOutcomes.get(item.sourceRowIndex ?? 0);
+        if (ledger) ledger.ratingOutcome = 'duplicate';
+        continue;
+      }
       queuedRatingKeys.add(titleKey);
       importedRatingRows.push({
         user_id: appUser.id,
@@ -762,6 +936,8 @@ serve(async (req) => {
         media_title: item.title,
         media_type: item.mediaType,
         rating: item.rating,
+        import_batch_id: importBatchId,
+        import_source_row_index: item.sourceRowIndex ?? 0,
       });
     }
     let importedRatingCount = 0;
@@ -773,11 +949,19 @@ serve(async (req) => {
           onConflict: 'user_id,media_external_id,media_external_source',
           ignoreDuplicates: true,
         })
-        .select('id, media_title, media_type, media_external_id, media_external_source');
+        .select('id, media_title, media_type, media_external_id, media_external_source, import_source_row_index');
       if (ratingInsertError) throw ratingInsertError;
       importedRatingCount += insertedRatings?.length || 0;
       for (const row of insertedRatings || []) insertedRatingRows.push(row as InsertedRatingRow);
+      for (const row of insertedRatings || []) {
+        const ledger = rowOutcomes.get(Number(row.import_source_row_index ?? -1));
+        if (ledger) {
+          ledger.ratingId = String(row.id);
+          ledger.ratingOutcome = 'inserted';
+        }
+      }
     }
+    preservedRatingCount += Math.max(0, importedRatingRows.length - importedRatingCount);
 
     // ── Background poster/catalog enrichment ──
     // Runs AFTER the response is sent, so the import itself is never delayed
@@ -921,7 +1105,27 @@ serve(async (req) => {
         for (let i = 0; i < canonicalRatings.length; i += CANONICAL_BATCH) {
           if (Date.now() - start > ENRICH_BUDGET_MS) break;
           await Promise.all(canonicalRatings.slice(i, i + CANONICAL_BATCH).map(async (row) => {
-            const canonicalMediaId = await resolveRatingCanonical(row);
+            let canonicalMediaId: string | null = null;
+            if (row.media_external_source === 'letterboxd') {
+              const item = parsedRatingItems.find((candidate) =>
+                candidate.sourceRowIndex === Number(row.import_source_row_index));
+              if (item) {
+                await enrichMovie(item);
+                if (item.externalId && item.externalSource === 'tmdb') {
+                  canonicalMediaId = await resolveListCanonical({
+                    id: String(row.id),
+                    title: item.title,
+                    media_type: item.mediaType,
+                    creator: item.creator || null,
+                    external_id: item.externalId,
+                    external_source: item.externalSource,
+                    import_source_row_index: item.sourceRowIndex,
+                  });
+                }
+              }
+            } else {
+              canonicalMediaId = await resolveRatingCanonical(row);
+            }
             if (!canonicalMediaId) return;
             const { error } = await supabase.from('media_ratings')
               .update({ canonical_media_id: canonicalMediaId })
@@ -936,6 +1140,35 @@ serve(async (req) => {
       console.log('Import: Background enrichment done.', updated, 'rows updated in', Date.now() - start, 'ms');
     };
 
+    const ledgerRows = parsedMediaItems.map((item) => {
+      const outcome = rowOutcomes.get(item.sourceRowIndex ?? 0) || { outcome: 'failed' as const, error: 'Item was not reconciled' };
+      return { batch_id: importBatchId, source_row_index: item.sourceRowIndex ?? 0, title: item.title,
+        media_type: item.mediaType, outcome: outcome.outcome, error_message: outcome.error || null,
+        list_item_id: outcome.listItemId || null, media_rating_id: outcome.ratingId || null,
+        rating_outcome: outcome.ratingOutcome || (Number(item.rating || 0) > 0 ? 'unresolved' : 'none') };
+    });
+    const outcomeCounts = reconcileImportOutcomes(ledgerRows.map((row) => row.outcome));
+    const insertedTypes = ledgerRows.filter((row) => row.outcome === 'inserted').map((row) => row.media_type || '');
+    const pointsAwarded = importPointsForInserted(insertedTypes);
+    const pointsByMediaType = insertedTypes.reduce((points, mediaType) => {
+      points[mediaType] = (points[mediaType] || 0) + (IMPORT_POINTS[mediaType] || 0);
+      return points;
+    }, {} as Record<string, number>);
+    const { error: rowLedgerError } = await ledgerAdmin!.from('media_import_rows').upsert(ledgerRows, { onConflict: 'batch_id,source_row_index' });
+    if (rowLedgerError) throw new Error(`Could not reconcile import receipt: ${rowLedgerError.message}`);
+    const { error: finishLedgerError } = await ledgerAdmin!.from('media_import_batches').update({
+      inserted_count: outcomeCounts.inserted || 0,
+      skipped_existing_count: outcomeCounts.skipped_existing || 0, skipped_duplicate_count: outcomeCounts.skipped_duplicate || 0,
+      failed_count: outcomeCounts.failed || 0,
+      ratings_imported_count: importedRatingCount, ratings_preserved_count: preservedRatingCount,
+      ratings_failed_count: failedRatingCount,
+      unique_rows: uniqueRows, imported_points: pointsAwarded,
+      points_by_media_type: pointsByMediaType, heartbeat_at: new Date().toISOString(),
+      status: ((outcomeCounts.failed || 0) + rejectedCount + failedRatingCount) > 0 ? 'completed_with_errors' : 'completed',
+      completed_at: new Date().toISOString(),
+    }).eq('id', importBatchId);
+    if (finishLedgerError) throw new Error(`Could not finalize import receipt: ${finishLedgerError.message}`);
+
     try {
       // @ts-ignore EdgeRuntime is provided by the Supabase edge environment
       EdgeRuntime.waitUntil(enrichInBackground());
@@ -944,14 +1177,28 @@ serve(async (req) => {
       enrichInBackground().catch((e) => console.error('Import: background enrichment failed:', e));
     }
 
+    const completedWithErrors = ((outcomeCounts.failed || 0) + rejectedCount + failedRatingCount) > 0;
     return new Response(JSON.stringify({
       success: true,
       imported: successCount,
       skipped: skippedCount,
-      failed: errorCount,
+      failed: (outcomeCounts.failed || 0) + rejectedCount,
       total: beforeDedupe,
       ratingsImported: importedRatingCount,
-      ratingsPreserved: parsedRatingItems.length - importedRatingCount,
+      ratingsPreserved: preservedRatingCount,
+      ratingsFailed: failedRatingCount,
+      batch: { id: importBatchId, status: completedWithErrors ? 'completed_with_errors' : 'completed' },
+      receipt: {
+        id: importBatchId, userId: appUser.id, source: detectedSource,
+        status: completedWithErrors ? 'completed_with_errors' : 'completed',
+        originalFilename: safeFilename, sourceRows, parsedRows: parsedMediaItems.length,
+        uniqueRows, insertedCount: outcomeCounts.inserted, skippedExistingCount: outcomeCounts.skipped_existing,
+        skippedDuplicateCount: outcomeCounts.skipped_duplicate, failedCount: outcomeCounts.failed, rejectedCount,
+        ratingsImportedCount: importedRatingCount, ratingsPreservedCount: preservedRatingCount,
+        ratingsFailedCount: failedRatingCount,
+        mediaTypeCounts: parsedTypeCounts, pointsByMediaType, importedPoints: pointsAwarded,
+        parserVersion: '1', pointsFormulaVersion: 'current-v1', isLegacy: false,
+      },
       errors: errors.length > 0 ? errors : undefined
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -959,6 +1206,12 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Import media error:', error);
+    if (importBatchId && ledgerAdmin) {
+      await ledgerAdmin.from('media_import_batches').update({
+        status: hasDurableRowLedger ? 'interrupted' : 'failed', error_summary: [error.message || 'Import failed'],
+        heartbeat_at: new Date().toISOString(), completed_at: new Date().toISOString(),
+      }).eq('id', importBatchId);
+    }
     return new Response(JSON.stringify({ 
       error: error.message || 'Import failed' 
     }), {

@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { supabase } from "@/lib/supabase";
 import { trackEvent } from "@/lib/posthog";
+import ImportHistory, { ImportReceipt, receiptFromResponse } from "@/components/import-history";
 
 export interface TrackDetailsMedia {
   title: string;
@@ -90,7 +91,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
 
   // Goodreads / Letterboxd import
   const [isImporting, setIsImporting] = useState(false);
-  const [importResult, setImportResult] = useState<{ imported: number; skipped: number; failed: number } | null>(null);
+  const [importResult, setImportResult] = useState<{ imported: number; skipped: number; failed: number; receipt?: ImportReceipt } | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const importFileRef = useRef<HTMLInputElement>(null);
   const importReqId = useRef(0);
@@ -374,9 +375,12 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
       if (!res.ok) {
         setImportError(data?.error || "Import failed. Make sure it's a Goodreads or Letterboxd export file.");
       } else {
-        setImportResult({ imported: data.imported || 0, skipped: data.skipped || 0, failed: data.failed || 0 });
+        const receipt = receiptFromResponse(data);
+        setImportResult({ imported: data.imported || 0, skipped: data.skipped || 0, failed: data.failed || 0, receipt });
         window.dispatchEvent(new CustomEvent("consumed:media-tracked"));
         queryClient.invalidateQueries({ queryKey: ["user-lists-with-media"] });
+        queryClient.invalidateQueries({ queryKey: ["media-import-batches"] });
+        toast({ title: "Import complete", description: `${data.imported || 0} imported${receipt?.importedPoints ? ` · ${receipt.importedPoints} points added` : ""}${receipt?.batchId ? ` · Receipt ${receipt.batchId.slice(0, 8)}` : ""}` });
       }
     } catch (e) {
       if (reqId === importReqId.current) setImportError("Import failed. Check your connection and try again.");
@@ -419,7 +423,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
               data-testid="quick-track-import-open"
             >
               <Upload size={15} />
-              Import from Goodreads or Letterboxd
+              Import from Netflix, Goodreads, or Letterboxd
             </button>
           </>
         )}
@@ -460,6 +464,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
                       formatting quirk in the export. Email Heidi (the builder of Consumed) if you'd like her to add them for you.
                     </p>
                   )}
+                   <ImportHistory receipt={importResult.receipt} limit={3} />
                   <button
                     onClick={handleClose}
                     className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold px-6 py-2.5 rounded-full transition-colors"
@@ -471,7 +476,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
               ) : (
                 <>
                   <p className="text-sm text-gray-600">
-                    Upload your <span className="font-semibold">Goodreads</span> or <span className="font-semibold">Letterboxd</span> export
+                    Upload your <span className="font-semibold">Netflix</span>, <span className="font-semibold">Goodreads</span>, or <span className="font-semibold">Letterboxd</span> export
                     and everything lands in your lists. Duplicates are skipped.
                   </p>
 
@@ -509,8 +514,10 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
                   <div className="text-xs text-gray-400 space-y-1.5 pt-1">
                     <p><span className="font-semibold text-gray-500">Goodreads:</span> on a computer, go to My Books → Import and export → Export Library (the export tool doesn't show up on phones)</p>
                     <p><span className="font-semibold text-gray-500">Letterboxd:</span> Settings → Data → Export Your Data</p>
+                     <p><span className="font-semibold text-gray-500">Netflix:</span> Account → Security & Privacy → Access personal information → Download.</p>
                     <p className="pt-1">Heidi can import any export you have — email <a href="mailto:support@consumedapp.com" className="text-purple-600 underline">support@consumedapp.com</a></p>
                   </div>
+                   <ImportHistory limit={3} />
                 </>
               )}
             </div>
