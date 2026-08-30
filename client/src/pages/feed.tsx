@@ -1575,14 +1575,29 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   // Related ratings: other users who rated the same media
   useEffect(() => {
+    setRelatedRatings([]);
     const externalId = post.externalId || post.mediaItems?.[0]?.externalId;
     const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource;
-    if (!externalId || !externalSource) return;
-    const primaryUserId = post.user?.id;
     const currentId = session?.user?.id;
-    fetchPreferredRatings(externalId, externalSource).then(async (ratings) => {
+    if (!externalId || !externalSource || !currentId) return;
+    const primaryUserId = post.user?.id;
+    Promise.all([
+      fetchPreferredRatings(externalId, externalSource),
+      supabase
+        .from('friendships')
+        .select('user_id, friend_id')
+        .or(`user_id.eq.${currentId},friend_id.eq.${currentId}`)
+        .eq('status', 'accepted'),
+    ]).then(async ([ratings, friendshipsResult]) => {
         if (!ratings || ratings.length === 0) return;
-        const filtered = ratings.filter((r: any) => r.user_id !== primaryUserId && r.user_id !== currentId);
+        const friendIds = new Set(
+          (friendshipsResult.data || []).map((friendship: any) =>
+            friendship.user_id === currentId ? friendship.friend_id : friendship.user_id
+          )
+        );
+        const filtered = ratings.filter((r: any) =>
+          friendIds.has(r.user_id) && r.user_id !== primaryUserId && r.user_id !== currentId
+        );
         if (filtered.length === 0) return;
         const ids = filtered.map((r: any) => r.user_id);
         const { data: users } = await supabase
@@ -2695,20 +2710,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 </div>
               </div>
 
-              {/* Other ratings — grouped below the primary review */}
+              {/* Accepted friends' ratings — shown automatically below the primary review */}
               {relatedRatings.length > 0 && (
-                <div onClick={(e) => e.stopPropagation()}>
-                  <button
-                    className="w-full flex items-center gap-2 py-1 mt-1 active:opacity-70 transition-opacity"
-                    onClick={(e) => { e.stopPropagation(); setShowAllRelated(v => !v); }}
-                  >
-                    <span className="text-[11px] font-medium text-gray-500 flex-1 text-left">
-                      {relatedRatings.length} more rating{relatedRatings.length !== 1 ? 's' : ''}
-                      <span className="text-gray-400"> · </span>
-                      <Star size={10} className="inline text-yellow-400 fill-yellow-400 -mt-px" /> {(relatedRatings.reduce((s, r) => s + r.rating, 0) / relatedRatings.length).toFixed(1)} avg
-                    </span>
-                    <ChevronDown size={14} className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${showAllRelated ? 'rotate-180' : ''}`} />
-                  </button>
+                <div className="mt-1" onClick={(e) => e.stopPropagation()}>
+                  {relatedRatings.map((r) => (
+                    <div key={r.userId} className="flex items-center gap-2 py-1">
+                      <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-gray-500">
+                        {formatFeedName(r.displayName, r.userName)}
+                      </span>
+                      <div className="flex shrink-0 items-center gap-0.5" aria-label={`${r.rating} out of 5 stars`}>
+                        {[1,2,3,4,5].map(s => (
+                          <Star key={s} size={10} className={s <= Math.round(r.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -2720,31 +2736,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
             );
           })()}
-
-          {/* ── Other ratings: expanded list (toggle lives up by the stars) ── */}
-          {relatedRatings.length > 0 && showAllRelated && (
-            <div className="px-4 mt-1" onClick={(e) => e.stopPropagation()}>
-              {showAllRelated && (
-                <div className="rounded-xl border border-gray-100 bg-white overflow-hidden mb-1">
-                  {relatedRatings.map((r) => (
-                    <div key={r.userId} className="flex items-center gap-2.5 px-3 py-2.5 border-b border-gray-50 last:border-0">
-                      <span className="text-xs font-medium text-gray-700 flex-shrink-0 w-24 truncate">{formatFeedName(r.displayName, r.userName)}</span>
-                      <div className="flex items-center gap-0.5 flex-shrink-0">
-                        {[1,2,3,4,5].map(s => (
-                          <Star key={s} size={11} className={s <= Math.round(r.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
-                        ))}
-                      </div>
-                      {r.content ? (
-                        <span className="text-[10px] text-gray-400 truncate flex-1">"{r.content}"</span>
-                      ) : (
-                        <span className="text-[10px] text-gray-300 flex-1 italic">No review</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Conversation preview appears once a discussion exists */}
           {commentsLoaded && conversationCount > 0 && !showComments && !replyOpen && (
