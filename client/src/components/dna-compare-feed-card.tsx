@@ -814,7 +814,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
               {/* Names + archetypes under each avatar */}
               <div className="flex w-full max-w-[300px] px-2 mt-2">
                 <div className="flex flex-col items-center" style={{ width: 100 }}>
-                  <span className="font-serif text-[18px] font-medium tracking-[-.035em] text-[#30203f] text-center">
+                  <span className="font-serif text-[24px] font-medium tracking-[-.035em] text-[#30203f] text-center">
                     {session?.user?.user_metadata?.display_name
                       ? formatFeedName(
                           session.user.user_metadata.display_name,
@@ -826,7 +826,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
                 </div>
                 <div className="flex-1" />
                 <div className="flex flex-col items-center" style={{ width: 100 }}>
-                  <span className="font-serif text-[18px] font-medium tracking-[-.035em] text-[#30203f] text-center">
+                  <span className="font-serif text-[24px] font-medium tracking-[-.035em] text-[#30203f] text-center">
                     {formatFeedName(featured.displayName)}
                   </span>
                   {featured.label && <span className="text-[10px] text-blue-500 font-medium text-center leading-tight line-clamp-2">{featured.label}</span>}
@@ -1160,12 +1160,12 @@ export function DnaComparePostCard({ item }: { item: any }) {
           {/* Names row — aligned under each avatar */}
           <div className="flex w-full" style={{ width: 240, marginTop: 2 }}>
             <div className="flex flex-col items-center gap-0.5" style={{ width: 108 }}>
-               <span className="font-serif text-[18px] font-medium tracking-[-.035em] text-[#30203f] text-center">{posterName}</span>
+               <span className="font-serif text-[24px] font-medium tracking-[-.035em] text-[#30203f] text-center">{posterName}</span>
               {cmp.your_dna_label && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight">{cmp.your_dna_label}</span>}
             </div>
             <div style={{ flex: 1 }} />
             <div className="flex flex-col items-center gap-0.5" style={{ width: 108 }}>
-               <span className="font-serif text-[18px] font-medium tracking-[-.035em] text-[#30203f] text-center">{friendName}</span>
+               <span className="font-serif text-[24px] font-medium tracking-[-.035em] text-[#30203f] text-center">{friendName}</span>
               {cmp.friend_dna_label && <span className="text-[10px] text-purple-500 font-medium text-center leading-tight">{cmp.friend_dna_label}</span>}
             </div>
           </div>
