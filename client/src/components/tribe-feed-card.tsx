@@ -149,7 +149,7 @@ export default function TribeFeedCard() {
 
   return (
     <Link href={`/people/tribes/${encodeURIComponent(tribe.id)}`} className="group block">
-      <article className="overflow-hidden rounded-[20px] border border-[#b99fcd] bg-[#fffdfb] px-5 py-5 text-left shadow-[0_7px_18px_rgba(65,49,55,.065)] transition active:scale-[.99]">
+      <article className="overflow-hidden rounded-[20px] border border-[#e2dcd5] bg-[#fffdfb] px-5 py-5 text-left shadow-[0_7px_18px_rgba(65,49,55,.065)] transition active:scale-[.99]">
         <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#67447c]">{Math.round(tribe.fit_score)}% overlap</p>
         <h2 className="mt-2 font-serif text-[22px] font-medium leading-[1.12] tracking-[-.025em] text-[#281e34]">{positioning.title}</h2>
         <p className="mt-3 text-sm leading-5 text-[#746b78]">{positioning.line}</p>
