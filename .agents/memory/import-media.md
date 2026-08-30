@@ -13,3 +13,6 @@ description: How the import-media edge fn behaves — dedupe, enrichment, safety
 - Known residual risks (accepted): read-then-insert dedupe can race across concurrent imports (no DB unique constraint); parseCSVLine doesn't handle quoted fields spanning newlines.
 - **Why:** Heidi is extremely protective of backend data — imports must be insert-only, never update/delete existing rows.
 - Netflix import deliberately not surfaced in UI (Younify planned; Netflix exports are noisy viewing history).
+- Imported `list_items` contribute to recalculated `user_points.all_time` using media weights (book 15, movie 8, TV 10, music 1, podcast 3, game 5, YouTube 2); imported rating stars add no separate points. The import itself does not write a per-row ledger entry.
+- `items_tracked` is derived by fetching items through lists owned by the user, so list membership must be valid; rows with a null/dangling `list_id` are omitted even when their own `user_id` is populated.
+- **How to apply:** Reconcile imported rows against the media-weight component of the calculated total, not against a ledger insert. Future import auditing still needs a server-owned batch ledger and separate origin provenance; keep import origin distinct from normalized catalog-provider identity.
