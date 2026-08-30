@@ -626,7 +626,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompar
     : "You";
   const isInviteEmpty = Boolean(session && user && noFriends && !featuredProp);
   const inviteUrl = user?.id
-    ? `${(import.meta.env.VITE_APP_URL as string) || window.location.origin}/u/${user.id}`
+    ? `${(import.meta.env.VITE_APP_URL as string) || window.location.origin}/invite/${user.id}`
     : "";
 
   const handleInvite = async () => {

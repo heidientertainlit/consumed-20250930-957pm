@@ -43,7 +43,7 @@ export default function FriendsManager({ userId, matchScores = {}, featuredFrien
 
   const handleInviteFriends = async () => {
     if (!userId) return;
-    const inviteUrl = `${APP_BASE}/u/${userId}`;
+    const inviteUrl = `${APP_BASE}/invite/${userId}`;
     const shareText = "My entire entertainment personality is on Consumed — every show, book, album, podcast. Join me and let's see who has better taste.";
 
     if (navigator.share) {

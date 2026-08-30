@@ -138,7 +138,7 @@ function readIndexHtml(): string {
 }
 
 function injectOpenGraphTags(html: string, rawTags: OpenGraphTags): string {
-  const fallbackImage = `${appBase()}/icon-512.png`;
+  const fallbackImage = `${appBase()}/og-consumed-share.png`;
   const title = escapeHtml(compactText(rawTags.title, 90) || "Consumed");
   const description = escapeHtml(
     compactText(rawTags.description, 200)
@@ -151,6 +151,9 @@ function injectOpenGraphTags(html: string, rawTags: OpenGraphTags): string {
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
     <meta property="og:image" content="${image}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="${title}" />
     <meta property="og:url" content="${url}" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Consumed" />
@@ -199,11 +202,7 @@ function responseTags(
 }
 
 function sendPreview(res: Response, next: NextFunction, tags: OpenGraphTags): void {
-  const html = readIndexHtml();
-  if (!html) {
-    next();
-    return;
-  }
+  const html = readIndexHtml() || "<!doctype html><html><head></head><body></body></html>";
   res
     .status(200)
     .set({
