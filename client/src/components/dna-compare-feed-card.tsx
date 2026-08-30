@@ -776,7 +776,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompar
               <span className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Match</span>
 
                {/* Names + archetypes above each avatar */}
-               <div className="flex w-full max-w-[300px] px-2 mt-5">
+               <div className="flex w-full max-w-[300px] px-2 mt-3">
                  <div className="flex flex-col items-center" style={{ width: 100 }}>
                    <span className="font-serif text-[24px] font-normal tracking-[-.035em] text-[#30203f] text-center">
                      {session?.user?.user_metadata?.display_name
@@ -842,7 +842,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompar
                   </span>
                   {/* Concrete title evidence — only shown when we also have genres */}
                   {sharedGenresFromDna.length > 0 && sharedTitles.length > 0 && (
-                    <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-purple-50 border border-purple-100">
+                    <span className="inline-flex items-center gap-1 mt-1 ml-2 px-2 py-0.5 rounded-full bg-purple-50 border border-purple-100">
                       <span className="text-amber-400 text-[9px]">★</span>
                       <span className="text-[9px] text-purple-700 font-semibold">Both loved: {sharedTitles[0]}</span>
                     </span>
@@ -885,7 +885,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompar
               onClick={() => session ? setSheetOpen(true) : setLocation("/dna")}
               className="w-full py-2 rounded-full bg-gray-100 text-gray-700 font-semibold text-[13px] hover:bg-gray-200 transition-colors text-center"
             >
-              Compare with a friend →
+              Compare with another friend →
             </button>
           )}
           {isInviteEmpty && <p className="sr-only" aria-live="polite">{inviteStatus}</p>}
