@@ -199,11 +199,14 @@ serve(async (req) => {
         // add-to-list/added_to_list are excluded at query level — we bring back
         // rated ones via a code-level filter below.
         query = query.not('post_type', 'in', '("friend_list_group","media_group","game_moment")');
+        // DNA comparisons contain private pairwise affinity details and belong only
+        // on participant-scoped direct result links, never in the public Now feed.
+        query = query.neq('post_type', 'dna_compare');
         // Exclude room-scoped posts — they belong only in the room feed, not the main activity feed
         query = query.is('room_id', null);
       }
       
-      const { data: rawPosts, error } = await query;
+      const { data: fetchedPosts, error } = await query;
 
       if (error) {
         console.log('Query failed:', error);
@@ -212,6 +215,22 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
+
+      // A direct DNA comparison result is private to the post creator and the
+      // compared friend. Guests and unrelated users must not receive it.
+      const rawPosts = specificPostId
+        ? fetchedPosts?.filter((post: any) => {
+            if (post.post_type !== 'dna_compare') return true;
+            if (!appUser?.id) return false;
+            let friendId = '';
+            try {
+              friendId = JSON.parse(post.content || '{}')?.friend_id || '';
+            } catch {
+              return false;
+            }
+            return post.user_id === appUser.id || friendId === appUser.id;
+          })
+        : fetchedPosts;
 
       // Keep add-to-list posts only when they carry a rating — those are real
       // engagement signals (ratings/reviews) and should appear in the feed carousel.

@@ -753,7 +753,7 @@ export default function UserProfile() {
         type: 'dna_compare',
         post_id: post?.id || null,
         triggered_by_user_id: user.id,
-        message: `${user.user_metadata?.display_name || user.email?.split('@')[0] || 'Someone'} compared DNA with you and shared it to the feed`,
+        message: `${user.user_metadata?.display_name || user.email?.split('@')[0] || 'Someone'} compared DNA with you`,
         read: false,
       });
       toast({ title: `${content.match_score}% match!`, description: "Taking you to your comparison…" });
@@ -4177,21 +4177,6 @@ export default function UserProfile() {
                               <Button variant="outline" size="sm" onClick={handleDnaDownloadComparison} className="border-purple-200 text-purple-600 text-xs">
                                 <Share2 size={12} className="mr-1" />
                                 Share Match
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleDnaPostToFeed}
-                                disabled={dnaIsPostingToFeed || dnaPostedToFeed}
-                                className="border-purple-200 text-purple-600 text-xs"
-                              >
-                                {dnaPostedToFeed ? (
-                                  <><Check size={12} className="mr-1" /> Posted</>
-                                ) : dnaIsPostingToFeed ? (
-                                  <><Loader2 size={12} className="mr-1 animate-spin" /> Posting…</>
-                                ) : (
-                                  <>Post to feed</>
-                                )}
                               </Button>
                             </div>
                           </div>

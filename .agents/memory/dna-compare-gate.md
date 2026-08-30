@@ -10,3 +10,9 @@ description: Item-count threshold for friend DNA comparison and where it's enfor
 **How to apply:** The gate lives in THREE places that must agree: `client/src/pages/dna.tsx`, `client/src/pages/user-profile.tsx` (own-profile DNA/Friends tabs), and the `compare-dna-friend` edge function (deployed). Known pre-existing quirk: frontend counts items from user stats (movies+tv+books+games) while the edge fn counts all `list_items` — totals can differ for music/podcast-heavy users; unify only with user approval.
 
 **Also:** The old `/identity` page was deleted (route + `pages/identity.tsx`); `/profile` (`user-profile.tsx`) is the live DNA profile page with My DNA / Friends / My Media pills.
+
+**Privacy rule:** Pairwise DNA comparisons are not public Now-feed content. Keep comparison tools and direct results available to the participating user, but do not offer “Post to feed” or surface shared comparison cards in the public feed.
+
+**Why:** A comparison exposes names, photos, affinity, genres, and shared titles for two people even though only one person initiates sharing.
+
+**How to apply:** Treat Compare DNA as a friend-scoped feature; use image/text sharing only when the initiating user explicitly chooses it, and do not reintroduce public comparison posts without consent from both people.

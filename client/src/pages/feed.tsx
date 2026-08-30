@@ -5961,10 +5961,6 @@ export default function Feed() {
     // dna_compare intentionally excluded — injected directly in JSX at slot 2
   );
 
-  // dna_compare shared posts — pulled out of the feed pipeline so we can place them
-  // precisely in the JSX at position 2 (between the first two UGC posts)
-  const dnaComparePostsForFeed = standaloneUGCPosts.filter((item: any) => item.type === 'dna_compare');
-
   const { feedRatingCarousels, promotedRatings } = (() => {
     const ratingItems: any[] = [];
     standaloneUGCPosts.forEach((item: any) => {
@@ -9251,10 +9247,6 @@ export default function Feed() {
               {/* — BLOCK 1 — */}
               {/* UGC slot #0 — most recent user post */}
               {renderPostBatchByIndex(0)}
-
-              {/* DNA Compare shared post — injected at slot 2 so it's always near the top */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && dnaComparePostsForFeed.length > 0 &&
-                renderFeedItem(dnaComparePostsForFeed[0], 'dna-compare-shared')}
 
               {/* UGC slot #1 — second user post, acts as buffer before DNA Clash */}
               {renderPostBatchByIndex(1)}

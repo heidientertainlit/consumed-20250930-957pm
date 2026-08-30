@@ -460,64 +460,6 @@ export function CompareSheet({
                 </div>
               )}
 
-              {/* Share to feed */}
-              <button
-                disabled={sharing || shared}
-                onClick={async () => {
-                  if (shared || sharing) return;
-                  setSharing(true);
-                  try {
-                    await fetch(`${SUPABASE_URL}/rest/v1/social_posts`, {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        "apikey": ANON_KEY,
-                        "Authorization": `Bearer ${session?.access_token}`,
-                        "Prefer": "return=minimal",
-                      },
-                      body: JSON.stringify({
-                        user_id: userId,
-                        post_type: "dna_compare",
-                        content: JSON.stringify({
-                          match_score: result.match_score,
-                          friend_name: selected
-                            ? formatFeedName(
-                                selected.display_name,
-                                selected.user_name,
-                                selected.first_name,
-                                selected.last_name,
-                              )
-                            : result.friend_name || "a friend",
-                          friend_id: selected?.id,
-                          friend_dna_label: result.friend_dna_label || null,
-                          your_dna_label: result.your_dna_label || null,
-                          shared_genres: result.shared_genres || [],
-                          compatibility_line: result.insights?.compatibilityLine || null,
-                        }),
-                      }),
-                    });
-                    setShared(true);
-                  } catch {
-                    /* silent — no toast on error to keep it lightweight */
-                  } finally {
-                    setSharing(false);
-                  }
-                }}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold transition-all"
-                style={{
-                  background: shared ? "rgba(34,197,94,0.15)" : "rgba(168,85,247,0.2)",
-                  border: shared ? "1px solid rgba(34,197,94,0.4)" : "1px solid rgba(168,85,247,0.4)",
-                  color: shared ? "#86efac" : "#e9d5ff",
-                }}
-              >
-                {sharing ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : shared ? (
-                  <><CheckCircle2 className="w-4 h-4" /> Posted to feed</>
-                ) : (
-                  <><Share2 className="w-4 h-4" /> Share to feed</>
-                )}
-              </button>
             </div>
           )}
         </div>

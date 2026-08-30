@@ -778,21 +778,6 @@ export default function DnaPage() {
                               <Share2 size={12} className="mr-1" />
                               Share Match
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handlePostToFeed}
-                              disabled={isPostingToFeed || postedToFeed}
-                              className="border-purple-200 text-purple-600 text-xs"
-                            >
-                              {postedToFeed ? (
-                                <><Check size={12} className="mr-1" /> Posted</>
-                              ) : isPostingToFeed ? (
-                                <><Loader2 size={12} className="mr-1 animate-spin" /> Posting…</>
-                              ) : (
-                                <>Post to feed</>
-                              )}
-                            </Button>
                           </div>
                         </div>
                       )}
