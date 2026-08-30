@@ -377,7 +377,7 @@ serve(async (req) => {
       // Fetch user's ratings from media_ratings table
       const { data: ratings, error: ratingsError } = await queryClient
         .from('media_ratings')
-        .select('id, media_external_id, media_external_source, rating, updated_at')
+        .select('id, media_external_id, media_external_source, canonical_media_id, rating, updated_at')
         .eq('user_id', targetUserId)
         .order('updated_at', { ascending: false })
         .order('id', { ascending: false });
@@ -387,6 +387,9 @@ serve(async (req) => {
         const ratingsMap = new Map();
         ratings.forEach((r: any) => {
           const key = `${r.media_external_source}-${r.media_external_id}`;
+          if (r.canonical_media_id && !ratingsMap.has(`canonical-${r.canonical_media_id}`)) {
+            ratingsMap.set(`canonical-${r.canonical_media_id}`, Number(r.rating));
+          }
           if (!ratingsMap.has(key) && Number.isFinite(Number(r.rating))) {
             ratingsMap.set(key, Number(r.rating));
           }
@@ -395,7 +398,9 @@ serve(async (req) => {
         // Attach ratings to items
         userItems = userItems.map((item: any) => {
           if (item.external_id && item.external_source) {
-            const key = `${item.external_source}-${item.external_id}`;
+            const key = item.canonical_media_id
+              ? `canonical-${item.canonical_media_id}`
+              : `${item.external_source}-${item.external_id}`;
             const rating = ratingsMap.get(key);
             return { ...item, user_rating: rating ?? null };
           }

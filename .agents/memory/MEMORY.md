@@ -45,3 +45,4 @@
 - [Friends and matches](friends-matches.md) — individual relationships share one Friends destination; preserve premium match discovery while keeping accepted friends and management distinct.
 - [Preview webview registration](preview-webview-registration.md) — if port 5000 and proxy are healthy but Preview is unreachable, explicitly re-register the workflow as a port-5000 webview.
 - [Feed person affinity](feed-person-affinity.md) — reviewer % must reuse the authoritative People affinity score; never calculate a separate exact-title-overlap percentage in the feed.
+- [Canonical media identity](canonical-media-identity.md) — cross-provider work identity is server-owned; exact aliases and authoritative keys outrank verified title+creator+year.

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { resolveCanonicalMedia } from '../_shared/canonical-media.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -66,6 +67,12 @@ serve(async (req) => {
         }
       }
     );
+    // Canonical identity is always resolved with server credentials; callers
+    // may provide an ID as a hint but can never choose the mapping themselves.
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
     // Get auth user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -91,11 +98,6 @@ serve(async (req) => {
     if (appUserError && appUserError.code === 'PGRST116') {
       console.log('User not found, creating new user:', user.email);
       
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-
       const { data: newUser, error: createError } = await supabaseAdmin
         .from('users')
         .insert({
@@ -141,7 +143,9 @@ serve(async (req) => {
       rating,
       skip_social_post,
       review_content,
-      contains_spoilers
+      contains_spoilers,
+      canonical_media_id: canonicalMediaIdHint,
+      media_year
     } = body;
     const media_type = normType(rawMediaType);
 
@@ -163,15 +167,62 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+    let canonicalMediaId: string | null = null;
+    try {
+      const resolution = await resolveCanonicalMedia(supabaseAdmin, {
+        externalId: media_external_id,
+        externalSource: media_external_source,
+        title: media_title,
+        mediaType: media_type,
+        creator: body.media_creator || body.creator,
+        year: media_year || body.year || body.release_year,
+      });
+      canonicalMediaId = resolution.canonicalMediaId;
+      if (canonicalMediaIdHint && canonicalMediaIdHint !== canonicalMediaId) {
+        console.warn('Ignoring unverified canonical_media_id hint for rating request', {
+          hinted: canonicalMediaIdHint,
+          resolved: canonicalMediaId,
+        });
+      }
+    } catch (canonicalError) {
+      // Canonicalization is additive during rollout: preserve legacy ratings if
+      // alias/fingerprint infrastructure is temporarily unavailable.
+      console.error('Canonical media resolution failed; using legacy rating identity:', canonicalError);
+    }
 
     // rating === 0 means DELETE the rating
     if (rating === 0) {
-      const { error: deleteError } = await supabase
+      let existingForDelete: { id: string } | null = null;
+      if (canonicalMediaId) {
+        const { data, error } = await supabase
+          .from('media_ratings')
+          .select('id')
+          .eq('user_id', appUser.id)
+          .eq('canonical_media_id', canonicalMediaId)
+          .maybeSingle();
+        if (error) console.error('Error finding canonical rating to delete:', error);
+        else existingForDelete = data;
+      }
+      if (!existingForDelete) {
+        const { data, error } = await supabase
+          .from('media_ratings')
+          .select('id')
+          .eq('user_id', appUser.id)
+          .eq('media_external_id', media_external_id)
+          .eq('media_external_source', media_external_source)
+          .maybeSingle();
+        if (error) {
+          console.error('Error finding legacy rating to delete:', error);
+          return new Response(JSON.stringify({ error: 'Failed to remove rating: ' + error.message }), {
+            status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        existingForDelete = data;
+      }
+      const { error: deleteError } = existingForDelete ? await supabase
         .from('media_ratings')
         .delete()
-        .eq('user_id', appUser.id)
-        .eq('media_external_id', media_external_id)
-        .eq('media_external_source', media_external_source);
+        .eq('id', existingForDelete.id) : { error: null };
 
       if (deleteError) {
         console.error('Error deleting rating:', deleteError);
@@ -181,7 +232,7 @@ serve(async (req) => {
         });
       }
       console.log('Rating removed successfully');
-      return new Response(JSON.stringify({ success: true, deleted: true }), {
+      return new Response(JSON.stringify({ success: true, deleted: true, canonical_media_id: canonicalMediaId }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -197,13 +248,27 @@ serve(async (req) => {
     }
 
     // Check if user has already rated this media
-    const { data: existingRating, error: checkError } = await supabase
-      .from('media_ratings')
-      .select('id')
-      .eq('user_id', appUser.id)
-      .eq('media_external_id', media_external_id)
-      .eq('media_external_source', media_external_source)
-      .maybeSingle();
+    let existingRating: { id: string } | null = null;
+    let checkError: any = null;
+    if (canonicalMediaId) {
+      const canonicalCheck = await supabase
+        .from('media_ratings').select('id').eq('user_id', appUser.id)
+        .eq('canonical_media_id', canonicalMediaId).maybeSingle();
+      existingRating = canonicalCheck.data;
+      checkError = canonicalCheck.error;
+      if (checkError) {
+        console.error('Error checking canonical existing rating; falling back to legacy identity:', checkError);
+        checkError = null;
+      }
+    }
+    if (!existingRating && !checkError) {
+      const legacyCheck = await supabase
+        .from('media_ratings').select('id').eq('user_id', appUser.id)
+        .eq('media_external_id', media_external_id).eq('media_external_source', media_external_source)
+        .maybeSingle();
+      existingRating = legacyCheck.data;
+      checkError = legacyCheck.error;
+    }
 
     if (checkError) {
       console.error('Error checking existing rating:', checkError);
@@ -219,18 +284,37 @@ serve(async (req) => {
     if (existingRating) {
       // Update existing rating
       console.log('Updating existing rating:', existingRating.id);
-      const { data, error } = await supabase
+      let { data, error } = await supabaseAdmin
         .from('media_ratings')
         .update({
           rating,
           media_title,
           media_type,
+          ...(canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
           updated_at: new Date().toISOString()
         })
         .eq('id', existingRating.id)
         .select()
         .single();
 
+      if (error?.code === '23505' && canonicalMediaId) {
+        const winner = await supabaseAdmin.from('media_ratings').select('id')
+          .eq('user_id', appUser.id).eq('canonical_media_id', canonicalMediaId).maybeSingle();
+        if (winner.data?.id && winner.data.id !== existingRating.id) {
+          const retry = await supabaseAdmin.from('media_ratings').update({
+            rating,
+            media_external_id,
+            media_external_source,
+            media_title,
+            media_type,
+            canonical_media_id: canonicalMediaId,
+            updated_at: new Date().toISOString(),
+          }).eq('id', winner.data.id).select().single();
+          data = retry.data;
+          error = retry.error;
+          if (!error) await supabaseAdmin.from('media_ratings').delete().eq('id', existingRating.id);
+        }
+      }
       if (error) {
         console.error('Error updating rating:', error);
         return new Response(JSON.stringify({ 
@@ -244,19 +328,47 @@ serve(async (req) => {
     } else {
       // Create new rating
       console.log('Creating new rating');
-      const { data, error } = await supabase
-        .from('media_ratings')
-        .insert({
+      let write = canonicalMediaId
+        ? supabaseAdmin.from('media_ratings').upsert({
           user_id: appUser.id,
           media_external_id,
           media_external_source,
           media_title,
           media_type,
-          rating
-        })
+          rating,
+          canonical_media_id: canonicalMediaId,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,canonical_media_id' })
+        : supabaseAdmin.from('media_ratings').insert({
+          user_id: appUser.id,
+          media_external_id,
+          media_external_source,
+          media_title,
+          media_type,
+          rating,
+        });
+      let { data, error } = await write
         .select()
         .single();
 
+      if (error?.code === '23505' && canonicalMediaId) {
+        const winner = await supabaseAdmin.from('media_ratings').select('id')
+          .eq('user_id', appUser.id)
+          .eq('media_external_id', media_external_id)
+          .eq('media_external_source', media_external_source)
+          .maybeSingle();
+        if (winner.data?.id) {
+          const retry = await supabaseAdmin.from('media_ratings').update({
+            rating,
+            media_title,
+            media_type,
+            canonical_media_id: canonicalMediaId,
+            updated_at: new Date().toISOString(),
+          }).eq('id', winner.data.id).select().single();
+          data = retry.data;
+          error = retry.error;
+        }
+      }
       if (error) {
         console.error('Error creating rating:', error);
         return new Response(JSON.stringify({ 
@@ -273,11 +385,6 @@ serve(async (req) => {
 
     // Resolve any pending bets on this user + media combination
     try {
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-
       // Find pending bets for this user on this specific media
       const { data: pendingBets, error: betsError } = await supabaseAdmin
         .from('bets')
@@ -362,6 +469,7 @@ serve(async (req) => {
             media_type: media_type,
             media_external_id: media_external_id,
             media_external_source: media_external_source,
+            ...(canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
             image_url: finalImageUrl,
             rating: rating,
             visibility: 'public',
@@ -382,7 +490,8 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({ 
       success: true,
-      rating: result
+      rating: result,
+      canonical_media_id: canonicalMediaId
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

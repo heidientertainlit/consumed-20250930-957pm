@@ -26,6 +26,8 @@ export interface UGCPost {
   mediaImage?: string;
   externalId?: string;
   externalSource?: string;
+  canonical_media_id?: string;
+  canonicalMediaId?: string;
   rating?: number;
   likes?: number;
   comments?: number;
@@ -38,6 +40,8 @@ export interface UGCPost {
   userHasVoted?: boolean;
   userVotedOption?: string;
   postType?: string;
+  origin_type?: string;
+  _rawPost?: any;
 }
 
 interface UserContentCarouselProps {

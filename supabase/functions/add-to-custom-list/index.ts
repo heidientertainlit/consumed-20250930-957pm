@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { resolveCanonicalMedia } from '../_shared/canonical-media.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -90,6 +91,11 @@ serve(async (req) => {
         }
       }
     );
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { autoRefreshToken: false, persistSession: false } },
+    );
 
     // Get auth user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -173,6 +179,47 @@ serve(async (req) => {
       });
     }
 
+    let canonicalMediaId: string | null = null;
+    if (externalId && externalSource && title && mediaType) {
+      try {
+        canonicalMediaId = (await resolveCanonicalMedia(admin, {
+          externalId,
+          externalSource,
+          title,
+          mediaType,
+          creator,
+          year: media?.year || media?.releaseYear || media?.release_date,
+        })).canonicalMediaId;
+      } catch (error) {
+        console.error('Canonical resolution failed; preserving provider list write:', error);
+      }
+    }
+
+    let existingItem: any = null;
+    if (canonicalMediaId) {
+      existingItem = (await admin.from('list_items').select()
+        .eq('user_id', appUser.id).eq('list_id', customList.id)
+        .eq('canonical_media_id', canonicalMediaId).maybeSingle()).data;
+    }
+    if (!existingItem && externalId && externalSource) {
+      existingItem = (await admin.from('list_items').select()
+        .eq('user_id', appUser.id).eq('list_id', customList.id)
+        .eq('external_id', externalId).eq('external_source', externalSource).maybeSingle()).data;
+      if (existingItem && canonicalMediaId && existingItem.canonical_media_id !== canonicalMediaId) {
+        const linked = await admin.from('list_items').update({ canonical_media_id: canonicalMediaId })
+          .eq('id', existingItem.id).select().maybeSingle();
+        if (linked.data) existingItem = linked.data;
+      }
+    }
+    if (existingItem) {
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Item already exists in this list',
+        data: existingItem,
+        listTitle: customList.title,
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // CRITICAL: Ensure we have a poster image URL before inserting
     // This prevents the "random stock image" bug in the activity feed
     let finalImageUrl = imageUrl || null;
@@ -187,9 +234,7 @@ serve(async (req) => {
     }
 
     // Insert the media item with core columns only
-    const { data: mediaItem, error: mediaError } = await supabase
-      .from('list_items')
-      .insert({
+    const listItemPayload = {
         list_id: customList.id,
         user_id: appUser.id,
         title: title || 'Untitled',
@@ -198,8 +243,15 @@ serve(async (req) => {
         image_url: finalImageUrl,
         external_id: externalId || null,
         external_source: externalSource || null,
+        ...(canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
         rewatch_count: rewatchCount || 1
-      })
+      };
+    const listItemWrite = canonicalMediaId
+      ? admin.from('list_items').upsert(listItemPayload, {
+          onConflict: 'user_id,list_id,canonical_media_id',
+        })
+      : admin.from('list_items').insert(listItemPayload);
+    const { data: mediaItem, error: mediaError } = await listItemWrite
       .select()
       .single();
 
@@ -266,7 +318,7 @@ serve(async (req) => {
         }
         
         // Use finalImageUrl from earlier fetch (already populated before list_items insert)
-        const { error: postError } = await supabase
+        const { error: postError } = await admin
           .from('social_posts')
           .insert({
             user_id: appUser.id,
@@ -279,6 +331,7 @@ serve(async (req) => {
             image_url: finalImageUrl,
             media_external_id: externalId,
             media_external_source: externalSource,
+            ...(canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
             rating: rating || null
           });
         

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { resolveCanonicalMedia } from '../_shared/canonical-media.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +19,26 @@ interface MediaItem {
   searchTitle?: string;   // bare title without "(Year)" for lookups
   externalId?: string;
   externalSource?: string;
+}
+
+// These IDs are returned only from rows inserted by this invocation. They are
+// deliberately retained so deferred canonicalization can never touch a user's
+// historical library or ratings.
+interface InsertedListRow {
+  id: string;
+  title: string;
+  media_type: string;
+  creator?: string | null;
+  external_id?: string | null;
+  external_source?: string | null;
+}
+
+interface InsertedRatingRow {
+  id: string;
+  media_title: string;
+  media_type: string;
+  media_external_id: string;
+  media_external_source: string;
 }
 
 // Cache for TMDB lookups to avoid duplicate API calls
@@ -664,7 +685,7 @@ serve(async (req) => {
     const batchSize = 100;
     // Rows created by THIS import, collected so background enrichment can
     // update ONLY these rows (by id) and never touch pre-existing data.
-    const insertedRows: { id: string; title: string; media_type: string }[] = [];
+    const insertedRows: InsertedListRow[] = [];
     let successCount = 0;
     let errorCount = 0;
     const errors: string[] = [];
@@ -703,7 +724,7 @@ serve(async (req) => {
         errors.push(`Batch ${i / batchSize + 1}: ${error.message}`);
       } else {
         successCount += data?.length || 0;
-        for (const row of data || []) insertedRows.push(row);
+        for (const row of data || []) insertedRows.push(row as InsertedListRow);
       }
     }
 
@@ -744,6 +765,7 @@ serve(async (req) => {
       });
     }
     let importedRatingCount = 0;
+    const insertedRatingRows: InsertedRatingRow[] = [];
     for (let i = 0; i < importedRatingRows.length; i += batchSize) {
       const { data: insertedRatings, error: ratingInsertError } = await supabase
         .from('media_ratings')
@@ -751,9 +773,10 @@ serve(async (req) => {
           onConflict: 'user_id,media_external_id,media_external_source',
           ignoreDuplicates: true,
         })
-        .select('id');
+        .select('id, media_title, media_type, media_external_id, media_external_source');
       if (ratingInsertError) throw ratingInsertError;
       importedRatingCount += insertedRatings?.length || 0;
+      for (const row of insertedRatings || []) insertedRatingRows.push(row as InsertedRatingRow);
     }
 
     // ── Background poster/catalog enrichment ──
@@ -767,6 +790,55 @@ serve(async (req) => {
       const ENRICH_CAP = 600;
       const ENRICH_BUDGET_MS = 300000; // generous: we're in the background now
       const start = Date.now();
+      const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+      // Canonical resolution can involve provider verification. Keep it off the
+      // request path and bound it just as tightly as catalog enrichment.
+      const admin = serviceRoleKey
+        ? createClient(Deno.env.get('SUPABASE_URL') ?? '', serviceRoleKey)
+        : null;
+      const CANONICAL_BATCH = 3;
+
+      const resolveListCanonical = async (row: InsertedListRow, identity = {
+        externalId: row.external_id,
+        externalSource: row.external_source,
+        title: row.title,
+        mediaType: row.media_type,
+        creator: row.creator || undefined,
+      }) => {
+        if (!admin || !identity.externalId || !identity.externalSource) return null;
+        try {
+          const resolution = await resolveCanonicalMedia(admin, {
+            externalId: identity.externalId,
+            externalSource: identity.externalSource,
+            title: identity.title,
+            mediaType: identity.mediaType,
+            creator: identity.creator,
+          });
+          return resolution.canonicalMediaId;
+        } catch (error) {
+          // Identity is additive enrichment; an outage must not make imports
+          // fail or prevent the legacy provider fields from being saved.
+          console.error('Import: canonical list resolution failed for', row.id, error);
+          return null;
+        }
+      };
+
+      const resolveRatingCanonical = async (row: InsertedRatingRow) => {
+        if (!admin) return null;
+        try {
+          const resolution = await resolveCanonicalMedia(admin, {
+            externalId: row.media_external_id,
+            externalSource: row.media_external_source,
+            title: row.media_title,
+            mediaType: row.media_type,
+          });
+          return resolution.canonicalMediaId;
+        } catch (error) {
+          console.error('Import: canonical rating resolution failed for', row.id, error);
+          return null;
+        }
+      };
+
       const targets = insertedRows
         .filter((r) => r.media_type === 'movie' || r.media_type === 'book')
         .slice(0, ENRICH_CAP);
@@ -792,6 +864,23 @@ serve(async (req) => {
           if (item.externalId) {
             patch.external_id = item.externalId;
             patch.external_source = item.externalSource;
+            // Enrichment can replace a legacy Goodreads/Open Library provider
+            // id with a verified catalog id. Resolve that exact new identity
+            // before patching the row, rather than retaining a stale canonical
+            // id from its original provider.
+            if (item.externalId !== row.external_id || item.externalSource !== row.external_source) {
+              const canonicalMediaId = await resolveListCanonical(row, {
+                externalId: item.externalId,
+                externalSource: item.externalSource,
+                title: item.title,
+                mediaType: item.mediaType,
+                creator: item.creator || undefined,
+              });
+              // Do not leave an old-provider canonical id attached when the
+              // provider identity changed but its new resolution is unavailable.
+              // Null is the same safe state the legacy importer produced.
+              patch.canonical_media_id = canonicalMediaId;
+            }
           }
           const { error: upErr } = await supabase
             .from('list_items')
@@ -802,6 +891,46 @@ serve(async (req) => {
         }));
         if (i + ENRICH_BATCH < targets.length) {
           await new Promise((r) => setTimeout(r, 250));
+        }
+      }
+      if (!admin) {
+        console.error('Import: SUPABASE_SERVICE_ROLE_KEY missing; skipping deferred canonical resolution');
+      } else {
+        // Resolve after catalog enrichment so a newly verified provider id is
+        // the identity used for the canonical link. All writes remain scoped
+        // to ids returned by this import.
+        const canonicalLists = insertedRows
+          .filter((row) => row.external_id && row.external_source)
+          .slice(0, ENRICH_CAP);
+        for (let i = 0; i < canonicalLists.length; i += CANONICAL_BATCH) {
+          if (Date.now() - start > ENRICH_BUDGET_MS) break;
+          await Promise.all(canonicalLists.slice(i, i + CANONICAL_BATCH).map(async (row) => {
+            const canonicalMediaId = await resolveListCanonical(row);
+            if (!canonicalMediaId) return;
+            const { error } = await supabase.from('list_items')
+              .update({ canonical_media_id: canonicalMediaId })
+              .eq('id', row.id)
+              .eq('user_id', appUser.id)
+              .eq('external_id', row.external_id!)
+              .eq('external_source', row.external_source!);
+            if (error) console.error('Import: canonical list patch failed for', row.id, error);
+          }));
+        }
+
+        const canonicalRatings = insertedRatingRows.slice(0, ENRICH_CAP);
+        for (let i = 0; i < canonicalRatings.length; i += CANONICAL_BATCH) {
+          if (Date.now() - start > ENRICH_BUDGET_MS) break;
+          await Promise.all(canonicalRatings.slice(i, i + CANONICAL_BATCH).map(async (row) => {
+            const canonicalMediaId = await resolveRatingCanonical(row);
+            if (!canonicalMediaId) return;
+            const { error } = await supabase.from('media_ratings')
+              .update({ canonical_media_id: canonicalMediaId })
+              .eq('id', row.id)
+              .eq('user_id', appUser.id)
+              .eq('media_external_id', row.media_external_id)
+              .eq('media_external_source', row.media_external_source);
+            if (error) console.error('Import: canonical rating patch failed for', row.id, error);
+          }));
         }
       }
       console.log('Import: Background enrichment done.', updated, 'rows updated in', Date.now() - start, 'ms');

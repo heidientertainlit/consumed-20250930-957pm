@@ -161,6 +161,7 @@ serve(async (req) => {
           image_url, 
           media_external_id, 
           media_external_source, 
+           canonical_media_id,
           media_season_number,
           media_episode_number,
           media_episode_title,
@@ -543,6 +544,7 @@ serve(async (req) => {
             mediaType: post.media_type,
             externalId: post.media_external_id || pool?.media_external_id,
             externalSource: post.media_external_source || pool?.media_external_source,
+            canonical_media_id: post.canonical_media_id || null,
             imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source, post.id),
             creator: post.media_creator
           });
@@ -1091,6 +1093,7 @@ serve(async (req) => {
             likedByCurrentUser: likedPostIds.has(post.id),
             rating: post.rating,
             progress: post.progress,
+            canonical_media_id: post.canonical_media_id || null,
             containsSpoilers: post.contains_spoilers || false,
             fire_votes: post.fire_votes || 0,
             ice_votes: post.ice_votes || 0,
@@ -1120,7 +1123,8 @@ serve(async (req) => {
               imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source, post.id),
               rating: post.rating,
               externalId: post.media_external_id || '',
-              externalSource: post.media_external_source || ''
+              externalSource: post.media_external_source || '',
+              canonical_media_id: post.canonical_media_id || null
             }]
           });
         } else {
@@ -1171,6 +1175,7 @@ serve(async (req) => {
             id: `grouped-${mediaKey}`,
             type: 'media_group',
             timestamp: mostRecentTimestamp,
+            canonical_media_id: firstPost.canonical_media_id || null,
             mediaItems: [{
               id: `${firstPost.media_external_source}-${firstPost.media_external_id}`,
               title: firstPost.media_title || '',
@@ -1178,7 +1183,8 @@ serve(async (req) => {
               mediaType: firstPost.media_type || 'unknown',
               imageUrl: ensureImageUrl(firstPost.image_url, firstPost.media_external_id, firstPost.media_external_source, firstPost.id),
               externalId: firstPost.media_external_id || '',
-              externalSource: firstPost.media_external_source || ''
+              externalSource: firstPost.media_external_source || '',
+              canonical_media_id: firstPost.canonical_media_id || null
             }],
             groupedActivities: activities,
             activityCount: activities.length
@@ -1275,6 +1281,7 @@ serve(async (req) => {
           ice_votes: post.ice_votes || 0,
           rating: post.rating,
           progress: post.progress,
+          canonical_media_id: post.canonical_media_id || null,
           rankId: post.rank_id || null,
           rankData: rankData || null,
           mediaItems: hasMedia ? [{
@@ -1286,6 +1293,7 @@ serve(async (req) => {
             rating: post.rating,
             externalId: post.media_external_id || '',
             externalSource: post.media_external_source || '',
+            canonical_media_id: post.canonical_media_id || null,
             description: post.media_description || ''
           }] : [],
           listId: effectiveListId || null,
@@ -1315,6 +1323,7 @@ serve(async (req) => {
             rating: post.rating,
             externalId: post.media_external_id || '',
             externalSource: post.media_external_source || '',
+            canonical_media_id: post.canonical_media_id || null,
             description: post.media_description || ''
           }] : [],
           gameMoment: gameMomentEnrichment,
@@ -1379,6 +1388,7 @@ serve(async (req) => {
           },
           mediaExternalId: pred.media_external_id,
           mediaExternalSource: pred.media_external_source,
+          canonical_media_id: poolMediaDataMap.get(pred.id)?.canonical_media_id || null,
           mediaTitle: poolMediaTitleMap.get(pred.id) || null,
           // Add mediaItems for the prediction card to display media info
           mediaItems: poolMediaDataMap.has(pred.id) ? [{
@@ -1387,6 +1397,7 @@ serve(async (req) => {
             mediaType: poolMediaDataMap.get(pred.id).mediaType || '',
             externalId: poolMediaDataMap.get(pred.id).externalId || pred.media_external_id || '',
             externalSource: poolMediaDataMap.get(pred.id).externalSource || pred.media_external_source || '',
+            canonical_media_id: poolMediaDataMap.get(pred.id).canonical_media_id || null,
             imageUrl: poolMediaDataMap.get(pred.id).imageUrl || '',
             creator: poolMediaDataMap.get(pred.id).creator || ''
           }] : [],

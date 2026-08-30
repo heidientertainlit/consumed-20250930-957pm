@@ -66,6 +66,7 @@ import { renderMentions } from "@/lib/mentions";
 import { copyLink, shareLink } from "@/lib/share";
 import { formatFeedName } from "@/lib/feed-name";
 import { MEDIA_MATCH_SCORER_VERSION } from "@/lib/media-match";
+import { canonicalMediaIdFrom, mergePreferredMediaRatings } from "@/lib/canonical-media";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { GameMomentCard } from "@/components/game-moment-card";
 import { SocialProofCard, buildGameMomentSocialProof, buildLeaderboardSocialProof } from "@/components/social-proof-card";
@@ -108,6 +109,8 @@ function loadFeedPersonAffinity(currentUserId: string, personId: string, token: 
 interface SocialPost {
   id: string;
   type: string;
+  canonical_media_id?: string;
+  canonicalMediaId?: string;
   mediaType?: string;
   externalId?: string;
   externalSource?: string;
@@ -135,6 +138,8 @@ interface SocialPost {
     imageUrl: string;
     externalId: string;
     externalSource: string;
+    canonical_media_id?: string;
+    canonicalMediaId?: string;
   }>;
   mediaItems: Array<{
     id: string;
@@ -145,6 +150,8 @@ interface SocialPost {
     rating?: number;
     externalId: string;
     externalSource: string;
+    canonical_media_id?: string;
+    canonicalMediaId?: string;
   }>;
   // Grouped media fields
   groupedActivities?: Array<{
@@ -487,6 +494,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
           userId: currentUserId,
           mediaExternalId: g.externalId || '',
           mediaExternalSource: g.externalSource || 'tmdb',
+          canonical_media_id: g.canonical_media_id || g.canonicalMediaId,
           mediaType: g.mediaType || 'movie',
           mediaTitle: g.title,
           imageUrl: g.mediaImage?.startsWith?.('http') ? g.mediaImage : '',
@@ -844,24 +852,31 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
       if (post.mediaItems?.length > 0) {
         return {
           ...post,
+          canonical_media_id: post.canonical_media_id || post.canonicalMediaId,
+          canonicalMediaId: post.canonicalMediaId || post.canonical_media_id,
           mediaItems: post.mediaItems.map((m: any) => {
             const src = m.externalSource || m.external_source || '';
             const eid = m.externalId || m.external_id || '';
+            const canonicalMediaId = m.canonical_media_id || m.canonicalMediaId;
             if (src === 'googlebooks' && eid && !(m.imageUrl || m.image_url)) {
-              return { ...m, imageUrl: `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`, image_url: `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1` };
+              return { ...m, canonical_media_id: canonicalMediaId, canonicalMediaId, imageUrl: `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`, image_url: `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1` };
             }
             if ((src === 'open_library' || src === 'openlibrary') && eid) {
               const isISBN = /^[\d-]+$/.test(eid);
               const coverUrl = isISBN
                 ? `https://covers.openlibrary.org/b/isbn/${eid}-L.jpg`
                 : `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`;
-              return { ...m, imageUrl: m.imageUrl || m.image_url || coverUrl, image_url: m.image_url || coverUrl };
+              return { ...m, canonical_media_id: canonicalMediaId, canonicalMediaId, imageUrl: m.imageUrl || m.image_url || coverUrl, image_url: m.image_url || coverUrl };
             }
-            return m;
+            return { ...m, canonical_media_id: canonicalMediaId, canonicalMediaId };
           })
         };
       }
-      return post;
+      return {
+        ...post,
+        canonical_media_id: post.canonical_media_id || post.canonicalMediaId,
+        canonicalMediaId: post.canonicalMediaId || post.canonical_media_id,
+      };
     });
 
     const userIds = [...new Set(fixedPosts.map((p: any) => p.user?.id).filter(Boolean))];
@@ -970,7 +985,8 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
         creator: media.creator || '',
         imageUrl: media.imageUrl,
         externalId: media.externalId,
-        externalSource: media.externalSource
+        externalSource: media.externalSource,
+        canonical_media_id: media.canonical_media_id || media.canonicalMediaId,
       };
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/track-media`, {
@@ -1366,6 +1382,23 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const touchStartY = useRef<number>(0);
   const [resolvedExternalId, setResolvedExternalId] = useState(post.externalId || '');
   const [resolvedExternalSource, setResolvedExternalSource] = useState(post.externalSource || 'tmdb');
+  const [resolvedCanonicalMediaId, setResolvedCanonicalMediaId] = useState<string | undefined>();
+  const canonicalMediaId = (post as any).canonical_media_id || (post as any).canonicalMediaId ||
+    resolvedCanonicalMediaId ||
+    post.mediaItems?.[0]?.canonical_media_id || post.mediaItems?.[0]?.canonicalMediaId;
+  // Canonical rows win, but retain provider-tuple rows during the migration. Avoid
+  // PostgREST OR expressions here: each predicate remains independently safe.
+  const fetchPreferredRatings = async (externalId: string, externalSource: string, userId?: string) => {
+    const base = supabase.from('media_ratings').select('user_id, rating, created_at, updated_at');
+    const canonicalRequest = canonicalMediaId
+      ? (userId ? base.eq('canonical_media_id', canonicalMediaId).eq('user_id', userId) : base.eq('canonical_media_id', canonicalMediaId))
+      : null;
+    const legacyRequest = userId
+      ? supabase.from('media_ratings').select('user_id, rating, created_at, updated_at').eq('media_external_id', externalId).eq('media_external_source', externalSource).eq('user_id', userId)
+      : supabase.from('media_ratings').select('user_id, rating, created_at, updated_at').eq('media_external_id', externalId).eq('media_external_source', externalSource);
+    const [canonicalResult, legacyResult] = await Promise.all([canonicalRequest, legacyRequest]);
+    return mergePreferredMediaRatings(canonicalResult?.data || [], legacyResult.data || []);
+  };
   // DNA match pill on the poster — same cached edge fn as the media detail page
   useEffect(() => {
     let cancelled = false;
@@ -1375,13 +1408,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     const fetchScore = async () => {
       try {
         // Viewer's own verdict beats a prediction: 4.5+ stars shows "You loved this"
-        const { data: own } = await supabase
-          .from('media_ratings')
-          .select('rating')
-          .eq('media_external_id', extId)
-          .eq('media_external_source', extSource)
-          .eq('user_id', session!.user.id)
-          .maybeSingle();
+        const own = (await fetchPreferredRatings(extId, extSource, session!.user.id))[0];
         if (cancelled) return;
         if (Number(own?.rating) >= 4.5) { setLovedIt(true); return; }
         const res = await fetch(`${supabaseUrl}/functions/v1/score-media-match`, {
@@ -1391,6 +1418,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             scorer_version: MEDIA_MATCH_SCORER_VERSION,
             external_source: extSource,
             external_id: extId,
+            canonical_media_id: canonicalMediaId,
             media_type: post.mediaType,
             title: post.mediaTitle,
             creator: (post as any).mediaCreator || (post as any)._rawPost?.mediaItems?.[0]?.creator,
@@ -1407,7 +1435,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     };
     fetchScore();
     return () => { cancelled = true; };
-  }, [post.externalId, post.externalSource, resolvedExternalId, resolvedExternalSource, session?.access_token]);
+  }, [post.externalId, post.externalSource, canonicalMediaId, resolvedExternalId, resolvedExternalSource, session?.access_token]);
 
   const [isSearchingMedia, setIsSearchingMedia] = useState(false);
   const [reportPostOpen, setReportPostOpen] = useState(false);
@@ -1435,7 +1463,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           const first = Array.isArray(results) ? results[0] : null;
           const newEid = first?.externalId || first?.external_id || first?.id;
           const newEsrc = first?.externalSource || first?.external_source || 'tmdb';
-          if (newEid) { setResolvedExternalId(String(newEid)); setResolvedExternalSource(newEsrc); }
+          const newCanonicalId = first?.canonical_media_id || first?.canonicalMediaId;
+          if (newEid) { setResolvedExternalId(String(newEid)); setResolvedExternalSource(newEsrc); setResolvedCanonicalMediaId(newCanonicalId); }
         })
         .catch(err => console.error('Media lookup failed', err))
         .finally(() => setIsSearchingMedia(false));
@@ -1461,6 +1490,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             imageUrl: post.mediaImage || '',
             externalId: post.externalId || '',
             externalSource: post.externalSource || 'tmdb',
+            canonical_media_id: canonicalMediaId,
           },
           listType: 'completed',
           skip_social_post: true,
@@ -1477,12 +1507,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     if (!externalId || !externalSource) return;
 
     // Community average rating + distribution
-    supabase
-      .from('media_ratings')
-      .select('rating')
-      .eq('media_external_id', externalId)
-      .eq('media_external_source', externalSource)
-      .then(({ data }) => {
+    fetchPreferredRatings(externalId, externalSource).then((data) => {
         if (data && data.length > 0) {
           const avg = data.reduce((sum: number, r: any) => sum + Number(r.rating), 0) / data.length;
           setCommunityRating(Math.round(avg * 10) / 10);
@@ -1499,14 +1524,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     // User's own existing rating (so "Your Turn" shows already-rated state)
     const userId = session?.user?.id;
     if (userId) {
-      supabase
-        .from('media_ratings')
-        .select('rating')
-        .eq('media_external_id', externalId)
-        .eq('media_external_source', externalSource)
-        .eq('user_id', userId)
-        .maybeSingle()
-        .then(({ data }) => {
+      fetchPreferredRatings(externalId, externalSource, userId).then((rows) => {
+          const data = rows[0];
           if (data?.rating) {
             setRatingValue(Number(data.rating));
             setRatingSubmitted(true);
@@ -1514,7 +1533,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           }
         });
     }
-  }, [post.externalId, post.externalSource, session?.user?.id]);
+  }, [post.externalId, post.externalSource, canonicalMediaId, session?.user?.id]);
 
   // External (3rd-party) rating from TMDB/Spotify etc.
   useEffect(() => {
@@ -1560,14 +1579,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     if (!externalId || !externalSource) return;
     const primaryUserId = post.user?.id;
     const currentId = session?.user?.id;
-    supabase
-      .from('media_ratings')
-      .select('user_id, rating')
-      .eq('media_external_id', externalId)
-      .eq('media_external_source', externalSource)
-      .order('created_at', { ascending: false })
-      .limit(10)
-      .then(async ({ data: ratings }) => {
+    fetchPreferredRatings(externalId, externalSource).then(async (ratings) => {
         if (!ratings || ratings.length === 0) return;
         const filtered = ratings.filter((r: any) => r.user_id !== primaryUserId && r.user_id !== currentId);
         if (filtered.length === 0) return;
@@ -1578,15 +1590,27 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           .in('id', ids);
         const userMap: Record<string, any> = {};
         (users || []).forEach((u: any) => { userMap[u.id] = u; });
-        // Also fetch review content from social_posts for these users + same media
-        const { data: posts } = await supabase
+        // Query canonical and legacy identities separately; canonical content wins
+        // while historical provider rows remain visible.
+        const legacyPosts = supabase
           .from('social_posts')
-          .select('user_id, content')
+          .select('id, user_id, content')
           .in('user_id', ids)
-          .eq('external_id', externalId)
-          .in('type', ['rating', 'rate-review', 'review'])
+          .eq('media_external_id', externalId)
+          .eq('media_external_source', externalSource)
+          .in('post_type', ['rating', 'rate-review', 'review'])
           .not('content', 'is', null)
           .limit(20);
+        const canonicalPosts = canonicalMediaId
+          ? supabase.from('social_posts').select('id, user_id, content').in('user_id', ids)
+            .eq('canonical_media_id', canonicalMediaId).in('post_type', ['rating', 'rate-review', 'review'])
+            .not('content', 'is', null).limit(20)
+          : null;
+        const [canonicalPostsResult, legacyPostsResult] = await Promise.all([canonicalPosts, legacyPosts]);
+        const postsByUser = new Map<string, any>();
+        (legacyPostsResult.data || []).forEach((p: any) => postsByUser.set(p.user_id, p));
+        (canonicalPostsResult?.data || []).forEach((p: any) => postsByUser.set(p.user_id, p));
+        const posts = Array.from(postsByUser.values());
         const contentMap: Record<string, string> = {};
         (posts || []).forEach((p: any) => { if (p.content?.trim()) contentMap[p.user_id] = p.content.trim(); });
         setRelatedRatings(filtered.map((r: any) => ({
@@ -1603,7 +1627,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           content: contentMap[r.user_id],
         })));
       });
-  }, [post.externalId, post.externalSource, post.user?.id, session?.user?.id]);
+  }, [post.externalId, post.externalSource, canonicalMediaId, post.user?.id, session?.user?.id]);
 
   // Auto-load comments for rating/review cards so they show inline without a tap.
   // The same component instance can be handed a DIFFERENT post (promoted card slots
@@ -1647,7 +1671,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         const first = Array.isArray(results) ? results[0] : null;
         externalId = String(first?.externalId || first?.external_id || first?.id || '');
         externalSource = first?.externalSource || first?.external_source || 'tmdb';
-        if (externalId) { setResolvedExternalId(externalId); setResolvedExternalSource(externalSource); }
+        if (externalId) {
+          setResolvedExternalId(externalId);
+          setResolvedExternalSource(externalSource);
+          setResolvedCanonicalMediaId(first?.canonical_media_id || first?.canonicalMediaId);
+        }
       } catch { /* fall through */ }
     }
     if (!externalId) return;
@@ -1658,6 +1686,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         body: JSON.stringify({
           media_external_id: externalId,
           media_external_source: externalSource,
+          canonical_media_id: canonicalMediaId,
           media_title: mediaTitle,
           media_type: mediaType,
           media_image_url: mediaImage,
@@ -1688,6 +1717,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         body: JSON.stringify({
           media_external_id: externalId,
           media_external_source: externalSource,
+          canonical_media_id: canonicalMediaId,
           media_title: mediaTitle,
           media_type: mediaType,
           media_image_url: mediaImage,
@@ -5817,11 +5847,12 @@ export default function Feed() {
         else if (src === 'open_library' && eid && !mediaImg) mediaImg = `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`;
 
         const userObj = p.user || p.creator;
+        const canonicalMediaId = canonicalMediaIdFrom(p, media);
         return {
           id: p.id, type: postType,
           user: { id: userObj?.id || '', username: userObj?.username || '', displayName: userObj?.displayName || userObj?.display_name || '', avatar: userObj?.avatar_url || userObj?.avatarUrl || userObj?.avatar || '', is_persona: userObj?.is_persona || false },
           content: (postType === 'poll' || postType === 'predict') ? ((p as any).question || content) : content,
-          mediaTitle: ((media?.title || (p as any).mediaTitle || (p as any).media_title) || '') + ((p as any).media_season_number ? ` · S${(p as any).media_season_number}${(p as any).media_episode_number ? ` E${(p as any).media_episode_number}` : ''}` : '') || null, mediaType: media?.mediaType || media?.type || (p as any).media_type, mediaImage: mediaImg, externalId: eid, externalSource: src,
+          mediaTitle: (((media?.title || (p as any).mediaTitle || (p as any).media_title) || '') + ((p as any).media_season_number ? ` · S${(p as any).media_season_number}${(p as any).media_episode_number ? ` E${(p as any).media_episode_number}` : ''}` : '')) || undefined, mediaType: media?.mediaType || media?.type || (p as any).media_type, mediaImage: mediaImg, externalId: eid, externalSource: src, canonical_media_id: canonicalMediaId, canonicalMediaId,
           rating: resolvedRating, containsSpoilers: p.containsSpoilers || false, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
           fire_votes: p.fire_votes || 0, ice_votes: p.ice_votes || 0,
           options: (p as any).options || [], optionVotes: (p as any).optionVotes || [], timestamp: p.createdAt || p.created_at || p.timestamp, pollId: (p as any).poolId || p.id,

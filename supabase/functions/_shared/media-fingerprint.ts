@@ -4,7 +4,7 @@
  * provider text into a small controlled vocabulary.
  */
 
-export const FINGERPRINT_VERSION = 6;
+export const FINGERPRINT_VERSION = 7;
 
 const DAY = 86_400_000;
 const READY_TTL = 30 * DAY;
@@ -31,6 +31,7 @@ type SourceMetadata = {
   imdb_id?: string | null;
   isbn_identifiers?: string[];
   open_library_work_id?: string | null;
+  release_year?: number | null;
 };
 
 export interface MediaFingerprint {
@@ -64,6 +65,10 @@ const text = (value: unknown, max = MAX_TEXT): string | null => {
 };
 const strings = (value: unknown, max = 12, itemMax = 100): string[] =>
   Array.isArray(value) ? value.map((v) => text(v, itemMax)).filter((v): v is string => !!v).slice(0, max) : [];
+const releaseYear = (value: unknown): number | null => {
+  const match = String(value || '').match(/\b(1\d{3}|20\d{2})\b/);
+  return match ? Number(match[1]) : null;
+};
 
 async function getJson(url: string, init: RequestInit = {}, timeout = 7_000): Promise<any | null> {
   const controller = new AbortController();
@@ -115,7 +120,7 @@ async function resolveOpenLibraryByTitle(
   const queryTitle = normalizedTitle(input.title);
   if (!queryTitle) return { metadata: fallback, found: false };
   const search = await getJson(
-    `https://openlibrary.org/search.json?title=${encodeURIComponent(input.title)}&limit=8&fields=key,title,author_name,subject,isbn`,
+    `https://openlibrary.org/search.json?title=${encodeURIComponent(input.title)}&limit=8&fields=key,title,author_name,subject,isbn,first_publish_year,publish_year`,
     { headers: { 'User-Agent': 'ConsumedApp-MediaFingerprint/1.0' } },
   );
   const exact = Array.isArray(search?.docs)
@@ -173,6 +178,7 @@ async function resolveOpenLibraryByTitle(
       source_url: `https://openlibrary.org${workKey}`,
       open_library_work_id: workId,
       isbn_identifiers: strings(selected.isbn, 4, 20),
+      release_year: releaseYear(selected.first_publish_year || selected.publish_year?.[0]),
     },
   };
 }
@@ -200,13 +206,14 @@ async function resolveSource(input: MediaFingerprintInput): Promise<{ metadata: 
         keywords: strings(d.keywords?.keywords?.map((k: any) => k?.name) || d.keywords?.results?.map((k: any) => k?.name), 12),
         collection,
         imdb_id: text(d.imdb_id || d.external_ids?.imdb_id, 20),
+         release_year: releaseYear(d.release_date || d.first_air_date),
       }};
     }
   } else if (source === 'googlebooks') {
     const key = Deno.env.get('GOOGLE_BOOKS_API_KEY');
     const d = await getJson(`https://www.googleapis.com/books/v1/volumes/${encodeURIComponent(input.externalId)}${key ? `?key=${encodeURIComponent(key)}` : ''}`);
     const v = d?.volumeInfo;
-    if (v) return { found: true, metadata: { title: text(v.title, 300) || fallback.title, creator: text((v.authors || []).join(', '), 300) || fallback.creator, description: text(v.description) || fallback.description, subjects: strings(v.categories, 10), keywords: [], collection: text(v.seriesInfo?.bookDisplayNumber, 200), source_url: text(v.infoLink, 500), isbn_identifiers: strings((v.industryIdentifiers || []).filter((i: any) => i?.type === 'ISBN_10' || i?.type === 'ISBN_13').map((i: any) => i.identifier), 4, 20) } };
+    if (v) return { found: true, metadata: { title: text(v.title, 300) || fallback.title, creator: text((v.authors || []).join(', '), 300) || fallback.creator, description: text(v.description) || fallback.description, subjects: strings(v.categories, 10), keywords: [], collection: text(v.seriesInfo?.bookDisplayNumber, 200), source_url: text(v.infoLink, 500), isbn_identifiers: strings((v.industryIdentifiers || []).filter((i: any) => i?.type === 'ISBN_10' || i?.type === 'ISBN_13').map((i: any) => i.identifier), 4, 20), release_year: releaseYear(v.publishedDate) } };
     return await resolveOpenLibraryByTitle(input, fallback);
   } else if (source === 'goodreads') {
     // Goodreads exports provide a stable book ID but no public metadata API.
@@ -229,12 +236,12 @@ async function resolveSource(input: MediaFingerprintInput): Promise<{ metadata: 
       workId = text(id, 30);
       work = await getJson(`https://openlibrary.org/works/${encodeURIComponent(id)}.json`);
     }
-    if (work) return { found: true, metadata: { title: text(work.title, 300) || fallback.title, creator: text(work.by_statement, 300) || fallback.creator, description: text(typeof work.description === 'string' ? work.description : work.description?.value) || fallback.description, subjects: strings(work.subjects, 12), keywords: strings(work.subject_people, 6), collection: text(work.series?.[0], 200), open_library_work_id: workId, isbn_identifiers: strings([...(edition?.isbn_13 || []), ...(edition?.isbn_10 || []), ...(isbn ? [input.externalId] : [])], 4, 20) } };
+    if (work) return { found: true, metadata: { title: text(work.title, 300) || fallback.title, creator: text(work.by_statement, 300) || fallback.creator, description: text(typeof work.description === 'string' ? work.description : work.description?.value) || fallback.description, subjects: strings(work.subjects, 12), keywords: strings(work.subject_people, 6), collection: text(work.series?.[0], 200), open_library_work_id: workId, isbn_identifiers: strings([...(edition?.isbn_13 || []), ...(edition?.isbn_10 || []), ...(isbn ? [input.externalId] : [])], 4, 20), release_year: releaseYear(edition?.publish_date || work.first_publish_date) } };
     return await resolveOpenLibraryByTitle(input, fallback);
   } else if (source === 'itunes') {
     const d = await getJson(`https://itunes.apple.com/lookup?id=${encodeURIComponent(input.externalId)}&limit=1`);
     const v = d?.results?.[0];
-    if (v) return { found: true, metadata: { title: text(v.collectionName || v.trackName, 300) || fallback.title, creator: text(v.artistName, 300) || fallback.creator, description: text(v.longDescription || v.description) || fallback.description, subjects: strings(v.genres || [v.primaryGenreName], 10), keywords: [], collection: text(v.collectionName, 200), source_url: text(v.collectionViewUrl || v.trackViewUrl, 500) } };
+    if (v) return { found: true, metadata: { title: text(v.collectionName || v.trackName, 300) || fallback.title, creator: text(v.artistName, 300) || fallback.creator, description: text(v.longDescription || v.description) || fallback.description, subjects: strings(v.genres || [v.primaryGenreName], 10), keywords: [], collection: text(v.collectionName, 200), source_url: text(v.collectionViewUrl || v.trackViewUrl, 500), release_year: releaseYear(v.releaseDate) } };
   } else if (source === 'spotify') {
     // Client-credentials access is optional; do one type-directed request rather
     // than probing every Spotify endpoint.
@@ -260,6 +267,7 @@ async function resolveSource(input: MediaFingerprintInput): Promise<{ metadata: 
       keywords: [],
       collection: text(v.album?.name || v.show?.name, 200),
       source_url: text(v.external_urls?.spotify, 500),
+      release_year: releaseYear(v.release_date || v.album?.release_date),
     }};
   }
   return { metadata: fallback, found: false };

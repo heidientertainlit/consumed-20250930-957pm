@@ -92,6 +92,41 @@ export default function MediaDetail() {
   const composeSectionRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  // Routes deliberately remain provider based. Resolve their durable identity when
+  // available, but treat resolver failures as a legacy-route fallback.
+  const { data: canonicalMediaId = null } = useQuery({
+    queryKey: ['canonical-media-id', params?.source, params?.id],
+    queryFn: async () => {
+      if (!params?.source || !params?.id) return null;
+      const { data, error } = await supabase.rpc('resolve_media_canonical_id', {
+        p_external_source: params.source,
+        p_external_id: params.id,
+      });
+      if (error) return null;
+      return typeof data === 'string' ? data : data?.canonical_media_id || data?.canonicalMediaId || null;
+    },
+    enabled: !!params?.source && !!params?.id,
+    retry: false,
+  });
+  const preferredMediaRows = async (table: 'media_ratings' | 'social_posts' | 'list_items', select: string, userOnly = false) => {
+    const legacyColumn = table === 'social_posts' ? 'media_external_id' : 'external_id';
+    const legacySourceColumn = table === 'social_posts' ? 'media_external_source' : 'external_source';
+    // media_ratings retains its historical media_external_* names.
+    const idColumn = table === 'media_ratings' ? 'media_external_id' : legacyColumn;
+    const sourceColumn = table === 'media_ratings' ? 'media_external_source' : legacySourceColumn;
+    let legacy = supabase.from(table).select(select).eq(idColumn, params?.id).eq(sourceColumn, params?.source);
+    let canonical = canonicalMediaId ? supabase.from(table).select(select).eq('canonical_media_id', canonicalMediaId) : null;
+    if (userOnly && user?.id) {
+      legacy = legacy.eq('user_id', user.id);
+      canonical = canonical?.eq('user_id', user.id) || null;
+    }
+    const [canonicalResult, legacyResult] = await Promise.all([canonical, legacy]);
+    const deduped = new Map<string, any>();
+    const rowKey = (row: any) => table === 'media_ratings' ? row.user_id : (row.id || row.user_id);
+    (legacyResult.data || []).forEach((row: any) => deduped.set(rowKey(row), row));
+    (canonicalResult?.data || []).forEach((row: any) => deduped.set(rowKey(row), row));
+    return Array.from(deduped.values());
+  };
 
   // Progress sheet state
   const [isProgressSheetOpen, setIsProgressSheetOpen] = useState(false);
@@ -448,32 +483,19 @@ export default function MediaDetail() {
 
   // Fetch user's own rating from media_ratings table (includes private ratings)
   const { data: userRating, isFetched: userRatingFetched } = useQuery({
-    queryKey: ['user-media-rating', params?.source, params?.id],
+    queryKey: ['user-media-rating', canonicalMediaId, params?.source, params?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('media_ratings')
-        .select('rating, created_at')
-        .eq('media_external_id', params?.id)
-        .eq('media_external_source', params?.source)
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Failed to fetch user rating:', error);
-        return null;
-      }
-      return data;
+      const rows = await preferredMediaRows('media_ratings', 'id, user_id, rating, created_at', true);
+      return rows[0] || null;
     },
     enabled: !!params?.source && !!params?.id && !!user?.id
   });
 
   // Fetch ALL social activity for this specific media
   const { data: socialActivity = [] } = useQuery({
-    queryKey: ['media-social-activity', params?.source, params?.id],
+    queryKey: ['media-social-activity', canonicalMediaId, params?.source, params?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('social_posts')
-        .select(`
+      const data = await preferredMediaRows('social_posts', `
           id,
           user_id,
           post_type,
@@ -487,15 +509,8 @@ export default function MediaDetail() {
             display_name,
             user_name
           )
-        `)
-        .eq('media_external_source', params?.source)
-        .eq('media_external_id', params?.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Failed to fetch social activity:', error);
-        return [];
-      }
+        `);
+      data.sort((a: any, b: any) => +new Date(b.created_at) - +new Date(a.created_at));
 
       // Fetch prediction pool details separately for posts that have them
       const postsWithPools = data?.filter(p => p.prediction_pool_id) || [];
@@ -525,19 +540,10 @@ export default function MediaDetail() {
   // Fetch ALL ratings for this media so every rater shows up in the conversation,
   // even users whose rating never produced a social post.
   const { data: allRatings = [] } = useQuery({
-    queryKey: ['media-all-ratings', params?.source, params?.id],
+    queryKey: ['media-all-ratings', canonicalMediaId, params?.source, params?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('media_ratings')
-        .select('id, user_id, rating, created_at')
-        .eq('media_external_source', params?.source)
-        .eq('media_external_id', params?.id)
-        .order('created_at', { ascending: false });
-      if (error) {
-        console.error('Failed to fetch media ratings:', error);
-        return [];
-      }
-      const rows = data || [];
+      const rows = await preferredMediaRows('media_ratings', 'id, user_id, rating, created_at');
+      rows.sort((a: any, b: any) => +new Date(b.created_at) - +new Date(a.created_at));
       const userIds = Array.from(new Set(rows.map((r: any) => r.user_id).filter(Boolean)));
       if (userIds.length === 0) return rows.map((r: any) => ({ ...r, users: null }));
       const { data: userRows } = await supabase
@@ -732,13 +738,11 @@ export default function MediaDetail() {
 
   // Query to find which lists contain this media item
   const { data: listsContainingMedia = [] } = useQuery({
-    queryKey: ['lists-containing-media', params?.source, params?.id],
+    queryKey: ['lists-containing-media', canonicalMediaId, params?.source, params?.id],
     queryFn: async () => {
       if (!user?.id || !params?.id || !params?.source) return [];
       
-      const { data, error } = await supabase
-        .from('list_items')
-        .select(`
+      const data = await preferredMediaRows('list_items', `
           id,
           list_id,
           title,
@@ -747,24 +751,15 @@ export default function MediaDetail() {
             title,
             is_default
           )
-        `)
-        .eq('external_id', params.id)
-        .eq('external_source', params.source)
-        .eq('user_id', user.id);
-      
-      if (error) {
-        console.error('Error fetching lists containing media:', error);
-        return [];
-      }
-      
-      return data || [];
+        `, true);
+      return data;
     },
     enabled: !!user?.id && !!params?.id && !!params?.source,
   });
 
   // On-demand DNA match: scores THIS title against your taste profile (server-cached)
   const { data: dnaRecMatch } = useQuery({
-    queryKey: ['dna-match-score', user?.id, params?.source, params?.id],
+    queryKey: ['dna-match-score', user?.id, canonicalMediaId, params?.source, params?.id],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return null;
@@ -780,6 +775,7 @@ export default function MediaDetail() {
              scorer_version: MEDIA_MATCH_SCORER_VERSION,
             external_source: params?.source,
             external_id: params?.id,
+             canonical_media_id: canonicalMediaId,
             media_type: params?.type,
             title: (mediaItem as any)?.title,
             creator: (mediaItem as any)?.creator,
@@ -811,7 +807,7 @@ export default function MediaDetail() {
   // Query: is this media in the user's "Currently" list?
   // Uses the same edge function as my-library (handles user ID resolution server-side)
   const { data: currentlyItem, refetch: refetchCurrentlyItem } = useQuery({
-    queryKey: ['currently-item', params?.source, params?.id, user?.id],
+    queryKey: ['currently-item', canonicalMediaId, params?.source, params?.id, user?.id],
     queryFn: async () => {
       if (!user?.id || !session?.access_token || !params?.id || !params?.source) return null;
       const res = await fetch(
@@ -823,7 +819,8 @@ export default function MediaDetail() {
       const currentlyList = (data.lists || []).find((l: any) => l.title === 'Currently');
       if (!currentlyList?.items) return null;
       const match = currentlyList.items.find(
-        (item: any) => item.external_id === params.id && item.external_source === params.source
+        (item: any) => (canonicalMediaId && (item.canonical_media_id === canonicalMediaId || item.canonicalMediaId === canonicalMediaId)) ||
+          (item.external_id === params.id && item.external_source === params.source)
       );
       return match || null;
     },
@@ -968,6 +965,7 @@ export default function MediaDetail() {
             imageUrl: resolvedImageUrl,
             externalId: params?.id,
             externalSource: params?.source,
+            canonical_media_id: canonicalMediaId,
             description: mediaItem.description || null
           },
           rating: null,
@@ -1027,6 +1025,7 @@ export default function MediaDetail() {
             type: "predict",
             media_external_id: params?.id || null,
             media_external_source: params?.source || null,
+            canonical_media_id: canonicalMediaId,
             media_title: mediaItem?.title || null,
             media_type: (mediaItem?.type || params?.type || null),
           }),
@@ -1048,6 +1047,7 @@ export default function MediaDetail() {
           media_type: (mediaItem.type || params?.type || 'movie').toLowerCase(),
           media_external_id: params?.id,
           media_external_source: params?.source || 'tmdb',
+          canonical_media_id: canonicalMediaId,
           image_url: resolvedImageUrl || '',
           fire_votes: 0,
           ice_votes: 0,
@@ -1057,6 +1057,7 @@ export default function MediaDetail() {
             user_id: authUser.id,
             media_external_id: params?.id,
             media_external_source: params?.source || 'tmdb',
+            canonical_media_id: canonicalMediaId,
             media_title: mediaItem.title,
             media_type: (mediaItem.type || params?.type || 'movie').toLowerCase(),
             rating,
@@ -1873,7 +1874,13 @@ export default function MediaDetail() {
                               if (userReview) {
                                 await supabase.from('social_posts').delete().eq('id', userReview.id).eq('user_id', user?.id);
                               }
-                              await supabase.from('media_ratings').delete().eq('media_external_id', params?.id).eq('media_external_source', params?.source).eq('user_id', user?.id);
+                              let deleted = canonicalMediaId
+                                ? await supabase.from('media_ratings').delete().eq('canonical_media_id', canonicalMediaId).eq('user_id', user?.id).select('id')
+                                : { data: [] as any[] };
+                              if (!canonicalMediaId || !deleted.data?.length) {
+                                deleted = await supabase.from('media_ratings').delete().eq('media_external_id', params?.id).eq('media_external_source', params?.source).eq('user_id', user?.id).select('id');
+                              }
+                              if ((deleted as any).error) throw (deleted as any).error;
                               queryClient.invalidateQueries({ queryKey: ['media-social-activity', params?.source, params?.id] });
                               queryClient.invalidateQueries({ queryKey: ['user-media-rating', params?.source, params?.id] });
                               queryClient.invalidateQueries({ queryKey: ['social-feed'] });

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { resolveCanonicalMedia } from '../_shared/canonical-media.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -82,6 +83,17 @@ serve(async (req) => {
       points_reward = 20
     } = body;
     const media_type = normType(rawMediaType);
+    let canonicalMediaId: string | null = null;
+    if (media_external_id && media_external_source && media_title && media_type) {
+      try {
+        canonicalMediaId = (await resolveCanonicalMedia(adminClient, {
+          externalId: media_external_id, externalSource: media_external_source,
+          title: media_title, mediaType: media_type,
+        })).canonicalMediaId;
+      } catch (error) {
+        console.error('Canonical prediction identity resolution failed:', error);
+      }
+    }
 
     // Support both new format (options array) and old format (option_1_label, option_2_label)
     let finalOptions: string[] = [];
@@ -176,6 +188,7 @@ serve(async (req) => {
         media_type: media_type || null,
         media_external_id: media_external_id || null,
         media_external_source: media_external_source || null,
+        ...(canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
         image_url: media_image_url || null,
         contains_spoilers: false
       })

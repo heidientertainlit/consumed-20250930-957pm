@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getOrResolveGenres } from '../_shared/genre-cache.ts';
 import { canonicalizeMany } from '../_shared/genre-taxonomy.ts';
 import { FINGERPRINT_VERSION, getOrResolveMediaFingerprint } from '../_shared/media-fingerprint.ts';
+import { resolveCanonicalMedia } from '../_shared/canonical-media.ts';
 import { buildPrompt } from './prompt.mjs';
 import { scoreMediaMatchV2 } from './v2.mjs';
 import { scoreMediaMatchV3 } from './v3.mjs';
@@ -87,7 +88,7 @@ async function loadAllRatings(admin: any, userId: string): Promise<any[]> {
   for (let from = 0; ; from += HISTORY_PAGE_SIZE) {
     const { data, error } = await admin
       .from('media_ratings')
-      .select('id, media_external_id, media_external_source, media_title, media_type, rating, updated_at')
+      .select('id, media_external_id, media_external_source, canonical_media_id, media_title, media_type, rating, updated_at')
       .eq('user_id', userId)
       .order('updated_at', { ascending: false })
       .order('media_external_source', { ascending: true })
@@ -148,17 +149,58 @@ serve(async (req) => {
       const isV3 = deterministicVersion === 'v3';
       const source = String(external_source);
       const id = String(external_id);
-      const deterministicCacheSource = isV3
-        ? `v3.${FINGERPRINT_VERSION}.${V3_SCORER_REVISION}:${source}`
-        : `v2.2:${source}`;
-      const { data: ownRating, error: ownRatingError } = await admin
-        .from('media_ratings')
-        .select('rating')
-        .eq('user_id', user.id)
-        .eq('media_external_source', source)
-        .eq('media_external_id', id)
-        .maybeSingle();
-      if (ownRatingError) throw ownRatingError;
+      // Canonical resolution is deliberately best-effort: an unavailable or
+      // incomplete identity graph must not change the established provider-key
+      // behavior for a request.
+      let targetCanonical: any = null;
+      if (isV3) {
+        try {
+          targetCanonical = await resolveCanonicalMedia(admin, {
+            externalSource: source,
+            externalId: id,
+            mediaType: String(media_type || ''),
+            title: String(title),
+            creator: creator ? String(creator) : null,
+            description: description ? String(description) : null,
+            genres: canonicalizeMany(genres),
+          });
+        } catch (error) {
+          console.error('Canonical target resolution failed; using provider identity:', error);
+        }
+      }
+      const canonicalMediaId = targetCanonical?.canonicalMediaId || null;
+      const deterministicCacheSource = isV3 && canonicalMediaId
+        ? `v3.${FINGERPRINT_VERSION}.${V3_SCORER_REVISION}:canonical`
+        : isV3
+          ? `v3.${FINGERPRINT_VERSION}.${V3_SCORER_REVISION}:${source}`
+          : `v2.2:${source}`;
+      const deterministicCacheId = isV3 && canonicalMediaId ? canonicalMediaId : id;
+      let ownRating: any = null;
+      if (isV3 && canonicalMediaId) {
+        const { data, error } = await admin
+          .from('media_ratings')
+          .select('rating')
+          .eq('user_id', user.id)
+          .eq('canonical_media_id', canonicalMediaId)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (error) throw error;
+        ownRating = data;
+      }
+      // Retain the provider lookup as a fallback for unresolved canonical
+      // identities and for legacy rating rows that have not been linked yet.
+      if (!ownRating) {
+        const { data, error } = await admin
+          .from('media_ratings')
+          .select('rating')
+          .eq('user_id', user.id)
+          .eq('media_external_source', source)
+          .eq('media_external_id', id)
+          .maybeSingle();
+        if (error) throw error;
+        ownRating = data;
+      }
       if (ownRating) {
         return new Response(JSON.stringify({
           score: null,
@@ -178,7 +220,7 @@ serve(async (req) => {
           .select('score, reason, created_at')
           .eq('user_id', user.id)
           .eq('external_source', deterministicCacheSource)
-          .eq('external_id', id)
+          .eq('external_id', deterministicCacheId)
           .maybeSingle();
         return data;
       };
@@ -206,8 +248,9 @@ serve(async (req) => {
       const reservation = {
         user_id: user.id,
         external_source: deterministicCacheSource,
-        external_id: id,
+        external_id: deterministicCacheId,
         media_type: media_type || null,
+        ...(isV3 && canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
         score: -1,
         reason: 'pending',
         created_at: leaseToken,
@@ -223,7 +266,7 @@ serve(async (req) => {
           .update(reservation)
           .eq('user_id', user.id)
           .eq('external_source', deterministicCacheSource)
-          .eq('external_id', id)
+          .eq('external_id', deterministicCacheId)
           .eq('score', cachedDeterministic.score)
           .eq('created_at', cachedDeterministic.created_at)
           .select('created_at');
@@ -240,7 +283,7 @@ serve(async (req) => {
         await admin.from('media_match_scores').delete()
           .eq('user_id', user.id)
           .eq('external_source', deterministicCacheSource)
-          .eq('external_id', id)
+          .eq('external_id', deterministicCacheId)
           .eq('score', -1)
           .eq('created_at', leaseToken);
       };
@@ -251,7 +294,7 @@ serve(async (req) => {
           : (async () => {
               const { data, error } = await admin
                 .from('media_ratings')
-                .select('media_external_id, media_external_source, media_title, media_type, rating, updated_at')
+                 .select('media_external_id, media_external_source, canonical_media_id, media_title, media_type, rating, updated_at')
                 .eq('user_id', user.id)
                 .order('updated_at', { ascending: false })
                 .limit(200);
@@ -264,10 +307,12 @@ serve(async (req) => {
         ]);
 
         const ratings = ratingRows || [];
-        const equivalentOwnRating = ratings.find((rating: any) =>
-          normalizeMatchText(rating.media_title) === normalizeMatchText(title)
-          && canonicalMediaType(rating.media_type) === canonicalMediaType(media_type)
-        );
+        const equivalentOwnRating = isV3 && canonicalMediaId
+          ? ratings.find((rating: any) => rating.canonical_media_id === canonicalMediaId)
+          : ratings.find((rating: any) =>
+              normalizeMatchText(rating.media_title) === normalizeMatchText(title)
+              && canonicalMediaType(rating.media_type) === canonicalMediaType(media_type)
+            );
         if (equivalentOwnRating) {
           await releaseDeterministicReservation();
           return new Response(JSON.stringify({
@@ -310,7 +355,9 @@ serve(async (req) => {
             mediaType: media_type,
           });
         } else {
-          const targetFingerprint = await getOrResolveMediaFingerprint(admin, {
+          // resolveCanonicalMedia already obtained the persisted enrichment
+          // record. Reuse it so aliases score from the same source metadata.
+          const targetFingerprint = targetCanonical?.fingerprint || await getOrResolveMediaFingerprint(admin, {
             externalSource: source,
             externalId: id,
             mediaType: String(media_type || ''),
@@ -619,13 +666,14 @@ serve(async (req) => {
           .from('media_match_scores')
           .update({
           media_type: media_type || null,
+          ...(isV3 && canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
           score: result.score,
           reason: cacheMetadata,
           created_at: new Date().toISOString(),
         })
           .eq('user_id', user.id)
           .eq('external_source', deterministicCacheSource)
-          .eq('external_id', id)
+          .eq('external_id', deterministicCacheId)
           .eq('score', -1)
           .eq('created_at', leaseToken)
           .select('score');

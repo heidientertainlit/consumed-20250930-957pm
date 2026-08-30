@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { resolveCanonicalMedia } from '../_shared/canonical-media.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -164,6 +165,20 @@ serve(async (req) => {
         room_id
       } = body;
       const media_type = normType(rawMediaType);
+      let canonicalMediaId: string | null = null;
+      if (media_external_id && media_external_source && media_title && media_type) {
+        try {
+          canonicalMediaId = (await resolveCanonicalMedia(adminClient, {
+            externalId: media_external_id,
+            externalSource: media_external_source,
+            title: media_title,
+            mediaType: media_type,
+            creator: media_creator,
+          })).canonicalMediaId;
+        } catch (error) {
+          console.error('Canonical inline-post identity resolution failed:', error);
+        }
+      }
 
       console.log('Inline post type:', type);
       console.log('User:', appUser.id);
@@ -228,6 +243,7 @@ serve(async (req) => {
           media_creator: media_creator || null,
           media_external_id: media_external_id || null,
           media_external_source: media_external_source || null,
+          ...(canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
           visibility,
           contains_spoilers,
           image_url: finalImageUrl
@@ -335,6 +351,7 @@ serve(async (req) => {
           media_type: media_type || null,
           media_external_id: media_external_id || null,
           media_external_source: media_external_source || null,
+          ...(canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
           visibility,
           contains_spoilers,
           image_url: pollImageUrl
@@ -407,6 +424,7 @@ serve(async (req) => {
         image_url: regularPostImageUrl,
         media_external_id: media_external_id || null,
         media_external_source: media_external_source || null,
+        ...(canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
         media_season_number: media_season_number || null,
         media_episode_number: media_episode_number || null,
         media_episode_title: media_episode_title || null,

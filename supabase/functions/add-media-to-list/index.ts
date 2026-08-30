@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { resolveCanonicalMedia } from '../_shared/canonical-media.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -217,13 +218,42 @@ serve(async (req) => {
       }
     }
 
-    const { data: existingItem } = await supabase
-      .from('list_items')
-      .select('id')
-      .eq('list_id', list_id)
-      .eq('external_id', media_external_id)
-      .eq('external_source', media_external_source || 'tmdb')
-      .single();
+    let canonicalMediaId: string | null = null;
+    if (media_external_id && media_external_source && media_title && media_type) {
+      try {
+        canonicalMediaId = (await resolveCanonicalMedia(adminClient, {
+          externalId: media_external_id,
+          externalSource: media_external_source,
+          title: media_title,
+          mediaType: media_type,
+          creator: media_creator,
+          year: requestBody.media_year || requestBody.year || requestBody.release_year,
+        })).canonicalMediaId;
+      } catch (error) {
+        console.error('Canonical resolution failed; preserving provider list write:', error);
+      }
+    }
+
+    let existingItem: any = null;
+    if (canonicalMediaId) {
+      const canonical = await adminClient.from('list_items').select()
+        .eq('user_id', appUser?.id).eq('list_id', list_id)
+        .eq('canonical_media_id', canonicalMediaId).maybeSingle();
+      existingItem = canonical.data;
+    }
+    if (!existingItem) {
+      const legacy = await adminClient.from('list_items').select()
+        .eq('user_id', appUser?.id).eq('list_id', list_id)
+        .eq('external_id', media_external_id)
+        .eq('external_source', media_external_source || 'tmdb')
+        .maybeSingle();
+      existingItem = legacy.data;
+      if (existingItem && canonicalMediaId && existingItem.canonical_media_id !== canonicalMediaId) {
+        const linked = await adminClient.from('list_items')
+          .update({ canonical_media_id: canonicalMediaId }).eq('id', existingItem.id).select().maybeSingle();
+        if (linked.data) existingItem = linked.data;
+      }
+    }
 
     if (existingItem) {
       return new Response(JSON.stringify({
@@ -249,9 +279,7 @@ serve(async (req) => {
       }
     }
 
-    const { data: mediaItem, error: mediaError } = await adminClient
-      .from('list_items')
-      .insert({
+    const listItemPayload = {
         list_id: list_id,
         user_id: appUser?.id,
         title: media_title || 'Untitled',
@@ -260,9 +288,16 @@ serve(async (req) => {
         image_url: finalImageUrl,
         external_id: media_external_id || null,
         external_source: media_external_source || 'tmdb',
+        ...(canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
         ...(media_subtype ? { media_subtype } : {}),
         ...(series_name ? { series_name } : {})
-      })
+      };
+    const listItemWrite = canonicalMediaId
+      ? adminClient.from('list_items').upsert(listItemPayload, {
+          onConflict: 'user_id,list_id,canonical_media_id',
+        })
+      : adminClient.from('list_items').insert(listItemPayload);
+    const { data: mediaItem, error: mediaError } = await listItemWrite
       .select()
       .single();
 
@@ -302,6 +337,7 @@ serve(async (req) => {
           image_url: finalImageUrl,
           media_external_id: media_external_id || null,
           media_external_source: media_external_source || null,
+          ...(canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
           visibility: 'public',
           contains_spoilers: false,
           list_id: list_id // Store list_id for list preview in feed

@@ -1,10 +1,151 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { resolveCanonicalMedia } from '../_shared/canonical-media.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
+
+const CANONICAL_RESOLUTION_CONCURRENCY = 4;
+const CANONICAL_RESOLUTION_LIMIT = 6;
+const KNOWN_CANONICAL_LOOKUP_LIMIT = 30;
+
+function canonicalAdmin() {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!supabaseUrl || !serviceRoleKey) return null;
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
+async function addKnownCanonicalIdentities(results: any[]): Promise<any[]> {
+  const admin = canonicalAdmin();
+  if (!admin) return results;
+  const candidates = results
+    .filter((result) =>
+      result?.type !== 'book_series'
+      && result?.external_source !== 'openai'
+      && result?.external_id != null
+      && typeof result?.external_source === 'string',
+    )
+    .slice(0, KNOWN_CANONICAL_LOOKUP_LIMIT)
+    .map((result) => ({
+      external_source: result.external_source,
+      external_id: String(result.external_id),
+    }));
+  if (!candidates.length) return results;
+  const { data, error } = await admin.rpc('resolve_media_canonical_batch', { p_items: candidates });
+  if (error) {
+    console.error('Known canonical identity lookup failed:', error);
+    return results;
+  }
+  const known = new Map(
+    (data || []).map((row: any) => [
+      `${String(row.external_source).toLowerCase().trim()}:${String(row.external_id).trim()}`,
+      row,
+    ]),
+  );
+  return results.map((result) => {
+    const row = known.get(`${String(result?.external_source || '').toLowerCase().trim()}:${String(result?.external_id || '').trim()}`) as any;
+    return row ? {
+      ...result,
+      canonical_media_id: row.canonical_media_id,
+      source_verified: row.source_verified,
+      verified_metadata: row.source_verified ? row.verified_metadata : null,
+      fingerprint: row.fingerprint,
+    } : result;
+  });
+}
+
+/**
+ * Canonical resolution is deliberately a post-search operation: only results
+ * that survived ranking are eligible, and one failed persistence/enrichment
+ * must never turn a successful provider search into a failed response.
+ */
+async function addCanonicalIdentities(
+  results: any[],
+  options: { limit?: number; trustProviderResult?: boolean; unresolvedOnly?: boolean } = {},
+): Promise<any[]> {
+  const admin = canonicalAdmin();
+  if (!admin) {
+    console.warn('Skipping canonical media resolution: service-role configuration is unavailable');
+    return results;
+  }
+  const enriched = [...results];
+  const candidates = results
+    .map((result, index) => ({ result, index }))
+    // OpenAI fallbacks are suggestions rather than provider evidence. Book
+    // series are synthetic groupings and intentionally remain untouched.
+    .filter(({ result }) =>
+      result?.type !== 'book_series'
+      && result?.external_source !== 'openai'
+      && typeof result?.title === 'string' && result.title.trim()
+      && result?.external_id != null && String(result.external_id).trim()
+      && typeof result?.external_source === 'string' && result.external_source.trim()
+      && (!options.unresolvedOnly || !result.canonical_media_id),
+    )
+    .slice(0, options.limit ?? CANONICAL_RESOLUTION_LIMIT);
+
+  let next = 0;
+  const worker = async () => {
+    while (next < candidates.length) {
+      const candidate = candidates[next++];
+      const item = candidate.result;
+      try {
+        const resolution = await resolveCanonicalMedia(admin, {
+          externalSource: item.external_source,
+          externalId: String(item.external_id),
+          mediaType: item.type,
+          title: item.title,
+          creator: item.creator || null,
+          description: item.description || null,
+          genres: Array.isArray(item.categories)
+            ? item.categories
+            : Array.isArray(item.genres)
+              ? item.genres
+              : item.primaryGenreName ? [item.primaryGenreName] : [],
+          year: item.year || item.release_date || null,
+          verifiedSourceMetadata: options.trustProviderResult ? {
+            title: item.title,
+            creator: item.creator || null,
+            description: item.description || null,
+            subjects: Array.isArray(item.categories) ? item.categories : Array.isArray(item.genres) ? item.genres : [],
+            collection: item.series || item.collection || null,
+            isbn_identifiers: Array.isArray(item.isbn_identifiers) ? item.isbn_identifiers : [],
+            open_library_work_id: item.open_library_work_id || null,
+            release_year: item.year || item.release_date || null,
+          } : undefined,
+        });
+        // Retain every provider field exactly as returned, while making the
+        // source-backed identity data available to downstream callers.
+        enriched[candidate.index] = {
+          ...item,
+          canonical_media_id: resolution.canonicalMediaId,
+          source_verified: resolution.sourceVerified,
+          verified_metadata: resolution.sourceVerified ? resolution.metadata : null,
+          fingerprint: resolution.fingerprint,
+        };
+      } catch (error) {
+        console.error('Canonical media resolution failed:', {
+          source: item.external_source,
+          externalId: item.external_id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from(
+      { length: Math.min(CANONICAL_RESOLUTION_CONCURRENCY, candidates.length) },
+      () => worker(),
+    ),
+  );
+  return enriched;
+}
 
 // Content filter helper
 function isContentAppropriate(item: any, type: string): boolean {
@@ -458,6 +599,13 @@ serve(async (req) => {
 
         // Normalise a title for deduplication (lowercase, strip punctuation/articles)
         const normTitle = (t: string) => t.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+        const googleBookIsbns = (volumeInfo: any): string[] =>
+          Array.isArray(volumeInfo?.industryIdentifiers)
+            ? volumeInfo.industryIdentifiers
+              .filter((identifier: any) => identifier?.type === 'ISBN_10' || identifier?.type === 'ISBN_13')
+              .map((identifier: any) => identifier.identifier)
+              .filter((identifier: unknown): identifier is string => typeof identifier === 'string' && !!identifier)
+            : [];
 
         // --- Fire all book searches in parallel ---
         const gbPrimaryPromise = googleBooksApiKey ? (async () => {
@@ -469,7 +617,7 @@ serve(async (req) => {
             console.log('Google Books (primary) items:', data.items?.length ?? 0);
             return (data.items || []).slice(0, 15).filter((item: any) => item.volumeInfo && isContentAppropriate(item.volumeInfo, 'book')).map((item: any) => {
               const v = item.volumeInfo;
-              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: v.imageLinks?.thumbnail ? v.imageLinks.thumbnail.replace('http://','https://') : (v.imageLinks?.smallThumbnail ? v.imageLinks.smallThumbnail.replace('http://','https://') : ''), external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [] };
+              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: v.imageLinks?.thumbnail ? v.imageLinks.thumbnail.replace('http://','https://') : (v.imageLinks?.smallThumbnail ? v.imageLinks.smallThumbnail.replace('http://','https://') : ''), external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [], isbn_identifiers: googleBookIsbns(v) };
             });
           } catch (e) { console.error('Google Books primary error:', e); return []; }
         })() : Promise.resolve([]);
@@ -483,7 +631,7 @@ serve(async (req) => {
             console.log('Google Books (intitle) items:', data.items?.length ?? 0);
             return (data.items || []).slice(0, 10).filter((item: any) => item.volumeInfo && isContentAppropriate(item.volumeInfo, 'book')).map((item: any) => {
               const v = item.volumeInfo;
-              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: v.imageLinks?.thumbnail ? v.imageLinks.thumbnail.replace('http://','https://') : (v.imageLinks?.smallThumbnail ? v.imageLinks.smallThumbnail.replace('http://','https://') : ''), external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [], _title_match: true };
+              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: v.imageLinks?.thumbnail ? v.imageLinks.thumbnail.replace('http://','https://') : (v.imageLinks?.smallThumbnail ? v.imageLinks.smallThumbnail.replace('http://','https://') : ''), external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [], isbn_identifiers: googleBookIsbns(v), _title_match: true };
             });
           } catch (e) { console.error('Google Books intitle error:', e); return []; }
         })() : Promise.resolve([]);
@@ -524,6 +672,8 @@ serve(async (req) => {
               release_date: book.first_publish_year ? `${book.first_publish_year}` : null,
               edition_count: book.edition_count ?? 0,
               series: book.series?.[0] || null,
+              open_library_work_id: typeof book.key === 'string' ? book.key.replace(/^\/works\//i, '') : null,
+              isbn_identifiers: Array.isArray(book.isbn) ? book.isbn.slice(0, 4) : [],
             }));
           } catch (e) { console.error('Open Library parallel error:', e); return []; }
         })();
@@ -543,7 +693,7 @@ serve(async (req) => {
             console.log('Google Books (base/no-num intitle) items:', data.items?.length ?? 0);
             return (data.items || []).slice(0, 10).filter((item: any) => item.volumeInfo && isContentAppropriate(item.volumeInfo, 'book')).map((item: any) => {
               const v = item.volumeInfo;
-              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: v.imageLinks?.thumbnail ? v.imageLinks.thumbnail.replace('http://','https://') : (v.imageLinks?.smallThumbnail ? v.imageLinks.smallThumbnail.replace('http://','https://') : ''), external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [] };
+              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: v.imageLinks?.thumbnail ? v.imageLinks.thumbnail.replace('http://','https://') : (v.imageLinks?.smallThumbnail ? v.imageLinks.smallThumbnail.replace('http://','https://') : ''), external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [], isbn_identifiers: googleBookIsbns(v) };
             });
           } catch (e) { console.error('Google Books base error:', e); return []; }
         })() : Promise.resolve([]);
@@ -563,6 +713,8 @@ serve(async (req) => {
               description: book.first_sentence?.[0] || '',
               release_date: book.first_publish_year ? `${book.first_publish_year}` : null,
               edition_count: book.edition_count ?? 0, series: book.series?.[0] || null,
+              open_library_work_id: typeof book.key === 'string' ? book.key.replace(/^\/works\//i, '') : null,
+              isbn_identifiers: Array.isArray(book.isbn) ? book.isbn.slice(0, 4) : [],
             }));
           } catch (e) { console.error('Open Library base error:', e); return []; }
         })() : Promise.resolve([]);
@@ -1390,8 +1542,29 @@ serve(async (req) => {
       }
     }
 
+    const knownCanonicalResults = await addKnownCanonicalIdentities(results);
+    // The provider response itself is verified source evidence. Persist all
+    // still-cold final results synchronously using only that response plus
+    // database operations—no external/model calls on the search path.
+    const canonicalResults = await addCanonicalIdentities(knownCanonicalResults, {
+      limit: KNOWN_CANONICAL_LOOKUP_LIMIT,
+      trustProviderResult: true,
+      unresolvedOnly: true,
+    });
+
+    // Persist source-backed identities after the response lifecycle so cold
+    // provider or embedding timeouts can never delay interactive search.
+    // Every mutating endpoint independently resolves identity before writing,
+    // so this is an optimization rather than a correctness dependency.
+    try {
+      // @ts-ignore EdgeRuntime is provided by the Supabase edge environment.
+      EdgeRuntime.waitUntil(addCanonicalIdentities(canonicalResults));
+    } catch (backgroundError) {
+      console.error('Unable to schedule canonical search persistence:', backgroundError);
+    }
+
     return new Response(JSON.stringify({ 
-      results,
+      results: canonicalResults,
       partial: errors.length > 0,
       failedProviders: errors
     }), {
