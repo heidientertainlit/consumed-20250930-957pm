@@ -76,6 +76,7 @@ import DnaCompareFeedCard, { DnaComparePostCard } from "@/components/dna-compare
 import { TodaysPlayNudge } from "@/components/todays-play-nudge";
 import { WhatsYourMove } from "@/components/whats-your-move"; // kept for reference — not currently rendered
 import FeedComposerBar from "@/components/feed-composer-bar";
+import TribeFeedCard from "@/components/tribe-feed-card";
 
 const FEED_REVIEW_TEXT_CLASS = "text-[14px] font-normal leading-snug text-gray-800";
 const feedAffinityRequests = new Map<string, Promise<number | null>>();
@@ -9257,6 +9258,11 @@ export default function Feed() {
 
               {/* UGC slot #1 — second user post, acts as buffer before DNA Clash */}
               {renderPostBatchByIndex(1)}
+
+              {/* Personalized Tribe glimpse — always within the first seven feed items */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
+                <TribeFeedCard />
+              )}
 
               {/* Seen It? — Movies (round 1) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
