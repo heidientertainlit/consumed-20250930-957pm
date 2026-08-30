@@ -37,6 +37,7 @@ type SourceMetadata = {
 export interface MediaFingerprint {
   version: number;
   source_verified: boolean;
+  verification_method?: 'provider_id';
   embedding: number[];
   themes: string[];
   tones: string[];
@@ -56,6 +57,8 @@ export interface MediaFingerprintInput {
   creator?: string | null;
   description?: string | null;
   genres?: string[] | null;
+  /** Require metadata returned directly for this provider ID; never title-search fallback. */
+  requireExactProviderMatch?: boolean;
 }
 
 const text = (value: unknown, max = MAX_TEXT): string | null => {
@@ -214,10 +217,12 @@ async function resolveSource(input: MediaFingerprintInput): Promise<{ metadata: 
     const d = await getJson(`https://www.googleapis.com/books/v1/volumes/${encodeURIComponent(input.externalId)}${key ? `?key=${encodeURIComponent(key)}` : ''}`);
     const v = d?.volumeInfo;
     if (v) return { found: true, metadata: { title: text(v.title, 300) || fallback.title, creator: text((v.authors || []).join(', '), 300) || fallback.creator, description: text(v.description) || fallback.description, subjects: strings(v.categories, 10), keywords: [], collection: text(v.seriesInfo?.bookDisplayNumber, 200), source_url: text(v.infoLink, 500), isbn_identifiers: strings((v.industryIdentifiers || []).filter((i: any) => i?.type === 'ISBN_10' || i?.type === 'ISBN_13').map((i: any) => i.identifier), 4, 20), release_year: releaseYear(v.publishedDate) } };
+    if (input.requireExactProviderMatch) return { metadata: fallback, found: false };
     return await resolveOpenLibraryByTitle(input, fallback);
   } else if (source === 'goodreads') {
     // Goodreads exports provide a stable book ID but no public metadata API.
     // Corroborate the imported title against Open Library before scoring it.
+    if (input.requireExactProviderMatch) return { metadata: fallback, found: false };
     return await resolveOpenLibraryByTitle(input, fallback);
   } else if (source === 'openlibrary' || source === 'open_library') {
     const isbn = /^[0-9Xx-]{10,17}$/.test(input.externalId);
@@ -237,6 +242,7 @@ async function resolveSource(input: MediaFingerprintInput): Promise<{ metadata: 
       work = await getJson(`https://openlibrary.org/works/${encodeURIComponent(id)}.json`);
     }
     if (work) return { found: true, metadata: { title: text(work.title, 300) || fallback.title, creator: text(work.by_statement, 300) || fallback.creator, description: text(typeof work.description === 'string' ? work.description : work.description?.value) || fallback.description, subjects: strings(work.subjects, 12), keywords: strings(work.subject_people, 6), collection: text(work.series?.[0], 200), open_library_work_id: workId, isbn_identifiers: strings([...(edition?.isbn_13 || []), ...(edition?.isbn_10 || []), ...(isbn ? [input.externalId] : [])], 4, 20), release_year: releaseYear(edition?.publish_date || work.first_publish_date) } };
+    if (input.requireExactProviderMatch) return { metadata: fallback, found: false };
     return await resolveOpenLibraryByTitle(input, fallback);
   } else if (source === 'itunes') {
     const d = await getJson(`https://itunes.apple.com/lookup?id=${encodeURIComponent(input.externalId)}&limit=1`);
@@ -273,12 +279,16 @@ async function resolveSource(input: MediaFingerprintInput): Promise<{ metadata: 
   return { metadata: fallback, found: false };
 }
 
-function deterministicFingerprint(metadata: SourceMetadata, sourceVerified: boolean): MediaFingerprint {
+function deterministicFingerprint(
+  metadata: SourceMetadata,
+  sourceVerified: boolean,
+  verificationMethod?: 'provider_id',
+): MediaFingerprint {
   const haystack = [...metadata.subjects, ...metadata.keywords].join(' ').toLowerCase();
   const styles = sourceVerified
     ? VOCAB.styles.filter((v) => haystack.includes(v) || (v === 'science-fiction' && /\bsci[- ]?fi\b/.test(haystack)))
     : [];
-  return { version: FINGERPRINT_VERSION, source_verified: sourceVerified, embedding: [], themes: [], tones: [], audience: [], styles, pacing: [], franchise: sourceVerified ? metadata.collection : null, story_key: null, source_metadata: metadata };
+  return { version: FINGERPRINT_VERSION, source_verified: sourceVerified, verification_method: verificationMethod, embedding: [], themes: [], tones: [], audience: [], styles, pacing: [], franchise: sourceVerified ? metadata.collection : null, story_key: null, source_metadata: metadata };
 }
 
 function controlled(value: unknown, key: ControlledKey): string[] {
@@ -373,6 +383,7 @@ export async function getOrResolveMediaFingerprint(admin: any, input: MediaFinge
     cached?.fingerprint_version === FINGERPRINT_VERSION &&
     cached?.fingerprint &&
     typeof cached.fingerprint.source_verified === 'boolean' &&
+    (!input.requireExactProviderMatch || cached.fingerprint.verification_method === 'provider_id') &&
     age >= 0 &&
     age < ttl
   ) return cached.fingerprint as MediaFingerprint;
@@ -383,7 +394,11 @@ export async function getOrResolveMediaFingerprint(admin: any, input: MediaFinge
       await admin.from('media_fingerprints').upsert({ external_source: source, external_id: id, media_type: text(input.mediaType, 50), fingerprint_version: FINGERPRINT_VERSION, status: 'empty', source_metadata: resolved.metadata, fingerprint, error_message: null, resolved_at: new Date().toISOString(), updated_at: new Date().toISOString() }, { onConflict: 'external_source,external_id' });
       return fingerprint;
     }
-    const base = deterministicFingerprint(resolved.metadata, true);
+    const base = deterministicFingerprint(
+      resolved.metadata,
+      true,
+      input.requireExactProviderMatch ? 'provider_id' : undefined,
+    );
     // Classification, embedding, and the single authoritative identity lookup
     // are independent, so keep enrichment latency bounded to the slowest call.
     const [classified, embedding, authoritativeStoryKey] = await Promise.all([

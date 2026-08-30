@@ -269,6 +269,96 @@ test('unverified metadata remains isolated even when title and creator match', a
   assert.notEqual(second.canonicalMediaId, first.canonicalMediaId);
 });
 
+test('strict catalog resolution creates nothing when provider verification fails', async () => {
+  const admin = new FakeAdmin();
+  seedFingerprint(admin, 'provider_a', 'unverified', fingerprint('Unknown Work', 'Someone', { source_verified: false }));
+  await assert.rejects(() => resolveCanonicalMedia(admin, {
+    externalSource: 'provider_a', externalId: 'unverified', mediaType: 'book', title: 'Unknown Work',
+    requireVerifiedSource: true, allowVerifiedTitleCreatorYear: false,
+  }));
+  assert.equal(admin.tables.canonical_media.length, 0);
+  assert.equal(admin.tables.media_provider_aliases.length, 0);
+});
+
+test('strict catalog resolution never falls back from a Google Books ID to title search', async () => {
+  const admin = new FakeAdmin();
+  const originalFetch = globalThis.fetch;
+  const originalDeno = (globalThis as any).Deno;
+  let fetches = 0;
+  (globalThis as any).Deno = { env: { get: () => null } };
+  globalThis.fetch = async () => {
+    fetches++;
+    return new Response(JSON.stringify({
+      docs: [{ key: '/works/OL999W', title: 'Collision', author_name: ['Wrong Person'] }],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+  try {
+    await assert.rejects(() => resolveCanonicalMedia(admin, {
+      externalSource: 'googlebooks',
+      externalId: 'missing-provider-id',
+      mediaType: 'book',
+      title: 'Collision',
+      creator: 'Right Person',
+      requireVerifiedSource: true,
+      allowVerifiedTitleCreatorYear: false,
+    }), /Provider tuple could not be verified/);
+    assert.equal(fetches, 1);
+    assert.equal(admin.tables.canonical_media.length, 0);
+    assert.equal(admin.tables.media_provider_aliases.length, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+    (globalThis as any).Deno = originalDeno;
+  }
+});
+
+test('strict catalog resolution does not title-search unverifiable Goodreads IDs', async () => {
+  const admin = new FakeAdmin();
+  const originalFetch = globalThis.fetch;
+  let fetches = 0;
+  globalThis.fetch = async () => {
+    fetches++;
+    return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+  try {
+    await assert.rejects(() => resolveCanonicalMedia(admin, {
+      externalSource: 'goodreads',
+      externalId: 'unverifiable-id',
+      mediaType: 'book',
+      title: 'Collision',
+      requireVerifiedSource: true,
+      allowVerifiedTitleCreatorYear: false,
+    }), /Provider tuple could not be verified/);
+    assert.equal(fetches, 0);
+    assert.equal(admin.tables.canonical_media.length, 0);
+    assert.equal(admin.tables.media_provider_aliases.length, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('strict catalog mode does not merge verified title creator year evidence', async () => {
+  const admin = new FakeAdmin();
+  const firstFingerprint = fingerprint('Same Work', 'Same Creator', { releaseYear: 2024 });
+  const secondFingerprint = fingerprint('Same Work', 'Same Creator', { releaseYear: 2024 });
+  firstFingerprint.verification_method = 'provider_id';
+  secondFingerprint.verification_method = 'provider_id';
+  seedFingerprint(admin, 'provider_a', 'one', firstFingerprint);
+  seedFingerprint(admin, 'provider_b', 'two', secondFingerprint);
+  const first = await resolveCanonicalMedia(admin, {
+    externalSource: 'provider_a', externalId: 'one', mediaType: 'book', title: 'Same Work',
+    requireVerifiedSource: true, allowVerifiedTitleCreatorYear: false,
+  });
+  const second = await resolveCanonicalMedia(admin, {
+    externalSource: 'provider_b', externalId: 'two', mediaType: 'book', title: 'Same Work',
+    requireVerifiedSource: true, allowVerifiedTitleCreatorYear: false,
+  });
+  assert.notEqual(first.canonicalMediaId, second.canonicalMediaId);
+  assert.equal(admin.tables.canonical_media[0].release_year, null);
+  assert.equal(admin.tables.canonical_media[1].release_year, null);
+  assert.equal(admin.tables.canonical_media[0].metadata.release_year, 2024);
+  assert.equal(admin.tables.canonical_media[1].metadata.release_year, 2024);
+});
+
 test('reuses the persisted fingerprint and exact alias during a provider outage', async () => {
   const admin = new FakeAdmin();
   seedFingerprint(admin, 'googlebooks', 'cached-id', fingerprint('Cached Book', 'Known Author', {

@@ -1276,6 +1276,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -1639,14 +1640,34 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       lastCommentsPostId.current = post.id;
       hasFetched.current = false;
       setComments([]);
+      setCommentsLoaded(false);
     }
     const isRating = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought';
-    // Auth is restored asynchronously on a cold app load. Do not consume the
-    // one-shot fetch before the token exists, or the card is permanently left
-    // with only the numeric "1 reply" fallback until it is remounted.
-    if (!isRating || !post.id || !session?.access_token || hasFetched.current) return;
+    if (!isRating || !post.id || hasFetched.current) return;
     hasFetched.current = true;
-    fetchComments(post.id).then(data => setComments(data || []));
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    const loadPreview = async (attempt = 0) => {
+      try {
+        const data = await fetchComments(post.id);
+        if (!cancelled) {
+          setComments(data || []);
+          setCommentsLoaded(true);
+        }
+      } catch {
+        if (cancelled) return;
+        if (attempt < 2) {
+          retryTimer = setTimeout(() => loadPreview(attempt + 1), 1000 * (attempt + 1));
+        } else {
+          hasFetched.current = false;
+        }
+      }
+    };
+    loadPreview();
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
   }, [post.id, post.type, session?.access_token]);
 
   const handleSubmitRating = async (rating: number) => {
@@ -2453,8 +2474,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     const hasContent = !!(post.content && post.content.trim());
     const hasRating = (post.rating || 0) > 0;
     const mediaCreator = (post as any)._rawPost?.mediaItems?.[0]?.creator || (post as any).mediaCreator || '';
-    const conversationCount = Math.max(post.comments || 0, comments.length);
-    const uniqueConversationParticipants = comments.filter((comment: any, index: number, allComments: any[]) => {
+    const flattenConversation = (items: any[]): any[] =>
+      items.flatMap((comment: any) => [comment, ...flattenConversation(comment.replies || [])]);
+    const flattenedConversation = flattenConversation(comments);
+    const conversationCount = commentsLoaded
+      ? flattenedConversation.length
+      : Math.max(post.comments || 0, flattenedConversation.length);
+    const uniqueConversationParticipants = flattenedConversation.filter((comment: any, index: number, allComments: any[]) => {
       const participantKey = comment.user?.id || comment.userId || comment.user?.username || comment.username || comment.id;
       return allComments.findIndex((candidate: any) => {
         const candidateKey = candidate.user?.id || candidate.userId || candidate.user?.username || candidate.username || candidate.id;
@@ -2465,9 +2491,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     const conversationLabel = conversationPeopleCount > 0
       ? `${conversationPeopleCount} ${conversationPeopleCount === 1 ? 'person' : 'people'} talking`
       : `${conversationCount} ${conversationCount === 1 ? 'reply' : 'replies'}`;
-    const flattenConversation = (items: any[]): any[] =>
-      items.flatMap((comment: any) => [comment, ...flattenConversation(comment.replies || [])]);
-    const latestReply = flattenConversation(comments)
+    const latestReply = [...flattenedConversation]
       .sort((a: any, b: any) => new Date(b.createdAt || b.created_at || 0).getTime() - new Date(a.createdAt || a.created_at || 0).getTime())[0];
     const latestReplyName = latestReply
       ? formatFeedName(latestReply.user?.displayName, latestReply.user?.username || latestReply.username)
@@ -8340,9 +8364,6 @@ export default function Feed() {
 
   // Fetch comments query with recursive transformation for nested replies
   const fetchComments = async (postId: string) => {
-    // Guests can't fetch comments — return empty instead of throwing
-    if (!session?.access_token) return [];
-
     const isPrediction = isPredictionPost(postId);
     console.log('🔍 Fetching comments for post:', postId, 'isPrediction:', isPrediction);
     
@@ -8353,10 +8374,12 @@ export default function Feed() {
       ? `${baseUrl}/functions/v1/prediction-comments?pool_id=${postId}${includeParam}`
       : `${baseUrl}/functions/v1/social-feed-comments?post_id=${postId}${includeParam}`;
 
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_KEY || '';
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `Bearer ${session?.access_token || anonKey}`,
+        'apikey': anonKey,
         'Content-Type': 'application/json',
       },
     });
@@ -8379,8 +8402,8 @@ export default function Feed() {
       user: {
         id: comment.user_id,
         username: comment.username,
-        displayName: comment.username, // Use username as displayName for now
-        avatar: ''
+        displayName: comment.display_name || comment.username,
+        avatar: comment.avatar || ''
       },
       likesCount: comment.likesCount || 0,
       likedByCurrentUser: comment.isLiked || false,

@@ -51,8 +51,8 @@ serve(async (req) => {
       }
     );
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (req.method !== 'GET' && !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -85,7 +85,7 @@ serve(async (req) => {
           created_at,
           user_id,
           parent_comment_id,
-          users!inner(user_name, email)
+          users!inner(user_name, display_name, first_name, last_name, avatar)
         `)
         .eq('social_post_id', post_id)
         .order('created_at', { ascending: true });
@@ -97,10 +97,19 @@ serve(async (req) => {
         });
       }
 
-      let transformedComments = comments?.map(comment => ({
-        ...comment,
-        username: comment.users?.user_name || comment.users?.email?.split('@')[0]
-      })) || [];
+      let transformedComments = comments?.map(comment => {
+        const profile = comment.users;
+        const displayName = profile?.first_name && profile?.last_name
+          ? `${profile.first_name} ${profile.last_name}`.trim()
+          : profile?.first_name || profile?.display_name || profile?.user_name || '';
+        const { users: _privateProfile, ...safeComment } = comment;
+        return {
+          ...safeComment,
+          username: profile?.user_name || '',
+          display_name: displayName,
+          avatar: profile?.avatar || '',
+        };
+      }) || [];
 
       // Always include vote metadata for comments
       if (comments && comments.length > 0) {
@@ -129,7 +138,7 @@ serve(async (req) => {
           } else if (vote.vote_type === -1) {
             downVoteMap[vote.comment_id] = (downVoteMap[vote.comment_id] || 0) + 1;
           }
-          if (vote.user_id === user.id) {
+          if (user && vote.user_id === user.id) {
             userVoteMap[vote.comment_id] = vote.vote_type === 1 ? 'up' : 'down';
           }
         });
@@ -148,11 +157,13 @@ serve(async (req) => {
           });
 
           // Check which comments current user has liked
-          const { data: userLikes } = await serviceSupabase
-            .from('social_comment_likes')
-            .select('comment_id')
-            .eq('user_id', user.id)
-            .in('comment_id', commentIds);
+          const userLikes = user
+            ? (await serviceSupabase
+                .from('social_comment_likes')
+                .select('comment_id')
+                .eq('user_id', user.id)
+                .in('comment_id', commentIds)).data
+            : [];
 
           const userLikedSet = new Set(userLikes?.map(l => l.comment_id));
 
@@ -204,7 +215,7 @@ serve(async (req) => {
 
       const insertData: any = {
         social_post_id: post_id,
-        user_id: user.id,
+        user_id: user!.id,
         content
       };
 

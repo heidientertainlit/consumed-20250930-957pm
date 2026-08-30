@@ -8,6 +8,10 @@ import {
 export interface CanonicalMediaInput extends MediaFingerprintInput {
   year?: number | string | null;
   verifiedSourceMetadata?: Partial<MediaFingerprint['source_metadata']>;
+  /** Reject provider failures instead of creating an unverified identity. */
+  requireVerifiedSource?: boolean;
+  /** Opt out of weak verified title/creator/year reconciliation. */
+  allowVerifiedTitleCreatorYear?: boolean;
 }
 
 export interface CanonicalMediaResolution {
@@ -15,6 +19,15 @@ export interface CanonicalMediaResolution {
   fingerprint: MediaFingerprint;
   metadata: MediaFingerprint['source_metadata'];
   sourceVerified: boolean;
+}
+
+export class UnverifiedProviderTupleError extends Error {
+  readonly code = 'UNVERIFIED_PROVIDER_TUPLE';
+
+  constructor() {
+    super('Provider tuple could not be verified; no canonical identity was created');
+    this.name = 'UnverifiedProviderTupleError';
+  }
 }
 
 type CanonicalRow = { id: string; release_year?: number | null };
@@ -144,7 +157,13 @@ export async function resolveCanonicalMedia(admin: any, input: CanonicalMediaInp
       open_library_work_id: clean(trusted.open_library_work_id, 50),
       release_year: yearOf(trusted.release_year),
     },
-  } : await getOrResolveMediaFingerprint(admin, { ...input, externalSource, externalId, title });
+  } : await getOrResolveMediaFingerprint(admin, {
+    ...input,
+    externalSource,
+    externalId,
+    title,
+    requireExactProviderMatch: input.requireVerifiedSource === true,
+  });
   if (exact) {
     const { error } = await admin.from('media_fingerprints')
       .update({ canonical_media_id: exact })
@@ -155,6 +174,9 @@ export async function resolveCanonicalMedia(admin: any, input: CanonicalMediaInp
   }
 
   const metadata = fingerprint.source_metadata;
+  if (input.requireVerifiedSource && !fingerprint.source_verified) {
+    throw new UnverifiedProviderTupleError();
+  }
   const creator = clean(metadata.creator || input.creator, 300);
   // Weak title+creator reconciliation requires a year returned by a verified
   // provider lookup. Caller-supplied years are retained only as display hints;
@@ -165,6 +187,16 @@ export async function resolveCanonicalMedia(admin: any, input: CanonicalMediaInp
   const storyKey = fingerprint.source_verified ? clean(fingerprint.story_key, 200) : null;
   const openLibraryWorkId = fingerprint.source_verified ? clean(metadata.open_library_work_id, 50)?.toUpperCase() || null : null;
   const isbn = fingerprint.source_verified ? (metadata.isbn_identifiers || []).map(normalizedIsbn).find(Boolean) || null : null;
+  // Strict backfills intentionally isolate provider tuples that lack an
+  // authoritative cross-provider key. Keep the verified year in metadata, but
+  // do not populate the weak title/creator/year unique-key column because that
+  // would either force a text-based merge or reject the isolated identity.
+  const canonicalReleaseYear = input.allowVerifiedTitleCreatorYear === false
+    && !storyKey
+    && !openLibraryWorkId
+    && !isbn
+    ? null
+    : releaseYear;
 
   let existing: CanonicalRow | null = null;
   for (const [field, value] of [['story_key', storyKey], ['open_library_work_id', openLibraryWorkId], ['isbn_identifier', isbn]] as const) {
@@ -177,7 +209,8 @@ export async function resolveCanonicalMedia(admin: any, input: CanonicalMediaInp
   }
 
   // Weak identity is intentionally gated on evidence from the source lookup.
-  if (!existing && fingerprint.source_verified && normalizedTitle && normalizedCreator && releaseYear !== null) {
+  if (!existing && input.allowVerifiedTitleCreatorYear !== false
+    && fingerprint.source_verified && normalizedTitle && normalizedCreator && releaseYear !== null) {
     const { data, error } = await admin.from('canonical_media')
       .select('id,release_year')
       .eq('source_verified', true)
@@ -194,7 +227,7 @@ export async function resolveCanonicalMedia(admin: any, input: CanonicalMediaInp
       media_type: clean(input.mediaType, 50),
       title: clean(metadata.title, 300) || title,
       creator,
-      release_year: releaseYear,
+      release_year: canonicalReleaseYear,
       normalized_title: normalizedTitle,
       normalized_creator: normalizedCreator || null,
       story_key: storyKey,
@@ -209,7 +242,8 @@ export async function resolveCanonicalMedia(admin: any, input: CanonicalMediaInp
         if (value) canonicalMediaId = (await canonicalByField(admin, field, value))?.id || canonicalMediaId;
         if (canonicalMediaId) break;
       }
-      if (!canonicalMediaId && fingerprint.source_verified && normalizedTitle && normalizedCreator && releaseYear !== null) {
+      if (!canonicalMediaId && input.allowVerifiedTitleCreatorYear !== false
+        && fingerprint.source_verified && normalizedTitle && normalizedCreator && releaseYear !== null) {
         const { data: raced, error: raceError } = await admin.from('canonical_media')
           .select('id')
           .eq('source_verified', true)
