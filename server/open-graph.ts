@@ -268,10 +268,10 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
       .select("display_name,user_name")
       .eq("id", req.params.userId)
       .maybeSingle();
-    const name = compactText(user?.display_name || user?.user_name, 45) || "A friend";
+    const name = compactText(user?.display_name || user?.user_name, 45) || "your friend";
     return responseTags(req, {
-      title: `${name} invited you to Consumed`,
-      description: "Join them to track your entertainment, compare tastes, and build your Entertainment DNA.",
+      title: "What’s your Entertainment DNA?",
+      description: `Join ${name} on Consumed to see what everyone’s watching, reading, and listening to — and compare your Entertainment DNA.`,
     });
   });
 
