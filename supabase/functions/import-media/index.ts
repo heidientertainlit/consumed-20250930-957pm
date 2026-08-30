@@ -88,6 +88,11 @@ function normTitle(t: string): string {
   return (t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
+function cleanBookIdentifier(value: string | undefined): string {
+  const cleaned = String(value || '').replace(/[^0-9Xx]/g, '').toUpperCase();
+  return cleaned.length === 10 || cleaned.length === 13 ? cleaned : '';
+}
+
 async function enrichMovie(item: MediaItem): Promise<void> {
   const tmdbKey = Deno.env.get('TMDB_API_KEY');
   if (!tmdbKey) return;
@@ -127,25 +132,53 @@ async function enrichBook(item: MediaItem): Promise<void> {
     if (item.creator) parts.push(`inauthor:${item.creator}`);
     const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(parts.join(' '))}&maxResults=5${key ? `&key=${key}` : ''}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    if (!res.ok) return;
-    const data = await res.json();
+    const data = res.ok ? await res.json() : null;
     const bare = item.title.replace(/\s*\(.*\)\s*$/, '');
     // Only accept volumes whose title actually matches (Goodreads titles often
     // carry series suffixes, so allow prefix containment either way).
-    const vols = (data.items || []).filter((v: any) => {
+    const vols = (data?.items || []).filter((v: any) => {
       const vt = normTitle(v.volumeInfo?.title || '');
       const bt = normTitle(bare);
       return vt && bt && (vt === bt || vt.startsWith(bt) || bt.startsWith(vt));
     });
     // Prefer an edition that actually has a cover (coverless editions return a gray placeholder).
     const withCover = vols.find((v: any) => v.volumeInfo?.imageLinks?.thumbnail) || vols[0];
-    if (!withCover) return;
-    item.externalId = withCover.id;
-    item.externalSource = 'googlebooks';
-    const thumb = withCover.volumeInfo?.imageLinks?.thumbnail;
-    if (thumb) item.imageUrl = thumb.replace('http://', 'https://');
+    if (withCover) {
+      item.externalId = withCover.id;
+      item.externalSource = 'googlebooks';
+      const thumb = withCover.volumeInfo?.imageLinks?.thumbnail;
+      if (thumb) item.imageUrl = thumb.replace('http://', 'https://');
+      return;
+    }
+
+    // Google Books regularly exhausts its project quota. Fall back to an exact
+    // Open Library title/author match rather than dropping imported ratings.
+    const olRes = await fetch(
+      `https://openlibrary.org/search.json?title=${encodeURIComponent(bare)}&limit=8&fields=key,title,author_name,cover_i`,
+      {
+        signal: AbortSignal.timeout(8000),
+        headers: { 'User-Agent': 'ConsumedApp-Import/1.0' },
+      },
+    );
+    if (!olRes.ok) return;
+    const olData = await olRes.json();
+    const wantedAuthor = normTitle(item.creator || '');
+    const matches = (olData.docs || []).filter((doc: any) => {
+      if (normTitle(doc?.title || '') !== normTitle(bare)) return false;
+      if (!wantedAuthor) return true;
+      return (doc.author_name || []).some((author: string) => {
+        const candidate = normTitle(author);
+        return candidate === wantedAuthor || candidate.includes(wantedAuthor) || wantedAuthor.includes(candidate);
+      });
+    });
+    const match = matches[0];
+    const workId = String(match?.key || '').match(/^\/works\/(OL\d+W)$/i)?.[1];
+    if (!workId) return;
+    item.externalId = workId;
+    item.externalSource = 'openlibrary';
+    if (match.cover_i) item.imageUrl = `https://covers.openlibrary.org/b/id/${match.cover_i}-L.jpg`;
   } catch (e) {
-    console.error('Google Books enrich failed for', item.title, e);
+    console.error('Book catalog enrich failed for', item.title, e);
   }
 }
 
@@ -257,12 +290,15 @@ function parseGoodreads(csvText: string): MediaItem[] {
   const items: MediaItem[] = [];
   
   // Find header indices - Goodreads CSV has columns like: Title, Author, My Rating, Date Read, etc.
-  const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
+  const header = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
   const titleIdx = header.indexOf('title');
   const authorIdx = header.indexOf('author');
   const ratingIdx = header.findIndex(h => h.includes('my rating') || h === 'rating');
   const dateReadIdx = header.findIndex(h => h.includes('date read'));
   const shelfIdx = header.findIndex(h => h.includes('exclusive shelf') || h === 'shelf');
+  const bookIdIdx = header.findIndex(h => h === 'book id' || h === 'bookid');
+  const isbnIdx = header.indexOf('isbn');
+  const isbn13Idx = header.indexOf('isbn13');
   
   console.log('Goodreads headers found:', { titleIdx, authorIdx, ratingIdx, dateReadIdx, shelfIdx });
   
@@ -273,6 +309,10 @@ function parseGoodreads(csvText: string): MediaItem[] {
     if (fields[titleIdx]) {
       const rating = ratingIdx >= 0 ? parseInt(fields[ratingIdx]) || 0 : 0;
       const shelf = shelfIdx >= 0 ? fields[shelfIdx]?.toLowerCase() : 'read';
+      const isbn13 = isbn13Idx >= 0 ? cleanBookIdentifier(fields[isbn13Idx]) : '';
+      const isbn10 = isbnIdx >= 0 ? cleanBookIdentifier(fields[isbnIdx]) : '';
+      const goodreadsId = bookIdIdx >= 0 ? String(fields[bookIdIdx] || '').trim() : '';
+      const catalogId = isbn13 || isbn10;
       
       // Map Goodreads shelves to our list types
       let listType = 'finished';
@@ -287,7 +327,9 @@ function parseGoodreads(csvText: string): MediaItem[] {
         mediaType: 'book',
         creator: fields[authorIdx] || '',
         rating: rating,
-        listType: listType
+        listType: listType,
+        externalId: catalogId || goodreadsId || undefined,
+        externalSource: catalogId ? 'openlibrary' : goodreadsId ? 'goodreads' : undefined,
       });
     }
   }
@@ -543,6 +585,7 @@ serve(async (req) => {
     }
 
     console.log('Import: Parsed items:', mediaItems.length);
+    const parsedRatingItems = mediaItems.filter((item) => Number(item.rating || 0) > 0);
 
     const MAX_ITEMS = 20000;
     if (mediaItems.length > MAX_ITEMS) {
@@ -642,7 +685,6 @@ serve(async (req) => {
           creator: item.creator || '',
           image_url: item.imageUrl || null,
           notes: item.notes || null,
-          rating: item.rating || 0,
           external_id: item.externalId || null,
           // Matched items carry their real catalog source; unmatched keep the
           // legacy 'tmdb_verified' marker so auto-fix doesn't recheck them.
@@ -666,6 +708,53 @@ serve(async (req) => {
     }
 
     console.log('Import: Complete. Success:', successCount, 'Errors:', errorCount);
+
+    // Imported stars are first-class user ratings, not list metadata. Reconcile
+    // them even when every list item was skipped as an existing duplicate.
+    const existingRatingKeys = new Set<string>();
+    {
+      const pageSize = 1000;
+      for (let page = 0; ; page++) {
+        const { data: existingRatings, error: ratingsReadError } = await supabase
+          .from('media_ratings')
+          .select('media_title, media_type')
+          .eq('user_id', appUser.id)
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        if (ratingsReadError) throw ratingsReadError;
+        for (const row of existingRatings || []) {
+          existingRatingKeys.add(`${normTitle(row.media_title)}::${String(row.media_type || '').toLowerCase()}`);
+        }
+        if (!existingRatings || existingRatings.length < pageSize) break;
+      }
+    }
+    const importedRatingRows: Record<string, unknown>[] = [];
+    const queuedRatingKeys = new Set<string>();
+    for (const item of parsedRatingItems) {
+      if (!item.externalId || !item.externalSource) continue;
+      const titleKey = `${normTitle(item.title)}::${item.mediaType.toLowerCase()}`;
+      if (existingRatingKeys.has(titleKey) || queuedRatingKeys.has(titleKey)) continue;
+      queuedRatingKeys.add(titleKey);
+      importedRatingRows.push({
+        user_id: appUser.id,
+        media_external_id: item.externalId,
+        media_external_source: item.externalSource,
+        media_title: item.title,
+        media_type: item.mediaType,
+        rating: item.rating,
+      });
+    }
+    let importedRatingCount = 0;
+    for (let i = 0; i < importedRatingRows.length; i += batchSize) {
+      const { data: insertedRatings, error: ratingInsertError } = await supabase
+        .from('media_ratings')
+        .upsert(importedRatingRows.slice(i, i + batchSize), {
+          onConflict: 'user_id,media_external_id,media_external_source',
+          ignoreDuplicates: true,
+        })
+        .select('id');
+      if (ratingInsertError) throw ratingInsertError;
+      importedRatingCount += insertedRatings?.length || 0;
+    }
 
     // ── Background poster/catalog enrichment ──
     // Runs AFTER the response is sent, so the import itself is never delayed
@@ -732,6 +821,8 @@ serve(async (req) => {
       skipped: skippedCount,
       failed: errorCount,
       total: beforeDedupe,
+      ratingsImported: importedRatingCount,
+      ratingsPreserved: parsedRatingItems.length - importedRatingCount,
       errors: errors.length > 0 ? errors : undefined
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

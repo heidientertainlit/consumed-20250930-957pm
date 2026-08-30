@@ -146,12 +146,30 @@ export function scoreMediaMatchV3({
     }
 
     const semanticSimilarity = cosineSimilarity(candidate.embedding, rating.embedding);
+    const sharedThemeCount = sharedValues(field(candidate, 'themes'), field(rating, 'themes')).length;
+    const sharedToneCount = sharedValues(field(candidate, 'tones'), field(rating, 'tones')).length;
+    const sharedStyleCount = sharedValues(field(candidate, 'styles'), field(rating, 'styles')).length;
+    const corroboratedSameFormatSemantic = Boolean(
+      candidateType
+      && candidateType === ratingType
+      && semanticSimilarity != null
+      && semanticSimilarity >= 0.45
+      && sharedThemeCount >= 2
+      && sharedToneCount >= 2
+      && sharedStyleCount >= 1
+    );
     if (semanticSimilarity != null && semanticSimilarity >= 0.62) {
       const excess = (semanticSimilarity - 0.62) / 0.38;
       weight += 1 + 5 * excess * excess;
       labels.push('semantic embedding');
       substantive = true;
       reliability = Math.max(reliability, 0.56 + 0.36 * excess);
+    } else if (corroboratedSameFormatSemantic) {
+      const excess = (semanticSimilarity - 0.45) / 0.17;
+      weight += 0.8 + 1.7 * excess * excess;
+      labels.push('corroborated semantic embedding');
+      substantive = true;
+      reliability = Math.max(reliability, 0.46 + 0.1 * excess);
     }
 
     for (const [key, traitWeight, label] of traitDefinitions) {

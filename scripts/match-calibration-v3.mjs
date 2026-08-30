@@ -31,6 +31,53 @@ const lowSimilarityAnalogue = scoreMediaMatchV3({
 });
 assert.equal(lowSimilarityAnalogue.score, null, 'low semantic similarity must not expose a score');
 
+const realisticBookAnalogue = scoreMediaMatchV3({
+  ratings: [{
+    title: 'A Related Romance',
+    media_type: 'book',
+    rating: 5,
+    embedding: [0.55, Math.sqrt(1 - 0.55 ** 2)],
+    themes: ['love', 'identity'],
+    tones: ['emotional', 'hopeful'],
+    styles: ['romance', 'drama'],
+    source_verified: true,
+  }],
+  candidate: {
+    title: 'A New Romance',
+    media_type: 'book',
+    embedding: [1, 0],
+    themes: ['love', 'identity'],
+    tones: ['emotional', 'hopeful'],
+    styles: ['romance'],
+    source_verified: true,
+  },
+});
+assert.notEqual(realisticBookAnalogue.score, null, 'same-format semantic evidence may qualify when multiple source-backed facets corroborate it');
+assert.match(realisticBookAnalogue.reason, /A Related Romance/);
+
+const crossFormatModerateAnalogue = scoreMediaMatchV3({
+  ratings: [{
+    title: 'A Related Movie',
+    media_type: 'movie',
+    rating: 5,
+    embedding: [0.55, Math.sqrt(1 - 0.55 ** 2)],
+    themes: ['love', 'identity'],
+    tones: ['emotional', 'hopeful'],
+    styles: ['romance'],
+    source_verified: true,
+  }],
+  candidate: {
+    title: 'A New Romance',
+    media_type: 'book',
+    embedding: [1, 0],
+    themes: ['love', 'identity'],
+    tones: ['emotional', 'hopeful'],
+    styles: ['romance'],
+    source_verified: true,
+  },
+});
+assert.equal(crossFormatModerateAnalogue.score, null, 'moderate corroborated semantic evidence must not cross formats');
+
 const creator = scoreMediaMatchV3({
   ratings: [{ title: 'Arrival', media_type: 'movie', rating: 5, creators: ['Denis Villeneuve'], source_verified: true }],
   candidate: { title: 'Dune', media_type: 'movie', creator: 'Denis Villeneuve', source_verified: true },
@@ -90,6 +137,7 @@ for (const [result, ratedTitle] of [
   [adaptationDislike, 'The Help'],
   [analogue, 'Station Eleven'],
   [creator, 'Arrival'],
+  [realisticBookAnalogue, 'A Related Romance'],
 ]) {
   assert.notEqual(result.score, null);
   assert.ok(result.reason.includes(ratedTitle), `scored reason must cite rated title "${ratedTitle}": ${result.reason}`);

@@ -4,7 +4,7 @@
  * provider text into a small controlled vocabulary.
  */
 
-export const FINGERPRINT_VERSION = 7;
+export const FINGERPRINT_VERSION = 6;
 
 const DAY = 86_400_000;
 const READY_TTL = 30 * DAY;
@@ -207,6 +207,10 @@ async function resolveSource(input: MediaFingerprintInput): Promise<{ metadata: 
     const d = await getJson(`https://www.googleapis.com/books/v1/volumes/${encodeURIComponent(input.externalId)}${key ? `?key=${encodeURIComponent(key)}` : ''}`);
     const v = d?.volumeInfo;
     if (v) return { found: true, metadata: { title: text(v.title, 300) || fallback.title, creator: text((v.authors || []).join(', '), 300) || fallback.creator, description: text(v.description) || fallback.description, subjects: strings(v.categories, 10), keywords: [], collection: text(v.seriesInfo?.bookDisplayNumber, 200), source_url: text(v.infoLink, 500), isbn_identifiers: strings((v.industryIdentifiers || []).filter((i: any) => i?.type === 'ISBN_10' || i?.type === 'ISBN_13').map((i: any) => i.identifier), 4, 20) } };
+    return await resolveOpenLibraryByTitle(input, fallback);
+  } else if (source === 'goodreads') {
+    // Goodreads exports provide a stable book ID but no public metadata API.
+    // Corroborate the imported title against Open Library before scoring it.
     return await resolveOpenLibraryByTitle(input, fallback);
   } else if (source === 'openlibrary' || source === 'open_library') {
     const isbn = /^[0-9Xx-]{10,17}$/.test(input.externalId);

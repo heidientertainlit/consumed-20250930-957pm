@@ -14,7 +14,7 @@ const corsHeaders = {
 };
 
 const CACHE_DAYS = 14;
-const V3_SCORER_REVISION = 6;
+const V3_SCORER_REVISION = 7;
 const HISTORY_PAGE_SIZE = 1000;
 const IN_QUERY_CHUNK_SIZE = 100;
 const BACKFILL_LEASE_STALE_MS = 2 * 60 * 1000;
@@ -541,6 +541,14 @@ serve(async (req) => {
                 .eq('lease_token', backfillLeaseToken);
               throw error;
             }
+          } else {
+            // A previous continuation may have completed between polls. Remove
+            // its now-idle marker once the full-history recheck is clean.
+            await admin.from('media_fingerprint_backfill_leases')
+              .delete()
+              .eq('user_id', user.id)
+              .eq('fingerprint_version', FINGERPRINT_VERSION)
+              .is('lease_token', null);
           }
 
           const ratingsWithFingerprints = ratingsWithGenres.map((rating: any) => {
