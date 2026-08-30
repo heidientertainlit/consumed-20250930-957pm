@@ -2825,7 +2825,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )}
 
           {/* ── Action row: YouTube-style compact pills, tucked up near the content ── */}
-          <div className="flex items-center justify-start gap-1 px-4 pb-3 pt-2" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-start gap-1 px-4 pb-3 pt-3" onClick={(e) => e.stopPropagation()}>
             {/* Like / dislike — grouped with a divider, no background */}
             <div className="flex items-center">
               <button
