@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/og/[...path].ts": {
+      "includeFiles": "dist/public/**"
+    }
+  },
   "headers": [
     {
       "source": "/.well-known/apple-app-site-association",
@@ -18,6 +23,50 @@
     {
       "source": "/.well-known/:path*",
       "destination": "/.well-known/:path*"
+    },
+    {
+      "source": "/invite/:userId",
+      "destination": "/api/og/invite/:userId"
+    },
+    {
+      "source": "/u/:userId",
+      "destination": "/api/og/u/:userId"
+    },
+    {
+      "source": "/post/:postId",
+      "destination": "/api/og/post/:postId"
+    },
+    {
+      "source": "/media/:mediaType/:source/:externalId",
+      "destination": "/api/og/media/:mediaType/:source/:externalId"
+    },
+    {
+      "source": "/people/tribes/:tribeId",
+      "destination": "/api/og/people/tribes/:tribeId"
+    },
+    {
+      "source": "/list/:listId",
+      "destination": "/api/og/list/:listId"
+    },
+    {
+      "source": "/rank/:rankId",
+      "destination": "/api/og/rank/:rankId"
+    },
+    {
+      "source": "/edna/:userId",
+      "destination": "/api/og/edna/:userId"
+    },
+    {
+      "source": "/leaderboard",
+      "destination": "/api/og/leaderboard"
+    },
+    {
+      "source": "/play",
+      "destination": "/api/og/play"
+    },
+    {
+      "source": "/play/:path*",
+      "destination": "/api/og/play/:path*"
     },
     {
       "source": "/:path*",
