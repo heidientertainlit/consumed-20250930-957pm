@@ -4,7 +4,7 @@
  * provider text into a small controlled vocabulary.
  */
 
-export const FINGERPRINT_VERSION = 5;
+export const FINGERPRINT_VERSION = 7;
 
 const DAY = 86_400_000;
 const READY_TTL = 30 * DAY;
@@ -94,6 +94,89 @@ function tmdbTypes(mediaType: string): ('movie' | 'tv')[] {
   return lower.includes('tv') || lower.includes('series') ? ['tv', 'movie'] : ['movie', 'tv'];
 }
 
+const normalizedTitle = (value: unknown): string =>
+  String(value || '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/**
+ * Google Books can exhaust its project quota even for IDs that media search
+ * resolved earlier. In that case, corroborate the title against Open Library
+ * and use only provider-returned metadata. Ambiguous title collisions fail
+ * closed instead of inheriting caller metadata.
+ */
+async function resolveOpenLibraryByTitle(
+  input: MediaFingerprintInput,
+  fallback: SourceMetadata,
+): Promise<{ metadata: SourceMetadata; found: boolean }> {
+  const queryTitle = normalizedTitle(input.title);
+  if (!queryTitle) return { metadata: fallback, found: false };
+  const search = await getJson(
+    `https://openlibrary.org/search.json?title=${encodeURIComponent(input.title)}&limit=8&fields=key,title,author_name,subject,isbn`,
+    { headers: { 'User-Agent': 'ConsumedApp-MediaFingerprint/1.0' } },
+  );
+  const exact = Array.isArray(search?.docs)
+    ? search.docs.filter((doc: any) =>
+        normalizedTitle(doc?.title) === queryTitle
+        && /^\/works\/OL\d+W$/i.test(String(doc?.key || ''))
+      )
+    : [];
+  const creator = normalizedTitle(input.creator);
+  const creatorMatches = creator
+    ? exact.filter((doc: any) =>
+        strings(doc?.author_name, 8, 200).some((name) => {
+          const normalized = normalizedTitle(name);
+          return normalized === creator || normalized.includes(creator) || creator.includes(normalized);
+        })
+      )
+    : [];
+  const candidates = creatorMatches.length > 0 ? creatorMatches : exact;
+  const informative = candidates.filter((doc: any) =>
+    strings(doc?.author_name, 8, 200).length > 0
+    || strings(doc?.subject, 12, 100).length > 0
+  );
+  const informativeAuthors = new Set(
+    informative
+      .map((doc: any) => strings(doc?.author_name, 8, 200).map(normalizedTitle).filter(Boolean).sort().join('|'))
+      .filter(Boolean),
+  );
+  const selected = informative.length === 1
+    ? informative[0]
+    : informative.length > 1 && informativeAuthors.size === 1
+      ? informative[0]
+      : candidates.length === 1
+        ? candidates[0]
+        : null;
+  if (!selected) return { metadata: fallback, found: false };
+
+  const workKey = String(selected.key);
+  const work = await getJson(`https://openlibrary.org${workKey}.json`, {
+    headers: { 'User-Agent': 'ConsumedApp-MediaFingerprint/1.0' },
+  });
+  if (!work) return { metadata: fallback, found: false };
+  const workId = text(workKey.replace(/^\/works\//, ''), 30);
+  return {
+    found: true,
+    metadata: {
+      title: text(work.title || selected.title, 300) || fallback.title,
+      creator: text(strings(selected.author_name, 8, 200).join(', '), 300),
+      description: text(typeof work.description === 'string' ? work.description : work.description?.value),
+      subjects: strings(
+        Array.isArray(work.subjects) && work.subjects.length > 0 ? work.subjects : selected.subject,
+        12,
+      ),
+      keywords: strings(work.subject_people, 6),
+      collection: text(work.series?.[0], 200),
+      source_url: `https://openlibrary.org${workKey}`,
+      open_library_work_id: workId,
+      isbn_identifiers: strings(selected.isbn, 4, 20),
+    },
+  };
+}
+
 async function resolveSource(input: MediaFingerprintInput): Promise<{ metadata: SourceMetadata; found: boolean }> {
   const fallback = initialMetadata(input);
   const source = input.externalSource.toLowerCase();
@@ -124,6 +207,7 @@ async function resolveSource(input: MediaFingerprintInput): Promise<{ metadata: 
     const d = await getJson(`https://www.googleapis.com/books/v1/volumes/${encodeURIComponent(input.externalId)}${key ? `?key=${encodeURIComponent(key)}` : ''}`);
     const v = d?.volumeInfo;
     if (v) return { found: true, metadata: { title: text(v.title, 300) || fallback.title, creator: text((v.authors || []).join(', '), 300) || fallback.creator, description: text(v.description) || fallback.description, subjects: strings(v.categories, 10), keywords: [], collection: text(v.seriesInfo?.bookDisplayNumber, 200), source_url: text(v.infoLink, 500), isbn_identifiers: strings((v.industryIdentifiers || []).filter((i: any) => i?.type === 'ISBN_10' || i?.type === 'ISBN_13').map((i: any) => i.identifier), 4, 20) } };
+    return await resolveOpenLibraryByTitle(input, fallback);
   } else if (source === 'openlibrary' || source === 'open_library') {
     const isbn = /^[0-9Xx-]{10,17}$/.test(input.externalId);
     let work: any = null;
@@ -142,6 +226,7 @@ async function resolveSource(input: MediaFingerprintInput): Promise<{ metadata: 
       work = await getJson(`https://openlibrary.org/works/${encodeURIComponent(id)}.json`);
     }
     if (work) return { found: true, metadata: { title: text(work.title, 300) || fallback.title, creator: text(work.by_statement, 300) || fallback.creator, description: text(typeof work.description === 'string' ? work.description : work.description?.value) || fallback.description, subjects: strings(work.subjects, 12), keywords: strings(work.subject_people, 6), collection: text(work.series?.[0], 200), open_library_work_id: workId, isbn_identifiers: strings([...(edition?.isbn_13 || []), ...(edition?.isbn_10 || []), ...(isbn ? [input.externalId] : [])], 4, 20) } };
+    return await resolveOpenLibraryByTitle(input, fallback);
   } else if (source === 'itunes') {
     const d = await getJson(`https://itunes.apple.com/lookup?id=${encodeURIComponent(input.externalId)}&limit=1`);
     const v = d?.results?.[0];
