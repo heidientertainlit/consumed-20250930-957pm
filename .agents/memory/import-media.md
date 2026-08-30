@@ -10,6 +10,7 @@ description: How the import-media edge fn behaves — dedupe, enrichment, safety
 - Letterboxd ratings are 0.5–5 half-stars → round to 1–5.
 - Goodreads "My Rating" values belong in `media_ratings`, never `list_items`; preserve existing in-app ratings by normalized title and use ISBN/Open Library IDs or stable Goodreads IDs for new rows.
 - **Why:** An older import path parsed 308 Goodreads ratings but discarded them into a nonexistent list column; list membership and user-entered rating evidence must be persisted independently.
+- Historical import certification must replay the parser version that actually ran. The legacy parser split quoted CSV rows on commas, so row counts and points can match while comma-containing titles/authors are malformed.
 - Known residual risks (accepted): read-then-insert dedupe can race across concurrent imports (no DB unique constraint); parseCSVLine doesn't handle quoted fields spanning newlines.
 - **Why:** Heidi is extremely protective of backend data — imports must be insert-only, never update/delete existing rows.
 - Netflix import deliberately not surfaced in UI (Younify planned; Netflix exports are noisy viewing history).
