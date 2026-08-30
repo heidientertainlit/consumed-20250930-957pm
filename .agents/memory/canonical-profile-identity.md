@@ -8,3 +8,7 @@ Resolve canonical profile identity before routing: silently accept complete emai
 **Why:** Competing checks and blanket reconfirmation caused redirect loops and duplicate forms; OAuth still needs an app-specific handle, while verification can delay otherwise-complete email identity.
 
 **How to apply:** Keep confirmation server-managed, username uniqueness case-insensitive, and confirmed handles immutable. Correctable conflicts go to editable setup; transport/database failures show retry.
+
+Returning-user sign-in always lands on Now (`/activity`) and must discard stale saved routes. Only users with genuinely incomplete canonical identity continue into onboarding.
+
+**Why:** Restoring a protected route from a prior session sent established users directly to DNA instead of the expected Now landing page.

@@ -187,13 +187,12 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
         return;
       }
 
-      const returnUrl = sessionStorage.getItem("returnUrl");
-      if (returnUrl) {
-        sessionStorage.removeItem("returnUrl");
-        setLocation(returnUrl);
-      } else {
-        setLocation("/activity");
-      }
+      // A normal returning-user sign-in always starts on Now. Stale protected
+      // routes (for example /dna from a previous session) must not override the
+      // post-login landing page. Incomplete profiles are routed to onboarding
+      // above before reaching this branch.
+      sessionStorage.removeItem("returnUrl");
+      setLocation("/activity");
     };
 
     void redirectAuthenticatedUser();
