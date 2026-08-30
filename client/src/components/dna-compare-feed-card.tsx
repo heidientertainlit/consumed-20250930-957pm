@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { Dna, ArrowRight, Users, X, ChevronLeft, ChevronDown, Loader2, Share2, CheckCircle2, Heart, Zap, Download } from "lucide-react";
+import { Dna, ArrowRight, Users, X, ChevronLeft, Loader2, Share2, CheckCircle2, Heart, Zap, Download } from "lucide-react";
 import { formatFeedName } from "@/lib/feed-name";
 
 /* ── types ─────────────────────────────────────────── */
@@ -528,19 +528,17 @@ export function CompareSheet({
 }
 
 /* ── Main card ──────────────────────────────────────── */
-export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: overlapsProp }: DnaCompareFeedCardProps) {
+export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompareFeedCardProps) {
   const [, setLocation] = useLocation();
   const { session, user, loading: authLoading } = useAuth();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [dynFeatured, setDynFeatured] = useState<CompareUser | null>(null);
-  const [dynOverlaps, setDynOverlaps] = useState<OverlapUser[]>([]);
   const [loadingPersonal, setLoadingPersonal] = useState(true);
   const [noFriends, setNoFriends] = useState(false);
   const [myLabel, setMyLabel] = useState<string | null>(null);
   const [sharedTitles, setSharedTitles] = useState<string[]>([]);
   const [differTitles, setDifferTitles] = useState<{ myTitle: string; friendTitle: string } | null>(null);
   const [sharedGenresFromDna, setSharedGenresFromDna] = useState<string[]>([]);
-  const [othersExpanded, setOthersExpanded] = useState(true);
   const [myAvatar, setMyAvatar] = useState<string | null>(null);
 
   useEffect(() => {
@@ -609,7 +607,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           return;
         }
 
-        const [top, ...rest] = scoredWithReal;
+        const [top] = scoredWithReal;
         const firstName = top.displayName.split(' ')[0];
         setSharedGenresFromDna(top.sharedGenres.slice(0, 3));
         setDynFeatured({
@@ -623,14 +621,6 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           avatarUrl: top.avatarUrl,
         });
 
-        const overlapItems = rest.slice(0, 5).map((r: any) => ({
-          displayName: r.displayName,
-          initials: initials(r.displayName),
-          color: r.color,
-          pct: r.pct,
-          avatarUrl: r.avatarUrl,
-        }));
-        setDynOverlaps(overlapItems);
       } catch (err) {
         console.error('Failed to load DNA compare data', err);
       } finally {
@@ -684,7 +674,6 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
   }, [dynFeatured?.userId, featuredProp?.userId]);
 
   const featured = dynFeatured ?? featuredProp ?? null;
-  const overlaps = dynOverlaps.length > 0 ? dynOverlaps : (overlapsProp ?? []);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [savingImage, setSavingImage] = useState(false);
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
@@ -882,47 +871,6 @@ export default function DnaCompareFeedCard({ featured: featuredProp, overlaps: o
           </div>
         )}
 
-        {/* Others aligned — collapsible avatar strip */}
-        {overlaps.length > 0 && (
-          <div className="mx-4 mb-2 pt-2 border-t border-gray-100">
-            <button
-              className="flex items-center gap-2 w-full"
-              onClick={() => setOthersExpanded(e => !e)}
-            >
-              {/* Stacked avatar circles */}
-              <div className="flex items-center" style={{ marginRight: 2 }}>
-                {overlaps.slice(0, 4).map((u, i) => (
-                  <ProfileAvatar
-                    key={u.displayName}
-                    size={24} color={u.color} avatarUrl={u.avatarUrl} label={u.displayName}
-                    fallback={u.initials} className="border-2 border-white shadow-sm"
-                    style={{ marginLeft: i === 0 ? 0 : -6, zIndex: 10 - i }}
-                  />
-                ))}
-                {overlaps.length > 4 && (
-                  <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold border-2 border-white" style={{ fontSize: 8, marginLeft: -6 }}>
-                    +{overlaps.length - 4}
-                  </div>
-                )}
-              </div>
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest flex-1 text-left">Others aligned</span>
-              <ChevronDown size={12} className={`text-gray-400 transition-transform duration-200 ${othersExpanded ? 'rotate-180' : ''}`} />
-            </button>
-            {othersExpanded && (
-              <div className="mt-2 flex flex-col gap-1.5 pl-1">
-                {overlaps.map((u) => (
-                  <div key={u.displayName} className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-gray-700 flex-1">{formatFeedName(u.displayName)}</span>
-                    {u.pct != null && u.pct > 0 && (
-                      <span className="text-purple-500 text-[10px] font-bold">{u.pct}%</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Button */}
         <div className="px-4 pb-3">
           {noFriends && !featuredProp ? (
@@ -975,8 +923,6 @@ export function DnaComparePostCard({ item }: { item: any }) {
   const [postIsSharing, setPostIsSharing] = useState(false);
   const postShareBlobRef = useReactRef<Blob | null>(null);
   const postCardRef = useReactRef<HTMLDivElement>(null);
-  const [posterOverlaps, setPosterOverlaps] = useState<OverlapUser[]>([]);
-  const [postOthersExpanded, setPostOthersExpanded] = useState(false);
   const [postSharedTitles, setPostSharedTitles] = useState<string[]>([]);
   const [resolvedFriendName, setResolvedFriendName] = useState<string | null>(null);
   const [resolvedFriendAvatar, setResolvedFriendAvatar] = useState<string | null>(null);
@@ -1011,11 +957,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
         if (cancelled) return;
         if (error) { console.error('Failed to load DNA poster alignments', error); return; }
 
-        const friendDnas: any[] = data?.friendDnas ?? [];
         const friendUsers: any[] = data?.friendUsers ?? [];
-        const cmp1: any[] = data?.cmp1 ?? [];
-        const cmp2: any[] = data?.cmp2 ?? [];
-        if (friendDnas.length === 0) return;
 
         const friendId: string | null = cmp?.friend_id || null;
         const friendInfo = friendId
@@ -1033,35 +975,6 @@ export function DnaComparePostCard({ item }: { item: any }) {
           setResolvedFriendName(exactFriendName);
           setResolvedFriendAvatar(friendInfo.avatar ?? null);
         }
-
-        // Build map of friendId → best real match_score from dna_comparisons
-        const cmpMap = new Map<string, number>();
-        const addToCmpMap = (fid: string, score: number) => {
-          if (!cmpMap.has(fid) || score > cmpMap.get(fid)!) cmpMap.set(fid, Math.round(score));
-        };
-        cmp1.forEach((r: any) => addToCmpMap(r.user_id_2, r.match_score));
-        cmp2.forEach((r: any) => addToCmpMap(r.user_id_1, r.match_score));
-
-        // Only friends with a real dna_comparisons score, excluding the post's friend
-        const scored = friendDnas
-          .filter((fd: any) => cmpMap.has(fd.user_id))
-          .map((fd: any, i: number) => {
-            const info = Array.isArray(friendUsers) ? friendUsers.find((u: any) => u.id === fd.user_id) : null;
-            const displayName = formatFeedName(
-              info?.display_name,
-              info?.user_name,
-              info?.first_name,
-              info?.last_name,
-            );
-            return { displayName, pct: cmpMap.get(fd.user_id)!, color: AVATAR_COLORS[i % AVATAR_COLORS.length], userId: fd.user_id, avatarUrl: info?.avatar ?? null };
-          })
-          .filter((u: any) => u.displayName !== exactFriendName)
-          .sort((a: any, b: any) => b.pct - a.pct);
-
-        const overlaps = scored.slice(0, 5).map((r: any) => ({
-          displayName: r.displayName, initials: initials(r.displayName), color: r.color, pct: r.pct, avatarUrl: r.avatarUrl,
-        }));
-        setPosterOverlaps(overlaps);
 
         // friend_id is stored directly in the post content JSON — no name matching needed
         if (friendId && posterId) {
@@ -1204,46 +1117,6 @@ export function DnaComparePostCard({ item }: { item: any }) {
                 </span>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Others aligned — collapsible avatar strip */}
-        {posterOverlaps.length > 0 && (
-          <div className="mx-4 mb-2 pt-2 border-t border-gray-100">
-            <button
-              className="flex items-center gap-2 w-full"
-              onClick={() => setPostOthersExpanded(e => !e)}
-            >
-              <div className="flex items-center">
-                {posterOverlaps.slice(0, 4).map((u, i) => (
-                  <ProfileAvatar
-                    key={u.displayName}
-                    size={24} color={u.color} avatarUrl={u.avatarUrl} label={u.displayName}
-                    fallback={u.initials} className="border-2 border-white shadow-sm"
-                    style={{ marginLeft: i === 0 ? 0 : -6, zIndex: 10 - i }}
-                  />
-                ))}
-                {posterOverlaps.length > 4 && (
-                  <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold border-2 border-white" style={{ fontSize: 8, marginLeft: -6 }}>
-                    +{posterOverlaps.length - 4}
-                  </div>
-                )}
-              </div>
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest flex-1 text-left">Others aligned</span>
-              <ChevronDown size={12} className={`text-gray-400 transition-transform duration-200 ${postOthersExpanded ? 'rotate-180' : ''}`} />
-            </button>
-            {postOthersExpanded && (
-              <div className="mt-2 flex flex-col gap-1.5 pl-1">
-                {posterOverlaps.map((u) => (
-                  <div key={u.displayName} className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-gray-700 flex-1">{formatFeedName(u.displayName)}</span>
-                    {u.pct != null && u.pct > 0 && (
-                      <span className="text-purple-500 text-[10px] font-bold">{u.pct}%</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
