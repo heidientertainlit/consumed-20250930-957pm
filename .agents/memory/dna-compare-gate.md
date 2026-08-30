@@ -16,3 +16,7 @@ description: Item-count threshold for friend DNA comparison and where it's enfor
 **Why:** A comparison exposes names, photos, affinity, genres, and shared titles for two people even though only one person initiates sharing.
 
 **How to apply:** Treat Compare DNA as a friend-scoped feature; use image/text sharing only when the initiating user explicitly chooses it, and do not reintroduce public comparison posts without consent from both people.
+
+**Invite empty state:** When the viewer has no completed friend comparison, use the private Now-feed card to invite a real friend onto Consumed. Match the Tribe-card visual language, show the viewer versus an unknown friend without a fake score, and open the platform invite/share flow directly.
+
+**Why:** The empty state should grow the user’s real friend network and lead toward an authentic pairwise comparison rather than presenting placeholder affinity or passive navigation.

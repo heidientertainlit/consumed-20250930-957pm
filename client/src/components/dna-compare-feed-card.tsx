@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { Dna, ArrowRight, Users, X, ChevronLeft, Loader2, Share2, CheckCircle2, Heart, Zap, Download } from "lucide-react";
+import { Dna, ArrowRight, Users, X, ChevronLeft, Loader2, Share2, CheckCircle2, Heart, Zap, Download, HelpCircle } from "lucide-react";
 import { formatFeedName } from "@/lib/feed-name";
 
 /* ── types ─────────────────────────────────────────── */
@@ -482,6 +482,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompar
   const [differTitles, setDifferTitles] = useState<{ myTitle: string; friendTitle: string } | null>(null);
   const [sharedGenresFromDna, setSharedGenresFromDna] = useState<string[]>([]);
   const [myAvatar, setMyAvatar] = useState<string | null>(null);
+  const [inviteStatus, setInviteStatus] = useState("");
 
   useEffect(() => {
     // Wait for auth to finish loading; skip if not logged in
@@ -620,6 +621,37 @@ export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompar
   const [savingImage, setSavingImage] = useState(false);
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
   const cardRef = useReactRef<HTMLDivElement>(null);
+  const currentUserName = session?.user?.user_metadata?.display_name
+    ? formatFeedName(session.user.user_metadata.display_name, session.user.user_metadata.user_name)
+    : "You";
+  const isInviteEmpty = Boolean(session && user && noFriends && !featuredProp);
+  const inviteUrl = user?.id
+    ? `${(import.meta.env.VITE_APP_URL as string) || window.location.origin}/u/${user.id}`
+    : "";
+
+  const handleInvite = async () => {
+    if (!inviteUrl) return;
+    const title = "Join me on Consumed";
+    const text = "Compare your entertainment taste with mine on Consumed.";
+
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title, text, url: inviteUrl });
+      } catch (error) {
+        if ((error as DOMException)?.name !== "AbortError") {
+          setInviteStatus("Couldn’t open sharing. Try again.");
+        }
+      }
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(`${text}\n${inviteUrl}`);
+      setInviteStatus("Invite link copied.");
+    } catch {
+      setInviteStatus("Copy this invite link: " + inviteUrl);
+    }
+  };
 
   // Show skeleton while loading — prevents null crash on featured.pct etc.
   if (loadingPersonal && !featured) {
@@ -646,14 +678,16 @@ export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompar
             <Dna size={10} className="text-violet-600" />
             <span className="text-violet-600 text-[10px] font-bold uppercase tracking-widest">Compare DNA</span>
           </div>
-          <button
+          {(!isInviteEmpty) && <button
             onClick={() => setShareMenuOpen(v => !v)}
             className="absolute top-2.5 right-3 flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors"
+            aria-expanded={shareMenuOpen}
+            aria-label="Open sharing options"
           >
             <span className="text-[13px] font-medium">Share</span>
             <span className="text-[13px]" aria-hidden="true">→</span>
-          </button>
-          {shareMenuOpen && (
+          </button>}
+          {!isInviteEmpty && shareMenuOpen && (
             <div className="absolute top-9 right-3 z-20 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden w-[170px]">
               <button
                 onClick={() => {
@@ -709,9 +743,33 @@ export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompar
 
         {/* Split card — you (violet) vs friend (amber), match badge centered */}
         <div className="px-3 pt-1 pb-3">
-          {!featured ? (
-            <p className="text-gray-500 text-[13px] font-medium py-2 text-center">No friends to compare with yet.</p>
-          ) : (
+          {isInviteEmpty ? (
+            <div className="px-2 pt-3 pb-2 text-center">
+              <div className="flex items-center justify-center gap-3">
+                <ProfileAvatar
+                  size={54}
+                  color="#8b5cf6"
+                  avatarUrl={myAvatar}
+                  label="Your profile photo"
+                  fallback={currentUserName === "You" ? (user?.email?.[0] ?? "Y").toUpperCase() : initials(currentUserName)}
+                  className="shadow-sm ring-2 ring-[#f7f3ef]"
+                />
+                <div className="w-10 border-t border-dashed border-[#d9d1d9]" />
+                <div
+                  className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-full border border-[#d9d1d9] bg-[#f4f0ef] text-[#6a5576]"
+                  aria-label="A friend to invite"
+                >
+                  <HelpCircle size={23} strokeWidth={1.7} aria-hidden="true" />
+                </div>
+              </div>
+              <h2 className="mt-4 font-serif text-[22px] font-medium leading-[1.12] tracking-[-.025em] text-[#281e34]">
+                Taste is better with company
+              </h2>
+              <p className="mx-auto mt-2 max-w-[285px] text-sm leading-5 text-[#746b78]">
+                Invite a friend to discover where your favorite stories, sounds, and obsessions align.
+              </p>
+            </div>
+          ) : featured ? (
             <div className="flex flex-col items-center pt-4 pb-2">
               {/* Big match number */}
               <span className="font-black leading-none" style={{ fontSize: 38, color: '#7c3aed' }}>{featured.pct}%</span>
@@ -765,7 +823,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompar
                 </div>
               </div>
             </div>
-          )}
+          ) : <p className="text-gray-500 text-[13px] font-medium py-2 text-center">No friends to compare with yet.</p>}
         </div>
 
         {/* Agree / Differ rows */}
@@ -813,14 +871,14 @@ export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompar
           </div>
         )}
 
-        {/* Button */}
-        <div className="px-4 pb-3">
-          {noFriends && !featuredProp ? (
+        {/* Footer action */}
+        <div className={`${isInviteEmpty ? "mt-2 border-t border-[#e6e0df] px-5 pt-4 pb-5" : "px-4 pb-3"}`}>
+          {isInviteEmpty ? (
             <button
-              onClick={() => setLocation("/people?tab=friends")}
-              className="w-full py-2 rounded-full bg-gray-100 text-gray-700 font-semibold text-[13px] hover:bg-gray-200 transition-colors text-center"
+              onClick={handleInvite}
+              className="group inline-flex w-full items-center justify-center gap-1.5 text-sm font-bold text-[#5b367b] transition-colors hover:text-[#402355] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6aa5] focus-visible:ring-offset-2"
             >
-              Add or invite friends →
+              Invite a friend to compare <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
             </button>
           ) : (
             <button
@@ -829,6 +887,12 @@ export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompar
             >
               Compare with a friend →
             </button>
+          )}
+          {isInviteEmpty && <p className="sr-only" aria-live="polite">{inviteStatus}</p>}
+          {isInviteEmpty && inviteStatus.startsWith("Copy this") && (
+            <p className="mt-3 break-all rounded-lg bg-[#f7f3ef] px-3 py-2 text-center text-[11px] leading-4 text-[#67447c]">
+              {inviteStatus}
+            </p>
           )}
         </div>
 
