@@ -484,16 +484,7 @@ export default function DnaClashFeedCard({
           )}
         </button>
 
-        {/* Center: comments */}
-        <button
-          onClick={() => setShowComments(s => !s)}
-          className={`flex items-center gap-1.5 transition-colors ${showComments ? 'text-purple-500' : 'text-gray-400'}`}
-        >
-          <MessageCircle size={16} fill={showComments ? 'currentColor' : 'none'} />
-          {commentCount > 0 && <span className="text-[12px] font-medium">{commentCount}</span>}
-        </button>
-
-        {/* Right: vote CTA or winner result */}
+        {/* Center: vote CTA or winner result */}
         {!voted ? (
           <button
             onClick={() => handleVote(pct1 >= pct2 ? user1.username : user2.username)}
@@ -506,6 +497,15 @@ export default function DnaClashFeedCard({
             {pct1 >= pct2 ? pct1 : pct2}% with {winnerName}
           </span>
         )}
+
+        {/* Right: comments */}
+        <button
+          onClick={() => setShowComments(s => !s)}
+          className={`flex items-center gap-1.5 transition-colors ${showComments ? 'text-purple-500' : 'text-gray-400'}`}
+        >
+          <MessageCircle size={16} fill={showComments ? 'currentColor' : 'none'} />
+          {commentCount > 0 && <span className="text-[12px] font-medium">{commentCount}</span>}
+        </button>
       </div>
 
       {/* ── Voter breakdown ── */}
