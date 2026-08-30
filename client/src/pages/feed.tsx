@@ -77,6 +77,33 @@ import { WhatsYourMove } from "@/components/whats-your-move"; // kept for refere
 import FeedComposerBar from "@/components/feed-composer-bar";
 
 const FEED_REVIEW_TEXT_CLASS = "text-[14px] font-normal leading-snug text-gray-800";
+const feedAffinityRequests = new Map<string, Promise<number | null>>();
+
+function loadFeedPersonAffinity(currentUserId: string, personId: string, token: string) {
+  const key = `${currentUserId}:${personId}`;
+  const existing = feedAffinityRequests.get(key);
+  if (existing) return existing;
+  const request = fetch(
+    `${import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co"}/functions/v1/people-affinity`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "score", person_id: personId }),
+    },
+  )
+    .then(async (response) => {
+      if (!response.ok) throw new Error(`People affinity failed (${response.status})`);
+      const payload = await response.json();
+      return typeof payload?.person?.match_score === "number" ? Math.round(payload.person.match_score) : null;
+    })
+    .catch((error) => {
+      feedAffinityRequests.delete(key);
+      console.error("Failed to load feed person affinity", error);
+      return null;
+    });
+  feedAffinityRequests.set(key, request);
+  return request;
+}
 
 interface SocialPost {
   id: string;
@@ -1517,31 +1544,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     setTasteAlignment(null);
     setAlignmentNudge(false);
     const postUserId = post.user?.id;
-    if (!postUserId || !session?.user?.id || postUserId === session?.user?.id) return;
+    if (!postUserId || !session?.user?.id || !session.access_token || postUserId === session?.user?.id) return;
     const isRatingPost2 = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review';
     if (!isRatingPost2) return;
-    supabase
-      .from('media_ratings')
-      .select('user_id, media_external_id, media_external_source, rating')
-      .in('user_id', [session.user.id, postUserId])
-      .then(({ data }) => {
-        if (!data || data.length < 2) return;
-        const myRatings: Record<string, number> = {};
-        const theirRatings: Record<string, number> = {};
-        data.forEach((r: any) => {
-          const key = `${r.media_external_id}__${r.media_external_source}`;
-          if (r.user_id === session.user.id) myRatings[key] = Number(r.rating);
-          else theirRatings[key] = Number(r.rating);
-        });
-        // Gate on 10 ratings minimum so the score is meaningful
-        if (Object.keys(myRatings).length < 10) { setAlignmentNudge(true); return; }
-        const sharedKeys = Object.keys(myRatings).filter(k => k in theirRatings);
-        if (sharedKeys.length < 2) return;
-        const avgDiff = sharedKeys.reduce((sum, k) => sum + Math.abs(myRatings[k] - theirRatings[k]), 0) / sharedKeys.length;
-        const alignment = Math.round((1 - avgDiff / 4) * 100);
-        setTasteAlignment(Math.max(0, Math.min(100, alignment)));
-      });
-  }, [post.user?.id, session?.user?.id, post.type]);
+    let active = true;
+    loadFeedPersonAffinity(session.user.id, postUserId, session.access_token)
+      .then((score) => { if (active) setTasteAlignment(score); });
+    return () => { active = false; };
+  }, [post.user?.id, session?.user?.id, session?.access_token, post.type]);
 
   // Related ratings: other users who rated the same media
   useEffect(() => {
@@ -3848,29 +3858,14 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   useEffect(() => {
     setTasteAlignment(null);
     const postUserId = post.user?.id;
-    if (!postUserId || !currentUserId || postUserId === currentUserId) return;
+    if (!postUserId || !currentUserId || !session?.access_token || postUserId === currentUserId) return;
     const isRating = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review' || post.type === 'thought';
     if (!isRating) return;
-    supabase
-      .from('media_ratings')
-      .select('user_id, media_external_id, media_external_source, rating')
-      .in('user_id', [currentUserId, postUserId])
-      .then(({ data }) => {
-        if (!data || data.length < 2) return;
-        const myRatings: Record<string, number> = {};
-        const theirRatings: Record<string, number> = {};
-        data.forEach((r: any) => {
-          const key = `${r.media_external_id}__${r.media_external_source}`;
-          if (r.user_id === currentUserId) myRatings[key] = Number(r.rating);
-          else theirRatings[key] = Number(r.rating);
-        });
-        const sharedKeys = Object.keys(myRatings).filter(k => k in theirRatings);
-        if (sharedKeys.length < 2) return;
-        const avgDiff = sharedKeys.reduce((sum, k) => sum + Math.abs(myRatings[k] - theirRatings[k]), 0) / sharedKeys.length;
-        const alignment = Math.round((1 - avgDiff / 4) * 100);
-        setTasteAlignment(Math.max(0, Math.min(100, alignment)));
-      });
-  }, [post.user?.id, currentUserId, post.type]);
+    let active = true;
+    loadFeedPersonAffinity(currentUserId, postUserId, session.access_token)
+      .then((score) => { if (active) setTasteAlignment(score); });
+    return () => { active = false; };
+  }, [post.user?.id, currentUserId, session?.access_token, post.type]);
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;

@@ -2,8 +2,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getOrResolveGenres } from '../_shared/genre-cache.ts';
 import { canonicalizeMany } from '../_shared/genre-taxonomy.ts';
+import { FINGERPRINT_VERSION, getOrResolveMediaFingerprint } from '../_shared/media-fingerprint.ts';
 import { buildPrompt } from './prompt.mjs';
 import { scoreMediaMatchV2 } from './v2.mjs';
+import { scoreMediaMatchV3 } from './v3.mjs';
+import { chunkValues, fingerprintKey, planFingerprintCoverage } from './coverage.mjs';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +14,92 @@ const corsHeaders = {
 };
 
 const CACHE_DAYS = 14;
+const V3_SCORER_REVISION = 6;
+const HISTORY_PAGE_SIZE = 1000;
+const IN_QUERY_CHUNK_SIZE = 100;
+const BACKFILL_LEASE_STALE_MS = 2 * 60 * 1000;
+const normalizeMatchText = (value: unknown) => String(value || '')
+  .toLowerCase()
+  .replace(/&/g, ' and ')
+  .replace(/[^\p{L}\p{N}]+/gu, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
+const canonicalMediaType = (value: unknown) => {
+  const normalized = normalizeMatchText(value);
+  if (normalized.includes('book')) return 'book';
+  if (normalized.includes('movie') || normalized.includes('film')) return 'movie';
+  if (normalized.includes('tv') || normalized.includes('show') || normalized.includes('series')) return 'tv';
+  if (normalized.includes('music') || normalized.includes('track') || normalized.includes('album')) return 'music';
+  if (normalized.includes('podcast')) return 'podcast';
+  if (normalized.includes('youtube') || normalized.includes('video') || normalized.includes('channel')) return 'youtube';
+  if (normalized.includes('game')) return 'game';
+  return normalized;
+};
+
+const fingerprintForScoring = (
+  fingerprint: any,
+  fallback: { title?: unknown; mediaType?: unknown; creator?: unknown; genres?: unknown[] },
+) => {
+  const metadata = fingerprint?.source_metadata || {};
+  const creatorValues = [
+    metadata.creator,
+  ].flatMap((value) => typeof value === 'string' ? value.split(/\s*,\s*/) : []).filter(Boolean);
+  return {
+    source_verified: fingerprint?.source_verified === true,
+    title: metadata.title || fallback.title || '',
+    media_type: fallback.mediaType || '',
+    creators: [...new Set(creatorValues)],
+    genres: canonicalizeMany([
+      ...(Array.isArray(fallback.genres) ? fallback.genres : []),
+      ...(Array.isArray(metadata.subjects) ? metadata.subjects : []),
+    ]),
+    themes: Array.isArray(fingerprint?.themes) ? fingerprint.themes : [],
+    tones: Array.isArray(fingerprint?.tones) ? fingerprint.tones : [],
+    audience: Array.isArray(fingerprint?.audience) ? fingerprint.audience : [],
+    styles: Array.isArray(fingerprint?.styles) ? fingerprint.styles : [],
+    pacing: Array.isArray(fingerprint?.pacing) ? fingerprint.pacing : [],
+    embedding: Array.isArray(fingerprint?.embedding) ? fingerprint.embedding : [],
+    keywords: Array.isArray(metadata.keywords) ? metadata.keywords : [],
+    franchise: fingerprint?.franchise || metadata.collection || null,
+    story_key: fingerprint?.story_key || null,
+  };
+};
+
+async function mapWithConcurrency<T, R>(
+  values: T[],
+  concurrency: number,
+  mapper: (value: T) => Promise<R>,
+): Promise<R[]> {
+  const output = new Array<R>(values.length);
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(concurrency, values.length) }, async () => {
+    while (cursor < values.length) {
+      const index = cursor++;
+      output[index] = await mapper(values[index]);
+    }
+  });
+  await Promise.all(workers);
+  return output;
+}
+
+async function loadAllRatings(admin: any, userId: string): Promise<any[]> {
+  const ratings: any[] = [];
+  for (let from = 0; ; from += HISTORY_PAGE_SIZE) {
+    const { data, error } = await admin
+      .from('media_ratings')
+      .select('id, media_external_id, media_external_source, media_title, media_type, rating, updated_at')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false })
+      .order('media_external_source', { ascending: true })
+      .order('media_external_id', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, from + HISTORY_PAGE_SIZE - 1);
+    if (error) throw error;
+    const page = data || [];
+    ratings.push(...page);
+    if (page.length < HISTORY_PAGE_SIZE) return ratings;
+  }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -52,12 +141,16 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Deterministic v2 is opt-in while it is evaluated. Its cache is namespaced
-    // from v1 so the client can roll back without losing previous AI scores.
-    if (scorer_version === 'v2') {
+    // Deterministic scorers are opt-in and version-namespaced so either can be
+    // rolled back without overwriting the legacy AI scorer or one another.
+    if (scorer_version === 'v2' || scorer_version === 'v3') {
+      const deterministicVersion = String(scorer_version);
+      const isV3 = deterministicVersion === 'v3';
       const source = String(external_source);
       const id = String(external_id);
-      const v2CacheSource = `v2.2:${source}`;
+      const deterministicCacheSource = isV3
+        ? `v3.${FINGERPRINT_VERSION}.${V3_SCORER_REVISION}:${source}`
+        : `v2.2:${source}`;
       const { data: ownRating, error: ownRatingError } = await admin
         .from('media_ratings')
         .select('rating')
@@ -72,39 +165,39 @@ serve(async (req) => {
           rated: true,
           rating: Number(ownRating.rating),
           reason: 'Your actual rating replaces a predicted match.',
-          scorer_version: 'v2',
+          scorer_version: deterministicVersion,
           cached: false,
         }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      const readV2Cache = async () => {
+      const readDeterministicCache = async () => {
         const { data } = await admin
           .from('media_match_scores')
           .select('score, reason, created_at')
           .eq('user_id', user.id)
-          .eq('external_source', v2CacheSource)
+          .eq('external_source', deterministicCacheSource)
           .eq('external_id', id)
           .maybeSingle();
         return data;
       };
-      const cachedV2 = await readV2Cache();
-      const v2Age = cachedV2 ? Date.now() - new Date(cachedV2.created_at).getTime() : Infinity;
-      if (cachedV2?.score >= 0 && v2Age < 24 * 60 * 60 * 1000) {
+      const cachedDeterministic = await readDeterministicCache();
+      const deterministicAge = cachedDeterministic ? Date.now() - new Date(cachedDeterministic.created_at).getTime() : Infinity;
+      if (cachedDeterministic?.score >= 0 && deterministicAge < 24 * 60 * 60 * 1000) {
         let metadata: any = {};
-        try { metadata = JSON.parse(cachedV2.reason || '{}'); } catch { metadata = { reason: cachedV2.reason }; }
+        try { metadata = JSON.parse(cachedDeterministic.reason || '{}'); } catch { metadata = { reason: cachedDeterministic.reason }; }
         return new Response(JSON.stringify({
-          score: cachedV2.score,
+          score: cachedDeterministic.score,
           ...metadata,
-          scorer_version: 'v2',
+          scorer_version: deterministicVersion,
           cached: true,
         }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
-      if (cachedV2?.score < 0 && v2Age < 2 * 60 * 1000) {
-        return new Response(JSON.stringify({ score: null, pending: true, scorer_version: 'v2' }), {
+      if (cachedDeterministic?.score < 0 && deterministicAge < 2 * 60 * 1000) {
+        return new Response(JSON.stringify({ score: null, pending: true, scorer_version: deterministicVersion }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
@@ -112,7 +205,7 @@ serve(async (req) => {
       const leaseToken = new Date().toISOString();
       const reservation = {
         user_id: user.id,
-        external_source: v2CacheSource,
+        external_source: deterministicCacheSource,
         external_id: id,
         media_type: media_type || null,
         score: -1,
@@ -120,60 +213,83 @@ serve(async (req) => {
         created_at: leaseToken,
       };
       let acquiredLease = false;
-      if (!cachedV2) {
+      if (!cachedDeterministic) {
         const { error } = await admin.from('media_match_scores').insert(reservation);
         if (!error) acquiredLease = true;
-        else if (error.code !== '23505') console.error('Failed to reserve v2 score slot:', error);
+        else if (error.code !== '23505') console.error('Failed to reserve deterministic score slot:', error);
       } else {
         const { data, error } = await admin
           .from('media_match_scores')
           .update(reservation)
           .eq('user_id', user.id)
-          .eq('external_source', v2CacheSource)
+          .eq('external_source', deterministicCacheSource)
           .eq('external_id', id)
-          .eq('score', cachedV2.score)
-          .eq('created_at', cachedV2.created_at)
+          .eq('score', cachedDeterministic.score)
+          .eq('created_at', cachedDeterministic.created_at)
           .select('created_at');
-        if (error) console.error('Failed to renew v2 score lease:', error);
+        if (error) console.error('Failed to renew deterministic score lease:', error);
         acquiredLease = Array.isArray(data) && data.length === 1;
       }
       if (!acquiredLease) {
-        return new Response(JSON.stringify({ score: null, pending: true, scorer_version: 'v2' }), {
+        return new Response(JSON.stringify({ score: null, pending: true, scorer_version: deterministicVersion }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      const releaseV2Reservation = async () => {
+      const releaseDeterministicReservation = async () => {
         await admin.from('media_match_scores').delete()
           .eq('user_id', user.id)
-          .eq('external_source', v2CacheSource)
+          .eq('external_source', deterministicCacheSource)
           .eq('external_id', id)
           .eq('score', -1)
           .eq('created_at', leaseToken);
       };
 
       try {
-        const [{ data: ratingRows, error: ratingsError }, resolvedGenres] = await Promise.all([
-          admin
-            .from('media_ratings')
-            .select('media_external_id, media_external_source, media_title, media_type, rating, updated_at')
-            .eq('user_id', user.id)
-            .order('updated_at', { ascending: false })
-            .limit(200),
+        const ratingsPromise = isV3
+          ? loadAllRatings(admin, user.id)
+          : (async () => {
+              const { data, error } = await admin
+                .from('media_ratings')
+                .select('media_external_id, media_external_source, media_title, media_type, rating, updated_at')
+                .eq('user_id', user.id)
+                .order('updated_at', { ascending: false })
+                .limit(200);
+              if (error) throw error;
+              return data || [];
+            })();
+        const [ratingRows, resolvedGenres] = await Promise.all([
+          ratingsPromise,
           getOrResolveGenres(admin, source, id, media_type ? String(media_type) : null),
         ]);
-        if (ratingsError) throw ratingsError;
 
         const ratings = ratingRows || [];
+        const equivalentOwnRating = ratings.find((rating: any) =>
+          normalizeMatchText(rating.media_title) === normalizeMatchText(title)
+          && canonicalMediaType(rating.media_type) === canonicalMediaType(media_type)
+        );
+        if (equivalentOwnRating) {
+          await releaseDeterministicReservation();
+          return new Response(JSON.stringify({
+            score: null,
+            rated: true,
+            rating: Number(equivalentOwnRating.rating),
+            reason: 'Your actual rating replaces a predicted match.',
+            scorer_version: deterministicVersion,
+            cached: false,
+          }), {
+            status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
         const ratingIds = [...new Set(ratings.map((rating: any) => String(rating.media_external_id || '')).filter(Boolean))];
         let genreRows: any[] = [];
-        if (ratingIds.length > 0) {
+        for (const idChunk of chunkValues(ratingIds, IN_QUERY_CHUNK_SIZE)) {
           const { data, error } = await admin
             .from('media_genres')
             .select('external_source, external_id, canonical_genres')
-            .in('external_id', ratingIds);
+            .in('external_id', idChunk);
           if (error) console.error('Failed to load rating genres for v2 scorer:', error);
-          genreRows = data || [];
+          genreRows.push(...(data || []));
         }
         const genreMap = new Map(
           genreRows.map((row: any) => [
@@ -186,16 +302,300 @@ serve(async (req) => {
           genres: genreMap.get(`${rating.media_external_source}:${rating.media_external_id}`) || [],
         }));
         const targetGenres = resolvedGenres.length > 0 ? resolvedGenres : canonicalizeMany(genres);
-        const result = scoreMediaMatchV2({
-          ratings: ratingsWithGenres,
-          mediaGenres: targetGenres,
-          mediaType: media_type,
-        });
+        let result: any;
+        if (!isV3) {
+          result = scoreMediaMatchV2({
+            ratings: ratingsWithGenres,
+            mediaGenres: targetGenres,
+            mediaType: media_type,
+          });
+        } else {
+          const targetFingerprint = await getOrResolveMediaFingerprint(admin, {
+            externalSource: source,
+            externalId: id,
+            mediaType: String(media_type || ''),
+            title: String(title),
+            creator: creator ? String(creator) : null,
+            description: description ? String(description) : null,
+            genres: targetGenres,
+          });
+          const candidate = fingerprintForScoring(targetFingerprint, {
+            title,
+            mediaType: media_type,
+            creator,
+            genres: targetGenres,
+          });
+
+          let cachedFingerprintRows: any[] = [];
+          for (const idChunk of chunkValues(ratingIds, IN_QUERY_CHUNK_SIZE)) {
+            const { data, error } = await admin
+              .from('media_fingerprints')
+              .select('external_source,external_id,fingerprint,fingerprint_version,status,resolved_at')
+              .eq('fingerprint_version', FINGERPRINT_VERSION)
+              .in('external_id', idChunk);
+            if (error) throw error;
+            cachedFingerprintRows.push(...(data || []));
+          }
+          const now = Date.now();
+          const fingerprintMap = new Map(
+            cachedFingerprintRows
+              .filter((row: any) => {
+                const age = now - new Date(row.resolved_at).getTime();
+                const ttl = row.status === 'ready' ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+                return row.fingerprint_version === FINGERPRINT_VERSION
+                  && row.fingerprint
+                  && typeof row.fingerprint.source_verified === 'boolean'
+                  && age >= 0
+                  && age < ttl;
+              })
+              .map((row: any) => [fingerprintKey(row), row.fingerprint])
+          );
+          const coveragePlan = planFingerprintCoverage(ratingsWithGenres, new Set(fingerprintMap.keys()));
+          if (coveragePlan.missingCount > 0) {
+            const backfillLeaseToken = crypto.randomUUID();
+            const leasedAt = new Date().toISOString();
+            const leaseRow = {
+              user_id: user.id,
+              fingerprint_version: FINGERPRINT_VERSION,
+              lease_token: backfillLeaseToken,
+              leased_at: leasedAt,
+            };
+            let ownsBackfillLease = false;
+            const { error: insertLeaseError } = await admin
+              .from('media_fingerprint_backfill_leases')
+              .insert(leaseRow);
+            if (!insertLeaseError) {
+              ownsBackfillLease = true;
+            } else if (insertLeaseError.code === '23505') {
+              const { data: claimed, error: claimError } = await admin
+                .from('media_fingerprint_backfill_leases')
+                .update({ lease_token: backfillLeaseToken, leased_at: leasedAt })
+                .eq('user_id', user.id)
+                .eq('fingerprint_version', FINGERPRINT_VERSION)
+                .is('lease_token', null)
+                .select('lease_token');
+              if (claimError) throw claimError;
+              ownsBackfillLease = Array.isArray(claimed)
+                && claimed.length === 1
+                && claimed[0].lease_token === backfillLeaseToken;
+              if (!ownsBackfillLease) {
+                const staleBefore = new Date(Date.now() - BACKFILL_LEASE_STALE_MS).toISOString();
+                const { data: takenOver, error: takeoverError } = await admin
+                  .from('media_fingerprint_backfill_leases')
+                  .update({ lease_token: backfillLeaseToken, leased_at: leasedAt })
+                  .eq('user_id', user.id)
+                  .eq('fingerprint_version', FINGERPRINT_VERSION)
+                  .not('lease_token', 'is', null)
+                  .lt('leased_at', staleBefore)
+                  .select('lease_token');
+                if (takeoverError) throw takeoverError;
+                ownsBackfillLease = Array.isArray(takenOver)
+                  && takenOver.length === 1
+                  && takenOver[0].lease_token === backfillLeaseToken;
+              }
+            } else {
+              throw insertLeaseError;
+            }
+            if (!ownsBackfillLease) {
+              await releaseDeterministicReservation();
+              return new Response(JSON.stringify({ score: null, pending: true, scorer_version: deterministicVersion }), {
+                status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            }
+
+            try {
+              const enriched = await mapWithConcurrency(coveragePlan.batch, 6, async (rating: any) => {
+                const heartbeat = await admin
+                  .from('media_fingerprint_backfill_leases')
+                  .update({ leased_at: new Date().toISOString() })
+                  .eq('user_id', user.id)
+                  .eq('fingerprint_version', FINGERPRINT_VERSION)
+                  .eq('lease_token', backfillLeaseToken)
+                  .select('lease_token');
+                if (heartbeat.error) throw heartbeat.error;
+                if (!Array.isArray(heartbeat.data) || heartbeat.data.length !== 1) {
+                  throw new Error('Media fingerprint backfill lease was lost');
+                }
+                const fingerprint = await getOrResolveMediaFingerprint(admin, {
+                  externalSource: String(rating.media_external_source),
+                  externalId: String(rating.media_external_id),
+                  mediaType: String(rating.media_type || ''),
+                  title: String(rating.media_title || ''),
+                  genres: rating.genres || [],
+                });
+                return { key: fingerprintKey(rating), fingerprint };
+              });
+              for (const entry of enriched) fingerprintMap.set(entry.key, entry.fingerprint);
+
+              const batchIds = [...new Set(coveragePlan.batch.map((rating: any) => String(rating.media_external_id)))];
+              const { data: persistedRows, error: persistedError } = await admin
+                .from('media_fingerprints')
+                .select('external_source,external_id,fingerprint,fingerprint_version,status,resolved_at')
+                .eq('fingerprint_version', FINGERPRINT_VERSION)
+                .in('external_id', batchIds);
+              if (persistedError) throw persistedError;
+              const persistedNow = Date.now();
+              const persistedKeys = new Set((persistedRows || [])
+                .filter((row: any) => {
+                  const age = persistedNow - new Date(row.resolved_at).getTime();
+                  const ttl = row.status === 'ready' ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+                  return row.fingerprint
+                    && typeof row.fingerprint.source_verified === 'boolean'
+                    && age >= 0
+                    && age < ttl;
+                })
+                .map((row: any) => fingerprintKey(row)));
+              const stillMissing = coveragePlan.batch.some((rating: any) => !persistedKeys.has(fingerprintKey(rating)));
+              if (stillMissing) {
+                const { error: releaseError } = await admin
+                  .from('media_fingerprint_backfill_leases')
+                  .update({ lease_token: null, leased_at: new Date().toISOString() })
+                  .eq('user_id', user.id)
+                  .eq('fingerprint_version', FINGERPRINT_VERSION)
+                  .eq('lease_token', backfillLeaseToken);
+                if (releaseError) throw releaseError;
+                await releaseDeterministicReservation();
+                return new Response(JSON.stringify({ score: null, pending: true, scorer_version: deterministicVersion }), {
+                  status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
+              }
+
+              if (!coveragePlan.completeAfterBatch) {
+                const { data: released, error: releaseError } = await admin
+                  .from('media_fingerprint_backfill_leases')
+                  .update({ lease_token: null, leased_at: new Date().toISOString() })
+                  .eq('user_id', user.id)
+                  .eq('fingerprint_version', FINGERPRINT_VERSION)
+                  .eq('lease_token', backfillLeaseToken)
+                  .select('fingerprint_version');
+                if (releaseError) throw releaseError;
+                if (!Array.isArray(released) || released.length !== 1) {
+                  throw new Error('Media fingerprint backfill lease was lost');
+                }
+                await releaseDeterministicReservation();
+                return new Response(JSON.stringify({ score: null, pending: true, scorer_version: deterministicVersion }), {
+                  status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
+              }
+
+              const finalFingerprintRows: any[] = [];
+              for (const idChunk of chunkValues(ratingIds, IN_QUERY_CHUNK_SIZE)) {
+                const { data, error } = await admin
+                  .from('media_fingerprints')
+                  .select('external_source,external_id,fingerprint,fingerprint_version,status,resolved_at')
+                  .eq('fingerprint_version', FINGERPRINT_VERSION)
+                  .in('external_id', idChunk);
+                if (error) throw error;
+                finalFingerprintRows.push(...(data || []));
+              }
+              const finalNow = Date.now();
+              const finalFingerprintMap = new Map(finalFingerprintRows
+                .filter((row: any) => {
+                  const age = finalNow - new Date(row.resolved_at).getTime();
+                  const ttl = row.status === 'ready' ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+                  return row.fingerprint
+                    && typeof row.fingerprint.source_verified === 'boolean'
+                    && age >= 0
+                    && age < ttl;
+                })
+                .map((row: any) => [fingerprintKey(row), row.fingerprint]));
+              const finalCoveragePlan = planFingerprintCoverage(
+                ratingsWithGenres,
+                new Set(finalFingerprintMap.keys()),
+              );
+              if (finalCoveragePlan.missingCount > 0) {
+                const { data: released, error: releaseError } = await admin
+                  .from('media_fingerprint_backfill_leases')
+                  .update({ lease_token: null, leased_at: new Date().toISOString() })
+                  .eq('user_id', user.id)
+                  .eq('fingerprint_version', FINGERPRINT_VERSION)
+                  .eq('lease_token', backfillLeaseToken)
+                  .select('fingerprint_version');
+                if (releaseError) throw releaseError;
+                if (!Array.isArray(released) || released.length !== 1) {
+                  throw new Error('Media fingerprint backfill lease was lost');
+                }
+                await releaseDeterministicReservation();
+                return new Response(JSON.stringify({ score: null, pending: true, scorer_version: deterministicVersion }), {
+                  status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
+              }
+              for (const [key, fingerprint] of finalFingerprintMap) fingerprintMap.set(key, fingerprint);
+
+              const { data: completed, error: completeError } = await admin
+                .from('media_fingerprint_backfill_leases')
+                .delete()
+                .eq('user_id', user.id)
+                .eq('fingerprint_version', FINGERPRINT_VERSION)
+                .eq('lease_token', backfillLeaseToken)
+                .select('fingerprint_version');
+              if (completeError) throw completeError;
+              if (!Array.isArray(completed) || completed.length !== 1) {
+                throw new Error('Media fingerprint backfill lease was lost');
+              }
+            } catch (error) {
+              await admin.from('media_fingerprint_backfill_leases')
+                .update({ lease_token: null, leased_at: new Date().toISOString() })
+                .eq('user_id', user.id)
+                .eq('fingerprint_version', FINGERPRINT_VERSION)
+                .eq('lease_token', backfillLeaseToken);
+              throw error;
+            }
+          }
+
+          const ratingsWithFingerprints = ratingsWithGenres.map((rating: any) => {
+            const fingerprint = fingerprintMap.get(`${rating.media_external_source}:${rating.media_external_id}`);
+            return {
+              ...rating,
+              ...fingerprintForScoring(fingerprint, {
+                title: rating.media_title,
+                mediaType: rating.media_type,
+                genres: rating.genres,
+              }),
+              rating: Number(rating.rating),
+            };
+          });
+          const [{ data: dnaSignalRows, error: dnaSignalError }, { data: followedRows, error: followedError }] = await Promise.all([
+            admin.from('user_dna_signals')
+              .select('signal_type,signal_value,strength,sources')
+              .eq('user_id', user.id)
+              .neq('signal_type', 'engagement')
+              .order('strength', { ascending: false })
+              .limit(40),
+            admin.from('followed_creators')
+              .select('creator_name')
+              .eq('user_id', user.id)
+              .limit(100),
+          ]);
+          if (dnaSignalError) console.error('Failed to load source-backed DNA signals for v3:', dnaSignalError);
+          if (followedError) console.error('Failed to load followed creators for v3:', followedError);
+          const dnaSignals = (dnaSignalRows || []).flatMap((signal: any) => {
+            const sources = signal.sources || {};
+            if (Number(sources.followed || 0) > 0) {
+              return [{ ...signal, source: 'followed creator', direction: 'positive' }];
+            }
+            if (Number(sources.genre_polls || 0) > 0) {
+              return [{ ...signal, source: 'explicit', direction: 'positive' }];
+            }
+            const rated = Number(sources.rated || 0);
+            const ratedHigh = Number(sources.rated_high || 0);
+            if (rated >= 2 && ratedHigh / rated >= 0.7) {
+              return [{ ...signal, source: 'rated', preference: Math.min(0.6, ratedHigh / rated) }];
+            }
+            return [];
+          });
+          result = scoreMediaMatchV3({
+            ratings: ratingsWithFingerprints,
+            candidate,
+            dnaSignals,
+            followedCreators: (followedRows || []).map((row: any) => row.creator_name).filter(Boolean),
+          });
+        }
         if (typeof result.score !== 'number') {
-          await releaseV2Reservation();
+          await releaseDeterministicReservation();
           return new Response(JSON.stringify({
             ...result,
-            scorer_version: 'v2',
+            scorer_version: deterministicVersion,
             cached: false,
           }), {
             status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -216,27 +616,27 @@ serve(async (req) => {
           created_at: new Date().toISOString(),
         })
           .eq('user_id', user.id)
-          .eq('external_source', v2CacheSource)
+          .eq('external_source', deterministicCacheSource)
           .eq('external_id', id)
           .eq('score', -1)
           .eq('created_at', leaseToken)
           .select('score');
         if (finalizeError) throw finalizeError;
         if (!Array.isArray(finalized) || finalized.length !== 1) {
-          return new Response(JSON.stringify({ score: null, pending: true, scorer_version: 'v2' }), {
+          return new Response(JSON.stringify({ score: null, pending: true, scorer_version: deterministicVersion }), {
             status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
 
         return new Response(JSON.stringify({
           ...result,
-          scorer_version: 'v2',
+          scorer_version: deterministicVersion,
           cached: false,
         }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       } catch (error) {
-        await releaseV2Reservation();
+        await releaseDeterministicReservation();
         throw error;
       }
     }

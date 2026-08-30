@@ -15,7 +15,11 @@
 
 import { canonicalizeMany } from './genre-taxonomy.ts';
 
-export const SUPPORTED_GENRE_SOURCES = ['tmdb', 'googlebooks', 'itunes', 'openlibrary'];
+// `open_library` is still used by existing media rows/callers. Keep it as a
+// distinct cache key while resolving it through the same Open Library adapter.
+export const SUPPORTED_GENRE_SOURCES = ['tmdb', 'googlebooks', 'itunes', 'openlibrary', 'open_library'];
+
+const EMPTY_GENRE_RETRY_TTL_MS = 24 * 60 * 60 * 1000;
 
 function normTmdbType(mediaType: string | null | undefined): 'tv' | 'movie' | null {
   if (!mediaType) return null;
@@ -72,15 +76,63 @@ async function fetchItunesGenres(externalId: string): Promise<string[]> {
 }
 
 async function fetchOpenLibraryGenres(externalId: string): Promise<string[]> {
-  // external_id may be "OL123W", "/works/OL123W", or a full key.
-  const id = String(externalId).replace(/^\/?(works\/)?/i, '').trim();
+  const subjects = (data: any): string[] =>
+    Array.isArray(data?.subjects)
+      ? data.subjects.filter((subject: unknown) => typeof subject === 'string').slice(0, 8)
+      : [];
+
+  const fetchJson = async (path: string): Promise<any | null> => {
+    const res = await fetch(`https://openlibrary.org${path}`);
+    return res.ok ? await res.json() : null;
+  };
+
+  // Open Library accepts ISBN-10 and ISBN-13 at /isbn. Remove formatting before
+  // testing/using one so ISBNs such as "978-1-..." work too.
+  const input = String(externalId).trim();
+  const isbn = input.replace(/^(?:isbn[:\s]*)/i, '').replace(/[\s-]/g, '').toUpperCase();
+  const isIsbn = /^(?:\d{9}[\dX]|\d{13})$/.test(isbn);
+
+  // Callers have stored bare IDs, API keys, and occasionally full OL URLs.
+  let key = input;
   try {
-    const res = await fetch(`https://openlibrary.org/works/${id}.json`);
-    if (res.ok) {
-      const data = await res.json();
-      // subjects can be very long; take the first handful (most relevant)
-      return ((data.subjects ?? []) as string[]).slice(0, 8);
+    if (/^https?:\/\//i.test(key)) key = new URL(key).pathname;
+    key = key.replace(/^https?:\/\/(?:www\.)?openlibrary\.org/i, '')
+      .replace(/^\/+|\/+$/g, '');
+
+    if (isIsbn) {
+      const edition = await fetchJson(`/isbn/${encodeURIComponent(isbn)}.json`);
+      if (!edition) return [];
+
+      // Editions can have their own subjects, but a work's subjects are the
+      // canonical, broader metadata and should take precedence.
+      const workKey = edition.works?.[0]?.key;
+      if (typeof workKey === 'string') {
+        const work = await fetchJson(`/${workKey.replace(/^\/+|\.json$/gi, '')}.json`);
+        const workSubjects = subjects(work);
+        if (workSubjects.length) return workSubjects;
+      }
+      return subjects(edition);
     }
+
+    const id = key.replace(/^(?:works|books|editions)\//i, '').replace(/\.json$/i, '');
+    if (!id) return [];
+
+    if (/^OL\d+M$/i.test(id) || /^(?:books|editions)\//i.test(key)) {
+      const edition = await fetchJson(`/books/${encodeURIComponent(id)}.json`);
+      if (!edition) return [];
+      const workKey = edition.works?.[0]?.key;
+      if (typeof workKey === 'string') {
+        const work = await fetchJson(`/${workKey.replace(/^\/+|\.json$/gi, '')}.json`);
+        const workSubjects = subjects(work);
+        if (workSubjects.length) return workSubjects;
+      }
+      return subjects(edition);
+    }
+
+    // Bare OL...W IDs and /works/OL... keys both resolve as works. Preserve
+    // the previous behavior of treating unknown non-ISBN IDs as work IDs.
+    const work = await fetchJson(`/works/${encodeURIComponent(id)}.json`);
+    return subjects(work);
   } catch (_) { /* skip */ }
   return [];
 }
@@ -96,7 +148,8 @@ export async function resolveRawGenres(
     case 'tmdb':        return await fetchTmdbGenres(externalId, mediaType);
     case 'googlebooks': return await fetchGoogleBooksGenres(externalId);
     case 'itunes':      return await fetchItunesGenres(externalId);
-    case 'openlibrary': return await fetchOpenLibraryGenres(externalId);
+    case 'openlibrary':
+    case 'open_library': return await fetchOpenLibraryGenres(externalId);
     default:            return null; // unsupported — caller falls back
   }
 }
@@ -108,11 +161,21 @@ export async function getCachedGenres(
 ): Promise<string[] | null> {
   const { data } = await svc
     .from('media_genres')
-    .select('canonical_genres')
+    .select('canonical_genres, resolved_at')
     .eq('external_source', source)
     .eq('external_id', externalId)
     .maybeSingle();
-  return data ? (data.canonical_genres as string[]) : null;
+  if (!data) return null;
+
+  const genres = Array.isArray(data.canonical_genres) ? data.canonical_genres as string[] : [];
+  if (genres.length) return genres;
+
+  // Empty results (including transient source/API failures) are written to
+  // avoid request storms, but must be retried eventually as metadata improves.
+  const resolvedAt = Date.parse(data.resolved_at ?? '');
+  const isFreshEmpty = Number.isFinite(resolvedAt) &&
+    Date.now() - resolvedAt < EMPTY_GENRE_RETRY_TTL_MS;
+  return isFreshEmpty ? [] : null;
 }
 
 export async function cacheGenres(

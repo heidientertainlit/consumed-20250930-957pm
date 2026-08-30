@@ -18,7 +18,7 @@
 - [YouTube media type](youtube-media-type.md) — first-class type with media_subtype channel/video; channel add auto-follows creator; never map youtube→tv; UC-regex distinguishes IDs.
 - [Creator follows feed DNA & recs](creator-follows-dna.md) — user_dna_signals is delete-and-reinsert by extract-dna-signals; derive new signal sources there, never write signals elsewhere.
 - [DNA Moment feed cards](dna-moments-cards.md) — cards return null on ANY query error (silent vanish); dna_moments is public-read-only RLS, admin page client writes fail; verify schema vs client filters.
-- [Media match % scoring](media-match-scoring.md) — feed % badge = score-media-match fn; callers send title only, prompt must allow model's own title knowledge; recalibration requires cache wipe.
+- [Media match % scoring](media-match-scoring.md) — signed ratings are authoritative; exact story/creator/semantic evidence may score, generic cross-media traits may not; AI never chooses the number.
 - [Media page DNA match line](media-match-line.md) — never show % match on titles the user rated; blend genre+creator signals normalized to user's top strengths; ≥70% + named evidence or nothing.
 - [Baseline template polls](play-baseline-polls.md) — every media/room Play tab gets 3 template polls stamped via ensure-* fns; play_context column scopes media/room polls (partner_tag reserved for partners).
 - [Goodreads/Letterboxd import](import-media.md) — insert-only, fail-closed dedupe, time-budgeted poster enrichment; never let enrichment time out the import.
@@ -44,3 +44,4 @@
 - [Taste group presentation](taste-group-presentation.md) — present Tribes as unnamed groups connected by recognizable media, simple types, people, and match strength.
 - [Friends and matches](friends-matches.md) — individual relationships share one Friends destination; preserve premium match discovery while keeping accepted friends and management distinct.
 - [Preview webview registration](preview-webview-registration.md) — if port 5000 and proxy are healthy but Preview is unreachable, explicitly re-register the workflow as a port-5000 webview.
+- [Feed person affinity](feed-person-affinity.md) — reviewer % must reuse the authoritative People affinity score; never calculate a separate exact-title-overlap percentage in the feed.

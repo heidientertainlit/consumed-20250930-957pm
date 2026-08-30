@@ -69,7 +69,7 @@ serve(async (req) => {
     if (authError || !user) return json({ error: "Unauthorized" }, 401);
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") return json({ error: "A JSON request body is required" }, 400);
-    if (!["load", "more"].includes(body.action)) return json({ error: "action must be load or more" }, 400);
+    if (!["load", "more", "score"].includes(body.action)) return json({ error: "action must be load, more, or score" }, 400);
 
     const { data: me, error: meError } = await db.from("users").select("id").eq("id", user.id).maybeSingle();
     if (meError || !me) return json({ error: `Could not load your account: ${meError?.message || "account not found"}` }, 500);
@@ -102,6 +102,75 @@ serve(async (req) => {
     };
     if (!readiness.ready) {
       return json({ ready: false, readiness, discoverable: true, bands: serializeBands(emptyBandPeople()), compared_now: 0, has_more: false, next_cursor: null });
+    }
+
+    if (body.action === "score") {
+      const candidateId = String(body.person_id || "");
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(candidateId)) {
+        return json({ error: "person_id must be a valid user ID" }, 400);
+      }
+      const { data: candidates, error: candidateError } = await db.rpc("get_people_affinity_candidate", {
+        p_user_id: myId,
+        p_candidate_id: candidateId,
+      });
+      if (candidateError) return json({ error: `Could not load this person: ${candidateError.message}` }, 500);
+      const candidate = candidates?.[0];
+      if (!candidate) return json({ ready: true, person: null });
+
+      const [userId1, userId2] = pair(myId, candidateId);
+      const freshAfter = new Date().toISOString();
+      const { data: cached, error: cachedError } = await db.from("dna_comparisons")
+        .select("*")
+        .eq("user_id_1", userId1)
+        .eq("user_id_2", userId2)
+        .gte("expires_at", freshAfter)
+        .maybeSingle();
+      if (cachedError) return json({ error: `Could not load cached comparison: ${cachedError.message}` }, 500);
+
+      let comparison = cached?.insights?.algorithm_version === AFFINITY_ALGORITHM_VERSION ? cached : null;
+      if (!comparison) {
+        const [signalsResult, ratingsResult] = await Promise.all([
+          db.from("user_dna_signals")
+            .select("user_id,signal_type,signal_value,strength")
+            .in("user_id", [myId, candidateId]),
+          db.from("media_ratings")
+            .select("user_id,media_title,media_type,media_external_id,media_external_source,rating")
+            .in("user_id", [myId, candidateId])
+            .gte("rating", 4),
+        ]);
+        if (signalsResult.error) return json({ error: `Could not load comparison signals: ${signalsResult.error.message}` }, 500);
+        if (ratingsResult.error) return json({ error: `Could not load shared titles: ${ratingsResult.error.message}` }, 500);
+        const signals = signalsResult.data || [];
+        const evidence = scoreAffinitySignals(
+          signals.filter((signal: any) => signal.user_id === myId),
+          signals.filter((signal: any) => signal.user_id === candidateId),
+        );
+        const row = {
+          user_id_1: userId1,
+          user_id_2: userId2,
+          ...evidence,
+          shared_titles: sharedTitles(ratingsResult.data || [], myId, candidateId),
+          computed_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 86400000).toISOString(),
+        };
+        const { data: saved, error: saveError } = await db.from("dna_comparisons")
+          .upsert(row, { onConflict: "user_id_1,user_id_2" })
+          .select()
+          .single();
+        if (saveError || !saved) return json({ error: `Could not save comparison: ${saveError?.message || "no comparison returned"}` }, 500);
+        comparison = saved;
+      }
+
+      return json({
+        ready: true,
+        person: {
+          id: candidate.id,
+          match_score: Number(comparison.match_score),
+          shared_titles: comparison.shared_titles || [],
+          shared_genres: comparison.shared_genres || [],
+          shared_creators: comparison.shared_creators || [],
+        },
+      });
     }
 
     const { data: candidateRows, error: candidatesError } = await db.rpc("get_people_affinity_candidates", {
