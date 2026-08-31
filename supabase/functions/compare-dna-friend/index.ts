@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { AFFINITY_ALGORITHM_VERSION, scoreAffinitySignals } from '../_shared/affinity-score.ts';
 import { canAccessDnaComparison } from '../_shared/comparison-access.ts';
 
-const SHARED_TITLES_VERSION = 4;
+const SHARED_TITLES_VERSION = 5;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -343,12 +343,14 @@ serve(async (req) => {
         .slice(0, 10)
         .map((item: any) => {
           const userItem: any = userLovedTitles.get(sharedTitleKey(item));
-          const matchingMediaType = String(item.media_type || '').toLowerCase() === String(userItem?.media_type || '').toLowerCase();
+          const routeItem = item.external_id && item.external_source && item.media_type
+            ? item
+            : userItem;
           return {
             title: item.title,
-            media_type: matchingMediaType ? item.media_type : undefined,
-            external_id: item.external_id || userItem?.external_id,
-            external_source: item.external_source || userItem?.external_source,
+            media_type: routeItem?.media_type || item.media_type || userItem?.media_type,
+            external_id: routeItem?.external_id,
+            external_source: routeItem?.external_source,
           };
         });
 
