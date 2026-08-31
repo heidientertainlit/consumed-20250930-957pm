@@ -39,6 +39,7 @@ interface Friend {
 interface ComparisonResult {
   match_score: number;
   shared_genres: string[];
+  shared_creators?: string[];
   shared_titles?: Array<{
     title: string;
     media_type?: string;
@@ -547,6 +548,22 @@ export function CompareSheet({
                       );
                     })}
                   </div>
+                  </div>
+                ) : null}
+
+                {result.shared_creators?.length ? (
+                  <div>
+                    <p className="mb-2 text-[10px] uppercase tracking-widest text-[#918a98]">Creators in common</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {result.shared_creators.slice(0, 2).map((creator) => (
+                        <span
+                          key={creator}
+                          className="rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-medium text-indigo-700"
+                        >
+                          {creator}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 ) : null}
 
