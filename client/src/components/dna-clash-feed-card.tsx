@@ -319,7 +319,7 @@ export default function DnaClashFeedCard({
 
         {/* Media title overlay — left side of banner */}
         <div className="absolute bottom-5 left-5 z-10 w-[58%]">
-          <p className="font-serif text-white text-[22px] leading-[1.05] drop-shadow-lg line-clamp-4">
+          <p className="font-serif text-white text-[18px] leading-[1.08] drop-shadow-lg line-clamp-4">
             {mediaTitle}
           </p>
         </div>
@@ -346,7 +346,7 @@ export default function DnaClashFeedCard({
       <div className="px-4 pt-4 pb-2">
 
         {/* Headline */}
-        <p className="text-gray-900 font-black text-[20px] leading-tight text-center">Same {mediaTypeLabel}. Different Takes.</p>
+        <p className="font-serif text-gray-900 text-[22px] leading-tight text-center">Same {mediaTypeLabel}. Different Takes.</p>
         <p className="text-gray-400 text-[13px] text-center mt-1 mb-4">Whose side are you on?</p>
 
         {/* Users row */}
@@ -368,7 +368,7 @@ export default function DnaClashFeedCard({
             <span className="font-bold text-gray-900 text-[14px] leading-tight">{name1}</span>
             <span className="text-purple-500 text-[11px] font-semibold leading-tight text-center">{user1.dnaLabel}</span>
             {/* Rating */}
-            <div className="font-serif text-[27px] leading-none text-purple-600">
+            <div className="text-[27px] font-bold leading-none text-purple-600">
               {Number(user1.rating).toFixed(1)} <span aria-hidden="true">★</span>
             </div>
           </div>
@@ -395,7 +395,7 @@ export default function DnaClashFeedCard({
             </div>
             <span className="font-bold text-gray-900 text-[14px] leading-tight">{name2}</span>
             <span className="text-pink-500 text-[11px] font-semibold leading-tight text-center">{user2.dnaLabel}</span>
-            <div className="font-serif text-[27px] leading-none text-pink-500">
+            <div className="text-[27px] font-bold leading-none text-pink-500">
               {Number(user2.rating).toFixed(1)} <span aria-hidden="true">★</span>
             </div>
           </div>
