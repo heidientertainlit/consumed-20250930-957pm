@@ -382,52 +382,45 @@ export function CompareSheet({
 
   return createPortal(
     <div
-      className="fixed inset-0 flex items-end justify-center"
-      style={{ background: "rgba(0,0,0,0.72)", zIndex: 10000 }}
-      onClick={onClose}
+      className="fixed inset-0 flex justify-center bg-white"
+      style={{ zIndex: 10000 }}
     >
       <div
-        className="w-full max-w-md rounded-t-3xl flex flex-col"
-        style={{
-          background: "linear-gradient(160deg, #0f0a2e 0%, #1a1050 55%, #1e1460 100%)",
-          maxHeight: "82vh",
-        }}
-        onClick={(e) => e.stopPropagation()}
+        className="flex min-h-[100dvh] w-full max-w-md flex-col bg-white"
       >
-        {/* Handle + header */}
-        <div className="px-5 pt-4 pb-3 flex flex-col gap-3 shrink-0">
-          <div className="w-10 h-1 rounded-full bg-white/20 mx-auto" />
+        {/* Header */}
+        <div className="shrink-0 border-b border-[#eeeaf1] px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {step === "result" && (
                 <button
                   onClick={() => { setStep("pick"); setResult(null); setSelected(null); }}
-                  className="p-1 rounded-full bg-white/10 text-white/60 hover:text-white transition-colors"
+                  className="rounded-full p-1.5 text-[#665d6d] transition-colors hover:bg-[#f5f2f7] hover:text-[#30203f]"
                 >
-                  <ChevronLeft size={16} />
+                  <ChevronLeft size={20} />
                 </button>
               )}
-              <span className="text-white font-bold text-[17px]">
+              <span className="text-[18px] font-bold text-[#30203f]">
                 {step === "result" ? `You vs ${friendLabel(selected!)}` : "Compare DNA"}
               </span>
             </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-full bg-white/10 text-white/50 hover:text-white transition-colors"
+              className="rounded-full bg-[#f5f2f7] p-2 text-[#665d6d] transition-colors hover:text-[#30203f]"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto flex-1 px-5 pb-8">
+        <div className="flex-1 overflow-y-auto px-6 pb-[max(2rem,env(safe-area-inset-bottom))]">
 
           {/* Loading friends */}
           {step === "loading-friends" && (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <Loader2 className="animate-spin text-purple-400" size={28} />
-              <p className="text-white/50 text-[13px]">Loading your friends…</p>
+              <p className="text-[13px] text-[#918a98]">Loading your friends…</p>
             </div>
           )}
 
@@ -435,7 +428,7 @@ export function CompareSheet({
           {step === "comparing" && (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <Loader2 className="animate-spin text-purple-400" size={28} />
-              <p className="text-white/50 text-[13px]">
+              <p className="text-[13px] text-[#918a98]">
                 Comparing your DNA with {selected ? friendLabel(selected) : ""}…
               </p>
             </div>
@@ -445,8 +438,8 @@ export function CompareSheet({
           {step === "no-friends" && (
             <div className="flex flex-col items-center text-center py-10 gap-3">
               <Users size={32} className="text-white/20" />
-              <p className="text-white/70 font-semibold text-[15px]">No friends with DNA yet</p>
-              <p className="text-white/40 text-[12px] max-w-[260px]">
+              <p className="text-[15px] font-semibold text-[#30203f]">No friends with DNA yet</p>
+              <p className="max-w-[260px] text-[12px] text-[#918a98]">
                 Your friends need to build their Entertainment DNA before you can compare. Nudge them!
               </p>
             </div>
@@ -467,72 +460,62 @@ export function CompareSheet({
 
           {/* Friend picker */}
           {step === "pick" && (
-            <div className="flex flex-col gap-5 pt-1">
-              {friends.some((friend) => friend.comparisonStatus === "ready") && (
-                <div className="flex flex-col gap-2">
-                  <p className="text-emerald-300/80 text-[11px] uppercase tracking-widest mb-1">
-                    Ready to compare
-                  </p>
-                  {friends.filter((friend) => friend.comparisonStatus === "ready").map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => handlePick(f)}
-                  className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 hover:border-purple-500/50 hover:bg-white/5 transition-all text-left"
-                >
-                  <FriendAvatar friend={f} size={40} />
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-white font-semibold text-[14px] truncate">
-                      {friendLabel(f)}
-                    </span>
-                    <span className="text-white/40 text-[11px]">@{f.user_name}</span>
-                  </div>
-                  <ArrowRight size={16} className="text-white/30 ml-auto shrink-0" />
-                </button>
-                  ))}
-                </div>
-              )}
-              {friends.some((friend) => friend.comparisonStatus !== "ready") && (
-                <div className="flex flex-col gap-2">
-                  <div className="mb-1">
-                    <p className="text-white/40 text-[11px] uppercase tracking-widest">
-                      Still developing
-                    </p>
-                    <p className="mt-1 text-white/35 text-[11px]">
-                      You both need more positive history and a title in common.
-                    </p>
-                  </div>
-                  {friends.filter((friend) => friend.comparisonStatus !== "ready").map((f) => (
-                    <div
-                      key={f.id}
-                      className="flex items-center gap-3 p-3 rounded-2xl border border-white/5 bg-white/[0.025] text-left opacity-65"
-                    >
-                      <FriendAvatar friend={f} size={40} />
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-white/75 font-semibold text-[14px] truncate">
+            <div className="flex flex-col pt-3">
+              {friends.map((f) => {
+                const ready = f.comparisonStatus === "ready";
+                const content = (
+                  <>
+                    <FriendAvatar friend={f} size={44} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="truncate text-[15px] font-semibold text-[#30203f]">
                           {friendLabel(f)}
                         </span>
-                        <span className="text-white/35 text-[11px]">@{f.user_name}</span>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[.08em] ${
+                          ready
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-[#f3f0f5] text-[#918a98]"
+                        }`}>
+                          {ready ? "Ready" : "Developing"}
+                        </span>
                       </div>
-                      <span className="ml-auto shrink-0 rounded-full bg-white/5 px-2 py-1 text-[10px] font-semibold text-white/40">
-                        Developing
-                      </span>
+                      <span className="text-[12px] text-[#918a98]">@{f.user_name}</span>
                     </div>
-                  ))}
-                </div>
-              )}
+                    {ready && <ArrowRight size={17} className="shrink-0 text-[#b1aab5]" />}
+                  </>
+                );
+
+                return ready ? (
+                  <button
+                    key={f.id}
+                    onClick={() => handlePick(f)}
+                    className="flex items-center gap-3 border-b border-[#eeeaf1] py-4 text-left transition-colors hover:bg-[#faf8fb]"
+                  >
+                    {content}
+                  </button>
+                ) : (
+                  <div
+                    key={f.id}
+                    aria-disabled="true"
+                    className="flex items-center gap-3 border-b border-[#eeeaf1] py-4 text-left"
+                  >
+                    {content}
+                  </div>
+                );
+              })}
             </div>
           )}
 
           {/* Result */}
           {step === "result" && result && selected && (
-            <div className="flex flex-col gap-5 pt-1">
+            <div className="flex flex-col gap-8 pt-6">
               {!isDnaComparisonReady(result) ? (
                 <DnaComparisonDeveloping friendName={friendLabel(selected)} />
               ) : (
                 <>
               <div
                 ref={resultCardRef}
-                className="flex flex-col gap-5 rounded-3xl border border-[#e9e3ee] bg-white p-5 shadow-[0_8px_24px_rgba(48,32,63,0.08)]"
+                className="flex flex-col gap-8 bg-white py-2"
               >
                 {/* Score + avatars */}
                 <div className="flex flex-col items-center gap-3">
@@ -579,9 +562,9 @@ export function CompareSheet({
 
                 {/* Shared media titles */}
                 {result.shared_titles?.length ? (
-                  <div>
-                  <p className="mb-2 text-[10px] uppercase tracking-widest text-[#918a98]">You both liked</p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="border-t border-[#eeeaf1] pt-6">
+                  <p className="mb-3 text-[10px] uppercase tracking-widest text-[#918a98]">You both liked</p>
+                  <div className="flex flex-col divide-y divide-[#eeeaf1]">
                     {result.shared_titles.slice(0, 2).map((item) => {
                       const title = typeof item === "string" ? item : item.title;
                       const mediaType = typeof item === "string" ? null : item.media_type;
@@ -593,26 +576,27 @@ export function CompareSheet({
                           ? mediaType.charAt(0).toUpperCase() + mediaType.slice(1)
                           : null;
                       const label = `${title}${mediaTypeLabel ? ` · ${mediaTypeLabel}` : ""}`;
-                      const className = "rounded-full border border-purple-200 bg-purple-50 px-2.5 py-1 text-left text-[11px] font-medium text-purple-700";
+                      const className = "flex w-full items-start justify-between gap-4 py-3 text-left text-[14px] font-medium leading-snug text-violet-700";
 
                       if (externalId && externalSource && mediaType) {
                         return (
                           <button
                             key={`${mediaType}:${externalSource}:${externalId}`}
                             type="button"
-                            className={`${className} hover:border-purple-400 hover:bg-purple-100`}
+                            className={`${className} hover:text-violet-900`}
                             onClick={() => {
                               onClose();
                               setLocation(`/media/${mediaType.toLowerCase()}/${externalSource}/${externalId}`);
                             }}
                           >
-                            {label}
+                            <span>{label}</span>
+                            <ArrowRight size={15} className="mt-0.5 shrink-0 text-violet-300" />
                           </button>
                         );
                       }
 
                       return (
-                        <span key={`${mediaType || "media"}:${title}`} className={className}>
+                        <span key={`${mediaType || "media"}:${title}`} className={`${className} text-[#5c5263]`}>
                           {label}
                         </span>
                       );
@@ -623,7 +607,7 @@ export function CompareSheet({
 
                 {/* Differences */}
                 {(result.differences?.user_unique?.length > 0 || result.differences?.friend_unique?.length > 0) && (
-                  <div className="flex gap-3">
+                  <div className="flex gap-8 border-t border-[#eeeaf1] pt-6">
                   {result.differences.user_unique?.length > 0 && (
                     <div className="flex-1">
                       <p className="mb-1.5 text-[10px] uppercase tracking-widest text-[#918a98]">You lean toward</p>
@@ -645,13 +629,13 @@ export function CompareSheet({
               </div>
 
               {shareNotice && (
-                <p className="text-center text-[12px] text-violet-300">{shareNotice}</p>
+                <p className="text-center text-[12px] text-violet-600">{shareNotice}</p>
               )}
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   onClick={handleShareText}
                   disabled={sharingText || sharingPhoto}
-                  className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 text-[13px] font-semibold text-white disabled:opacity-50"
+                  className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#d9d2de] bg-white px-3 text-[13px] font-semibold text-[#30203f] disabled:opacity-50"
                 >
                   {sharingText ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
                   Share by Text
