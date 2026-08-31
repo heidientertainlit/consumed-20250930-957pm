@@ -140,7 +140,7 @@ serve(async (req) => {
       { data: rawReactions },
       { data: followedCreatorRows },
     ] = await Promise.all([
-      svc.from('lists').select('id').eq('user_id', userId),
+      svc.from('lists').select('id, title').eq('user_id', userId),
       svc.from('media_ratings')
         .select('media_type, media_title, media_external_id, media_external_source, rating')
         .eq('user_id', userId),
@@ -172,9 +172,23 @@ serve(async (req) => {
     let listItems: any[] = [];
     if (userLists?.length) {
       const { data } = await svc.from('list_items')
-        .select('title, media_type, type, creator, external_id, external_source')
+        .select('title, media_type, type, creator, external_id, external_source, list_id')
         .in('list_id', userLists.map((l: any) => l.id));
-      listItems = data ?? [];
+      const dnfListIds = new Set(
+        userLists
+          .filter((list: any) => list.title?.toLowerCase().includes('did not finish'))
+          .map((list: any) => list.id)
+      );
+      const negativeTitleKeys = new Set(
+        (ratings ?? [])
+          .filter((rating: any) => Number(rating.rating) < 3.5)
+          .map((rating: any) => String(rating.media_title || '').trim().toLowerCase())
+          .filter(Boolean)
+      );
+      listItems = (data ?? []).filter((item: any) =>
+        !dnfListIds.has(item.list_id)
+        && !negativeTitleKeys.has(String(item.title || '').trim().toLowerCase())
+      );
     }
 
     // Pool details for predictions
@@ -263,6 +277,7 @@ serve(async (req) => {
 
     // ── Source 2: Ratings — weight 1.5 for ≥4★, 1.0 for others ──────────────
     for (const rating of (ratings ?? [])) {
+      if (Number(rating.rating) < 3.5) continue;
       const isHigh = Number(rating.rating) >= 4;
       const weight = isHigh ? 1.5 : 1.0;
       const mediaType = categoryToMediaType(rating.media_type);

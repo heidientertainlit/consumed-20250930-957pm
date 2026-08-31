@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { AFFINITY_ALGORITHM_VERSION, scoreAffinitySignals } from '../_shared/affinity-score.ts';
 import { canAccessDnaComparison } from '../_shared/comparison-access.ts';
 
-const SHARED_TITLES_VERSION = 5;
+const SHARED_TITLES_VERSION = 6;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -167,6 +167,23 @@ serve(async (req) => {
         });
       }
 
+      // Rebuild both users' signals so low ratings and DNF items cannot remain
+      // cached as positive taste evidence.
+      try {
+        await Promise.all([user.id, friend_id].map((targetUserId) =>
+          fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/extract-dna-signals`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ user_id: targetUserId })
+          })
+        ));
+      } catch (extractError) {
+        console.error('Could not refresh DNA signals before comparison:', extractError);
+      }
+
       // Get both users' signals
       let [userSignalsRes, friendSignalsRes] = await Promise.all([
         supabaseClient
@@ -298,17 +315,21 @@ serve(async (req) => {
       const [userItemsRes, friendItemsRes, userRatingsRes, friendRatingsRes] = await Promise.all([
         supabaseClient.from('list_items').select('title, media_type, list_id, external_id, external_source').eq('user_id', user.id),
         supabaseClient.from('list_items').select('title, media_type, list_id, external_id, external_source').eq('user_id', friend_id),
-        supabaseClient.from('media_ratings').select('media_title, media_type, rating, media_external_id, media_external_source').eq('user_id', user.id).gte('rating', 3.5),
-        supabaseClient.from('media_ratings').select('media_title, media_type, rating, media_external_id, media_external_source').eq('user_id', friend_id).gte('rating', 3.5)
+        supabaseClient.from('media_ratings').select('media_title, media_type, rating, media_external_id, media_external_source').eq('user_id', user.id),
+        supabaseClient.from('media_ratings').select('media_title, media_type, rating, media_external_id, media_external_source').eq('user_id', friend_id)
       ]);
       const titleError = userItemsRes.error || friendItemsRes.error || userRatingsRes.error || friendRatingsRes.error;
       if (titleError) throw new Error(`Could not load shared title evidence: ${titleError.message}`);
 
       const lovedItems = (items: any[], ratings: any[], favListIds: Set<any>, dnfListIds: Set<any>) => {
         const loved = new Map<string, { title: string; media_type?: string; external_id?: string; external_source?: string }>();
+        const negativeTitles = new Set<string>();
         const itemKey = (title: string, mediaType?: string) =>
           `${String(mediaType || 'unknown').toLowerCase()}:${title.trim().toLowerCase()}`;
         for (const item of items) {
+          if (item.title && dnfListIds.has(item.list_id)) {
+            negativeTitles.add(item.title.trim().toLowerCase());
+          }
           if (item.title && favListIds.has(item.list_id) && !dnfListIds.has(item.list_id)) {
             loved.set(itemKey(item.title, item.media_type), {
               title: item.title,
@@ -320,6 +341,10 @@ serve(async (req) => {
         }
         for (const rating of ratings) {
           if (rating.media_title) {
+            if (Number(rating.rating) < 3.5) {
+              negativeTitles.add(rating.media_title.trim().toLowerCase());
+              continue;
+            }
             loved.set(itemKey(rating.media_title, rating.media_type), {
               title: rating.media_title,
               media_type: rating.media_type,
@@ -327,6 +352,9 @@ serve(async (req) => {
               external_source: rating.media_external_source,
             });
           }
+        }
+        for (const [key, item] of loved) {
+          if (negativeTitles.has(item.title.trim().toLowerCase())) loved.delete(key);
         }
         return [...loved.values()];
       };

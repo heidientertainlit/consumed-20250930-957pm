@@ -11,6 +11,8 @@ Jaccard genre overlap (`calcOverlapPct`) is a FALLBACK ONLY — used when a frie
 **Why:** Real scores from the `compare-dna-friend` edge function encode viewing history, ratings, trivia, and DNA signal weights — far more accurate than simple genre intersection. Jaccard was used as a placeholder during early development and caused repeated regressions where all friends showed identical percentages.
 
 **How to apply:**
+- Treat ratings below 3.5 stars and Did Not Finish as negative evidence. They must override tracked/Favorites records for the same title and must not produce positive title, creator, or genre overlap.
+- Rebuild both participants' DNA signals before recalculating a comparison after signal-filtering rules change; otherwise a corrected card can still show a stale score.
 - In `fetchPersonalized()` (dna-compare-feed-card.tsx): fetch ALL `dna_comparisons` rows for the current user in one query using `or=(user_id_1.eq.{uid},user_id_2.eq.{uid})`.
 - Build a `cmpMap: Map<friendId, match_score>`.
 - When scoring each friend: `realPct = cmpMap.has(friendId) ? cmpMap.get(friendId) : jaccard`.
