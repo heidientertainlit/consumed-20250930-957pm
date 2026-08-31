@@ -320,7 +320,7 @@ export function CompareSheet({
     if (!selected || !result || !isDnaComparisonReady(result) || sharingText) return;
     setSharingText(true);
     setShareNotice("");
-    const url = `${(import.meta.env.VITE_APP_URL as string) || window.location.origin}/edna/${userId}?compare=1`;
+    const url = `${(import.meta.env.VITE_APP_URL as string) || window.location.origin}/edna/${userId}?compare=1&v=2`;
     const text = comparisonText();
     try {
       if (navigator.share) {
@@ -666,27 +666,6 @@ export function CompareSheet({
                   </div>
                 ) : null}
 
-                {/* Differences */}
-                {(result.differences?.user_unique?.length > 0 || result.differences?.friend_unique?.length > 0) && (
-                  <div className="flex gap-8 border-t border-[#eeeaf1] pt-6">
-                  {result.differences.user_unique?.length > 0 && (
-                    <div className="flex-1">
-                      <p className="mb-1.5 text-[10px] uppercase tracking-widest text-[#918a98]">You lean toward</p>
-                      {result.differences.user_unique.slice(0, 3).map((g) => (
-                        <p key={g} className="text-[12px] text-[#5c5263]">· {g}</p>
-                      ))}
-                    </div>
-                  )}
-                  {result.differences.friend_unique?.length > 0 && (
-                    <div className="flex-1">
-                      <p className="mb-1.5 text-[10px] uppercase tracking-widest text-[#918a98]">They lean toward</p>
-                      {result.differences.friend_unique.slice(0, 3).map((g) => (
-                        <p key={g} className="text-[12px] text-[#5c5263]">· {g}</p>
-                      ))}
-                    </div>
-                  )}
-                  </div>
-                )}
               </div>
 
                 </>
