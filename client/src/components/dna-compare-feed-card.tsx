@@ -1028,7 +1028,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompar
           ) : featured ? (
             <div className="flex flex-col items-center pt-4 pb-2">
               {/* Big match number */}
-              <span className="font-black leading-none" style={{ fontSize: 38, color: '#7c3aed' }}>{featured.pct}%</span>
+              <span className="font-serif font-normal leading-none" style={{ fontSize: 42, color: '#7c3aed' }}>{featured.pct}%</span>
               <span className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Match</span>
 
                {/* Names + archetypes above each avatar */}
