@@ -6,9 +6,12 @@ import { Progress } from "@/components/ui/progress";
 import { Users, Sparkles, Loader2, Lock, Film, Tv, BookOpen, Music, Heart, X, Download, Share2, Send, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
+import { DnaComparisonDeveloping, isDnaComparisonReady } from "@/components/dna-comparison-developing";
 
 interface ComparisonResult {
   match_score: number;
+  comparison_status?: "ready" | "developing";
+  comparison_readiness?: { status?: "ready" | "developing" };
   shared_genres: string[];
   shared_creators: string[];
   shared_titles: { title: string; media_type: string }[];
@@ -18,6 +21,7 @@ interface ComparisonResult {
   };
   insights: {
     compatibilityLine?: string;
+    comparison_readiness?: { status?: "ready" | "developing" };
     consumeTogether?: {
       movies?: string[];
       tv?: string[];
@@ -321,7 +325,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
 
   // Share card
   const handleShare = async (cardRef: React.RefObject<HTMLDivElement>, cardName: string) => {
-    if (!cardRef.current || !comparison) return;
+    if (!cardRef.current || !comparison || !isDnaComparisonReady(comparison)) return;
     
     try {
       const canvas = await html2canvas(cardRef.current, {
@@ -522,6 +526,10 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
 
               {!isComparing && !compareError && comparison && (
                 <div className="space-y-4">
+                  {!isDnaComparisonReady(comparison) ? (
+                    <DnaComparisonDeveloping friendName={selectedFriend?.user_name} />
+                  ) : (
+                    <>
                   {/* Combined shareable card */}
                   <div 
                     ref={card1Ref}
@@ -678,6 +686,8 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
                       Share
                     </Button>
                   </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>

@@ -6,6 +6,8 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { Dna, ArrowRight, Users, X, ChevronLeft, Loader2, Share2, CheckCircle2, Heart, Zap, Download, HelpCircle } from "lucide-react";
 import { formatFeedName } from "@/lib/feed-name";
+import { DnaComparisonDeveloping, isDnaComparisonReady } from "@/components/dna-comparison-developing";
+import { getDnaComparisonUpdateDetail } from "@/lib/dna-comparison-readiness";
 
 /* ── types ─────────────────────────────────────────── */
 interface OverlapUser {
@@ -38,6 +40,8 @@ interface Friend {
 
 interface ComparisonResult {
   match_score: number;
+  comparison_status?: "ready" | "developing";
+  comparison_readiness?: { status?: "ready" | "developing" };
   shared_genres: string[];
   shared_creators?: string[];
   shared_titles?: Array<{
@@ -47,7 +51,10 @@ interface ComparisonResult {
     external_source?: string;
   } | string>;
   differences: { user_unique: string[]; friend_unique: string[] };
-  insights: { compatibilityLine?: string };
+  insights: {
+    compatibilityLine?: string;
+    comparison_readiness?: { status?: "ready" | "developing" };
+  };
   friend_name: string;
   friend_dna_label?: string;
   your_dna_label?: string;
@@ -265,9 +272,12 @@ export function CompareSheet({
       const data = await res.json();
       setResult(data);
       setStep("result");
-      window.dispatchEvent(new CustomEvent("dna-comparison-updated", {
-        detail: { friendId: friend.id, matchScore: data.match_score },
-      }));
+      const updateDetail = getDnaComparisonUpdateDetail(friend.id, data);
+      if (updateDetail) {
+        window.dispatchEvent(new CustomEvent("dna-comparison-updated", {
+          detail: updateDetail,
+        }));
+      }
     } catch (e: any) {
       setErrMsg(e.message || "Something went wrong");
       setStep("error");
@@ -277,12 +287,12 @@ export function CompareSheet({
   const friendLabel = formatFriendName;
 
   const comparisonText = () => {
-    if (!selected || !result) return "";
+    if (!selected || !result || !isDnaComparisonReady(result)) return "";
     return `${friendLabel(selected)} and I are ${result.match_score}% aligned in our Entertainment DNA on Consumed.`;
   };
 
   async function handleShareText() {
-    if (!selected || !result || sharingText) return;
+    if (!selected || !result || !isDnaComparisonReady(result) || sharingText) return;
     setSharingText(true);
     setShareNotice("");
     const url = `${(import.meta.env.VITE_APP_URL as string) || window.location.origin}/edna/${userId}`;
@@ -308,7 +318,7 @@ export function CompareSheet({
   }
 
   async function handleSharePhoto() {
-    if (!selected || !result || !resultCardRef.current || sharingPhoto) return;
+    if (!selected || !result || !isDnaComparisonReady(result) || !resultCardRef.current || sharingPhoto) return;
     setSharingPhoto(true);
     setShareNotice("");
     try {
@@ -463,6 +473,10 @@ export function CompareSheet({
           {/* Result */}
           {step === "result" && result && selected && (
             <div className="flex flex-col gap-5 pt-1">
+              {!isDnaComparisonReady(result) ? (
+                <DnaComparisonDeveloping friendName={friendLabel(selected)} />
+              ) : (
+                <>
               <div
                 ref={resultCardRef}
                 className="flex flex-col gap-5 rounded-3xl border border-[#e9e3ee] bg-white p-5 shadow-[0_8px_24px_rgba(48,32,63,0.08)]"
@@ -614,6 +628,8 @@ export function CompareSheet({
                   Share Photo
                 </button>
               </div>
+                </>
+              )}
             </div>
           )}
         </div>

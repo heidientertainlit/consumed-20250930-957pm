@@ -1,13 +1,17 @@
 ---
 name: DNA compare gate
-description: Item-count threshold for friend DNA comparison and where it's enforced.
+description: Eligibility, evidence-readiness, privacy, and score rules for friend DNA comparison.
 ---
 
-**Rule:** Friend DNA comparison unlocks at DNA survey + 10 logged items (lowered from 30, July 2026). Comparisons where either side has <30 items show an amber "Early match" tag.
+**Rule:** Access to Friend DNA comparison unlocks at DNA survey + 10 logged items. A detailed result has a separate readiness gate: both people need 10 unique positive items and at least one canonically verified title they both positively liked.
 
-**Why:** 30 items blocked the key social hook for new users; 10 keeps enough signal (survey carries most of it) while labeling low-confidence scores honestly.
+**Why:** Production-pair analysis showed 10 positive items gives a strong chance of real overlap while avoiding percentages and explanations built only from broad affinity. Access can remain welcoming without presenting unsupported detail.
 
-**How to apply:** The gate lives in THREE places that must agree: `client/src/pages/dna.tsx`, `client/src/pages/user-profile.tsx` (own-profile DNA/Friends tabs), and the `compare-dna-friend` edge function (deployed). Known pre-existing quirk: frontend counts items from user stats (movies+tv+books+games) while the edge fn counts all `list_items` — totals can differ for music/podcast-heavy users; unify only with user approval.
+**How to apply:** Keep access eligibility and detailed readiness distinct. Positive evidence is Favorites or ratings ≥3.5; a lower rating or DNF vetoes that work. Intersect only canonical identity or exact provider identity—never title text alone. If developing, hide score, evidence, AI copy, and share controls and show the developing message.
+
+**Score rule:** When detailed comparison is ready, retain the same authoritative pairwise affinity score used by People/feed alignment. Readiness filters whether detail may be shown; it never changes the affinity algorithm or score.
+
+**Cache rule:** Store versioned Compare readiness and strict shared-title evidence separately from the legacy People shared-title cache contract. Directional “you/them” evidence must be oriented for the requester when a deterministic pair cache is reused.
 
 **Also:** The old `/identity` page was deleted (route + `pages/identity.tsx`); `/profile` (`user-profile.tsx`) is the live DNA profile page with My DNA / Friends / My Media pills.
 

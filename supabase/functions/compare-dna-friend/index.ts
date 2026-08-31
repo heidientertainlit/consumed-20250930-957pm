@@ -2,8 +2,16 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { AFFINITY_ALGORITHM_VERSION, scoreAffinitySignals } from '../_shared/affinity-score.ts';
 import { canAccessDnaComparison } from '../_shared/comparison-access.ts';
+import {
+  COMPARISON_READINESS_VERSION,
+  buildComparisonReadiness,
+  collectPositiveMediaEvidence,
+  comparisonProviderKey,
+  findSharedPositiveMedia,
+} from '../_shared/compare-readiness.ts';
+import { buildLegacyPeopleSharedTitles } from '../_shared/people-shared-titles.ts';
 
-const SHARED_TITLES_VERSION = 6;
+const SHARED_TITLES_VERSION = 7;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -157,9 +165,20 @@ serve(async (req) => {
       if (
         cachedComparison?.insights?.algorithm_version === AFFINITY_ALGORITHM_VERSION
         && cachedComparison?.insights?.shared_titles_version === SHARED_TITLES_VERSION
+        && cachedComparison?.insights?.comparison_readiness?.version === COMPARISON_READINESS_VERSION
       ) {
+        const cachedDifferences = cachedComparison.insights.differences_user_id === user.id
+          ? cachedComparison.differences
+          : {
+              user_unique: cachedComparison.differences?.friend_unique || [],
+              friend_unique: cachedComparison.differences?.user_unique || [],
+            };
         return new Response(JSON.stringify({
           ...cachedComparison,
+          shared_titles: cachedComparison.insights.detailed_shared_titles || [],
+          differences: cachedDifferences,
+          comparison_status: cachedComparison.insights.comparison_readiness.status,
+          comparison_readiness: cachedComparison.insights.comparison_readiness,
           from_cache: true
         }), {
           status: 200,
@@ -289,14 +308,13 @@ serve(async (req) => {
       const userUnique = affinityEvidence.differences.user_unique;
       const friendUnique = affinityEvidence.differences.friend_unique;
 
-      // Get shared LOVED titles - only items rated 4-5 stars OR in Favorites list
-      // "Loved" = rating >= 4 OR in a Favorites list
-      
       // First, find Favorites and DNF list IDs for both users
       const [userListsRes, friendListsRes] = await Promise.all([
         supabaseClient.from('lists').select('id, title').eq('user_id', user.id),
         supabaseClient.from('lists').select('id, title').eq('user_id', friend_id)
       ]);
+      const listError = userListsRes.error || friendListsRes.error;
+      if (listError) throw new Error(`Could not load comparison lists: ${listError.message}`);
       
       const userFavListIds = new Set((userListsRes.data || [])
         .filter((l: any) => l.title?.toLowerCase().includes('favorite'))
@@ -313,83 +331,70 @@ serve(async (req) => {
         .map((l: any) => l.id));
 
       const [userItemsRes, friendItemsRes, userRatingsRes, friendRatingsRes] = await Promise.all([
-        supabaseClient.from('list_items').select('title, media_type, list_id, external_id, external_source').eq('user_id', user.id),
-        supabaseClient.from('list_items').select('title, media_type, list_id, external_id, external_source').eq('user_id', friend_id),
-        supabaseClient.from('media_ratings').select('media_title, media_type, rating, media_external_id, media_external_source').eq('user_id', user.id),
-        supabaseClient.from('media_ratings').select('media_title, media_type, rating, media_external_id, media_external_source').eq('user_id', friend_id)
+        supabaseClient.from('list_items').select('title, media_type, list_id, external_id, external_source, canonical_media_id').eq('user_id', user.id),
+        supabaseClient.from('list_items').select('title, media_type, list_id, external_id, external_source, canonical_media_id').eq('user_id', friend_id),
+        supabaseClient.from('media_ratings').select('media_title, media_type, rating, media_external_id, media_external_source, canonical_media_id').eq('user_id', user.id),
+        supabaseClient.from('media_ratings').select('media_title, media_type, rating, media_external_id, media_external_source, canonical_media_id').eq('user_id', friend_id)
       ]);
       const titleError = userItemsRes.error || friendItemsRes.error || userRatingsRes.error || friendRatingsRes.error;
       if (titleError) throw new Error(`Could not load shared title evidence: ${titleError.message}`);
 
-      const lovedItems = (items: any[], ratings: any[], favListIds: Set<any>, dnfListIds: Set<any>) => {
-        const loved = new Map<string, { title: string; media_type?: string; external_id?: string; external_source?: string }>();
-        const negativeTitles = new Set<string>();
-        const itemKey = (title: string, mediaType?: string) =>
-          `${String(mediaType || 'unknown').toLowerCase()}:${title.trim().toLowerCase()}`;
-        for (const item of items) {
-          if (item.title && dnfListIds.has(item.list_id)) {
-            negativeTitles.add(item.title.trim().toLowerCase());
-          }
-          if (item.title && favListIds.has(item.list_id) && !dnfListIds.has(item.list_id)) {
-            loved.set(itemKey(item.title, item.media_type), {
-              title: item.title,
-              media_type: item.media_type,
-              external_id: item.external_id,
-              external_source: item.external_source,
-            });
-          }
+      const allEvidenceRows = [
+        ...(userItemsRes.data || []).map((item: any) => ({ source: item.external_source, id: item.external_id })),
+        ...(friendItemsRes.data || []).map((item: any) => ({ source: item.external_source, id: item.external_id })),
+        ...(userRatingsRes.data || []).map((item: any) => ({ source: item.media_external_source, id: item.media_external_id })),
+        ...(friendRatingsRes.data || []).map((item: any) => ({ source: item.media_external_source, id: item.media_external_id })),
+      ];
+      const sourceValues = [...new Set(allEvidenceRows.map((item: any) => item.source).filter(Boolean))];
+      const externalIds = [...new Set(allEvidenceRows.map((item: any) => item.id).filter(Boolean))];
+      const canonicalByProvider = new Map<string, string>();
+      for (let start = 0; sourceValues.length > 0 && start < externalIds.length; start += 100) {
+        const { data: aliases, error: aliasesError } = await supabaseClient
+          .from('media_provider_aliases')
+          .select('external_source, external_id, canonical_media_id')
+          .in('external_source', sourceValues)
+          .in('external_id', externalIds.slice(start, start + 100));
+        if (aliasesError) throw new Error(`Could not load canonical media aliases: ${aliasesError.message}`);
+        for (const alias of aliases || []) {
+          const key = comparisonProviderKey(alias.external_source, alias.external_id);
+          if (key) canonicalByProvider.set(key, alias.canonical_media_id);
         }
-        for (const rating of ratings) {
-          if (rating.media_title) {
-            if (Number(rating.rating) < 3.5) {
-              negativeTitles.add(rating.media_title.trim().toLowerCase());
-              continue;
-            }
-            loved.set(itemKey(rating.media_title, rating.media_type), {
-              title: rating.media_title,
-              media_type: rating.media_type,
-              external_id: rating.media_external_id,
-              external_source: rating.media_external_source,
-            });
-          }
-        }
-        for (const [key, item] of loved) {
-          if (negativeTitles.has(item.title.trim().toLowerCase())) loved.delete(key);
-        }
-        return [...loved.values()];
-      };
-      const userLovedItems = lovedItems(userItemsRes.data || [], userRatingsRes.data || [], userFavListIds, userDnfListIds);
-      const friendLovedItems = lovedItems(friendItemsRes.data || [], friendRatingsRes.data || [], friendFavListIds, friendDnfListIds);
+      }
 
-      // Create lookup of user's loved titles
-      const sharedTitleKey = (item: any) => item.title.trim().toLowerCase();
-      const userLovedTitles = new Map(userLovedItems.map((item: any) => [sharedTitleKey(item), item]));
-      
-      // Find titles that BOTH users love
-      const sharedTitles = friendLovedItems
-        .filter((item: any) => userLovedTitles.has(sharedTitleKey(item)))
-        .slice(0, 10)
-        .map((item: any) => {
-          const userItem: any = userLovedTitles.get(sharedTitleKey(item));
-          const routeItem = item.external_id && item.external_source && item.media_type
-            ? item
-            : userItem;
-          return {
-            title: item.title,
-            media_type: routeItem?.media_type || item.media_type || userItem?.media_type,
-            external_id: routeItem?.external_id,
-            external_source: routeItem?.external_source,
-          };
-        });
+      const userLovedItems = collectPositiveMediaEvidence({
+        items: userItemsRes.data || [],
+        ratings: userRatingsRes.data || [],
+        favoriteListIds: userFavListIds,
+        dnfListIds: userDnfListIds,
+        canonicalByProvider,
+      });
+      const friendLovedItems = collectPositiveMediaEvidence({
+        items: friendItemsRes.data || [],
+        ratings: friendRatingsRes.data || [],
+        favoriteListIds: friendFavListIds,
+        dnfListIds: friendDnfListIds,
+        canonicalByProvider,
+      });
+      const sharedTitles = findSharedPositiveMedia(userLovedItems, friendLovedItems).slice(0, 10);
+      const comparisonReadiness = buildComparisonReadiness(userLovedItems, friendLovedItems, sharedTitles);
+      // Keep the shared cache's legacy People-affinity evidence unchanged.
+      // Detailed Compare evidence lives separately in insights.
+      const peopleSharedTitles = buildLegacyPeopleSharedTitles(
+        (userRatingsRes.data || []).filter((rating: any) => Number(rating.rating) >= 4),
+        (friendRatingsRes.data || []).filter((rating: any) => Number(rating.rating) >= 4),
+      );
 
       // Generate AI insights
       const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
       let insights: any = {
         algorithm_version: AFFINITY_ALGORITHM_VERSION,
         shared_titles_version: SHARED_TITLES_VERSION,
+        comparison_readiness: comparisonReadiness,
+        detailed_shared_titles: sharedTitles,
+        differences_user_id: user.id,
       };
 
-      if (openaiApiKey) {
+      if (openaiApiKey && comparisonReadiness.status === 'ready') {
         const insightPrompt = `Given two users' entertainment DNA comparison:
 
 User 1 DNA: ${userProfileRes.data?.label || 'Unknown'} - "${userProfileRes.data?.tagline || ''}"
@@ -444,6 +449,9 @@ Only include media types where you have good recommendations. It's fine to have 
               ...JSON.parse(data.choices[0].message.content),
               algorithm_version: AFFINITY_ALGORITHM_VERSION,
               shared_titles_version: SHARED_TITLES_VERSION,
+              comparison_readiness: comparisonReadiness,
+              detailed_shared_titles: sharedTitles,
+              differences_user_id: user.id,
             };
           }
         } catch (e) {
@@ -461,7 +469,7 @@ Only include media types where you have good recommendations. It's fine to have 
         match_score: normalizedScore,
         shared_genres: sharedGenres.slice(0, 10),
         shared_creators: sharedCreators.slice(0, 10),
-        shared_titles: sharedTitles,
+        shared_titles: peopleSharedTitles,
         differences: { user_unique: userUnique.slice(0, 5), friend_unique: friendUnique.slice(0, 5) },
         insights,
         computed_at: new Date().toISOString(),
@@ -482,6 +490,9 @@ Only include media types where you have good recommendations. It's fine to have 
 
       return new Response(JSON.stringify({
         ...comparisonData,
+        shared_titles: sharedTitles,
+        comparison_status: comparisonReadiness.status,
+        comparison_readiness: comparisonReadiness,
         friend_name: [friendUser?.first_name, friendUser?.last_name].filter(Boolean).join(' ')
           || friendUser?.display_name
           || friendUser?.user_name
