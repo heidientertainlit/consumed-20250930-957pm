@@ -319,7 +319,7 @@ export default function DnaClashFeedCard({
 
         {/* Media title overlay — left side of banner */}
         <div className="absolute bottom-5 left-5 z-10 w-[58%]">
-          <p className="font-serif text-white text-[18px] leading-[1.08] drop-shadow-lg line-clamp-4">
+          <p className="font-fraunces text-white text-[18px] font-semibold leading-[1.08] drop-shadow-lg line-clamp-4">
             {mediaTitle}
           </p>
         </div>
@@ -346,7 +346,7 @@ export default function DnaClashFeedCard({
       <div className="px-4 pt-4 pb-2">
 
         {/* Headline */}
-        <p className="font-serif text-gray-900 text-[22px] leading-tight text-center">Same {mediaTypeLabel}. Different Takes.</p>
+        <p className="font-fraunces text-gray-900 text-[22px] font-semibold leading-[.98] tracking-[-.025em] text-center">Same {mediaTypeLabel}. Different Takes.</p>
         <p className="text-gray-400 text-[13px] text-center mt-1 mb-4">Whose side are you on?</p>
 
         {/* Users row */}
