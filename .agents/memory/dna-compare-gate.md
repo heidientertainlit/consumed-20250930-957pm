@@ -11,7 +11,7 @@ description: Eligibility, evidence-readiness, privacy, and score rules for frien
 
 **Picker rule:** Before selection, show each friend in one unified list with “COMPARE — enough DNA to compare” or “BUILDING DNA — not enough yet” beside their name using the same server readiness rule. Building rows are informative, not clickable; never make users discover readiness through a result error.
 
-**Evidence presentation:** Compare is a tall white bottom sheet with the feed still visible behind it, not a full-screen takeover or dark sheet. Give evidence generous spacing and render verified shared titles as simple media-detail links, not pills. Do not show “Creators in common”; normalized creator signals can look ambiguous or incorrectly cased without work-level context.
+**Evidence presentation:** Compare is a tall, edge-to-edge white bottom sheet with the feed still visible above it, not a full-screen takeover or dark sheet. Brand results with the Consumed logo and “Comparing your Entertainment DNA.” Give evidence generous spacing and render verified shared titles as plain clickable text without pills or arrows. Do not show “Creators in common”; normalized creator signals can look ambiguous or incorrectly cased without work-level context.
 
 **Why:** Readiness after selection wastes a tap, while unexplained creator names make sound comparison evidence feel unreliable.
 

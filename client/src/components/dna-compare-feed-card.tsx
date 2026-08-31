@@ -382,12 +382,12 @@ export function CompareSheet({
 
   return createPortal(
     <div
-      className="fixed inset-0 flex items-end justify-center bg-black/45 px-2 sm:px-4"
+      className="fixed inset-0 flex items-end justify-center bg-black/45"
       style={{ zIndex: 10000 }}
       onClick={onClose}
     >
       <div
-        className="flex max-h-[90dvh] min-h-[62dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_-12px_40px_rgba(25,15,35,0.16)]"
+        className="flex h-[94dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_-12px_40px_rgba(25,15,35,0.16)]"
         onClick={(event) => event.stopPropagation()}
       >
         {/* Header */}
@@ -481,7 +481,7 @@ export function CompareSheet({
                           {ready ? "Compare" : "Building DNA"}
                         </span>
                         <span className="text-[10px] text-[#918a98]">
-                          — {ready ? "enough DNA to compare" : "not enough yet"}
+                          — {ready ? "enough DNA to compare" : "track more items to compare"}
                         </span>
                       </div>
                       <span className="text-[12px] text-[#918a98]">@{f.user_name}</span>
@@ -524,9 +524,18 @@ export function CompareSheet({
               >
                 {/* Score + avatars */}
                 <div className="flex flex-col items-center gap-3">
+                  <img
+                    src="/consumed-logo-new.png"
+                    alt="Consumed"
+                    className="mb-1 h-5 w-auto object-contain"
+                  />
                   <p className="font-serif text-[25px] font-normal tracking-[-.025em] text-[#30203f]">
                     You + {friendLabel(selected)}
                   </p>
+                  <div className="rounded-full border border-violet-100 bg-gradient-to-r from-violet-50 via-purple-100 to-violet-50 px-4 py-2 text-[13px] font-semibold text-violet-700 shadow-sm">
+                    <span className="mr-1.5 text-violet-500">✣</span>
+                    Comparing your Entertainment DNA
+                  </div>
                   <div className="flex items-center gap-0">
                     <div
                       className="rounded-full flex items-center justify-center font-bold text-white bg-indigo-500"
@@ -581,7 +590,7 @@ export function CompareSheet({
                           ? mediaType.charAt(0).toUpperCase() + mediaType.slice(1)
                           : null;
                       const label = `${title}${mediaTypeLabel ? ` · ${mediaTypeLabel}` : ""}`;
-                      const className = "flex w-full items-start justify-between gap-4 py-3 text-left text-[14px] font-medium leading-snug text-violet-700";
+                      const className = "block w-full py-3 text-left text-[14px] font-medium leading-snug text-violet-700";
 
                       if (externalId && externalSource && mediaType) {
                         return (
@@ -594,8 +603,7 @@ export function CompareSheet({
                               setLocation(`/media/${mediaType.toLowerCase()}/${externalSource}/${externalId}`);
                             }}
                           >
-                            <span>{label}</span>
-                            <ArrowRight size={15} className="mt-0.5 shrink-0 text-violet-300" />
+                            {label}
                           </button>
                         );
                       }
