@@ -346,7 +346,7 @@ export default function DnaClashFeedCard({
       <div className="px-4 pt-4 pb-2">
 
         {/* Headline */}
-        <p className="font-fraunces text-gray-900 text-[22px] font-semibold leading-[.98] tracking-[-.025em] text-center">Same {mediaTypeLabel}. Different Takes.</p>
+        <p className="font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-center text-[#30203f]">Same {mediaTypeLabel}. Different Takes.</p>
         <p className="text-gray-400 text-[13px] text-center mt-1 mb-4">Whose side are you on?</p>
 
         {/* Users row */}
