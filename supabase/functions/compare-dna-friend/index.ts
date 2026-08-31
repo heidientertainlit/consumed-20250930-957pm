@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { AFFINITY_ALGORITHM_VERSION, scoreAffinitySignals } from '../_shared/affinity-score.ts';
 import { canAccessDnaComparison } from '../_shared/comparison-access.ts';
 
-const SHARED_TITLES_VERSION = 3;
+const SHARED_TITLES_VERSION = 4;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -298,8 +298,8 @@ serve(async (req) => {
       const [userItemsRes, friendItemsRes, userRatingsRes, friendRatingsRes] = await Promise.all([
         supabaseClient.from('list_items').select('title, media_type, list_id, external_id, external_source').eq('user_id', user.id),
         supabaseClient.from('list_items').select('title, media_type, list_id, external_id, external_source').eq('user_id', friend_id),
-        supabaseClient.from('media_ratings').select('media_title, media_type, rating, media_external_id, media_external_source').eq('user_id', user.id).gte('rating', 4),
-        supabaseClient.from('media_ratings').select('media_title, media_type, rating, media_external_id, media_external_source').eq('user_id', friend_id).gte('rating', 4)
+        supabaseClient.from('media_ratings').select('media_title, media_type, rating, media_external_id, media_external_source').eq('user_id', user.id).gte('rating', 3.5),
+        supabaseClient.from('media_ratings').select('media_title, media_type, rating, media_external_id, media_external_source').eq('user_id', friend_id).gte('rating', 3.5)
       ]);
       const titleError = userItemsRes.error || friendItemsRes.error || userRatingsRes.error || friendRatingsRes.error;
       if (titleError) throw new Error(`Could not load shared title evidence: ${titleError.message}`);
@@ -334,8 +334,7 @@ serve(async (req) => {
       const friendLovedItems = lovedItems(friendItemsRes.data || [], friendRatingsRes.data || [], friendFavListIds, friendDnfListIds);
 
       // Create lookup of user's loved titles
-      const sharedTitleKey = (item: any) =>
-        `${String(item.media_type || 'unknown').toLowerCase()}:${item.title.trim().toLowerCase()}`;
+      const sharedTitleKey = (item: any) => item.title.trim().toLowerCase();
       const userLovedTitles = new Map(userLovedItems.map((item: any) => [sharedTitleKey(item), item]));
       
       // Find titles that BOTH users love
@@ -344,38 +343,20 @@ serve(async (req) => {
         .slice(0, 10)
         .map((item: any) => {
           const userItem: any = userLovedTitles.get(sharedTitleKey(item));
+          const matchingMediaType = String(item.media_type || '').toLowerCase() === String(userItem?.media_type || '').toLowerCase();
           return {
             title: item.title,
-            media_type: item.media_type,
+            media_type: matchingMediaType ? item.media_type : undefined,
             external_id: item.external_id || userItem?.external_id,
             external_source: item.external_source || userItem?.external_source,
           };
         });
-
-      const sharedTitleKeys = new Set(sharedTitles.map((item: any) => sharedTitleKey(item)));
-      const toHighlight = (item: any, likedBy: 'you' | 'friend' | 'both') => ({
-        title: item.title,
-        media_type: item.media_type,
-        external_id: item.external_id,
-        external_source: item.external_source,
-        liked_by: likedBy,
-      });
-      const mediaHighlights = sharedTitles.slice(0, 2).map((item: any) => toHighlight(item, 'both'));
-      if (mediaHighlights.length < 2) {
-        const yourTitle = userLovedItems.find((item: any) => !sharedTitleKeys.has(sharedTitleKey(item)));
-        if (yourTitle) mediaHighlights.push(toHighlight(yourTitle, 'you'));
-      }
-      if (mediaHighlights.length < 2) {
-        const friendTitle = friendLovedItems.find((item: any) => !sharedTitleKeys.has(sharedTitleKey(item)));
-        if (friendTitle) mediaHighlights.push(toHighlight(friendTitle, 'friend'));
-      }
 
       // Generate AI insights
       const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
       let insights: any = {
         algorithm_version: AFFINITY_ALGORITHM_VERSION,
         shared_titles_version: SHARED_TITLES_VERSION,
-        mediaHighlights,
       };
 
       if (openaiApiKey) {
@@ -433,7 +414,6 @@ Only include media types where you have good recommendations. It's fine to have 
               ...JSON.parse(data.choices[0].message.content),
               algorithm_version: AFFINITY_ALGORITHM_VERSION,
               shared_titles_version: SHARED_TITLES_VERSION,
-              mediaHighlights,
             };
           }
         } catch (e) {
