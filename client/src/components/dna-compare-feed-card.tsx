@@ -480,7 +480,7 @@ export function CompareSheet({
                             ? "bg-emerald-50 text-emerald-700"
                             : "bg-[#f3f0f5] text-[#918a98]"
                         }`}>
-                          {ready ? "Compare" : "Add more to compare"}
+                          {ready ? "Compare" : "Needs more DNA to compare"}
                         </span>
                       </div>
                       <span className="text-[12px] text-[#918a98]">@{f.user_name}</span>

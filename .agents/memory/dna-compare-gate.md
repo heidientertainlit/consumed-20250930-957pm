@@ -9,7 +9,7 @@ description: Eligibility, evidence-readiness, privacy, and score rules for frien
 
 **How to apply:** Keep access eligibility and detailed readiness distinct. Positive evidence is Favorites or ratings ≥3.5; a lower rating or DNF vetoes that work. Intersect only canonical identity or exact provider identity—never title text alone. If developing, hide score, evidence, AI copy, and share controls and show the developing message.
 
-**Picker rule:** Before selection, show each friend in one unified list with a single “COMPARE” or “ADD MORE TO COMPARE” pill beside their name using the same server readiness rule. Sort comparable friends first while preserving order within each group. Building rows are informative, not clickable; never make users discover readiness through a result error.
+**Picker rule:** Before selection, show each friend in one unified list with a single “COMPARE” or “NEEDS MORE DNA TO COMPARE” pill beside their name using the same server readiness rule. Sort comparable friends first while preserving order within each group. Building rows are informative, not clickable; never make users discover readiness through a result error.
 
 **Evidence presentation:** Compare is a tall, edge-to-edge white bottom sheet with the feed still visible above it, not a full-screen takeover or dark sheet. Brand results with the Consumed logo and “Comparing your Entertainment DNA.” Give evidence generous spacing and render verified shared titles as plain clickable text without pills or arrows. Do not show “Creators in common”; normalized creator signals can look ambiguous or incorrectly cased without work-level context.
 
