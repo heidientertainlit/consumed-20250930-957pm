@@ -164,8 +164,10 @@ export function CompareSheet({
   userId: string;
 }) {
   const [step, setStep] = useState<"loading-friends" | "pick" | "comparing" | "result" | "no-friends" | "error">("loading-friends");
-  const [shared, setShared] = useState(false);
-  const [sharing, setSharing] = useState(false);
+  const resultCardRef = useReactRef<HTMLDivElement>(null);
+  const [sharingText, setSharingText] = useState(false);
+  const [sharingPhoto, setSharingPhoto] = useState(false);
+  const [shareNotice, setShareNotice] = useState("");
   const [friends, setFriends] = useState<Friend[]>([]);
   const [selected, setSelected] = useState<Friend | null>(null);
   const [result, setResult] = useState<ComparisonResult | null>(null);
@@ -262,6 +264,80 @@ export function CompareSheet({
   }
 
   const friendLabel = formatFriendName;
+
+  const comparisonText = () => {
+    if (!selected || !result) return "";
+    return `${friendLabel(selected)} and I are ${result.match_score}% aligned in our Entertainment DNA on Consumed.`;
+  };
+
+  async function handleShareText() {
+    if (!selected || !result || sharingText) return;
+    setSharingText(true);
+    setShareNotice("");
+    const url = `${(import.meta.env.VITE_APP_URL as string) || window.location.origin}/edna/${userId}`;
+    const text = comparisonText();
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Our Entertainment DNA Match",
+          text,
+          url,
+        });
+      } else {
+        await navigator.clipboard.writeText(`${text} ${url}`);
+        setShareNotice("Comparison text and link copied.");
+      }
+    } catch (error: any) {
+      if (error?.name !== "AbortError") {
+        setShareNotice("Couldn’t open sharing. Try again.");
+      }
+    } finally {
+      setSharingText(false);
+    }
+  }
+
+  async function handleSharePhoto() {
+    if (!selected || !result || !resultCardRef.current || sharingPhoto) return;
+    setSharingPhoto(true);
+    setShareNotice("");
+    try {
+      const canvas = await html2canvas(resultCardRef.current, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: "#130b3d",
+      });
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) throw new Error("Could not create comparison image");
+
+      const file = new File([blob], "entertainment-dna-match.png", { type: "image/png" });
+      const shareData = {
+        title: "Our Entertainment DNA Match",
+        text: comparisonText(),
+        files: [file],
+      };
+
+      if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+        await navigator.share(shareData);
+      } else {
+        const imageUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = imageUrl;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(imageUrl), 5000);
+        setShareNotice("Comparison photo saved.");
+      }
+    } catch (error: any) {
+      if (error?.name !== "AbortError") {
+        console.error("Could not share DNA comparison photo:", error);
+        setShareNotice("Couldn’t create the photo. Try again.");
+      }
+    } finally {
+      setSharingPhoto(false);
+    }
+  }
 
   return createPortal(
     <div
@@ -376,8 +452,13 @@ export function CompareSheet({
           {/* Result */}
           {step === "result" && result && selected && (
             <div className="flex flex-col gap-5 pt-1">
-              {/* Score + avatars */}
-              <div className="flex flex-col items-center gap-3">
+              <div
+                ref={resultCardRef}
+                className="flex flex-col gap-5 rounded-2xl p-4"
+                style={{ background: "linear-gradient(160deg, #0f0a2e 0%, #1a1050 55%, #1e1460 100%)" }}
+              >
+                {/* Score + avatars */}
+                <div className="flex flex-col items-center gap-3">
                 <div className="flex items-center gap-0">
                   <div
                     className="rounded-full flex items-center justify-center font-bold text-white bg-indigo-500"
@@ -399,11 +480,11 @@ export function CompareSheet({
                     "{result.insights.compatibilityLine}"
                   </p>
                 )}
-              </div>
+                </div>
 
-              {/* Labels */}
-              {(result.your_dna_label || result.friend_dna_label) && (
-                <div className="flex gap-2">
+                {/* Labels */}
+                {(result.your_dna_label || result.friend_dna_label) && (
+                  <div className="flex gap-2">
                   {result.your_dna_label && (
                     <div className="flex-1 px-3 py-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 text-center">
                       <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">You</p>
@@ -416,12 +497,12 @@ export function CompareSheet({
                       <p className="text-purple-300 font-semibold text-[11px] leading-tight">{result.friend_dna_label}</p>
                     </div>
                   )}
-                </div>
-              )}
+                  </div>
+                )}
 
-              {/* Shared genres */}
-              {result.shared_genres?.length > 0 && (
-                <div>
+                {/* Shared genres */}
+                {result.shared_genres?.length > 0 && (
+                  <div>
                   <p className="text-white/40 text-[10px] uppercase tracking-widest mb-2">You both love</p>
                   <div className="flex flex-wrap gap-1.5">
                     {result.shared_genres.slice(0, 6).map((g) => (
@@ -434,12 +515,12 @@ export function CompareSheet({
                       </span>
                     ))}
                   </div>
-                </div>
-              )}
+                  </div>
+                )}
 
-              {/* Differences */}
-              {(result.differences?.user_unique?.length > 0 || result.differences?.friend_unique?.length > 0) && (
-                <div className="flex gap-3">
+                {/* Differences */}
+                {(result.differences?.user_unique?.length > 0 || result.differences?.friend_unique?.length > 0) && (
+                  <div className="flex gap-3">
                   {result.differences.user_unique?.length > 0 && (
                     <div className="flex-1">
                       <p className="text-white/40 text-[10px] uppercase tracking-widest mb-1.5">You lean toward</p>
@@ -456,9 +537,31 @@ export function CompareSheet({
                       ))}
                     </div>
                   )}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
 
+              {shareNotice && (
+                <p className="text-center text-[12px] text-violet-300">{shareNotice}</p>
+              )}
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  onClick={handleShareText}
+                  disabled={sharingText || sharingPhoto}
+                  className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 text-[13px] font-semibold text-white disabled:opacity-50"
+                >
+                  {sharingText ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
+                  Share by Text
+                </button>
+                <button
+                  onClick={handleSharePhoto}
+                  disabled={sharingText || sharingPhoto}
+                  className="flex min-h-11 items-center justify-center gap-2 rounded-full bg-violet-500 px-3 text-[13px] font-semibold text-white disabled:opacity-50"
+                >
+                  {sharingPhoto ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                  Share Photo
+                </button>
+              </div>
             </div>
           )}
         </div>
