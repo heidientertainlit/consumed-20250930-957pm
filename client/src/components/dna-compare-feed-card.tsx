@@ -304,7 +304,7 @@ export function CompareSheet({
       const canvas = await html2canvas(resultCardRef.current, {
         scale: 3,
         useCORS: true,
-        backgroundColor: "#130b3d",
+        backgroundColor: "#ffffff",
       });
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob) throw new Error("Could not create comparison image");
@@ -454,47 +454,51 @@ export function CompareSheet({
             <div className="flex flex-col gap-5 pt-1">
               <div
                 ref={resultCardRef}
-                className="flex flex-col gap-5 rounded-2xl p-4"
-                style={{ background: "linear-gradient(160deg, #0f0a2e 0%, #1a1050 55%, #1e1460 100%)" }}
+                className="flex flex-col gap-5 rounded-3xl border border-[#e9e3ee] bg-white p-5 shadow-[0_8px_24px_rgba(48,32,63,0.08)]"
               >
                 {/* Score + avatars */}
                 <div className="flex flex-col items-center gap-3">
-                <div className="flex items-center gap-0">
-                  <div
-                    className="rounded-full flex items-center justify-center font-bold text-white bg-indigo-500"
-                    style={{ width: 52, height: 52, fontSize: 16 }}
-                  >
-                    Me
+                  <p className="font-serif text-[25px] font-normal tracking-[-.025em] text-[#30203f]">
+                    You + {friendLabel(selected)}
+                  </p>
+                  <div className="flex items-center gap-0">
+                    <div
+                      className="rounded-full flex items-center justify-center font-bold text-white bg-indigo-500"
+                      style={{ width: 52, height: 52, fontSize: 16 }}
+                    >
+                      Me
+                    </div>
+                    <Waveform />
+                    <FriendAvatar friend={selected} size={52} />
                   </div>
-                  <Waveform />
-                  <FriendAvatar friend={selected} size={52} />
-                </div>
-                <div className="text-center">
-                  <p className="text-white font-extrabold" style={{ fontSize: 36 }}>
-                    <span style={{ color: "#c084fc" }}>{result.match_score}%</span>
-                  </p>
-                  <p className="text-white/60 text-[13px]">Entertainment DNA match</p>
-                </div>
-                {result.insights?.compatibilityLine && (
-                  <p className="text-white/70 text-[12px] text-center italic px-4">
-                    "{result.insights.compatibilityLine}"
-                  </p>
-                )}
+                  <div className="text-center">
+                    <p className="font-serif text-[42px] font-normal leading-none tracking-[-.04em] text-violet-600">
+                      {result.match_score}%
+                    </p>
+                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[.18em] text-[#918a98]">
+                      Entertainment DNA match
+                    </p>
+                  </div>
+                  {result.insights?.compatibilityLine && (
+                    <p className="px-4 text-center font-serif text-[15px] italic leading-relaxed text-[#5c5263]">
+                      “{result.insights.compatibilityLine}”
+                    </p>
+                  )}
                 </div>
 
                 {/* Labels */}
                 {(result.your_dna_label || result.friend_dna_label) && (
                   <div className="flex gap-2">
                   {result.your_dna_label && (
-                    <div className="flex-1 px-3 py-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 text-center">
-                      <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">You</p>
-                      <p className="text-indigo-300 font-semibold text-[11px] leading-tight">{result.your_dna_label}</p>
+                    <div className="flex-1 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-center">
+                      <p className="mb-0.5 text-[9px] uppercase tracking-widest text-[#918a98]">You</p>
+                      <p className="text-[11px] font-semibold leading-tight text-indigo-700">{result.your_dna_label}</p>
                     </div>
                   )}
                   {result.friend_dna_label && (
-                    <div className="flex-1 px-3 py-2 rounded-xl border border-purple-500/30 bg-purple-500/10 text-center">
-                      <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">{friendLabel(selected)}</p>
-                      <p className="text-purple-300 font-semibold text-[11px] leading-tight">{result.friend_dna_label}</p>
+                    <div className="flex-1 rounded-xl border border-purple-200 bg-purple-50 px-3 py-2 text-center">
+                      <p className="mb-0.5 text-[9px] uppercase tracking-widest text-[#918a98]">{friendLabel(selected)}</p>
+                      <p className="text-[11px] font-semibold leading-tight text-purple-700">{result.friend_dna_label}</p>
                     </div>
                   )}
                   </div>
@@ -503,13 +507,12 @@ export function CompareSheet({
                 {/* Shared genres */}
                 {result.shared_genres?.length > 0 && (
                   <div>
-                  <p className="text-white/40 text-[10px] uppercase tracking-widest mb-2">You both love</p>
+                  <p className="mb-2 text-[10px] uppercase tracking-widest text-[#918a98]">You both love</p>
                   <div className="flex flex-wrap gap-1.5">
                     {result.shared_genres.slice(0, 6).map((g) => (
                       <span
                         key={g}
-                        className="px-2.5 py-1 rounded-full text-[11px] font-medium text-purple-200"
-                        style={{ background: "rgba(168,85,247,0.18)", border: "1px solid rgba(168,85,247,0.3)" }}
+                        className="rounded-full border border-purple-200 bg-purple-50 px-2.5 py-1 text-[11px] font-medium text-purple-700"
                       >
                         {g}
                       </span>
@@ -523,17 +526,17 @@ export function CompareSheet({
                   <div className="flex gap-3">
                   {result.differences.user_unique?.length > 0 && (
                     <div className="flex-1">
-                      <p className="text-white/40 text-[10px] uppercase tracking-widest mb-1.5">You lean toward</p>
+                      <p className="mb-1.5 text-[10px] uppercase tracking-widest text-[#918a98]">You lean toward</p>
                       {result.differences.user_unique.slice(0, 3).map((g) => (
-                        <p key={g} className="text-white/70 text-[12px]">· {g}</p>
+                        <p key={g} className="text-[12px] text-[#5c5263]">· {g}</p>
                       ))}
                     </div>
                   )}
                   {result.differences.friend_unique?.length > 0 && (
                     <div className="flex-1">
-                      <p className="text-white/40 text-[10px] uppercase tracking-widest mb-1.5">They lean toward</p>
+                      <p className="mb-1.5 text-[10px] uppercase tracking-widest text-[#918a98]">They lean toward</p>
                       {result.differences.friend_unique.slice(0, 3).map((g) => (
-                        <p key={g} className="text-white/70 text-[12px]">· {g}</p>
+                        <p key={g} className="text-[12px] text-[#5c5263]">· {g}</p>
                       ))}
                     </div>
                   )}
