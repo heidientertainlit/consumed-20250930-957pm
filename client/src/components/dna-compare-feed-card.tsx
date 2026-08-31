@@ -39,6 +39,7 @@ interface Friend {
 interface ComparisonResult {
   match_score: number;
   shared_genres: string[];
+  shared_titles?: Array<{ title: string; media_type?: string } | string>;
   differences: { user_unique: string[]; friend_unique: string[] };
   insights: { compatibilityLine?: string };
   friend_name: string;
@@ -504,22 +505,25 @@ export function CompareSheet({
                   </div>
                 )}
 
-                {/* Shared genres */}
-                {result.shared_genres?.length > 0 && (
+                {/* Shared media titles */}
+                {result.shared_titles?.length ? (
                   <div>
-                  <p className="mb-2 text-[10px] uppercase tracking-widest text-[#918a98]">You both love</p>
+                  <p className="mb-2 text-[10px] uppercase tracking-widest text-[#918a98]">You both liked</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {result.shared_genres.slice(0, 6).map((g) => (
+                    {result.shared_titles.slice(0, 6).map((item) => {
+                      const title = typeof item === "string" ? item : item.title;
+                      return (
                       <span
-                        key={g}
+                        key={title}
                         className="rounded-full border border-purple-200 bg-purple-50 px-2.5 py-1 text-[11px] font-medium text-purple-700"
                       >
-                        {g}
+                        {title}
                       </span>
-                    ))}
+                      );
+                    })}
                   </div>
                   </div>
-                )}
+                ) : null}
 
                 {/* Differences */}
                 {(result.differences?.user_unique?.length > 0 || result.differences?.friend_unique?.length > 0) && (
