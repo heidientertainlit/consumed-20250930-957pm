@@ -382,11 +382,13 @@ export function CompareSheet({
 
   return createPortal(
     <div
-      className="fixed inset-0 flex justify-center bg-white"
+      className="fixed inset-0 flex items-end justify-center bg-black/45 px-2 sm:px-4"
       style={{ zIndex: 10000 }}
+      onClick={onClose}
     >
       <div
-        className="flex min-h-[100dvh] w-full max-w-md flex-col bg-white"
+        className="flex max-h-[90dvh] min-h-[62dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_-12px_40px_rgba(25,15,35,0.16)]"
+        onClick={(event) => event.stopPropagation()}
       >
         {/* Header */}
         <div className="shrink-0 border-b border-[#eeeaf1] px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
@@ -467,7 +469,7 @@ export function CompareSheet({
                   <>
                     <FriendAvatar friend={f} size={44} />
                     <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 items-center gap-2">
+                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="truncate text-[15px] font-semibold text-[#30203f]">
                           {friendLabel(f)}
                         </span>
@@ -476,7 +478,10 @@ export function CompareSheet({
                             ? "bg-emerald-50 text-emerald-700"
                             : "bg-[#f3f0f5] text-[#918a98]"
                         }`}>
-                          {ready ? "Ready" : "Developing"}
+                          {ready ? "Compare" : "Building DNA"}
+                        </span>
+                        <span className="text-[10px] text-[#918a98]">
+                          — {ready ? "enough DNA to compare" : "not enough yet"}
                         </span>
                       </div>
                       <span className="text-[12px] text-[#918a98]">@{f.user_name}</span>
