@@ -463,7 +463,9 @@ export function CompareSheet({
           {/* Friend picker */}
           {step === "pick" && (
             <div className="flex flex-col pt-3">
-              {friends.map((f) => {
+              {[...friends]
+                .sort((a, b) => Number(b.comparisonStatus === "ready") - Number(a.comparisonStatus === "ready"))
+                .map((f) => {
                 const ready = f.comparisonStatus === "ready";
                 const content = (
                   <>
@@ -478,10 +480,7 @@ export function CompareSheet({
                             ? "bg-emerald-50 text-emerald-700"
                             : "bg-[#f3f0f5] text-[#918a98]"
                         }`}>
-                          {ready ? "Compare" : "Building DNA"}
-                        </span>
-                        <span className="text-[10px] text-[#918a98]">
-                          — {ready ? "enough DNA to compare" : "track more items to compare"}
+                          {ready ? "Compare" : "Add more to compare"}
                         </span>
                       </div>
                       <span className="text-[12px] text-[#918a98]">@{f.user_name}</span>
