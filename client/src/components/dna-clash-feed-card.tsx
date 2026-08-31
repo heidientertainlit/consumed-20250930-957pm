@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Zap, MessageCircle, Send, Trash2, MoreHorizontal, ChevronRight, Play } from "lucide-react";
+import { Zap, MessageCircle, Send, Trash2, MoreHorizontal, Heart } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -262,8 +262,6 @@ export default function DnaClashFeedCard({
   const commentCount = commentsData?.comments?.length ?? 0;
   const name1 = formatFeedName(user1.displayName, user1.username);
   const name2 = formatFeedName(user2.displayName, user2.username);
-  const winnerName = pct1 >= pct2 ? name1 : name2;
-
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 mb-4">
 
@@ -351,11 +349,9 @@ export default function DnaClashFeedCard({
             </div>
             <span className="font-bold text-gray-900 text-[14px] leading-tight">{name1}</span>
             <span className="text-purple-500 text-[11px] font-semibold leading-tight text-center">{user1.dnaLabel}</span>
-            {/* Stars + rating */}
-            <div className="flex items-center gap-0.5">
-              {[1,2,3,4,5].map(s => (
-                <span key={s} style={{ fontSize: 11, color: s <= user1.rating ? '#a855f7' : '#e5e7eb' }}>★</span>
-              ))}
+            {/* Rating */}
+            <div className="font-serif text-[27px] leading-none text-purple-600">
+              {Number(user1.rating).toFixed(1)} <span aria-hidden="true">★</span>
             </div>
           </div>
 
@@ -381,10 +377,8 @@ export default function DnaClashFeedCard({
             </div>
             <span className="font-bold text-gray-900 text-[14px] leading-tight">{name2}</span>
             <span className="text-pink-500 text-[11px] font-semibold leading-tight text-center">{user2.dnaLabel}</span>
-            <div className="flex items-center gap-0.5">
-              {[1,2,3,4,5].map(s => (
-                <span key={s} style={{ fontSize: 11, color: s <= user2.rating ? '#ec4899' : '#e5e7eb' }}>★</span>
-              ))}
+            <div className="font-serif text-[27px] leading-none text-pink-500">
+              {Number(user2.rating).toFixed(1)} <span aria-hidden="true">★</span>
             </div>
           </div>
         </div>
@@ -425,33 +419,37 @@ export default function DnaClashFeedCard({
         )}
 
         {/* ── Vote section ── */}
-        {!voted ? (
-          /* Pre-vote: big percentage split + Vote now CTA */
-          <div className="mt-1 mb-2">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[28px] font-black text-purple-500">{pct1}%</span>
-              <div className="flex-1 h-2.5 rounded-full overflow-hidden bg-gray-100">
-                <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-purple-400 transition-all duration-500"
-                  style={{ width: `${pct1}%` }} />
-              </div>
-              <span className="text-[28px] font-black text-pink-500">{pct2}%</span>
-            </div>
-            {total > 0 && <p className="text-gray-400 text-[11px] text-center">{total} {total === 1 ? 'vote' : 'votes'}</p>}
+        <div className="mt-2 border-t border-gray-100 pt-4">
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[.14em] text-gray-500">Pick a side</p>
+          <div className="grid grid-cols-2 gap-2.5">
+            {[
+              { user: user1, name: name1, color: '#8b35e8', background: '#f5edff', border: '#d8b4fe' },
+              { user: user2, name: name2, color: '#ec3f91', background: '#fff0f7', border: '#f9a8d4' },
+            ].map(({ user, name, color, background, border }) => {
+              const selected = voted === user.username;
+              return (
+                <button
+                  key={user.username}
+                  type="button"
+                  onClick={() => handleVote(user.username)}
+                  disabled={Boolean(voted)}
+                  aria-pressed={selected}
+                  className="flex min-h-[126px] flex-col items-center justify-center rounded-xl border px-3 py-4 text-center transition-transform active:scale-[.98] disabled:cursor-default"
+                  style={{
+                    color,
+                    background,
+                    borderColor: selected ? color : border,
+                    boxShadow: selected ? `inset 0 0 0 1px ${color}` : 'none',
+                  }}
+                >
+                  <Heart size={34} strokeWidth={1.7} fill={selected ? color : 'none'} />
+                  <span className="mt-2 text-[14px] font-bold">I’m with {name.split(' ')[0]}</span>
+                  <span className="mt-0.5 text-[11px] text-gray-500">See their take</span>
+                </button>
+              );
+            })}
           </div>
-        ) : (
-          /* Post-vote: result bars */
-          <div className="flex flex-col gap-1.5 mb-2">
-            {[{ u: user1, pct: pct1, color: '#a855f7', voted: voted === user1.username }, { u: user2, pct: pct2, color: '#ec4899', voted: voted === user2.username }].map(({ u, pct, color, voted: isVoted }) => (
-              <div key={u.username} className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold w-14 truncate shrink-0 text-gray-600">{formatFeedName(u.displayName, u.username)}</span>
-                <div className="flex-1 h-2 rounded-full overflow-hidden bg-gray-100">
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: color }} />
-                </div>
-                <span className="text-[12px] font-bold w-8 text-right shrink-0" style={{ color: isVoted ? color : '#6b7280' }}>{pct}%</span>
-              </div>
-            ))}
-          </div>
-        )}
+        </div>
       </div>
 
       {/* ── Footer action bar ── */}
@@ -484,19 +482,11 @@ export default function DnaClashFeedCard({
           )}
         </button>
 
-        {/* Center: vote CTA or winner result */}
-        {!voted ? (
-          <button
-            onClick={() => handleVote(pct1 >= pct2 ? user1.username : user2.username)}
-            className="flex items-center gap-1 text-purple-600 font-bold text-[13px] active:opacity-70 transition-opacity"
-          >
-            Vote now <ChevronRight size={15} />
-          </button>
-        ) : (
-          <span className="text-[12px] font-semibold text-purple-500">
-            {pct1 >= pct2 ? pct1 : pct2}% with {winnerName}
-          </span>
-        )}
+        {/* Center: side-by-side result */}
+        <div className="min-w-0 flex-1 px-3 text-[11px] font-semibold leading-snug">
+          <p className="truncate text-purple-500">{pct1}% sided with {name1}</p>
+          <p className="truncate text-pink-500">{pct2}% sided with {name2}</p>
+        </div>
 
         {/* Right: comments */}
         <button
