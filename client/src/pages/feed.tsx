@@ -1306,6 +1306,22 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [reviewText, setReviewText] = useState('');
   const [reviewPosted, setReviewPosted] = useState(false);
   const [peeked, setPeeked] = useState(false);
+
+  useEffect(() => {
+    const handleComparisonUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ friendId?: string; matchScore?: number }>).detail;
+      if (
+        detail?.friendId === post.user?.id
+        && typeof detail.matchScore === "number"
+        && session?.user?.id
+      ) {
+        feedAffinityRequests.delete(`${session.user.id}:${detail.friendId}`);
+        setTasteAlignment(Math.round(detail.matchScore));
+      }
+    };
+    window.addEventListener("dna-comparison-updated", handleComparisonUpdated);
+    return () => window.removeEventListener("dna-comparison-updated", handleComparisonUpdated);
+  }, [post.user?.id, session?.user?.id]);
   const [ratingDistribution, setRatingDistribution] = useState<Record<number, number>>({});
   const [ratingCount, setRatingCount] = useState(0);
   // Fire / Ice vote state (used by hot_take cards)

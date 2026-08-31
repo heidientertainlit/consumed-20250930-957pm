@@ -265,6 +265,9 @@ export function CompareSheet({
       const data = await res.json();
       setResult(data);
       setStep("result");
+      window.dispatchEvent(new CustomEvent("dna-comparison-updated", {
+        detail: { friendId: friend.id, matchScore: data.match_score },
+      }));
     } catch (e: any) {
       setErrMsg(e.message || "Something went wrong");
       setStep("error");
