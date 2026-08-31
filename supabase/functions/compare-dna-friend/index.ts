@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { AFFINITY_ALGORITHM_VERSION, scoreAffinitySignals } from '../_shared/affinity-score.ts';
 import { canAccessDnaComparison } from '../_shared/comparison-access.ts';
 
-const SHARED_TITLES_VERSION = 2;
+const SHARED_TITLES_VERSION = 3;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -352,11 +352,30 @@ serve(async (req) => {
           };
         });
 
+      const sharedTitleKeys = new Set(sharedTitles.map((item: any) => sharedTitleKey(item)));
+      const toHighlight = (item: any, likedBy: 'you' | 'friend' | 'both') => ({
+        title: item.title,
+        media_type: item.media_type,
+        external_id: item.external_id,
+        external_source: item.external_source,
+        liked_by: likedBy,
+      });
+      const mediaHighlights = sharedTitles.slice(0, 2).map((item: any) => toHighlight(item, 'both'));
+      if (mediaHighlights.length < 2) {
+        const yourTitle = userLovedItems.find((item: any) => !sharedTitleKeys.has(sharedTitleKey(item)));
+        if (yourTitle) mediaHighlights.push(toHighlight(yourTitle, 'you'));
+      }
+      if (mediaHighlights.length < 2) {
+        const friendTitle = friendLovedItems.find((item: any) => !sharedTitleKeys.has(sharedTitleKey(item)));
+        if (friendTitle) mediaHighlights.push(toHighlight(friendTitle, 'friend'));
+      }
+
       // Generate AI insights
       const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
       let insights: any = {
         algorithm_version: AFFINITY_ALGORITHM_VERSION,
         shared_titles_version: SHARED_TITLES_VERSION,
+        mediaHighlights,
       };
 
       if (openaiApiKey) {
@@ -414,6 +433,7 @@ Only include media types where you have good recommendations. It's fine to have 
               ...JSON.parse(data.choices[0].message.content),
               algorithm_version: AFFINITY_ALGORITHM_VERSION,
               shared_titles_version: SHARED_TITLES_VERSION,
+              mediaHighlights,
             };
           }
         } catch (e) {

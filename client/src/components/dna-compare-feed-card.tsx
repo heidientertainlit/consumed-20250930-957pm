@@ -46,7 +46,16 @@ interface ComparisonResult {
     external_source?: string;
   } | string>;
   differences: { user_unique: string[]; friend_unique: string[] };
-  insights: { compatibilityLine?: string };
+  insights: {
+    compatibilityLine?: string;
+    mediaHighlights?: Array<{
+      title: string;
+      media_type?: string;
+      external_id?: string;
+      external_source?: string;
+      liked_by: "you" | "friend" | "both";
+    }>;
+  };
   friend_name: string;
   friend_dna_label?: string;
   your_dna_label?: string;
@@ -486,11 +495,6 @@ export function CompareSheet({
                       Entertainment DNA match
                     </p>
                   </div>
-                  {result.insights?.compatibilityLine && (
-                    <p className="px-4 text-center font-serif text-[15px] italic leading-relaxed text-[#5c5263]">
-                      “{result.insights.compatibilityLine}”
-                    </p>
-                  )}
                 </div>
 
                 {/* Labels */}
@@ -512,21 +516,30 @@ export function CompareSheet({
                 )}
 
                 {/* Shared media titles */}
-                {result.shared_titles?.length ? (
+                {result.insights?.mediaHighlights?.length ? (
                   <div>
-                  <p className="mb-2 text-[10px] uppercase tracking-widest text-[#918a98]">You both liked</p>
+                  <p className="mb-2 text-[10px] uppercase tracking-widest text-[#918a98]">
+                    {result.insights.mediaHighlights.every((item) => item.liked_by === "both")
+                      ? "You both liked"
+                      : "Media you liked"}
+                  </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {result.shared_titles.slice(0, 2).map((item) => {
-                      const title = typeof item === "string" ? item : item.title;
-                      const mediaType = typeof item === "string" ? null : item.media_type;
-                      const externalId = typeof item === "string" ? null : item.external_id;
-                      const externalSource = typeof item === "string" ? null : item.external_source;
+                    {result.insights.mediaHighlights.slice(0, 2).map((item) => {
+                      const title = item.title;
+                      const mediaType = item.media_type;
+                      const externalId = item.external_id;
+                      const externalSource = item.external_source;
                       const mediaTypeLabel = mediaType === "tv"
                         ? "TV"
                         : mediaType
                           ? mediaType.charAt(0).toUpperCase() + mediaType.slice(1)
                           : null;
-                      const label = mediaTypeLabel ? `${title} · ${mediaTypeLabel}` : title;
+                      const likedBy = item.liked_by === "both"
+                        ? "Both"
+                        : item.liked_by === "you"
+                          ? "You"
+                          : friendLabel(selected);
+                      const label = `${likedBy}: ${title}${mediaTypeLabel ? ` · ${mediaTypeLabel}` : ""}`;
                       const className = "rounded-full border border-purple-200 bg-purple-50 px-2.5 py-1 text-left text-[11px] font-medium text-purple-700";
 
                       if (externalId && externalSource && mediaType) {
