@@ -275,19 +275,28 @@ export default function DnaClashFeedCard({
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 mb-4">
 
       {/* ── Banner ── */}
-      <div className="relative w-full" style={{ height: 200 }}>
+      <div className="relative w-full overflow-hidden" style={{ height: 230 }}>
         {bannerUrl ? (
-          <img
-            src={bannerUrl}
-            alt={mediaTitle}
-            className="w-full h-full object-cover"
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-          />
+          <>
+            <img
+              src={bannerUrl}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full scale-110 object-cover blur-md"
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+            <div className="absolute inset-0 bg-[#174f48]/75" />
+            <img
+              src={bannerUrl}
+              alt={`${mediaTitle} cover`}
+              className="absolute bottom-[-18px] right-7 h-[190px] w-[128px] rotate-[4deg] rounded-md object-cover shadow-2xl"
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          </>
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-slate-700 via-slate-600 to-slate-500" />
+          <div className="h-full w-full bg-gradient-to-br from-emerald-900 via-teal-800 to-slate-800" />
         )}
-        {/* Dark gradient overlay so text is readable */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/15 to-transparent" />
 
         {/* DNA CLASH pill — top left */}
         <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-white/15 backdrop-blur-sm border border-white/30">
@@ -308,9 +317,9 @@ export default function DnaClashFeedCard({
           </button>
         </div>
 
-        {/* Media title overlay — bottom of banner */}
-        <div className="absolute bottom-3 left-4 right-4">
-          <p className="font-serif text-white text-[21px] leading-tight drop-shadow-lg line-clamp-2">
+        {/* Media title overlay — left side of banner */}
+        <div className="absolute bottom-6 left-5 z-10 w-[56%]">
+          <p className="font-serif text-white text-[27px] leading-[1.02] drop-shadow-lg line-clamp-4">
             {mediaTitle}
           </p>
         </div>
@@ -453,7 +462,6 @@ export default function DnaClashFeedCard({
                 >
                   <Heart size={34} strokeWidth={1.7} fill={selected ? color : 'none'} />
                   <span className="mt-2 text-[14px] font-bold">I’m with {name.split(' ')[0]}</span>
-                  <span className="mt-0.5 text-[11px] text-gray-500">See their take</span>
                 </button>
               );
             })}
