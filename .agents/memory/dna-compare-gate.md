@@ -9,6 +9,12 @@ description: Eligibility, evidence-readiness, privacy, and score rules for frien
 
 **How to apply:** Keep access eligibility and detailed readiness distinct. Positive evidence is Favorites or ratings ≥3.5; a lower rating or DNF vetoes that work. Intersect only canonical identity or exact provider identity—never title text alone. If developing, hide score, evidence, AI copy, and share controls and show the developing message.
 
+**Picker rule:** Before selection, group friends as “Ready to compare” or “Still developing” using the same server readiness rule. Developing rows are informative, not clickable; never make users discover readiness through a result error.
+
+**Evidence presentation:** Keep the Compare card focused on verified shared titles and directional taste evidence. Do not show “Creators in common”; normalized creator signals can look ambiguous or incorrectly cased without work-level context.
+
+**Why:** Readiness after selection wastes a tap, while unexplained creator names make sound comparison evidence feel unreliable.
+
 **Score rule:** When detailed comparison is ready, retain the same authoritative pairwise affinity score used by People/feed alignment. Readiness filters whether detail may be shown; it never changes the affinity algorithm or score.
 
 **Cache rule:** Store versioned Compare readiness and strict shared-title evidence separately from the legacy People shared-title cache contract. Directional “you/them” evidence must be oriented for the requester when a deterministic pair cache is reused.

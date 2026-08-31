@@ -50,7 +50,111 @@ serve(async (req) => {
     }
 
     if (req.method === 'POST') {
-      const { friend_id } = await req.json();
+      const { friend_id, action, friend_ids } = await req.json();
+
+      if (action === 'readiness-list') {
+        const requestedIds = [...new Set(
+          (Array.isArray(friend_ids) ? friend_ids : [])
+            .filter((id: unknown): id is string => typeof id === 'string' && id !== user.id)
+            .slice(0, 50),
+        )];
+        if (requestedIds.length === 0) {
+          return new Response(JSON.stringify({ friends: [] }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const { data: friendships, error: friendshipsError } = await supabaseClient
+          .from('friendships')
+          .select('user_id,friend_id')
+          .eq('status', 'accepted')
+          .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
+        if (friendshipsError) throw new Error(`Could not load comparison friends: ${friendshipsError.message}`);
+        const acceptedIds = new Set((friendships || []).map((friendship: any) =>
+          friendship.user_id === user.id ? friendship.friend_id : friendship.user_id
+        ));
+        const allowedIds = requestedIds.filter((id) => acceptedIds.has(id));
+        if (allowedIds.length === 0) {
+          return new Response(JSON.stringify({ friends: [] }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const participantIds = [user.id, ...allowedIds];
+        const [profilesRes, blocksRes, listsRes, itemsRes, ratingsRes] = await Promise.all([
+          supabaseClient.from('dna_profiles').select('user_id').in('user_id', allowedIds),
+          supabaseClient.from('user_blocks').select('blocker_id,blocked_id')
+            .or(`blocker_id.eq.${user.id},blocked_id.eq.${user.id}`),
+          supabaseClient.from('lists').select('id,title,user_id').in('user_id', participantIds),
+          supabaseClient.from('list_items')
+            .select('title,media_type,list_id,external_id,external_source,canonical_media_id,user_id')
+            .in('user_id', participantIds),
+          supabaseClient.from('media_ratings')
+            .select('media_title,media_type,rating,media_external_id,media_external_source,canonical_media_id,user_id')
+            .in('user_id', participantIds),
+        ]);
+        const readinessLoadError = profilesRes.error || blocksRes.error || listsRes.error || itemsRes.error || ratingsRes.error;
+        if (readinessLoadError) throw new Error(`Could not load comparison readiness: ${readinessLoadError.message}`);
+
+        const profileIds = new Set((profilesRes.data || []).map((profile: any) => profile.user_id));
+        const blockedIds = new Set((blocksRes.data || []).map((block: any) =>
+          block.blocker_id === user.id ? block.blocked_id : block.blocker_id
+        ));
+        const visibleIds = allowedIds.filter((id) => profileIds.has(id) && !blockedIds.has(id));
+        const allEvidenceRows = [
+          ...(itemsRes.data || []).map((item: any) => ({ source: item.external_source, id: item.external_id })),
+          ...(ratingsRes.data || []).map((item: any) => ({ source: item.media_external_source, id: item.media_external_id })),
+        ];
+        const sourceValues = [...new Set(allEvidenceRows.map((item: any) => item.source).filter(Boolean))];
+        const externalIds = [...new Set(allEvidenceRows.map((item: any) => item.id).filter(Boolean))];
+        const canonicalByProvider = new Map<string, string>();
+        for (let start = 0; sourceValues.length > 0 && start < externalIds.length; start += 100) {
+          const { data: aliases, error: aliasesError } = await supabaseClient
+            .from('media_provider_aliases')
+            .select('external_source,external_id,canonical_media_id')
+            .in('external_source', sourceValues)
+            .in('external_id', externalIds.slice(start, start + 100));
+          if (aliasesError) throw new Error(`Could not load canonical media aliases: ${aliasesError.message}`);
+          for (const alias of aliases || []) {
+            const key = comparisonProviderKey(alias.external_source, alias.external_id);
+            if (key) canonicalByProvider.set(key, alias.canonical_media_id);
+          }
+        }
+
+        const evidenceByUser = new Map<string, ReturnType<typeof collectPositiveMediaEvidence>>();
+        for (const participantId of participantIds) {
+          const userLists = (listsRes.data || []).filter((list: any) => list.user_id === participantId);
+          const favoriteListIds = new Set(userLists
+            .filter((list: any) => list.title?.toLowerCase().includes('favorite'))
+            .map((list: any) => list.id));
+          const dnfListIds = new Set(userLists
+            .filter((list: any) => list.title?.toLowerCase().includes('did not finish'))
+            .map((list: any) => list.id));
+          evidenceByUser.set(participantId, collectPositiveMediaEvidence({
+            items: (itemsRes.data || []).filter((item: any) => item.user_id === participantId),
+            ratings: (ratingsRes.data || []).filter((rating: any) => rating.user_id === participantId),
+            favoriteListIds,
+            dnfListIds,
+            canonicalByProvider,
+          }));
+        }
+
+        const currentEvidence = evidenceByUser.get(user.id) || [];
+        const readiness = visibleIds.map((id) => {
+          const friendEvidence = evidenceByUser.get(id) || [];
+          const shared = findSharedPositiveMedia(currentEvidence, friendEvidence);
+          return {
+            friend_id: id,
+            ...buildComparisonReadiness(currentEvidence, friendEvidence, shared),
+          };
+        });
+        return new Response(JSON.stringify({ friends: readiness }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
       if (!friend_id) {
         return new Response(JSON.stringify({ error: 'friend_id is required' }), {
@@ -109,7 +213,7 @@ serve(async (req) => {
       const canCompare = canAccessDnaComparison({
         targetExists: !!targetUser,
         targetHasProfile: !!targetProfile,
-        targetEligible: Number(targetEligibilityResult.data?.tracked_items || 0) >= 10,
+        targetEligible: isFriend || Number(targetEligibilityResult.data?.tracked_items || 0) >= 10,
         targetIsPersona: !!targetUser?.is_persona,
         blocked: !!block,
         isFriend,
@@ -151,6 +255,31 @@ serve(async (req) => {
         }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (isFriend && Number(targetEligibilityResult.data?.tracked_items || 0) < 10) {
+        return new Response(JSON.stringify({
+          comparison_status: 'developing',
+          comparison_readiness: {
+            version: COMPARISON_READINESS_VERSION,
+            status: 'developing',
+            required_positive_items: 10,
+            both_have_minimum: false,
+            has_shared_positive_title: false,
+          },
+          insights: {
+            comparison_readiness: {
+              version: COMPARISON_READINESS_VERSION,
+              status: 'developing',
+              required_positive_items: 10,
+              both_have_minimum: false,
+              has_shared_positive_title: false,
+            },
+          },
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
@@ -276,13 +405,26 @@ serve(async (req) => {
 
       // If still no signals, return helpful error
       if (userSignals.length === 0 || friendSignals.length === 0) {
-        return new Response(JSON.stringify({ 
-          error: 'Could not generate DNA signals for comparison. Try again in a moment.',
-          user_has_signals: userSignals.length > 0,
-          friend_has_signals: friendSignals.length > 0,
-          hint: 'DNA signals are extracted from your tracked items. Make sure both users have logged media.'
+        return new Response(JSON.stringify({
+          comparison_status: 'developing',
+          comparison_readiness: {
+            version: COMPARISON_READINESS_VERSION,
+            status: 'developing',
+            required_positive_items: 10,
+            both_have_minimum: false,
+            has_shared_positive_title: false,
+          },
+          insights: {
+            comparison_readiness: {
+              version: COMPARISON_READINESS_VERSION,
+              status: 'developing',
+              required_positive_items: 10,
+              both_have_minimum: false,
+              has_shared_positive_title: false,
+            },
+          },
         }), {
-          status: 400,
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }

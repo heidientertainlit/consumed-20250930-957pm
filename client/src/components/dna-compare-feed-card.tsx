@@ -36,6 +36,7 @@ interface Friend {
   first_name?: string;
   last_name?: string;
   avatar?: string;
+  comparisonStatus?: "ready" | "developing";
 }
 
 interface ComparisonResult {
@@ -239,7 +240,26 @@ export function CompareSheet({
         if (eligible.length === 0) {
           setStep("no-friends");
         } else {
-          setFriends(eligible);
+          const readinessRes = await fetch(
+            `${SUPABASE_URL}/functions/v1/compare-dna-friend`,
+            {
+              method: "POST",
+              headers,
+              body: JSON.stringify({
+                action: "readiness-list",
+                friend_ids: eligible.map((friend) => friend.id),
+              }),
+            }
+          );
+          if (!readinessRes.ok) throw new Error("Couldn't load comparison readiness");
+          const readinessData = await readinessRes.json();
+          const readinessByFriend = new Map(
+            (readinessData.friends || []).map((item: any) => [item.friend_id, item.status])
+          );
+          setFriends(eligible.map((friend) => ({
+            ...friend,
+            comparisonStatus: readinessByFriend.get(friend.id) === "ready" ? "ready" : "developing",
+          })));
           setStep("pick");
         }
       } catch {
@@ -447,11 +467,13 @@ export function CompareSheet({
 
           {/* Friend picker */}
           {step === "pick" && (
-            <div className="flex flex-col gap-2 pt-1">
-              <p className="text-white/40 text-[11px] uppercase tracking-widest mb-2">
-                Pick a friend
-              </p>
-              {friends.map((f) => (
+            <div className="flex flex-col gap-5 pt-1">
+              {friends.some((friend) => friend.comparisonStatus === "ready") && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-emerald-300/80 text-[11px] uppercase tracking-widest mb-1">
+                    Ready to compare
+                  </p>
+                  {friends.filter((friend) => friend.comparisonStatus === "ready").map((f) => (
                 <button
                   key={f.id}
                   onClick={() => handlePick(f)}
@@ -466,7 +488,38 @@ export function CompareSheet({
                   </div>
                   <ArrowRight size={16} className="text-white/30 ml-auto shrink-0" />
                 </button>
-              ))}
+                  ))}
+                </div>
+              )}
+              {friends.some((friend) => friend.comparisonStatus !== "ready") && (
+                <div className="flex flex-col gap-2">
+                  <div className="mb-1">
+                    <p className="text-white/40 text-[11px] uppercase tracking-widest">
+                      Still developing
+                    </p>
+                    <p className="mt-1 text-white/35 text-[11px]">
+                      You both need more positive history and a title in common.
+                    </p>
+                  </div>
+                  {friends.filter((friend) => friend.comparisonStatus !== "ready").map((f) => (
+                    <div
+                      key={f.id}
+                      className="flex items-center gap-3 p-3 rounded-2xl border border-white/5 bg-white/[0.025] text-left opacity-65"
+                    >
+                      <FriendAvatar friend={f} size={40} />
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-white/75 font-semibold text-[14px] truncate">
+                          {friendLabel(f)}
+                        </span>
+                        <span className="text-white/35 text-[11px]">@{f.user_name}</span>
+                      </div>
+                      <span className="ml-auto shrink-0 rounded-full bg-white/5 px-2 py-1 text-[10px] font-semibold text-white/40">
+                        Developing
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -565,22 +618,6 @@ export function CompareSheet({
                       );
                     })}
                   </div>
-                  </div>
-                ) : null}
-
-                {result.shared_creators?.length ? (
-                  <div>
-                    <p className="mb-2 text-[10px] uppercase tracking-widest text-[#918a98]">Creators in common</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {result.shared_creators.slice(0, 2).map((creator) => (
-                        <span
-                          key={creator}
-                          className="rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-medium text-indigo-700"
-                        >
-                          {creator}
-                        </span>
-                      ))}
-                    </div>
                   </div>
                 ) : null}
 
