@@ -1,5 +1,5 @@
 export const COMPARISON_POSITIVE_ITEM_MINIMUM = 10;
-export const COMPARISON_READINESS_VERSION = 2;
+export const COMPARISON_READINESS_VERSION = 3;
 
 export type ComparisonStatus = 'ready' | 'developing';
 

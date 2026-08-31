@@ -61,8 +61,8 @@ interface ComparisonResult {
   friend_dna_label?: string;
   your_dna_label?: string;
   individual_stats?: {
-    user?: { positive_title_count?: number; top_media_type?: string | null };
-    friend?: { positive_title_count?: number; top_media_type?: string | null };
+    user?: { total_tracked?: number; average_rating?: number | null; top_media_type?: string | null };
+    friend?: { total_tracked?: number; average_rating?: number | null; top_media_type?: string | null };
   };
 }
 
@@ -587,12 +587,17 @@ export function CompareSheet({
                             {person.label}
                           </p>
                           <p className="mt-2 font-serif text-[24px] leading-none text-[#30203f]">
-                            {person.stats?.positive_title_count ?? 0}
+                            {person.stats?.total_tracked ?? 0}
                           </p>
-                          <p className="mt-1 text-[11px] text-[#665d6d]">positive picks</p>
-                          {mediaTypeLabel && (
+                          <p className="mt-1 text-[11px] text-[#665d6d]">total tracked</p>
+                          {person.stats?.average_rating != null && (
                             <p className="mt-2 text-[11px] font-semibold text-violet-600">
-                              Most: {mediaTypeLabel}
+                              {person.stats.average_rating.toFixed(1)} ★ average rating
+                            </p>
+                          )}
+                          {mediaTypeLabel && (
+                            <p className="mt-1 text-[11px] text-[#665d6d]">
+                              Top type: {mediaTypeLabel}
                             </p>
                           )}
                           {person.archetype && (
@@ -684,32 +689,36 @@ export function CompareSheet({
                 )}
               </div>
 
-              {shareNotice && (
-                <p className="text-center text-[12px] text-violet-600">{shareNotice}</p>
-              )}
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  onClick={handleShareText}
-                  disabled={sharingText || sharingPhoto}
-                  className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#d9d2de] bg-white px-3 text-[13px] font-semibold text-[#30203f] disabled:opacity-50"
-                >
-                  {sharingText ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
-                  Share by Text
-                </button>
-                <button
-                  onClick={handleSharePhoto}
-                  disabled={sharingText || sharingPhoto}
-                  className="flex min-h-11 items-center justify-center gap-2 rounded-full bg-violet-500 px-3 text-[13px] font-semibold text-white disabled:opacity-50"
-                >
-                  {sharingPhoto ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                  Share Photo
-                </button>
-              </div>
                 </>
               )}
             </div>
           )}
         </div>
+        {step === "result" && result && selected && isDnaComparisonReady(result) && (
+          <div className="z-10 shrink-0 border-t border-[#eeeaf1] bg-white px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+            {shareNotice && (
+              <p className="mb-2 text-center text-[12px] text-violet-600">{shareNotice}</p>
+            )}
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                onClick={handleShareText}
+                disabled={sharingText || sharingPhoto}
+                className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#d9d2de] bg-white px-3 text-[13px] font-semibold text-[#30203f] disabled:opacity-50"
+              >
+                {sharingText ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
+                Share by Text
+              </button>
+              <button
+                onClick={handleSharePhoto}
+                disabled={sharingText || sharingPhoto}
+                className="flex min-h-11 items-center justify-center gap-2 rounded-full bg-violet-500 px-3 text-[13px] font-semibold text-white disabled:opacity-50"
+              >
+                {sharingPhoto ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                Share Photo
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>,
     document.body

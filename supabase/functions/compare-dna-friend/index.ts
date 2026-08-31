@@ -526,22 +526,32 @@ serve(async (req) => {
       });
       const sharedTitles = findSharedPositiveMedia(userLovedItems, friendLovedItems).slice(0, 10);
       const comparisonReadiness = buildComparisonReadiness(userLovedItems, friendLovedItems, sharedTitles);
-      const summarizePositiveEvidence = (items: typeof userLovedItems) => {
+      const summarizeIndividualStats = (
+        trackedItems: any[],
+        ratings: any[],
+      ) => {
         const counts = new Map<string, number>();
-        for (const item of items) {
+        for (const item of trackedItems) {
           const type = String(item.media_type || 'media').toLowerCase();
           counts.set(type, (counts.get(type) || 0) + 1);
         }
         const topMediaType = [...counts.entries()]
           .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || null;
+        const numericRatings = ratings
+          .map((rating) => Number(rating.rating))
+          .filter((rating) => Number.isFinite(rating) && rating > 0);
+        const averageRating = numericRatings.length > 0
+          ? Number((numericRatings.reduce((sum, rating) => sum + rating, 0) / numericRatings.length).toFixed(1))
+          : null;
         return {
-          positive_title_count: items.length,
+          total_tracked: trackedItems.length,
+          average_rating: averageRating,
           top_media_type: topMediaType,
         };
       };
       const individualStats = {
-        user: summarizePositiveEvidence(userLovedItems),
-        friend: summarizePositiveEvidence(friendLovedItems),
+        user: summarizeIndividualStats(userItemsRes.data || [], userRatingsRes.data || []),
+        friend: summarizeIndividualStats(friendItemsRes.data || [], friendRatingsRes.data || []),
       };
       // Keep the shared cache's legacy People-affinity evidence unchanged.
       // Detailed Compare evidence lives separately in insights.
