@@ -275,7 +275,7 @@ export default function DnaClashFeedCard({
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 mb-4">
 
       {/* ── Banner ── */}
-      <div className="relative w-full overflow-hidden" style={{ height: 230 }}>
+      <div className="relative w-full overflow-hidden" style={{ height: 185 }}>
         {bannerUrl ? (
           <>
             <img
@@ -289,7 +289,7 @@ export default function DnaClashFeedCard({
             <img
               src={bannerUrl}
               alt={`${mediaTitle} cover`}
-              className="absolute bottom-[-18px] right-7 h-[190px] w-[128px] rotate-[4deg] rounded-md object-cover shadow-2xl"
+              className="absolute bottom-[-14px] right-7 h-[154px] w-[104px] rotate-[4deg] rounded-md object-cover shadow-2xl"
               onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
           </>
@@ -318,8 +318,8 @@ export default function DnaClashFeedCard({
         </div>
 
         {/* Media title overlay — left side of banner */}
-        <div className="absolute bottom-6 left-5 z-10 w-[56%]">
-          <p className="font-serif text-white text-[27px] leading-[1.02] drop-shadow-lg line-clamp-4">
+        <div className="absolute bottom-5 left-5 z-10 w-[58%]">
+          <p className="font-serif text-white text-[22px] leading-[1.05] drop-shadow-lg line-clamp-4">
             {mediaTitle}
           </p>
         </div>
