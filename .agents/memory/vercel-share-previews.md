@@ -10,3 +10,5 @@ Production at the custom app domain is served as a static Vercel SPA. React meta
 **How to apply:** Route known shareable paths through the OG handler for every user agent rather than trying to identify crawlers. Bundle the built app shell with the handler so human taps still load the SPA. Keep these rewrites ahead of the static fallback, preserve a branded 1200×630 image, and verify against production after Vercel deploys.
 
 Invite actions should share `/invite/:userId`, not `/u/:userId`; profile URLs are for viewing a profile, while invite URLs carry action-oriented invitation metadata.
+
+Private Compare shares use `/edna/:userId?compare=1`: metadata invites the recipient to compare with the sender, but never exposes the existing friend, score, or pairwise result publicly. Keep the preview title action-specific and the description a single direct CTA; do not repeat generic app marketing in both.

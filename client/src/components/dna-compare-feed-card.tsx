@@ -313,19 +313,19 @@ export function CompareSheet({
 
   const comparisonText = () => {
     if (!selected || !result || !isDnaComparisonReady(result)) return "";
-    return `${friendLabel(selected)} and I are ${result.match_score}% aligned in our Entertainment DNA on Consumed.`;
+    return `${friendLabel(selected)} and I are ${result.match_score}% aligned. Compare your Entertainment DNA with me on Consumed.`;
   };
 
   async function handleShareText() {
     if (!selected || !result || !isDnaComparisonReady(result) || sharingText) return;
     setSharingText(true);
     setShareNotice("");
-    const url = `${(import.meta.env.VITE_APP_URL as string) || window.location.origin}/edna/${userId}`;
+    const url = `${(import.meta.env.VITE_APP_URL as string) || window.location.origin}/edna/${userId}?compare=1`;
     const text = comparisonText();
     try {
       if (navigator.share) {
         await navigator.share({
-          title: "Our Entertainment DNA Match",
+          title: "Compare your Entertainment DNA with me",
           text,
           url,
         });

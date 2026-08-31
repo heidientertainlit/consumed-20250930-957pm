@@ -441,6 +441,7 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
 
   route("/edna/:id", async (req) => {
     const userId = typeof req.query.user === "string" ? req.query.user : req.params.id;
+    const isCompareInvite = req.query.compare === "1";
     const [{ data: profile }, { data: user }] = await Promise.all([
       supabase
         .from("dna_profiles")
@@ -454,6 +455,13 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
         .maybeSingle(),
     ]);
     const name = compactText(user?.display_name || user?.user_name, 40);
+    if (isCompareInvite) {
+      return responseTags(req, {
+        title: `Compare your Entertainment DNA with ${name || "me"}`,
+        description: "Reveal your match on Consumed.",
+        image: user?.avatar,
+      });
+    }
     const label = profile?.is_private ? "" : compactText(profile?.label, 65);
     const tagline = profile?.is_private ? "" : compactText(profile?.tagline, 135);
     if (profile?.is_private) {
