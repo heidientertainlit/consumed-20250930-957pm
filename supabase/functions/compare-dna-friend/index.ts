@@ -302,12 +302,19 @@ serve(async (req) => {
               user_unique: cachedComparison.differences?.friend_unique || [],
               friend_unique: cachedComparison.differences?.user_unique || [],
             };
+        const cachedIndividualStats = cachedComparison.insights.differences_user_id === user.id
+          ? cachedComparison.insights.individual_stats
+          : {
+              user: cachedComparison.insights.individual_stats?.friend,
+              friend: cachedComparison.insights.individual_stats?.user,
+            };
         return new Response(JSON.stringify({
           ...cachedComparison,
           shared_titles: cachedComparison.insights.detailed_shared_titles || [],
           differences: cachedDifferences,
           comparison_status: cachedComparison.insights.comparison_readiness.status,
           comparison_readiness: cachedComparison.insights.comparison_readiness,
+          individual_stats: cachedIndividualStats,
           from_cache: true
         }), {
           status: 200,
@@ -519,6 +526,23 @@ serve(async (req) => {
       });
       const sharedTitles = findSharedPositiveMedia(userLovedItems, friendLovedItems).slice(0, 10);
       const comparisonReadiness = buildComparisonReadiness(userLovedItems, friendLovedItems, sharedTitles);
+      const summarizePositiveEvidence = (items: typeof userLovedItems) => {
+        const counts = new Map<string, number>();
+        for (const item of items) {
+          const type = String(item.media_type || 'media').toLowerCase();
+          counts.set(type, (counts.get(type) || 0) + 1);
+        }
+        const topMediaType = [...counts.entries()]
+          .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || null;
+        return {
+          positive_title_count: items.length,
+          top_media_type: topMediaType,
+        };
+      };
+      const individualStats = {
+        user: summarizePositiveEvidence(userLovedItems),
+        friend: summarizePositiveEvidence(friendLovedItems),
+      };
       // Keep the shared cache's legacy People-affinity evidence unchanged.
       // Detailed Compare evidence lives separately in insights.
       const peopleSharedTitles = buildLegacyPeopleSharedTitles(
@@ -534,6 +558,7 @@ serve(async (req) => {
         comparison_readiness: comparisonReadiness,
         detailed_shared_titles: sharedTitles,
         differences_user_id: user.id,
+        individual_stats: individualStats,
       };
 
       if (openaiApiKey && comparisonReadiness.status === 'ready') {
@@ -594,6 +619,7 @@ Only include media types where you have good recommendations. It's fine to have 
               comparison_readiness: comparisonReadiness,
               detailed_shared_titles: sharedTitles,
               differences_user_id: user.id,
+              individual_stats: individualStats,
             };
           }
         } catch (e) {
@@ -635,6 +661,7 @@ Only include media types where you have good recommendations. It's fine to have 
         shared_titles: sharedTitles,
         comparison_status: comparisonReadiness.status,
         comparison_readiness: comparisonReadiness,
+        individual_stats: individualStats,
         friend_name: [friendUser?.first_name, friendUser?.last_name].filter(Boolean).join(' ')
           || friendUser?.display_name
           || friendUser?.user_name

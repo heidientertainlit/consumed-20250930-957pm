@@ -8,6 +8,7 @@ import { Dna, ArrowRight, Users, X, ChevronLeft, Loader2, Share2, CheckCircle2, 
 import { formatFeedName } from "@/lib/feed-name";
 import { DnaComparisonDeveloping, isDnaComparisonReady } from "@/components/dna-comparison-developing";
 import { getDnaComparisonUpdateDetail } from "@/lib/dna-comparison-readiness";
+import consumedPurpleLogo from "../../../attached_assets/consumed_logo_purple_bgTransparent_1788203998710.png";
 
 /* ── types ─────────────────────────────────────────── */
 interface OverlapUser {
@@ -59,6 +60,10 @@ interface ComparisonResult {
   friend_name: string;
   friend_dna_label?: string;
   your_dna_label?: string;
+  individual_stats?: {
+    user?: { positive_title_count?: number; top_media_type?: string | null };
+    friend?: { positive_title_count?: number; top_media_type?: string | null };
+  };
 }
 
 interface DnaCompareFeedCardProps {
@@ -524,9 +529,9 @@ export function CompareSheet({
                 {/* Score + avatars */}
                 <div className="flex flex-col items-center gap-3">
                   <img
-                    src="/consumed-logo-new.png"
+                    src={consumedPurpleLogo}
                     alt="Consumed"
-                    className="mb-1 h-5 w-auto object-contain"
+                    className="mb-2 h-6 w-auto object-contain"
                   />
                   <p className="font-serif text-[25px] font-normal tracking-[-.025em] text-[#30203f]">
                     You + {friendLabel(selected)}
@@ -555,28 +560,56 @@ export function CompareSheet({
                   </div>
                 </div>
 
-                {/* Labels */}
-                {(result.your_dna_label || result.friend_dna_label) && (
-                  <div className="flex gap-2">
-                  {result.your_dna_label && (
-                    <div className="flex-1 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-center">
-                      <p className="mb-0.5 text-[9px] uppercase tracking-widest text-[#918a98]">You</p>
-                      <p className="text-[11px] font-semibold leading-tight text-indigo-700">{result.your_dna_label}</p>
-                    </div>
-                  )}
-                  {result.friend_dna_label && (
-                    <div className="flex-1 rounded-xl border border-purple-200 bg-purple-50 px-3 py-2 text-center">
-                      <p className="mb-0.5 text-[9px] uppercase tracking-widest text-[#918a98]">{friendLabel(selected)}</p>
-                      <p className="text-[11px] font-semibold leading-tight text-purple-700">{result.friend_dna_label}</p>
-                    </div>
-                  )}
+                {/* Individual DNA stats */}
+                {result.individual_stats && (
+                  <div className="grid grid-cols-2 divide-x divide-[#e9e3ee] border-y border-[#e9e3ee] py-5">
+                    {([
+                      {
+                        label: "You",
+                        stats: result.individual_stats.user,
+                        archetype: result.your_dna_label,
+                      },
+                      {
+                        label: friendLabel(selected),
+                        stats: result.individual_stats.friend,
+                        archetype: result.friend_dna_label,
+                      },
+                    ] as const).map((person) => {
+                      const mediaType = person.stats?.top_media_type;
+                      const mediaTypeLabel = mediaType === "tv"
+                        ? "TV"
+                        : mediaType
+                          ? mediaType.charAt(0).toUpperCase() + mediaType.slice(1)
+                          : null;
+                      return (
+                        <div key={person.label} className="px-4 text-center first:pl-0 last:pr-0">
+                          <p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#918a98]">
+                            {person.label}
+                          </p>
+                          <p className="mt-2 font-serif text-[24px] leading-none text-[#30203f]">
+                            {person.stats?.positive_title_count ?? 0}
+                          </p>
+                          <p className="mt-1 text-[11px] text-[#665d6d]">positive picks</p>
+                          {mediaTypeLabel && (
+                            <p className="mt-2 text-[11px] font-semibold text-violet-600">
+                              Most: {mediaTypeLabel}
+                            </p>
+                          )}
+                          {person.archetype && (
+                            <p className="mt-1 text-[10px] leading-tight text-[#918a98]">
+                              {person.archetype}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
                 {/* Shared media titles */}
                 {result.shared_titles?.length ? (
-                  <div className="border-t border-[#eeeaf1] pt-6">
-                  <p className="mb-3 text-[10px] uppercase tracking-widest text-[#918a98]">You both liked</p>
+                  <div>
+                  <p className="mb-2 text-[10px] uppercase tracking-widest text-[#918a98]">You both liked</p>
                   <div className="flex flex-col divide-y divide-[#eeeaf1]">
                     {result.shared_titles.slice(0, 2).map((item) => {
                       const title = typeof item === "string" ? item : item.title;
@@ -588,8 +621,19 @@ export function CompareSheet({
                         : mediaType
                           ? mediaType.charAt(0).toUpperCase() + mediaType.slice(1)
                           : null;
-                      const label = `${title}${mediaTypeLabel ? ` · ${mediaTypeLabel}` : ""}`;
-                      const className = "block w-full py-3 text-left text-[14px] font-medium leading-snug text-violet-700";
+                      const className = "block w-full py-4 text-left";
+                      const content = (
+                        <>
+                          <span className="block font-serif text-[18px] leading-snug text-violet-700">
+                            {title}
+                          </span>
+                          {mediaTypeLabel && (
+                            <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[.14em] text-[#918a98]">
+                              {mediaTypeLabel}
+                            </span>
+                          )}
+                        </>
+                      );
 
                       if (externalId && externalSource && mediaType) {
                         return (
@@ -602,14 +646,14 @@ export function CompareSheet({
                               setLocation(`/media/${mediaType.toLowerCase()}/${externalSource}/${externalId}`);
                             }}
                           >
-                            {label}
+                            {content}
                           </button>
                         );
                       }
 
                       return (
                         <span key={`${mediaType || "media"}:${title}`} className={`${className} text-[#5c5263]`}>
-                          {label}
+                          {content}
                         </span>
                       );
                     })}
