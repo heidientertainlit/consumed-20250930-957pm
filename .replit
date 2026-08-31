@@ -44,10 +44,6 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Deploy: daily-challenge"
 
 [[workflows.workflow.tasks]]
@@ -78,17 +74,9 @@ args = "Deploy: generate-dna-moments"
 task = "workflow.run"
 args = "Deploy: People"
 
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "webview"
-
 [[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-waitForPort = 5000
+task = "workflow.run"
+args = "Start application"
 
 [[workflows.workflow]]
 name = "Deploy: daily-challenge"
@@ -174,6 +162,18 @@ args = "npx supabase functions deploy people-affinity --project-ref mahpgcogwpaw
 
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
 
 [agent]
 integrations = ["javascript_openai:1.0.0", "javascript_supabase:1.0.0"]

@@ -262,6 +262,15 @@ export default function DnaClashFeedCard({
   const commentCount = commentsData?.comments?.length ?? 0;
   const name1 = formatFeedName(user1.displayName, user1.username);
   const name2 = formatFeedName(user2.displayName, user2.username);
+  const mediaTypeLabel = ({
+    book: 'Book',
+    movie: 'Movie',
+    tv: 'TV Show',
+    music: 'Music',
+    podcast: 'Podcast',
+    game: 'Game',
+    youtube: 'YouTube',
+  } as Record<string, string>)[String(mediaType || '').toLowerCase()] || 'Media';
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 mb-4">
 
@@ -328,8 +337,8 @@ export default function DnaClashFeedCard({
       <div className="px-4 pt-4 pb-2">
 
         {/* Headline */}
-        <p className="text-gray-900 font-black text-[20px] leading-tight text-center">Completely different takes.</p>
-        <p className="text-gray-400 text-[13px] text-center mt-1 mb-4">Whose take do you agree with?</p>
+        <p className="text-gray-900 font-black text-[20px] leading-tight text-center">Same {mediaTypeLabel}. Different Takes.</p>
+        <p className="text-gray-400 text-[13px] text-center mt-1 mb-4">Whose side are you on?</p>
 
         {/* Users row */}
         <div className="flex items-start justify-between gap-2 mb-4">
