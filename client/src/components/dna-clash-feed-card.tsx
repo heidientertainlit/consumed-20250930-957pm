@@ -310,7 +310,7 @@ export default function DnaClashFeedCard({
 
         {/* Media title overlay — bottom of banner */}
         <div className="absolute bottom-3 left-4 right-4">
-          <p className="text-white font-black text-[17px] leading-tight drop-shadow-lg uppercase tracking-wide line-clamp-2">
+          <p className="font-serif text-white text-[21px] leading-tight drop-shadow-lg line-clamp-2">
             {mediaTitle}
           </p>
         </div>
