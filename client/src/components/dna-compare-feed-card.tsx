@@ -51,6 +51,7 @@ interface ComparisonResult {
     media_type?: string;
     external_id?: string;
     external_source?: string;
+    image_url?: string;
   } | string>;
   differences: { user_unique: string[]; friend_unique: string[] };
   insights: {
@@ -295,7 +296,37 @@ export function CompareSheet({
         throw new Error(e.error || "Comparison failed");
       }
       const data = await res.json();
-      setResult(data);
+      const sharedTitles = Array.isArray(data.shared_titles) ? data.shared_titles : [];
+      const hydratedTitles = await Promise.all(sharedTitles.slice(0, 2).map(async (item: any) => {
+        const title = typeof item === "string" ? item : item?.title;
+        const mediaType = typeof item === "string" ? "" : item?.media_type || "";
+        if (!title || (typeof item !== "string" && item.image_url)) return item;
+        try {
+          const params = new URLSearchParams({ query: title });
+          if (mediaType) params.set("type", mediaType);
+          const imageRes = await fetch(`${SUPABASE_URL}/functions/v1/media-search?${params}`, {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          });
+          if (!imageRes.ok) return item;
+          const payload = await imageRes.json();
+          const results = Array.isArray(payload?.results) ? payload.results : Array.isArray(payload) ? payload : [];
+          const normalizeTitle = (value: unknown) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+          const match = results.find((candidate: any) =>
+            normalizeTitle(candidate?.title || candidate?.name) === normalizeTitle(title)
+          );
+          const imageUrl = match?.poster_url || match?.image || match?.image_url || match?.cover_url || "";
+          if (!imageUrl) return item;
+          return typeof item === "string"
+            ? { title: item, image_url: imageUrl }
+            : { ...item, image_url: imageUrl };
+        } catch {
+          return item;
+        }
+      }));
+      setResult({
+        ...data,
+        shared_titles: [...hydratedTitles, ...sharedTitles.slice(2)],
+      });
       setStep("result");
       const updateDetail = getDnaComparisonUpdateDetail(friend.id, data);
       if (updateDetail) {
@@ -621,6 +652,7 @@ export function CompareSheet({
                       const mediaType = typeof item === "string" ? null : item.media_type;
                       const externalId = typeof item === "string" ? null : item.external_id;
                       const externalSource = typeof item === "string" ? null : item.external_source;
+                      const imageUrl = typeof item === "string" ? null : item.image_url;
                       const mediaTypeLabel = mediaType === "tv"
                         ? "TV"
                         : mediaType
@@ -629,6 +661,20 @@ export function CompareSheet({
                       const className = "block w-full min-w-0 py-3 text-left";
                       const content = (
                         <>
+                          <span className="mb-3 block aspect-[2/3] w-full overflow-hidden rounded-xl bg-[#eeeaf1] shadow-sm">
+                            {imageUrl ? (
+                              <img
+                                src={imageUrl}
+                                alt={`${title} poster`}
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <span className="flex h-full items-end bg-gradient-to-br from-violet-200 to-violet-500 p-3 font-serif text-lg leading-tight text-white">
+                                {title}
+                              </span>
+                            )}
+                          </span>
                           <span className="block font-serif text-[18px] leading-snug text-violet-700">
                             {title}
                           </span>
