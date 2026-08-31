@@ -79,13 +79,17 @@ function initials(name: string) {
     : name.slice(0, 2).toUpperCase();
 }
 
+function formatFriendName(friend: Friend): string {
+  const fullName = [friend.first_name, friend.last_name]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(" ");
+
+  return fullName || friend.display_name?.trim() || friend.user_name;
+}
+
 function FriendAvatar({ friend, size = 40 }: { friend: Friend; size?: number }) {
-  const label = formatFeedName(
-    friend.display_name,
-    friend.user_name,
-    friend.first_name,
-    friend.last_name,
-  );
+  const label = formatFriendName(friend);
   return (
     <div
       className="rounded-full shrink-0 flex items-center justify-center font-bold text-white bg-indigo-500"
@@ -257,12 +261,7 @@ export function CompareSheet({
     }
   }
 
-  const friendLabel = (f: Friend) => formatFeedName(
-    f.display_name,
-    f.user_name,
-    f.first_name,
-    f.last_name,
-  );
+  const friendLabel = formatFriendName;
 
   return createPortal(
     <div
