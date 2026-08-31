@@ -39,7 +39,12 @@ interface Friend {
 interface ComparisonResult {
   match_score: number;
   shared_genres: string[];
-  shared_titles?: Array<{ title: string; media_type?: string } | string>;
+  shared_titles?: Array<{
+    title: string;
+    media_type?: string;
+    external_id?: string;
+    external_source?: string;
+  } | string>;
   differences: { user_unique: string[]; friend_unique: string[] };
   insights: { compatibilityLine?: string };
   friend_name: string;
@@ -164,6 +169,7 @@ export function CompareSheet({
   session: any;
   userId: string;
 }) {
+  const [, setLocation] = useLocation();
   const [step, setStep] = useState<"loading-friends" | "pick" | "comparing" | "result" | "no-friends" | "error">("loading-friends");
   const resultCardRef = useReactRef<HTMLDivElement>(null);
   const [sharingText, setSharingText] = useState(false);
@@ -510,15 +516,39 @@ export function CompareSheet({
                   <div>
                   <p className="mb-2 text-[10px] uppercase tracking-widest text-[#918a98]">You both liked</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {result.shared_titles.slice(0, 6).map((item) => {
+                    {result.shared_titles.slice(0, 2).map((item) => {
                       const title = typeof item === "string" ? item : item.title;
+                      const mediaType = typeof item === "string" ? null : item.media_type;
+                      const externalId = typeof item === "string" ? null : item.external_id;
+                      const externalSource = typeof item === "string" ? null : item.external_source;
+                      const mediaTypeLabel = mediaType === "tv"
+                        ? "TV"
+                        : mediaType
+                          ? mediaType.charAt(0).toUpperCase() + mediaType.slice(1)
+                          : null;
+                      const label = mediaTypeLabel ? `${title} · ${mediaTypeLabel}` : title;
+                      const className = "rounded-full border border-purple-200 bg-purple-50 px-2.5 py-1 text-left text-[11px] font-medium text-purple-700";
+
+                      if (externalId && externalSource && mediaType) {
+                        return (
+                          <button
+                            key={`${mediaType}:${externalSource}:${externalId}`}
+                            type="button"
+                            className={`${className} hover:border-purple-400 hover:bg-purple-100`}
+                            onClick={() => {
+                              onClose();
+                              setLocation(`/media/${mediaType.toLowerCase()}/${externalSource}/${externalId}`);
+                            }}
+                          >
+                            {label}
+                          </button>
+                        );
+                      }
+
                       return (
-                      <span
-                        key={title}
-                        className="rounded-full border border-purple-200 bg-purple-50 px-2.5 py-1 text-[11px] font-medium text-purple-700"
-                      >
-                        {title}
-                      </span>
+                        <span key={`${mediaType || "media"}:${title}`} className={className}>
+                          {label}
+                        </span>
                       );
                     })}
                   </div>
