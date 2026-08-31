@@ -615,7 +615,7 @@ export function CompareSheet({
                 {result.shared_titles?.length ? (
                   <div>
                   <p className="mb-2 text-[10px] uppercase tracking-widest text-[#918a98]">You both liked</p>
-                  <div className="flex flex-col divide-y divide-[#eeeaf1]">
+                  <div className="grid grid-cols-2 gap-5">
                     {result.shared_titles.slice(0, 2).map((item) => {
                       const title = typeof item === "string" ? item : item.title;
                       const mediaType = typeof item === "string" ? null : item.media_type;
@@ -626,7 +626,7 @@ export function CompareSheet({
                         : mediaType
                           ? mediaType.charAt(0).toUpperCase() + mediaType.slice(1)
                           : null;
-                      const className = "block w-full py-4 text-left";
+                      const className = "block w-full min-w-0 py-3 text-left";
                       const content = (
                         <>
                           <span className="block font-serif text-[18px] leading-snug text-violet-700">
