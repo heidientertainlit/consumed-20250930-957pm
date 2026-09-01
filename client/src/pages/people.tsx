@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, LockKeyhole, Share2, Sparkles, Star, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, LockKeyhole, Search, Share2, Sparkles, Star, Users } from "lucide-react";
 import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
 import FriendsManager from "@/components/friends-manager";
@@ -348,6 +348,7 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
   const queryClient = useQueryClient();
   const automaticMatchBatches = useRef(0);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [peopleSearchQuery, setPeopleSearchQuery] = useState("");
   const [relationshipStatus, setRelationshipStatus] = useState<"loading" | "none" | "pending">("none");
   const [isSendingRequest, setIsSendingRequest] = useState(false);
   const [, setLocation] = useLocation();
@@ -499,6 +500,19 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
             </h1>
             <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Find the people, communities, and creators connected by what you love.</p>
           </div>
+          {tab === "friends" && (
+            <div className="relative mt-5 max-w-xl">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60" size={18} aria-hidden="true" />
+              <input
+                type="search"
+                placeholder="Search people and friends"
+                value={peopleSearchQuery}
+                onChange={(event) => setPeopleSearchQuery(event.target.value)}
+                className="w-full rounded-xl border border-white/15 bg-white/10 py-3 pl-11 pr-4 text-sm text-white shadow-[0_6px_18px_rgba(10,4,24,0.14)] outline-none backdrop-blur-sm placeholder:text-white/55 focus:border-white/35 focus:bg-white/15 focus:ring-2 focus:ring-white/15"
+                data-testid="input-search-friends-hero"
+              />
+            </div>
+          )}
         </div>
       </div>
     </header>
@@ -522,7 +536,7 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
     </div>
     <main className="mx-auto max-w-5xl px-4 sm:px-6">
 
-      {tab === "friends" && <Friends query={affinityQuery} more={moreMatches} onSelectPerson={openPerson} onInvite={copyInvite} userId={user?.id} />}
+      {tab === "friends" && <Friends query={affinityQuery} more={moreMatches} onSelectPerson={openPerson} onInvite={copyInvite} userId={user?.id} searchQuery={peopleSearchQuery} onSearchQueryChange={setPeopleSearchQuery} />}
       {tab === "tribes" && <Tribes query={tribesQuery} selected={selectedTribe} onSelect={setTribe} membership={membership} relatedPeople={relatedPeople} />}
       {tab === "creators" && <Creators query={creatorsQuery} />}
     </main>
@@ -566,11 +580,12 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
   </div>;
 }
 
-function Friends({ query, more, onSelectPerson, onInvite, userId }: { query: ReturnType<typeof useQuery<Affinity>>; more: ReturnType<typeof useMutation<Affinity, Error, void>>; onSelectPerson: (person: Person) => void; onInvite: () => void; userId?: string }) {
-  if (query.isLoading) return <section className="mt-7"><FriendsHeader />{userId && <div className="mb-10"><FriendsManager userId={userId} /></div>}<div className="space-y-3"><div className="h-5 w-36 animate-pulse rounded bg-[#e6e0e7]" />{[1, 2].map((item) => <div key={item} className="h-[252px] animate-pulse rounded-[22px] bg-[#e6e0e7]" />)}</div></section>;
+function Friends({ query, more, onSelectPerson, onInvite, userId, searchQuery, onSearchQueryChange }: { query: ReturnType<typeof useQuery<Affinity>>; more: ReturnType<typeof useMutation<Affinity, Error, void>>; onSelectPerson: (person: Person) => void; onInvite: () => void; userId?: string; searchQuery: string; onSearchQueryChange: (query: string) => void }) {
+  const managerSearchProps = { searchQuery, onSearchQueryChange, hideSearchInput: true };
+  if (query.isLoading) return <section className="mt-7"><FriendsHeader />{userId && <div className="mb-10"><FriendsManager userId={userId} {...managerSearchProps} /></div>}<div className="space-y-3"><div className="h-5 w-36 animate-pulse rounded bg-[#e6e0e7]" />{[1, 2].map((item) => <div key={item} className="h-[252px] animate-pulse rounded-[22px] bg-[#e6e0e7]" />)}</div></section>;
   const data = query.data;
-  if (query.isError) return <section className="mt-7"><FriendsHeader /><ErrorState onRetry={() => query.refetch()} />{userId && <div className="mt-8"><FriendsManager userId={userId} /></div>}</section>;
-  if (!data?.ready) return <section className="mt-7"><FriendsHeader /><Readiness readiness={data?.readiness} onInvite={onInvite} />{userId && <div className="mt-9 border-t border-[#e3dce5] pt-7"><FriendsManager userId={userId} /></div>}</section>;
+  if (query.isError) return <section className="mt-7"><FriendsHeader /><ErrorState onRetry={() => query.refetch()} />{userId && <div className="mt-8"><FriendsManager userId={userId} {...managerSearchProps} /></div>}</section>;
+  if (!data?.ready) return <section className="mt-7"><FriendsHeader /><Readiness readiness={data?.readiness} onInvite={onInvite} />{userId && <div className="mt-9 border-t border-[#e3dce5] pt-7"><FriendsManager userId={userId} {...managerSearchProps} /></div>}</section>;
   const ordered = bands.map((definition) => ({ ...definition, people: data.bands?.find((band) => band.id === definition.id)?.people || [] })).filter((band) => band.people.length);
   const friendMatchScores = Object.fromEntries(
     ordered.flatMap((band) => band.people)
@@ -587,7 +602,7 @@ function Friends({ query, more, onSelectPerson, onInvite, userId }: { query: Ret
   const remaining = discoverable.map((band) => ({ ...band, people: band.people.filter((person) => !featuredIds.has(person.id)) })).filter((band) => band.id !== "wildcards" && band.people.length);
   return <section className="mt-7">
     <FriendsHeader />
-    {userId && <div className="mb-10"><FriendsManager userId={userId} matchScores={friendMatchScores} featuredFriend={closestFriend} /></div>}
+    {userId && <div className="mb-10"><FriendsManager userId={userId} matchScores={friendMatchScores} featuredFriend={closestFriend} {...managerSearchProps} /></div>}
     <div className="mb-9 border-t border-[#e2dbe5] pt-7">
       <div className="mb-3"><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#65457b]">People you might click with</p></div>
       {featured.length > 0 ? <div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person, band }, index) => <FeaturedMatch key={person.id} person={person} band={band} index={index} onSelect={onSelectPerson} />)}</div> : <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-7 text-sm text-[#746b7b]"><p className="font-bold text-[#3b2c47]">No new taste matches yet.</p><p className="mt-1 leading-5">We’ll add compatible people here as more members build their Entertainment DNA.</p></div>}

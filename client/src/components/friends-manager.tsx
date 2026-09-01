@@ -11,10 +11,22 @@ interface FriendsManagerProps {
   userId: string;
   matchScores?: Record<string, number>;
   featuredFriend?: Person;
+  searchQuery?: string;
+  onSearchQueryChange?: (query: string) => void;
+  hideSearchInput?: boolean;
 }
 
-export default function FriendsManager({ userId, matchScores = {}, featuredFriend }: FriendsManagerProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+export default function FriendsManager({
+  userId,
+  matchScores = {},
+  featuredFriend,
+  searchQuery: controlledSearchQuery,
+  onSearchQueryChange,
+  hideSearchInput = false,
+}: FriendsManagerProps) {
+  const [internalSearchQuery, setInternalSearchQuery] = useState("");
+  const searchQuery = controlledSearchQuery ?? internalSearchQuery;
+  const setSearchQuery = onSearchQueryChange ?? setInternalSearchQuery;
   const [requestsOpen, setRequestsOpen] = useState(false);
   const [showAllFriends, setShowAllFriends] = useState(false);
   const { toast } = useToast();
@@ -78,7 +90,7 @@ export default function FriendsManager({ userId, matchScores = {}, featuredFrien
     <div className="mb-6">
       {/* People search */}
       <div>
-        <div className="relative">
+        {!hideSearchInput && <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8b7e91]" size={17} />
           <input
             type="text"
@@ -88,7 +100,7 @@ export default function FriendsManager({ userId, matchScores = {}, featuredFrien
             className="w-full rounded-xl border border-[#ded7e1] bg-[#f7f4f6] py-2.5 pl-10 pr-4 text-sm text-[#30203f] placeholder-[#9a909e] focus:outline-none focus:ring-2 focus:ring-[#765394]/35"
             data-testid="input-search-friends"
           />
-        </div>
+        </div>}
 
         {searchQuery.length > 0 && (
           <div className="space-y-2 max-h-64 overflow-y-auto mt-3">
