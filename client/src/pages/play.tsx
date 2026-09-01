@@ -276,7 +276,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
         SEEN_IT_TYPES.length,
       );
       return Array.from({ length: feedLength }, (_, index) => (
-        <div key={`all-play-${index}`} className="contents">
+        <div key={`all-play-${index}`} className="flex flex-col gap-6">
           {TRIVIA_CATEGORIES[index] && (
             <TriviaCarousel category={TRIVIA_CATEGORIES[index]} />
           )}
@@ -380,7 +380,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
           role="tabpanel"
           aria-labelledby={`play-tab-${activeMode}`}
           tabIndex={0}
-          className="space-y-4 pt-5"
+          className="space-y-6 pt-5"
         >
           {renderModeFeed()}
         </section>
