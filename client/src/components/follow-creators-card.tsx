@@ -103,10 +103,10 @@ export default function FollowCreatorsCard({ dismissible = true }: { dismissible
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm" data-testid="follow-creators-card">
-      <div className="flex items-start justify-between mb-1">
+      <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <Users size={16} className="text-purple-600" />
-          <h3 className="text-[15px] font-bold text-gray-900">Artists & Creators</h3>
+          <h3 className="font-serif text-[18px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Artists & Creators</h3>
         </div>
         {dismissible && (
           <button
@@ -121,7 +121,7 @@ export default function FollowCreatorsCard({ dismissible = true }: { dismissible
           </button>
         )}
       </div>
-      <p className="text-[13px] text-gray-400 mb-3">
+      <p className="mt-0.5 mb-3 text-[13px] leading-[1.25] text-gray-400">
         Follow creators you like and sharpen your DNA and recommendations.
       </p>
       <div className="flex items-stretch gap-2.5 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
