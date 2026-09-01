@@ -340,7 +340,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
         <nav
           role="tablist"
           aria-label="Play modes"
-          className="flex w-full overflow-x-auto border-b border-[#e5dfe8] bg-[#fbf8f5]"
+          className="flex w-full overflow-x-auto bg-[#fbf8f5]"
         >
           {gameModes.map((mode, index) => {
             const Icon = mode.icon;
