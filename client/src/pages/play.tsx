@@ -1,4 +1,4 @@
-import { useState, useEffect, type KeyboardEvent } from "react";
+import { Fragment, useState, useEffect, type KeyboardEvent } from "react";
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { DailyHeroSection } from "@/components/daily-hero-section";
@@ -8,9 +8,17 @@ import { RanksCarousel } from "@/components/ranks-carousel";
 import SeenItGame from "@/components/seen-it-game";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { supabase } from "@/lib/supabase";
-import { Brain, Vote, BarChart2, Eye, ArrowRight } from "lucide-react";
+import { Brain, Vote, BarChart2, Eye, LayoutGrid, ArrowRight } from "lucide-react";
 
 const gameModes = [
+  {
+    id: "all",
+    label: "All",
+    description: "Everything happening in Play.",
+    icon: LayoutGrid,
+    color: "bg-[#f2ebfb] border-[#dfd0f3]",
+    iconColor: "text-[#63339b]",
+  },
   {
     id: "trivia",
     label: "Trivia",
@@ -77,7 +85,7 @@ const gameModes = [
   // },
 ];
 
-type PlayMode = "trivia" | "polls" | "ranks" | "seen-it";
+type PlayMode = "all" | "trivia" | "polls" | "ranks" | "seen-it";
 
 const TRIVIA_CATEGORIES = ["Movies", "TV", "Books", "Music", "Podcasts", "Gaming", "Other"];
 const POLL_CATEGORIES = ["Movies", "TV", "Books", "Music", "Podcasts", "Sports", "Other"];
@@ -217,7 +225,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
   const [, setLocation] = useLocation();
   const initialMode = gameModes.some((mode) => mode.id === initialTab)
     ? initialTab as PlayMode
-    : "trivia";
+    : "all";
   const [activeMode, setActiveMode] = useState<PlayMode>(initialMode);
   const [quickAddMedia, setQuickAddMedia] = useState<{
     title: string;
@@ -257,6 +265,30 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
   };
 
   const renderModeFeed = () => {
+    if (activeMode === "all") {
+      const feedLength = Math.max(
+        TRIVIA_CATEGORIES.length,
+        POLL_CATEGORIES.length,
+        SEEN_IT_TYPES.length,
+      );
+      return Array.from({ length: feedLength }, (_, index) => (
+        <Fragment key={`all-play-${index}`}>
+          {TRIVIA_CATEGORIES[index] && (
+            <TriviaCarousel category={TRIVIA_CATEGORIES[index]} />
+          )}
+          {POLL_CATEGORIES[index] && (
+            <PollsCarousel category={POLL_CATEGORIES[index]} />
+          )}
+          {index < 3 && <RanksCarousel offset={index} />}
+          {SEEN_IT_TYPES[index] && (
+            <SeenItGame
+              mediaTypeFilter={SEEN_IT_TYPES[index]}
+              onAddToList={setQuickAddMedia}
+            />
+          )}
+        </Fragment>
+      ));
+    }
     if (activeMode === "trivia") {
       const categories = requestedTriviaCategory
         ? [requestedTriviaCategory]
@@ -329,6 +361,8 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
                   onClick={() => setActiveMode(mode.id as PlayMode)}
                   onKeyDown={(event) => handleTabKeyDown(event, index)}
                   className={`group relative flex min-h-[70px] w-full items-center gap-2.5 rounded-2xl border p-2.5 text-left transition-[transform,box-shadow,border-color,background-color] duration-150 active:scale-[0.985] ${
+                    mode.id === "all" ? "col-span-2" : ""
+                  } ${
                     isActive
                       ? "border-[#8b5bc4] bg-white shadow-[0_5px_14px_rgba(69,31,105,0.12)]"
                       : "border-[#e4dfda] bg-[#fdfaf7] shadow-[0_3px_8px_rgba(44,26,61,0.05)]"
