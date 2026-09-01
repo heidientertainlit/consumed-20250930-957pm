@@ -184,7 +184,7 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
               <div className="p-5 flex flex-col h-full">
                 <div className="text-center mb-3">
                   <h1
-                    className="mb-2 text-[17px] font-medium leading-tight text-gray-900"
+                    className="mb-0.5 text-[17px] font-medium leading-tight text-gray-900"
                     style={{ fontFamily: "Poppins, sans-serif" }}
                   >
                     Your Entertainment DNA by
@@ -196,7 +196,7 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
                 </div>
 
                 <div className="text-center mb-3">
-                  <h2 className="bg-gradient-to-r from-purple-950 to-purple-700 bg-clip-text font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-transparent">
+                  <h2 className="bg-gradient-to-r from-purple-950 to-purple-700 bg-clip-text pb-1 font-serif text-[24px] font-medium leading-[1.2] tracking-[-.035em] text-transparent">
                     {profile.title}
                   </h2>
                   <p className="text-gray-600 text-sm">{profile.description}</p>
