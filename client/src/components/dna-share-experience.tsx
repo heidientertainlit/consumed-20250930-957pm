@@ -3,9 +3,8 @@ import { createPortal } from "react-dom";
 import html2canvas from "html2canvas";
 import { X, Dna, Download, Share2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareImageSheet } from "@/components/share-image-sheet";
 import { supabase } from "@/lib/supabase";
-import { APP_BASE } from "@/lib/share";
+import { shareImageBlob } from "@/lib/share-image-blob";
 import { useLocation } from "wouter";
 import consumedPurpleLogo from "@/assets/consumed_logo_purple_trimmed.png";
 
@@ -34,8 +33,6 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
   const [loadError, setLoadError] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-  const [shareSheetOpen, setShareSheetOpen] = useState(false);
-  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -111,22 +108,22 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
   };
 
   const handleShare = async () => {
-    if (isSharing || !profile) return;
+    if (isSharing || !profile || !cardRef.current) return;
     setIsSharing(true);
     try {
-      const shareText = `I'm a "${profile.title}" — ${profile.description} Check out my Entertainment DNA on Consumed!`;
-      const shareUrl = `${APP_BASE}/edna/${userId}?share=cta-free-v2`;
-      if (navigator.share) {
-        try {
-          await navigator.share({ title: "My Entertainment DNA", text: shareText, url: shareUrl });
-          return;
-        } catch (err: any) {
-          if (err?.name === "AbortError") return;
-        }
-      }
-      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+      const canvas = await html2canvas(cardRef.current, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: null,
+      });
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) throw new Error("Could not generate DNA share image");
+      await shareImageBlob(blob, {
+        fileName: "my-entertainment-dna.png",
+        title: `I'm ${profile.title} — what's your Entertainment DNA? (via Consumed)`,
+      });
     } catch (error) {
-      console.error("Error sharing link:", error);
+      console.error("Error sharing DNA image:", error);
     } finally {
       setIsSharing(false);
     }
@@ -248,15 +245,6 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
               </Button>
             </div>
 
-            <ShareImageSheet
-              open={shareSheetOpen}
-              onOpenChange={setShareSheetOpen}
-              imageDataUrl={shareImageUrl}
-              fileName="my-entertainment-dna.png"
-              title="Share Your Entertainment DNA"
-              shareText={`I'm a "${profile.title}" — ${profile.description} Check out my Entertainment DNA on Consumed!`}
-              shareUrl={`${APP_BASE}/edna/${userId}?share=cta-free-v2`}
-            />
           </>
         )}
       </div>
