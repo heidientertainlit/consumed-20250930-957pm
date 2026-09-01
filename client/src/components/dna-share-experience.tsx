@@ -7,6 +7,7 @@ import { ShareImageSheet } from "@/components/share-image-sheet";
 import { supabase } from "@/lib/supabase";
 import { APP_BASE } from "@/lib/share";
 import { useLocation } from "wouter";
+import consumedPurpleLogo from "@/assets/consumed_logo_purple_trimmed.png";
 
 interface DnaShareExperienceProps {
   userId: string;
@@ -113,10 +114,10 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
   return createPortal(
     <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/70 px-3 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="max-h-[92vh] w-full overflow-y-auto rounded-3xl bg-gray-950 p-4 pb-6 sm:max-w-sm"
+        className="max-h-[96vh] w-full overflow-y-auto rounded-3xl bg-gray-950 p-3 pb-4 sm:max-w-md sm:p-4 sm:pb-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-3 flex items-center justify-between">
           <p className="text-white font-semibold text-[15px]">Share your DNA</p>
           <button
             onClick={onClose}
@@ -153,7 +154,7 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
           </div>
         ) : (
           <>
-            <div className="mx-auto mb-4 flex max-h-[58vh] justify-center overflow-y-auto rounded-2xl bg-gray-900">
+            <div className="mx-auto mb-3 flex max-h-[68vh] justify-center overflow-y-auto rounded-2xl bg-gray-900">
             <div
               ref={cardRef}
               className="w-[320px] max-w-full shrink-0 bg-white rounded-3xl overflow-hidden shadow-2xl"
@@ -161,6 +162,7 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
             >
               <div className="p-5 flex flex-col h-full">
                 <div className="text-center mb-3">
+                  <img src={consumedPurpleLogo} alt="Consumed" className="mx-auto mb-3 h-auto w-28" />
                   <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
                     <Dna className="text-white" size={24} />
                   </div>

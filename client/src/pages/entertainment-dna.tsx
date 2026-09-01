@@ -4,6 +4,7 @@ import { Dna, Feather, Loader2, Share2, Download, Tv, Film, BookOpen, Music, Mic
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import html2canvas from "html2canvas";
+import consumedPurpleLogo from "@/assets/consumed_logo_purple_trimmed.png";
 import { ShareImageSheet } from "@/components/share-image-sheet";
 import { APP_BASE } from "@/lib/share";
 import { useFirstSessionHooks } from "@/components/first-session-hooks";
@@ -482,6 +483,7 @@ export default function EntertainmentDNAPage() {
           <div className="p-5 flex flex-col h-full">
             {/* Header */}
             <div className="text-center mb-3">
+              <img src={consumedPurpleLogo} alt="Consumed" className="mx-auto mb-3 h-auto w-28" />
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
                 <Dna className="text-white" size={24} />
               </div>
