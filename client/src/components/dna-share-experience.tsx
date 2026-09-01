@@ -196,7 +196,7 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
                 </div>
 
                 <div className="text-center mb-3">
-                  <h2 className="bg-gradient-to-r from-purple-950 to-purple-700 bg-clip-text font-serif text-lg font-bold text-transparent">
+                  <h2 className="bg-gradient-to-r from-purple-950 to-purple-700 bg-clip-text font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-transparent">
                     {profile.title}
                   </h2>
                   <p className="text-gray-600 text-sm">{profile.description}</p>
