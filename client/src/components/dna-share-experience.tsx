@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import html2canvas from "html2canvas";
-import { X, Dna, Sparkles, Download, Share2, Loader2 } from "lucide-react";
+import { X, Dna, Download, Share2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShareImageSheet } from "@/components/share-image-sheet";
 import { supabase } from "@/lib/supabase";
@@ -183,31 +183,32 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
             >
               <div className="p-5 flex flex-col h-full">
                 <div className="text-center mb-3">
+                  <h1 className="mb-2 font-serif text-[17px] font-medium leading-tight tracking-[-.025em] text-gray-900">
+                    Your Entertainment DNA by
+                  </h1>
                   <img src={consumedPurpleLogo} alt="Consumed" className="mx-auto mb-3 h-auto w-28" />
                   <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
                     <Dna className="text-white" size={24} />
                   </div>
-                  <h1 className="font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-gray-900">Your Entertainment DNA</h1>
                 </div>
 
                 <div className="text-center mb-3">
-                  <h2 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  <h2 className="bg-gradient-to-r from-purple-950 to-purple-700 bg-clip-text text-lg font-bold text-transparent">
                     {profile.title}
                   </h2>
                   <p className="text-gray-600 text-sm">{profile.description}</p>
                 </div>
 
                 {profile.superpowers.length > 0 && (
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-3 mb-3">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-1 flex items-center">
-                      <Sparkles className="mr-1.5 text-purple-600" size={14} />
-                      Your Flavor Notes:
-                    </h3>
-                    <ul>
-                      {profile.superpowers.slice(0, 3).map((power, index) => (
-                        <li key={index} className="text-gray-700 text-xs leading-tight">• {power}</li>
-                      ))}
-                    </ul>
+                  <div className="mb-3 flex flex-wrap justify-center gap-1.5">
+                    {profile.superpowers.slice(0, 3).map((power, index) => (
+                      <span
+                        key={index}
+                        className="rounded-full border border-purple-100 bg-purple-50 px-2.5 py-1 text-[11px] font-medium leading-tight text-purple-800"
+                      >
+                        {power}
+                      </span>
+                    ))}
                   </div>
                 )}
 
