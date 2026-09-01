@@ -1072,7 +1072,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompar
                  <div className="flex-1" />
                  <div className="flex flex-col items-center" style={{ width: 100 }}>
                    <span className="font-serif text-[24px] font-normal tracking-[-.035em] text-[#30203f] text-center">
-                     {formatFeedName(featured.displayName)}
+                   {featured.displayName.trim()}
                    </span>
                    {featured.label && <span className="text-[10px] text-blue-500 font-medium text-center leading-tight line-clamp-2">{featured.label}</span>}
                  </div>
