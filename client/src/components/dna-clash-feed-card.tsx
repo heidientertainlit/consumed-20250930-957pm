@@ -319,7 +319,7 @@ export default function DnaClashFeedCard({
 
         {/* Media title overlay — left side of banner */}
         <div className="absolute bottom-5 left-5 z-10 w-[58%]">
-          <p className="font-fraunces text-white text-[18px] font-semibold leading-[1.08] drop-shadow-lg line-clamp-4">
+          <p className="font-serif text-white text-[18px] font-medium leading-[1.08] tracking-[-.035em] drop-shadow-lg line-clamp-4">
             {mediaTitle}
           </p>
         </div>
@@ -406,7 +406,7 @@ export default function DnaClashFeedCard({
           <div className="flex gap-2 mb-3">
             {/* Quote 1 */}
             <div className="flex-1 rounded-2xl px-3 pt-2 pb-3" style={{ background: 'rgba(168,85,247,0.07)', border: '1px solid rgba(168,85,247,0.15)' }}>
-              <span className="text-purple-400 font-black text-[28px] leading-none block" style={{ fontFamily: 'Georgia, serif', lineHeight: '0.6' }}>"</span>
+              <span className="block font-serif text-[28px] font-medium leading-[.6] text-purple-400">"</span>
               <p className="text-gray-800 text-[12px] leading-snug font-medium mt-1.5">
                 {user1.quote || `${name1} gave this ${user1.rating} stars.`}
               </p>
@@ -421,7 +421,7 @@ export default function DnaClashFeedCard({
 
             {/* Quote 2 */}
             <div className="flex-1 rounded-2xl px-3 pt-2 pb-3" style={{ background: 'rgba(236,72,153,0.07)', border: '1px solid rgba(236,72,153,0.15)' }}>
-              <span className="text-pink-400 font-black text-[28px] leading-none block" style={{ fontFamily: 'Georgia, serif', lineHeight: '0.6' }}>"</span>
+              <span className="block font-serif text-[28px] font-medium leading-[.6] text-pink-400">"</span>
               <p className="text-gray-800 text-[12px] leading-snug font-medium mt-1.5">
                 {user2.quote || `${name2} gave this ${user2.rating} stars.`}
               </p>
