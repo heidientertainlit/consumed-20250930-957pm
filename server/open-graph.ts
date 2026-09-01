@@ -138,7 +138,7 @@ function readIndexHtml(): string {
 }
 
 function injectOpenGraphTags(html: string, rawTags: OpenGraphTags): string {
-  const fallbackImage = `${appBase()}/og-consumed-share-no-cta-1200x630.png`;
+  const fallbackImage = `${appBase()}/og-consumed-share-20260901-1200x630.png`;
   const title = escapeHtml(compactText(rawTags.title, 90) || "Consumed");
   const description = escapeHtml(
     compactText(rawTags.description, 200)
