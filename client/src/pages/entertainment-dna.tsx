@@ -5,8 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import html2canvas from "html2canvas";
 import consumedPurpleLogo from "@/assets/consumed_logo_purple_trimmed.png";
-import { ShareImageSheet } from "@/components/share-image-sheet";
-import { APP_BASE } from "@/lib/share";
+import { shareImageBlob } from "@/lib/share-image-blob";
 import { useFirstSessionHooks } from "@/components/first-session-hooks";
 
 // Icon mapping for entertainment types
@@ -106,8 +105,6 @@ export default function EntertainmentDNAPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Analyzing your responses...");
   const [isDownloading, setIsDownloading] = useState(false);
-  const [shareSheetOpen, setShareSheetOpen] = useState(false);
-  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -443,28 +440,12 @@ export default function EntertainmentDNAPage() {
           useCORS: true,
           backgroundColor: null,
         });
-        const shareText = `I'm a "${dnaProfile.title}" — ${dnaProfile.description} Check out my Entertainment DNA on Consumed!`;
-        // Public, no-login-required DNA page for recipients.
-        const shareUrl = session?.user?.id ? `${APP_BASE}/edna/${session.user.id}?share=cta-free-v2` : APP_BASE;
-        // Prefer the OS share sheet (text, AirDrop, etc.) with the image attached.
         const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, 'image/png'));
-        if (blob && navigator.share) {
-          const file = new File([blob], 'my-entertainment-dna.png', { type: 'image/png' });
-          const withImage = { files: [file], title: 'My Entertainment DNA', text: `${shareText} ${shareUrl}` };
-          try {
-            if (navigator.canShare?.(withImage)) {
-              await navigator.share(withImage);
-            } else {
-              await navigator.share({ title: 'My Entertainment DNA', text: shareText, url: shareUrl });
-            }
-            return;
-          } catch (err: any) {
-            if (err?.name === 'AbortError') return; // user closed the share sheet
-          }
-        }
-        // Fallback (no native share support): show the in-app share sheet.
-        setShareImageUrl(canvas.toDataURL('image/png'));
-        setShareSheetOpen(true);
+        if (!blob) throw new Error('Could not generate DNA share image');
+        await shareImageBlob(blob, {
+          fileName: 'my-entertainment-dna.png',
+          title: `I'm ${dnaProfile.title} — what's your Entertainment DNA? (via Consumed)`,
+        });
       } catch (error) {
         console.error('Error preparing share image:', error);
       } finally {
@@ -558,16 +539,6 @@ export default function EntertainmentDNAPage() {
             Check out what others are consuming
           </Button>
         </div>
-
-        <ShareImageSheet
-          open={shareSheetOpen}
-          onOpenChange={setShareSheetOpen}
-          imageDataUrl={shareImageUrl}
-          fileName="my-entertainment-dna.png"
-          title="Share Your Entertainment DNA"
-          shareText={`I'm a "${dnaProfile.title}" — ${dnaProfile.description} Check out my Entertainment DNA on Consumed!`}
-          shareUrl={session?.user?.id ? `${APP_BASE}/edna/${session.user.id}?share=cta-free-v2` : undefined}
-        />
       </div>
     );
   }
