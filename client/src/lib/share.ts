@@ -67,13 +67,22 @@ export async function shareLink(opts: { kind: ShareKind; id?: string; obj?: any;
 }
 
 // Share a trivia question via the native share sheet (Messages/SMS, WhatsApp, etc.).
-// Links to /play/trivia#<poolId> — that page already scrolls to the game from the hash.
+// Challenge links open the current Play screen and pin the exact question first.
 // Falls back to copying the link on desktop. Returns 'shared' | 'copied'.
-export async function shareTrivia(opts: { poolId: string; question?: string }): Promise<'shared' | 'copied'> {
-  const url = `${BASE}/play/trivia#${opts.poolId}`;
+export async function shareTrivia(opts: { poolId: string; question?: string; fromUserId?: string; daily?: boolean }): Promise<'shared' | 'copied'> {
+  const search = new URLSearchParams();
+  if (opts.fromUserId) search.set('from', opts.fromUserId);
+  if (opts.daily) {
+    search.set('open', 'todays-play');
+    search.set('challenge', opts.poolId);
+  }
+  const query = search.toString();
+  const url = opts.daily
+    ? `${BASE}/play${query ? `?${query}` : ''}`
+    : `${BASE}/play?mode=trivia&challenge=${encodeURIComponent(opts.poolId)}${opts.fromUserId ? `&from=${encodeURIComponent(opts.fromUserId)}` : ''}`;
   const text = opts.question
-    ? `Think you know this one? "${opts.question}" Play it on Consumed:`
-    : 'Try this trivia question on Consumed:';
+    ? `See if you can beat me: "${opts.question}" Play it on Consumed:`
+    : 'See if you can beat my trivia score on Consumed:';
 
   if (navigator.share) {
     try {
