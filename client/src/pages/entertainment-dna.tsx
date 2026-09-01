@@ -483,7 +483,10 @@ export default function EntertainmentDNAPage() {
           <div className="p-5 flex flex-col h-full">
             {/* Header */}
             <div className="text-center mb-3">
-              <h1 className="mb-2 font-serif text-[17px] font-medium leading-tight tracking-[-.025em] text-gray-900">
+              <h1
+                className="mb-2 text-[17px] font-medium leading-tight text-gray-900"
+                style={{ fontFamily: "Poppins, sans-serif" }}
+              >
                 Your Entertainment DNA by
               </h1>
               <img src={consumedPurpleLogo} alt="Consumed" className="mx-auto mb-3 h-auto w-28" />
@@ -494,7 +497,7 @@ export default function EntertainmentDNAPage() {
 
             {/* DNA Label & Tagline */}
             <div className="text-center mb-3">
-              <h2 className="bg-gradient-to-r from-purple-950 to-purple-700 bg-clip-text text-lg font-bold text-transparent">
+              <h2 className="bg-gradient-to-r from-purple-950 to-purple-700 bg-clip-text font-serif text-lg font-bold text-transparent">
                 {dnaProfile.title}
               </h2>
               <p className="text-gray-600 text-sm">{dnaProfile.description}</p>
