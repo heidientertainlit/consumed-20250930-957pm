@@ -445,7 +445,7 @@ export default function EntertainmentDNAPage() {
         });
         const shareText = `I'm a "${dnaProfile.title}" — ${dnaProfile.description} Check out my Entertainment DNA on Consumed!`;
         // Public, no-login-required DNA page for recipients.
-        const shareUrl = session?.user?.id ? `${APP_BASE}/edna/${session.user.id}` : APP_BASE;
+        const shareUrl = session?.user?.id ? `${APP_BASE}/edna/${session.user.id}?share=cta-free-v2` : APP_BASE;
         // Prefer the OS share sheet (text, AirDrop, etc.) with the image attached.
         const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, 'image/png'));
         if (blob && navigator.share) {
@@ -570,7 +570,7 @@ export default function EntertainmentDNAPage() {
           fileName="my-entertainment-dna.png"
           title="Share Your Entertainment DNA"
           shareText={`I'm a "${dnaProfile.title}" — ${dnaProfile.description} Check out my Entertainment DNA on Consumed!`}
-          shareUrl={session?.user?.id ? `${APP_BASE}/edna/${session.user.id}` : undefined}
+          shareUrl={session?.user?.id ? `${APP_BASE}/edna/${session.user.id}?share=cta-free-v2` : undefined}
         />
       </div>
     );

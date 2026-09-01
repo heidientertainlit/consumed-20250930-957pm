@@ -115,7 +115,7 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
     setIsSharing(true);
     try {
       const shareText = `I'm a "${profile.title}" — ${profile.description} Check out my Entertainment DNA on Consumed!`;
-      const shareUrl = `${APP_BASE}/edna/${userId}`;
+      const shareUrl = `${APP_BASE}/edna/${userId}?share=cta-free-v2`;
       if (navigator.share) {
         try {
           await navigator.share({ title: "My Entertainment DNA", text: shareText, url: shareUrl });
@@ -259,7 +259,7 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
               fileName="my-entertainment-dna.png"
               title="Share Your Entertainment DNA"
               shareText={`I'm a "${profile.title}" — ${profile.description} Check out my Entertainment DNA on Consumed!`}
-              shareUrl={`${APP_BASE}/edna/${userId}`}
+              shareUrl={`${APP_BASE}/edna/${userId}?share=cta-free-v2`}
             />
           </>
         )}
