@@ -356,7 +356,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => setActiveMode(mode.id as PlayMode)}
                 onKeyDown={(event) => handleTabKeyDown(event, index)}
-                className={`flex min-h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-semibold transition-all ${
+                className={`flex min-h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[12px] px-3.5 py-2 text-xs font-semibold transition-all ${
                   isActive
                     ? "bg-[linear-gradient(100deg,#6f2fe8_0%,#346cf5_100%)] text-white shadow-[0_8px_20px_rgba(92,55,211,0.22)]"
                     : "bg-[#eee7f2] text-[#54445f] hover:bg-[#e5d9eb] hover:text-[#3c2b47]"
