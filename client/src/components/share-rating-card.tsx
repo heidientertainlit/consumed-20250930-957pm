@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { X, Share2, Download, Loader2 } from "lucide-react";
 import { createPortal } from "react-dom";
 import logoPath from "@/assets/consumed_logo_purple_trimmed.png";
+import { shareImageBlob } from "@/lib/share-image-blob";
 
 interface ShareRatingCardProps {
   isOpen: boolean;
@@ -238,55 +239,6 @@ async function renderCard(props: ShareRatingCardProps): Promise<Blob | null> {
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
 }
 
-async function shareBlob(blob: Blob, title: string): Promise<"shared" | "downloaded" | "failed"> {
-  const fileName = `consumed-${title.replace(/[^a-z0-9]+/gi, "-").toLowerCase().slice(0, 40) || "rating"}.png`;
-
-  // 1) Capacitor native share (available after the iOS app adds @capacitor/share + @capacitor/filesystem)
-  try {
-    const cap = (window as any).Capacitor;
-    if (cap?.isNativePlatform?.() && cap.Plugins?.Share && cap.Plugins?.Filesystem) {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve((reader.result as string).split(",")[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-      const written = await cap.Plugins.Filesystem.writeFile({ path: fileName, data: base64, directory: "CACHE" });
-      await cap.Plugins.Share.share({ title, files: [written.uri] });
-      return "shared";
-    }
-  } catch (e: any) {
-    if (e?.message?.toLowerCase?.().includes("cancel")) return "failed";
-    // fall through to web share
-  }
-
-  // 2) Web Share API with file (works in Safari/iOS browsers)
-  try {
-    const file = new File([blob], fileName, { type: "image/png" });
-    if (typeof navigator.share === "function" && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
-      await navigator.share({ files: [file], title });
-      return "shared";
-    }
-  } catch (e: any) {
-    if (e?.name === "AbortError") return "failed";
-  }
-
-  // 3) Fallback: download the image
-  try {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-    return "downloaded";
-  } catch {
-    return "failed";
-  }
-}
-
 export function ShareRatingCard(props: ShareRatingCardProps) {
   const { isOpen, onClose } = props;
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -355,7 +307,8 @@ export function ShareRatingCard(props: ShareRatingCardProps) {
         const shareTitle = firstName
           ? `${firstName}'s take on ${props.mediaTitle} — what's yours? (via Consumed)`
           : `My take on ${props.mediaTitle} — what's yours? (via Consumed)`;
-        const result = await shareBlob(blobRef.current, shareTitle);
+        const fileName = `consumed-${props.mediaTitle.replace(/[^a-z0-9]+/gi, "-").toLowerCase().slice(0, 40) || "rating"}.png`;
+        const result = await shareImageBlob(blobRef.current, { fileName, title: shareTitle });
         if (result === "downloaded") setNotice("Sharing not available here — image downloaded instead");
       }
     } finally {
