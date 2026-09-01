@@ -460,9 +460,15 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
 
         return (
           <div key={rank.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
-            {/* Header: title */}
-            <div className="px-4 pt-4 pb-3">
-              <h3 className="text-gray-900 font-bold text-base leading-snug">{rank.title}</h3>
+            {/* Header: matches the Cast Your Vote card hierarchy */}
+            <div className="px-4 pt-4">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-600">
+                  <BarChart3 className="h-4 w-4 text-white" />
+                </div>
+                <p className="text-sm font-semibold text-gray-900">Debate the Rank</p>
+              </div>
+              <h3 className="mb-3 text-[18px] font-semibold leading-snug text-gray-900">{rank.title}</h3>
             </div>
 
               {/* ── DRAG & RANK VIEW ── always visible */}
