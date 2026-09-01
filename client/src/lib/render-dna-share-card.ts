@@ -62,22 +62,31 @@ function drawDnaIcon(ctx: CanvasRenderingContext2D, centerX: number, centerY: nu
   ctx.fill();
 
   ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 8;
+  ctx.lineWidth = 7;
   ctx.lineCap = "round";
-  for (let side = -1; side <= 1; side += 2) {
+  const top = -42;
+  const bottom = 42;
+  const turns = 2.25;
+
+  for (let strand = 0; strand < 2; strand++) {
     ctx.beginPath();
-    for (let y = -34; y <= 34; y += 3) {
-      const x = side * Math.sin((y + 34) / 17) * 22;
-      if (y === -34) ctx.moveTo(centerX + x, centerY + y);
+    for (let y = top; y <= bottom; y += 2) {
+      const progress = (y - top) / (bottom - top);
+      const phase = progress * Math.PI * 2 * turns + strand * Math.PI;
+      const x = Math.sin(phase) * 25;
+      if (y === top) ctx.moveTo(centerX + x, centerY + y);
       else ctx.lineTo(centerX + x, centerY + y);
     }
     ctx.stroke();
   }
-  for (let y = -27; y <= 27; y += 18) {
-    const x = Math.sin((y + 34) / 17) * 22;
+
+  ctx.lineWidth = 5;
+  for (let y = top + 7; y <= bottom - 7; y += 12) {
+    const progress = (y - top) / (bottom - top);
+    const x = Math.sin(progress * Math.PI * 2 * turns) * 25;
     ctx.beginPath();
-    ctx.moveTo(centerX - x, centerY + y);
-    ctx.lineTo(centerX + x, centerY + y);
+    ctx.moveTo(centerX + x, centerY + y);
+    ctx.lineTo(centerX - x, centerY + y);
     ctx.stroke();
   }
 }
