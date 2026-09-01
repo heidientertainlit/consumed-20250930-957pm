@@ -18,16 +18,12 @@ import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
 import { DnaMomentCard } from "@/components/dna-moment-card";
 import { FeedIdentityHero, HeroCTAButtons, IdentityFace } from "@/components/feed-identity-hero";
 import { OnboardingResumePrompt } from "@/components/onboarding-resume-prompt";
-import { TriviaCarousel } from "@/components/trivia-carousel";
 import CastApprovalCard from "@/components/cast-approval-card";
 
 import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
-import { PollsCarousel } from "@/components/polls-carousel";
 import { WhoReactedInline } from "@/components/who-reacted-sheet";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { GamesCarousel } from "@/components/games-carousel";
-import SeenItGame from "@/components/seen-it-game";
-import { RanksCarousel } from "@/components/ranks-carousel";
 import { ChallengePoolsFeedBanner } from "@/components/challenge-pools-feed-banner";
 import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
@@ -9222,34 +9218,6 @@ export default function Feed() {
 
               {/* === FEED SEQUENCE === */}
 
-              {/* TRIVIA - category-selected views (shown regardless of position) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'music' && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Music" />
-              )}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'books' && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
-              )}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'podcasts' && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Podcasts" />
-              )}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'games' && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Gaming" />
-              )}
-
-              {/* POLLS - category-selected views */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'music' && (
-                <PollsCarousel expanded={selectedFilter === 'polls'} category="Music" />
-              )}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'books' && (
-                <PollsCarousel expanded={selectedFilter === 'polls'} category="Books" />
-              )}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'podcasts' && (
-                <PollsCarousel expanded={selectedFilter === 'polls'} category="Podcasts" />
-              )}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'games' && (
-                <PollsCarousel expanded={selectedFilter === 'polls'} category="Gaming" />
-              )}
-
               {/* ── Everyone's Talking — featured trending conversation, above the take carousel ── */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && everyonesTalking && everyonesTalking.length > 0 && (
                 <EveryonesTalkingCard
@@ -9276,11 +9244,6 @@ export default function Feed() {
               {/* Personalized Tribe glimpse — always within the first seven feed items */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
                 <TribeFeedCard />
-              )}
-
-              {/* Seen It? — Movies (round 1) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="movie" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
               {/* DNA Clash card — rotates every 2 days, always from prediction_pools (type='clash'). */}
@@ -9329,19 +9292,8 @@ export default function Feed() {
                 );
               })()}
 
-              {/* Movies trivia — round 1 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') &&
-               (!selectedCategory || selectedCategory === 'movies') && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Movies" />
-              )}
-
               {/* UGC slot 7 — between Movies trivia and TV Polls */}
               {renderPostBatchByIndex(7)}
-
-              {/* TV Polls — round 1 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
-                <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
-              )}
 
               {/* UGC slot 8 — after TV Polls */}
               {renderPostBatchByIndex(8)}
@@ -9371,37 +9323,15 @@ export default function Feed() {
                 <ChallengePoolsFeedBanner />
               )} */}
 
-              {/* Seen It? — TV Shows (round 1) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="tv" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
-              )}
-
               {/* — Rating carousel #0 — */}
               {renderRatingCarousel(0)}
-
-              {/* TV trivia — round 1 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') &&
-               (!selectedCategory || selectedCategory === 'tv') && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
-              )}
 
               {/* UGC slot 9 — after TV trivia round 1 */}
               {renderPostBatchByIndex(9)}
 
               {/* — BLOCK 2 — */}
-              {/* Movies Polls */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') &&
-               (!selectedCategory || selectedCategory === 'movies') && (
-                <PollsCarousel expanded={selectedFilter === 'polls'} category="Movies" />
-              )}
-
               {/* UGC slot 10 — after Movies Polls */}
               {renderPostBatchByIndex(10)}
-
-              {/* Books trivia */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
-              )}
 
               {/* UGC slot 11 — after Books trivia */}
               {renderPostBatchByIndex(11)}
@@ -9411,28 +9341,8 @@ export default function Feed() {
                 <SocialProofCard card={buildLeaderboardSocialProof(playActivity[1], 1)} />
               )}
 
-              {/* Seen It? — Books (round 1) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
-              )}
-
-              {/* Music trivia */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Music" />
-              )}
-
               {/* UGC slot 12 — after Music trivia */}
               {renderPostBatchByIndex(12)}
-
-              {/* Seen It? — Music (round 1) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
-              )}
-
-              {/* TV Polls — round 2 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
-                <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
-              )}
 
               {/* — Rating carousel #1 — */}
               {renderRatingCarousel(1)}
@@ -9449,21 +9359,11 @@ export default function Feed() {
                 <PointsGlimpse />
               )}
 
-              {/* Movies trivia — round 2 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Movies" />
-              )}
-
               {/* UGC slot 13 — after Movies trivia round 2 */}
               {renderPostBatchByIndex(13)}
 
               {/* Sprinkled single-conversation card #2 */}
               {renderConvoSprinkle(1)}
-
-              {/* Seen It? — Movies (round 2) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="movie" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
-              )}
 
               {/* Follow creators suggestion card */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
@@ -9475,28 +9375,13 @@ export default function Feed() {
                 <DnaMomentCard slot={1} />
               )}
 
-              {/* TV trivia — round 2 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
-              )}
-
               {/* UGC slot 14 — after TV trivia round 2 */}
               {renderPostBatchByIndex(14)}
-
-              {/* Seen It? — TV Shows (round 2) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="tv" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
-              )}
 
               {/* — Rating carousel #2 — */}
               {renderRatingCarousel(2)}
 
               {/* — BLOCK 4 — */}
-              {/* Podcasts trivia */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Podcasts" />
-              )}
-
               {/* UGC slot 15 — after Podcasts trivia */}
               {renderPostBatchByIndex(15)}
 
@@ -9508,35 +9393,15 @@ export default function Feed() {
                 <SocialProofCard card={buildLeaderboardSocialProof(playActivity[3], 3)} />
               )}
 
-              {/* Seen It? — Books (round 2) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
-              )}
-
-              {/* Games trivia */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Gaming" />
-              )}
-
               {/* UGC slot 16 — after Games trivia */}
               {renderPostBatchByIndex(16)}
 
               {/* Sprinkled single-conversation card #3 */}
               {renderConvoSprinkle(2)}
 
-              {/* Seen It? — Podcasts (round 1), kept after Gaming so it cannot follow the TV card directly */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="podcast" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
-              )}
-
               {/* DNA Moment #3 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
                 <DnaMomentCard slot={2} />
-              )}
-
-              {/* Movies Polls — round 2 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
-                <PollsCarousel expanded={selectedFilter === 'polls'} category="Movies" />
               )}
 
               {/* HIDDEN: Challenge Pools banner #2 (friend-vs-friend trivia Pools) — soft-hidden. Re-enable by uncommenting. */}
@@ -9551,18 +9416,8 @@ export default function Feed() {
               {/* Play slot #4 */}
               {renderPostBatchByIndex(4)}
 
-              {/* Books trivia — round 2 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
-              )}
-
               {/* UGC slot 17 — after Books trivia round 2 */}
               {renderPostBatchByIndex(17)}
-
-              {/* Music trivia — round 2 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Music" />
-              )}
 
               {/* UGC slot 18 — after Music trivia round 2 */}
               {renderPostBatchByIndex(18)}
@@ -9572,11 +9427,6 @@ export default function Feed() {
                 <DnaMomentCard slot={3} />
               )}
 
-              {/* Seen It? — Music (round 2) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
-              )}
-
               {/* Play slot #5 */}
               {renderPostBatchByIndex(5)}
 
@@ -9584,11 +9434,6 @@ export default function Feed() {
               {/* {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <ChallengePoolsFeedBanner />
               )} */}
-
-              {/* Podcasts trivia — round 2 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Podcasts" />
-              )}
 
               {/* Play slot #6 */}
               {renderPostBatchByIndex(6)}
@@ -11279,66 +11124,6 @@ export default function Feed() {
 
               {hasNextPage && !isFetchingNextPage && (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
                 <div ref={loadMoreRef} className="h-20" />
-              )}
-
-              {/* Category carousels for trivia filter */}
-              {selectedFilter === 'trivia' && (
-                <div className="space-y-4 mt-4">
-                  {selectedCategory ? (
-                    <TriviaCarousel category={selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} />
-                  ) : (
-                    <>
-                      <TriviaCarousel category="Movies" />
-                      <TriviaCarousel category="TV" />
-                      <TriviaCarousel category="Books" />
-                      <TriviaCarousel category="Music" />
-                      <TriviaCarousel category="Podcasts" />
-                      <TriviaCarousel category="Gaming" />
-                      <TriviaCarousel category="Other" />
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Category carousels for challenges filter - shows multi-question trivia */}
-              {selectedFilter === 'challenges' && (
-                <div className="space-y-4 mt-4">
-                  <div className="text-center py-2">
-                    <p className="text-sm font-medium text-gray-700">Challenge Sets</p>
-                    <p className="text-xs text-gray-500">Compete with friends or alone on these challenge sets</p>
-                  </div>
-                  {selectedCategory ? (
-                    <TriviaCarousel category={selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} challengesOnly />
-                  ) : (
-                    <>
-                      <TriviaCarousel category="Movies" challengesOnly />
-                      <TriviaCarousel category="TV" challengesOnly />
-                      <TriviaCarousel category="Books" challengesOnly />
-                      <TriviaCarousel category="Music" challengesOnly />
-                      <TriviaCarousel category="Podcasts" challengesOnly />
-                      <TriviaCarousel category="Gaming" challengesOnly />
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Category carousels for polls filter */}
-              {selectedFilter === 'polls' && (
-                <div className="space-y-4 mt-4">
-                  {selectedCategory ? (
-                    <PollsCarousel category={selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} />
-                  ) : (
-                    <>
-                      <PollsCarousel category="Movies" />
-                      <PollsCarousel category="TV" />
-                      <PollsCarousel category="Books" />
-                      <PollsCarousel category="Music" />
-                      <PollsCarousel category="Sports" />
-                      <PollsCarousel category="Podcasts" />
-                      <PollsCarousel category="Other" />
-                    </>
-                  )}
-                </div>
               )}
 
               {/* Predictions Filter - Show all awards */}

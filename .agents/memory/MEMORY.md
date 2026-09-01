@@ -48,3 +48,4 @@
 - [Canonical media identity](canonical-media-identity.md) — cross-provider work identity is server-owned; exact aliases and authoritative keys outrank verified title+creator+year.
 - [Supabase migration history drift](supabase-migration-history-drift.md) — remote history omits many local migrations; isolate new pushes so unrelated files are never replayed.
 - [Vercel share previews](vercel-share-previews.md) — production is a static Vercel SPA; crawler rewrites must reach server-rendered OG metadata, and invite actions must share invite URLs.
+- [Now and Play boundary](now-play-boundary.md) — full playable Trivia, Polls, Ranks, and Seen It feeds belong in Play; Now may show social Play stories, not embedded games.

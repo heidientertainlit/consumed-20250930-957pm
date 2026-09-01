@@ -1,9 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type KeyboardEvent } from "react";
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { DailyHeroSection } from "@/components/daily-hero-section";
+import { TriviaCarousel } from "@/components/trivia-carousel";
+import { PollsCarousel } from "@/components/polls-carousel";
+import { RanksCarousel } from "@/components/ranks-carousel";
+import SeenItGame from "@/components/seen-it-game";
+import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { supabase } from "@/lib/supabase";
-import { Brain, Vote, BarChart2, ChevronRight, ArrowRight } from "lucide-react";
+import { Brain, Vote, BarChart2, Eye, ArrowRight } from "lucide-react";
 
 const gameModes = [
   {
@@ -13,7 +18,6 @@ const gameModes = [
     icon: Brain,
     color: "bg-[#f7f0ff] border-[#eadbff]",
     iconColor: "text-[#6929c4]",
-    href: "/play/trivia",
   },
   {
     id: "polls",
@@ -22,7 +26,6 @@ const gameModes = [
     icon: Vote,
     color: "bg-[#f1efff] border-[#e0dcff]",
     iconColor: "text-[#5f35c9]",
-    href: "/play/polls",
   },
   {
     id: "ranks",
@@ -31,7 +34,14 @@ const gameModes = [
     icon: BarChart2,
     color: "bg-[#fff2e9] border-[#fde4d4]",
     iconColor: "text-[#db6a25]",
-    href: "/play/ranks",
+  },
+  {
+    id: "seen-it",
+    label: "Seen It",
+    description: "Seen it? Read it? Heard it?",
+    icon: Eye,
+    color: "bg-[#f5efff] border-[#e5d8fb]",
+    iconColor: "text-[#7c3aed]",
   },
   // HIDDEN: Cast a Friend — temporarily hidden while redesigning
   // { id: "cast", label: "Cast a Friend", description: "Who would play who?", icon: UserPlus, color: "bg-teal-50 border-teal-100", iconColor: "text-teal-500", href: "/play/cast" },
@@ -66,6 +76,31 @@ const gameModes = [
   //   href: "/play/binge-battle",
   // },
 ];
+
+type PlayMode = "trivia" | "polls" | "ranks" | "seen-it";
+
+const TRIVIA_CATEGORIES = ["Movies", "TV", "Books", "Music", "Podcasts", "Gaming", "Other"];
+const POLL_CATEGORIES = ["Movies", "TV", "Books", "Music", "Podcasts", "Sports", "Other"];
+const SEEN_IT_TYPES = ["movie", "tv", "book", "music", "podcast", "game"];
+
+function getRequestedTriviaCategory() {
+  const requested = new URLSearchParams(window.location.search).get("category")?.toLowerCase();
+  const categoryMap: Record<string, string> = {
+    movie: "Movies",
+    movies: "Movies",
+    tv: "TV",
+    book: "Books",
+    books: "Books",
+    music: "Music",
+    podcast: "Podcasts",
+    podcasts: "Podcasts",
+    game: "Gaming",
+    games: "Gaming",
+    gaming: "Gaming",
+    other: "Other",
+  };
+  return requested ? categoryMap[requested] : undefined;
+}
 
 interface RankEntry {
   user_id: string;
@@ -180,7 +215,74 @@ function RankWidget({
 
 export default function PlayPage({ initialTab }: { initialTab?: string }) {
   const [, setLocation] = useLocation();
-  void initialTab;
+  const initialMode = gameModes.some((mode) => mode.id === initialTab)
+    ? initialTab as PlayMode
+    : "trivia";
+  const [activeMode, setActiveMode] = useState<PlayMode>(initialMode);
+  const [quickAddMedia, setQuickAddMedia] = useState<{
+    title: string;
+    mediaType: string;
+    externalId: string;
+    externalSource: string;
+    imageUrl: string;
+  } | null>(null);
+  const requestedTriviaCategory = getRequestedTriviaCategory();
+
+  useEffect(() => {
+    if (gameModes.some((mode) => mode.id === initialTab)) {
+      setActiveMode(initialTab as PlayMode);
+    }
+  }, [initialTab]);
+
+  const handleTabKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number,
+  ) => {
+    let nextIndex: number | null = null;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      nextIndex = (currentIndex + 1) % gameModes.length;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      nextIndex = (currentIndex - 1 + gameModes.length) % gameModes.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = gameModes.length - 1;
+    }
+
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const nextMode = gameModes[nextIndex].id as PlayMode;
+    setActiveMode(nextMode);
+    document.getElementById(`play-tab-${nextMode}`)?.focus();
+  };
+
+  const renderModeFeed = () => {
+    if (activeMode === "trivia") {
+      const categories = requestedTriviaCategory
+        ? [requestedTriviaCategory]
+        : TRIVIA_CATEGORIES;
+      return categories.map((category) => (
+        <TriviaCarousel key={category} category={category} />
+      ));
+    }
+    if (activeMode === "polls") {
+      return POLL_CATEGORIES.map((category) => (
+        <PollsCarousel key={category} category={category} />
+      ));
+    }
+    if (activeMode === "ranks") {
+      return [0, 1, 2].map((offset) => (
+        <RanksCarousel key={offset} offset={offset} />
+      ));
+    }
+    return SEEN_IT_TYPES.map((mediaType) => (
+      <SeenItGame
+        key={mediaType}
+        mediaTypeFilter={mediaType}
+        onAddToList={setQuickAddMedia}
+      />
+    ));
+  };
 
   return (
     <div className="min-h-[100dvh] bg-[#fbf8f5]">
@@ -207,29 +309,60 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
           <p className="mb-2.5 px-0.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#87808f]">
             More ways to play
           </p>
-          <div className="space-y-2.5">
-            {gameModes.map((mode) => {
+          <div
+            role="tablist"
+            aria-label="Play modes"
+            className="grid grid-cols-2 gap-2.5"
+          >
+            {gameModes.map((mode, index) => {
               const Icon = mode.icon;
+              const isActive = activeMode === mode.id;
               return (
                 <button
                   key={mode.id}
-                  onClick={() => setLocation(mode.href)}
-                  className="group relative flex w-full items-center gap-3 rounded-2xl border border-[#e4dfda] bg-[#fdfaf7] p-2.5 text-left shadow-[0_3px_8px_rgba(44,26,61,0.05)] transition-[transform,box-shadow] duration-150 active:scale-[0.985] active:shadow-none"
+                  id={`play-tab-${mode.id}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls="play-mode-panel"
+                  tabIndex={isActive ? 0 : -1}
+                  onClick={() => setActiveMode(mode.id as PlayMode)}
+                  onKeyDown={(event) => handleTabKeyDown(event, index)}
+                  className={`group relative flex min-h-[70px] w-full items-center gap-2.5 rounded-2xl border p-2.5 text-left transition-[transform,box-shadow,border-color,background-color] duration-150 active:scale-[0.985] ${
+                    isActive
+                      ? "border-[#8b5bc4] bg-white shadow-[0_5px_14px_rgba(69,31,105,0.12)]"
+                      : "border-[#e4dfda] bg-[#fdfaf7] shadow-[0_3px_8px_rgba(44,26,61,0.05)]"
+                  }`}
                 >
-                  <span className={`grid h-[54px] w-[54px] shrink-0 place-items-center rounded-xl border ${mode.color}`}>
-                    <Icon size={25} strokeWidth={1.8} className={mode.iconColor} />
+                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border ${mode.color}`}>
+                    <Icon size={21} strokeWidth={1.8} className={mode.iconColor} />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-base font-bold leading-tight tracking-[-0.02em] text-[#22172d]">{mode.label}</span>
-                    <span className="mt-0.5 block text-[13px] leading-tight text-[#77707b]">{mode.description}</span>
+                    <span className="block text-[14px] font-bold leading-tight tracking-[-0.02em] text-[#22172d]">{mode.label}</span>
+                    <span className="mt-0.5 block text-[11px] leading-tight text-[#77707b]">{mode.description}</span>
                   </span>
-                  <ChevronRight size={20} strokeWidth={1.5} className="mr-0.5 shrink-0 text-[#706a73] transition-transform duration-150 group-active:translate-x-0.5" />
                 </button>
               );
             })}
           </div>
         </section>
+
+        <section
+          id="play-mode-panel"
+          role="tabpanel"
+          aria-labelledby={`play-tab-${activeMode}`}
+          tabIndex={0}
+          className="space-y-4 pt-5"
+        >
+          {renderModeFeed()}
+        </section>
       </main>
+
+      <QuickAddListSheet
+        isOpen={!!quickAddMedia}
+        onClose={() => setQuickAddMedia(null)}
+        media={quickAddMedia}
+      />
     </div>
   );
 }

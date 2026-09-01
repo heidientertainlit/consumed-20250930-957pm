@@ -45,11 +45,9 @@ import PlayPools from "@/pages/play-pools";
 import PlayPoolsDetail from "@/pages/play-pools-detail";
 import PlayChallenge from "@/pages/play-challenge";
 import PlayTrivia from "@/pages/play-trivia";
-import PlayPolls from "@/pages/play-polls";
 import PlayPredictions from "@/pages/play-predictions";
 import PlayAskRecs from "@/pages/play-ask-recs";
 import PlayHighStakes from "@/pages/play-high-stakes";
-import PlayRanks from "@/pages/play-ranks";
 import PlayCast from "@/pages/play-cast";
 
 import People from "@/pages/people";
@@ -440,7 +438,9 @@ function Router() {
 
           <Route path="/play/trivia">
             <ProtectedRoute>
-              <PlayTrivia />
+              {window.location.hash
+                ? <PlayTrivia />
+                : <PlayPage initialTab="trivia" />}
             </ProtectedRoute>
           </Route>
 
@@ -450,7 +450,7 @@ function Router() {
 
           <Route path="/play/polls">
             <ProtectedRoute>
-              <PlayPolls />
+              <PlayPage initialTab="polls" />
             </ProtectedRoute>
           </Route>
 
@@ -496,7 +496,7 @@ function Router() {
 
           <Route path="/play/ranks">
             <ProtectedRoute>
-              <PlayRanks />
+              <PlayPage initialTab="ranks" />
             </ProtectedRoute>
           </Route>
 
