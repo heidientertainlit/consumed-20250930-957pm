@@ -69,20 +69,26 @@ export async function shareLink(opts: { kind: ShareKind; id?: string; obj?: any;
 // Share a trivia question via the native share sheet (Messages/SMS, WhatsApp, etc.).
 // Challenge links open the current Play screen and pin the exact question first.
 // Falls back to copying the link on desktop. Returns 'shared' | 'copied'.
-export async function shareTrivia(opts: { poolId: string; question?: string; fromUserId?: string; daily?: boolean }): Promise<'shared' | 'copied'> {
+export async function shareTrivia(opts: { poolId: string; question?: string; fromUserId?: string; daily?: boolean; result?: 'right' | 'wrong' }): Promise<'shared' | 'copied'> {
   const search = new URLSearchParams();
   if (opts.fromUserId) search.set('from', opts.fromUserId);
   if (opts.daily) {
     search.set('open', 'todays-play');
     search.set('challenge', opts.poolId);
   }
+  if (opts.result) search.set('result', opts.result);
   const query = search.toString();
   const url = opts.daily
     ? `${BASE}/play${query ? `?${query}` : ''}`
-    : `${BASE}/play?mode=trivia&challenge=${encodeURIComponent(opts.poolId)}${opts.fromUserId ? `&from=${encodeURIComponent(opts.fromUserId)}` : ''}`;
+    : `${BASE}/play?mode=trivia&challenge=${encodeURIComponent(opts.poolId)}${opts.fromUserId ? `&from=${encodeURIComponent(opts.fromUserId)}` : ''}${opts.result ? `&result=${opts.result}` : ''}`;
+  const resultText = opts.result === 'right'
+    ? 'I got this one right.'
+    : opts.result === 'wrong'
+      ? 'I missed this one.'
+      : 'I played this one.';
   const text = opts.question
-    ? `See if you can beat me: "${opts.question}" Play it on Consumed:`
-    : 'See if you can beat my trivia score on Consumed:';
+    ? `${resultText} See how you score on "${opts.question}" — no spoilers. Play it on Consumed:`
+    : `${resultText} See how you score — no spoilers. Play it on Consumed:`;
 
   if (navigator.share) {
     try {
