@@ -111,11 +111,9 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[99999] bg-black/60 flex items-end sm:items-center justify-center" onClick={onClose}>
-      {/* Small action sheet — just the two buttons */}
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/70 px-3 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="w-full sm:w-[340px] rounded-t-3xl sm:rounded-3xl p-5 pb-8 sm:pb-5"
-        style={{ background: "linear-gradient(155deg, #2c2150 0%, #181030 100%)" }}
+        className="max-h-[92vh] w-full overflow-y-auto rounded-3xl bg-gray-950 p-4 pb-6 sm:max-w-sm"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -155,14 +153,10 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
           </div>
         ) : (
           <>
-            {/* Hidden shareable card — rendered off-screen for image capture */}
-            <div
-              style={{ position: "fixed", left: "-10000px", top: 0, pointerEvents: "none" }}
-              aria-hidden="true"
-            >
+            <div className="mx-auto mb-4 flex max-h-[58vh] justify-center overflow-y-auto rounded-2xl bg-gray-900">
             <div
               ref={cardRef}
-              className="w-[320px] bg-white rounded-3xl overflow-hidden shadow-2xl"
+              className="w-[320px] max-w-full shrink-0 bg-white rounded-3xl overflow-hidden shadow-2xl"
               style={{ minHeight: "568px" }}
             >
               <div className="p-5 flex flex-col h-full">
@@ -210,11 +204,11 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5">
               <Button
                 onClick={handleDownload}
                 disabled={isDownloading}
-                className="bg-white/20 hover:bg-white/30 text-white border border-white/30 px-6 py-2.5 rounded-full shadow-lg text-sm flex items-center justify-center gap-2"
+                className="w-full rounded-full border border-white/20 bg-white/5 px-6 py-3 text-[15px] font-medium text-white/90 hover:bg-white/10 flex items-center justify-center gap-2"
                 data-testid="download-dna-button"
               >
                 <Download size={18} />
@@ -224,7 +218,7 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
               <Button
                 onClick={handleShare}
                 disabled={isSharing}
-                className="bg-white/20 hover:bg-white/30 text-white border border-white/30 px-6 py-2.5 rounded-full shadow-lg text-sm flex items-center justify-center gap-2"
+                className="w-full rounded-full border border-white/20 bg-white/5 px-6 py-3 text-[15px] font-medium text-white/90 hover:bg-white/10 flex items-center justify-center gap-2"
                 data-testid="share-dna-button"
               >
                 <Share2 size={18} />

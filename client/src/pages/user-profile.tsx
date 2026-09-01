@@ -3895,14 +3895,11 @@ export default function UserProfile() {
                 <div>
                   <div>
                     <button
-                      onClick={handleDnaDownloadSummary}
-                      disabled={dnaIsDownloading}
-                      className="w-full flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-60"
+                      onClick={() => setProfileShareMenuOpen(true)}
+                      className="w-full flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
                     >
-                      {dnaIsDownloading
-                        ? <Loader2 size={18} className="animate-spin text-purple-500" />
-                        : <Share2 size={18} className="text-purple-500" />}
-                      <span className="text-[10px] font-semibold text-gray-700">{dnaIsDownloading ? "Preparing…" : "Share DNA"}</span>
+                      <Share2 size={18} className="text-purple-500" />
+                      <span className="text-[10px] font-semibold text-gray-700">Share DNA</span>
                     </button>
                   </div>
                 </div>
@@ -6001,39 +5998,6 @@ export default function UserProfile() {
         isOpen={isFeedbackOpen}
         onClose={() => setIsFeedbackOpen(false)}
       />
-
-      {dnaProfile && (
-        <div
-          ref={dnaSummaryCardRef}
-          aria-hidden="true"
-          className="pointer-events-none fixed left-[-10000px] top-0 w-[360px] overflow-hidden rounded-[28px] bg-[#fffdfb] text-[#21172d]"
-        >
-          <div className="bg-[linear-gradient(145deg,#281b43,#5d2d7c)] px-7 py-8 text-center text-white">
-            <div className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-white/25 bg-white/10">
-              <Dna size={24} />
-            </div>
-            <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.2em] text-violet-200">My Entertainment DNA</p>
-            <h2 className="mt-2 text-2xl font-bold leading-tight">{dnaProfile.label}</h2>
-            {userProfileData?.user_name && <p className="mt-1 text-xs text-white/65">@{userProfileData.user_name}</p>}
-          </div>
-          <div className="px-7 py-7">
-            {dnaProfile.tagline && <p className="text-center font-serif text-lg italic leading-6 text-[#4d365c]">“{dnaProfile.tagline}”</p>}
-            {dnaProfile.profile_text && (
-              <p className="mt-5 rounded-2xl bg-[#f2ebf4] px-5 py-4 text-center text-[13px] leading-5 text-[#5f5267]">
-                {dnaProfile.profile_text}
-              </p>
-            )}
-            {dnaProfile.favorite_genres?.length > 0 && (
-              <div className="mt-5 flex flex-wrap justify-center gap-1.5">
-                {dnaProfile.favorite_genres.slice(0, 5).map((genre: string) => (
-                  <span key={genre} className="rounded-full bg-[#e9ddf0] px-3 py-1 text-[11px] font-semibold text-[#61367a]">{genre}</span>
-                ))}
-              </div>
-            )}
-            <p className="mt-7 text-center text-xl font-black tracking-[-0.06em] text-[#27183d]">consumed</p>
-          </div>
-        </div>
-      )}
 
       {/* DNA Share Sheet */}
       <ShareImageSheet
