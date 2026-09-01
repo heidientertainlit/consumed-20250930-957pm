@@ -527,6 +527,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-2 p-3 border border-violet-100">
       <div className="flex items-center gap-1.5 mb-1 px-1">
         {single && <Flame size={15} className="text-orange-500 fill-orange-500 shrink-0" />}
+        {!single && <Zap size={15} className="shrink-0 fill-violet-500 text-violet-500" />}
         <span className="text-[13px] font-semibold text-violet-600 truncate">{single ? 'People are talking' : 'Trending Now'}</span>
       </div>
 
@@ -551,7 +552,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-serif text-[19px] font-medium leading-[1.08] tracking-[-.035em] text-[#30203f] cursor-pointer" onClick={() => onOpenMedia(g)}>{g.title}</p>
+                    <p className="text-[18px] font-bold text-gray-900 leading-snug cursor-pointer" onClick={() => onOpenMedia(g)}>{g.title}</p>
                     <p className="text-[11.5px] text-gray-500 mt-0.5">
                       {extScores[g.key] && <><span className="font-semibold text-gray-700">{extScores[g.key]}</span> · </>}{g.talkingCount} people talking
                     </p>
@@ -592,11 +593,11 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                       "{topGlimpse.content}"
                     </p>
                   ) : (
-                    <p className="font-serif text-[16px] font-medium leading-[1.08] tracking-[-.035em] text-[#30203f]">{g.title}</p>
+                    <p className="text-[14px] font-medium text-gray-800 leading-snug">{g.title}</p>
                   )}
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <span className="text-[11.5px] text-gray-500 truncate">
-                      <span className="font-serif font-medium tracking-[-.025em] text-gray-700">{g.title}</span> · {g.talkingCount} people talking
+                      <span className="font-medium text-gray-700">{g.title}</span> · {g.talkingCount} people talking
                     </span>
                   </div>
                 </div>

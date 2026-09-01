@@ -309,7 +309,7 @@ export function DnaMomentCard({ slot = 0 }: { slot?: number } = {}) {
               className="flex-shrink-0 w-full snap-center"
             >
               <div className="flex items-center gap-2 mb-2">
-                <h3 className="font-serif text-[20px] font-normal leading-[1.08] tracking-[-.035em] text-[#30203f]">{moment.questionText}</h3>
+                <h3 className="font-serif text-[19px] font-medium leading-[1.08] tracking-[-.035em] text-[#30203f]">{moment.questionText}</h3>
                 {isMulti && !isAnswered && (
                   <span className="text-[10px] bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">Select all that apply</span>
                 )}
