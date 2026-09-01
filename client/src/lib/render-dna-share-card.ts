@@ -61,34 +61,29 @@ function drawDnaIcon(ctx: CanvasRenderingContext2D, centerX: number, centerY: nu
   ctx.arc(centerX, centerY, 72, 0, Math.PI * 2);
   ctx.fill();
 
+  const paths = [
+    "m10 16 1.5 1.5",
+    "m14 8-1.5-1.5",
+    "M15 2c-1.798 1.998-2.518 3.995-2.807 5.993",
+    "m16.5 10.5 1 1",
+    "m17 6-2.891-2.891",
+    "M2 15c6.667-6 13.333 0 20-6",
+    "m20 9 .891.891",
+    "M3.109 14.109 4 15",
+    "m6.5 12.5 1 1",
+    "m7 18 2.891 2.891",
+    "M9 22c1.798-1.998 2.518-3.995 2.807-5.993",
+  ];
+
+  ctx.save();
+  ctx.translate(centerX - 48, centerY - 48);
+  ctx.scale(4, 4);
   ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 7;
+  ctx.lineWidth = 2;
   ctx.lineCap = "round";
-  const top = -42;
-  const bottom = 42;
-  const turns = 2.25;
-
-  for (let strand = 0; strand < 2; strand++) {
-    ctx.beginPath();
-    for (let y = top; y <= bottom; y += 2) {
-      const progress = (y - top) / (bottom - top);
-      const phase = progress * Math.PI * 2 * turns + strand * Math.PI;
-      const x = Math.sin(phase) * 25;
-      if (y === top) ctx.moveTo(centerX + x, centerY + y);
-      else ctx.lineTo(centerX + x, centerY + y);
-    }
-    ctx.stroke();
-  }
-
-  ctx.lineWidth = 5;
-  for (let y = top + 7; y <= bottom - 7; y += 12) {
-    const progress = (y - top) / (bottom - top);
-    const x = Math.sin(progress * Math.PI * 2 * turns) * 25;
-    ctx.beginPath();
-    ctx.moveTo(centerX + x, centerY + y);
-    ctx.lineTo(centerX - x, centerY + y);
-    ctx.stroke();
-  }
+  ctx.lineJoin = "round";
+  paths.forEach((path) => ctx.stroke(new Path2D(path)));
+  ctx.restore();
 }
 
 function drawCenteredPills(
