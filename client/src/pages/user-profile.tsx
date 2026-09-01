@@ -3620,29 +3620,27 @@ export default function UserProfile() {
         {/* Section navigation (only for own profile) */}
         {isOwnProfile && (
         <div className="bg-[#fbf8f5] px-4 pt-4">
-          <div className="flex w-full border-b border-[#ded5e3]" role="tablist" aria-label="Profile sections">
+          <div className="flex w-full gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Profile sections">
             <button
               onClick={() => setActiveSection('dna')}
-              className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 whitespace-nowrap px-2 pb-3 pt-1 text-center text-[10px] font-bold transition-colors sm:text-[12px] ${
+              className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition-colors ${
                 activeSection === 'dna'
-                  ? 'text-[#5b168f] after:absolute after:inset-x-2 after:-bottom-px after:h-[3px] after:rounded-t-full after:bg-[linear-gradient(90deg,#5b168f,#8a35be)]'
-                  : 'text-[#776c7c] hover:text-[#34213f]'
+                  ? 'border-[#513278] bg-[#513278] text-white'
+                  : 'border-[#d9d1dc] bg-white text-[#6f6575] hover:border-[#b9a9c2] hover:text-[#34213f]'
               }`}
               data-testid="nav-dna-profile"
             >
-              <Dna size={17} strokeWidth={2} />
               DNA
             </button>
             <button
               onClick={() => setActiveSection('all-media')}
-              className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 whitespace-nowrap px-2 pb-3 pt-1 text-center text-[10px] font-bold transition-colors sm:text-[12px] ${
+              className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition-colors ${
                 activeSection === 'all-media'
-                  ? 'text-[#5b168f] after:absolute after:inset-x-2 after:-bottom-px after:h-[3px] after:rounded-t-full after:bg-[linear-gradient(90deg,#5b168f,#8a35be)]'
-                  : 'text-[#776c7c] hover:text-[#34213f]'
+                  ? 'border-[#513278] bg-[#513278] text-white'
+                  : 'border-[#d9d1dc] bg-white text-[#6f6575] hover:border-[#b9a9c2] hover:text-[#34213f]'
               }`}
               data-testid="nav-all-media"
             >
-              <List size={17} strokeWidth={2} />
               My Media
             </button>
           </div>
@@ -3652,29 +3650,27 @@ export default function UserProfile() {
         {/* Section Navigation for Friend Profiles */}
         {!isOwnProfile && friendshipStatus === 'friends' && (
           <div className="bg-[#fbf8f5] px-4 pt-4">
-            <div className="flex w-full border-b border-[#ded5e3]" role="tablist" aria-label="Friend profile sections">
+            <div className="flex w-full gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Friend profile sections">
               <button
                 onClick={() => setActiveSection('dna')}
-                className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 whitespace-nowrap px-2 pb-3 pt-1 text-center text-[10px] font-bold transition-colors sm:text-[12px] ${
+                className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition-colors ${
                   activeSection === 'dna'
-                    ? 'text-[#5b168f] after:absolute after:inset-x-2 after:-bottom-px after:h-[3px] after:rounded-t-full after:bg-[linear-gradient(90deg,#5b168f,#8a35be)]'
-                    : 'text-[#776c7c] hover:text-[#34213f]'
+                    ? 'border-[#513278] bg-[#513278] text-white'
+                    : 'border-[#d9d1dc] bg-white text-[#6f6575] hover:border-[#b9a9c2] hover:text-[#34213f]'
                 }`}
                 data-testid="tab-friend-dna"
               >
-                <Dna size={17} strokeWidth={2} />
                 DNA
               </button>
               <button
                 onClick={() => setActiveSection('their-media')}
-                className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 whitespace-nowrap px-2 pb-3 pt-1 text-center text-[10px] font-bold transition-colors sm:text-[12px] ${
+                className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition-colors ${
                   activeSection === 'their-media'
-                    ? 'text-[#5b168f] after:absolute after:inset-x-2 after:-bottom-px after:h-[3px] after:rounded-t-full after:bg-[linear-gradient(90deg,#5b168f,#8a35be)]'
-                    : 'text-[#776c7c] hover:text-[#34213f]'
+                    ? 'border-[#513278] bg-[#513278] text-white'
+                    : 'border-[#d9d1dc] bg-white text-[#6f6575] hover:border-[#b9a9c2] hover:text-[#34213f]'
                 }`}
                 data-testid="tab-friend-media"
               >
-                <List size={17} strokeWidth={2} />
                 Their Media
               </button>
             </div>

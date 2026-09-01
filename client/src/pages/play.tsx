@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, type KeyboardEvent } from "react";
+import { useState, useEffect, type KeyboardEvent } from "react";
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { DailyHeroSection } from "@/components/daily-hero-section";
@@ -272,7 +272,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
         SEEN_IT_TYPES.length,
       );
       return Array.from({ length: feedLength }, (_, index) => (
-        <Fragment key={`all-play-${index}`}>
+        <div key={`all-play-${index}`} className="contents">
           {TRIVIA_CATEGORIES[index] && (
             <TriviaCarousel category={TRIVIA_CATEGORIES[index]} />
           )}
@@ -286,7 +286,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
               onAddToList={setQuickAddMedia}
             />
           )}
-        </Fragment>
+        </div>
       ));
     }
     if (activeMode === "trivia") {
@@ -341,10 +341,9 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
           <nav
             role="tablist"
             aria-label="Play modes"
-            className="flex w-full overflow-x-auto border-b border-[#ded5e3]"
+            className="flex w-full gap-2 overflow-x-auto pb-1"
           >
             {gameModes.map((mode, index) => {
-              const Icon = mode.icon;
               const isActive = activeMode === mode.id;
               return (
                 <button
@@ -357,13 +356,12 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
                   tabIndex={isActive ? 0 : -1}
                   onClick={() => setActiveMode(mode.id as PlayMode)}
                   onKeyDown={(event) => handleTabKeyDown(event, index)}
-                  className={`relative flex min-w-[92px] shrink-0 flex-col items-center justify-center gap-1 whitespace-nowrap px-2 pb-3 pt-1 text-center text-[10px] font-bold transition-colors sm:min-w-0 sm:flex-1 sm:text-[12px] ${
+                  className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition-colors ${
                     isActive
-                      ? "text-[#5b168f] after:absolute after:inset-x-2 after:-bottom-px after:h-[3px] after:rounded-t-full after:bg-[linear-gradient(90deg,#5b168f,#8a35be)]"
-                      : "text-[#776c7c] hover:text-[#34213f]"
+                      ? "border-[#513278] bg-[#513278] text-white"
+                      : "border-[#d9d1dc] bg-white text-[#6f6575] hover:border-[#b9a9c2] hover:text-[#34213f]"
                   }`}
                 >
-                  <Icon size={17} strokeWidth={2} />
                   {mode.label}
                 </button>
               );
