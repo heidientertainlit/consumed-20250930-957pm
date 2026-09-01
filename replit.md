@@ -5,6 +5,7 @@ Consumed is a mobile-first platform designed to transform entertainment consumpt
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+- **“Our serif font” means the exact `font-serif` family used by “Your circle.” on People → Friends & Matches.** Use that class with regular/medium weight and tight tracking as appropriate; do not substitute Fraunces or hard-coded Georgia.
 - **No emojis in UI design.** Never use emojis as design elements anywhere in the app — use icons (lucide-react) instead. Only exception: user expressly asks for an emoji.
 - When user asks "give me the code to push to git", provide `git push origin main` command. User deploys from their own git repo.
 - **No DNA/identity one-liners on media pages.** Never add taste-flavored blurbs like "We think you'll appreciate this one" to media detail pages — user has removed these repeatedly.
