@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
-import { APP_BASE } from '@/lib/share';
+import { APP_BASE, shareTrivia } from '@/lib/share';
 import { TodaysPlayNudge } from '@/components/todays-play-nudge';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -106,7 +106,7 @@ function ScoreShareCard({
   streak?: number | null;
   userId?: string;
   answers?: { correct: boolean; category?: string; picked?: string }[];
-  questions?: { category?: string | null; title?: string | null; options?: string[] | null }[];
+  questions?: { id?: string; category?: string | null; title?: string | null; options?: string[] | null }[];
   username?: string | null;
   dnaStats?: { label: string | null; totalAnswered: number; topGenre: string | null; allGenres: string[] } | null;
   rankData?: { rank: number | null; total: number | null; beatenPct?: number } | null;
@@ -145,12 +145,22 @@ function ScoreShareCard({
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   const handleShare = async () => {
-    let text = '';
     if (type === 'play' && playScore) {
-      text = `My entertainment score on Consumed Today's Play: ${playScore.correct}/${playScore.total} correct! Think you can beat me? ${APP_BASE}`;
-    } else {
-      text = `I just made my Daily Call on Consumed — join me! ${APP_BASE}`;
+      const firstQuestion = questions?.[0];
+      if (firstQuestion?.title) {
+        const result = await shareTrivia({
+          poolId: firstQuestion.id!,
+          question: firstQuestion.title,
+          fromUserId: userId,
+          daily: true,
+        });
+        if (result === 'copied') {
+          toast({ title: 'Challenge link copied', description: 'Send it to a friend to compare scores.' });
+        }
+        return;
+      }
     }
+    const text = `I just made my Daily Call on Consumed — join me! ${APP_BASE}`;
     try {
       if (navigator.share) {
         await navigator.share({ text });
@@ -683,46 +693,114 @@ function TodaysPlayGame({
 }) {
   const [, setLocation] = useLocation();
   const { session } = useAuth();
+  const { toast } = useToast();
   const [qIndex, setQIndex] = useState(0);
   const [phase, setPhase] = useState<'playing' | 'result' | 'done'>('playing');
   const [selected, setSelected] = useState<string | null>(null);
   const [answers, setAnswers] = useState<{ correct: boolean; points: number; category?: string; picked?: string }[]>([]);
   const [socialProof, setSocialProof] = useState<number | null>(null);
   const [doneScore, setDoneScore] = useState<PlayScore | null>(null);
+  const [challenger, setChallenger] = useState<{ name: string; prediction: string } | null>(null);
 
   const q = questions[qIndex];
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const fromUserId = params.get('from');
+    const challengeId = params.get('challenge');
+    if (!fromUserId || challengeId !== q?.id || fromUserId === session?.user?.id) {
+      setChallenger(null);
+      return;
+    }
+    let active = true;
+    (async () => {
+      const [{ data: prediction }, { data: profile }] = await Promise.all([
+        supabase
+          .from('user_predictions')
+          .select('prediction')
+          .eq('user_id', fromUserId)
+          .eq('pool_id', challengeId)
+          .maybeSingle(),
+        supabase
+          .from('users')
+          .select('display_name, first_name')
+          .eq('id', fromUserId)
+          .maybeSingle(),
+      ]);
+      if (active && prediction?.prediction) {
+        setChallenger({
+          name: profile?.first_name || profile?.display_name || 'Your friend',
+          prediction: prediction.prediction,
+        });
+      }
+    })();
+    return () => { active = false; };
+  }, [q?.id, session?.user?.id]);
+
+  const handleChallengeFriend = async () => {
+    if (!q?.id) return;
+    const result = await shareTrivia({
+      poolId: q.id,
+      question: q.title,
+      fromUserId: session?.user?.id,
+      daily: true,
+    });
+    if (result === 'copied') {
+      toast({ title: 'Challenge link copied', description: 'Send it to a friend to compare scores.' });
+    }
+  };
+
   const handleConfirm = async () => {
     if (!selected || phase !== 'playing') return;
-    const isCorrect = selected === q.correct_answer;
-    const points = isCorrect ? q.points_reward : 0;
+    let resolvedSelected = selected;
+    let isCorrect = resolvedSelected === q.correct_answer;
+    let points = isCorrect ? q.points_reward : 0;
 
     setSocialProof(null);
 
-    // Record answer in user_predictions so the leaderboard and carousel both see it.
-    // Fire-and-forget — only inserts on first answer (unique constraint on user_id+pool_id).
+    // Record the answer before exposing the comparison link so the recipient can
+    // reliably load the sender's result immediately.
     if (session?.user?.id) {
-      supabase
+      const { error } = await supabase
         .from('user_predictions')
         .insert({
           user_id: session.user.id,
           pool_id: q.id,
           prediction: selected,
           points_earned: points,
-        })
-        .then(async ({ error }) => {
-          // Only credit points when it's a new answer (not a duplicate)
-          if (!error && points > 0) {
-            try {
-              await supabase.rpc('increment_trivia_points', {
-                uid: session.user.id,
-                pts: points,
-              });
-            } catch {}
-          }
-          // Bust the carousel cache so answered pools are filtered on next load
-          queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
-        }, () => {});
+        });
+      const isDuplicate = error?.code === '23505' || error?.message?.toLowerCase().includes('duplicate');
+      if (isDuplicate) {
+        const { data: existing } = await supabase
+          .from('user_predictions')
+          .select('prediction, points_earned')
+          .eq('user_id', session.user.id)
+          .eq('pool_id', q.id)
+          .maybeSingle();
+        if (existing?.prediction) {
+          resolvedSelected = existing.prediction;
+          isCorrect = resolvedSelected === q.correct_answer;
+          points = existing.points_earned || 0;
+          setSelected(resolvedSelected);
+        }
+      } else if (error) {
+        toast({
+          title: 'Could not save your answer',
+          description: 'Check your connection and try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      // Only credit points when this was a new answer.
+      if (!error && points > 0) {
+        try {
+          await supabase.rpc('increment_trivia_points', {
+            uid: session.user.id,
+            pts: points,
+          });
+        } catch {}
+      }
+      queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
     }
 
     try {
@@ -742,7 +820,7 @@ function TodaysPlayGame({
       setSocialProof(Math.floor(Math.random() * 25) + 52);
     }
 
-    setAnswers(prev => [...prev, { correct: isCorrect, points, category: q.category || 'General', picked: selected ?? undefined }]);
+    setAnswers(prev => [...prev, { correct: isCorrect, points, category: q.category || 'General', picked: resolvedSelected }]);
     setPhase('result');
   };
 
@@ -1178,7 +1256,17 @@ function TodaysPlayGame({
                           {phase === 'result' && (
                             <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-50">
                               <Users size={13} className="text-gray-400" />
-                              {socialProof !== null ? (
+                              {challenger ? (
+                                <p className="text-[13px] text-gray-600">
+                                  You <span className={`font-bold ${selected === q.correct_answer ? 'text-green-600' : 'text-red-500'}`}>
+                                    {selected === q.correct_answer ? '✓' : '✕'}
+                                  </span>
+                                  <span className="text-gray-300 mx-2">·</span>
+                                  {challenger.name} <span className={`font-bold ${challenger.prediction === q.correct_answer ? 'text-green-600' : 'text-red-500'}`}>
+                                    {challenger.prediction === q.correct_answer ? '✓' : '✕'}
+                                  </span>
+                                </p>
+                              ) : socialProof !== null ? (
                                 <p className="text-[13px] text-gray-600">
                                   <span className="font-bold text-gray-900">{socialProof}%</span> of players got this right
                                 </p>
@@ -1199,13 +1287,21 @@ function TodaysPlayGame({
                               Lock In Answer
                             </button>
                           ) : (
-                            <button
-                              onClick={handleNext}
-                              className="w-full py-3.5 rounded-xl font-bold text-white text-base shadow-md active:scale-[0.98]"
-                              style={{ background: PURPLE_GRADIENT }}
-                            >
-                              {qIndex < questions.length - 1 ? 'Next Question' : 'See Where You Rank'}
-                            </button>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                onClick={handleChallengeFriend}
+                                className="py-3.5 rounded-xl font-bold text-[13px] text-purple-700 bg-purple-50 border border-purple-200 active:scale-[0.98]"
+                              >
+                                Compare Friend
+                              </button>
+                              <button
+                                onClick={handleNext}
+                                className="py-3.5 rounded-xl font-bold text-white text-[13px] shadow-md active:scale-[0.98]"
+                                style={{ background: PURPLE_GRADIENT }}
+                              >
+                                {qIndex < questions.length - 1 ? 'Next Question' : 'View Rank'}
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>

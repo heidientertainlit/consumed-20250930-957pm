@@ -88,6 +88,39 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   const [containerHeight, setContainerHeight] = useState<number | undefined>(undefined);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<Record<string, string>>({});
+  const challengeFromUserId = new URLSearchParams(window.location.search).get('from');
+  const challengedPoolId = new URLSearchParams(window.location.search).get('challenge');
+  const [sharedChallenger, setSharedChallenger] = useState<{ name: string; prediction: string } | null>(null);
+
+  useEffect(() => {
+    if (!challengeFromUserId || !challengedPoolId || challengeFromUserId === user?.id) {
+      setSharedChallenger(null);
+      return;
+    }
+    let active = true;
+    (async () => {
+      const [{ data: prediction }, { data: profile }] = await Promise.all([
+        supabase
+          .from('user_predictions')
+          .select('prediction')
+          .eq('user_id', challengeFromUserId)
+          .eq('pool_id', challengedPoolId)
+          .maybeSingle(),
+        supabase
+          .from('users')
+          .select('display_name, first_name')
+          .eq('id', challengeFromUserId)
+          .maybeSingle(),
+      ]);
+      if (active && prediction?.prediction) {
+        setSharedChallenger({
+          name: profile?.first_name || profile?.display_name || 'Your friend',
+          prediction: prediction.prediction,
+        });
+      }
+    })();
+    return () => { active = false; };
+  }, [challengeFromUserId, challengedPoolId, user?.id]);
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; points?: number; stats: any; friendAnswers?: FriendAnswer[] }>>({});
   const [answeredLoaded, setAnsweredLoaded] = useState(false);
   const [lockedOrder, setLockedOrder] = useState<TriviaItem[] | null>(null);
@@ -157,7 +190,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   });
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['trivia-carousel', user?.id],
+    queryKey: ['trivia-carousel', user?.id, challengedPoolId],
     queryFn: async () => {
       const now = new Date().toISOString();
       const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // YYYY-MM-DD Pacific Time
@@ -182,11 +215,12 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         answeredPoolIds = (userPredictions || []).map(p => p.pool_id);
       }
       
-      // Flatten pools into individual trivia questions, skipping already-answered ones
+      // Keep the exact shared challenge even if this user answered it before, so
+      // the existing result can be hydrated and compared without replaying it.
       const items: TriviaItem[] = [];
       
       for (const pool of (pools || [])) {
-        if (answeredPoolIds.includes(pool.id)) continue;
+        if (answeredPoolIds.includes(pool.id) && pool.id !== challengedPoolId) continue;
         if (pool.options && Array.isArray(pool.options)) {
           const firstOpt = pool.options[0];
           const isObject = typeof firstOpt === 'object' && firstOpt !== null;
@@ -368,10 +402,17 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       }
       const catOffset = category ? category.charCodeAt(0) : 0;
       const shuffled = shuffleArray(filtered, sessionSeed + catOffset);
+      const challenged = challengedPoolId
+        ? shuffled.find(item => (item.poolId || item.id) === challengedPoolId)
+        : null;
+      const remaining = challenged
+        ? shuffled.filter(item => item.id !== challenged.id)
+        : shuffled;
       // Unanswered first, answered at the end — order locked so answering mid-session doesn't jump
       return [
-        ...shuffled.filter(item => !answeredState[item.id]),
-        ...shuffled.filter(item => !!answeredState[item.id]),
+        ...(challenged ? [challenged] : []),
+        ...remaining.filter(item => !answeredState[item.id]),
+        ...remaining.filter(item => !!answeredState[item.id]),
       ];
     };
 
@@ -437,7 +478,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
     };
 
     loadAnswered();
-  }, [data, user?.id]);
+  }, [data, user?.id, challengedPoolId]);
 
   const answerMutation = useMutation({
     mutationFn: async ({ itemId, poolId, answer, pointsReward, correctAnswer, options, questionTitle }: { itemId: string; poolId: string; answer: string; pointsReward: number; correctAnswer?: string; options: string[]; questionTitle?: string }) => {
@@ -976,19 +1017,31 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   </>)}
                 
                 <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      const result = await shareTrivia({ poolId: item.poolId || item.id, question: item.question });
-                      if (result === 'copied') {
-                        toast({ title: 'Link copied', description: 'Paste it into a text to challenge a friend.' });
-                      }
-                    }}
-                    className="inline-flex items-center gap-1 text-[13px] font-medium text-gray-400 hover:text-gray-600 transition-colors mx-auto"
-                  >
-                    Share
-                    <span aria-hidden="true">→</span>
-                  </button>
+                  {answered && sharedChallenger && challengedPoolId === (item.poolId || item.id) ? (
+                    <div className="w-full flex items-center justify-center gap-2 text-[13px] font-semibold text-gray-700">
+                      <span>You <span className={answered.isCorrect ? 'text-green-600' : 'text-red-500'}>{answered.isCorrect ? '✓' : '✕'}</span></span>
+                      <span className="text-gray-300">·</span>
+                      <span>{sharedChallenger.name} <span className={sharedChallenger.prediction === item.correctAnswer ? 'text-green-600' : 'text-red-500'}>{sharedChallenger.prediction === item.correctAnswer ? '✓' : '✕'}</span></span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        const result = await shareTrivia({
+                          poolId: item.poolId || item.id,
+                          question: item.question,
+                          fromUserId: user?.id,
+                        });
+                        if (result === 'copied') {
+                          toast({ title: 'Challenge link copied', description: 'Send it to a friend to compare scores.' });
+                        }
+                      }}
+                      className="inline-flex items-center gap-1 text-[13px] font-semibold text-purple-600 hover:text-purple-700 transition-colors mx-auto"
+                    >
+                      See how a friend scores
+                      <span aria-hidden="true">→</span>
+                    </button>
+                  )}
                 </div>
               </div>
             );

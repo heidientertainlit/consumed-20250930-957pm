@@ -223,7 +223,10 @@ function RankWidget({
 
 export default function PlayPage({ initialTab }: { initialTab?: string }) {
   const [, setLocation] = useLocation();
-  const initialMode = gameModes.some((mode) => mode.id === initialTab)
+  const requestedMode = new URLSearchParams(window.location.search).get("mode");
+  const initialMode = requestedMode && gameModes.some((mode) => mode.id === requestedMode)
+    ? requestedMode as PlayMode
+    : gameModes.some((mode) => mode.id === initialTab)
     ? initialTab as PlayMode
     : "all";
   const [activeMode, setActiveMode] = useState<PlayMode>(initialMode);
@@ -235,6 +238,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
     imageUrl: string;
   } | null>(null);
   const requestedTriviaCategory = getRequestedTriviaCategory();
+  const challengedTriviaId = new URLSearchParams(window.location.search).get("challenge");
 
   useEffect(() => {
     if (gameModes.some((mode) => mode.id === initialTab)) {
@@ -290,6 +294,9 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
       ));
     }
     if (activeMode === "trivia") {
+      if (challengedTriviaId) {
+        return <TriviaCarousel />;
+      }
       const categories = requestedTriviaCategory
         ? [requestedTriviaCategory]
         : TRIVIA_CATEGORIES;
