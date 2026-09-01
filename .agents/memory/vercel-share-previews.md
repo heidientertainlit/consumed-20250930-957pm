@@ -15,6 +15,8 @@ Never call an Open Graph change fixed after checking only the development server
 
 **How to apply:** Test both the final share URL and its `og:image` on the production domain after the Vercel build completes. A local build or `.replit.dev` response is not production evidence.
 
+When replacing shared preview artwork, publish it under a new versioned filename and update `og:image`; Messages and other clients may retain the old bytes indefinitely when the image URL stays unchanged.
+
 Replacing an existing static Open Graph image can make the preview artwork look new while the page metadata and serverless handler remain on an older Vercel deployment. Test the direct `/api/og/...` URL: if it returns `index.html`, the function/rewrite is not active in production.
 
 **Why:** A narrow image replacement updated the visible preview, but production continued returning generic homepage metadata for every share route.
