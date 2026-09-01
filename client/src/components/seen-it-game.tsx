@@ -446,7 +446,9 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     return (
       <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
         <div className="flex items-center gap-2 mb-1">
-          <endConfig.icon className="w-4 h-4 text-purple-500" />
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-700">
+            <endConfig.icon className="h-4 w-4 text-white" />
+          </span>
           <span className="text-gray-900 font-semibold text-sm">{endConfig.question}</span>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${endConfig.pillBg}`}>{endConfig.pill}</span>
         </div>
@@ -491,7 +493,9 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-2">
-          <mediaConfig.icon className="w-4 h-4 text-purple-500" />
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-700">
+            <mediaConfig.icon className="h-4 w-4 text-white" />
+          </span>
           <span className="text-gray-900 font-semibold text-sm">{mediaConfig.question}</span>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${mediaConfig.pillBg}`}>{mediaConfig.pill}</span>
         </div>

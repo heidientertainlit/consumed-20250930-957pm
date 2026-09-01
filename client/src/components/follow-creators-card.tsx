@@ -105,7 +105,9 @@ export default function FollowCreatorsCard({ dismissible = true }: { dismissible
     <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm" data-testid="follow-creators-card">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
-          <Users size={16} className="text-purple-600" />
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-700">
+            <Users size={15} className="text-white" />
+          </span>
           <h3 className="text-base font-medium text-gray-900">Artists & Creators</h3>
         </div>
         {dismissible && (

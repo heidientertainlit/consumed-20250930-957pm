@@ -9500,12 +9500,6 @@ export default function Feed() {
               {/* UGC slot 15 — after Podcasts trivia */}
               {renderPostBatchByIndex(15)}
 
-              {/* Seen It? — Podcasts (round 1) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
-                <SeenItGame mediaTypeFilter="podcast" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
-              )}
-
-
               {/* Play slot #3 */}
               {renderPostBatchByIndex(3)}
 
@@ -9529,6 +9523,11 @@ export default function Feed() {
 
               {/* Sprinkled single-conversation card #3 */}
               {renderConvoSprinkle(2)}
+
+              {/* Seen It? — Podcasts (round 1), kept after Gaming so it cannot follow the TV card directly */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
+                <SeenItGame mediaTypeFilter="podcast" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
+              )}
 
               {/* DNA Moment #3 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
