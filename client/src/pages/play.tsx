@@ -336,7 +336,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
           <nav
             role="tablist"
             aria-label="Play modes"
-            className="mt-4 flex w-full gap-2 overflow-x-auto pb-1"
+            className="relative z-20 -mb-11 mt-4 flex w-full overflow-x-auto rounded-2xl border border-[#e5dfe8] bg-[#fffdfb]/95 px-2 shadow-[0_10px_30px_rgba(35,20,48,0.12)] backdrop-blur"
           >
             {gameModes.map((mode, index) => {
               const isActive = activeMode === mode.id;
@@ -351,10 +351,10 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
                   tabIndex={isActive ? 0 : -1}
                   onClick={() => setActiveMode(mode.id as PlayMode)}
                   onKeyDown={(event) => handleTabKeyDown(event, index)}
-                  className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition-colors ${
+                  className={`relative shrink-0 whitespace-nowrap px-4 py-3.5 text-xs font-semibold tracking-[-0.01em] transition-colors sm:min-w-0 sm:flex-1 ${
                     isActive
-                      ? "border-white bg-white text-[#41265f] shadow-sm"
-                      : "border-white/20 bg-white/[0.07] text-white/75 hover:border-white/35 hover:bg-white/[0.12] hover:text-white"
+                      ? "text-[#4d2868] after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-6 after:-translate-x-1/2 after:rounded-full after:bg-[#6f3a8f]"
+                      : "text-[#8b818f] hover:text-[#4d4051]"
                   }`}
                 >
                   {mode.label}
@@ -365,7 +365,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
         </div>
       </div>
 
-      <main className="mx-auto max-w-[680px] px-4 pb-28 sm:px-6">
+      <main className="mx-auto max-w-[680px] px-4 pb-28 pt-7 sm:px-6">
         <section
           id="play-mode-panel"
           role="tabpanel"
