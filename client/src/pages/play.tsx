@@ -333,15 +333,10 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
               <RankWidget onNavigate={setLocation} insideHero />
             </div>
           </section>
-        </div>
-      </div>
-
-      <main className="mx-auto max-w-[680px] px-4 pb-28 sm:px-6">
-        <section className="pt-4">
           <nav
             role="tablist"
             aria-label="Play modes"
-            className="flex w-full gap-2 overflow-x-auto pb-1"
+            className="mt-4 flex w-full gap-2 overflow-x-auto pb-1"
           >
             {gameModes.map((mode, index) => {
               const isActive = activeMode === mode.id;
@@ -358,8 +353,8 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
                   onKeyDown={(event) => handleTabKeyDown(event, index)}
                   className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition-colors ${
                     isActive
-                      ? "border-[#513278] bg-[#513278] text-white"
-                      : "border-[#d9d1dc] bg-white text-[#6f6575] hover:border-[#b9a9c2] hover:text-[#34213f]"
+                      ? "border-white bg-white text-[#41265f] shadow-sm"
+                      : "border-white/20 bg-white/[0.07] text-white/75 hover:border-white/35 hover:bg-white/[0.12] hover:text-white"
                   }`}
                 >
                   {mode.label}
@@ -367,8 +362,10 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
               );
             })}
           </nav>
-        </section>
+        </div>
+      </div>
 
+      <main className="mx-auto max-w-[680px] px-4 pb-28 sm:px-6">
         <section
           id="play-mode-panel"
           role="tabpanel"
