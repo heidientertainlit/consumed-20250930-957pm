@@ -337,14 +337,11 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
       </div>
 
       <main className="mx-auto max-w-[680px] px-4 pb-28 sm:px-6">
-        <section className="pt-5">
-          <p className="mb-2.5 px-0.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#87808f]">
-            More ways to play
-          </p>
-          <div
+        <section className="pt-4">
+          <nav
             role="tablist"
             aria-label="Play modes"
-            className="grid grid-cols-2 gap-2.5"
+            className="flex w-full overflow-x-auto border-b border-[#ded5e3]"
           >
             {gameModes.map((mode, index) => {
               const Icon = mode.icon;
@@ -360,25 +357,18 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
                   tabIndex={isActive ? 0 : -1}
                   onClick={() => setActiveMode(mode.id as PlayMode)}
                   onKeyDown={(event) => handleTabKeyDown(event, index)}
-                  className={`group relative flex min-h-[70px] w-full items-center gap-2.5 rounded-2xl border p-2.5 text-left transition-[transform,box-shadow,border-color,background-color] duration-150 active:scale-[0.985] ${
-                    mode.id === "all" ? "col-span-2" : ""
-                  } ${
+                  className={`relative flex min-w-[92px] shrink-0 flex-col items-center justify-center gap-1 whitespace-nowrap px-2 pb-3 pt-1 text-center text-[10px] font-bold transition-colors sm:min-w-0 sm:flex-1 sm:text-[12px] ${
                     isActive
-                      ? "border-[#8b5bc4] bg-white shadow-[0_5px_14px_rgba(69,31,105,0.12)]"
-                      : "border-[#e4dfda] bg-[#fdfaf7] shadow-[0_3px_8px_rgba(44,26,61,0.05)]"
+                      ? "text-[#5b168f] after:absolute after:inset-x-2 after:-bottom-px after:h-[3px] after:rounded-t-full after:bg-[linear-gradient(90deg,#5b168f,#8a35be)]"
+                      : "text-[#776c7c] hover:text-[#34213f]"
                   }`}
                 >
-                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border ${mode.color}`}>
-                    <Icon size={21} strokeWidth={1.8} className={mode.iconColor} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[14px] font-bold leading-tight tracking-[-0.02em] text-[#22172d]">{mode.label}</span>
-                    <span className="mt-0.5 block text-[11px] leading-tight text-[#77707b]">{mode.description}</span>
-                  </span>
+                  <Icon size={17} strokeWidth={2} />
+                  {mode.label}
                 </button>
               );
             })}
-          </div>
+          </nav>
         </section>
 
         <section
