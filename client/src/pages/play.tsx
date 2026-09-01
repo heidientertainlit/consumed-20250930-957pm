@@ -340,7 +340,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
         <nav
           role="tablist"
           aria-label="Play modes"
-          className="flex w-full gap-2.5 overflow-x-auto bg-[#fbf8f5] pb-1"
+          className="flex w-full gap-2 overflow-x-auto bg-[#fbf8f5] pb-1"
         >
           {gameModes.map((mode, index) => {
             const Icon = mode.icon;
@@ -356,15 +356,13 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => setActiveMode(mode.id as PlayMode)}
                 onKeyDown={(event) => handleTabKeyDown(event, index)}
-                className={`flex min-h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[12px] px-3.5 py-2 text-xs font-semibold transition-all ${
+                className={`flex min-h-8 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
                   isActive
-                    ? mode.id === "all"
-                      ? "bg-[linear-gradient(100deg,#8b6aae_0%,#72518f_100%)] text-white shadow-[0_6px_16px_rgba(83,55,108,0.18)]"
-                      : "bg-[linear-gradient(100deg,#6f2fe8_0%,#346cf5_100%)] text-white shadow-[0_8px_20px_rgba(92,55,211,0.22)]"
-                    : "bg-[#eee7f2] text-[#54445f] hover:bg-[#e5d9eb] hover:text-[#3c2b47]"
+                    ? "border-[#76528f] bg-[#76528f] text-white"
+                    : "border-[#ded4e3] bg-[#f7f2f8] text-[#5f5267] hover:border-[#cbbbd3] hover:bg-[#eee6f1] hover:text-[#3c2b47]"
                 }`}
               >
-                <Icon size={16} strokeWidth={2} aria-hidden="true" />
+                <Icon size={14} strokeWidth={2} aria-hidden="true" />
                 {mode.label}
               </button>
             );
