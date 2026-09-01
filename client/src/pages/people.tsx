@@ -500,20 +500,20 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
             </h1>
             <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Find the people, communities, and creators connected by what you love.</p>
           </div>
-          {tab === "friends" && (
-            <div className="relative mt-5 max-w-xl">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60" size={18} aria-hidden="true" />
-              <input
-                type="search"
-                placeholder="Search people and friends"
-                value={peopleSearchQuery}
-                onChange={(event) => setPeopleSearchQuery(event.target.value)}
-                className="w-full rounded-xl border border-white/15 bg-white/10 py-3 pl-11 pr-4 text-sm text-white shadow-[0_6px_18px_rgba(10,4,24,0.14)] outline-none backdrop-blur-sm placeholder:text-white/55 focus:border-white/35 focus:bg-white/15 focus:ring-2 focus:ring-white/15"
-                data-testid="input-search-friends-hero"
-              />
-            </div>
-          )}
         </div>
+        {tab === "friends" && (
+          <div className="relative mt-4">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#84768c]" size={18} aria-hidden="true" />
+            <input
+              type="search"
+              placeholder="Search people and friends"
+              value={peopleSearchQuery}
+              onChange={(event) => setPeopleSearchQuery(event.target.value)}
+              className="w-full rounded-xl border border-white/60 bg-[#fffdfb] py-3 pl-11 pr-4 text-sm text-[#30203f] shadow-[0_6px_18px_rgba(10,4,24,0.12)] outline-none placeholder:text-[#9a909e] focus:border-white focus:ring-2 focus:ring-white/25"
+              data-testid="input-search-friends-hero"
+            />
+          </div>
+        )}
       </div>
     </header>
     <div className="bg-[#fbf8f5] px-4 pt-4 sm:px-6">
