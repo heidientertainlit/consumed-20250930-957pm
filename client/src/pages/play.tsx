@@ -340,7 +340,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
         <nav
           role="tablist"
           aria-label="Play modes"
-          className="flex w-full gap-2 overflow-x-auto bg-[#fbf8f5] px-2 pb-1"
+          className="flex w-full overflow-x-auto"
         >
           {gameModes.map((mode, index) => {
             const Icon = mode.icon;
@@ -356,14 +356,14 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => setActiveMode(mode.id as PlayMode)}
                 onKeyDown={(event) => handleTabKeyDown(event, index)}
-                className={`flex min-h-8 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`relative flex min-w-0 flex-1 flex-col items-center justify-start gap-1.5 px-2 pb-3 pt-2 text-center text-[10px] font-medium leading-tight transition-colors sm:text-[11px] ${
                   isActive
-                    ? "border-[#76528f] bg-[#76528f] text-white"
-                    : "border-[#ded4e3] bg-[#f7f2f8] text-[#5f5267] hover:border-[#cbbbd3] hover:bg-[#eee6f1] hover:text-[#3c2b47]"
+                    ? "text-[#7139a0] after:absolute after:bottom-[-1px] after:left-1/2 after:h-0.5 after:w-8 after:-translate-x-1/2 after:rounded-full after:bg-[#7139a0]"
+                    : "text-[#817987] hover:text-[#4d4051]"
                 }`}
               >
-                <Icon size={14} strokeWidth={2} aria-hidden="true" />
-                {mode.label}
+                <Icon size={19} strokeWidth={isActive ? 2.25 : 1.8} aria-hidden="true" />
+                <span className="min-h-[2.4em] max-w-[88px] whitespace-normal">{mode.label}</span>
               </button>
             );
           })}
