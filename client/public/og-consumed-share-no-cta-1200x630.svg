@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#160a31"/>
+      <stop offset=".5" stop-color="#38136a"/>
+      <stop offset="1" stop-color="#5b1594"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#a855f7" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1030" cy="90" r="350" fill="url(#glow)"/>
+  <circle cx="150" cy="650" r="330" fill="url(#glow)" opacity=".55"/>
+  <text x="78" y="102" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="52" font-weight="800" letter-spacing="-2">consumed</text>
+  <text x="78" y="218" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="57" font-weight="700">See what everyone’s consuming.</text>
+  <text x="78" y="301" fill="#e9d5ff" font-family="Arial,Helvetica,sans-serif" font-size="34" font-weight="500">Discover your Entertainment DNA. Find your people.</text>
+  <text x="78" y="379" fill="#d8b4fe" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="500">Movies · TV · Books · Podcasts · Music · Games &amp; more</text>
+  <rect x="78" y="442" width="242" height="66" rx="33" fill="#fff"/>
+  <text x="199" y="485" text-anchor="middle" fill="#581c87" font-family="Arial,Helvetica,sans-serif" font-size="26" font-weight="700">Join Consumed</text>
+  <text x="78" y="565" fill="#c4b5fd" font-family="Arial,Helvetica,sans-serif" font-size="24" font-weight="600">app.consumedapp.com</text>
+</svg>

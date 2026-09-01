@@ -1016,7 +1016,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                     )}
                   </>)}
                 
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                {answered && <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
                   {answered && sharedChallenger && challengedPoolId === (item.poolId || item.id) ? (
                     <div className="w-full flex items-center justify-center gap-2 text-[13px] font-semibold text-gray-700">
                       <span>You <span className={answered.isCorrect ? 'text-green-600' : 'text-red-500'}>{answered.isCorrect ? '✓' : '✕'}</span></span>
@@ -1031,6 +1031,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                           poolId: item.poolId || item.id,
                           question: item.question,
                           fromUserId: user?.id,
+                          result: answered.isCorrect ? 'right' : 'wrong',
                         });
                         if (result === 'copied') {
                           toast({ title: 'Challenge link copied', description: 'Send it to a friend to compare scores.' });
@@ -1042,7 +1043,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                       <span aria-hidden="true">→</span>
                     </button>
                   )}
-                </div>
+                </div>}
               </div>
             );
           })}

@@ -744,6 +744,7 @@ function TodaysPlayGame({
       question: q.title,
       fromUserId: session?.user?.id,
       daily: true,
+      result: selected === q.correct_answer ? 'right' : 'wrong',
     });
     if (result === 'copied') {
       toast({ title: 'Challenge link copied', description: 'Send it to a friend to compare scores.' });
