@@ -333,39 +333,39 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
               <RankWidget onNavigate={setLocation} insideHero />
             </div>
           </section>
-          <nav
-            role="tablist"
-            aria-label="Play modes"
-            className="relative z-20 -mb-11 mt-4 flex w-full overflow-x-auto rounded-2xl border border-[#e5dfe8] bg-[#fffdfb]/95 px-2 shadow-[0_10px_30px_rgba(35,20,48,0.12)] backdrop-blur"
-          >
-            {gameModes.map((mode, index) => {
-              const isActive = activeMode === mode.id;
-              return (
-                <button
-                  key={mode.id}
-                  id={`play-tab-${mode.id}`}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-controls="play-mode-panel"
-                  tabIndex={isActive ? 0 : -1}
-                  onClick={() => setActiveMode(mode.id as PlayMode)}
-                  onKeyDown={(event) => handleTabKeyDown(event, index)}
-                  className={`relative shrink-0 whitespace-nowrap px-4 py-3.5 text-xs font-semibold tracking-[-0.01em] transition-colors sm:min-w-0 sm:flex-1 ${
-                    isActive
-                      ? "text-[#4d2868] after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-6 after:-translate-x-1/2 after:rounded-full after:bg-[#6f3a8f]"
-                      : "text-[#8b818f] hover:text-[#4d4051]"
-                  }`}
-                >
-                  {mode.label}
-                </button>
-              );
-            })}
-          </nav>
         </div>
       </div>
 
-      <main className="mx-auto max-w-[680px] px-4 pb-28 pt-7 sm:px-6">
+      <main className="mx-auto max-w-[680px] px-4 pb-28 pt-4 sm:px-6">
+        <nav
+          role="tablist"
+          aria-label="Play modes"
+          className="flex w-full overflow-x-auto rounded-2xl border border-[#e5dfe8] bg-[#fffdfb] px-2 shadow-[0_6px_20px_rgba(35,20,48,0.08)]"
+        >
+          {gameModes.map((mode, index) => {
+            const isActive = activeMode === mode.id;
+            return (
+              <button
+                key={mode.id}
+                id={`play-tab-${mode.id}`}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-controls="play-mode-panel"
+                tabIndex={isActive ? 0 : -1}
+                onClick={() => setActiveMode(mode.id as PlayMode)}
+                onKeyDown={(event) => handleTabKeyDown(event, index)}
+                className={`relative shrink-0 whitespace-nowrap px-4 py-3.5 text-xs font-semibold tracking-[-0.01em] transition-colors sm:min-w-0 sm:flex-1 ${
+                  isActive
+                    ? "text-[#4d2868] after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-6 after:-translate-x-1/2 after:rounded-full after:bg-[#6f3a8f]"
+                    : "text-[#8b818f] hover:text-[#4d4051]"
+                }`}
+              >
+                {mode.label}
+              </button>
+            );
+          })}
+        </nav>
         <section
           id="play-mode-panel"
           role="tabpanel"
