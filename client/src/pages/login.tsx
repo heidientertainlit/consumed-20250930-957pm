@@ -296,16 +296,6 @@ export default function LoginPage() {
             />
             <IdentityFace size={46} variant="outline" className="identity-face-float" />
           </div>
-          <div className="font-serif text-white mb-2">
-            <h1 className="font-serif text-[14px] font-normal leading-[1.1] whitespace-nowrap">
-              Where entertainment comes together,
-            </h1>
-            <div className="mt-0 flex items-center justify-center gap-2">
-              <p className="font-serif text-[14px] italic font-normal leading-[1.1]">
-                so we can too.
-              </p>
-            </div>
-          </div>
         </div>
 
         <div className="bg-white rounded-3xl p-8 shadow-2xl">
