@@ -2644,7 +2644,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {/* Title first — the media is the headline */}
               {post.mediaTitle && (
                 <div className="min-w-0">
-                  <p className="text-[17px] font-bold text-gray-900 leading-snug">{post.mediaTitle}</p>
+                  <p className="font-serif text-[19px] font-medium leading-[1.08] tracking-[-.035em] text-[#30203f]">{post.mediaTitle}</p>
                   {mediaCreator && (
                     <p className="text-[12px] text-gray-500 leading-snug truncate mt-0.5">by {mediaCreator}</p>
                   )}

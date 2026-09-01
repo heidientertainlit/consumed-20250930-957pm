@@ -368,7 +368,7 @@ export default function DnaClashFeedCard({
             <span className="font-bold text-gray-900 text-[14px] leading-tight">{name1}</span>
             <span className="text-purple-500 text-[11px] font-semibold leading-tight text-center">{user1.dnaLabel}</span>
             {/* Rating */}
-            <div className="font-serif text-[27px] font-medium leading-none tracking-[-.035em] text-purple-600">
+            <div className="font-serif text-[27px] font-normal leading-none tracking-[-.035em] text-purple-600">
               {Number(user1.rating).toFixed(1)} <span aria-hidden="true">★</span>
             </div>
           </div>
@@ -395,7 +395,7 @@ export default function DnaClashFeedCard({
             </div>
             <span className="font-bold text-gray-900 text-[14px] leading-tight">{name2}</span>
             <span className="text-pink-500 text-[11px] font-semibold leading-tight text-center">{user2.dnaLabel}</span>
-            <div className="font-serif text-[27px] font-medium leading-none tracking-[-.035em] text-pink-500">
+            <div className="font-serif text-[27px] font-normal leading-none tracking-[-.035em] text-pink-500">
               {Number(user2.rating).toFixed(1)} <span aria-hidden="true">★</span>
             </div>
           </div>
