@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import html2canvas from "html2canvas";
 import { X, Dna, Download, Share2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { shareImageBlob } from "@/lib/share-image-blob";
+import { renderDnaShareCard } from "@/lib/render-dna-share-card";
 import { useLocation } from "wouter";
 import consumedPurpleLogo from "@/assets/consumed_logo_purple_trimmed.png";
 
@@ -88,18 +88,17 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
   }, []);
 
   const handleDownload = async () => {
-    if (!cardRef.current) return;
+    if (!profile) return;
     setIsDownloading(true);
     try {
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: null,
-      });
+      const blob = await renderDnaShareCard(profile);
+      if (!blob) throw new Error("Could not generate DNA share image");
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.download = "my-entertainment-dna.png";
-      link.href = canvas.toDataURL("image/png");
+      link.href = url;
       link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch (error) {
       console.error("Error downloading image:", error);
     } finally {
@@ -108,15 +107,10 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
   };
 
   const handleShare = async () => {
-    if (isSharing || !profile || !cardRef.current) return;
+    if (isSharing || !profile) return;
     setIsSharing(true);
     try {
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: null,
-      });
-      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+      const blob = await renderDnaShareCard(profile);
       if (!blob) throw new Error("Could not generate DNA share image");
       await shareImageBlob(blob, {
         fileName: "my-entertainment-dna.png",
