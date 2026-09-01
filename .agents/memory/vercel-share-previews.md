@@ -21,6 +21,12 @@ Replacing an existing static Open Graph image can make the preview artwork look 
 
 **How to apply:** Treat artwork bytes, crawler metadata, and the direct serverless route as three separate production checks.
 
+For this Vite/static-SPA deployment, use one explicit `api/og.ts` function and pass public share paths through a rewrite query parameter. Do not rely on a nested catch-all function filename. Imports from the function into project TypeScript must use the emitted `.js` extension under Node ESM.
+
+**Why:** The nested catch-all was omitted from production routing; after switching to an explicit function, Vercel compiled it to ESM but an extensionless project import crashed at invocation with `ERR_MODULE_NOT_FOUND`.
+
+**How to apply:** Validate the direct function separately. Static HTML means discovery/routing failed; `FUNCTION_INVOCATION_FAILED` requires runtime logs. Confirm the compiled function locally and production after each Vercel deployment.
+
 Invite actions should share `/invite/:userId`, not `/u/:userId`; profile URLs are for viewing a profile, while invite URLs carry action-oriented invitation metadata.
 
 Private Compare shares use `/edna/:userId?compare=1`: metadata invites the recipient to compare with the sender, but never exposes the existing friend, score, or pairwise result publicly. Keep the preview title action-specific and the description a single direct CTA; do not repeat generic app marketing in both.
