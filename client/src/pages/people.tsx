@@ -502,7 +502,7 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
           </div>
         </div>
         {tab === "friends" && (
-          <div className="relative mt-4">
+          <div className="relative mx-2 mt-4">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#84768c]" size={18} aria-hidden="true" />
             <input
               type="search"
