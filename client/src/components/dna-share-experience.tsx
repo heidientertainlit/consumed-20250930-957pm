@@ -184,7 +184,7 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
               <div className="p-5 flex flex-col h-full">
                 <div className="text-center mb-3">
                   <h1
-                    className="mb-0.5 text-[17px] font-medium leading-tight text-gray-900"
+                    className="mb-0.5 text-[17px] font-normal leading-tight text-gray-900"
                     style={{ fontFamily: "Poppins, sans-serif" }}
                   >
                     Your Entertainment DNA by
