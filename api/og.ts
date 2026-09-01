@@ -1,6 +1,6 @@
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
-import { registerOpenGraphRoutes } from "../../server/open-graph";
+import { registerOpenGraphRoutes } from "../server/open-graph";
 
 const app = express();
 const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
@@ -14,9 +14,12 @@ app.use((_req, res) => {
 
 export default function handler(req: any, res: any) {
   const incoming = new URL(req.url || "/", "https://app.consumedapp.com");
-  const previewPath = incoming.pathname.replace(/^\/api\/og/, "") || "/";
+  const requestedPath = incoming.searchParams.get("path") || "/";
+  const previewPath = requestedPath.startsWith("/") ? requestedPath : `/${requestedPath}`;
 
-  req.url = `${previewPath}${incoming.search}`;
+  incoming.searchParams.delete("path");
+  const query = incoming.searchParams.toString();
+  req.url = `${previewPath}${query ? `?${query}` : ""}`;
   delete req._parsedUrl;
   delete req._parsedOriginalUrl;
 
