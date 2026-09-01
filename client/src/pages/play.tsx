@@ -29,7 +29,7 @@ const gameModes = [
   },
   {
     id: "polls",
-    label: "Cast Your Vote",
+    label: "Vote",
     description: "Pick your side. See who agrees.",
     icon: Vote,
     color: "bg-[#f1efff] border-[#e0dcff]",
@@ -37,7 +37,7 @@ const gameModes = [
   },
   {
     id: "ranks",
-    label: "Debate the Rank",
+    label: "Rank",
     description: "Rank your favorites. See who agrees.",
     icon: BarChart2,
     color: "bg-[#fff2e9] border-[#fde4d4]",
