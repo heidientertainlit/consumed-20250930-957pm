@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Dna, Feather, Loader2, Share2, Download, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy, Sparkles, Check, ArrowLeft, ArrowRight, Search, Heart, Zap, Clapperboard, Wand2, Smile, Skull, HelpCircle, Crown, Rocket, Video, Palette, Drama, HeartHandshake, Home, Leaf, Plane, Users, Eye, CircleUser, Youtube } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
-import html2canvas from "html2canvas";
 import consumedPurpleLogo from "@/assets/consumed_logo_purple_trimmed.png";
 import { shareImageBlob } from "@/lib/share-image-blob";
+import { renderDnaShareCard } from "@/lib/render-dna-share-card";
 import { useFirstSessionHooks } from "@/components/first-session-hooks";
 
 // Icon mapping for entertainment types
@@ -410,20 +410,17 @@ export default function EntertainmentDNAPage() {
 
   if (showResults && dnaProfile) {
     const handleDownload = async () => {
-      if (!cardRef.current) return;
       setIsDownloading(true);
       
       try {
-        const canvas = await html2canvas(cardRef.current, {
-          scale: 3,
-          useCORS: true,
-          backgroundColor: null,
-        });
-        
+        const blob = await renderDnaShareCard(dnaProfile);
+        if (!blob) throw new Error('Could not generate DNA share image');
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.download = 'my-entertainment-dna.png';
-        link.href = canvas.toDataURL('image/png');
+        link.href = url;
         link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
       } catch (error) {
         console.error('Error downloading image:', error);
       } finally {
@@ -432,15 +429,10 @@ export default function EntertainmentDNAPage() {
     };
 
     const handleShare = async () => {
-      if (!cardRef.current || isSharing) return;
+      if (isSharing) return;
       setIsSharing(true);
       try {
-        const canvas = await html2canvas(cardRef.current, {
-          scale: 3,
-          useCORS: true,
-          backgroundColor: null,
-        });
-        const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+        const blob = await renderDnaShareCard(dnaProfile);
         if (!blob) throw new Error('Could not generate DNA share image');
         await shareImageBlob(blob, {
           fileName: 'my-entertainment-dna.png',
