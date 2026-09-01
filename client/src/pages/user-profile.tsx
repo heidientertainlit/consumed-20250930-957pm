@@ -771,8 +771,6 @@ export default function UserProfile() {
     }
   };
 
-  // Share DNA menu: link vs image
-  const [dnaShareMenuOpen, setDnaShareMenuOpen] = useState(false);
   // Lightweight refresh: just re-fetches the saved profile (no AI regeneration).
   const [isRefreshingDna, setIsRefreshingDna] = useState(false);
   const handleRefreshDna = async () => {
@@ -3892,30 +3890,17 @@ export default function UserProfile() {
 
                 {/* Quick Actions */}
                 <div>
-                  <div className="relative">
+                  <div>
                     <button
-                      onClick={() => setDnaShareMenuOpen(v => !v)}
-                      className="w-full flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
+                      onClick={handleDnaDownloadSummary}
+                      disabled={dnaIsDownloading}
+                      className="w-full flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-60"
                     >
-                      <Share2 size={18} className="text-purple-500" />
-                      <span className="text-[10px] font-semibold text-gray-700">Share DNA</span>
+                      {dnaIsDownloading
+                        ? <Loader2 size={18} className="animate-spin text-purple-500" />
+                        : <Share2 size={18} className="text-purple-500" />}
+                      <span className="text-[10px] font-semibold text-gray-700">{dnaIsDownloading ? "Preparing…" : "Share DNA"}</span>
                     </button>
-                    {dnaShareMenuOpen && (
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 z-30 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden w-[160px]">
-                        <button
-                          onClick={() => { setDnaShareMenuOpen(false); handleDnaShareSummary(); }}
-                          className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-gray-800 hover:bg-gray-50 border-b border-gray-100"
-                        >
-                          Share link
-                        </button>
-                        <button
-                          onClick={() => { setDnaShareMenuOpen(false); handleDnaDownloadSummary(); }}
-                          className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-gray-800 hover:bg-gray-50"
-                        >
-                          {dnaIsDownloading ? 'Preparing…' : 'Save as image'}
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -6022,6 +6007,7 @@ export default function UserProfile() {
         fileName="my-entertainment-dna.png"
         title={dnaShareSheetTitle}
         shareText={dnaProfile ? `I'm a "${dnaProfile.label}" - ${dnaProfile.tagline}. Check out my entertainment DNA on Consumed!` : undefined}
+        variant="dark-preview"
       />
       {profileShareMenuOpen && (user?.id || viewingUserId) && (
         <DnaShareExperience
