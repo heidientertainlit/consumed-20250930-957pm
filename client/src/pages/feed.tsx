@@ -552,7 +552,14 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-serif text-[19px] font-medium leading-[1.08] tracking-[-.035em] text-[#30203f] cursor-pointer" onClick={() => onOpenMedia(g)}>{g.title}</p>
+                    <p
+                      className={single
+                        ? "font-serif text-[19px] font-medium leading-[1.08] tracking-[-.035em] text-[#30203f] cursor-pointer"
+                        : "text-[18px] font-bold leading-snug text-gray-900 cursor-pointer"}
+                      onClick={() => onOpenMedia(g)}
+                    >
+                      {g.title}
+                    </p>
                     <p className="text-[11.5px] text-gray-500 mt-0.5">
                       {extScores[g.key] && <><span className="font-semibold text-gray-700">{extScores[g.key]}</span> · </>}{g.talkingCount} people talking
                     </p>
@@ -593,11 +600,11 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
                       "{topGlimpse.content}"
                     </p>
                   ) : (
-                    <p className="font-serif text-[16px] font-medium leading-[1.08] tracking-[-.035em] text-[#30203f]">{g.title}</p>
+                    <p className="text-[14px] font-medium leading-snug text-gray-800">{g.title}</p>
                   )}
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <span className="text-[11.5px] text-gray-500 truncate">
-                      <span className="font-serif font-medium tracking-[-.035em] text-[#30203f]">{g.title}</span> · {g.talkingCount} people talking
+                      <span className="font-medium text-gray-700">{g.title}</span> · {g.talkingCount} people talking
                     </span>
                   </div>
                 </div>
