@@ -138,7 +138,7 @@ function readIndexHtml(): string {
 }
 
 function injectOpenGraphTags(html: string, rawTags: OpenGraphTags): string {
-  const fallbackImage = `${appBase()}/og-consumed-share-no-cta-1200x630.png`;
+  const fallbackImage = `${appBase()}/og-consumed-share-20260901-1200x630.png`;
   const title = escapeHtml(compactText(rawTags.title, 90) || "Consumed");
   const description = escapeHtml(
     compactText(rawTags.description, 200)
@@ -484,8 +484,18 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
     description: "Compare your entertainment stats, climb the leaderboard, and challenge your friends.",
   }));
 
-  route(/^\/play(?:\/.*)?$/, async (req) => responseTags(req, {
-    title: "Play together on Consumed",
-    description: "Answer trivia, make predictions, and challenge friends who love the same entertainment.",
-  }));
+  route(/^\/play(?:\/.*)?$/, async (req) => {
+    const result = req.query.result;
+    const title = result === "right"
+      ? "I got it right — see how you score"
+      : result === "wrong"
+        ? "I got it wrong — see how you score"
+        : "Play together on Consumed";
+    return responseTags(req, {
+      title,
+      description: result === "right" || result === "wrong"
+        ? "Play the same question on Consumed and compare results. No answer spoilers."
+        : "Answer trivia, make predictions, and challenge friends who love the same entertainment.",
+    });
+  });
 }
