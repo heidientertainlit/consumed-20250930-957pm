@@ -269,7 +269,7 @@ export default function FriendsManager({
     {(!featuredFriend || sortedFriends.length > 0) && <section className="mt-7">
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
-           <h3 className="text-base font-bold tracking-[-.02em] text-[#30203f]">{featuredFriend ? "More friends" : "Your friends"}</h3>
+           <h3 className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">{featuredFriend ? "More friends" : "Your friends"}</h3>
            <p className="mt-0.5 text-xs text-[#7d7382]">{featuredFriend ? "Everyone else in your circle." : "Closest DNA matches first."}</p>
         </div>
         {!isLoadingFriends && friendsData?.friends?.length > 0 && (
@@ -360,7 +360,7 @@ function ClosestFriendCard({ friend }: { friend: Person }) {
 
   return <section className="mt-7">
     <div className="mb-3">
-      <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#65457b]">Closest friend match</p>
+      <p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Closest friend match</p>
       <p className="mt-1 text-xs text-[#7d7382]">The friend whose Entertainment DNA feels most like yours.</p>
     </div>
     <Link
