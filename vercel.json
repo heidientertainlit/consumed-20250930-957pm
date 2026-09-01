@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/og/[...path].ts": {
+    "api/og.ts": {
       "includeFiles": "dist/public/**"
     }
   },
@@ -26,47 +26,47 @@
     },
     {
       "source": "/invite/:userId",
-      "destination": "/api/og/invite/:userId"
+      "destination": "/api/og?path=/invite/:userId"
     },
     {
       "source": "/u/:userId",
-      "destination": "/api/og/u/:userId"
+      "destination": "/api/og?path=/u/:userId"
     },
     {
       "source": "/post/:postId",
-      "destination": "/api/og/post/:postId"
+      "destination": "/api/og?path=/post/:postId"
     },
     {
       "source": "/media/:mediaType/:source/:externalId",
-      "destination": "/api/og/media/:mediaType/:source/:externalId"
+      "destination": "/api/og?path=/media/:mediaType/:source/:externalId"
     },
     {
       "source": "/people/tribes/:tribeId",
-      "destination": "/api/og/people/tribes/:tribeId"
+      "destination": "/api/og?path=/people/tribes/:tribeId"
     },
     {
       "source": "/list/:listId",
-      "destination": "/api/og/list/:listId"
+      "destination": "/api/og?path=/list/:listId"
     },
     {
       "source": "/rank/:rankId",
-      "destination": "/api/og/rank/:rankId"
+      "destination": "/api/og?path=/rank/:rankId"
     },
     {
       "source": "/edna/:userId",
-      "destination": "/api/og/edna/:userId"
+      "destination": "/api/og?path=/edna/:userId"
     },
     {
       "source": "/leaderboard",
-      "destination": "/api/og/leaderboard"
+      "destination": "/api/og?path=/leaderboard"
     },
     {
       "source": "/play",
-      "destination": "/api/og/play"
+      "destination": "/api/og?path=/play"
     },
     {
       "source": "/play/:path*",
-      "destination": "/api/og/play/:path*"
+      "destination": "/api/og?path=/play/:path*"
     },
     {
       "source": "/:path*",
@@ -77,7 +77,7 @@
           "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|TelegramBot|Applebot|Pinterestbot|SkypeUriPreview|Iframely|Embedly).*"
         }
       ],
-      "destination": "/api/og/:path*"
+      "destination": "/api/og?path=/:path*"
     },
     {
       "source": "/:path*",
