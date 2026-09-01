@@ -8,7 +8,7 @@ import { Dna, ArrowRight, Users, X, ChevronLeft, Loader2, Share2, CheckCircle2, 
 import { formatFeedName } from "@/lib/feed-name";
 import { DnaComparisonDeveloping, isDnaComparisonReady } from "@/components/dna-comparison-developing";
 import { getDnaComparisonUpdateDetail } from "@/lib/dna-comparison-readiness";
-import consumedPurpleLogo from "../../../attached_assets/consumed_logo_purple_bgTransparent_1788203998710.png";
+import consumedPurpleLogo from "@/assets/consumed_logo_purple_trimmed.png";
 
 /* ── types ─────────────────────────────────────────── */
 interface OverlapUser {
