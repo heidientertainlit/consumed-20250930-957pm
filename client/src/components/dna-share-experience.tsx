@@ -69,6 +69,27 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
     return () => { cancelled = true; };
   }, [userId]);
 
+  useEffect(() => {
+    const scrollY = window.scrollY;
+    const previous = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+    };
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    return () => {
+      document.body.style.overflow = previous.overflow;
+      document.body.style.position = previous.position;
+      document.body.style.top = previous.top;
+      document.body.style.width = previous.width;
+      window.scrollTo(0, scrollY);
+    };
+  }, []);
+
   const handleDownload = async () => {
     if (!cardRef.current) return;
     setIsDownloading(true);
@@ -112,9 +133,9 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/70 px-3 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-[100000] overflow-y-auto overscroll-contain bg-black/45 px-3 backdrop-blur-md" onClick={onClose}>
       <div
-        className="max-h-[96vh] w-full overflow-y-auto rounded-3xl bg-gray-950 p-3 pb-4 sm:max-w-md sm:p-4 sm:pb-5"
+        className="mx-auto my-4 w-full max-w-sm pb-4 sm:my-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
@@ -154,7 +175,7 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
           </div>
         ) : (
           <>
-            <div className="mx-auto mb-3 flex max-h-[68vh] justify-center overflow-y-auto rounded-2xl bg-gray-900">
+            <div className="mx-auto mb-5 flex justify-center">
             <div
               ref={cardRef}
               className="w-[320px] max-w-full shrink-0 bg-white rounded-3xl overflow-hidden shadow-2xl"
@@ -166,8 +187,7 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
                   <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
                     <Dna className="text-white" size={24} />
                   </div>
-                  <h1 className="text-base font-bold text-gray-900">Your Entertainment DNA</h1>
-                  <div className="w-10 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto rounded-full mt-1"></div>
+                  <h1 className="font-serif text-lg font-bold text-gray-900">Your Entertainment DNA</h1>
                 </div>
 
                 <div className="text-center mb-3">
@@ -206,7 +226,7 @@ export function DnaShareExperience({ userId, onClose }: DnaShareExperienceProps)
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2.5 px-1">
               <Button
                 onClick={handleDownload}
                 disabled={isDownloading}
