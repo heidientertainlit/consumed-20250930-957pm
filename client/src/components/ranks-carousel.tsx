@@ -100,7 +100,6 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
       const { data: ranksData, error: ranksError } = await supabase
         .from('ranks')
         .select('*')
-        .eq('origin_type', 'consumed')
         .eq('visibility', 'public')
         .order('created_at', { ascending: false })
         .range(from, to);
