@@ -1,6 +1,6 @@
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
-import { registerOpenGraphRoutes } from "../server/open-graph";
+import { registerOpenGraphRoutes } from "../server/open-graph.js";
 
 const app = express();
 const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
