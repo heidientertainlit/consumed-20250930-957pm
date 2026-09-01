@@ -487,7 +487,7 @@ export default function EntertainmentDNAPage() {
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
                 <Dna className="text-white" size={24} />
               </div>
-              <h1 className="font-serif text-lg font-bold text-gray-900">Your Entertainment DNA</h1>
+              <h1 className="font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-gray-900">Your Entertainment DNA</h1>
             </div>
 
             {/* DNA Label & Tagline */}
