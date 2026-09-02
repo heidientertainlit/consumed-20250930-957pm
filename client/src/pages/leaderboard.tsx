@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
-import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, Youtube, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp, Award, Dices, Flame, MessageCircle, MessagesSquare } from "lucide-react";
+import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, Youtube, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp, ChevronRight, Award, Dices, Flame, MessageCircle, MessagesSquare } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
@@ -493,17 +493,17 @@ export default function Leaderboard() {
             const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
             
             return (
-              <div
-                key={entry.user_id}
-                className={`flex items-center gap-4 p-4 ${
-                  isSharedUser
-                    ? 'bg-blue-50 ring-2 ring-inset ring-blue-400'
-                    : isCurrentUser
-                      ? 'bg-purple-50'
-                      : 'hover:bg-gray-50'
-                } transition-colors`}
-                data-testid={`leaderboard-entry-${entry.user_id}`}
-              >
+              <div key={entry.user_id}>
+                <div
+                  className={`flex items-center gap-4 p-4 ${
+                    isSharedUser
+                      ? 'bg-blue-50 ring-2 ring-inset ring-blue-400'
+                      : isCurrentUser
+                        ? 'bg-purple-50'
+                        : 'hover:bg-gray-50'
+                  } transition-colors`}
+                  data-testid={`leaderboard-entry-${entry.user_id}`}
+                >
                 <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
                   {entry.rank <= 3 ? (
                     <div className={`w-8 h-8 rounded-full ${rankColors[entry.rank - 1]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
@@ -539,29 +539,35 @@ export default function Leaderboard() {
                   <p className="text-xs text-gray-500">@{entry.username}</p>
                 </Link>
 
-                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="flex items-center gap-3 flex-shrink-0">
                   <div className="text-right">
                     <p className="font-medium text-sm text-gray-600">
                       {typeof entry.score === 'number' ? entry.score.toLocaleString() : entry.score} pts
                     </p>
                   </div>
-                  
-                  {isCurrentUser && scope === 'global' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
+                  </div>
+                </div>
+
+                {isCurrentUser && scope === 'global' && (
+                  <div className="bg-purple-50 px-3 pb-3">
+                    <button
+                      type="button"
                       onClick={() => handleShareRank(entry, categoryName)}
                       disabled={sharingRankKey === `${categoryName}-${entry.user_id}`}
-                      className="flex items-center gap-1.5"
+                      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-white/70 px-4 text-sm font-semibold text-purple-700 shadow-sm ring-1 ring-purple-100 transition-colors hover:bg-white active:bg-purple-100 disabled:opacity-60"
                       data-testid={`button-share-rank-${categoryName}`}
                       aria-label={`Share my #${entry.rank} rank in ${categoryName}`}
-                      title="Share my rank"
                     >
-                      <Share2 size={14} />
-                      <span>Share</span>
-                    </Button>
-                  )}
-                </div>
+                      <Share2 size={16} />
+                      <span>
+                        {sharingRankKey === `${categoryName}-${entry.user_id}`
+                          ? 'Preparing share…'
+                          : `Share your #${entry.rank} rank`}
+                      </span>
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
