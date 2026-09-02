@@ -8892,12 +8892,12 @@ export default function Feed() {
 
       {/* Guest banner — visible only when browsing logged-out */}
       {isGuestMode && (
-        <div className="bg-purple-950 border-b border-purple-500/30" data-testid="guest-banner">
+        <div className="bg-gradient-to-r from-[#0f3b64] via-[#14537a] to-[#274678] border-b border-sky-300/20" data-testid="guest-banner">
           <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
-            <p className="text-purple-200 text-xs leading-snug">
+            <p className="text-sky-50/90 text-xs leading-snug">
               You're browsing Consumed as a guest.
             </p>
-            <button className="flex-shrink-0 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-full px-4 py-1.5 transition-colors" data-testid="button-guest-banner-join">
+            <button className="flex-shrink-0 bg-white/15 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold rounded-full px-4 py-1.5 transition-colors" data-testid="button-guest-banner-join">
               Join free
             </button>
           </div>
@@ -8926,9 +8926,9 @@ export default function Feed() {
                 </div>
                 <IdentityFace size={80} />
               </div>
-              <button className="mt-4 w-full bg-gradient-to-r from-purple-600 to-purple-400 hover:from-purple-700 hover:to-purple-500 text-white text-sm font-semibold rounded-full py-2.5 transition-colors flex items-center justify-center gap-2" data-testid="button-guest-dna-cta">
-                <Sparkles className="w-4 h-4" />
-                Learn yours
+              <button className="mt-4 w-full bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_55%,#2563eb_100%)] text-white text-sm font-bold rounded-full py-2.5 shadow-[0_7px_20px_rgba(50,42,180,.38)] transition active:scale-[.98] active:brightness-95 flex items-center justify-center gap-2" data-testid="button-guest-dna-cta">
+                <User className="w-4 h-4" />
+                Sign In / Sign Up
               </button>
               <div className="grid grid-cols-3 divide-x divide-white/10 border-t border-white/10 mt-4 pt-4">
                 <div className="flex flex-col items-center gap-1.5 px-1 text-center">
