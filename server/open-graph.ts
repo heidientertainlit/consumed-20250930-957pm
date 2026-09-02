@@ -492,10 +492,10 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
         ? "I got it wrong — see how you score"
         : "Play together on Consumed";
     const imageName = result === "right"
-      ? "og-play-challenge-v5-right-1200x630.png"
+      ? "og-play-challenge-v6-right-1200x630.png"
       : result === "wrong"
-        ? "og-play-challenge-v5-wrong-1200x630.png"
-        : "og-play-challenge-v5-1200x630.png";
+        ? "og-play-challenge-v6-wrong-1200x630.png"
+        : "og-play-challenge-v6-1200x630.png";
     return responseTags(req, {
       title,
       description: result === "right" || result === "wrong"
