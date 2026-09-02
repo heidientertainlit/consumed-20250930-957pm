@@ -44,7 +44,7 @@ export function GuestSignupSheet({ open, onClose }: { open: boolean; onClose: ()
         >
           <X size={20} />
         </button>
-        <div className="mb-3 flex items-center gap-3 pr-10">
+        <div className="mb-1.5 flex items-center gap-3 pr-10">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_55%,#2563eb_100%)] shadow-[0_5px_16px_rgba(79,70,229,.28)]">
             <Dna size={22} strokeWidth={2.25} className="text-white" />
           </div>
