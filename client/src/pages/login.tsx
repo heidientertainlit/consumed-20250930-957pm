@@ -378,7 +378,7 @@ export default function LoginPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-[linear-gradient(135deg,#2e1065_0%,#581c87_34%,#4338ca_68%,#1d4ed8_100%)] text-white rounded-full text-sm font-bold shadow-[0_7px_20px_rgba(46,16,101,.42)] transition active:scale-[.98] active:brightness-95"
+                  className="w-full h-12 bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_55%,#2563eb_100%)] text-white rounded-full text-sm font-bold shadow-[0_7px_20px_rgba(50,42,180,.38)] transition active:scale-[.98] active:brightness-95"
                   disabled={submitting}
                   data-testid="button-signin"
                 >

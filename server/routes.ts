@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { createClient } from "@supabase/supabase-js";
 import { registerOpenGraphRoutes } from "./open-graph";
+import { handleLeaderboardShareRequest } from "./leaderboard-share";
 // All user data is handled by Supabase Edge Functions
 // These routes only proxy external APIs (TMDB, NYT, Spotify) that need server-side API keys
 
@@ -14,6 +15,9 @@ function getSupabaseForOG() {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  app.get("/api/leaderboard-share", handleLeaderboardShareRequest);
+  app.post("/api/leaderboard-share", handleLeaderboardShareRequest);
+  app.options("/api/leaderboard-share", handleLeaderboardShareRequest);
 
   app.get("/api/image-proxy", async (req, res) => {
     try {

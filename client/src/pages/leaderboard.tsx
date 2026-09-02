@@ -2,17 +2,19 @@ import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
 import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, Youtube, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp, Award, Dices, Flame, MessageCircle, MessagesSquare } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link, useSearch } from "wouter";
+import { appApiUrl, shareLeaderboardRank } from "@/lib/share";
 
 interface LeaderboardEntry {
   user_id: string;
   username: string;
   display_name: string;
+  avatar_url?: string | null;
   score: number;
   rank: number;
   detail?: string;
@@ -43,6 +45,38 @@ interface LeaderboardData {
   period: string;
 }
 
+interface VerifiedLeaderboardShare {
+  userId: string;
+  displayName: string;
+  rank: number;
+  categoryId: string;
+  categoryLabel: string;
+  period: 'weekly' | 'monthly' | 'all_time';
+  tab: 'engagement' | 'consumption' | 'games';
+  board?: string;
+}
+
+function categoryIdFor(categoryName: string) {
+  const categoryIds: Record<string, string> = {
+    'Top Engagers': 'overall',
+    'Total Consumption': 'total_consumption',
+    Books: 'books',
+    Movies: 'movies',
+    TV: 'tv',
+    Music: 'music',
+    Podcasts: 'podcasts',
+    Games: 'games',
+    YouTube: 'youtube',
+    Trivia: 'trivia',
+    Polls: 'polls',
+  };
+  if (categoryIds[categoryName]) return categoryIds[categoryName];
+  if (categoryName.startsWith('Top Engagers ')) {
+    return `genre:${categoryName.slice('Top Engagers '.length).trim().toLowerCase()}`;
+  }
+  return categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+}
+
 export default function Leaderboard() {
   const { session, user } = useAuth();
   const { toast } = useToast();
@@ -50,15 +84,44 @@ export default function Leaderboard() {
   const urlParams = new URLSearchParams(searchString);
   const tabParam = urlParams.get('tab');
   const eventParam = urlParams.get('event');
+  const scopeParam = urlParams.get('scope');
+  const periodParam = urlParams.get('period');
+  const boardParam = urlParams.get('board');
+  const shareToken = urlParams.get('share');
   
-  const [scope, setScope] = useState<'global' | 'friends'>('global');
-  const [period, setPeriod] = useState<'weekly' | 'monthly' | 'all_time'>('all_time');
+  const [scope, setScope] = useState<'global' | 'friends'>(scopeParam === 'friends' ? 'friends' : 'global');
+  const [period, setPeriod] = useState<'weekly' | 'monthly' | 'all_time'>(
+    periodParam === 'weekly' || periodParam === 'monthly' ? periodParam : 'all_time'
+  );
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<string>(
     tabParam === 'games' || tabParam === 'consumption' || tabParam === 'predictions' ? 
       (tabParam === 'predictions' ? 'games' : tabParam) : 'engagement'
   );
-  const [engagerBoard, setEngagerBoard] = useState<string>('overall');
+  const [engagerBoard, setEngagerBoard] = useState<string>(boardParam || 'overall');
+  const [sharingRankKey, setSharingRankKey] = useState<string | null>(null);
+
+  const { data: verifiedShare } = useQuery<VerifiedLeaderboardShare | null>({
+    queryKey: ['leaderboard-share', shareToken],
+    queryFn: async () => {
+      if (!shareToken) return null;
+      const response = await fetch(
+        appApiUrl(`/api/leaderboard-share?token=${encodeURIComponent(shareToken)}`)
+      );
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: Boolean(shareToken),
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!verifiedShare) return;
+    setScope('global');
+    setPeriod(verifiedShare.period);
+    setActiveTab(verifiedShare.tab);
+    setEngagerBoard(verifiedShare.board || 'overall');
+  }, [verifiedShare]);
 
   const toggleExpanded = (categoryName: string) => {
     setExpandedCategories(prev => {
@@ -93,47 +156,45 @@ export default function Leaderboard() {
     enabled: !!session?.access_token,
   });
 
-  const shareRankMutation = useMutation({
-    mutationFn: async ({ rank, categoryName }: { rank: number; categoryName: string }) => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-
-      const periodLabel = period === 'weekly' ? 'this week' : period === 'monthly' ? 'this month' : 'all time';
-      const shareText = `🏆 I'm #${rank} in ${categoryName} ${periodLabel} on Consumed!`;
-      
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/inline-post`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            content: shareText,
-            post_type: 'update',
-          }),
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to share rank');
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Rank shared!",
-        description: "Your leaderboard rank has been posted to your feed.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Failed to share",
-        description: "Could not share your rank. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+  useEffect(() => {
+    if (!verifiedShare || isLoading) return;
+    const timer = window.setTimeout(() => {
+      document
+        .getElementById(`leaderboard-${verifiedShare.categoryId}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [isLoading, leaderboardData, verifiedShare]);
 
   const currentUserId = leaderboardData?.currentUserId;
+  const predictionEntries = leaderboardData?.categories?.predictions || [];
+
+  const handleShareRank = async (entry: LeaderboardEntry, categoryName: string) => {
+    if (!currentUserId || !session?.access_token) return;
+    const shareKey = `${categoryName}-${entry.user_id}`;
+    setSharingRankKey(shareKey);
+    try {
+      const result = await shareLeaderboardRank({
+        accessToken: session.access_token,
+        categoryId: categoryIdFor(categoryName),
+        period,
+      });
+      toast({
+        title: result === 'copied' ? "Leaderboard link copied" : "Ready to share",
+        description: result === 'copied'
+          ? "Send it to a friend so they can see your spot."
+          : "Your leaderboard link includes your rank and board.",
+      });
+    } catch {
+      toast({
+        title: "Could not share your rank",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSharingRankKey(null);
+    }
+  };
 
   // Fetch awards events and their leaderboards
   interface AwardsEvent {
@@ -408,7 +469,19 @@ export default function Leaderboard() {
       );
     }
 
-    const displayEntries = isExpanded ? entries.slice(0, 10) : entries.slice(0, 3);
+    const categoryId = categoryIdFor(categoryName);
+    const isSharedCategory = scope === 'global' && verifiedShare?.categoryId === categoryId;
+    const baseEntries = isExpanded ? entries.slice(0, 10) : entries.slice(0, 3);
+    const displayEntries = [...baseEntries];
+    entries
+      .filter((entry) =>
+        entry.user_id === currentUserId || (isSharedCategory && entry.user_id === verifiedShare?.userId)
+      )
+      .forEach((entry) => {
+        if (!displayEntries.some((displayed) => displayed.user_id === entry.user_id)) {
+          displayEntries.push(entry);
+        }
+      });
     const hasMore = entries.length > 3;
 
     return (
@@ -416,21 +489,28 @@ export default function Leaderboard() {
         <div className="divide-y divide-gray-100">
           {displayEntries.map((entry, index) => {
             const isCurrentUser = entry.user_id === currentUserId;
+            const isSharedUser = isSharedCategory && entry.user_id === verifiedShare?.userId;
             const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
             
             return (
               <div
                 key={entry.user_id}
-                className={`flex items-center gap-4 p-4 ${isCurrentUser ? 'bg-purple-50' : 'hover:bg-gray-50'} transition-colors`}
+                className={`flex items-center gap-4 p-4 ${
+                  isSharedUser
+                    ? 'bg-blue-50 ring-2 ring-inset ring-blue-400'
+                    : isCurrentUser
+                      ? 'bg-purple-50'
+                      : 'hover:bg-gray-50'
+                } transition-colors`}
                 data-testid={`leaderboard-entry-${entry.user_id}`}
               >
                 <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-                  {index < 3 ? (
-                    <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
-                      {index + 1}
+                  {entry.rank <= 3 ? (
+                    <div className={`w-8 h-8 rounded-full ${rankColors[entry.rank - 1]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                      {entry.rank}
                     </div>
                   ) : (
-                    <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
+                    <span className="text-gray-500 font-semibold text-sm">#{entry.rank}</span>
                   )}
                 </div>
                 <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-purple-100">
@@ -450,6 +530,11 @@ export default function Leaderboard() {
                   <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
                     {entry.display_name || entry.username}
                     {isCurrentUser && <span className="ml-2 text-xs text-purple-600">(You)</span>}
+                    {isSharedUser && !isCurrentUser && (
+                      <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                        Shared with you
+                      </span>
+                    )}
                   </p>
                   <p className="text-xs text-gray-500">@{entry.username}</p>
                 </Link>
@@ -461,16 +546,19 @@ export default function Leaderboard() {
                     </p>
                   </div>
                   
-                  {isCurrentUser && (
+                  {isCurrentUser && scope === 'global' && (
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => shareRankMutation.mutate({ rank: index + 1, categoryName })}
-                      disabled={shareRankMutation.isPending}
+                      onClick={() => handleShareRank(entry, categoryName)}
+                      disabled={sharingRankKey === `${categoryName}-${entry.user_id}`}
                       className="flex items-center gap-1.5"
                       data-testid={`button-share-rank-${categoryName}`}
+                      aria-label={`Share my #${entry.rank} rank in ${categoryName}`}
+                      title="Share my rank"
                     >
                       <Share2 size={14} />
+                      <span>Share</span>
                     </Button>
                   )}
                 </div>
@@ -513,7 +601,10 @@ export default function Leaderboard() {
     const isExpanded = expandedCategories.has(categoryName);
     
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
+      <div
+        id={`leaderboard-${categoryIdFor(categoryName)}`}
+        className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4"
+      >
         <div className={`bg-gradient-to-r ${gradient} p-4`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -573,6 +664,16 @@ export default function Leaderboard() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-4">
+        {verifiedShare && scope === 'global' && (
+          <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-center">
+            <p className="text-sm font-semibold text-blue-900">
+              {verifiedShare.displayName} reached #{verifiedShare.rank} in {verifiedShare.categoryLabel}
+            </p>
+            <p className="mt-0.5 text-xs text-blue-700">
+              Their shared position is highlighted below. See where you rank.
+            </p>
+          </div>
+        )}
 
         <div className="flex justify-center gap-2 mb-6">
           {(['weekly', 'monthly', 'all_time'] as const).map((p) => (
@@ -937,14 +1038,14 @@ export default function Leaderboard() {
                 })}
                 
                 {/* Regular Predictions Leaderboard */}
-                {leaderboardData?.categories?.predictions && leaderboardData.categories.predictions.length > 0 ? (
+                {predictionEntries.length > 0 ? (
                   <div>
                     <div className="px-4 py-2 bg-green-50 border-b border-green-100 flex items-center gap-2">
                       <Target size={16} className="text-green-600" />
                       <span className="text-sm font-semibold text-green-800">General Predictions</span>
                     </div>
                     <div className="divide-y divide-gray-100">
-                      {leaderboardData.categories.predictions.slice(0, 10).map((entry: any, index: number) => {
+                      {predictionEntries.slice(0, 10).map((entry: any, index: number) => {
                         const isCurrentUser = entry.user_id === currentUserId;
                         const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
                         

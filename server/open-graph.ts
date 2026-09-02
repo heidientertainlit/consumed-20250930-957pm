@@ -2,6 +2,7 @@ import type { Express, NextFunction, Request, Response } from "express";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
+import { verifyLeaderboardShareToken } from "./leaderboard-share";
 
 type OpenGraphTags = {
   title: string;
@@ -479,10 +480,26 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
     });
   });
 
-  route("/leaderboard", async (req) => responseTags(req, {
-    title: "See who's leading on Consumed",
-    description: "Compare your entertainment stats, climb the leaderboard, and challenge your friends.",
-  }));
+  route("/leaderboard", async (req) => {
+    const share = verifyLeaderboardShareToken(typeof req.query.share === "string" ? req.query.share : "");
+    if (!share) {
+      return responseTags(req, {
+        title: "See who's leading on Consumed",
+        description: "Compare your entertainment stats, climb the leaderboard, and challenge your friends.",
+      });
+    }
+    const period = share.period === "weekly"
+      ? "this week"
+      : share.period === "monthly"
+        ? "this month"
+        : "all time";
+    return responseTags(req, {
+      title: share.rank === 1
+        ? `${share.displayName} reached #1 on Consumed`
+        : `${share.displayName} reached #${share.rank} on Consumed`,
+      description: `See their ${share.categoryLabel} rank ${period} — then find your own spot on the Consumed leaderboard.`,
+    });
+  });
 
   route(/^\/play(?:\/.*)?$/, async (req) => {
     const result = req.query.result;

@@ -167,6 +167,12 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
     let cancelled = false;
 
     const redirectAuthenticatedUser = async () => {
+      const returnUrl = sessionStorage.getItem("returnUrl");
+      const isLeaderboardShareReturn = Boolean(
+        returnUrl
+        && returnUrl.startsWith("/leaderboard?")
+        && new URLSearchParams(returnUrl.split("?")[1] || "").has("share"),
+      );
       const dnaResult = await supabase
         .from("dna_profiles")
         .select("user_id")
@@ -182,6 +188,9 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
       if (dnaProfile) markOnboardingComplete(user.id);
 
       if (!identity.complete) {
+        if (isLeaderboardShareReturn && returnUrl) {
+          sessionStorage.setItem("identityReturnUrl", returnUrl);
+        }
         sessionStorage.removeItem("returnUrl");
         setLocation("/onboarding");
         return;
@@ -192,7 +201,7 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
       // post-login landing page. Incomplete profiles are routed to onboarding
       // above before reaching this branch.
       sessionStorage.removeItem("returnUrl");
-      setLocation("/activity");
+      setLocation(isLeaderboardShareReturn && returnUrl ? returnUrl : "/activity");
     };
 
     void redirectAuthenticatedUser();

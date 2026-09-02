@@ -51,3 +51,4 @@
 - [DNA share image rendering](dna-share-image-rendering.md) — share a direct-canvas portrait with the full profile paragraph; never use DOM screenshots for the exported image.
 - [Now and Play boundary](now-play-boundary.md) — full playable Trivia, Polls, Ranks, and Seen It feeds belong in Play; Now may show social Play stories, not embedded games.
 - [Play friend challenges](play-friend-challenges.md) — exact-game links compare sender and recipient results inside the existing mobile result card; never require a new page or scrolling.
+- [Leaderboard share links](leaderboard-share-links.md) — share only server-verified Global rank snapshots; category owns destination, and native API calls must use the production app origin.

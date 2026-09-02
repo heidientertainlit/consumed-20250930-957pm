@@ -1,9 +1,15 @@
+import { Capacitor } from '@capacitor/core';
+
 const RAW_BASE = import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com';
 const BASE = RAW_BASE.startsWith('http') ? RAW_BASE : `https://${RAW_BASE}`;
 
 // Always returns the real web URL — never capacitor://localhost or localhost.
 // Use this everywhere you build a shareable link.
 export const APP_BASE = BASE;
+
+export function appApiUrl(path: string) {
+  return `${Capacitor.isNativePlatform() ? BASE : ''}${path}`;
+}
 
 export type ShareKind = 'list' | 'media' | 'prediction' | 'post' | 'edna' | 'profile' | 'leaderboard' | 'game';
 
@@ -99,6 +105,49 @@ export async function shareTrivia(opts: { poolId: string; question?: string; fro
       // fall through to clipboard
     }
   }
+  await navigator.clipboard.writeText(`${text} ${url}`);
+  return 'copied';
+}
+
+export async function shareLeaderboardRank(opts: {
+  accessToken: string;
+  categoryId: string;
+  period: 'weekly' | 'monthly' | 'all_time';
+}): Promise<'shared' | 'copied'> {
+  const response = await fetch(appApiUrl('/api/leaderboard-share'), {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${opts.accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      categoryId: opts.categoryId,
+      period: opts.period,
+    }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.error || 'Could not create leaderboard share');
+  }
+  const { url, share } = await response.json();
+  const periodLabel = share.period === 'weekly'
+    ? 'this week'
+    : share.period === 'monthly'
+      ? 'this month'
+      : 'all time';
+  const text = share.rank === 1
+    ? `I reached #1 in ${share.categoryLabel} ${periodLabel} on Consumed. Think you can catch me?`
+    : `I reached #${share.rank} in ${share.categoryLabel} ${periodLabel} on Consumed. See where you rank:`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ url, text, title: 'My Consumed leaderboard rank' });
+      return 'shared';
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return 'shared';
+    }
+  }
+
   await navigator.clipboard.writeText(`${text} ${url}`);
   return 'copied';
 }
