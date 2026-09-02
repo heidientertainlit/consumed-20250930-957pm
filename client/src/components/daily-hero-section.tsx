@@ -6,7 +6,7 @@ import {
   Trophy, X, Loader2, Star, Users, Radio, Share2, Check,
   Film, Tv, Music, BookOpen, Mic2, Gamepad2,
   Zap, ArrowRight, Sparkles, MessageCircle, TrendingUp,
-  ChevronRight, ChevronDown, Lock, Dna,
+  ChevronRight, ChevronDown, Lock, Dna, Send,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -50,6 +50,9 @@ const getStoredUserId = (): string => {
 };
 
 const getLocalDateStr = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // YYYY-MM-DD Pacific Time
+
+const firstName = (name: string | null | undefined, fallback = 'Friend') =>
+  name?.trim().split(/\s+/)[0] || fallback;
 
 const getTodayPlayKey = (userId?: string) =>
   `todays-play-${getLocalDateStr()}-${userId ?? getStoredUserId()}`;
@@ -1258,15 +1261,17 @@ function TodaysPlayGame({
                             <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-50">
                               <Users size={13} className="text-gray-400" />
                               {challenger ? (
-                                <p className="text-[13px] text-gray-600">
-                                  You <span className={`font-bold ${selected === q.correct_answer ? 'text-green-600' : 'text-red-500'}`}>
+                                <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-[13px] font-semibold text-gray-700">
+                                  <span className={selected === q.correct_answer ? 'text-emerald-600' : 'text-gray-400'}>
                                     {selected === q.correct_answer ? '✓' : '✕'}
                                   </span>
-                                  <span className="text-gray-300 mx-2">·</span>
-                                  {challenger.name} <span className={`font-bold ${challenger.prediction === q.correct_answer ? 'text-green-600' : 'text-red-500'}`}>
+                                  <span>{firstName(user?.user_metadata?.first_name || user?.user_metadata?.display_name, 'You')}</span>
+                                  <span className="text-gray-300">·</span>
+                                  <span>{firstName(challenger.name)}</span>
+                                  <span className={challenger.prediction === q.correct_answer ? 'text-emerald-600' : 'text-gray-400'}>
                                     {challenger.prediction === q.correct_answer ? '✓' : '✕'}
                                   </span>
-                                </p>
+                                </div>
                               ) : socialProof !== null ? (
                                 <p className="text-[13px] text-gray-600">
                                   <span className="font-bold text-gray-900">{socialProof}%</span> of players got this right
@@ -1288,12 +1293,18 @@ function TodaysPlayGame({
                               Lock In Answer
                             </button>
                           ) : (
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-[1.25fr_.75fr] gap-2">
                               <button
                                 onClick={handleChallengeFriend}
-                                className="py-3.5 rounded-xl font-bold text-[13px] text-purple-700 bg-purple-50 border border-purple-200 active:scale-[0.98]"
+                                className="min-w-0 px-3 py-2.5 rounded-xl text-left text-purple-700 bg-purple-50 border border-purple-100 active:scale-[0.98] flex items-center gap-2.5"
                               >
-                                Compare Friend
+                                <span className="w-8 h-8 shrink-0 rounded-full bg-white flex items-center justify-center shadow-sm">
+                                  <Send size={15} />
+                                </span>
+                                <span className="min-w-0">
+                                  <span className="block text-[12px] font-bold leading-tight">Send to a friend</span>
+                                  <span className="block text-[10px] font-medium text-gray-500 mt-0.5">See how they scored</span>
+                                </span>
                               </button>
                               <button
                                 onClick={handleNext}

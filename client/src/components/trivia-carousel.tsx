@@ -27,6 +27,10 @@ function normalizeCategory(cat: string | null | undefined): string {
   return cat;
 }
 
+function firstName(name: string | null | undefined, fallback = 'Friend'): string {
+  return name?.trim().split(/\s+/)[0] || fallback;
+}
+
 function shuffleArray<T>(array: T[], seed: number): T[] {
   const shuffled = [...array];
   let currentSeed = seed;
@@ -951,77 +955,36 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   </div>
                     {/* Friend answers section */}
                     {answered && answered.friendAnswers && answered.friendAnswers.length > 0 && (
-                      <div className="mt-4 pt-3 border-t border-gray-200">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Users className="w-4 h-4 text-purple-600" />
+                      <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-2.5">
+                        <div className="flex items-center gap-2 mb-2.5">
+                          <Users className="w-4 h-4 text-gray-500" />
                           <span className="text-xs font-semibold text-gray-700">Friends who played</span>
                         </div>
-                        <div className="flex flex-wrap gap-3">
-                          {answered.friendAnswers.filter(f => f.isCorrect).length > 0 && (
-                            <div className="flex items-center gap-1.5">
-                              <div className="flex -space-x-2">
-                                {answered.friendAnswers.filter(f => f.isCorrect).slice(0, 4).map((friend, idx) => (
-                                  <div 
-                                    key={friend.userId}
-                                    className="w-7 h-7 rounded-full bg-green-100 border-2 border-white flex items-center justify-center overflow-hidden"
-                                    title={friend.displayName}
-                                  >
-                                    {friend.avatarUrl ? (
-                                      <img src={friend.avatarUrl} alt={friend.displayName} className="w-full h-full object-cover" />
-                                    ) : (
-                                      <span className="text-xs font-medium text-green-700">{friend.displayName.charAt(0).toUpperCase()}</span>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <CheckCircle className="w-3 h-3 text-green-600" />
-                                <span className="text-xs text-green-700 font-medium">
-                                  {answered.friendAnswers.filter(f => f.isCorrect).length === 1 
-                                    ? answered.friendAnswers.find(f => f.isCorrect)?.displayName
-                                    : `${answered.friendAnswers.filter(f => f.isCorrect).length} got it right`}
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                          {answered.friendAnswers.slice(0, 6).map((friend, idx) => (
+                            <div key={friend.userId} className="contents">
+                              {idx > 0 && <span className="text-gray-300">·</span>}
+                              <div className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700">
+                                <span className={friend.isCorrect ? 'text-emerald-600' : 'text-gray-400'}>
+                                  {friend.isCorrect ? '✓' : '✕'}
                                 </span>
+                                <span>{firstName(friend.displayName)}</span>
                               </div>
                             </div>
-                          )}
-                          {answered.friendAnswers.filter(f => !f.isCorrect).length > 0 && (
-                            <div className="flex items-center gap-1.5">
-                              <div className="flex -space-x-2">
-                                {answered.friendAnswers.filter(f => !f.isCorrect).slice(0, 4).map((friend, idx) => (
-                                  <div 
-                                    key={friend.userId}
-                                    className="w-7 h-7 rounded-full bg-red-100 border-2 border-white flex items-center justify-center overflow-hidden"
-                                    title={friend.displayName}
-                                  >
-                                    {friend.avatarUrl ? (
-                                      <img src={friend.avatarUrl} alt={friend.displayName} className="w-full h-full object-cover" />
-                                    ) : (
-                                      <span className="text-xs font-medium text-red-700">{friend.displayName.charAt(0).toUpperCase()}</span>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <XCircle className="w-3 h-3 text-red-500" />
-                                <span className="text-xs text-red-600 font-medium">
-                                  {answered.friendAnswers.filter(f => !f.isCorrect).length === 1 
-                                    ? answered.friendAnswers.find(f => !f.isCorrect)?.displayName
-                                    : `${answered.friendAnswers.filter(f => !f.isCorrect).length} missed it`}
-                                </span>
-                              </div>
-                            </div>
-                          )}
+                          ))}
                         </div>
                       </div>
                     )}
                   </>)}
                 
-                {answered && <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                {answered && <div className="mt-4 pt-3 border-t border-gray-100">
                   {answered && sharedChallenger && challengedPoolId === (item.poolId || item.id) ? (
-                    <div className="w-full flex items-center justify-center gap-2 text-[13px] font-semibold text-gray-700">
-                      <span>You <span className={answered.isCorrect ? 'text-green-600' : 'text-red-500'}>{answered.isCorrect ? '✓' : '✕'}</span></span>
+                    <div className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2.5 flex items-center justify-center gap-2 text-[13px] font-semibold text-gray-700">
+                      <span className={answered.isCorrect ? 'text-emerald-600' : 'text-gray-400'}>{answered.isCorrect ? '✓' : '✕'}</span>
+                      <span>{firstName(user?.user_metadata?.first_name || user?.user_metadata?.display_name, 'You')}</span>
                       <span className="text-gray-300">·</span>
-                      <span>{sharedChallenger.name} <span className={sharedChallenger.prediction === item.correctAnswer ? 'text-green-600' : 'text-red-500'}>{sharedChallenger.prediction === item.correctAnswer ? '✓' : '✕'}</span></span>
+                      <span>{firstName(sharedChallenger.name)}</span>
+                      <span className={sharedChallenger.prediction === item.correctAnswer ? 'text-emerald-600' : 'text-gray-400'}>{sharedChallenger.prediction === item.correctAnswer ? '✓' : '✕'}</span>
                     </div>
                   ) : (
                     <button
@@ -1037,10 +1000,16 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                           toast({ title: 'Challenge link copied', description: 'Send it to a friend to compare scores.' });
                         }
                       }}
-                      className="inline-flex items-center gap-1 text-[13px] font-semibold text-purple-600 hover:text-purple-700 transition-colors mx-auto"
+                      className="w-full rounded-xl border border-purple-100 bg-purple-50/70 px-3.5 py-3 flex items-center gap-3 text-left transition-colors hover:bg-purple-50"
                     >
-                      See how a friend scores
-                      <span aria-hidden="true">→</span>
+                      <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-purple-600 shadow-sm">
+                        <Send className="w-4 h-4" />
+                      </span>
+                      <span className="flex-1">
+                        <span className="block text-[13px] font-semibold text-purple-700">Send to a friend</span>
+                        <span className="block text-[11px] text-gray-500 mt-0.5">See how they scored</span>
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-purple-500" />
                     </button>
                   )}
                 </div>}
