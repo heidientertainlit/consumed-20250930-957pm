@@ -19,6 +19,8 @@ When replacing shared preview artwork, publish it under a new versioned filename
 
 When sending binary preview assets through the GitHub connector, do not pass base64 through shell callback stdout; it can truncate silently. Write a temporary JSON manifest, read the file, then upload and checksum the live asset.
 
+ImageMagick may silently omit raster logos referenced by relative path inside SVG share artwork. Embed the real logo as a base64 data URI during PNG rendering, then visually verify the output.
+
 Replacing an existing static Open Graph image can make the preview artwork look new while the page metadata and serverless handler remain on an older Vercel deployment. Test the direct `/api/og/...` URL: if it returns `index.html`, the function/rewrite is not active in production.
 
 **Why:** A narrow image replacement updated the visible preview, but production continued returning generic homepage metadata for every share route.
