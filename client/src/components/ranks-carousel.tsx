@@ -438,7 +438,7 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
     return (
       <div className="bg-white border border-gray-100 shadow rounded-2xl p-5">
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+          <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
         </div>
       </div>
     );
@@ -463,7 +463,7 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
             {/* Header: matches the Cast Your Vote card hierarchy */}
             <div className="px-4 pt-4">
               <div className="mb-3 flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-600">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600">
                   <BarChart3 className="h-4 w-4 text-white" />
                 </div>
                 <p className="text-sm font-semibold text-gray-900">Debate the Rank</p>
@@ -473,7 +473,7 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
 
               {/* ── DRAG & RANK VIEW ── always visible */}
               <div className="px-4 mb-2">
-                <div className="flex items-center gap-1.5 text-[11px] text-purple-600 bg-purple-50 rounded-lg px-2.5 py-1.5 mb-3">
+                <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50 rounded-lg px-2.5 py-1.5 mb-3">
                   <GripVertical size={11} />
                   Drag to reorder — saves automatically
                 </div>
@@ -489,18 +489,18 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
                                 {...provided.draggableProps}
                                 className={`flex items-center gap-2.5 py-2 px-2 rounded-xl border transition-colors ${
                                   snapshot.isDragging
-                                    ? 'bg-purple-50 border-purple-200 shadow-md'
+                                    ? 'bg-emerald-50 border-emerald-200 shadow-md'
                                     : 'bg-gray-50 border-transparent'
                                 }`}
                               >
-                                <div {...provided.dragHandleProps} className="text-gray-300 hover:text-purple-400 cursor-grab active:cursor-grabbing flex-shrink-0">
+                                <div {...provided.dragHandleProps} className="text-gray-300 hover:text-emerald-500 cursor-grab active:cursor-grabbing flex-shrink-0">
                                   <GripVertical size={14} />
                                 </div>
                                 <span className={`w-6 h-6 flex items-center justify-center text-[11px] font-bold text-white rounded flex-shrink-0 ${
-                                  index === 0 ? 'bg-purple-600' :
-                                  index === 1 ? 'bg-purple-500' :
-                                  index === 2 ? 'bg-purple-400' :
-                                  'bg-purple-300'
+                                  index === 0 ? 'bg-emerald-700' :
+                                  index === 1 ? 'bg-emerald-600' :
+                                  index === 2 ? 'bg-emerald-500' :
+                                  'bg-emerald-400'
                                 }`}>{index + 1}</span>
                                 {item.image_url && (
                                   <img src={item.image_url} alt={item.title} className="w-8 h-11 rounded object-cover flex-shrink-0" />
@@ -521,7 +521,7 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
                 {currentItems.length > 5 && (
                   <button
                     onClick={() => setExpandedRanks(prev => ({ ...prev, [rank.id]: !prev[rank.id] }))}
-                    className="w-full text-center text-sm text-purple-600 font-medium py-2.5 mt-1"
+                    className="w-full text-center text-sm text-emerald-700 font-medium py-2.5 mt-1"
                   >
                     {isExpanded ? '↑ Show less' : `See all ${currentItems.length} →`}
                   </button>
@@ -532,7 +532,7 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
                   <button
                     onClick={() => submitMutation.mutate({ rankId: rank.id, items: currentItems })}
                     disabled={submitMutation.isPending}
-                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-purple-600 text-white hover:bg-purple-700 transition-colors font-medium disabled:opacity-60"
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-medium disabled:opacity-60"
                   >
                     {submitMutation.isPending ? (
                       <><Loader2 size={11} className="animate-spin" /> Saving...</>
@@ -563,7 +563,7 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
                 })()}
                 <button
                   onClick={() => toggleComments(rank.id)}
-                  className="flex items-center gap-1.5 text-gray-400 hover:text-purple-600 transition-colors"
+                  className="flex items-center gap-1.5 text-gray-400 hover:text-emerald-600 transition-colors"
                 >
                   <MessageCircle size={15} />
                   <span className="text-xs font-medium text-gray-500">
@@ -572,7 +572,7 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
                   </span>
                 </button>
                 <div className="ml-auto">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">
                     <BarChart3 size={9} />
                     Rank
                   </span>

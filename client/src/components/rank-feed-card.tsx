@@ -327,7 +327,7 @@ export default function RankFeedCard({
             <span className="text-xs text-gray-400">No items added yet</span>
             {isOwner && (
               <Link href={`/rank/${rank.id}`}>
-                <span className="ml-auto text-xs text-purple-500 font-medium hover:text-purple-700">Add items →</span>
+                <span className="ml-auto text-xs text-emerald-600 font-medium hover:text-emerald-700">Add items →</span>
               </Link>
             )}
           </div>
@@ -353,7 +353,7 @@ export default function RankFeedCard({
             {myOrder.length > PREVIEW_ITEMS && (
               <button
                 onClick={() => setShowAll(s => !s)}
-                className="mt-2 w-full text-xs font-medium text-purple-600 hover:text-purple-700 py-1.5 text-center"
+                className="mt-2 w-full text-xs font-medium text-emerald-700 hover:text-emerald-800 py-1.5 text-center"
               >
                 {showAll ? '↑ Show less' : `See all ${myOrder.length} →`}
               </button>
@@ -362,10 +362,10 @@ export default function RankFeedCard({
         ) : (
           /* Everyone else: drag to set personal order, community % shown live */
           <>
-            <div className="mb-2 flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 rounded-lg px-3 py-1.5">
+            <div className="mb-2 flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 rounded-lg px-3 py-1.5">
               <GripVertical size={12} />
               Drag to reorder — saves automatically
-              {submitOrderingMutation.isPending && <Loader2 size={11} className="animate-spin ml-auto text-purple-400" />}
+              {submitOrderingMutation.isPending && <Loader2 size={11} className="animate-spin ml-auto text-emerald-500" />}
             </div>
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId={`rank-drag-${rank.id}`}>
@@ -379,14 +379,14 @@ export default function RankFeedCard({
                             {...provided.draggableProps}
                             className={`flex items-center gap-2 py-2 px-3 rounded-lg border transition-colors ${
                               snapshot.isDragging
-                                ? 'bg-purple-50 border-purple-300 shadow-md'
+                                ? 'bg-emerald-50 border-emerald-300 shadow-md'
                                 : 'bg-gray-50 border-transparent'
                             }`}
                           >
-                            <div {...provided.dragHandleProps} className="text-gray-300 hover:text-purple-400 cursor-grab active:cursor-grabbing flex-shrink-0">
+                            <div {...provided.dragHandleProps} className="text-gray-300 hover:text-emerald-500 cursor-grab active:cursor-grabbing flex-shrink-0">
                               <GripVertical size={16} />
                             </div>
-                            <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-purple-100 text-purple-600 flex-shrink-0">
+                            <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-emerald-100 text-emerald-700 flex-shrink-0">
                               {idx + 1}
                             </span>
                             {item.image_url && (
@@ -412,7 +412,7 @@ export default function RankFeedCard({
             {myOrder.length > PREVIEW_ITEMS && (
               <button
                 onClick={() => setShowAll(s => !s)}
-                className="mt-2 w-full text-xs font-medium text-purple-600 hover:text-purple-700 py-1.5 text-center"
+                className="mt-2 w-full text-xs font-medium text-emerald-700 hover:text-emerald-800 py-1.5 text-center"
               >
                 {showAll ? '↑ Show less' : `See all ${myOrder.length} →`}
               </button>
@@ -439,14 +439,14 @@ export default function RankFeedCard({
           </button>
           <button
             onClick={() => onToggleComments?.()}
-            className="flex items-center gap-1.5 text-gray-400 hover:text-purple-500 transition-colors"
+            className="flex items-center gap-1.5 text-gray-400 hover:text-emerald-600 transition-colors"
             data-testid={`comment-rank-${postId}`}
           >
             <MessageCircle size={16} />
             <span className="text-xs font-medium text-gray-500">{commentsCount}</span>
           </button>
           <div className="ml-auto flex items-center gap-1.5">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">
               <BarChart2 size={9} />
               Rank
             </span>
