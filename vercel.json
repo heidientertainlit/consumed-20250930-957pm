@@ -4,7 +4,10 @@
       "includeFiles": "dist/public/**"
     },
     "api/leaderboard-rank-image.ts": {
-      "includeFiles": "node_modules/@fontsource/poppins/files/poppins-latin-700-normal.woff2"
+      "includeFiles": [
+        "node_modules/@fontsource/poppins/files/poppins-latin-*-normal.woff2",
+        "client/public/consumed-logo-white.png"
+      ]
     }
   },
   "headers": [

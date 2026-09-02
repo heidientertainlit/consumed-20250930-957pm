@@ -17,18 +17,18 @@
 
   <rect width="1200" height="630" fill="url(#bg)"/>
   <circle cx="1010" cy="205" r="330" fill="url(#glow)"/>
-  <text x="76" y="112" fill="#fff" font-family="Poppins,sans-serif" font-size="54" font-weight="700" letter-spacing="-2">consumed</text>
+  <image href="consumed-logo-white.png" x="76" y="55" width="300" height="68" preserveAspectRatio="xMinYMid meet"/>
 
   <rect x="76" y="157" width="236" height="48" rx="24" fill="#ffffff" fill-opacity=".1" stroke="#ffffff" stroke-opacity=".12"/>
   <circle cx="101" cy="181" r="12" fill="url(#accent)"/>
   <text x="124" y="188" fill="#d8b4fe" font-family="Poppins,sans-serif" font-size="20" font-weight="600" letter-spacing=".7">LEADERBOARD</text>
 
-  <text x="76" y="302" fill="#fff" font-family="Poppins,sans-serif" font-size="58" font-weight="700" letter-spacing="-2.2">
+  <text x="76" y="314" fill="#fff" font-family="Poppins,sans-serif" font-size="58" font-weight="700" letter-spacing="-2.2">
     <tspan x="76" dy="0">See where you</tspan>
     <tspan x="76" dy="72">stack up.</tspan>
   </text>
 
-  <g transform="translate(76 441)">
+  <g transform="translate(76 459)">
     <rect width="125" height="38" rx="19" fill="#ffffff" fill-opacity=".09"/>
     <rect x="137" width="72" height="38" rx="19" fill="#ffffff" fill-opacity=".09"/>
     <rect x="221" width="104" height="38" rx="19" fill="#ffffff" fill-opacity=".09"/>
@@ -39,7 +39,4 @@
     <text x="389" y="26" text-anchor="middle" fill="#ddd8e8" font-family="Poppins,sans-serif" font-size="15" font-weight="500">MUSIC</text>
   </g>
 
-  <circle cx="985" cy="250" r="124" fill="none" stroke="#a855f7" stroke-width="5" opacity=".82"/>
-  <path d="M906 319h44V257h45v62h45v-116h45v116" fill="none" stroke="#c084fc" stroke-width="12" stroke-linejoin="round"/>
-  <path d="M891 319h210" fill="none" stroke="#60a5fa" stroke-width="9" stroke-linecap="round"/>
 </svg>

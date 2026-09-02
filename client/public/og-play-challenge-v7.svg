@@ -17,7 +17,7 @@
 
   <rect width="1200" height="630" fill="url(#bg)"/>
   <circle cx="1010" cy="205" r="330" fill="url(#glow)"/>
-  <text x="76" y="112" fill="#fff" font-family="Poppins,sans-serif" font-size="54" font-weight="700" letter-spacing="-2">consumed</text>
+  <image href="consumed-logo-white.png" x="76" y="55" width="300" height="68" preserveAspectRatio="xMinYMid meet"/>
 
   <rect x="76" y="157" width="226" height="48" rx="24" fill="#ffffff" fill-opacity=".1" stroke="#ffffff" stroke-opacity=".12"/>
   <circle cx="101" cy="181" r="12" fill="url(#accent)"/>

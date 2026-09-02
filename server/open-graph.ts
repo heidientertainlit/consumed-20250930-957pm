@@ -497,7 +497,7 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
       return responseTags(req, {
         title: "See who's leading on Consumed",
         description: "Compare your entertainment stats, climb the leaderboard, and challenge your friends.",
-        image: `${base}/og-leaderboard-rank-v2-1200x630.png`,
+        image: `${base}/og-leaderboard-rank-v3-1200x630.png`,
       });
     }
     const period = share.period === "weekly"
@@ -512,7 +512,7 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
       description: `See their ${share.categoryLabel} rank ${period} — then find your own spot on the Consumed leaderboard.`,
       image: `${base}/api/leaderboard-rank-image?share=${encodeURIComponent(
         typeof req.query.share === "string" ? req.query.share : "",
-      )}&v=2`,
+      )}&v=3`,
     });
   });
 
@@ -528,7 +528,7 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
       description: result === "right" || result === "wrong"
         ? "Play the same question on Consumed and compare results. No answer spoilers."
         : "Answer trivia, make predictions, and challenge friends who love the same entertainment.",
-      image: `${requestBase(req)}/og-play-challenge-v7-1200x630.png`,
+      image: `${requestBase(req)}/og-play-challenge-v8-1200x630.png`,
     });
   });
 }
