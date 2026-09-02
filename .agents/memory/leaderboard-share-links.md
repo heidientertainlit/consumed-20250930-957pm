@@ -12,3 +12,9 @@ External leaderboard shares must use a server-verified, signed snapshot of the a
 Signed-link creation is asynchronous and may take long enough for iOS to expire browser user-activation permission. Prepare and cache the verified share data before enabling the button, then call the same immediate `navigator.share` flow used by existing DNA/rating shares.
 
 **Why:** A successful server response can still end in a false “Could not share” error when a network request runs inside the tap before Web Share or Clipboard is called.
+
+Open Graph artwork for Play challenges and leaderboard rank shares should contain only the purple branded panel. Do not draw a white title/URL panel inside the image; Messages and other clients already add their own metadata panel below it. Personalized leaderboard artwork should say “I reached #N on Consumed.”
+
+**Why:** Repeating the share result and URL inside both the artwork and the native link preview makes Messages cards visually crowded.
+
+**How to apply:** Keep result-specific Play copy and leaderboard context in the Open Graph title/description. Use versioned artwork URLs to avoid stale social-preview caches, and derive dynamic rank images only from the verified signed token.

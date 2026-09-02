@@ -481,13 +481,12 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
   });
 
   route("/leaderboard", async (req) => {
-    const leaderboardImage = `${appBase()}/og-leaderboard-rank-v1-1200x630.png`;
     const share = verifyLeaderboardShareToken(typeof req.query.share === "string" ? req.query.share : "");
     if (!share) {
       return responseTags(req, {
         title: "See who's leading on Consumed",
         description: "Compare your entertainment stats, climb the leaderboard, and challenge your friends.",
-        image: leaderboardImage,
+        image: `${appBase()}/og-leaderboard-rank-v2-1200x630.png`,
       });
     }
     const period = share.period === "weekly"
@@ -497,10 +496,12 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
         : "all time";
     return responseTags(req, {
       title: share.rank === 1
-        ? `${share.displayName} reached #1 on Consumed`
-        : `${share.displayName} reached #${share.rank} on Consumed`,
+        ? "I reached #1 on Consumed"
+        : `I reached #${share.rank} on Consumed`,
       description: `See their ${share.categoryLabel} rank ${period} — then find your own spot on the Consumed leaderboard.`,
-      image: leaderboardImage,
+      image: `${appBase()}/api/leaderboard-rank-image?share=${encodeURIComponent(
+        typeof req.query.share === "string" ? req.query.share : "",
+      )}&v=2`,
     });
   });
 
@@ -511,17 +512,12 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
       : result === "wrong"
         ? "I got it wrong — see how you score"
         : "Play together on Consumed";
-    const imageName = result === "right"
-      ? "og-play-challenge-v6-right-1200x630.png"
-      : result === "wrong"
-        ? "og-play-challenge-v6-wrong-1200x630.png"
-        : "og-play-challenge-v6-1200x630.png";
     return responseTags(req, {
       title,
       description: result === "right" || result === "wrong"
         ? "Play the same question on Consumed and compare results. No answer spoilers."
         : "Answer trivia, make predictions, and challenge friends who love the same entertainment.",
-      image: `${appBase()}/${imageName}`,
+      image: `${appBase()}/og-play-challenge-v7-1200x630.png`,
     });
   });
 }

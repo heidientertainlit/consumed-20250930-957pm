@@ -2,6 +2,9 @@
   "functions": {
     "api/og.ts": {
       "includeFiles": "dist/public/**"
+    },
+    "api/leaderboard-rank-image.ts": {
+      "includeFiles": "node_modules/@fontsource/poppins/files/poppins-latin-700-normal.woff2"
     }
   },
   "headers": [
