@@ -44,10 +44,12 @@ export function GuestSignupSheet({ open, onClose }: { open: boolean; onClose: ()
         >
           <X size={20} />
         </button>
-        <div className="w-10 h-10 rounded-full bg-purple-600/30 border border-purple-500/40 flex items-center justify-center mb-4">
-          <Dna size={20} className="text-purple-300" />
+        <div className="mb-3 flex items-center gap-3 pr-10">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_55%,#2563eb_100%)] shadow-[0_5px_16px_rgba(79,70,229,.28)]">
+            <Dna size={22} strokeWidth={2.25} className="text-white" />
+          </div>
+          <h2 className="text-gray-950 text-xl font-bold leading-tight">Join the conversation</h2>
         </div>
-        <h2 className="text-gray-950 text-xl font-bold mb-1.5">Join the conversation</h2>
         <p className="text-gray-600 text-sm mb-6 leading-relaxed">
           Create a free account to react, comment, play trivia, and build your Entertainment DNA.
         </p>
