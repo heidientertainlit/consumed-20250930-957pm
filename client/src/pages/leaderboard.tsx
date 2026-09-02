@@ -3,7 +3,7 @@ import Navigation from "@/components/navigation";
 import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, Youtube, TrendingUp, Users, Globe, ChevronDown, ChevronUp, ArrowRight, Award, Dices, Flame, MessageCircle, MessagesSquare } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -61,9 +61,34 @@ function ShareRankAction({
   rank: number;
 }) {
   const { toast } = useToast();
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const [shouldPrepare, setShouldPrepare] = useState(false);
+
+  useEffect(() => {
+    const button = buttonRef.current;
+    if (!button || shouldPrepare) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setShouldPrepare(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldPrepare(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '160px' },
+    );
+    observer.observe(button);
+    return () => observer.disconnect();
+  }, [shouldPrepare]);
+
   const preparedShare = useQuery({
     queryKey: ['leaderboard-rank-share', userId, categoryId, period],
     queryFn: () => prepareLeaderboardRankShare({ accessToken, categoryId, period }),
+    enabled: shouldPrepare,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
@@ -92,23 +117,23 @@ function ShareRankAction({
       });
   };
 
-  const isPreparing = preparedShare.isLoading || preparedShare.isFetching;
+  const isPreparing = !preparedShare.data;
 
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={handleShare}
       disabled={isPreparing}
-      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-white/70 px-4 text-sm font-semibold text-purple-700 shadow-sm ring-1 ring-purple-100 transition-colors hover:bg-white active:bg-purple-100 disabled:opacity-60"
+      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-white/70 px-4 text-sm font-semibold text-purple-700 shadow-sm ring-1 ring-purple-100 transition-colors hover:bg-white active:bg-purple-100 disabled:cursor-default"
       data-testid={`button-share-rank-${categoryName}`}
       aria-label={`Share my #${rank} rank in ${categoryName}`}
+      aria-busy={isPreparing}
     >
-      <span>{isPreparing ? 'Preparing share…' : `Share your #${rank} rank`}</span>
-      {!isPreparing && (
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-purple-600">
-          <ArrowRight size={15} strokeWidth={2} />
-        </span>
-      )}
+      <span>{`Share your #${rank} rank`}</span>
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-purple-600">
+        <ArrowRight size={15} strokeWidth={2} />
+      </span>
     </button>
   );
 }
