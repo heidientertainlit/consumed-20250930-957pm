@@ -481,11 +481,13 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
   });
 
   route("/leaderboard", async (req) => {
+    const leaderboardImage = `${appBase()}/og-leaderboard-rank-v1-1200x630.png`;
     const share = verifyLeaderboardShareToken(typeof req.query.share === "string" ? req.query.share : "");
     if (!share) {
       return responseTags(req, {
         title: "See who's leading on Consumed",
         description: "Compare your entertainment stats, climb the leaderboard, and challenge your friends.",
+        image: leaderboardImage,
       });
     }
     const period = share.period === "weekly"
@@ -498,6 +500,7 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
         ? `${share.displayName} reached #1 on Consumed`
         : `${share.displayName} reached #${share.rank} on Consumed`,
       description: `See their ${share.categoryLabel} rank ${period} — then find your own spot on the Consumed leaderboard.`,
+      image: leaderboardImage,
     });
   });
 
