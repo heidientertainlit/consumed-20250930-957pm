@@ -8892,7 +8892,7 @@ export default function Feed() {
 
       {/* Guest banner — visible only when browsing logged-out */}
       {isGuestMode && (
-        <div className="bg-[linear-gradient(110deg,#5b21b6_0%,#4f46e5_42%,#0ea5e9_100%)] border-b border-sky-200/25" data-testid="guest-banner">
+        <div className="bg-[linear-gradient(110deg,#6338ad_0%,#5361c8_42%,#259bc5_100%)] border-b border-sky-200/25" data-testid="guest-banner">
           <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
             <p className="text-sky-50/90 text-xs leading-snug">
               You're browsing Consumed as a guest.
@@ -8927,7 +8927,7 @@ export default function Feed() {
                 <IdentityFace size={80} />
               </div>
               <button className="mt-4 w-full bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_55%,#2563eb_100%)] text-white text-sm font-bold rounded-full py-2.5 shadow-[0_7px_20px_rgba(50,42,180,.38)] transition active:scale-[.98] active:brightness-95 flex items-center justify-center gap-2" data-testid="button-guest-dna-cta">
-                Discover Yours
+                Discover Your DNA
                 <ArrowRight className="w-4 h-4" />
               </button>
               <div className="grid grid-cols-3 divide-x divide-white/10 border-t border-white/10 mt-4 pt-4">
