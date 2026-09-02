@@ -36,7 +36,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=Poppins:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div
+        aria-label="Loading Consumed"
+        style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#030305 0%,#0b0912 58%,#17112d 100%);font-family:'Poppins',sans-serif;color:#fff"
+      >
+        <div style="display:flex;flex-direction:column;align-items:center;gap:18px">
+          <div style="font-size:32px;font-weight:700;letter-spacing:-1.4px">consumed</div>
+          <div style="width:34px;height:34px;border:3px solid rgba(255,255,255,.18);border-top-color:#8b5cf6;border-right-color:#3b82f6;border-radius:999px;animation:consumed-spin .8s linear infinite"></div>
+        </div>
+      </div>
+      <style>@keyframes consumed-spin{to{transform:rotate(360deg)}}</style>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
