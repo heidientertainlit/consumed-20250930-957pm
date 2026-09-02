@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
-import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, Youtube, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp, ChevronRight, Award, Dices, Flame, MessageCircle, MessagesSquare } from "lucide-react";
+import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, Youtube, TrendingUp, Users, Globe, Share, ChevronDown, ChevronUp, ChevronRight, Award, Dices, Flame, MessageCircle, MessagesSquare } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
@@ -558,7 +558,7 @@ export default function Leaderboard() {
                       data-testid={`button-share-rank-${categoryName}`}
                       aria-label={`Share my #${entry.rank} rank in ${categoryName}`}
                     >
-                      <Share2 size={16} />
+                      <Share size={16} />
                       <span>
                         {sharingRankKey === `${categoryName}-${entry.user_id}`
                           ? 'Preparing share…'

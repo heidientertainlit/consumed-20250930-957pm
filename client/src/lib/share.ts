@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+import { Share as NativeShare } from '@capacitor/share';
 
 const RAW_BASE = import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com';
 const BASE = RAW_BASE.startsWith('http') ? RAW_BASE : `https://${RAW_BASE}`;
@@ -9,6 +10,24 @@ export const APP_BASE = BASE;
 
 export function appApiUrl(path: string) {
   return `${Capacitor.isNativePlatform() ? BASE : ''}${path}`;
+}
+
+async function copyShareText(value: string) {
+  try {
+    await navigator.clipboard.writeText(value);
+    return;
+  } catch {
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand('copy');
+    textarea.remove();
+    if (!copied) throw new Error('Could not copy leaderboard link');
+  }
 }
 
 export type ShareKind = 'list' | 'media' | 'prediction' | 'post' | 'edna' | 'profile' | 'leaderboard' | 'game';
@@ -139,6 +158,16 @@ export async function shareLeaderboardRank(opts: {
     ? `I reached #1 in ${share.categoryLabel} ${periodLabel} on Consumed. Think you can catch me?`
     : `I reached #${share.rank} in ${share.categoryLabel} ${periodLabel} on Consumed. See where you rank:`;
 
+  if (Capacitor.isNativePlatform()) {
+    await NativeShare.share({
+      title: 'My Consumed leaderboard rank',
+      text,
+      url,
+      dialogTitle: 'Share your leaderboard rank',
+    });
+    return 'shared';
+  }
+
   if (navigator.share) {
     try {
       await navigator.share({ url, text, title: 'My Consumed leaderboard rank' });
@@ -148,7 +177,7 @@ export async function shareLeaderboardRank(opts: {
     }
   }
 
-  await navigator.clipboard.writeText(`${text} ${url}`);
+  await copyShareText(`${text} ${url}`);
   return 'copied';
 }
 
