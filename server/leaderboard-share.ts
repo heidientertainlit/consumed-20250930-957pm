@@ -107,6 +107,11 @@ export async function handleLeaderboardShareRequest(req: any, res: any) {
   const requestOrigin = typeof req.headers?.origin === "string" ? req.headers.origin : "";
   const rawBase = process.env.VITE_APP_URL || "https://app.consumedapp.com";
   const appBase = (rawBase.startsWith("http") ? rawBase : `https://${rawBase}`).replace(/\/$/, "");
+  const developmentShareBase = process.env.NODE_ENV !== "production"
+    && /^https?:\/\/[^/]+$/i.test(requestOrigin)
+    ? requestOrigin
+    : "";
+  const shareBase = developmentShareBase || appBase;
   const allowedOrigins = new Set([
     appBase,
     "capacitor://localhost",
@@ -201,7 +206,7 @@ export async function handleLeaderboardShareRequest(req: any, res: any) {
 
   res.setHeader("Cache-Control", "private, no-store");
   return res.status(200).json({
-    url: `${appBase}/leaderboard?${viewParams.toString()}`,
+    url: `${shareBase}/leaderboard?${viewParams.toString()}`,
     share: payload,
   });
 }

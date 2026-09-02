@@ -86,7 +86,7 @@ function ShareRankAction({
   }, [shouldPrepare]);
 
   const preparedShare = useQuery({
-    queryKey: ['leaderboard-rank-share', userId, categoryId, period],
+    queryKey: ['leaderboard-rank-share-v2', userId, categoryId, period],
     queryFn: () => prepareLeaderboardRankShare({ accessToken, categoryId, period }),
     enabled: shouldPrepare,
     staleTime: 5 * 60 * 1000,

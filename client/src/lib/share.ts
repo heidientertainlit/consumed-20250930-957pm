@@ -2,13 +2,18 @@ import { Capacitor } from '@capacitor/core';
 
 const RAW_BASE = import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com';
 const BASE = RAW_BASE.startsWith('http') ? RAW_BASE : `https://${RAW_BASE}`;
+const DEV_HTTP_BASE = import.meta.env.DEV
+  && typeof window !== 'undefined'
+  && /^https?:$/.test(window.location.protocol)
+  ? window.location.origin
+  : '';
 
 // Always returns the real web URL — never capacitor://localhost or localhost.
 // Use this everywhere you build a shareable link.
-export const APP_BASE = BASE;
+export const APP_BASE = DEV_HTTP_BASE || BASE;
 
 export function appApiUrl(path: string) {
-  return `${Capacitor.isNativePlatform() ? BASE : ''}${path}`;
+  return `${Capacitor.isNativePlatform() && !DEV_HTTP_BASE ? BASE : ''}${path}`;
 }
 
 async function copyShareText(value: string) {
@@ -45,27 +50,27 @@ function ednaPath(input: { id?: string; user_id?: string }) {
 }
 
 export function urlFor(kind: ShareKind, arg: any) {
-  if (kind === 'list') return `${BASE}${listPath(arg)}`;
-  if (kind === 'edna') return `${BASE}${ednaPath(arg)}`;
+  if (kind === 'list') return `${APP_BASE}${listPath(arg)}`;
+  if (kind === 'edna') return `${APP_BASE}${ednaPath(arg)}`;
   if (kind === 'profile') {
     const id = typeof arg === 'string' ? arg : arg?.id;
-    return `${BASE}/u/${id}`;
+    return `${APP_BASE}/u/${id}`;
   }
   if (kind === 'prediction' || kind === 'game') {
     const id = typeof arg === 'string' ? arg : arg?.id;
-    return `${BASE}/play?game=${id}`;
+    return `${APP_BASE}/play?game=${id}`;
   }
   if (kind === 'leaderboard') {
-    return `${BASE}/leaderboard`;
+    return `${APP_BASE}/leaderboard`;
   }
   if (kind === 'media') {
     // Media URLs need type/source/id structure: /media/movie/tmdb/951
     if (arg?.type && arg?.source && arg?.id) {
-      return `${BASE}/media/${arg.type}/${arg.source}/${arg.id}`;
+      return `${APP_BASE}/media/${arg.type}/${arg.source}/${arg.id}`;
     }
   }
   const id = typeof arg === 'string' ? arg : arg?.id;
-  return `${BASE}/${kind}/${id}`;
+  return `${APP_BASE}/${kind}/${id}`;
 }
 
 // Opens the native share sheet (iOS/Android — Messages, WhatsApp, etc.) when
@@ -103,8 +108,8 @@ export async function shareTrivia(opts: { poolId: string; question?: string; fro
   if (opts.result) search.set('result', opts.result);
   const query = search.toString();
   const url = opts.daily
-    ? `${BASE}/play${query ? `?${query}` : ''}`
-    : `${BASE}/play?mode=trivia&challenge=${encodeURIComponent(opts.poolId)}${opts.fromUserId ? `&from=${encodeURIComponent(opts.fromUserId)}` : ''}${opts.result ? `&result=${opts.result}` : ''}`;
+    ? `${APP_BASE}/play${query ? `?${query}` : ''}`
+    : `${APP_BASE}/play?mode=trivia&challenge=${encodeURIComponent(opts.poolId)}${opts.fromUserId ? `&from=${encodeURIComponent(opts.fromUserId)}` : ''}${opts.result ? `&result=${opts.result}` : ''}`;
   const resultText = opts.result === 'right'
     ? 'I got this one right.'
     : opts.result === 'wrong'

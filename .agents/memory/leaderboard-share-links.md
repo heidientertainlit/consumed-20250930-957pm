@@ -7,7 +7,7 @@ External leaderboard shares must use a server-verified, signed snapshot of the a
 
 **Why:** Raw rank parameters can be edited to forge achievements, and Friends rankings differ by viewer. Signed snapshots keep “reached #N” truthful, while Global scope gives sender and recipient the same board.
 
-**How to apply:** Verify the signed payload before showing rank copy, highlighting a person, or producing personalized Open Graph metadata. Web API calls may be same-origin, but Capacitor must call the production app origin because relative `/api` URLs resolve to the native localhost bundle. Preserve signed leaderboard links through login/onboarding.
+**How to apply:** Verify the signed payload before showing rank copy, highlighting a person, or producing personalized Open Graph metadata. Production Capacitor bundles must call the production app origin because relative `/api` URLs resolve to native localhost. Vite development and native live reload must use the current HTTP origin so dev shares exercise dev Open Graph routes. Preserve signed leaderboard links through login/onboarding.
 
 Signed-link creation is asynchronous and may take long enough for iOS to expire browser user-activation permission. Prepare and cache the verified share data before enabling the button, then call the same immediate `navigator.share` flow used by existing DNA/rating shares.
 

@@ -101,6 +101,16 @@ function appBase(): string {
   return withProtocol.replace(/\/+$/, "");
 }
 
+function requestBase(req: Request): string {
+  if (process.env.NODE_ENV === "production") return appBase();
+  const forwardedProto = compactText(req.headers["x-forwarded-proto"], 10).split(",")[0];
+  const protocol = forwardedProto === "https" ? "https" : "http";
+  const forwardedHost = compactText(req.headers["x-forwarded-host"], 255).split(",")[0];
+  const host = forwardedHost || compactText(req.headers.host, 255);
+  if (!host || !/^[a-z0-9.-]+(?::\d+)?$/i.test(host)) return appBase();
+  return `${protocol}://${host}`;
+}
+
 function absoluteHttpUrl(value: unknown, base = appBase()): string | null {
   if (typeof value !== "string" || !value.trim()) return null;
   try {
@@ -113,7 +123,7 @@ function absoluteHttpUrl(value: unknown, base = appBase()): string | null {
 }
 
 function requestUrl(req: Request): string {
-  return `${appBase()}${req.originalUrl}`;
+  return `${requestBase(req)}${req.originalUrl}`;
 }
 
 function readIndexHtml(): string {
@@ -481,12 +491,13 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
   });
 
   route("/leaderboard", async (req) => {
+    const base = requestBase(req);
     const share = verifyLeaderboardShareToken(typeof req.query.share === "string" ? req.query.share : "");
     if (!share) {
       return responseTags(req, {
         title: "See who's leading on Consumed",
         description: "Compare your entertainment stats, climb the leaderboard, and challenge your friends.",
-        image: `${appBase()}/og-leaderboard-rank-v2-1200x630.png`,
+        image: `${base}/og-leaderboard-rank-v2-1200x630.png`,
       });
     }
     const period = share.period === "weekly"
@@ -499,7 +510,7 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
         ? "I reached #1 on Consumed"
         : `I reached #${share.rank} on Consumed`,
       description: `See their ${share.categoryLabel} rank ${period} — then find your own spot on the Consumed leaderboard.`,
-      image: `${appBase()}/api/leaderboard-rank-image?share=${encodeURIComponent(
+      image: `${base}/api/leaderboard-rank-image?share=${encodeURIComponent(
         typeof req.query.share === "string" ? req.query.share : "",
       )}&v=2`,
     });
@@ -517,7 +528,7 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
       description: result === "right" || result === "wrong"
         ? "Play the same question on Consumed and compare results. No answer spoilers."
         : "Answer trivia, make predictions, and challenge friends who love the same entertainment.",
-      image: `${appBase()}/og-play-challenge-v7-1200x630.png`,
+      image: `${requestBase(req)}/og-play-challenge-v7-1200x630.png`,
     });
   });
 }
