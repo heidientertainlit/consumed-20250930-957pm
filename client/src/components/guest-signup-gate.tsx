@@ -1,6 +1,6 @@
 import { useState, useCallback, createContext, useContext } from "react";
 import { useLocation } from "wouter";
-import { Sparkles, X } from "lucide-react";
+import { Dna, X } from "lucide-react";
 
 /**
  * Guest signup gate — reusable across guest-accessible pages.
@@ -45,7 +45,7 @@ export function GuestSignupSheet({ open, onClose }: { open: boolean; onClose: ()
           <X size={20} />
         </button>
         <div className="w-10 h-10 rounded-full bg-purple-600/30 border border-purple-500/40 flex items-center justify-center mb-4">
-          <Sparkles size={20} className="text-purple-300" />
+          <Dna size={20} className="text-purple-300" />
         </div>
         <h2 className="text-gray-950 text-xl font-bold mb-1.5">Join the conversation</h2>
         <p className="text-gray-600 text-sm mb-6 leading-relaxed">
