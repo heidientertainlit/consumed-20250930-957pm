@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
-import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, Youtube, TrendingUp, Users, Globe, Share, ChevronDown, ChevronUp, ChevronRight, Award, Dices, Flame, MessageCircle, MessagesSquare } from "lucide-react";
+import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, Youtube, TrendingUp, Users, Globe, ChevronDown, ChevronUp, ArrowRight, Award, Dices, Flame, MessageCircle, MessagesSquare } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link, useSearch } from "wouter";
-import { appApiUrl, shareLeaderboardRank } from "@/lib/share";
+import { appApiUrl, prepareLeaderboardRankShare, sharePreparedLeaderboardRank } from "@/lib/share";
 
 interface LeaderboardEntry {
   user_id: string;
@@ -43,6 +43,74 @@ interface LeaderboardData {
   currentUserId: string;
   scope: string;
   period: string;
+}
+
+function ShareRankAction({
+  accessToken,
+  userId,
+  categoryId,
+  categoryName,
+  period,
+  rank,
+}: {
+  accessToken: string;
+  userId: string;
+  categoryId: string;
+  categoryName: string;
+  period: 'weekly' | 'monthly' | 'all_time';
+  rank: number;
+}) {
+  const { toast } = useToast();
+  const preparedShare = useQuery({
+    queryKey: ['leaderboard-rank-share', userId, categoryId, period],
+    queryFn: () => prepareLeaderboardRankShare({ accessToken, categoryId, period }),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+  const handleShare = () => {
+    if (!preparedShare.data) {
+      void preparedShare.refetch();
+      return;
+    }
+
+    void sharePreparedLeaderboardRank(preparedShare.data)
+      .then((result) => {
+        if (result === 'copied') {
+          toast({
+            title: "Leaderboard link copied",
+            description: "Send it to a friend so they can see your spot.",
+          });
+        }
+      })
+      .catch(() => {
+        toast({
+          title: "Could not share your rank",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+      });
+  };
+
+  const isPreparing = preparedShare.isLoading || preparedShare.isFetching;
+
+  return (
+    <button
+      type="button"
+      onClick={handleShare}
+      disabled={isPreparing}
+      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-white/70 px-4 text-sm font-semibold text-purple-700 shadow-sm ring-1 ring-purple-100 transition-colors hover:bg-white active:bg-purple-100 disabled:opacity-60"
+      data-testid={`button-share-rank-${categoryName}`}
+      aria-label={`Share my #${rank} rank in ${categoryName}`}
+    >
+      <span>{isPreparing ? 'Preparing share…' : `Share your #${rank} rank`}</span>
+      {!isPreparing && (
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-purple-600">
+          <ArrowRight size={15} strokeWidth={2} />
+        </span>
+      )}
+    </button>
+  );
 }
 
 interface VerifiedLeaderboardShare {
@@ -99,7 +167,6 @@ export default function Leaderboard() {
       (tabParam === 'predictions' ? 'games' : tabParam) : 'engagement'
   );
   const [engagerBoard, setEngagerBoard] = useState<string>(boardParam || 'overall');
-  const [sharingRankKey, setSharingRankKey] = useState<string | null>(null);
 
   const { data: verifiedShare } = useQuery<VerifiedLeaderboardShare | null>({
     queryKey: ['leaderboard-share', shareToken],
@@ -168,33 +235,6 @@ export default function Leaderboard() {
 
   const currentUserId = leaderboardData?.currentUserId;
   const predictionEntries = leaderboardData?.categories?.predictions || [];
-
-  const handleShareRank = async (entry: LeaderboardEntry, categoryName: string) => {
-    if (!currentUserId || !session?.access_token) return;
-    const shareKey = `${categoryName}-${entry.user_id}`;
-    setSharingRankKey(shareKey);
-    try {
-      const result = await shareLeaderboardRank({
-        accessToken: session.access_token,
-        categoryId: categoryIdFor(categoryName),
-        period,
-      });
-      toast({
-        title: result === 'copied' ? "Leaderboard link copied" : "Ready to share",
-        description: result === 'copied'
-          ? "Send it to a friend so they can see your spot."
-          : "Your leaderboard link includes your rank and board.",
-      });
-    } catch {
-      toast({
-        title: "Could not share your rank",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setSharingRankKey(null);
-    }
-  };
 
   // Fetch awards events and their leaderboards
   interface AwardsEvent {
@@ -548,24 +588,16 @@ export default function Leaderboard() {
                   </div>
                 </div>
 
-                {isCurrentUser && scope === 'global' && (
+                {isCurrentUser && scope === 'global' && session?.access_token && currentUserId && (
                   <div className="bg-purple-50 px-3 pb-3">
-                    <button
-                      type="button"
-                      onClick={() => handleShareRank(entry, categoryName)}
-                      disabled={sharingRankKey === `${categoryName}-${entry.user_id}`}
-                      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-white/70 px-4 text-sm font-semibold text-purple-700 shadow-sm ring-1 ring-purple-100 transition-colors hover:bg-white active:bg-purple-100 disabled:opacity-60"
-                      data-testid={`button-share-rank-${categoryName}`}
-                      aria-label={`Share my #${entry.rank} rank in ${categoryName}`}
-                    >
-                      <Share size={16} />
-                      <span>
-                        {sharingRankKey === `${categoryName}-${entry.user_id}`
-                          ? 'Preparing share…'
-                          : `Share your #${entry.rank} rank`}
-                      </span>
-                      <ChevronRight size={16} />
-                    </button>
+                    <ShareRankAction
+                      accessToken={session.access_token}
+                      userId={currentUserId}
+                      categoryId={categoryId}
+                      categoryName={categoryName}
+                      period={period}
+                      rank={entry.rank}
+                    />
                   </div>
                 )}
               </div>

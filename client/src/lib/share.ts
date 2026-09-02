@@ -1,5 +1,4 @@
 import { Capacitor } from '@capacitor/core';
-import { Share as NativeShare } from '@capacitor/share';
 
 const RAW_BASE = import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com';
 const BASE = RAW_BASE.startsWith('http') ? RAW_BASE : `https://${RAW_BASE}`;
@@ -128,11 +127,17 @@ export async function shareTrivia(opts: { poolId: string; question?: string; fro
   return 'copied';
 }
 
-export async function shareLeaderboardRank(opts: {
+export type PreparedLeaderboardRankShare = {
+  url: string;
+  text: string;
+  title: string;
+};
+
+export async function prepareLeaderboardRankShare(opts: {
   accessToken: string;
   categoryId: string;
   period: 'weekly' | 'monthly' | 'all_time';
-}): Promise<'shared' | 'copied'> {
+}): Promise<PreparedLeaderboardRankShare> {
   const response = await fetch(appApiUrl('/api/leaderboard-share'), {
     method: 'POST',
     headers: {
@@ -158,26 +163,26 @@ export async function shareLeaderboardRank(opts: {
     ? `I reached #1 in ${share.categoryLabel} ${periodLabel} on Consumed. Think you can catch me?`
     : `I reached #${share.rank} in ${share.categoryLabel} ${periodLabel} on Consumed. See where you rank:`;
 
-  if (Capacitor.isNativePlatform()) {
-    await NativeShare.share({
-      title: 'My Consumed leaderboard rank',
-      text,
-      url,
-      dialogTitle: 'Share your leaderboard rank',
-    });
-    return 'shared';
-  }
+  return {
+    url,
+    text,
+    title: 'My Consumed leaderboard rank',
+  };
+}
 
+export async function sharePreparedLeaderboardRank(
+  prepared: PreparedLeaderboardRankShare
+): Promise<'shared' | 'copied'> {
   if (navigator.share) {
     try {
-      await navigator.share({ url, text, title: 'My Consumed leaderboard rank' });
+      await navigator.share(prepared);
       return 'shared';
     } catch (err: any) {
       if (err?.name === 'AbortError') return 'shared';
     }
   }
 
-  await copyShareText(`${text} ${url}`);
+  await copyShareText(`${prepared.text} ${prepared.url}`);
   return 'copied';
 }
 
