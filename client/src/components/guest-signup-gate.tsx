@@ -35,10 +35,10 @@ export function GuestSignupSheet({ open, onClose }: { open: boolean; onClose: ()
   return (
     <div className="fixed inset-0 z-[99999] flex items-end justify-center" data-testid="guest-signup-sheet">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md mx-auto bg-gradient-to-b from-slate-900 to-purple-950 border-t border-purple-500/30 rounded-t-3xl p-6 pb-10 animate-in slide-in-from-bottom duration-300">
+      <div className="relative w-full max-w-md mx-auto bg-white border-t border-gray-200 rounded-t-3xl p-6 pb-10 shadow-[0_-16px_48px_rgba(15,23,42,.18)] animate-in slide-in-from-bottom duration-300">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white p-1"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 p-1"
           data-testid="button-close-guest-sheet"
           aria-label="Close"
         >
@@ -47,8 +47,8 @@ export function GuestSignupSheet({ open, onClose }: { open: boolean; onClose: ()
         <div className="w-10 h-10 rounded-full bg-purple-600/30 border border-purple-500/40 flex items-center justify-center mb-4">
           <Sparkles size={20} className="text-purple-300" />
         </div>
-        <h2 className="text-white text-xl font-bold mb-1.5">Join the conversation</h2>
-        <p className="text-gray-300 text-sm mb-6 leading-relaxed">
+        <h2 className="text-gray-950 text-xl font-bold mb-1.5">Join the conversation</h2>
+        <p className="text-gray-600 text-sm mb-6 leading-relaxed">
           Create a free account to react, comment, play trivia, and build your Entertainment DNA.
         </p>
         <button
@@ -60,7 +60,7 @@ export function GuestSignupSheet({ open, onClose }: { open: boolean; onClose: ()
         </button>
         <button
           onClick={() => go('signin')}
-          className="w-full bg-transparent border border-purple-500/50 text-purple-200 hover:bg-purple-500/10 font-semibold rounded-full py-3.5 text-sm transition-colors"
+          className="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-full py-3.5 text-sm transition-colors"
           data-testid="button-guest-login"
         >
           I already have an account
