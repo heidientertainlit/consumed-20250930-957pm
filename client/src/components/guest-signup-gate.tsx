@@ -53,7 +53,7 @@ export function GuestSignupSheet({ open, onClose }: { open: boolean; onClose: ()
         </p>
         <button
           onClick={() => go('signup')}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-full py-3.5 text-sm mb-3 transition-colors"
+          className="w-full bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_55%,#2563eb_100%)] text-white font-bold rounded-full py-3.5 text-sm mb-3 shadow-[0_7px_20px_rgba(50,42,180,.38)] transition active:scale-[.98] active:brightness-95"
           data-testid="button-guest-signup"
         >
           Create free account
