@@ -1,32 +1,49 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#05050a"/>
-      <stop offset=".52" stop-color="#100b1d"/>
-      <stop offset="1" stop-color="#20103b"/>
+      <stop offset="0" stop-color="#030305"/>
+      <stop offset=".62" stop-color="#090810"/>
+      <stop offset="1" stop-color="#101225"/>
     </linearGradient>
-    <radialGradient id="purpleGlow">
-      <stop offset="0" stop-color="#7c3aed" stop-opacity=".46"/>
-      <stop offset="1" stop-color="#7c3aed" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="blueGlow">
-      <stop offset="0" stop-color="#2563eb" stop-opacity=".3"/>
-      <stop offset="1" stop-color="#2563eb" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#8b5cf6"/>
-      <stop offset="1" stop-color="#3b82f6"/>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a855f7"/>
+      <stop offset=".52" stop-color="#6d5dfc"/>
+      <stop offset="1" stop-color="#2997ff"/>
     </linearGradient>
+    <radialGradient id="orb" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#7057ff" stop-opacity=".5"/>
+      <stop offset=".55" stop-color="#3b2ca8" stop-opacity=".17"/>
+      <stop offset="1" stop-color="#111225" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="38"/></filter>
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
-  <circle cx="1050" cy="105" r="390" fill="url(#purpleGlow)"/>
-  <circle cx="870" cy="590" r="330" fill="url(#blueGlow)"/>
-  <rect x="0" y="0" width="1200" height="7" fill="url(#accent)"/>
-  <text x="82" y="102" fill="#fff" font-family="Poppins,sans-serif" font-size="48" font-weight="700" letter-spacing="-1.8">consumed</text>
-  <text x="82" y="210" fill="#fff" font-family="Poppins,sans-serif" font-size="49" font-weight="700" letter-spacing="-1.45">See what everyone’s consuming.</text>
-  <text x="82" y="286" fill="#ddd6fe" font-family="Poppins,sans-serif" font-size="29" font-weight="500" letter-spacing="-.35">Discover your Entertainment DNA. Find your people.</text>
-  <text x="82" y="359" fill="#a9a6b8" font-family="Poppins,sans-serif" font-size="23" font-weight="400" letter-spacing="-.15">Movies · TV · Books · Podcasts · Music · Games &amp; more</text>
-  <rect x="82" y="424" width="230" height="61" rx="30.5" fill="#fff"/>
-  <text x="197" y="464" text-anchor="middle" fill="#17111f" font-family="Poppins,sans-serif" font-size="23" font-weight="600" letter-spacing="-.25">Join Consumed</text>
-  <text x="82" y="552" fill="#8f8a9e" font-family="Poppins,sans-serif" font-size="21" font-weight="500" letter-spacing="-.2">app.consumedapp.com</text>
+  <circle cx="995" cy="315" r="330" fill="url(#orb)"/>
+  <path d="M850 44 C1020 116 925 220 1055 306 C1155 372 1095 486 1195 548" fill="none" stroke="url(#accent)" stroke-width="74" stroke-linecap="round" opacity=".2" filter="url(#blur)"/>
+  <path d="M871 14 C1035 106 946 220 1071 299 C1169 361 1106 478 1212 530" fill="none" stroke="url(#accent)" stroke-width="5" stroke-linecap="round" opacity=".9"/>
+  <circle cx="1038" cy="116" r="7" fill="#a855f7"/>
+  <circle cx="1071" cy="299" r="7" fill="#6476ff"/>
+  <circle cx="1141" cy="432" r="7" fill="#2997ff"/>
+
+  <text x="78" y="83" fill="#fff" font-family="Poppins,sans-serif" font-size="38" font-weight="700" letter-spacing="-1.6">consumed</text>
+  <rect x="78" y="118" width="64" height="4" rx="2" fill="url(#accent)"/>
+  <text x="78" y="177" fill="#9996a5" font-family="Poppins,sans-serif" font-size="17" font-weight="600" letter-spacing="1.8">ENTERTAINMENT, TOGETHER</text>
+
+  <text x="74" y="267" fill="#fff" font-family="Poppins,sans-serif" font-size="61" font-weight="700" letter-spacing="-2.6">See what everyone’s</text>
+  <text x="74" y="341" fill="url(#accent)" font-family="Poppins,sans-serif" font-size="61" font-weight="700" letter-spacing="-2.6">consuming.</text>
+
+  <text x="78" y="407" fill="#d8d6df" font-family="Poppins,sans-serif" font-size="25" font-weight="400" letter-spacing="-.55">Discover your Entertainment DNA. Find your people.</text>
+
+  <rect x="78" y="465" width="112" height="42" rx="21" fill="#14131b" stroke="#373442"/>
+  <rect x="202" y="465" width="72" height="42" rx="21" fill="#14131b" stroke="#373442"/>
+  <rect x="286" y="465" width="89" height="42" rx="21" fill="#14131b" stroke="#373442"/>
+  <rect x="387" y="465" width="107" height="42" rx="21" fill="#14131b" stroke="#373442"/>
+  <text x="134" y="492" text-anchor="middle" fill="#b8b5c2" font-family="Poppins,sans-serif" font-size="16" font-weight="500">MOVIES</text>
+  <text x="238" y="492" text-anchor="middle" fill="#b8b5c2" font-family="Poppins,sans-serif" font-size="16" font-weight="500">TV</text>
+  <text x="330.5" y="492" text-anchor="middle" fill="#b8b5c2" font-family="Poppins,sans-serif" font-size="16" font-weight="500">BOOKS</text>
+  <text x="440.5" y="492" text-anchor="middle" fill="#b8b5c2" font-family="Poppins,sans-serif" font-size="16" font-weight="500">MUSIC</text>
+
+  <rect x="78" y="548" width="206" height="56" rx="28" fill="#fff"/>
+  <text x="181" y="584" text-anchor="middle" fill="#09080d" font-family="Poppins,sans-serif" font-size="21" font-weight="600" letter-spacing="-.4">Join Consumed</text>
+  <text x="311" y="583" fill="#777482" font-family="Poppins,sans-serif" font-size="18" font-weight="500" letter-spacing="-.35">app.consumedapp.com</text>
 </svg>
