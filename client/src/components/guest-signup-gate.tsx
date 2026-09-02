@@ -50,7 +50,7 @@ export function GuestSignupSheet({ open, onClose }: { open: boolean; onClose: ()
           </div>
           <h2 className="text-gray-950 text-xl font-bold leading-tight">Join the conversation</h2>
         </div>
-        <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+        <p className="ml-14 max-w-[18rem] text-gray-600 text-sm mb-6 leading-relaxed">
           Create a free account to react, comment, play trivia, and build your Entertainment DNA.
         </p>
         <button
