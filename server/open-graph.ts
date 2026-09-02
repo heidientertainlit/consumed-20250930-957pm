@@ -491,11 +491,17 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
       : result === "wrong"
         ? "I got it wrong — see how you score"
         : "Play together on Consumed";
+    const imageName = result === "right"
+      ? "og-play-challenge-v4-right-1200x630.png"
+      : result === "wrong"
+        ? "og-play-challenge-v4-wrong-1200x630.png"
+        : "og-play-challenge-v4-1200x630.png";
     return responseTags(req, {
       title,
       description: result === "right" || result === "wrong"
         ? "Play the same question on Consumed and compare results. No answer spoilers."
         : "Answer trivia, make predictions, and challenge friends who love the same entertainment.",
+      image: `${appBase()}/${imageName}`,
     });
   });
 }
