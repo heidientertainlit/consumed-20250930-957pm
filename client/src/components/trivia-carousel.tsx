@@ -955,7 +955,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   </div>
                     {/* Friend answers section */}
                     {answered && answered.friendAnswers && answered.friendAnswers.length > 0 && (
-                      <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-2.5">
+                      <div className="mt-2.5 rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-2.5">
                         <div className="flex items-center gap-2 mb-2.5">
                           <Users className="w-4 h-4 text-gray-500" />
                           <span className="text-xs font-semibold text-gray-700">Friends who played</span>
@@ -977,7 +977,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                     )}
                   </>)}
                 
-                {answered && <div className="mt-4 pt-3 border-t border-gray-100">
+                {answered && <div className="mt-2.5">
                   {answered && sharedChallenger && challengedPoolId === (item.poolId || item.id) ? (
                     <div className="w-full rounded-xl bg-gray-50 border border-gray-200 px-3 py-2.5 flex items-center justify-center gap-2 text-[13px] font-semibold text-gray-700">
                       <span className={answered.isCorrect ? 'text-emerald-600' : 'text-gray-400'}>{answered.isCorrect ? '✓' : '✕'}</span>
