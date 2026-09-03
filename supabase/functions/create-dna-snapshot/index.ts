@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { authorizeAdminOrService } from '../_shared/authorization.ts';
 
 // Monthly sweep: creates a dna_snapshot for every user who has a dna_profiles
 // record but no snapshot for the prior month. Safe to run on the 1st of each
@@ -17,14 +18,20 @@ serve(async (req) => {
   }
 
   try {
+    const authorization = await authorizeAdminOrService(req);
+    if (!authorization.authorized) {
+      return new Response(JSON.stringify({ error: authorization.error }), {
+        status: authorization.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // This function requires service-role access — verify via header or anon
-    // key check. In practice, call it from a cron or admin context only.
     const url    = new URL(req.url);
     const userId = url.searchParams.get('user_id') ?? null;
 

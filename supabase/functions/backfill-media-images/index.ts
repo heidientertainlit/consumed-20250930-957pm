@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { authorizeAdminOrService } from "../_shared/authorization.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +20,14 @@ serve(async (req) => {
   const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
+    const authorization = await authorizeAdminOrService(req);
+    if (!authorization.authorized) {
+      return new Response(JSON.stringify({ error: authorization.error }), {
+        status: authorization.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     console.log('Starting media image backfill...');
     
     if (!tmdbApiKey) {

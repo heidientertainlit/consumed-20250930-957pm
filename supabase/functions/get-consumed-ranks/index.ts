@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { authorizeAdminOrService } from '../_shared/authorization.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -64,6 +65,14 @@ serve(async (req) => {
     const action = searchParams.get('action') || 'fetch';
 
     if (action === 'seed') {
+      const authorization = await authorizeAdminOrService(req);
+      if (!authorization.authorized) {
+        return new Response(JSON.stringify({ error: authorization.error }), {
+          status: authorization.status,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       const { data: existingUser } = await supabaseAdmin
         .from('users')
         .select('id')

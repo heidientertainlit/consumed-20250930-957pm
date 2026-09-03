@@ -16,6 +16,8 @@ attached_assets/
 .env
 .env.*
 *.local
+supabase/.temp/
+supabase/supabase/.temp/
 
 # OS/editor noise
 .DS_Store
