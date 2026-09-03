@@ -6,6 +6,7 @@
     "api/share-card-image.ts": {
       "includeFiles": [
         "server/assets/Poppins-*.ttf",
+        "server/assets/Fraunces.ttf",
         "client/public/consumed-logo-white.png"
       ]
     }

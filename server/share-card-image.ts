@@ -30,6 +30,7 @@ type ArtworkAssets = {
   regular: string;
   semibold: string;
   bold: string;
+  fraunces: string;
 };
 
 let artworkAssets: ArtworkAssets | null = null;
@@ -68,6 +69,7 @@ function loadArtworkAssets(): ArtworkAssets {
     regular: fileData("server", "assets", "Poppins-Regular.ttf"),
     semibold: fileData("server", "assets", "Poppins-SemiBold.ttf"),
     bold: fileData("server", "assets", "Poppins-Bold.ttf"),
+    fraunces: fileData("server", "assets", "Fraunces.ttf"),
   };
   return artworkAssets;
 }
@@ -136,6 +138,7 @@ function renderShareCardSvg(payload: ShareCardPayload): string {
         @font-face { font-family: "Poppins"; src: url(data:font/ttf;base64,${assets.regular}) format("truetype"); font-weight: 400; }
         @font-face { font-family: "Poppins"; src: url(data:font/ttf;base64,${assets.semibold}) format("truetype"); font-weight: 600; }
         @font-face { font-family: "Poppins"; src: url(data:font/ttf;base64,${assets.bold}) format("truetype"); font-weight: 700; }
+        @font-face { font-family: "Fraunces"; src: url(data:font/ttf;base64,${assets.fraunces}) format("truetype"); font-weight: 100 900; }
       </style>
       <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" stop-color="#070817"/>
@@ -162,7 +165,7 @@ function renderShareCardSvg(payload: ShareCardPayload): string {
       <text x="102" y="152" fill="#d8b4fe" font-family="Poppins" font-size="17" font-weight="600" letter-spacing=".5">${escapeXml(payload.eyebrow)}</text>
     `}
 
-    <text x="58" y="${titleY}" fill="#fff" font-family="Poppins" font-size="${titleFontSize}" font-weight="700" letter-spacing="-1.8">${titleTspans}</text>
+    <text x="58" y="${titleY}" fill="#fff" font-family="${isPlayCard ? "Fraunces" : "Poppins"}" font-size="${titleFontSize}" font-weight="${isPlayCard ? "600" : "700"}" letter-spacing="-1.8">${titleTspans}</text>
     ${isPlayCard ? "" : `<text x="58" y="${descriptionY}" fill="#d7d2de" font-family="Poppins" font-size="24" font-weight="400">${escapeXml(description)}</text>`}
     ${showVisual ? visualSvg(payload.kind) : ""}
 
