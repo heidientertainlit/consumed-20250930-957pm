@@ -276,6 +276,49 @@ export default function MediaDetail() {
     likeMutation.mutate(postId);
   };
 
+  const handleAgree = async (postId: string) => {
+    if (!user?.id) {
+      toast({ title: "Please sign in to react", variant: "destructive" });
+      return;
+    }
+    if (disagreedTakes.has(postId)) {
+      setDisagreedTakes(prev => {
+        const next = new Set(prev);
+        next.delete(postId);
+        return next;
+      });
+      await supabase.from('post_reactions').delete()
+        .eq('social_post_id', postId)
+        .eq('user_id', user.id);
+    }
+    handleLike(postId);
+  };
+
+  const handleDisagree = async (postId: string) => {
+    if (!user?.id) {
+      toast({ title: "Please sign in to react", variant: "destructive" });
+      return;
+    }
+    const wasDisagreed = disagreedTakes.has(postId);
+    setDisagreedTakes(prev => {
+      const next = new Set(prev);
+      if (wasDisagreed) next.delete(postId);
+      else next.add(postId);
+      return next;
+    });
+    if (likedPosts.has(postId)) handleLike(postId);
+    if (wasDisagreed) {
+      await supabase.from('post_reactions').delete()
+        .eq('social_post_id', postId)
+        .eq('user_id', user.id);
+    } else {
+      await supabase.from('post_reactions').upsert(
+        { social_post_id: postId, user_id: user.id, reaction: 'disagree' },
+        { onConflict: 'social_post_id,user_id' },
+      );
+    }
+  };
+
   const handleReply = (postId: string) => {
     if (!replyContent.trim()) return;
     replyMutation.mutate({ postId, content: replyContent });
@@ -1272,16 +1315,27 @@ export default function MediaDetail() {
             <span className="text-[12px] text-gray-500 truncate">{name}</span>
             {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">· {takeTimeAgo(post.created_at)}</span>}
             {!post._ratingOnly && (
-              <div className="ml-auto flex items-center gap-1.5 text-gray-400 shrink-0">
+              <div className="ml-auto flex items-center shrink-0">
                 <button
-                  onClick={() => handleLike(post.id)}
-                  className={`active:scale-90 transition-transform ${isLiked ? 'text-orange-500' : ''}`}
-                  aria-label="Hot take"
+                  onClick={() => handleAgree(post.id)}
+                  className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 active:scale-95 transition-transform"
+                  aria-label="Like"
                   data-testid={`take-agree-${post.id}`}
                 >
-                  <Flame size={16} strokeWidth={2.5} className={isLiked ? 'fill-orange-500' : ''} />
+                  <ThumbsUp size={15} className={isLiked ? 'text-gray-900 fill-gray-900' : 'text-gray-600'} strokeWidth={1.75} />
+                  {(Number(post.likes_count) || 0) > 0 && (
+                    <span className="text-[12px] font-medium text-gray-600">{Number(post.likes_count)}</span>
+                  )}
                 </button>
-                <span className="text-[12px] font-medium text-gray-500">{Number(post.likes_count) || 0}</span>
+                <div className="w-px h-4 bg-gray-300" />
+                <button
+                  onClick={() => handleDisagree(post.id)}
+                  className="flex items-center pl-2.5 pr-3 py-1.5 active:scale-95 transition-transform"
+                  aria-label="Dislike"
+                  data-testid={`take-disagree-${post.id}`}
+                >
+                  <ThumbsDown size={15} className={`translate-y-[1px] ${isDisagreed ? 'text-gray-900 fill-gray-900' : 'text-gray-600'}`} strokeWidth={1.75} />
+                </button>
               </div>
             )}
           </div>
@@ -1327,16 +1381,27 @@ export default function MediaDetail() {
         {/* Actions row — YouTube-style, left aligned */}
         {!post._ratingOnly && (
           <div className="flex items-center gap-5 mt-2 text-gray-500">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center">
               <button
-                onClick={() => handleLike(post.id)}
-                className={`active:scale-90 transition-transform ${isLiked ? 'text-orange-500' : ''}`}
-                aria-label="Hot take"
+                onClick={() => handleAgree(post.id)}
+                className="flex items-center gap-1.5 pr-2 py-1.5 active:scale-95 transition-transform"
+                aria-label="Like"
                 data-testid={`take-agree-${post.id}`}
               >
-                <Flame size={16} strokeWidth={2.5} className={isLiked ? 'fill-orange-500' : ''} />
+                <ThumbsUp size={15} className={isLiked ? 'text-gray-900 fill-gray-900' : 'text-gray-600'} strokeWidth={1.75} />
+                {(Number(post.likes_count) || 0) > 0 && (
+                  <span className="text-[12px] font-medium text-gray-600">{Number(post.likes_count)}</span>
+                )}
               </button>
-              <span className="text-[12px] font-medium">{Number(post.likes_count) || 0}</span>
+              <div className="w-px h-4 bg-gray-300" />
+              <button
+                onClick={() => handleDisagree(post.id)}
+                className="flex items-center pl-2.5 py-1.5 active:scale-95 transition-transform"
+                aria-label="Dislike"
+                data-testid={`take-disagree-${post.id}`}
+              >
+                <ThumbsDown size={15} className={`translate-y-[1px] ${isDisagreed ? 'text-gray-900 fill-gray-900' : 'text-gray-600'}`} strokeWidth={1.75} />
+              </button>
             </div>
             <button
               onClick={toggleExpand}
