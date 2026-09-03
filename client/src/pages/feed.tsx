@@ -8888,7 +8888,7 @@ export default function Feed() {
     <GuestGate enabled={isGuestMode}>
     <div className="min-h-screen bg-[#fbf8f5] pb-32">
       <div id="feed-page">
-      <Navigation onTrackConsumption={handleTrackConsumption} topBarTone="purple" roomyTopBar />
+      <Navigation onTrackConsumption={handleTrackConsumption} roomyTopBar />
 
       {/* Guest banner — visible only when browsing logged-out */}
       {isGuestMode && (
