@@ -1411,13 +1411,6 @@ export default function MediaDetail() {
               Reply{commentCount > 0 ? ` · ${commentCount}` : ''}
             </button>
             <button
-              onClick={() => { setComposerOpen(true); setTimeout(() => composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50); }}
-              className="flex items-center gap-1 text-[12px] font-semibold active:text-purple-600"
-              data-testid={`take-rate-${post.id}`}
-            >
-              <Star size={14} className="text-yellow-400" /> Rate
-            </button>
-            <button
               onClick={handleShare}
               className="text-[12px] font-semibold active:text-purple-600"
               data-testid={`take-share-${post.id}`}
