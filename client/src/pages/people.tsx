@@ -477,8 +477,8 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
     { id: "creators", label: "Artists & Creators", Icon: Star },
   ];
   return <div className="min-h-[100dvh] bg-[#fbf8f5] pb-24 text-[#271d3a]">
-    <Navigation roomyTopBar topBarTone="purple" />
-    <header className="relative -mt-px bg-[linear-gradient(to_right,#21183b,#332052,#4a246b)] px-4 pb-6 pt-5 text-white shadow-[0_10px_28px_rgba(41,16,71,.18)] sm:px-6 sm:pb-8 sm:pt-6">
+    <Navigation roomyTopBar />
+    <header className="relative -mt-px bg-[linear-gradient(to_right,#0a0a0f,#12121f,#2d1f4e)] px-4 pb-6 pt-5 text-white shadow-[0_10px_28px_rgba(41,16,71,.18)] sm:px-6 sm:pb-8 sm:pt-6">
       <div className="mx-auto max-w-5xl">
         <div
           className="relative overflow-hidden rounded-3xl border border-white/10 px-6 py-6 shadow-[0_10px_40px_rgba(22,10,38,.24)] sm:px-8 sm:py-8"
