@@ -4,6 +4,7 @@ import {
   Tv, Film, BookOpen, Music, Mic, Youtube, Gamepad2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { getBookVolumeLabel } from "@/lib/book-volume";
 
 /**
  * MediaSearchPanel — THE shared media search experience.
@@ -225,7 +226,7 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900 text-sm line-clamp-1">{r.title}</p>
                     <p className="text-xs text-gray-500">
-                      {typeLabel(r.type, r.media_subtype)}{r.year ? ` • ${r.year}` : ""}
+                      {typeLabel(r.type, r.media_subtype)}{getBookVolumeLabel(r) ? ` • ${getBookVolumeLabel(r)}` : ""}{r.year ? ` • ${r.year}` : ""}
                     </p>
                     {r.creator && r.creator !== "Unknown Author" && <p className="text-xs text-gray-400 truncate">{r.creator}</p>}
                   </div>

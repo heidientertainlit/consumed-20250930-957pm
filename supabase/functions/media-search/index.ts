@@ -12,6 +12,44 @@ const CANONICAL_RESOLUTION_CONCURRENCY = 4;
 const CANONICAL_RESOLUTION_LIMIT = 6;
 const KNOWN_CANONICAL_LOOKUP_LIMIT = 30;
 
+const BOOK_VOLUME_WORDS: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5,
+  six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+  eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
+  sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20,
+};
+
+function parseRomanNumeral(value: string): number | null {
+  if (!/^[ivxlcdm]+$/i.test(value)) return null;
+  const numerals: Record<string, number> = { i: 1, v: 5, x: 10, l: 50, c: 100, d: 500, m: 1000 };
+  let total = 0;
+  let previous = 0;
+  for (const character of value.toLowerCase().split('').reverse()) {
+    const current = numerals[character];
+    total += current < previous ? -current : current;
+    previous = current;
+  }
+  return total > 0 ? total : null;
+}
+
+function extractBookVolumeNumber(...values: unknown[]): number | null {
+  const text = values.filter((value): value is string => typeof value === 'string' && !!value.trim()).join(' ');
+  const match = /(?:volume|vol\.?|book|bk\.?|#)\s*[:#.-]?\s*(\d+(?:\.\d+)?|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\b/i.exec(text);
+  if (!match) return null;
+  if (/^\d/.test(match[1])) return Number(match[1]);
+  return BOOK_VOLUME_WORDS[match[1].toLowerCase()] ?? parseRomanNumeral(match[1]);
+}
+
+function bookSeriesKey(title: unknown): string {
+  if (typeof title !== 'string') return '';
+  return title
+    .replace(/\s*[:(),-]?\s*(?:volume|vol\.?|book|bk\.?|#)\s*[:#.-]?\s*(?:\d+(?:\.\d+)?|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\b.*$/i, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function canonicalAdmin() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -738,7 +776,11 @@ serve(async (req) => {
           if (!id || seenIds.has(id) || seenTitles.has(nt)) return;
           seenIds.add(id);
           seenTitles.add(nt);
-          bookResults.push(book);
+          bookResults.push({
+            ...book,
+            volume_number: extractBookVolumeNumber(book.title, book.subtitle, book.series),
+            _series_key: bookSeriesKey(book.title),
+          });
         };
 
         // Priority order: intitle (highest title signal) → primary → Open Library → base fallbacks
@@ -747,6 +789,23 @@ serve(async (req) => {
         for (const b of olResults) addBook(b);
         for (const b of gbBase) addBook(b);
         for (const b of olBase) addBook(b);
+
+        // Catalogs frequently omit "Volume 1" from the first book's title.
+        // Infer it only when that exact base title appears beside numbered volumes.
+        const numberedSeriesKeys = new Set(
+          bookResults
+            .filter((book: any) => book.volume_number != null && book._series_key)
+            .map((book: any) => book._series_key)
+        );
+        for (const book of bookResults) {
+          if (
+            book.volume_number == null
+            && numberedSeriesKeys.has(book._series_key)
+            && normTitle(book.title || '') === book._series_key
+          ) {
+            book.volume_number = 1;
+          }
+        }
 
         // Cover backfill — if a chosen edition has no cover art, borrow one from a
         // sister edition (same title + author) in ANY of the raw result sets.
@@ -1449,14 +1508,42 @@ serve(async (req) => {
       return { ...item, _score: score };
     });
     
-    // Sort by score descending (best matches first)
-    scoredResults.sort((a, b) => b._score - a._score);
+    // Keep exact matching book-series volumes together and in reading order.
+    // Unrelated books and non-book media retain normal relevance ordering.
+    const querySeriesKey = bookSeriesKey(searchQuery);
+    scoredResults.sort((a, b) => {
+      const aSeriesMatch = a.type === 'book' && a._series_key === querySeriesKey;
+      const bSeriesMatch = b.type === 'book' && b._series_key === querySeriesKey;
+      if (aSeriesMatch !== bSeriesMatch) return aSeriesMatch ? -1 : 1;
+      if (aSeriesMatch && bSeriesMatch) {
+        const aVolume = typeof a.volume_number === 'number' ? a.volume_number : Number.POSITIVE_INFINITY;
+        const bVolume = typeof b.volume_number === 'number' ? b.volume_number : Number.POSITIVE_INFINITY;
+        if (aVolume !== bVolume) return aVolume - bVolume;
+      }
+      return b._score - a._score;
+    });
+
+    const seenSeriesVolumes = new Set<string>();
+    const orderedResults = scoredResults.filter((item) => {
+      if (
+        item.type !== 'book'
+        || item._series_key !== querySeriesKey
+        || typeof item.volume_number !== 'number'
+      ) {
+        return true;
+      }
+
+      const volumeKey = `${item._series_key}:${item.volume_number}`;
+      if (seenSeriesVolumes.has(volumeKey)) return false;
+      seenSeriesVolumes.add(volumeKey);
+      return true;
+    });
     
     // Trim to top results — already sorted by relevance score above
-    const trimmed = scoredResults.slice(0, 60);
+    const trimmed = orderedResults.slice(0, 60);
     
     // Normalize image fields on both scored results and series results
-    const normalizeResult = ({ _score, poster_url, ...item }: any) => ({
+    const normalizeResult = ({ _score, _series_key, poster_url, ...item }: any) => ({
       ...item,
       poster_url,
       image: poster_url,

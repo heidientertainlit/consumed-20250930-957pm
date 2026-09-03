@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getBookVolumeLabel } from "@/lib/book-volume";
 
 type IntentType = "capture" | "say" | "play" | null;
 type ActionType = "track" | "post" | "prediction" | "rank" | "challenge" | null;
@@ -1592,7 +1593,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug">{result.title}</p>
-                      <p className="text-xs text-gray-500">{result.type}{result.creator && result.creator !== 'Unknown Author' ? ` • ${result.creator}` : ''}</p>
+                      <p className="text-xs text-gray-500">{result.type}{getBookVolumeLabel(result) ? ` • ${getBookVolumeLabel(result)}` : ''}{result.creator && result.creator !== 'Unknown Author' ? ` • ${result.creator}` : ''}</p>
                       {result.type === 'book' && result.series && <span className="inline-block text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full mt-0.5">📚 {result.series}</span>}
                     </div>
                   </button>
@@ -1607,7 +1608,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{selectedMedia.title}</p>
-                  <p className="text-xs text-gray-500 truncate">{selectedMedia.type}</p>
+                  <p className="text-xs text-gray-500 truncate">{selectedMedia.type}{getBookVolumeLabel(selectedMedia) ? ` • ${getBookVolumeLabel(selectedMedia)}` : ''}</p>
                 </div>
                 <button onClick={() => setSelectedMedia(null)} className="p-1 hover:bg-purple-100 rounded">
                   <X size={16} className="text-gray-500" />
@@ -1733,7 +1734,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                 {result.image && <img src={result.image} alt={result.title} className="w-8 h-11 object-cover rounded flex-shrink-0" />}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-900 text-sm line-clamp-1">{result.title}</p>
-                  <p className="text-xs text-gray-500">{result.type === 'book_series' ? (result.series_count ? `${result.series_count}-book series` : 'book series') : result.type}{result.year && ` • ${result.year}`}</p>
+                  <p className="text-xs text-gray-500">{result.type === 'book_series' ? (result.series_count ? `${result.series_count}-book series` : 'book series') : result.type}{getBookVolumeLabel(result) ? ` • ${getBookVolumeLabel(result)}` : ''}{result.year && ` • ${result.year}`}</p>
                   {result.creator && result.creator !== 'Unknown Author' && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
                 </div>
                 <Plus size={16} className="text-purple-500 shrink-0" />
@@ -1750,7 +1751,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
         <DrawerHeader className="text-center pb-2 border-b border-gray-100">
           <DrawerTitle className="text-lg font-semibold text-gray-900">Add to List</DrawerTitle>
           {selectedMedia && (
-            <p className="text-sm text-gray-500 mt-1">{selectedMedia.title}</p>
+            <p className="text-sm text-gray-500 mt-1">{selectedMedia.title}{getBookVolumeLabel(selectedMedia) ? ` • ${getBookVolumeLabel(selectedMedia)}` : ''}</p>
           )}
         </DrawerHeader>
         <div className="px-4 py-4 max-h-[60vh] overflow-y-auto space-y-2">

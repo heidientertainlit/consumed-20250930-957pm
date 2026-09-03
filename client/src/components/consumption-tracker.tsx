@@ -14,6 +14,7 @@ import { useAuth } from "@/lib/auth";
 import { AuthModal } from "./auth-modal";
 import { useToast } from "@/hooks/use-toast";
 import { JustTrackedSheet } from "./just-tracked-sheet";
+import { getBookVolumeLabel } from "@/lib/book-volume";
 
 interface ConsumptionTrackerProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ interface MediaResult {
   videoId?: string;
   url?: string;
   page_count?: number;
+  volume_number?: number | null;
 }
 
 export default function ConsumptionTracker({ isOpen, onClose, defaultListType, targetRankId }: ConsumptionTrackerProps) {
@@ -110,7 +112,8 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
         },
         body: JSON.stringify({
           query: query.trim(),
-          type: type
+          type: type,
+          include_book_series: true
         }),
       });
 
@@ -427,7 +430,14 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{result.title}</p>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <p className="font-medium text-gray-900 truncate">{result.title}</p>
+                              {getBookVolumeLabel(result) && (
+                                <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] font-semibold text-purple-700">
+                                  {getBookVolumeLabel(result)}
+                                </span>
+                              )}
+                            </div>
                             {result.creator && (
                               <p className="text-sm text-gray-500 truncate">by {result.creator}</p>
                             )}
@@ -466,7 +476,14 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{selectedMedia.title}</p>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{selectedMedia.title}</p>
+                      {getBookVolumeLabel(selectedMedia) && (
+                        <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] font-semibold text-purple-700">
+                          {getBookVolumeLabel(selectedMedia)}
+                        </span>
+                      )}
+                    </div>
                     {selectedMedia.creator && (
                       <p className="text-sm text-gray-500 truncate">by {selectedMedia.creator}</p>
                     )}

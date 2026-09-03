@@ -14,6 +14,7 @@ import { queryClient } from "@/lib/queryClient";
 import { supabase } from "@/lib/supabase";
 import { trackEvent } from "@/lib/posthog";
 import ImportHistory, { ImportReceipt, receiptFromResponse } from "@/components/import-history";
+import { getBookVolumeLabel } from "@/lib/book-volume";
 
 export interface TrackDetailsMedia {
   title: string;
@@ -551,7 +552,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
                 <div className="min-w-0">
                   <p className="font-bold text-gray-900 line-clamp-2">{selectedMedia.title}</p>
                   <p className="text-xs text-gray-500">
-                    {typeLabel(selectedMedia.type, selectedMedia.media_subtype)}{selectedMedia.year ? ` • ${selectedMedia.year}` : ""}
+                    {typeLabel(selectedMedia.type, selectedMedia.media_subtype)}{getBookVolumeLabel(selectedMedia) ? ` • ${getBookVolumeLabel(selectedMedia)}` : ""}{selectedMedia.year ? ` • ${selectedMedia.year}` : ""}
                   </p>
                   <button
                     onClick={() => { setStep("search"); setSelectedMedia(null); }}
