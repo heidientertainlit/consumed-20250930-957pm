@@ -53,3 +53,4 @@
 - [Play friend challenges](play-friend-challenges.md) — exact-game links compare sender and recipient results inside the existing mobile result card; never require a new page or scrolling.
 - [Leaderboard share links](leaderboard-share-links.md) — share only server-verified Global rank snapshots; category owns destination, and native API calls must use the production app origin.
 - [Portable npm lockfile](portable-npm-lockfile.md) — keep package-lock free of package-firewall.replit.local URLs so Mac/Capacitor installs remain portable.
+- [Supabase function deploy verification](supabase-function-deploy-verification.md) — verify intended Edge Function version/hash after bulk deploys; success output may not mean active code changed.

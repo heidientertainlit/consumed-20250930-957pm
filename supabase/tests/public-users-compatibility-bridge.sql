@@ -171,6 +171,11 @@ begin
          or not pg_catalog.has_column_privilege('authenticated', 'public.users', user_column.attname, 'SELECT') then
         raise exception 'legacy identity SELECT grant is missing for public.users.%', user_column.attname;
       end if;
+    elsif user_column.attname = 'identity_confirmed_at' then
+      if pg_catalog.has_column_privilege('anon', 'public.users', user_column.attname, 'SELECT')
+         or not pg_catalog.has_column_privilege('authenticated', 'public.users', user_column.attname, 'SELECT') then
+        raise exception 'identity_confirmed_at must be authenticated-only during legacy login compatibility';
+      end if;
     elsif pg_catalog.has_column_privilege('anon', 'public.users', user_column.attname, 'SELECT')
        or pg_catalog.has_column_privilege('authenticated', 'public.users', user_column.attname, 'SELECT') then
       raise exception 'a client role can read non-allowlisted public.users.%', user_column.attname;
