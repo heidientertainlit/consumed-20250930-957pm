@@ -1731,20 +1731,25 @@ export default function OnboardingPage() {
           <OnboardingHero currentStep={3} onBack={() => goToStep("interests")} />
 
           <div className="flex-1 flex flex-col px-5 pt-3 pb-8 bg-white">
-            <div
-              className={`mx-auto mt-1 flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all ${
+            <button
+              type="button"
+              onClick={submitLoved}
+              disabled={loved.length < 3 || saving}
+              className={`mx-auto mt-1 flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition-all active:scale-95 disabled:cursor-not-allowed ${
                 loved.length >= 3
                   ? "border-purple-200 bg-purple-50 text-purple-700"
                   : "border-gray-200 bg-gray-50 text-gray-600"
               }`}
             >
-              {loved.length >= 3 && <Check size={15} strokeWidth={3} />}
-              <span>
-                {loved.length >= 3
-                  ? `${loved.length} ${loved.length === 1 ? "title" : "titles"} picked`
-                  : `${loved.length} of 3 titles picked`}
-              </span>
-            </div>
+              {loved.length >= 3 ? (
+                <>
+                  <span>{saving ? "Saving..." : `Continue with ${loved.length} picks`}</span>
+                  {!saving && <ArrowRight size={15} strokeWidth={2.5} />}
+                </>
+              ) : (
+                <span>{loved.length} of 3 picks — keep choosing</span>
+              )}
+            </button>
 
             <div className="mt-2 space-y-4">
             {titleRows.map((row) => {
@@ -1810,14 +1815,6 @@ export default function OnboardingPage() {
             })}
           </div>
 
-          <button
-            onClick={submitLoved}
-            disabled={loved.length < 3 || saving}
-            className="w-full py-3.5 rounded-full font-bold text-[15px] text-white mt-4 transition-all active:scale-95 disabled:opacity-40"
-            style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7)" }}
-          >
-            {saving ? "Saving..." : "Continue"}
-          </button>
           <button
             onClick={() => {
               setLoved([]);
