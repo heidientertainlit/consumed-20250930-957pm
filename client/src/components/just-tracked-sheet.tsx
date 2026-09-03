@@ -126,7 +126,7 @@ export function JustTrackedSheet({
   elevated,
 }: JustTrackedSheetProps) {
   const { user } = useAuth();
-  const [phase, setPhase] = useState<'identity' | 'actions'>('identity');
+  const [phase, setPhase] = useState<'identity' | 'actions'>('actions');
   const [identityAnswer, setIdentityAnswer] = useState<string | null>(null);
   const [isSavingAnswer, setIsSavingAnswer] = useState(false);
   const [triviaAnswer, setTriviaAnswer] = useState<string | null>(null);
@@ -194,13 +194,13 @@ export function JustTrackedSheet({
       if (unanswered.length === 0) return null;
       return unanswered[Math.floor(Math.random() * unanswered.length)] as DnaMoment;
     },
-    enabled: isOpen && !!user?.id,
+    enabled: false,
     staleTime: 30000,
   });
 
   useEffect(() => {
     if (isOpen) {
-      setPhase('identity');
+      setPhase('actions');
       setIdentityAnswer(null);
       setTriviaAnswer(null);
       setTriviaRevealed(false);
