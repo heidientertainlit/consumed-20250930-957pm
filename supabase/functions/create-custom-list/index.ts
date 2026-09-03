@@ -62,18 +62,45 @@ serve(async (req) => {
       });
     }
 
+    const listColumns = 'id, title, user_id, is_private, is_default';
+    const { data: existingList, error: lookupError } = await supabase
+      .from('lists')
+      .select(listColumns)
+      .eq('user_id', user.id)
+      .eq('title', normalizedTitle)
+      .limit(1)
+      .maybeSingle();
+
+    if (lookupError) {
+      console.error('Error finding standard list:', lookupError);
+      return new Response(JSON.stringify({
+        error: 'Failed to find list: ' + lookupError.message
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (existingList) {
+      return new Response(JSON.stringify({
+        success: true,
+        list: existingList,
+        itemsAdded: 0
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const { data: newList, error: createError } = await supabase
       .from('lists')
-      .upsert({
+      .insert({
         title: normalizedTitle,
         user_id: user.id,
         is_default: true,
         is_private: false
-      }, {
-        onConflict: 'user_id,title',
-        ignoreDuplicates: false
       })
-      .select('id, title, user_id, is_private, is_default')
+      .select(listColumns)
       .single();
 
     if (createError) {
