@@ -175,7 +175,7 @@ export function JustTrackedSheet({
   });
 
   const { data: dnaMoment, isLoading: isLoadingMoment } = useQuery<DnaMoment | null>({
-    queryKey: ['unanswered-dna-moment', user?.id],
+    queryKey: ['unanswered-dna-moment', 'post-track', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
       const { data: answered } = await supabase
@@ -187,7 +187,8 @@ export function JustTrackedSheet({
       const { data: allMoments } = await supabase
         .from('dna_moments')
         .select('id, question_text, option_a, option_b, option_c, option_d, option_e, category, is_multi_select')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .neq('category', 'format_preference');
 
       const unanswered = (allMoments || []).filter((m: any) => !answeredIds.has(m.id));
       if (unanswered.length === 0) return null;
