@@ -3,9 +3,9 @@
     "api/og.ts": {
       "includeFiles": "dist/public/**"
     },
-    "api/leaderboard-rank-image.ts": {
+    "api/share-card-image.ts": {
       "includeFiles": [
-        "node_modules/@fontsource/poppins/files/poppins-latin-*-normal.woff2",
+        "server/assets/Poppins-*.ttf",
         "client/public/consumed-logo-white.png"
       ]
     }

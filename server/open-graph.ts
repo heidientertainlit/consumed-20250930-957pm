@@ -3,12 +3,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
 import { verifyLeaderboardShareToken } from "./leaderboard-share";
+import { createShareCardToken, type ShareCardKind } from "./share-card-image";
 
 type OpenGraphTags = {
   title: string;
   description: string;
   image?: string | null;
   url: string;
+  cardTitle?: string;
+  cardDescription?: string;
 };
 
 type CachedTags = {
@@ -206,8 +209,36 @@ function responseTags(
   req: Request,
   values: Omit<OpenGraphTags, "url"> & { url?: string },
 ): OpenGraphTags {
+  const route = req.path;
+  let kind: ShareCardKind = "general";
+  let eyebrow = "SHARED ON CONSUMED";
+  if (route.startsWith("/invite/")) [kind, eyebrow] = ["invite", "FRIEND INVITE"];
+  else if (route.startsWith("/u/")) [kind, eyebrow] = ["profile", "PROFILE"];
+  else if (route.startsWith("/pool/") || route.startsWith("/room/")) [kind, eyebrow] = ["challenge", "CHALLENGE"];
+  else if (route.startsWith("/post/")) [kind, eyebrow] = ["post", "TAKE"];
+  else if (route.startsWith("/media/")) [kind, eyebrow] = ["media", "MEDIA"];
+  else if (route.startsWith("/people/tribes/")) [kind, eyebrow] = ["tribe", "TASTE GROUP"];
+  else if (route.startsWith("/list/")) [kind, eyebrow] = ["list", "LIST"];
+  else if (route.startsWith("/rank/")) [kind, eyebrow] = ["ranking", "RANKING"];
+  else if (route.startsWith("/edna/")) [kind, eyebrow] = ["dna", "ENTERTAINMENT DNA"];
+  else if (route === "/leaderboard") [kind, eyebrow] = ["leaderboard", "LEADERBOARD"];
+  else if (route.startsWith("/play")) [kind, eyebrow] = ["play", "TRIVIA CHALLENGE"];
+  const title = compactText(values.title, 90) || "Consumed";
+  const description = compactText(values.description, 120)
+    || "Discover your Entertainment DNA and find your people.";
+  const cardToken = createShareCardToken({
+    kind,
+    eyebrow,
+    title: compactText(values.cardTitle, 90) || title,
+    description: compactText(values.cardDescription, 120) || description,
+  });
   return {
     ...values,
+    title,
+    description,
+    image: cardToken
+      ? `${requestBase(req)}/api/share-card-image?token=${encodeURIComponent(cardToken)}&v=1`
+      : values.image,
     url: values.url || requestUrl(req),
   };
 }
@@ -491,13 +522,11 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
   });
 
   route("/leaderboard", async (req) => {
-    const base = requestBase(req);
     const share = verifyLeaderboardShareToken(typeof req.query.share === "string" ? req.query.share : "");
     if (!share) {
       return responseTags(req, {
         title: "See who's leading on Consumed",
         description: "Compare your entertainment stats, climb the leaderboard, and challenge your friends.",
-        image: `${base}/og-leaderboard-rank-v3-1200x630.png`,
       });
     }
     const period = share.period === "weekly"
@@ -510,14 +539,22 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
         ? "I reached #1 on Consumed"
         : `I reached #${share.rank} on Consumed`,
       description: `See their ${share.categoryLabel} rank ${period} — then find your own spot on the Consumed leaderboard.`,
-      image: `${base}/api/leaderboard-rank-image?share=${encodeURIComponent(
-        typeof req.query.share === "string" ? req.query.share : "",
-      )}&v=3`,
     });
   });
 
   route(/^\/play(?:\/.*)?$/, async (req) => {
     const result = req.query.result;
+    const senderId = typeof req.query.from === "string" && /^[0-9a-f-]{36}$/i.test(req.query.from)
+      ? req.query.from
+      : "";
+    const { data: sender } = senderId
+      ? await supabase
+          .from("users")
+          .select("display_name,user_name")
+          .eq("id", senderId)
+          .maybeSingle()
+      : { data: null };
+    const senderName = compactText(sender?.display_name || sender?.user_name, 35).split(/\s+/)[0];
     const title = result === "right"
       ? "I got it right — see how you score"
       : result === "wrong"
@@ -528,7 +565,8 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
       description: result === "right" || result === "wrong"
         ? "Play the same question on Consumed and compare results. No answer spoilers."
         : "Answer trivia, make predictions, and challenge friends who love the same entertainment.",
-      image: `${requestBase(req)}/og-play-challenge-v8-1200x630.png`,
+      cardTitle: `${senderName || "Your friend"} thinks you can beat their score.`,
+      cardDescription: "Can you get this one right?",
     });
   });
 }
