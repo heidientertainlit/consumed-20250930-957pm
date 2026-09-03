@@ -618,7 +618,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
               className="px-6 bg-blue-900 text-white hover:bg-blue-800 disabled:bg-gray-400"
               data-testid="button-add-to-list"
             >
-              {trackMediaMutation.isPending ? "Adding..." : `Add to ${targetListDisplayName || getListDisplayName(defaultListType)}`}
+              {trackMediaMutation.isPending ? "Adding..." : `Add to ${getListDisplayName(defaultListType)}`}
             </Button>
           ) : (
             <div className="flex">

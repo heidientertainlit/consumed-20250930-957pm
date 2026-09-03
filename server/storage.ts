@@ -130,6 +130,8 @@ export class MemStorage implements IStorage {
     const log: ConsumptionLog = {
       ...insertLog,
       id,
+      rating: insertLog.rating ?? null,
+      review: insertLog.review ?? null,
       pointsEarned: this.calculatePointsForLog(insertLog),
       createdAt: new Date(),
       consumedAt: insertLog.consumedAt || new Date(),

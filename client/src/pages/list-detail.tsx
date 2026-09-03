@@ -24,7 +24,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 interface SortableListItemProps {
   item: any;
-  onRemove: (id: string) => void;
+  onRemove?: (id: string) => void;
   onMove?: (item: any) => void;
   isOwner: boolean;
 }
@@ -113,7 +113,7 @@ function SortableListItem({ item, onRemove, onMove, isOwner }: SortableListItemP
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onRemove(item.id)}
+            onClick={() => onRemove?.(item.id)}
             className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 h-auto"
             data-testid={`button-remove-${item.id}`}
           >

@@ -330,7 +330,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   useEffect(() => {
     if (!data || data.length === 0) return;
     const poolIds = [...new Set(
-      data.map(item => item.poolId).filter(id => !!id)
+      data.map(item => item.poolId).filter((id): id is string => Boolean(id))
     )];
     if (poolIds.length === 0) return;
 
@@ -375,7 +375,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
           const topOption = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
           if (!topOption) continue;
           const total = poolVotes.length;
-          const pct = Math.round((counts[topOption] / total) * 100);
+          const pct = Math.round(((counts[topOption] ?? 0) / total) * 100);
           const latestUserId = poolVotes[0]?.user_id;
           const latestUser = latestUserId ? (userMap[latestUserId] || 'Someone') : 'Someone';
           map[poolId] = { userName: latestUser, option: topOption, pct, total };
@@ -642,10 +642,20 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   };
 
   const setTriviaRatingField = (itemId: string, updates: Partial<typeof triviaRatings[string]>) => {
-    setTriviaRatings(prev => ({
-      ...prev,
-      [itemId]: { ratingState: 'idle', rating: 0, reviewText: '', skipped: false, hoverRating: 0, reviewFocused: false, ...(prev[itemId] || {}), ...updates },
-    }));
+    setTriviaRatings(prev => {
+      const current = prev[itemId] ?? {
+        ratingState: 'idle' as const,
+        rating: 0,
+        reviewText: '',
+        skipped: false,
+        hoverRating: 0,
+        reviewFocused: false,
+      };
+      return {
+        ...prev,
+        [itemId]: { ...current, ...updates },
+      };
+    });
   };
 
   const handleTriviaRate = async (item: TriviaItem, rating: number) => {
@@ -847,6 +857,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
           {filteredData.map((item, idx) => {
             const answered = answeredQuestions[item.id];
             const selected = selectedAnswer[item.id];
+            const socialProof = item.poolId ? socialProofMap[item.poolId] : undefined;
             
             return (
               <div key={item.id} ref={(el) => { slideRefs.current[idx] = el; }} className="flex-shrink-0 w-full snap-center h-auto relative">
@@ -888,9 +899,9 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                       </button>
                     ))}
                     {/* Social proof — most popular pick so far */}
-                    {socialProofMap[item.poolId] && (
+                    {socialProof && (
                       <p className="text-[11px] text-gray-400 text-center pt-1">
-                        {socialProofMap[item.poolId].total} {socialProofMap[item.poolId].total === 1 ? 'player has' : 'players have'} already answered — your turn
+                        {socialProof.total} {socialProof.total === 1 ? 'player has' : 'players have'} already answered — your turn
                       </p>
                     )}
                   </div>

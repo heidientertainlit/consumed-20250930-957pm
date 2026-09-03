@@ -2546,7 +2546,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {Array.from({ length: swipeProps.totalPosts }).map((_, i) => (
                 <button
                   key={i}
-                  onClick={(e) => { e.stopPropagation(); swipeProps.navigate!((stackIndex ?? 0) - i); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const currentIndex = stackIndex ?? 0;
+                    if (i === currentIndex) return;
+                    swipeProps.navigate!(i > currentIndex ? -1 : 1);
+                  }}
                   aria-label={`Go to post ${i + 1}`}
                   className={`rounded-full transition-all ${i === (stackIndex ?? 0) ? 'w-2 h-2 bg-purple-500' : 'w-1.5 h-1.5 bg-gray-300'}`}
                 />
@@ -4561,7 +4566,7 @@ function CurrentlyConsumingFeedCard({
   handleCommentInputChange: (postId: string, value: string) => void;
   handleComment: (postId: string, parentCommentId?: string, content?: string) => void;
   commentMutation: any;
-  handleDeleteComment: (commentId: string) => void;
+  handleDeleteComment: (commentId: string, postId: string) => void;
   commentLikesEnabled: boolean;
   handleLikeComment?: (commentId: string) => void;
   handleVoteComment: (commentId: string, voteType: 'up' | 'down') => void;
@@ -4951,10 +4956,7 @@ function CurrentlyConsumingFeedCard({
             <div className="pt-3 mt-2 border-t border-gray-100">
               <CommentsSection
                 postId={post.id}
-                isLiked={likedPosts.has(post.id)}
-                onLike={handleLike}
-                expandedComments={true}
-                onToggleComments={() => {}}
+                session={session}
                 fetchComments={fetchComments}
                 commentInput={commentInputs[post.id] || ''}
                 onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
@@ -9917,10 +9919,7 @@ export default function Feed() {
                             <div className="mt-3 pt-3 border-t border-gray-100">
                           <CommentsSection
                             postId={post.id}
-                            isLiked={likedPosts.has(post.id)}
-                            onLike={handleLike}
-                            expandedComments={true}
-                            onToggleComments={() => {}}
+                            session={session}
                             fetchComments={fetchComments}
                             commentInput={commentInputs[post.id] || ''}
                             onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}

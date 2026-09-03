@@ -96,6 +96,8 @@ export default function SwipeableRatingCards({ posts, onLike, onDelete, likedPos
   const [submittingRating, setSubmittingRating] = useState(false);
   const [userRating, setUserRating] = useState<number | null>(null);
   const [fetchedData, setFetchedData] = useState<Record<string, { image?: string; creator?: string }>>({});
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
   
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
@@ -286,8 +288,7 @@ export default function SwipeableRatingCards({ posts, onLike, onDelete, likedPos
     creator: resolvedCreator || mediaItem.creator
   } : undefined;
 
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isSwiping, setIsSwiping] = useState(false);
+  if (!currentPost || !media) return null;
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;

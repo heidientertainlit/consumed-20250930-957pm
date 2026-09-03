@@ -125,5 +125,8 @@
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.4.0",
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "path-to-regexp": "0.1.13"
   }
 }

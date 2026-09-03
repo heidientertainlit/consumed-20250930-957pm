@@ -21,11 +21,11 @@ import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, T
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { getGameAlignment } from "@/lib/identity-feedback";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import {
   Avatar,
@@ -119,14 +119,14 @@ export default function UserProfile() {
   // Support both /user/:id and /me routes
   const [userMatch, userParams] = useRoute('/user/:id');
   const [meMatch] = useRoute('/me');
-  
+
   // If we're on /me or params.id is "profile" or not set, use current user's ID (own profile)
   // Otherwise use the ID from the URL
-  const viewingUserId = (userMatch && userParams?.id && userParams.id !== 'profile') 
-    ? userParams.id 
+  const viewingUserId = (userMatch && userParams?.id && userParams.id !== 'profile')
+    ? userParams.id
     : user?.id;
   const isOwnProfile = meMatch || !userParams?.id || userParams.id === 'profile' || viewingUserId === user?.id;
-  
+
   // Track if route is still resolving to prevent showing wrong profile
   // Must wait for BOTH userMatch AND userParams.id to be available
   const isRouteResolving = location.startsWith('/user/') && (!userMatch || !userParams?.id);
@@ -200,7 +200,7 @@ export default function UserProfile() {
   const profileHeroRef = useRef<HTMLDivElement>(null);
   const [dnaShareImageUrl, setDnaShareImageUrl] = useState<string | null>(null);
   const [dnaShareSheetTitle, setDnaShareSheetTitle] = useState("Your Entertainment DNA");
-  
+
   // Tracked genre analysis states
   const [trackedGenres, setTrackedGenres] = useState<Record<string, number>>({});
   const [isLoadingTrackedGenres, setIsLoadingTrackedGenres] = useState(false);
@@ -221,7 +221,7 @@ export default function UserProfile() {
   const [isLoadingRanks, setIsLoadingRanks] = useState(false);
   const [showCreateRankDialog, setShowCreateRankDialog] = useState(false);
   const [showCreateListDialog, setShowCreateListDialog] = useState(false);
-  
+
   // Ref to track current fetch request to prevent stale data
   const currentFetchUserIdRef = useRef<string | null>(null);
 
@@ -283,7 +283,7 @@ export default function UserProfile() {
   const [creatorSearchQuery, setCreatorSearchQuery] = useState("");
   const [creatorSearchResults, setCreatorSearchResults] = useState<any[]>([]);
   const [isSearchingCreators, setIsSearchingCreators] = useState(false);
-  
+
   // Followed creators state
   const [followedCreators, setFollowedCreators] = useState<any[]>([]);
   const [isLoadingFollowedCreators, setIsLoadingFollowedCreators] = useState(false);
@@ -496,15 +496,15 @@ export default function UserProfile() {
   // Level 0 = No survey, Level 1 = Survey + 10 items (DNA Summary), Level 2 = Survey + 30 items (Friend Compare)
   const calculateDnaLevelFromStats = (stats: typeof userStats, hasSurvey: boolean) => {
     if (!stats) return { level: 0 as const, itemCount: 0 };
-    
-    const totalItems = (stats.moviesWatched || 0) + (stats.tvShowsWatched || 0) + 
+
+    const totalItems = (stats.moviesWatched || 0) + (stats.tvShowsWatched || 0) +
                        (stats.booksRead || 0) + (stats.gamesPlayed || 0);
-    
+
     if (!hasSurvey) return { level: 0 as const, itemCount: totalItems };
-    
+
     let level: 0 | 1 | 2 = 1;
     if (totalItems >= 10) level = 2;
-    
+
     return { level, itemCount: totalItems };
   };
 
@@ -580,9 +580,9 @@ export default function UserProfile() {
 
       if (response.ok) {
         const data = await response.json();
-        toast({ 
-          title: "Highlight Added!", 
-          description: `Added "${media.title}" to your highlights` 
+        toast({
+          title: "Highlight Added!",
+          description: `Added "${media.title}" to your highlights`
         });
         // Refresh highlights from server
         fetchHighlights();
@@ -618,9 +618,9 @@ export default function UserProfile() {
       });
 
       if (response.ok) {
-        toast({ 
-          title: "Highlight Removed", 
-          description: "Highlight removed successfully" 
+        toast({
+          title: "Highlight Removed",
+          description: "Highlight removed successfully"
         });
         // Refresh highlights from server
         fetchHighlights();
@@ -934,7 +934,7 @@ export default function UserProfile() {
       }
 
       const isCustomList = userLists.some((list: any) => list.id === listType && list.isCustom);
-      const endpoint = isCustomList 
+      const endpoint = isCustomList
         ? "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list"
         : "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media";
 
@@ -989,7 +989,7 @@ export default function UserProfile() {
 
       const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/rate-media', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
@@ -1001,7 +1001,7 @@ export default function UserProfile() {
           rating: rating,
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to rate item');
@@ -1025,7 +1025,7 @@ export default function UserProfile() {
   const updateProgressMutation = useMutation({
     mutationFn: async ({ itemId, progress, total, mode, progressDisplay }: { itemId: string; progress: number; total?: number; mode: string; progressDisplay: string }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
-      
+
       const response = await fetch(
         'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-item-progress',
         {
@@ -1043,7 +1043,7 @@ export default function UserProfile() {
           }),
         }
       );
-      
+
       if (!response.ok) throw new Error('Failed to update progress');
       return { ...await response.json(), progressDisplay };
     },
@@ -1060,7 +1060,7 @@ export default function UserProfile() {
   const moveToListMutation = useMutation({
     mutationFn: async ({ itemId, targetList, listName }: { itemId: string; targetList: string; listName: string }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
-      
+
       const response = await fetch(
         'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/move-item-to-list',
         {
@@ -1076,7 +1076,7 @@ export default function UserProfile() {
           }),
         }
       );
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to move item');
@@ -1123,7 +1123,7 @@ export default function UserProfile() {
         },
         body: JSON.stringify({
           query: searchQuery,
-          type: selectedCategories.includes("All Media") ? null : 
+          type: selectedCategories.includes("All Media") ? null :
                 selectedCategories.includes("Movies") ? "movie" :
                 selectedCategories.includes("TV Shows") ? "tv" :
                 selectedCategories.includes("Books") ? "book" :
@@ -1306,8 +1306,8 @@ export default function UserProfile() {
       if (response.ok) {
         toast({
           title: action === 'follow' ? "Following!" : "Unfollowed",
-          description: action === 'follow' 
-            ? `You're now following ${creator.name}` 
+          description: action === 'follow'
+            ? `You're now following ${creator.name}`
             : `You unfollowed ${creator.name}`,
         });
         // Refresh the followed creators list
@@ -1334,8 +1334,8 @@ export default function UserProfile() {
 
   // Helper to check if a creator is already followed
   const isCreatorFollowed = (creator: any) => {
-    return followedCreators.some(fc => 
-      fc.external_id === creator.external_id && 
+    return followedCreators.some(fc =>
+      fc.external_id === creator.external_id &&
       fc.external_source === creator.external_source
     );
   };
@@ -1722,8 +1722,8 @@ export default function UserProfile() {
 
   // Create a stable fingerprint of list items to detect any changes (not just length)
   const listItemsFingerprint = useMemo(() => {
-    const items = userLists.flatMap(list => 
-      (list.items || []).map(item => `${item.id}-${item.media_id}-${item.updated_at || ''}`)
+    const items = userLists.flatMap(list =>
+      (list.items || []).map((item: any) => `${item.id}-${item.media_id}-${item.updated_at || ''}`)
     );
     return items.sort().join('|');
   }, [userLists]);
@@ -1747,7 +1747,7 @@ export default function UserProfile() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tab = urlParams.get('tab');
-    
+
     if (tab) {
       // Map 'lists' to 'collections' for backward compatibility
       const validTabs = ['stats', 'friends', 'collections', 'activity', 'dna'];
@@ -2104,8 +2104,8 @@ export default function UserProfile() {
       const { data, error } = await supabase
         .from('user_predictions')
         .select(`
-          pool_id, 
-          prediction, 
+          pool_id,
+          prediction,
           points_earned,
           created_at,
           prediction_pools (
@@ -2208,9 +2208,9 @@ export default function UserProfile() {
     try {
       const listSlug = listTitle.toLowerCase().replace(/\s+/g, '-');
       const userId = session?.user?.id || viewingUserId;
-      
+
       console.log('Sharing list:', { listId, listTitle, listSlug, userId });
-      
+
       await copyLink({
         kind: 'list',
         obj: { id: listSlug, user_id: userId }
@@ -2341,10 +2341,10 @@ export default function UserProfile() {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             user_id: session.user?.id,
-            question_id: questionId, 
-            answer_text: answer 
+            question_id: questionId,
+            answer_text: answer
           }),
         });
 
@@ -2451,9 +2451,11 @@ export default function UserProfile() {
         setIsDNASurveyOpen(false);
         await handleGenerateDNAProfile();
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : undefined;
         console.error('Failed to complete survey:', error);
-        console.error('Error details:', error.message, error.stack);
-        alert(`Survey submission failed: ${error.message || 'Unknown error'}. Please try again.`);
+        console.error('Error details:', errorMessage, errorStack);
+        alert(`Survey submission failed: ${errorMessage || 'Unknown error'}. Please try again.`);
       } finally {
         setIsSubmittingSurvey(false);
       }
@@ -2470,6 +2472,21 @@ export default function UserProfile() {
     const currentQ = surveyQuestions[currentQuestion];
     if (!currentQ) return undefined;
     return surveyAnswers.find(a => a.questionId === currentQ.id)?.answer;
+  };
+
+  const getCurrentSurveyAnswers = (): string[] => {
+    const answer = getCurrentSurveyAnswer();
+    return Array.isArray(answer) ? answer : [];
+  };
+
+  const getCurrentSurveyTextAnswer = (): string => {
+    const answer = getCurrentSurveyAnswer();
+    return typeof answer === 'string' ? answer : '';
+  };
+
+  const hasCurrentSurveyAnswer = (): boolean => {
+    const answer = getCurrentSurveyAnswer();
+    return Array.isArray(answer) ? answer.length > 0 : Boolean(answer);
   };
 
   const handleGenerateDNAProfile = async () => {
@@ -2748,7 +2765,7 @@ export default function UserProfile() {
         ctx.font = 'bold 38px Poppins, sans-serif';
         ctx.fillText('app.consumedapp.com', canvas.width / 2, 1750);
 
-        // Bottom text: "@consumedapp" 
+        // Bottom text: "@consumedapp"
         ctx.font = 'bold 38px Poppins, sans-serif';
         ctx.fillText('@consumedapp', canvas.width / 2, 1810);
 
@@ -2795,7 +2812,7 @@ export default function UserProfile() {
     try {
       // Use the session user ID or viewing user ID
       const userId = session?.user?.id || viewingUserId;
-      
+
       await copyLink({
         kind: 'edna',
         obj: {
@@ -2908,7 +2925,7 @@ export default function UserProfile() {
       // Search filter
       if (mediaHistorySearch.trim()) {
         const searchLower = mediaHistorySearch.toLowerCase();
-        const matchesSearch = 
+        const matchesSearch =
           item.title?.toLowerCase().includes(searchLower) ||
           item.creator?.toLowerCase().includes(searchLower);
         if (!matchesSearch) return false;
@@ -3009,7 +3026,7 @@ export default function UserProfile() {
     const labels: any = { all: 'Media Type', movies: 'Movies', tv: 'TV', books: 'Books', music: 'Music', podcasts: 'Podcasts', games: 'Games' };
     return labels[mediaHistoryType] || 'Media Type';
   };
-  
+
   const getDateLabel = () => {
     if (mediaHistoryDate === "anytime") return "Date";
     if (mediaHistoryDate === "this-month") return "This month";
@@ -3044,13 +3061,13 @@ export default function UserProfile() {
   // Handle import file
   const handleFileImport = async () => {
     if (!importFile || !session?.access_token) return;
-    
+
     setIsUploading(true);
-    
+
     try {
       const formData = new FormData();
       formData.append('file', importFile);
-      
+
       const response = await fetch(
         'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/import-media',
         {
@@ -3061,7 +3078,7 @@ export default function UserProfile() {
           body: formData,
         }
       );
-      
+
       if (response.ok) {
         const result = await response.json();
         toast({
@@ -3130,16 +3147,16 @@ export default function UserProfile() {
       game: 'Gaming',
       sports: 'Sports'
     };
-    
+
     const sortedTypes = Object.entries(canonicalMediaTypeCounts)
       .filter(([_, count]) => (count as number) > 0)
       .sort((a, b) => (b[1] as number) - (a[1] as number))
       .slice(0, 2)
       .map(([type]) => typeLabels[type] || type);
-    
+
     return sortedTypes;
   };
-  
+
   const mostlyIntoTypes = getMostlyIntoTypes();
 
   // Generate years and months for filter dropdowns
@@ -3156,8 +3173,10 @@ export default function UserProfile() {
   const totalItemsLogged = allDnaItems.length;
   const recentDnaItems = allDnaItems.slice(0, 10);
   const recentDnaTypeCounts = getMediaTypeCounts(recentDnaItems);
-  const [dominantRecentType, dominantRecentCount] = Object.entries(recentDnaTypeCounts)
-    .sort((a, b) => Number(b[1]) - Number(a[1]))[0] || ['movie', 0];
+  const [dominantRecentType, dominantRecentCount] = (
+    Object.entries(recentDnaTypeCounts)
+      .sort((a, b) => Number(b[1]) - Number(a[1]))[0] || ['movie', 0]
+  ) as [string, number];
   const dnaTypeLabels: Record<string, string> = {
     movie: 'movies', tv: 'TV', book: 'books', book_series: 'book series',
     music: 'music', podcast: 'podcasts', game: 'games', sports: 'sports', youtube: 'YouTube',
@@ -3542,7 +3561,7 @@ export default function UserProfile() {
           {!isOwnProfile && (
             <div className="mt-6">
               {!user ? (
-                <Button 
+                <Button
                   onClick={() => setIsAuthModalOpen(true)}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
                   data-testid="button-signin-to-connect"
@@ -3554,7 +3573,7 @@ export default function UserProfile() {
                 <div className="flex items-center gap-3 flex-wrap">
                   {friendshipStatus === 'friends' ? (
                     <>
-                      <Button 
+                      <Button
                         disabled
                         className="bg-gray-300 text-gray-600 rounded-full px-5 py-3 text-sm font-semibold cursor-not-allowed"
                         data-testid="button-already-friends"
@@ -3575,7 +3594,7 @@ export default function UserProfile() {
                       )}
                     </>
                   ) : friendshipStatus === 'pending_sent' ? (
-                    <Button 
+                    <Button
                       disabled
                       className="bg-gray-300 text-gray-600 rounded-full px-8 py-3 text-base font-semibold cursor-not-allowed"
                       data-testid="button-request-pending"
@@ -3584,7 +3603,7 @@ export default function UserProfile() {
                       Request Pending
                     </Button>
                   ) : friendshipStatus === 'pending_received' ? (
-                    <Button 
+                    <Button
                       onClick={() => setLocation('/people?tab=friends')}
                       className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
                       data-testid="button-accept-request"
@@ -3593,7 +3612,7 @@ export default function UserProfile() {
                       Accept Friend Request
                     </Button>
                   ) : (
-                    <Button 
+                    <Button
                       onClick={() => viewingUserId && sendFriendRequest(viewingUserId)}
                       disabled={isSendingRequest || !viewingUserId}
                       className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -4990,8 +5009,8 @@ export default function UserProfile() {
         {isOwnProfile && (
           <div className="px-4 pb-32 pt-12">
             <div className="flex justify-center gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-gray-300 text-purple-600 hover:bg-purple-50 hover:border-purple-300 min-h-[44px]"
                 onClick={() => setIsFeedbackOpen(true)}
                 data-testid="button-feedback"
@@ -4999,8 +5018,8 @@ export default function UserProfile() {
                 <MessageSquarePlus size={16} className="mr-2" />
                 Share Feedback
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-gray-300 text-red-600 hover:bg-red-50 hover:border-red-300 min-h-[44px]"
                 onClick={async (e) => {
                   e.preventDefault();
@@ -5040,7 +5059,7 @@ export default function UserProfile() {
                   if (!firstConfirm) return;
                   const secondConfirm = confirm('This cannot be undone. All your data, lists, reviews, and friends will be permanently removed. Continue?');
                   if (!secondConfirm) return;
-                  
+
                   try {
                     const session = (await supabase.auth.getSession()).data.session;
                     if (!session) {
@@ -5085,9 +5104,9 @@ export default function UserProfile() {
         )}
         </div>
 
-      <ConsumptionTracker 
-        isOpen={isTrackModalOpen} 
-        onClose={() => setIsTrackModalOpen(false)} 
+      <ConsumptionTracker
+        isOpen={isTrackModalOpen}
+        onClose={() => setIsTrackModalOpen(false)}
       />
 
       {/* Highlight Modal with Media Search */}
@@ -5136,7 +5155,7 @@ export default function UserProfile() {
                             setSelectedCategories(newCategories);
                           }
                         } else {
-                          setSelectedCategories(prev => 
+                          setSelectedCategories(prev =>
                             prev.filter(cat => cat !== category && cat !== "All Media")
                           );
                         }
@@ -5206,13 +5225,13 @@ export default function UserProfile() {
                             <div className="flex-1 min-w-0">
                               <h5 className="font-semibold text-gray-900 truncate">{result.title}</h5>
                               <p className="text-sm text-gray-600 truncate">
-                                {result.type === 'tv' ? 'TV Show' : 
-                                 result.type === 'movie' ? 'Movie' : 
-                                 result.type === 'book' ? 'Book' : 
-                                 result.type === 'music' ? 'Music' : 
-                                 result.type === 'podcast' ? 'Podcast' : 
-                                 result.type === 'game' ? 'Game' : 
-                                 result.type === 'sports' ? 'Sports' : 
+                                {result.type === 'tv' ? 'TV Show' :
+                                 result.type === 'movie' ? 'Movie' :
+                                 result.type === 'book' ? 'Book' :
+                                 result.type === 'music' ? 'Music' :
+                                 result.type === 'podcast' ? 'Podcast' :
+                                 result.type === 'game' ? 'Game' :
+                                 result.type === 'sports' ? 'Sports' :
                                  result.type === 'youtube' ? 'YouTube' : result.type}
                               </p>
                               {result.creator && (
@@ -5253,13 +5272,13 @@ export default function UserProfile() {
                       <div>
                         <h5 className="font-medium text-gray-900">{selectedMedia.title}</h5>
                         <p className="text-sm text-gray-600">
-                          {selectedMedia.type === 'tv' ? 'TV Show' : 
-                           selectedMedia.type === 'movie' ? 'Movie' : 
-                           selectedMedia.type === 'book' ? 'Book' : 
-                           selectedMedia.type === 'music' ? 'Music' : 
-                           selectedMedia.type === 'podcast' ? 'Podcast' : 
-                           selectedMedia.type === 'game' ? 'Game' : 
-                           selectedMedia.type === 'sports' ? 'Sports' : 
+                          {selectedMedia.type === 'tv' ? 'TV Show' :
+                           selectedMedia.type === 'movie' ? 'Movie' :
+                           selectedMedia.type === 'book' ? 'Book' :
+                           selectedMedia.type === 'music' ? 'Music' :
+                           selectedMedia.type === 'podcast' ? 'Podcast' :
+                           selectedMedia.type === 'game' ? 'Game' :
+                           selectedMedia.type === 'sports' ? 'Sports' :
                            selectedMedia.type === 'youtube' ? 'YouTube' : selectedMedia.type}
                         </p>
                         {selectedMedia.creator && (
@@ -5356,7 +5375,7 @@ export default function UserProfile() {
                     {/* Text Input */}
                     {surveyQuestions[currentQuestion].question_type === 'text' && (
                       <textarea
-                        value={getCurrentSurveyAnswer() || ""}
+                        value={getCurrentSurveyTextAnswer()}
                         onChange={(e) => handleSurveyAnswer(e.target.value)}
                         placeholder="Please share your thoughts..."
                         className="w-full p-2.5 border border-gray-200 rounded-lg focus:border-purple-300 focus:ring-purple-300 min-h-[90px] resize-vertical text-sm text-black bg-white placeholder:text-gray-500"
@@ -5366,25 +5385,25 @@ export default function UserProfile() {
 
                     {/* Single Select */}
                     {surveyQuestions[currentQuestion].question_type === 'select' && (
-                      <RadioGroup 
-                        value={getCurrentSurveyAnswer() || ""} 
+                      <RadioGroup
+                        value={getCurrentSurveyTextAnswer()}
                         onValueChange={handleSurveyAnswer}
                         className="space-y-2"
                       >
-                        {surveyQuestions[currentQuestion].options?.map((option, index) => {
+                        {surveyQuestions[currentQuestion].options?.map((option: string, index: number) => {
                           const isSelected = getCurrentSurveyAnswer() === option;
                           return (
-                            <div 
-                              key={index} 
+                            <div
+                              key={index}
                               className={`flex items-center space-x-2 px-3 py-2.5 rounded-full border-2 transition-all cursor-pointer ${
-                                isSelected 
-                                  ? 'border-purple-500 bg-purple-100 shadow-sm' 
+                                isSelected
+                                  ? 'border-purple-500 bg-purple-100 shadow-sm'
                                   : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50'
                               }`}
                             >
                               <RadioGroupItem value={option} id={`option-${index}`} className="flex-shrink-0" />
-                              <Label 
-                                htmlFor={`option-${index}`} 
+                              <Label
+                                htmlFor={`option-${index}`}
                                 className="text-gray-900 text-sm leading-tight cursor-pointer flex-1 font-medium"
                                 data-testid={`option-${option}`}
                               >
@@ -5399,16 +5418,16 @@ export default function UserProfile() {
                     {/* Multi-Select */}
                     {surveyQuestions[currentQuestion].question_type === 'multi-select' && (
                       <div className="space-y-2">
-                        {surveyQuestions[currentQuestion].options?.map((option, index) => {
-                          const currentAnswers = Array.isArray(getCurrentSurveyAnswer()) ? getCurrentSurveyAnswer() : [];
+                        {surveyQuestions[currentQuestion].options?.map((option: string, index: number) => {
+                          const currentAnswers = getCurrentSurveyAnswers();
                           const isChecked = currentAnswers.includes(option);
 
                           return (
-                            <div 
-                              key={index} 
+                            <div
+                              key={index}
                               className={`flex items-center space-x-2 px-3 py-2.5 rounded-full border-2 transition-all cursor-pointer ${
-                                isChecked 
-                                  ? 'border-purple-500 bg-purple-100 shadow-sm' 
+                                isChecked
+                                  ? 'border-purple-500 bg-purple-100 shadow-sm'
                                   : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50'
                               }`}
                             >
@@ -5417,7 +5436,7 @@ export default function UserProfile() {
                                 id={`multi-option-${index}`}
                                 checked={isChecked}
                                 onChange={(e) => {
-                                  const currentAnswers = Array.isArray(getCurrentSurveyAnswer()) ? [...getCurrentSurveyAnswer()] : [];
+                                  const currentAnswers = [...getCurrentSurveyAnswers()];
                                   if (e.target.checked) {
                                     currentAnswers.push(option);
                                   } else {
@@ -5431,8 +5450,8 @@ export default function UserProfile() {
                                 className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
                                 data-testid={`multi-option-${option}`}
                               />
-                              <Label 
-                                htmlFor={`multi-option-${index}`} 
+                              <Label
+                                htmlFor={`multi-option-${index}`}
                                 className="text-gray-900 text-sm leading-tight cursor-pointer flex-1 font-medium"
                               >
                                 {option}
@@ -5479,11 +5498,11 @@ export default function UserProfile() {
 
                 <Button
                   onClick={handleSurveyNext}
-                  disabled={isSubmittingSurvey || surveyQuestions.length === 0 || !getCurrentSurveyAnswer() || (Array.isArray(getCurrentSurveyAnswer()) && getCurrentSurveyAnswer().length === 0)}
+                  disabled={isSubmittingSurvey || surveyQuestions.length === 0 || !hasCurrentSurveyAnswer()}
                   size="sm"
                   className={`text-white flex items-center space-x-1 disabled:opacity-50 px-2.5 py-1.5 h-8 transition-all ${
-                    isSubmittingSurvey 
-                      ? 'bg-purple-800 scale-95' 
+                    isSubmittingSurvey
+                      ? 'bg-purple-800 scale-95'
                       : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 active:scale-95 active:brightness-75'
                   }`}
                   data-testid="next-question-button"
@@ -5988,9 +6007,9 @@ export default function UserProfile() {
 
 
       {/* Quick Add Modal */}
-      <QuickAddModal 
-        isOpen={isQuickAddOpen} 
-        onClose={() => setIsQuickAddOpen(false)} 
+      <QuickAddModal
+        isOpen={isQuickAddOpen}
+        onClose={() => setIsQuickAddOpen(false)}
       />
 
       {/* Feedback Dialog */}

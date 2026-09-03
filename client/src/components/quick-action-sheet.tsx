@@ -340,7 +340,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   const resetAll = () => {
     setSelectedIntent(null);
     setSelectedAction(null);
-    setSayMode("thought");
+    setSayMode("review");
     setContentText("");
     setContainsSpoilers(false);
     setSelectedMedia(null);

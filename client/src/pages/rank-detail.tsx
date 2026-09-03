@@ -168,8 +168,9 @@ export default function RankDetail() {
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination || !rankData?.items) return;
     
-    const items = Array.from(rankData.items);
+    const items = Array.from(rankData.items) as RankItem[];
     const [reorderedItem] = items.splice(result.source.index, 1);
+    if (!reorderedItem) return;
     items.splice(result.destination.index, 0, reorderedItem);
     
     const updatedItems = items.map((item, index) => ({

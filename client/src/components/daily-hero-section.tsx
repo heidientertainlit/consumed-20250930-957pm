@@ -695,7 +695,7 @@ function TodaysPlayGame({
   onShare: (answers: { correct: boolean; category?: string; picked?: string }[], socialProof?: number | null) => void;
 }) {
   const [, setLocation] = useLocation();
-  const { session } = useAuth();
+  const { user, session } = useAuth();
   const { toast } = useToast();
   const [qIndex, setQIndex] = useState(0);
   const [phase, setPhase] = useState<'playing' | 'result' | 'done'>('playing');

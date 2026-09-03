@@ -450,6 +450,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
     // Book series: toggle inline expansion and fetch individual books on demand
     if (result.type === 'book_series') {
       const sid = result.external_id;
+      if (!sid) return;
       if (expandedSeriesId === sid) {
         setExpandedSeriesId(null);
       } else {
@@ -628,7 +629,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
                         creator: media.creator,
                       };
                       const isSeriesExpanded = media.type === 'book_series' && expandedSeriesId === media.external_id;
-                      const seriesBooks = seriesBooksMap[media.external_id] || [];
+                      const seriesBooks = media.external_id ? (seriesBooksMap[media.external_id] || []) : [];
                       const isLoadingSeries = loadingSeriesId === media.external_id;
                       return (
                         <div key={`${media.external_id}-${idx}`}>
@@ -688,7 +689,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
                               ) : seriesBooks.length === 0 ? (
                                 <p className="px-4 py-3 text-xs text-gray-500">No individual books found.</p>
                               ) : (
-                                seriesBooks.map((book, bIdx) => {
+                                seriesBooks.map((book: MediaResult, bIdx: number) => {
                                   const bPoster = (book as any).poster_url || (book as any).image_url || book.image || '';
                                   const bObj = { title: book.title, mediaType: 'book', imageUrl: bPoster, externalId: book.external_id, externalSource: book.external_source || 'googlebooks', creator: book.creator };
                                   return (
