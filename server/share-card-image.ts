@@ -121,10 +121,12 @@ function renderShareCardSvg(payload: ShareCardPayload): string {
   const titleLines = wrapText(payload.title, 25, 3);
   const titleFontSize = titleLines.length === 3 ? 46 : 52;
   const titleLineHeight = titleFontSize + 10;
+  const isPlayCard = payload.kind === "play";
+  const titleY = isPlayCard ? 184 : 220;
   const titleTspans = titleLines
     .map((line, index) => `<tspan x="58" dy="${index === 0 ? 0 : titleLineHeight}">${escapeXml(line)}</tspan>`)
     .join("");
-  const descriptionY = 220 + (titleLines.length - 1) * titleLineHeight + 58;
+  const descriptionY = titleY + (titleLines.length - 1) * titleLineHeight + 58;
   const showVisual = payload.kind !== "leaderboard" && titleLines.join(" ").length < 55;
   const description = compact(payload.description, showVisual ? 46 : 66);
 
@@ -154,15 +156,14 @@ function renderShareCardSvg(payload: ShareCardPayload): string {
     <circle cx="940" cy="220" r="330" fill="url(#glow)"/>
     <image href="data:image/png;base64,${assets.logo}" x="58" y="42" width="285" height="66" preserveAspectRatio="xMinYMid meet"/>
 
-    <circle cx="1102" cy="74" r="31" fill="none" stroke="#8b5cf6" stroke-opacity=".5" stroke-width="2"/>
-    <path d="M1088 78l25-22m0 0v17m0-17h-17M1114 82c-12-3-24 2-31 13" fill="none" stroke="#c084fc" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    ${isPlayCard ? "" : `
+      <rect x="58" y="124" width="${Math.max(180, payload.eyebrow.length * 13 + 52)}" height="42" rx="21" fill="#7c3aed" fill-opacity=".14" stroke="#a855f7" stroke-opacity=".18"/>
+      <circle cx="82" cy="145" r="9" fill="url(#accent)"/>
+      <text x="102" y="152" fill="#d8b4fe" font-family="Poppins" font-size="17" font-weight="600" letter-spacing=".5">${escapeXml(payload.eyebrow)}</text>
+    `}
 
-    <rect x="58" y="124" width="${Math.max(180, payload.eyebrow.length * 13 + 52)}" height="42" rx="21" fill="#7c3aed" fill-opacity=".14" stroke="#a855f7" stroke-opacity=".18"/>
-    <circle cx="82" cy="145" r="9" fill="url(#accent)"/>
-    <text x="102" y="152" fill="#d8b4fe" font-family="Poppins" font-size="17" font-weight="600" letter-spacing=".5">${escapeXml(payload.eyebrow)}</text>
-
-    <text x="58" y="220" fill="#fff" font-family="Poppins" font-size="${titleFontSize}" font-weight="700" letter-spacing="-1.8">${titleTspans}</text>
-    <text x="58" y="${descriptionY}" fill="#d7d2de" font-family="Poppins" font-size="24" font-weight="400">${escapeXml(description)}</text>
+    <text x="58" y="${titleY}" fill="#fff" font-family="Poppins" font-size="${titleFontSize}" font-weight="700" letter-spacing="-1.8">${titleTspans}</text>
+    ${isPlayCard ? "" : `<text x="58" y="${descriptionY}" fill="#d7d2de" font-family="Poppins" font-size="24" font-weight="400">${escapeXml(description)}</text>`}
     ${showVisual ? visualSvg(payload.kind) : ""}
 
     <g transform="translate(58 407)">
