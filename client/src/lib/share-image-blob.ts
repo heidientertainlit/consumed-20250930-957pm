@@ -3,15 +3,18 @@ export type ShareImageResult = "shared" | "downloaded" | "failed";
 interface ShareImageBlobOptions {
   fileName: string;
   title: string;
+  text?: string;
 }
 
 export async function shareImageBlob(
   blob: Blob,
-  { fileName, title }: ShareImageBlobOptions,
+  { fileName, title, text }: ShareImageBlobOptions,
 ): Promise<ShareImageResult> {
+  let nativeShareAvailable = false;
   try {
     const cap = (window as any).Capacitor;
     if (cap?.isNativePlatform?.() && cap.Plugins?.Share && cap.Plugins?.Filesystem) {
+      nativeShareAvailable = true;
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve((reader.result as string).split(",")[1]);
@@ -23,11 +26,17 @@ export async function shareImageBlob(
         data: base64,
         directory: "CACHE",
       });
-      await cap.Plugins.Share.share({ title, files: [written.uri] });
+      await cap.Plugins.Share.share({
+        title,
+        ...(text ? { text } : {}),
+        files: [written.uri],
+      });
       return "shared";
     }
   } catch (error: any) {
     if (error?.message?.toLowerCase?.().includes("cancel")) return "failed";
+    console.error("Native image share failed:", error);
+    if (nativeShareAvailable) return "failed";
   }
 
   try {
@@ -36,7 +45,7 @@ export async function shareImageBlob(
       typeof navigator.share === "function"
       && (!navigator.canShare || navigator.canShare({ files: [file] }))
     ) {
-      await navigator.share({ files: [file], title });
+      await navigator.share({ files: [file], title, ...(text ? { text } : {}) });
       return "shared";
     }
   } catch (error: any) {

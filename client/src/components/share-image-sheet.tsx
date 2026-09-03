@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Share2, X, Check, Download } from "lucide-react";
 import { APP_BASE } from "@/lib/share";
+import { shareImageBlob } from "@/lib/share-image-blob";
 
 interface ShareImageSheetProps {
   open: boolean;
@@ -28,9 +29,14 @@ export function ShareImageSheet({
   const [shared, setShared] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const imageFile = async () => {
+  const imageBlob = async () => {
     if (!imageDataUrl) return null;
-    const blob = await (await fetch(imageDataUrl)).blob();
+    return (await fetch(imageDataUrl)).blob();
+  };
+
+  const imageFile = async () => {
+    const blob = await imageBlob();
+    if (!blob) return null;
     return new File([blob], fileName, { type: blob.type || "image/png" });
   };
 
@@ -49,17 +55,16 @@ export function ShareImageSheet({
   };
 
   const handleShareImage = async () => {
-    const file = await imageFile();
     try {
-      if (file && navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          title,
-          text: shareText || "Check out my Entertainment DNA on Consumed!",
-          files: [file],
-        });
-      } else {
-        await handleShareLink();
-      }
+      const blob = await imageBlob();
+      if (!blob) throw new Error("Share image is not ready");
+      const result = await shareImageBlob(blob, {
+        fileName,
+        title,
+        text: shareText || "Check out my Entertainment DNA on Consumed!",
+      });
+      if (result === "downloaded") setNotice("Image saved — attach it from Photos");
+      else if (result === "failed") setNotice("Could not share — try saving the image instead");
     } catch (error: any) {
       if (error?.name !== "AbortError") setNotice("Could not share — try saving the image instead");
     }
