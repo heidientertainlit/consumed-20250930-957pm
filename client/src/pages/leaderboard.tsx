@@ -702,27 +702,33 @@ export default function Leaderboard() {
           See how you stack up.
         </p>
 
-        <div className="flex justify-center gap-2 mt-4">
-          <Button
-            size="sm"
-            variant={scope === 'global' ? 'default' : 'outline'}
+        <div className="mx-auto mt-4 flex w-fit rounded-full border border-white/15 bg-white/10 p-1">
+          <button
+            type="button"
             onClick={() => setScope('global')}
-            className={scope === 'global' ? 'bg-purple-600 hover:bg-purple-700 border-purple-600' : 'border-white/30 text-white hover:bg-white/10 bg-transparent'}
+            className={`flex min-h-9 items-center rounded-full px-4 text-sm font-semibold transition-all ${
+              scope === 'global'
+                ? 'bg-white text-[#5b3879] shadow-sm'
+                : 'text-white/65 hover:bg-white/10 hover:text-white'
+            }`}
             data-testid="button-scope-global"
           >
             <Globe size={14} className="mr-1" />
             Global
-          </Button>
-          <Button
-            size="sm"
-            variant={scope === 'friends' ? 'default' : 'outline'}
+          </button>
+          <button
+            type="button"
             onClick={() => setScope('friends')}
-            className={scope === 'friends' ? 'bg-purple-600 hover:bg-purple-700 border-purple-600' : 'border-white/30 text-white hover:bg-white/10 bg-transparent'}
+            className={`flex min-h-9 items-center rounded-full px-4 text-sm font-semibold transition-all ${
+              scope === 'friends'
+                ? 'bg-white text-[#5b3879] shadow-sm'
+                : 'text-white/65 hover:bg-white/10 hover:text-white'
+            }`}
             data-testid="button-scope-friends"
           >
             <Users size={14} className="mr-1" />
             Friends
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -738,15 +744,15 @@ export default function Leaderboard() {
           </div>
         )}
 
-        <div className="flex justify-center gap-2 mb-6">
+        <div className="mb-6 flex justify-center gap-7 border-b border-[#e4dfe5]">
           {(['weekly', 'monthly', 'all_time'] as const).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-3 py-1 text-sm rounded-full transition-colors ${
+              className={`relative px-1 pb-2.5 pt-1 text-sm font-medium transition-colors after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:rounded-full ${
                 period === p 
-                  ? 'bg-purple-100 text-purple-700 font-medium' 
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'text-[#6d3d91] after:bg-[#7c3aed]'
+                  : 'text-[#8b818e] after:bg-transparent hover:text-[#4d4051]'
               }`}
               data-testid={`button-period-${p}`}
             >
@@ -777,67 +783,42 @@ export default function Leaderboard() {
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full mb-4 bg-white border border-gray-200 p-1 h-auto flex flex-wrap justify-center gap-1">
+            <TabsList className="mb-4 flex h-auto w-full rounded-[14px] border-0 bg-[#eee8f0] p-1">
               <TabsTrigger 
                 value="engagement" 
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
+                className="min-h-11 min-w-0 flex-1 gap-1.5 rounded-[10px] px-2 py-2 text-sm font-semibold text-[#817487] shadow-none hover:bg-white/35 hover:text-[#4d4051] data-[state=active]:bg-[#fffdfb] data-[state=active]:text-[#5b3879] data-[state=active]:shadow-[0_2px_8px_rgba(48,27,62,0.12)]"
                 data-testid="tab-engagement"
               >
-                <TrendingUp size={14} className="mr-1" />
+                <TrendingUp size={16} />
                 Engagers
               </TabsTrigger>
               <TabsTrigger 
                 value="consumption" 
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
+                className="min-h-11 min-w-0 flex-1 gap-1.5 rounded-[10px] px-2 py-2 text-sm font-semibold text-[#817487] shadow-none hover:bg-white/35 hover:text-[#4d4051] data-[state=active]:bg-[#fffdfb] data-[state=active]:text-[#5b3879] data-[state=active]:shadow-[0_2px_8px_rgba(48,27,62,0.12)]"
                 data-testid="tab-consumption"
               >
-                <Star size={14} className="mr-1" />
+                <Star size={16} />
                 Media
               </TabsTrigger>
               <TabsTrigger 
                 value="games" 
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
+                className="min-h-11 min-w-0 flex-1 gap-1.5 rounded-[10px] px-2 py-2 text-sm font-semibold text-[#817487] shadow-none hover:bg-white/35 hover:text-[#4d4051] data-[state=active]:bg-[#fffdfb] data-[state=active]:text-[#5b3879] data-[state=active]:shadow-[0_2px_8px_rgba(48,27,62,0.12)]"
                 data-testid="tab-games"
               >
-                <Target size={14} className="mr-1" />
+                <Target size={16} />
                 Games
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="engagement">
-              {/* ── Top Engagers: Overall first, then by genre ── */}
-              <div className="flex gap-2 overflow-x-auto pb-2 mb-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {['overall', ...((leaderboardData?.categories as any)?.genre_engagers || []).map((b: any) => b.genre)].map((key: string) => (
-                  <button
-                    key={key}
-                    onClick={() => setEngagerBoard(key)}
-                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium capitalize transition-colors ${
-                      engagerBoard === key
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-white border border-gray-200 text-gray-600'
-                    }`}
-                  >
-                    {key === 'overall' ? 'Overall' : key}
-                  </button>
-                ))}
-              </div>
-              {engagerBoard === 'overall'
-                ? renderCategoryCard(
-                    'Overall Top Engagers',
-                    TrendingUp,
-                    leaderboardData?.categories?.overall,
-                    'Top Engagers',
-                    'Start posting and engaging to appear here!',
-                    'from-purple-600 to-pink-600'
-                  )
-                : renderCategoryCard(
-                    `Top Engagers · ${engagerBoard.charAt(0).toUpperCase()}${engagerBoard.slice(1)}`,
-                    TrendingUp,
-                    ((leaderboardData?.categories as any)?.genre_engagers || []).find((b: any) => b.genre === engagerBoard)?.entries,
-                    `Top Engagers ${engagerBoard}`,
-                    'Post and react to titles in this genre to appear here!',
-                    'from-purple-600 to-pink-600'
-                  )}
+              {renderCategoryCard(
+                'Overall Top Engagers',
+                TrendingUp,
+                leaderboardData?.categories?.overall,
+                'Top Engagers',
+                'Start posting and engaging to appear here!',
+                'from-purple-600 to-pink-600'
+              )}
 
               {/* ── Conversation Starters / Top Commenters / Room Regulars — hidden for now (same people on every board) ── */}
               {false && (
