@@ -169,15 +169,21 @@ function renderShareCardSvg(payload: ShareCardPayload): string {
     ${isPlayCard ? "" : `<text x="58" y="${descriptionY}" fill="#d7d2de" font-family="Poppins" font-size="24" font-weight="400">${escapeXml(description)}</text>`}
     ${showVisual ? visualSvg(payload.kind) : ""}
 
-    <g transform="translate(58 407)">
-      <rect width="134" height="38" rx="19" fill="#ffffff" fill-opacity=".055" stroke="#ffffff" stroke-opacity=".1"/>
-      <rect x="147" width="78" height="38" rx="19" fill="#ffffff" fill-opacity=".055" stroke="#ffffff" stroke-opacity=".1"/>
-      <rect x="238" width="112" height="38" rx="19" fill="#ffffff" fill-opacity=".055" stroke="#ffffff" stroke-opacity=".1"/>
-      <rect x="363" width="112" height="38" rx="19" fill="#ffffff" fill-opacity=".055" stroke="#ffffff" stroke-opacity=".1"/>
-      <text x="67" y="25" text-anchor="middle" fill="#ede9f3" font-family="Poppins" font-size="15" font-weight="600">MOVIES</text>
-      <text x="186" y="25" text-anchor="middle" fill="#ede9f3" font-family="Poppins" font-size="15" font-weight="600">TV</text>
-      <text x="294" y="25" text-anchor="middle" fill="#ede9f3" font-family="Poppins" font-size="15" font-weight="600">BOOKS</text>
-      <text x="419" y="25" text-anchor="middle" fill="#ede9f3" font-family="Poppins" font-size="15" font-weight="600">MUSIC</text>
+    <g transform="translate(64 399)" fill="none" stroke="#d8d0e3" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".8">
+      <g transform="translate(0 0)">
+        <rect x="0" y="4" width="38" height="28" rx="5"/>
+        <path d="M5 4l6 8 7-8 7 8 7-8M8 20h22"/>
+      </g>
+      <g transform="translate(78 0)">
+        <rect x="0" y="6" width="38" height="25" rx="5"/>
+        <path d="M13 1l6 5 6-5M13 36h12"/>
+      </g>
+      <g transform="translate(156 0)">
+        <path d="M2 5c9-3 16-1 18 3v27c-3-4-10-6-18-3V5ZM38 5c-9-3-16-1-18 3v27c3-4 10-6 18-3V5Z"/>
+      </g>
+      <g transform="translate(238 0)">
+        <path d="M27 3v23a9 9 0 1 1-6-8V8l17-4v18a9 9 0 1 1-6-8"/>
+      </g>
     </g>
 
     <path d="M36 476h1128" stroke="#7c3aed" stroke-width="2" opacity=".72"/>

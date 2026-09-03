@@ -106,10 +106,11 @@ export async function shareTrivia(opts: { poolId: string; question?: string; fro
     search.set('challenge', opts.poolId);
   }
   if (opts.result) search.set('result', opts.result);
+  search.set('card', '2');
   const query = search.toString();
   const url = opts.daily
     ? `${APP_BASE}/play${query ? `?${query}` : ''}`
-    : `${APP_BASE}/play?mode=trivia&challenge=${encodeURIComponent(opts.poolId)}${opts.fromUserId ? `&from=${encodeURIComponent(opts.fromUserId)}` : ''}${opts.result ? `&result=${opts.result}` : ''}`;
+    : `${APP_BASE}/play?mode=trivia&challenge=${encodeURIComponent(opts.poolId)}${opts.fromUserId ? `&from=${encodeURIComponent(opts.fromUserId)}` : ''}${opts.result ? `&result=${opts.result}` : ''}&card=2`;
   const resultText = opts.result === 'right'
     ? 'I got this one right.'
     : opts.result === 'wrong'

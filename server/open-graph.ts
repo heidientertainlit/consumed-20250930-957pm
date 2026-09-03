@@ -237,7 +237,7 @@ function responseTags(
     title,
     description,
     image: cardToken
-      ? `${requestBase(req)}/api/share-card-image?token=${encodeURIComponent(cardToken)}&v=1`
+      ? `${requestBase(req)}/api/share-card-image?token=${encodeURIComponent(cardToken)}&v=2`
       : values.image,
     url: values.url || requestUrl(req),
   };
