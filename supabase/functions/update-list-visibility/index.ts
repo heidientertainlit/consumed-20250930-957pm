@@ -26,7 +26,7 @@ serve(async (req) => {
 
     // Get auth user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    console.log("Auth check result:", { user: user?.email, userError });
+    console.log("Auth check result:", { userId: user?.id, userError });
     
     if (!user || userError) {
       console.error("Authentication failed:", userError);

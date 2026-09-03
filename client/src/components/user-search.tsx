@@ -11,7 +11,6 @@ interface User {
   id: string;
   user_name: string;
   display_name?: string;
-  email?: string;
 }
 
 interface UserSearchProps {
@@ -30,9 +29,9 @@ export default function UserSearch({ onSelectUser, excludeUserIds = [], placehol
       if (!searchTerm || searchTerm.length < 2) return [];
       if (!session?.access_token) return [];
 
-      // Use Supabase client to search users table directly
+      // Search the intentionally public profile projection only.
       const { data, error } = await supabase
-        .from('users')
+        .from('public_user_profiles')
         .select('id, user_name, display_name')
         .or(`user_name.ilike.%${searchTerm}%,display_name.ilike.%${searchTerm}%`)
         .limit(10);

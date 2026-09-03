@@ -136,7 +136,7 @@ export default function DnaClashFeedCard({
       const voterIds = [...new Set(data.map((r: any) => r.user_id as string))];
       if (voterIds.length > 0) {
         const { data: usersData } = await supabase
-          .from('users')
+          .from('public_user_profiles')
           .select('id, display_name, user_name, first_name, last_name')
           .in('id', voterIds);
         const usersMap = new Map((usersData || []).map((u: any) => [u.id, u]));
@@ -241,7 +241,8 @@ export default function DnaClashFeedCard({
     if (!currentUserId) return;
     setOptingOut(true);
     try {
-      await supabase.from('users').update({ clash_opt_out: true }).eq('id', currentUserId);
+      const { error } = await supabase.rpc('set_my_clash_opt_out', { p_opt_out: true });
+      if (error) throw error;
       setOptedOut(true);
       setShowOptOutConfirm(false);
       onOptOut?.();

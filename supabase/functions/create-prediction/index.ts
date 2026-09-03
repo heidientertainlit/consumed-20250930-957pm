@@ -49,10 +49,10 @@ serve(async (req) => {
     }
 
     // Look up app user by email
-    let { data: appUser, error: appUserError } = await supabase
+    let { data: appUser, error: appUserError } = await adminClient
       .from('users')
       .select('id, user_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
     if (appUserError || !appUser) {

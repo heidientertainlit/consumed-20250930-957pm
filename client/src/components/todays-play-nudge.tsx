@@ -103,7 +103,7 @@ export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'ligh
       if (perfectIds.length === 0) return [];
 
       const { data: users } = await supabase
-        .from('users')
+        .from('public_user_profiles')
         .select('id, display_name, user_name')
         .in('id', perfectIds.slice(0, 3));
 

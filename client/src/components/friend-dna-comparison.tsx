@@ -139,7 +139,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
         
         // Fetch user details for friends (use 'avatar' not 'avatar_url')
         const usersResponse = await fetch(
-          `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/users?id=in.(${friendIds.join(',')})&select=id,user_name,avatar`,
+          `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/public_user_profiles?id=in.(${friendIds.join(',')})&select=id,user_name,avatar`,
           {
             headers: {
               'Authorization': `Bearer ${session.access_token}`,

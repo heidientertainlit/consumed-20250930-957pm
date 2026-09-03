@@ -25,14 +25,7 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return json({ error: "Unauthorized" }, 401);
 
-    // Look up app user by email
-    const { data: appUser } = await supabase
-      .from("users")
-      .select("id")
-      .eq("email", user.email)
-      .single();
-
-    const blockerId = appUser?.id ?? user.id;
+    const blockerId = user.id;
 
     const { blocked_user_id, action = "block" } = await req.json();
     if (!blocked_user_id) return json({ error: "blocked_user_id is required" }, 400);

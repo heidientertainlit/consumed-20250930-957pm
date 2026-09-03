@@ -95,7 +95,7 @@ export default function AdminRoomConversationsPage() {
     queryKey: ["admin-profile-check", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data, error } = await supabase.from("users").select("id, user_name, is_admin").eq("id", user.id).single();
+      const { data, error } = await supabase.from("admin_user_profiles").select("id, user_name, is_admin").eq("id", user.id).single();
       if (error) throw error;
       return data;
     },

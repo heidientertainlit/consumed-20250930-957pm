@@ -207,7 +207,7 @@ export default function PlayRanks() {
           .in('rank_id', rankIds)
           .order('position', { ascending: true }),
         supabase
-          .from('users')
+          .from('public_user_profiles')
           .select('id, user_name, display_name')
           .in('id', userIds),
         supabase

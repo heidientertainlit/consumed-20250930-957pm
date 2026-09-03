@@ -33,16 +33,21 @@ serve(async (req) => {
       });
     }
 
+    const accountAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     // Look up app user by email
-    let { data: appUser, error: appUserError } = await supabase
+    let { data: appUser, error: appUserError } = await accountAdmin
       .from('users')
       .select('id, email, user_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
     if (appUserError && appUserError.code === 'PGRST116') {
       // Create user if doesn't exist
-      const { data: newUser, error: createError } = await supabase
+      const { data: newUser, error: createError } = await accountAdmin
         .from('users')
         .insert({
           id: user.id,
@@ -124,7 +129,7 @@ serve(async (req) => {
     const friendPoints = friendCount * 5;
 
     // Count successful referrals (25 pts per referral that made first action)
-    const { data: referrals } = await supabase
+    const { data: referrals } = await accountAdmin
       .from('users')
       .select('id')
       .eq('referred_by', targetUserId)

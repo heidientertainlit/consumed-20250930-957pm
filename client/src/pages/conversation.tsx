@@ -28,7 +28,7 @@ export default function ConversationPage() {
     queryKey: ["conversation", takeId],
     queryFn: async () => {
       const { data, error } = await supabase.from("room_takes")
-        .select("*, users:user_id(id, display_name, user_name, first_name, last_name)")
+        .select("*, users:public_user_profiles(id, display_name, user_name, first_name, last_name)")
         .eq("id", takeId!).maybeSingle();
       if (error) throw error;
       return data;
@@ -39,7 +39,7 @@ export default function ConversationPage() {
     queryKey: ["conversation-replies", takeId],
     queryFn: async () => {
       const { data, error } = await supabase.from("room_take_replies")
-        .select("*, users:user_id(id, display_name, user_name, first_name, last_name)")
+        .select("*, users:public_user_profiles(id, display_name, user_name, first_name, last_name)")
         .eq("take_id", takeId!).order("created_at", { ascending: true });
       if (error) throw error;
       return data || [];

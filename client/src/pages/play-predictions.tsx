@@ -315,7 +315,7 @@ export default function PlayPredictionsPage() {
     queryFn: async () => {
       if (communityUserIds.length === 0) return {};
       const { data, error } = await supabase
-        .from('users')
+        .from('public_user_profiles')
         .select('id, display_name, user_name')
         .in('id', communityUserIds);
       if (error || !data) return {};

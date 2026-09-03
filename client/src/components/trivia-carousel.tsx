@@ -111,7 +111,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
           .eq('pool_id', challengedPoolId)
           .maybeSingle(),
         supabase
-          .from('users')
+          .from('public_user_profiles')
           .select('display_name, first_name')
           .eq('id', challengeFromUserId)
           .maybeSingle(),
@@ -353,7 +353,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         }).filter(Boolean))];
 
         const { data: userRows } = await supabase
-          .from('users')
+          .from('public_user_profiles')
           .select('id, display_name, user_name')
           .in('id', recentUserIds);
 
@@ -556,7 +556,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
           if (friendPredictions.length > 0) {
             // Get friend user info
             const { data: friendUsers } = await supabase
-              .from('users')
+              .from('public_user_profiles')
               .select('id, display_name, first_name, last_name, avatar')
               .in('id', friendPredictions.map(p => p.user_id));
             

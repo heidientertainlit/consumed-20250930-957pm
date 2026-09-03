@@ -7,6 +7,32 @@ const corsHeaders = {
   'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
 };
 
+const privateUserFields = new Set([
+  'email',
+  'password',
+  'is_admin',
+  'persona_config',
+  'identity_confirmed_at',
+  'clash_opt_out',
+  'people_discoverable',
+]);
+
+function sanitizePublicPayload(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(sanitizePublicPayload);
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([key]) => !privateUserFields.has(key))
+        .map(([key, nestedValue]) => [key, sanitizePublicPayload(nestedValue)])
+    );
+  }
+
+  return value;
+}
+
 function feedDisplayName(profile: any): string {
   const firstName = profile?.first_name?.trim();
   const lastName = profile?.last_name?.trim();
@@ -50,24 +76,24 @@ serve(async (req) => {
       });
     }
 
-    console.log(isGuest ? 'Guest request (no auth user)' : `Auth user: ${user!.email}`);
+    console.log(isGuest ? 'Guest request (no auth user)' : `Authenticated request for user ${user!.id}`);
 
     // Get or create app user (skipped entirely for guests)
-    let appUser: { id: string; email: string; user_name: string } | null = null;
+    let appUser: { id: string; user_name: string } | null = null;
     let appUserError: any = null;
     if (!isGuest) {
       const result = await supabase
-        .from('users')
-        .select('id, email, user_name')
-        .eq('email', user!.email)
-        .single();
-      appUser = result.data;
-      appUserError = result.error;
+        .rpc('get_my_account_profile');
+      const accountProfile = Array.isArray(result.data) ? result.data[0] : result.data;
+      appUser = accountProfile
+        ? { id: accountProfile.id, user_name: accountProfile.user_name }
+        : null;
+      appUserError = result.error || (!appUser ? { code: 'PGRST116' } : null);
     }
 
     if (appUserError && appUserError.code === 'PGRST116') {
       // User doesn't exist, create them using service role client (bypass RLS)
-      console.log('Creating new user:', user.email);
+      console.log('Creating new user profile:', user.id);
       
       const { data: newUser, error: createError } = await supabaseAdmin
         .from('users')
@@ -628,22 +654,23 @@ serve(async (req) => {
       // Filter out null/undefined user IDs to prevent PostgreSQL UUID errors
       const validUserIds = userIds.filter(id => id != null && id !== 'null');
       if (validUserIds.length > 0) {
-        // Try users table first with admin client
+        // This authenticated function intentionally uses its service client for
+        // the persona marker, while selecting only response-safe identity fields.
         console.log('Querying users with IDs:', validUserIds.slice(0, 3));
         let result = await supabaseAdmin
           .from('users')
-          .select('id, user_name, display_name, first_name, last_name, email, avatar, is_persona')
+          .select('id, user_name, display_name, first_name, last_name, avatar, is_persona')
           .in('id', validUserIds);
         users = result.data || [];
         usersError = result.error;
         console.log('Admin users query result:', { data: result.data?.length, error: result.error });
         
-        // If admin client failed, try with regular authenticated client
+        // If the trusted lookup fails, retry through the public projection.
         if (users.length === 0) {
-          console.log('Admin client returned 0 users, trying regular client');
+          console.log('Admin client returned 0 users, trying public profiles');
           const regularResult = await supabase
-            .from('users')
-            .select('id, user_name, display_name, first_name, last_name, email, avatar, is_persona')
+            .from('public_user_profiles')
+            .select('id, user_name, display_name, first_name, last_name, avatar')
             .in('id', validUserIds);
           users = regularResult.data || [];
           usersError = regularResult.error;
@@ -656,7 +683,7 @@ serve(async (req) => {
           console.log('Missing users from users table, trying profiles:', missingUserIds.length);
           const profilesResult = await supabaseAdmin
             .from('profiles')
-            .select('id, username, display_name, email, avatar_url')
+            .select('id, username, display_name, avatar_url')
             .in('id', missingUserIds);
           
           if (profilesResult.data && profilesResult.data.length > 0) {
@@ -665,7 +692,6 @@ serve(async (req) => {
               id: p.id,
               user_name: p.username || p.display_name || 'A fan',
               display_name: p.display_name || p.username || 'A fan',
-              email: p.email || '',
               avatar: p.avatar_url || ''
             }));
             users = [...users, ...mappedProfiles];
@@ -1087,7 +1113,7 @@ serve(async (req) => {
         if (groupPosts.length === 1) {
           // If only one post about this media, don't group it
           const post = groupPosts[0];
-          const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
+          const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', avatar: '' };
           
           // Get list data for added_to_list posts - use stored list_id or inferred from content
           const effectiveListId = post.list_id || postToListIdMap.get(post.id);
@@ -1101,7 +1127,6 @@ serve(async (req) => {
               username: postUser.user_name || 'Unknown',
                displayName: feedDisplayName(postUser),
               avatar: postUser.avatar || '',
-              email: postUser.email || '',
               is_persona: (postUser as any).is_persona || false
             },
             content: post.content || '',
@@ -1155,7 +1180,7 @@ serve(async (req) => {
           }, groupPosts[0].created_at);
           
           const activities = groupPosts.map(post => {
-            const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
+            const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', avatar: '' };
             let activityText = '';
             
             if (post.post_type === 'finished') {
@@ -1181,7 +1206,6 @@ serve(async (req) => {
               username: postUser.user_name || 'Unknown',
                displayName: feedDisplayName(postUser),
               avatar: postUser.avatar || '',
-              email: postUser.email || '',
               is_persona: (postUser as any).is_persona || false,
               activityText,
               content: post.content || '',
@@ -1220,7 +1244,7 @@ serve(async (req) => {
           !(post.post_type === 'game_moment' && post.prediction_pool_id && userVotedPoolIds.has(post.prediction_pool_id))
         )
         .map(post => {
-        const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
+        const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', avatar: '' };
         
         const hasMedia = post.media_title && post.media_title.trim() !== '';
         
@@ -1238,7 +1262,6 @@ serve(async (req) => {
               username: postUser.user_name || 'Unknown',
                displayName: feedDisplayName(postUser),
               avatar: postUser.avatar || '',
-              email: postUser.email || '',
               is_persona: (postUser as any).is_persona || false
             },
             content: post.content || '',
@@ -1351,7 +1374,7 @@ serve(async (req) => {
 
       // Transform predictions into feed items
       const transformedPredictions = (predictions || []).map((pred: any) => {
-        const creatorUser = userMap.get(pred.origin_user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
+        const creatorUser = userMap.get(pred.origin_user_id) || { user_name: 'Unknown', display_name: 'Unknown', avatar: '' };
         const invitedUser = pred.invited_user_id ? (userMap.get(pred.invited_user_id) || null) : null;
 
         // Calculate vote percentages for this prediction
@@ -1438,7 +1461,7 @@ serve(async (req) => {
       console.log('Predictions:', transformedPredictions.length);
 
       // Return response with current user's app user ID for delete button matching
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify(sanitizePublicPayload({
         posts: allItems, 
         currentUserId: appUser?.id ?? null,
         _debug: {
@@ -1451,7 +1474,7 @@ serve(async (req) => {
           ratedAddToListPosts: allItems.filter((p: any) => p.type === 'add-to-list' && p.rating).map((p: any) => ({ id: p.id?.substring(0, 8), type: p.type, rating: p.rating, title: p.mediaItems?.[0]?.title })),
           totalPostsReturned: allItems.length
         }
-      }), {
+      })), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }

@@ -321,7 +321,7 @@ export default function UserProfile() {
         .from('social_posts')
         .select(`
           *,
-          user:users!social_posts_user_id_fkey(*),
+          user:public_user_profiles!social_posts_user_id_fkey(*),
           mediaItems:social_post_media(*)
         `)
         .eq('user_id', viewingUserId)
@@ -682,7 +682,7 @@ export default function UserProfile() {
         f.user_id === user.id ? f.friend_id : f.user_id
       ).filter((id: string) => id !== user.id))];
       if (!friendIds.length) return [];
-      const { data: usersData } = await supabase.from('users').select('id, user_name, avatar').in('id', friendIds);
+      const { data: usersData } = await supabase.from('public_user_profiles').select('id, user_name, avatar').in('id', friendIds);
       const { data: dnaData } = await supabase.from('dna_profiles').select('user_id').in('user_id', friendIds);
       const hasSurveyMap: Record<string, boolean> = {};
       dnaData?.forEach((d: any) => { hasSurveyMap[d.user_id] = true; });
@@ -1528,7 +1528,7 @@ export default function UserProfile() {
 
         while (retries > 0 && !data) {
           const result = await supabase
-            .from('users')
+            .from('public_user_profiles')
             .select('user_name, first_name, last_name, display_name, avatar')
             .eq('id', viewingUserId)
             .single();
@@ -5564,13 +5564,13 @@ export default function UserProfile() {
                       setFriendSearchQuery(e.target.value);
                       searchFriends(e.target.value);
                     }}
-                    placeholder="Enter username or email..."
+                    placeholder="Enter a username or name..."
                     className="w-full pr-10"
                     data-testid="input-friend-search"
                   />
                   <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Search by username or email address</p>
+                <p className="text-xs text-gray-500 mt-1">Search by username or name</p>
               </div>
 
               {/* Search Results */}
@@ -5593,7 +5593,9 @@ export default function UserProfile() {
                           </div>
                           <div>
                             <p className="font-medium text-gray-900">@{result.user_name}</p>
-                            <p className="text-xs text-gray-500">{result.email}</p>
+                            {(result.display_name || `${result.first_name || ''} ${result.last_name || ''}`.trim()) && (
+                              <p className="text-xs text-gray-500">{result.display_name || `${result.first_name || ''} ${result.last_name || ''}`.trim()}</p>
+                            )}
                           </div>
                         </div>
                         <Button

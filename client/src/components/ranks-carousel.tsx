@@ -237,7 +237,7 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
         user_id,
         content,
         created_at,
-        users:user_id (display_name, user_name, avatar)
+        users:public_user_profiles (display_name, user_name, avatar)
       `)
       .eq('rank_id', rankId)
       .order('created_at', { ascending: false })

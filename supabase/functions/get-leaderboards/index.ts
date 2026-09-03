@@ -60,8 +60,8 @@ serve(async (req) => {
     // Get current app user
     let { data: appUser } = await supabase
       .from('users')
-      .select('id, email, user_name, display_name')
-      .eq('email', user.email)
+      .select('id')
+      .eq('id', user.id)
       .single();
 
     if (!appUser) {
@@ -97,7 +97,7 @@ serve(async (req) => {
 
     // Get all users for name mapping (include first_name, last_name for proper display names)
     const { data: allUsers } = await supabase
-      .from('users')
+      .from('public_user_profiles')
       .select('id, user_name, display_name, first_name, last_name, avatar');
     
     const userMap: Record<string, { username: string; display_name: string; avatar_url: string | null }> = {};

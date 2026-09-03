@@ -53,9 +53,8 @@ export default function DnaPage() {
     queryFn: async () => {
       if (!user?.id) return null;
       const { data } = await supabase
-        .from('users')
+        .rpc('get_my_account_profile')
         .select('first_name, last_name, display_name, user_name')
-        .eq('id', user.id)
         .single();
       return data;
     },
@@ -107,7 +106,7 @@ export default function DnaPage() {
       if (!friendIds.length) return [];
       
       const { data: usersData } = await supabase
-        .from('users')
+        .from('public_user_profiles')
         .select('id, user_name, avatar')
         .in('id', friendIds);
       

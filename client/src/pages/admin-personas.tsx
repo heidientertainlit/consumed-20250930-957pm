@@ -178,7 +178,7 @@ export default function AdminPersonasPage() {
     queryFn: async () => {
       if (!user?.id) return null;
       const { data } = await supabase
-        .from("users")
+        .from("admin_user_profiles")
         .select("id, user_name, is_admin")
         .eq("id", user.id)
         .single();
@@ -197,7 +197,7 @@ export default function AdminPersonasPage() {
     queryKey: ["admin-personas"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("users")
+        .from("admin_user_profiles")
         .select("id, user_name, display_name, persona_config")
         .eq("is_persona", true)
         .order("display_name");
@@ -221,7 +221,7 @@ export default function AdminPersonasPage() {
       if (userIds.length === 0) return [];
 
       const { data: users } = await supabase
-        .from("users")
+        .from("admin_user_profiles")
         .select("id, user_name, display_name")
         .in("id", userIds);
 
@@ -248,7 +248,7 @@ export default function AdminPersonasPage() {
       if (userIds.length === 0) return [];
 
       const { data: users } = await supabase
-        .from("users")
+        .from("admin_user_profiles")
         .select("id, user_name, display_name")
         .in("id", userIds);
 
@@ -352,7 +352,7 @@ export default function AdminPersonasPage() {
     queryFn: async () => {
       // Get all persona user IDs first
       const { data: personaUsers } = await supabase
-        .from("users")
+        .from("admin_user_profiles")
         .select("id, user_name, display_name")
         .eq("is_persona", true);
 

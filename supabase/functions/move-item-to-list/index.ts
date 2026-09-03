@@ -30,23 +30,7 @@ serve(async (req) => {
       throw new Error('Not authenticated');
     }
 
-    // Look up app user by email (same pattern as other edge functions)
-    let appUser = null;
-    const { data: appUserData, error: appUserError } = await supabaseClient
-      .from('users')
-      .select('id, email, user_name')
-      .eq('email', user.email)
-      .single();
-
-    if (appUserError && appUserError.code === 'PGRST116') {
-      // User not found - this shouldn't happen for existing items
-      throw new Error('User not found');
-    } else if (appUserError) {
-      throw new Error('User lookup failed: ' + appUserError.message);
-    }
-    
-    appUser = appUserData;
-    const userId = appUser.id;
+    const userId = user.id;
 
     const { item_id, target_list, client_event_id, event_id, idempotency_key } = await req.json();
     const clientEventId = client_event_id ?? event_id ?? idempotency_key ?? null;

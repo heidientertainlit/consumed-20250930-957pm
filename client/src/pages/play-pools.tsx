@@ -131,7 +131,7 @@ function LeaderboardSheet({ pool, onClose }: { pool: Pool; onClose: () => void }
 
         const userIds = Object.keys(totals);
         const { data: users } = await supabase
-          .from("users")
+          .from("public_user_profiles")
           .select("id, display_name, user_name")
           .in("id", userIds);
 

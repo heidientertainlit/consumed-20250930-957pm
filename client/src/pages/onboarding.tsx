@@ -481,7 +481,7 @@ export default function OnboardingPage() {
           .select("user_id")
           .eq("user_id", user.id)
           .maybeSingle(),
-        supabase.from("users").select("avatar").eq("id", user.id).maybeSingle(),
+        supabase.rpc("get_my_account_profile").select("avatar").maybeSingle(),
         supabase.from("user_private_details").select("birth_date, gender").eq("user_id", user.id).maybeSingle(),
       ]);
       if (cancelled) return;

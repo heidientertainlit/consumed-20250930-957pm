@@ -57,7 +57,7 @@ export default function PlayAskRecsPage() {
           created_at,
           likes_count,
           comments_count,
-          users:user_id (
+          users:public_user_profiles (
             display_name,
             user_name,
             avatar

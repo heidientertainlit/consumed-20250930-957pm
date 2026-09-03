@@ -227,7 +227,7 @@ export default function AwardsPredictions() {
       
       try {
         const result = await supabase
-          .from('users')
+          .from('public_user_profiles')
           .select('id, display_name, user_name, avatar')
           .in('id', completedUserIds.slice(0, 20)); // Limit to first 20
         
@@ -329,7 +329,7 @@ export default function AwardsPredictions() {
       let friendUsers: Record<string, { name: string; avatar: string | null }> = {};
       if (friendIds.length > 0) {
         const { data: usersData } = await supabase
-          .from('users')
+          .from('public_user_profiles')
           .select('id, display_name, user_name, avatar')
           .in('id', friendIds);
         (usersData || []).forEach(u => {
@@ -514,9 +514,8 @@ export default function AwardsPredictions() {
     queryFn: async () => {
       if (!userId) return null;
       const { data } = await supabase
-        .from('users')
+        .rpc('get_my_account_profile')
         .select('display_name, user_name')
-        .eq('id', userId)
         .single();
       return data;
     },

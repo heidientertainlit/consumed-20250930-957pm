@@ -572,7 +572,7 @@ export default function FeedComposerBar({
         if (!friendIds.length) return;
 
         const [{ data: usersData }, { data: listsData }] = await Promise.all([
-          supabase.from('users').select('id, user_name').in('id', friendIds),
+          supabase.from('public_user_profiles').select('id, user_name').in('id', friendIds),
           supabase.from('lists').select('id, user_id').in('user_id', friendIds).ilike('title', 'Currently%'),
         ]);
         if (!listsData?.length) return;
@@ -654,7 +654,7 @@ export default function FeedComposerBar({
         const senderIds = [...new Set(recs.map((r: any) => r.triggered_by_user_id).filter(Boolean))];
         const nameMap: Record<string, string> = {};
         if (senderIds.length) {
-          const { data: senders } = await supabase.from('users').select('id, user_name').in('id', senderIds);
+          const { data: senders } = await supabase.from('public_user_profiles').select('id, user_name').in('id', senderIds);
           senders?.forEach((u: any) => { nameMap[u.id] = u.user_name || 'A friend'; });
         }
 

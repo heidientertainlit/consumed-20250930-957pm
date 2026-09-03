@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
 
     if (customUserError && customUserError.code === 'PGRST116') {
       // User doesn't exist, create them
-      console.log('Creating new user:', user.email);
+      console.log('Creating new user profile:', user.id);
       const { data: newUser, error: createError } = await supabase
         .from('users')
         .insert({

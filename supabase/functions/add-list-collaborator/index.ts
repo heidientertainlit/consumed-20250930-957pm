@@ -82,11 +82,8 @@ serve(async (req) => {
     }
 
     // Get the current user's name for the notification
-    const { data: currentUser } = await supabase
-      .from('users')
-      .select('user_name')
-      .eq('id', user.id)
-      .single();
+    const { data: accountProfile } = await supabase.rpc('get_my_account_profile');
+    const currentUser = Array.isArray(accountProfile) ? accountProfile[0] : accountProfile;
 
     const userName = currentUser?.user_name || 'Someone';
 

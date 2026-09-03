@@ -13,7 +13,7 @@ export default function ProfileByUsername() {
   useEffect(() => {
     if (!username) return;
     supabase
-      .from("users")
+      .from("public_user_profiles")
       .select("id")
       .eq("user_name", username)
       .maybeSingle()

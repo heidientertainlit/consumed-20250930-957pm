@@ -395,7 +395,7 @@ export default function PlayChallengePage() {
 
         if (cScore) {
           const { data: cUser } = await supabase
-            .from("users")
+            .from("public_user_profiles")
             .select("display_name, user_name")
             .eq("id", challengerUserId)
             .single();

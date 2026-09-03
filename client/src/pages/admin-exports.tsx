@@ -33,7 +33,7 @@ function flt(v: any): number {
 async function buildMasterExport() {
   // 1. Non-persona real users
   const { data: users } = await supabase
-    .from("users")
+    .from("admin_user_profiles")
     .select("id, created_at, is_admin")
     .or("is_persona.is.null,is_persona.eq.false")
     .order("created_at");
@@ -488,7 +488,7 @@ async function buildMasterExport() {
 
 async function buildMediaDetailExport() {
   const { data: users } = await supabase
-    .from("users")
+    .from("admin_user_profiles")
     .select("id")
     .or("is_persona.is.null,is_persona.eq.false");
   const realUserIds = new Set((users || []).map((u: any) => u.id));
@@ -601,7 +601,7 @@ async function buildMediaDetailExport() {
 
 async function buildPollResponsesExport() {
   const { data: users } = await supabase
-    .from("users")
+    .from("admin_user_profiles")
     .select("id")
     .or("is_persona.is.null,is_persona.eq.false");
   const realUserIds = new Set((users || []).map((u: any) => u.id));
@@ -666,7 +666,7 @@ async function buildPollResponsesExport() {
 async function buildRoomEngagementExport() {
   // Real users only
   const { data: users } = await supabase
-    .from("users")
+    .from("admin_user_profiles")
     .select("id")
     .or("is_persona.is.null,is_persona.eq.false");
   const realUserIds = new Set((users || []).map((u: any) => u.id));
@@ -785,7 +785,7 @@ async function buildRoomEngagementExport() {
 async function buildTodaysPlayExport() {
   // Real users only
   const { data: users } = await supabase
-    .from("users")
+    .from("admin_user_profiles")
     .select("id")
     .or("is_persona.is.null,is_persona.eq.false");
   const realUserIds = new Set((users || []).map((u: any) => u.id));
@@ -887,7 +887,7 @@ export default function AdminExportsPage() {
     queryKey: ["admin-profile-check", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data } = await supabase.from("users").select("is_admin").eq("id", user.id).single();
+      const { data } = await supabase.from("admin_user_profiles").select("is_admin").eq("id", user.id).single();
       return data;
     },
     enabled: !!user?.id,

@@ -37,10 +37,10 @@ serve(async (req) => {
       });
     }
 
-    let { data: appUser, error: appUserError } = await supabase
+    let { data: appUser, error: appUserError } = await supabaseAdmin
       .from('users')
       .select('id, email, user_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
     if (appUserError) {

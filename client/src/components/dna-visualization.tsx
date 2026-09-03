@@ -46,7 +46,7 @@ export default function DNAVisualization() {
       
       // Fetch user details
       const { data: usersData } = await supabase
-        .from('users')
+        .from('public_user_profiles')
         .select('id, user_name, display_name')
         .in('id', friendIds);
 

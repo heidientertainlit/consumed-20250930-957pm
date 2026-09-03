@@ -66,7 +66,7 @@ serve(async (req) => {
       }
 
       userId = user.id;
-      console.log('User rebuild for:', user.email);
+    console.log('User rebuild for:', user.id);
     }
     console.log('Rebuilding recommendations for user:', userId);
 

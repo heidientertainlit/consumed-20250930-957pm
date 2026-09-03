@@ -725,7 +725,7 @@ function TodaysPlayGame({
           .eq('pool_id', challengeId)
           .maybeSingle(),
         supabase
-          .from('users')
+          .from('public_user_profiles')
           .select('display_name, first_name')
           .eq('id', fromUserId)
           .maybeSingle(),
@@ -2024,9 +2024,8 @@ export function DailyHeroSection({ embedded = false }: { embedded?: boolean }) {
     queryFn: async () => {
       if (!user?.id) return null;
       const { data } = await supabase
-        .from('users')
+        .rpc('get_my_account_profile')
         .select('user_name, display_name')
-        .eq('id', user.id)
         .single();
       return data?.display_name || data?.user_name || null;
     },

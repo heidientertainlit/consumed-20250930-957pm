@@ -31,20 +31,20 @@ serve(async (req) => {
       });
     }
 
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     // Look up app user by email, CREATE if doesn't exist (matching track-media pattern)
-    let { data: appUser, error: appUserError } = await supabase
+    let { data: appUser, error: appUserError } = await supabaseAdmin
       .from('users')
       .select('id, email, user_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
     if (appUserError && appUserError.code === 'PGRST116') {
       // User doesn't exist - create with service role to bypass RLS
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-
       const { data: newUser, error: createError } = await supabaseAdmin
         .from('users')
         .insert({

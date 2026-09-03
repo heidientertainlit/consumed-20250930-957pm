@@ -131,7 +131,7 @@ export default function FriendsManager({
                         </div>
                         <div className="min-w-0">
                           <div className="truncate text-sm font-bold text-[#30263a]">{displayName}</div>
-                          <div className="truncate text-xs text-[#817686]">{searchUser.email}</div>
+                          <div className="truncate text-xs text-[#817686]">@{searchUser.user_name}</div>
                         </div>
                       </Link>
                        {isFriend ? (

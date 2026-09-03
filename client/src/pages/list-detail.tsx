@@ -773,7 +773,7 @@ export default function ListDetail() {
 
       const { data, error } = await supabase
         .from('list_collaborators')
-        .select('*, users(id, user_name, display_name)')
+        .select('*, users:public_user_profiles(id, user_name, display_name)')
         .eq('list_id', sharedListData.id);
 
       if (error) {

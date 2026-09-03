@@ -32,68 +32,37 @@ serve(async (req) => {
       });
     }
 
-    // Look up app user by ID first (more reliable), then fall back to email
-    let { data: appUser, error: appUserError } = await supabase
-      .from('users')
-      .select('id, email, user_name')
-      .eq('id', user.id)
-      .single();
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    // If not found by ID, try by email
-    if (appUserError && appUserError.code === 'PGRST116') {
-      const { data: emailUser } = await supabase
-        .from('users')
-        .select('id, email, user_name')
-        .eq('email', user.email)
-        .single();
-      
-      if (emailUser) {
-        appUser = emailUser;
-      } else {
-        // User doesn't exist, create it
-        const { data: newUser, error: createError } = await supabase
+    // Load private self data through the owner-only account RPC.
+    let { data: appUser, error: appUserError } = await supabase
+      .rpc('get_my_account_profile');
+    appUser = Array.isArray(appUser) ? appUser[0] : appUser;
+
+    if (!appUser && !appUserError) {
+      // Authenticated initialization is a trusted write and remains service-role.
+      const { data: newUser, error: createError } = await supabaseAdmin
           .from('users')
-          .insert({
+          .upsert({
             id: user.id,
             email: user.email,
             user_name: user.user_metadata?.user_name || user.email.split('@')[0] || 'user',
             first_name: user.user_metadata?.first_name || '',
             last_name: user.user_metadata?.last_name || ''
-          })
+          }, { onConflict: 'id' })
           .select('id, email, user_name')
           .single();
 
-        if (createError) {
-          // If it's a duplicate key error, try fetching the user again
-          if (createError.code === '23505') {
-            const { data: existingUser } = await supabase
-              .from('users')
-              .select('id, email, user_name')
-              .eq('id', user.id)
-              .single();
-            
-            if (existingUser) {
-              appUser = existingUser;
-            } else {
-              return new Response(JSON.stringify({ 
-                error: 'Failed to create or fetch user' 
-              }), {
-                status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-              });
-            }
-          } else {
-            return new Response(JSON.stringify({ 
-              error: 'Failed to create user: ' + createError.message 
-            }), {
-              status: 500,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
-          }
-        } else {
-          appUser = newUser;
-        }
+      if (createError) {
+        return new Response(JSON.stringify({ error: 'Failed to initialize user' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
+      appUser = newUser;
     } else if (appUserError) {
       return new Response(JSON.stringify({ 
         error: 'User lookup failed: ' + appUserError.message 
@@ -131,8 +100,8 @@ serve(async (req) => {
           // Fetch user data for each friendship
           const friendIds = friendships.map(f => f.friend_id);
           const { data: users, error: usersError } = await supabase
-            .from('users')
-            .select('id, user_name, email, first_name, last_name, display_name, avatar')
+            .from('public_user_profiles')
+            .select('id, user_name, first_name, last_name, display_name, avatar')
             .in('id', friendIds);
 
           if (usersError) {
@@ -178,8 +147,8 @@ serve(async (req) => {
           // Fetch user data for each friendship
           const userIds = friendships.map(f => f.user_id);
           const { data: users, error: usersError } = await supabase
-            .from('users')
-            .select('id, user_name, email, first_name, last_name, display_name, avatar')
+            .from('public_user_profiles')
+            .select('id, user_name, first_name, last_name, display_name, avatar')
             .in('id', userIds);
 
           if (usersError) {
@@ -214,16 +183,10 @@ serve(async (req) => {
 
           console.log('Searching for users with query:', query, 'excluding user:', appUser.id);
 
-          // Use admin client for better access
-          const supabaseAdmin = createClient(
-            Deno.env.get('SUPABASE_URL') ?? '', 
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-          );
-
-          // Get all users except current user, then filter manually for better control
+          // Search only the public identity projection.
           const { data: allUsers, error: fetchError } = await supabaseAdmin
-            .from('users')
-            .select('id, user_name, email, first_name, last_name, display_name, avatar')
+            .from('public_user_profiles')
+            .select('id, user_name, first_name, last_name, display_name, avatar')
             .neq('id', appUser.id);
 
           console.log('Fetched all users:', { count: allUsers?.length || 0, error: fetchError?.message });
@@ -244,19 +207,17 @@ serve(async (req) => {
           const queryLower = query.toLowerCase();
           const matchedUsers = (allUsers || []).filter(user => {
             const userName = (user.user_name || '').toLowerCase();
-            const email = (user.email || '').toLowerCase();
             const firstName = (user.first_name || '').toLowerCase();
             const lastName = (user.last_name || '').toLowerCase();
             const fullName = `${firstName} ${lastName}`.trim();
             
             const matches = userName.includes(queryLower) ||
-                   email.includes(queryLower) ||
                    firstName.includes(queryLower) ||
                    lastName.includes(queryLower) ||
                    fullName.includes(queryLower);
             
             if (matches) {
-              console.log('Match found:', { user_name: userName, email });
+              console.log('Public profile match found:', { user_name: userName });
             }
             
             return matches;
@@ -340,7 +301,7 @@ serve(async (req) => {
           }
 
           // Send notification to the friend
-          const requesterName = appUser.user_name || appUser.email?.split('@')[0] || 'Someone';
+          const requesterName = appUser.user_name || 'Someone';
           await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification`, {
             method: 'POST',
             headers: {
@@ -427,7 +388,7 @@ serve(async (req) => {
           }
 
           // Send notification to the friend that request was accepted
-          const accepterName = appUser.user_name || appUser.email?.split('@')[0] || 'Someone';
+          const accepterName = appUser.user_name || 'Someone';
           await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification`, {
             method: 'POST',
             headers: {

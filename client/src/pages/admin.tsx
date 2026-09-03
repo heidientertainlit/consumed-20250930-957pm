@@ -98,7 +98,7 @@ export default function AdminPage() {
     queryFn: async () => {
       if (!user?.id) return null;
       const { data } = await supabase
-        .from("users")
+        .from("admin_user_profiles")
         .select("id, user_name, is_admin")
         .eq("id", user.id)
         .single();

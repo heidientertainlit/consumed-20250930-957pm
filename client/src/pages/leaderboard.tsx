@@ -336,7 +336,7 @@ export default function Leaderboard() {
 
         const userIds = filtered.map((c: any) => c.user_id);
         const { data: users } = await supabase
-          .from('users')
+          .from('public_user_profiles')
           .select('id, display_name, user_name')
           .in('id', userIds);
 
@@ -417,7 +417,7 @@ export default function Leaderboard() {
         const userIds = Object.keys(userPickCounts);
         
         const { data: users } = await supabase
-          .from('users')
+          .from('public_user_profiles')
           .select('id, user_name, display_name, first_name, last_name, avatar')
           .in('id', userIds);
         

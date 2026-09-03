@@ -37,7 +37,7 @@ serve(async (req) => {
     );
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    console.log('User lookup result:', user?.email, 'error:', userError?.message);
+    console.log('User lookup result:', user?.id, 'error:', userError?.message);
     
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized - invalid token' }), {

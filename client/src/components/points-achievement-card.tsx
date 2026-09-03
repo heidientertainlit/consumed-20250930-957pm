@@ -48,7 +48,7 @@ export default function PointsAchievementCard({ className, cardIndex = 0 }: Poin
       if (userIds.length === 0) return [];
       
       const { data: users } = await supabase
-        .from('users')
+        .from('public_user_profiles')
         .select('id, user_name, display_name, avatar')
         .in('id', userIds);
       

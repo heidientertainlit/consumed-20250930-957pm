@@ -35,10 +35,10 @@ serve(async (req) => {
       });
     }
 
-    const { data: appUser, error: appUserError } = await supabase
+    const { data: appUser, error: appUserError } = await supabaseAdmin
       .from('users')
       .select('id, user_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
     if (appUserError || !appUser) {

@@ -24,7 +24,7 @@ serve(async (req) => {
 
     // Get auth user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    console.log("Auth check result:", { user: user?.email, userError });
+    console.log("Auth check result:", { userId: user?.id, userError });
     
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -33,22 +33,22 @@ serve(async (req) => {
       });
     }
 
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     // Look up app user by email
-    let { data: appUser, error: appUserError } = await supabase
+    let { data: appUser, error: appUserError } = await supabaseAdmin
       .from('users')
       .select('id, email, user_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
     console.log('User lookup result:', { appUser, appUserError });
 
     if (appUserError && appUserError.code === 'PGRST116') {
       // User doesn't exist, create them
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '', 
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-      
       const { data: newUser, error: createError } = await supabaseAdmin
         .from('users')
         .insert({

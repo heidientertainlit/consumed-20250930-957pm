@@ -88,15 +88,15 @@ serve(async (req) => {
     }
 
     // Get or create app user
-    let { data: appUser, error: appUserError } = await supabase
+    let { data: appUser, error: appUserError } = await adminClient
       .from('users')
       .select('id, email, user_name, display_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
     if (appUserError && appUserError.code === 'PGRST116') {
       // User doesn't exist, create them using admin client
-      console.log('Creating new user:', user.email);
+      console.log('Creating new user profile:', user.id);
       
       const newUserData = {
         id: user.id,

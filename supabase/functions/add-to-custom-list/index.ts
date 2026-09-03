@@ -107,15 +107,15 @@ serve(async (req) => {
     }
 
     // Look up app user by email
-    let { data: appUser, error: appUserError } = await supabase
+    let { data: appUser, error: appUserError } = await admin
       .from('users')
       .select('id, email, user_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
     // Auto-create user if doesn't exist
     if (appUserError && appUserError.code === 'PGRST116') {
-      const { data: newUser, error: createError } = await supabase
+      const { data: newUser, error: createError } = await admin
         .from('users')
         .insert({
           id: user.id,

@@ -43,17 +43,22 @@ serve(async (req) => {
       });
     }
 
+    const accountAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     // Get or create app user
-    let { data: appUser, error: appUserError } = await supabase
+    let { data: appUser, error: appUserError } = await accountAdmin
       .from('users')
       .select('id, email, user_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
     if (appUserError && appUserError.code === 'PGRST116') {
       // User doesn't exist, create them
-      console.log('Creating new user:', user.email);
-      const { data: newUser, error: createError } = await supabase
+      console.log('Creating new user profile:', user.id);
+      const { data: newUser, error: createError } = await accountAdmin
         .from('users')
         .insert({
           id: user.id,
@@ -304,7 +309,7 @@ serve(async (req) => {
           
           // Look up user IDs for mentioned usernames
           const { data: mentionedUsers } = await supabase
-            .from('users')
+            .from('public_user_profiles')
             .select('id, user_name')
             .in('user_name', mentions);
 

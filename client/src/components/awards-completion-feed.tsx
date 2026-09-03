@@ -69,7 +69,7 @@ export function AwardsCompletionFeed() {
         if (completedUserIds.length === 0) continue;
 
         const { data: users } = await supabase
-          .from('users')
+          .from('public_user_profiles')
           .select('id, user_name')
           .in('id', completedUserIds.map(u => u.userId));
 

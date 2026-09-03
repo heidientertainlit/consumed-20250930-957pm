@@ -252,7 +252,7 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
     try {
       const { data, error } = await supabase
         .from('social_post_comments')
-        .select(`id, content, created_at, user_id, users:user_id (id, user_name, display_name, avatar)`)
+        .select(`id, content, created_at, user_id, users:public_user_profiles (id, user_name, display_name, avatar)`)
         .eq('social_post_id', postId)
         .order('created_at', { ascending: true })
         .limit(10);

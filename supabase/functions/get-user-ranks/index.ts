@@ -31,17 +31,9 @@ serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
-    let appUser = null;
+    let appUser: { id: string } | null = null;
     if (user && !userError) {
-      let { data: foundAppUser, error: appUserError } = await supabase
-        .from('users')
-        .select('id, email, user_name')
-        .eq('email', user.email)
-        .single();
-
-      if (!appUserError) {
-        appUser = foundAppUser;
-      }
+      appUser = { id: user.id };
     }
 
     const { searchParams } = new URL(req.url);

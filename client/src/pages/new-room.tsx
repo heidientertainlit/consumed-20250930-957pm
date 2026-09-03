@@ -217,7 +217,7 @@ export default function NewRoom() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("room_takes")
-        .select("*, users:user_id(id, display_name, user_name, first_name, last_name)")
+        .select("*, users:public_user_profiles(id, display_name, user_name, first_name, last_name)")
         .eq("room_id", roomId)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -259,7 +259,7 @@ export default function NewRoom() {
     void (async () => {
       const { data, error } = await supabase
         .from("room_takes")
-        .select("*, users:user_id(id, display_name, user_name, first_name, last_name)")
+        .select("*, users:public_user_profiles(id, display_name, user_name, first_name, last_name)")
         .eq("id", takeId)
         .eq("room_id", roomId)
         .maybeSingle();
@@ -534,7 +534,7 @@ export default function NewRoom() {
         rating,
         ...mediaFields,
       })
-      .select("*, users:user_id(id, display_name, user_name, first_name, last_name)")
+      .select("*, users:public_user_profiles(id, display_name, user_name, first_name, last_name)")
       .single();
     if (error) {
       toast({ title: "Could not post", description: error.message, variant: "destructive" });
@@ -1107,7 +1107,7 @@ function HotConversationCard({ take, agreed, onAgree, currentUserId, token, myVo
     queryFn: async () => {
       const { data, error } = await supabase
         .from("room_take_replies")
-        .select("*, users:user_id(id, display_name, user_name, first_name, last_name)")
+        .select("*, users:public_user_profiles(id, display_name, user_name, first_name, last_name)")
         .eq("take_id", take.id)
         .order("upvotes", { ascending: false });
       if (error) throw error;
@@ -1300,7 +1300,7 @@ function ThreadSheet({ take, currentUserId, token, myVotes, onClose, onChanged, 
     queryFn: async () => {
       const { data, error } = await supabase
         .from("room_take_replies")
-        .select("*, users:user_id(id, display_name, user_name, first_name, last_name)")
+        .select("*, users:public_user_profiles(id, display_name, user_name, first_name, last_name)")
         .eq("take_id", take.id)
         .order("upvotes", { ascending: false });
       if (error) throw error;

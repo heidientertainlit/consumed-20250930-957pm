@@ -37,12 +37,12 @@ serve(async (req) => {
         if (data) {
           // Get username
           const { data: user } = await supabase
-            .from("users")
-            .select("user_name, email")
+            .from("public_user_profiles")
+            .select("user_name")
             .eq("id", data.user_id)
             .single();
           
-          const username = user?.user_name || user?.email?.split("@")[0] || "Someone";
+          const username = user?.user_name || "Someone";
           
           title = data.media_title ? `${username} shared: ${data.media_title}` : `${username}'s post on consumed`;
           desc = data.content || "Check out this entertainment update";
@@ -56,12 +56,12 @@ serve(async (req) => {
         // Handle list sharing with user context
         if (userId) {
           const { data: user } = await supabase
-            .from("users")
-            .select("user_name, email")
+            .from("public_user_profiles")
+            .select("user_name")
             .eq("id", userId)
             .single();
           
-          const username = user?.user_name || user?.email?.split("@")[0] || "Someone";
+          const username = user?.user_name || "Someone";
           
           // Map slug to title
           const slugToTitle = {
@@ -85,12 +85,12 @@ serve(async (req) => {
         // Entertainment DNA profile sharing
         if (userId) {
           const { data: user } = await supabase
-            .from("users")
-            .select("user_name, email")
+            .from("public_user_profiles")
+            .select("user_name")
             .eq("id", userId)
             .single();
           
-          const username = user?.user_name || user?.email?.split("@")[0] || "Someone";
+          const username = user?.user_name || "Someone";
           
           title = `${username}'s Entertainment DNA`;
           desc = `Discover ${username}'s entertainment personality and see what they love to watch, read, and play`;

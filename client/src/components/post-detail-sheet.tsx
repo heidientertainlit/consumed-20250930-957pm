@@ -112,7 +112,7 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
     try {
       const { data, error } = await supabase
         .from('comments')
-        .select(`id, content, created_at, user_id, users:user_id (id, user_name, display_name, avatar)`)
+        .select(`id, content, created_at, user_id, users:public_user_profiles (id, user_name, display_name, avatar)`)
         .eq('post_id', post.id)
         .order('created_at', { ascending: true })
         .limit(20);

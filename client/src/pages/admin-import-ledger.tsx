@@ -10,11 +10,11 @@ export default function AdminImportLedgerPage() {
   const { user } = useAuth(); const [, setLocation] = useLocation();
   const [source, setSource] = useState("all"); const [status, setStatus] = useState("all"); const [date, setDate] = useState(""); const [userFilter, setUserFilter] = useState("");
   const profileQuery = useQuery({ queryKey: ["admin-profile-check", user?.id], queryFn: async () => {
-    if (!user?.id) return null; const { data, error } = await supabase.from("users").select("id, is_admin").eq("id", user.id).single(); if (error) throw error; return data;
+    if (!user?.id) return null; const { data, error } = await supabase.from("admin_user_profiles").select("id, is_admin").eq("id", user.id).single(); if (error) throw error; return data;
   }, enabled: !!user?.id });
   useEffect(() => { if (!profileQuery.isLoading && profileQuery.data && !profileQuery.data.is_admin) setLocation("/"); }, [profileQuery.data, profileQuery.isLoading, setLocation]);
   const batchesQuery = useQuery({ queryKey: ["admin-import-ledger"], queryFn: async () => {
-    const { data, error } = await supabase.from("media_import_batches").select(`user_id, users:users!media_import_batches_user_id_fkey(user_name, display_name), ${importBatchSelectFields}`).order("started_at", { ascending: false }).limit(250);
+    const { data, error } = await supabase.from("media_import_batches").select(`user_id, users:admin_user_profiles!media_import_batches_user_id_fkey(user_name, display_name), ${importBatchSelectFields}`).order("started_at", { ascending: false }).limit(250);
     if (error) throw error; return (data || []) as (ImportBatch & { user_id?: string })[];
   }, enabled: !!profileQuery.data?.is_admin });
   const batches = useMemo(() => (batchesQuery.data || []).filter(batch => {

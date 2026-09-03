@@ -35,10 +35,10 @@ serve(async (req) => {
       });
     }
 
-    const { data: appUser, error: appUserError } = await supabase
+    const { data: appUser, error: appUserError } = await supabaseAdmin
       .from('users')
       .select('id, user_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
     if (appUserError || !appUser) {
@@ -69,7 +69,7 @@ serve(async (req) => {
       // Fetch target user info separately
       const betsWithUsers = await Promise.all((data || []).map(async (bet) => {
         const { data: targetUser } = await supabaseAdmin
-          .from('users')
+          .from('public_user_profiles')
           .select('user_name, display_name')
           .eq('id', bet.target_user_id)
           .single();
@@ -92,7 +92,7 @@ serve(async (req) => {
       // Fetch bettor info separately
       const betsWithUsers = await Promise.all((data || []).map(async (bet) => {
         const { data: bettor } = await supabaseAdmin
-          .from('users')
+          .from('public_user_profiles')
           .select('user_name, display_name')
           .eq('id', bet.user_id)
           .single();

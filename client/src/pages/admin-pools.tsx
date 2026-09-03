@@ -232,7 +232,7 @@ export default function AdminPoolsPage() {
     queryKey: ["admin-profile-check", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data } = await supabase.from("users").select("id, is_admin").eq("id", user.id).single();
+      const { data } = await supabase.from("admin_user_profiles").select("id, is_admin").eq("id", user.id).single();
       return data;
     },
     enabled: !!user?.id,

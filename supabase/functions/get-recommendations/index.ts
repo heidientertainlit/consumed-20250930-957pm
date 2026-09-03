@@ -32,7 +32,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('Fetching cached recommendations for user:', user.email);
+    console.log('Fetching cached recommendations for user:', user.id);
 
     // Get cached recommendations
     const { data: cached, error: cacheError } = await supabase

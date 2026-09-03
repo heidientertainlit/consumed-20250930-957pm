@@ -25,14 +25,7 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return json({ error: "Unauthorized" }, 401);
 
-    // Look up app user by email
-    const { data: appUser } = await supabase
-      .from("users")
-      .select("id")
-      .eq("email", user.email)
-      .single();
-
-    const reporterId = appUser?.id ?? user.id;
+    const reporterId = user.id;
 
     const { content_type, content_id, reason, description, reported_user_id } = await req.json();
 

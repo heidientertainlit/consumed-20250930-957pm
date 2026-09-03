@@ -374,7 +374,6 @@ export default function FriendsPage() {
                         </div>
                         <div>
                           <div className="font-medium text-gray-900">{friendship.friend?.user_name || 'Unknown User'}</div>
-                          <div className="text-sm text-gray-500">{friendship.friend?.email}</div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-1 text-green-600 font-medium text-sm">
@@ -401,7 +400,7 @@ export default function FriendsPage() {
             <Search className="absolute left-3 top-3 text-gray-400" size={18} />
             <input
               type="text"
-              placeholder="Search by username or email..."
+              placeholder="Search by username or name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-700 focus:border-transparent text-sm text-black placeholder-gray-500"
@@ -430,7 +429,7 @@ export default function FriendsPage() {
                       </div>
                       <div>
                         <div className="font-medium text-gray-900">{displayName}</div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
+                        <div className="text-sm text-gray-500">@{user.user_name}</div>
                       </div>
                     </Link>
                     <Button

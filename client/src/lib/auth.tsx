@@ -70,9 +70,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sessionTracker.startSession(session.user.id)
 
         supabase
-          .from('users')
+          .rpc('get_my_account_profile')
           .select('user_name, display_name')
-          .eq('id', session.user.id)
           .maybeSingle()
           .then(({ data: profile }) => {
             identifyUser(session.user.id, {
@@ -102,9 +101,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           sessionTracker.startSession(session.user.id)
 
           supabase
-            .from('users')
+            .rpc('get_my_account_profile')
             .select('user_name, display_name')
-            .eq('id', session.user.id)
             .maybeSingle()
             .then(({ data: profile }) => {
               identifyUser(session.user.id, {

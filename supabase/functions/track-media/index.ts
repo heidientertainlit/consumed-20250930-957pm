@@ -107,20 +107,20 @@ serve(async (req) => {
       });
     }
 
-    console.log('Auth user:', user.email);
+    console.log('Auth user:', user.id);
 
     // Look up app user by email, CREATE if doesn't exist
-    let { data: appUser, error: appUserError } = await supabase
+    let { data: appUser, error: appUserError } = await supabaseAdmin
       .from('users')
       .select('id, email, user_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
     console.log('User lookup result:', { appUser, appUserError });
 
     // If user doesn't exist, create them
     if (appUserError && appUserError.code === 'PGRST116') {
-      console.log('User not found, creating new user:', user.email);
+      console.log('User not found, creating profile for:', user.id);
       
       // Use service role to bypass RLS for user creation
       const { data: newUser, error: createError } = await supabaseAdmin

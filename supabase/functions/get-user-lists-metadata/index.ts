@@ -26,12 +26,8 @@ serve(async (req) => {
     
     let appUser = null;
     if (user && !userError) {
-      const { data: foundAppUser } = await supabase
-        .from('users')
-        .select('id, email, user_name')
-        .eq('email', user.email)
-        .single();
-      appUser = foundAppUser;
+      const { data: accountProfile } = await supabase.rpc('get_my_account_profile');
+      appUser = Array.isArray(accountProfile) ? accountProfile[0] : accountProfile;
     }
 
     const { searchParams } = new URL(req.url);

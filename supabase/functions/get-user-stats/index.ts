@@ -26,7 +26,7 @@ serve(async (req) => {
 
     // Get auth user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    console.log('Auth check result:', { user: user?.email, userError });
+    console.log('Auth check result:', { userId: user?.id, userError });
     
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -35,17 +35,22 @@ serve(async (req) => {
       });
     }
 
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     // Look up app user by email, CREATE if doesn't exist
-    let { data: appUser, error: appUserError } = await supabase
+    let { data: appUser, error: appUserError } = await admin
       .from('users')
       .select('id, email, user_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
     // If user doesn't exist, create them
     if (appUserError && appUserError.code === 'PGRST116') {
-      console.log('User not found, creating new user:', user.email);
-      const { data: newUser, error: createError } = await supabase
+      console.log('User not found, creating profile for:', user.id);
+      const { data: newUser, error: createError } = await admin
         .from('users')
         .insert({
           id: user.id,
@@ -76,7 +81,7 @@ serve(async (req) => {
       });
     }
 
-    console.log("App user lookup:", { appUser: appUser?.email });
+    console.log("App user lookup:", { appUserId: appUser?.id });
 
     // Get user_id from query parameter (for viewing other users) or use logged-in user
     const { searchParams } = new URL(req.url);

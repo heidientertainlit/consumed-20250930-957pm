@@ -26,7 +26,7 @@ serve(async (req) => {
 
     // Get auth user (using working pattern)
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    console.log("Auth check result:", { user: user?.email, userError });
+    console.log("Auth check result:", { userId: user?.id, userError });
     
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -35,23 +35,23 @@ serve(async (req) => {
       });
     }
 
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     // Look up app user by email, CREATE if doesn't exist (using working pattern)
-    let { data: appUser, error: appUserError } = await supabase
+    let { data: appUser, error: appUserError } = await supabaseAdmin
       .from('users')
       .select('id, email, user_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
     console.log('User lookup result:', { appUser, appUserError });
 
     // If user doesn't exist, create them using service role client (bypass RLS)
     if (appUserError && appUserError.code === 'PGRST116') {
-      console.log('User not found, creating new user:', user.email);
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '', 
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-      
+      console.log('User not found, creating profile for:', user.id);
       const { data: newUser, error: createError } = await supabaseAdmin
         .from('users')
         .insert({

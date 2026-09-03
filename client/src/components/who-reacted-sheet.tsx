@@ -87,7 +87,7 @@ async function fetchReactors(postId: string) {
   const userMap = new Map<string, Person>();
   if (allIds.length > 0) {
     const { data: users } = await supabase
-      .from("users")
+      .from("public_user_profiles")
       .select("id, display_name, user_name, first_name, last_name, avatar")
       .in("id", allIds);
     for (const u of users || []) {

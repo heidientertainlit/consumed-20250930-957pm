@@ -37,7 +37,7 @@ export default function PlayBingeBattleAccept() {
       setBattle(data);
 
       const { data: challenger } = await supabase
-        .from("users")
+        .from("public_user_profiles")
         .select("user_name, display_name")
         .eq("id", data.challenger_id)
         .single();

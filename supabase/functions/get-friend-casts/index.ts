@@ -80,7 +80,7 @@ serve(async (req) => {
     let creatorMap = new Map();
     if (creatorIds.length > 0) {
       const { data: creators } = await supabase
-        .from('users')
+        .from('public_user_profiles')
         .select('id, user_name, display_name')
         .in('id', creatorIds);
       

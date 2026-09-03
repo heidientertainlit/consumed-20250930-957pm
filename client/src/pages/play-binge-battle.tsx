@@ -189,7 +189,7 @@ export default function PlayBingeBattle() {
     const ids = [...new Set(rows.flatMap(b => [b.challenger_id, b.opponent_id]).filter(Boolean) as string[])];
     if (ids.length > 0) {
       const { data: usersData } = await supabase
-        .from("users")
+        .from("public_user_profiles")
         .select("id, user_name, display_name")
         .in("id", ids);
       const map: Record<string, UserInfo> = {};
@@ -316,7 +316,7 @@ export default function PlayBingeBattle() {
     const ids = [data.challenger_id, data.opponent_id].filter(Boolean) as string[];
     if (ids.some(id => !userMap[id])) {
       const { data: usersData } = await supabase
-        .from("users")
+        .from("public_user_profiles")
         .select("id, user_name, display_name")
         .in("id", ids);
       const newMap = { ...userMap };
@@ -394,7 +394,7 @@ export default function PlayBingeBattle() {
     let opponentName = userMap[opponentId || ""]?.name || null;
     if (!opponentName && opponentId) {
       const { data: oppData } = await supabase
-        .from("users")
+        .from("public_user_profiles")
         .select("display_name, user_name")
         .eq("id", opponentId)
         .single();

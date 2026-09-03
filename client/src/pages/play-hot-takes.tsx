@@ -153,7 +153,7 @@ export default function PlayHotTakesPage() {
           ice_votes,
           comments_count,
           media_type,
-          users:user_id (
+          users:public_user_profiles (
             display_name,
             user_name,
             avatar

@@ -306,7 +306,7 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
 
   route("/invite/:userId", async (req) => {
     const { data: user } = await supabase
-      .from("users")
+      .from("public_user_profiles")
       .select("display_name,user_name")
       .eq("id", req.params.userId)
       .maybeSingle();
@@ -319,7 +319,7 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
 
   route("/u/:userId", async (req) => {
     const { data: user } = await supabase
-      .from("users")
+      .from("public_user_profiles")
       .select("display_name,user_name,avatar")
       .eq("id", req.params.userId)
       .maybeSingle();
@@ -362,7 +362,7 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
     }
 
     const { data: user } = await supabase
-      .from("users")
+      .from("public_user_profiles")
       .select("display_name,user_name")
       .eq("id", post.user_id)
       .maybeSingle();
@@ -491,7 +491,7 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
         .eq("user_id", userId)
         .maybeSingle(),
       supabase
-        .from("users")
+        .from("public_user_profiles")
         .select("display_name,user_name,avatar")
         .eq("id", userId)
         .maybeSingle(),
@@ -549,7 +549,7 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
       : "";
     const { data: sender } = senderId
       ? await supabase
-          .from("users")
+          .from("public_user_profiles")
           .select("display_name,user_name")
           .eq("id", senderId)
           .maybeSingle()

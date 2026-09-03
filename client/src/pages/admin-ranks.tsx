@@ -103,7 +103,7 @@ export default function AdminRanksPage() {
     queryFn: async () => {
       if (!user?.id) return null;
       const { data } = await supabase
-        .from("users")
+        .from("admin_user_profiles")
         .select("id, is_admin")
         .eq("id", user.id)
         .single();

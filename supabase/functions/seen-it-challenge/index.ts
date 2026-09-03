@@ -30,19 +30,7 @@ serve(async (req) => {
       });
     }
 
-    // Get app user
-    const { data: appUser } = await supabase
-      .from('users')
-      .select('id, display_name, user_name')
-      .eq('email', user.email)
-      .single();
-
-    if (!appUser) {
-      return new Response(JSON.stringify({ error: 'User not found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    const appUser = { id: user.id };
 
     const body = await req.json();
     const { action } = body;

@@ -107,14 +107,14 @@ serve(async (req) => {
       });
     }
 
-    let { data: appUser, error: appUserError } = await supabase
+    let { data: appUser, error: appUserError } = await adminClient
       .from('users')
       .select('id, email, user_name, display_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
     if (appUserError && appUserError.code === 'PGRST116') {
-      const { data: newUser, error: createError } = await supabase
+      const { data: newUser, error: createError } = await adminClient
         .from('users')
         .insert({
           id: user.id,

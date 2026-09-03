@@ -150,7 +150,7 @@ export default function AdminRoomsPage() {
       setSearchLoading(true);
       const q = memberSearch.trim().toLowerCase();
       const { data } = await supabase
-        .from("users")
+        .from("admin_user_profiles")
         .select("id, user_name, display_name")
         .or(`user_name.ilike.%${q}%,display_name.ilike.%${q}%`)
         .limit(8);

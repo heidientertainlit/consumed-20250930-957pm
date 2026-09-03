@@ -21,7 +21,7 @@ export function LeaderboardGlimpse() {
 
       const userIds = pointsData.map((p: any) => p.user_id);
       const { data: usersData } = await supabase
-        .from('users')
+        .from('public_user_profiles')
         .select('id, user_name, display_name')
         .in('id', userIds);
 

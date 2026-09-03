@@ -356,7 +356,7 @@ function EveryonesTalkingCard({ groups, currentUserId, session, onOpenMedia, sin
     try {
       const { data } = await supabase
         .from('comments')
-        .select('id, content, created_at, post_id, users:user_id (id, user_name, display_name, avatar)')
+        .select('id, content, created_at, post_id, users:public_user_profiles (id, user_name, display_name, avatar)')
         .in('post_id', ids)
         .order('created_at', { ascending: true })
         .limit(60);
@@ -886,7 +886,7 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
     if (userIds.length > 0) {
       try {
         const { data: users } = await supabase
-          .from('users')
+          .from('public_user_profiles')
           .select('id, display_name, user_name, first_name, last_name')
           .in('id', userIds);
         if (users && users.length > 0) {
@@ -1620,7 +1620,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         if (filtered.length === 0) return;
         const ids = filtered.map((r: any) => r.user_id);
         const { data: users } = await supabase
-          .from('users')
+          .from('public_user_profiles')
           .select('id, user_name, display_name, first_name, last_name, avatar')
           .in('id', ids);
         const userMap: Record<string, any> = {};
@@ -5546,7 +5546,7 @@ export default function Feed() {
     queryKey: ['current-user-name', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data } = await supabase.from('users').select('user_name').eq('id', user.id).single();
+      const { data } = await supabase.rpc('get_my_account_profile').select('user_name').single();
       return data?.user_name || null;
     },
     enabled: !!user?.id,
@@ -7857,7 +7857,7 @@ export default function Feed() {
       if (participantIds.length === 0) return pools;
 
       const { data: participants } = await supabase
-        .from('users')
+        .from('public_user_profiles')
         .select('id, user_name, display_name, first_name, last_name, avatar')
         .in('id', participantIds);
       const participantMap = new Map((participants || []).map((participant: any) => [participant.id, participant]));
@@ -8416,7 +8416,7 @@ export default function Feed() {
       const ids = [...new Set(collectIds(transformedComments))];
       if (ids.length > 0) {
         const { data: users } = await supabase
-          .from('users')
+          .from('public_user_profiles')
           .select('id, display_name, user_name, first_name, last_name, avatar')
           .in('id', ids);
         if (users && users.length > 0) {

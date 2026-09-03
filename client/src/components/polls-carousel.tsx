@@ -166,7 +166,7 @@ export function PollsCarousel({ expanded = false, category, mediaFilter }: Polls
       let creatorMap = new Map<string, { display_name: string; avatar: string; user_name: string }>();
       if (userCreatorIds.length > 0) {
         const { data: creators } = await supabase
-          .from('users')
+          .from('public_user_profiles')
           .select('id, display_name, avatar, user_name')
           .in('id', userCreatorIds);
         if (creators) {

@@ -226,7 +226,7 @@ export function CompareSheet({
 
         // Get friend users
         const usersRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/users?id=in.(${friendIds.join(",")})&select=id,user_name,display_name,first_name,last_name,avatar`,
+          `${SUPABASE_URL}/rest/v1/public_user_profiles?id=in.(${friendIds.join(",")})&select=id,user_name,display_name,first_name,last_name,avatar`,
           { headers }
         );
         const usersData: Friend[] = await usersRes.json();

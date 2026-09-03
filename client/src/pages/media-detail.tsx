@@ -505,7 +505,7 @@ export default function MediaDetail() {
           likes_count,
           comments_count,
           prediction_pool_id,
-          users!social_posts_user_id_fkey (
+          users:public_user_profiles!social_posts_user_id_fkey (
             display_name,
             user_name
           )
@@ -547,7 +547,7 @@ export default function MediaDetail() {
       const userIds = Array.from(new Set(rows.map((r: any) => r.user_id).filter(Boolean)));
       if (userIds.length === 0) return rows.map((r: any) => ({ ...r, users: null }));
       const { data: userRows } = await supabase
-        .from('users')
+        .from('public_user_profiles')
         .select('id, display_name, user_name')
         .in('id', userIds);
       const userMap = new Map((userRows || []).map((u: any) => [u.id, u]));
@@ -564,7 +564,7 @@ export default function MediaDetail() {
       if (!mediaItem?.title) return [];
       const mediaType = mediaItem.media_type || mediaItem.type || params?.type;
       let query = supabase.from('room_takes')
-        .select('id, title, body, reply_count, upvotes, media_title, media_type, users:user_id(display_name, user_name)')
+        .select('id, title, body, reply_count, upvotes, media_title, media_type, users:public_user_profiles(display_name, user_name)')
         .eq('media_title', mediaItem.title)
         .order('created_at', { ascending: false })
         .limit(6);

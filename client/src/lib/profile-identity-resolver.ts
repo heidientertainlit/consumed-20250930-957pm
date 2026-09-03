@@ -60,9 +60,8 @@ async function resolveIdentity(
 ): Promise<ResolvedProfileIdentity> {
   const [profileResult, dnaResult] = await Promise.all([
     supabase
-      .from("users")
+      .rpc("get_my_account_profile")
       .select("first_name, last_name, user_name, identity_confirmed_at")
-      .eq("id", user.id)
       .maybeSingle(),
     supabase
       .from("dna_profiles")

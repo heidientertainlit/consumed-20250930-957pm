@@ -59,7 +59,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
     queryKey: ['nav-avatar', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data } = await supabase.from('users').select('avatar_url:avatar').eq('id', user.id).single();
+      const { data } = await supabase.rpc('get_my_account_profile').select('avatar_url:avatar').single();
       return (data as any)?.avatar_url ?? null;
     },
     enabled: !!user?.id,

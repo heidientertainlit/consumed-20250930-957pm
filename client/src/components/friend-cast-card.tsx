@@ -67,7 +67,7 @@ export default function FriendCastCard({ cast, onDelete, currentUserId }: Friend
     try {
       const { data, error } = await supabase
         .from('friend_cast_comments')
-        .select('id, content, created_at, user:users!friend_cast_comments_user_id_fkey(id, user_name)')
+        .select('id, content, created_at, user:public_user_profiles!friend_cast_comments_user_id_fkey(id, user_name)')
         .eq('friend_cast_id', cast.id)
         .order('created_at', { ascending: false })
         .limit(10);

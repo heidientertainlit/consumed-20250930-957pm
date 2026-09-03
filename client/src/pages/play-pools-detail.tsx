@@ -68,7 +68,7 @@ export default function PlayPoolsDetailPage() {
       const [{ data: poolData }, { data: roundsData }, { data: membersData }] = await Promise.all([
         supabase.from("pools").select("*").eq("id", params.id).single(),
         supabase.from("pool_rounds").select("*").eq("pool_id", params.id).order("created_at"),
-        supabase.from("pool_members").select("user_id, users:user_id(display_name, user_name)").eq("pool_id", params.id),
+        supabase.from("pool_members").select("user_id, users:public_user_profiles(display_name, user_name)").eq("pool_id", params.id),
       ]);
 
       setPool(poolData);
