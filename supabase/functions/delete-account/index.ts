@@ -6,12 +6,131 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-async function deleteRows(client: any, table: string, column: string, value: string) {
+const jsonHeaders = {
+  ...corsHeaders,
+  "Content-Type": "application/json",
+};
+
+const AVATAR_BUCKET = "avatars";
+const STORAGE_PAGE_SIZE = 100;
+const STORAGE_REMOVE_BATCH_SIZE = 100;
+const MAX_STORAGE_DEPTH = 10;
+
+type StorageEntry = {
+  id?: string | null;
+  name?: string;
+  metadata?: Record<string, unknown> | null;
+};
+
+function isSafeUserAvatarPath(path: string, userId: string): boolean {
+  const prefix = `${userId}/`;
+  return (
+    path.startsWith(prefix) &&
+    !path.startsWith("/") &&
+    !path.includes("\\") &&
+    !path.split("/").includes("..")
+  );
+}
+
+function avatarPathFromPublicUrl(
+  value: unknown,
+  userId: string,
+  supabaseUrl: string,
+): string | null {
+  if (typeof value !== "string" || !value) return null;
+
   try {
-    const { error } = await client.from(table).delete().eq(column, value);
-    return error ? `error: ${error.message}` : "ok";
-  } catch (e: any) {
-    return `exception: ${e.message}`;
+    const url = new URL(value);
+    if (url.origin !== new URL(supabaseUrl).origin) return null;
+
+    const marker = `/storage/v1/object/public/${AVATAR_BUCKET}/`;
+    const markerIndex = url.pathname.indexOf(marker);
+    if (markerIndex < 0) return null;
+
+    const objectPath = decodeURIComponent(
+      url.pathname.slice(markerIndex + marker.length),
+    );
+    return isSafeUserAvatarPath(objectPath, userId) ? objectPath : null;
+  } catch {
+    return null;
+  }
+}
+
+async function listUserAvatarPaths(
+  admin: any,
+  userId: string,
+): Promise<string[]> {
+  const paths = new Set<string>();
+  const prefixes: Array<{ prefix: string; depth: number }> = [
+    { prefix: userId, depth: 0 },
+  ];
+
+  while (prefixes.length > 0) {
+    const current = prefixes.pop()!;
+    let offset = 0;
+
+    while (true) {
+      const { data, error } = await admin.storage
+        .from(AVATAR_BUCKET)
+        .list(current.prefix, {
+          limit: STORAGE_PAGE_SIZE,
+          offset,
+          sortBy: { column: "name", order: "asc" },
+        });
+
+      if (error) {
+        throw new Error("Unable to enumerate avatar files");
+      }
+
+      const entries = (data || []) as StorageEntry[];
+      for (const entry of entries) {
+        if (!entry.name) {
+          throw new Error("Avatar listing returned an invalid object");
+        }
+
+        const objectPath = `${current.prefix}/${entry.name}`;
+        if (!isSafeUserAvatarPath(objectPath, userId)) {
+          throw new Error("Avatar listing returned an unsafe object path");
+        }
+
+        const isFolder = !entry.id && !entry.metadata;
+        if (isFolder) {
+          if (current.depth >= MAX_STORAGE_DEPTH) {
+            throw new Error("Avatar folder nesting is too deep");
+          }
+          prefixes.push({ prefix: objectPath, depth: current.depth + 1 });
+        } else {
+          paths.add(objectPath);
+        }
+      }
+
+      if (entries.length < STORAGE_PAGE_SIZE) break;
+      offset += entries.length;
+    }
+  }
+
+  return [...paths];
+}
+
+async function removeUserAvatars(
+  admin: any,
+  userId: string,
+  fallbackPaths: Array<string | null>,
+) {
+  const paths = new Set(await listUserAvatarPaths(admin, userId));
+  for (const fallbackPath of fallbackPaths) {
+    if (fallbackPath && isSafeUserAvatarPath(fallbackPath, userId)) {
+      paths.add(fallbackPath);
+    }
+  }
+
+  const allPaths = [...paths];
+  for (let index = 0; index < allPaths.length; index += STORAGE_REMOVE_BATCH_SIZE) {
+    const batch = allPaths.slice(index, index + STORAGE_REMOVE_BATCH_SIZE);
+    const { error } = await admin.storage.from(AVATAR_BUCKET).remove(batch);
+    if (error) {
+      throw new Error("Unable to remove avatar files");
+    }
   }
 }
 
@@ -20,175 +139,101 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: jsonHeaders,
+    });
+  }
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Missing authorization" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders,
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    if (!supabaseUrl || !serviceRoleKey || !anonKey) {
+      throw new Error("Account deletion is not configured");
+    }
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
+    const {
+      data: { user },
+      error: userError,
+    } = await userClient.auth.getUser();
 
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Invalid user" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders,
       });
     }
-
-    const userId = user.id;
-    console.log("Deleting account for user:", userId);
 
     const admin = createClient(supabaseUrl, serviceRoleKey);
-    const results: Record<string, string> = {};
+    const { data: profile, error: profileError } = await admin
+      .from("users")
+      .select("avatar")
+      .eq("id", user.id)
+      .maybeSingle();
 
-    // Step 1: Get IDs of user's posts, ranks, strands, lists for cascading deletes
-    const { data: userPosts } = await admin.from("social_posts").select("id").eq("user_id", userId);
-    const postIds = (userPosts || []).map((p: any) => p.id);
+    if (profileError) {
+      throw new Error("Unable to prepare account deletion");
+    }
 
-    const { data: userRanks } = await admin.from("ranks").select("id").eq("user_id", userId);
-    const rankIds = (userRanks || []).map((r: any) => r.id);
+    await removeUserAvatars(admin, user.id, [
+      avatarPathFromPublicUrl(profile?.avatar, user.id, supabaseUrl),
+      avatarPathFromPublicUrl(
+        user.user_metadata?.avatar_url,
+        user.id,
+        supabaseUrl,
+      ),
+    ]);
 
-    const { data: userStrands } = await admin.from("strands").select("id").eq("user_id", userId);
-    const strandIds = (userStrands || []).map((s: any) => s.id);
+    const { error: deletionError } = await admin.rpc(
+      "delete_account_transaction",
+      { p_user_id: user.id },
+    );
 
-    const { data: userLists } = await admin.from("lists").select("id").eq("user_id", userId);
-    const listIds = (userLists || []).map((l: any) => l.id);
-
-    const { data: userComments } = await admin.from("social_post_comments").select("id").eq("user_id", userId);
-    const commentIds = (userComments || []).map((c: any) => c.id);
-
-    console.log(`Found: ${postIds.length} posts, ${rankIds.length} ranks, ${strandIds.length} strands, ${listIds.length} lists, ${commentIds.length} comments`);
-
-    // Step 2: Delete children of user's content (likes/votes on their posts)
-    if (postIds.length > 0) {
-      for (const pid of postIds) {
-        await admin.from("social_post_likes").delete().eq("post_id", pid);
-        await admin.from("social_post_comments").delete().eq("post_id", pid);
-        await admin.from("post_votes").delete().eq("post_id", pid);
+    if (deletionError) {
+      // If the RPC committed but its response was interrupted, do not tell the
+      // user deletion failed when the Auth account is already gone.
+      const {
+        data: { user: remainingUser },
+      } = await admin.auth.admin.getUserById(user.id);
+      if (!remainingUser) {
+        return new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: jsonHeaders,
+        });
       }
+      throw new Error("Unable to delete account data");
     }
 
-    if (commentIds.length > 0) {
-      for (const cid of commentIds) {
-        await admin.from("social_comment_likes").delete().eq("comment_id", cid);
-        await admin.from("social_comment_votes").delete().eq("comment_id", cid);
-      }
-    }
-
-    if (rankIds.length > 0) {
-      for (const rid of rankIds) {
-        await admin.from("rank_item_votes").delete().eq("rank_id", rid);
-        await admin.from("rank_comments").delete().eq("rank_id", rid);
-        await admin.from("rank_items").delete().eq("rank_id", rid);
-      }
-    }
-
-    if (strandIds.length > 0) {
-      for (const sid of strandIds) {
-        await admin.from("strand_likes").delete().eq("strand_id", sid);
-        await admin.from("strand_comments").delete().eq("strand_id", sid);
-        await admin.from("strand_media").delete().eq("strand_id", sid);
-      }
-    }
-
-    if (listIds.length > 0) {
-      for (const lid of listIds) {
-        await admin.from("list_items").delete().eq("list_id", lid);
-        await admin.from("list_collaborators").delete().eq("list_id", lid);
-      }
-    }
-
-    // Step 3: Delete all user_id referenced data
-    const userIdTables = [
-      "social_comment_likes", "social_comment_votes",
-      "social_post_likes", "social_post_comments", "post_votes", "social_posts",
-      "prediction_comment_likes", "prediction_comment_votes",
-      "prediction_comments", "prediction_likes", "predictions",
-      "user_predictions", "user_prediction_stats",
-      "media_ratings", "ratings", "reviews",
-      "media_history_log", "user_media_items", "user_media",
-      "list_collaborators", "list_items", "user_lists", "lists",
-      "rank_comments", "rank_items", "ranks",
-      "dna_moment_responses", "dna_profiles", "edna_responses",
-      "user_dna_levels", "user_dna_signals", "celebrity_dna",
-      "entertainment_dna",
-      "friend_cast_responses", "friend_casts",
-      "friends_trivia", "followed_creators",
-      "hot_take_votes", "hot_take_passes",
-      "poll_responses", "pool_answers", "pool_members",
-      "awards_picks", "awards_ballot_completions",
-      "daily_challenge_responses", "daily_runs",
-      "seen_it_responses", "seen_it_completions",
-      "trivia_answers", "trivia_results", "trivia_user_points",
-      "activity_logs", "user_activity", "user_last_activity",
-      "points_log", "user_points",
-      "notifications", "user_highlights", "user_badges",
-      "user_creator_stats", "user_flags",
-      "login_streaks", "bets",
-      "cached_recommendations", "rec_requests", "media_goals",
-      "beta_feedback",
-      "strand_likes", "strand_comments", "strand_media", "strands",
-      "public_feed", "user_sessions",
-    ];
-
-    for (const table of userIdTables) {
-      results[table] = await deleteRows(admin, table, "user_id", userId);
-    }
-
-    // Tables that use different column names
-    results["friendships_user"] = await deleteRows(admin, "friendships", "user_id", userId);
-    results["friendships_friend"] = await deleteRows(admin, "friendships", "friend_id", userId);
-    results["friend_invitations_inviter"] = await deleteRows(admin, "friend_invitations", "inviter_id", userId);
-    results["friend_invitations_invitee"] = await deleteRows(admin, "friend_invitations", "invitee_id", userId);
-    results["dna_comparisons_user"] = await deleteRows(admin, "dna_comparisons", "user_id", userId);
-    results["dna_comparisons_friend"] = await deleteRows(admin, "dna_comparisons", "friend_id", userId);
-    results["rank_item_votes_voter"] = await deleteRows(admin, "rank_item_votes", "voter_id", userId);
-
-    // Profiles table - try both id and user_id
-    results["profiles_id"] = await deleteRows(admin, "profiles", "id", userId);
-    results["profiles_user_id"] = await deleteRows(admin, "profiles", "user_id", userId);
-
-    // Log failures only
-    const failures = Object.entries(results).filter(([_, v]) => v !== "ok" && !v.includes("does not exist"));
-    console.log("Failures:", JSON.stringify(failures));
-    console.log("Total tables processed:", Object.keys(results).length);
-
-    // Step 4: Delete auth user
-    console.log("Deleting auth user...");
-    const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
-
-    if (deleteError) {
-      console.error("Auth deletion failed:", JSON.stringify(deleteError));
-      return new Response(JSON.stringify({
-        error: "Failed to delete auth account",
-        authError: deleteError.message,
-        failures
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    console.log("Account deleted successfully");
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
-  } catch (err: any) {
-    console.error("Delete account error:", err);
-    return new Response(JSON.stringify({ error: err.message || "Internal server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  } catch (error) {
+    console.error(
+      "Delete account failed:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+    return new Response(
+      JSON.stringify({
+        error: "Account deletion failed. Please try again.",
+      }),
+      {
+        status: 500,
+        headers: jsonHeaders,
+      },
+    );
   }
 });
