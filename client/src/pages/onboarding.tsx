@@ -607,19 +607,17 @@ export default function OnboardingPage() {
       setIdentityError("Please enter your first and last name.");
       return;
     }
-    if (!identityBirthDate) {
-      setIdentityError("Please enter your birthday.");
-      return;
+    if (identityBirthDate) {
+      const birthDate = new Date(`${identityBirthDate}T00:00:00`);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      if (Number.isNaN(birthDate.getTime()) || birthDate > today) {
+        setIdentityError("Please enter a valid birthday.");
+        return;
+      }
     }
-    if (identityGender !== "male" && identityGender !== "female") {
+    if (identityGender && identityGender !== "male" && identityGender !== "female") {
       setIdentityError("Please select male or female.");
-      return;
-    }
-    const birthDate = new Date(`${identityBirthDate}T00:00:00`);
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    if (Number.isNaN(birthDate.getTime()) || birthDate > today) {
-      setIdentityError("Please enter a valid birthday.");
       return;
     }
     if (!USERNAME_PATTERN.test(username)) {
@@ -640,8 +638,8 @@ export default function OnboardingPage() {
           first_name: firstName,
           last_name: lastName,
           username,
-          birth_date: identityBirthDate,
-          gender: identityGender,
+          birth_date: identityBirthDate || null,
+          gender: identityGender || null,
         }),
       });
       const result = await response.json().catch(() => ({}));
@@ -1397,8 +1395,8 @@ export default function OnboardingPage() {
               )}
             </div>
 
-            <label className="mt-3.5 block text-sm font-semibold text-gray-700">
-              Birthday
+            <label className="mt-3.5 block min-w-0 overflow-hidden text-sm font-semibold text-gray-700">
+              Birthday <span className="font-normal text-gray-400">(optional)</span>
               <input
                 type="date"
                 value={identityBirthDate}
@@ -1408,13 +1406,13 @@ export default function OnboardingPage() {
                   setIdentityError(null);
                 }}
                 autoComplete="bday"
-                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                className="mt-1.5 block w-full min-w-0 max-w-full box-border overflow-hidden rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-base text-gray-900 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
                 data-testid="onboarding-birthday"
               />
             </label>
 
             <fieldset className="mt-3.5">
-              <legend className="text-sm font-semibold text-gray-700">Gender</legend>
+              <legend className="text-sm font-semibold text-gray-700">Gender <span className="font-normal text-gray-400">(optional)</span></legend>
               <div className="mt-1.5 grid grid-cols-2 gap-3">
                 {(["female", "male"] as const).map((gender) => (
                   <button
@@ -1438,13 +1436,13 @@ export default function OnboardingPage() {
               </div>
             </fieldset>
 
-            <div className="mt-3.5">
+            <div className="mt-3.5 flex items-center justify-between gap-3">
               <p className="text-sm font-semibold text-gray-700">Profile photo <span className="font-normal text-gray-400">(optional)</span></p>
               <button
                 type="button"
                 onClick={() => identityPhotoInputRef.current?.click()}
                 disabled={identityPhotoPreparing || identitySaving}
-                className="mt-1.5 inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-semibold text-purple-700 disabled:opacity-50"
+                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-semibold text-purple-700 disabled:opacity-50"
               >
                 {identityPhotoPreparing ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
                 {identityAvatarUrl ? "Change photo" : "Add photo"}
@@ -1470,8 +1468,6 @@ export default function OnboardingPage() {
                 identitySaving
                 || !identityFirstName.trim()
                 || !identityLastName.trim()
-                || !identityBirthDate
-                || !identityGender
                 || !USERNAME_PATTERN.test(normalizeUsername(identityUsername))
                 || (identityNeedsUsername && identityUsernameStatus === "checking")
                 || (identityNeedsUsername && identityUsernameStatus === "taken")
@@ -2119,7 +2115,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
-      <div className="relative max-w-[430px] w-full bg-white rounded-3xl p-7 shadow-2xl text-center">
+      <div className="relative max-w-[430px] w-full bg-white rounded-3xl p-5 shadow-2xl text-center">
         <button
           type="button"
           onClick={() => setShowDnaShare(true)}
@@ -2128,16 +2124,16 @@ export default function OnboardingPage() {
         >
           <Forward size={18} strokeWidth={2.2} />
         </button>
-        <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-5">
-          <Dna className="text-white" size={40} />
+        <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
+          <Dna className="text-white" size={32} />
         </div>
         <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 uppercase">Your Entertainment DNA</p>
-        <h1 className="text-3xl font-black text-gray-900 mt-2" style={{ fontFamily: "Poppins, sans-serif" }}>
+        <h1 className="text-[28px] leading-tight font-black text-gray-900 mt-1.5" style={{ fontFamily: "Poppins, sans-serif" }}>
           {generatedProfile?.label || "Your DNA is ready"}
         </h1>
-        {generatedProfile?.tagline && <p className="text-gray-600 mt-3 text-base">{generatedProfile.tagline}</p>}
+        {generatedProfile?.tagline && <p className="text-gray-600 mt-2 text-sm">{generatedProfile.tagline}</p>}
         {generatedProfile?.flavor_notes && generatedProfile.flavor_notes.length > 0 && (
-          <div className="mt-6 rounded-2xl bg-purple-50 p-4 text-left">
+          <div className="mt-4 rounded-2xl bg-purple-50 p-3 text-left">
             <p className="text-sm font-bold text-gray-900 flex items-center gap-2">
               <Sparkles size={16} className="text-purple-600" />
               Your Flavor Notes
@@ -2148,9 +2144,9 @@ export default function OnboardingPage() {
           </div>
         )}
         {generatedProfile?.profile_text && (
-          <p className="mt-5 text-left text-sm leading-relaxed text-gray-700">{generatedProfile.profile_text}</p>
+          <p className="mt-3 text-left text-sm leading-relaxed text-gray-700">{generatedProfile.profile_text}</p>
         )}
-        <div className="mt-7">
+        <div className="mt-4">
           <button
             onClick={() => setStep("customize")}
             className="w-full py-3.5 rounded-full font-bold text-[15px] text-white transition-all active:scale-95"

@@ -259,26 +259,33 @@ serve(async (req) => {
     }
 
     const birthDate = String(body.birth_date || "").trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
-      return json({ error: "A valid birthday is required." }, 400);
-    }
-    const parsedBirthDate = new Date(`${birthDate}T00:00:00.000Z`);
-    if (
-      Number.isNaN(parsedBirthDate.getTime())
-      || parsedBirthDate.toISOString().slice(0, 10) !== birthDate
-      || birthDate > new Date().toISOString().slice(0, 10)
-    ) {
-      return json({ error: "A valid birthday is required." }, 400);
+    if (birthDate) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+        return json({ error: "Please enter a valid birthday." }, 400);
+      }
+      const parsedBirthDate = new Date(`${birthDate}T00:00:00.000Z`);
+      if (
+        Number.isNaN(parsedBirthDate.getTime())
+        || parsedBirthDate.toISOString().slice(0, 10) !== birthDate
+        || birthDate > new Date().toISOString().slice(0, 10)
+      ) {
+        return json({ error: "Please enter a valid birthday." }, 400);
+      }
     }
     const gender = String(body.gender || "").trim().toLowerCase();
-    if (gender !== "male" && gender !== "female") {
+    if (gender && gender !== "male" && gender !== "female") {
       return json({ error: "Please select male or female." }, 400);
     }
 
-    const { error: privateDetailsError } = await admin
-      .from("user_private_details")
-      .upsert({ user_id: user.id, birth_date: birthDate, gender }, { onConflict: "user_id" });
-    if (privateDetailsError) throw privateDetailsError;
+    if (birthDate || gender) {
+      const privateDetails: Record<string, string> = { user_id: user.id };
+      if (birthDate) privateDetails.birth_date = birthDate;
+      if (gender) privateDetails.gender = gender;
+      const { error: privateDetailsError } = await admin
+        .from("user_private_details")
+        .upsert(privateDetails, { onConflict: "user_id" });
+      if (privateDetailsError) throw privateDetailsError;
+    }
 
     const displayName = `${firstName} ${lastName}`.trim();
     const profileFields = {
