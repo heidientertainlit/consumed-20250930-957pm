@@ -52,3 +52,4 @@
 - [Now and Play boundary](now-play-boundary.md) — full playable Trivia, Polls, Ranks, and Seen It feeds belong in Play; Now may show social Play stories, not embedded games.
 - [Play friend challenges](play-friend-challenges.md) — exact-game links compare sender and recipient results inside the existing mobile result card; never require a new page or scrolling.
 - [Leaderboard share links](leaderboard-share-links.md) — share only server-verified Global rank snapshots; category owns destination, and native API calls must use the production app origin.
+- [Portable npm lockfile](portable-npm-lockfile.md) — keep package-lock free of package-firewall.replit.local URLs so Mac/Capacitor installs remain portable.
