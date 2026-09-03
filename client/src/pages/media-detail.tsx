@@ -928,7 +928,7 @@ export default function MediaDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       queryClient.invalidateQueries({ queryKey: ['media-reviews'] });
-      queryClient.invalidateQueries({ queryKey: ['media-social-activity', params?.source, params?.id] });
+      queryClient.invalidateQueries({ queryKey: ['media-social-activity', canonicalMediaId, params?.source, params?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-media-rating', params?.source, params?.id] });
       toast({
         title: "Review deleted",
@@ -1079,7 +1079,7 @@ export default function MediaDetail() {
       setComposePredictionOptions(["", ""]);
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       queryClient.invalidateQueries({ queryKey: ['media-reviews'] });
-      queryClient.invalidateQueries({ queryKey: ['media-social-activity', params?.source, params?.id] });
+      queryClient.invalidateQueries({ queryKey: ['media-social-activity', canonicalMediaId, params?.source, params?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-media-rating', params?.source, params?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       toast({ title: "Posted!", description: "Your post has been shared." });
