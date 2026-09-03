@@ -8960,7 +8960,7 @@ export default function Feed() {
 
       {/* Header Section — identity hero + DNA moment need a logged-in user, hidden for guests */}
       {!isGuestMode && (
-        <div className="-mt-px" style={{ background: "linear-gradient(to right, #21183b, #332052, #4a246b)" }}>
+        <div className="-mt-px" style={{ background: "linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)" }}>
           <div className="max-w-4xl mx-auto px-4 pt-6 pb-6">
             
             {/* Composer Trigger - dark hero zone */}
