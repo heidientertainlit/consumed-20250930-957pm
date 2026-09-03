@@ -509,7 +509,7 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
               placeholder="Search people and friends"
               value={peopleSearchQuery}
               onChange={(event) => setPeopleSearchQuery(event.target.value)}
-              className="w-full rounded-xl border border-white/35 bg-[#eee8f0] py-3 pl-11 pr-4 text-sm text-[#30203f] shadow-[0_4px_14px_rgba(10,4,24,0.09)] outline-none placeholder:text-[#918696] focus:border-white/60 focus:bg-[#f3eef4] focus:ring-2 focus:ring-white/15"
+              className="w-full rounded-xl border border-white/35 bg-[#fbf8f5] py-3 pl-11 pr-4 text-sm text-[#30203f] shadow-[0_4px_14px_rgba(10,4,24,0.09)] outline-none placeholder:text-[#918696] focus:border-white/60 focus:bg-[#fbf8f5] focus:ring-2 focus:ring-white/15"
               data-testid="input-search-friends-hero"
             />
           </div>
