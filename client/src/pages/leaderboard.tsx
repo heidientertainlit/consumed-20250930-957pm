@@ -662,13 +662,16 @@ export default function Leaderboard() {
     hideDetails: boolean = false
   ) => {
     const isExpanded = expandedCategories.has(categoryName);
+    const headerGradientClass = gradient.startsWith('bg-[')
+      ? gradient
+      : `bg-gradient-to-r ${gradient}`;
     
     return (
       <div
         id={`leaderboard-${categoryIdFor(categoryName)}`}
         className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4"
       >
-        <div className={`bg-gradient-to-r ${gradient} p-4`}>
+        <div className={`${headerGradientClass} p-4`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Icon className="text-white" size={20} />
@@ -817,7 +820,7 @@ export default function Leaderboard() {
                 leaderboardData?.categories?.overall,
                 'Top Engagers',
                 'Start posting and engaging to appear here!',
-                'from-purple-600 to-pink-600'
+                'bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_55%,#2563eb_100%)]'
               )}
 
               {/* ── Conversation Starters / Top Commenters / Room Regulars — hidden for now (same people on every board) ── */}
@@ -923,7 +926,7 @@ export default function Leaderboard() {
                 leaderboardData?.categories?.trivia,
                 'Trivia',
                 'No trivia results yet. Play some trivia!',
-                'from-yellow-500 to-orange-500',
+                'bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_55%,#2563eb_100%)]',
                 { label: 'Play Trivia', href: '/play/trivia' },
                 true
               )}
@@ -1145,7 +1148,7 @@ export default function Leaderboard() {
                   leaderboardData?.categories?.total_consumption,
                   'Total Consumption',
                   'Track some media to appear here!',
-                  'from-purple-600 to-blue-600'
+                  'bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_55%,#2563eb_100%)]'
                 )}
               </div>
               
