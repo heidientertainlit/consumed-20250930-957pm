@@ -1604,9 +1604,27 @@ export default function MediaDetail() {
                     const hiddenCount = unique.length - MAX_VISIBLE;
                     const chips = visible.map((platform: any, index: number) => {
                       const label = baseName(platform.name);
+                      const providerKey = label.toLowerCase();
+                      const fallbackMark = providerKey.includes('google books') ? (
+                        <BookOpen className="w-3 h-3 text-blue-600" strokeWidth={2.5} />
+                      ) : providerKey.includes('amazon') ? (
+                        <span className="text-[12px] font-bold leading-none text-[#ff9900]">a</span>
+                      ) : (
+                        <span className="text-[9px] font-bold leading-none text-gray-700">{label.charAt(0).toUpperCase()}</span>
+                      );
                       const inner = (
                         <>
-                          {platform.logo && <img src={platform.logo} alt={label} className="w-4 h-4 rounded-[3px] object-contain" />}
+                          <span className="relative flex w-4 h-4 shrink-0 items-center justify-center overflow-hidden rounded-[3px] bg-white">
+                            {fallbackMark}
+                            {platform.logo && (
+                              <img
+                                src={platform.logo}
+                                alt=""
+                                className="absolute inset-0 w-full h-full bg-white object-contain"
+                                onError={(event) => { event.currentTarget.style.display = 'none'; }}
+                              />
+                            )}
+                          </span>
                           <span className="text-sm text-white">{label}</span>
                         </>
                       );
