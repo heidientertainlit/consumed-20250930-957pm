@@ -3071,7 +3071,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               <button
                 onClick={(e) => { e.stopPropagation(); submitComment(); }}
                 disabled={submitting || !commentText.trim()}
-                className="w-10 h-10 rounded-full bg-violet-200 hover:bg-violet-300 flex items-center justify-center flex-shrink-0 disabled:opacity-60 transition-colors"
+                className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                  submitting || !commentText.trim()
+                    ? 'bg-violet-200 opacity-60'
+                    : 'bg-violet-600 hover:bg-violet-700 active:bg-violet-800'
+                }`}
+                aria-label="Send reply"
               >
                 <Send size={15} className="text-white ml-px" />
               </button>
