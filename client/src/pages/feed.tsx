@@ -4992,6 +4992,113 @@ function CurrentlyConsumingFeedCard({
   );
 }
 
+function StandardFeedInteractionBar({
+  postId,
+  likes,
+  comments,
+  isLiked,
+  session,
+  onLike,
+  onComment,
+  onAdd,
+  onRate,
+  showRate,
+  extraAction,
+  timestamp,
+}: {
+  postId: string;
+  likes: number;
+  comments: number;
+  isLiked: boolean;
+  session: any;
+  onLike: () => void;
+  onComment: () => void;
+  onAdd?: () => void;
+  onRate?: () => void;
+  showRate?: boolean;
+  extraAction?: React.ReactNode;
+  timestamp: string;
+}) {
+  const [isDisliked, setIsDisliked] = useState(false);
+  const [dislikeCount, setDislikeCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!postId) return;
+    supabase
+      .from('post_reactions')
+      .select('reaction, user_id')
+      .eq('social_post_id', postId)
+      .then(({ data }) => {
+        if (cancelled) return;
+        const rows = data || [];
+        setDislikeCount(rows.filter((row) => row.reaction === 'disagree').length);
+        setIsDisliked(Boolean(session?.user?.id && rows.some((row) => row.user_id === session.user.id && row.reaction === 'disagree')));
+      });
+    return () => { cancelled = true; };
+  }, [postId, session?.user?.id]);
+
+  const handleAgree = async () => {
+    if (isDisliked && session?.user?.id) {
+      setIsDisliked(false);
+      setDislikeCount((count) => Math.max(0, count - 1));
+      await supabase.from('post_reactions').delete().eq('social_post_id', postId).eq('user_id', session.user.id);
+    }
+    onLike();
+  };
+
+  const handleDisagree = async () => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+    if (isLiked) onLike();
+    if (isDisliked) {
+      setIsDisliked(false);
+      setDislikeCount((count) => Math.max(0, count - 1));
+      await supabase.from('post_reactions').delete().eq('social_post_id', postId).eq('user_id', userId);
+      return;
+    }
+    setIsDisliked(true);
+    setDislikeCount((count) => count + 1);
+    await supabase
+      .from('post_reactions')
+      .upsert({ social_post_id: postId, user_id: userId, reaction: 'disagree' }, { onConflict: 'social_post_id,user_id' });
+  };
+
+  return (
+    <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2">
+      <div className="flex items-center gap-1">
+        <div className="flex items-center">
+          <button onClick={handleAgree} className="flex min-h-9 items-center gap-1.5 py-1.5 pl-2 pr-2.5 active:scale-95" aria-label="Like">
+            <ThumbsUp size={16} strokeWidth={1.75} className={isLiked && !isDisliked ? 'fill-gray-900 text-gray-900' : 'text-gray-600'} />
+            {likes > 0 && <span className="text-xs text-gray-600">{likes}</span>}
+          </button>
+          <span className="h-4 w-px bg-gray-300" />
+          <button onClick={handleDisagree} className="flex min-h-9 items-center gap-1.5 py-1.5 pl-2.5 pr-2 active:scale-95" aria-label="Dislike">
+            <ThumbsDown size={16} strokeWidth={1.75} className={`translate-y-px ${isDisliked ? 'fill-gray-900 text-gray-900' : 'text-gray-600'}`} />
+            {dislikeCount > 0 && <span className="text-xs text-gray-600">{dislikeCount}</span>}
+          </button>
+        </div>
+        <button onClick={onComment} className="flex min-h-9 items-center gap-1.5 px-2.5 py-1.5 active:scale-95" aria-label="Reply">
+          <MessageCircle size={16} className="text-gray-600" />
+          {comments > 0 && <span className="text-xs text-gray-600">{comments}</span>}
+        </button>
+        {onAdd && (
+          <button onClick={onAdd} className="flex min-h-9 items-center px-2.5 py-1.5 active:scale-95" aria-label="Add to library">
+            <Plus size={17} className="text-gray-600" />
+          </button>
+        )}
+        {showRate && onRate && (
+          <button onClick={onRate} className="flex min-h-9 items-center px-2.5 py-1.5 active:scale-95" aria-label="Rate">
+            <Star size={16} className="text-gray-600" />
+          </button>
+        )}
+        {extraAction}
+      </div>
+      <span className="shrink-0 text-sm text-gray-400">{timestamp}</span>
+    </div>
+  );
+}
+
 // ── Tinder-style swipeable wrapper for individual UGC feed cards ──────────────
 // Shared gesture hook used by both TinderCard and TinderCardStack
 function useSwipeGesture({
@@ -10930,63 +11037,57 @@ export default function Feed() {
                   })()}
 
                   {/* Interaction Bar */}
-                  <div className="pt-2 border-t border-gray-100 mt-2 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-6">
-                          <button 
-                            onClick={() => handleLike(realPostId)}
-                            disabled={likeMutation.isPending}
-                            className={`flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                              likedPosts.has(realPostId) 
-                                ? 'text-red-500' 
-                                : 'text-gray-500 hover:text-red-500'
-                            }`}
-                            data-testid={`button-like-${post.id}`}
-                          >
-                            <Heart 
-                              size={18} 
-                              fill={likedPosts.has(realPostId) ? 'currentColor' : 'none'}
-                            />
-                            <span className="text-sm">{post.likes}</span>
-                          </button>
-                        <button 
-                          onClick={() => toggleComments(realPostId)}
-                          className={`flex items-center space-x-2 transition-colors ${activeCommentPostId === realPostId ? 'text-purple-600' : 'text-gray-500 hover:text-blue-500'}`}
-                        >
-                          <MessageCircle size={18} />
-                          <span className="text-sm">{post.comments}</span>
-                        </button>
-                        {/* Add to library - only for posts with media */}
-                        {post.mediaItems && post.mediaItems.length > 0 && (
+                  <div className="space-y-2">
+                    <StandardFeedInteractionBar
+                      postId={realPostId}
+                      likes={post.likes || 0}
+                      comments={post.comments || 0}
+                      isLiked={likedPosts.has(realPostId)}
+                      session={session}
+                      onLike={() => handleLike(realPostId)}
+                      onComment={() => toggleComments(realPostId)}
+                      onAdd={post.mediaItems?.length ? () => {
+                        const media = post.mediaItems![0];
+                        setQuickAddMedia({
+                          title: media.title,
+                          mediaType: media.mediaType || 'movie',
+                          externalId: media.externalId,
+                          externalSource: media.externalSource || 'tmdb',
+                          imageUrl: media.imageUrl || '',
+                        });
+                        setIsQuickAddOpen(true);
+                      } : undefined}
+                      showRate={Boolean(post.mediaItems?.length && !activeInlineRating)}
+                      onRate={() => toggleInlineRating(post.id)}
+                      extraAction={(() => {
+                        const listData = (post as any).listData;
+                        const listNames = (post as any).listNames as string[] | undefined;
+                        const listTitle = (listData?.title || listNames?.[0] || '').toLowerCase();
+                        const isBettableList = listTitle === 'currently' || listTitle === 'want to';
+                        const isOwnPost = currentAppUserId && post.user?.id === currentAppUserId;
+                        if (!isBettableList || !post.mediaItems?.length || activeInlineRating || isOwnPost) return null;
+                        const media = post.mediaItems[0];
+                        return (
                           <button
-                            onClick={() => {
-                              const media = post.mediaItems[0];
-                              setQuickAddMedia({
-                                title: media.title,
-                                mediaType: media.mediaType || 'movie',
-                                externalId: media.externalId,
-                                externalSource: media.externalSource || 'tmdb',
-                                imageUrl: media.imageUrl || '',
-                              });
-                              setIsQuickAddOpen(true);
-                            }}
-                            className="flex items-center space-x-1 text-gray-500 hover:text-purple-500 transition-colors"
-                            data-testid={`button-add-to-library-${post.id}`}
-                            title="Add to library"
+                            onClick={() => setActiveBetPost({
+                              postId: post.id,
+                              mediaTitle: media.title,
+                              userName: formatFeedName(post.user?.displayName, post.user?.username),
+                              targetUserId: post.user?.id || '',
+                              externalId: media.externalId,
+                              externalSource: media.externalSource,
+                              mediaType: media.mediaType,
+                            })}
+                            className="flex min-h-9 items-center px-2.5 py-1.5 active:scale-95"
+                            aria-label="Bet on their reaction"
                           >
-                            <Plus size={18} />
+                            <Dices size={17} className="text-gray-600" />
                           </button>
-                        )}
-                        {/* Star rating for posts with media */}
-                        {post.mediaItems && post.mediaItems.length > 0 && !activeInlineRating && (
-                          <button 
-                            onClick={() => toggleInlineRating(post.id)}
-                            className="flex items-center space-x-1 text-gray-500 hover:text-yellow-500 transition-colors"
-                            data-testid={`button-rate-${post.id}`}
-                          >
-                            <Star size={18} />
-                          </button>
-                        )}
+                        );
+                      })()}
+                      timestamp={post.timestamp ? formatDate(post.timestamp) : 'Today'}
+                    />
+                    <div className="flex items-center">
                         {post.mediaItems && post.mediaItems.length > 0 && activeInlineRating === post.id && (
                           <div className="flex items-center gap-0.5">
                             {[1, 2, 3, 4, 5].map((star) => {
@@ -11034,49 +11135,7 @@ export default function Feed() {
                             </button>
                           </div>
                         )}
-                        {/* Bet button - only show for Currently/Want To list posts */}
-                        {(() => {
-                          const listData = (post as any).listData;
-                          const listNames = (post as any).listNames as string[] | undefined;
-                          
-                          // Check multiple sources for list name
-                          const listTitle = (listData?.title || listNames?.[0] || '').toLowerCase();
-                          
-                          // Direct check for bettable lists
-                          const isBettableList = listTitle === 'currently' || listTitle === 'want to';
-                          const hasMedia = post.mediaItems && post.mediaItems.length > 0;
-                          const isOwnPost = currentAppUserId && post.user?.id === currentAppUserId;
-                          const userName = formatFeedName(post.user?.displayName, post.user?.username);
-                          
-                          // Only show bet button for other users' posts (can't bet on your own)
-                          if (isBettableList && hasMedia && !activeInlineRating && !isOwnPost) {
-                            const media = post.mediaItems[0];
-                            return (
-                              <button 
-                                onClick={() => setActiveBetPost({
-                                  postId: post.id,
-                                  mediaTitle: media.title,
-                                  userName,
-                                  targetUserId: post.user?.id || '',
-                                  externalId: media.externalId,
-                                  externalSource: media.externalSource,
-                                  mediaType: media.mediaType
-                                })}
-                                className="flex items-center space-x-1 text-gray-500 hover:text-purple-500 transition-colors"
-                                data-testid={`button-bet-${post.id}`}
-                                title="Bet on their reaction"
-                              >
-                                <Dices size={18} />
-                              </button>
-                            );
-                          }
-                          return null;
-                        })()}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {post.timestamp ? formatDate(post.timestamp) : 'Today'}
-                      </div>
-                    </div>
 
                     {activeCommentPostId === realPostId && (
                       <div className="mt-3 pt-3 border-t border-gray-100">
