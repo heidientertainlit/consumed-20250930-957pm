@@ -11,4 +11,6 @@ Matches and Friends belong in one Friends destination. Lead with search, request
 
 Use the same “Your circle” structure for every account, including users whose comparison data is not ready or who have few friends. Never expose affinity scoring bands as person labels or explanatory buckets (“Your People,” “Common Ground,” or “Different Vibes”); show individual match percentages and evidence instead.
 
+Accepted friends may be identified by their full available first and last names on the viewer’s People page. Keep non-friend discovery identities privacy-safe as first name plus last initial.
+
 Use open tabs with a small icon stacked above each label and a purple active underline rather than segmented pills across People and DNA surfaces. People labels are “Friends & Matches,” “Tribes,” and “Artists & Creators.” The live profile page (`/profile`) uses “DNA” and “My Media” (or “Their Media” on friend profiles); the separate `/dna` comparison page uses “My DNA” and “Compare.”

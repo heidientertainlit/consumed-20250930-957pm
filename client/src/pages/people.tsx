@@ -338,10 +338,29 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
 
   const affinityQuery = useQuery({
     queryKey: ["people-affinity-v9", user?.id], enabled: !!session?.access_token && (tab === "friends" || tab === "tribes"),
-    queryFn: async () => hydrateFriendSharedTitleImages(
-      await functionRequest<Affinity>("people-affinity", session!.access_token, { action: "load", batch_size: 25 }),
-      session!.access_token,
-    ), staleTime: 60_000,
+    queryFn: async () => {
+      const data = await functionRequest<Affinity>("people-affinity", session!.access_token, { action: "load", batch_size: 25 });
+      void hydrateFriendSharedTitleImages(data, session!.access_token).then((hydrated) => {
+        queryClient.setQueryData<Affinity>(["people-affinity-v9", user?.id], (current) => {
+          if (!current) return hydrated;
+          const hydratedPeople = new Map(
+            (hydrated.bands || []).flatMap((band) => band.people).map((person) => [person.id, person]),
+          );
+          return {
+            ...current,
+            bands: (current.bands || []).map((band) => ({
+              ...band,
+              people: band.people.map((person) => {
+                const enriched = hydratedPeople.get(person.id);
+                return enriched ? { ...person, shared_titles: enriched.shared_titles } : person;
+              }),
+            })),
+          };
+        });
+      });
+      return data;
+    },
+    staleTime: 60_000,
   });
   const tribesQuery = useQuery({
     queryKey: ["people-tribes-v6", user?.id], enabled: !!session?.access_token,
@@ -354,15 +373,18 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
     mutationFn: () => functionRequest<Affinity>("people-affinity", session!.access_token, { action: "more", cursor: affinityQuery.data?.next_cursor, batch_size: 25 }),
     onSuccess: (next) => queryClient.setQueryData<Affinity>(["people-affinity-v9", user?.id], (old) => {
       if (!old) return next;
-      const mergedBands = bands.map((definition) => {
-        const previous = old.bands?.find((band) => band.id === definition.id)?.people || [];
-        const incoming = next.bands?.find((band) => band.id === definition.id)?.people || [];
+      const mergedBands: Band[] = affinityBandOrder.flatMap((id) => {
+        const band = next.bands?.find((candidate) => candidate.id === id)
+          || old.bands?.find((candidate) => candidate.id === id);
+        if (!band) return [];
+        const previous = old.bands?.find((band) => band.id === id)?.people || [];
+        const incoming = next.bands?.find((band) => band.id === id)?.people || [];
         const people = [...previous, ...incoming]
           .filter((person, index, all) => all.findIndex((candidate) => candidate.id === person.id) === index)
           .sort((a, b) => Number(b.is_friend) - Number(a.is_friend)
             || Number(b.match_score || 0) - Number(a.match_score || 0)
             || a.id.localeCompare(b.id));
-        return { ...definition, people };
+        return [{ ...band, people }];
       });
       return {
         ...old,

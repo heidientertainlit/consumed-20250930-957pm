@@ -290,7 +290,7 @@ export default function FriendsManager({
             const first = friend.first_name?.trim();
             const last = friend.last_name?.trim();
             const displayName = first
-              ? `${first}${last ? ` ${last[0].toUpperCase()}.` : ""}`
+              ? `${first}${last ? ` ${last}` : ""}`
               : friend.display_name || friend.user_name || "Consumed member";
             const avatarInitials = `${first?.[0] || friend.user_name?.[0] || "?"}${last?.[0] || ""}`.toUpperCase();
             return (
@@ -348,7 +348,7 @@ function ClosestFriendCard({ friend }: { friend: Person }) {
   const first = friend.first_name?.trim();
   const last = friend.last_name?.trim();
   const displayName = first
-    ? `${first}${last ? ` ${last[0].toUpperCase()}.` : ""}`
+    ? `${first}${last ? ` ${last}` : ""}`
     : friend.display_name || friend.user_name || "Consumed member";
   const avatar = friend.profile_image_url || friend.avatar_url || friend.avatar;
   const avatarInitials = `${first?.[0] || friend.user_name?.[0] || "?"}${last?.[0] || ""}`.toUpperCase();
