@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, LockKeyhole, Search, Share2, Sparkles, Star, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, Search, Share2, Sparkles, Star, Users } from "lucide-react";
 import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
 import FriendsManager from "@/components/friends-manager";
@@ -38,11 +38,7 @@ type Tribe = {
 type TribesResponse = { readiness: Affinity["readiness"]; tribes: Tribe[] };
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
-const bands = [
-  { id: "your-people", label: "65–100", min: 65, max: 100, note: "Your People" },
-  { id: "common-ground", label: "35–64", min: 35, max: 64, note: "Common Ground" },
-  { id: "wildcards", label: "0–34", min: 0, max: 34, note: "Different Vibes" },
-] as const;
+const affinityBandOrder = ["your-people", "common-ground", "wildcards"] as const;
 const TribeLabel = ({ children }: { children: React.ReactNode }) =>
   <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#67447c]" style={{ fontFamily: "inherit", fontWeight: 700 }}>{children}</p>;
 
@@ -278,68 +274,6 @@ async function hydrateFriendSharedTitleImages(data: Affinity, token: string): Pr
       }),
     })),
   };
-}
-
-function Readiness({ readiness, onInvite }: { readiness?: Affinity["readiness"]; onInvite: () => void }) {
-  const count = readiness?.tracked_items ?? readiness?.item_count ?? 0;
-  const needed = readiness?.items_needed ?? Math.max(0, 10 - count);
-  const examples = [
-    { score: 86, label: "Your People", detail: "Same comfort shows + music taste", color: "from-[#6d3da2] to-[#a855a7]" },
-    { score: 58, label: "Common Ground", detail: "3 shared favorites across TV + books", color: "from-[#7f5f91] to-[#b48a9d]" },
-    { score: 27, label: "Different Vibes", detail: "Opposite genres, one surprise overlap", color: "from-[#817887] to-[#aba2ac]" },
-  ];
-  return <section>
-    <div className="text-center">
-      <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-[#e8def1] text-[#553878]"><Dna size={20} /></span>
-      <h2 className="mt-4 text-xl font-bold tracking-[-.035em] text-[#271d3a]">See how your taste connects</h2>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#746b7b]">
-        DNA comparisons reveal where you and another person overlap—and where your tastes take different paths.
-      </p>
-    </div>
-
-    <div className="mt-6 space-y-3" aria-label="Example DNA comparisons">
-      {examples.map((example) => (
-        <div key={example.label} className="relative overflow-hidden rounded-[18px] border border-[#ded7e9] bg-white p-4 shadow-[0_4px_16px_rgba(53,35,69,.04)]">
-          <span className="absolute right-3 top-3 rounded-full bg-[#f4eff6] px-2 py-1 text-[9px] font-bold uppercase tracking-[.12em] text-[#806e88]">Example</span>
-          <div className="flex items-center gap-3">
-            <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br ${example.color} text-sm font-black text-white`}>
-              {example.score}%
-            </div>
-            <div className="min-w-0 pr-14">
-              <p className="text-sm font-bold text-[#2b2135]">{example.label}</p>
-              <p className="mt-1 truncate text-xs text-[#796f7e]">{example.detail}</p>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-
-    <div className="mt-6 rounded-[22px] border border-[#ded7e9] bg-[#f4f0f5] p-5 sm:p-6">
-      <div className="flex items-start gap-3">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#ded5ef] text-[#4c3972]"><LockKeyhole size={16} /></span>
-        <div>
-          <p className="text-sm font-bold text-[#271d3a]">Unlock your real comparisons</p>
-          <p className="mt-1 text-sm leading-5 text-[#746b7b]">
-            {needed > 0
-              ? `Track ${needed} more ${needed === 1 ? "item" : "items"} to unlock community DNA matches and personalized Tribes.`
-              : "Your DNA is ready to find taste matches across the Consumed community."}
-          </p>
-        </div>
-      </div>
-      <div className="mt-5">
-        <div className="mb-2 flex justify-between text-[11px] font-bold uppercase tracking-[.12em] text-[#756985]"><span>Your DNA progress</span><span>{Math.min(count, 10)} / 10 tracked</span></div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-[#ddd7e0]"><div className="h-full rounded-full bg-[#5b4389] transition-all duration-500" style={{ width: `${Math.min(100, count * 10)}%` }} /></div>
-      </div>
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <button type="button" onClick={onInvite} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#513879] px-3 py-3 text-sm font-bold text-white transition hover:bg-[#412c62]">
-          <Share2 size={15} /> Invite friends
-        </button>
-        <Link href="/add" className="inline-flex items-center justify-center gap-1 rounded-full border border-[#cfc3d8] bg-white px-3 py-3 text-sm font-bold text-[#513879] transition hover:bg-[#faf7fb]">
-          Track more <ArrowUpRight size={15} />
-        </Link>
-      </div>
-    </div>
-  </section>;
 }
 
 export default function PeoplePage({ initialTribeId }: { initialTribeId?: string } = {}) {
@@ -585,8 +519,27 @@ function Friends({ query, more, onSelectPerson, onInvite, userId, searchQuery, o
   if (query.isLoading) return <section className="mt-7"><FriendsHeader />{userId && <div className="mb-10"><FriendsManager userId={userId} {...managerSearchProps} /></div>}<div className="space-y-3"><div className="h-5 w-36 animate-pulse rounded bg-[#e6e0e7]" />{[1, 2].map((item) => <div key={item} className="h-[252px] animate-pulse rounded-[22px] bg-[#e6e0e7]" />)}</div></section>;
   const data = query.data;
   if (query.isError) return <section className="mt-7"><FriendsHeader /><ErrorState onRetry={() => query.refetch()} />{userId && <div className="mt-8"><FriendsManager userId={userId} {...managerSearchProps} /></div>}</section>;
-  if (!data?.ready) return <section className="mt-7"><FriendsHeader /><Readiness readiness={data?.readiness} onInvite={onInvite} />{userId && <div className="mt-9 border-t border-[#e3dce5] pt-7"><FriendsManager userId={userId} {...managerSearchProps} /></div>}</section>;
-  const ordered = bands.map((definition) => ({ ...definition, people: data.bands?.find((band) => band.id === definition.id)?.people || [] })).filter((band) => band.people.length);
+  if (!data?.ready) {
+    const count = data?.readiness?.tracked_items ?? data?.readiness?.item_count ?? 0;
+    const needed = data?.readiness?.items_needed ?? Math.max(0, 10 - count);
+    return <section className="mt-7">
+      <FriendsHeader />
+      {userId && <div className="mb-10"><FriendsManager userId={userId} {...managerSearchProps} /></div>}
+      <div className="border-t border-[#e2dbe5] pt-7">
+        <p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">People you might click with</p>
+        <div className="mt-3 rounded-[18px] border border-dashed border-[#d6ceda] px-5 py-6">
+          <p className="text-sm font-bold text-[#3b2c47]">Your taste matches are getting ready.</p>
+          <p className="mt-1 text-sm leading-5 text-[#746b7b]">
+            {needed > 0
+              ? `Track ${needed} more ${needed === 1 ? "item" : "items"} to start seeing people with overlapping taste.`
+              : "We’ll add compatible people here as more members build their Entertainment DNA."}
+          </p>
+          {needed > 0 && <Link href="/add" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#513879]">Track more <ArrowUpRight size={15} /></Link>}
+        </div>
+      </div>
+    </section>;
+  }
+  const ordered = affinityBandOrder.map((id) => ({ id, people: data.bands?.find((band) => band.id === id)?.people || [] })).filter((band) => band.people.length);
   const friendMatchScores = Object.fromEntries(
     ordered.flatMap((band) => band.people)
       .filter((person) => person.is_friend && person.match_score != null)
@@ -599,15 +552,18 @@ function Friends({ query, more, onSelectPerson, onInvite, userId, searchQuery, o
   const discoverable = ordered.map((band) => ({ ...band, people: band.people.filter((person) => !person.is_friend) })).filter((band) => band.people.length);
   const featured = discoverable.flatMap((band) => band.people.map((person) => ({ person, band }))).sort((a, b) => (b.person.match_score || 0) - (a.person.match_score || 0)).slice(0, 2);
   const featuredIds = new Set(featured.map(({ person }) => person.id));
-  const remaining = discoverable.map((band) => ({ ...band, people: band.people.filter((person) => !featuredIds.has(person.id)) })).filter((band) => band.id !== "wildcards" && band.people.length);
+  const remaining = discoverable
+    .filter((band) => band.id !== "wildcards")
+    .flatMap((band) => band.people)
+    .filter((person) => !featuredIds.has(person.id));
   return <section className="mt-7">
     <FriendsHeader />
     {userId && <div className="mb-10"><FriendsManager userId={userId} matchScores={friendMatchScores} featuredFriend={closestFriend} {...managerSearchProps} /></div>}
     <div className="mb-9 border-t border-[#e2dbe5] pt-7">
       <div className="mb-3"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">People you might click with</p></div>
-      {featured.length > 0 ? <div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person, band }, index) => <FeaturedMatch key={person.id} person={person} band={band} index={index} onSelect={onSelectPerson} />)}</div> : <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-7 text-sm text-[#746b7b]"><p className="font-bold text-[#3b2c47]">No new taste matches yet.</p><p className="mt-1 leading-5">We’ll add compatible people here as more members build their Entertainment DNA.</p></div>}
+      {featured.length > 0 ? <div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person }) => <FeaturedMatch key={person.id} person={person} onSelect={onSelectPerson} />)}</div> : <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-7 text-sm text-[#746b7b]"><p className="font-bold text-[#3b2c47]">No new taste matches yet.</p><p className="mt-1 leading-5">We’ll add compatible people here as more members build their Entertainment DNA.</p></div>}
     </div>
-    {remaining.length > 0 && <div><div className="mb-3 flex items-end justify-between"><div><h3 className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">More people to explore</h3><p className="mt-0.5 text-xs text-[#7d7382]">Every overlap is a place to start.</p></div></div><div className="divide-y divide-[#dfd8e1] border-y border-[#dfd8e1]">{remaining.map((band) => <div key={band.id} className="py-5"><div className="mb-2 flex items-baseline justify-between"><h3 className="text-[11px] font-bold uppercase tracking-[.15em] text-[#65457b]">{band.label}%</h3><span className="text-xs text-[#857a8b]">{band.note}</span></div>{band.people.map((person) => <MatchRow key={person.id} person={person} onSelect={onSelectPerson} />)}</div>)}</div></div>}
+    {remaining.length > 0 && <div><div className="mb-3 flex items-end justify-between"><div><h3 className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">More people to explore</h3><p className="mt-0.5 text-xs text-[#7d7382]">Every overlap is a place to start.</p></div></div><div className="divide-y divide-[#dfd8e1] border-y border-[#dfd8e1] py-2">{remaining.map((person) => <MatchRow key={person.id} person={person} onSelect={onSelectPerson} />)}</div></div>}
     {data.has_more && <button disabled={more.isPending} onClick={() => more.mutate()} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#503574] disabled:opacity-50">Compare more people <ChevronRight size={16} /></button>}
   </section>;
 }
@@ -616,12 +572,12 @@ function FriendsHeader() {
   return <div className="mb-5"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Friends & Matches</p><h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Your circle.</h2><p className="mt-1 text-sm leading-5 text-[#746b78]">Friends you know. People you might want to.</p></div>;
 }
 
-function FeaturedMatch({ person, band, onSelect }: { person: Person; band: { label: string; note: string }; index: number; onSelect: (person: Person) => void }) {
+function FeaturedMatch({ person, onSelect }: { person: Person; onSelect: (person: Person) => void }) {
   const shared = (person.shared_titles || []).map((item) => typeof item === "string" ? { title: item } : { ...item, title: item.title || item.name }).filter((item): item is { title: string; image_url?: string | null; media_type?: string } => Boolean(item.title));
   const posters = shared.filter((item) => Boolean(item.image_url)).slice(0, 3);
   const totalShared = (person.shared_titles?.length || 0) + (person.shared_genres?.length || 0) + (person.shared_creators?.length || 0);
   return <button type="button" onClick={() => onSelect(person)} className="group relative overflow-hidden rounded-[22px] border border-[#e1dadd] bg-[#fffdfb] p-4 text-left shadow-[0_6px_18px_rgba(65,49,55,.055)] transition duration-300 hover:-translate-y-0.5 hover:border-[#cbbfc6] hover:shadow-[0_11px_24px_rgba(65,49,55,.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#624183] focus-visible:ring-offset-2">
-    <div className="relative flex items-start gap-3"><Avatar person={person} /><div className="flex h-10 min-w-0 flex-1 flex-col justify-center"><p className="truncate text-[15px] font-bold leading-none text-[#2c2038]">{nameFor(person)}</p><span className="mt-1.5 w-fit rounded-full bg-[#eee6f3] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[.09em] text-[#69477f]">New match</span></div><div className="text-right"><p className="font-serif text-3xl leading-none tracking-[-.06em] text-[#4f2d73]">{Math.round(person.match_score || 0)}%</p><span className="mt-1 inline-block rounded-full bg-[#5b387f] px-2 py-1 text-[8px] font-bold uppercase tracking-[.11em] text-white">{band.note}</span></div></div>
+    <div className="relative flex items-start gap-3"><Avatar person={person} /><div className="flex h-10 min-w-0 flex-1 flex-col justify-center"><p className="truncate text-[15px] font-bold leading-none text-[#2c2038]">{nameFor(person)}</p><span className="mt-1.5 w-fit rounded-full bg-[#eee6f3] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[.09em] text-[#69477f]">New match</span></div><div className="text-right"><p className="font-serif text-3xl leading-none tracking-[-.06em] text-[#4f2d73]">{Math.round(person.match_score || 0)}%</p></div></div>
     <div className="relative mt-3.5"><p className="mb-2 text-[11px] font-bold uppercase tracking-[.12em] text-[#67447c]">You both love</p>{posters.length ? <div className="flex gap-2">{posters.map((item, tileIndex) => <SharedTitleTile key={`${item.title}-${tileIndex}`} item={item} />)}{totalShared > posters.length && <div className="flex aspect-[4/5] w-[64px] shrink-0 flex-col items-center justify-center rounded-xl bg-[#e7dfee] text-[#583875]"><span className="text-lg font-bold">+{totalShared - posters.length}</span><span className="text-[9px] font-semibold">more</span></div>}</div> : <p className="line-clamp-2 text-xs leading-5 text-[#756b79]">{shared.slice(0, 3).map((item) => item.title).join(" · ") || "Your taste profiles were compared across media."}</p>}</div>
     <div className="relative mt-4 flex items-center justify-between border-t border-[#dcd2df] pt-3 text-xs font-semibold text-[#614276]"><span>{totalShared ? `${totalShared} thing${totalShared === 1 ? "" : "s"} in common` : "Taste profile compared"}</span><ChevronRight size={16} className="transition-transform duration-200 group-hover:translate-x-0.5" /></div>
   </button>;
