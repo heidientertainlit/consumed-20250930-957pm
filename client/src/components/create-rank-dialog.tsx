@@ -32,6 +32,18 @@ interface MediaResult {
 const MAX_RANK_ITEMS = 10;
 const MIN_RANK_ITEMS = 2;
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
+const MEDIA_TYPES = [
+  { label: "All", value: undefined },
+  { label: "Movies", value: "movie" },
+  { label: "TV", value: "tv" },
+  { label: "Books", value: "book" },
+  { label: "Music", value: "music" },
+  { label: "Podcasts", value: "podcast" },
+  { label: "YouTube", value: "youtube" },
+  { label: "Games", value: "game" },
+] as const;
+
+type MediaTypeFilter = Exclude<(typeof MEDIA_TYPES)[number]["value"], undefined>;
 
 async function readJson(response: Response) {
   try {
@@ -52,6 +64,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
   const [title, setTitle] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [mediaType, setMediaType] = useState<MediaTypeFilter | undefined>(undefined);
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<MediaResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -63,6 +76,8 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
   const savedItemCountRef = useRef(0);
   const submissionInFlightRef = useRef(false);
   const searchRequestRef = useRef(0);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const previousMediaTypeRef = useRef<MediaTypeFilter | undefined>(undefined);
   const rankRequestIdRef = useRef<string | null>(null);
   const flowAbortRef = useRef<AbortController | null>(null);
   const flowGenerationRef = useRef(0);
@@ -79,6 +94,8 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
   currentUserIdRef.current = session?.user.id || null;
 
   const resetForm = () => {
+    searchAbortRef.current?.abort();
+    searchAbortRef.current = null;
     flowAbortRef.current?.abort();
     flowAbortRef.current = null;
     flowGenerationRef.current += 1;
@@ -86,7 +103,9 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
     setTitle("");
     setIsPublic(true);
     setSearchQuery("");
+    setMediaType(undefined);
     setSearchResults([]);
+    setIsSearching(false);
     setSelectedMedia([]);
     setSaveError("");
     setSavedItemCount(0);
@@ -127,28 +146,36 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
       mountedRef.current = false;
       flowGenerationRef.current += 1;
       flowAbortRef.current?.abort();
+      searchAbortRef.current?.abort();
       searchRequestRef.current += 1;
     };
   }, []);
 
   const searchMedia = async (query: string, type?: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
+    const trimmedQuery = query.trim();
+    if (trimmedQuery.length < 2) {
+      if (!trimmedQuery) setSearchResults([]);
       return;
     }
 
     const bearer = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+    searchAbortRef.current?.abort();
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
     const requestId = ++searchRequestRef.current;
     setIsSearching(true);
     
     try {
+      const body: { query: string; type?: string } = { query: trimmedQuery };
+      if (type) body.type = type;
       const response = await fetch(`${SUPABASE_URL}/functions/v1/media-search`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${bearer}`,
         },
-        body: JSON.stringify({ query: query.trim(), type }),
+        signal: controller.signal,
+        body: JSON.stringify(body),
       });
 
       const data = await readJson(response);
@@ -159,9 +186,9 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
         image: result.image || result.image_url || result.poster_url || "",
       })));
     } catch (error) {
+      if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return;
       console.error("Media search error:", error);
       if (requestId === searchRequestRef.current) {
-        setSearchResults([]);
         toast({
           title: "Media search failed",
           description: error instanceof Error ? error.message : "Please try again.",
@@ -169,21 +196,39 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
         });
       }
     } finally {
-      if (requestId === searchRequestRef.current) setIsSearching(false);
+      if (requestId === searchRequestRef.current) {
+        setIsSearching(false);
+        if (searchAbortRef.current === controller) searchAbortRef.current = null;
+      }
     }
   };
 
   useEffect(() => {
-    const debounce = setTimeout(() => {
-      if (searchQuery.trim()) {
-        searchMedia(searchQuery);
-      } else {
-        setSearchResults([]);
-      }
-    }, 300);
+    const trimmedQuery = searchQuery.trim();
+    const mediaTypeChanged = previousMediaTypeRef.current !== mediaType;
+    previousMediaTypeRef.current = mediaType;
+    searchAbortRef.current?.abort();
+    searchAbortRef.current = null;
+    searchRequestRef.current += 1;
+    setIsSearching(false);
+
+    if (!trimmedQuery) {
+      setSearchResults([]);
+      return;
+    }
+    if (trimmedQuery.length < 2) {
+      return;
+    }
+
+    if (mediaTypeChanged) {
+      void searchMedia(searchQuery, mediaType);
+      return;
+    }
+
+    const debounce = setTimeout(() => void searchMedia(searchQuery, mediaType), 200);
 
     return () => clearTimeout(debounce);
-  }, [searchQuery]);
+  }, [searchQuery, mediaType]);
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination || flowStarted) return;
@@ -373,7 +418,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (createRankMutation.isPending) return; if (!isOpen) resetForm(); onOpenChange(isOpen); }}>
-      <DialogContent className="max-h-[90dvh] w-[calc(100vw-1.5rem)] max-w-md overflow-y-auto bg-white text-black" data-testid="dialog-create-rank">
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-1.5rem)] max-w-md min-w-0 overflow-x-hidden overflow-y-auto rounded-3xl bg-white text-black sm:rounded-3xl" data-testid="dialog-create-rank">
         <DialogHeader>
           <DialogTitle className="text-black flex items-center gap-2">
             <Trophy size={20} className="text-purple-600" />
@@ -381,7 +426,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
           </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
           {/* Rank Name */}
           <div className="space-y-1">
             <Label className="text-black font-medium text-sm">Rank Name</Label>
@@ -393,7 +438,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
               disabled={flowStarted}
               data-testid="input-rank-title"
               autoFocus
-              className="bg-white text-black border-gray-300 focus:border-purple-400 placeholder:text-gray-400"
+              className="rounded-xl bg-white text-black border-gray-300 focus:border-purple-400 placeholder:text-gray-400"
             />
             <p className="text-xs text-gray-500">{title.length}/50</p>
           </div>
@@ -413,7 +458,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
           </div>
 
           {/* Add Media Section */}
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <Label className="text-black font-medium text-sm">Add media (2–10 items)</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
@@ -421,7 +466,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search movies, shows, books..."
-                className="pl-9 bg-white text-black border-gray-300 focus:border-purple-400 placeholder:text-gray-400"
+                className="rounded-xl pl-9 bg-white text-black border-gray-300 focus:border-purple-400 placeholder:text-gray-400"
                 data-testid="input-rank-media-search"
                 disabled={flowStarted}
               />
@@ -430,18 +475,47 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
               )}
             </div>
 
+            <div
+              className="scrollbar-hide flex w-full min-w-0 max-w-full gap-1.5 overflow-x-auto pb-1"
+              style={{ scrollbarWidth: "none" }}
+              aria-label="Filter media type"
+              data-testid="rank-media-type-filters"
+            >
+              {MEDIA_TYPES.map((option) => {
+                const selected = mediaType === option.value;
+                const testValue = option.value || "all";
+                return (
+                  <button
+                    key={testValue}
+                    type="button"
+                    aria-pressed={selected}
+                    data-testid={`filter-rank-media-${testValue}`}
+                    disabled={flowStarted}
+                    onClick={() => setMediaType(option.value)}
+                    className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-40 ${
+                      selected
+                        ? "border-purple-600 bg-purple-600 text-white"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+
             {searchResults.length > 0 && (
-              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
+              <div className="max-h-48 space-y-1 overflow-y-auto rounded-xl border border-gray-200 p-1" data-testid="rank-media-search-results">
                 {searchResults.map((result, index) => (
                   <div
                     key={index}
                     onClick={() => addMedia(result)}
-                    className="flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                    className="flex cursor-pointer items-center gap-3 rounded-xl p-2 hover:bg-gray-50"
                   >
                     {result.image ? (
-                      <img src={result.image} alt={result.title} className="w-10 h-10 object-cover rounded" />
+                      <img src={result.image} alt={result.title} className="w-10 h-10 rounded-xl object-cover" />
                     ) : (
-                      <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-200">
                         <Search className="text-gray-400" size={16} />
                       </div>
                     )}
@@ -468,14 +542,14 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
                               <div
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
-                                className={`flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-lg px-2 py-2 ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                                className={`flex items-center gap-2 rounded-xl border border-purple-200 bg-purple-50 px-2 py-2 ${snapshot.isDragging ? 'shadow-lg' : ''}`}
                               >
                                 <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing text-purple-400 hover:text-purple-600">
                                   <GripVertical size={16} />
                                 </div>
                                 <span className="text-purple-600 font-bold text-sm w-6">#{index + 1}</span>
                                 {media.image && (
-                                  <img src={media.image} alt="" className="w-8 h-8 rounded object-cover" />
+                                  <img src={media.image} alt="" className="h-8 w-8 rounded-xl object-cover" />
                                 )}
                                 <span className="text-sm text-purple-900 flex-1 truncate">{media.title}</span>
                                 <button type="button" onClick={() => removeMedia(index)} disabled={flowStarted} aria-label={`Remove ${media.title}`} className="text-purple-600 hover:text-red-600 p-1 disabled:opacity-40">
@@ -495,7 +569,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
           </div>
 
           {saveError && (
-            <div role="alert" className="flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <div role="alert" className="flex gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
               <AlertCircle className="mt-0.5 shrink-0" size={16} />
               <div>
                 <p className="font-medium">{createdRankId ? "Your rank was created, but not every item was saved." : "We couldn't create your rank."}</p>
@@ -518,7 +592,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
             size="sm"
             onClick={() => { resetForm(); onOpenChange(false); }}
             disabled={createRankMutation.isPending}
-            className="border-gray-300 bg-white text-black hover:bg-gray-100"
+            className="rounded-xl border-gray-300 bg-white text-black hover:bg-gray-100"
             data-testid="button-cancel-create-rank"
           >
             Cancel
@@ -527,7 +601,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
             onClick={handleSubmit}
             size="sm"
             disabled={createRankMutation.isPending || !title.trim() || selectedMedia.length < MIN_RANK_ITEMS}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="rounded-xl bg-purple-600 hover:bg-purple-700 text-white"
             data-testid="button-create-rank"
           >
             {createRankMutation.isPending ? (

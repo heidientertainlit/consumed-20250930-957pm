@@ -40,14 +40,18 @@ const pendingResponse = (init, body) => new Promise(resolve => {
   mock.pending.push(() => resolve(new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } })));
 });
 window.fetch = (url, init = {}) => {
-  const request = { url: String(url), method: init.method || "GET", authorization: init.headers?.Authorization, contentType: init.headers?.["Content-Type"], body: init.body ? JSON.parse(init.body) : null };
+  const request = { url: String(url), method: init.method || "GET", authorization: init.headers?.Authorization, contentType: init.headers?.["Content-Type"], body: init.body ? JSON.parse(init.body) : null, aborted: init.signal?.aborted || false };
+  init.signal?.addEventListener("abort", () => { request.aborted = true; });
   mock.requests.push(request);
   if (request.url.includes("/media-search")) {
     const result = media[request.body.query] || {
-      title: "Title " + request.body.query, type: "movie", creator: "Fixture Creator",
+      title: "Title " + request.body.query, type: request.body.type || "movie", creator: "Fixture Creator",
       image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='%236d28d9'/%3E%3C/svg%3E",
       external_id: "fixture-" + request.body.query, external_source: "fixture"
     };
+    if (mock.mode === "search-race" && request.body.query === "slow") {
+      return new Promise(resolve => setTimeout(() => resolve(new Response(JSON.stringify({ results: [result] }), { status: 200, headers: { "Content-Type": "application/json" } })), 650));
+    }
     return Promise.resolve(new Response(JSON.stringify({ results: [result] }), { status: 200, headers: { "Content-Type": "application/json" } }));
   }
   if (request.url.includes("/create-rank")) {
@@ -241,8 +245,8 @@ try {
   async function add(query) {
     await setInput("input-rank-media-search", query);
     const expectedTitle = query === "alpha" ? "Alpha Film" : query === "beta" ? "Beta Book" : `Title ${query}`;
-    await waitFor(`(() => { const input = document.querySelector('[data-testid="input-rank-media-search"]'); return input.value === ${JSON.stringify(query)} && input.parentElement.nextElementSibling?.textContent.includes(${JSON.stringify(expectedTitle)}); })()`, `search result ${query}`);
-    await evaluate(`document.querySelector('[data-testid="input-rank-media-search"]').parentElement.nextElementSibling.firstElementChild.click()`);
+    await waitFor(`(() => { const input = document.querySelector('[data-testid="input-rank-media-search"]'); return input.value === ${JSON.stringify(query)} && document.querySelector('[data-testid="rank-media-search-results"]')?.textContent.includes(${JSON.stringify(expectedTitle)}); })()`, `search result ${query}`);
+    await evaluate(`document.querySelector('[data-testid="rank-media-search-results"]').firstElementChild.click()`);
     await waitFor(`document.querySelector('[data-testid="input-rank-media-search"]').value === ""`);
   }
   const submit = () => click('[data-testid="button-create-rank"]');
@@ -261,6 +265,77 @@ try {
     await click('[data-testid="button-open-create-rank"]');
     await waitFor(`!!document.querySelector('[data-testid="dialog-create-rank"]')`);
     assert.match(await text('[data-testid="dialog-create-rank"]'), /Create New Rank/);
+  });
+
+  await reset();
+  await record("compact media pills expose every label and horizontally scroll on mobile", async () => {
+    const filters = await evaluate(`[...document.querySelectorAll('[data-testid^="filter-rank-media-"]')].map(node => node.textContent)`);
+    assert.deepEqual(filters, ["All", "Movies", "TV", "Books", "Music", "Podcasts", "YouTube", "Games"]);
+    const layout = await evaluate(`(() => { const node = document.querySelector('[data-testid="rank-media-type-filters"]'); const style = getComputedStyle(node); return { overflowX: style.overflowX, clientWidth: node.clientWidth, scrollWidth: node.scrollWidth }; })()`);
+    assert.equal(layout.overflowX, "auto");
+    assert.ok(layout.scrollWidth > layout.clientWidth, JSON.stringify(layout));
+  });
+
+  await setInput("input-rank-media-search", "x");
+  await evaluate(`new Promise(resolve => setTimeout(resolve, 250))`);
+  await click('[data-testid="filter-rank-media-movie"]');
+  await evaluate(`new Promise(resolve => setTimeout(resolve, 50))`);
+  await record("search and filter retriggers require at least two trimmed query characters", async () => {
+    assert.equal((await requests()).filter(x => x.url.includes("/media-search")).length, 0);
+  });
+
+  await click('[data-testid="filter-rank-media-all"]');
+  await setInput("input-rank-media-search", "filter");
+  await waitFor(`window.__fixture.state().requests.filter(x => x.url.includes("/media-search")).length === 1`, "initial all-filter search");
+  for (const type of ["movie", "tv", "book", "music", "podcast", "youtube", "game", "all"]) {
+    await click(`[data-testid="filter-rank-media-${type}"]`);
+    const expectedCount = type === "all" ? 9 : ["movie", "tv", "book", "music", "podcast", "youtube", "game"].indexOf(type) + 2;
+    await waitFor(`window.__fixture.state().requests.filter(x => x.url.includes("/media-search")).length === ${expectedCount}`, `${type} filter retrigger`);
+  }
+  await record("filter changes promptly retrigger the current query with exact canonical JSON types", async () => {
+    const searches = (await requests()).filter(x => x.url.includes("/media-search"));
+    assert.deepEqual(searches.map(x => x.body.query), Array(9).fill("filter"));
+    assert.deepEqual(searches.map(x => Object.prototype.hasOwnProperty.call(x.body, "type") ? x.body.type : null), [
+      null, "movie", "tv", "book", "music", "podcast", "youtube", "game", null,
+    ]);
+    assert.equal(await evaluate(`document.querySelector('[data-testid="filter-rank-media-all"]').getAttribute("aria-pressed")`), "true");
+  });
+
+  await reset("search-race");
+  await setInput("input-rank-media-search", "alpha");
+  await waitFor(`document.querySelector('[data-testid="rank-media-search-results"]')?.textContent.includes("Alpha Film")`, "baseline result");
+  await setInput("input-rank-media-search", "slow");
+  await waitFor(`window.__fixture.state().requests.some(x => x.url.includes("/media-search") && x.body.query === "slow")`, "slow search starts");
+  await record("a current search keeps previous results visible while its spinner runs", async () => {
+    assert.match(await text('[data-testid="rank-media-search-results"]'), /Alpha Film/);
+    assert.ok(await evaluate(`!!document.querySelector('[data-testid="input-rank-media-search"]').parentElement.querySelector('.animate-spin')`));
+  });
+  await setInput("input-rank-media-search", "fast");
+  await waitFor(`document.querySelector('[data-testid="rank-media-search-results"]')?.textContent.includes("Title fast")`, "fast result");
+  await evaluate(`new Promise(resolve => setTimeout(resolve, 700))`);
+  await record("an aborted stale search never overwrites newer results or controls its spinner", async () => {
+    assert.match(await text('[data-testid="rank-media-search-results"]'), /Title fast/);
+    assert.doesNotMatch(await text('[data-testid="rank-media-search-results"]'), /Title slow/);
+    assert.equal(await evaluate(`!!document.querySelector('[data-testid="input-rank-media-search"]').parentElement.querySelector('.animate-spin')`), false);
+  });
+
+  await setInput("input-rank-media-search", "slow");
+  await waitFor(`window.__fixture.state().requests.filter(x => x.url.includes("/media-search") && x.body.query === "slow").length === 2`, "closing slow search starts");
+  await click('[data-testid="button-cancel-create-rank"]');
+  await waitFor(`!document.querySelector('[data-testid="dialog-create-rank"]')`, "search dialog closes");
+  await record("closing and resetting aborts the active search and clears its draft", async () => {
+    const slowRequests = (await requests()).filter(x => x.url.includes("/media-search") && x.body.query === "slow");
+    assert.equal(slowRequests.at(-1).aborted, true);
+    await click('[data-testid="button-open-create-rank"]');
+    await waitFor(`!!document.querySelector('[data-testid="dialog-create-rank"]')`);
+    assert.equal(await evaluate(`document.querySelector('[data-testid="input-rank-media-search"]').value`), "");
+    assert.equal(await evaluate(`!!document.querySelector('[data-testid="rank-media-search-results"]')`), false);
+  });
+
+  await setInput("input-rank-media-search", "");
+  await waitFor(`!document.querySelector('[data-testid="rank-media-search-results"]')`, "cleared query removes results");
+  await record("clearing the query immediately removes prior results", async () => {
+    assert.equal(await evaluate(`!!document.querySelector('[data-testid="input-rank-media-search"]').parentElement.querySelector('.animate-spin')`), false);
   });
 
   await reset();
@@ -440,7 +515,7 @@ try {
   for (let i = 0; i < 10; i++) await add(`pick-${i}`);
   await setInput("input-rank-media-search", "pick-10");
   await waitFor(`document.querySelectorAll('[data-testid="dialog-create-rank"] img').length > 10`, "eleventh search result");
-  await evaluate(`document.querySelector('[data-testid="input-rank-media-search"]').parentElement.nextElementSibling.firstElementChild.click()`);
+  await evaluate(`document.querySelector('[data-testid="rank-media-search-results"]').firstElementChild.click()`);
   await waitFor(`document.querySelector('#fixture-toasts').textContent.includes("Limit Reached")`, "limit toast");
   await record("10-item maximum rejects an eleventh item with visible feedback", async () => {
     assert.match(await text('[data-testid="dialog-create-rank"]'), /10\/10 items/);
@@ -453,6 +528,19 @@ try {
     assert.match(dialogSource, /items\.splice\(result\.source\.index, 1\)[\s\S]*items\.splice\(result\.destination\.index, 0, reorderedItem\)[\s\S]*setSelectedMedia\(items\)/);
     assert.match(playSource, /activeMode === "ranks"[\s\S]*data-testid="button-open-create-rank"/);
     assert.match(playSource, /<CreateRankDialog open=\{createRankOpen\}/);
+  });
+
+  await record("modal, search results, selected rows, and controls render with rounded-xl or stronger corners", async () => {
+    const radii = await evaluate(`(() => {
+      const dialog = document.querySelector('[data-testid="dialog-create-rank"]');
+      const result = document.querySelector('[data-testid="rank-media-search-results"]')?.firstElementChild;
+      const selected = document.querySelector('[aria-label^="Remove "]')?.parentElement;
+      const input = document.querySelector('[data-testid="input-rank-media-search"]');
+      const button = document.querySelector('[data-testid="button-create-rank"]');
+      return [dialog, result, selected, input, button].map(node => parseFloat(getComputedStyle(node).borderTopLeftRadius));
+    })()`);
+    assert.ok(radii[0] >= 24, JSON.stringify(radii));
+    assert.ok(radii.slice(1).every(radius => radius >= 12), JSON.stringify(radii));
   });
 
   await page.call("Emulation.setDeviceMetricsOverride", { width: 390, height: 700, deviceScaleFactor: 1, mobile: false });

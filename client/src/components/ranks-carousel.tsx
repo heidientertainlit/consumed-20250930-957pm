@@ -10,6 +10,7 @@ import { trackEvent } from '@/lib/posthog';
 import { BarChart3, ChevronDown, ChevronUp, Loader2, Plus, X, MessageCircle, Send, Heart, Flag, GripVertical, Check } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { ReportSheet } from '@/components/report-sheet';
+import { formatFeedName } from '@/lib/feed-name';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -29,9 +30,20 @@ interface RankData {
   title: string;
   description?: string;
   category: string;
+  user_id?: string | null;
+  origin_type?: string | null;
+  creatorName: string;
   items: RankItem[];
   socialPostId?: string | null;
   likesCount?: number;
+}
+
+interface PublicCreatorProfile {
+  id: string;
+  display_name?: string | null;
+  user_name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
 }
 
 function VoteCount({ upCount, downCount }: { upCount: number; downCount: number }) {
@@ -108,8 +120,14 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
       if (!ranksData || ranksData.length === 0) return [];
 
       const rankIds = ranksData.map(r => r.id);
+      const userOriginIds = Array.from(new Set(
+        ranksData
+          .filter(rank => rank.origin_type !== 'consumed')
+          .map(rank => rank.user_id)
+          .filter((id): id is string => typeof id === 'string' && id.length > 0)
+      ));
 
-      const [itemsResults, socialPostsResult] = await Promise.all([
+      const [itemsResults, socialPostsResult, creatorProfilesResult] = await Promise.all([
         Promise.all(ranksData.map(rank =>
           supabase
             .from('rank_items')
@@ -122,6 +140,13 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
           .select('id, rank_id, likes_count')
           .in('rank_id', rankIds)
           .eq('post_type', 'rank_share'),
+        userOriginIds.length > 0
+          ? supabase
+              .from('public_user_profiles')
+              .select('id, display_name, user_name, first_name, last_name')
+              .in('id', userOriginIds)
+              .limit(userOriginIds.length)
+          : Promise.resolve({ data: [] as PublicCreatorProfile[], error: null }),
       ]);
 
       // Build rankId → socialPostId map
@@ -149,14 +174,30 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
       }
 
       const postByRank = new Map((socialPostsResult.data || []).map((sp: any) => [sp.rank_id, sp]));
+      const profileById = new Map<string, PublicCreatorProfile>(
+        ((creatorProfilesResult.data || []) as PublicCreatorProfile[]).map(profile => [profile.id, profile])
+      );
 
       return ranksData.map((rank, i) => {
         const sp = postByRank.get(rank.id);
+        const creatorProfile = rank.origin_type === 'consumed'
+          ? undefined
+          : profileById.get(rank.user_id);
         return {
           id: rank.id,
           title: rank.title,
           description: rank.description,
           category: rank.category,
+          user_id: rank.user_id,
+          origin_type: rank.origin_type,
+          creatorName: rank.origin_type === 'consumed'
+            ? 'Consumed'
+            : formatFeedName(
+                creatorProfile?.display_name,
+                creatorProfile?.user_name,
+                creatorProfile?.first_name,
+                creatorProfile?.last_name,
+              ),
           items: itemsResults[i].data || [],
           socialPostId: sp?.id || null,
           likesCount: sp?.likes_count || 0,
@@ -468,7 +509,8 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
                 </div>
                 <p className="text-sm font-semibold text-gray-900">Debate the Rank</p>
               </div>
-              <h3 className="mb-3 text-[18px] font-semibold leading-snug text-gray-900">{rank.title}</h3>
+              <h3 className="mb-1 text-[18px] font-semibold leading-snug text-gray-900">{rank.title}</h3>
+              <p className="mb-3 text-[11px] font-medium text-gray-400">By {rank.creatorName}</p>
             </div>
 
               {/* ── DRAG & RANK VIEW ── always visible */}
