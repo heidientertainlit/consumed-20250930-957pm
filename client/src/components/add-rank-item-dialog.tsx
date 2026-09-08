@@ -147,7 +147,10 @@ export default function AddRankItemDialog({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetForm(); onOpenChange(isOpen); }}>
-      <DialogContent className="rounded-2xl w-[calc(100vw-2rem)] max-w-md bg-white text-black flex flex-col gap-3 p-4 sm:p-6" style={{ maxHeight: '80vh' }} data-testid="dialog-add-rank-item">
+      <DialogContent
+        className="flex h-[80vh] max-h-[760px] w-[calc(100vw-2rem)] max-w-md flex-col gap-3 overflow-hidden rounded-2xl bg-white p-4 text-black sm:p-6"
+        data-testid="dialog-add-rank-item"
+      >
         <DialogHeader>
           <DialogTitle className="text-black flex items-center gap-2">
             <Trophy size={20} className="text-purple-600" />

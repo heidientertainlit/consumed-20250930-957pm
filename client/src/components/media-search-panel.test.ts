@@ -163,6 +163,8 @@ test("rank and room pickers use the canonical panel contract", () => {
 
   assert.match(rankPicker, /import MediaSearchPanel from "@\/components\/media-search-panel"/);
   assert.match(rankPicker, /<MediaSearchPanel[\s\S]*onSelect=/);
+  assert.match(rankPicker, /h-\[80vh\]/);
+  assert.match(rankPicker, /overflow-hidden/);
   assert.match(roomPicker, /MEDIA_SEARCH_FILTERS, requestMediaSearch/);
   assert.match(roomPicker, /new AbortController\(\)/);
   assert.match(roomPicker, /setTimeout\(\(\) => void search\(\), 200\)/);
