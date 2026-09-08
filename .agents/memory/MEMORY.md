@@ -55,3 +55,4 @@
 - [Portable npm lockfile](portable-npm-lockfile.md) — keep package-lock free of package-firewall.replit.local URLs so Mac/Capacitor installs remain portable.
 - [Supabase function deploy verification](supabase-function-deploy-verification.md) — verify intended Edge Function version/hash after bulk deploys; success output may not mean active code changed.
 - [Feed DNA answers](feed-dna-answers.md) — feed-question choices are explicit personality evidence; refresh signals after each answer and retire cards when the active set is complete.
+- [Analytics export model](analytics-export-model.md) — keep one-row user summaries separate from pivotable event tables; join every export through the same anonymous user ID.
