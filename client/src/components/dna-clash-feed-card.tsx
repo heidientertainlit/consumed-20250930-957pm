@@ -131,7 +131,11 @@ export default function DnaClashFeedCard({
         if (currentUserId && row.user_id === currentUserId) myVote = row.prediction;
       });
       setLiveCounts(prev => ({ ...prev, ...counts }));
-      if (myVote) setVoted(myVote);
+       if (myVote === user1.username || myVote === user2.username) {
+         setVoted(myVote);
+       } else {
+         setVoted(null);
+       }
 
       // Fetch display names for voter breakdown
       const voterIds = [...new Set(data.map((r: any) => r.user_id as string))];
@@ -154,7 +158,7 @@ export default function DnaClashFeedCard({
       }
     }
     loadVotes();
-  }, [poolId, currentUserId]);
+  }, [poolId, currentUserId, user1.username, user2.username]);
 
   useEffect(() => {
     if (!isInClash || !currentUserId || !activeSession) return;
@@ -209,7 +213,7 @@ export default function DnaClashFeedCard({
   });
 
   const handleVote = async (username: string) => {
-    if (voted || isVoting) return;
+    if (isVoting || voted === username) return;
 
     const session = activeSession || (await supabase.auth.getSession()).data.session;
     if (!session?.access_token) {
@@ -229,9 +233,16 @@ export default function DnaClashFeedCard({
       return;
     }
 
+    const previousVote = voted;
     setIsVoting(true);
     setVoted(username);
-    setLiveCounts(prev => ({ ...prev, [username]: (prev[username] || 0) + 1 }));
+    setLiveCounts(prev => ({
+      ...prev,
+      ...(previousVote && previousVote !== username
+        ? { [previousVote]: Math.max(0, (prev[previousVote] || 1) - 1) }
+        : {}),
+      [username]: (prev[username] || 0) + 1,
+    }));
 
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/predictions/predict`, {
@@ -255,8 +266,14 @@ export default function DnaClashFeedCard({
       ]);
     } catch (error) {
       console.error('[clash vote error]', error);
-      setVoted(null);
-      setLiveCounts(prev => ({ ...prev, [username]: Math.max(0, (prev[username] || 1) - 1) }));
+      setVoted(previousVote);
+      setLiveCounts(prev => ({
+        ...prev,
+        [username]: Math.max(0, (prev[username] || 1) - 1),
+        ...(previousVote && previousVote !== username
+          ? { [previousVote]: (prev[previousVote] || 0) + 1 }
+          : {}),
+      }));
       toast({
         title: 'Failed to cast vote',
         description: error instanceof Error ? error.message : 'Please try again.',
@@ -481,7 +498,7 @@ export default function DnaClashFeedCard({
                   key={user.username}
                   type="button"
                   onClick={() => handleVote(user.username)}
-                  disabled={Boolean(voted) || isVoting}
+                  disabled={isVoting}
                   aria-pressed={selected}
                   className="flex min-h-[126px] flex-col items-center justify-center rounded-xl border px-3 py-4 text-center transition-transform active:scale-[.98] disabled:cursor-default"
                   style={{
@@ -492,7 +509,9 @@ export default function DnaClashFeedCard({
                   }}
                 >
                   <Heart size={34} strokeWidth={1.7} fill={selected ? color : 'none'} />
-                  <span className="mt-2 text-[14px] font-bold">I’m with {name.split(' ')[0]}</span>
+                  <span className="mt-2 text-[14px] font-bold">
+                    {selected ? `You’re with ${name.split(' ')[0]}` : `I’m with ${name.split(' ')[0]}`}
+                  </span>
                 </button>
               );
             })}
