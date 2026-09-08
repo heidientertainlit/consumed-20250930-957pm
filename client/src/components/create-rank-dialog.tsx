@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
-import { Search, Globe, Lock, X, Plus, Loader2, Users, Trophy, GripVertical } from "lucide-react";
+import { Search, Globe, Lock, X, Plus, Loader2, Trophy, GripVertical, AlertCircle } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import UserSearch from "@/components/user-search";
 
 interface CreateRankDialogProps {
   open: boolean;
@@ -22,15 +21,23 @@ interface MediaResult {
   type: string;
   creator: string;
   image: string;
+  poster_url?: string;
+  image_url?: string;
   external_id?: string;
   external_source?: string;
   description?: string;
 }
 
-interface SelectedCollaborator {
-  id: string;
-  user_name: string;
-  display_name?: string;
+const MAX_RANK_ITEMS = 10;
+const MIN_RANK_ITEMS = 2;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
+
+async function readJson(response: Response) {
+  try {
+    return await response.json();
+  } catch {
+    throw new Error("The server returned an unreadable response. Please try again.");
+  }
 }
 
 export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialogProps) {
@@ -40,7 +47,14 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<MediaResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedCollaborators, setSelectedCollaborators] = useState<SelectedCollaborator[]>([]);
+  const [saveError, setSaveError] = useState("");
+  const [savedItemCount, setSavedItemCount] = useState(0);
+  const [createdRankId, setCreatedRankId] = useState<string | null>(null);
+  const [creationBlocked, setCreationBlocked] = useState(false);
+  const createdRankIdRef = useRef<string | null>(null);
+  const savedItemCountRef = useRef(0);
+  const submissionInFlightRef = useRef(false);
+  const searchRequestRef = useRef(0);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -53,7 +67,13 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
     setSearchQuery("");
     setSearchResults([]);
     setSelectedMedia([]);
-    setSelectedCollaborators([]);
+    setSaveError("");
+    setSavedItemCount(0);
+    setCreatedRankId(null);
+    setCreationBlocked(false);
+    createdRankIdRef.current = null;
+    savedItemCountRef.current = 0;
+    submissionInFlightRef.current = false;
   };
 
   const searchMedia = async (query: string, type?: string) => {
@@ -62,27 +82,39 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
       return;
     }
 
-    const apiKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const bearer = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const requestId = ++searchRequestRef.current;
     setIsSearching(true);
     
     try {
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search", {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/media-search`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
+          "Authorization": `Bearer ${bearer}`,
         },
         body: JSON.stringify({ query: query.trim(), type }),
       });
 
-      if (!response.ok) throw new Error("Search failed");
-      const data = await response.json();
-      setSearchResults(data.results || []);
+      const data = await readJson(response);
+      if (!response.ok) throw new Error(data?.error || "Search failed");
+      if (requestId !== searchRequestRef.current) return;
+      setSearchResults((data.results || []).map((result: any) => ({
+        ...result,
+        image: result.image || result.image_url || result.poster_url || "",
+      })));
     } catch (error) {
       console.error("Media search error:", error);
-      setSearchResults([]);
+      if (requestId === searchRequestRef.current) {
+        setSearchResults([]);
+        toast({
+          title: "Media search failed",
+          description: error instanceof Error ? error.message : "Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setIsSearching(false);
+      if (requestId === searchRequestRef.current) setIsSearching(false);
     }
   };
 
@@ -110,81 +142,102 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
 
   const createRankMutation = useMutation({
     mutationFn: async () => {
-      const payload = { 
-        title: title.trim(),
-        visibility: isPublic ? 'public' : 'private',
-      };
-      console.log('Creating rank with payload:', payload);
-      
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/create-rank", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token || ''}`,
-        },
-        body: JSON.stringify(payload),
-      });
+      if (!session?.access_token) throw new Error("Please sign in before creating a ranked list.");
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create rank');
-      }
-
-      return response.json();
-    },
-    onSuccess: async (data) => {
-      console.log('Rank created successfully:', data);
-      const rankId = data.data?.id || data.rank?.id;
-      
-      if (rankId && selectedMedia.length > 0) {
-        for (let i = 0; i < selectedMedia.length; i++) {
-          const media = selectedMedia[i];
-          try {
-            await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-rank-item", {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${session?.access_token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                rankId: rankId,
-                position: i + 1,
-                media: {
-                  title: media.title,
-                  mediaType: media.type,
-                  creator: media.creator,
-                  imageUrl: media.image,
-                  externalId: media.external_id,
-                  externalSource: media.external_source,
-                }
-              }),
-            });
-          } catch (err) {
-            console.error('Failed to add rank item:', err);
-          }
+      let rankId = createdRankIdRef.current;
+      if (!rankId) {
+        if (creationBlocked) {
+          throw new Error("This creation attempt cannot be safely retried because the server did not return its ID. Close this window and check your ranks.");
         }
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/create-rank`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            title: title.trim(),
+            visibility: isPublic ? "public" : "private",
+          }),
+        });
+        const data = await readJson(response);
+        if (!response.ok) throw new Error(data?.error || "Failed to create ranked list.");
+        if (data?.success !== true) throw new Error(data?.error || "The ranked list was not created.");
+        if (typeof data?.data?.id !== "string" || !data.data.id.trim()) {
+          setCreationBlocked(true);
+          throw new Error("The ranked list was created, but the server did not return its ID. Please close this window and check your ranks before trying again.");
+        }
+        rankId = data.data.id;
+        createdRankIdRef.current = rankId;
+        setCreatedRankId(rankId);
       }
-      
-      await queryClient.refetchQueries({ queryKey: ['user-ranks'] });
-      
+
+      for (let i = savedItemCountRef.current; i < selectedMedia.length; i++) {
+        const media = selectedMedia[i];
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/add-rank-item`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            rankId,
+            position: i + 1,
+            media: {
+              title: media.title,
+              mediaType: media.type,
+              creator: media.creator,
+              imageUrl: media.image,
+              externalId: media.external_id,
+              externalSource: media.external_source,
+            },
+          }),
+        });
+        const data = await readJson(response);
+        if (!response.ok) {
+          throw new Error(data?.error || `Could not save item ${i + 1} (${media.title}).`);
+        }
+        if (data?.success !== true || !data?.data) {
+          throw new Error(data?.error || `The server did not confirm item ${i + 1} (${media.title}).`);
+        }
+        savedItemCountRef.current = i + 1;
+        setSavedItemCount(i + 1);
+      }
+
+      return rankId;
+    },
+    onSuccess: async (rankId) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["consumed-ranks-carousel"] }),
+        queryClient.invalidateQueries({ queryKey: ["user-ranks"] }),
+      ]);
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["consumed-ranks-carousel"], type: "all" }),
+        queryClient.refetchQueries({ queryKey: ["user-ranks"], type: "all" }),
+      ]);
       resetForm();
       onOpenChange(false);
-      
-      if (rankId) {
-        setLocation(`/rank/${rankId}`);
-      }
+      setLocation(`/rank/${rankId}`);
     },
     onError: (error: Error) => {
+      const prefix = createdRankIdRef.current
+        ? `${savedItemCountRef.current} of ${selectedMedia.length} items saved. `
+        : "";
+      setSaveError(`${prefix}${error.message || "Please try again."}`);
       toast({
-        title: "Failed to Create Rank",
-        description: error.message || "Please try again",
+        title: createdRankIdRef.current ? "Rank needs your attention" : "Failed to create rank",
+        description: `${prefix}${error.message || "Please try again."}`,
         variant: "destructive",
       });
+    },
+    onSettled: () => {
+      submissionInFlightRef.current = false;
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (submissionInFlightRef.current || createRankMutation.isPending) return;
     
     if (!title.trim()) {
       toast({ title: "Title Required", description: "Please enter a name for your rank", variant: "destructive" });
@@ -196,12 +249,20 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
       return;
     }
 
+    if (selectedMedia.length < MIN_RANK_ITEMS) {
+      toast({ title: "Add at least 2 items", description: "A ranked list needs at least two choices.", variant: "destructive" });
+      return;
+    }
+
+    setSaveError("");
+    submissionInFlightRef.current = true;
     createRankMutation.mutate();
   };
 
   const addMedia = (media: MediaResult) => {
-    if (selectedMedia.length >= 20) {
-      toast({ title: "Limit Reached", description: "Ranks are limited to 20 items", variant: "destructive" });
+    if (createdRankIdRef.current) return;
+    if (selectedMedia.length >= MAX_RANK_ITEMS) {
+      toast({ title: "Limit Reached", description: `Ranks are limited to ${MAX_RANK_ITEMS} items`, variant: "destructive" });
       return;
     }
     if (!selectedMedia.find(m => m.external_id === media.external_id && m.external_source === media.external_source)) {
@@ -212,12 +273,13 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
   };
 
   const removeMedia = (index: number) => {
+    if (createdRankIdRef.current) return;
     setSelectedMedia(selectedMedia.filter((_, i) => i !== index));
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetForm(); onOpenChange(isOpen); }}>
-      <DialogContent className="max-w-md bg-white text-black max-h-[90vh] overflow-y-auto" data-testid="dialog-create-rank">
+    <Dialog open={open} onOpenChange={(isOpen) => { if (createRankMutation.isPending) return; if (!isOpen) resetForm(); onOpenChange(isOpen); }}>
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-1.5rem)] max-w-md overflow-y-auto bg-white text-black" data-testid="dialog-create-rank">
         <DialogHeader>
           <DialogTitle className="text-black flex items-center gap-2">
             <Trophy size={20} className="text-purple-600" />
@@ -234,6 +296,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Top 10 90s Movies"
               maxLength={50}
+              disabled={!!createdRankId}
               data-testid="input-rank-title"
               autoFocus
               className="bg-white text-black border-gray-300 focus:border-purple-400 placeholder:text-gray-400"
@@ -250,13 +313,14 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
             <Switch
               checked={isPublic}
               onCheckedChange={setIsPublic}
+              disabled={!!createdRankId}
               data-testid="switch-rank-visibility"
             />
           </div>
 
           {/* Add Media Section */}
           <div className="space-y-2">
-            <Label className="text-black font-medium text-sm">Add Media (Optional)</Label>
+            <Label className="text-black font-medium text-sm">Add media (2–10 items)</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
               <Input
@@ -265,6 +329,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
                 placeholder="Search movies, shows, books..."
                 className="pl-9 bg-white text-black border-gray-300 focus:border-purple-400 placeholder:text-gray-400"
                 data-testid="input-rank-media-search"
+                disabled={!!createdRankId}
               />
               {isSearching && (
                 <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 animate-spin text-purple-600" size={16} />
@@ -298,13 +363,13 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
 
             {selectedMedia.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm text-gray-600">{selectedMedia.length}/20 items - drag to reorder:</p>
+                <p className="text-sm text-gray-600">{selectedMedia.length}/{MAX_RANK_ITEMS} items · drag to reorder</p>
                 <DragDropContext onDragEnd={handleDragEnd}>
                   <Droppable droppableId="rank-items">
                     {(provided) => (
                       <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1">
                         {selectedMedia.map((media, index) => (
-                          <Draggable key={`${media.external_id}-${media.external_source}-${index}`} draggableId={`${media.external_id}-${index}`} index={index}>
+                          <Draggable key={`${media.external_id}-${media.external_source}-${index}`} draggableId={`${media.external_id}-${index}`} index={index} isDragDisabled={!!createdRankId}>
                             {(provided, snapshot) => (
                               <div
                                 ref={provided.innerRef}
@@ -319,7 +384,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
                                   <img src={media.image} alt="" className="w-8 h-8 rounded object-cover" />
                                 )}
                                 <span className="text-sm text-purple-900 flex-1 truncate">{media.title}</span>
-                                <button type="button" onClick={() => removeMedia(index)} className="text-purple-600 hover:text-red-600 p-1">
+                                <button type="button" onClick={() => removeMedia(index)} disabled={!!createdRankId} aria-label={`Remove ${media.title}`} className="text-purple-600 hover:text-red-600 p-1 disabled:opacity-40">
                                   <X size={14} />
                                 </button>
                               </div>
@@ -335,42 +400,16 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
             )}
           </div>
 
-          {/* Collaborators Section */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Users size={14} className="text-gray-500" />
-              <Label className="text-black font-medium text-sm">Invite Collaborators (Optional)</Label>
-            </div>
-            <UserSearch
-              onSelectUser={(user) => {
-                if (!selectedCollaborators.find(c => c.id === user.id)) {
-                  setSelectedCollaborators([...selectedCollaborators, {
-                    id: user.id,
-                    user_name: user.user_name,
-                    display_name: user.display_name
-                  }]);
-                }
-              }}
-              excludeUserIds={[session?.user?.id || '', ...selectedCollaborators.map(c => c.id)]}
-              placeholder="Search friends by name..."
-            />
-            {selectedCollaborators.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {selectedCollaborators.map((collab) => (
-                  <div key={collab.id} className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-full px-3 py-1">
-                    <span className="text-sm text-blue-900">@{collab.user_name}</span>
-                    <button 
-                      type="button" 
-                      onClick={() => setSelectedCollaborators(selectedCollaborators.filter(c => c.id !== collab.id))} 
-                      className="text-blue-600 hover:text-red-600"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
+          {saveError && (
+            <div role="alert" className="flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              <AlertCircle className="mt-0.5 shrink-0" size={16} />
+              <div>
+                <p className="font-medium">{createdRankId ? "Your rank was created, but not every item was saved." : "We couldn't create your rank."}</p>
+                <p className="mt-0.5 text-xs">{saveError}</p>
+                {createdRankId && <p className="mt-1 text-xs font-medium">Retry will continue with item {savedItemCount + 1}; saved items will not be added again.</p>}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </form>
 
         <div className="flex justify-end gap-2 pt-3 border-t mt-3">
@@ -379,6 +418,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
             variant="outline"
             size="sm"
             onClick={() => { resetForm(); onOpenChange(false); }}
+            disabled={createRankMutation.isPending}
             className="border-gray-300 bg-white text-black hover:bg-gray-100"
             data-testid="button-cancel-create-rank"
           >
@@ -387,14 +427,14 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
           <Button
             onClick={handleSubmit}
             size="sm"
-            disabled={createRankMutation.isPending || !title.trim()}
+            disabled={createRankMutation.isPending || creationBlocked || !title.trim() || selectedMedia.length < MIN_RANK_ITEMS}
             className="bg-purple-600 hover:bg-purple-700 text-white"
             data-testid="button-create-rank"
           >
             {createRankMutation.isPending ? (
               <><Loader2 className="animate-spin mr-1" size={14} /> Creating...</>
             ) : (
-              `Create${selectedMedia.length > 0 ? ` (${selectedMedia.length})` : ''}`
+              creationBlocked ? "Check your ranks" : createdRankId ? "Retry saving items" : `Create (${selectedMedia.length})`
             )}
           </Button>
         </div>

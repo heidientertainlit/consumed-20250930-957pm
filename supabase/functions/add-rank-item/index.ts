@@ -103,6 +103,12 @@ serve(async (req) => {
 
     if (countError) {
       console.error('Error counting items:', countError);
+      return new Response(JSON.stringify({
+        error: 'Could not check existing rank items. Please try again.'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     const itemCount = existingItems?.length || 0;

@@ -5,10 +5,13 @@ import { DailyHeroSection } from "@/components/daily-hero-section";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import { PollsCarousel } from "@/components/polls-carousel";
 import { RanksCarousel } from "@/components/ranks-carousel";
+import CreateRankDialog from "@/components/create-rank-dialog";
 import SeenItGame from "@/components/seen-it-game";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { supabase } from "@/lib/supabase";
-import { Brain, Vote, BarChart2, Eye, LayoutGrid, ArrowRight } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
+import { Brain, Vote, BarChart2, Eye, LayoutGrid, ArrowRight, Plus } from "lucide-react";
 
 const gameModes = [
   {
@@ -223,6 +226,8 @@ function RankWidget({
 
 export default function PlayPage({ initialTab }: { initialTab?: string }) {
   const [, setLocation] = useLocation();
+  const { session } = useAuth();
+  const { toast } = useToast();
   const requestedMode = new URLSearchParams(window.location.search).get("mode");
   const initialMode = requestedMode && gameModes.some((mode) => mode.id === requestedMode)
     ? requestedMode as PlayMode
@@ -230,6 +235,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
     ? initialTab as PlayMode
     : "all";
   const [activeMode, setActiveMode] = useState<PlayMode>(initialMode);
+  const [createRankOpen, setCreateRankOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<{
     title: string;
     mediaType: string;
@@ -266,6 +272,19 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
     const nextMode = gameModes[nextIndex].id as PlayMode;
     setActiveMode(nextMode);
     document.getElementById(`play-tab-${nextMode}`)?.focus();
+  };
+
+  const handleCreateRank = () => {
+    if (!session?.access_token) {
+      sessionStorage.setItem("returnUrl", `${window.location.pathname}?mode=ranks`);
+      toast({
+        title: "Sign in to create a ranked list",
+        description: "Your ranked list will be saved to your profile.",
+      });
+      setLocation("/login");
+      return;
+    }
+    setCreateRankOpen(true);
   };
 
   const renderModeFeed = () => {
@@ -382,6 +401,17 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
           tabIndex={0}
           className="space-y-6 pt-5"
         >
+          {activeMode === "ranks" && (
+            <button
+              type="button"
+              onClick={handleCreateRank}
+              className="mb-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6d35a3] px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#5d2c8d] active:bg-[#51277b]"
+              data-testid="button-open-create-rank"
+            >
+              <Plus size={17} aria-hidden="true" />
+              Create a ranked list
+            </button>
+          )}
           {renderModeFeed()}
         </section>
       </main>
@@ -391,6 +421,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
         onClose={() => setQuickAddMedia(null)}
         media={quickAddMedia}
       />
+      <CreateRankDialog open={createRankOpen} onOpenChange={setCreateRankOpen} />
     </div>
   );
 }
