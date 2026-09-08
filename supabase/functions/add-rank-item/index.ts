@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 serve(async (req) => {
   console.log("add-rank-item function hit!", req.method);
   
@@ -53,7 +55,7 @@ serve(async (req) => {
     }
 
     const requestBody = await req.json();
-    const { rankId, media, position, notes } = requestBody;
+    const { rankId, media, position, notes, requestId } = requestBody;
     const { title, mediaType, creator, imageUrl, externalId, externalSource } = media || {};
 
     if (!rankId) {
@@ -95,6 +97,53 @@ serve(async (req) => {
       });
     }
 
+    if (requestId !== undefined && (typeof requestId !== 'string' || !uuidPattern.test(requestId))) {
+      return new Response(JSON.stringify({ error: 'requestId must be a valid UUID' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const successResponse = (rankItem) => new Response(JSON.stringify({
+      success: true,
+      data: rankItem,
+      rankTitle: rank.title
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+
+    const conflictResponse = () => new Response(JSON.stringify({
+      error: 'Request ID conflict'
+    }), {
+      status: 409,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+
+    const readRequestedItem = async () => {
+      const { data, error } = await supabaseAdmin
+        .from('rank_items')
+        .select()
+        .eq('id', requestId)
+        .maybeSingle();
+      return { data, error };
+    };
+
+    if (requestId) {
+      const { data: existingItem, error: existingItemError } = await readRequestedItem();
+      if (existingItemError) {
+        console.error('Error checking existing item request:', existingItemError);
+        return new Response(JSON.stringify({ error: 'Could not check existing rank items. Please try again.' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (existingItem) {
+        return existingItem.user_id === appUser.id && existingItem.rank_id === rank.id
+          ? successResponse(existingItem)
+          : conflictResponse();
+      }
+    }
+
     const { data: existingItems, error: countError } = await supabaseAdmin
       .from('rank_items')
       .select('id, position')
@@ -133,24 +182,39 @@ serve(async (req) => {
       }
     }
 
+    const itemToInsert = {
+      ...(requestId ? { id: requestId } : {}),
+      rank_id: rankId,
+      user_id: appUser.id,
+      position: newPosition,
+      title: title,
+      media_type: mediaType || null,
+      creator: creator || null,
+      image_url: imageUrl || null,
+      external_id: externalId || null,
+      external_source: externalSource || null,
+      notes: notes || null
+    };
+
     const { data: rankItem, error: insertError } = await supabaseAdmin
       .from('rank_items')
-      .insert({
-        rank_id: rankId,
-        user_id: appUser.id,
-        position: newPosition,
-        title: title,
-        media_type: mediaType || null,
-        creator: creator || null,
-        image_url: imageUrl || null,
-        external_id: externalId || null,
-        external_source: externalSource || null,
-        notes: notes || null
-      })
+      .insert(itemToInsert)
       .select()
       .single();
 
     if (insertError) {
+      if (requestId && insertError.code === '23505') {
+        const { data: existingItem, error: existingItemError } = await readRequestedItem();
+        if (!existingItemError && existingItem) {
+          return existingItem.user_id === appUser.id && existingItem.rank_id === rank.id
+            ? successResponse(existingItem)
+            : conflictResponse();
+        }
+        if (existingItemError) {
+          console.error('Error re-reading conflicting item request:', existingItemError);
+        }
+        return conflictResponse();
+      }
       console.error('Error adding rank item:', insertError);
       return new Response(JSON.stringify({
         error: 'Failed to add item: ' + insertError.message
@@ -162,13 +226,7 @@ serve(async (req) => {
 
     console.log('Successfully added item to rank:', rank.title, 'at position', newPosition);
 
-    return new Response(JSON.stringify({
-      success: true,
-      data: rankItem,
-      rankTitle: rank.title
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return successResponse(rankItem);
 
   } catch (error) {
     console.error('Add rank item error:', error);

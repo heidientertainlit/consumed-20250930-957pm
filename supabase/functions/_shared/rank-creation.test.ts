@@ -6,8 +6,17 @@ import { transformSync } from "esbuild";
 const ownerId = "11111111-1111-4111-8111-111111111111";
 const strangerId = "22222222-2222-4222-8222-222222222222";
 const rankId = "33333333-3333-4333-8333-333333333333";
+const rankRequestId = "44444444-4444-4444-8444-444444444444";
+const itemRequestId = "55555555-5555-4555-8555-555555555555";
 
-type Failure = { table: string; operation: string; message: string; code?: string };
+type Failure = {
+  table: string;
+  operation: string;
+  message: string;
+  code?: string;
+  times?: number;
+  commit?: boolean;
+};
 type Options = {
   ranks?: any[];
   items?: any[];
@@ -34,6 +43,7 @@ function controlledFunction(
   const items = options.items ?? [];
   let authorization: string | null = null;
   let normalUsersReads = 0;
+  const failureUses = new Map<Failure, number>();
 
   const identity = () => {
     const token = authorization?.match(/^Bearer (.+)$/)?.[1];
@@ -44,8 +54,12 @@ function controlledFunction(
   };
 
   function failure(table: string, operation: string) {
-    return options.failures?.find((entry) =>
-      entry.table === table && entry.operation === operation);
+    const configured = options.failures?.find((entry) =>
+      entry.table === table &&
+      entry.operation === operation &&
+      (entry.times === undefined || (failureUses.get(entry) ?? 0) < entry.times));
+    if (configured) failureUses.set(configured, (failureUses.get(configured) ?? 0) + 1);
+    return configured;
   }
 
   function client(kind: "user" | "service") {
@@ -111,7 +125,7 @@ function controlledFunction(
 
         async function execute(single: boolean) {
           const configured = failure(table, operation);
-          if (configured) {
+          if (configured && !(configured.commit && operation === "insert")) {
             return {
               data: null,
               error: { message: configured.message, code: configured.code },
@@ -133,16 +147,41 @@ function controlledFunction(
           }
           if (table === "ranks") {
             if (operation === "insert") {
-              return { data: { id: rankId, ...value }, error: null };
+              const inserted = { id: rankId, ...value };
+              const duplicate = ranks.some((row) => row.id === inserted.id);
+              if (!duplicate) ranks.push(inserted);
+              if (configured || duplicate) {
+                return {
+                  data: null,
+                  error: {
+                    message: configured?.message ?? "duplicate key value",
+                    code: configured?.code ?? "23505",
+                  },
+                };
+              }
+              return { data: inserted, error: null };
             }
             const found = filter(ranks);
             return { data: single ? found[0] ?? null : found, error: null };
           }
           if (table === "rank_items") {
             if (operation === "insert") {
-              return { data: { id: "item-new", ...value }, error: null };
+              const inserted = { id: "item-new", ...value };
+              const duplicate = items.some((row) => row.id === inserted.id);
+              if (!duplicate) items.push(inserted);
+              if (configured || duplicate) {
+                return {
+                  data: null,
+                  error: {
+                    message: configured?.message ?? "duplicate key value",
+                    code: configured?.code ?? "23505",
+                  },
+                };
+              }
+              return { data: inserted, error: null };
             }
-            return { data: filter(items), error: null };
+            const found = filter(items);
+            return { data: single ? found[0] ?? null : found, error: null };
           }
           if (table === "rank_item_votes") return { data: [], error: null };
           if (table === "social_posts") return { data: { id: "post-1", ...value }, error: null };
@@ -262,6 +301,58 @@ test("create-rank provisions a missing app user through the service client", asy
   assert.equal(endpoint.normalUsersReads, 0);
 });
 
+test("create-rank replays the original rank for a repeated requestId", async () => {
+  const endpoint = controlledFunction("create-rank");
+  const body = { title: "Retry-safe rank", requestId: rankRequestId };
+  const first = await endpoint.request("owner-token", body);
+  const second = await endpoint.request("owner-token", body);
+
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 200);
+  assert.deepEqual((await second.json()).data, (await first.json()).data);
+  assert.equal(
+    endpoint.calls.filter((call) => call.table === "ranks" && call.operation === "insert").length,
+    1,
+  );
+  assert.equal(
+    endpoint.calls.filter((call) => call.table === "social_posts" && call.operation === "insert").length,
+    1,
+  );
+});
+
+test("create-rank recovers a committed 23505 race and rejects foreign requestId collisions", async () => {
+  const raced = controlledFunction("create-rank", {
+    failures: [{
+      table: "ranks",
+      operation: "insert",
+      message: "response unavailable after commit",
+      code: "23505",
+      times: 1,
+      commit: true,
+    }],
+  });
+  const racedResponse = await raced.request("owner-token", {
+    title: "Committed rank",
+    requestId: rankRequestId,
+  });
+  assert.equal(racedResponse.status, 200);
+  assert.equal((await racedResponse.json()).data.id, rankRequestId);
+
+  const collision = controlledFunction("create-rank", {
+    ranks: [{ ...ownerRank(), id: rankRequestId, user_id: strangerId }],
+  });
+  const collisionResponse = await collision.request("owner-token", {
+    title: "Guessed",
+    requestId: rankRequestId,
+  });
+  assert.equal(collisionResponse.status, 409);
+  assert.deepEqual(await collisionResponse.json(), { error: "Request ID conflict" });
+  assert.equal(
+    collision.calls.some((call) => call.table === "ranks" && call.operation === "insert"),
+    false,
+  );
+});
+
 test("add-rank-item lets an owner add to public and private ranks using verified identity", async () => {
   for (const visibility of ["public", "private"] as const) {
     const endpoint = controlledFunction("add-rank-item", { ranks: [ownerRank(visibility)] });
@@ -342,6 +433,91 @@ test("add-rank-item denies guest/invalid auth without reads or writes", async ()
     assert.equal(endpoint.calls.length, 0);
     assert.equal(endpoint.normalUsersReads, 0);
   }
+});
+
+test("add-rank-item replays after a lost successful response without inserting twice", async () => {
+  const endpoint = controlledFunction("add-rank-item", { ranks: [ownerRank()] });
+  const body = {
+    rankId,
+    requestId: itemRequestId,
+    media: { title: "Retry-safe item", mediaType: "book" },
+  };
+
+  // The caller never observes this successful response and sends the same request again.
+  await endpoint.request("owner-token", body);
+  const replay = await endpoint.request("owner-token", body);
+  assert.equal(replay.status, 200);
+  assert.equal((await replay.json()).data.id, itemRequestId);
+  assert.equal(
+    endpoint.calls.filter((call) => call.table === "rank_items" && call.operation === "insert").length,
+    1,
+  );
+});
+
+test("add-rank-item returns a matching retry at cap and rejects foreign item IDs", async () => {
+  const existingItem = {
+    id: itemRequestId,
+    rank_id: rankId,
+    user_id: ownerId,
+    position: 1,
+    title: "Already committed",
+  };
+  const full = controlledFunction("add-rank-item", {
+    ranks: [ownerRank("public", 1)],
+    items: [existingItem],
+  });
+  const replay = await full.request("owner-token", {
+    rankId,
+    requestId: itemRequestId,
+    media: { title: "Already committed" },
+  });
+  assert.equal(replay.status, 200);
+  assert.deepEqual((await replay.json()).data, existingItem);
+  assert.equal(
+    full.calls.some((call) => call.table === "rank_items" && call.operation === "insert"),
+    false,
+  );
+
+  for (const foreignItem of [
+    { ...existingItem, user_id: strangerId },
+    { ...existingItem, rank_id: "66666666-6666-4666-8666-666666666666" },
+  ]) {
+    const collision = controlledFunction("add-rank-item", {
+      ranks: [ownerRank()],
+      items: [foreignItem],
+    });
+    const response = await collision.request("owner-token", {
+      rankId,
+      requestId: itemRequestId,
+      media: { title: "Guessed" },
+    });
+    assert.equal(response.status, 409);
+    assert.deepEqual(await response.json(), { error: "Request ID conflict" });
+  }
+});
+
+test("add-rank-item recovers a committed 23505 race with owner and rank validation", async () => {
+  const endpoint = controlledFunction("add-rank-item", {
+    ranks: [ownerRank()],
+    failures: [{
+      table: "rank_items",
+      operation: "insert",
+      message: "response unavailable after commit",
+      code: "23505",
+      times: 1,
+      commit: true,
+    }],
+  });
+  const response = await endpoint.request("owner-token", {
+    rankId,
+    requestId: itemRequestId,
+    media: { title: "Committed item" },
+  });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.data.id, itemRequestId);
+  assert.equal(body.data.user_id, ownerId);
+  assert.equal(body.data.rank_id, rankId);
 });
 
 test("get-user-ranks owner sees private/public while stranger is constrained to public", async () => {

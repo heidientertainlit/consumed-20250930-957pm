@@ -57,3 +57,5 @@
 - [Feed DNA answers](feed-dna-answers.md) — feed-question choices are explicit personality evidence; refresh signals after each answer and retire cards when the active set is complete.
 - [Analytics export model](analytics-export-model.md) — keep one-row user summaries separate from pivotable event tables; join every export through the same anonymous user ID.
 - [Friend invitation voice](friend-invitation-voice.md) — invite copy should create curiosity around comparing Entertainment DNA, not read like a generic app referral.
+- [Rank creation boundaries](rank-creation-boundaries.md) — Play ranks are not tracking lists or full profiles; preserve public contributions while denying foreign private-rank inserts.
+- [Development share pages](development-share-page-rendering.md) — verify direct links as well as SPA navigation; metadata HTML must retain Vite's development preamble.

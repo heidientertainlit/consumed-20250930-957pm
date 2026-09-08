@@ -4,6 +4,7 @@
 set -euo pipefail
 
 SNAPSHOT="${1:-/tmp/rank-live-policies.json}"
+MIGRATION="${2:-}"
 PORT="${RANK_ACCESS_TEST_PG_PORT:-55441}"
 DATA_DIR="$(mktemp -d /tmp/consumed-rank-pg.XXXXXX)"
 SOCKET_DIR="$(mktemp -d /tmp/consumed-rank-socket.XXXXXX)"
@@ -11,6 +12,7 @@ POLICY_SQL="$(mktemp /tmp/consumed-rank-policies.XXXXXX.sql)"
 LOG_FILE="$DATA_DIR/postgres.log"
 PSQL=(psql -X -v ON_ERROR_STOP=1 -h "$SOCKET_DIR" -p "$PORT" -U runner -d postgres)
 FAILURES=0
+PASSES=0
 
 cleanup() {
   pg_ctl -D "$DATA_DIR" -m immediate stop >/dev/null 2>&1 || true
@@ -20,11 +22,12 @@ trap cleanup EXIT
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 record_failure() { echo "FAIL: $*" >&2; FAILURES=$((FAILURES + 1)); }
+pass() { echo "PASS: $*"; PASSES=$((PASSES + 1)); }
 query() { "${PSQL[@]}" -Atqc "$1"; }
 assert_eq() {
   local label="$1" expected="$2" actual="$3"
   if [[ "$actual" == "$expected" ]]; then
-    echo "PASS: $label"
+    pass "$label"
   else
     record_failure "$label (expected <$expected>, got <$actual>)"
   fi
@@ -34,7 +37,7 @@ expect_denied() {
   if "${PSQL[@]}" -c "$sql" >/dev/null 2>&1; then
     record_failure "$label unexpectedly succeeded"
   else
-    echo "PASS: $label"
+    pass "$label"
   fi
 }
 
@@ -138,6 +141,10 @@ insert into public.rank_items(id,rank_id,user_id,title,position) values
 SQL
 
 "${PSQL[@]}" -f "$POLICY_SQL" >/dev/null
+if [[ -n "$MIGRATION" ]]; then
+  [[ -r "$MIGRATION" ]] || fail "migration is not readable: $MIGRATION"
+  "${PSQL[@]}" -f "$MIGRATION" >/dev/null
+fi
 
 U1=10000000-0000-0000-0000-000000000001
 U2=20000000-0000-0000-0000-000000000002
@@ -182,6 +189,19 @@ expect_denied "guest role cannot read users table" \
 assert_eq "KNOWN INTENDED BEHAVIOR: community addition to public rank succeeds" "1" \
   "$(query "set role authenticated; set request.jwt.claim.sub='$U2'; insert into rank_items(id,rank_id,user_id,title,position) values ('32000000-0000-0000-0000-000000000002','$PUBLIC_RANK','$U2','Community item',2) returning 1")"
 
+# Positive and negative INSERT boundaries remain explicit when a candidate
+# migration is supplied, while also exercising the original live baseline.
+assert_eq "owner can insert own item into own private rank" "1" \
+  "$(query "set role authenticated; set request.jwt.claim.sub='$U1'; insert into rank_items(id,rank_id,user_id,title,position) values ('31000000-0000-0000-0000-000000000003','$PRIVATE_RANK','$U1','Owner private addition',3) returning 1")"
+assert_eq "owner can insert own item into own public rank" "1" \
+  "$(query "set role authenticated; set request.jwt.claim.sub='$U1'; insert into rank_items(id,rank_id,user_id,title,position) values ('31000000-0000-0000-0000-000000000004','$PUBLIC_RANK','$U1','Owner public addition',4) returning 1")"
+expect_denied "caller cannot spoof another user_id on insert" \
+  "set role authenticated; set request.jwt.claim.sub='$U1'; insert into rank_items(id,rank_id,user_id,title,position) values ('31000000-0000-0000-0000-000000000005','$PUBLIC_RANK','$U2','Spoofed owner',5);"
+expect_denied "item insert with missing parent rank is denied" \
+  "set role authenticated; set request.jwt.claim.sub='$U1'; insert into rank_items(id,rank_id,user_id,title,position) values ('31000000-0000-0000-0000-000000000006','99000000-0000-0000-0000-000000000099','$U1','Missing parent',6);"
+expect_denied "anonymous item insert is denied" \
+  "set role anon; insert into rank_items(id,rank_id,user_id,title,position) values ('31000000-0000-0000-0000-000000000007','$PUBLIC_RANK','$U1','Anonymous item',7);"
+
 # These are mandatory isolation assertions. Inspect via the cluster owner after
 # each attempted write so RLS cannot hide a successful exploit from the proof.
 if "${PSQL[@]}" -c "set role authenticated; set request.jwt.claim.sub='$U2'; insert into rank_items(id,rank_id,user_id,title,position) values ('32000000-0000-0000-0000-000000000003','$PRIVATE_RANK','$U2','Injected private item',3);" >/dev/null 2>&1; then
@@ -189,10 +209,10 @@ if "${PSQL[@]}" -c "set role authenticated; set request.jwt.claim.sub='$U2'; ins
   if [[ -n "$proof" ]]; then
     record_failure "PRIVATE ISOLATION: attacker-owned INSERT into victim private rank succeeded ($proof)"
   else
-    echo "PASS: attacker-owned INSERT into victim private rank created no row"
+    pass "attacker-owned INSERT into victim private rank created no row"
   fi
 else
-  echo "PASS: attacker-owned INSERT into victim private rank was denied"
+  pass "attacker-owned INSERT into victim private rank was denied"
 fi
 
 if "${PSQL[@]}" -c "set role authenticated; set request.jwt.claim.sub='$U2'; update rank_items set rank_id='$PRIVATE_RANK' where id='32000000-0000-0000-0000-000000000001';" >/dev/null 2>&1; then
@@ -200,14 +220,14 @@ if "${PSQL[@]}" -c "set role authenticated; set request.jwt.claim.sub='$U2'; upd
   if [[ "$proof" == "rank_id=$PRIVATE_RANK, user_id=$U2" ]]; then
     record_failure "PRIVATE ISOLATION: attacker moved own item into victim private rank ($proof)"
   else
-    echo "PASS: moving own item into victim private rank changed no row ($proof)"
+    pass "moving own item into victim private rank changed no row ($proof)"
   fi
 else
-  echo "PASS: moving own item into victim private rank was denied"
+  pass "moving own item into victim private rank was denied"
 fi
 
 if (( FAILURES > 0 )); then
-  echo "Rank access policy harness failed with $FAILURES violation(s)." >&2
+  echo "Rank access policy harness: $PASSES passed, $FAILURES violation(s)." >&2
   exit 1
 fi
-echo "All isolated local rank access tests passed."
+echo "All $PASSES isolated local rank access tests passed."

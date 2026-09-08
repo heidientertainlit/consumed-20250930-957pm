@@ -26,6 +26,7 @@ interface MediaResult {
   external_id?: string;
   external_source?: string;
   description?: string;
+  requestId?: string;
 }
 
 const MAX_RANK_ITEMS = 10;
@@ -40,6 +41,13 @@ async function readJson(response: Response) {
   }
 }
 
+class FlowError extends Error {
+  constructor(message: string, readonly flowToken: number, readonly aborted = false) {
+    super(message);
+    this.name = "FlowError";
+  }
+}
+
 export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialogProps) {
   const [title, setTitle] = useState("");
   const [isPublic, setIsPublic] = useState(true);
@@ -50,18 +58,31 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
   const [saveError, setSaveError] = useState("");
   const [savedItemCount, setSavedItemCount] = useState(0);
   const [createdRankId, setCreatedRankId] = useState<string | null>(null);
-  const [creationBlocked, setCreationBlocked] = useState(false);
+  const [flowStarted, setFlowStarted] = useState(false);
   const createdRankIdRef = useRef<string | null>(null);
   const savedItemCountRef = useRef(0);
   const submissionInFlightRef = useRef(false);
   const searchRequestRef = useRef(0);
+  const rankRequestIdRef = useRef<string | null>(null);
+  const flowAbortRef = useRef<AbortController | null>(null);
+  const flowGenerationRef = useRef(0);
+  const flowTokenRef = useRef(0);
+  const flowOwnerIdRef = useRef<string | null>(null);
+  const currentUserIdRef = useRef<string | null>(null);
+  const previousUserIdRef = useRef<string | null | undefined>(undefined);
+  const mountedRef = useRef(true);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { session } = useAuth();
   const [, setLocation] = useLocation();
+  currentUserIdRef.current = session?.user.id || null;
 
   const resetForm = () => {
+    flowAbortRef.current?.abort();
+    flowAbortRef.current = null;
+    flowGenerationRef.current += 1;
+    flowTokenRef.current = flowGenerationRef.current;
     setTitle("");
     setIsPublic(true);
     setSearchQuery("");
@@ -70,11 +91,45 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
     setSaveError("");
     setSavedItemCount(0);
     setCreatedRankId(null);
-    setCreationBlocked(false);
+    setFlowStarted(false);
     createdRankIdRef.current = null;
     savedItemCountRef.current = 0;
     submissionInFlightRef.current = false;
+    rankRequestIdRef.current = null;
+    flowOwnerIdRef.current = null;
+    searchRequestRef.current += 1;
   };
+
+  const isFlowActive = (token: number) => (
+    mountedRef.current
+    && flowGenerationRef.current === token
+    && !flowAbortRef.current?.signal.aborted
+    && !!flowOwnerIdRef.current
+    && flowOwnerIdRef.current === currentUserIdRef.current
+  );
+
+  useEffect(() => {
+    const userId = session?.user.id || null;
+    if (previousUserIdRef.current === undefined) {
+      previousUserIdRef.current = userId;
+      return;
+    }
+    if (previousUserIdRef.current !== userId) {
+      previousUserIdRef.current = userId;
+      resetForm();
+      onOpenChange(false);
+    }
+  }, [session?.user.id]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      flowGenerationRef.current += 1;
+      flowAbortRef.current?.abort();
+      searchRequestRef.current += 1;
+    };
+  }, []);
 
   const searchMedia = async (query: string, type?: string) => {
     if (!query.trim()) {
@@ -131,7 +186,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
   }, [searchQuery]);
 
   const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
+    if (!result.destination || flowStarted) return;
     
     const items = Array.from(selectedMedia);
     const [reorderedItem] = items.splice(result.source.index, 1);
@@ -142,84 +197,107 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
 
   const createRankMutation = useMutation({
     mutationFn: async () => {
-      if (!session?.access_token) throw new Error("Please sign in before creating a ranked list.");
-
-      let rankId = createdRankIdRef.current;
-      if (!rankId) {
-        if (creationBlocked) {
-          throw new Error("This creation attempt cannot be safely retried because the server did not return its ID. Close this window and check your ranks.");
+      const token = flowTokenRef.current;
+      try {
+        if (!session?.access_token || !session.user.id) {
+          throw new Error("Please sign in before creating a ranked list.");
         }
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/create-rank`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            title: title.trim(),
-            visibility: isPublic ? "public" : "private",
-          }),
-        });
-        const data = await readJson(response);
-        if (!response.ok) throw new Error(data?.error || "Failed to create ranked list.");
-        if (data?.success !== true) throw new Error(data?.error || "The ranked list was not created.");
-        if (typeof data?.data?.id !== "string" || !data.data.id.trim()) {
-          setCreationBlocked(true);
-          throw new Error("The ranked list was created, but the server did not return its ID. Please close this window and check your ranks before trying again.");
+        if (!isFlowActive(token)) {
+          throw new FlowError("Rank creation was cancelled.", token, true);
         }
-        rankId = data.data.id;
-        createdRankIdRef.current = rankId;
-        setCreatedRankId(rankId);
-      }
 
-      for (let i = savedItemCountRef.current; i < selectedMedia.length; i++) {
-        const media = selectedMedia[i];
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/add-rank-item`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            rankId,
-            position: i + 1,
-            media: {
-              title: media.title,
-              mediaType: media.type,
-              creator: media.creator,
-              imageUrl: media.image,
-              externalId: media.external_id,
-              externalSource: media.external_source,
+        let rankId = createdRankIdRef.current;
+        if (!rankId) {
+          const response = await fetch(`${SUPABASE_URL}/functions/v1/create-rank`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session.access_token}`,
             },
-          }),
-        });
-        const data = await readJson(response);
-        if (!response.ok) {
-          throw new Error(data?.error || `Could not save item ${i + 1} (${media.title}).`);
+            signal: flowAbortRef.current!.signal,
+            body: JSON.stringify({
+              requestId: rankRequestIdRef.current,
+              title: title.trim(),
+              visibility: isPublic ? "public" : "private",
+            }),
+          });
+          const data = await readJson(response);
+          if (!isFlowActive(token)) throw new FlowError("Rank creation was cancelled.", token, true);
+          if (!response.ok) throw new Error(data?.error || "Failed to create ranked list.");
+          if (data?.success !== true) throw new Error(data?.error || "The ranked list was not created.");
+          if (typeof data?.data?.id !== "string" || !data.data.id.trim()) {
+            throw new Error("The server did not return the ranked list ID. Retrying will safely check the same creation request.");
+          }
+          rankId = data.data.id;
+          createdRankIdRef.current = rankId;
+          setCreatedRankId(rankId);
         }
-        if (data?.success !== true || !data?.data) {
-          throw new Error(data?.error || `The server did not confirm item ${i + 1} (${media.title}).`);
-        }
-        savedItemCountRef.current = i + 1;
-        setSavedItemCount(i + 1);
-      }
 
-      return rankId;
+        for (let i = savedItemCountRef.current; i < selectedMedia.length; i++) {
+          if (!isFlowActive(token)) throw new FlowError("Rank creation was cancelled.", token, true);
+          const media = selectedMedia[i];
+          const response = await fetch(`${SUPABASE_URL}/functions/v1/add-rank-item`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+            signal: flowAbortRef.current!.signal,
+            body: JSON.stringify({
+              requestId: media.requestId,
+              rankId,
+              position: i + 1,
+              media: {
+                title: media.title,
+                mediaType: media.type,
+                creator: media.creator,
+                imageUrl: media.image,
+                externalId: media.external_id,
+                externalSource: media.external_source,
+              },
+            }),
+          });
+          const data = await readJson(response);
+          if (!isFlowActive(token)) throw new FlowError("Rank creation was cancelled.", token, true);
+          if (!response.ok) {
+            throw new Error(data?.error || `Could not save item ${i + 1} (${media.title}).`);
+          }
+          if (data?.success !== true || !data?.data) {
+            throw new Error(data?.error || `The server did not confirm item ${i + 1} (${media.title}).`);
+          }
+          savedItemCountRef.current = i + 1;
+          setSavedItemCount(i + 1);
+        }
+
+        return { rankId, flowToken: token };
+      } catch (error) {
+        if (error instanceof FlowError) throw error;
+        const aborted = error instanceof DOMException && error.name === "AbortError";
+        throw new FlowError(
+          error instanceof Error ? error.message : "Please try again.",
+          token,
+          aborted,
+        );
+      }
     },
-    onSuccess: async (rankId) => {
+    onSuccess: async ({ rankId, flowToken }) => {
+      if (!isFlowActive(flowToken)) return;
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["consumed-ranks-carousel"] }),
         queryClient.invalidateQueries({ queryKey: ["user-ranks"] }),
       ]);
+      if (!isFlowActive(flowToken)) return;
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ["consumed-ranks-carousel"], type: "all" }),
         queryClient.refetchQueries({ queryKey: ["user-ranks"], type: "all" }),
       ]);
-      resetForm();
+      if (!isFlowActive(flowToken)) return;
       onOpenChange(false);
       setLocation(`/rank/${rankId}`);
+      resetForm();
     },
-    onError: (error: Error) => {
+    onError: (error: FlowError) => {
+      if (error.aborted || !isFlowActive(error.flowToken)) return;
       const prefix = createdRankIdRef.current
         ? `${savedItemCountRef.current} of ${selectedMedia.length} items saved. `
         : "";
@@ -230,7 +308,9 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
         variant: "destructive",
       });
     },
-    onSettled: () => {
+    onSettled: (data, error) => {
+      const token = data?.flowToken ?? (error instanceof FlowError ? error.flowToken : -1);
+      if (token !== flowGenerationRef.current) return;
       submissionInFlightRef.current = false;
     },
   });
@@ -254,26 +334,40 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
       return;
     }
 
+    if (!session?.access_token || !session.user.id) {
+      toast({ title: "Sign in required", description: "Please sign in before creating a ranked list.", variant: "destructive" });
+      return;
+    }
+
     setSaveError("");
+    if (!flowStarted) {
+      const controller = new AbortController();
+      flowAbortRef.current = controller;
+      flowGenerationRef.current += 1;
+      flowTokenRef.current = flowGenerationRef.current;
+      flowOwnerIdRef.current = session?.user.id || null;
+      rankRequestIdRef.current = crypto.randomUUID();
+      setFlowStarted(true);
+    }
     submissionInFlightRef.current = true;
     createRankMutation.mutate();
   };
 
   const addMedia = (media: MediaResult) => {
-    if (createdRankIdRef.current) return;
+    if (flowStarted) return;
     if (selectedMedia.length >= MAX_RANK_ITEMS) {
       toast({ title: "Limit Reached", description: `Ranks are limited to ${MAX_RANK_ITEMS} items`, variant: "destructive" });
       return;
     }
     if (!selectedMedia.find(m => m.external_id === media.external_id && m.external_source === media.external_source)) {
-      setSelectedMedia([...selectedMedia, media]);
+      setSelectedMedia([...selectedMedia, { ...media, requestId: crypto.randomUUID() }]);
     }
     setSearchQuery("");
     setSearchResults([]);
   };
 
   const removeMedia = (index: number) => {
-    if (createdRankIdRef.current) return;
+    if (flowStarted) return;
     setSelectedMedia(selectedMedia.filter((_, i) => i !== index));
   };
 
@@ -296,7 +390,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Top 10 90s Movies"
               maxLength={50}
-              disabled={!!createdRankId}
+              disabled={flowStarted}
               data-testid="input-rank-title"
               autoFocus
               className="bg-white text-black border-gray-300 focus:border-purple-400 placeholder:text-gray-400"
@@ -313,7 +407,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
             <Switch
               checked={isPublic}
               onCheckedChange={setIsPublic}
-              disabled={!!createdRankId}
+              disabled={flowStarted}
               data-testid="switch-rank-visibility"
             />
           </div>
@@ -329,7 +423,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
                 placeholder="Search movies, shows, books..."
                 className="pl-9 bg-white text-black border-gray-300 focus:border-purple-400 placeholder:text-gray-400"
                 data-testid="input-rank-media-search"
-                disabled={!!createdRankId}
+                disabled={flowStarted}
               />
               {isSearching && (
                 <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 animate-spin text-purple-600" size={16} />
@@ -369,7 +463,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
                     {(provided) => (
                       <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1">
                         {selectedMedia.map((media, index) => (
-                          <Draggable key={`${media.external_id}-${media.external_source}-${index}`} draggableId={`${media.external_id}-${index}`} index={index} isDragDisabled={!!createdRankId}>
+                          <Draggable key={media.requestId} draggableId={media.requestId!} index={index} isDragDisabled={flowStarted}>
                             {(provided, snapshot) => (
                               <div
                                 ref={provided.innerRef}
@@ -384,7 +478,7 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
                                   <img src={media.image} alt="" className="w-8 h-8 rounded object-cover" />
                                 )}
                                 <span className="text-sm text-purple-900 flex-1 truncate">{media.title}</span>
-                                <button type="button" onClick={() => removeMedia(index)} disabled={!!createdRankId} aria-label={`Remove ${media.title}`} className="text-purple-600 hover:text-red-600 p-1 disabled:opacity-40">
+                                <button type="button" onClick={() => removeMedia(index)} disabled={flowStarted} aria-label={`Remove ${media.title}`} className="text-purple-600 hover:text-red-600 p-1 disabled:opacity-40">
                                   <X size={14} />
                                 </button>
                               </div>
@@ -407,6 +501,11 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
                 <p className="font-medium">{createdRankId ? "Your rank was created, but not every item was saved." : "We couldn't create your rank."}</p>
                 <p className="mt-0.5 text-xs">{saveError}</p>
                 {createdRankId && <p className="mt-1 text-xs font-medium">Retry will continue with item {savedItemCount + 1}; saved items will not be added again.</p>}
+                {createdRankId && (
+                  <button type="button" onClick={() => setLocation(`/rank/${createdRankId}`)} className="mt-2 font-semibold underline">
+                    View saved rank
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -427,14 +526,14 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
           <Button
             onClick={handleSubmit}
             size="sm"
-            disabled={createRankMutation.isPending || creationBlocked || !title.trim() || selectedMedia.length < MIN_RANK_ITEMS}
+            disabled={createRankMutation.isPending || !title.trim() || selectedMedia.length < MIN_RANK_ITEMS}
             className="bg-purple-600 hover:bg-purple-700 text-white"
             data-testid="button-create-rank"
           >
             {createRankMutation.isPending ? (
               <><Loader2 className="animate-spin mr-1" size={14} /> Creating...</>
             ) : (
-              creationBlocked ? "Check your ranks" : createdRankId ? "Retry saving items" : `Create (${selectedMedia.length})`
+              flowStarted ? "Retry saving" : `Create (${selectedMedia.length})`
             )}
           </Button>
         </div>

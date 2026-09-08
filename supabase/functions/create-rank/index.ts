@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 serve(async (req) => {
   console.log("create-rank function hit!", req.method);
   
@@ -77,7 +79,7 @@ serve(async (req) => {
     }
 
     const requestBody = await req.json();
-    const { title, description, visibility, isCollaborative, maxItems, category, coverImageUrl } = requestBody;
+    const { title, description, visibility, isCollaborative, maxItems, category, coverImageUrl, requestId } = requestBody;
 
     if (!title) {
       return new Response(JSON.stringify({ error: 'Title is required' }), {
@@ -86,22 +88,83 @@ serve(async (req) => {
       });
     }
 
+    if (requestId !== undefined && (typeof requestId !== 'string' || !uuidPattern.test(requestId))) {
+      return new Response(JSON.stringify({ error: 'requestId must be a valid UUID' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const successResponse = (rank) => new Response(JSON.stringify({
+      success: true,
+      data: rank
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+
+    const conflictResponse = () => new Response(JSON.stringify({
+      error: 'Request ID conflict'
+    }), {
+      status: 409,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+
+    const readRequestedRank = async () => {
+      const { data, error } = await supabaseAdmin
+        .from('ranks')
+        .select()
+        .eq('id', requestId)
+        .maybeSingle();
+      return { data, error };
+    };
+
+    if (requestId) {
+      const { data: existingRank, error: existingRankError } = await readRequestedRank();
+      if (existingRankError) {
+        console.error('Error checking existing rank request:', existingRankError);
+        return new Response(JSON.stringify({ error: 'Failed to check existing rank request' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (existingRank) {
+        return existingRank.user_id === appUser.id
+          ? successResponse(existingRank)
+          : conflictResponse();
+      }
+    }
+
+    const rankToInsert = {
+      ...(requestId ? { id: requestId } : {}),
+      user_id: appUser.id,
+      title,
+      description: description || null,
+      visibility: visibility || 'public',
+      is_collaborative: isCollaborative || false,
+      max_items: maxItems || 10,
+      category: category || 'mixed',
+      cover_image_url: coverImageUrl || null
+    };
+
     const { data: rank, error: rankError } = await supabaseAdmin
       .from('ranks')
-      .insert({
-        user_id: appUser.id,
-        title,
-        description: description || null,
-        visibility: visibility || 'public',
-        is_collaborative: isCollaborative || false,
-        max_items: maxItems || 10,
-        category: category || 'mixed',
-        cover_image_url: coverImageUrl || null
-      })
+      .insert(rankToInsert)
       .select()
       .single();
 
     if (rankError) {
+      if (requestId && rankError.code === '23505') {
+        const { data: existingRank, error: existingRankError } = await readRequestedRank();
+        if (!existingRankError && existingRank) {
+          return existingRank.user_id === appUser.id
+            ? successResponse(existingRank)
+            : conflictResponse();
+        }
+        if (existingRankError) {
+          console.error('Error re-reading conflicting rank request:', existingRankError);
+        }
+        return conflictResponse();
+      }
       console.error('Error creating rank:', rankError);
       return new Response(JSON.stringify({
         error: 'Failed to create rank: ' + rankError.message
@@ -135,12 +198,7 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({
-      success: true,
-      data: rank
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return successResponse(rank);
 
   } catch (error) {
     console.error('Create rank error:', error);
