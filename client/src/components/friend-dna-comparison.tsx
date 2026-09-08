@@ -789,7 +789,7 @@ export function FriendDNACompareButton({
         variant="outline" 
         size="sm" 
         disabled
-        className="opacity-60"
+        className="opacity-60 rounded-full"
         data-testid="button-compare-dna-locked"
         title={!hasSurvey ? 'Finish your Entertainment DNA to unlock' : `Track ${itemsNeeded} more items to unlock`}
       >
@@ -813,7 +813,7 @@ export function FriendDNACompareButton({
         window.dispatchEvent(new PopStateEvent('popstate'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }}
-      className="border-purple-200 hover:border-purple-300 hover:bg-purple-50"
+      className="rounded-full border-purple-200 hover:border-purple-300 hover:bg-purple-50"
       data-testid="button-compare-dna"
     >
       {isComparing ? <Loader2 size={14} className="mr-2 animate-spin text-purple-600" /> : <Users size={14} className="mr-2 text-purple-600" />}

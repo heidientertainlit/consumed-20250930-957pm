@@ -160,6 +160,7 @@ export default function DnaPage() {
   const eligibleFriends = friends.filter((f: any) => f.isEligible);
   const almostEligibleFriends = friends.filter((f: any) => !f.isEligible && f.itemCount > 0);
   const selectedFriend = friends.find((f: any) => f.id === selectedFriendId);
+  const otherEligibleFriends = eligibleFriends.filter((f: any) => f.id !== selectedFriendId);
 
   const handleSelectFriend = async (friendId: string) => {
     if (!session?.access_token || !canCompare) return;
@@ -583,7 +584,7 @@ export default function DnaPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {eligibleFriends.length > 0 && (
+                  {!selectedFriendId && eligibleFriends.length > 0 && (
                     <div>
                       <p className="text-xs text-gray-600 mb-2">Select a friend to compare:</p>
                       <div className="flex flex-wrap gap-2">
@@ -591,11 +592,7 @@ export default function DnaPage() {
                           <button
                             key={friend.id}
                             onClick={() => handleSelectFriend(friend.id)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs transition-all ${
-                              selectedFriendId === friend.id
-                                ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs transition-all bg-gray-100 text-gray-700 hover:bg-gray-200"
                           >
                             <div className="w-5 h-5 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 text-xs font-medium overflow-hidden">
                               {friend.avatar_url ? (
@@ -605,7 +602,6 @@ export default function DnaPage() {
                               )}
                             </div>
                             <span>{friend.user_name}</span>
-                            {selectedFriendId === friend.id && <X size={12} />}
                           </button>
                         ))}
                       </div>
@@ -613,7 +609,32 @@ export default function DnaPage() {
                   )}
 
                   {selectedFriendId && (
-                    <div className="pt-3 border-t border-gray-100">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between rounded-xl border border-purple-200 bg-purple-50 px-3 py-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 text-xs font-semibold overflow-hidden">
+                            {selectedFriend?.avatar_url ? (
+                              <img src={selectedFriend.avatar_url} alt={selectedFriend.user_name} className="w-8 h-8 rounded-full object-cover" />
+                            ) : (
+                              selectedFriend?.user_name.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wide text-purple-500 font-semibold">Comparing with</p>
+                            <p className="text-sm font-semibold text-gray-900">{selectedFriend?.user_name}</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectFriend(selectedFriendId)}
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-white"
+                          aria-label={`Stop comparing with ${selectedFriend?.user_name}`}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+
+                      <div className="pt-3 border-t border-gray-100">
                       {isComparing && (
                         <div className="flex flex-col items-center py-6">
                           <Loader2 className="animate-spin text-purple-600 mb-2" size={28} />
@@ -750,6 +771,31 @@ export default function DnaPage() {
                           )}
                         </div>
                       )}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedFriendId && otherEligibleFriends.length > 0 && (
+                    <div className="pt-3 border-t border-gray-100">
+                      <p className="text-xs font-medium text-gray-700 mb-2">Others you can compare with</p>
+                      <div className="flex flex-wrap gap-2">
+                        {otherEligibleFriends.map((friend: any) => (
+                          <button
+                            key={friend.id}
+                            onClick={() => handleSelectFriend(friend.id)}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs transition-all bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          >
+                            <div className="w-5 h-5 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 text-xs font-medium overflow-hidden">
+                              {friend.avatar_url ? (
+                                <img src={friend.avatar_url} alt={friend.user_name} className="w-5 h-5 rounded-full object-cover" />
+                              ) : (
+                                friend.user_name.charAt(0).toUpperCase()
+                              )}
+                            </div>
+                            <span>{friend.user_name}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
 
