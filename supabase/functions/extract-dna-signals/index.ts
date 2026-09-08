@@ -202,13 +202,13 @@ serve(async (req) => {
     }
 
     // Moment categories
-    let momentCategoryMap: Record<string, string> = {};
+    let momentDetailMap: Record<string, any> = {};
     if (momentResponses?.length) {
       const momentIds = [...new Set(momentResponses.map((r: any) => r.moment_id))];
       const { data: moments } = await svc.from('dna_moments')
-        .select('id, category')
+        .select('id, question_text, category, option_a, option_b, option_c, option_d, option_e')
         .in('id', momentIds);
-      (moments ?? []).forEach((m: any) => { if (m.category) momentCategoryMap[m.id] = m.category; });
+      (moments ?? []).forEach((m: any) => { momentDetailMap[m.id] = m; });
     }
 
     // ── Build signal accumulator ─────────────────────────────────────────────
@@ -344,11 +344,32 @@ serve(async (req) => {
 
     // ── Source 4: DNA Moments — weight 0.8 ───────────────────────────────────
     for (const response of (momentResponses ?? [])) {
-      const category = momentCategoryMap[response.moment_id];
-      if (!category) continue;
-      const mediaType = categoryToMediaType(category);
+      const moment = momentDetailMap[response.moment_id];
+      if (!moment) continue;
+
+      const mediaType = categoryToMediaType(moment.category);
       if (mediaType) {
         const s = touch('media_type', mediaType);
+        if (s) { s.weightedCount += 0.8; s.sources.moments += 1; }
+      }
+
+      const optionLabels: Record<string, string | null> = {
+        a: moment.option_a,
+        b: moment.option_b,
+        c: moment.option_c,
+        d: moment.option_d,
+        e: moment.option_e,
+      };
+      const selectedLabels = String(response.answer || '')
+        .split(',')
+        .map((key: string) => optionLabels[key.trim()])
+        .filter((label: string | null): label is string => Boolean(label));
+
+      if (moment.question_text && selectedLabels.length > 0) {
+        const s = touch(
+          'personality',
+          `${moment.question_text}: ${selectedLabels.join(', ')}`
+        );
         if (s) { s.weightedCount += 0.8; s.sources.moments += 1; }
       }
     }

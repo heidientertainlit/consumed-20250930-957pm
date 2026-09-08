@@ -107,7 +107,7 @@ export function DnaMomentCard({ slot = 0 }: { slot?: number } = {}) {
         isMultiSelect: m.is_multi_select || false,
       }));
 
-      return { moments: momentsToShow, answeredIds };
+      return { moments: momentsToShow, answeredIds, unansweredCount: unanswered.length };
     },
     enabled: !!session?.access_token
   });
@@ -121,59 +121,72 @@ export function DnaMomentCard({ slot = 0 }: { slot?: number } = {}) {
   const answerMutation = useMutation({
     mutationFn: async ({ momentId, answer, answers }: { momentId: string, answer?: string, answers?: string[] }) => {
       const userId = session?.user?.id;
-      if (!userId) throw new Error('Not logged in');
+      const accessToken = session?.access_token;
+      if (!userId || !accessToken) throw new Error('Not logged in');
 
       const answerValue = answer || (answers ? answers.join(',') : '');
       
       console.log('🧬 Saving DNA answer:', { momentId, answerValue, userId });
-      
-      const { data: insertData, error: insertError } = await supabase
-        .from('dna_moment_responses')
-        .insert({
-          user_id: userId,
-          moment_id: momentId,
-          answer: answerValue,
-          points_earned: 5,
-        })
-        .select();
-      
-      if (insertError) {
-        console.error('🧬 DNA answer save error:', insertError);
-        throw new Error(insertError.message);
-      }
-      
-      console.log('🧬 DNA answer saved successfully:', insertData);
 
-      const { data: allResponses } = await supabase
-        .from('dna_moment_responses')
-        .select('answer')
-        .eq('moment_id', momentId);
-      
-      const total = allResponses?.length || 1;
-      const optionCounts: Record<string, number> = {};
-      (allResponses || []).forEach((r: any) => {
-        const a = r.answer || '';
-        a.split(',').forEach((val: string) => {
-          optionCounts[val] = (optionCounts[val] || 0) + 1;
-        });
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/answer-dna-moment`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ momentId, answer, answers }),
       });
+      const result = await response.json().catch(() => ({}));
 
-      const stats = {
-        totalResponses: total,
-        optionAPercent: Math.round(((optionCounts['a'] || 0) / total) * 100),
-        optionBPercent: Math.round(((optionCounts['b'] || 0) / total) * 100),
-        optionCPercent: Math.round(((optionCounts['c'] || 0) / total) * 100),
-        optionDPercent: Math.round(((optionCounts['d'] || 0) / total) * 100),
-        optionEPercent: Math.round(((optionCounts['e'] || 0) / total) * 100),
+      if (!response.ok) {
+        console.error('🧬 DNA answer save error:', result);
+        throw new Error(result.error || 'Failed to save DNA answer');
+      }
+
+      console.log('🧬 DNA answer saved successfully');
+
+      return {
+        momentId,
+        result: {
+          stats: result.stats,
+          pointsEarned: result.pointsEarned ?? 5,
+        },
       };
-
-      return { momentId, result: { stats, pointsEarned: 5 } };
     },
     onSuccess: ({ momentId, result }) => {
       setAnsweredMoments(prev => new Set([...prev, momentId]));
       setMomentResults(prev => ({ ...prev, [momentId]: result }));
       incrementActivityCount();
       trackEvent('dna_moment_answered', { moment_id: momentId, points_earned: result.pointsEarned });
+
+      const accessToken = session?.access_token;
+      const completedAllFeedQuestions = (data?.unansweredCount || 0) <= 1;
+      queryClient.invalidateQueries({ queryKey: ['dna-moments-carousel', session?.user?.id] });
+
+      if (accessToken) {
+        void (async () => {
+          const extractResponse = await fetch(`${SUPABASE_URL}/functions/v1/extract-dna-signals`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (completedAllFeedQuestions && extractResponse.ok) {
+            await fetch(`${SUPABASE_URL}/functions/v1/generate-dna-profile-v2`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            queryClient.invalidateQueries({ queryKey: ['dna-profile'] });
+          }
+        })().catch((error) => {
+          console.error('🧬 DNA refresh after moment answer failed:', error);
+        });
+      }
     },
     onError: (error: Error) => {
       toast({

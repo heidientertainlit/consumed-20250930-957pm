@@ -249,7 +249,8 @@ serve(async (req) => {
       { data: recentSignals },
       { data: showSignalsRaw },
       { data: existingProfile },
-      { data: followedCreatorRows }
+      { data: followedCreatorRows },
+      { data: dnaMomentResponses }
     ] = await Promise.all([
       supabaseClient
         .from('edna_responses')
@@ -283,7 +284,11 @@ serve(async (req) => {
         .from('followed_creators')
         .select('creator_name, creator_role')
         .eq('user_id', userId)
-        .limit(30)
+        .limit(30),
+      supabaseClient
+        .from('dna_moment_responses')
+        .select('answer, dna_moments!inner(question_text, option_a, option_b, option_c, option_d, option_e)')
+        .eq('user_id', userId)
     ]);
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -335,9 +340,43 @@ serve(async (req) => {
       .join('\n\n') || 'No survey responses';
 
     const formattedSignals = (allSignals || [])
-      .filter(s => s.signal_type !== 'engagement')
+      .filter(s => s.signal_type !== 'engagement' && s.signal_type !== 'personality')
       .map(s => `${s.signal_type}: ${s.signal_value} (strength: ${Number(s.strength).toFixed(2)})`)
       .join('\n') || 'No behavioral signals';
+
+    const formattedPersonalitySignalsFromExtraction = (allSignals || [])
+      .filter(s => s.signal_type === 'personality')
+      .map(s => `- ${s.signal_value}`)
+      .join('\n');
+
+    const formattedDnaMomentResponses = (dnaMomentResponses || [])
+      .map((response: any) => {
+        const moment = Array.isArray(response.dna_moments)
+          ? response.dna_moments[0]
+          : response.dna_moments;
+        if (!moment?.question_text) return null;
+
+        const optionLabels: Record<string, string | null> = {
+          a: moment.option_a,
+          b: moment.option_b,
+          c: moment.option_c,
+          d: moment.option_d,
+          e: moment.option_e,
+        };
+        const answers = String(response.answer || '')
+          .split(',')
+          .map((key: string) => optionLabels[key.trim()])
+          .filter(Boolean)
+          .join(', ');
+        return answers ? `- ${moment.question_text}: ${answers}` : null;
+      })
+      .filter(Boolean)
+      .join('\n');
+
+    const formattedPersonalitySignals =
+      formattedDnaMomentResponses
+      || formattedPersonalitySignalsFromExtraction
+      || 'No ongoing DNA question answers yet';
 
     const topShows = (showSignalsRaw || [])
       .map(s => s.signal_value)
@@ -381,6 +420,9 @@ BLEND WEIGHTS: Survey ${Math.round(blend.survey * 100)}% / Behavior ${Math.round
 
 SURVEY RESPONSES (what they say they like):
 ${formattedResponses}
+
+ONGOING DNA QUESTION ANSWERS (explicit self-reported entertainment personality evidence):
+${formattedPersonalitySignals}
 
 BEHAVIORAL SIGNALS (what they actually consume — ordered by strength):
 ${formattedSignals}
