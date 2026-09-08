@@ -278,6 +278,25 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
            lower.includes('favorite') || lower.includes('favorites');
   };
 
+  const hasExistingRating = async () => {
+    if (!session?.user?.id || !effectiveMedia?.externalId) return false;
+
+    const { data, error } = await supabase
+      .from('media_ratings')
+      .select('id')
+      .eq('user_id', session.user.id)
+      .eq('media_external_id', effectiveMedia.externalId)
+      .eq('media_external_source', effectiveMedia.externalSource || 'tmdb')
+      .limit(1);
+
+    if (error) {
+      console.error('Failed to check existing rating:', error);
+      return false;
+    }
+
+    return (data?.length || 0) > 0;
+  };
+
   const handleAddToList = async (listId: string, listName: string) => {
     if (!session?.access_token || !effectiveMedia) {
       if (!effectiveMedia) inlineSearchRef.current?.focus();
@@ -410,7 +429,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
           setStep('just-tracked');
         }
       } else if (shouldShowFollowUp(listName) && effectiveMedia?.externalId) {
-        setStep('rate');
+        setStep(await hasExistingRating() ? 'just-tracked' : 'rate');
       } else {
         setStep('just-tracked');
       }
