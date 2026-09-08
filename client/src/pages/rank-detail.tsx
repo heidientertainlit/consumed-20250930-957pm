@@ -15,6 +15,8 @@ import { supabase } from '@/lib/supabase';
 import AddRankItemDialog from '@/components/add-rank-item-dialog';
 import Navigation from '@/components/navigation';
 
+const RANKS_PLAY_ROUTE = '/play?mode=ranks';
+
 interface RankItem {
   id: string;
   position: number;
@@ -105,7 +107,7 @@ export default function RankDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-ranks'] });
       toast({ title: "Rank Deleted" });
-      setLocation('/me?tab=collections');
+      setLocation(RANKS_PLAY_ROUTE);
     },
     onError: (error) => {
       toast({
@@ -218,8 +220,8 @@ export default function RankDetail() {
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Rank not found</h1>
-            <Button onClick={() => setLocation("/me")}>
-              Back to Profile
+            <Button onClick={() => setLocation(RANKS_PLAY_ROUTE)}>
+              Back to Ranks
             </Button>
           </div>
         </div>
@@ -236,7 +238,7 @@ export default function RankDetail() {
           {/* Title Row - Full Width */}
           <div className="flex items-start gap-3 mb-3">
             <button
-              onClick={() => setLocation("/me?tab=collections")}
+              onClick={() => setLocation(RANKS_PLAY_ROUTE)}
               className="p-1 mt-0.5 text-gray-600 hover:text-gray-900 transition-colors flex-shrink-0"
               data-testid="button-back"
             >
