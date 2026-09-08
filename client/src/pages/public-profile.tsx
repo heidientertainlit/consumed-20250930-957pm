@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { APP_BASE } from "@/lib/share";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -8,6 +9,7 @@ import { Loader2, Star, Trophy, TrendingUp, BookOpen, Tv, Film, Music, Headphone
 
 interface PublicProfile {
   access: "full" | "preview";
+  can_view_full_profile?: boolean;
   id: string;
   display_name: string | null;
   username: string | null;
@@ -30,7 +32,7 @@ export default function PublicProfilePage() {
   const [, navigate] = useLocation();
   const { user, session, loading: authLoading } = useAuth();
 
-  const { data: profile, isLoading, error } = useQuery<PublicProfile>({
+  const { data: profile, isLoading, isFetching, error } = useQuery<PublicProfile>({
     queryKey: ['public-profile', userId, session?.access_token],
     queryFn: async () => {
       if (!userId) throw new Error('No user ID');
@@ -59,6 +61,18 @@ export default function PublicProfilePage() {
     enabled: !!userId && !authLoading,
   });
 
+  // Only the server can authorize leaving the teaser. An older response
+  // without this flag stays on the preview rather than assuming access.
+  const shouldOpenFullProfile = !authLoading && !isFetching && !error
+    && !!session?.access_token && !!user
+    && profile?.id === userId && profile?.can_view_full_profile === true;
+
+  useEffect(() => {
+    if (shouldOpenFullProfile) {
+      navigate(`/user/${userId}?ref=invite`, { replace: true });
+    }
+  }, [shouldOpenFullProfile, userId, navigate]);
+
   const handleJoin = () => {
     if (userId) {
       localStorage.setItem('consumed_referrer', userId);
@@ -75,7 +89,8 @@ export default function PublicProfilePage() {
 
   const displayName = profile?.display_name || profile?.username || 'User';
   const appUrl = APP_BASE;
-  const isPreview = profile?.access === 'preview';
+  // Full details belong on the canonical profile, never this share surface.
+  const isPreview = !shouldOpenFullProfile;
 
   const getMediaIcon = (type: string) => {
     switch (type?.toLowerCase()) {
@@ -90,7 +105,7 @@ export default function PublicProfilePage() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || shouldOpenFullProfile) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-purple-900 via-gray-900 to-black flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-white animate-spin" />

@@ -11,8 +11,8 @@ type Scenario = { friend?: boolean; blocked?: boolean; private?: boolean; discov
 
 function clientFor(s: Scenario) {
   return {
-    auth: { getUser: async (token: string) => token === "viewer"
-      ? { data: { user: { id: viewerId } }, error: null }
+    auth: { getUser: async (token: string) => token === "viewer" || token === "owner"
+      ? { data: { user: { id: token === "owner" ? targetId : viewerId } }, error: null }
       : { data: { user: null }, error: new Error("expired") } },
     from(table: string) {
       let columns = "";
@@ -90,6 +90,37 @@ for (const slug of ["get-public-dna", "get-public-profile"]) {
 
 test("get-public-dna: accepted friend keeps full access despite privacy/discovery settings", async () => {
   const response = await handlerFor("get-public-dna", { friend: true, private: true, discoverable: false })("viewer");
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.access, "full");
+  assert.equal(body.dna_profile.profile_text, secretParagraph);
+});
+
+test("public-profile permission flag authorizes only owners and accepted friends", async () => {
+  for (const { token, scenario, allowed } of [
+    { token: "owner", scenario: { private: true, discoverable: false }, allowed: true },
+    { token: "viewer", scenario: { friend: true, private: true, discoverable: false }, allowed: true },
+    { token: "viewer", scenario: {}, allowed: false },
+    { token: "anon", scenario: {}, allowed: false },
+  ]) {
+    const response = await handlerFor("get-public-profile", scenario)(token);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.can_view_full_profile, allowed);
+    assert.equal(body.access, "preview");
+    assert.equal(body.profile_text, undefined);
+    assert.equal(body.total_points, undefined);
+  }
+});
+
+test("blocked friend is denied, not given a full-profile navigation flag", async () => {
+  const response = await handlerFor("get-public-profile", { friend: true, blocked: true })("viewer");
+  assert.equal(response.status, 404);
+  assert.equal((await response.json()).can_view_full_profile, undefined);
+});
+
+test("own full DNA response is retained without opening stranger access", async () => {
+  const response = await handlerFor("get-public-dna", { private: true, discoverable: false })("owner");
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.access, "full");

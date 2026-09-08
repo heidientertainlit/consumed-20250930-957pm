@@ -60,6 +60,7 @@ Deno.serve(async (req) => {
         dna_label: dnaProfile?.label || null,
         dna_tagline: dnaProfile?.tagline || null,
         access: 'preview',
+        can_view_full_profile: fullAccess,
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error) {

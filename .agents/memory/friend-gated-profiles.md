@@ -14,3 +14,9 @@ Intentional public invite links may expose a minimal identity/archetype teaser f
 **Why:** Invitations need to work before signup without silently undoing the member-profile friendship boundary. Public teaser information cannot be hidden from a determined blocked person who browses anonymously; never promise otherwise.
 
 **How to apply:** Enforce the boundary both in service-role endpoints and direct database reads. Treat failed privacy/block lookups as denials, not as missing restrictions. Keep privileged admin exports separate from ordinary member reads.
+
+Privacy rollouts must account for independently shipped web and native clients; restoring protected fields or broad database access is not an acceptable compatibility fix.
+
+**Why:** Older clients can turn omitted statistics into misleading zeros, send anonymous authorization despite a signed-in session, or silently export only the DNA rows allowed by member-level policies.
+
+**How to apply:** Distinguish source-level verification from released-bundle verification. Missing authorization metadata must retain the teaser, and privileged export compatibility belongs in the authenticated admin path rather than relaxed RLS.
