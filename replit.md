@@ -3,6 +3,28 @@
 ## Overview
 Consumed is a mobile-first platform designed to transform entertainment consumption into an interactive, game-like experience. It encourages active engagement through ranking, voting, predicting, and knowledge testing, moving users from passive consumption to active participation. The platform aims to foster engagement, social comparison, and personalization, envisioning significant market potential by creating a dynamic and engaging space for entertainment enthusiasts.
 
+## Security preservation guardrails
+
+The existing security hardening is a protected baseline during app testing and subsequent feature fixes. A request to fix a feature, screen, sharing flow, or compatibility issue is **not** permission to weaken access controls.
+
+**Why:** The user wants to improve and test the app without undoing the privacy and authorization protections already released.
+
+### Boundaries to preserve
+- Full member DNA and personal consumption details remain restricted to the owner or an accepted, unblocked friend. Enforce authorization server-side and on direct database access, not just by hiding UI.
+- Public profile/DNA/invite links expose only the existing minimal identity/archetype teaser for eligible profiles; do not add protected statistics, full DNA, or consumption history.
+- Invalid tokens, failed authorization/privacy/block lookups, and missing permission metadata must fail closed. Shared-profile automatic navigation requires explicit server authorization.
+- Preserve friendship protections: only the recipient can accept a request; blocking removes reciprocal relationships; retain the service-only, pair-locked mutation transactions.
+- DNA regeneration must preserve privacy settings.
+- Admin DNA exports require an authenticated, server-authorized administrator. Do not restore broad browser database reads to make exports work.
+- Fix older web/native client compatibility on the client or within the existing authorization boundary; never relax RLS or return protected fields to satisfy an old bundle.
+
+### How to apply during future updates
+1. Keep each fix narrowly scoped and inspect its impact on auth, RLS, profile disclosure, friendship/blocking, privileged exports, and privacy persistence.
+2. If a fix needs to change a security rule or its enforcement, explain the exact change and obtain explicit approval before implementing it. Investigating a failure or running non-mutating checks does not require changing the rule.
+3. Run the relevant existing regression tests before delivering the affected feature. For security-sensitive paths, cover guest, owner, accepted friend, stranger, blocked user, admin, and non-admin as applicable, including direct database access where relevant.
+4. Distinguish local/simulated test results from real-account, deployed-web, and installed-native verification. Never claim that one certifies the others.
+5. Keep release scope separate from implementation: no unrelated migrations, bulk function deployments, whole-history pushes, or native builds/distribution as part of routine bug fixes. Obtain explicit authorization for releases and any expanded scope.
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 - **“Our serif font” means the exact `font-serif` family used by “Your circle.” on People → Friends & Matches.** Use that class with regular/medium weight and tight tracking as appropriate; do not substitute Fraunces or hard-coded Georgia.
