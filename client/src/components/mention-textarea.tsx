@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { User, Film, Tv, BookOpen, Music, Gamepad2 } from "lucide-react";
 import { MENTION_TRIGGER_PATTERN } from "@/lib/mention-constants";
+import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
 
 interface Friend {
   id: string;
@@ -61,8 +62,11 @@ export default function MentionTextarea({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isSearchingMedia, setIsSearchingMedia] = useState(false);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<"movie" | "tv" | "book" | "music" | "podcast" | "youtube" | "game" | undefined>();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mediaAbortRef = useRef<AbortController | null>(null);
+  const mediaRequestRef = useRef(0);
 
   // Fetch friends when component mounts
   useEffect(() => {
@@ -186,44 +190,53 @@ export default function MentionTextarea({
           setShowMentions(false);
           setIsSearchingMedia(true);
           
-          // Debounce the search
+           mediaAbortRef.current?.abort();
+           const requestId = ++mediaRequestRef.current;
+           // Match the canonical picker's 200ms debounce and ignore stale results.
           const timeoutId = setTimeout(async () => {
+             const bearer = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+             if (!bearer) {
+               if (requestId === mediaRequestRef.current) setIsSearchingMedia(false);
+               return;
+             }
+             const controller = new AbortController();
+             mediaAbortRef.current = controller;
             try {
-              const response = await fetch(
-                'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search',
-                {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${session?.access_token}`,
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ query }),
-                }
-              );
-              
-              if (response.ok) {
-                const data = await response.json();
-                setMediaResults(data.results || []);
-              }
+               const results = await requestMediaSearch({ query, type: mediaTypeFilter, bearer, signal: controller.signal });
+               if (requestId === mediaRequestRef.current) setMediaResults(results);
             } catch (error) {
-              console.error('Media search error:', error);
+               if (!controller.signal.aborted && requestId === mediaRequestRef.current) {
+                 console.error('Media search error:', error);
+                 setMediaResults([]);
+               }
             } finally {
-              setIsSearchingMedia(false);
+               if (requestId === mediaRequestRef.current) setIsSearchingMedia(false);
             }
-          }, 300);
+           }, 200);
           
-          return () => clearTimeout(timeoutId);
+           return () => {
+             clearTimeout(timeoutId);
+             mediaAbortRef.current?.abort();
+           };
         } else {
           setShowMedia(false);
           setMediaResults([]);
+           setIsSearchingMedia(false);
         }
       } else {
         setShowMedia(false);
+         setIsSearchingMedia(false);
       }
     } else {
       setShowMedia(false);
+       setIsSearchingMedia(false);
     }
-  }, [value, session]);
+  }, [value, session, mediaTypeFilter]);
+
+  useEffect(() => () => {
+    mediaAbortRef.current?.abort();
+    mediaRequestRef.current += 1;
+  }, []);
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -385,9 +398,25 @@ export default function MentionTextarea({
       {showMedia && (
         <div
           ref={dropdownRef}
-          className="absolute bottom-full mb-2 left-0 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto z-50 w-full"
+          className="absolute bottom-full mb-2 left-0 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto z-50 w-full p-1"
           data-testid="media-dropdown"
         >
+          <div className="flex gap-1.5 overflow-x-auto border-b border-gray-100 pb-2 mb-1 scrollbar-hide" aria-label="Filter media type">
+            {MEDIA_SEARCH_FILTERS.map(({ label, value }) => (
+              <button
+                key={value || "all"}
+                type="button"
+                aria-pressed={mediaTypeFilter === value}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => setMediaTypeFilter(value)}
+                className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium ${
+                  mediaTypeFilter === value ? "border-purple-600 bg-purple-600 text-white" : "border-gray-200 bg-white text-gray-700"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           {isSearchingMedia ? (
             <div className="p-4 text-center text-sm text-gray-500">
               Searching...
@@ -397,7 +426,7 @@ export default function MentionTextarea({
               <div
                 key={`${media.external_source}-${media.external_id}`}
                 onClick={() => selectMedia(media)}
-                className={`flex items-start space-x-3 p-3 cursor-pointer transition-colors ${
+                className={`flex items-start space-x-3 rounded-xl p-3 cursor-pointer transition-colors ${
                   index === selectedIndex ? "bg-purple-50" : "hover:bg-gray-50"
                 }`}
                 data-testid={`media-option-${media.external_id}`}

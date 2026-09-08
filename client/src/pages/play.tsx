@@ -1,5 +1,6 @@
 import { useState, useEffect, type KeyboardEvent } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import { DailyHeroSection } from "@/components/daily-hero-section";
 import { TriviaCarousel } from "@/components/trivia-carousel";
@@ -11,7 +12,19 @@ import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { Brain, Vote, BarChart2, Eye, LayoutGrid, ArrowRight, Plus } from "lucide-react";
+import {
+  Brain,
+  Vote,
+  BarChart2,
+  Eye,
+  LayoutGrid,
+  ArrowRight,
+  Plus,
+  Globe2,
+  Lock,
+  RefreshCw,
+  ChevronRight,
+} from "lucide-react";
 
 const gameModes = [
   {
@@ -90,6 +103,15 @@ const gameModes = [
 
 type PlayMode = "all" | "trivia" | "polls" | "ranks" | "seen-it";
 
+interface UserRank {
+  id: string;
+  title: string;
+  visibility: string;
+  created_at?: string | null;
+  items_count?: number | null;
+  items?: unknown[];
+}
+
 const TRIVIA_CATEGORIES = ["Movies", "TV", "Books", "Music", "Podcasts", "Gaming", "Other"];
 const POLL_CATEGORIES = ["Movies", "TV", "Books", "Music", "Podcasts", "Sports", "Other"];
 const SEEN_IT_TYPES = ["movie", "tv", "book", "music", "podcast", "game"];
@@ -111,6 +133,170 @@ function getRequestedTriviaCategory() {
     other: "Other",
   };
   return requested ? categoryMap[requested] : undefined;
+}
+
+export function sortUserRanksNewestFirst(ranks: UserRank[]): UserRank[] {
+  return [...ranks].sort((a, b) => {
+    const aTime = a.created_at ? Date.parse(a.created_at) : 0;
+    const bTime = b.created_at ? Date.parse(b.created_at) : 0;
+    return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
+  });
+}
+
+function MyRanks({
+  session,
+  onNavigate,
+}: {
+  session: ReturnType<typeof useAuth>["session"];
+  onNavigate: (path: string) => void;
+}) {
+  const userId = session?.user?.id;
+  const accessToken = session?.access_token;
+  const {
+    data: ranks = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery<UserRank[]>({
+    queryKey: ["user-ranks", userId],
+    queryFn: async () => {
+      if (!userId || !accessToken) {
+        throw new Error("Sign in to load your ranks.");
+      }
+
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-ranks?user_id=${encodeURIComponent(userId)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (!response.ok) {
+        let message = `Couldn't load your ranks (${response.status}).`;
+        try {
+          const errorBody: { error?: string } = await response.json();
+          if (errorBody.error) message = errorBody.error;
+        } catch {
+          // The status-based message remains useful if the response is not JSON.
+        }
+        throw new Error(message);
+      }
+
+      const data: { ranks?: UserRank[] } = await response.json();
+      return sortUserRanksNewestFirst(Array.isArray(data.ranks) ? data.ranks : []);
+    },
+    enabled: !!userId && !!accessToken,
+  });
+
+  return (
+    <section aria-labelledby="my-ranks-heading" className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 id="my-ranks-heading" className="text-base font-bold text-[#281d2d]">
+            My Ranks
+          </h2>
+          {!isLoading && !isError && ranks.length > 0 && (
+            <p className="text-xs text-[#817987]">
+              {ranks.length} {ranks.length === 1 ? "rank" : "ranks"}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div
+          role="status"
+          aria-label="Loading your ranks"
+          className="flex gap-3 overflow-hidden"
+        >
+          {[0, 1].map((item) => (
+            <div
+              key={item}
+              className="h-[104px] min-w-[230px] animate-pulse rounded-2xl border border-[#e7dfda] bg-[#f0ebe7]"
+            />
+          ))}
+        </div>
+      ) : isError ? (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-[#efd4d1] bg-[#fff8f7] px-4 py-3"
+        >
+          <p className="text-sm text-[#76524f]">
+            {error instanceof Error ? error.message : "Couldn't load your ranks."}
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#6d35a3] hover:bg-[#f2e9fa] disabled:opacity-60"
+          >
+            <RefreshCw size={13} className={isFetching ? "animate-spin" : ""} aria-hidden="true" />
+            Retry
+          </button>
+        </div>
+      ) : ranks.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-[#d9cec7] bg-white/60 px-4 py-4 text-center">
+          <p className="text-sm font-semibold text-[#4d4051]">No ranks yet</p>
+          <p className="mt-0.5 text-xs text-[#817987]">
+            Create your first ranked list above.
+          </p>
+        </div>
+      ) : (
+        <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:-mx-1 sm:px-1">
+          {ranks.map((rank) => {
+            const isPrivate = rank.visibility === "private";
+            const itemCount = typeof rank.items_count === "number"
+              ? rank.items_count
+              : Array.isArray(rank.items)
+              ? rank.items.length
+              : 0;
+            const VisibilityIcon = isPrivate ? Lock : Globe2;
+
+            return (
+              <button
+                key={rank.id}
+                type="button"
+                onClick={() => onNavigate(`/rank/${rank.id}`)}
+                className="group min-w-[230px] max-w-[260px] snap-start rounded-2xl border border-[#e3d9d2] bg-white px-4 py-3 text-left shadow-[0_3px_10px_rgba(42,24,64,0.05)] transition active:scale-[0.985]"
+                aria-label={`Open ${rank.title}`}
+              >
+                <div className="flex min-w-0 items-start gap-2">
+                  <h3 className="line-clamp-2 min-h-[2.5rem] flex-1 text-sm font-bold leading-5 text-[#281d2d]">
+                    {rank.title}
+                  </h3>
+                  <ChevronRight
+                    size={16}
+                    className="mt-0.5 shrink-0 text-[#9a8f9e] transition-transform group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-[11px]">
+                  <span className="font-medium text-[#756c78]">
+                    {itemCount} {itemCount === 1 ? "item" : "items"}
+                  </span>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold ${
+                      isPrivate
+                        ? "bg-[#f1edf4] text-[#655d69]"
+                        : "bg-[#edf6ef] text-[#3f704a]"
+                    }`}
+                  >
+                    <VisibilityIcon size={10} aria-hidden="true" />
+                    {isPrivate ? "Private" : "Public"}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
 }
 
 interface RankEntry {
@@ -402,15 +588,18 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
           className="space-y-6 pt-5"
         >
           {activeMode === "ranks" && (
-            <button
-              type="button"
-              onClick={handleCreateRank}
-              className="mb-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6d35a3] px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#5d2c8d] active:bg-[#51277b]"
-              data-testid="button-open-create-rank"
-            >
-              <Plus size={17} aria-hidden="true" />
-              Create a ranked list
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={handleCreateRank}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#6d35a3] px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#5d2c8d] active:bg-[#51277b]"
+                data-testid="button-open-create-rank"
+              >
+                <Plus size={17} aria-hidden="true" />
+                Create a ranked list
+              </button>
+              <MyRanks session={session} onNavigate={setLocation} />
+            </>
           )}
           {renderModeFeed()}
         </section>

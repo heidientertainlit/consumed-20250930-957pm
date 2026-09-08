@@ -4702,14 +4702,15 @@ export default function UserProfile() {
                       key={list.id}
                       type="button"
                       onClick={() => setMediaHistoryList(filterValue)}
-                      className={`flex min-w-[108px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-full px-5 py-3 text-xs font-semibold transition ${
+                      className={`flex shrink-0 items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold transition ${
                         isActive
                           ? 'bg-[#68418f] text-white'
                           : 'bg-[#f8f5f9] text-[#34283d] hover:bg-[#f0e9f4]'
                       }`}
                     >
-                      {getDisplayTitle(list.title)}
-                      <span className={`font-normal ${isActive ? 'text-white/75' : 'text-[#8f8098]'}`}>{itemCount}</span>
+                      <span>
+                        {getDisplayTitle(list.title)} <span className={isActive ? 'text-white/75' : 'text-[#8f8098]'}>({itemCount})</span>
+                      </span>
                     </button>
                   );
                 })}

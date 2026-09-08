@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Search, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
 
 interface MediaResult {
   title: string;
@@ -33,6 +34,8 @@ export default function MediaRecInput({
   const [showDropdown, setShowDropdown] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
 
   // Map rec category to media type filter
   const categoryToType: Record<string, string> = {
@@ -43,6 +46,9 @@ export default function MediaRecInput({
     podcasts: 'podcast',
     games: 'game'
   };
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<"movie" | "tv" | "book" | "music" | "podcast" | "youtube" | "game" | undefined>(
+    recCategory ? categoryToType[recCategory] as "movie" | "tv" | "book" | "music" | "podcast" | "youtube" | "game" | undefined : undefined
+  );
 
   const searchMedia = async (query: string) => {
     if (!query.trim() || query.length < 2) {
@@ -52,30 +58,25 @@ export default function MediaRecInput({
     }
 
     const apiKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!apiKey) return;
+    searchAbortRef.current?.abort();
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
+    const requestId = ++requestIdRef.current;
     setIsSearching(true);
-    
     try {
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({ 
-          query: query.trim(),
-          type: recCategory && categoryToType[recCategory] ? categoryToType[recCategory] : undefined
-        }),
-      });
-
-      if (!response.ok) throw new Error("Search failed");
-      const data = await response.json();
-      setSearchResults(data.results || []);
-      setShowDropdown(true);
+      const results = await requestMediaSearch({ query, type: mediaTypeFilter, bearer: apiKey, signal: controller.signal });
+      if (requestId === requestIdRef.current) {
+        setSearchResults(results.map((result) => ({ ...result, poster_url: result.poster_url || result.image || "" })));
+        setShowDropdown(true);
+      }
     } catch (error) {
-      console.error("Media search error:", error);
-      setSearchResults([]);
+      if (!controller.signal.aborted && requestId === requestIdRef.current) {
+        console.error("Media search error:", error);
+        setSearchResults([]);
+      }
     } finally {
-      setIsSearching(false);
+      if (requestId === requestIdRef.current) setIsSearching(false);
     }
   };
 
@@ -89,10 +90,15 @@ export default function MediaRecInput({
         setSearchResults([]);
         setShowDropdown(false);
       }
-    }, 300);
+    }, 200);
 
     return () => clearTimeout(debounce);
-  }, [searchQuery, selectedMedia]);
+  }, [searchQuery, selectedMedia, mediaTypeFilter]);
+
+  useEffect(() => () => {
+    searchAbortRef.current?.abort();
+    requestIdRef.current += 1;
+  }, []);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -176,6 +182,24 @@ export default function MediaRecInput({
           {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : "Add"}
         </Button>
       </div>
+      <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide" aria-label="Filter media type">
+        {MEDIA_SEARCH_FILTERS.map(({ label, value }) => (
+          <button
+            key={value || "all"}
+            type="button"
+            aria-pressed={mediaTypeFilter === value}
+            onClick={() => setMediaTypeFilter(value)}
+            disabled={isSubmitting}
+            className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium ${
+              mediaTypeFilter === value
+                ? "border-purple-600 bg-purple-600 text-white"
+                : "border-gray-200 bg-white text-gray-700 hover:bg-purple-50"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {/* Selected media preview */}
       {selectedMedia && (
@@ -202,7 +226,7 @@ export default function MediaRecInput({
       {showDropdown && searchResults.length > 0 && !selectedMedia && (
         <div 
           ref={dropdownRef}
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto"
+          className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto p-1"
         >
           {isSearching && (
             <div className="p-3 text-center text-gray-500">
@@ -214,7 +238,7 @@ export default function MediaRecInput({
             <button
               key={`${result.external_id || result.title}-${idx}`}
               onClick={() => handleSelect(result)}
-              className="w-full p-2 flex items-center gap-3 hover:bg-purple-50 transition-colors text-left"
+              className="w-full rounded-xl p-2 flex items-center gap-3 hover:bg-purple-50 transition-colors text-left"
               data-testid={`button-select-media-${idx}`}
             >
               {result.poster_url ? (

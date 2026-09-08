@@ -1,8 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import {
-  Search, Loader2, X, Sparkles,
-  Tv, Film, BookOpen, Music, Mic, Youtube, Gamepad2,
-} from "lucide-react";
+import { Search, Loader2, X, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { getBookVolumeLabel } from "@/lib/book-volume";
 
@@ -14,17 +11,67 @@ import { getBookVolumeLabel } from "@/lib/book-volume";
  * one single implementation. Change it here, it changes everywhere.
  */
 
-const TYPE_PILLS: { value: string; label: string; Icon: typeof Tv; beta?: boolean }[] = [
-  { value: "tv", label: "TV", Icon: Tv },
-  { value: "movie", label: "Movie", Icon: Film },
-  { value: "book", label: "Book", Icon: BookOpen },
-  { value: "music", label: "Music", Icon: Music },
-  { value: "podcast", label: "Podcast", Icon: Mic },
-  { value: "youtube", label: "YouTube", Icon: Youtube },
-  { value: "game", label: "Gaming", Icon: Gamepad2, beta: true },
-];
+export const MEDIA_SEARCH_FILTERS = [
+  { label: "All", value: undefined },
+  { label: "Movies", value: "movie" },
+  { label: "TV", value: "tv" },
+  { label: "Books", value: "book" },
+  { label: "Music", value: "music" },
+  { label: "Podcasts", value: "podcast" },
+  { label: "YouTube", value: "youtube" },
+  { label: "Games", value: "game" },
+] as const;
+
+type MediaTypeFilter = Exclude<(typeof MEDIA_SEARCH_FILTERS)[number]["value"], undefined>;
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
+
+export function mediaSearchBody(query: string, type?: MediaTypeFilter) {
+  return {
+    query: query.trim(),
+    include_book_series: true,
+    ...(type ? { type } : {}),
+  };
+}
+
+export function normalizeMediaSearchResult(result: any) {
+  return {
+    ...result,
+    image: result.image || result.image_url || result.poster_url || "",
+  };
+}
+
+export async function requestMediaSearch({
+  query,
+  type,
+  bearer,
+  signal,
+  fetcher = fetch,
+}: {
+  query: string;
+  type?: MediaTypeFilter;
+  bearer: string;
+  signal: AbortSignal;
+  fetcher?: typeof fetch;
+}): Promise<any[]> {
+  const response = await fetcher(`${SUPABASE_URL}/functions/v1/media-search`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${bearer}`,
+      "Content-Type": "application/json",
+    },
+    signal,
+    body: JSON.stringify(mediaSearchBody(query, type)),
+  });
+  let data: any;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error("The server returned an unreadable response. Please try again.");
+  }
+  if (!response.ok) throw new Error(data?.error || "Media search failed. Please try again.");
+  return (Array.isArray(data?.results) ? data.results : []).map(normalizeMediaSearchResult);
+}
 
 function typeLabel(type?: string, mediaSubtype?: string): string {
   switch (type) {
@@ -54,66 +101,69 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [mediaTypeFilter, setMediaTypeFilter] = useState<string | null>(null);
-  const [correctedQuery, setCorrectedQuery] = useState<string | null>(null);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter | undefined>(undefined);
+  const [searchError, setSearchError] = useState("");
   const searchReqId = useRef(0);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const previousMediaTypeRef = useRef<MediaTypeFilter | undefined>(undefined);
 
   useEffect(() => {
-    if (!session?.access_token || !searchQuery.trim()) { setSearchResults([]); setCorrectedQuery(null); return; }
-    const t = setTimeout(() => doSearch(searchQuery), 300);
-    return () => clearTimeout(t);
+    const trimmedQuery = searchQuery.trim();
+    const mediaTypeChanged = previousMediaTypeRef.current !== mediaTypeFilter;
+    previousMediaTypeRef.current = mediaTypeFilter;
+
+    searchAbortRef.current?.abort();
+    searchAbortRef.current = null;
+    searchReqId.current += 1;
+    setIsSearching(false);
+    setSearchError("");
+
+    if (trimmedQuery.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    if (mediaTypeChanged) {
+      void doSearch(trimmedQuery, mediaTypeFilter);
+      return;
+    }
+    const timer = setTimeout(() => void doSearch(trimmedQuery, mediaTypeFilter), 200);
+    return () => clearTimeout(timer);
+    // doSearch deliberately uses the query/type arguments captured by this effect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, session?.access_token, mediaTypeFilter]);
 
-  const runMediaSearch = async (query: string): Promise<any[]> => {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/media-search`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${session!.access_token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ query, include_book_series: true, ...(mediaTypeFilter ? { type: mediaTypeFilter } : {}) }),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.results || [];
-  };
+  useEffect(() => () => {
+    searchAbortRef.current?.abort();
+    searchReqId.current += 1;
+  }, []);
 
-  const doSearch = async (query: string) => {
-    if (!session?.access_token) return;
+  const doSearch = async (query: string, type?: MediaTypeFilter) => {
+    const bearer = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!bearer) {
+      setSearchError("Media search is unavailable. Please try again later.");
+      return;
+    }
+    searchAbortRef.current?.abort();
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
     const reqId = ++searchReqId.current;
     setIsSearching(true);
-    setCorrectedQuery(null);
-    const matchesFilter = (r: any) =>
-      !mediaTypeFilter || r.type === mediaTypeFilter || (mediaTypeFilter === "book" && r.type === "book_series");
+    setSearchError("");
     try {
-      let results = await runMediaSearch(query);
-      let corrected: string | null = null;
-
-      // No *visible* results (after the media-type filter)? Try a one-shot spelling correction and retry.
-      if (results.filter(matchesFilter).length === 0 && query.trim().length >= 4) {
-        try {
-          const fixRes = await fetch(`${SUPABASE_URL}/functions/v1/spell-fix`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ query, ...(mediaTypeFilter ? { type: mediaTypeFilter } : {}) }),
-          });
-          const fix = fixRes.ok ? await fixRes.json() : { corrected: null };
-          if (fix.corrected) {
-            const retried = await runMediaSearch(fix.corrected);
-            if (retried.filter(matchesFilter).length > 0) {
-              results = retried;
-              corrected = fix.corrected;
-            }
-          }
-        } catch { /* rescue is best-effort — fall through to "No results" */ }
-      }
-
+      const results = await requestMediaSearch({ query, type, bearer, signal: controller.signal });
+      if (reqId === searchReqId.current) setSearchResults(results);
+    } catch (error) {
+      if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return;
+      console.error("Media search error:", error);
       if (reqId === searchReqId.current) {
-        setSearchResults(results);
-        setCorrectedQuery(corrected);
+        setSearchError(error instanceof Error ? error.message : "Media search failed. Please try again.");
       }
-    } catch (e) {
-      console.error("Media search error:", e);
     } finally {
-      if (reqId === searchReqId.current) setIsSearching(false);
+      if (reqId === searchReqId.current) {
+        setIsSearching(false);
+        if (searchAbortRef.current === controller) searchAbortRef.current = null;
+      }
     }
   };
 
@@ -132,48 +182,43 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search movies, shows, books, games…"
             autoFocus={autoFocus}
-            className="w-full pl-11 pr-10 py-3 border border-gray-200 rounded-2xl bg-gray-50 text-base text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full pl-11 pr-10 py-3 border border-gray-200 rounded-xl bg-gray-50 text-base text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             data-testid="media-search-input"
           />
-          {searchQuery && (
+          {isSearching ? (
+            <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-purple-600" size={16} />
+          ) : searchQuery ? (
             <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 text-gray-400">
               <X size={15} />
             </button>
-          )}
+          ) : null}
         </div>
 
         <div>
           <p className="text-xs font-semibold text-gray-500 mb-2">Filter by media type</p>
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
-            <button
-              onClick={() => setMediaTypeFilter(null)}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                mediaTypeFilter === null ? "bg-gray-700 border-gray-700 text-white" : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
-              }`}
-            >
-              All
-            </button>
-            {TYPE_PILLS.map(({ value, label, Icon, beta }) => {
+          <div
+            className="scrollbar-hide flex w-full min-w-0 max-w-full gap-1.5 overflow-x-auto pb-1"
+            style={{ scrollbarWidth: "none" }}
+            aria-label="Filter media type"
+            data-testid="media-search-type-filters"
+          >
+            {MEDIA_SEARCH_FILTERS.map(({ value, label }) => {
               const active = mediaTypeFilter === value;
+              const testValue = value || "all";
               return (
                 <button
-                  key={value}
-                  onClick={() => setMediaTypeFilter(active ? null : value)}
-                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                    active ? "bg-gray-700 border-gray-700 text-white" : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                  key={testValue}
+                  type="button"
+                  aria-pressed={active}
+                  data-testid={`filter-media-${testValue}`}
+                  onClick={() => setMediaTypeFilter(value)}
+                  className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium transition-colors ${
+                    active
+                      ? "border-purple-600 bg-purple-600 text-white"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50"
                   }`}
                 >
-                  <Icon size={14} />
                   {label}
-                  {beta && (
-                    <span
-                      className={`rounded-full px-1 py-px text-[8px] font-bold uppercase tracking-wide ${
-                        active ? "bg-white/20 text-white" : "bg-purple-100 text-purple-600"
-                      }`}
-                    >
-                      Beta
-                    </span>
-                  )}
                 </button>
               );
             })}
@@ -185,11 +230,7 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
         className="flex-1 overflow-y-auto overscroll-contain px-5 pt-0 min-h-0 [-webkit-overflow-scrolling:touch]"
         style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))" }}
       >
-        {isSearching && (
-          <div className="flex justify-center py-6"><Loader2 className="animate-spin text-purple-500" size={24} /></div>
-        )}
-
-        {!isSearching && !searchQuery.trim() && (
+        {!searchQuery.trim() && (
           <>
             <div className="flex flex-col items-center text-center py-8 px-4">
               <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mb-3">
@@ -202,19 +243,18 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
           </>
         )}
 
-        {!isSearching && searchQuery.trim() && filteredResults.length === 0 && (
+        {searchError && (
+          <p role="alert" className="text-center text-sm text-red-600 py-4">{searchError}</p>
+        )}
+
+        {!isSearching && !searchError && searchQuery.trim().length >= 2 && filteredResults.length === 0 && (
           <p className="text-center text-sm text-gray-400 py-6">No results for "{searchQuery}".</p>
         )}
 
         {filteredResults.length > 0 && (
           <>
-            {correctedQuery && (
-              <p className="text-xs text-gray-500 mb-1.5">
-                Showing results for "<span className="font-semibold text-gray-700">{correctedQuery}</span>"
-              </p>
-            )}
             <p className="text-xs font-semibold text-gray-400 mb-1.5">Top results</p>
-            <div className="space-y-1">
+            <div className="space-y-1 rounded-xl border border-gray-200 p-1" data-testid="media-search-results">
               {filteredResults.slice(0, 12).map((r, idx) => (
                 <button
                   key={`${r.external_id}-${idx}`}

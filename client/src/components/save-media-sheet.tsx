@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Search, X, Clock, Play, Check, Ban, Loader2, ArrowLeft, Plus } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
+
+type MediaTypeFilter = (typeof MEDIA_SEARCH_FILTERS)[number]["value"];
 
 interface SaveMediaSheetProps {
   isOpen: boolean;
@@ -36,34 +38,52 @@ export function SaveMediaSheet({ isOpen, onClose }: SaveMediaSheetProps) {
   const [query, setQuery] = useState("");
   const [selectedMedia, setSelectedMedia] = useState<MediaResult | null>(null);
   const [addingList, setAddingList] = useState<string | null>(null);
+  const [results, setResults] = useState<MediaResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const searchRequestId = useRef(0);
 
   useEffect(() => {
     if (isOpen) {
       setQuery("");
       setSelectedMedia(null);
       setAddingList(null);
+      setResults([]);
+      setMediaTypeFilter(undefined);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
 
-  const { data: results = [], isLoading } = useQuery<MediaResult[]>({
-    queryKey: ["save-media-search", query],
-    queryFn: async () => {
-      if (!query.trim() || !session?.access_token) return [];
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
-      const res = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return (data.results || []).slice(0, 10);
-    },
-    enabled: !!query.trim() && !!session?.access_token && isOpen,
-    staleTime: 30_000,
-  });
+  useEffect(() => {
+    const searchQuery = query.trim();
+    searchAbortRef.current?.abort();
+    const requestId = ++searchRequestId.current;
+    if (searchQuery.length < 2 || !isOpen) {
+      setResults([]);
+      setIsSearching(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      const bearer = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!bearer) return;
+      const controller = new AbortController();
+      searchAbortRef.current = controller;
+      setIsSearching(true);
+      try {
+        const found = await requestMediaSearch({ query: searchQuery, type: mediaTypeFilter, bearer, signal: controller.signal });
+        if (requestId === searchRequestId.current) setResults(found.slice(0, 10));
+      } catch (error) {
+        if (!controller.signal.aborted) console.error("Media search error:", error);
+      } finally {
+        if (requestId === searchRequestId.current) setIsSearching(false);
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [query, mediaTypeFilter, isOpen, session?.access_token]);
+
+  useEffect(() => () => searchAbortRef.current?.abort(), []);
 
   const handleClose = () => {
     setQuery("");
@@ -199,16 +219,29 @@ export function SaveMediaSheet({ isOpen, onClose }: SaveMediaSheetProps) {
                   </button>
                 )}
               </div>
+              <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1" aria-label="Filter media type">
+                {MEDIA_SEARCH_FILTERS.map(({ value, label }) => (
+                  <button
+                    key={value || "all"}
+                    type="button"
+                    aria-pressed={mediaTypeFilter === value}
+                    onClick={() => setMediaTypeFilter(value)}
+                    className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium ${mediaTypeFilter === value ? "border-purple-600 bg-purple-600 text-white" : "border-gray-200 bg-white text-gray-700"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="overflow-y-auto flex-1 px-2 pb-6">
-              {isLoading && (
+              {isSearching && (
                 <div className="flex justify-center py-8">
                   <Loader2 size={22} className="animate-spin text-purple-500" />
                 </div>
               )}
 
-              {!isLoading && query.trim() && results.length === 0 && (
+              {!isSearching && query.trim().length >= 2 && results.length === 0 && (
                 <p className="text-center text-gray-400 text-sm py-8">No results found</p>
               )}
 
@@ -219,7 +252,7 @@ export function SaveMediaSheet({ isOpen, onClose }: SaveMediaSheetProps) {
                 </div>
               )}
 
-              {results.map((item, idx) => {
+              {results.length > 0 && <div className="rounded-xl border border-gray-100 p-1">{results.map((item, idx) => {
                 const poster = item.poster_url || item.image || "";
                 return (
                   <button
@@ -242,7 +275,7 @@ export function SaveMediaSheet({ isOpen, onClose }: SaveMediaSheetProps) {
                     </div>
                   </button>
                 );
-              })}
+              })}</div>}
             </div>
           </div>
         )}

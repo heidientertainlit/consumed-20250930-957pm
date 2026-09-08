@@ -1,13 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
-import { Search, X, Plus, Loader2, Trophy, GripVertical } from "lucide-react";
+import { X, Loader2, Trophy, GripVertical } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import MediaSearchPanel from "@/components/media-search-panel";
 
 interface AddRankItemDialogProps {
   open: boolean;
@@ -21,22 +20,13 @@ interface AddRankItemDialogProps {
 interface MediaResult {
   title: string;
   type: string;
-  creator: string;
+  creator?: string;
   image: string;
   year?: string | number;
   external_id?: string;
   external_source?: string;
   description?: string;
 }
-
-const TYPE_FILTERS = [
-  { value: null, label: "All" },
-  { value: "tv", label: "TV" },
-  { value: "movie", label: "Movie" },
-  { value: "book", label: "Book" },
-  { value: "music", label: "Music" },
-  { value: "podcast", label: "Podcast" },
-] as const;
 
 export default function AddRankItemDialog({ 
   open, 
@@ -46,64 +36,17 @@ export default function AddRankItemDialog({
   currentItemCount,
   maxItems = 20 
 }: AddRankItemDialogProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<MediaResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [mediaTypeFilter, setMediaTypeFilter] = useState<string | null>(null);
+  const [searchPanelKey, setSearchPanelKey] = useState(0);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { session } = useAuth();
 
   const resetForm = () => {
-    setSearchQuery("");
-    setSearchResults([]);
     setSelectedMedia([]);
-    setMediaTypeFilter(null);
+    setSearchPanelKey((key) => key + 1);
   };
-
-  const searchMedia = async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    const apiKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    setIsSearching(true);
-    
-    try {
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({ query: query.trim(), ...(mediaTypeFilter ? { type: mediaTypeFilter } : {}) }),
-      });
-
-      if (!response.ok) throw new Error("Search failed");
-      const data = await response.json();
-      setSearchResults(data.results || []);
-    } catch (error) {
-      console.error("Media search error:", error);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  useEffect(() => {
-    const debounce = setTimeout(() => {
-      if (searchQuery.trim()) {
-        searchMedia(searchQuery);
-      } else {
-        setSearchResults([]);
-      }
-    }, 300);
-
-    return () => clearTimeout(debounce);
-  }, [searchQuery, mediaTypeFilter]);
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -186,8 +129,9 @@ export default function AddRankItemDialog({
     if (!selectedMedia.find(m => m.external_id === media.external_id && m.external_source === media.external_source)) {
       setSelectedMedia([...selectedMedia, media]);
     }
-    setSearchQuery("");
-    setSearchResults([]);
+    // The shared panel owns its input/results state; remount it after a pick
+    // to retain this dialog's established multi-select flow.
+    setSearchPanelKey((key) => key + 1);
   };
 
   const removeMedia = (index: number) => {
@@ -215,71 +159,11 @@ export default function AddRankItemDialog({
         <div className="flex flex-col gap-3 mt-1 flex-1 min-h-0 overflow-y-auto">
           {/* Media Search */}
           <div className="space-y-2">
-            {/* Type filter pills */}
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 flex-shrink-0">
-              {TYPE_FILTERS.map(({ value, label }) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => setMediaTypeFilter(value)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    mediaTypeFilter === value
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  data-testid={`filter-${label.toLowerCase()}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={mediaTypeFilter ? `Search ${mediaTypeFilter}s…` : 'Search movies, shows, books…'}
-                className="pl-9 pr-9 bg-white text-black border-gray-200 rounded-xl focus:border-purple-400 placeholder:text-gray-400"
-                data-testid="input-add-rank-media-search"
-                autoFocus
-              />
-              {isSearching && (
-                <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 animate-spin text-purple-600" size={16} />
-              )}
-            </div>
-
-            {/* Search Results */}
-            {searchResults.length > 0 && (
-              <div className="max-h-56 overflow-y-auto border border-gray-100 rounded-xl">
-                {(mediaTypeFilter
-                  ? searchResults.filter(r => r.type === mediaTypeFilter || (mediaTypeFilter === 'book' && r.type === 'book_series'))
-                  : searchResults
-                ).slice(0, 8).map((result, index) => (
-                  <button
-                    key={`${result.external_id}-${index}`}
-                    type="button"
-                    onClick={() => handleSelectMedia(result)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 text-left border-b border-gray-50 last:border-0"
-                    data-testid={`search-result-${index}`}
-                  >
-                    {result.image ? (
-                      <img src={result.image} alt={result.title} className="w-8 h-11 object-cover rounded flex-shrink-0" />
-                    ) : (
-                      <div className="w-8 h-11 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                        <Search className="text-gray-400" size={14} />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 text-sm line-clamp-1">{result.title}</p>
-                      <p className="text-xs text-gray-500">{result.type}{result.year ? ` • ${result.year}` : ''}</p>
-                      {result.creator && result.creator !== 'Unknown Author' && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
-                    </div>
-                    <Plus size={16} className="text-purple-500 shrink-0" />
-                  </button>
-                ))}
-              </div>
-            )}
+            <MediaSearchPanel
+              key={searchPanelKey}
+              onSelect={(result) => handleSelectMedia(result as MediaResult)}
+              autoFocus
+            />
 
             {/* Selected Media with Drag & Drop */}
             {selectedMedia.length > 0 && (

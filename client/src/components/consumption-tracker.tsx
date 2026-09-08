@@ -1,13 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Search, X, List, Star, MessageCircle } from "lucide-react";
-import { InsertConsumptionLog } from "@shared/schema";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, X, Star } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -15,6 +12,7 @@ import { AuthModal } from "./auth-modal";
 import { useToast } from "@/hooks/use-toast";
 import { JustTrackedSheet } from "./just-tracked-sheet";
 import { getBookVolumeLabel } from "@/lib/book-volume";
+import MediaSearchPanel from "@/components/media-search-panel";
 
 interface ConsumptionTrackerProps {
   isOpen: boolean;
@@ -38,10 +36,6 @@ interface MediaResult {
 }
 
 export default function ConsumptionTracker({ isOpen, onClose, defaultListType, targetRankId }: ConsumptionTrackerProps) {
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(["All Media"]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<MediaResult | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showJustTracked, setShowJustTracked] = useState(false);
@@ -53,18 +47,6 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
   const queryClient = useQueryClient();
   const { user, session } = useAuth();
   const { toast } = useToast();
-
-  const categories = [
-    "All Media",
-    "Movies",
-    "TV Shows",
-    "Books",
-    "Music",
-    "Podcasts",
-    "YouTube",
-    "Games",
-    "Sports"
-  ];
 
   // Helper to get display name from list type
   const getListDisplayName = (listType: string): string => {
@@ -82,83 +64,12 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
   // Removed old Express API consumption logging - now using Supabase track-media edge function below
 
   const resetForm = () => {
-    setSelectedCategories(["All Media"]);
-    setSearchQuery("");
-    setSearchResults([]);
     setSelectedMedia(null);
     setRating(0);
     setReview("");
     setRewatchCount(1);
   };
 
-
-  const searchMedia = async (query: string, type?: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    // Get the API key
-    const apiKey = import.meta.env.VITE_SUPABASE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    setIsSearching(true);
-    try {
-
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          query: query.trim(),
-          type: type,
-          include_book_series: true
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Search failed: ${response.status} - ${errorText}`);
-      }
-
-      const data = await response.json();
-      setSearchResults(data.results || []);
-    } catch (error) {
-      console.error("Media search error:", error);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // Debounced search effect
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchQuery.trim()) {
-        const categoryToType = {
-          "Movies": "movie",
-          "TV Shows": "tv",
-          "Books": "book",
-          "Music": "music",
-          "Podcasts": "podcast",
-          "YouTube": "youtube",
-          "Games": "game",
-          "Sports": "sports"
-        };
-
-        const searchType = selectedCategories.includes("All Media")
-          ? undefined
-          : categoryToType[selectedCategories[0] as keyof typeof categoryToType];
-
-        searchMedia(searchQuery, searchType);
-      } else {
-        setSearchResults([]);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery, selectedCategories]);
 
   const trackMediaMutation = useMutation({
     mutationFn: async (mediaData: MediaResult & { listType?: string }) => {
@@ -256,13 +167,15 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
           "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          rank_id: targetRankId,
-          title: mediaData.title,
-          media_type: mediaData.type,
-          creator: mediaData.creator,
-          image_url: mediaData.image,
-          external_id: mediaData.external_id,
-          external_source: mediaData.external_source,
+          rankId: targetRankId,
+          media: {
+            title: mediaData.title,
+            mediaType: mediaData.type,
+            creator: mediaData.creator,
+            imageUrl: mediaData.image,
+            externalId: mediaData.external_id,
+            externalSource: mediaData.external_source,
+          },
         }),
       });
 
@@ -335,129 +248,9 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6 min-h-0">
-          {/* Media Type Selection */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Media Types to Search</h3>
-
-            {/* Category Checkboxes - 2 Column Layout */}
-            <div className="grid grid-cols-2 gap-y-3 gap-x-6 mb-6">
-              {categories.map((category) => {
-                const isChecked = selectedCategories.includes(category);
-                const isAllMedia = category === "All Media";
-
-                const handleToggle = () => {
-                  if (isAllMedia) {
-                    // If "All Media" is clicked, select only it
-                    setSelectedCategories(["All Media"]);
-                  } else {
-                    // If any specific category is clicked
-                    if (isChecked) {
-                      // Remove this category
-                      const newSelected = selectedCategories.filter(c => c !== category);
-                      // If no categories left, default to "All Media"
-                      setSelectedCategories(newSelected.length === 0 ? ["All Media"] : newSelected.filter(c => c !== "All Media"));
-                    } else {
-                      // Add this category and remove "All Media" if it was selected
-                      const newSelected = selectedCategories.filter(c => c !== "All Media");
-                      setSelectedCategories([...newSelected, category]);
-                    }
-                  }
-                };
-
-                return (
-                  <div key={category} className="flex items-center space-x-3">
-                    <Checkbox
-                      id={category}
-                      checked={isChecked}
-                      onCheckedChange={handleToggle}
-                      className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 w-5 h-5"
-                    />
-                    <label
-                      htmlFor={category}
-                      className="text-sm font-medium text-gray-700 cursor-pointer select-none"
-                    >
-                      {category === "All Media" ? "All Types" : category}
-                    </label>
-                  </div>
-                );
-              })}
-            </div>
-
-          </div>
-
-          {/* Search for Media Section */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Search for Media</h3>
-
-            {/* Search Input */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for movies, TV shows, books, podcasts, music..."
-                className="pl-10 py-3 text-base bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-purple-500 focus:ring-purple-500"
-              />
-            </div>
-
-            {/* Search Results */}
-            {searchQuery.trim() && !selectedMedia && (
-              <div className="mt-4">
-                {isSearching ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="text-gray-500">Searching...</div>
-                  </div>
-                ) : searchResults.length > 0 ? (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">Select a media item:</h4>
-                    <div className="max-h-60 overflow-y-auto border rounded-lg">
-                      {searchResults.map((result, index) => (
-                        <div
-                          key={index}
-                          onClick={() => setSelectedMedia(result)}
-                          className="flex items-center space-x-3 p-3 border-b last:border-b-0 cursor-pointer transition-all hover:bg-gray-50"
-                          data-testid={`search-result-${index}`}
-                        >
-                          {result.image ? (
-                            <img
-                              src={result.image}
-                              alt={result.title}
-                              className="w-12 h-12 object-cover rounded flex-shrink-0"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                              <Search className="text-gray-400" size={20} />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <p className="font-medium text-gray-900 truncate">{result.title}</p>
-                              {getBookVolumeLabel(result) && (
-                                <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-[11px] font-semibold text-purple-700">
-                                  {getBookVolumeLabel(result)}
-                                </span>
-                              )}
-                            </div>
-                            {result.creator && (
-                              <p className="text-sm text-gray-500 truncate">by {result.creator}</p>
-                            )}
-                            {result.description ? (
-                              <p className="text-xs text-purple-600">{result.description}</p>
-                            ) : (
-                              <p className="text-xs text-purple-600 capitalize">{result.type}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : searchQuery.trim() && !isSearching ? (
-                  <div className="text-center py-8 text-gray-500">
-                    No results found for "{searchQuery}"
-                  </div>
-                ) : null}
-              </div>
-            )}
+            {!selectedMedia && <MediaSearchPanel onSelect={(result) => setSelectedMedia(result)} autoFocus={false} />}
 
             {/* Selected Media Preview */}
             {selectedMedia && (

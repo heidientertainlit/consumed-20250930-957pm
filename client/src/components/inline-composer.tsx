@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import MentionTextarea from "@/components/mention-textarea";
+import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
 import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 
@@ -37,6 +38,9 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<"movie" | "tv" | "book" | "music" | "podcast" | "youtube" | "game" | undefined>();
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const searchRequestRef = useRef(0);
   
   // Content state - unified text field
   const [contentText, setContentText] = useState("");
@@ -124,22 +128,25 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
 
   const userRanks = userRanksData?.ranks || [];
 
-  // Auto-search when query changes
+  // Keep this compact picker consistent with the canonical media search panel.
   useEffect(() => {
-    if (!session?.access_token) {
-      console.log("No session token yet, skipping search");
+    searchAbortRef.current?.abort();
+    searchRequestRef.current += 1;
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
       return;
     }
-    
     const timer = setTimeout(() => {
-      if (searchQuery.trim()) {
-        handleMediaSearch(searchQuery);
-      } else {
-        setSearchResults([]);
-      }
-    }, 300);
+      void handleMediaSearch(searchQuery, mediaTypeFilter);
+    }, 200);
     return () => clearTimeout(timer);
-  }, [searchQuery, session?.access_token]);
+  }, [searchQuery, mediaTypeFilter, session?.access_token]);
+
+  useEffect(() => () => {
+    searchAbortRef.current?.abort();
+    searchRequestRef.current += 1;
+  }, []);
 
   const resetComposer = () => {
     // Stay open but clear all fields
@@ -149,6 +156,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
     setPostType("thought");
     setSearchQuery("");
     setSearchResults([]);
+    setMediaTypeFilter(undefined);
     setContentText("");
     setRatingValue(0);
     setRewatchCount(1);
@@ -250,50 +258,32 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
   };
 
   // PRESERVED: handleMediaSearch - calls media-search edge function
-  const handleMediaSearch = async (query: string) => {
+  const handleMediaSearch = async (query: string, type = mediaTypeFilter) => {
     if (!query.trim()) {
       setSearchResults([]);
       return;
     }
 
-    if (!session?.access_token) {
-      console.error("No session token for media search");
+    const bearer = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!bearer) {
       return;
     }
 
+    searchAbortRef.current?.abort();
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
+    const requestId = ++searchRequestRef.current;
     setIsSearching(true);
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      console.log("Searching for:", query, "URL:", `${supabaseUrl}/functions/v1/media-search`);
-      
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/media-search`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ query }),
-        }
-      );
-
-      console.log("Media search response status:", response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Media search results:", data.results?.length || 0, "items");
-        setSearchResults(data.results || []);
-      } else {
-        const errorText = await response.text();
-        console.error("Media search failed:", response.status, errorText);
+      const results = await requestMediaSearch({ query, type, bearer, signal: controller.signal });
+      if (requestId === searchRequestRef.current) setSearchResults(results);
+    } catch (error) {
+      if (!controller.signal.aborted && requestId === searchRequestRef.current) {
+        console.error("Media search error:", error);
         setSearchResults([]);
       }
-    } catch (error) {
-      console.error("Media search error:", error);
-      setSearchResults([]);
     } finally {
-      setIsSearching(false);
+      if (requestId === searchRequestRef.current) setIsSearching(false);
     }
   };
 
@@ -395,13 +385,15 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          rank_id: rankId,
-          title: media.title || "",
-          media_type: media.type || "movie",
-          creator: media.creator || media.author || media.artist || "",
-          image_url: media.poster_url || media.image_url || media.image || media.thumbnail || "",
-          external_id: media.external_id || media.id || "",
-          external_source: media.external_source || media.source || "tmdb",
+          rankId,
+          media: {
+            title: media.title || "",
+            mediaType: media.type || "movie",
+            creator: media.creator || media.author || media.artist || "",
+            imageUrl: media.poster_url || media.image_url || media.image || media.thumbnail || "",
+            externalId: media.external_id || media.id || "",
+            externalSource: media.external_source || media.source || "tmdb",
+          },
         }),
       });
 
@@ -1034,6 +1026,23 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
                           <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
+                      <div className="flex gap-1.5 overflow-x-auto border-t border-gray-200 px-2.5 py-2 scrollbar-hide" aria-label="Filter media type">
+                        {MEDIA_SEARCH_FILTERS.map(({ label, value }) => (
+                          <button
+                            key={value || "all"}
+                            type="button"
+                            aria-pressed={mediaTypeFilter === value}
+                            onClick={() => setMediaTypeFilter(value)}
+                            className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium ${
+                              mediaTypeFilter === value
+                                ? "border-purple-600 bg-purple-600 text-white"
+                                : "border-gray-200 bg-white text-gray-700 hover:bg-purple-50"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
 
                       {/* Search Results */}
                       {isSearching && (
@@ -1043,12 +1052,12 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
                       )}
 
                       {!isSearching && searchResults.length > 0 && (
-                        <div className="border-t border-gray-200 max-h-64 overflow-y-auto">
+                        <div className="border-t border-gray-200 max-h-64 overflow-y-auto p-1">
                           {searchResults.slice(0, 10).map((media, index) => (
                             <button
                               key={index}
                               onClick={() => handleSelectMedia(media)}
-                              className="w-full flex items-center gap-3 p-2.5 hover:bg-white transition-colors text-left border-b border-gray-100 last:border-b-0"
+                              className="w-full flex items-center gap-3 rounded-xl p-2.5 hover:bg-white transition-colors text-left"
                               data-testid={`button-select-media-${index}`}
                             >
                               {(media.poster_url || media.image_url || media.image) && (

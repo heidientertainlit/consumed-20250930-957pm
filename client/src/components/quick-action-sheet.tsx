@@ -21,6 +21,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getBookVolumeLabel } from "@/lib/book-volume";
+import {
+  MEDIA_SEARCH_FILTERS,
+  requestMediaSearch,
+} from "@/components/media-search-panel";
 
 type IntentType = "capture" | "say" | "play" | null;
 type ActionType = "track" | "post" | "prediction" | "rank" | "challenge" | null;
@@ -140,10 +144,11 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   const [newRankVisibility, setNewRankVisibility] = useState("public");
   const [shareToFeed, setShareToFeed] = useState(true);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
-  const [mediaTypeFilter, setMediaTypeFilter] = useState<string | null>(null);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<Exclude<(typeof MEDIA_SEARCH_FILTERS)[number]["value"], undefined> | undefined>(undefined);
   const [correctedQuery, setCorrectedQuery] = useState<string | null>(null);
 
   const episodeCache = useRef<Record<string, any[]>>({});
+  const searchAbortRef = useRef<AbortController | null>(null);
 
   const { data: userListsData } = useQuery<any>({
     queryKey: ['user-lists-with-media'],
@@ -208,14 +213,31 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   });
 
   useEffect(() => {
-    if (!session?.access_token || !searchQuery.trim()) {
+    const trimmedQuery = searchQuery.trim();
+    searchAbortRef.current?.abort();
+    searchAbortRef.current = null;
+    searchReqIdQA.current += 1;
+
+    if (!trimmedQuery) {
       setSearchResults([]);
+      setIsSearching(false);
       return;
     }
-    
-    const timer = setTimeout(() => handleMediaSearch(searchQuery), 300);
+
+    if (trimmedQuery.length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    const timer = setTimeout(() => void handleMediaSearch(trimmedQuery, mediaTypeFilter), 200);
     return () => clearTimeout(timer);
-  }, [searchQuery, session?.access_token]);
+  }, [searchQuery, session?.access_token, mediaTypeFilter]);
+
+  useEffect(() => () => {
+    searchAbortRef.current?.abort();
+    searchReqIdQA.current += 1;
+  }, []);
 
   useEffect(() => {
     if (selectedMedia?.type === 'tv' && selectedMedia.external_id) {
@@ -239,58 +261,63 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
 
   const searchReqIdQA = useRef(0);
 
-  const handleMediaSearch = async (query: string) => {
-    if (!session?.access_token) return;
+  const handleMediaSearch = async (
+    query: string,
+    type?: Exclude<(typeof MEDIA_SEARCH_FILTERS)[number]["value"], undefined>,
+  ) => {
+    const bearer = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!bearer) return;
+    searchAbortRef.current?.abort();
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
     const reqId = ++searchReqIdQA.current;
     setIsSearching(true);
     setCorrectedQuery(null);
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-    const runSearch = async (q: string): Promise<any[]> => {
-      const response = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query: q, include_book_series: true, ...(mediaTypeFilter ? { type: mediaTypeFilter } : {}) })
-      });
-      if (!response.ok) return [];
-      const data = await response.json();
-      return data.results || [];
-    };
-    const matchesFilter = (r: any) =>
-      !mediaTypeFilter || r.type === mediaTypeFilter || (mediaTypeFilter === 'book' && r.type === 'book_series');
     try {
-      let results = await runSearch(query);
-      let corrected: string | null = null;
-      // No visible results? Try a one-shot spelling correction and retry.
-      if (results.filter(matchesFilter).length === 0 && query.trim().length >= 4) {
-        try {
-          const fixRes = await fetch(`${supabaseUrl}/functions/v1/spell-fix`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query, ...(mediaTypeFilter ? { type: mediaTypeFilter } : {}) }),
-          });
-          const fix = fixRes.ok ? await fixRes.json() : { corrected: null };
-          if (fix.corrected) {
-            const retried = await runSearch(fix.corrected);
-            if (retried.filter(matchesFilter).length > 0) {
-              results = retried;
-              corrected = fix.corrected;
-            }
-          }
-        } catch { /* best-effort */ }
-      }
+      const results = await requestMediaSearch({ query, type, bearer, signal: controller.signal });
       if (reqId === searchReqIdQA.current) {
         setSearchResults(results);
-        setCorrectedQuery(corrected);
       }
     } catch (error) {
+      if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return;
       console.error('Search error:', error);
     } finally {
-      if (reqId === searchReqIdQA.current) setIsSearching(false);
+      if (reqId === searchReqIdQA.current) {
+        setIsSearching(false);
+        if (searchAbortRef.current === controller) searchAbortRef.current = null;
+      }
     }
   };
+
+  const renderMediaTypeFilters = (testId: string) => (
+    <div
+      className="scrollbar-hide flex w-full min-w-0 max-w-full gap-1.5 overflow-x-auto pb-1"
+      style={{ scrollbarWidth: "none" }}
+      aria-label="Filter media type"
+      data-testid={testId}
+    >
+      {MEDIA_SEARCH_FILTERS.map(({ value, label }) => {
+        const active = mediaTypeFilter === value;
+        const testValue = value || "all";
+        return (
+          <button
+            key={testValue}
+            type="button"
+            aria-pressed={active}
+            data-testid={`${testId}-${testValue}`}
+            onClick={() => setMediaTypeFilter(value)}
+            className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium transition-colors ${
+              active
+                ? "border-purple-600 bg-purple-600 text-white"
+                : "border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50"
+            }`}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
 
   const fetchSeasons = async (externalId: string) => {
     setIsLoadingSeasons(true);
@@ -347,6 +374,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
     setSelectedMedia(null);
     setSearchQuery("");
     setSearchResults([]);
+    setMediaTypeFilter(undefined);
     setRatingValue(0);
     setRewatchCount(1);
     setPollOptions(["", ""]);
@@ -636,14 +664,14 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
             method: 'POST',
             headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              rank_id: selectedRankId,
+              rankId: selectedRankId,
               media: {
                 title: selectedMedia.title,
-                media_type: selectedMedia.type,
+                mediaType: selectedMedia.type,
                 creator: selectedMedia.creator || '',
-                image_url: selectedMedia.image || selectedMedia.image_url || '',
-                external_id: selectedMedia.external_id,
-                external_source: selectedMedia.external_source || 'tmdb',
+                imageUrl: selectedMedia.image || selectedMedia.image_url || '',
+                externalId: selectedMedia.external_id,
+                externalSource: selectedMedia.external_source || 'tmdb',
               },
             }),
           });
@@ -808,14 +836,14 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            rank_id: selectedRankId,
+            rankId: selectedRankId,
             media: {
               title: selectedMedia.title,
-              media_type: selectedMedia.type,
+              mediaType: selectedMedia.type,
               creator: selectedMedia.creator || '',
-              image_url: selectedMedia.image || selectedMedia.image_url || '',
-              external_id: selectedMedia.external_id,
-              external_source: selectedMedia.external_source || 'tmdb',
+              imageUrl: selectedMedia.image || selectedMedia.image_url || '',
+              externalId: selectedMedia.external_id,
+              externalSource: selectedMedia.external_source || 'tmdb',
             },
           }),
         });
@@ -1165,6 +1193,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
     if (selectedAction === "post") {
       return (
         <div className="space-y-4">
+          {!selectedMedia && renderMediaTypeFilters("say-media-type-filters")}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
@@ -1177,7 +1206,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           </div>
           
           {searchResults.length > 0 && (
-            <div className="max-h-32 overflow-y-auto space-y-1">
+            <div className="max-h-32 overflow-y-auto space-y-1 rounded-xl border border-gray-100 p-1">
               {searchResults.slice(0, 4).map((result, idx) => (
                 <button
                   key={`${result.external_id}-${idx}`}
@@ -1186,7 +1215,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                     setSearchResults([]);
                     setSearchQuery("");
                   }}
-                  className="w-full flex items-center gap-2 p-2 hover:bg-gray-100 rounded text-left text-sm"
+                  className="w-full flex items-center gap-2 p-2 hover:bg-gray-100 rounded-xl text-left text-sm"
                 >
                   {result.image && (
                     <img src={result.image} alt={result.title} className="w-8 h-10 object-cover rounded" />
@@ -1319,6 +1348,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
               
               {selectedRankId && (
                 <>
+                  {!selectedMedia && renderMediaTypeFilters("rank-media-type-filters")}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input
@@ -1326,7 +1356,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search for media to add..."
-                      className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       data-testid="rank-media-search"
                     />
                   </div>
@@ -1338,7 +1368,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                   )}
                   
                   {!selectedMedia && searchResults.length > 0 && (
-                    <div className="max-h-48 overflow-y-auto space-y-2">
+                    <div className="max-h-48 overflow-y-auto space-y-1 rounded-xl border border-gray-100 p-1">
                       {searchResults.slice(0, 6).map((result, idx) => (
                         <button
                           key={`${result.external_id}-${idx}`}
@@ -1347,7 +1377,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                             setSearchResults([]);
                             setSearchQuery("");
                           }}
-                          className="w-full flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg text-left"
+                          className="w-full flex items-center gap-3 p-2 hover:bg-gray-100 rounded-xl text-left"
                         >
                           {result.image && (
                             <img src={result.image} alt={result.title} className="w-10 h-14 object-cover rounded" />
@@ -1556,17 +1586,20 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
         {sayMode === "review" && (
           <div className="space-y-2">
             {!selectedMedia ? (
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Tag a movie, show, book... (optional)"
-                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  data-testid="say-media-search"
-                />
-              </div>
+              <>
+                {renderMediaTypeFilters("say-media-type-filters")}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Tag a movie, show, book... (optional)"
+                    className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    data-testid="say-media-search"
+                  />
+                </div>
+              </>
             ) : null}
             
             {isSearching && (
@@ -1576,7 +1609,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
             )}
             
             {!selectedMedia && searchResults.length > 0 && (
-              <div className="max-h-32 overflow-y-auto space-y-1 bg-gray-50 rounded-lg p-2">
+              <div className="max-h-32 overflow-y-auto space-y-1 bg-gray-50 rounded-xl p-2">
                 {searchResults.slice(0, 4).map((result, idx) => (
                   <button
                     key={`${result.external_id}-${idx}`}
@@ -1585,7 +1618,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                       setSearchResults([]);
                       setSearchQuery("");
                     }}
-                    className="w-full flex items-center gap-2 p-2 hover:bg-gray-100 rounded text-left"
+                    className="w-full flex items-center gap-2 p-2 hover:bg-gray-100 rounded-xl text-left"
                     data-testid={`say-search-result-${result.external_id}`}
                   >
                     {result.image && (
@@ -1658,7 +1691,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
     </Sheet>
 
     {/* ── Media search modal ── */}
-    <Dialog open={isMediaModalOpen} onOpenChange={(open) => { setIsMediaModalOpen(open); if (!open) { setSearchQuery(""); setSearchResults([]); setMediaTypeFilter(null); } }}>
+    <Dialog open={isMediaModalOpen} onOpenChange={(open) => { setIsMediaModalOpen(open); if (!open) { setSearchQuery(""); setSearchResults([]); setMediaTypeFilter(undefined); } }}>
       <DialogContent
         className="rounded-2xl !bg-white w-[calc(100vw-2rem)] max-w-md flex flex-col min-h-0 overflow-hidden gap-3"
         style={{
@@ -1669,29 +1702,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           <DialogTitle className="text-base font-semibold text-gray-900">Add media</DialogTitle>
         </DialogHeader>
 
-        {/* Type filter pills */}
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 flex-shrink-0">
-          {([
-            { value: null,      label: 'All' },
-            { value: 'tv',      label: 'TV' },
-            { value: 'movie',   label: 'Movie' },
-            { value: 'book',    label: 'Book' },
-            { value: 'music',   label: 'Music' },
-            { value: 'podcast', label: 'Podcast' },
-          ] as const).map(({ value, label }) => (
-            <button
-              key={label}
-              onClick={() => setMediaTypeFilter(value)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                mediaTypeFilter === value
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {renderMediaTypeFilters("rate-media-type-filters")}
 
         {/* Search input */}
         <div className="relative flex-shrink-0">
@@ -1727,8 +1738,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
             ).slice(0, 8).map((result, idx) => (
               <button
                 key={`${result.external_id}-${idx}`}
-                onClick={() => { setSelectedMedia(result); setSearchResults([]); setSearchQuery(""); setMediaTypeFilter(null); setIsMediaModalOpen(false); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 text-left border-b border-gray-50 last:border-0"
+                onClick={() => { setSelectedMedia(result); setSearchResults([]); setSearchQuery(""); setMediaTypeFilter(undefined); setIsMediaModalOpen(false); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 rounded-xl text-left border-b border-gray-50 last:border-0"
                 data-testid={`search-result-${result.external_id}`}
               >
                 {result.image && <img src={result.image} alt={result.title} className="w-8 h-11 object-cover rounded flex-shrink-0" />}

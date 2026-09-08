@@ -9,6 +9,9 @@ import { supabase } from '@/lib/supabase';
 import { useLocation } from 'wouter';
 import { QuickAddListSheet } from './quick-add-list-sheet';
 import RatingModal from './rating-modal';
+import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from './media-search-panel';
+
+type MediaTypeFilter = Exclude<(typeof MEDIA_SEARCH_FILTERS)[number]["value"], undefined>;
 
 interface PreselectedMedia {
   id: string;
@@ -34,12 +37,14 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
   const [isPosting, setIsPosting] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter | undefined>();
   const [recentMedia, setRecentMedia] = useState<any[]>([]);
   const [showPostDialog, setShowPostDialog] = useState(false);
   const [postedMedia, setPostedMedia] = useState<any>(null);
   const [showListSheet, setShowListSheet] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const searchIdRef = useRef(0);
+  const searchAbortRef = useRef<AbortController | null>(null);
 
   const popularMedia = [
     { id: 'tmdb-1396', title: 'Breaking Bad', type: 'TV', image: 'https://image.tmdb.org/t/p/w92/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg', external_id: '1396', external_source: 'tmdb' },
@@ -85,43 +90,42 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
   }, [isExpanded, session?.access_token]);
 
   useEffect(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
+    searchAbortRef.current?.abort();
+    const searchId = ++searchIdRef.current;
     if (!searchQuery.trim() || searchQuery.length < 2) {
       setSearchResults([]);
+      setIsSearching(false);
       return;
     }
 
-    debounceRef.current = setTimeout(async () => {
+    const timer = setTimeout(async () => {
+      const controller = new AbortController();
+      searchAbortRef.current = controller;
       setIsSearching(true);
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-search`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session?.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ query: searchQuery, types: ['movie', 'tv'] }),
-          }
-        );
-        const data = await response.json();
-        setSearchResults(data.results?.slice(0, 5) || []);
+        const bearer = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+        if (!bearer) throw new Error("Authentication required");
+        const results = await requestMediaSearch({
+          query: searchQuery,
+          type: mediaTypeFilter,
+          bearer,
+          signal: controller.signal,
+        });
+        if (searchId === searchIdRef.current) setSearchResults(results.slice(0, 5));
       } catch (error) {
+        if (controller.signal.aborted) return;
         console.error('Search error:', error);
+        if (searchId === searchIdRef.current) setSearchResults([]);
+      } finally {
+        if (searchId === searchIdRef.current) setIsSearching(false);
       }
-      setIsSearching(false);
-    }, 300);
+    }, 200);
 
     return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
+      clearTimeout(timer);
+      searchAbortRef.current?.abort();
     };
-  }, [searchQuery, session?.access_token]);
+  }, [searchQuery, session?.access_token, mediaTypeFilter]);
 
   const handleSelectMedia = (media: any) => {
     setSelectedMedia(media);
@@ -228,6 +232,19 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
                 placeholder="Search movies, shows..."
                 className="w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-purple-400"
               />
+            </div>
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-3" aria-label="Filter media type" data-testid="media-search-type-filters">
+              {MEDIA_SEARCH_FILTERS.map(({ label, value }) => (
+                <button
+                  key={label}
+                  type="button"
+                  aria-pressed={mediaTypeFilter === value}
+                  onClick={() => setMediaTypeFilter(value)}
+                  className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium ${mediaTypeFilter === value ? "border-purple-600 bg-purple-600 text-white" : "border-gray-200 bg-white text-gray-700"}`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
 
             {/* Search Results - Add page style */}

@@ -12,6 +12,9 @@ import { useToast } from "@/hooks/use-toast";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { supabase } from "@/lib/supabase";
+import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
+
+type MediaTypeFilter = Exclude<(typeof MEDIA_SEARCH_FILTERS)[number]["value"], undefined>;
 
 function AnimatedWord() {
   const words = [
@@ -138,7 +141,8 @@ export default function Search() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const debouncedSearchQuery = useDebounce(searchQuery, 200);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter | undefined>();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const voiceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -264,22 +268,16 @@ export default function Search() {
 
   // Quick search - media results (only when NOT in AI mode)
   const { data: quickMediaResults = [], isLoading: isLoadingMedia } = useQuery({
-    queryKey: ['quick-media-search', debouncedSearchQuery],
-    queryFn: async () => {
+    queryKey: ['quick-media-search', debouncedSearchQuery, mediaTypeFilter],
+    queryFn: async ({ signal }) => {
       if (!debouncedSearchQuery.trim() || !session?.access_token) return [];
-
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      const response = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query: debouncedSearchQuery, include_book_series: true })
+      const results = await requestMediaSearch({
+        query: debouncedSearchQuery,
+        type: mediaTypeFilter,
+        bearer: session.access_token,
+        signal,
       });
-      if (!response.ok) return [];
-      const data = await response.json();
-      return (data.results || []).map((r: any) => ({
+      return results.map((r: any) => ({
         ...r,
         image_url: r.image_url || r.poster_url || r.image || r.poster_path || '',
       }));
@@ -462,6 +460,21 @@ export default function Search() {
               <Sparkles size={18} className={isAiMode ? "text-purple-600" : "text-gray-300"} />
             </button>
           </div>
+          {!isAiMode && (
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pt-2" aria-label="Filter media type" data-testid="media-search-type-filters">
+              {MEDIA_SEARCH_FILTERS.map(({ label, value }) => (
+                <button
+                  type="button"
+                  key={label}
+                  aria-pressed={mediaTypeFilter === value}
+                  onClick={() => setMediaTypeFilter(value)}
+                  className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium ${mediaTypeFilter === value ? "border-purple-600 bg-purple-600 text-white" : "border-gray-200 bg-white text-gray-700"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Quiet link: New Rank */}

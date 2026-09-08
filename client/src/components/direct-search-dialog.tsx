@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, X, User, Film, Music, BookOpen, Tv, Loader2, UserPlus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,9 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
+
+type MediaTypeFilter = Exclude<(typeof MEDIA_SEARCH_FILTERS)[number]["value"], undefined>;
 
 interface DirectSearchDialogProps {
   isOpen: boolean;
@@ -36,64 +39,75 @@ export default function DirectSearchDialog({ isOpen, onClose }: DirectSearchDial
   const [mediaResults, setMediaResults] = useState<MediaResult[]>([]);
   const [userResults, setUserResults] = useState<UserResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter | undefined>();
+  const searchIdRef = useRef(0);
+  const mediaAbortRef = useRef<AbortController | null>(null);
   const { session } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
+    mediaAbortRef.current?.abort();
+    const searchId = ++searchIdRef.current;
     if (!searchQuery.trim()) {
       setMediaResults([]);
       setUserResults([]);
+      setIsSearching(false);
       return;
     }
 
     const debounceTimer = setTimeout(() => {
-      handleSearch();
-    }, 300);
+      void handleSearch(searchQuery.trim(), searchId);
+    }, 200);
 
-    return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
+    return () => {
+      clearTimeout(debounceTimer);
+      mediaAbortRef.current?.abort();
+    };
+  }, [searchQuery, mediaTypeFilter, session?.access_token]);
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim() || !session?.access_token) return;
+  const handleSearch = async (query: string, searchId: number) => {
+    if (!query || !session?.access_token) return;
 
     setIsSearching(true);
+    const controller = new AbortController();
+    mediaAbortRef.current = controller;
 
     try {
-      // Search media
-      const mediaResponse = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search', {
+      const [mediaResult, userResult] = await Promise.allSettled([
+        requestMediaSearch({
+          query,
+          type: mediaTypeFilter,
+          bearer: session.access_token,
+          signal: controller.signal,
+        }),
+        fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/search-users', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query: searchQuery })
-      });
-
-      if (mediaResponse.ok) {
-        const mediaData = await mediaResponse.json();
-        setMediaResults(mediaData.results || []);
+        signal: controller.signal,
+        body: JSON.stringify({ query })
+        })
+      ]);
+      if (searchId !== searchIdRef.current) return;
+      if (mediaResult.status === "fulfilled") {
+        setMediaResults(mediaResult.value as MediaResult[]);
+      } else if (!controller.signal.aborted) {
+        setMediaResults([]);
       }
 
-      // Search users
-      const userResponse = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/search-users', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query: searchQuery })
-      });
-
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        setUserResults(userData.users || []);
+      if (userResult.status === "fulfilled" && userResult.value.ok) {
+        const userData = await userResult.value.json();
+        if (searchId === searchIdRef.current) setUserResults(userData.users || []);
       }
 
     } catch (error) {
+      if (controller.signal.aborted) return;
       console.error('Search error:', error);
     } finally {
-      setIsSearching(false);
+      if (searchId === searchIdRef.current) setIsSearching(false);
     }
   };
 
@@ -188,6 +202,19 @@ export default function DirectSearchDialog({ isOpen, onClose }: DirectSearchDial
                 <X size={18} />
               </button>
             )}
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto pb-1" aria-label="Filter media type" data-testid="media-search-type-filters">
+            {MEDIA_SEARCH_FILTERS.map(({ label, value }) => (
+              <button
+                type="button"
+                key={label}
+                aria-pressed={mediaTypeFilter === value}
+                onClick={() => setMediaTypeFilter(value)}
+                className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium ${mediaTypeFilter === value ? "border-purple-600 bg-purple-600 text-white" : "border-gray-200 bg-white text-gray-700"}`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
           {/* Loading State */}

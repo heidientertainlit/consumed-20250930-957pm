@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,9 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { Search, Globe, Lock, X, Plus, Loader2, Users } from "lucide-react";
 import UserSearch from "@/components/user-search";
+import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
+
+type MediaTypeFilter = (typeof MEDIA_SEARCH_FILTERS)[number]["value"];
 
 interface CreateListDialogProps {
   open: boolean;
@@ -41,6 +44,9 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<MediaResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter>(undefined);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const searchRequestId = useRef(0);
   const [selectedCollaborators, setSelectedCollaborators] = useState<SelectedCollaborator[]>([]);
   
   const { toast } = useToast();
@@ -53,50 +59,39 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
     setIsPublic(true);
     setSearchQuery("");
     setSearchResults([]);
+    setMediaTypeFilter(undefined);
     setSelectedMedia([]);
     setSelectedCollaborators([]);
   };
 
-  const searchMedia = async (query: string, type?: string) => {
-    if (!query.trim()) {
+  useEffect(() => {
+    const query = searchQuery.trim();
+    searchAbortRef.current?.abort();
+    const requestId = ++searchRequestId.current;
+    if (query.length < 2) {
       setSearchResults([]);
+      setIsSearching(false);
       return;
     }
-
-    const apiKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    setIsSearching(true);
-    
-    try {
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({ query: query.trim(), type }),
-      });
-
-      if (!response.ok) throw new Error("Search failed");
-      const data = await response.json();
-      setSearchResults(data.results || []);
-    } catch (error) {
-      console.error("Media search error:", error);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchQuery.trim()) {
-        searchMedia(searchQuery);
-      } else {
-        setSearchResults([]);
+    const timer = setTimeout(async () => {
+      const bearer = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!bearer) return;
+      const controller = new AbortController();
+      searchAbortRef.current = controller;
+      setIsSearching(true);
+      try {
+        const results = await requestMediaSearch({ query, type: mediaTypeFilter, bearer, signal: controller.signal });
+        if (requestId === searchRequestId.current) setSearchResults(results);
+      } catch (error) {
+        if (!controller.signal.aborted) console.error("Media search error:", error);
+      } finally {
+        if (requestId === searchRequestId.current) setIsSearching(false);
       }
-    }, 500);
+    }, 200);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, mediaTypeFilter, session?.access_token]);
+
+  useEffect(() => () => searchAbortRef.current?.abort(), []);
 
   const createListMutation = useMutation({
     mutationFn: async () => {
@@ -250,6 +245,19 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
                 className="pl-10 bg-white border-gray-300 text-black placeholder:text-gray-400 h-10 focus:border-gray-400 focus:ring-1 focus:ring-gray-300 focus-visible:ring-1 focus-visible:ring-gray-300 focus-visible:ring-offset-0"
               />
             </div>
+            <div className="flex gap-1.5 overflow-x-auto pb-1" aria-label="Filter media type">
+              {MEDIA_SEARCH_FILTERS.map(({ value, label }) => (
+                <button
+                  key={value || "all"}
+                  type="button"
+                  aria-pressed={mediaTypeFilter === value}
+                  onClick={() => setMediaTypeFilter(value)}
+                  className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium ${mediaTypeFilter === value ? "border-purple-600 bg-purple-600 text-white" : "border-gray-200 bg-white text-gray-700"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
             {isSearching && (
               <div className="flex items-center justify-center py-4">
@@ -259,7 +267,7 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
             )}
 
             {searchResults.length > 0 && (
-              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
+              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl p-1">
                 {searchResults.map((result, index) => {
                   const imgUrl = result.image || result.poster_url || '';
                   const details = [result.year, result.creator, result.type].filter(Boolean).join(' · ');

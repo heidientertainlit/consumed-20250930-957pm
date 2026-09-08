@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { APP_BASE } from "@/lib/share";
 import { Link, useLocation } from "wouter";
 import Navigation from "@/components/navigation";
@@ -56,6 +56,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { DnfReasonDrawer } from "@/components/dnf-reason-drawer";
+import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
+
+type MediaTypeFilter = (typeof MEDIA_SEARCH_FILTERS)[number]["value"];
 
 export default function CollectionsPage() {
   const { user, session } = useAuth();
@@ -71,6 +74,9 @@ export default function CollectionsPage() {
   const [newListSearchQuery, setNewListSearchQuery] = useState("");
   const [isSearchingForList, setIsSearchingForList] = useState(false);
   const [listSearchResults, setListSearchResults] = useState<any[]>([]);
+  const [newListMediaTypeFilter, setNewListMediaTypeFilter] = useState<MediaTypeFilter>(undefined);
+  const listSearchAbortRef = useRef<AbortController | null>(null);
+  const listSearchRequestId = useRef(0);
   const [listSearch, setListSearch] = useState("");
   
   
@@ -187,44 +193,34 @@ export default function CollectionsPage() {
   const userListsMetadata = listsMetadata?.lists || [];
   const userListsFull = listsData?.lists || [];
 
-  // Search for media to add to new list
   useEffect(() => {
-    const searchMedia = async () => {
-      if (!newListSearchQuery.trim() || !session?.access_token) {
-        setListSearchResults([]);
-        return;
-      }
-      
+    const query = newListSearchQuery.trim();
+    listSearchAbortRef.current?.abort();
+    const requestId = ++listSearchRequestId.current;
+    if (query.length < 2 || !isCreateListOpen) {
+      setListSearchResults([]);
+      setIsSearchingForList(false);
+      return;
+    }
+    const debounce = setTimeout(async () => {
+      const bearer = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!bearer) return;
+      const controller = new AbortController();
+      listSearchAbortRef.current = controller;
       setIsSearchingForList(true);
       try {
-        const response = await fetch(
-          'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search',
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ query: newListSearchQuery.trim() }),
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Search results:', data);
-          setListSearchResults(data.results || []);
-        } else {
-          console.error('Search failed:', response.status);
-        }
+        const results = await requestMediaSearch({ query, type: newListMediaTypeFilter, bearer, signal: controller.signal });
+        if (requestId === listSearchRequestId.current) setListSearchResults(results);
       } catch (error) {
-        console.error('Search error:', error);
+        if (!controller.signal.aborted) console.error('Search error:', error);
       } finally {
-        setIsSearchingForList(false);
+        if (requestId === listSearchRequestId.current) setIsSearchingForList(false);
       }
-    };
-    
-    const debounce = setTimeout(searchMedia, 300);
+    }, 200);
     return () => clearTimeout(debounce);
-  }, [newListSearchQuery, session?.access_token]);
+  }, [newListSearchQuery, newListMediaTypeFilter, isCreateListOpen, session?.access_token]);
+
+  useEffect(() => () => listSearchAbortRef.current?.abort(), []);
 
   // Create list mutation
   const createListMutation = useMutation({
@@ -1220,6 +1216,7 @@ export default function CollectionsPage() {
           setNewListItems([]);
           setNewListSearchQuery("");
           setListSearchResults([]);
+          setNewListMediaTypeFilter(undefined);
         }
       }}>
         <DialogContent className="bg-white max-h-[85vh] overflow-hidden flex flex-col">
@@ -1277,6 +1274,19 @@ export default function CollectionsPage() {
                   data-testid="input-list-search"
                 />
               </div>
+              <div className="flex gap-1.5 overflow-x-auto pb-1" aria-label="Filter media type">
+                {MEDIA_SEARCH_FILTERS.map(({ value, label }) => (
+                  <button
+                    key={value || "all"}
+                    type="button"
+                    aria-pressed={newListMediaTypeFilter === value}
+                    onClick={() => setNewListMediaTypeFilter(value)}
+                    className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium ${newListMediaTypeFilter === value ? 'border-purple-600 bg-purple-600 text-white' : 'border-gray-200 bg-white text-gray-700'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               
               {/* Search results */}
               {isSearchingForList ? (
@@ -1284,7 +1294,7 @@ export default function CollectionsPage() {
                   <Loader2 className="animate-spin text-purple-600" size={20} />
                 </div>
               ) : listSearchResults.length > 0 ? (
-                <div className="max-h-48 overflow-y-auto space-y-1 border border-gray-200 rounded-lg">
+                <div className="max-h-48 overflow-y-auto space-y-1 border border-gray-200 rounded-xl p-1">
                   {listSearchResults.slice(0, 5).map((result, idx) => {
                     const isAdded = newListItems.some(item => 
                       item.external_id === result.external_id && item.external_source === result.external_source

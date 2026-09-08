@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X, Plus, Star, Target, MessageCircle, Vote, Search, UserPlus, HelpCircle } from "lucide-react";
@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import MentionTextarea from "@/components/mention-textarea";
+import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
 
 interface ShareUpdateDialogV2Props {
   isOpen: boolean;
@@ -27,6 +28,10 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [attachedMedia, setAttachedMedia] = useState<any>(null);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<"movie" | "tv" | "book" | "music" | "podcast" | "youtube" | "game" | undefined>();
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchRequestRef = useRef(0);
   
   // Prediction-specific state
   const [predictionType, setPredictionType] = useState<PredictionType>("yes-no");
@@ -43,12 +48,17 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
 
   // Reset all state when dialog closes
   const handleClose = () => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchAbortRef.current?.abort();
+    searchRequestRef.current += 1;
+    setIsSearching(false);
     setContent("");
     setPostMode("text");
     setContainsSpoilers(false);
     setShowMediaSearch(false);
     setSearchQuery("");
     setSearchResults([]);
+    setMediaTypeFilter(undefined);
     setAttachedMedia(null);
     setPredictionType("yes-no");
     setPredictionOptions(["Yes", "No"]);
@@ -202,38 +212,61 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   };
 
   const handleAttachMedia = async () => {
+    if (showMediaSearch) {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+      searchAbortRef.current?.abort();
+      searchRequestRef.current += 1;
+      setSearchResults([]);
+      setIsSearching(false);
+    }
     setShowMediaSearch(!showMediaSearch);
   };
 
-  const handleMediaSearch = async (query: string) => {
-    if (!query.trim()) {
+  const handleMediaSearch = async (query: string, type = mediaTypeFilter) => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchAbortRef.current?.abort();
+    const requestId = ++searchRequestRef.current;
+    if (query.trim().length < 2) {
       setSearchResults([]);
+      setIsSearching(false);
       return;
     }
-
     setIsSearching(true);
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-search?query=${encodeURIComponent(query)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
+    searchTimerRef.current = setTimeout(() => {
+      void (async () => {
+        const bearer = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+        if (!bearer) {
+          if (requestId === searchRequestRef.current) setIsSearching(false);
+          return;
         }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data.results || []);
-      }
-    } catch (error) {
-      console.error("Media search error:", error);
-    } finally {
-      setIsSearching(false);
-    }
+        const controller = new AbortController();
+        searchAbortRef.current = controller;
+        try {
+          const results = await requestMediaSearch({ query, type, bearer, signal: controller.signal });
+          if (requestId === searchRequestRef.current) setSearchResults(results);
+        } catch (error) {
+          if (!controller.signal.aborted && requestId === searchRequestRef.current) {
+            console.error("Media search error:", error);
+            setSearchResults([]);
+          }
+        } finally {
+          if (requestId === searchRequestRef.current) setIsSearching(false);
+        }
+      })();
+    }, 200);
   };
 
+  useEffect(() => () => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchAbortRef.current?.abort();
+    searchRequestRef.current += 1;
+  }, []);
+
   const handleSelectMedia = (media: any) => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchAbortRef.current?.abort();
+    searchRequestRef.current += 1;
+    setIsSearching(false);
     setAttachedMedia(media);
     setShowMediaSearch(false);
     setSearchQuery("");
@@ -398,13 +431,31 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                         className="w-full px-3 py-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
                         autoFocus
                       />
+                      <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide" aria-label="Filter media type">
+                        {MEDIA_SEARCH_FILTERS.map(({ label, value }) => (
+                          <button
+                            key={value || "all"}
+                            type="button"
+                            aria-pressed={mediaTypeFilter === value}
+                            onClick={() => {
+                              setMediaTypeFilter(value);
+                              if (searchQuery.trim().length >= 2) void handleMediaSearch(searchQuery, value);
+                            }}
+                            className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium ${
+                              mediaTypeFilter === value ? "border-purple-600 bg-purple-600 text-white" : "border-gray-200 bg-white text-gray-700"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
                       {searchResults.length > 0 && (
-                        <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
+                        <div className="mt-2 max-h-48 overflow-y-auto space-y-1 rounded-xl border border-purple-100 p-1">
                           {searchResults.slice(0, 8).map((result, idx) => (
                             <button
                               key={idx}
                               onClick={() => handleSelectMedia(result)}
-                              className="w-full flex items-center gap-3 p-2 hover:bg-white rounded text-left transition-colors"
+                              className="w-full flex items-center gap-3 p-2 hover:bg-white rounded-xl text-left transition-colors"
                             >
                               {result.poster_url && (
                                 <img 
@@ -905,6 +956,10 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                   </div>
                   <Button
                     onClick={() => {
+                      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+                      searchAbortRef.current?.abort();
+                      searchRequestRef.current += 1;
+                      setIsSearching(false);
                       setPostMode("text");
                       setShowMediaSearch(false);
                       setSearchQuery("");

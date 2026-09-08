@@ -4,6 +4,9 @@ import { SearchPlusIcon } from "@/components/ui/search-plus-icon";
 import { Link } from "wouter";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { QuickAddModal } from "@/components/quick-add-modal";
+import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
+
+type MediaTypeFilter = Exclude<(typeof MEDIA_SEARCH_FILTERS)[number]["value"], undefined>;
 
 const normalizeMediaType = (type: string | undefined | null): string => {
   const t = (type || "").toLowerCase().trim();
@@ -62,6 +65,7 @@ export function MediaSearchBar({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter | undefined>();
 
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
@@ -70,45 +74,41 @@ export function MediaSearchBar({
   const [composerMedia, setComposerMedia] = useState<any>(null);
 
   const searchIdRef = useRef(0);
+  const searchAbortRef = useRef<AbortController | null>(null);
 
-  const clear = () => { setQuery(""); setResults([]); };
+  const clear = () => { searchAbortRef.current?.abort(); setQuery(""); setResults([]); };
 
   useEffect(() => {
+    searchAbortRef.current?.abort();
     const currentId = ++searchIdRef.current;
     const timer = setTimeout(async () => {
       if (!query.trim() || !session?.access_token) {
         setResults([]);
+        setIsSearching(false);
         return;
       }
+      const controller = new AbortController();
+      searchAbortRef.current = controller;
       setIsSearching(true);
       try {
-        const res = await fetch(
-          "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ query: query.trim(), include_book_series: true }),
-          }
-        );
+        const searched = await requestMediaSearch({
+          query,
+          type: mediaTypeFilter,
+          bearer: session.access_token,
+          signal: controller.signal,
+        });
         if (currentId !== searchIdRef.current) return;
-        if (res.ok) {
-          const data = await res.json();
-          setResults(data.results || []);
-        } else {
-          setResults([]);
-        }
-      } catch {
+        setResults(searched);
+      } catch (error) {
+        if (controller.signal.aborted) return;
         if (currentId !== searchIdRef.current) return;
         setResults([]);
       } finally {
         if (currentId === searchIdRef.current) setIsSearching(false);
       }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [query, session?.access_token]);
+    }, 200);
+    return () => { clearTimeout(timer); searchAbortRef.current?.abort(); };
+  }, [query, session?.access_token, mediaTypeFilter]);
 
   const displayResults = diversifyResults(results);
 
@@ -132,6 +132,19 @@ export function MediaSearchBar({
               <X size={16} className="text-white/40" />
             </button>
           )}
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide py-2" aria-label="Filter media type" data-testid="media-search-type-filters">
+          {MEDIA_SEARCH_FILTERS.map(({ label, value }) => (
+            <button
+              type="button"
+              key={label}
+              aria-pressed={mediaTypeFilter === value}
+              onClick={() => setMediaTypeFilter(value)}
+              className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium ${mediaTypeFilter === value ? "border-purple-400 bg-purple-600 text-white" : "border-white/20 bg-white/10 text-white/80"}`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {displayResults.length > 0 && (

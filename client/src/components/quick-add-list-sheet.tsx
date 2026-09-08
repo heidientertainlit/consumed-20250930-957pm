@@ -11,6 +11,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { JustTrackedSheet } from "./just-tracked-sheet";
 import { ProgressUpdateSheet } from "./progress-update-sheet";
+import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
+
+type MediaTypeFilter = (typeof MEDIA_SEARCH_FILTERS)[number]["value"];
 
 interface QuickAddListSheetProps {
   isOpen: boolean;
@@ -52,6 +55,11 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   const [inlineSelectedMedia, setInlineSelectedMedia] = useState<{ title: string; mediaType: string; imageUrl?: string; externalId?: string; externalSource?: string; creator?: string; seriesName?: string } | null>(null);
   const [showInlineResults, setShowInlineResults] = useState(false);
   const inlineSearchRef = useRef<HTMLInputElement>(null);
+  const [inlineSearchResults, setInlineSearchResults] = useState<any[]>([]);
+  const [isInlineSearching, setIsInlineSearching] = useState(false);
+  const [inlineMediaTypeFilter, setInlineMediaTypeFilter] = useState<MediaTypeFilter>(undefined);
+  const inlineSearchAbortRef = useRef<AbortController | null>(null);
+  const inlineSearchRequestId = useRef(0);
   const [selectedRating, setSelectedRating] = useState<number>(0);
   const [hoveredRating, setHoveredRating] = useState<number>(0);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
@@ -101,23 +109,34 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
 
   const userLists = userListsData?.lists || [];
 
-  const { data: inlineSearchResults = [] } = useQuery<any[]>({
-    queryKey: ['quick-add-list-inline-search', inlineQuery],
-    queryFn: async () => {
-      if (!inlineQuery.trim() || !session?.access_token) return [];
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      const res = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: inlineQuery }),
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return (data.results || []).slice(0, 6);
-    },
-    enabled: !!inlineQuery.trim() && !!session?.access_token && isOpen && !media,
-    staleTime: 30_000,
-  });
+  useEffect(() => {
+    const query = inlineQuery.trim();
+    inlineSearchAbortRef.current?.abort();
+    const requestId = ++inlineSearchRequestId.current;
+    if (query.length < 2 || !isOpen || media) {
+      setInlineSearchResults([]);
+      setIsInlineSearching(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      const bearer = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!bearer) return;
+      const controller = new AbortController();
+      inlineSearchAbortRef.current = controller;
+      setIsInlineSearching(true);
+      try {
+        const results = await requestMediaSearch({ query, type: inlineMediaTypeFilter, bearer, signal: controller.signal });
+        if (requestId === inlineSearchRequestId.current) setInlineSearchResults(results.slice(0, 6));
+      } catch (error) {
+        if (!controller.signal.aborted) console.error("Media search error:", error);
+      } finally {
+        if (requestId === inlineSearchRequestId.current) setIsInlineSearching(false);
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [inlineQuery, inlineMediaTypeFilter, isOpen, media, session?.access_token]);
+
+  useEffect(() => () => inlineSearchAbortRef.current?.abort(), []);
 
   const handleClose = () => {
     setStep('select-list');
@@ -135,6 +154,8 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     setInlineQuery('');
     setInlineSelectedMedia(null);
     setShowInlineResults(false);
+    setInlineSearchResults([]);
+    setInlineMediaTypeFilter(undefined);
     onClose();
   };
 
@@ -763,8 +784,26 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
                     />
                   </div>
                 )}
+                {!inlineSelectedMedia && (
+                  <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1" aria-label="Filter media type">
+                    {MEDIA_SEARCH_FILTERS.map(({ value, label }) => (
+                      <button
+                        key={value || "all"}
+                        type="button"
+                        aria-pressed={inlineMediaTypeFilter === value}
+                        onClick={() => setInlineMediaTypeFilter(value)}
+                        className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium ${inlineMediaTypeFilter === value ? "border-purple-600 bg-purple-600 text-white" : "border-gray-200 bg-white text-gray-700"}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {isInlineSearching && !inlineSelectedMedia && (
+                  <Loader2 className="absolute right-3 top-3 animate-spin text-purple-600" size={15} />
+                )}
                 {showInlineResults && inlineSearchResults.length > 0 && !inlineSelectedMedia && (
-                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto">
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto p-1">
                     {inlineSearchResults.map((r: any, i: number) => {
                       const poster = r.poster_url || r.image || '';
                       return (
