@@ -15,8 +15,8 @@ Intentional public invite links may expose a minimal identity/archetype teaser f
 
 **How to apply:** Enforce the boundary both in service-role endpoints and direct database reads. Treat failed privacy/block lookups as denials, not as missing restrictions. Keep privileged admin exports separate from ordinary member reads.
 
-Privacy rollouts must account for independently shipped web and native clients; restoring protected fields or broad database access is not an acceptable compatibility fix.
+Privacy rollouts must account for independently shipped web clients, native clients, and Edge Functions; restoring protected fields or broad database access is not an acceptable compatibility fix.
 
-**Why:** Older clients can turn omitted statistics into misleading zeros, send anonymous authorization despite a signed-in session, or silently export only the DNA rows allowed by member-level policies.
+**Why:** Older clients can turn omitted statistics into misleading zeros, send anonymous authorization despite a signed-in session, or silently export only the DNA rows allowed by member-level policies. An older deployed Edge Function can still depend on revoked table grants even when the workspace source has already removed that dependency.
 
-**How to apply:** Distinguish source-level verification from released-bundle verification. Missing authorization metadata must retain the teaser, and privileged export compatibility belongs in the authenticated admin path rather than relaxed RLS.
+**How to apply:** Distinguish source-level verification from released-bundle verification. Before changing shared grants, inspect the active source of affected deployed functions, not just local callers. Missing authorization metadata must retain the teaser, and privileged export compatibility belongs in the authenticated admin path rather than relaxed RLS.
