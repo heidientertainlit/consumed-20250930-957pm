@@ -71,6 +71,7 @@ export default function DnaClashFeedCard({
   const token = activeSession?.access_token;
 
   const [voted, setVoted] = useState<string | null>(null);
+  const [isVoting, setIsVoting] = useState(false);
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [optingOut, setOptingOut] = useState(false);
   const [optedOut, setOptedOut] = useState(false);
@@ -208,33 +209,62 @@ export default function DnaClashFeedCard({
   });
 
   const handleVote = async (username: string) => {
-    if (voted || !activeSession) return;
+    if (voted || isVoting) return;
+
+    const session = activeSession || (await supabase.auth.getSession()).data.session;
+    if (!session?.access_token) {
+      toast({
+        title: 'Sign in to pick a side',
+        description: 'Create an account or sign in to cast your vote.',
+      });
+      return;
+    }
+
+    if (!poolId) {
+      toast({
+        title: 'This clash is unavailable',
+        description: 'Refresh the feed and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsVoting(true);
     setVoted(username);
     setLiveCounts(prev => ({ ...prev, [username]: (prev[username] || 0) + 1 }));
-    if (poolId && activeSession?.access_token) {
-      try {
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/predictions/predict`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${activeSession.access_token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pool_id: poolId, prediction: username }),
-        });
-        if (!res.ok) {
-          setVoted(null);
-          setLiveCounts(prev => ({ ...prev, [username]: Math.max(0, (prev[username] || 1) - 1) }));
-          return;
-        }
-      } catch {
-        setVoted(null);
-        setLiveCounts(prev => ({ ...prev, [username]: Math.max(0, (prev[username] || 1) - 1) }));
-        return;
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/predictions/predict`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ pool_id: poolId, prediction: username }),
+      });
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}));
+        throw new Error(result.error || 'Failed to cast vote');
       }
+
+      const votedFor = username === user1.username ? user1 : user2;
+      const votedAgainst = username === user1.username ? user2 : user1;
+      await Promise.all([
+        sendNotification(votedFor.userId, `Someone agreed with your take on "${mediaTitle}" in a DNA Clash!`, currentUserId, session),
+        sendNotification(votedAgainst.userId, `Someone sided with ${votedFor.displayName} on "${mediaTitle}" in a DNA Clash.`, currentUserId, session),
+      ]);
+    } catch (error) {
+      console.error('[clash vote error]', error);
+      setVoted(null);
+      setLiveCounts(prev => ({ ...prev, [username]: Math.max(0, (prev[username] || 1) - 1) }));
+      toast({
+        title: 'Failed to cast vote',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsVoting(false);
     }
-    const votedFor = username === user1.username ? user1 : user2;
-    const votedAgainst = username === user1.username ? user2 : user1;
-    await Promise.all([
-      sendNotification(votedFor.userId, `Someone agreed with your take on "${mediaTitle}" in a DNA Clash!`, currentUserId, activeSession),
-      sendNotification(votedAgainst.userId, `Someone sided with ${votedFor.displayName} on "${mediaTitle}" in a DNA Clash.`, currentUserId, activeSession),
-    ]);
   };
 
   const handleOptOut = async () => {
@@ -451,7 +481,7 @@ export default function DnaClashFeedCard({
                   key={user.username}
                   type="button"
                   onClick={() => handleVote(user.username)}
-                  disabled={Boolean(voted)}
+                  disabled={Boolean(voted) || isVoting}
                   aria-pressed={selected}
                   className="flex min-h-[126px] flex-col items-center justify-center rounded-xl border px-3 py-4 text-center transition-transform active:scale-[.98] disabled:cursor-default"
                   style={{
