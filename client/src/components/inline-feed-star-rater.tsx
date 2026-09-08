@@ -3,11 +3,14 @@ import { Star } from "lucide-react";
 
 interface InlineFeedStarRaterProps {
   onRate: (rating: number) => void;
+  disabled?: boolean;
+  value?: number;
 }
 
 /** Keep the half-star hit areas stationary while previewing a rating. */
-export function InlineFeedStarRater({ onRate }: InlineFeedStarRaterProps) {
+export function InlineFeedStarRater({ onRate, disabled = false, value = 0 }: InlineFeedStarRaterProps) {
   const [preview, setPreview] = useState(0);
+  const displayRating = preview || value;
   const starsRef = useRef<HTMLDivElement>(null);
   const touchId = useRef<number | null>(null);
   const ignoreMouseUntil = useRef(0);
@@ -37,6 +40,7 @@ export function InlineFeedStarRater({ onRate }: InlineFeedStarRaterProps) {
         ref={starsRef}
         role="group"
         aria-label="Choose your star rating"
+        aria-busy={disabled}
         className="flex flex-1 min-w-0 max-w-[196px] gap-1 touch-none"
         onMouseLeave={() => { if (touchId.current === null) setPreview(0); }}
         onBlur={(event) => {
@@ -44,6 +48,7 @@ export function InlineFeedStarRater({ onRate }: InlineFeedStarRaterProps) {
         }}
         onTouchStart={(event) => {
           event.stopPropagation();
+          if (disabled) return;
           ignoreMouseUntil.current = performance.now() + 800;
           if (event.touches.length !== 1) {
             touchId.current = null;
@@ -56,6 +61,7 @@ export function InlineFeedStarRater({ onRate }: InlineFeedStarRaterProps) {
         }}
         onTouchMove={(event) => {
           event.stopPropagation();
+          if (disabled) return;
           const touch = Array.from(event.touches).find(t => t.identifier === touchId.current);
           if (touch) setPreview(ratingAt(touch.clientX));
         }}
@@ -66,7 +72,7 @@ export function InlineFeedStarRater({ onRate }: InlineFeedStarRaterProps) {
           ignoreMouseUntil.current = performance.now() + 800;
           const touch = Array.from(event.changedTouches).find(t => t.identifier === touchId.current);
           touchId.current = null;
-          if (touch) onRate(ratingAt(touch.clientX));
+          if (touch && !disabled) onRate(ratingAt(touch.clientX));
           setPreview(0);
         }}
         onTouchCancel={(event) => {
@@ -81,21 +87,22 @@ export function InlineFeedStarRater({ onRate }: InlineFeedStarRaterProps) {
             <Star className="absolute inset-0 w-full h-full text-violet-200 pointer-events-none" />
             <Star
               className="absolute inset-0 w-full h-full fill-yellow-400 text-yellow-400 pointer-events-none"
-              style={{ clipPath: `inset(0 ${preview >= star ? 0 : preview >= star - 0.5 ? 50 : 100}% 0 0)` }}
+              style={{ clipPath: `inset(0 ${displayRating >= star ? 0 : displayRating >= star - 0.5 ? 50 : 100}% 0 0)` }}
             />
             {[star - 0.5, star].map((rating, half) => (
               <button
                 key={rating}
                 type="button"
+                disabled={disabled}
                 aria-label={`Rate ${rating}`}
                 className={`absolute inset-y-0 w-1/2 z-10 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-600 ${half ? "right-0" : "left-0"}`}
                 onMouseEnter={() => {
-                  if (performance.now() >= ignoreMouseUntil.current) setPreview(rating);
+                  if (!disabled && performance.now() >= ignoreMouseUntil.current) setPreview(rating);
                 }}
                 onFocus={() => setPreview(rating)}
                 onClick={(event) => {
                   event.stopPropagation();
-                  if (event.detail !== 0 && performance.now() < ignoreMouseUntil.current) return;
+                  if (disabled || (event.detail !== 0 && performance.now() < ignoreMouseUntil.current)) return;
                   onRate(rating);
                 }}
               />
@@ -104,10 +111,10 @@ export function InlineFeedStarRater({ onRate }: InlineFeedStarRaterProps) {
         ))}
       </div>
       <span
-        className={`w-8 shrink-0 text-xs text-gray-400 tabular-nums ${preview ? "" : "invisible"}`}
-        aria-hidden={!preview}
+        className={`w-8 shrink-0 text-xs text-gray-400 tabular-nums ${displayRating ? "" : "invisible"}`}
+        aria-hidden={!displayRating}
       >
-        {preview || 0}/5
+        {displayRating || 0}/5
       </span>
     </div>
   );

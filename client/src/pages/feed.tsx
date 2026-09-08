@@ -39,6 +39,9 @@ import { ReportSheet } from "@/components/report-sheet";
 import PostDetailSheet from "@/components/post-detail-sheet";
 import { ShareRatingCard } from "@/components/share-rating-card";
 import { InlineFeedStarRater } from "@/components/inline-feed-star-rater";
+import { RatingSaveFeedback } from "@/components/rating-save-feedback";
+import { useConfirmedRatingSave } from "@/hooks/use-confirmed-rating-save";
+import { saveFeedRating } from "@/lib/save-feed-rating";
 import { dbTagToDisplay } from "@/components/room-composer";
 import { type UGCPost } from "@/components/user-content-carousel";
 import ConversationsPanel from "@/components/conversations-panel";
@@ -1292,7 +1295,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [showRating, setShowRating] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
-  const [ratingJustSaved, setRatingJustSaved] = useState(false);
   const [showStarPicker, setShowStarPicker] = useState(false);
   const [communityRating, setCommunityRating] = useState<number | null>(null);
   const [externalRating, setExternalRating] = useState<number | null>(null);
@@ -1708,60 +1710,37 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     };
   }, [post.id, post.type, session?.access_token]);
 
-  const handleSubmitRating = async (rating: number) => {
-    if (!session?.access_token) return;
-    // Optimistic update — lock in stars immediately so the user sees instant feedback
-    setRatingValue(rating);
-    setRatingSubmitted(true);
-    setShowStarPicker(false);
-    setHoverRating(0);
-    setRatingJustSaved(true);
-    setTimeout(() => setRatingJustSaved(false), 1800);
-    let externalId = resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId || '';
-    let externalSource = resolvedExternalSource || post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
-    const mediaTitle = post.mediaTitle || post.mediaItems?.[0]?.title || '';
-    const mediaType = post.mediaType || post.mediaItems?.[0]?.type || 'tv';
-    const mediaImage = post.mediaImage || post.mediaItems?.[0]?.imageUrl || '';
-    if (!externalId && mediaTitle) {
-      try {
-        const r = await fetch(
-          `${supabaseUrl}/functions/v1/media-search?q=${encodeURIComponent(mediaTitle)}&type=${mediaType.toLowerCase()}&limit=1`,
-          { headers: { Authorization: `Bearer ${session.access_token}` } }
-        );
-        const d = await r.json();
-        const results = d?.results || d || [];
-        const first = Array.isArray(results) ? results[0] : null;
-        externalId = String(first?.externalId || first?.external_id || first?.id || '');
-        externalSource = first?.externalSource || first?.external_source || 'tmdb';
-        if (externalId) {
-          setResolvedExternalId(externalId);
-          setResolvedExternalSource(externalSource);
-          setResolvedCanonicalMediaId(first?.canonical_media_id || first?.canonicalMediaId);
-        }
-      } catch { /* fall through */ }
-    }
-    if (!externalId) return;
-    try {
-      await fetch(`${supabaseUrl}/functions/v1/rate-media`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          media_external_id: externalId,
-          media_external_source: externalSource,
-          canonical_media_id: canonicalMediaId,
-          media_title: mediaTitle,
-          media_type: mediaType,
-          media_image_url: mediaImage,
-          rating,
-          skip_social_post: false,
-        }),
-      });
-    } catch (err) {
-      console.error('Rating failed', err);
-    }
-  };
+  const ratingSave = useConfirmedRatingSave({
+    resetKey: `${post.id}:${session?.user?.id || ''}`,
+    save: (rating, signal) => saveFeedRating({
+      supabaseUrl,
+      accessToken: session?.access_token,
+      externalId: resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId || '',
+      externalSource: resolvedExternalSource || post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb',
+      canonicalMediaId,
+      mediaTitle: post.mediaTitle || post.mediaItems?.[0]?.title || '',
+      mediaType: post.mediaType || post.mediaItems?.[0]?.type || 'tv',
+      mediaImage: post.mediaImage || post.mediaItems?.[0]?.imageUrl || '',
+      rating,
+      signal,
+    }),
+    onSuccess: (rating, media) => {
+      setResolvedExternalId(media.externalId);
+      setResolvedExternalSource(media.externalSource);
+      if (media.canonicalMediaId) setResolvedCanonicalMediaId(media.canonicalMediaId);
+      setRatingValue(rating);
+      setRatingSubmitted(true);
+      setShowStarPicker(false);
+      setShowInlineRater(false);
+      setHoverRating(0);
+    },
+  });
+  const ratingJustSaved = ratingSave.justSaved;
+  const handleSubmitRating = ratingSave.submit;
 
   const handleRemoveRating = async () => {
+    if (ratingSave.saving) return;
+    ratingSave.clear();
     if (!session?.access_token) return;
     const externalId = resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId || '';
     const externalSource = resolvedExternalSource || post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
@@ -2808,11 +2787,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
           {/* YOUR TURN — inline star rater appears above the action row */}
           {isOtherUser && session?.access_token && showInlineRater && !ratingSubmitted && (
-            <InlineFeedStarRater onRate={(rating) => {
-              handleSubmitRating(rating);
-              setShowInlineRater(false);
-            }} />
+            <InlineFeedStarRater
+              onRate={handleSubmitRating}
+              disabled={ratingSave.saving}
+              value={ratingSave.pendingRating || 0}
+            />
           )}
+          <RatingSaveFeedback {...ratingSave} onRetry={ratingSave.retry} />
 
           {/* ── Action row: YouTube-style compact pills, tucked up near the content ── */}
           <div className="flex items-center justify-start gap-1 px-4 pb-3 pt-3" onClick={(e) => e.stopPropagation()}>
@@ -3457,6 +3438,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           )}
           <div className="mt-3 pt-3 border-t border-gray-50">{actionBar}</div>
+          <RatingSaveFeedback {...ratingSave} justSaved={false} onRetry={ratingSave.retry} />
           {ratingSubmitted && ratingValue > 0 && isOtherUser && (
             <div className="flex items-center justify-start gap-2 pt-2">
               <span className="text-sm text-gray-500">
