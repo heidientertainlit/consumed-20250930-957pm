@@ -294,6 +294,14 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
     resolve: (req: Request) => Promise<OpenGraphTags>,
   ) => {
     app.get(pathPattern, async (req, res, next) => {
+      // In development, let Vite serve and transform the application shell.
+      // Sending client/index.html directly skips the React refresh preamble and
+      // leaves direct preview links on a blank screen.
+      if (process.env.NODE_ENV !== "production") {
+        next();
+        return;
+      }
+
       try {
         const key = req.originalUrl;
         const tags = cached(key) || cache(key, await resolve(req));
