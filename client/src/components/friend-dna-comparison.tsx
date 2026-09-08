@@ -809,7 +809,7 @@ export function FriendDNACompareButton({
           onCompare();
           return;
         }
-        window.history.pushState({}, '', '/me?tab=dna');
+        window.history.pushState({}, '', `/dna?tab=compare&friend=${encodeURIComponent(friendId)}`);
         window.dispatchEvent(new PopStateEvent('popstate'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }}

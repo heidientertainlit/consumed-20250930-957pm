@@ -53,6 +53,7 @@ import PlayCast from "@/pages/play-cast";
 import People from "@/pages/people";
 import CreatorProfile from "@/pages/creator-profile";
 import UserProfile from "@/pages/user-profile";
+import DnaPage from "@/pages/dna";
 import MediaDetail from "@/pages/media-detail";
 import ListDetail from "@/pages/list-detail";
 import PostDetail from "@/pages/post-detail";
@@ -425,7 +426,9 @@ function Router() {
           </Route>
 
           <Route path="/dna">
-            <RedirectTo to="/me" />
+            <ProtectedRoute>
+              <DnaPage />
+            </ProtectedRoute>
           </Route>
 
           <Route path="/collections">
