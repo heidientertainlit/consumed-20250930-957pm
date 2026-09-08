@@ -46,7 +46,19 @@ test("My Ranks preserves the owner response, including public and private lists,
   assert.deepEqual(expectedNewestFirst.map((rank) => rank.id), ["newer-private", "older-public"]);
   assert.equal(ownerResponse.ranks.filter((rank) => rank.visibility === "public").length, 1);
   assert.equal(ownerResponse.ranks.filter((rank) => rank.visibility === "private").length, 1);
-  assert.match(source, /return sortUserRanksNewestFirst\(Array\.isArray\(data\.ranks\) \? data\.ranks : \[\]\)/);
+  assert.match(source, /return \{ ranks: Array\.isArray\(data\.ranks\) \? data\.ranks : \[\] \}/);
+  assert.match(source, /select: normalizeUserRanks/);
+
+  const objectCache = ownerResponse;
+  const legacyArrayCache = ownerResponse.ranks;
+  for (const cachedData of [objectCache.ranks, legacyArrayCache]) {
+    assert.deepEqual(
+      [...cachedData]
+        .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
+        .map((rank) => rank.id),
+      ["newer-private", "older-public"],
+    );
+  }
   assert.match(source, /const itemCount = typeof rank\.items_count === "number"/);
   assert.match(source, /\{isPrivate \? "Private" : "Public"\}/);
 });

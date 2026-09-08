@@ -143,6 +143,15 @@ export function sortUserRanksNewestFirst(ranks: UserRank[]): UserRank[] {
   });
 }
 
+export function normalizeUserRanks(data: { ranks?: UserRank[] } | UserRank[] | undefined): UserRank[] {
+  const ranks = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.ranks)
+    ? data.ranks
+    : [];
+  return sortUserRanksNewestFirst(ranks);
+}
+
 function MyRanks({
   session,
   onNavigate,
@@ -159,7 +168,7 @@ function MyRanks({
     error,
     refetch,
     isFetching,
-  } = useQuery<UserRank[]>({
+  } = useQuery<{ ranks?: UserRank[] } | UserRank[], Error, UserRank[]>({
     queryKey: ["user-ranks", userId],
     queryFn: async () => {
       if (!userId || !accessToken) {
@@ -188,8 +197,9 @@ function MyRanks({
       }
 
       const data: { ranks?: UserRank[] } = await response.json();
-      return sortUserRanksNewestFirst(Array.isArray(data.ranks) ? data.ranks : []);
+      return { ranks: Array.isArray(data.ranks) ? data.ranks : [] };
     },
+    select: normalizeUserRanks,
     enabled: !!userId && !!accessToken,
   });
 
