@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isValidFriendshipUuid } from "../_shared/friendship-policy.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -28,7 +29,12 @@ serve(async (req) => {
     const blockerId = user.id;
 
     const { blocked_user_id, action = "block" } = await req.json();
-    if (!blocked_user_id) return json({ error: "blocked_user_id is required" }, 400);
+    if (!isValidFriendshipUuid(blocked_user_id)) {
+      return json({ error: "blocked_user_id must be a valid UUID" }, 400);
+    }
+    if (action !== "block" && action !== "unblock") {
+      return json({ error: "Invalid action" }, 400);
+    }
     if (blockerId === blocked_user_id) return json({ error: "Cannot block yourself" }, 400);
 
     const admin = createClient(
@@ -37,11 +43,12 @@ serve(async (req) => {
     );
 
     if (action === "unblock") {
-      await admin
+      const { error: unblockError } = await admin
         .from("user_blocks")
         .delete()
         .eq("blocker_id", blockerId)
         .eq("blocked_id", blocked_user_id);
+      if (unblockError) return json({ error: "Failed to unblock user" }, 500);
       return json({ success: true, action: "unblocked" });
     }
 
@@ -64,12 +71,8 @@ serve(async (req) => {
       return json({ error: "Failed to block user" }, 500);
     }
 
-    // Remove friendship in both directions
-    await admin
-      .from("friendships")
-      .delete()
-      .or(`and(user_id.eq.${blockerId},friend_id.eq.${blocked_user_id}),and(user_id.eq.${blocked_user_id},friend_id.eq.${blockerId})`);
-
+    // The database trigger pair-locks and atomically removes any pending or
+    // accepted friendship before the block row becomes visible.
     return json({ success: true, action: "blocked" });
   } catch (err) {
     console.error("Error:", err);

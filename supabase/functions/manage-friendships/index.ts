@@ -1,11 +1,43 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import {
+  isValidFriendshipUuid,
+  normalizeFriendshipSearchQuery,
+} from "../_shared/friendship-policy.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
+
+function databaseErrorResponse() {
+  return new Response(JSON.stringify({ error: 'Unable to complete friendship request' }), {
+    status: 500,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  });
+}
+
+function transitionErrorResponse(error: { code?: string; message?: string }, action: 'send' | 'accept' | 'reject') {
+  const allowedMessages = new Set([
+    'Already friends',
+    'Friend request already sent',
+    'Friend request not found or already processed',
+    'Unable to send friend request',
+    'Unable to manage friend request',
+  ]);
+  const message = error.code === 'P0001' && error.message && allowedMessages.has(error.message)
+    ? error.message
+    : action === 'send'
+      ? 'Unable to send friend request'
+      : action === 'accept'
+        ? 'Friend request not found or already processed'
+        : 'Unable to reject friend request';
+  return new Response(JSON.stringify({ error: message }), {
+    status: error.code === 'P0001' || error.code === '22023' ? 400 : 500,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  });
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -57,16 +89,20 @@ serve(async (req) => {
           .single();
 
       if (createError) {
-        return new Response(JSON.stringify({ error: 'Failed to initialize user' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+        return databaseErrorResponse();
       }
       appUser = newUser;
     } else if (appUserError) {
       return new Response(JSON.stringify({ 
-        error: 'User lookup failed: ' + appUserError.message 
+        error: 'User lookup failed'
       }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!isValidFriendshipUuid(appUser?.id)) {
+      return new Response(JSON.stringify({ error: 'Invalid authenticated user identity' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -77,42 +113,42 @@ serve(async (req) => {
 
       switch (action) {
         case 'getFriends': {
-          const { data: friendships, error: friendshipsError } = await supabase
+          const [{ data: friendships, error: friendshipsError }, { data: blockRows, error: blocksError }] = await Promise.all([
+            supabase
             .from('friendships')
             .select('id, friend_id, created_at')
             .eq('user_id', appUser.id)
             .eq('status', 'accepted')
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false }),
+            supabaseAdmin
+              .from('user_blocks')
+              .select('blocker_id, blocked_id')
+              .or(`blocker_id.eq.${appUser.id},blocked_id.eq.${appUser.id}`)
+          ]);
 
-          if (friendshipsError) {
-            return new Response(JSON.stringify({ error: friendshipsError.message }), {
-              status: 500,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
-          }
+          if (friendshipsError || blocksError) return databaseErrorResponse();
 
-          if (!friendships || friendships.length === 0) {
+          const blockedIds = new Set((blockRows || []).map((row) =>
+            row.blocker_id === appUser.id ? row.blocked_id : row.blocker_id
+          ));
+          const visibleFriendships = (friendships || []).filter((friendship) => !blockedIds.has(friendship.friend_id));
+          if (visibleFriendships.length === 0) {
             return new Response(JSON.stringify({ friends: [] }), {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
           }
 
           // Fetch user data for each friendship
-          const friendIds = friendships.map(f => f.friend_id);
+          const friendIds = visibleFriendships.map(f => f.friend_id);
           const { data: users, error: usersError } = await supabase
             .from('public_user_profiles')
             .select('id, user_name, first_name, last_name, display_name, avatar')
             .in('id', friendIds);
 
-          if (usersError) {
-            return new Response(JSON.stringify({ error: usersError.message }), {
-              status: 500,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
-          }
+          if (usersError) return databaseErrorResponse();
 
           // Combine friendships with user data
-          const friends = friendships.map(friendship => ({
+          const friends = visibleFriendships.map(friendship => ({
             id: friendship.id,
             created_at: friendship.created_at,
             friend: users?.find(u => u.id === friendship.friend_id) || null
@@ -124,42 +160,42 @@ serve(async (req) => {
         }
 
         case 'getPendingRequests': {
-          const { data: friendships, error: friendshipsError } = await supabase
+          const [{ data: friendships, error: friendshipsError }, { data: blockRows, error: blocksError }] = await Promise.all([
+            supabase
             .from('friendships')
             .select('id, user_id, created_at')
             .eq('friend_id', appUser.id)
             .eq('status', 'pending')
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false }),
+            supabaseAdmin
+              .from('user_blocks')
+              .select('blocker_id, blocked_id')
+              .or(`blocker_id.eq.${appUser.id},blocked_id.eq.${appUser.id}`)
+          ]);
 
-          if (friendshipsError) {
-            return new Response(JSON.stringify({ error: friendshipsError.message }), {
-              status: 500,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
-          }
+          if (friendshipsError || blocksError) return databaseErrorResponse();
 
-          if (!friendships || friendships.length === 0) {
+          const blockedIds = new Set((blockRows || []).map((row) =>
+            row.blocker_id === appUser.id ? row.blocked_id : row.blocker_id
+          ));
+          const visibleFriendships = (friendships || []).filter((friendship) => !blockedIds.has(friendship.user_id));
+          if (visibleFriendships.length === 0) {
             return new Response(JSON.stringify({ requests: [] }), {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
           }
 
           // Fetch user data for each friendship
-          const userIds = friendships.map(f => f.user_id);
+          const userIds = visibleFriendships.map(f => f.user_id);
           const { data: users, error: usersError } = await supabase
             .from('public_user_profiles')
             .select('id, user_name, first_name, last_name, display_name, avatar')
             .in('id', userIds);
 
-          if (usersError) {
-            return new Response(JSON.stringify({ error: usersError.message }), {
-              status: 500,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
-          }
+          if (usersError) return databaseErrorResponse();
 
           // Combine friendships with user data
-          const requests = friendships.map(friendship => ({
+          const requests = visibleFriendships.map(friendship => ({
             id: friendship.id,
             user_id: friendship.user_id,
             created_at: friendship.created_at,
@@ -172,132 +208,54 @@ serve(async (req) => {
         }
 
         case 'searchUsers': {
-          console.log('Search users called with query:', query);
-          
-          if (!query || query.length < 2) {
-            console.log('Query too short, returning empty results');
+          const searchQuery = normalizeFriendshipSearchQuery(query);
+          if (!searchQuery) {
             return new Response(JSON.stringify({ users: [] }), {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
           }
 
-          console.log('Searching for users with query:', query, 'excluding user:', appUser.id);
+          const { data: users, error } = await supabaseAdmin.rpc('search_friendship_users', {
+            p_actor_id: appUser.id,
+            p_query: searchQuery,
+            p_limit: 20,
+          });
 
-          // Search only the public identity projection.
-          const { data: allUsers, error: fetchError } = await supabaseAdmin
-            .from('public_user_profiles')
-            .select('id, user_name, first_name, last_name, display_name, avatar')
-            .neq('id', appUser.id);
-
-          console.log('Fetched all users:', { count: allUsers?.length || 0, error: fetchError?.message });
-          
-          if (allUsers && allUsers.length > 0) {
-            console.log('Sample users:', allUsers.slice(0, 3));
-          }
-
-          if (fetchError) {
-            console.error('User fetch error:', fetchError);
-            return new Response(JSON.stringify({ error: fetchError.message }), {
+          if (error) {
+            return new Response(JSON.stringify({ error: 'Failed to search users' }), {
               status: 500,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
           }
 
-          // Manual filter to handle null values properly
-          const queryLower = query.toLowerCase();
-          const matchedUsers = (allUsers || []).filter(user => {
-            const userName = (user.user_name || '').toLowerCase();
-            const firstName = (user.first_name || '').toLowerCase();
-            const lastName = (user.last_name || '').toLowerCase();
-            const fullName = `${firstName} ${lastName}`.trim();
-            
-            const matches = userName.includes(queryLower) ||
-                   firstName.includes(queryLower) ||
-                   lastName.includes(queryLower) ||
-                   fullName.includes(queryLower);
-            
-            if (matches) {
-              console.log('Public profile match found:', { user_name: userName });
-            }
-            
-            return matches;
-          }).slice(0, 20); // Get top 20 matches
-
-          console.log('Matched users count:', matchedUsers.length);
-
-          const matchedIds = new Set(matchedUsers.map((user) => user.id));
-          const { data: relationships, error: relationshipsError } = await supabaseAdmin
-            .from('friendships')
-            .select('user_id, friend_id, status')
-            .or(`user_id.eq.${appUser.id},friend_id.eq.${appUser.id}`);
-
-          if (relationshipsError) {
-            console.error('Relationship status fetch error:', relationshipsError);
-          }
-
-          const relationshipByUser = new Map<string, { status: string; direction: 'incoming' | 'outgoing' }>();
-          (relationships || []).forEach((relationship) => {
-            const otherUserId = relationship.user_id === appUser.id ? relationship.friend_id : relationship.user_id;
-            if (!matchedIds.has(otherUserId)) return;
-            relationshipByUser.set(otherUserId, {
-              status: relationship.status,
-              direction: relationship.user_id === appUser.id ? 'outgoing' : 'incoming',
-            });
-          });
-
-          const usersWithRelationships = matchedUsers.map((user) => {
-            const relationship = relationshipByUser.get(user.id);
-            return {
-              ...user,
-              relationship_status: relationship?.status || null,
-              relationship_direction: relationship?.direction || null,
-            };
-          });
-
-          return new Response(JSON.stringify({ users: usersWithRelationships }), {
+          return new Response(JSON.stringify({ users: users || [] }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
 
         case 'sendRequest': {
-          if (!friendId) {
+          if (!isValidFriendshipUuid(friendId)) {
             return new Response(JSON.stringify({ error: 'friendId is required' }), {
               status: 400,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
           }
 
-          // Check if friendship already exists
-          const { data: existing } = await supabase
-            .from('friendships')
-            .select('id, status')
-            .or(`and(user_id.eq.${appUser.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${appUser.id})`)
-            .single();
-
-          if (existing) {
-            return new Response(JSON.stringify({ 
-              error: existing.status === 'accepted' ? 'Already friends' : 'Friend request already sent' 
-            }), {
+          if (friendId === appUser.id) {
+            return new Response(JSON.stringify({ error: 'Cannot send a friend request to yourself' }), {
               status: 400,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
           }
 
-          const { data: friendship, error } = await supabase
-            .from('friendships')
-            .insert({
-              user_id: appUser.id,
-              friend_id: friendId,
-              status: 'pending'
-            })
-            .select()
-            .single();
+          const { data, error } = await supabaseAdmin.rpc('transition_friendship', {
+            p_action: 'send',
+            p_actor_id: appUser.id,
+            p_target_id: friendId,
+          });
 
           if (error) {
-            return new Response(JSON.stringify({ error: error.message }), {
-              status: 500,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
+            return transitionErrorResponse(error, 'send');
           }
 
           // Send notification to the friend
@@ -316,75 +274,28 @@ serve(async (req) => {
             })
           });
 
-          return new Response(JSON.stringify({ friendship }), {
+          return new Response(JSON.stringify({ friendship: data?.friendship ?? null }), {
             status: 201,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
 
         case 'acceptRequest': {
-          if (!friendId) {
+          if (!isValidFriendshipUuid(friendId)) {
             return new Response(JSON.stringify({ error: 'friendId is required' }), {
               status: 400,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
           }
 
-          // Check if the pending request exists
-          const { data: existingRequest, error: checkError } = await supabase
-            .from('friendships')
-            .select('id')
-            .eq('user_id', friendId)
-            .eq('friend_id', appUser.id)
-            .eq('status', 'pending')
-            .single();
+          const { error } = await supabaseAdmin.rpc('transition_friendship', {
+            p_action: 'accept',
+            p_actor_id: appUser.id,
+            p_target_id: friendId,
+          });
 
-          if (checkError || !existingRequest) {
-            return new Response(JSON.stringify({ error: 'Friend request not found or already processed' }), {
-              status: 404,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
-          }
-
-          // Delete the pending request (where friend_id = current user, should be allowed)
-          const { error: deleteError } = await supabase
-            .from('friendships')
-            .delete()
-            .eq('user_id', friendId)
-            .eq('friend_id', appUser.id)
-            .eq('status', 'pending');
-
-          if (deleteError) {
-            console.error('Delete error:', deleteError);
-          }
-
-          // Create accepted friendship for current user (this we can definitely do)
-          const { error: insertError1 } = await supabase
-            .from('friendships')
-            .insert({
-              user_id: appUser.id,
-              friend_id: friendId,
-              status: 'accepted'
-            });
-
-          if (insertError1) {
-            return new Response(JSON.stringify({ error: insertError1.message }), {
-              status: 500,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
-          }
-
-          // Try to create reciprocal friendship (might fail due to RLS, but that's ok)
-          const { error: insertError2 } = await supabase
-            .from('friendships')
-            .insert({
-              user_id: friendId,
-              friend_id: appUser.id,
-              status: 'accepted'
-            });
-
-          if (insertError2) {
-            console.log('Reciprocal insert failed (expected due to RLS):', insertError2.message);
+          if (error) {
+            return transitionErrorResponse(error, 'accept');
           }
 
           // Send notification to the friend that request was accepted
@@ -409,26 +320,21 @@ serve(async (req) => {
         }
 
         case 'rejectRequest': {
-          if (!friendId) {
+          if (!isValidFriendshipUuid(friendId)) {
             return new Response(JSON.stringify({ error: 'friendId is required' }), {
               status: 400,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
           }
 
-          // Delete the pending friendship request
-          const { error } = await supabase
-            .from('friendships')
-            .delete()
-            .eq('user_id', friendId)
-            .eq('friend_id', appUser.id)
-            .eq('status', 'pending');
+          const { error } = await supabaseAdmin.rpc('transition_friendship', {
+            p_action: 'reject',
+            p_actor_id: appUser.id,
+            p_target_id: friendId,
+          });
 
           if (error) {
-            return new Response(JSON.stringify({ error: 'Failed to reject friend request' }), {
-              status: 500,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
+            return transitionErrorResponse(error, 'reject');
           }
 
           return new Response(JSON.stringify({ success: true }), {
@@ -451,9 +357,6 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Friendship management error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return databaseErrorResponse();
   }
 });

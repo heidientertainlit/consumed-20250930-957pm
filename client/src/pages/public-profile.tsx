@@ -1,23 +1,22 @@
-import { useEffect, useState } from "react";
 import { APP_BASE } from "@/lib/share";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
 import { Loader2, Star, Trophy, TrendingUp, BookOpen, Tv, Film, Music, Headphones, Gamepad2, Lock, Youtube } from "lucide-react";
 
 interface PublicProfile {
+  access: "full" | "preview";
   id: string;
   display_name: string | null;
   username: string | null;
   avatar_url: string | null;
-  total_points: number;
-  items_logged: number;
-  global_rank: number | null;
-  mostly_into: string[];
-  currently_consuming: Array<{
+  total_points?: number;
+  items_logged?: number;
+  global_rank?: number | null;
+  mostly_into?: string[];
+  currently_consuming?: Array<{
     title: string;
     image_url: string | null;
     media_type: string;
@@ -29,27 +28,22 @@ interface PublicProfile {
 export default function PublicProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const [, navigate] = useLocation();
-  const { user, loading: authLoading } = useAuth();
-
-  useEffect(() => {
-    if (!authLoading && user) {
-      navigate(`/user/${userId}?ref=invite`);
-    }
-  }, [user, authLoading, userId, navigate]);
+  const { user, session, loading: authLoading } = useAuth();
 
   const { data: profile, isLoading, error } = useQuery<PublicProfile>({
-    queryKey: ['public-profile', userId],
+    queryKey: ['public-profile', userId, session?.access_token],
     queryFn: async () => {
       if (!userId) throw new Error('No user ID');
       
       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const token = session?.access_token || anonKey;
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-profile?user_id=${userId}`,
         {
           headers: {
             'Content-Type': 'application/json',
             'apikey': anonKey,
-            'Authorization': `Bearer ${anonKey}`,
+            'Authorization': `Bearer ${token}`,
           },
         }
       );
@@ -62,7 +56,7 @@ export default function PublicProfilePage() {
       
       return response.json();
     },
-    enabled: !!userId && !user,
+    enabled: !!userId && !authLoading,
   });
 
   const handleJoin = () => {
@@ -71,9 +65,17 @@ export default function PublicProfilePage() {
     }
     navigate('/login');
   };
+  const handleProfileAction = () => {
+    if (user && userId) {
+      navigate(`/user/${userId}?ref=invite`);
+      return;
+    }
+    handleJoin();
+  };
 
   const displayName = profile?.display_name || profile?.username || 'User';
   const appUrl = APP_BASE;
+  const isPreview = profile?.access === 'preview';
 
   const getMediaIcon = (type: string) => {
     switch (type?.toLowerCase()) {
@@ -92,17 +94,6 @@ export default function PublicProfilePage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-purple-900 via-gray-900 to-black flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-white animate-spin" />
-      </div>
-    );
-  }
-
-  if (user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-900 via-gray-900 to-black flex items-center justify-center">
-        <div className="text-center text-white">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
-          <p>Redirecting to full profile...</p>
-        </div>
       </div>
     );
   }
@@ -210,6 +201,36 @@ export default function PublicProfilePage() {
 
         <div className="max-w-2xl mx-auto px-4 -mt-4">
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            {isPreview ? (
+              <div className="text-center py-2">
+                {profile.dna_label && (
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 mb-5">
+                    <h3 className="text-sm font-medium text-purple-700 mb-1">Entertainment DNA</h3>
+                    <p className="font-bold text-purple-900">{profile.dna_label}</p>
+                    {profile.dna_tagline && (
+                      <p className="text-sm text-purple-600 italic">{profile.dna_tagline}</p>
+                    )}
+                  </div>
+                )}
+                <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mx-auto mb-3">
+                  <Lock className="w-5 h-5 text-purple-600" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-2">Friends can see more</h3>
+                <p className="text-gray-600 text-sm mb-5">
+                  {user
+                    ? `Visit ${displayName}'s profile to connect and see their activity, lists, and entertainment stats.`
+                    : `Join consumed to connect with ${displayName} and see their activity, lists, and entertainment stats.`}
+                </p>
+                <Button
+                  onClick={handleProfileAction}
+                  className="bg-purple-600 hover:bg-purple-700"
+                  data-testid="button-preview-profile-action"
+                >
+                  {user ? `View ${displayName}'s profile` : 'Log in to connect'}
+                </Button>
+              </div>
+            ) : (
+              <>
             <div className="grid grid-cols-3 gap-4 text-center mb-6">
               <div>
                 <div className="flex items-center justify-center gap-1 text-purple-600 font-bold text-xl">
@@ -281,6 +302,8 @@ export default function PublicProfilePage() {
                 )}
               </div>
             )}
+              </>
+            )}
           </div>
 
           <div className="relative mb-6">
@@ -303,14 +326,16 @@ export default function PublicProfilePage() {
                 <Lock className="w-8 h-8 text-purple-500 mx-auto mb-3" />
                 <h3 className="font-bold text-gray-900 mb-2">See More</h3>
                 <p className="text-gray-600 text-sm mb-4">
-                  Join consumed to see {displayName}'s full profile, lists, reviews, and activity
+                  {user
+                    ? `Visit ${displayName}'s profile to connect and see more.`
+                    : `Join consumed to see ${displayName}'s full profile, lists, reviews, and activity`}
                 </p>
                 <Button 
-                  onClick={handleJoin}
+                  onClick={handleProfileAction}
                   className="w-full bg-purple-600 hover:bg-purple-700"
                   data-testid="button-join-see-more"
                 >
-                  Join consumed - It's Free
+                  {user ? `View ${displayName}'s profile` : "Join consumed - It's Free"}
                 </Button>
               </div>
             </div>
@@ -322,11 +347,11 @@ export default function PublicProfilePage() {
               See what friends are watching, get your Entertainment DNA, and discover what to consume next
             </p>
             <Button 
-              onClick={handleJoin}
+              onClick={handleProfileAction}
               className="bg-white text-purple-700 hover:bg-gray-100 font-semibold px-8"
               data-testid="button-get-started"
             >
-              Get Started Free
+              {user ? `View ${displayName}'s profile` : "Get Started Free"}
             </Button>
           </div>
         </div>

@@ -2520,9 +2520,10 @@ export default function UserProfile() {
 
           if (response.ok) {
             const data = await response.json();
-            if (data && (data.profile_text || data.dna_type)) {
-              console.log('DNA profile ready:', data);
-              setDnaProfile(data);
+            const profile = data?.dna_profile;
+            if (profile && (profile.profile_text || profile.dna_type)) {
+              console.log('DNA profile ready:', profile);
+              setDnaProfile(profile);
               setDnaProfileStatus('has_profile');
               setIsGeneratingProfile(false);
               return true;

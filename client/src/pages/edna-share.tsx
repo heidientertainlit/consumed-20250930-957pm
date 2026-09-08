@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useRoute } from "wouter";
-import { Loader2 } from "lucide-react";
+import { useRoute, useLocation } from "wouter";
+import { Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 
 interface DNAProfile {
   id: string;
@@ -22,29 +22,35 @@ interface DNAProfile {
 
 export default function EdnaSharePage() {
   const [, params] = useRoute("/edna/:id");
+  const [, navigate] = useLocation();
+  const { session, loading: authLoading } = useAuth();
   const [dnaProfile, setDnaProfile] = useState<DNAProfile | null>(null);
+  const [access, setAccess] = useState<"full" | "preview">("preview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDNAProfile = async () => {
-      if (!params?.id) return;
+      if (!params?.id || authLoading) return;
 
       try {
+        setLoading(true);
+        setError(null);
         // Get user_id from query parameter or URL path
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('user') || params.id;
 
         console.log('Fetching public DNA for user:', userId);
 
-        // Call Edge Function with service role access to bypass RLS
+        const token = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-dna?user_id=${userId}`,
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
+              "Authorization": `Bearer ${token}`,
             },
           }
         );
@@ -60,6 +66,7 @@ export default function EdnaSharePage() {
 
         if (data.dna_profile) {
           setDnaProfile(data.dna_profile as DNAProfile);
+          setAccess(data.access === "full" ? "full" : "preview");
         } else {
           throw new Error('No DNA profile returned');
         }
@@ -72,7 +79,7 @@ export default function EdnaSharePage() {
     };
 
     fetchDNAProfile();
-  }, [params?.id]);
+  }, [params?.id, authLoading, session?.access_token]);
 
   if (loading) {
     return (
@@ -103,6 +110,15 @@ export default function EdnaSharePage() {
   }
 
   const userName = dnaProfile.users?.display_name || dnaProfile.users?.user_name || 'Someone';
+  const isPreview = access === "preview";
+  const handleProfileAction = () => {
+    if (session) {
+      navigate(`/user/${dnaProfile.user_id}?ref=invite`);
+      return;
+    }
+    localStorage.setItem("consumed_referrer", dnaProfile.user_id);
+    navigate("/login");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-700 to-purple-500 py-12 px-4">
@@ -119,14 +135,14 @@ export default function EdnaSharePage() {
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-white/20">
           <div className="text-center">
             <p className="text-white text-lg mb-3" data-testid="text-top-cta">
-              Try consumed and get your own Entertainment DNA
+              {isPreview ? `Connect with ${userName} on consumed to unlock their full Entertainment DNA` : "Try consumed and get your own Entertainment DNA"}
             </p>
             <Button
-              onClick={() => window.location.href = '/login'}
+              onClick={handleProfileAction}
               className="bg-white text-purple-700 hover:bg-gray-100 font-semibold px-8 py-3 text-lg shadow-lg"
               data-testid="button-get-started-top"
             >
-              Get Started Free
+              {session ? `View ${userName}'s profile` : "Get Started Free"}
             </Button>
           </div>
         </div>
@@ -145,17 +161,30 @@ export default function EdnaSharePage() {
             )}
           </div>
 
-          {/* Divider */}
-          <div className="border-t border-gray-200 my-6" />
+          {isPreview ? (
+            <div className="border-t border-gray-200 mt-6 pt-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mx-auto mb-3">
+                <Lock className="w-5 h-5 text-purple-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">A closer look is for friends</h3>
+              <p className="text-gray-600 mb-5">
+                {session
+                  ? `Visit ${userName}'s profile to connect and see their entertainment tastes.`
+                  : `Join ${userName} on consumed to see their favorite genres, entertainment style, and full DNA.`}
+              </p>
+              <Button onClick={handleProfileAction} className="bg-purple-600 hover:bg-purple-700 text-white px-8" data-testid="button-preview-profile-action">
+                {session ? `View ${userName}'s profile` : "Log in to connect"}
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="border-t border-gray-200 my-6" />
+              <div className="mb-8">
+                <p className="text-gray-700 text-lg leading-relaxed" data-testid="text-dna-profile">
+                  {dnaProfile.profile_text}
+                </p>
+              </div>
 
-          {/* Profile Text */}
-          <div className="mb-8">
-            <p className="text-gray-700 text-lg leading-relaxed" data-testid="text-dna-profile">
-              {dnaProfile.profile_text}
-            </p>
-          </div>
-
-          {/* Favorite Genres */}
           {dnaProfile.favorite_genres && dnaProfile.favorite_genres.length > 0 && (
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-gray-700 mb-3" data-testid="text-section-genres">Favorite Genres</h3>
@@ -226,6 +255,8 @@ export default function EdnaSharePage() {
               </div>
             </div>
           )}
+            </>
+          )}
 
           {/* CTA */}
           <div className="pt-6 border-t border-gray-200 text-center">
@@ -233,11 +264,11 @@ export default function EdnaSharePage() {
               Discover your own Entertainment DNA
             </p>
             <Button
-              onClick={() => window.location.href = '/login'}
+              onClick={handleProfileAction}
               className="bg-purple-600 hover:bg-purple-700 text-white px-8"
               data-testid="button-discover-yours"
             >
-              Get Started on consumed
+              {session ? `View ${userName}'s profile` : "Get Started on consumed"}
             </Button>
           </div>
         </div>

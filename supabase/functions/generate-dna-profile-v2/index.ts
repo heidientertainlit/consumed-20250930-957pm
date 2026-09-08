@@ -521,7 +521,7 @@ Respond with valid JSON only:
       flavor_notes:         flavorNoteLabels.length > 0 ? flavorNoteLabels : (gpt.flavorNotes || []),
       favorite_genres:      gpt.favoriteGenres || [],
       favorite_media_types: gpt.favoriteMediaTypes || [],
-      is_private:           false,
+      // Existing privacy is owner-controlled; regeneration must never reset it.
       updated_at:           new Date().toISOString(),
       // new fields
       core_archetype:       safeCore,

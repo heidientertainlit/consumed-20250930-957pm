@@ -30,6 +30,17 @@ function flt(v: any): number {
   return isNaN(n) ? 0 : n;
 }
 
+async function fetchAdminDnaProfiles(userIds?: string[]) {
+  const { data, error } = await supabase.functions.invoke("admin-dna-export", {
+    body: userIds === undefined ? {} : { userIds },
+  });
+  if (error) throw error;
+  if (!data || !Array.isArray(data.profiles)) {
+    throw new Error("DNA export returned an invalid response");
+  }
+  return data.profiles;
+}
+
 async function buildMasterExport() {
   // 1. Non-persona real users
   const { data: users } = await supabase
@@ -93,9 +104,7 @@ async function buildMasterExport() {
   });
 
   // 4. DNA profiles (archetype, tagline, flavor notes)
-  const { data: dnaProfiles } = await supabase
-    .from("dna_profiles")
-    .select("user_id, label, tagline, flavor_notes, favorite_genres");
+  const dnaProfiles = await fetchAdminDnaProfiles();
 
   const dnaMap: Record<string, any> = {};
   (dnaProfiles || []).forEach((d: any) => { dnaMap[d.user_id] = d; });
@@ -811,12 +820,9 @@ async function buildTodaysPlayExport() {
 
   // DNA profiles for archetype labels
   const respondentIds = [...new Set((responses || []).map((r: any) => r.user_id))];
-  const { data: dnaProfiles } = respondentIds.length > 0
-    ? await supabase
-        .from("dna_profiles")
-        .select("user_id, label, favorite_genres")
-        .in("user_id", respondentIds)
-    : { data: [] };
+  const dnaProfiles = respondentIds.length > 0
+    ? await fetchAdminDnaProfiles(respondentIds)
+    : [];
 
   const dnaMap: Record<string, any> = {};
   (dnaProfiles || []).forEach((d: any) => { dnaMap[d.user_id] = d; });
