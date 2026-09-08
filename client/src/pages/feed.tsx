@@ -6256,6 +6256,11 @@ export default function Feed() {
 
     const groups = new Map<string, any>();
     for (const p of pool) {
+      const rawPost = p._rawPost || p;
+      const originType = p.origin_type || rawPost.origin_type;
+      const isPersona = p.user?.is_persona === true || rawPost.user?.is_persona === true;
+      if (originType !== 'user' || isPersona) continue;
+
       const m = mediaOf(p);
       if (!m.title) continue;
       const key = (m.externalSource && m.externalId)
@@ -6275,7 +6280,7 @@ export default function Feed() {
     }
 
     // Qualify groups: >=2 distinct people talking, >=1 written take.
-    // Sort by most people talking, then most posts. Take top 3 trending titles.
+    // Sort organic conversations by most distinct people talking, then most posts.
     const qualified = Array.from(groups.values())
       .map((g: any) => ({ ...g, takes: g.posts.filter((p: any) => p.content && p.content.trim()) }))
       .filter((g: any) => g.users.size >= 2 && g.takes.length >= 1)
@@ -9284,7 +9289,7 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && everyonesTalking && everyonesTalking.length > 0 && (
                 <EveryonesTalkingCard
                   key={everyonesTalking[0].key}
-                  groups={everyonesTalking.slice(0, 5)}
+                  groups={everyonesTalking.slice(0, 3)}
                   currentUserId={currentAppUserId}
                   session={session}
                   onOpenMedia={(g: any) => {
