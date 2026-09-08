@@ -56,10 +56,11 @@ serve(async (req) => {
       'favorites': { title: 'Favorites', patterns: ['Favorites', '%Favorite%'] }
     };
 
-    const listConfig = listTypeMap[target_list];
-    if (!listConfig) {
+    if (typeof target_list !== 'string' ||
+      !Object.prototype.hasOwnProperty.call(listTypeMap, target_list)) {
       throw new Error('Invalid target list');
     }
+    const listConfig = listTypeMap[target_list];
 
     // Find the target list for this user - try exact match first, then patterns
     let targetListData = null;
