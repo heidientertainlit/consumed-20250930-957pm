@@ -8976,21 +8976,16 @@ export default function Feed() {
         <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-4 -mt-px">
           <div className="max-w-4xl mx-auto px-4 pt-4">
             <div className="rounded-2xl border border-purple-500/25 bg-white/[0.04] p-5" data-testid="guest-dna-teaser">
-              <div className="flex items-start">
+              <div className="flex items-start gap-1.5">
                 <div className="flex flex-col">
-                  <span className="text-[8px] font-medium uppercase tracking-[0.12em] text-purple-300/65">
-                    Your
-                  </span>
-                  <div className="mt-0.5 flex items-center gap-1.5">
-                    <p className="text-purple-300 text-[11px] font-semibold uppercase tracking-[0.18em]">
-                      Entertainment DNA
-                    </p>
-                    <Dna className="w-3.5 h-3.5 text-purple-300" />
-                  </div>
+                  <p className="text-purple-300 text-[11px] font-semibold uppercase tracking-[0.18em]">
+                    Your Entertainment DNA
+                  </p>
                   <span className="mt-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-purple-300/65">
                     Profile
                   </span>
                 </div>
+                <Dna className="mt-0.5 w-3.5 h-3.5 text-purple-300" />
               </div>
               <div className="flex items-center justify-between gap-4 mt-3">
                 <div className="min-w-0">
