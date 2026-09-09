@@ -8978,7 +8978,10 @@ export default function Feed() {
             <div className="rounded-2xl border border-purple-500/25 bg-white/[0.04] p-5" data-testid="guest-dna-teaser">
               <div className="flex items-center gap-1.5">
                 <p className="text-purple-300 text-[11px] font-semibold uppercase tracking-[0.18em]">
-                  Your Entertainment DNA Profile
+                  Your Entertainment DNA{" "}
+                  <span className="text-[8px] font-medium tracking-[0.12em] text-purple-300/65">
+                    Profile
+                  </span>
                 </p>
                 <Dna className="w-3.5 h-3.5 text-purple-300" />
               </div>
