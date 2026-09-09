@@ -147,7 +147,7 @@ export function FeedIdentityHero() {
                 className="text-[11px] font-bold uppercase"
                 style={{ letterSpacing: "0.16em", color: "rgba(192,160,255,0.9)" }}
               >
-                Your Entertainment DNA
+                Your Entertainment DNA Profile
               </span>
               <Dna size={13} className="text-purple-400" />
             </div>
