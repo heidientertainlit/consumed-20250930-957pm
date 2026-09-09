@@ -142,20 +142,22 @@ export function FeedIdentityHero() {
 
           {/* Header row */}
           <div className="relative flex items-center justify-between mb-4">
-            <div className="flex items-center gap-1.5">
-              <span
-                className="text-[11px] font-bold uppercase"
-                style={{ letterSpacing: "0.16em", color: "rgba(192,160,255,0.9)" }}
-              >
-                Your Entertainment DNA{" "}
+            <div className="flex items-start gap-1.5">
+              <div className="flex flex-col">
                 <span
-                  className="text-[8px] font-medium"
+                  className="text-[11px] font-bold uppercase"
+                  style={{ letterSpacing: "0.16em", color: "rgba(192,160,255,0.9)" }}
+                >
+                  Your Entertainment DNA
+                </span>
+                <span
+                  className="mt-0.5 text-[8px] font-medium uppercase"
                   style={{ letterSpacing: "0.12em", color: "rgba(192,160,255,0.65)" }}
                 >
                   Profile
                 </span>
-              </span>
-              <Dna size={13} className="text-purple-400" />
+              </div>
+              <Dna size={13} className="mt-0.5 text-purple-400" />
             </div>
             <button
               onClick={() => {
