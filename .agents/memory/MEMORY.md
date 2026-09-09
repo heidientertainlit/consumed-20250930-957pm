@@ -59,3 +59,4 @@
 - [Friend invitation voice](friend-invitation-voice.md) — invite copy should create curiosity around comparing Entertainment DNA, not read like a generic app referral.
 - [Rank creation boundaries](rank-creation-boundaries.md) — Play ranks are not tracking lists or full profiles; preserve public contributions while denying foreign private-rank inserts.
 - [Development share pages](development-share-page-rendering.md) — verify direct links as well as SPA navigation; metadata HTML must retain Vite's development preamble.
+- [Native update gate rollout](native-update-gate-rollout.md) — the first checker-bearing iOS release must remain supported; only later can remote minimum-version enforcement move beyond it.

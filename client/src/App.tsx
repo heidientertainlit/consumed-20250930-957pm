@@ -16,6 +16,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "./lib/auth";
 import { IdentityAwareRoute, ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
 import { FeatureFlagsProvider, useFeatureFlags } from "@/lib/feature-flags";
+import { AppUpdateGate } from "@/components/app-update-gate";
 
 // Pages
 import AdminPage from "@/pages/admin";
@@ -221,6 +222,7 @@ function Router() {
   return (
     <AuthProvider>
       <PageTracker>
+        <AppUpdateGate />
         <PendingRouteHandler />
         <CapacitorDeepLinkHandler />
 
