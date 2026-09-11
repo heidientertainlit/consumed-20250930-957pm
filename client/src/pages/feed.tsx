@@ -2518,11 +2518,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     return (
       <>
         {/* ── SeenIt-style carousel card ── */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-visible">
+        <div className="relative bg-white rounded-2xl shadow-sm overflow-visible">
+          {currentUserId && post.user?.id !== currentUserId && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }}
+              className="absolute top-1 right-1 z-10 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 hover:text-orange-600 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 transition-colors"
+              title="Report review"
+              aria-label="Report review"
+            >
+              <Flag size={17} />
+            </button>
+          )}
 
           {/* Header: label + type pill + ‹ N of M › nav */}
           {swipeProps?.navigate && swipeProps?.totalPosts && swipeProps.totalPosts > 1 && (
-            <div className="flex items-center justify-center gap-1.5 px-4 pt-4 pb-2">
+            <div className="flex min-h-12 items-center justify-center gap-1.5 px-12 pt-4 pb-2">
               {Array.from({ length: swipeProps.totalPosts }).map((_, i) => (
                 <button
                   key={i}
@@ -2537,6 +2547,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 />
               ))}
             </div>
+          )}
+          {!(swipeProps?.navigate && swipeProps?.totalPosts && swipeProps.totalPosts > 1) && (
+            <div className="h-12" />
           )}
 
           {/* Content row — poster anchored left, take on the right (updates as you swipe) */}
@@ -2705,9 +2718,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   ) : null}
                 </div>
                 <div className="flex items-center gap-0.5 flex-shrink-0 self-start">
-                  {currentUserId && post.user?.id !== currentUserId && (
-                    <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-orange-500 transition-colors p-1 rounded-full hover:bg-orange-50" title="Report review"><Flag size={13} /></button>
-                  )}
                   {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
                     <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this post?')) onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50" title="Delete post"><Trash2 size={13} /></button>
                   )}
