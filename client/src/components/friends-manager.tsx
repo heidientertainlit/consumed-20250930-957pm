@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Search, Check, UserPlus, X, Users, Plus, ChevronRight, ChevronDown, User } from "lucide-react";
+import { Search, Check, UserPlus, X, Users, Plus, ChevronRight, ChevronDown, User, Ban } from "lucide-react";
 import { useFriendsManagement } from "@/hooks/use-friends-management";
 import { APP_BASE } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
+import { BlockUserSheet } from "@/components/block-user-sheet";
 import type { Person } from "@/pages/people";
 
 interface FriendsManagerProps {
@@ -29,6 +30,7 @@ export default function FriendsManager({
   const setSearchQuery = onSearchQueryChange ?? setInternalSearchQuery;
   const [requestsOpen, setRequestsOpen] = useState(false);
   const [showAllFriends, setShowAllFriends] = useState(false);
+  const [blockTarget, setBlockTarget] = useState<{ id: string; name?: string } | null>(null);
   const { toast } = useToast();
 
   const {
@@ -150,8 +152,17 @@ export default function FriendsManager({
                            <UserPlus size={13} className="mr-1" />
                            Add
                          </Button>
-                       )}
-                    </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setBlockTarget({ id: searchUser.id, name: searchUser.user_name })}
+                          className="ml-2 shrink-0 rounded-full p-2 text-[#a28f9f] transition hover:bg-red-50 hover:text-red-600"
+                          title={`Block ${displayName}`}
+                          aria-label={`Block ${displayName}`}
+                        >
+                          <Ban size={15} />
+                        </button>
+                     </div>
                   );
                 })
               ) : (
@@ -237,6 +248,15 @@ export default function FriendsManager({
                     >
                       <X size={13} />
                     </Button>
+                     <button
+                       type="button"
+                       onClick={() => setBlockTarget({ id: request.user_id, name: request.users?.user_name })}
+                       className="rounded-full p-2 text-[#a28f9f] transition hover:bg-red-50 hover:text-red-600"
+                       title={`Block ${request.users?.user_name || "this user"}`}
+                       aria-label={`Block ${request.users?.user_name || "this user"}`}
+                     >
+                       <Ban size={15} />
+                     </button>
                   </div>
                 </div>
               ))}
@@ -265,7 +285,7 @@ export default function FriendsManager({
         <ChevronRight size={18} className="shrink-0 text-[#8b7e91]" />
       </button>
     </div>
-    {featuredFriend && <ClosestFriendCard friend={featuredFriend} />}
+    {featuredFriend && <ClosestFriendCard friend={featuredFriend} onBlock={() => setBlockTarget({ id: featuredFriend.id, name: featuredFriend.user_name })} />}
     {(!featuredFriend || sortedFriends.length > 0) && <section className="mt-7">
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
@@ -320,6 +340,15 @@ export default function FriendsManager({
                 >
                   {matchScore != null ? `${matchScore}% match` : "Compare DNA"}
                 </Link>
+                 <button
+                   type="button"
+                   onClick={() => setBlockTarget({ id: friend.id, name: friend.user_name })}
+                   className="shrink-0 rounded-full p-2 text-[#a28f9f] transition hover:bg-red-50 hover:text-red-600"
+                   title={`Block ${displayName}`}
+                   aria-label={`Block ${displayName}`}
+                 >
+                   <Ban size={15} />
+                 </button>
               </div>
             );
           })}
@@ -340,11 +369,19 @@ export default function FriendsManager({
         </button>
       )}
     </section>}
+    {blockTarget && (
+      <BlockUserSheet
+        isOpen
+        onClose={() => setBlockTarget(null)}
+        targetUserId={blockTarget.id}
+        targetUserName={blockTarget.name}
+      />
+    )}
     </>
   );
 }
 
-function ClosestFriendCard({ friend }: { friend: Person }) {
+function ClosestFriendCard({ friend, onBlock }: { friend: Person; onBlock?: () => void }) {
   const first = friend.first_name?.trim();
   const last = friend.last_name?.trim();
   const displayName = first
@@ -389,5 +426,15 @@ function ClosestFriendCard({ friend }: { friend: Person }) {
         <span className="inline-flex items-center gap-1">View profile <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" /></span>
       </div>
     </Link>
+    {onBlock && (
+      <button
+        type="button"
+        onClick={onBlock}
+        className="mt-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold text-[#a28f9f] transition hover:bg-red-50 hover:text-red-600"
+        aria-label={`Block ${displayName}`}
+      >
+        <Ban size={13} /> Block
+      </button>
+    )}
   </section>;
 }

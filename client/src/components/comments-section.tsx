@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { renderMentions } from "@/lib/mentions";
 import MentionInput from "@/components/mention-input";
 import MediaRecInput from "@/components/media-rec-input";
+import { filterCommentsForBlockedUsers } from "@/lib/block-user";
+import { useBlockedUsers } from "@/hooks/use-blocked-users";
 
 interface MediaMetadata {
   title: string;
@@ -515,10 +517,23 @@ export default function CommentsSection({
     if (forceShowAddInput) setShowAddRecInput(true);
   }, [forceShowAddInput]);
   
+  const viewerId = session?.user?.id || currentUserId;
+  const blockedUsers = useBlockedUsers(viewerId);
+  const blockedUserIds = blockedUsers.data || [];
+  const blockedUsersReady = !!viewerId && blockedUsers.isSuccess;
+  const blockedUsersError = blockedUsers.error || (
+    session?.access_token && !viewerId
+      ? new Error("Your account could not be identified while checking blocked users.")
+      : null
+  );
   const { data: comments, isLoading } = useQuery({
-    queryKey: ["post-comments", postId],
-    queryFn: () => fetchComments(postId),
-    enabled: !!session?.access_token,
+    queryKey: ["post-comments", postId, viewerId || "anonymous", blockedUserIds.join(",")],
+    queryFn: async () => {
+      if (!blockedUsersReady) throw new Error("Blocked users have not been verified for this account yet.");
+      const fetchedComments = await fetchComments(postId);
+      return filterCommentsForBlockedUsers(fetchedComments, blockedUserIds);
+    },
+    enabled: !!session?.access_token && blockedUsersReady,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -582,7 +597,13 @@ export default function CommentsSection({
         )
       ) : (
         <>
-          {isLoading ? (
+          {blockedUsersError ? (
+            <div className="rounded-lg bg-red-50 px-3 py-2 text-center text-xs text-red-700">
+              {blockedUsersError.message}
+            </div>
+          ) : !blockedUsersReady ? (
+            <div className="py-2 text-center text-xs text-gray-400">Checking your blocked users…</div>
+          ) : isLoading ? (
             <div className="space-y-2">
               {[1, 2].map((n) => (
                 <div key={n} className="flex items-start space-x-2 animate-pulse">

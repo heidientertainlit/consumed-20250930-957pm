@@ -57,6 +57,7 @@ import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
 import { DnaShareExperience } from "@/components/dna-share-experience";
 import { ReportSheet } from "@/components/report-sheet";
+import { BlockUserSheet } from "@/components/block-user-sheet";
 import { ProfilePhotoEditor } from "@/components/profile-photo-editor";
 import { DnaComparisonDeveloping, isDnaComparisonReady } from "@/components/dna-comparison-developing";
 
@@ -166,7 +167,6 @@ export default function UserProfile() {
   const [isProfileOptionsOpen, setIsProfileOptionsOpen] = useState(false);
   const [isReportUserOpen, setIsReportUserOpen] = useState(false);
   const [isBlockConfirmOpen, setIsBlockConfirmOpen] = useState(false);
-  const [isBlocking, setIsBlocking] = useState(false);
 
   // Entertainment DNA states
   const [dnaProfileStatus, setDnaProfileStatus] = useState<'loading' | 'no_profile' | 'has_profile' | 'generating'>('loading');
@@ -1340,31 +1340,6 @@ export default function UserProfile() {
     );
   };
 
-  // Send friend request
-  const handleBlockUser = async () => {
-    if (!session?.access_token || !viewingUserId) return;
-    setIsBlocking(true);
-    try {
-      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/block-user`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ blocked_user_id: viewingUserId }),
-      });
-      toast({ title: "User blocked", description: "They won't appear in your feed." });
-      setIsBlockConfirmOpen(false);
-      setIsProfileOptionsOpen(false);
-      setLocation('/');
-    } catch {
-      toast({ title: "Something went wrong", description: "Please try again.", variant: "destructive" });
-    } finally {
-      setIsBlocking(false);
-    }
-  };
-
   const sendFriendRequest = async (friendId: string) => {
     if (!session?.access_token) return;
 
@@ -1517,6 +1492,7 @@ export default function UserProfile() {
 
   // Fetch user profile data from custom users table
   useEffect(() => {
+    let cancelled = false;
     const fetchUserProfile = async () => {
       if (!session?.access_token || !viewingUserId) return;
 
@@ -1529,7 +1505,7 @@ export default function UserProfile() {
         while (retries > 0 && !data) {
           const result = await supabase
             .from('public_user_profiles')
-            .select('user_name, first_name, last_name, display_name, avatar')
+            .select('id, user_name, first_name, last_name, display_name, avatar')
             .eq('id', viewingUserId)
             .single();
 
@@ -1544,7 +1520,7 @@ export default function UserProfile() {
           }
         }
 
-        if (!error && data) {
+        if (!cancelled && !error && data) {
           console.log('✅ User profile data loaded successfully:', data);
           setUserProfileData(data);
         } else {
@@ -1558,6 +1534,9 @@ export default function UserProfile() {
     };
 
     fetchUserProfile();
+    return () => {
+      cancelled = true;
+    };
   }, [session?.access_token, viewingUserId]);
 
   // Clear state when switching profiles to avoid showing stale data
@@ -1573,8 +1552,12 @@ export default function UserProfile() {
     setDnaItemCount(0);
     setHighlights([]);
     setUserBadges([]);
+    setUserProfileData(null);
     setFriendshipStatus('loading');
     setFriendshipCheckedUserId(null);
+    setIsProfileOptionsOpen(false);
+    setIsReportUserOpen(false);
+    setIsBlockConfirmOpen(false);
   }, [viewingUserId]);
 
   // Viewer's own compare eligibility (survey + items) when viewing a friend
@@ -3263,7 +3246,7 @@ export default function UserProfile() {
               Connect to see their Entertainment DNA, ratings, lists, and what they’re consuming.
             </p>
 
-            <div className="mt-6 flex justify-center">
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
               {friendshipStatus === 'loading' ? (
                 <Button disabled className="rounded-full bg-gray-200 px-6 text-gray-500">
                   <Loader2 size={17} className="mr-2 animate-spin" /> Checking connection
@@ -3285,9 +3268,31 @@ export default function UserProfile() {
                   <Users size={17} className="mr-2" /> {isSendingRequest ? 'Sending…' : 'Add Friend'}
                 </Button>
               )}
+              {viewingUserId && userProfileData?.id === viewingUserId && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsBlockConfirmOpen(true)}
+                  className="rounded-full border-red-200 px-6 text-red-600 hover:bg-red-50 hover:text-red-700"
+                >
+                  <Ban size={17} className="mr-2" /> Block
+                </Button>
+              )}
             </div>
           </section>
         </main>
+        {viewingUserId && userProfileData?.id === viewingUserId && (
+          <BlockUserSheet
+            isOpen={isBlockConfirmOpen}
+            onClose={() => setIsBlockConfirmOpen(false)}
+            targetUserId={viewingUserId}
+            targetUserName={userProfileData?.id === viewingUserId ? userProfileData.user_name : undefined}
+            onBlocked={() => {
+              setIsBlockConfirmOpen(false);
+              setLocation('/people');
+            }}
+          />
+        )}
       </div>
     );
   }
@@ -6064,32 +6069,18 @@ export default function UserProfile() {
         </SheetContent>
       </Sheet>
 
-      {/* Block Confirmation Sheet */}
-      <Sheet open={isBlockConfirmOpen} onOpenChange={setIsBlockConfirmOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl pb-safe bg-white text-gray-900">
-          <SheetTitle className="text-base font-semibold text-gray-900 mb-2">
-            Block @{userProfileData?.user_name || 'this user'}?
-          </SheetTitle>
-          <p className="text-sm text-gray-500 mb-6">They won't be able to see your profile and you won't see their content.</p>
-          <div className="flex flex-col gap-3">
-            <Button
-              onClick={handleBlockUser}
-              disabled={isBlocking}
-              className="w-full bg-red-600 hover:bg-red-700 text-white rounded-full py-3 font-semibold"
-            >
-              {isBlocking ? <Loader2 size={18} className="mr-2 animate-spin" /> : <Ban size={18} className="mr-2" />}
-              {isBlocking ? 'Blocking...' : 'Block user'}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsBlockConfirmOpen(false)}
-              className="w-full rounded-full py-3 font-semibold border-gray-200"
-            >
-              Cancel
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
+      {viewingUserId && userProfileData?.id === viewingUserId && (
+        <BlockUserSheet
+          isOpen={isBlockConfirmOpen}
+          onClose={() => setIsBlockConfirmOpen(false)}
+          targetUserId={viewingUserId}
+          targetUserName={userProfileData?.id === viewingUserId ? userProfileData.user_name : undefined}
+          onBlocked={() => {
+            setIsProfileOptionsOpen(false);
+            setLocation('/');
+          }}
+        />
+      )}
 
       {/* Report User Sheet */}
       {viewingUserId && (

@@ -64,6 +64,8 @@ import { apiRequest, queryClient as globalQueryClient } from "@/lib/queryClient"
 import { renderMentions } from "@/lib/mentions";
 import { copyLink, shareLink } from "@/lib/share";
 import { formatFeedName } from "@/lib/feed-name";
+import { blockedUsersQueryKey, filterCommentsForBlockedUsers, getBlockedUserIdsForViewer } from "@/lib/block-user";
+import { useBlockedUsers } from "@/hooks/use-blocked-users";
 import { MEDIA_MATCH_SCORER_VERSION } from "@/lib/media-match";
 import { canonicalMediaIdFrom, mergePreferredMediaRatings } from "@/lib/canonical-media";
 import { FeedbackDialog } from "@/components/feedback-dialog";
@@ -1303,6 +1305,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [alignmentNudge, setAlignmentNudge] = useState(false);
   const [relatedRatings, setRelatedRatings] = useState<Array<{userId: string; userName: string; displayName: string; avatar?: string; rating: number; content?: string}>>([]);
   const [showAllRelated, setShowAllRelated] = useState(false);
+  const blockedViewerId = session?.user?.id || currentUserId;
+  const blockedUsers = useBlockedUsers(blockedViewerId);
+  const blockedUserIds = blockedUsers.data || [];
+  const blockedUserIdsKey = `${blockedViewerId || "anonymous"}:${blockedUserIds.join(",")}`;
+
+  useEffect(() => {
+    if (!blockedUsers.isSuccess) {
+      setComments([]);
+      setCommentsLoaded(false);
+      return;
+    }
+    setComments((current) => filterCommentsForBlockedUsers(current, blockedUserIds));
+  }, [blockedUserIdsKey, blockedUsers.isSuccess]);
   const [showAllComments, setShowAllComments] = useState(false);
   const [, setLocation] = useLocation();
   const [seenItDone, setSeenItDone] = useState(false);
@@ -1683,7 +1698,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       setReplyOpen(false);
     }
     const isRating = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought';
-    if (!isRating || !post.id || hasFetched.current) return;
+    if (!isRating || !post.id || !blockedUsers.isSuccess || hasFetched.current) return;
     hasFetched.current = true;
     let cancelled = false;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
@@ -1708,7 +1723,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       cancelled = true;
       if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [post.id, post.type, session?.access_token]);
+  }, [post.id, post.type, session?.access_token, blockedUsers.isSuccess]);
 
   const ratingSave = useConfirmedRatingSave({
     resetKey: `${post.id}:${session?.user?.id || ''}`,
@@ -1804,7 +1819,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   const handleCommentToggle = async (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (!showComments && !hasFetched.current) {
+    if (!showComments && blockedUsers.isSuccess && !hasFetched.current) {
       hasFetched.current = true;
       setLoadingComments(true);
       try {
@@ -2218,7 +2233,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
         {showComments && (
           <div className={`border-t border-gray-200 bg-gray-50 ${replyingToName ? 'border-l-[3px] border-violet-400' : ''}`}>
-            {loadingComments ? (
+            {blockedUsers.isError ? (
+              <p className="text-xs text-red-600 text-center py-4">{blockedUsers.error.message}</p>
+            ) : !blockedUsers.isSuccess ? (
+              <p className="text-xs text-gray-400 text-center py-4">Checking your blocked users…</p>
+            ) : loadingComments ? (
               <p className="text-xs text-gray-400 text-center py-4">Loading...</p>
             ) : comments.length === 0 ? (
               <div className="px-4 pt-4 pb-5">
@@ -2398,7 +2417,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
         {showComments && (
           <div className={`border-t border-gray-200 bg-gray-50 ${replyingToName ? 'border-l-[3px] border-violet-400' : ''}`}>
-            {loadingComments ? (
+            {blockedUsers.isError ? (
+              <p className="text-xs text-red-600 text-center py-4">{blockedUsers.error.message}</p>
+            ) : !blockedUsers.isSuccess ? (
+              <p className="text-xs text-gray-400 text-center py-4">Checking your blocked users…</p>
+            ) : loadingComments ? (
               <p className="text-xs text-gray-400 text-center py-4">Loading...</p>
             ) : comments.length === 0 ? (
               <div className="px-4 pt-4 pb-5">
@@ -3737,6 +3760,18 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   const [loadingComments, setLoadingComments] = useState(false);
   const [reportCommentLocal, setReportCommentLocal] = useState<{ commentId: string; userId: string; userName: string } | null>(null);
   const hasFetchedComments = useRef(false);
+  const blockedViewerId = session?.user?.id || currentUserId;
+  const blockedUsers = useBlockedUsers(blockedViewerId);
+  const blockedUserIds = blockedUsers.data || [];
+  const blockedUserIdsKey = `${blockedViewerId || "anonymous"}:${blockedUserIds.join(",")}`;
+  useEffect(() => {
+    if (!blockedUsers.isSuccess) {
+      setComments([]);
+      hasFetchedComments.current = false;
+      return;
+    }
+    setComments((current) => filterCommentsForBlockedUsers(current, blockedUserIds));
+  }, [blockedUserIdsKey, blockedUsers.isSuccess]);
   const [localLikedComments, setLocalLikedComments] = useState<Set<string>>(new Set());
   const [replyingTo, setReplyingTo] = useState<{ id: string; name: string } | null>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
@@ -4085,7 +4120,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   };
 
   useEffect(() => {
-    if (isCommentsActive && !hasFetchedComments.current && fetchComments) {
+    if (isCommentsActive && blockedUsers.isSuccess && !hasFetchedComments.current && fetchComments) {
       hasFetchedComments.current = true;
       setLoadingComments(true);
       fetchComments(post.id).then(data => {
@@ -4093,14 +4128,14 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
         setLoadingComments(false);
       }).catch(() => setLoadingComments(false));
     }
-  }, [isCommentsActive, post.id]);
+  }, [isCommentsActive, post.id, blockedUsers.isSuccess, blockedUserIdsKey]);
 
   const handleSubmitComment = () => {
     if (!commentText.trim() || !onSubmitComment) return;
     onSubmitComment(post.id, commentText.trim());
     setCommentText('');
     setTimeout(() => {
-      if (fetchComments) {
+      if (fetchComments && blockedUsers.isSuccess) {
         fetchComments(post.id).then(data => setComments(data || []));
       }
     }, 1000);
@@ -4245,7 +4280,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
             <p className="text-[10px] text-gray-400 mt-2">Counts toward your entertainment DNA</p>
             {isCommentsActive && (
               <div className="mt-3 pt-3 border-t border-gray-100">
-                {loadingComments ? <p className="text-xs text-gray-400 text-center py-2">Loading...</p> : comments.length === 0 ? <p className="text-xs text-gray-400 text-center py-2">No comments yet</p> : (
+                {blockedUsers.isError ? <p className="text-xs text-red-600 text-center py-2">{blockedUsers.error.message}</p> : !blockedUsers.isSuccess ? <p className="text-xs text-gray-400 text-center py-2">Checking your blocked users…</p> : loadingComments ? <p className="text-xs text-gray-400 text-center py-2">Loading...</p> : comments.length === 0 ? <p className="text-xs text-gray-400 text-center py-2">No comments yet</p> : (
                   <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto mb-2">
                     {comments.slice(0, 5).map((comment: any) => {
                       const commenterName = formatFeedName(comment.user?.displayName, comment.user?.username);
@@ -4431,7 +4466,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
           {isRatingType && <p className="text-[10px] text-gray-400 mt-2">Counts toward your entertainment DNA</p>}
           {isCommentsActive && (
             <div className="mt-3 pt-3 border-t border-gray-100">
-              {loadingComments ? <p className="text-xs text-gray-400 text-center py-2">Loading...</p> : comments.length === 0 ? <p className="text-xs text-gray-400 text-center py-2">No comments yet</p> : (
+              {blockedUsers.isError ? <p className="text-xs text-red-600 text-center py-2">{blockedUsers.error.message}</p> : !blockedUsers.isSuccess ? <p className="text-xs text-gray-400 text-center py-2">Checking your blocked users…</p> : loadingComments ? <p className="text-xs text-gray-400 text-center py-2">Loading...</p> : comments.length === 0 ? <p className="text-xs text-gray-400 text-center py-2">No comments yet</p> : (
                 <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto mb-2">
                   {comments.slice(0, 5).map((comment: any) => {
                     const commenterName = formatFeedName(comment.user?.displayName, comment.user?.username);
@@ -8514,8 +8549,17 @@ export default function Feed() {
       // Name enrichment is cosmetic — never block comments on it
     }
 
-    console.log('🔄 Transformed comments with nesting:', transformedComments);
-    return transformedComments;
+    const viewerId = session?.user?.id;
+    const blockedUsersState = viewerId ? globalQueryClient.getQueryState(blockedUsersQueryKey(viewerId)) : undefined;
+    if (!viewerId || blockedUsersState?.status !== "success") {
+      throw new Error("Blocked users have not been verified for this account yet.");
+    }
+    const visibleComments = filterCommentsForBlockedUsers<any>(
+      transformedComments,
+      getBlockedUserIdsForViewer(globalQueryClient, viewerId),
+    );
+    console.log('🔄 Transformed comments with nesting:', visibleComments);
+    return visibleComments;
   };
 
   const handleTrackConsumption = () => {

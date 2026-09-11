@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { useBlockedUsers } from '@/hooks/use-blocked-users';
+import { blockedUsersSignature, filterNotificationsForBlockedUsers } from '@/lib/block-user';
 
 interface Notification {
   id: string;
@@ -30,6 +32,10 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [, setLocation] = useLocation();
+  const blockedUsers = useBlockedUsers(userId || undefined);
+  const blockedUserIds = blockedUsers.data || [];
+  const blockedUserIdsKey = blockedUsersSignature(blockedUserIds);
+  const blockedUsersReady = !!userId && blockedUsers.isSuccess;
 
   // Get current user
   useEffect(() => {
@@ -42,11 +48,11 @@ export function NotificationBell() {
 
   // Fetch notifications (includes both regular and engagement notifications stored in DB)
   const { data: notifications = [], refetch } = useQuery<Notification[]>({
-    queryKey: ['/api/notifications', userId],
-    enabled: !!userId,
+    queryKey: ['/api/notifications', userId, blockedUserIdsKey],
+    enabled: blockedUsersReady,
     refetchInterval: 30000,
     queryFn: async () => {
-      if (!userId) return [];
+      if (!userId || !blockedUsersReady) throw new Error("Blocked users have not been verified for this account yet.");
       
       const { data, error } = await supabase
         .from('notifications')
@@ -59,8 +65,9 @@ export function NotificationBell() {
         console.error('[notifications] query error:', error.message, error.code);
         throw error;
       }
-      console.log('[notifications] loaded:', data?.length || 0, 'for user', userId, data?.map((n: any) => ({ type: n.type, message: n.message })));
-      return data || [];
+      const visibleNotifications = filterNotificationsForBlockedUsers(data || [], blockedUserIds);
+      console.log('[notifications] loaded:', visibleNotifications.length, 'for user', userId, visibleNotifications.map((n: any) => ({ type: n.type, message: n.message })));
+      return visibleNotifications;
     },
   });
 
@@ -70,7 +77,7 @@ export function NotificationBell() {
   // Refetch immediately when bell is opened
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
-    if (newOpen) refetch();
+    if (newOpen && blockedUsersReady) refetch();
   };
 
   // Mark notification as read
@@ -108,7 +115,7 @@ export function NotificationBell() {
 
   // Subscribe to realtime notifications
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !blockedUsersReady) return;
 
     const channel = supabase
       .channel(`notifications:${userId}`)
@@ -130,7 +137,7 @@ export function NotificationBell() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refetch, userId]);
+  }, [blockedUsersReady, blockedUserIdsKey, refetch, userId]);
 
   const handleNotificationClick = (notification: Notification) => {
     // Mark as read
@@ -309,7 +316,13 @@ export function NotificationBell() {
           )}
         </div>
         <ScrollArea className="h-96">
-          {notifications.length === 0 ? (
+          {blockedUsers.isError ? (
+             <div className="p-6 text-center text-red-300" data-testid="text-blocked-users-error">
+               {blockedUsers.error.message}
+             </div>
+           ) : !blockedUsersReady ? (
+             <div className="p-6 text-center text-slate-400">Checking your blocked users…</div>
+           ) : notifications.length === 0 ? (
             <div className="p-8 text-center text-slate-400" data-testid="text-no-notifications">
               <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" />
               <p>No notifications yet</p>

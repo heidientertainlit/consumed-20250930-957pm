@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Flag, Ban, ChevronRight, AlertCircle, MessageSquareWarning, ShieldAlert, ThumbsDown, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
+import { useBlockUser } from "@/hooks/use-block-user";
 
 const REPORT_REASONS = [
   { id: "spam", label: "Spam", description: "Repetitive or unwanted content", icon: MessageSquareWarning },
@@ -33,15 +35,21 @@ export function ReportSheet({
   reportedUserName,
 }: ReportSheetProps) {
   const { toast } = useToast();
+  const { user, session } = useAuth();
   const [step, setStep] = useState<"reason" | "confirm" | "done">("reason");
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [alsoBlock, setAlsoBlock] = useState(false);
+  const [blockError, setBlockError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const blockMutation = useBlockUser({ notifySuccess: false, notifyError: false });
+  const viewerId = user?.id || session?.user?.id;
+  const canBlockReportedUser = !!reportedUserId && reportedUserId !== viewerId;
 
   const handleClose = () => {
     setStep("reason");
     setSelectedReason(null);
     setAlsoBlock(false);
+    setBlockError(null);
     onClose();
   };
 
@@ -86,19 +94,18 @@ export function ReportSheet({
         throw new Error(result.error || "Failed to submit report");
       }
 
-      if (alsoBlock && reportedUserId) {
-        await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/block-user`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.access_token}`,
-              apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-            },
-            body: JSON.stringify({ blocked_user_id: reportedUserId }),
-          }
-        );
+      if (alsoBlock && canBlockReportedUser && reportedUserId) {
+        try {
+          await blockMutation.mutateAsync(reportedUserId);
+        } catch (blockError) {
+          const message = blockError instanceof Error ? blockError.message : "Please block this user separately.";
+          setBlockError(message);
+          toast({
+            title: "Report submitted, but block failed",
+            description: message,
+            variant: "destructive",
+          });
+        }
       }
 
       setStep("done");
@@ -156,7 +163,7 @@ export function ReportSheet({
               </p>
             </div>
 
-            {reportedUserId && (
+            {canBlockReportedUser && (
               <button
                 onClick={() => setAlsoBlock(!alsoBlock)}
                 className="w-full flex items-center gap-3 p-4 mb-4 rounded-xl border border-gray-200 text-left"
@@ -166,7 +173,7 @@ export function ReportSheet({
                   <p className="text-sm font-medium text-gray-900">
                     Also block {reportedUserName ? `@${reportedUserName}` : "this user"}
                   </p>
-                  <p className="text-xs text-gray-400">Their posts won't appear in your feed</p>
+                  <p className="text-xs text-gray-400">Their posts, requests, and matches will be hidden</p>
                 </div>
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${alsoBlock ? "border-red-500 bg-red-500" : "border-gray-300"}`}>
                   {alsoBlock && <div className="w-2 h-2 rounded-full bg-white" />}
@@ -203,6 +210,11 @@ export function ReportSheet({
               <p className="text-sm text-gray-500">
                 Thanks for helping keep Consumed safe. We'll review this shortly.
               </p>
+              {blockError && (
+                <p className="max-w-sm text-xs text-red-600">
+                  The report was saved, but the user was not blocked. You can try blocking them again from their profile.
+                </p>
+              )}
             </div>
             <Button className="mt-2 bg-purple-600 hover:bg-purple-700 text-white" onClick={handleClose}>
               Done
