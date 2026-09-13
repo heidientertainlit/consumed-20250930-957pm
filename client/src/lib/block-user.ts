@@ -5,6 +5,35 @@ export const blockedUsersQueryKey = (viewerId: string) => ["blocked-user-ids", v
 export const blockedUsersSignature = (blockedUserIds: readonly string[]) =>
   [...new Set(blockedUserIds)].sort().join(",");
 
+type BlockedUserCacheOverrides = {
+  added: Set<string>;
+  removed: Set<string>;
+};
+
+// The blocks query deliberately keeps a small, viewer-scoped tombstone set in
+// memory. A blocks request can finish while an older hydration is still in
+// flight; without the tombstone that older response would union an unblocked
+// id back into the active query.
+const blockedUserCacheOverrides = new Map<string, BlockedUserCacheOverrides>();
+
+function overridesForViewer(viewerId: string): BlockedUserCacheOverrides {
+  const existing = blockedUserCacheOverrides.get(viewerId);
+  if (existing) return existing;
+  const overrides = { added: new Set<string>(), removed: new Set<string>() };
+  blockedUserCacheOverrides.set(viewerId, overrides);
+  return overrides;
+}
+
+export function mergeBlockedUserIdsForViewer(
+  viewerId: string,
+  hydratedIds: readonly string[],
+  optimisticIds: readonly string[] = [],
+): string[] {
+  const overrides = overridesForViewer(viewerId);
+  const ids = [...new Set([...hydratedIds, ...optimisticIds, ...overrides.added])];
+  return ids.filter((id) => !overrides.removed.has(id));
+}
+
 export type BlockedUserDisplayIdentity = {
   id: string;
   user_name?: string | null;
@@ -41,14 +70,24 @@ function belongsToUser(value: any, blockedUserId: string): boolean {
 export function getBlockedUserIdsForViewer(queryClient: QueryClient, viewerId?: string): string[] {
   if (!viewerId) return [];
   const cached = queryClient.getQueryData<string[]>(blockedUsersQueryKey(viewerId)) || [];
-  return [...new Set(cached)];
+  return mergeBlockedUserIdsForViewer(viewerId, cached);
 }
 
 export function rememberBlockedUserForViewer(queryClient: QueryClient, viewerId: string | undefined, blockedUserId: string) {
   if (!viewerId || !blockedUserId) return;
+  const overrides = overridesForViewer(viewerId);
+  overrides.removed.delete(blockedUserId);
+  overrides.added.add(blockedUserId);
   const next = getBlockedUserIdsForViewer(queryClient, viewerId);
   if (!next.includes(blockedUserId)) next.push(blockedUserId);
   queryClient.setQueryData(blockedUsersQueryKey(viewerId), next);
+}
+
+export function rememberUnblockedUserForViewer(viewerId: string | undefined, blockedUserId: string) {
+  if (!viewerId || !blockedUserId) return;
+  const overrides = overridesForViewer(viewerId);
+  overrides.added.delete(blockedUserId);
+  overrides.removed.add(blockedUserId);
 }
 
 export function filterCommentsForBlockedUsers<T>(comments: T[], blockedUserIds: readonly string[]): T[] {
@@ -194,6 +233,12 @@ function updateUserSearch(data: any, blockedUserId: string): CacheUpdate {
   return { changed: users.length !== data.users.length, data: users.length !== data.users.length ? { ...data, users } : data };
 }
 
+function removeBlockedUserFromDisplayData(data: unknown, blockedUserId: string): CacheUpdate {
+  if (!Array.isArray(data)) return { changed: false, data };
+  const filtered = data.filter((profile: any) => profile?.id !== blockedUserId);
+  return { changed: filtered.length !== data.length, data: filtered };
+}
+
 /**
  * Removes the target from the known client-side social caches. This is only an
  * optimistic privacy update; the follow-up invalidations re-read server data
@@ -225,20 +270,33 @@ export function removeBlockedUserFromCaches(queryClient: QueryClient, blockedUse
 
   // Refetch active data so the local privacy update is reconciled with the
   // database trigger that removes relationships in both directions.
-  for (const queryKey of [
-    ["social-feed"],
-    ["highlighted-post"],
-    ["post-comments"],
-    ["play-activity"],
-    ["/api/notifications"],
-    ["friends"],
-    ["user-friends"],
-    ["compare-friends"],
-    ["pending-requests"],
-    ["user-search"],
-    ["people-affinity-v9"],
-    ["people-tribes-v6"],
-  ]) {
+  invalidateBlockedUserRelatedCaches(queryClient, viewerId);
+}
+
+const blockedUserRelatedQueryRoots = [
+  ["social-feed"],
+  ["highlighted-post"],
+  ["post-comments"],
+  ["play-activity"],
+  ["/api/notifications"],
+  ["friends"],
+  ["user-friends"],
+  ["compare-friends"],
+  ["pending-requests"],
+  ["user-search"],
+  ["people-affinity-v9"],
+  ["people-tribes-v6"],
+  ["people-friends"],
+  ["people-affinity"],
+  ["dna-compare-friends"],
+  ["user-profile"],
+  ["profile"],
+  ["nav-avatar"],
+  ["user-lists-with-media"],
+] as const;
+
+function invalidateBlockedUserRelatedCaches(queryClient: QueryClient, viewerId?: string) {
+  for (const queryKey of blockedUserRelatedQueryRoots) {
     if (queryKey[0] === "post-comments" && viewerId) {
       void queryClient.invalidateQueries({
         queryKey,
@@ -250,10 +308,49 @@ export function removeBlockedUserFromCaches(queryClient: QueryClient, blockedUse
   }
 }
 
-export async function blockUserRequest(accessToken: string, blockedUserId: string, currentUserId?: string): Promise<{ success?: boolean; action?: string }> {
-  if (!accessToken) throw new Error("Sign in is required to block someone.");
-  if (!blockedUserId) throw new Error("The user to block could not be identified.");
-  if (currentUserId && blockedUserId === currentUserId) throw new Error("You can't block yourself.");
+export function removeUnblockedUserFromQueryData(
+  queryKey: readonly unknown[],
+  data: unknown,
+  blockedUserId: string,
+): CacheUpdate {
+  if (String(queryKey[0] || "") !== "blocked-user-profiles") return { changed: false, data };
+  return removeBlockedUserFromDisplayData(data, blockedUserId);
+}
+
+export function removeUnblockedUserFromCaches(queryClient: QueryClient, blockedUserId: string, viewerId?: string) {
+  if (!viewerId || !blockedUserId) return;
+  rememberUnblockedUserForViewer(viewerId, blockedUserId);
+  queryClient.setQueryData<string[]>(
+    blockedUsersQueryKey(viewerId),
+    (current) => (current || []).filter((id) => id !== blockedUserId),
+  );
+
+  for (const [queryKey, data] of queryClient.getQueriesData({})) {
+    if (String(queryKey[0] || "") === "blocked-user-profiles" && queryKey[1] === viewerId) {
+      const update = removeUnblockedUserFromQueryData(queryKey, data, blockedUserId);
+      if (update.changed) queryClient.setQueryData(queryKey, update.data);
+    }
+  }
+
+  // The target may have been removed from privacy-filtered caches when the
+  // block was created. Refetch those feeds and profile/people queries after
+  // the successful unblock; the endpoint does not restore a friendship.
+  void queryClient.invalidateQueries({ queryKey: blockedUsersQueryKey(viewerId) });
+  invalidateBlockedUserRelatedCaches(queryClient, viewerId);
+}
+
+type BlockUserAction = "block" | "unblock";
+
+async function blockUserActionRequest(
+  accessToken: string,
+  blockedUserId: string,
+  currentUserId: string | undefined,
+  action: BlockUserAction,
+): Promise<{ success?: boolean; action?: string }> {
+  const actionLabel = action === "unblock" ? "unblock" : "block";
+  if (!accessToken) throw new Error(`Sign in is required to ${actionLabel} someone.`);
+  if (!blockedUserId) throw new Error(`The user to ${actionLabel} could not be identified.`);
+  if (currentUserId && blockedUserId === currentUserId) throw new Error(`You can't ${actionLabel} yourself.`);
 
   const response = await fetch(`${SUPABASE_URL}/functions/v1/block-user`, {
     method: "POST",
@@ -262,9 +359,29 @@ export async function blockUserRequest(accessToken: string, blockedUserId: strin
       "Content-Type": "application/json",
       apikey: import.meta.env?.VITE_SUPABASE_ANON_KEY,
     },
-    body: JSON.stringify({ blocked_user_id: blockedUserId }),
+    body: JSON.stringify({
+      blocked_user_id: blockedUserId,
+      ...(action === "unblock" ? { action } : {}),
+    }),
   });
   const result = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(result?.error || "Unable to block this user. Please try again.");
+  if (!response.ok) throw new Error(result?.error || `Unable to ${actionLabel} this user. Please try again.`);
   return result;
+}
+
+export function blockUserRequest(
+  accessToken: string,
+  blockedUserId: string,
+  currentUserId?: string,
+  action: BlockUserAction = "block",
+): Promise<{ success?: boolean; action?: string }> {
+  return blockUserActionRequest(accessToken, blockedUserId, currentUserId, action);
+}
+
+export function unblockUserRequest(
+  accessToken: string,
+  blockedUserId: string,
+  currentUserId?: string,
+): Promise<{ success?: boolean; action?: string }> {
+  return blockUserActionRequest(accessToken, blockedUserId, currentUserId, "unblock");
 }

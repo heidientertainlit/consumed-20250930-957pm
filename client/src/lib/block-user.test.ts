@@ -3,12 +3,16 @@ import test from "node:test";
 import { QueryClient } from "@tanstack/react-query";
 import {
   blockedUsersSignature,
+  blockedUsersQueryKey,
   filterNotificationsForBlockedUsers,
   getBlockedUserIdsForViewer,
   loadBlockedUserDisplayIdentities,
   loadBlockedUserIds,
+  mergeBlockedUserIdsForViewer,
   removeBlockedUserFromCaches,
   removeBlockedUserFromQueryData,
+  removeUnblockedUserFromCaches,
+  unblockUserRequest,
 } from "./block-user";
 
 const blockedId = "blocked-user";
@@ -214,4 +218,62 @@ test("filters newly refetched notifications by their blocked actor", () => {
 test("changes the notification cache signature immediately when a block is remembered", () => {
   assert.notEqual(blockedUsersSignature([]), blockedUsersSignature([blockedId]));
   assert.equal(blockedUsersSignature(["z-user", "a-user", "z-user"]), "a-user,z-user");
+});
+
+test("unblock sends the action body and surfaces endpoint failures", async () => {
+  const originalFetch = globalThis.fetch;
+  const requests: Array<{ body?: string; authorization?: string }> = [];
+  globalThis.fetch = (async (_input, init) => {
+    requests.push({
+      body: typeof init?.body === "string" ? init.body : undefined,
+      authorization: new Headers(init?.headers).get("Authorization") || undefined,
+    });
+    return {
+      ok: false,
+      json: async () => ({ error: "Unblock was rejected" }),
+    } as Response;
+  }) as typeof fetch;
+
+  try {
+    await assert.rejects(
+      () => unblockUserRequest("token", blockedId, "viewer"),
+      /Unblock was rejected/,
+    );
+    assert.deepEqual(JSON.parse(requests[0].body || "{}"), {
+      blocked_user_id: blockedId,
+      action: "unblock",
+    });
+    assert.equal(requests[0].authorization, "Bearer token");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("removing an unblock updates the viewer block list and display cache only", () => {
+  const queryClient = new QueryClient();
+  const viewerId = "unblock-viewer";
+  const otherViewerId = "other-viewer";
+  queryClient.setQueryData(blockedUsersQueryKey(viewerId), [blockedId, "other-user"]);
+  queryClient.setQueryData(["blocked-user-profiles", viewerId, "blocked-user,other-user"], [
+    { id: blockedId, user_name: "blocked" },
+    { id: "other-user", user_name: "other" },
+  ]);
+  queryClient.setQueryData(blockedUsersQueryKey(otherViewerId), [blockedId]);
+
+  removeUnblockedUserFromCaches(queryClient, blockedId, viewerId);
+
+  assert.deepEqual(getBlockedUserIdsForViewer(queryClient, viewerId), ["other-user"]);
+  assert.deepEqual(queryClient.getQueryData(["blocked-user-profiles", viewerId, "blocked-user,other-user"]), [
+    { id: "other-user", user_name: "other" },
+  ]);
+  assert.deepEqual(getBlockedUserIdsForViewer(queryClient, otherViewerId), [blockedId]);
+});
+
+test("an in-flight hydration cannot re-add an unblocked id for its viewer", () => {
+  const viewerId = "race-viewer";
+  const result = mergeBlockedUserIdsForViewer(viewerId, [blockedId, "other-user"], [blockedId]);
+
+  assert.deepEqual(result, [blockedId, "other-user"]);
+  removeUnblockedUserFromCaches(new QueryClient(), blockedId, viewerId);
+  assert.deepEqual(mergeBlockedUserIdsForViewer(viewerId, [blockedId, "other-user"], [blockedId]), ["other-user"]);
 });

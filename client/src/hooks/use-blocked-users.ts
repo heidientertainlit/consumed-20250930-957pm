@@ -5,6 +5,7 @@ import {
   blockedUsersSignature,
   loadBlockedUserDisplayIdentities,
   loadBlockedUserIds,
+  mergeBlockedUserIdsForViewer,
   type BlockedUserDisplayIdentity,
 } from "@/lib/block-user";
 
@@ -23,7 +24,7 @@ export function useBlockedUsers(viewerId?: string) {
       if (!viewerId) throw new Error("Your account could not be identified while checking blocked users.");
       const hydratedIds = await loadBlockedUserIds(supabase, viewerId);
       const optimisticIds = queryClient.getQueryData<string[]>(blockedUsersQueryKey(viewerId)) || [];
-      return [...new Set([...hydratedIds, ...optimisticIds])];
+      return mergeBlockedUserIdsForViewer(viewerId, hydratedIds, optimisticIds);
     },
   });
 }

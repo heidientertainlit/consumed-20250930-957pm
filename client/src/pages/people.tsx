@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, L
 import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
 import FriendsManager from "@/components/friends-manager";
+import { BlockedPeopleList } from "@/components/blocked-people-list";
 import { BlockUserSheet } from "@/components/block-user-sheet";
 import { IdentityFace } from "@/components/feed-identity-hero";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -546,8 +547,26 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
   </div>;
 }
 
-function Friends({ query, more, onSelectPerson, onBlockPerson, onInvite, userId, searchQuery, onSearchQueryChange }: { query: ReturnType<typeof useQuery<Affinity>>; more: ReturnType<typeof useMutation<Affinity, Error, void>>; onSelectPerson: (person: Person) => void; onBlockPerson: (person: Person) => void; onInvite: () => void; userId?: string; searchQuery: string; onSearchQueryChange: (query: string) => void }) {
-  const managerSearchProps = { searchQuery, onSearchQueryChange, hideSearchInput: true };
+type FriendsProps = {
+  query: ReturnType<typeof useQuery<Affinity>>;
+  more: ReturnType<typeof useMutation<Affinity, Error, void>>;
+  onSelectPerson: (person: Person) => void;
+  onBlockPerson: (person: Person) => void;
+  onInvite: () => void;
+  userId?: string;
+  searchQuery: string;
+  onSearchQueryChange: (query: string) => void;
+};
+
+function Friends(props: FriendsProps) {
+  return <>
+    <FriendsContent {...props} />
+    {props.userId && <BlockedPeopleList userId={props.userId} />}
+  </>;
+}
+
+function FriendsContent({ query, more, onSelectPerson, onBlockPerson, onInvite, userId, searchQuery, onSearchQueryChange }: FriendsProps) {
+  const managerSearchProps = { searchQuery, onSearchQueryChange, hideSearchInput: true, hideBlockedSection: true };
   if (query.isLoading) return <section className="mt-7"><FriendsHeader />{userId && <div className="mb-10"><FriendsManager userId={userId} {...managerSearchProps} /></div>}<div className="space-y-3"><div className="h-5 w-36 animate-pulse rounded bg-[#e6e0e7]" />{[1, 2].map((item) => <div key={item} className="h-[252px] animate-pulse rounded-[22px] bg-[#e6e0e7]" />)}</div></section>;
   const data = query.data;
   if (query.isError) return <section className="mt-7"><FriendsHeader /><ErrorState onRetry={() => query.refetch()} />{userId && <div className="mt-8"><FriendsManager userId={userId} {...managerSearchProps} /></div>}</section>;
