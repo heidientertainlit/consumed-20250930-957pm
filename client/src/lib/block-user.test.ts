@@ -5,6 +5,7 @@ import {
   blockedUsersSignature,
   filterNotificationsForBlockedUsers,
   getBlockedUserIdsForViewer,
+  loadBlockedUserDisplayIdentities,
   loadBlockedUserIds,
   removeBlockedUserFromCaches,
   removeBlockedUserFromQueryData,
@@ -140,6 +141,65 @@ test("does not silently treat a blocked-user query failure as an empty list", as
   };
 
   await assert.rejects(() => loadBlockedUserIds(client, "viewer"), /Blocked users could not be verified: permission denied/);
+});
+
+test("loads only minimal public identity for authoritative blocked ids", async () => {
+  const calls: string[] = [];
+  const client = {
+    from: (table: string) => {
+      calls.push(`from:${table}`);
+      const chain = {
+        select: (columns: string) => {
+          calls.push(`select:${columns}`);
+          return chain;
+        },
+        in: async (column: string, ids: string[]) => {
+          calls.push(`in:${column}:${ids.join(",")}`);
+          return {
+            data: [
+              { id: blockedId, display_name: "Blocked Person", user_name: "blocked", first_name: "Blocked", last_name: "Person", email: "private@example.com" },
+              { id: "not-requested", display_name: "Unexpected Person" },
+            ],
+            error: null,
+          };
+        },
+      };
+      return chain;
+    },
+  };
+
+  assert.deepEqual(
+    await loadBlockedUserDisplayIdentities(client, [blockedId, blockedId]),
+    [{ id: blockedId, display_name: "Blocked Person", user_name: "blocked", first_name: "Blocked", last_name: "Person" }],
+  );
+  assert.deepEqual(calls, [
+    "from:public_user_profiles",
+    "select:id,user_name,display_name,first_name,last_name",
+    `in:id:${blockedId}`,
+  ]);
+});
+
+test("does not query public identities when the account has no blocks", async () => {
+  let queried = false;
+  const client = { from: () => { queried = true; return {}; } };
+
+  assert.deepEqual(await loadBlockedUserDisplayIdentities(client, []), []);
+  assert.equal(queried, false);
+});
+
+test("does not silently treat blocked identity lookup failure as an empty list", async () => {
+  const client = {
+    from: () => ({
+      select: () => ({
+        in: async () => ({ data: null, error: { message: "permission denied" } }),
+      }),
+    }),
+  };
+
+  await assert.rejects(
+    () => loadBlockedUserDisplayIdentities(client, [blockedId]),
+    /Blocked user identities could not be loaded: permission denied/,
+  );
 });
 
 test("filters newly refetched notifications by their blocked actor", () => {

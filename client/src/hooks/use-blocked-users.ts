@@ -1,6 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { blockedUsersQueryKey, loadBlockedUserIds } from "@/lib/block-user";
+import {
+  blockedUsersQueryKey,
+  blockedUsersSignature,
+  loadBlockedUserDisplayIdentities,
+  loadBlockedUserIds,
+  type BlockedUserDisplayIdentity,
+} from "@/lib/block-user";
 
 /**
  * Loads the viewer's blocks from the account-authoritative table. Callers
@@ -20,4 +26,32 @@ export function useBlockedUsers(viewerId?: string) {
       return [...new Set([...hydratedIds, ...optimisticIds])];
     },
   });
+}
+
+/**
+ * Hydrates display-only identities after the account-authoritative block list
+ * has loaded. Keeping this as a separate query means callers never use a
+ * public profile row to decide whether a person is blocked.
+ */
+export function useBlockedUserProfiles(viewerId?: string) {
+  const blockedUsers = useBlockedUsers(viewerId);
+  const blockedUserIds = blockedUsers.data || [];
+  const blockedIdsKey = blockedUsersSignature(blockedUserIds);
+  const profiles = useQuery<BlockedUserDisplayIdentity[], Error>({
+    queryKey: ["blocked-user-profiles", viewerId || "anonymous", blockedIdsKey],
+    enabled: !!viewerId && blockedUsers.isSuccess,
+    staleTime: Infinity,
+    retry: 1,
+    queryFn: async () => {
+      if (!viewerId) throw new Error("Your account could not be identified while loading blocked people.");
+      if (!blockedUsers.isSuccess) throw new Error("Blocked users have not been verified for this account yet.");
+      return loadBlockedUserDisplayIdentities(supabase, blockedUserIds);
+    },
+  });
+
+  return {
+    ...profiles,
+    blockedUsers,
+    blockedUserIds,
+  };
 }

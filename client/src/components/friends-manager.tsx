@@ -3,6 +3,8 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Search, Check, UserPlus, X, Users, Plus, ChevronRight, ChevronDown, User, Ban } from "lucide-react";
 import { useFriendsManagement } from "@/hooks/use-friends-management";
+import { useBlockedUserProfiles } from "@/hooks/use-blocked-users";
+import type { BlockedUserDisplayIdentity } from "@/lib/block-user";
 import { APP_BASE } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 import { BlockUserSheet } from "@/components/block-user-sheet";
@@ -44,9 +46,29 @@ export default function FriendsManager({
   } = useFriendsManagement();
 
   const { data: searchResults, isLoading: searchLoading } = useUserSearch(searchQuery);
+  const {
+    data: blockedUserProfiles,
+    blockedUsers,
+    blockedUserIds,
+    isLoading: isLoadingBlockedProfiles,
+    error: blockedProfilesError,
+  } = useBlockedUserProfiles(userId);
+  const blockedUsersReady = blockedUsers.isSuccess;
+  const blockedUsersError = blockedUsers.error || blockedProfilesError;
+  const trustedBlockedUserIds = blockedUsersReady ? blockedUserIds : [];
+  const blockedIds = new Set(trustedBlockedUserIds);
+  const blockedProfilesById = new Map<string, BlockedUserDisplayIdentity>(
+    (blockedUserProfiles || []).map((profile): [string, BlockedUserDisplayIdentity] => [profile.id, profile]),
+  );
+  const visibleFeaturedFriend = blockedUsersReady && featuredFriend && !blockedIds.has(featuredFriend.id)
+    ? featuredFriend
+    : undefined;
 
   const pendingCount = pendingData?.requests?.length || 0;
-  const sortedFriends = [...(friendsData?.friends || [])].filter((friendship: any) => friendship.friend?.id !== featuredFriend?.id).sort((a: any, b: any) => {
+  const sortedFriends = [...(friendsData?.friends || [])]
+    .filter((friendship: any) => friendship.friend?.id !== visibleFeaturedFriend?.id)
+    .filter((friendship: any) => !blockedIds.has(friendship.friend?.id))
+    .sort((a: any, b: any) => {
     const scoreDifference = (matchScores[b.friend?.id] ?? -1) - (matchScores[a.friend?.id] ?? -1);
     if (scoreDifference) return scoreDifference;
     const aName = a.friend?.display_name || a.friend?.user_name || "";
@@ -54,6 +76,7 @@ export default function FriendsManager({
     return aName.localeCompare(bName);
   });
   const visibleFriends = showAllFriends ? sortedFriends : sortedFriends.slice(0, 5);
+  const blockedPeopleLoading = blockedUsers.isLoading || (blockedUsersReady && isLoadingBlockedProfiles);
 
   const handleInviteFriends = async () => {
     if (!userId) return;
@@ -105,12 +128,18 @@ export default function FriendsManager({
         </div>}
 
         {searchQuery.length > 0 && (
-          <div className="space-y-2 max-h-64 overflow-y-auto mt-3">
+          blockedPeopleLoading ? (
+            <div className="mt-3 py-4 text-center text-sm text-[#817686]">Checking blocked people...</div>
+          ) : blockedUsers.isError ? (
+            <div className="mt-3 py-4 text-center text-sm text-red-700" data-testid="text-blocked-search-error">
+              {blockedUsers.error?.message || "Blocked people could not be verified for this account."}
+            </div>
+          ) : <div className="space-y-2 max-h-64 overflow-y-auto mt-3">
             {searchQuery.length >= 3 ? (
               searchLoading ? (
                 <div className="py-4 text-center text-sm text-[#817686]">Searching...</div>
-              ) : searchResults?.users && searchResults.users.length > 0 ? (
-                searchResults.users.map((searchUser: any) => {
+              ) : searchResults?.users && searchResults.users.filter((searchUser: any) => !blockedIds.has(searchUser.id)).length > 0 ? (
+                searchResults.users.filter((searchUser: any) => !blockedIds.has(searchUser.id)).map((searchUser: any) => {
                   const displayName = searchUser.display_name ||
                                      (searchUser.first_name && searchUser.last_name ? `${searchUser.first_name} ${searchUser.last_name}` : '') ||
                                      searchUser.user_name ||
@@ -285,23 +314,27 @@ export default function FriendsManager({
         <ChevronRight size={18} className="shrink-0 text-[#8b7e91]" />
       </button>
     </div>
-    {featuredFriend && <ClosestFriendCard friend={featuredFriend} onBlock={() => setBlockTarget({ id: featuredFriend.id, name: featuredFriend.user_name })} />}
-    {(!featuredFriend || sortedFriends.length > 0) && <section className="mt-7">
+     {visibleFeaturedFriend && <ClosestFriendCard friend={visibleFeaturedFriend} onBlock={() => setBlockTarget({ id: visibleFeaturedFriend.id, name: visibleFeaturedFriend.user_name })} />}
+     {(!visibleFeaturedFriend || sortedFriends.length > 0 || blockedPeopleLoading || blockedUsersError || trustedBlockedUserIds.length > 0) && <section className="mt-7">
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
-           <h3 className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">{featuredFriend ? "More friends" : "Your friends"}</h3>
-           <p className="mt-0.5 text-xs text-[#7d7382]">{featuredFriend ? "Everyone else in your circle." : "Closest DNA matches first."}</p>
+            <h3 className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">{visibleFeaturedFriend ? "More friends" : "Your friends"}</h3>
+            <p className="mt-0.5 text-xs text-[#7d7382]">{visibleFeaturedFriend ? "Everyone else in your circle." : "Closest DNA matches first."}</p>
         </div>
-        {!isLoadingFriends && friendsData?.friends?.length > 0 && (
-          <span className="text-xs font-semibold text-[#79618f]">{friendsData.friends.length}</span>
+         {!isLoadingFriends && blockedUsersReady && sortedFriends.length > 0 && (
+           <span className="text-xs font-semibold text-[#79618f]">{sortedFriends.length}</span>
         )}
       </div>
 
-      {isLoadingFriends ? (
+       {isLoadingFriends || blockedPeopleLoading ? (
         <div className="space-y-2">
           {[1, 2, 3].map((item) => <div key={item} className="h-[62px] animate-pulse rounded-xl bg-[#e6e0e7]" />)}
         </div>
-      ) : friendsData?.friends?.length ? (
+       ) : blockedUsers.isError ? (
+         <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-5 text-sm text-red-700" data-testid="text-blocked-users-error">
+           {blockedUsers.error?.message || "Blocked people could not be verified for this account."}
+         </div>
+       ) : sortedFriends.length ? (
         <div className="divide-y divide-[#e2dce4] border-y border-[#e2dce4]">
           {visibleFriends.map((friendship: any) => {
             const friend = friendship.friend;
@@ -358,16 +391,21 @@ export default function FriendsManager({
           Your accepted friends will appear here.
         </div>
       )}
-      {!isLoadingFriends && sortedFriends.length > 5 && (
+       {!isLoadingFriends && blockedUsersReady && sortedFriends.length > 5 && (
         <button
           type="button"
           onClick={() => setShowAllFriends((current) => !current)}
           className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#5b387f]"
         >
-          {showAllFriends ? "Show fewer friends" : `See all ${friendsData?.friends?.length || sortedFriends.length} friends`}
+           {showAllFriends ? "Show fewer friends" : `See all ${sortedFriends.length} friends`}
           <ChevronDown size={14} className={`transition-transform ${showAllFriends ? "rotate-180" : ""}`} />
         </button>
       )}
+       {blockedUsersReady && <BlockedPeopleSection
+         blockedUserIds={trustedBlockedUserIds}
+         profilesById={blockedProfilesById}
+         error={blockedProfilesError}
+       />}
     </section>}
     {blockTarget && (
       <BlockUserSheet
@@ -378,6 +416,78 @@ export default function FriendsManager({
       />
     )}
     </>
+  );
+}
+
+function BlockedPeopleSection({
+  blockedUserIds,
+  profilesById,
+  error,
+}: {
+  blockedUserIds: string[];
+  profilesById: Map<string, BlockedUserDisplayIdentity>;
+  error: Error | null;
+}) {
+  if (!blockedUserIds.length) return null;
+
+  return (
+    <div className="mt-5 border-t border-[#e2dce4] pt-4" data-testid="section-blocked-people">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <h4 className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Blocked</h4>
+          <p className="mt-0.5 text-xs text-[#7d7382]">These people stay out of your friends and matches.</p>
+        </div>
+        <span className="text-xs font-semibold text-[#9b4a4a]">{blockedUserIds.length}</span>
+      </div>
+      {error && (
+        <p className="mb-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700" data-testid="text-blocked-identities-error">
+          {error.message || "Blocked people’s display names could not be loaded."}
+        </p>
+      )}
+      <div className="divide-y divide-[#eadfe2] border-y border-[#eadfe2]">
+        {blockedUserIds.map((blockedUserId) => (
+          <BlockedPersonRow
+            key={blockedUserId}
+            userId={blockedUserId}
+            profile={profilesById.get(blockedUserId)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BlockedPersonRow({
+  userId,
+  profile,
+}: {
+  userId: string;
+  profile?: BlockedUserDisplayIdentity;
+}) {
+  const first = profile?.first_name?.trim();
+  const last = profile?.last_name?.trim();
+  const displayName = profile?.display_name?.trim()
+    || (first ? `${first}${last ? ` ${last}` : ""}` : "")
+    || profile?.user_name
+    || "Blocked member";
+
+  return (
+    <div className="flex min-h-[66px] items-center gap-3 rounded-xl px-2 py-2.5" data-testid={`row-blocked-user-${userId}`}>
+      <span
+        className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#d84949]"
+        aria-label="Blocked"
+        data-testid="icon-blocked-minus"
+      >
+        <span className="h-0.5 w-4 rounded-full bg-white" aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-sm font-bold text-[#30263a]">{displayName}</span>
+          <span className="shrink-0 rounded-full bg-[#fbe6e6] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[.08em] text-[#a63838]" data-testid="badge-blocked">Blocked</span>
+        </span>
+        {profile?.user_name && <span className="mt-0.5 block truncate text-xs text-[#817686]">@{profile.user_name}</span>}
+      </span>
+    </div>
   );
 }
 

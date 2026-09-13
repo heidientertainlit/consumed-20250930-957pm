@@ -5,6 +5,16 @@ export const blockedUsersQueryKey = (viewerId: string) => ["blocked-user-ids", v
 export const blockedUsersSignature = (blockedUserIds: readonly string[]) =>
   [...new Set(blockedUserIds)].sort().join(",");
 
+export type BlockedUserDisplayIdentity = {
+  id: string;
+  user_name?: string | null;
+  display_name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+};
+
+const blockedUserDisplayColumns = "id,user_name,display_name,first_name,last_name";
+
 type CacheUpdate = { changed: boolean; data: unknown };
 
 function idOf(value: any): string | undefined {
@@ -55,6 +65,38 @@ export async function loadBlockedUserIds(client: any, viewerId: string): Promise
   const rows = Array.isArray(data) ? data as Array<{ blocked_id: string | null }> : [];
   const ids = rows.map((row) => row.blocked_id).filter((id): id is string => Boolean(id));
   return [...new Set<string>(ids)];
+}
+
+/**
+ * Resolve only the public identity fields needed to label blocked rows. The
+ * blocks query remains the account-authoritative source of membership; this
+ * second query must never be used to infer whether a person is blocked.
+ */
+export async function loadBlockedUserDisplayIdentities(
+  client: any,
+  blockedUserIds: readonly string[],
+): Promise<BlockedUserDisplayIdentity[]> {
+  const ids = [...new Set(blockedUserIds)].filter(Boolean);
+  if (!ids.length) return [];
+
+  const { data, error } = await client
+    .from("public_user_profiles")
+    .select(blockedUserDisplayColumns)
+    .in("id", ids);
+  if (error) throw new Error(`Blocked user identities could not be loaded: ${error.message}`);
+
+  const requestedIds = new Set(ids);
+  return (Array.isArray(data) ? data : [])
+    .filter((profile): profile is BlockedUserDisplayIdentity =>
+      Boolean(profile && typeof profile.id === "string" && requestedIds.has(profile.id))
+    )
+    .map((profile) => ({
+      id: profile.id,
+      user_name: profile.user_name ?? null,
+      display_name: profile.display_name ?? null,
+      first_name: profile.first_name ?? null,
+      last_name: profile.last_name ?? null,
+    }));
 }
 
 export function filterNotificationsForBlockedUsers<T extends { triggered_by_user_id?: string | null }>(
