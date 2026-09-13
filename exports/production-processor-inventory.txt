@@ -1,0 +1,603 @@
+CONSUMED PRODUCTION PROCESSOR / DATA-FLOW INVENTORY
+====================================================
+
+Scope and collection
+--------------------
+Audit target is the production app at https://app.consumedapp.com and the
+Supabase project mahpgcogwpawvviapqza. No deployment, workflow, database,
+provider, or account data was mutated. Secrets and public API keys are
+redacted below. This is an inventory, not a claim about provider retention
+terms.
+
+Production-origin evidence:
+* getDeploymentInfo() returned success=true, isDeployed=false, and no primary
+  URL. It does not identify a Replit production deployment.
+* GET/HEAD https://app.consumedapp.com returned HTTP/2 200 with
+  server: Vercel. The live /.well-known/apple-app-site-association response
+  names the Consumed iOS application. The iOS entitlement also names
+  app.consumedapp.com.
+* Current downloaded web asset: /tmp/privacy-production-assets/
+  index-Dzsd4hP0.js (the PostHog initialization appears on minified line 93;
+  the same asset contains the Customer.io function name). The web asset is
+  evidence for the submitted web deployment only.
+* Current deployed Edge Function source was downloaded from production into
+  /tmp/privacy-production-all-sources and/or
+  /tmp/privacy-production-sources. Production metadata reports 181 ACTIVE
+  Edge Functions. Relevant versions at collection time included:
+  track-analytics v12, send-notification v49, delete-account v17,
+  customerio-identify v13, notify-new-user-cio v12,
+  conversational-search v45, media-search v971, score-media-match v23,
+  generate-dna-profile v50, generate-dna-profile-v2 v42,
+  generate-dna-snapshot v32, generate-dna-blueprint v32,
+  generate-media-based-dna v37, generate-media-recommendations v53,
+  rebuild-recommendations v45, compare-dna-friend v134,
+  match-dna-celebrity v33, gaming-search v120, sports-search v40,
+  spell-fix v1, and admin-room-conversations v7.
+* Native-branch caveat: the production web bundle contains a Capacitor/native
+  branch, but that is NOT proof that the currently submitted iOS/Android IPA
+  contains the same branch, plugin version, app ID, or runtime behavior. The
+  native claims below are based on repository source plus the native plugin
+  configuration, not on an inspected submitted IPA.
+
+Status vocabulary used below
+----------------------------
+YES = directly established by current deployed source or live read-only
+configuration. NO = explicit source/configuration says it is not sent or not
+enabled. UNABLE = source does not establish the provider-side behavior or an
+exact runtime field set. "No account ID in request" does not mean anonymous:
+content can still be identifying, transport metadata and provider logs are
+outside the request body, and server-side linkage may be possible.
+
+1. POSTHOG: EXACT DATA INVENTORY
+--------------------------------
+
+Client initialization and identity
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Evidence: client/src/main.tsx:5-22 calls initPostHog() on web and native.
+client/src/lib/posthog.ts:3-18 sets api_host=https://us.i.posthog.com,
+capture_pageview=false, capture_pageleave=true, autocapture=true,
+persistence=localStorage, and person_profiles=identified_only. The production
+web asset contains the same initialization and the event helper strings at
+/tmp/privacy-production-assets/index-Dzsd4hP0.js:93 (asset key redacted).
+client/src/lib/posthog.ts:23-40 calls identify(userId, properties), preserves
+all supplied properties, and adds email and is_internal.
+client/src/lib/auth.tsx:127-131 supplies the Supabase auth UUID, email,
+profile display_name/user_name as name, and profile user_name as username.
+
+PostHog requested-category matrix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Category / status / exact value or limitation / evidence
+
+* Supabase internal account UUID: YES. It is the PostHog distinct_id on
+  identify and client events. Value is user.id, not a hashed surrogate.
+  client/src/lib/auth.tsx:127-131; client/src/lib/posthog.ts:36-40.
+* Email address: YES after identify. identify properties include
+  email=session.user.email; not sent by the unauthenticated initialization.
+  client/src/lib/auth.tsx:127-131; client/src/lib/posthog.ts:26-40.
+* Display name: YES when profile display_name exists; otherwise the code
+  falls back to user_name, then the auth email as name. Same evidence.
+* Username: YES when profile user_name exists. Same evidence.
+* Internal/test-account classification: YES. is_internal is true for
+  thinkhp+ addresses, @consumedapp.com addresses, or localhost; otherwise
+  false. client/src/lib/posthog.ts:26-40. This is an event/person property,
+  not an advertising audience export.
+* Sign-in/sign-out state: YES. user_signed_in and user_signed_out have no
+  custom properties. client/src/lib/auth.tsx:135,148-155.
+* Manual route/page name: YES. A $pageview event contains page=the current
+  wouter location and any caller properties. client/src/App.tsx:104-111;
+  client/src/lib/posthog.ts:53-56.
+* Page-leave data: YES as a feature. capture_pageleave=true. The exact SDK
+  generated duration/path payload is UNABLE from application source alone;
+  standard SDK behavior and project configuration are not a substitute for
+  inspecting captured payloads.
+* Current URL, pathname, referrer, host, browser/device SDK properties:
+  UNABLE as an exact field inventory. autocapture=true proves the feature is
+  enabled, but application source does not enumerate the runtime SDK payload.
+  Do not describe this as absent. Evidence: posthog.ts:11-18 and downloaded
+  asset line 93.
+* DOM autocapture: YES as a collection mode. Exact clicked element,
+  attributes, form/value, DOM text, selector, and masking behavior are
+  UNABLE from this audit. Evidence: autocapture=true in posthog.ts:11-18;
+  remote configuration below reports elementsChainAsString=true and does not
+  expose a custom masking policy.
+* Local browser persistence: YES. PostHog persistence is localStorage.
+  This is local storage, not a separate provider field. posthog.ts:11-18.
+* Browser/device/screen data explicitly supplied by the application:
+  NO. The app does not pass those properties to identify or its explicit
+  captureEvent calls. SDK-derived browser/device/screen fields: UNABLE as an
+  exact runtime payload, and must not be represented as absent.
+* IP address: UNABLE. No explicit ip property or ip-discard option appears
+  in client source or the live public config response. PostHog necessarily
+  receives the HTTP request at its endpoint; whether project/server processing
+  stores or discards the source IP is not established here.
+* Session recording: NO for the current public remote decision/config:
+  /decide?v=4 with the public project key (redacted in this report) returned sessionRecording=false and /config?v=4 returned
+  sessionRecording.sampleRate=null. The config object includes recorder
+  metadata and consoleLogRecordingEnabled=true, but that object alone does
+  not mean recording is enabled. A per-user targeted decision cannot be
+  excluded without a person-specific decision request; no local
+  session_recording enablement is present. Remote evidence is saved as
+  /tmp/prod-posthog-remote-config-redacted.json and
+  /tmp/prod-posthog-decide-redacted.json.
+* Heatmaps: NO in the live public remote config: heatmaps=false. No app
+  source enables heatmaps. Same remote files.
+* Surveys: NO in the live public remote config: surveys=false. No app source
+  enables surveys. Same remote files.
+* Product tours/site apps: NO in live public config: productTours=false and
+  siteApps=[].
+* Feature flags: NO observed in live public config: hasFeatureFlags=false and
+  /decide returned flags={}. This does not prove that every authenticated
+  targeted decision is identical.
+* Console log capture: NO in live public config: logs.captureConsoleLogs=false.
+* Exception/error autocapture: NO in live public config: autocaptureExceptions=false
+  and errorTracking.autocaptureExceptions=false.
+* Web Vitals: NO in live public config: capturePerformance.web_vitals=false.
+* Network performance timing: YES in live public config:
+  capturePerformance.network_timing=true. Exact captured timing property names
+  and whether the project receives them for every route are UNABLE.
+* Explicit media type: YES. media_tracked sends selectedMedia.type as
+  media_type. quick-action-sheet.tsx:722-726 and quick-track-sheet.tsx:342.
+* Explicit list type/list selector: YES. media_tracked sends list_type.
+  Same evidence.
+* Explicit rating presence: YES. media_tracked sends has_rating boolean.
+  The actual rating value is NO in this client event. Same evidence.
+* Media title in explicit client event: NO. media_tracked sends type/list/
+  has_rating only. Titles are sent by database-trigger events below.
+* Media titles and external source: YES through production SQL triggers.
+  notify_posthog sends media_added or media_status_changed with media_type,
+  title, external_source, and for status changes old_status/new_status.
+  /tmp/privacy-production-db-posthog-definition-redacted.sql:15-32.
+* Lists: YES through SQL trigger. list_created sends list_name and UUID
+  distinct_id. Same SQL file:55-60.
+* Predictions: YES through SQL trigger. prediction_made sends pool_id.
+  Same SQL file:34-39.
+* DNA profile type: YES through SQL trigger. dna_profile_generated sends
+  dna_type. Same SQL file:41-46.
+* DNA moment answer metadata: YES. Client dna_moment_answered sends
+  moment_id and points_earned; featured answer sends answer and
+  points_earned. It does not send the complete free-form profile as a client
+  property. dna-moment-card.tsx:160; dna-moment-featured-card.tsx:129.
+* DNA survey answer content: NO in the listed client PostHog events. The SQL
+  trigger only sends moment_id/dna_type, not survey text. Whether autocapture
+  sees any answer UI content is UNABLE, not NO, because autocapture runtime
+  payload is not captured here.
+* Trivia/poll/challenge interaction: YES. trivia_answered sends pool_id and
+  points_reward; poll_voted sends poll_id and points_earned;
+  daily_challenge_completed sends points_earned, is_correct, and
+  challenge_type. trivia-game-modal.tsx:98; polls-carousel.tsx:339;
+  daily-challenge-card.tsx:168-172.
+* Rank interaction: YES. rank_submitted/rank_comment_posted/rank_custom_add
+  each send rank_id only. ranks-carousel.tsx:256,333,438.
+* Seen-it interaction: YES. seen_it_response sends item_id,response;
+  seen_it_rating sends item_id,stars,has_take; seen_it_reaction sends
+  item_id,stars. seen-it-game.tsx:315,400,423.
+* Friend-cast interaction: YES. cast_friends_ai_suggest sends
+  description_length; friend_cast_created sends has_friend_account and
+  celeb_name; friend_cast_response sends celeb_name. cast-friends-game.tsx:
+  115,217-220; friend-cast-card.tsx:151.
+* Friend relationship identifiers: YES through SQL trigger. friend_request_sent
+  and friend_added send friend_id. Same SQL file:70-82.
+* Login streak counts: YES through SQL trigger. streak_updated sends
+  current_streak and longest_streak. Same SQL file:62-68.
+* Social post/comment text, free-text search, full reviews: NO in explicit
+  PostHog event helper calls inspected. Autocaptured form/DOM content is
+  UNABLE, so the stronger claim that such text can never be captured is not
+  supported.
+* Precise geolocation: NO explicit application property found. Browser/SDK
+  inferred location fields, if any, are UNABLE.
+* Device push token: NO explicit PostHog property found. OneSignal owns push
+  registration; see provider table.
+* Provider-side deletion: NO implementation found. Client resetUser() clears
+  the local PostHog identity state only; client/src/lib/posthog.ts:43-46.
+  delete-account invokes Supabase deletion but does not call a PostHog erasure
+  API (function-delete-account.ts:159-164 and domain search).
+
+Production PostHog SQL trigger inventory
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/tmp/privacy-production-trigger-metadata.json:1 reports enabled production
+trigger names posthog_dna_moment_responses, posthog_dna_profiles,
+posthog_friendships, posthog_list_items, posthog_lists, posthog_login_streaks,
+posthog_user_predictions, and posthog_users (friendships/list_items/login_streaks
+appear twice in metadata because separate operation rows are represented).
+Each executes notify_posthog(). The production function body is
+/tmp/privacy-production-db-posthog-definition-redacted.sql:1-113. It builds
+an event plus properties, sets distinct_id to NEW.user_id/NEW.id, and posts
+through Supabase net.http_post to track-analytics. This is direct account
+linkage, not anonymous analytics.
+
+Track-analytics authentication behavior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Deployed source: /tmp/privacy-production-all-sources/function-track-analytics.ts.
+Lines 27-39 read ANALYTICS_WEBHOOK_SECRET and compare it to x-analytics-key
+when the environment value is nonempty. Lines 40-67 accept event,
+distinct_id/user_id, arbitrary properties, timestamp, and forward to PostHog
+with $lib=supabase-trigger. Production metadata marks verify_jwt=false so the
+DB trigger can call it; verify_jwt=false alone is NOT evidence of a defect.
+Whether ANALYTICS_WEBHOOK_SECRET is populated in the deployed environment is
+UNABLE from source alone. If it is empty, the handler has no shared-secret
+check; do not infer that state without environment evidence. The SQL trigger
+contains a redacted literal used as x-analytics-key; its presence in a
+private function definition does not by itself prove exposure.
+
+Live PostHog remote read-only config
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Read-only GETs were made to the public project config/decide endpoints; no
+capture/ingest call was made. The project API key is omitted here. Results:
+* /array/<public-project-key-redacted>/config?v=4 HTTP 200: heatmaps=false, surveys=false, productTours=false,
+  siteApps=[], logs.captureConsoleLogs=false, autocaptureExceptions=false,
+  capturePerformance.network_timing=true, capturePerformance.web_vitals=false,
+  sessionRecording.sampleRate=null, sessionRecording.recordCanvas=false,
+  sessionRecording.networkPayloadCapture=null, and no ip/ip-discard field.
+* /decide?v=4 with api_key=<public-project-key-redacted> HTTP 200: sessionRecording=false, flags={},
+  isAuthenticated=false, config.enable_collect_everything=true.
+* No response field establishes IP discard. IP handling is therefore UNABLE.
+The exact sanitized responses are in /tmp/prod-posthog-remote-config-redacted.json
+and /tmp/prod-posthog-decide-redacted.json.
+
+2. FIRST-PARTY SESSION / EVENT DATA
+-----------------------------------
+Evidence: client/src/lib/sessionTracker.ts:17-45 inserts user_sessions with
+user_id, random session_id, started_at, and client_metadata containing
+navigator.userAgent, navigator.platform, screen_width, screen_height. Lines
+94-118 update last_heartbeat. Lines 120-167 write ended_at and page_views.
+Lines 186-260 track page, duration, and maximum scrollDepth. Lines 293-323
+repeat page snapshots in heartbeats. client/src/App.tsx:109 calls
+trackPageView(location); auth.tsx:83/120/153/162 starts/ends sessions.
+
+The code also attempts user_events inserts with user_id, session_id,
+event_name, arbitrary properties, and created_at at sessionTracker.ts:263-290.
+Production public table inventory contains user_sessions but no public.user_events
+(table query evidence: /tmp/privacy-query-tables.out). No current callers of
+sessionTracker.trackEvent() were found; only startSession/endSession and
+trackPageView are called. Therefore the intended user_events path is not a
+confirmed active production store.
+
+3. PROVIDER TABLE: OUTBOUND DATA, ACCOUNT LINKAGE, CONTENT LINKABILITY
+---------------------------------------------------------------------
+The "explicit account linkage" column refers only to values in the outbound
+application request. "Content linkability" avoids calling title/query traffic
+anonymous: unique content, free text, transport metadata, provider logs, and
+server-side request context may still be linkable.
+
+Provider | Explicit account linkage | Exact outbound data | Content linkability | Evidence
+
+PostHog | YES/direct | distinct_id=Supabase UUID; identify email, name,
+username,is_internal; explicit event properties and SQL-trigger title/list/
+friend/DNA/streak fields above; SDK/autocapture/page-leave/pageview | HIGH,
+direct account linkage | posthog.ts:11-55; SQL function lines 15-102;
+web asset line 93.
+
+Customer.io | YES/direct | customer ID is supplied UUID; email; first_name;
+username; created_at; plan=free; signup_source=supabase_auth; signed_up
+email/signed_up_at; admin event has new_user_id,new_user_email,signed_up_at |
+HIGH/direct | function-customerio-identify.ts:14-49 and
+function-notify-new-user-cio.ts:13-141.
+
+OneSignal | YES/direct | REST include_aliases.external_id=[internal UUID];
+headings, message, route, app_id, push target, iOS badge fields; SDK also
+manages subscription/device/token records | HIGH/direct through external_id;
+message/route can reveal activity | function-send-notification.ts:38-72,
+105-142; native branch main.tsx:77-101 and auth.tsx:52-70,127-152. IPA caveat
+at top applies.
+
+OpenAI | MIXED | Ordinary prompts carry query/profile/media/social/DNA content
+without full email or UUID. Blends parser receives raw blend_input; blend
+recommendation prompt labels participants with first 8 chars of p.user_id and
+seed media title/type/creator. Admin room prompt includes topic and serialized
+persona id,user_name,display_name,persona_config. Moderation receives generated
+message bodies. | MEDIUM-HIGH content linkability; direct identifier on blend
+fragment/admin persona paths; not anonymous merely because email is absent |
+see OpenAI inventory below.
+
+TMDB | NO app account ID in request | cleaned title/query, media type filters,
+external IDs, imported movie title/year, and catalog enrichment title; API
+credentials are server-side | LOW/MEDIUM: title/query can be unique; no app
+UUID/email in source | media-search.ts:305-399; function-get-media-details.ts:
+78-105; function-import-media.ts:18-75; blends.ts:128-134.
+
+Google Books | NO app account ID | searchQuery/intitle query; imported book
+title/ISBN/author-like title; selected external volume IDs for details | LOW/
+MEDIUM content-only; not account-anonymous | media-search.ts:596-656;
+function-get-media-details.ts:343-350; function-import-media.ts catalog code.
+
+Open Library | NO app account ID | searchQuery or title+author query; selected
+book identifiers | LOW/MEDIUM content-only | media-search.ts:697-705.
+
+Spotify | NO app account ID or end-user Spotify token | server client-credential
+token request; searchQuery for show/podcast search | LOW/MEDIUM content-only;
+no user Spotify account linkage in source | media-search.ts:894-912.
+
+Apple/iTunes Search | NO app account ID | searchQuery/term plus media/entity
+filters for podcasts, albums, tracks | LOW/MEDIUM content-only | media-search.ts:
+870-883,941-974.
+
+YouTube Data API | NO app account ID | media external ID, channel ID/handle,
+or video ID in details; media-search source uses YouTube search code where
+applicable | LOW/MEDIUM content-only; no Google user token | function-get-media-details.ts:271-337.
+
+RAWG | NO app account ID | raw game search query | LOW/MEDIUM content-only | gaming-search.ts:13-46.
+
+ESPN | NO app account ID; raw query is NOT placed in ESPN URL | sport_type-derived
+scoreboard path and fixed User-Agent; response is filtered locally against the
+query | LOW; the sports type/path is not account-linked | sports-search.ts:27-61.
+
+TheSportsDB | NO app account ID | raw query as searchevents.php?e=... | LOW/
+MEDIUM content-only | sports-search.ts:93-113.
+
+FlixPatrol | NO app account ID | fixed platform, media type, country, and date;
+then returned title is looked up at TMDB | NONE from user request in this
+function; catalog title is public content | get-flixpatrol-platform.ts:46-74.
+
+The New York Times | NO app account ID | fixed admin topic-suggestion query
+(true-crime documentary/podcast) and fixed section filters; no normal user
+search body | NONE/low; this is an admin content-source call | deployed
+admin-room-conversations source topicSuggestions section (source code lines
+46-92 in the downloaded body).
+
+Vercel | UNABLE for exact account linkage | receives normal web HTTP request,
+URL, headers, and transport metadata; no application provider payload | UNABLE;
+standard hosting request metadata is not an app-level anonymous guarantee |
+live response server: Vercel; no provider payload inspection.
+
+Supabase | YES/direct first-party backend | auth UUID/email and all fields
+needed by authenticated functions; stores user_sessions, ratings, lists,
+DNA, social content, and account records | HIGH/direct | deployed function
+sources and production table inventory.
+
+Browser links to Netflix/Hulu/Paramount+/Crunchyroll/Tubi/Pluto/Google search
+are returned as links by get-media-details.ts:10-29. They are not backend
+outbound audience integrations in this code. If a user follows one, the
+browser makes a separate request to that destination; that behavior is not
+counted as the server sending an account profile.
+
+4. OPENAI: CURRENT DEPLOYED SOURCE INVENTORY
+--------------------------------------------
+All listed calls use https://api.openai.com/v1/chat/completions unless noted.
+The request body includes the user prompt plus the shown system/output rules;
+OpenAI receives the prompt content, not the app's Supabase bearer token. The
+functions may still be able to associate a request internally at the app layer.
+
+* conversational-search: function-conversational-search.ts:164-219. Reads
+  list_items title,creator,media_type,notes,created_at and dna_profiles
+  profile_text,favorite_media_types,favorite_genres. The OpenAI prompt includes
+  the raw query, profile_text, favorite types/genres, and up to ten recent
+  title/creator/type strings. The selected notes and account UUID are not put
+  into the prompt. Direct searches first call media-search with the raw query
+  (lines 116-126).
+* media-search movie/TV fallback: media-search.ts:532-550 sends cleaned
+  searchQuery to OpenAI only when the catalog path needs an AI fallback. The
+  music fallback at lines 983-998 sends searchQuery. No account ID/email.
+* gaming-search: gaming-search.ts:56-88 sends raw query in
+  "Find games matching" when RAWG returns no results. No account ID/email.
+* sports-search: sports-search.ts:121-169 sends raw query plus current date,
+  season context, and requested game/sport wording on fallback. No account
+  ID/email.
+* spell-fix: supabase/functions/spell-fix/index.ts:18-49 sends the raw query
+  (up to 120 characters) and an optional media type hint. No account ID/email.
+* generate-dna-profile: generate-dna-profile.ts:51-86,134-179 sends every
+  survey question and answer text, and asks for label, tagline, bio, favorite
+  genres/types/sports, flavor notes, and media-consumption stats. No email or
+  UUID in prompt.
+* generate-dna-snapshot: generate-dna-snapshot.ts:47-103 sends survey
+  question text plus answer_text only. No email or UUID.
+* generate-dna-profile-v2: generate-dna-profile-v2.ts:220-320 sends survey
+  question/answers; behavioral signal_type/value/strength/source_count;
+  recent signal values; top show signals; followed creator name/role; existing
+  archetype/label; and DNA moment question/answer option text. No email or
+  full UUID.
+* generate-dna-blueprint: generate-dna-blueprint.ts:59-174 sends survey
+  question/answer text, signal_type/value/strength/source_count, and recent
+  item title/media_type/rating (the selected year is not formatted into the
+  item text); it also sends derived anti-preferences and asks for creators,
+  decades, genres, and media types. No email or UUID.
+* generate-media-based-dna: generate-media-based-dna.ts: user-specific
+  media-derived profile prompt (source lines 100-220 in downloaded source)
+  includes aggregate watched/rated titles, media types, genres/creators and
+  generated DNA signals; exact prompt is source-version dependent. No email
+  field was selected for the prompt.
+* generate-media-recommendations: generate-media-recommendations.ts:83-170
+  sends DNA profile_text/favorite genres/types, recent title/creator/type
+  history, and optional currentMediaTitle/currentMediaType/currentMediaCreator.
+  OpenAI response contains title/creator/type/year/description/genre and
+  rating_explanation. No email or UUID in prompt.
+* generate-advanced-recommendations: deployed function source reads DNA
+  profile label/tagline/profile_text/favorite genres/types, highlights,
+  recent consumption title/type/creator, highly rated title/type/rating,
+  social post media title/type/rating/content (prompt truncates review text),
+  custom list titles, followed creator names/roles, and behavioral/engagement
+  signals. OpenAI call is at the corresponding deployed function source
+  around lines 89-289 in the production source snapshot. No email/UUID in the
+  prompt; appUser lookup itself reads id/email server-side.
+* rebuild-recommendations: rebuild-recommendations.ts:90-118,120-250,260-276
+  sends DNA profile fields; up to 20 consumption title/type/creator records;
+  high ratings title/type/rating; up to 10 social post media title/type/rating
+  and content; custom list titles; followed creator name/role; behavioral
+  signal value/strength/source counts/sources; engagement counts. It then
+  calls media-search to resolve generated title/creator/type (lines 314-360).
+  No email in prompt; no full UUID in prompt.
+* score-media-match: production source
+  /tmp/privacy-production-sources/score-media-match__0__functions__
+  score-media-match__index.ts:610-777 loads DNA signal values/strength,
+  followed creator names, DNA label/tagline/profile_text/favorite genres/types,
+  loved title/type/rating rows, disliked title/type/rating rows, and the
+  candidate title/creator/media_type/genres/description. The prompt builder is
+  supabase/functions/score-media-match/prompt.mjs:4-43. No email or full UUID
+  in prompt.
+* compare-dna-friend: compare-dna-friend.ts:533-610 sends two users' DNA
+  labels/taglines, normalized match score, shared genres, shared creators,
+  and shared titles both rated/favorited; it also formats individual stats
+  (tracked count, average rating, top media type). Prompt includes the
+  friend's display_name as a friend label. It does not send either email.
+* match-dna-celebrity: match-dna-celebrity.ts:107-191 sends the user's DNA
+  label/tagline, genre signals, favorite creator signals, media type signals,
+  favorite decade signals, and flavor notes. No email/UUID.
+* blends: blends.ts:8-49 sends raw blend_input to parse titles/types/creators and
+  mentioned usernames/friends. blends.ts:94-115 sends each participant's
+  first-eight-character user_id label plus seed media type/title/creator. The
+  current user's completed list seeds and list titles are assembled at
+  blends.ts:255-267. No email, but the UUID fragment is an explicit identifier.
+* suggest-celebrities: source code accepts the free-form description and uses
+  OpenAI generation; no account email/UUID is added.
+* admin-room-conversations: deployed source
+  /tmp/privacy-production-sources/admin-room-conversations__0__admin-room-
+  conversations__index.ts:287-315 sends admin topic plus JSON.stringify(people),
+  where each persona record has id,user_name,display_name,persona_config. These
+  are is_persona records, not an assertion that they are ordinary customers.
+  The same function's moderation helper sends the concatenated generated
+  message bodies to OpenAI moderation (source lines 32-43 in the downloaded
+  body). The OpenAI prompt is not an end-user's account profile.
+* generate-dna-moments, generate-challenge-pool, generate-pool-questions, and
+  generate-trivia-polls are admin/content generation paths. Their prompts use
+  category/topic/pool name/existing questions or trivia context; no ordinary
+  user's email/UUID was identified in their current deployed prompt paths.
+* conversational/media search and the above AI functions persist or return
+  generated output through Supabase; there is no second provider call that
+  sends the OpenAI output back with an account identifier in the inspected
+  source.
+
+OpenAI provider linkage conclusion: ordinary prompts are not account-ID/email
+requests, but rich DNA, title, ratings, review, search, free-text, username,
+and UUID-fragment content is not anonymous in a content sense. Provider-side
+retention/deletion settings were not established here.
+
+5. CUSTOMER.IO: EXACT CURRENT FLOW
+----------------------------------
+
+Client signup evidence: client/src/pages/login.tsx:165-176 invokes
+customerio-identify with id, email, first_name, and username.
+
+Deployed customerio-identify evidence:
+/tmp/privacy-production-all-sources/function-customerio-identify.ts:14-49
+reads id,email,first_name,username and sends a Customer.io PUT customer
+record with email, first_name, username, created_at (current timestamp), and
+plan=free. Production metadata reports verify_jwt=true for this function. The
+handler trusts the request-body id/email; no visible source check compares the
+body id to the authenticated subject.
+
+Production database trigger evidence:
+/tmp/privacy-production-db-notify-triggers.json:1 has enabled trigger
+on_public_user_created_notify_customerio on public.users calling
+notify_new_public_user_signup. The downloaded trigger definition is
+/tmp/privacy-production-db-notify-definition-redacted.tsv:1. It POSTs a body
+record containing new.id, new.email, and new.created_at and only a
+Content-Type header; no shared-secret header appears in the trigger body.
+
+Deployed notify-new-user-cio evidence:
+/tmp/privacy-production-all-sources/function-notify-new-user-cio.ts:13-23
+reads record/new/body, id,email,created_at, and requires environment values
+CUSTOMERIO_SITE_ID, CUSTOMERIO_TRACK_API_KEY, and NOTIFY_EMAIL. Lines 42-43
+construct the provider Basic-auth credential and admin customer ID
+admin:<lowercase NOTIFY_EMAIL>. Lines 52-61 identify that admin target with
+email=NOTIFY_EMAIL and role=admin_signup_notifier. Lines 75-89 send the admin
+event supabase_new_user_joined containing new_user_id,new_user_email,
+signed_up_at. Lines 103-141 identify the new user with email,created_at,
+signup_source=supabase_auth and send signed_up with email,signed_up_at.
+
+Exact handler-auth conclusion: NOTIFY_EMAIL is an admin destination/customer
+identifier, not an incoming webhook secret. The handler source has no request
+header/signature/shared-secret validation before processing the JSON body.
+Production metadata says verify_jwt=false for notify-new-user-cio; that fact
+alone is not treated as a defect here. This report does not infer whether an
+external gateway, network policy, or environment setting exists outside the
+handler source.
+
+No Customer.io delete/erase call was found in delete-account or repository
+provider-call search. Provider retention is UNABLE.
+
+6. ONESIGNAL: EXACT CURRENT FLOW
+--------------------------------
+
+Native source: client/src/main.tsx:77-101 dynamically loads the Cordova
+OneSignal plugin only when Capacitor.getPlatform() is ios/android and calls
+initialize with the app ID (redacted here). client/src/lib/auth.tsx:52-70
+requests push permission with false and calls OneSignal.login(userId), where
+userId is the Supabase UUID. auth.tsx:148-155 calls OneSignal.logout on
+SIGNED_OUT. No email, name, tag, or custom behavioral-event call was found in
+the app's OneSignal usage.
+
+Native caveat: this web bundle/native branch is NOT proof that the current
+submitted IPA has the same OneSignal plugin or code. That requires inspecting
+the submitted binary/build artifact; it was not done here.
+
+Deployed notification source:
+/tmp/privacy-production-all-sources/function-send-notification.ts:38-72 sends
+include_aliases.external_id=[userId], target_channel=push, headings.en,
+contents.en=message, data.route, ios_badgeType, and ios_badgeCount to
+api.onesignal.com. Lines 105-125 show the function request fields userId,
+type,triggeredByUserId,message,postId,commentId,listId,friendCastId and the
+first-party notification row; route is derived from type/postId at lines 8-36.
+The REST call therefore carries an internal UUID and activity-derived route/
+message/IDs, not an email.
+
+SDK/provider-managed token, subscription, device, delivery, and open metadata
+may exist; exact OneSignal provider fields/retention are UNABLE from app
+source. Account deletion has no OneSignal delete/subscription API call.
+
+7. ACCOUNT DELETION / RETENTION
+--------------------------------
+
+Deployed delete-account source removes avatar storage and invokes
+admin.rpc("delete_account_transaction") at
+/tmp/privacy-production-all-sources/function-delete-account.ts:151-164.
+The production SQL RPC is /tmp/privacy-production-db-delete-definition-
+redacted.sql:1-131. It deletes many user-owned rows, nulls attribution on
+shared content, and deletes auth.users; it contains no PostHog, Customer.io,
+or OneSignal provider API call. Client reset/logout is not provider erasure.
+
+The production table query includes public.user_sessions but no
+public.user_events. No active cron job named for session/event/provider purge
+was found. Current active cron summary
+/tmp/privacy-production-db-cron-summary.json:1-32 contains weekly signal
+report, scheduled persona posting, daily DNA signals, monthly DNA refresh,
+and nightly genre backfill. Provider terms, provider backups, Supabase
+backups, and exact retention windows are UNABLE.
+
+8. B2B / AUDIENCE-SHARING CHECK
+--------------------------------
+
+No implemented external audience-sharing path was found. Source/domain search
+covered client and all downloaded production function sources and found no
+Meta/Facebook Custom Audiences, Google Ads Customer Match, TikTok, LinkedIn,
+Segment/RudderStack, Braze/Iterable, HubSpot, Salesforce, Marketo, hashed
+email upload, or similar audience-export API. The user also states there is
+no such B2B audience sharing. This cannot prove that a historical manual
+export never occurred; no claim about undocumented/manual activity is made.
+
+PostHog, Customer.io, and OneSignal are operational analytics, messaging,
+and push integrations in the inspected code, not implemented ad-audience
+exports. The current in-app policy also says no third-party SDKs are used for
+advertising/cross-app tracking at client/src/pages/privacy-policy.tsx:94-102;
+that statement does not change the source inventory above.
+
+9. POLICY / DISCLOSURE CROSS-CHECK
+-----------------------------------
+
+client/src/pages/privacy-policy.tsx:77-102 names generic push, analytics,
+AI, and external media categories; it explicitly names TMDB, Spotify, and
+Google Books, and names PostHog account-linked analytics/email. It does not
+name Customer.io, OneSignal, OpenAI, Open Library, Apple/iTunes, YouTube,
+RAWG, ESPN, TheSportsDB, FlixPatrol, or the exact PostHog autocapture,
+page-leave, SQL-trigger, network-timing, and session-tracker fields. The
+policy says active-account retention at lines 105-109 and active-system
+removal at lines 112-119; provider erasure and provider retention remain
+UNABLE in source inventory.
+
+10. EXACT SECURITY/SECRET OBSERVATIONS (REDACTED, NON-SPECULATIVE)
+-------------------------------------------------------------------
+
+* The production SQL notify_posthog definition contains a webhook secret
+  literal; its value is intentionally omitted. This shows storage in the
+  private DB function definition, not proof it was publicly exposed.
+* Private cron SQL inspected during the audit contains a service-role bearer
+  literal. The value is intentionally omitted. Presence in private cron SQL
+  is not proof of a leak; no blanket rotation conclusion is made without
+  evidence of exposure or provenance.
+* track-analytics has conditional x-analytics-key validation in deployed
+  source (lines 27-39); verify_jwt=false is not, by itself, a vulnerability.
+* notify-new-user-cio reads provider/admin environment values but has no
+  handler-level incoming secret check (lines 18-23,42-45). This is an exact
+  source fact, not a claim about external gateway controls.
+* No secret, token, private API key, or raw credential is reproduced in this
+  report.
+
+End of inventory.

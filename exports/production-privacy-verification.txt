@@ -1,0 +1,94 @@
+CONSUMED — PRODUCTION PRIVACY VERIFICATION
+September 13, 2026
+
+SCOPE
+Read-only review of live https://app.consumedapp.com assets, Supabase production function metadata and downloaded deployed source, live database functions/policies/grants/foreign keys/triggers, backup metadata, and public PostHog remote configuration. 181 active Edge Functions were inventoried. No code, account, database policy, configuration or provider records were changed. No accounts were created or deleted. Read-only requests to reporting endpoints and read-only database-role simulations were used; response contents were not published.
+A downloaded web bundle is NOT proof of the current App Store IPA. Provider administrative account records/retention were not accessible. This is an engineering audit, not legal certification.
+
+CONFIRMED WORKING AS INTENDED
+
+1. Main full-DNA authorization is correct.
+Live get-public-dna v36 and active dna_profiles RLS enforce self/accepted-friend access and symmetric blocking. Existing-role read tests returned the target profile for self/friend and no row for a stranger. The production can_read_dna_profile helper enforces the friend/block rule. Public profiles expose label/tagline/identity previews, not the full paragraph, evidence and full profile fields. The user's intended rule does not require adding a new privacy setting.
+Owner-bound DNA functions were inspected from deployed sources: dna-profile v37, generate-dna-profile v50, generate-media-based-dna v37, generate-dna-snapshot v32 and generate-dna-blueprint v32 authenticate and target the caller. generate-dna-profile-v2 v42 permits another target only with the service-role credential. They were NOT invoked because they can write data. Admin DNA export v1 validates an authenticated administrator.
+Survey answers and snapshots have owner-only read rules. Comparisons have participant read rules. People affinity/tribes preview functions enforce blocked-pair filtering. The active blocking trigger removes friendships.
+
+2. Most first-party account deletion is implemented.
+Deployed delete-account v17 authenticates the caller, removes that caller's avatar objects and invokes a service-only transactional SQL function. Active foreign keys/manual deletes cover Auth identity/session records, main user/profile data, tracked media, owned lists/items/ratings/reviews, owned posts/takes/comments/replies/reactions, DNA profiles/signals/snapshots/answers/comparisons and recommendations. Shared/copy provenance rows can be kept with attribution cleared. Removing an author ID does not guarantee free text contains no identifying content.
+No real deletion was executed. These conclusions follow from the active function and live dependency graph, not an end-to-end deletion experiment. Avatar removal precedes the SQL transaction and cannot roll back if SQL fails.
+
+3. Several admin paths are properly protected.
+admin-dna-export, admin-delete-post, admin-room-conversations and admin-approve-draft contain explicit administrator checks. The observed /admin Access Restricted screen is valid UI protection; it is simply separate from the unprotected reporting paths below.
+
+4. Product analytics is intentionally account-linked.
+Production web instrumentation and enabled DB triggers send account-linked data to PostHog. This supports the draft's account-linked analytics description, not an anonymous-only description.
+The public PostHog decision currently returns sessionRecording=false. Heatmaps, surveys and product tours are disabled in the inspected public configuration. Network timing is enabled. Per-person targeted settings and raw SDK payloads were not inspected.
+
+5. Future B2B sharing.
+No implemented production external audience-data sharing path was found. Current outgoing integrations are operational processors and media/AI services, not a business audience-export product. The owner states no external business sharing has happened. No B2B implementation is needed or changed for this audit; future sharing still needs safeguards. Internal CSV exports do not prove external sharing.
+
+CONFIRMED GAPS — SMALLEST RECOMMENDED FIXES, NOT IMPLEMENTED
+
+A. Live reporting access is not administrator-restricted.
+get-analytics v36 is ACTIVE with gateway JWT validation, but the handler checks only a Bearer prefix before using a service-role client. A live read-only request using the PUBLIC project anon JWT received HTTP 200 for summary data. Missing/malformed credentials were rejected by the gateway; that is not an admin check.
+Live get_dashboard_summary, get_dna_clusters and get_social_graph_metrics RPCs also accepted public-anon read calls. Production grants show a wider reporting RPC family executable by anon/authenticated without an administrator predicate.
+admin-analytics v35 validates the user but does not check the administrator role. Its ordinary-user access path is confirmed by deployed source; no real non-admin JWT was used for an HTTP test.
+Smallest fix: require authenticated admin permission on both reporting Edge Functions and restrict the underlying reporting RPCs, so direct RPC access cannot bypass the fix. UI changes alone are insufficient.
+Evidence: deployed get-analytics handler lines 14-32, admin-analytics handler, live pg_proc/ACL definitions and HTTP status-only checks.
+
+B. Some account-linked rows are not included in deletion.
+Live user_blocks and user_last_activity have no relevant cascade and are not explicitly deleted by the production deletion routine. They would remain when the associated account is deleted. This was established from schema/code, not by deleting a user.
+Smallest fix: include appropriate cleanup or define and justify any necessary safety retention. Auth audit logs/temporary flow records also remain; security retention may be legitimate but needs a defined purpose and period, not automatic classification as a bug.
+Four active NO ACTION foreign-key relationships involving admin conversation drafts/runs/provision locks can prevent deletion if populated. Those relations were empty at inspection, so this is a conditional failure risk, not evidence normal user deletion is currently failing.
+Smallest fix: resolve those dependencies explicitly without removing business/security constraints indiscriminately.
+
+C. Account deletion does not request processor erasure.
+No deployed deletion handler, enabled DB delete trigger or scheduled cleanup job sends person/event deletion to PostHog, user/subscription deletion to OneSignal, or person deletion to Customer.io. Client PostHog reset and OneSignal logout are not server-side erasure.
+Smallest fix: establish provider deletion/de-identification operations with a restricted retry/audit process. Actual provider records remaining after past deletions are UNABLE TO VERIFY without provider access; lack of requests is confirmed, perpetual retention is not.
+Customer.io is an additional ACTIVE processor, not a hypothetical installed package: enabled signup DB trigger and deployed customerio-identify v13/notify-new-user-cio v12 transmit UUID/email and signup/profile fields.
+
+D. Raw signals and one partial-DNA path have broader access.
+user_dna_signals has an active authenticated SELECT USING(true) policy. A read-only non-friend role simulation returned another user's raw signal values/strength/source records. This is NOT access to the generated full dna_profiles row, but it exposes underlying taste evidence beyond the friend-only full-profile boundary.
+get-dna-feed-data v5 authenticates a caller but accepts target_user_id when a DNA comparison post exists, then returns partial target/friend genres/labels/comparison data without a viewer-target block check.
+Smallest fix: restrict raw signals to required authorized consumers (keeping intentional public previews separate), and apply the shared block/access checks to get-dna-feed-data. Do not add a new privacy setting or change the established friend rule.
+Public ratings/list items were observed but are NOT classified here as a confirmed violation without establishing intended item-level visibility.
+
+E. Additional deployed handler authorization concerns.
+Source inspection found daily-dna-signals v1 performs bulk service-role refreshes without its own admin/service check. It was not invoked; it returns summaries, not full DNA. Smallest fix: restrict this scheduled job to authorized service calls.
+notify-new-user-cio v12 is JWT-disabled and has no incoming handler secret/auth check before provider writes. It was not invoked. Smallest fix: authenticate its intended database/webhook caller. track-analytics is also JWT-disabled but DOES have conditional webhook-key validation; JWT-disabled alone is not a vulnerability.
+
+F. Apple name/email purpose mismatch for the current web instrumentation.
+The supplied screenshots list Name and Email only for App Functionality. Deployed web code sends these to PostHog for identified product analytics. If the submitted native build has the same instrumentation, include Analytics for these fields or change collection deliberately later. The user explicitly wants to retain email collection for now.
+User-content/avatar categories also need the submitted-build review, rather than assuming the existing five categories cover every input.
+
+UNABLE TO VERIFY
+
+- Actual contents and retention/deletion status inside PostHog, OneSignal and Customer.io. Needed: provider dashboard/API read access or redacted exports/settings. No credentials should be pasted into chat.
+- Exact SDK automatic device/IP/referrer/DOM payloads; PostHog IP storage/discard setting; per-person replay overrides, downstream destinations and contractual data reuse. Public config does not expose all administrative settings.
+- Current installed/submitted IPA: needed archive/privacy report and build identification or controlled device observation. Native code in a web bundle is not proof of shipped native behavior.
+- End-to-end real account deletion and provider cleanup behavior: would require a separately authorized disposable test account and write/delete testing, outside this read-only audit.
+- End-to-end blocked-user fixture tests were not run. Live symmetric predicates and trigger were inspected. No new block relationships were created.
+- The current external full-DNA sharing mechanism as experienced in the submitted IPA. Inspected backend share/profile/OG sources do not reveal a stranger full-profile endpoint; a deliberately exported image is outside subsequent in-app access controls.
+- Backup retention guarantee: production reports eight completed daily physical backups, WAL backup enabled, PITR disabled. Deleted data can remain in backups; the listing does not establish a contractual retention/deletion period. No backup restore was performed.
+- AI-provider training/retention contracts, processing regions beyond observable endpoints, operational privacy-request handling and historical manual exports. These cannot be established by code alone.
+
+NO LONGER A CONCERN / CORRECTIONS TO EARLIER CLAIMS
+
+- Main full-DNA access is not openly available to strangers just by knowing an ID; the live owner/friend gate works.
+- A friend seeing full DNA is intended behavior, not a private-flag bug requiring a new setting.
+- Internal UUID exports are not proof of external B2B sharing. No production audience-sharing path was found; the owner confirms no sharing to date.
+- Installed recorder code is not proof session replay is enabled. Current public PostHog decision says it is disabled.
+- A JWT-disabled function is not automatically unauthenticated: inspect its own authorization. track-analytics has a separate conditional webhook-key check.
+- Credentials present in private database/cron definitions are not by themselves proof they were exposed publicly. This audit does not establish a credential leak or require blanket rotation based solely on that observation.
+
+PROCESSOR SUMMARY
+
+Supabase: account/contact/authentication, app content/activity/DNA and associated records; directly account-linked; most first-party data deleted with noted exceptions/backups.
+PostHog: UUID, email, name/username, is_internal, page/events, selected media/list/DNA/answer/rating metadata; account-linked; no account-triggered erasure.
+OneSignal: deployed push API receives UUID external alias, message/heading and route/context IDs. Native SDK manages subscription/token/device details, exact submitted build unverified; no account-triggered erasure.
+Customer.io: UUID/email, first_name/username on identify; signup trigger id/email/created_at and signed_up/admin notification events; account-linked; no account-triggered erasure.
+OpenAI: entertainment preferences, survey answers/signals, media titles/ratings, recommendation/profile inputs, search/free text; some paths include display names/usernames or a short UUID fragment. Even without email, content is not guaranteed anonymous. Provider deletion/retention unverified.
+Metadata services: deployed TMDB, Spotify, Google Books, Open Library, Apple/iTunes, YouTube, RAWG and sports sources receive queries/title/creator/ISBN or catalog parameters as applicable. Inspected server requests do not generally include Consumed account IDs, but queries can contain identifying free text and provider logs were not inspected. Fixed trend lookups are not automatically user-data disclosures.
+Vercel: live app hosting receives HTTP requests; precise access-log retention/IP handling and any serverless runtime settings were not accessible.
+Email delivery/authentication upstreams: Supabase authentication is confirmed; exact configured upstream mail/OAuth processor retention is not fully established here.
+
+See the separate exact processor inventory for Yes/No/Unable categories, actual property names and deployed/source references. No proposed fixes were implemented.

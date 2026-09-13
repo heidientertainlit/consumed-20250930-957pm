@@ -132,3 +132,31 @@ mtime_ms = 1789333582603
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/feaaf4bf-3917-444d-ac2c-7c26d7653687/2b5b0a5d-9827-45ae-9011-c391d6c9863e"
 storage_version_token = "1789333583771514"
 content_type = "text/plain"
+
+[[outputs]]
+id = "bQA4CT7ak2S1D2kIRN_P5"
+uri = "file://exports/production-privacy-verification.txt"
+type = "text"
+title = "Production Privacy Verification — Findings"
+description = "Read-only production evidence organized into working protections, confirmed gaps, unknowns and corrected earlier concerns. Includes smallest recommended fixes, none implemented."
+logical_id = "53103ed4-4cf8-4081-88c5-ab0445077588"
+content_hash = "sha256:9ca4fc5c54bd9bf3e98d0dcc313a96f273e5b7b61887c03fc3cd34b8fc17fb0f"
+size = 13825
+mtime_ms = 1789340306694
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/53103ed4-4cf8-4081-88c5-ab0445077588/59669ba6-5650-4362-9856-94be8796feb8"
+storage_version_token = "1789340308397245"
+content_type = "text/plain"
+
+[[outputs]]
+id = "XB4Kj5XlwU-jTPoASRB8q"
+uri = "file://exports/production-processor-inventory.txt"
+type = "text"
+title = "Production Data Inventory — Exact Fields"
+description = "Detailed PostHog, OneSignal, Customer.io and AI/metadata processor inventory, with field names, source references and explicit verification limits."
+logical_id = "8a5c5faf-90f2-4b5f-8837-d322e3a0291d"
+content_hash = "sha256:2ea572313885b563df73a879de4c1c9636094bb28c7bb7eba18ba32ea97debd4"
+size = 36204
+mtime_ms = 1789340307354
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/8a5c5faf-90f2-4b5f-8837-d322e3a0291d/b34daf37-ea0c-49f3-b0db-a50c362087f2"
+storage_version_token = "1789340309128531"
+content_type = "text/plain"
