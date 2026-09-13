@@ -12,10 +12,10 @@ export default function PrivacyPolicy() {
         </Link>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Privacy Policy</h1>
-        <p className="text-sm text-gray-500 mb-8">EntertainLit Inc. (dba Consumed) · Effective Date: February 23, 2026</p>
+        <p className="text-sm text-gray-500 mb-8">Entertainlit Inc (dba Consumed) · Effective Date: September 13, 2026</p>
 
         <p className="text-gray-700 mb-6 leading-relaxed">
-          This Privacy Policy describes how EntertainLit Inc. doing business as Consumed ("Consumed," "we," "us," or "our") collects, uses, and protects your information when you use the Consumed mobile application and related services.
+          This Privacy Policy describes how Entertainlit Inc doing business as Consumed ("Consumed," "we," "us," or "our") collects, uses, and protects your information when you use the Consumed mobile application and related services.
         </p>
 
         <section className="mb-8">
@@ -30,6 +30,7 @@ export default function PrivacyPolicy() {
             <li>Ratings, lists, predictions, trivia participation, and leaderboard activity</li>
             <li>User-generated content</li>
             <li>Support communications</li>
+            <li>Records of your acceptance of our Terms of Service, including your account identifier, the terms version, and the date and time of acceptance</li>
           </ul>
           <h3 className="text-base font-medium text-gray-800 mb-2">B. Automatically Collected Information</h3>
           <p className="text-gray-700 mb-3 leading-relaxed">When you use the app, we may automatically collect:</p>
@@ -37,7 +38,7 @@ export default function PrivacyPolicy() {
             <li>Device type and operating system</li>
             <li>App usage and interaction data (features used, screens viewed)</li>
             <li>Push notification tokens</li>
-            <li>Anonymous analytics identifiers (not linked to advertising identifiers)</li>
+            <li>Analytics identifiers and usage events, which may be associated with your account identifier and account information, such as your email address, when you sign in; these are not advertising identifiers</li>
           </ul>
         </section>
 
@@ -53,6 +54,7 @@ export default function PrivacyPolicy() {
             <li>Send optional push notifications</li>
             <li>Monitor security and prevent abuse</li>
             <li>Provide customer support</li>
+            <li>Record and verify your acceptance of our Terms of Service</li>
           </ul>
           <p className="text-gray-700 font-medium">We do not sell your personal information.</p>
         </section>
@@ -96,7 +98,7 @@ export default function PrivacyPolicy() {
             We do not use third-party SDKs for advertising or cross-app tracking purposes.
           </p>
           <p className="text-gray-700 leading-relaxed">
-            PostHog does not use Apple's Advertising Identifier (IDFA) and does not engage in cross-app or cross-site tracking. Its data collection is not considered "tracking" under Apple's App Tracking Transparency framework.
+            We use PostHog for product analytics to understand how Consumed is used and improve the service. Analytics events may be linked to your account identifier and account information, such as your email address, rather than being anonymous. We do not use this analytics integration for advertising or tracking you across other companies' apps or websites.
           </p>
         </section>
 
@@ -137,6 +139,9 @@ export default function PrivacyPolicy() {
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">8. Children's Privacy</h2>
           <p className="text-gray-700 mb-3 leading-relaxed">
+            Consumed is intended for adults aged 18 and older. Our Terms of Service require users to be at least 18 years old. The protections for children described below do not permit anyone under 18 to use the service.
+          </p>
+          <p className="text-gray-700 mb-3 leading-relaxed">
             Consumed is not directed to children under 13 years of age. We do not knowingly collect personal information from children under 13. If we become aware that we have collected such information, we will promptly delete it.
           </p>
           <p className="text-gray-700 leading-relaxed">
@@ -165,7 +170,7 @@ export default function PrivacyPolicy() {
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">11. Contact Us</h2>
           <p className="text-gray-700 mb-2 leading-relaxed">If you have questions about this Privacy Policy or our data practices:</p>
-          <p className="text-gray-700 font-medium">EntertainLit, LLC (dba Consumed)</p>
+          <p className="text-gray-700 font-medium">Entertainlit Inc (dba Consumed)</p>
           <a href="mailto:support@consumedapp.com" className="text-purple-600 underline">
             support@consumedapp.com
           </a>

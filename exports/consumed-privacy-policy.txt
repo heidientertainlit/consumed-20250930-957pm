@@ -1,0 +1,115 @@
+Privacy Policy
+
+Entertainlit Inc (dba Consumed) · Effective Date: September 13, 2026
+
+This Privacy Policy describes how Entertainlit Inc doing business as Consumed ("Consumed," "we," "us," or "our") collects, uses, and protects your information when you use the Consumed mobile application and related services.
+
+1. Information We Collect
+
+A. Information You Provide
+
+When you create an account or use Consumed, we may collect:
+• Email address
+• Username
+• Profile information
+• Media tracking activity (movies, television, books, music, podcasts, games, sports, and other entertainment)
+• Ratings, lists, predictions, trivia participation, and leaderboard activity
+• User-generated content
+• Support communications
+• Records of your acceptance of our Terms of Service, including your account identifier, the terms version, and the date and time of acceptance
+
+B. Automatically Collected Information
+
+When you use the app, we may automatically collect:
+• Device type and operating system
+• App usage and interaction data (features used, screens viewed)
+• Push notification tokens
+• Analytics identifiers and usage events, which may be associated with your account identifier and account information, such as your email address, when you sign in; these are not advertising identifiers
+
+2. How We Use Your Information
+
+We use collected information to:
+• Provide authentication and account access
+• Store and display your media history and activity
+• Power leaderboards, games, predictions, and interactive features
+• Generate insights, summaries, or classifications using artificial intelligence services
+• Improve product performance and user experience
+• Send optional push notifications
+• Monitor security and prevent abuse
+• Provide customer support
+• Record and verify your acceptance of our Terms of Service
+
+We do not sell your personal information.
+
+3. Media Tracking Data
+
+Consumed allows users to log and track their entertainment consumption across media types. This information may be used to:
+• Generate personal insights, summaries, and AI-powered features
+• Display leaderboard rankings
+• Improve feature development
+• Enable social and interactive experiences
+
+You control what you choose to track within the app.
+
+4. Third-Party Service Providers & Content Sources
+
+We use third-party providers and content sources to operate and improve our services. These may include:
+• Cloud infrastructure and database providers
+• Push notification services
+• Analytics and product usage tracking services
+• Artificial intelligence processing services
+• External media data providers
+
+Media data and metadata may be provided by third-party APIs, including:
+• The Movie Database (TMDB) for movie and television information
+• Spotify for music and podcast-related metadata
+• Google Books for book-related metadata
+
+These providers may process limited data necessary to deliver functionality. Their use of information is governed by their respective privacy policies and terms.
+
+We do not use third-party SDKs for advertising or cross-app tracking purposes.
+
+We use PostHog for product analytics to understand how Consumed is used and improve the service. Analytics events may be linked to your account identifier and account information, such as your email address, rather than being anonymous. We do not use this analytics integration for advertising or tracking you across other companies' apps or websites.
+
+5. Data Retention
+
+We retain your information while your account is active. You may request deletion of your account at any time through the app settings.
+
+6. Account Deletion
+
+If you delete your account:
+• Your personal data will be removed from our active systems
+• Aggregated or anonymized data that cannot be linked back to you may be retained
+• Certain information may be retained if required for legal, fraud prevention, or security purposes
+
+7. Your Rights and Choices
+
+Depending on your location, you may have the right to:
+• Access the personal information we hold about you
+• Request correction of inaccurate data
+• Request deletion of your data
+• Opt out of optional push notifications at any time through your device settings
+
+To exercise these rights, contact us at: support@consumedapp.com
+
+8. Children's Privacy
+
+Consumed is intended for adults aged 18 and older. Our Terms of Service require users to be at least 18 years old. The protections for children described below do not permit anyone under 18 to use the service.
+
+Consumed is not directed to children under 13 years of age. We do not knowingly collect personal information from children under 13. If we become aware that we have collected such information, we will promptly delete it.
+
+If you believe we may have collected such information, contact us at support@consumedapp.com.
+
+9. Security
+
+We implement reasonable technical and organizational safeguards to protect your information from unauthorized access, disclosure, or loss. However, no method of transmission over the internet or electronic storage is completely secure, and we cannot guarantee absolute security.
+
+10. Changes to This Policy
+
+We may update this Privacy Policy periodically. When we do, we will update the Effective Date above. For significant changes, we may notify you through the app or via email. Continued use of the app after updates constitutes acceptance of the revised policy.
+
+11. Contact Us
+
+If you have questions about this Privacy Policy or our data practices:
+
+Entertainlit Inc (dba Consumed) support@consumedapp.com

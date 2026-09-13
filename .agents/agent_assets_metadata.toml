@@ -104,3 +104,17 @@ mtime_ms = 1789329924073
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/fd066a2d-15f7-4db7-b85f-e0a7f15b5d79/148d81ce-7a13-414c-afec-bdb36d0823c8"
 storage_version_token = "1789329930800140"
 content_type = "text/plain"
+
+[[outputs]]
+id = "xytoNOAVdAVsQ7i5-PEaK"
+uri = "file://exports/consumed-privacy-policy.txt"
+type = "text"
+title = "Consumed — Full Updated Privacy Policy"
+description = "Full copy-ready website text, effective September 13, 2026, matching the corrected in-app Privacy Policy."
+logical_id = "feb80fb1-642a-41b3-bd59-7a0afa3566b1"
+content_hash = "sha256:90b4f89aad0511a3e682667ef4b2ea260142b0ae8a1785637c0128d7fee844fe"
+size = 5574
+mtime_ms = 1789332764363
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/feb80fb1-642a-41b3-bd59-7a0afa3566b1/3af9d409-0082-47a7-93b2-55d0da0a4889"
+storage_version_token = "1789332803497967"
+content_type = "text/plain"
