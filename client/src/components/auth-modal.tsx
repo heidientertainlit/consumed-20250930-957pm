@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { TermsConsentCheckbox } from "@/components/terms-consent";
 
 interface AuthModalProps {
   open: boolean;
@@ -16,14 +17,24 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [signInTermsAccepted, setSignInTermsAccepted] = useState(false);
+  const [signUpTermsAccepted, setSignUpTermsAccepted] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!signInTermsAccepted) {
+      toast({
+        title: "Terms agreement required",
+        description: "Please review and agree to the Terms of Service before signing in.",
+        variant: "destructive",
+      });
+      return;
+    }
     setLoading(true);
     
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(email, password, { termsAccepted: signInTermsAccepted });
     
     if (error) {
       toast({
@@ -39,6 +50,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       onOpenChange(false);
       setEmail("");
       setPassword("");
+      setSignInTermsAccepted(false);
     }
     
     setLoading(false);
@@ -46,9 +58,17 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!signUpTermsAccepted) {
+      toast({
+        title: "Terms agreement required",
+        description: "Please review and agree to the Terms of Service before signing up.",
+        variant: "destructive",
+      });
+      return;
+    }
     setLoading(true);
     
-    const { error } = await signUp(email, password);
+    const { error } = await signUp(email, password, undefined, { termsAccepted: signUpTermsAccepted });
     
     if (error) {
       toast({
@@ -64,6 +84,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       onOpenChange(false);
       setEmail("");
       setPassword("");
+      setSignUpTermsAccepted(false);
     }
     
     setLoading(false);
@@ -71,8 +92,19 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
   const inputClasses = "w-full h-11 bg-gray-100/80 border-0 rounded-full px-11 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:bg-white transition-all";
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setEmail("");
+      setPassword("");
+      setSignInTermsAccepted(false);
+      setSignUpTermsAccepted(false);
+      setLoading(false);
+    }
+    onOpenChange(nextOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md bg-white rounded-3xl border-0 shadow-2xl">
         <DialogHeader>
           <DialogTitle className="text-center text-gray-900 text-lg font-bold">Welcome to consumed</DialogTitle>
@@ -140,6 +172,12 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
               >
                 {loading ? "Signing In..." : "Sign In"}
               </Button>
+              <TermsConsentCheckbox
+                id="compact-modal-checkbox-signin-terms"
+                checked={signInTermsAccepted}
+                onCheckedChange={setSignInTermsAccepted}
+                className="mt-3"
+              />
             </form>
           </TabsContent>
           
@@ -188,6 +226,12 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
               >
                 {loading ? "Creating Account..." : "Create Account"}
               </Button>
+              <TermsConsentCheckbox
+                id="compact-modal-checkbox-signup-terms"
+                checked={signUpTermsAccepted}
+                onCheckedChange={setSignUpTermsAccepted}
+                className="mt-3"
+              />
             </form>
           </TabsContent>
         </Tabs>

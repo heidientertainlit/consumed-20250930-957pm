@@ -17,6 +17,9 @@ import { AuthProvider, useAuth } from "./lib/auth";
 import { IdentityAwareRoute, ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
 import { FeatureFlagsProvider, useFeatureFlags } from "@/lib/feature-flags";
 import { AppUpdateGate } from "@/components/app-update-gate";
+import { TermsAcceptanceGate } from "@/components/terms-consent";
+import { markRecoveryAuthFlow } from "@/lib/auth-flow";
+import { clearOAuthTermsConsentAttempt } from "@/lib/legal-terms-consent";
 
 // Pages
 import AdminPage from "@/pages/admin";
@@ -194,6 +197,12 @@ function CapacitorDeepLinkHandler() {
       console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: type:", type, "has tokens:", !!accessToken, !!refreshToken);
 
       if (accessToken && refreshToken) {
+        if (type === "recovery") {
+          // Warm native links set the session before navigation. Mark and
+          // clear first so AuthProvider cannot classify this as a normal login.
+          markRecoveryAuthFlow();
+          clearOAuthTermsConsentAttempt();
+        }
         console.log("[AUTH-DEBUG] CapacitorDeepLinkHandler: calling setSession()");
         const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
         console.log("[AUTH-DEBUG] CapacitorDeepLinkHandler: setSession result — error:", error);
@@ -221,12 +230,13 @@ function Router() {
 
   return (
     <AuthProvider>
-      <PageTracker>
-        <AppUpdateGate />
-        <PendingRouteHandler />
-        <CapacitorDeepLinkHandler />
+      <PendingRouteHandler />
+      <CapacitorDeepLinkHandler />
+      <TermsAcceptanceGate>
+        <PageTracker>
+          <AppUpdateGate />
 
-        <Switch>
+          <Switch>
           <Route path="/login">
             <PublicOnlyRoute>
               <LoginPage />
@@ -692,8 +702,9 @@ function Router() {
           </Route>
 
           <Route component={NotFoundPage} />
-        </Switch>
-      </PageTracker>
+          </Switch>
+        </PageTracker>
+      </TermsAcceptanceGate>
     </AuthProvider>
   );
 }

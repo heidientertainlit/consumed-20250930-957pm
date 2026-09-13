@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Lock } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
+import { markRecoveryAuthFlow } from "@/lib/auth-flow";
+import { clearOAuthTermsConsentAttempt } from "@/lib/legal-terms-consent";
 
 export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
@@ -45,6 +47,8 @@ export default function ResetPasswordPage() {
       try {
         const { accessToken, refreshToken } = JSON.parse(pendingRaw);
         console.log("[RESET-DEBUG] Calling setSession() with tokens from localStorage");
+        markRecoveryAuthFlow();
+        clearOAuthTermsConsentAttempt();
         supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
           .then(({ data, error }) => {
             console.log("[RESET-DEBUG] setSession() result — error:", error, "| session user:", data?.session?.user?.email ?? "none");

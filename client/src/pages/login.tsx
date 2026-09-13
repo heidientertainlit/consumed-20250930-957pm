@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { resetOnboardingState } from "@/components/route-guards";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { getLastLoginMethod, lastLoginMethodLabels } from "@/lib/last-login-method";
+import { TermsConsentCheckbox } from "@/components/terms-consent";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -26,6 +27,8 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false);
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [signInTermsAccepted, setSignInTermsAccepted] = useState(false);
+  const [signUpTermsAccepted, setSignUpTermsAccepted] = useState(false);
   const [lastLoginMethod] = useState(getLastLoginMethod);
   const { user, session, loading, signIn, signUp, signInWithOAuth, resetPassword } = useAuth();
   const [, setLocation] = useLocation();
@@ -33,9 +36,17 @@ export default function LoginPage() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!signInTermsAccepted) {
+      toast({
+        title: "Terms agreement required",
+        description: "Please review and agree to the Terms of Service before signing in.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSubmitting(true);
     
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(email, password, { termsAccepted: signInTermsAccepted });
     
     if (error) {
       toast({
@@ -53,6 +64,15 @@ export default function LoginPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!signUpTermsAccepted) {
+      toast({
+        title: "Terms agreement required",
+        description: "Please review and agree to the Terms of Service before signing up.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (!firstName.trim() || !lastName.trim()) {
       toast({
@@ -103,7 +123,7 @@ export default function LoginPage() {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       username: normalizedUsername
-    });
+    }, { termsAccepted: signUpTermsAccepted });
     
     if (error) {
       toast({
@@ -238,9 +258,18 @@ export default function LoginPage() {
   const inputClasses = "w-full h-12 bg-gray-100/80 border-0 rounded-full px-12 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:bg-white transition-all";
   const labelClasses = "text-sm font-medium text-gray-600 ml-1";
 
-  const handleOAuth = async (provider: 'apple' | 'google') => {
+  const handleOAuth = async (provider: 'apple' | 'google', context: 'signin' | 'signup') => {
+    const termsAccepted = context === "signup" ? signUpTermsAccepted : signInTermsAccepted;
+    if (!termsAccepted) {
+      toast({
+        title: "Terms agreement required",
+        description: "Please review and agree to the Terms of Service before continuing.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSubmitting(true);
-    const { error } = await signInWithOAuth(provider);
+    const { error } = await signInWithOAuth(provider, { termsAccepted });
     if (error) {
       toast({
         title: `${provider === 'apple' ? 'Apple' : 'Google'} sign-in failed`,
@@ -251,7 +280,9 @@ export default function LoginPage() {
     }
   };
 
-  const renderSocialButtons = (context: 'signin' | 'signup') => (
+  const renderSocialButtons = (context: 'signin' | 'signup') => {
+    const termsAccepted = context === "signup" ? signUpTermsAccepted : signInTermsAccepted;
+    return (
     <div className="space-y-3 mt-5">
       <div className="relative py-1">
         <div className="absolute inset-0 flex items-center">
@@ -263,7 +294,9 @@ export default function LoginPage() {
       </div>
       <button
         type="button"
-        onClick={() => handleOAuth('apple')}
+        onClick={() => {
+          void handleOAuth('apple', context);
+        }}
         disabled={submitting}
         className="w-full h-12 flex items-center justify-center gap-2 bg-black text-white rounded-full text-sm font-semibold hover:bg-black/90 transition-all"
         data-testid={`button-${context}-apple`}
@@ -273,7 +306,9 @@ export default function LoginPage() {
       </button>
       <button
         type="button"
-        onClick={() => handleOAuth('google')}
+        onClick={() => {
+          void handleOAuth('google', context);
+        }}
         disabled={submitting}
         className="w-full h-12 flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 rounded-full text-sm font-semibold hover:bg-gray-50 transition-all"
         data-testid={`button-${context}-google`}
@@ -281,8 +316,18 @@ export default function LoginPage() {
         <SiGoogle className="h-4 w-4 text-[#4285F4]" />
         Continue with Google{context === 'signin' && lastLoginMethod === 'google' ? ' (last used)' : ''}
       </button>
+      <TermsConsentCheckbox
+        id={`checkbox-${context}-terms`}
+        checked={termsAccepted}
+        onCheckedChange={(value) => {
+          if (context === "signup") setSignUpTermsAccepted(value);
+          else setSignInTermsAccepted(value);
+        }}
+        className="mt-4"
+      />
     </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#09060f] via-[#180d2d] to-[#32194f] overflow-y-auto flex flex-col">

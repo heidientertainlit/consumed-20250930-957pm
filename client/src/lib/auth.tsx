@@ -6,21 +6,34 @@ import { identifyUser, resetUser, trackEvent } from './posthog'
 import { Capacitor } from "@capacitor/core"
 import OneSignal from "onesignal-cordova-plugin"
 import { rememberLastLoginMethod, rememberLastLoginMethodFromUser } from "./last-login-method"
+import {
+  acceptCurrentLegalTerms,
+  clearOAuthTermsConsentAttempt,
+  beginOAuthTermsConsentAttempt,
+  clearLocallyAcceptedLegalTerms,
+  beginLegalTermsAcceptanceAttempt,
+  finishLegalTermsAcceptanceAttempt,
+  noteAuthSignIn,
+  clearAuthSignInNote,
+} from "./legal-terms-consent"
+import { isRecoveryAuthCallback } from "./auth-flow"
 
 type OAuthProvider = 'apple' | 'google'
+type AuthConsentOptions = { termsAccepted?: boolean }
 
 interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error: any }>
+  signIn: (email: string, password: string, options?: AuthConsentOptions) => Promise<{ error: any }>
   signUp: (
     email: string,
     password: string,
-    metadata?: { firstName?: string; lastName?: string; username?: string }
+    metadata?: { firstName?: string; lastName?: string; username?: string },
+    options?: AuthConsentOptions,
   ) => Promise<{ error: any; data?: any }>
   signOut: () => Promise<{ error: any }>
-  signInWithOAuth: (provider: OAuthProvider) => Promise<{ error: any }>
+  signInWithOAuth: (provider: OAuthProvider, options?: AuthConsentOptions) => Promise<{ error: any }>
   resetPassword: (email: string) => Promise<{ error: any }>
   updatePassword: (newPassword: string) => Promise<{ error: any }>
 }
@@ -64,40 +77,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
 
       if (session?.user?.id) {
-        if (window.location.pathname !== '/reset-password') {
+        const isRecoveryFlow = isRecoveryAuthCallback(window.location.pathname)
+        if (!isRecoveryFlow) {
           rememberLastLoginMethodFromUser(session.user)
-        }
-        sessionTracker.startSession(session.user.id)
-
-        supabase
-          .rpc('get_my_account_profile')
-          .select('user_name, display_name')
-          .maybeSingle()
-          .then(({ data: profile }) => {
-            identifyUser(session.user.id, {
-              email: session.user.email,
-              name: profile?.display_name || profile?.user_name || session.user.email,
-              username: profile?.user_name,
-            })
-            console.log("PostHog identify", session.user.id)
-          })
-
-        await requestPushPermissionIfNative()
-        await linkOneSignalUser(session.user.id)
-      }
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔐 Auth event:', event, session ? 'Session active' : 'No session')
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-
-        if (event === 'SIGNED_IN' && session?.user?.id) {
-          if (window.location.pathname !== '/reset-password') {
-            rememberLastLoginMethodFromUser(session.user)
-          }
           sessionTracker.startSession(session.user.id)
 
           supabase
@@ -113,22 +95,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               console.log("PostHog identify", session.user.id)
             })
 
-          trackEvent('user_signed_in')
+          await requestPushPermissionIfNative()
+          await linkOneSignalUser(session.user.id)
+        }
+      }
+    })
 
-          // Skip push permission during password recovery — setSession() fires SIGNED_IN
-          // but the user is mid-recovery, not completing a normal login. The prompt would
-          // appear before the Reset Your Password screen, which is jarring and wrong.
-          const isRecoveryFlow = window.location.pathname === '/reset-password';
-          if (!isRecoveryFlow) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔐 Auth event:', event, session ? 'Session active' : 'No session')
+        setSession(session)
+        setUser(session?.user ?? null)
+        setLoading(false)
+
+        if (event === 'SIGNED_IN' && session?.user?.id) {
+          const isRecoveryFlow = isRecoveryAuthCallback(window.location.pathname)
+          if (isRecoveryFlow) {
+            clearOAuthTermsConsentAttempt()
+            clearAuthSignInNote()
+          } else {
+            noteAuthSignIn(session.user.id)
+            rememberLastLoginMethodFromUser(session.user)
+
+            sessionTracker.startSession(session.user.id)
+
+            supabase
+              .rpc('get_my_account_profile')
+              .select('user_name, display_name')
+              .maybeSingle()
+              .then(({ data: profile }) => {
+                identifyUser(session.user.id, {
+                  email: session.user.email,
+                  name: profile?.display_name || profile?.user_name || session.user.email,
+                  username: profile?.user_name,
+                })
+                console.log("PostHog identify", session.user.id)
+              })
+
+            trackEvent('user_signed_in')
+
             await requestPushPermissionIfNative()
             await linkOneSignalUser(session.user.id)
           }
 
         } else if (event === 'PASSWORD_RECOVERY') {
+          isRecoveryAuthCallback(window.location.pathname)
+          clearOAuthTermsConsentAttempt()
+          clearAuthSignInNote()
           // Recovery session established — do nothing here. The reset-password page
           // handles everything. Push permission will be requested after normal login.
 
         } else if (event === 'SIGNED_OUT') {
+          clearOAuthTermsConsentAttempt()
+          clearLocallyAcceptedLegalTerms()
+          clearAuthSignInNote()
           try { await OneSignal.logout() } catch (_) {}
           sessionTracker.endSession()
           resetUser()
@@ -143,42 +163,96 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    if (!error) {
-      rememberLastLoginMethod('email')
+  const signIn = async (
+    email: string,
+    password: string,
+    options: AuthConsentOptions = {},
+  ) => {
+    clearOAuthTermsConsentAttempt()
+    if (!options.termsAccepted) {
+      return {
+        error: new Error("Please review and agree to the Terms of Service before signing in."),
+      }
     }
-    return { error }
+
+    beginLegalTermsAcceptanceAttempt()
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      if (!error) {
+        rememberLastLoginMethod('email')
+        const { error: acceptanceError } = await acceptCurrentLegalTerms(data.user?.id)
+        if (acceptanceError) {
+          await supabase.auth.signOut()
+          return { error: acceptanceError }
+        }
+      }
+      return { error }
+    } finally {
+      finishLegalTermsAcceptanceAttempt()
+    }
   }
 
   const signUp = async (
     email: string,
     password: string,
-    metadata?: { firstName?: string; lastName?: string; username?: string }
+    metadata?: { firstName?: string; lastName?: string; username?: string },
+    options: AuthConsentOptions = {},
   ) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          first_name: metadata?.firstName || '',
-          last_name: metadata?.lastName || '',
-          user_name: metadata?.username?.trim().toLowerCase() || email.split('@')[0].toLowerCase(),
+    clearOAuthTermsConsentAttempt()
+    if (!options.termsAccepted) {
+      return {
+        error: new Error("Please review and agree to the Terms of Service before signing up."),
+        data: undefined,
+      }
+    }
+
+    beginLegalTermsAcceptanceAttempt()
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: metadata?.firstName || '',
+            last_name: metadata?.lastName || '',
+            user_name: metadata?.username?.trim().toLowerCase() || email.split('@')[0].toLowerCase(),
+          }
+        }
+      })
+      if (!error && data.session) {
+        const { error: acceptanceError } = await acceptCurrentLegalTerms(data.user?.id)
+        if (acceptanceError) {
+          await supabase.auth.signOut()
+          return { error: acceptanceError, data }
         }
       }
-    })
-    return { error, data }
+      return { error, data }
+    } finally {
+      finishLegalTermsAcceptanceAttempt()
+    }
   }
 
   const signOut = async () => {
+    clearOAuthTermsConsentAttempt()
+    clearLocallyAcceptedLegalTerms()
     const { error } = await supabase.auth.signOut()
     return { error }
   }
 
-  const signInWithOAuth = async (provider: OAuthProvider) => {
+  const signInWithOAuth = async (
+    provider: OAuthProvider,
+    options: AuthConsentOptions = {},
+  ) => {
+    clearOAuthTermsConsentAttempt()
+    if (!options.termsAccepted) {
+      return {
+        error: new Error("Please review and agree to the Terms of Service before signing in."),
+      }
+    }
+
     // Browser sign-in must return to the exact current origin so previews and
     // production work without separate code paths. Native uses the published
     // app URL, which is handled by CapacitorDeepLinkHandler.
@@ -189,6 +263,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       provider,
       options: { redirectTo },
     })
+    if (!error) beginOAuthTermsConsentAttempt(provider)
     return { error }
   }
 

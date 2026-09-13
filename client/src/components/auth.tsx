@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,6 +10,7 @@ import { useAuth } from '@/lib/auth'
 import { Eye, EyeOff } from 'lucide-react'
 import { SiApple, SiGoogle } from 'react-icons/si'
 import { getLastLoginMethod, lastLoginMethodLabels } from '@/lib/last-login-method'
+import { TermsConsentCheckbox } from '@/components/terms-consent'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -25,16 +25,26 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
   const [activeTab, setActiveTab] = useState('signin')
   const [showSignInPassword, setShowSignInPassword] = useState(false)
   const [showSignUpPassword, setShowSignUpPassword] = useState(false)
+  const [signInTermsAccepted, setSignInTermsAccepted] = useState(false)
+  const [signUpTermsAccepted, setSignUpTermsAccepted] = useState(false)
   const [lastLoginMethod] = useState(getLastLoginMethod)
   const { toast } = useToast()
-  const { signIn, signInWithOAuth: oauthSignIn } = useAuth()
+  const { signIn, signUp, signInWithOAuth: oauthSignIn } = useAuth()
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!signInTermsAccepted) {
+      toast({
+        title: "Terms agreement required",
+        description: "Please review and agree to the Terms of Service before signing in.",
+        variant: "destructive",
+      })
+      return
+    }
     setIsLoading(true)
 
     try {
-      const { error } = await signIn(email, password)
+      const { error } = await signIn(email, password, { termsAccepted: signInTermsAccepted })
 
       if (error) {
         toast({
@@ -66,12 +76,19 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!signUpTermsAccepted) {
+      toast({
+        title: "Terms agreement required",
+        description: "Please review and agree to the Terms of Service before signing up.",
+        variant: "destructive",
+      })
+      return
+    }
     setIsLoading(true)
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+      const { data, error } = await signUp(email, password, undefined, {
+        termsAccepted: signUpTermsAccepted,
       })
 
       if (error) {
@@ -102,9 +119,19 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
     }
   }
 
-  const handleOAuth = async (provider: 'apple' | 'google') => {
+  const handleOAuth = async (provider: 'apple' | 'google', context: 'signin' | 'signup') => {
     setIsLoading(true)
-    const { error } = await oauthSignIn(provider)
+    const termsAccepted = context === "signup" ? signUpTermsAccepted : signInTermsAccepted
+    if (!termsAccepted) {
+      toast({
+        title: "Terms agreement required",
+        description: "Please review and agree to the Terms of Service before continuing.",
+        variant: "destructive",
+      })
+      setIsLoading(false)
+      return
+    }
+    const { error } = await oauthSignIn(provider, { termsAccepted })
     if (error) {
       toast({
         title: `${provider === 'apple' ? 'Apple' : 'Google'} sign-in failed`,
@@ -120,7 +147,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
       <Button
         type="button"
         variant="outline"
-        onClick={() => handleOAuth('apple')}
+        onClick={() => void handleOAuth('apple', context)}
         disabled={isLoading}
         className="w-full bg-black text-white hover:bg-black/90 hover:text-white border-black"
         data-testid={`button-${context}-apple`}
@@ -131,7 +158,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
       <Button
         type="button"
         variant="outline"
-        onClick={() => handleOAuth('google')}
+        onClick={() => void handleOAuth('google', context)}
         disabled={isLoading}
         className="w-full bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 border-gray-300"
         data-testid={`button-${context}-google`}
@@ -146,6 +173,15 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         <div className="relative flex justify-center text-xs">
           <span className="bg-card px-2 text-muted-foreground">or continue with email</span>
         </div>
+        <TermsConsentCheckbox
+          id={`modal-checkbox-${context}-terms`}
+          checked={context === "signup" ? signUpTermsAccepted : signInTermsAccepted}
+          onCheckedChange={(value) => {
+            if (context === "signup") setSignUpTermsAccepted(value)
+            else setSignInTermsAccepted(value)
+          }}
+          className="mt-3"
+        />
       </div>
     </div>
   )
@@ -153,6 +189,8 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
   const resetForm = () => {
     setEmail('')
     setPassword('')
+    setSignInTermsAccepted(false)
+    setSignUpTermsAccepted(false)
     setIsLoading(false)
   }
 

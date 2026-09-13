@@ -5,6 +5,8 @@ import "./index.css";
 import { initPostHog } from "./lib/posthog";
 import { Capacitor } from "@capacitor/core";
 import { App as CapApp } from "@capacitor/app";
+import { markRecoveryAuthFlow } from "./lib/auth-flow";
+import { clearOAuthTermsConsentAttempt } from "./lib/legal-terms-consent";
 
 // Replit's public development proxy does not accept an explicit :5000 port.
 // Normalize stale preview URLs before the SPA adds them to navigation history.
@@ -43,6 +45,12 @@ if (Capacitor.isNativePlatform()) {
     console.log("[RESET-DEBUG] Parsed hash params — type:", type, "| has access_token:", !!accessToken, "| has refresh_token:", !!refreshToken);
 
     if (accessToken && refreshToken) {
+      if (type === "recovery") {
+        // This must happen before ResetPasswordPage calls setSession(). On a
+        // native cold start there is no /reset-password route yet.
+        markRecoveryAuthFlow();
+        clearOAuthTermsConsentAttempt();
+      }
       const storageKey = type === "recovery" ? "pendingRecovery" : "pendingOAuthSession";
       const pendingRoute = type === "recovery" ? "/reset-password" : "/activity";
       localStorage.setItem(storageKey, JSON.stringify({ accessToken, refreshToken }));
