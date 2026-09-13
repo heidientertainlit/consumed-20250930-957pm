@@ -1,0 +1,87 @@
+CONSUMED — READ-ONLY PRIVACY ALIGNMENT AUDIT
+September 13, 2026
+
+SCOPE AND LIMITS
+Compared the uploaded 18-section draft with workspace source code, SQL migrations, and native configuration. No application, database, policy, account, vendor configuration or deployment was changed. This report is the only new deliverable. No accounts were deleted and no live unauthorized-access probes were performed. Local code and migrations are not proof of the deployed function version, active RLS rules, vendor settings or business operations. This is an engineering review, not legal advice or a guarantee that every discrepancy has been found. App Store Connect answers were not supplied, so three-way alignment remains incomplete.
+
+SUMMARY
+The draft describes Consumed more accurately than the existing short policy, particularly DNA, social features and account-linked analytics. Do not replace the current policy yet. Resolve the access-control risk, establish deletion coverage, clarify visibility and de-identification semantics, and verify processor settings before treating its assurances as established facts.
+
+1. ANALYTICS AUTHORIZATION — HIGH PRIORITY IMPLEMENTATION FINDING
+Evidence: supabase/functions/get-analytics/index.ts:14-32 checks only that Authorization begins with Bearer, then uses a service-role database client. It does not verify the user or check administrator permission. Later branches return behavioral and partnership/DNA-derived metrics.
+A private admin screen is not endpoint authorization. Even if the deployment gateway validates JWTs, the handler has no administrator check. Actual deployed exposure and gateway configuration were not tested. This is not proof a breach occurred.
+Action: verify deployed state; enforce valid authentication plus administrator authorization before any privileged read. Do not address this by weakening the policy.
+
+2. INTERNAL EXPORTS ARE PSEUDONYMOUS, NOT AUTOMATICALLY ANONYMOUS
+Evidence: client/src/pages/admin-exports.tsx:393-495 exports user UUID as anon_id with individual DNA, entertainment titles/ratings and activity. At :1014 the UI calls UUID-only data fully anonymous. A UUID remains linkable to the account; detailed entertainment histories can also be identifying.
+The draft sections 6 and 9 describe external aggregated/de-identified sharing. Internal export functionality does NOT prove that anyone shared these files externally, sold data, or violated that promise. Actual recipients/contracts/export practices are unknown.
+Action: distinguish restricted internal row-level analysis from external audience products. Do not represent current row-level exports as anonymous. Establish aggregation/small-group suppression and re-identification review before external sharing; verify actual business practices.
+The separate admin-dna-export endpoint DOES check user/admin permission (supabase/functions/admin-dna-export/index.ts:21-43); do not conflate it with get-analytics.
+
+3. ACCOUNT DELETION — APP PATH EXISTS; COMPLETE PROCESSOR COVERAGE UNVERIFIED
+Evidence: supabase/functions/delete-account/index.ts:149-203 authenticates the user, deletes avatar objects, then calls delete_account_transaction. The migration supabase/migrations/20260903193000* removes selected rows, clears ownership on some shared objects and deletes the auth user, relying on additional foreign-key cascades.
+No PostHog or OneSignal account/history deletion call is present in this deletion path. Vendor retention, separate operational deletion processes, active cascades and non-avatar storage coverage were not established. Absence of a call does not prove that a vendor retains data forever.
+The draft section 12 promises deletion/de-identification with specific exceptions. That promise needs a complete inventory and actual deletion/retention process, not simply sign-out or analytics reset. Shared text with a removed author ID is not necessarily de-identified if the text itself identifies someone.
+Reliability observation: avatar removal precedes database deletion and cannot roll back if the DB step fails. This can leave partial deletion. No claim is made that the UI falsely reports every such failure as success.
+Action: verify all storage/tables/vendors/logs/backups and establish deletion propagation, retries and justified retention exceptions. Use disposable test accounts, never a real user's account for testing.
+
+4. DNA VISIBILITY — FRIEND-RESTRICTED INTENT; DIFFERENT PRIVATE-FLAG SEMANTICS
+Evidence: supabase/migrations/20260908000100_restrict_dna_profile_reads_to_friends.sql:7-41 grants full-profile reads to self or accepted unblocked friends; it does not consult is_private. The policy is applied at :54-68 and denies anonymous reads. Comparison/discovery logic in supabase/functions/compare-dna-friend/index.ts:172-227 also uses private/discoverability conditions for some access paths.
+This supports the draft's statement that full DNA is not automatically public. It does not establish that a private flag hides DNA from accepted friends, nor that every derived score/share route follows the same rules. No comprehensive user-facing DNA privacy control was established in this review.
+Action: define whether private means hidden from strangers or hidden from everyone except self. Explain default discoverability, friend access, derived scores and deliberate public sharing separately; align backend enforcement with that definition. Verify live policies rather than assuming migrations are applied.
+Blocking is implemented in several friend/DNA/feed paths, but this was not an exhaustive endpoint-by-endpoint blocking audit. Do not promise universal invisibility without verification.
+
+5. POSTHOG — DRAFT MOSTLY CORRECT, BUT PAYLOAD DESCRIPTION INCOMPLETE
+Evidence: client/src/lib/posthog.ts:11-40 enables autocapture/page-leave events and localStorage when configured, and identifies users with account ID and supplied properties. client/src/lib/auth.tsx supplies email, name and username. Examples of explicit event properties include DNA answers and Seen It responses. supabase/migrations/posthog_triggers.sql defines a separate server route with title/list/status/activity properties if deployed; supabase/functions/track-analytics/index.ts forwards event properties.
+Draft section 7 correctly says account ID/email/usage are linked. It should also explain profile properties and selected entertainment/activity data sent to analytics, rather than implying only generic screen counts. Exact autocaptured fields, remote replay settings and server-trigger activation require configuration/runtime verification. Not every SDK setting needs its own legal clause, but the categories and purposes should be accurate.
+
+6. ONESIGNAL — MORE THAN A PUSH TOKEN
+Evidence: native initialization in client/src/main.tsx; identity binding in client/src/lib/auth.tsx; supabase/functions/send-notification/index.ts:53-79 sends user UUID as external_id, notification heading/message and destination route. Records are also stored in the app database.
+Draft section 7 generally covers information necessary for notifications but would be clearer if it named the account identifier and notification content/delivery information. Native SDK metadata, remote settings and retention remain unverified.
+
+7. AI — REAL USER ANSWERS LEAVE THE APP
+Evidence: supabase/functions/generate-dna-profile/index.ts:53-60,134-178 reads survey questions/answers and sends them to OpenAI for generation, then stores generated profile fields (:188-235). Additional recommendation/DNA/chat generators exist; their full payload inventory was not exhaustively reviewed.
+Draft sections 2, 7 and 9 acknowledge AI processing; no confirmed false no-training promise appears in the uploaded draft. Improve specificity about entertainment preferences, answers/content and derived profiles being processed by AI providers, including OpenAI. Provider/model names are not by themselves a universal legal requirement, but meaningful categories and purposes matter.
+No conclusion about provider training, retention, residency or deletion can be drawn solely from an API call. Check the actual account terms/settings and contracts.
+The draft says DNA is not intended to infer sensitive characteristics. An older generator explicitly says avoid politics/religion takes, but no comprehensive all-generator sensitive-trait guard was established. This is an unverified design assurance, not proof that sensitive traits are currently inferred.
+
+8. ADVERTISING / CROSS-APP TRACKING — NO CONTRADICTION FOUND; NOT CERTIFIED
+No ad SDK, IDFA access or ATT request was identified in the inspected app code. Account-linked product analytics is not automatically Apple's advertising tracking.
+However, absence in source is not proof of vendor-side data reuse, integrations, audience syncing or commercial data practices. Verify PostHog, OneSignal and other processors' actual settings/agreements. The no-sale promise likewise requires business confirmation.
+
+9. CONNECTED SERVICES — DISTINGUISH METADATA FROM PERSONAL ACCOUNTS
+Metadata APIs are confirmed. The draft conditionally describes user-authorized third-party account connections, but this audit did not establish the actual enabled connected-account flows and scopes. Metadata lookup, CSV import, and connecting a personal service account are different data flows.
+Action: inventory enabled integrations and imported fields before describing specific permissions or data received. Conditional may language is not itself a confirmed false statement.
+
+10. OPERATIONAL CLAIMS THE REPOSITORY CANNOT PROVE
+Sections 11-16: backup deletion schedules, legal/security retention exceptions, privacy-request response processes, non-discrimination, deletion after discovering underage users, security operations and international transfer safeguards require operational evidence.
+The draft contains no fixed backup deletion deadline, so there is no code-proven missed deadline. Do not invent one. A US PostHog host is visible; it does not establish every processor's region or transfer safeguards. In-app terms agreement is not a comprehensive age-verification system.
+
+11. DOCUMENT CONSISTENCY
+The uploaded draft uses EntertainLit, Inc.; the user previously confirmed Entertainlit Inc. Confirm exact registered legal styling and use it consistently. The in-app page still contains the previously approved shorter 11-section policy; this new draft was intentionally NOT installed. The separately hosted website was not changed. Align effective dates and content once reviewed; do not assume common ownership of both sources produces automatic synchronization.
+
+12. REPOSITORY CREDENTIAL HYGIENE
+A reviewer flagged a hard-coded credential-like webhook value in supabase/migrations/posthog_triggers.sql. No value is reproduced here. Treat this as a potential exposed credential pending classification; if it is a secret rather than a public ingestion identifier, rotate it and remove hard-coded use through the proper secrets flow. A public analytics project key must not be mislabeled an administrator credential.
+
+APPLE APP PRIVACY — PRELIMINARY MAPPING, NOT A COMPLETED LABEL
+Apple requires disclosures covering integrated third-party partners and data linked through accounts/devices. Reference: https://developer.apple.com/app-store/app-privacy-details/
+Candidates supported by source:
+- Contact Info: email, name where provided; account functionality and identified analytics.
+- Identifiers: user ID; authentication, analytics and notification targeting. Device/push identifier details require native SDK review.
+- User Content: profile photos, reviews/comments/answers and other submitted content where uploaded; functionality and personalization, and analytics for the selected fields actually sent.
+- Usage Data / Product Interaction: feature events, media interactions and app activity; analytics and relevant personalization.
+- Search History: verify which query paths are stored/transmitted and whether Apple collection criteria apply; not blanket-confirmed here.
+- Diagnostics: runtime/provider verification required; not proven solely by SDK presence.
+- Sensitive Info: do not tick solely because media preferences could be sensitive; inspect explicit inputs/inferences and Apple's definitions.
+Most account-associated categories should not be represented as unlinked or anonymous simply because they use UUIDs. Different categories can have different purposes; do not apply every purpose to every category.
+No source evidence currently establishes advertising tracking, but vendor configuration must be checked before confidently selecting No tracking.
+A location usage-description string exists in native Info.plist; no actual location collection was established. A permission string alone is not proof of collection. No app-authored PrivacyInfo.xcprivacy was found in the inspected repository; SDK manifests may be bundled during native builds. The archive's privacy report is separate from the App Store label and should be inspected.
+
+NEXT EVIDENCE NEEDED
+1. App Store Connect > App Privacy screenshots/export: all data types, purposes, linked-to-user and tracking answers, including expanded details and unpublished edits.
+2. Actual native archive/privacy report and processor settings for analytics, replay, push, retention and deletion.
+3. Read-only verification of deployed access controls/function versions and backup/retention configuration; separately authorize any runtime test that would create or delete data.
+4. Business confirmation of whether any individual-level exports leave the company and what safeguards/recipient agreements apply.
+
+RECOMMENDED ORDER
+Verify and fix admin authorization first; resolve deletion coverage and DNA access semantics; establish aggregation/export boundaries; verify processor settings; then finalize one policy and match the App Store answers. No fixes were made as part of this read-only audit.
