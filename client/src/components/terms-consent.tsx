@@ -10,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/lib/auth";
 import {
   acceptCurrentLegalTerms,
@@ -76,16 +75,16 @@ export function TermsConsentCheckbox({
       </div>
 
       <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
-        <DialogContent className="flex max-h-[90vh] max-w-3xl flex-col p-0">
-          <DialogHeader className="border-b px-6 py-5">
+        <DialogContent className="flex h-[90dvh] max-h-[90dvh] max-w-3xl flex-col overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b px-6 py-5">
             <DialogTitle>Terms of Service</DialogTitle>
             <DialogDescription>
               Review the current Terms of Service before continuing.
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="min-h-0 flex-1 px-6 py-5">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5" tabIndex={0} role="region" aria-label="Terms of Service text">
             <TermsContent />
-          </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
     </>
@@ -159,9 +158,9 @@ function TermsAcceptancePrompt({
   error: string | null;
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900 px-4 py-8">
-      <div className="flex max-h-[calc(100vh-4rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
-        <div className="border-b px-6 py-5 sm:px-8">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900 px-4 py-4">
+      <div className="flex h-[calc(100dvh-2rem)] min-h-[420px] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+        <div className="shrink-0 border-b px-6 py-5 sm:px-8">
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-purple-600" />
             <div>
@@ -172,10 +171,10 @@ function TermsAcceptancePrompt({
             </div>
           </div>
         </div>
-        <ScrollArea className="min-h-0 flex-1 px-6 py-5 sm:px-8">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5 sm:px-8" tabIndex={0} role="region" aria-label="Terms of Service text">
           <TermsContent />
-        </ScrollArea>
-        <div className="border-t bg-gray-50 px-6 py-5 sm:px-8">
+        </div>
+        <div className="shrink-0 border-t bg-gray-50 px-6 py-5 sm:px-8">
           <div className="flex items-start gap-2">
             <Checkbox
               id="account-terms-acceptance"
