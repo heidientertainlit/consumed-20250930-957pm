@@ -11,66 +11,77 @@ id = "ZiSC4-fLSv4-TaWXUeSzo"
 uri = "file://rob_data_export.csv"
 type = "table"
 title = "Rob Data Export (Enhanced)"
+logical_id = "073ddb09-d3ff-423c-9db1-39dc7b028a7f"
 
 [[outputs]]
 id = "vgcysVIIHyt7syO6CmOY1"
 uri = "file://rob_data_export-2.csv"
 type = "table"
 title = "rob_data_export-2 — 726 responses, 17 columns"
+logical_id = "011c04e2-8785-4340-ad22-c9302128326f"
 
 [[outputs]]
 id = "IeQxCV_y1F8aWK5e2eR4w"
 uri = "file://consumed_dna_export.csv"
 type = "table"
 title = "Consumed — Full User DNA & Engagement Export"
+logical_id = "ef73a314-2f49-441a-bed1-4e91d5bb4e3f"
 
 [[outputs]]
 id = "8e_joFcVS2_eiuyhrWOiP"
 uri = "file://consumed_user_profiles.csv"
 type = "table"
 title = "User Profiles — DNA, Genre Alignment & Activity Mix"
+logical_id = "8b939f1b-8911-4ee6-bd33-4300cb3462b3"
 
 [[outputs]]
 id = "kEFDIhXTHm28vui_bkqjI"
 uri = "file://consumed_media_detail.csv"
 type = "table"
 title = "Media Detail — Every Tracked & Rated Item per User"
+logical_id = "e827d376-ccb1-4048-ae86-0c612d06d0c6"
 
 [[outputs]]
 id = "OsBgcYYLxn_XSf3DYAq1C"
 uri = "file://consumed_responses.csv"
 type = "table"
 title = "Poll, Trivia & Prediction Responses (817 rows)"
+logical_id = "b3cdf870-006e-4680-9304-ca3c36086976"
 
 [[outputs]]
 id = "KSqgMScQgt582J7szbJEL"
 uri = "file://consumed_tracked_items.csv"
 type = "table"
 title = "Tracked Items by List (765 rows)"
+logical_id = "55667b49-fab6-4d24-a599-87ece968c5c7"
 
 [[outputs]]
 id = "xErjjVmZHjWMyb4QWJ6Um"
 uri = "file://consumed_ratings.csv"
 type = "table"
 title = "All Ratings Given (414 rows)"
+logical_id = "a338db3e-2f24-45df-8ef3-120c7bda9d2e"
 
 [[outputs]]
 id = "dOQJXXU5Qm026B1UF-8SX"
 uri = "file://consumed_genre_profiles.csv"
 type = "table"
 title = "Genre Profiles (claimed + behavioral)"
+logical_id = "870cb9fd-bc26-4b58-b6fc-0d8b259cb922"
 
 [[outputs]]
 id = "KGX5OTqEfGLtKH_M3oTx5"
 uri = "file://consumed_media_engagement.csv"
 type = "table"
 title = "Media Engagement (tracked, rated, lists)"
+logical_id = "cd41186f-e69e-4358-a8bb-2c2bc7e5a38a"
 
 [[outputs]]
 id = "G5uVBTSL0n8TGcj8kmH7U"
 uri = "file://consumed_master.csv"
 type = "table"
 title = "Consumed Master — Anonymous, One Row Per User"
+logical_id = "43efac58-903f-4deb-8760-032a2251fed6"
 
 [[outputs]]
 id = "q6zgh5CwONKrZZjn75egw"
@@ -78,3 +89,18 @@ uri = "file://screenshots/now-serif-trial.jpg"
 type = "image"
 title = "Now page serif typography trial"
 description = "A reversible preview using serif accents only for Trending Takes editorial text while keeping navigation, controls, names, and metadata in the existing sans-serif system."
+logical_id = "0b0a9829-e70e-49ff-ad17-feab69525b50"
+
+[[outputs]]
+id = "S8jZaKbU1I5HS8XVkVp5j"
+uri = "file://exports/consumed-terms-of-service.txt"
+type = "text"
+title = "Consumed — Full Terms of Service"
+description = "Complete copy-ready terms text, version September 13, 2026, exported from the app for your website."
+logical_id = "fd066a2d-15f7-4db7-b85f-e0a7f15b5d79"
+content_hash = "sha256:fab2030b47f8d7250776b5b9df873bc3c454dca04cb9584a3e1aca0b97f393f1"
+size = 10037
+mtime_ms = 1789329924073
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/fd066a2d-15f7-4db7-b85f-e0a7f15b5d79/148d81ce-7a13-414c-afec-bdb36d0823c8"
+storage_version_token = "1789329930800140"
+content_type = "text/plain"
