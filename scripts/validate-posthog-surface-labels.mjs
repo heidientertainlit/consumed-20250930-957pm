@@ -2,6 +2,7 @@
  * Local-only browser validation for PostHog surface labels.
  *
  * Run: node scripts/validate-posthog-surface-labels.mjs
+ * App SDK only (no separately downloaded marketing fixture): add --app-only.
  * Uses only installed Playwright/esbuild, local fixture requests, and dummy
  * credentials. It never loads the app, auth, a provider, or a published host.
  */
@@ -16,7 +17,7 @@ const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const helperPath = resolve(root, "client/src/lib/posthog-surface.ts");
 const capturePrefix = "/fake-posthog-capture/";
 const dummyKey = "phc_surface_labels_local_validation_only";
-const sdkFixtures = [
+const allSdkFixtures = [
   {
     version: "1.352.0",
     source: resolve(root, "node_modules/posthog-js/dist/array.full.js"),
@@ -28,6 +29,9 @@ const sdkFixtures = [
     package: "/tmp/posthog-replay-sdk-1.430.3/package/package.json",
   },
 ];
+const sdkFixtures = process.argv.includes("--app-only")
+  ? allSdkFixtures.slice(0, 1)
+  : allSdkFixtures;
 
 function fail(message) {
   throw new Error(`PostHog surface-label validation: ${message}`);

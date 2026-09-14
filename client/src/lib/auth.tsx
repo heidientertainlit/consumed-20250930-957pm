@@ -132,6 +132,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (state !== "live") {
       // Do not identify, track, request push permission, or log into
       // OneSignal when the UUID is stale or account status is unavailable.
+      // A later successful check must restore capture and identity rather
+      // than taking the already-prepared shortcut while still opted out.
+      providerSetupUserId = null;
       setPostHogCaptureAllowed(false);
       if (state === "missing") {
         await oneSignalIdentity.logout();

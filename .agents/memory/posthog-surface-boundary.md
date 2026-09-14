@@ -14,3 +14,26 @@ Client metadata work does not authorize the paused ingestion migration or deploy
 **Why:** The user authorized surface labeling independently, while explicitly keeping transport, credentials, replay settings, cleanup, and migration unchanged.
 
 **How to apply:** Review the actual release diff before any later publishing request. Do not infer backend event origins or an installed native binary's behavior from current client source.
+
+Do not describe native labeling as metadata-only until the shipped archive's
+SDK initialization and call sites are verified.
+
+**Why:** The inspected released iOS archive bundled PostHog without initializing
+it. A later source build can therefore introduce active collection even when
+the immediate patch only concerns labels or remote-configuration compatibility.
+
+**How to apply:** Explicitly disclose native initialization, identity fields,
+event categories, and project-controlled replay before building. SDK presence
+alone is not proof of prior collection, and local browser tests are not
+physical-device release evidence.
+
+Prove replay recovery separately from event capture and remote-config loading.
+
+**Why:** With the inspected SDK, the app's opt-out/reset/opt-in sequence can
+clear recording configuration even though ordinary capture resumes. A plain
+SDK control recorded with the same local configuration while the app wrapper
+did not.
+
+**How to apply:** Use the actual wrapper and real recorder, include a plain-SDK
+control, and require snapshots after lifecycle transitions. Do not treat a
+successful config request, opt-in, or custom event as replay evidence.

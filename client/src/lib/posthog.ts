@@ -268,9 +268,6 @@ export function initPostHog() {
     autocapture: true,
     persistence: 'localStorage',
     person_profiles: 'identified_only',
-    advanced_disable_flags: true,
-    advanced_disable_decide: true,
-    advanced_disable_feature_flags: true,
     // Do not let a stale local PostHog identity send while the authenticated
     // UUID is checked against the current first-party account row.
     opt_out_capturing_by_default: true,
