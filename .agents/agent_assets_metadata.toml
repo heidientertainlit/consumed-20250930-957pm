@@ -244,3 +244,17 @@ mtime_ms = 1789361966432
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/335a019c-048e-490f-a7ec-dab2b0072b79/e51d494b-bcc7-4a27-a556-21c959ccd329"
 storage_version_token = "1789363108343076"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "pkUN5mmerawqhJwDKy4D2"
+uri = "file://exports/posthog-replay-preserving-architecture.md"
+type = "text"
+title = "PostHog — Replay-Preserving Architecture"
+description = "Source-verified, independently reviewed candidate using the full SDK. Includes security controls, replay-preservation requirements, and the tests required before any activation or rotation."
+logical_id = "eb4f6778-9864-4b69-bc3d-f4413857d4f4"
+content_hash = "sha256:736c4855e6e7795debb72218e347d1721dfeba87388eb8c71eb476a593ddeecb"
+size = 11149
+mtime_ms = 1789401891698
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/eb4f6778-9864-4b69-bc3d-f4413857d4f4/145dfcb8-f852-42f5-b6cf-eeb0866ae7b7"
+storage_version_token = "1789401909035845"
+content_type = "text/markdown"

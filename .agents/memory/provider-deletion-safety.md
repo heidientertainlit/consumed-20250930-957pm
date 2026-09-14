@@ -32,3 +32,9 @@ For native identity-verification work, verify the pinned release's public header
 **Why:** Review found documented lifecycle methods absent from released iOS headers, a non-escaping token-refresh completion incompatible with a deferred JavaScript callback, and edits in generated Cordova sources that synchronization would erase.
 
 **How to apply:** Keep bridge changes in reproducible source, distinguish interface checks from native compilation/device proof, and leave enforcement off when compatibility is unproven.
+
+PostHog migration must preserve session replay and full behavioral analytics on both the app and marketing website; event-only capture and custom click tracking are not acceptable substitutes.
+
+**Why:** The user explicitly rejected disabling recording, deleting existing recordings, or degrading analytics during the security migration.
+
+**How to apply:** Keep the full SDK; validate event and replay transport, configuration, unload delivery and identity transitions together. Standard reverse-proxy support does not establish custom deletion enforcement.
