@@ -125,18 +125,15 @@ function richControlScript() {
         await sleep(500);
         fixture.remoteConfigBeforeWrapperOptIn = remoteConfig();
         fixture.originalPolicy = fixture.remoteConfigBeforeWrapperOptIn;
-        if (
-          fixture.expiredPolicyScenario &&
-          fixture.remoteConfigBeforeWrapperOptIn &&
-          typeof fixture.remoteConfigBeforeWrapperOptIn === "object"
-        ) {
-          fixture.expiredPolicy = {
-            ...fixture.remoteConfigBeforeWrapperOptIn,
-            cache_timestamp: Date.now() - 600_000,
-          };
-          window.posthog.persistence.register({
-            $session_recording_remote_config: fixture.expiredPolicy,
-          });
+        fixture.originalPolicyTimestamp =
+          fixture.remoteConfigBeforeWrapperOptIn?.cache_timestamp ?? null;
+        if (fixture.expiredPolicyScenario && fixture.originalPolicy) {
+          // Advance the fixture clock before the first authorized native
+          // reset. The cached timestamp is left intact, making request #2 a
+          // genuine TTL refresh that can cross the opt-out boundary.
+          fixture.expiredPolicy = fixture.originalPolicy;
+          window.__posthogReleaseFixtureClockOffset += 7_200_001;
+          fixture.expiredPolicyAge = Date.now() - fixture.originalPolicy.cache_timestamp;
         }
         await markPhase("initial");
 
@@ -158,7 +155,11 @@ function richControlScript() {
         window.posthog.flush?.();
         await sleep(400);
 
+        // The initial stale refresh was started above. Opt out before its
+        // deliberately delayed response returns; no persistence policy is
+        // fabricated or retained by this fixture.
         wrapper.setPostHogCaptureAllowed(false);
+        await sleep(250);
         await markPhase("optout");
         wrapper.trackEvent("release_optout_blocked", { phase: "optout" });
         window.posthog.capture("sdk_optout_blocked", { phase: "optout" });
@@ -174,7 +175,10 @@ function richControlScript() {
 
         await markPhase("recovery");
         wrapper.setPostHogCaptureAllowed(true, "${fakeUserId}");
-        await sleep(500);
+        // The expired request may complete only after the opt-out boundary.
+        // Wait for that real response rather than manufacturing a policy.
+        await sleep(fixture.expiredPolicyScenario ? 4_500 : 500);
+        fixture.remoteConfigAfterRecoveryOptIn = remoteConfig();
         fixture.recoveryState = state();
         fixture.beforeRecoveryRecording = fixture.recoveryState.recording;
         fixture.recoverySessionId = fixture.recoveryState.sessionId;
@@ -187,34 +191,45 @@ function richControlScript() {
         window.posthog.flush?.();
         await sleep(400);
 
-        await markPhase("guest");
-        wrapper.resetUser();
-        wrapper.setPostHogCaptureAllowed(true, null);
-        await sleep(500);
-        fixture.guestState = state();
-        fixture.guestSessionId = fixture.guestState.sessionId;
-        wrapper.trackEvent("release_guest", {
-          phase: "guest", identity: "guest", normal: true,
-        });
-        await sleep(3_600);
-        window.posthog.flush?.();
-        await sleep(400);
-
-        // An expired policy is held while this guest identity is discarded.
         if (fixture.expiredPolicyScenario) {
           const currentPolicy = remoteConfig();
           if (currentPolicy && typeof currentPolicy === "object") {
-            fixture.expiredPolicyForSwitch = {
-              ...currentPolicy,
-              cache_timestamp: Date.now() - 600_000,
-            };
-            window.posthog.persistence.register({
-              $session_recording_remote_config: fixture.expiredPolicyForSwitch,
-            });
+            fixture.originalPolicyForSwitch = currentPolicy;
+            fixture.originalPolicyForSwitchTimestamp = currentPolicy.cache_timestamp ?? null;
+            fixture.expiredPolicyForSwitch = currentPolicy;
+            window.__posthogReleaseFixtureClockOffset += 7_200_001;
+            fixture.expiredPolicyForSwitchAge = Date.now() - currentPolicy.cache_timestamp;
+            // This marker follows the second two-hour aging and precedes the
+            // actual native reset/opt-in. It proves the delayed request is a
+            // fresh expired-policy evaluation, not the earlier guest reset.
+            await markPhase("guest-expired");
+            // A new anonymous identity is the actual SDK transition that
+            // starts a second remote-config evaluation after the guest policy
+            // has become stale.
+            wrapper.resetUser();
+            wrapper.setPostHogCaptureAllowed(true, null);
           }
+          await sleep(400);
+          fixture.guestState = state();
+          fixture.guestSessionId = fixture.guestState.sessionId;
+          wrapper.trackEvent("release_guest", {
+            phase: "guest", identity: "guest", normal: true,
+          });
+        } else {
+          await markPhase("guest");
+          wrapper.resetUser();
+          wrapper.setPostHogCaptureAllowed(true, null);
+          await sleep(500);
+          fixture.guestState = state();
+          fixture.guestSessionId = fixture.guestState.sessionId;
+          wrapper.trackEvent("release_guest", {
+            phase: "guest", identity: "guest", normal: true,
+          });
+          await sleep(3_600);
+          window.posthog.flush?.();
+          await sleep(400);
         }
-        wrapper.setPostHogCaptureAllowed(true, null);
-        await sleep(150);
+        await sleep(fixture.expiredPolicyScenario ? 0 : 150);
         wrapper.resetUser();
         await markPhase("account-switch-optout");
         await sleep(1_500);
@@ -228,7 +243,7 @@ function richControlScript() {
           email: "account-b@example.test",
           display_name: "Fixture Account B",
         });
-        await sleep(500);
+        await sleep(fixture.expiredPolicyScenario ? 5_500 : 500);
         fixture.accountBState = state();
         fixture.accountBSessionId = fixture.accountBState.sessionId;
         wrapper.trackEvent("release_account_b", {
@@ -280,6 +295,11 @@ export function assertRichLifecycle({
     ? { surface: "ios_app", platform: "ios" }
     : { surface: "web_app", platform: "web" };
   const configRequests = fixture.requests.filter((request) => request.kind === "remote-config");
+  const configScriptRequests = fixture.requests.filter(
+    (request) => request.kind === "remote-config-script-fallback",
+  );
+  const nativeSdkReset = scenario.resetMode === "native-sdk-reset";
+  const replayDisabled = scenario.recordingDisabled || scenario.recordingSampleRate === 0;
   const snapshotItems = captureRecords
     .filter(({ item }) => snapshotValue(item) !== undefined)
     .map(({ item, phase }) => ({ ...item, __fixturePhase: phase }));
@@ -320,19 +340,30 @@ export function assertRichLifecycle({
     "account-b",
   );
   const replayEvidence = {
+    configScriptStatus: configScriptRequests[0]?.responseStatus,
+    configStatus: configRequests[0]?.responseStatus,
+    configScriptStatuses: configScriptRequests.map((request) => request.responseStatus),
     configRequests: configRequests.length,
     configDelays: configRequests.map((request) => request.delayMs || 0),
     configResponses: configRequests.map((request) => request.response),
+    sampleRates: configRequests.map((request) => request.response?.sessionRecording?.sampleRate),
     configPhases: configRequests.map((request) => ({
       phaseAtRequest: request.phaseAtRequest,
       phaseAtResponse: request.phaseAtResponse,
       delayMs: request.delayMs || 0,
     })),
     originalPolicy: policyFields(state.originalPolicy),
+    originalPolicyTimestamp: state.originalPolicyTimestamp,
     expiredPolicy: policyFields(state.expiredPolicy),
+    expiredPolicyAge: state.expiredPolicyAge,
+    originalPolicyForSwitch: policyFields(state.originalPolicyForSwitch),
+    originalPolicyForSwitchTimestamp: state.originalPolicyForSwitchTimestamp,
+    expiredPolicyForSwitch: policyFields(state.expiredPolicyForSwitch),
+    expiredPolicyForSwitchAge: state.expiredPolicyForSwitchAge,
     persistedConfigBeforeWrapperOptIn: state.remoteConfigBeforeWrapperOptIn,
     persistedConfigAfterWrapperOptIn: state.remoteConfigAfterWrapperOptIn,
     persistedConfigAfterReset: state.remoteConfigAfterReset,
+    persistedConfigAfterRecoveryOptIn: state.remoteConfigAfterRecoveryOptIn,
     freshPolicyUnchangedAfterOptIn:
       !scenario.expiredPolicy &&
       JSON.stringify(policyFields(state.remoteConfigBeforeWrapperOptIn)) ===
@@ -343,11 +374,16 @@ export function assertRichLifecycle({
         JSON.stringify(policyFields(state.remoteConfigAfterReset)),
     disabledPolicyNotManufactured:
       scenario.recordingDisabled &&
-      state.remoteConfigBeforeWrapperOptIn == null &&
-      state.remoteConfigAfterWrapperOptIn == null &&
-      state.remoteConfigAfterReset == null,
+      [
+        state.remoteConfigBeforeWrapperOptIn,
+        state.remoteConfigAfterWrapperOptIn,
+        state.remoteConfigAfterReset,
+        state.remoteConfigAfterRecoveryOptIn,
+      ].every((policy) => policy == null || policy.enabled === false),
     resetClearedCachedRemoteConfig:
       !!state.remoteConfigBeforeWrapperOptIn && !state.remoteConfigAfterReset,
+    remoteReplayPolicyNotOverridden:
+      !Object.prototype.hasOwnProperty.call(state.initCalls?.[0]?.config || {}, "session_recording"),
     recorderResourceLoaded: fixture.requests.some((request) => request.kind === "rrweb-recorder"),
     initialRecording: state.initialRecording,
     recoveryRecording: state.beforeRecoveryRecording,
@@ -395,27 +431,44 @@ export function assertRichLifecycle({
   assert.equal(init.config.request_batching, true, `${scenario.name}: batching changed`);
   assert.equal(init.config.autocapture, true, `${scenario.name}: autocapture changed`);
   assert.equal(init.config.capture_pageleave, true, `${scenario.name}: pageleave changed`);
+  assert.equal(replayEvidence.remoteReplayPolicyNotOverridden, true,
+    `${scenario.name}: wrapper locally overrode remote replay retention`);
+  assert.ok(configScriptRequests.length >= 1 &&
+    configScriptRequests.every((request) => request.responseStatus === 404),
+  `${scenario.name}: config.js 404 -> JSON fallback was not preserved`);
   assert.equal(configRequests[0]?.responseStatus, 200,
     `${scenario.name}: initial local JSON remote config did not load`);
 
-  if (scenario.recordingDisabled) {
+  if (replayDisabled) {
     assert.ok(configRequests.length >= 1, `${scenario.name}: disabled config did not load`);
-    assert.ok(configRequests.every((request) => request.response?.sessionRecording === false),
-      `${scenario.name}: server-disabled recording policy changed`);
-    assert.equal(state.sdkState?.recording, false, `${scenario.name}: disabled recording started`);
-    for (const phase of ["initialState", "recoveryState", "guestState", "accountBState"]) {
-      assert.equal(state[phase]?.recording, false,
-        `${scenario.name}: disabled recording started in ${phase}`);
-    }
-    assert.equal(replayEvidence.recorderResourceLoaded, false,
-      `${scenario.name}: disabled recording loaded rrweb`);
+    const expectedRecordingPolicy = scenario.recordingDisabled
+      ? false
+      : { sampleRate: 0, minimumDurationMilliseconds: 0, maskAllInputs: true };
+    assert.ok(configRequests.every((request) =>
+      JSON.stringify(request.response?.sessionRecording) === JSON.stringify(expectedRecordingPolicy)
+    ), `${scenario.name}: disabled recording policy changed`);
     assert.equal(snapshotItems.length, 0,
       `${scenario.name}: disabled recording emitted snapshots`);
-    assert.equal(replayEvidence.disabledPolicyNotManufactured, true,
-      `${scenario.name}: disabled server policy was manufactured locally`);
+    if (scenario.recordingDisabled) {
+      assert.equal(state.sdkState?.recording, false, `${scenario.name}: disabled recording started`);
+      for (const phase of ["initialState", "recoveryState", "guestState", "accountBState"]) {
+        assert.equal(state[phase]?.recording, false,
+          `${scenario.name}: disabled recording started in ${phase}`);
+      }
+      assert.equal(replayEvidence.recorderResourceLoaded, false,
+        `${scenario.name}: disabled recording loaded rrweb`);
+      assert.equal(replayEvidence.disabledPolicyNotManufactured, true,
+        `${scenario.name}: disabled server policy was manufactured locally`);
+    } else {
+      // Sampling is applied to emitted replay payloads, not necessarily to
+      // recorder construction/status. Assert the privacy outcome directly.
+      assert.equal(replayEvidence.snapshotItems, 0,
+        `${scenario.name}: sampleRate 0 emitted a replay snapshot`);
+    }
   } else {
     assert.deepEqual(configRequests[0]?.response, {
       sessionRecording: { sampleRate: 1, minimumDurationMilliseconds: 0, maskAllInputs: true },
+      autocapture_opt_out: false,
     }, `${scenario.name}: enabled remote config schema changed`);
     assert.ok(configRequests.length >= (scenario.expiredPolicy ? 3 : 1),
       `${scenario.name}: expected local remote configuration requests ${JSON.stringify(replayEvidence)}`);
@@ -431,36 +484,74 @@ export function assertRichLifecycle({
       assert.ok(
         configRequests.some((request) =>
           (request.delayMs || 0) >= 4_000 &&
-          request.phaseAtRequest === "guest" &&
+          request.phaseAtRequest === "guest-expired" &&
           ["account-switch-optout", "account-b"].includes(request.phaseAtResponse),
         ),
         `${scenario.name}: expired policy response did not cross account switch ${JSON.stringify(replayEvidence)}`,
       );
-      assert.notEqual(
+      assert.equal(
         replayEvidence.originalPolicy?.cache_timestamp,
         replayEvidence.expiredPolicy?.cache_timestamp,
-        `${scenario.name}: expired-policy fixture did not preserve the original timestamp before expiry`,
+        `${scenario.name}: expiry fixture changed the original timestamp`,
       );
+      assert.equal(
+        replayEvidence.originalPolicy?.cache_timestamp,
+        replayEvidence.originalPolicyTimestamp,
+        `${scenario.name}: expired-policy fixture mutated the original timestamp`,
+      );
+      assert.ok(replayEvidence.expiredPolicyAge > 7_200_000,
+        `${scenario.name}: expiry fixture did not exceed the one-hour TTL`);
+      assert.equal(
+        replayEvidence.originalPolicyForSwitch?.cache_timestamp,
+        replayEvidence.expiredPolicyForSwitch?.cache_timestamp,
+        `${scenario.name}: account-switch expiry fixture changed the original timestamp`,
+      );
+      assert.equal(
+        replayEvidence.originalPolicyForSwitch?.cache_timestamp,
+        replayEvidence.originalPolicyForSwitchTimestamp,
+        `${scenario.name}: account-switch expiry fixture mutated the original timestamp`,
+      );
+      assert.ok(replayEvidence.expiredPolicyForSwitchAge > 7_200_000,
+        `${scenario.name}: account-switch expiry fixture did not exceed the one-hour TTL`);
     } else {
-      assert.equal(replayEvidence.freshPolicyUnchangedAfterOptIn, true,
-        `${scenario.name}: fresh policy changed during opt-in reset`);
-      assert.equal(replayEvidence.freshPolicyUnchangedAfterReset, true,
-        `${scenario.name}: fresh policy changed during reset`);
+      if (nativeSdkReset) {
+        // Native reset is exercised without the application policy helper.
+        // The selected SDK may retain its own remote policy cache; require
+        // the actual remote response and reject only a local policy override.
+        assert.equal(replayEvidence.remoteReplayPolicyNotOverridden, true,
+          `${scenario.name}: native SDK reset locally overrode remote replay policy`);
+        assert.equal(state.remoteConfigAfterRecoveryOptIn?.enabled, true,
+          `${scenario.name}: native SDK reset did not load a fresh remote policy`);
+      } else {
+        assert.equal(replayEvidence.freshPolicyUnchangedAfterOptIn, true,
+          `${scenario.name}: fresh policy changed during opt-in reset`);
+        assert.equal(replayEvidence.freshPolicyUnchangedAfterReset, true,
+          `${scenario.name}: fresh policy changed during reset`);
+      }
     }
     assert.ok(replayEvidence.recorderResourceLoaded,
       `${scenario.name}: local rrweb recorder was not loaded`);
-    assert.equal(replayEvidence.initialRecording, true,
-      `${scenario.name}: initial replay did not start before recovery`);
+    if (scenario.expiredPolicy) {
+      assert.equal(replayEvidence.initialRecording, false,
+        `${scenario.name}: stale initial config started replay before it returned`);
+    } else {
+      assert.equal(replayEvidence.initialRecording, true,
+        `${scenario.name}: initial replay did not start before recovery`);
+    }
     assert.equal(replayEvidence.recoveryRecording, true,
       `${scenario.name}: opt-out -> reset -> opt-in replay did not recover`);
-    assert.equal(replayEvidence.guestRecording, true,
-      `${scenario.name}: guest replay did not start after logout`);
+    if (!scenario.expiredPolicy) {
+      assert.equal(replayEvidence.guestRecording, true,
+        `${scenario.name}: guest replay did not start after logout`);
+    }
     assert.equal(replayEvidence.accountBRecording, true,
       `${scenario.name}: different-account replay did not start`);
     assert.ok(replayEvidence.fullSnapshots > 0, `${scenario.name}: no full snapshot`);
     assert.ok(replayEvidence.incrementalSnapshots > 0, `${scenario.name}: no incremental snapshot`);
-    assert.equal(replayEvidence.initialSnapshotHasAccountADom, true,
-      `${scenario.name}: initial snapshot omitted account A DOM`);
+    if (!scenario.expiredPolicy) {
+      assert.equal(replayEvidence.initialSnapshotHasAccountADom, true,
+        `${scenario.name}: initial snapshot omitted account A DOM`);
+    }
     assert.equal(replayEvidence.initialSnapshotMasksInput, true,
       `${scenario.name}: initial snapshot exposed an input`);
     assert.equal(replayEvidence.initialSnapshotOmitsPrivateHook, true,
@@ -521,12 +612,14 @@ export function assertRichLifecycle({
 
   const result = {
     scenario: scenario.name,
-    mode: "actual-wrapper-rich-identity-and-replay",
+    mode: `actual-wrapper-rich-identity-and-replay:${scenario.resetMode || "app-policy-helper"}`,
     requestPaths: fixture.requests.map((request) => request.path),
     events: namedEvents,
-    replayRecovered: scenario.recordingDisabled
-      ? !replayEvidence.recorderResourceLoaded && replayEvidence.snapshotItems === 0
-      : replayEvidence.initialRecording &&
+    replayRecovered: replayDisabled
+      ? scenario.recordingDisabled
+        ? !replayEvidence.recorderResourceLoaded && replayEvidence.snapshotItems === 0
+        : replayEvidence.snapshotItems === 0
+      : (scenario.expiredPolicy || replayEvidence.initialRecording) &&
         replayEvidence.recoveryRecording &&
         replayEvidence.accountBRecording &&
         replayEvidence.fullSnapshots > 0 &&
