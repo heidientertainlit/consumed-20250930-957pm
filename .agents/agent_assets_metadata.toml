@@ -258,3 +258,45 @@ mtime_ms = 1789401891698
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/eb4f6778-9864-4b69-bc3d-f4413857d4f4/145dfcb8-f852-42f5-b6cf-eeb0866ae7b7"
 storage_version_token = "1789401909035845"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "up8Y7Pf5J0gfvkAgIdidE"
+uri = "file://exports/replay-prototype-validation-results.md"
+type = "text"
+title = "Replay Prototype — Validation Results: NO-GO"
+description = "Local SDK evidence, the consent-to-replay recovery failure, and the complete matrix of passed, failed, and unverified checks."
+logical_id = "0c3354d5-f1c3-4326-9627-088ccf1bbdcd"
+content_hash = "sha256:d3986317a576f145ef84089f31d86a15918c0733fd3bb2c7e75a47ec7c2e2c5a"
+size = 5352
+mtime_ms = 1789405233696
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/0c3354d5-f1c3-4326-9627-088ccf1bbdcd/622fbcee-067d-4df4-9077-a90897ee975f"
+storage_version_token = "1789405252123774"
+content_type = "text/markdown"
+
+[[outputs]]
+id = "YKXwqC-OzTT0TcBtIqwB-"
+uri = "file://exports/released-ios-posthog-impact.md"
+type = "text"
+title = "iOS Capture-Token Rotation — Impact Report"
+description = "Source-backed expected behavior, exact released-build uncertainty, and the evidence required before any token rotation."
+logical_id = "a61d416c-4b3a-424b-88ae-04e86479e2a8"
+content_hash = "sha256:bb066db0d44695b6a7e3eade20a7e8058c52a9b898e54b2522d0157f2801a87e"
+size = 5622
+mtime_ms = 1789402613064
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/a61d416c-4b3a-424b-88ae-04e86479e2a8/8c38f1c3-8930-4a1b-9894-56f403d10330"
+storage_version_token = "1789405253073522"
+content_type = "text/markdown"
+
+[[outputs]]
+id = "Z5wK_qRmsi41hIg5xUtZw"
+uri = "file://exports/posthog-replay-prototype-marketing-handoff.md"
+type = "text"
+title = "Marketing Prototype — Keep Disabled"
+description = "Full-SDK adapter contract and known blockers. This is not an activation or publishing instruction."
+logical_id = "b26591c5-3002-4184-8f50-78072a496ffe"
+content_hash = "sha256:86e3d66270ffe6653963cdb4f94cb210369dac1ce0f81daa93371df213326848"
+size = 8354
+mtime_ms = 1789404851149
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/b26591c5-3002-4184-8f50-78072a496ffe/90ad9332-fcbb-4b39-86dd-0911dcbed930"
+storage_version_token = "1789405253975957"
+content_type = "text/markdown"
