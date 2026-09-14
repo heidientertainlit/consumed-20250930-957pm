@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { authorizeAdminOrService } from '../_shared/authorization.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,15 +12,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
-    }
-
-    // Simple check: just verify an auth header exists
-    // Since /admin is only accessible on Replit, this is sufficient
-    if (!authHeader.startsWith('Bearer ')) {
-      throw new Error('Invalid authorization header');
+    const authorization = await authorizeAdminOrService(req);
+    if (!authorization.authorized) {
+      return new Response(JSON.stringify({ error: authorization.error }), {
+        status: authorization.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const url = new URL(req.url);

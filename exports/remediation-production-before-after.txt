@@ -1,0 +1,57 @@
+CONSUMED — SCOPED REMEDIATION: PRODUCTION BEFORE/AFTER
+Approved scope: reporting authorization, raw DNA reads/feed blocking, first-party deletion gaps/dependencies, scheduled DNA and Customer.io webhook authorization.
+Provider deletion Section 3B remains DESIGN ONLY. No provider cleanup queue/worker was enabled, no provider account was deleted, and no iOS/client/privacy-policy/B2B changes were included.
+
+1. REPORTING AUTHORIZATION
+Before: get-analytics v36 accepted a public project anon JWT and returned reporting data. admin-analytics v35 checked identity but not administrator status. Underlying reporting RPCs were publicly executable.
+After: get-analytics v37 and admin-analytics v36 authenticate via the shared administrator-or-service guard. Normal sessions must resolve to authoritative users.is_admin. Missing/invalid identity is 401; a valid non-admin is 403. Service-role internal calls remain supported. Twenty exact live reporting-RPC overloads now deny PUBLIC/anon/authenticated and retain service_role execution; no direct frontend/native RPC caller was found for these functions.
+Production proof: both endpoints now reject public-anon requests with HTTP 401; sampled direct RPC calls return permission denied. Live ACL inspection verifies all 20 signatures, and active downloaded source matches the intended deployment. Unit tests cover administrator/non-administrator authorization paths. A real signed-in administrator response test was not performed; normal response construction is preserved and reviewed.
+Unrelated pre-existing limitation: the partnerships branch references missing get_platform_affinity_insights. It was not created or redesigned in this remediation.
+
+2. DNA SIGNAL ACCESS
+Before: authenticated strangers could directly select another account's raw signal rows.
+After: the broad SELECT policy is replaced by self/accepted-unblocked-friend access through can_read_dna_profile; anonymous reads are denied. Existing service-role and write behavior remains intact. No full-DNA privacy model or new setting was introduced.
+Production proof: transaction-scoped role tests verified self/friend visibility, unrelated/anonymous denial, both block directions hiding friend data, and service-role read/write. Synthetic fixture records were absent afterward. The new policy and migration history are active.
+
+3. PARTIAL DNA FEED BLOCKING
+Before: get-dna-feed-data allowed target preview/comparison retrieval without viewer-target block checks.
+After: get-dna-feed-data v6 checks both block directions before returning target data, filters blocked friend/comparison participants, and fails closed on access-check errors. Successful unblocked response structure is preserved.
+Proof: active deployed source/hash verified; helper/unit tests passed for target and related-user filtering. The separate database role tests cover both block directions. No real authenticated end-to-end feed fixture request was made.
+
+4. FIRST-PARTY ACCOUNT DELETION
+Before: deletion did not clean user_blocks, had conditional admin dependencies, and source tracing had incorrectly identified user_last_activity as a table. Executable tests additionally exposed a varchar/bigint comparison failure and an UPDATE rejected by immutable canonical audit protection.
+After: the live delete_account_transaction locks/checks one exact existing Auth target, cleans both directions of that target's blocks, removes the writable user_sessions source rows underlying activity, handles only target-related admin draft/run/provision dependencies, uses the deployed identifier types safely, preserves immutable canonical audit records, and asserts exactly one Auth account was removed. Service-only execution and transaction semantics remain intact. No global audit protection or foreign-key definition was removed.
+The delete-account Edge Function remains v17: it already derives the target from auth.getUser rather than a supplied user ID; no provider cleanup was added. Avatars remain removed before the SQL transaction, so a later SQL failure cannot restore already removed avatar objects.
+
+Executed safety test: synthetic User A target, User B control, independent C friendship/D block controls; fixture creation is transaction-local with external insertion triggers suppressed, normal enforcement restored before exercising deletion, then full rollback.
+PASS: A removed; B account/profile/list/item/rating/social/DNA/activity and independent relationship controls preserved; B's entire seeded session row unchanged; A's sessions and derived activity absent; A-related relationships removed as expected; immutable audit provenance retained. All touched table counts returned to their pre-test totals and all synthetic accounts/session records were absent afterward. No real user deletion or provider event committed.
+This is the completed FIRST-PARTY negative-control test, not the future provider-linked A/B release test required for Section 3B.
+Retention exception: service-only immutable canonical backfill plan/audit provenance retains historical user-id snapshots. The run requested_by FK attribution is cleared by the existing FK. This is not total anonymization of every historical record; it must be reflected in a justified retention policy rather than bypassing immutability.
+
+5. SCHEDULED DNA AUTHORIZATION
+Before: daily-dna-signals v1 had no handler-level service authorization before bulk processing.
+After: active v3 validates the intended service credential before opening a DB client or performing bulk work and restricts method. The existing scheduled caller is preserved.
+Production proof: unauthenticated/wrong-token calls are denied; active source matches local and contains the early guard. Authorization unit tests pass. No authorized bulk generator was triggered and no post-change scheduled execution was awaited, so successful cron execution remains to be observed rather than claimed tested.
+
+6. CUSTOMER.IO WEBHOOK AUTHORIZATION
+Before: notify-new-user-cio accepted unauthenticated requests before provider work.
+After: active v14 requires a dedicated webhook secret before payload validation/provider calls. The existing public.users signup producer now obtains that same secret from Vault and supplies the dedicated header. One existing signup trigger remains; no duplicate auth.users producer was added. Provider credentials remain in secret storage.
+Production proof: no header/wrong secret ->401; correct secret with intentionally invalid payload ->400 before provider work. Active deployed source matches the intended bundle. Producer/consumer payload compatibility and single-trigger configuration were checked. No real signup email/event was emitted, so end-to-end delivery has not been claimed tested. Existing customerio-identify and login/native sources were left unchanged.
+
+7. MIGRATIONS/RELEASE HYGIENE
+Only six new scoped migrations were applied, each through an isolated migration workdir/dry run and recorded remotely:
+20260914000100 reporting_rpc_grants
+20260914000200 restrict_user_dna_signal_reads
+20260914000300 account_deletion_dependency_cleanup
+20260914000400 account_deletion_runtime_safety
+20260914000500 new_user_cio_webhook_producer
+20260914000600 account_deletion_immutable_audit_retention
+Historical migration drift was not replayed or repaired speculatively. Only the targeted Edge Functions were deployed; their active versions/source were inspected rather than trusting deploy output alone.
+
+8. PROJECT VERIFICATION
+159 automated tests passed, 0 failed. Production build passed with existing non-blocking bundle warnings. Independent review found no remaining blocking defect in the implemented scope. Login preview loads; this is not presented as signed-in admin/native testing.
+
+9. SECTION 3B APPROVAL BOUNDARY
+No automated PostHog, OneSignal or Customer.io deletion is enabled. The attached final design documents exact single-user operations, identity mapping, event/subscription coverage, asynchronous completion limits, retries, shared configurable circuit breakers, kill switch, minimal identifiers, and mandatory provider-linked target/control release tests.
+PostHog's documented singular person DELETE must pass the disposable test with explicit historical-event deletion; no bulk endpoint fallback is permitted. OneSignal acceptance is not completion; exact-ID disappearance is recorded as observed absence, not guaranteed backup erasure. Customer.io deletion completion claims are limited to its documented API semantics and verified observations.
+Awaiting explicit approval of that final design before provider-cleanup implementation/production enablement. No success claim is made for unperformed provider tests.

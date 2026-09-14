@@ -36,8 +36,8 @@ Smallest fix: require authenticated admin permission on both reporting Edge Func
 Evidence: deployed get-analytics handler lines 14-32, admin-analytics handler, live pg_proc/ACL definitions and HTTP status-only checks.
 
 B. Some account-linked rows are not included in deletion.
-Live user_blocks and user_last_activity have no relevant cascade and are not explicitly deleted by the production deletion routine. They would remain when the associated account is deleted. This was established from schema/code, not by deleting a user.
-Smallest fix: include appropriate cleanup or define and justify any necessary safety retention. Auth audit logs/temporary flow records also remain; security retention may be legitimate but needs a defined purpose and period, not automatic classification as a bug.
+Live user_blocks requires explicit exact-target deletion. user_last_activity is not a table: it is a derived GROUP BY view over user_sessions, list_items, and social_posts. Account deletion now removes the user_sessions source rows and Auth cascades remove the target's list_items/social_posts, so the target disappears from the view. This correction is based on the live view definition and deployed dependency function, not on a committed real-user deletion.
+Canonical-media backfill plans/audit are immutable service-role-only provenance records and are an explicit security/audit-retention exception: their historical user_id snapshot remains while the run's requested_by Auth reference is nulled by its ON DELETE SET NULL FK. Auth audit logs/temporary flow records also remain; security retention may be legitimate but needs a defined purpose and period, not automatic classification as a bug.
 Four active NO ACTION foreign-key relationships involving admin conversation drafts/runs/provision locks can prevent deletion if populated. Those relations were empty at inspection, so this is a conditional failure risk, not evidence normal user deletion is currently failing.
 Smallest fix: resolve those dependencies explicitly without removing business/security constraints indiscriminately.
 

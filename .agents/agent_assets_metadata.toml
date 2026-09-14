@@ -160,3 +160,31 @@ mtime_ms = 1789340307354
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/8a5c5faf-90f2-4b5f-8837-d322e3a0291d/b34daf37-ea0c-49f3-b0db-a50c362087f2"
 storage_version_token = "1789340309128531"
 content_type = "text/plain"
+
+[[outputs]]
+id = "YQRvqBGRJjTthNbCvRY-H"
+uri = "file://exports/remediation-production-before-after.txt"
+type = "text"
+title = "Remediation — Production Before/After"
+description = "Deployed fixes, exact production checks, first-party target/control deletion test, retained audit-data exception and verification limits."
+logical_id = "745cef53-ffc5-4d25-8730-21a710813d32"
+content_hash = "sha256:548c2dff6ed09192564342094369256d3194c8717ce89f4bccc151153e6a3996"
+size = 8686
+mtime_ms = 1789352424874
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/745cef53-ffc5-4d25-8730-21a710813d32/1cb5238c-fa32-4735-8945-762c3bfa4ca2"
+storage_version_token = "1789352425574687"
+content_type = "text/plain"
+
+[[outputs]]
+id = "bDGtINsCIP9lvKH-g-aPe"
+uri = "file://exports/provider-deletion-final-design.md"
+type = "text"
+title = "Provider Cleanup — Final Safety Design"
+description = "For approval only: provider APIs, historical-data semantics, single-user protections, circuit breaker, kill switch and mandatory provider-linked A/B tests. Not enabled."
+logical_id = "282d1772-943e-4ae0-a03f-fd4e5ef48070"
+content_hash = "sha256:89655ced845db17f9fbf62e3101c5b2fb8568c2b1d0f1892ffe922c2c551c216"
+size = 14766
+mtime_ms = 1789352424666
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/282d1772-943e-4ae0-a03f-fd4e5ef48070/5cf0bc06-d55c-42a5-898c-f06da17bbadf"
+storage_version_token = "1789352426261022"
+content_type = "text/markdown"

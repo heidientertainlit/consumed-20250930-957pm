@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { authorizeServiceRole } from "../_shared/authorization.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -6,6 +7,17 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
+  }
+
+  // This endpoint performs a bulk read and invokes extract-dna-signals for
+  // every active member.  Only the existing service-role cron caller may run
+  // it; importantly, reject before creating a client or querying any data.
+  const authorization = authorizeServiceRole(req);
+  if (!authorization.authorized) {
+    return new Response(JSON.stringify({ error: authorization.error }), {
+      status: authorization.status,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
