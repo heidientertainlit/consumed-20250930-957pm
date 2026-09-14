@@ -49,5 +49,15 @@ review incorrectly suggested that field could be called at runtime.
 names. Exercise the production module entry in local real-recorder tests.
 When retaining SDK project policy across identity resets, preserve its original
 expiry and settings only—never user/session state or sampling decisions.
-Test expired-policy refresh separately: fresh-policy recovery passed while
-the deliberately expired-policy fixture did not resume recording.
+Expiry diagnostics must separate successful config-script loading from
+script-error/JSON-fallback behavior.
+
+**Why:** The failed expiry fixture forced config.js to return 404. SDK 1.352.0
+leaves that failed tag unmarked, then waits on its already-failed load event
+during refresh. Plain SDK and wrapper both reproduced the stall; successful
+script loading allowed expiry recovery. Ordinary capture continued.
+
+**How to apply:** Do not classify that fixture as proof that normal expiry
+always breaks replay. Compare plain SDK, successful script, and failed-script
+fallback controls; retain the distinction between a conditional SDK loader bug
+and app identity-policy restoration.
