@@ -19,11 +19,18 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gunzipSync } from "node:zlib";
+import {
+  assertRichLifecycle,
+  richWrapperControlScript,
+} from "./posthog-release-rich-fixture.mjs";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const posthogPath = resolve(root, "client/src/lib/posthog.ts");
 const authPath = resolve(root, "client/src/lib/auth.tsx");
-const sdkPath = resolve(root, "node_modules/posthog-js/dist/array.full.js");
+const sdkPaths = {
+  array: resolve(root, "node_modules/posthog-js/dist/array.js"),
+  module: resolve(root, "node_modules/posthog-js/dist/module.js"),
+};
 const sdkPackagePath = resolve(root, "node_modules/posthog-js/package.json");
 const recorderPath = resolve(root, "node_modules/posthog-js/dist/lazy-recorder.js");
 const fakeKey = "phc_local_release_regression_only";
@@ -53,6 +60,25 @@ async function loadLocalAsset(path, description) {
   return readFile(path, "utf8").catch(() =>
     fail(`${description} is unavailable at ${path}`),
   );
+}
+
+async function loadSdkAssets() {
+  const esbuild = await import("esbuild").catch(() =>
+    fail("esbuild is not installed; no package was installed"),
+  );
+  const entries = await Promise.all(Object.entries(sdkPaths).map(async ([variant, path]) => {
+    const source = await loadLocalAsset(path, `installed posthog-js ${variant} SDK`);
+    if (variant === "array") return [variant, source];
+    const output = await esbuild.transform(source, {
+      loader: "js",
+      format: "iife",
+      globalName: "PosthogModule",
+      target: "es2020",
+      legalComments: "none",
+    });
+    return [variant, `${output.code}\nwindow.posthog = PosthogModule.default;`];
+  }));
+  return Object.fromEntries(entries);
 }
 
 function decodeData(value) {
@@ -362,11 +388,14 @@ function fixtureHtml({ origin, wrapper, sdk, recorder, scenario }) {
     native: scenario.native,
     platform: scenario.platform,
     scenario: scenario.name,
+    sdkVariant: scenario.sdkVariant,
     ready: false,
     errors: [],
     initCalls: [],
     captures: [],
     resetCount: 0,
+    manualRecordingStarts: 0,
+    expiredPolicyScenario: Boolean(scenario.expiredPolicy),
   });
   const supabase = `
     const authListeners = [];
@@ -409,7 +438,7 @@ function fixtureHtml({ origin, wrapper, sdk, recorder, scenario }) {
         fixture.controlMutation = "plain SDK mutation";
         document.querySelector("#fixture-main").textContent = fixture.controlMutation;
         document.querySelector("#fixture-button").click();
-        await sleep(5_000);
+        await sleep(7_000);
         fixture.sdkState = {
           optedOut: window.posthog.has_opted_out_capturing(),
           capturing: window.posthog.is_capturing(),
@@ -420,7 +449,7 @@ function fixtureHtml({ origin, wrapper, sdk, recorder, scenario }) {
         fixture.errors.push(String(error));
       }
     })();
-  </script>` : `
+  </script>` : scenario.richLifecycle ? richWrapperControlScript(scenario) : `
   <script src="/assets/posthog-wrapper.js"></script>
   <script>
     (async () => {
@@ -516,6 +545,13 @@ function fixtureHtml({ origin, wrapper, sdk, recorder, scenario }) {
         fixture.resetCount += 1;
         return originalReset(...args);
       };
+      if (typeof window.posthog.startSessionRecording === "function") {
+        const originalStartSessionRecording = window.posthog.startSessionRecording.bind(window.posthog);
+        window.posthog.startSessionRecording = (...args) => {
+          fixture.manualRecordingStarts += 1;
+          return originalStartSessionRecording(...args);
+        };
+      }
     })();
   </script>
   ${controlScript}
@@ -525,6 +561,8 @@ function fixtureHtml({ origin, wrapper, sdk, recorder, scenario }) {
 async function startFixtureServer({ sdk, recorder, wrapper, scenario }) {
   const requests = [];
   const captures = [];
+  let capturePhase = "bootstrap";
+  let configRequestCount = 0;
   const server = createServer((request, response) => {
     void (async () => {
       const chunks = [];
@@ -552,6 +590,13 @@ async function startFixtureServer({ sdk, recorder, wrapper, scenario }) {
         response.writeHead(204, headers).end();
         return;
       }
+      if (path === "/fixture-phase") {
+        capturePhase = url.searchParams.get("phase") || "unknown";
+        requests[requests.length - 1].kind = "fixture-phase";
+        requests[requests.length - 1].phase = capturePhase;
+        response.writeHead(204, headers).end();
+        return;
+      }
       if (path === "/assets/posthog-sdk.js") {
         response.writeHead(200, { ...headers, "content-type": "application/javascript" }).end(sdk);
         return;
@@ -574,16 +619,24 @@ async function startFixtureServer({ sdk, recorder, wrapper, scenario }) {
         return;
       }
       if (path.endsWith("/config")) {
+        configRequestCount += 1;
         requests[requests.length - 1].kind = "remote-config";
+        requests[requests.length - 1].phaseAtRequest = capturePhase;
+        requests[requests.length - 1].startedAt = Date.now();
+        const delay = Number(scenario.configDelayMs?.[configRequestCount - 1] || 0);
+        requests[requests.length - 1].delayMs = delay;
+        if (delay > 0) await new Promise((done) => setTimeout(done, delay));
         const config = {
-          sessionRecording: {
+          sessionRecording: scenario.recordingDisabled ? false : {
             sampleRate: 1,
             minimumDurationMilliseconds: 0,
-            maskAllInputs: false,
+            maskAllInputs: true,
           },
         };
         requests[requests.length - 1].response = config;
         requests[requests.length - 1].responseStatus = 200;
+        requests[requests.length - 1].phaseAtResponse = capturePhase;
+        requests[requests.length - 1].completedAt = Date.now();
         response.writeHead(200, { ...headers, "content-type": "application/json" }).end(JSON.stringify(config));
         return;
       }
@@ -597,7 +650,8 @@ async function startFixtureServer({ sdk, recorder, wrapper, scenario }) {
         const entries = captureItems(decoded);
         requests[requests.length - 1].decoded = decoded;
         requests[requests.length - 1].itemCount = entries.length;
-        captures.push(...entries.map((item) => ({ path, item })));
+        requests[requests.length - 1].phase = capturePhase;
+        captures.push(...entries.map((item) => ({ path, item, phase: capturePhase })));
         response.writeHead(200, { ...headers, "content-type": "application/json" })
           .end(JSON.stringify({ status: 1 }));
         return;
@@ -635,6 +689,11 @@ async function runBrowserScenario(playwright, assets, scenario) {
   const posthogRerouted = [];
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error" && message.text().includes("Error loading remote config")) {
+      console.error(`SDK configuration diagnostic (${scenario.name}): ${message.text()}`);
+    }
+  });
   await page.route("**/*", async (route) => {
     const requestUrl = new URL(route.request().url());
     if (requestUrl.origin === fixture.origin) {
@@ -672,7 +731,7 @@ async function runBrowserScenario(playwright, assets, scenario) {
   try {
     await page.goto(`${fixture.origin}/`);
     await page.waitForFunction(() => window.__posthogReleaseFixture?.ready === true, undefined, {
-      timeout: 25_000,
+      timeout: 45_000,
     }).catch(async () => {
       const state = await page.evaluate(() => window.__posthogReleaseFixture || null);
       fail(`${scenario.name} fixture did not become ready`, {
@@ -687,14 +746,29 @@ async function runBrowserScenario(playwright, assets, scenario) {
       ...window.__posthogReleaseFixture,
       initCalls: window.__posthogReleaseFixture.initCalls,
     }));
+    const captureRecords = fixture.captures;
     const events = fixture.captures.map(({ item }) => item);
     const namedEvents = events.map(eventName).filter(Boolean);
+    if (scenario.richLifecycle) {
+      const richResult = assertRichLifecycle({
+        scenario,
+        state,
+        fixture,
+        events,
+        namedEvents,
+        captureRecords,
+        externalAborted,
+        posthogRerouted,
+      });
+      lastEvidence = richResult;
+      return richResult;
+    }
     if (scenario.control) {
       const expectedRemoteConfig = {
         sessionRecording: {
           sampleRate: 1,
           minimumDurationMilliseconds: 0,
-          maskAllInputs: false,
+          maskAllInputs: true,
         },
       };
       const configScriptRequest = fixture.requests.find(
@@ -741,7 +815,7 @@ async function runBrowserScenario(playwright, assets, scenario) {
         `${scenario.name}: SDK normalized sample rate incorrectly`);
       assert.equal(state.remoteConfigBeforeOptIn?.minimumDurationMilliseconds, 0,
         `${scenario.name}: SDK normalized minimum duration incorrectly`);
-      assert.equal(state.remoteConfigBeforeOptIn?.maskAllInputs, false,
+      assert.equal(state.remoteConfigBeforeOptIn?.maskAllInputs, true,
         `${scenario.name}: SDK normalized masking config incorrectly`);
       assert.equal(state.sdkState?.optedOut, false,
         `${scenario.name}: plain SDK remained opted out`);
@@ -813,7 +887,7 @@ async function runBrowserScenario(playwright, assets, scenario) {
       sessionRecording: {
         sampleRate: 1,
         minimumDurationMilliseconds: 0,
-        maskAllInputs: false,
+        maskAllInputs: true,
       },
     }, `${scenario.name}: local remote config response schema changed`);
     assert.equal(state.sdkState?.optedOut, false,
@@ -958,8 +1032,8 @@ async function runProviderHarness(providerCode) {
 }
 
 async function main() {
-  const [sdk, sdkPackage, recorder, wrapper, providerCode] = await Promise.all([
-    loadLocalAsset(sdkPath, "installed posthog-js SDK"),
+  const [sdkAssets, sdkPackage, recorder, wrapper, providerCode] = await Promise.all([
+    loadSdkAssets(),
     loadLocalAsset(sdkPackagePath, "installed posthog-js package metadata"),
     loadLocalAsset(recorderPath, "installed posthog-js rrweb recorder"),
     buildActualWrapper(),
@@ -969,7 +1043,8 @@ async function main() {
   assert.equal(packageJSON.name, "posthog-js");
   assert.equal(packageJSON.version, "1.352.0",
     `unexpected installed SDK version ${packageJSON.version || "unknown"}`);
-  assert.ok(sdk.length > 100_000, "installed SDK asset is unexpectedly small");
+    assert.ok(sdkAssets.array.length > 100_000, "installed array SDK asset is unexpectedly small");
+    assert.ok(sdkAssets.module.length > 100_000, "installed module SDK asset is unexpectedly small");
   assert.ok(recorder.length > 50_000, "installed rrweb asset is unexpectedly small");
 
   const playwright = await loadPlaywright();
@@ -979,6 +1054,8 @@ async function main() {
       native: false,
       platform: "web",
       userAgent: fixtureUserAgent,
+      richLifecycle: true,
+      configDelayMs: [0, 0, 1_300, 0, 0, 1_300, 0],
     },
     {
       name: "iphone-web",
@@ -1005,15 +1082,38 @@ async function main() {
       userAgent: fixtureUserAgent,
     },
     ...scenarios,
+    {
+      name: "web-server-recording-disabled",
+      native: false,
+      platform: "web",
+      userAgent: fixtureUserAgent,
+      richLifecycle: true,
+      recordingDisabled: true,
+      configDelayMs: [0, 0, 1_300, 0, 0, 1_300, 0],
+    },
+    {
+      name: "web-expired-policy",
+      native: false,
+      platform: "web",
+      userAgent: fixtureUserAgent,
+      richLifecycle: true,
+      expiredPolicy: true,
+      configDelayMs: [0, 5_200, 5_200, 0],
+    },
   ];
   for (const scenario of browserScenarios) {
-    browserResults.push(await runBrowserScenario(
-      playwright,
-      { sdk, recorder, wrapper },
-      scenario,
-    ));
+    for (const sdkVariant of ["array", "module"]) {
+      const selected = process.argv.find((arg) => arg.startsWith("--scenario="))?.slice(11);
+      if (selected && selected !== `${sdkVariant}:${scenario.name}`) continue;
+      browserResults.push(await runBrowserScenario(
+        playwright,
+        { sdk: sdkAssets[sdkVariant], recorder, wrapper },
+        { ...scenario, name: `${sdkVariant}:${scenario.name}`, sdkVariant },
+      ));
+    }
   }
   const providerResult = await runProviderHarness(providerCode);
+  assert.ok(browserResults.length, "No browser scenario matched the requested selection");
   const replayFailures = browserResults
     .filter((result) => !result.replayRecovered)
     .map(({ scenario, replayEvidence }) => ({
@@ -1028,6 +1128,41 @@ async function main() {
         recorderResourceLoaded: replayEvidence.recorderResourceLoaded,
         beforeRecoveryRecording: replayEvidence.beforeRecoveryRecording,
         afterRecoveryRecording: replayEvidence.afterRecoveryRecording,
+        initialRecording: replayEvidence.initialRecording,
+        recoveryRecording: replayEvidence.recoveryRecording,
+        guestRecording: replayEvidence.guestRecording,
+        accountBRecording: replayEvidence.accountBRecording,
+        configRequests: replayEvidence.configRequests,
+        configDelays: replayEvidence.configDelays,
+         configPhases: replayEvidence.configPhases,
+         originalPolicy: replayEvidence.originalPolicy,
+         expiredPolicy: replayEvidence.expiredPolicy,
+         freshPolicyUnchangedAfterOptIn: replayEvidence.freshPolicyUnchangedAfterOptIn,
+         freshPolicyUnchangedAfterReset: replayEvidence.freshPolicyUnchangedAfterReset,
+         disabledPolicyNotManufactured: replayEvidence.disabledPolicyNotManufactured,
+        staleOptoutState: replayEvidence.staleOptoutState,
+        staleAccountSwitchState: replayEvidence.staleAccountSwitchState,
+        forbiddenOptoutRecords: replayEvidence.forbiddenOptoutRecords,
+        manualRecordingStarts: replayEvidence.manualRecordingStarts,
+        reroutedPosthogRequests: replayEvidence.reroutedPosthogPaths?.length,
+        sessionIds: [
+          replayEvidence.initialSessionId,
+          replayEvidence.recoverySessionId,
+          replayEvidence.guestSessionId,
+          replayEvidence.accountBSessionId,
+        ],
+        distinctIds: [
+          replayEvidence.initialDistinctId,
+          replayEvidence.guestDistinctId,
+          replayEvidence.accountBDistinctId,
+        ],
+        maskedAndPrivateDom: {
+          initial: replayEvidence.initialSnapshotMasksInput &&
+            replayEvidence.initialSnapshotOmitsPrivateHook,
+          accountB: replayEvidence.accountBSnapshotMasksInput &&
+            replayEvidence.accountBSnapshotOmitsPrivateHook,
+          accountBHasNoPreviousDom: replayEvidence.accountBSnapshotOmitsPreviousDom,
+        },
         snapshotItems: replayEvidence.snapshotItems,
         rrwebEntries: replayEvidence.rrwebEntries,
         fullSnapshots: replayEvidence.fullSnapshots,
@@ -1058,6 +1193,41 @@ async function main() {
       recordingStartedWithoutManualStart: result.replayEvidence.recordingStartedWithoutManualStart,
       beforeRecoveryRecording: result.replayEvidence.beforeRecoveryRecording,
       afterRecoveryRecording: result.replayEvidence.afterRecoveryRecording,
+      initialRecording: result.replayEvidence.initialRecording,
+      recoveryRecording: result.replayEvidence.recoveryRecording,
+      guestRecording: result.replayEvidence.guestRecording,
+      accountBRecording: result.replayEvidence.accountBRecording,
+      configRequests: result.replayEvidence.configRequests,
+      configDelays: result.replayEvidence.configDelays,
+       configPhases: result.replayEvidence.configPhases,
+       originalPolicy: result.replayEvidence.originalPolicy,
+       expiredPolicy: result.replayEvidence.expiredPolicy,
+       freshPolicyUnchangedAfterOptIn: result.replayEvidence.freshPolicyUnchangedAfterOptIn,
+       freshPolicyUnchangedAfterReset: result.replayEvidence.freshPolicyUnchangedAfterReset,
+       disabledPolicyNotManufactured: result.replayEvidence.disabledPolicyNotManufactured,
+      staleOptoutState: result.replayEvidence.staleOptoutState,
+      staleAccountSwitchState: result.replayEvidence.staleAccountSwitchState,
+      forbiddenOptoutRecords: result.replayEvidence.forbiddenOptoutRecords,
+      manualRecordingStarts: result.replayEvidence.manualRecordingStarts,
+      reroutedPosthogRequests: result.replayEvidence.reroutedPosthogPaths?.length,
+      sessionIds: [
+        result.replayEvidence.initialSessionId,
+        result.replayEvidence.recoverySessionId,
+        result.replayEvidence.guestSessionId,
+        result.replayEvidence.accountBSessionId,
+      ],
+      distinctIds: [
+        result.replayEvidence.initialDistinctId,
+        result.replayEvidence.guestDistinctId,
+        result.replayEvidence.accountBDistinctId,
+      ],
+      maskedAndPrivateDom: {
+        initial: result.replayEvidence.initialSnapshotMasksInput &&
+          result.replayEvidence.initialSnapshotOmitsPrivateHook,
+        accountB: result.replayEvidence.accountBSnapshotMasksInput &&
+          result.replayEvidence.accountBSnapshotOmitsPrivateHook,
+        accountBHasNoPreviousDom: result.replayEvidence.accountBSnapshotOmitsPreviousDom,
+      },
       snapshotItems: result.replayEvidence.snapshotItems,
       rrwebEntries: result.replayEvidence.rrwebEntries,
       fullSnapshots: result.replayEvidence.fullSnapshots,
@@ -1070,6 +1240,7 @@ async function main() {
     command: "node scripts/validate-posthog-release.mjs",
     mode: "local isolated Playwright fixture only",
     installedSdk: packageJSON.version,
+    installedSdkVariants: ["array.js", "module.js (IIFE fixture import)"],
     externalNetworkBlocked: true,
     appBuild: false,
     providerNetwork: false,
@@ -1077,7 +1248,9 @@ async function main() {
       "actual initPostHog/setPostHogCaptureAllowed/identifyUser/trackEvent/resetUser",
       "legacy fetch host, transport, batching, autocapture, and pageleave unchanged",
       "local remote configuration and rrweb recorder loading",
-      "real opt-out -> opt-in/reset replay full and incremental snapshots",
+      "initial replay before recovery, opt-out -> reset -> opt-in replay, and delayed stale-config rejection",
+      "logout -> guest -> different-account identity/session separation and previous-DOM exclusion",
+      "normal events, surface labels, opt-out event/snapshot suppression, server-disabled replay, masked inputs, and ph-no-capture hooks",
       "web/native iOS/iPhone web surface labels",
       "actual prepareProviderIdentity live -> failure -> same-live recovery",
       "duplicate live no-op and stale pending account/profile rejection",
@@ -1085,10 +1258,15 @@ async function main() {
     browserResults: conciseBrowserResults,
     providerResult,
     ...(replayFailures.length ? {
-      replayRecoveryFailure: "Actual SDK replay did not recover after wrapper opt-out/reset/opt-in; no lifecycle was changed.",
-      smallestCandidateRemedy: "Preserve or reload the SDK remote recording config after reset before opt-in; not implemented.",
+      replayRecoveryFailure: "Actual SDK replay or lifecycle assertions failed; this report does not infer absence of previously queued events from suppression of newly attempted events.",
+      smallestCandidateRemedy: "Confirm the authorized opt-in invokes the installed SDK remote configuration loader and that delayed responses remain consent-gated.",
       replayFailures,
     } : {}),
+    limitations: [
+      "All browser provider and PostHog requests are intercepted by the local fixture; no provider, credential, published endpoint, build, prepare, deploy, or package installation is used.",
+      "Opt-out suppression assertions inspect captured request items and phase markers; they do not claim that an event queued before the boundary could never be flushed later.",
+      "Replay identity/session assertions use SDK-emitted distinct/session properties and rrweb payload text; they do not inspect a provider-side recording.",
+    ],
   };
   console.log(JSON.stringify(result, null, 2));
   if (replayFailures.length) process.exitCode = 1;

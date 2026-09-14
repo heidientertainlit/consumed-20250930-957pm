@@ -3,6 +3,7 @@ import { supabase } from './supabase';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { createSurfaceLabelHook, getAppSurfaceLabels } from './posthog-surface';
+import { resetPostHogPreservingReplayPolicy } from './posthog-replay-lifecycle';
 import {
   canReuseGuestToken,
   guestTokenExpiry,
@@ -323,9 +324,11 @@ export function setPostHogCaptureAllowed(
 
   if (allowed) {
     // Never merge a persisted/deleted UUID into the newly authorized account.
-    posthog.reset();
+    if (controlledIngestionEnabled) posthog.reset();
+    else resetPostHogPreservingReplayPolicy(posthog);
     void refreshGatewayAuthorization().then((authorized) => {
-      if (captureAllowed && authorized) posthog.opt_in_capturing();
+      if (!authorized || !currentContext(authorized)) return;
+      posthog.opt_in_capturing();
     });
   } else {
     posthog.opt_out_capturing();
@@ -368,7 +371,8 @@ export function resetUser() {
   posthog.opt_out_capturing();
   gatewayHeaders = {};
   posthog.set_config({ request_headers: {} });
-  posthog.reset();
+  if (controlledIngestionEnabled) posthog.reset();
+  else resetPostHogPreservingReplayPolicy(posthog);
 }
 
 export function trackEvent(eventName: string, properties?: Record<string, any>) {

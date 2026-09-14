@@ -6,17 +6,33 @@ PostHog migration, rotate keys, or change capture/recording settings.
 ## Release blocker found in local validation
 
 **Do not treat the current source as a replay-safe release candidate yet.**
-The focused `node scripts/validate-posthog-release.mjs` check confirms normal
-capture recovery and configuration loading, but fails replay recovery:
-the existing wrapper's opt-out/reset/opt-in sequence clears persisted recording
-configuration. All three app scenarios (browser, iPhone browser, simulated
-Capacitor iOS) fail to start recording. A plain-SDK control using the identical
-local recording configuration starts automatically and emits real rrweb data.
+The focused `node scripts/validate-posthog-release.mjs` check now verifies normal
+replay recovery by retaining only the existing SDK project recording policy
+across identity resets, using public get/reset/register APIs. Its timestamp,
+enabled state, masking and sampling rules are unchanged. User/session state
+and sampling decisions are still reset; opt-in requires current authorization.
 
-The scoped change removed the three remote-config suppression flags and fixed
-the stale account-setup marker. It did not add configuration-restoration logic,
-change recording settings, or rewrite auth/reset behavior to resolve this
-newly demonstrated blocker. No iOS assets were prepared.
+Local verification against both published SDK 1.352.0 bundles (module and
+snippet) passed:
+
+- Browser, iPhone-browser and simulated Capacitor-iOS replay/capture recovery.
+- Account A → guest → account B identity and replay-session separation.
+- No previous-account DOM in the new-account replay fixture.
+- Input masking, private-element exclusion, opt-out suppression and labels.
+- Server-disabled recording remains disabled.
+
+**Remaining blocker:** both deliberately expired-policy scenarios fail.
+The SDK does not complete the expected configuration refresh/replay restart
+in that local fixture. The repair does not extend cache timestamps, force
+recording on, or fabricate an enabled policy. Further expiry/refresh diagnosis
+is required before calling the entire candidate replay-safe.
+
+The full browser suite therefore remains red; 16 focused unit tests and eight
+app browser scenarios passed, with plain-SDK controls also passing. Use
+`--scenario=module:web` for a targeted browser scenario and
+`--scenario=module:web-expired-policy` to reproduce the remaining failure.
+No SDK upgrade, broader auth rewrite, production changes, or iOS asset
+preparation was performed.
 
 ## Native collection warning — read before building
 
