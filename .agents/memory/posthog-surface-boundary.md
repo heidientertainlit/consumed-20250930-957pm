@@ -61,3 +61,17 @@ script loading allowed expiry recovery. Ordinary capture continued.
 always breaks replay. Compare plain SDK, successful script, and failed-script
 fallback controls; retain the distinction between a conditional SDK loader bug
 and app identity-policy restoration.
+
+Upgrade comparisons must expire policy beyond each tested SDK's actual TTL
+and compare native SDK reset with the app's policy-restoration helper separately.
+
+**Why:** A ten-minute fixture is expired for 1.352.0 but fresh for 1.433.3
+(one-hour TTL). True-expiry plain-SDK tests recovered on the newer version,
+but the existing app helper still produced a different configuration-refresh
+path despite successful replay. Recording success alone does not prove that
+expired policy was refreshed.
+
+**How to apply:** Keep the approved assessment separate from implementing an
+upgrade. Do not add the external-script preparation workaround; the user
+prefers the vendor-recommended SDK upgrade. Resolve legacy helper behavior
+and changed collection defaults before treating that upgrade as release-ready.
