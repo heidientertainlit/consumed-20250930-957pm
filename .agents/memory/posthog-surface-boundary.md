@@ -79,3 +79,17 @@ Meta-cookie attribution conflicts with the current non-advertising-identifier
 description unless those reads are prevented or the intended collection is
 explicitly reconciled. Web-vitals attribution defaults apply only when
 project/client configuration enables web-vitals collection.
+
+Do not describe `save_campaign_params: false` as removing all attribution or
+advertising identifiers.
+
+**Why:** It prevents new campaign persistence and the newer SDK's Meta-cookie
+reads, but session-entry/initial attribution can still be reconstructed from
+URLs. Referrers, existing local/server properties, and query strings remain.
+Consumed's first-party referral rewards are independent of SDK campaigns.
+
+**How to apply:** Separate cookie-read prevention from URL sanitization and
+historical data handling. Check which property family a report uses before
+claiming its attribution is unaffected. Keep new web-vitals attribution
+explicitly off if preserving the older metric detail; do not override the
+project's web-vitals enablement or metric allowlist.
