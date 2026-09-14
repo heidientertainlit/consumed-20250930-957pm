@@ -1,0 +1,21 @@
+/*
+ * Public-source evidence, not application source.
+ *
+ * Source: OneSignal/OneSignal-iOS-SDK tag 5.6.1
+ * Commit: 25977b771746b80db32da4e5f5cd8b1086707301
+ * iOS_SDK/OneSignalSDK/OneSignalUser/Source/
+ * OneSignalUserManagerImpl.swift, fireJwtExpired()
+ */
+
+private func fireJwtExpired() {
+    guard let externalId = user.identityModel.externalId,
+          let jwtExpiredHandler = self.jwtExpiredHandler else {
+        return
+    }
+    jwtExpiredHandler(externalId) { [self] (newToken) in
+        guard user.identityModel.externalId == externalId else {
+            return
+        }
+        user.identityModel.jwtBearerToken = newToken
+    }
+}

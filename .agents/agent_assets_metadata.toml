@@ -202,3 +202,45 @@ mtime_ms = 1789357932274
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/5558c5ee-4658-4b22-9a0e-775babdc6f25/cb7a27e5-ace1-4f12-86f6-3c0c1d6f44df"
 storage_version_token = "1789357959421616"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "sglfzm6KVGBSJ1mZFnzFh"
+uri = "file://exports/posthog-cutover-checklist.md"
+type = "text"
+title = "PostHog — Pre-Rotation Cutover Checklist"
+description = "Deployed guest gateway evidence, remaining authenticated/marketing prerequisites, environment changes, current iOS impact and non-reversible-token rollback limits."
+logical_id = "df6dc053-dfca-440f-8446-051a4013e5a9"
+content_hash = "sha256:efe0ac688cbf1aaaeb347c1808443d23074c95c9a1121e9b3e16dc7dd50fd493"
+size = 10406
+mtime_ms = 1789363069000
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/df6dc053-dfca-440f-8446-051a4013e5a9/9a96a644-6429-4d08-b839-78c6d0a16fa9"
+storage_version_token = "1789363106927426"
+content_type = "text/markdown"
+
+[[outputs]]
+id = "l6u4DVKgv0XgmbQW7FYw0"
+uri = "file://exports/posthog-implementation-test-results.md"
+type = "text"
+title = "PostHog — Staging Test Results"
+description = "Live guest capture and negative tests, active-source verification, and rollback-only deletion-to-three-jobs proof. Token rotation is blocked."
+logical_id = "8878b8b7-7b8d-4ac7-b87d-ba0750e14369"
+content_hash = "sha256:980f2db290ace9a20af0056c43d82e1aaa54e31e337521cfdf736984ad2a77c1"
+size = 8770
+mtime_ms = 1789363006084
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/8878b8b7-7b8d-4ac7-b87d-ba0750e14369/e4fdab92-102d-4ede-b5a8-f35604b22d2f"
+storage_version_token = "1789363107700506"
+content_type = "text/markdown"
+
+[[outputs]]
+id = "MiyLyHEHXdhBunH3nZS61"
+uri = "file://exports/onesignal-identity-rollout.md"
+type = "text"
+title = "OneSignal — Implementation Status and Native Blocker"
+description = "JWT/race tests, exact staged versions and actual SDK compatibility limitation. No compatible native release or provider enforcement is claimed."
+logical_id = "335a019c-048e-490f-a7ec-dab2b0072b79"
+content_hash = "sha256:0cc0f7af106526994e1cff858c801a98fcdd71b3d9be14bea25321c9b9989251"
+size = 9296
+mtime_ms = 1789361966432
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/335a019c-048e-490f-a7ec-dab2b0072b79/e51d494b-bcc7-4a27-a556-21c959ccd329"
+storage_version_token = "1789363108343076"
+content_type = "text/markdown"

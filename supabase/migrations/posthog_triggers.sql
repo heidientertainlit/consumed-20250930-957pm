@@ -3,8 +3,9 @@
 -- ============================================================
 -- 
 -- SETUP STEPS:
--- 1. Add POSTHOG_API_KEY and ANALYTICS_WEBHOOK_SECRET as 
---    Edge Function secrets in Supabase Dashboard
+-- 1. Store analytics_webhook_secret in Supabase Vault and configure the
+--    same value as ANALYTICS_WEBHOOK_SECRET on the Edge Function.
+--    Keep the PostHog capture token server-side as POSTHOG_CAPTURE_TOKEN.
 -- 2. Deploy: supabase functions deploy track-analytics --no-verify-jwt
 -- 3. Run this SQL in Supabase SQL Editor
 -- ============================================================
@@ -22,8 +23,20 @@ DECLARE
   event_properties jsonb := '{}'::jsonb;
   user_id_val text := NULL;
   edge_url text := 'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-analytics';
-  webhook_secret text := 'hfbwpasjdd7927alskdfbabsldyha287103jduwoqkdndh19993716392628';
+  webhook_secret text;
 BEGIN
+
+  SELECT decrypted_secret
+    INTO webhook_secret
+  FROM vault.decrypted_secrets
+  WHERE name = 'analytics_webhook_secret'
+  ORDER BY created_at DESC
+  LIMIT 1;
+
+  IF webhook_secret IS NULL OR btrim(webhook_secret) = '' THEN
+    RAISE WARNING 'PostHog analytics webhook is not configured in Vault';
+    RETURN NEW;
+  END IF;
 
   IF TG_TABLE_NAME = 'list_items' THEN
     user_id_val := COALESCE(NEW.user_id::text, '');
@@ -110,7 +123,7 @@ BEGIN
       )::jsonb,
       body := jsonb_build_object(
         'event', event_name,
-        'distinct_id', user_id_val,
+        'user_id', user_id_val,
         'properties', event_properties
       )::jsonb
     );

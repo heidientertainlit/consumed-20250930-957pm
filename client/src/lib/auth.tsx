@@ -23,6 +23,7 @@ import {
 } from "./legal-terms-consent"
 import { isRecoveryAuthCallback } from "./auth-flow"
 import { createProviderIdentityTransition } from "./provider-identity-transition"
+import { createOneSignalIdentityAdapter } from "./onesignal-identity"
 
 type OAuthProvider = 'apple' | 'google'
 type AuthConsentOptions = { termsAccepted?: boolean }
@@ -86,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   let providerSetupUserId: string | null = null;
   let providerSetupGeneration = 0;
   let observedAuthUserId: string | null = null;
+  const oneSignalNativeAdapter = createOneSignalIdentityAdapter();
   const isNativePlatform = () => {
     const platform = Capacitor.getPlatform()
     return platform === "ios" || platform === "android"
@@ -94,7 +96,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getCurrentUserId: () => observedAuthUserId,
     login: (userId) => {
       if (!isNativePlatform()) return;
-      return OneSignal.login(userId);
+      return oneSignalNativeAdapter.login(
+        userId,
+        () => observedAuthUserId === userId,
+      );
     },
     logout: () => {
       if (!isNativePlatform()) return;
@@ -136,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (providerSetupUserId === authUser.id) return true;
     providerSetupUserId = authUser.id;
-    setPostHogCaptureAllowed(true);
+    setPostHogCaptureAllowed(true, authUser.id);
     rememberLastLoginMethodFromUser(authUser);
     sessionTracker.startSession(authUser.id);
 
@@ -157,6 +162,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    oneSignalNativeAdapter.installJwtInvalidationHandler(
+      (externalId) => observedAuthUserId === externalId,
+    );
+
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
@@ -174,7 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // capture. This prevents a signed-out deleted UUID from being reused.
         await oneSignalIdentity.logout()
         resetUser()
-        setPostHogCaptureAllowed(true)
+        setPostHogCaptureAllowed(true, null)
       }
     })
 
@@ -214,7 +223,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           sessionTracker.endSession()
           providerSetupUserId = null
           resetUser()
-          setPostHogCaptureAllowed(true)
+          setPostHogCaptureAllowed(true, null)
           trackEvent('user_signed_out')
         }
       }

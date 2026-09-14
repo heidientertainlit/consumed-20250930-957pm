@@ -26,3 +26,9 @@ Do not use a 404 from a write-only or unsupported provider endpoint as proof of 
 **Why:** Customer.io Track API GET returned 404 for both an existing disposable control and a deletion target. Only a supported read API with verified permissions can establish profile/activity absence or unchanged control data.
 
 **How to apply:** Separate successful deletion-request evidence from verified erasure. Likewise, manually seeded worker jobs prove worker behavior, not the authenticated first-party-deletion-to-provider flow; reserve full release PASS for the actual integrated target/control test.
+
+For native identity-verification work, verify the pinned release's public headers and callback lifetime contract rather than assuming the latest documentation applies to the installed wrapper.
+
+**Why:** Review found documented lifecycle methods absent from released iOS headers, a non-escaping token-refresh completion incompatible with a deferred JavaScript callback, and edits in generated Cordova sources that synchronization would erase.
+
+**How to apply:** Keep bridge changes in reproducible source, distinguish interface checks from native compilation/device proof, and leave enforcement off when compatibility is unproven.
