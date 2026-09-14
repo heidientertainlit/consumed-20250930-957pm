@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { authorizeServiceRole } from '../_shared/authorization.ts';
+import { loadLiveUser } from '../_shared/provider-ingestion-guard.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -109,6 +110,29 @@ Deno.serve(async (req) => {
 
     const { userId, type, triggeredByUserId, message, postId, commentId, listId, friendCastId }: NotificationRequest = await req.json();
 
+    // Notification callers are trusted service functions, but their payload
+    // still names an exact recipient.  Require both sides of the event to
+    // exist before writing or sending anything so a deleted UUID cannot be
+    // recreated/targeted by a late notification.
+    const [recipient, actor] = await Promise.all([
+      loadLiveUser(supabaseAdmin, userId, 'id'),
+      loadLiveUser(supabaseAdmin, triggeredByUserId, 'id'),
+    ]);
+    const lookupFailed = !recipient.allowed
+      ? recipient.reason === 'account_lookup_failed'
+      : !actor.allowed && actor.reason === 'account_lookup_failed';
+    if (!recipient.allowed || !actor.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: lookupFailed ? 'Account status unavailable' : 'Account not found',
+        }),
+        {
+          status: lookupFailed ? 503 : 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
+    }
+
     if (userId === triggeredByUserId) {
       return new Response(
         JSON.stringify({ success: true, message: 'No self-notification sent' }),
@@ -142,6 +166,30 @@ Deno.serve(async (req) => {
     }
 
     const route = routeForType(type, postId);
+
+    // Re-check immediately before the OneSignal request.  This closes the
+    // normal delete/send race as far as a provider ingress can without a
+    // transaction spanning Supabase and OneSignal.
+    const [recipientBeforePush, actorBeforePush] = await Promise.all([
+      loadLiveUser(supabaseAdmin, userId, 'id'),
+      loadLiveUser(supabaseAdmin, triggeredByUserId, 'id'),
+    ]);
+    if (!recipientBeforePush.allowed || !actorBeforePush.allowed) {
+      const lookupFailedBeforePush = !recipientBeforePush.allowed
+        ? recipientBeforePush.reason === 'account_lookup_failed'
+        : actorBeforePush.reason === 'account_lookup_failed';
+      return new Response(
+        JSON.stringify({
+          error: lookupFailedBeforePush
+            ? 'Account status unavailable'
+            : 'Account not found',
+        }),
+        {
+          status: lookupFailedBeforePush ? 503 : 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
+    }
     await sendOneSignalPush(userId, message, route);
 
     return new Response(

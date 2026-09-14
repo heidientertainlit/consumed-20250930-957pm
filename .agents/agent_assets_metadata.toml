@@ -188,3 +188,17 @@ mtime_ms = 1789352424666
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/282d1772-943e-4ae0-a03f-fd4e5ef48070/5cf0bc06-d55c-42a5-898c-f06da17bbadf"
 storage_version_token = "1789352426261022"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "cPi4MzFNq5H1mcJFsMA36"
+uri = "file://exports/provider-cleanup-release-results.md"
+type = "text"
+title = "Provider Cleanup — Interim Test Results"
+description = "Workspace implementation and rollback-only database tests; live provider A/B tests remain blocked. Nothing deployed or enabled for real users."
+logical_id = "5558c5ee-4658-4b22-9a0e-775babdc6f25"
+content_hash = "sha256:0231dfa6f276e05801c6fd11de44a505f9b5b8ec050f6b8c9cb97a484231a053"
+size = 13917
+mtime_ms = 1789356320013
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/5558c5ee-4658-4b22-9a0e-775babdc6f25/f07d9392-b51f-4c74-9a0e-ba5b06207828"
+storage_version_token = "1789356341135625"
+content_type = "text/markdown"

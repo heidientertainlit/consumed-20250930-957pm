@@ -32,6 +32,17 @@ function isSafeUserAvatarPath(path: string, userId: string): boolean {
   );
 }
 
+async function validateSingleUserRequest(req: Request): Promise<boolean> {
+  const url = new URL(req.url);
+  if (url.search) return false;
+
+  const body = await req.text();
+  // Account deletion derives its only target from the verified access-token
+  // subject. Reject every body shape rather than accidentally accepting a
+  // future selector, array, email, or bulk request.
+  return body.trim() === "";
+}
+
 function avatarPathFromPublicUrl(
   value: unknown,
   userId: string,
@@ -147,6 +158,13 @@ serve(async (req) => {
   }
 
   try {
+    if (!(await validateSingleUserRequest(req))) {
+      return new Response(JSON.stringify({ error: "No account selector is accepted" }), {
+        status: 400,
+        headers: jsonHeaders,
+      });
+    }
+
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Missing authorization" }), {

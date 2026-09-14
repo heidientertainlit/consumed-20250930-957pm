@@ -2,7 +2,12 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { sessionTracker } from './sessionTracker'
-import { identifyUser, resetUser, trackEvent } from './posthog'
+import {
+  identifyUser,
+  resetUser,
+  setPostHogCaptureAllowed,
+  trackEvent,
+} from './posthog'
 import { Capacitor } from "@capacitor/core"
 import OneSignal from "onesignal-cordova-plugin"
 import { rememberLastLoginMethod, rememberLastLoginMethodFromUser } from "./last-login-method"
@@ -17,6 +22,7 @@ import {
   clearAuthSignInNote,
 } from "./legal-terms-consent"
 import { isRecoveryAuthCallback } from "./auth-flow"
+import { createProviderIdentityTransition } from "./provider-identity-transition"
 
 type OAuthProvider = 'apple' | 'google'
 type AuthConsentOptions = { termsAccepted?: boolean }
@@ -57,17 +63,98 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Links this device's push token to the user's ID in OneSignal so we can target them.
-  const linkOneSignalUser = async (userId: string) => {
-    const platform = Capacitor.getPlatform()
-    if (platform !== "ios" && platform !== "android") return
+  type AccountState = "live" | "missing" | "unknown";
 
-    try {
-      await OneSignal.login(userId)
-    } catch (e) {
-      console.log("OneSignal login failed:", e)
+  // public.users is the authoritative first-party account existence check.
+  // Retry a just-created profile briefly so the signup -> complete-profile
+  // flow and native onboarding are not mistaken for a deleted account.
+  const currentAccountState = async (userId: string): Promise<AccountState> => {
+    const delays = [0, 150, 350, 700, 1200];
+    for (const delay of delays) {
+      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
+      const { data, error } = await supabase
+        .from("users")
+        .select("id")
+        .eq("id", userId)
+        .maybeSingle();
+      if (!error && data?.id === userId) return "live";
+      if (error && delay === delays[delays.length - 1]) return "unknown";
     }
-  }
+    return "missing";
+  };
+
+  let providerSetupUserId: string | null = null;
+  let providerSetupGeneration = 0;
+  let observedAuthUserId: string | null = null;
+  const isNativePlatform = () => {
+    const platform = Capacitor.getPlatform()
+    return platform === "ios" || platform === "android"
+  };
+  const oneSignalIdentity = createProviderIdentityTransition({
+    getCurrentUserId: () => observedAuthUserId,
+    login: (userId) => {
+      if (!isNativePlatform()) return;
+      return OneSignal.login(userId);
+    },
+    logout: () => {
+      if (!isNativePlatform()) return;
+      return OneSignal.logout();
+    },
+  });
+
+  // Auth can switch directly from one signed-in account to another without
+  // emitting SIGNED_OUT first. Invalidate the old identity synchronously,
+  // then serialize native logout transitions before allowing a new login.
+  const reconcileAuthIdentity = (nextUserId: string | null) => {
+    if (observedAuthUserId === nextUserId) {
+      return oneSignalIdentity.transitionTo(nextUserId).completion;
+    }
+
+    observedAuthUserId = nextUserId;
+    providerSetupGeneration += 1;
+    providerSetupUserId = null;
+    resetUser();
+    setPostHogCaptureAllowed(false);
+    sessionTracker.endSession();
+
+    return oneSignalIdentity.transitionTo(nextUserId).completion;
+  };
+
+  const prepareProviderIdentity = async (authUser: User) => {
+    const generation = providerSetupGeneration;
+    const state = await currentAccountState(authUser.id);
+    if (generation !== providerSetupGeneration) return false;
+    if (state !== "live") {
+      // Do not identify, track, request push permission, or log into
+      // OneSignal when the UUID is stale or account status is unavailable.
+      setPostHogCaptureAllowed(false);
+      if (state === "missing") {
+        await oneSignalIdentity.logout();
+      }
+      return false;
+    }
+
+    if (providerSetupUserId === authUser.id) return true;
+    providerSetupUserId = authUser.id;
+    setPostHogCaptureAllowed(true);
+    rememberLastLoginMethodFromUser(authUser);
+    sessionTracker.startSession(authUser.id);
+
+    const { data: profile } = await supabase
+      .rpc('get_my_account_profile')
+      .select('user_name, display_name')
+      .maybeSingle();
+    if (generation !== providerSetupGeneration) return false;
+    identifyUser(authUser.id, {
+      email: authUser.email,
+      name: profile?.display_name || profile?.user_name || authUser.email,
+      username: profile?.user_name,
+    });
+
+    await requestPushPermissionIfNative();
+    if (generation !== providerSetupGeneration) return false;
+    return await oneSignalIdentity.login(authUser.id);
+  };
 
   useEffect(() => {
     // Get initial session
@@ -77,27 +164,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
 
       if (session?.user?.id) {
+        await reconcileAuthIdentity(session.user.id)
         const isRecoveryFlow = isRecoveryAuthCallback(window.location.pathname)
         if (!isRecoveryFlow) {
-          rememberLastLoginMethodFromUser(session.user)
-          sessionTracker.startSession(session.user.id)
-
-          supabase
-            .rpc('get_my_account_profile')
-            .select('user_name, display_name')
-            .maybeSingle()
-            .then(({ data: profile }) => {
-              identifyUser(session.user.id, {
-                email: session.user.email,
-                name: profile?.display_name || profile?.user_name || session.user.email,
-                username: profile?.user_name,
-              })
-              console.log("PostHog identify", session.user.id)
-            })
-
-          await requestPushPermissionIfNative()
-          await linkOneSignalUser(session.user.id)
+          await prepareProviderIdentity(session.user)
         }
+      } else {
+        // Reset any persisted account identity before allowing anonymous
+        // capture. This prevents a signed-out deleted UUID from being reused.
+        await oneSignalIdentity.logout()
+        resetUser()
+        setPostHogCaptureAllowed(true)
       }
     })
 
@@ -107,6 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
+        await reconcileAuthIdentity(session?.user?.id ?? null)
 
         if (event === 'SIGNED_IN' && session?.user?.id) {
           const isRecoveryFlow = isRecoveryAuthCallback(window.location.pathname)
@@ -114,28 +192,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             clearOAuthTermsConsentAttempt()
             clearAuthSignInNote()
           } else {
-            noteAuthSignIn(session.user.id)
-            rememberLastLoginMethodFromUser(session.user)
-
-            sessionTracker.startSession(session.user.id)
-
-            supabase
-              .rpc('get_my_account_profile')
-              .select('user_name, display_name')
-              .maybeSingle()
-              .then(({ data: profile }) => {
-                identifyUser(session.user.id, {
-                  email: session.user.email,
-                  name: profile?.display_name || profile?.user_name || session.user.email,
-                  username: profile?.user_name,
-                })
-                console.log("PostHog identify", session.user.id)
-              })
-
-            trackEvent('user_signed_in')
-
-            await requestPushPermissionIfNative()
-            await linkOneSignalUser(session.user.id)
+            const isLive = await prepareProviderIdentity(session.user);
+            if (isLive) {
+              noteAuthSignIn(session.user.id)
+              trackEvent('user_signed_in')
+            }
           }
 
         } else if (event === 'PASSWORD_RECOVERY') {
@@ -149,16 +210,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           clearOAuthTermsConsentAttempt()
           clearLocallyAcceptedLegalTerms()
           clearAuthSignInNote()
-          try { await OneSignal.logout() } catch (_) {}
+          await oneSignalIdentity.logout()
           sessionTracker.endSession()
+          providerSetupUserId = null
           resetUser()
+          setPostHogCaptureAllowed(true)
           trackEvent('user_signed_out')
         }
       }
     )
 
+    const handleProfileReady = () => {
+      void supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user && !isRecoveryAuthCallback(window.location.pathname)) {
+          void prepareProviderIdentity(session.user);
+        }
+      });
+    };
+    window.addEventListener("consumed:profile-ready", handleProfileReady);
+
     return () => {
       subscription.unsubscribe()
+      window.removeEventListener("consumed:profile-ready", handleProfileReady)
       sessionTracker.endSession()
     }
   }, [])

@@ -160,19 +160,20 @@ export default function LoginPage() {
         } catch (profileError) {
           console.warn("[signup profile confirmation]", profileError);
         }
+        window.dispatchEvent(new Event("consumed:profile-ready"));
       }
 
-      // Identify new user in Customer.io for email journey
-      console.log('Sign up data:', { userId: data?.user?.id, email: data?.user?.email });
-      if (data?.user?.id && data?.user?.email) {
+      // The server-side public.users webhook is the authoritative signup
+      // producer.  For an already-authenticated signup, this optional
+      // best-effort identify fills the same journey without sending
+      // client-supplied IDs or contact fields; customerio-identify derives all
+      // values from the verified session and current users row.  Email
+      // verification signups have no session here and are handled by the
+      // authoritative webhook after profile creation.
+      if (data?.session?.access_token && data?.user?.id) {
         try {
           const { error: fnError } = await supabase.functions.invoke('customerio-identify', {
-            body: {
-              id: data.user.id,
-              email: data.user.email,
-              first_name: firstName.trim() || null,
-              username: username.trim() || null,
-            },
+            body: {},
           });
           if (fnError) {
             console.error('Customer.io identify error:', fnError);
@@ -182,8 +183,6 @@ export default function LoginPage() {
         } catch (err) {
           console.error('Customer.io identify exception:', err);
         }
-      } else {
-        console.warn('Customer.io skipped — no user id/email in signup response', data);
       }
 
       const referrerId = localStorage.getItem('consumed_referrer');

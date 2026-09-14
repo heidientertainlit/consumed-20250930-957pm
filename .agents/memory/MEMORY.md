@@ -50,6 +50,7 @@
 - [Canonical media identity](canonical-media-identity.md) — cross-provider work identity is server-owned; exact aliases and authoritative keys outrank verified title+creator+year.
 - [Supabase migration history drift](supabase-migration-history-drift.md) — remote history omits many local migrations; isolate new pushes so unrelated files are never replayed.
 - [Deletion verification](deletion-verification.md) — live-schema rollback target/control tests are required; source review and FK inventories do not prove deletion executes.
+- [Provider deletion safety](provider-deletion-safety.md) — UUID-only suppression, separate release approval, and legacy direct SDK ingestion as an explicit release gate.
 - [Vercel share previews](vercel-share-previews.md) — production is a static Vercel SPA; crawler rewrites must reach server-rendered OG metadata, and invite actions must share invite URLs.
 - [DNA share image rendering](dna-share-image-rendering.md) — share a direct-canvas portrait with the full profile paragraph; never use DOM screenshots for the exported image.
 - [Now and Play boundary](now-play-boundary.md) — full playable Trivia, Polls, Ranks, and Seen It feeds belong in Play; Now may show social Play stories, not embedded games.
