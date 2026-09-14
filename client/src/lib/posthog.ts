@@ -1,6 +1,8 @@
 import posthog from 'posthog-js';
 import { supabase } from './supabase';
 import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+import { createSurfaceLabelHook, getAppSurfaceLabels } from './posthog-surface';
 import {
   canReuseGuestToken,
   guestTokenExpiry,
@@ -272,7 +274,10 @@ export function initPostHog() {
     // Do not let a stale local PostHog identity send while the authenticated
     // UUID is checked against the current first-party account row.
     opt_out_capturing_by_default: true,
-    before_send: (event) => captureAllowed ? event : null,
+    before_send: createSurfaceLabelHook(
+      getAppSurfaceLabels(Capacitor),
+      (event) => captureAllowed ? event : null,
+    ),
   });
   
   initialized = true;
