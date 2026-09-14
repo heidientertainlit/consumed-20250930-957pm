@@ -38,3 +38,9 @@ PostHog migration must preserve session replay and full behavioral analytics on 
 **Why:** The user explicitly rejected disabling recording, deleting existing recordings, or degrading analytics during the security migration.
 
 **How to apply:** Keep the full SDK; validate event and replay transport, configuration, unload delivery and identity transitions together. Standard reverse-proxy support does not establish custom deletion enforcement.
+
+Further controlled-capture/replay migration work requires renewed user authorization; preserve the existing production analytics path and retain the isolated prototype without expanding it.
+
+**Why:** After the NO-GO result, the user explicitly withdrew implementation authorization and required evidence about the actual released iOS binary before further migration work.
+
+**How to apply:** Limit the next investigation to read-only release/artifact/existing-telemetry evidence. Do not interpret audit access as permission to publish, activate capture controls, rotate tokens, change recording settings, enable cleanup, or perform deletion tests.
