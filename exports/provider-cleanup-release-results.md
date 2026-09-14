@@ -104,6 +104,12 @@ the queued login also rechecks the current auth subject before calling the
 provider. This is helper behavior coverage, not evidence against an old
 installed/native client.
 
+The current combined local command
+`npx tsx --test client/src/lib/provider-identity-transition.test.ts
+supabase/functions/_shared/*.test.ts` passed 124 tests with zero failures.
+These are mocked/local tests and include no provider credentials or real
+provider data.
+
 **PASS — live rollback SQL verification.** The migration and
 `supabase/tests/provider-deletion-queue.sql` were submitted together to the
 actual Supabase project through the secured database-query management API
@@ -118,30 +124,60 @@ attempt-ledger mutation. A follow-up read
 confirmed all four new queue/control/attempt relations and functions are
 absent, proving no migration persisted.
 
-**Limited two-session lock probe — not queue contention proof.** Two independent secured database-query
-sessions contended on an advisory lock; while the holder
-transaction slept, the probe's `pg_try_advisory_xact_lock` returned
-`acquired=false`. The queue implementation uses row locks, so this does not
-prove simultaneous queue claims/reservations. Sequential CAS tests and an
-injected concurrent dispatch test passed; a real two-session queue contention
-test remains outstanding. No queue schema was persisted by the probe.
+**PASS — two-session queue contention.** Two independent secured
+database-query sessions claimed the same queued negative-control job
+concurrently. Exactly one returned the row (`in_flight`, attempt 1); the other
+returned zero rows. A separate advisory-lock probe also returned
+`acquired=false` for the contending session. The queue schema was removed
+afterward and the account-deletion function was restored to 00600.
 
 ## Disposable User A / User B gate
 
-**BLOCKED — not simulated as live.** The approved gate still requires a real
-disposable User A and negative-control User B, both linked to all applicable
-providers, with first-party fixtures/content, PostHog persons/events,
-OneSignal users/subscriptions/devices, and Customer.io profiles/data.
-Required proof remains outstanding for:
+**PARTIAL PASS — provider-only disposable worker gate; release remains
+blocked.** After preflight, a temporary service-only probe created two fresh
+Auth A/B users with synthetic fixture metadata and exact UUIDs recorded in
+mode-0600 ephemeral manifests (`/tmp/provider-cleanup-auth-manifest` and
+`/tmp/provider-cleanup-fixture-manifest`; values are not copied into this
+report). The same exact Auth UUIDs were used for Customer.io and OneSignal
+fixtures. This did **not** call `delete_account_transaction`: the Auth users
+were still-live disposable users and the tombstone/job rows were manually
+seeded for the worker run. No `public.users` rows, app content, relationships,
+or first-party tables were seeded or snapshotted, so this is not a full
+first-party account-deletion gate. A temporary worker ran the actual queue
+claim → reserve → pre-dispatch guard → provider request → CAS result path;
+deletion was not issued by an independent script.
 
-1. A local account and all first-party data are deleted while B, B–C, and B–D
-   controls remain unchanged (A–B relationship removal is expected).
-2. A targets only A's verified PostHog person and historical events.
-3. A targets only A's exact OneSignal external ID and subscriptions/devices.
-4. A targets only A's exact Customer.io customer ID/data.
-5. Kill switch, circuit threshold, duplicate delivery, ambiguous PostHog
-   mapping, outage, timeout, 429, 503, and late-ingestion rejection are
-   exercised against the live disposable provider fixtures.
+* Customer.io A returned the documented `200 {}` and the worker marked A
+  `completed`. B's job was queued and untouched while A ran. The Track API
+  `GET` returned 404 for both A and B, but that endpoint is not a supported
+  profile/history readback with these Track credentials; the 404 is **not**
+  interpreted as absence. Thus the evidence proves A's worker DELETE response
+  contract and queue isolation, not A/B profile or history absence. A
+  documented Customer.io App API customer-read credential is still required:
+  the approved exact-ID read resources are `GET
+  /v1/customers/{customer_id}/attributes`, `activities`, or `messages` on
+  `https://api.customer.io` (or `api-eu.customer.io`), using the App API
+  credential and its documented read permission. No App API read credential
+  was present in the inspected secret names. Even that read would prove only
+  current profile/activity visibility, not historical-event or backup purge.
+* OneSignal A returned `202`; the worker performed three exact-ID `404`
+  readbacks and marked A `observed_absent`. B returned `200` while A was
+  processed and B's queue row remained untouched. B was cleaned only after
+  this negative-control capture, using the same worker path.
+* Alias-only OneSignal users were used: no phone, email, fabricated device
+  token, subscription, or notification was sent. The SDK test-device/device
+  subscription gate is therefore **BLOCKED**, not passed.
+* Both provider fixtures and both Auth users were removed after the capture;
+  final exact readbacks were 404 for both providers and the Auth-user count
+  was zero. The temporary probe/worker functions and disposable secrets were
+  deleted/unset, and no queue tables remained.
+
+The full three-provider/account gate is **BLOCKED** because PostHog preflight
+cannot read a person with the supplied personal key, no real first-party app
+content/relationships/historical PostHog events were created, and the
+Customer.io profile/history readback remains unavailable. Live timeout/429/503,
+ambiguous PostHog mapping, and late-ingestion tests remain blocked; local
+policy tests are not substituted for those cases.
 
 ## Remote Supabase secret-name inspection
 
@@ -156,20 +192,35 @@ contains:
   `ONESIGNAL_REST_API_KEY`;
 * PostHog ingestion: `POSTHOG_API_KEY`, `ANALYTICS_WEBHOOK_SECRET`.
 
-**BLOCKED — provider-delete scope/configuration is not yet proven.**
-`POSTHOG_API_KEY` is the existing capture/ingestion credential and must not be
-reused or relabeled as the required personal key with current `person:write`
-permission. No `POSTHOG_PERSONAL_API_KEY` or PostHog project-id configuration
-name is present in the remote name inventory. The worker therefore fails
+**PASS/BLOCKED — scoped preflight, without secret values.** The new
+`POSTHOG_PERSONAL_API_KEY` was read only from the Replit secret environment.
+Against `https://us.posthog.com` project `294186`, synthetic nonexistent-UUID
+persons and deletion-status GETs returned HTTP 403 with sanitized
+`code=permission_denied` and detail naming `person:read`. The earlier
+synthetic singular DELETE also returned HTTP 403, but its detail was not
+captured; because no further destructive probe was authorized, its missing
+scope is recorded as **unknown**, not asserted to be `person:write`.
+`GET /api/projects/294186/` returned HTTP 403 with
+`code=permission_denied`; its detail did not name `project:list` and is
+recorded as scope-unspecified (the expected project-list restriction is not
+being used to request broader access). A harmless `select 1` HogQL query
+returned 200. Documented key metadata endpoints did not expose
+`person:write` (`/api/api-keys/` 404 and `/api/personal_api_keys/` 403), so no
+person write permission can be claimed. No real PostHog record was returned
+or deleted.
+
+`POSTHOG_API_KEY` remains the existing capture/ingestion credential and was
+not reused or relabeled. The remote secret-name inventory still does not
+contain a PostHog personal-key or project-ID name; the worker therefore fails
 closed for PostHog.
 
-OneSignal has an existing App ID and runtime server key names, but the
-app-scoped destructive-delete permission has not been confirmed from the
-secret name alone. The worker can use the existing server-only runtime key
-after that scope is independently confirmed; it never accepts a client key.
-Customer.io has the Track credentials, but no `CUSTOMERIO_REGION` name is
-present. The worker intentionally does not guess US versus EU and remains
-blocked until the region is explicitly configured.
+OneSignal's existing app ID and server key were proven against exact fresh
+alias-only A/B users through the worker: A's 202 plus three exact 404
+readbacks reached `observed_absent`; no device/subscription permission was
+claimed. Customer.io Track credentials were proven for the US endpoint in the
+temporary disposable run, but `CUSTOMERIO_REGION=us` was temporary and was
+unset afterward; the worker remains blocked until that region is explicitly
+configured in the approved deployment.
 
 No secret values were requested, printed, committed, or placed in logs. A
 disposable provider project and A/B fixtures are also required.
@@ -191,13 +242,42 @@ the reviewer approves a safe authenticated compatibility check.
 ## Release decision
 
 **DO NOT enable `PROVIDER_DELETION_ENABLED` for real users.** The migration
-has not been deployed; only the rollback-scoped validation above was run.
-Keep provider control rows disabled and keep the server-only disposable
-allowlist absent until the reviewer permits the isolated migration and the
-live A/B gate is run. Real mode additionally requires both the
+was applied only during two temporary disposable verification windows with
+all real-mode flags false, then the queue tables/functions were removed and
+the 00600 account-deletion function was restored. The worker and probe
+functions were deleted and disposable secrets unset. Keep provider control
+rows disabled and keep the server-only disposable allowlist absent. Real mode
+additionally requires both the
 `PROVIDER_DELETION_ENABLED` and separate `PROVIDER_DELETION_REAL_APPROVAL`
 server flags plus the database `real_cleanup_approved` switch. No provider
-call is authorized by this report.
+call is authorized by this report; the calls recorded above were disposable
+only.
+
+## Final disposable-installation cleanup proof
+
+**PASS — temporary installation fully removed.** Final read-only checks showed
+`provider_deletion_jobs`, `provider_deletion_attempts`,
+`provider_control_ledger`, and `deleted_account_tombstones` absent;
+`provider_deletion_reserve_attempt(uuid,uuid,boolean)` absent; and only
+the pre-existing `delete_account_transaction(uuid)` remains present among the
+inspected queue/account identifiers. The migration-history latest row
+remains `20260914000600`. Function inventory contains no temporary
+`provider-cleanup-*` or `provider-deletion-worker` deployment, and secret-name
+inspection contains no temporary probe/worker/region names. The temporary
+00600-compatible account-deletion function was restored.
+
+The temporary queue contained only the manually seeded disposable A/B
+tombstone/job rows for each verification window; `delete_account_transaction`
+was never called and no production/live-user queue job existed. The Auth probe was coded to
+create exactly two fixture users; their exact-ID final count is zero and no
+`public.users` rows were created by that probe. A global before/after Auth
+population snapshot was not taken, so this is not a claim about unrelated
+pre-existing Auth users.
+
+The workspace implementation remains retained: the provider-deletion
+migration, worker, shared adapters/tests, and SQL fixture are still present;
+only the temporary probe source was removed. No real-enabled worker was left
+deployed, and real-mode flags/control were never enabled.
 
 ## Release blocker — late ingestion and direct public SDKs
 
@@ -227,6 +307,23 @@ clients to a controlled ingress, or use an approved provider-side
 filtering/control that can enforce the deleted-ID set. No gateway or provider
 setting was added here.
 
+PostHog's official custom-transformation documentation
+(https://posthog.com/docs/cdp/transformations/customizing-transformations.md)
+does provide a per-event `return null` drop operation, but it explicitly says
+transformations receive only `event` and `project`, cannot access person
+profiles, and cannot make external HTTP calls or access external services.
+Consequently a Hog transformation can drop a statically configured UUID (or
+the documented small filter set), but cannot consult the live Supabase
+tombstone table per event. No tested PostHog configuration in this review
+enforces an arbitrary, changing deleted-UUID set.
+
+The configured `POSTHOG_PERSONAL_API_KEY` was used only for read-only
+metadata probes against US project `294186`: project metadata,
+`hog_functions`, and transformation-template reads all returned HTTP 403.
+No real event/person data was requested or printed, and project/plugin rights
+were not assumed. The provider-side transformation/filter option therefore
+remains unverified and cannot be called a tested solution.
+
 OneSignal's official Identity Verification documentation says the feature is
 currently beta, must first be enabled by OneSignal support and then toggled
 under Settings → Keys & IDs, and requires server-generated ES256 JWTs. It
@@ -234,7 +331,12 @@ currently supports native Android SDK 5.9.0+ and iOS SDK 5.3.0+; wrapper SDK
 support is documented as coming soon. The current app uses the Cordova
 plugin's one-argument `login(externalId)` API, so enabling the OneSignal
 toggle now would require an approved plugin/native SDK and token lifecycle
-release. Research indicates the setting is feasible without changing the
-current app today only as a future approval/release item; it must not be
-enabled for this build. See:
+release. The installed Cordova 5.3.1 package embeds Android OneSignal SDK
+5.6.1 and iOS OneSignalXCFramework 5.4.1; Android is below the documented
+5.9.0 minimum, and the bridge has no JWT login argument despite the iOS
+native version meeting the numeric floor. Existing installed clients would
+therefore be incompatible with provider enforcement. The minimum gated
+release needs a supported bridge/native SDK with JWT login, an approved
+server JWT lifecycle, and an enforced minimum app version; no toggle was
+enabled here. See:
 https://documentation.onesignal.com/docs/en/identity-verification

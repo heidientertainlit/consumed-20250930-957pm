@@ -20,3 +20,9 @@ Client-side identity checks do not prevent old installed clients from calling pr
 **Why:** Review found legacy direct PostHog capture and native OneSignal identity calls outside app-owned server checks.
 
 **How to apply:** Require provider-side enforcement or verified supported identity controls before claiming complete stale-UUID ingestion prevention; account for native SDK compatibility before enabling enforcement.
+
+Do not use a 404 from a write-only or unsupported provider endpoint as proof of deletion.
+
+**Why:** Customer.io Track API GET returned 404 for both an existing disposable control and a deletion target. Only a supported read API with verified permissions can establish profile/activity absence or unchanged control data.
+
+**How to apply:** Separate successful deletion-request evidence from verified erasure. Likewise, manually seeded worker jobs prove worker behavior, not the authenticated first-party-deletion-to-provider flow; reserve full release PASS for the actual integrated target/control test.
