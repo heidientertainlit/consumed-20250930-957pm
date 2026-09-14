@@ -44,3 +44,9 @@ Further controlled-capture/replay migration work requires renewed user authoriza
 **Why:** After the NO-GO result, the user explicitly withdrew implementation authorization and required evidence about the actual released iOS binary before further migration work.
 
 **How to apply:** Limit the next investigation to read-only release/artifact/existing-telemetry evidence. Do not interpret audit access as permission to publish, activate capture controls, rotate tokens, change recording settings, enable cleanup, or perform deletion tests.
+
+Base old-client ingestion assumptions on the exact archived binary, not current source, SDK presence, or diagnostic log labels.
+
+**Why:** Released-archive inspection overturned the assumption of direct native PostHog capture: an unused SDK and "PostHog identify" console messages did not represent an initialized integration.
+
+**How to apply:** Consult `exports/released-ios-1.0.6-build-23-static-audit.md` before applying earlier rotation-impact reports to the distributed client. Keep direct browser capture, first-party database events, and backend provider ingestion distinct.

@@ -1,5 +1,12 @@
 # Released iOS/PostHog impact report
 
+> Update, 2026-09-14: a user-supplied archive now verifies packaged version
+> 1.0.6/build 23. See `released-ios-1.0.6-build-23-static-audit.md`.
+> Its bundled PostHog singleton is not initialized by app code, and the
+> workspace-configured capture token was not found. The earlier
+> direct-capture/token-rotation expectations below are conditional historical
+> analysis and must not be applied to that archive. Migration remains paused.
+
 ## Scope and status
 
 This is a source-and-release-artifact review only. It does not inspect
