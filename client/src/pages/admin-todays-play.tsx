@@ -1323,7 +1323,7 @@ export default function AdminTodaysPlayPage() {
                       <p className="text-xs text-gray-400 mt-0.5">Hit "Suggest Dates" and we'll group your questions into day sets — one Movie, Book, and TV per day. Then one tap schedules the whole day.</p>
                     </div>
                     <button
-                      onClick={suggestDates}
+                      onClick={() => suggestDates()}
                       className="flex-shrink-0 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
                     >
                       <CalendarDays size={12} />
@@ -1690,7 +1690,7 @@ export default function AdminTodaysPlayPage() {
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{scheduled.length} dates scheduled</p>
                   <button
-                    onClick={suggestDates}
+                    onClick={() => suggestDates()}
                     className="text-xs font-semibold text-teal-400 hover:text-teal-300 flex items-center gap-1.5 transition-colors"
                   >
                     <CalendarDays size={12} /> Suggest Dates

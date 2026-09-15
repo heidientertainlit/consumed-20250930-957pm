@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
-import { supabase } from './supabase'
+import { SUPABASE_URL, supabase } from './supabase'
 import { sessionTracker } from './sessionTracker'
 import {
   identifyUser,
@@ -9,6 +9,7 @@ import {
   trackEvent,
 } from './posthog'
 import { Capacitor } from "@capacitor/core"
+import { Browser } from "@capacitor/browser"
 import OneSignal from "onesignal-cordova-plugin"
 import { rememberLastLoginMethod, rememberLastLoginMethodFromUser } from "./last-login-method"
 import {
@@ -20,8 +21,21 @@ import {
   finishLegalTermsAcceptanceAttempt,
   noteAuthSignIn,
   clearAuthSignInNote,
+  clearMatchingOAuthTermsConsentAttempt,
+  consumeNativeOAuthBrowserCancellation,
+  markNativeOAuthBrowserAttempt,
+  notifyNativeOAuthBrowserOutcome,
 } from "./legal-terms-consent"
-import { isRecoveryAuthCallback } from "./auth-flow"
+import {
+  createAuthWorkGenerationGuard,
+  isRecoveryAuthCallback,
+  isSessionEstablishingAuthEvent,
+  resolveInitialAuthStartup,
+  shouldApplyAuthStateEvent,
+  shouldInvalidateAuthWorkForEvent,
+  withAuthStateRequestDeadline,
+} from "./auth-flow"
+import { isTrustedNativeOAuthAuthorizationUrl } from "./native-oauth"
 import { createProviderIdentityTransition } from "./provider-identity-transition"
 import { createOneSignalIdentityAdapter } from "./onesignal-identity"
 
@@ -32,6 +46,7 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
+  startupError: string | null
   signIn: (email: string, password: string, options?: AuthConsentOptions) => Promise<{ error: any }>
   signUp: (
     email: string,
@@ -43,6 +58,7 @@ interface AuthContextType {
   signInWithOAuth: (provider: OAuthProvider, options?: AuthConsentOptions) => Promise<{ error: any }>
   resetPassword: (email: string) => Promise<{ error: any }>
   updatePassword: (newPassword: string) => Promise<{ error: any }>
+  retryStartup: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -51,6 +67,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [startupError, setStartupError] = useState<string | null>(null)
+  const [startupAttempt, setStartupAttempt] = useState(0)
+  const authWorkGeneration = useRef(createAuthWorkGenerationGuard());
 
   const requestPushPermissionIfNative = async () => {
     const platform = Capacitor.getPlatform()
@@ -126,9 +145,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const prepareProviderIdentity = async (authUser: User) => {
+    // Do not let a queued SIGNED_IN handler prepare an account that was
+    // replaced before its background work began.
+    if (observedAuthUserId !== authUser.id) return false;
     const generation = providerSetupGeneration;
     const state = await currentAccountState(authUser.id);
-    if (generation !== providerSetupGeneration) return false;
+    if (
+      generation !== providerSetupGeneration
+      || observedAuthUserId !== authUser.id
+    ) return false;
     if (state !== "live") {
       // Do not identify, track, request push permission, or log into
       // OneSignal when the UUID is stale or account status is unavailable.
@@ -152,7 +177,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .rpc('get_my_account_profile')
       .select('user_name, display_name')
       .maybeSingle();
-    if (generation !== providerSetupGeneration) return false;
+    if (
+      generation !== providerSetupGeneration
+      || observedAuthUserId !== authUser.id
+    ) return false;
     identifyUser(authUser.id, {
       email: authUser.email,
       name: profile?.display_name || profile?.user_name || authUser.email,
@@ -160,7 +188,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     await requestPushPermissionIfNative();
-    if (generation !== providerSetupGeneration) return false;
+    if (
+      generation !== providerSetupGeneration
+      || observedAuthUserId !== authUser.id
+    ) return false;
     return await oneSignalIdentity.login(authUser.id);
   };
 
@@ -169,66 +200,162 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (externalId) => observedAuthUserId === externalId,
     );
 
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-
-      if (session?.user?.id) {
-        await reconcileAuthIdentity(session.user.id)
-        const isRecoveryFlow = isRecoveryAuthCallback(window.location.pathname)
-        if (!isRecoveryFlow) {
-          await prepareProviderIdentity(session.user)
+    let browserFinishedListener: { remove: () => Promise<void> } | undefined;
+    let disposed = false;
+    if (isNativePlatform()) {
+      void Browser.addListener("browserFinished", () => {
+        if (consumeNativeOAuthBrowserCancellation()) {
+          notifyNativeOAuthBrowserOutcome("Sign-in was cancelled. Please try again.");
         }
-      } else {
-        // Reset any persisted account identity before allowing anonymous
-        // capture. This prevents a signed-out deleted UUID from being reused.
-        await oneSignalIdentity.logout()
-        resetUser()
-        setPostHogCaptureAllowed(true, null)
+      }).then((listener) => {
+        if (disposed) {
+          void listener.remove();
+        } else {
+          browserFinishedListener = listener;
+        }
+      }).catch(() => {
+        // Opening the browser will surface an explicit error to its caller.
+      });
+    }
+
+    // Get the initial session with a deadline so the auth UI cannot remain in
+    // its loading state if browser storage or the auth transport stalls.
+    const initialGeneration = authWorkGeneration.current.begin();
+    void (async () => {
+      try {
+        const startup = await resolveInitialAuthStartup(
+          () => supabase.auth.getSession(),
+          () => supabase.auth.signOut(),
+        );
+        if (!authWorkGeneration.current.isCurrent(initialGeneration)) return;
+        if (startup.kind === "blocked") {
+          setStartupError(
+            "We couldn't verify or safely clear your account session. Check your connection and try again.",
+          )
+          setLoading(false)
+          return
+        }
+        const session = startup.kind === "resolved" ? startup.session : null;
+
+        // Snapshot before awaiting identity work: this consumes a recovery
+        // marker only while processing the session it was created for.
+        const isRecoveryFlow = session?.user?.id
+          ? isRecoveryAuthCallback(window.location.pathname)
+          : false;
+        setSession(session)
+        setUser(session?.user ?? null)
+        setLoading(false)
+        setStartupError(null)
+
+        const establishesInitialSession = isSessionEstablishingAuthEvent(
+          "INITIAL_SESSION",
+          !!session?.user?.id,
+        )
+        if (establishesInitialSession && session?.user?.id) {
+          if (!isRecoveryFlow) {
+            // INITIAL_SESSION is handled by this canonical startup read rather
+            // than its duplicate SDK event, so native OAuth still receives
+            // synchronous account correlation before the terms gate runs.
+            noteAuthSignIn(session.user.id)
+          }
+          const transition = reconcileAuthIdentity(session.user.id)
+          await transition
+          if (!authWorkGeneration.current.isCurrent(initialGeneration)) return;
+          if (!isRecoveryFlow) {
+            await prepareProviderIdentity(session.user)
+          }
+        } else {
+          // Reset any persisted account identity before allowing anonymous
+          // capture. This prevents a signed-out deleted UUID from being reused.
+          await oneSignalIdentity.logout()
+          if (!authWorkGeneration.current.isCurrent(initialGeneration)) return;
+          resetUser()
+          setPostHogCaptureAllowed(true, null)
+        }
+      } catch (error) {
+        if (!authWorkGeneration.current.isCurrent(initialGeneration)) return;
+        console.error("[auth initial session]", error);
+        setStartupError(
+          "We couldn't verify or safely clear your account session. Check your connection and try again.",
+        )
+        setLoading(false)
       }
-    })
+    })()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        // Supabase emits INITIAL_SESSION as a reflection of getSession().
+        // The bounded canonical startup resolver above is the only source
+        // allowed to certify its null/non-null result. In particular, a null
+        // event after an SDK read error cannot erase blocked fail-closed UI.
+        if (!shouldApplyAuthStateEvent(event)) return;
+        const eventGeneration = shouldInvalidateAuthWorkForEvent(event)
+          ? authWorkGeneration.current.begin()
+          : authWorkGeneration.current.current();
+        const establishesSession = isSessionEstablishingAuthEvent(
+          event,
+          !!session?.user?.id,
+        );
+        // Read the recovery marker before yielding. The marker is one-use, so
+        // a later event must not be able to consume this event's classification.
+        const isRecoveryFlow = event === "PASSWORD_RECOVERY"
+          ? isRecoveryAuthCallback(window.location.pathname)
+          : establishesSession
+            ? isRecoveryAuthCallback(window.location.pathname)
+            : false;
         console.log('🔐 Auth event:', event, session ? 'Session active' : 'No session')
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
-        await reconcileAuthIdentity(session?.user?.id ?? null)
+        setStartupError(null)
 
-        if (event === 'SIGNED_IN' && session?.user?.id) {
-          const isRecoveryFlow = isRecoveryAuthCallback(window.location.pathname)
-          if (isRecoveryFlow) {
+        // Supabase holds its auth lock until this callback returns. Keep this
+        // callback synchronous: profile/account queries and provider work must
+        // run after the lock has been released.
+        const identityTransition = reconcileAuthIdentity(session?.user?.id ?? null)
+        if (establishesSession && session?.user?.id && !isRecoveryFlow) {
+          // The gate needs the callback account before React can inspect the
+          // pending OAuth attempt. It still performs the authoritative RPC;
+          // this note only correlates one short-lived browser attempt.
+          noteAuthSignIn(session.user.id)
+        }
+        void (async () => {
+          await identityTransition
+          if (!authWorkGeneration.current.isCurrent(eventGeneration)) return
+
+          if (establishesSession && session?.user?.id) {
+            if (isRecoveryFlow) {
+              clearOAuthTermsConsentAttempt()
+              clearAuthSignInNote()
+            } else {
+              const isLive = await prepareProviderIdentity(session.user);
+              if (!authWorkGeneration.current.isCurrent(eventGeneration)) return
+              if (isLive) {
+                if (event === "SIGNED_IN") {
+                  trackEvent('user_signed_in')
+                }
+              }
+            }
+
+          } else if (event === 'PASSWORD_RECOVERY') {
             clearOAuthTermsConsentAttempt()
             clearAuthSignInNote()
-          } else {
-            const isLive = await prepareProviderIdentity(session.user);
-            if (isLive) {
-              noteAuthSignIn(session.user.id)
-              trackEvent('user_signed_in')
-            }
+            // Recovery session established — do nothing here. The reset-password page
+            // handles everything. Push permission will be requested after normal login.
+
+          } else if (event === 'SIGNED_OUT') {
+            clearOAuthTermsConsentAttempt()
+            clearLocallyAcceptedLegalTerms()
+            clearAuthSignInNote()
+            await oneSignalIdentity.logout()
+            if (!authWorkGeneration.current.isCurrent(eventGeneration)) return
+            sessionTracker.endSession()
+            providerSetupUserId = null
+            resetUser()
+            setPostHogCaptureAllowed(true, null)
+            trackEvent('user_signed_out')
           }
-
-        } else if (event === 'PASSWORD_RECOVERY') {
-          isRecoveryAuthCallback(window.location.pathname)
-          clearOAuthTermsConsentAttempt()
-          clearAuthSignInNote()
-          // Recovery session established — do nothing here. The reset-password page
-          // handles everything. Push permission will be requested after normal login.
-
-        } else if (event === 'SIGNED_OUT') {
-          clearOAuthTermsConsentAttempt()
-          clearLocallyAcceptedLegalTerms()
-          clearAuthSignInNote()
-          await oneSignalIdentity.logout()
-          sessionTracker.endSession()
-          providerSetupUserId = null
-          resetUser()
-          setPostHogCaptureAllowed(true, null)
-          trackEvent('user_signed_out')
-        }
+        })()
       }
     )
 
@@ -243,10 +370,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       subscription.unsubscribe()
+      disposed = true
+      void browserFinishedListener?.remove()
       window.removeEventListener("consumed:profile-ready", handleProfileReady)
       sessionTracker.endSession()
     }
-  }, [])
+  }, [startupAttempt])
+
+  const retryStartup = () => {
+    setStartupError(null)
+    setLoading(true)
+    setStartupAttempt((attempt) => attempt + 1)
+  }
 
   const signIn = async (
     email: string,
@@ -260,7 +395,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    beginLegalTermsAcceptanceAttempt()
+    const acceptanceAttempt = beginLegalTermsAcceptanceAttempt()
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -270,13 +405,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         rememberLastLoginMethod('email')
         const { error: acceptanceError } = await acceptCurrentLegalTerms(data.user?.id)
         if (acceptanceError) {
-          await supabase.auth.signOut()
+          await withAuthStateRequestDeadline(supabase.auth.signOut()).catch(() => undefined)
           return { error: acceptanceError }
         }
       }
       return { error }
     } finally {
-      finishLegalTermsAcceptanceAttempt()
+      finishLegalTermsAcceptanceAttempt(acceptanceAttempt)
     }
   }
 
@@ -294,7 +429,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    beginLegalTermsAcceptanceAttempt()
+    const acceptanceAttempt = beginLegalTermsAcceptanceAttempt()
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -310,13 +445,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!error && data.session) {
         const { error: acceptanceError } = await acceptCurrentLegalTerms(data.user?.id)
         if (acceptanceError) {
-          await supabase.auth.signOut()
+          await withAuthStateRequestDeadline(supabase.auth.signOut()).catch(() => undefined)
           return { error: acceptanceError, data }
         }
       }
       return { error, data }
     } finally {
-      finishLegalTermsAcceptanceAttempt()
+      finishLegalTermsAcceptanceAttempt(acceptanceAttempt)
     }
   }
 
@@ -338,17 +473,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Browser sign-in must return to the exact current origin so previews and
-    // production work without separate code paths. Native uses the published
-    // app URL, which is handled by CapacitorDeepLinkHandler.
+    // Web sign-in returns to the exact current origin. Native returns through
+    // the published app URL, whose callback lifecycle is handled separately.
     const appUrl = (import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com').replace(/\/$/, '')
-    const redirectOrigin = Capacitor.isNativePlatform() ? appUrl : window.location.origin
-    const redirectTo = `${redirectOrigin}/login`
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo },
-    })
-    if (!error) beginOAuthTermsConsentAttempt(provider)
+    const nativePlatform = Capacitor.isNativePlatform()
+    const redirectOrigin = nativePlatform ? appUrl : window.location.origin
+    const nativeAttempt = nativePlatform
+      ? beginOAuthTermsConsentAttempt(provider)
+      : null
+    if (nativeAttempt) markNativeOAuthBrowserAttempt(nativeAttempt.id)
+    const redirectTo = nativeAttempt
+      ? `${redirectOrigin}/login?oauth_attempt=${encodeURIComponent(nativeAttempt.id)}`
+      : `${redirectOrigin}/login`
+    let data: { url: string | null } | null = null
+    let error: unknown = null
+    try {
+      const response = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo,
+          ...(nativePlatform ? { skipBrowserRedirect: true } : {}),
+        },
+      })
+      data = response.data
+      error = response.error
+    } catch (oauthError) {
+      if (nativeAttempt) clearMatchingOAuthTermsConsentAttempt(nativeAttempt.id)
+      return {
+        error: oauthError instanceof Error
+          ? oauthError
+          : new Error("Couldn't start sign-in securely. Please try again."),
+      }
+    }
+    if (error) {
+      if (nativeAttempt) clearMatchingOAuthTermsConsentAttempt(nativeAttempt.id)
+      return { error }
+    }
+
+    if (nativePlatform) {
+      const authorizationUrl = data?.url
+      if (
+        !authorizationUrl
+        || !isTrustedNativeOAuthAuthorizationUrl(
+          authorizationUrl,
+          SUPABASE_URL,
+          provider,
+          redirectTo,
+        )
+      ) {
+        clearMatchingOAuthTermsConsentAttempt(nativeAttempt?.id ?? null)
+        return {
+          error: new Error("Couldn't start sign-in securely. Please try again."),
+        }
+      }
+
+      try {
+        await Browser.open({ url: authorizationUrl })
+      } catch (browserError) {
+        clearMatchingOAuthTermsConsentAttempt(nativeAttempt?.id ?? null)
+        return {
+          error: browserError instanceof Error
+            ? browserError
+            : new Error("Couldn't open the secure sign-in browser. Please try again."),
+        }
+      }
+      return { error: null }
+    }
+
+    beginOAuthTermsConsentAttempt(provider)
     return { error }
   }
 
@@ -379,12 +571,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       session,
       loading,
+      startupError,
       signIn,
       signUp,
       signOut,
         signInWithOAuth,
       resetPassword,
       updatePassword,
+      retryStartup,
     }}>
       {children}
     </AuthContext.Provider>

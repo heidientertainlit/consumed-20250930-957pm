@@ -388,7 +388,15 @@ export default function PlayPollsPage() {
       </div>
 
       {isTrackModalOpen && <ConsumptionTracker isOpen={isTrackModalOpen} onClose={() => setIsTrackModalOpen(false)} />}
-      {shareModalGame && <GameShareModal game={shareModalGame} onClose={() => setShareModalGame(null)} />}
+      {shareModalGame && (
+        <GameShareModal
+          isOpen={!!shareModalGame}
+          onClose={() => setShareModalGame(null)}
+          gameId={shareModalGame.id}
+          gameTitle={shareModalGame.title}
+          gameType={shareModalGame.type || "vote"}
+        />
+      )}
     </div>
   );
 }

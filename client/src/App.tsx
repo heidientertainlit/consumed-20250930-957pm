@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useKeyboardAdjust } from "@/hooks/use-keyboard-adjust";
 import { Capacitor } from "@capacitor/core";
 import { App as CapApp } from "@capacitor/app";
+import { Browser } from "@capacitor/browser";
 import { supabase } from "@/lib/supabase";
 
 import { sessionTracker } from "./lib/sessionTracker";
@@ -19,7 +20,14 @@ import { FeatureFlagsProvider, useFeatureFlags } from "@/lib/feature-flags";
 import { AppUpdateGate } from "@/components/app-update-gate";
 import { TermsAcceptanceGate } from "@/components/terms-consent";
 import { markRecoveryAuthFlow } from "@/lib/auth-flow";
-import { clearOAuthTermsConsentAttempt } from "@/lib/legal-terms-consent";
+import {
+  clearMatchingOAuthTermsConsentAttempt,
+  hasMatchingOAuthTermsConsentAttempt,
+  noteNativeOAuthCallbackReceived,
+  notifyNativeOAuthBrowserOutcome,
+} from "@/lib/legal-terms-consent";
+import { parseNativeAuthCallback } from "@/lib/native-oauth";
+import { restoreNativeAuthCallbackSession } from "@/lib/native-oauth-session";
 
 // Pages
 import AdminPage from "@/pages/admin";
@@ -127,12 +135,31 @@ function PendingRouteHandler() {
       if (pendingOAuthRaw) {
         localStorage.removeItem("pendingOAuthSession");
         try {
-          const { accessToken, refreshToken } = JSON.parse(pendingOAuthRaw);
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          if (error) {
+          const { accessToken, refreshToken, attemptId } = JSON.parse(pendingOAuthRaw);
+          if (
+            typeof accessToken !== "string"
+            || typeof refreshToken !== "string"
+            || typeof attemptId !== "string"
+            || !hasMatchingOAuthTermsConsentAttempt(attemptId)
+          ) {
+            console.error("[AUTH-DEBUG] Invalid or stale pending OAuth session");
+            localStorage.removeItem("pendingRoute");
+            return;
+          }
+          const restored = await restoreNativeAuthCallbackSession(
+            {
+              kind: "oauth-session",
+              accessToken,
+              refreshToken,
+              attemptId,
+            },
+            (tokens) => supabase.auth.setSession(tokens),
+            (failedAttemptId) => {
+              clearMatchingOAuthTermsConsentAttempt(failedAttemptId);
+              notifyNativeOAuthBrowserOutcome("Sign-in was denied. Please try again.");
+            },
+          );
+          if (!restored) {
             console.error("[AUTH-DEBUG] Failed to restore pending OAuth session");
             localStorage.removeItem("pendingRoute");
             return;
@@ -183,36 +210,52 @@ function CapacitorDeepLinkHandler() {
 
     const handleAppUrlOpen = async ({ url }: { url: string }) => {
       console.log("[AUTH-DEBUG] CapacitorDeepLinkHandler appUrlOpen fired");
-      const hashIndex = url.indexOf('#');
-      if (hashIndex === -1) {
-        console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: no hash, ignoring");
+      const appUrl = (import.meta.env.VITE_APP_URL || "https://app.consumedapp.com").replace(/\/$/, "");
+      const callback = parseNativeAuthCallback(
+        url,
+        appUrl,
+        hasMatchingOAuthTermsConsentAttempt,
+      );
+      if (!callback) {
+        console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: invalid callback, ignoring");
+        return;
+      }
+      if (callback.kind === "oauth-error") {
+        clearMatchingOAuthTermsConsentAttempt(callback.attemptId);
+        notifyNativeOAuthBrowserOutcome("Sign-in was denied. Please try again.");
+        void Browser.close().catch(() => {});
         return;
       }
 
-      const hash = url.substring(hashIndex + 1);
-      const params = new URLSearchParams(hash);
-      const type = params.get('type');
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-      console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: type:", type, "has tokens:", !!accessToken, !!refreshToken);
-
-      if (accessToken && refreshToken) {
-        if (type === "recovery") {
+      noteNativeOAuthCallbackReceived(
+        callback.kind === "oauth-session" ? callback.attemptId : null,
+      );
+      void Browser.close().catch(() => {
+        // Closing is best-effort; callback verification and session setup
+        // remain independent if the system browser was already dismissed.
+      });
+      if (callback.kind === "recovery-session") {
           // Warm native links set the session before navigation. Mark and
           // clear first so AuthProvider cannot classify this as a normal login.
           markRecoveryAuthFlow();
-          clearOAuthTermsConsentAttempt();
+          // Recovery callbacks never own a pre-auth OAuth consent attempt.
+      }
+      console.log("[AUTH-DEBUG] CapacitorDeepLinkHandler: calling setSession()");
+      const restored = await restoreNativeAuthCallbackSession(
+        callback,
+        (tokens) => supabase.auth.setSession(tokens),
+        (attemptId) => {
+          clearMatchingOAuthTermsConsentAttempt(attemptId);
+          notifyNativeOAuthBrowserOutcome("Sign-in was denied. Please try again.");
+        },
+      );
+      console.log("[AUTH-DEBUG] CapacitorDeepLinkHandler: setSession result — restored:", restored);
+      if (restored) {
+        if (callback.kind !== "recovery-session") {
+          localStorage.removeItem("pendingOAuthSession");
+          localStorage.removeItem("pendingRoute");
         }
-        console.log("[AUTH-DEBUG] CapacitorDeepLinkHandler: calling setSession()");
-        const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-        console.log("[AUTH-DEBUG] CapacitorDeepLinkHandler: setSession result — error:", error);
-        if (!error) {
-          if (type !== 'recovery') {
-            localStorage.removeItem("pendingOAuthSession");
-            localStorage.removeItem("pendingRoute");
-          }
-          setLocation(type === 'recovery' ? '/reset-password' : '/activity');
-        }
+        setLocation(callback.kind === "recovery-session" ? "/reset-password" : "/activity");
       }
     };
 

@@ -1413,7 +1413,7 @@ function DraftCard({
                     </div>
                     {editMediaResults.length > 0 && (
                       <div className="rounded-lg border border-gray-700 overflow-hidden divide-y divide-gray-700/40">
-                        {editMediaResults.map((r, i) => (
+                        {editMediaResults.map((r: LinkedMedia, i: number) => (
                           <button key={i} onClick={() => { setEditLinkedMedia(r); setEditMediaResults([]); }}
                             className="w-full flex items-center gap-2 px-2.5 py-1.5 hover:bg-gray-800/60 transition-colors text-left">
                             {r.poster_url

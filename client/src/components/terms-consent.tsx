@@ -231,7 +231,14 @@ function isLegalRoute(pathname: string) {
  */
 export function TermsAcceptanceGate({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { user, session, loading: authLoading, signOut } = useAuth();
+  const {
+    user,
+    session,
+    loading: authLoading,
+    signOut,
+    startupError,
+    retryStartup,
+  } = useAuth();
   const [loading, setLoading] = useState(true);
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
   const [acceptedUserId, setAcceptedUserId] = useState<string | null>(null);
@@ -324,6 +331,15 @@ export function TermsAcceptanceGate({ children }: { children: React.ReactNode })
   };
 
   if (authLoading || loading) return <LegalGateLoading />;
+  if (startupError) {
+    return (
+      <LegalGateError
+        message={startupError}
+        onRetry={retryStartup}
+        onSignOut={() => void handleSignOut()}
+      />
+    );
+  }
   if (isLegalRoute(location) || !user) return <>{children}</>;
   if (resolvedUserId !== user.id) return <LegalGateLoading />;
   if (error && errorUserId === user.id) {

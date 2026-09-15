@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
@@ -13,6 +13,7 @@ import { resetOnboardingState } from "@/components/route-guards";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { getLastLoginMethod, lastLoginMethodLabels } from "@/lib/last-login-method";
 import { TermsConsentCheckbox } from "@/components/terms-consent";
+import { subscribeToNativeOAuthBrowserOutcomes } from "@/lib/legal-terms-consent";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -33,6 +34,15 @@ export default function LoginPage() {
   const { user, session, loading, signIn, signUp, signInWithOAuth, resetPassword } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  useEffect(() => subscribeToNativeOAuthBrowserOutcomes((message) => {
+    setSubmitting(false);
+    toast({
+      title: "Sign-in failed",
+      description: message,
+      variant: "destructive",
+    });
+  }), [toast]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();

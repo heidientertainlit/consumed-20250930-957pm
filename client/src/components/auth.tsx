@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,6 +11,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { SiApple, SiGoogle } from 'react-icons/si'
 import { getLastLoginMethod, lastLoginMethodLabels } from '@/lib/last-login-method'
 import { TermsConsentCheckbox } from '@/components/terms-consent'
+import { subscribeToNativeOAuthBrowserOutcomes } from '@/lib/legal-terms-consent'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -30,6 +31,15 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
   const [lastLoginMethod] = useState(getLastLoginMethod)
   const { toast } = useToast()
   const { signIn, signUp, signInWithOAuth: oauthSignIn } = useAuth()
+
+  useEffect(() => subscribeToNativeOAuthBrowserOutcomes((message) => {
+    setIsLoading(false)
+    toast({
+      title: "Sign-in failed",
+      description: message,
+      variant: "destructive",
+    })
+  }), [toast])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -282,6 +282,10 @@ export default function AdminRanksPage() {
       toast({ title: "Need a title and at least 2 items", variant: "destructive" });
       return;
     }
+    if (!user) {
+      toast({ title: "Please sign in to publish a rank", variant: "destructive" });
+      return;
+    }
     if (status === "scheduled" && !scheduleDate) {
       toast({ title: "Pick a schedule date first", variant: "destructive" });
       return;

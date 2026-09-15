@@ -60,6 +60,12 @@ import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-sea
 
 type MediaTypeFilter = (typeof MEDIA_SEARCH_FILTERS)[number]["value"];
 
+type UserListWithMedia = {
+  id: string;
+  title: string;
+  items?: Array<Record<string, any>>;
+};
+
 export default function CollectionsPage() {
   const { user, session } = useAuth();
   const { toast } = useToast();
@@ -326,8 +332,8 @@ export default function CollectionsPage() {
     
     // Skip the "All" list since it duplicates items from other lists
     userListsFull
-      .filter(list => list.id !== 'all' && list.title !== 'All')
-      .forEach(list => {
+      .filter((list: UserListWithMedia) => list.id !== 'all' && list.title !== 'All')
+      .forEach((list: UserListWithMedia) => {
         if (list.items && Array.isArray(list.items)) {
           list.items.forEach((item: any) => {
             // Create unique key using external_id+source or item id
@@ -1517,7 +1523,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
     },
   });
 
-  const handleDnfWithReason = async (reasons: string[], otherReason?: string) => {
+  const handleDnfWithReason = async (reason: string, otherReason?: string) => {
     // First move the item to DNF list
     onMoveToList('dnf', 'Did Not Finish');
     setIsDnfDrawerOpen(false);
@@ -1527,7 +1533,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
     try {
       await dnfReasonMutation.mutateAsync({
         listItemId: item.id,
-        reasons,
+        reasons: [reason],
         otherReason,
       });
     } catch (error) {

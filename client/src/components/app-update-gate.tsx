@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { App as CapApp, type PluginListenerHandle } from "@capacitor/app";
-import { Capacitor } from "@capacitor/core";
+import { App as CapApp } from "@capacitor/app";
+import { Capacitor, type PluginListenerHandle } from "@capacitor/core";
 import { ArrowUpCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {

@@ -319,6 +319,7 @@ async function buildActualProviderHarness() {
     const calls = [];
     let providerSetupUserId = null;
     let providerSetupGeneration = 0;
+    let observedAuthUserId = ${JSON.stringify(fakeUserId)};
     let accountStates = [];
     let profileResolvers = [];
     let profilePending = false;
@@ -362,6 +363,7 @@ async function buildActualProviderHarness() {
       calls,
       prepareProviderIdentity,
       setAccountStates: (next) => { accountStates = [...next]; },
+      setObservedUser: (id) => { observedAuthUserId = id; },
       bumpGeneration: () => { providerSetupGeneration += 1; providerSetupUserId = null; },
       resolveProfile: (value = { data: { user_name: "fixture_name", display_name: "Fixture Name" } }) => {
         const resolve = profileResolvers.shift();
@@ -372,6 +374,7 @@ async function buildActualProviderHarness() {
         calls.length = 0;
         providerSetupUserId = null;
         providerSetupGeneration = 0;
+        observedAuthUserId = ${JSON.stringify(fakeUserId)};
         accountStates = [];
         profileResolvers = [];
         profilePending = false;
@@ -1086,6 +1089,13 @@ async function runProviderHarness(providerCode) {
   const harness = globalThis.__providerHarness;
   if (!harness) fail("provider harness did not initialize");
   const user = { id: fakeUserId, email: "fixture@example.test" };
+
+  harness.reset();
+  harness.setObservedUser("22222222-2222-4222-8222-222222222222");
+  assert.equal(await harness.prepareProviderIdentity(user), false,
+    "a replaced auth subject was prepared");
+  assert.equal(harness.calls.length, 0,
+    "a replaced auth subject touched providers");
 
   harness.reset();
   harness.setAccountStates(["live", "missing", "live"]);

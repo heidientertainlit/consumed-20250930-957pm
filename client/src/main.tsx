@@ -5,8 +5,15 @@ import "./index.css";
 import { initPostHog } from "./lib/posthog";
 import { Capacitor } from "@capacitor/core";
 import { App as CapApp } from "@capacitor/app";
+import { Browser } from "@capacitor/browser";
 import { markRecoveryAuthFlow } from "./lib/auth-flow";
-import { clearOAuthTermsConsentAttempt } from "./lib/legal-terms-consent";
+import {
+  clearMatchingOAuthTermsConsentAttempt,
+  hasMatchingOAuthTermsConsentAttempt,
+  noteNativeOAuthCallbackReceived,
+  notifyNativeOAuthBrowserOutcome,
+} from "./lib/legal-terms-consent";
+import { parseNativeAuthCallback } from "./lib/native-oauth";
 
 // Replit's public development proxy does not accept an explicit :5000 port.
 // Normalize stale preview URLs before the SPA adds them to navigation history.
@@ -29,36 +36,46 @@ if (Capacitor.isNativePlatform()) {
   console.log("[RESET-DEBUG] main.tsx: isNativePlatform = true, registering appUrlOpen listener");
   CapApp.addListener("appUrlOpen", ({ url }) => {
     console.log("[AUTH-DEBUG] appUrlOpen fired");
-
-    const hashIndex = url.indexOf("#");
-    if (hashIndex === -1) {
-      console.log("[RESET-DEBUG] No hash in URL — not a Supabase auth callback, ignoring");
+    const appUrl = (import.meta.env.VITE_APP_URL || "https://app.consumedapp.com").replace(/\/$/, "");
+    const callback = parseNativeAuthCallback(
+      url,
+      appUrl,
+      hasMatchingOAuthTermsConsentAttempt,
+    );
+    if (!callback) {
+      console.log("[RESET-DEBUG] Invalid native auth callback, ignoring");
+      return;
+    }
+    if (callback.kind === "oauth-error") {
+      clearMatchingOAuthTermsConsentAttempt(callback.attemptId);
+      notifyNativeOAuthBrowserOutcome("Sign-in was denied. Please try again.");
+      void Browser.close().catch(() => {});
       return;
     }
 
-    const hash = url.substring(hashIndex + 1);
-    const params = new URLSearchParams(hash);
-    const type = params.get("type");
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
-
-    console.log("[RESET-DEBUG] Parsed hash params — type:", type, "| has access_token:", !!accessToken, "| has refresh_token:", !!refreshToken);
-
-    if (accessToken && refreshToken) {
-      if (type === "recovery") {
+    noteNativeOAuthCallbackReceived(
+      callback.kind === "oauth-session" ? callback.attemptId : null,
+    );
+    void Browser.close().catch(() => {
+      // The native browser may already be closed; the verified callback is
+      // still safe to complete through the existing session handoff.
+    });
+    if (callback.kind === "recovery-session") {
         // This must happen before ResetPasswordPage calls setSession(). On a
         // native cold start there is no /reset-password route yet.
         markRecoveryAuthFlow();
-        clearOAuthTermsConsentAttempt();
-      }
-      const storageKey = type === "recovery" ? "pendingRecovery" : "pendingOAuthSession";
-      const pendingRoute = type === "recovery" ? "/reset-password" : "/activity";
-      localStorage.setItem(storageKey, JSON.stringify({ accessToken, refreshToken }));
-      localStorage.setItem("pendingRoute", pendingRoute);
-      console.log("[AUTH-DEBUG] Stored pending auth callback for app startup");
-    } else {
-      console.log("[AUTH-DEBUG] Auth callback tokens missing, skipping");
+        // Recovery callbacks never own a pre-auth OAuth consent attempt.
     }
+    const isRecovery = callback.kind === "recovery-session";
+    const storageKey = isRecovery ? "pendingRecovery" : "pendingOAuthSession";
+    const pendingRoute = isRecovery ? "/reset-password" : "/activity";
+    localStorage.setItem(storageKey, JSON.stringify({
+      accessToken: callback.accessToken,
+      refreshToken: callback.refreshToken,
+      ...(callback.kind === "oauth-session" ? { attemptId: callback.attemptId } : {}),
+    }));
+    localStorage.setItem("pendingRoute", pendingRoute);
+    console.log("[AUTH-DEBUG] Stored pending auth callback for app startup");
   });
 } else {
   console.log("[RESET-DEBUG] main.tsx: not native platform, skipping appUrlOpen registration");
