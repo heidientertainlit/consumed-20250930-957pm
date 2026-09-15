@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, Search, Share2, Sparkles, Star, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, Plus, Search, Share2, Sparkles, Star, Users } from "lucide-react";
+import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
 import FriendsManager from "@/components/friends-manager";
@@ -799,13 +800,40 @@ function mediaDetailHref(item?: TribeMedia) {
 }
 
 function MediaShelf({ media, tribe, metric }: { media: TribeMedia[]; tribe: Tribe; metric?: "loved" | "trending" }) {
-  return <div className="mt-4 flex gap-3 overflow-x-auto pb-1">{media.map((item, index) => {
+  const [selectedMedia, setSelectedMedia] = useState<TribeMedia | null>(null);
+  return <><div className="mt-4 flex gap-3 overflow-x-auto pb-1">{media.map((item, index) => {
     const href = mediaDetailHref(item);
     const card = <article className="w-28 shrink-0"><div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-[#ddd6e0]">{item.image_url ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full flex-col justify-between p-3 text-white" style={{ background: `linear-gradient(145deg, ${tribe.accent_color || "#745386"}, ${tribe.accent_color_2 || "#4d6e9b"})` }}><span className="text-[9px] font-bold uppercase tracking-[.14em] text-white/65">{item.media_type}</span><span className="font-serif text-xl text-white/90">0{index + 1}</span></div>}</div><p className="mt-2 line-clamp-2 text-xs font-bold">{item.title}</p>{metric === "loved" && <p className="mt-1 text-[10px] font-semibold text-[#6f5a7d]">{item.like_percent != null ? `${item.like_percent}% liked it` : ""}{item.like_percent != null && item.avg_rating != null ? " · " : ""}{item.avg_rating != null ? `${item.avg_rating} ★` : ""}</p>}{metric === "trending" && item.people_count != null && <p className="mt-1 text-[10px] font-semibold text-[#6f5a7d]">{item.people_count} {item.people_count === 1 ? "person" : "people"} lately</p>}{!metric && item.creator && <p className="truncate text-[11px] text-[#7b7180]">{item.creator}</p>}</article>;
-    return href
-      ? <Link key={`${item.id || item.external_source || item.title}-${index}`} href={href} className="block shrink-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#67447c]">{card}</Link>
-      : <div key={`${item.id || item.external_source || item.title}-${index}`}>{card}</div>;
-  })}</div>;
+    return <div key={`${item.id || item.external_source || item.title}-${index}`} className="relative shrink-0">
+      {href
+        ? <Link href={href} className="block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#67447c]">{card}</Link>
+        : card}
+      <button
+        type="button"
+        onClick={() => setSelectedMedia(item)}
+        disabled={!href}
+        aria-label={`Add ${item.title} to your lists`}
+        title={href ? "Add to your lists" : "Media details unavailable"}
+        className="absolute right-1 top-[6.5rem] flex h-8 w-8 items-center justify-center rounded-lg border border-white/60 bg-white/90 text-[#67447c] shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#67447c] disabled:opacity-40"
+      >
+        <Plus size={18} aria-hidden="true" />
+      </button>
+    </div>;
+  })}</div>
+    {selectedMedia && <QuickAddListSheet
+      isOpen
+      onClose={() => setSelectedMedia(null)}
+      media={{
+        title: selectedMedia.title,
+        mediaType: normalizedGroupMediaType(selectedMedia.media_type) === "shows" ? "tv" : (selectedMedia.media_type || "movie").trim().toLowerCase(),
+        imageUrl: selectedMedia.image_url,
+        externalId: selectedMedia.external_id?.trim(),
+        externalSource: selectedMedia.external_source?.trim(),
+        creator: selectedMedia.creator,
+      }}
+      elevated
+    />}
+  </>;
 }
 
 function Creators({ query }: { query: ReturnType<typeof useQuery<any[]>> }) {
