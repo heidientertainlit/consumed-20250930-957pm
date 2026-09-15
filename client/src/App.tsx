@@ -41,6 +41,7 @@ import AdminTodaysPlayPage from "@/pages/admin-todays-play";
 import AdminRoomConversationsPage from "@/pages/admin-room-conversations";
 import AdminExportsPage from "@/pages/admin-exports";
 import AdminImportLedgerPage from "@/pages/admin-import-ledger";
+import AdminBlockAlertsPage from "@/pages/admin-block-alerts";
 import Feed from "@/pages/feed";
 import GameFirstFeed from "@/pages/game-first-feed";
 import QuickLog from "@/pages/quick-log";
@@ -727,6 +728,11 @@ function Router() {
           <Route path="/admin/import-ledger">
             <ProtectedRoute>
               <AdminImportLedgerPage />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/admin/block-alerts">
+            <ProtectedRoute>
+              <AdminBlockAlertsPage />
             </ProtectedRoute>
           </Route>
 

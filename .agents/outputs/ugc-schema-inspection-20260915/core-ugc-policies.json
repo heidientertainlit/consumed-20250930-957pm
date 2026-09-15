@@ -1,0 +1,1192 @@
+[
+  {
+    "schemaname": "public",
+    "tablename": "bets",
+    "policyname": "Service role full access",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(auth.role() = 'service_role'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "bets",
+    "policyname": "Users can view bets on their posts",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((auth.uid())::text = (target_user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "bets",
+    "policyname": "Users can view own bets",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "binge_battles",
+    "policyname": "Challenger insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((auth.uid())::text = challenger_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "binge_battles",
+    "policyname": "Participant delete",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(((auth.uid())::text = challenger_id) OR ((auth.uid())::text = opponent_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "binge_battles",
+    "policyname": "Participant update",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(((auth.uid())::text = challenger_id) OR ((auth.uid())::text = opponent_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "binge_battles",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "friend_cast_responses",
+    "policyname": "Users can create responses",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = responder_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "friend_cast_responses",
+    "policyname": "Users can view responses",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "friend_casts",
+    "policyname": "Target users can update casts",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "((auth.uid() = target_friend_id) OR (auth.uid() = creator_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "friend_casts",
+    "policyname": "Users can create casts",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = creator_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "friend_casts",
+    "policyname": "Users can view public casts",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((is_public = true) OR (creator_id = auth.uid()) OR (target_friend_id = auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "hot_take_passes",
+    "policyname": "Recipients can update response",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = to_user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "hot_take_passes",
+    "policyname": "Users can create passes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = from_user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "hot_take_passes",
+    "policyname": "Users can view passes they're involved in",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((auth.uid() = from_user_id) OR (auth.uid() = to_user_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "hot_take_votes",
+    "policyname": "Authenticated users can insert votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "hot_take_votes",
+    "policyname": "Users can delete their own votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "hot_take_votes",
+    "policyname": "Users can update their own votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "hot_take_votes",
+    "policyname": "Users can view all votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "list_collaborators",
+    "policyname": "List owners can add collaborators",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(EXISTS ( SELECT 1\n   FROM lists\n  WHERE ((lists.id = list_collaborators.list_id) AND (lists.user_id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "list_collaborators",
+    "policyname": "List owners can remove collaborators",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM lists\n  WHERE ((lists.id = list_collaborators.list_id) AND (lists.user_id = auth.uid()))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "list_collaborators",
+    "policyname": "Users can view relevant collaborators",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((EXISTS ( SELECT 1\n   FROM lists\n  WHERE ((lists.id = list_collaborators.list_id) AND (lists.user_id = auth.uid())))) OR (user_id = auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "list_items",
+    "policyname": "Allow public read list items",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "list_items",
+    "policyname": "Users can read own list items",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "list_items",
+    "policyname": "Users can update own list items",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "list_items",
+    "policyname": "final_items_modify",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "list_items",
+    "policyname": "final_items_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((auth.uid() = user_id) OR (list_id IN ( SELECT lists.id\n   FROM lists\n  WHERE ((lists.visibility = 'public'::text) OR (lists.user_id IS NULL)))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "list_items",
+    "policyname": "friends_can_view_list_items",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM friendships f\n  WHERE ((f.status = 'accepted'::text) AND ((((f.user_id)::text = (auth.uid())::text) AND ((f.friend_id)::text = (list_items.user_id)::text)) OR (((f.friend_id)::text = (auth.uid())::text) AND ((f.user_id)::text = (list_items.user_id)::text))))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "lists",
+    "policyname": "Allow public read lists",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "lists",
+    "policyname": "Users can access their own lists",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "lists",
+    "policyname": "Users can insert their own lists",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "lists",
+    "policyname": "Users can update their own lists",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "lists",
+    "policyname": "Users can view their own lists",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "lists",
+    "policyname": "final_lists_modify",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "lists",
+    "policyname": "final_lists_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((auth.uid() = user_id) OR (visibility = 'public'::text) OR (user_id IS NULL))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "lists",
+    "policyname": "friends_can_view_lists",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM friendships f\n  WHERE ((f.status = 'accepted'::text) AND ((((f.user_id)::text = (auth.uid())::text) AND ((f.friend_id)::text = (lists.user_id)::text)) OR (((f.friend_id)::text = (auth.uid())::text) AND ((f.user_id)::text = (lists.user_id)::text))))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "lists",
+    "policyname": "lists_modify_owner",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "lists",
+    "policyname": "lists_select_user_or_public_or_system",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((auth.uid() = user_id) OR (visibility = 'public'::text) OR (user_id IS NULL))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "media_ratings",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "media_ratings",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "poll_responses",
+    "policyname": "Anyone can view poll responses",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "poll_responses",
+    "policyname": "Users can insert their own poll votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "poll_responses",
+    "policyname": "Users can insert their own responses",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "poll_responses",
+    "policyname": "Users can view all poll responses",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "polls",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "post_reactions",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "post_reactions",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "post_votes",
+    "policyname": "Users can delete own votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "post_votes",
+    "policyname": "Users can insert own votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "post_votes",
+    "policyname": "Users can update own votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "post_votes",
+    "policyname": "Users can view all post votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "prediction_comment_likes",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "prediction_comment_likes",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "prediction_comment_votes",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "prediction_comment_votes",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "prediction_comments",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "prediction_comments",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "prediction_likes",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "prediction_likes",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "predictions",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "predictions",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "rank_comments",
+    "policyname": "Authenticated users can insert comments",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "rank_comments",
+    "policyname": "Users can delete own comments",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "rank_comments",
+    "policyname": "Users can view all rank comments",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "rank_item_votes",
+    "policyname": "Users can delete their own votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(voter_id IN ( SELECT users.id\n   FROM users\n  WHERE (users.id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "rank_item_votes",
+    "policyname": "Users can insert their own votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(((auth.uid())::text = (voter_id)::text) OR (voter_id IN ( SELECT users.id\n   FROM users\n  WHERE (users.id = auth.uid()))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "rank_item_votes",
+    "policyname": "Users can update their own votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(voter_id IN ( SELECT users.id\n   FROM users\n  WHERE (users.id = auth.uid())))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "rank_item_votes",
+    "policyname": "Users can view all votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "rank_items",
+    "policyname": "Service role can manage rank items",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.jwt() ->> 'role'::text) = 'service_role'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "rank_items",
+    "policyname": "Users can delete rank items",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "rank_items",
+    "policyname": "Users can insert rank items",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((user_id = auth.uid()) AND (EXISTS ( SELECT 1\n   FROM ranks parent_rank\n  WHERE ((parent_rank.id = rank_items.rank_id) AND ((parent_rank.user_id = auth.uid()) OR (parent_rank.visibility = 'public'::text))))))"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "rank_items",
+    "policyname": "Users can update rank items",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "rank_items",
+    "policyname": "Users can view rank items",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM ranks\n  WHERE ((ranks.id = rank_items.rank_id) AND ((ranks.visibility = 'public'::text) OR (ranks.user_id = auth.uid())))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ranks",
+    "policyname": "Service role can manage ranks",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.jwt() ->> 'role'::text) = 'service_role'::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ranks",
+    "policyname": "Users can delete own ranks",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ranks",
+    "policyname": "Users can insert own ranks",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ranks",
+    "policyname": "Users can update own ranks",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ranks",
+    "policyname": "Users can view public ranks or own ranks",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((visibility = 'public'::text) OR (user_id = auth.uid()))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ratings",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "ratings",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "reviews",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "reviews",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "room_take_replies",
+    "policyname": "authenticated_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "room_take_votes",
+    "policyname": "authenticated_all",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "ALL",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "room_takes",
+    "policyname": "room_takes_delete",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "DELETE",
+    "qual": "(user_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "room_takes",
+    "policyname": "room_takes_insert",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(user_id = auth.uid())"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "room_takes",
+    "policyname": "room_takes_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM pools p\n  WHERE ((p.id = room_takes.room_id) AND ((p.is_public = true) OR (EXISTS ( SELECT 1\n           FROM pool_members pm\n          WHERE ((pm.pool_id = p.id) AND (pm.user_id = auth.uid()))))))))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "room_takes",
+    "policyname": "room_takes_update",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "UPDATE",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_comment_likes",
+    "policyname": "Comment likes are viewable by everyone",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_comment_likes",
+    "policyname": "Users can delete their own comment likes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_comment_likes",
+    "policyname": "Users can insert their own comment likes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_comment_votes",
+    "policyname": "Users can delete own votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_comment_votes",
+    "policyname": "Users can insert own votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "((auth.uid())::text = (user_id)::text)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_comment_votes",
+    "policyname": "Users can update own votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_comment_votes",
+    "policyname": "Users can view all votes",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_post_comments",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_post_comments",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_post_likes",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_post_likes",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_posts",
+    "policyname": "delete own posts",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_posts",
+    "policyname": "insert own posts",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_posts",
+    "policyname": "modify own posts",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "social_posts",
+    "policyname": "read public or own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "((visibility = 'public'::text) OR (auth.uid() = user_id))",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "strand_comments",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "strand_comments",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "strand_likes",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "strand_likes",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "strand_media",
+    "policyname": "Authenticated write",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": null,
+    "with_check": "(auth.uid() IS NOT NULL)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "strand_media",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "strands",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "strands",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_blocks",
+    "policyname": "user_blocks_authenticated_owner_select",
+    "permissive": "PERMISSIVE",
+    "roles": "{authenticated}",
+    "cmd": "SELECT",
+    "qual": "(blocker_id = auth.uid())",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_highlights",
+    "policyname": "Anyone can view highlights",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_highlights",
+    "policyname": "Users can delete their own highlights",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "DELETE",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_highlights",
+    "policyname": "Users can insert their own highlights",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "INSERT",
+    "qual": null,
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_highlights",
+    "policyname": "Users can manage their own highlights",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_highlights",
+    "policyname": "Users can view their own highlights",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = user_id)",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_lists",
+    "policyname": "Public read",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true",
+    "with_check": null
+  },
+  {
+    "schemaname": "public",
+    "tablename": "user_lists",
+    "policyname": "Users manage own",
+    "permissive": "PERMISSIVE",
+    "roles": "{public}",
+    "cmd": "ALL",
+    "qual": "((auth.uid())::text = (user_id)::text)",
+    "with_check": null
+  }
+]

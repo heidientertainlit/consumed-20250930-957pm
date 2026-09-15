@@ -1,0 +1,69 @@
+bets | id:uuid!, user_id:uuid!, target_user_id:uuid!, post_id:uuid!, external_id:text!, external_source:text!, media_title:text?, media_type:text?, prediction:text!, status:text!, points_awarded:int4?, created_at:timestamptz?, resolved_at:timestamptz?
+binge_battles | id:uuid!, challenger_id:text!, opponent_id:text?, media_external_id:text!, media_external_source:text!, media_title:text!, media_type:text!, media_poster:text?, media_sub:text?, media_total:int4!, media_unit:text!, status:text!, challenger_progress:int4!, opponent_progress:int4!, winner_id:text?, created_at:timestamptz!, updated_at:timestamptz!, media_items:jsonb?
+content_reports | id:uuid!, reporter_id:uuid!, content_type:text!, content_id:text!, reason:text!, description:text?, reported_user_id:uuid?, status:text!, created_at:timestamptz?
+daily_challenge_responses | id:text!, challenge_id:text!, user_id:uuid!, response:jsonb!, points_earned:int4?, created_at:timestamptz?
+dna_moment_responses | id:uuid!, user_id:uuid!, moment_id:uuid!, answer:text!, points_earned:int4!, created_at:timestamp!
+edna_responses | id:uuid!, user_id:uuid?, question_id:uuid?, answer_text:text?, answer_option:text?, answer_options:_text?, created_at:timestamp?
+followed_creators | id:uuid!, user_id:uuid!, creator_name:text!, creator_role:text!, creator_image:text?, external_id:text!, external_source:text!, created_at:timestamp!
+friend_cast_responses | id:uuid!, friend_cast_id:uuid!, responder_id:uuid!, celeb_id:text!, celeb_name:text!, celeb_image:text?, created_at:timestamptz?
+friend_casts | id:uuid!, creator_id:uuid!, target_friend_id:uuid?, target_friend_name:text?, prompt:text?, creator_pick_celeb_id:text!, creator_pick_celeb_name:text!, creator_pick_celeb_image:text?, status:text?, counter_celeb_id:text?, counter_celeb_name:text?, counter_celeb_image:text?, share_token:text?, is_public:bool?, approved_at:timestamptz?, feed_post_id:uuid?, created_at:timestamptz?
+hot_take_passes | id:uuid!, post_id:uuid!, from_user_id:uuid!, to_user_id:uuid!, response:text?, response_post_id:uuid?, created_at:timestamptz?, responded_at:timestamptz?
+hot_take_votes | id:uuid!, post_id:uuid!, user_id:uuid!, vote_type:text!, created_at:timestamptz?
+list_collaborators | id:uuid!, list_id:uuid!, user_id:uuid!, role:text?, added_at:timestamp?
+list_items | id:uuid!, list_id:uuid?, user_id:uuid!, title:text!, type:text?, creator:text?, image_url:text?, notes:text?, created_at:timestamp?, media_type:text?, media_id:uuid?, external_id:text?, external_source:text?, progress:int4?, total:int4?, progress_mode:varchar?, season_number:numeric?, episode_number:numeric?, series_name:text?, media_subtype:text?, completed_at:timestamptz?, canonical_media_id:uuid?, import_batch_id:uuid?, import_source_row_index:int4?
+lists | id:uuid!, user_id:uuid?, title:text!, media_type:text?, created_at:timestamp?, is_private:bool?, is_pinned:bool?, share_id:text?, updated_at:timestamp?, visibility:text?, is_default:bool?, is_public:bool?, origin_type:text?, origin_user_id:varchar?
+media_engagements | id:uuid!, user_id:uuid!, media_title:text!, media_type:text?, media_external_id:text?, media_external_source:text?, engagement_type:text!, source_id:text!, source_table:text!, created_at:timestamptz?, selected:bool!
+media_goals | id:uuid!, user_id:uuid!, media_type:text!, goal_description:text?, target_count:int4?, current_count:int4?, period:text?, created_at:timestamp?, current_progress:int4?, goal_type:text?, target_value:int4!, current_value:int4!, deadline:timestamptz?, description:text?, title:text?, updated_at:timestamptz?
+media_history_log | id:uuid!, item_id:uuid!, user_id:uuid!, action:text!, old_status:text?, new_status:text?, timestamp:timestamp?, name:text?
+media_import_batches | id:uuid!, user_id:uuid!, original_filename:text!, content_type:text?, file_size_bytes:int8!, sha256:text?, source:text!, points_formula:jsonb!, status:text!, started_at:timestamptz!, heartbeat_at:timestamptz!, source_rows:int4!, parsed_rows:int4!, unique_rows:int4!, inserted_count:int4!, skipped_existing_count:int4!, skipped_duplicate_count:int4!, failed_count:int4!, rejected_count:int4!, ratings_imported_count:int4!, ratings_preserved_count:int4!, ratings_failed_count:int4!, media_type_counts:jsonb!, points_by_media_type:jsonb!, imported_points:int4!, parser_version:text!, points_formula_version:text!, error_summary:jsonb!, is_legacy:bool!, legacy_evidence:jsonb?, legacy_cohort:text?, created_at:timestamptz!, completed_at:timestamptz?
+media_import_rows | id:int8!, batch_id:uuid!, source_row_index:int4!, title:text?, media_type:text?, outcome:text!, error_message:text?, list_item_id:uuid?, media_rating_id:int8?, rating_outcome:text!, created_at:timestamptz!
+media_progress_events | id:uuid!, list_item_id:uuid?, user_id:uuid!, event_type:text!, previous_progress:int4?, previous_total:int4?, progress:int4!, total:int4?, progress_mode:text!, media_type:text?, media_title:text?, media_external_id:text?, media_external_source:text?, occurred_at:timestamptz!, client_event_id:uuid?, created_at:timestamptz!, canonical_media_id:uuid?
+media_ratings | id:int4!, user_id:uuid!, media_external_id:text!, media_external_source:text!, media_title:text!, media_type:text!, rating:numeric!, created_at:timestamp!, updated_at:timestamp!, canonical_media_id:uuid?, import_batch_id:uuid?, import_source_row_index:int4?
+media_statuses | id:uuid!, media_type:text!, label:text!, slug:text!, sort_order:int4?, created_at:timestamp?
+notifications | id:uuid!, user_id:uuid!, type:text!, post_id:text?, comment_id:text?, triggered_by_user_id:uuid?, message:text!, read:bool?, created_at:timestamptz?, list_id:text?, friend_cast_id:uuid?, metadata:jsonb?
+poll_responses | id:uuid!, poll_id:int4!, option_id:int4!, user_id:uuid!, created_at:timestamptz!
+polls | id:int4!, question:text!, type:text!, sponsor_name:text?, sponsor_logo_url:text?, sponsor_cta_url:text?, status:text!, points_reward:int4?, expires_at:timestamp?, created_by:text?, created_at:timestamp?, updated_at:timestamp?, options:jsonb?
+post_reactions | id:int8!, social_post_id:uuid!, user_id:uuid!, reaction:text!, created_at:timestamptz?
+post_votes | id:uuid!, post_id:uuid!, user_id:uuid!, vote_type:int4!, created_at:timestamptz?
+prediction_comment_likes | id:int8!, comment_id:int8!, user_id:varchar!, created_at:timestamptz?
+prediction_comment_votes | id:int4!, comment_id:varchar!, user_id:varchar!, vote_type:int4!, created_at:timestamptz?
+prediction_comments | id:int8!, pool_id:text!, user_id:varchar!, content:text!, parent_comment_id:int8?, created_at:timestamptz?, updated_at:timestamptz?
+prediction_likes | id:int8!, pool_id:text!, user_id:varchar!, created_at:timestamptz?
+prediction_pools | id:text!, title:text!, type:text!, points_reward:int4!, deadline:text?, status:text!, category:text!, icon:text!, options:jsonb?, inline:bool?, created_at:timestamptz?, correct_answer:text?, sponsor_name:text?, sponsor_logo_url:text?, sponsor_cta_url:text?, origin_type:text?, origin_user_id:varchar?, resolved_at:timestamptz?, resolved_by:text?, likes_count:int4?, comments_count:int4?, participants:int4?, invited_user_id:varchar?, media_external_id:text?, media_external_source:varchar?, media_title:text?, publish_at:timestamptz?, featured_date:date?, difficulty:text?, partner_tag:text?, show_tag:text?, media_tags:_text?, media_type:text?, play_context:text?
+predictions | id:uuid!, user_id:uuid?, strand_id:uuid?, is_correct:bool?, created_at:timestamp?
+rank_comments | id:uuid!, rank_id:uuid!, user_id:uuid!, content:text!, created_at:timestamptz?
+rank_item_votes | id:uuid!, rank_item_id:uuid!, voter_id:uuid!, direction:text!, created_at:timestamptz?
+rank_items | id:uuid!, rank_id:uuid!, user_id:uuid!, position:int4!, title:text!, media_type:text?, creator:text?, image_url:text?, external_id:text?, external_source:text?, notes:text?, created_at:timestamptz!, updated_at:timestamptz!, up_vote_count:int4?, down_vote_count:int4?, year:text?, custom_add_user_id:varchar?
+ranks | id:uuid!, user_id:uuid?, title:text!, description:text?, visibility:text?, is_collaborative:bool?, max_items:int4?, category:text?, cover_image_url:text?, created_at:timestamptz!, updated_at:timestamptz!, origin_type:text?, origin_user_id:varchar?, status:text?, scheduled_date:timestamptz?
+ratings | id:uuid!, user_id:uuid?, media_title:text!, media_type:text?, rating:int4?, created_at:timestamp?
+rec_requests | id:uuid!, post_id:uuid!, category:text?, context:text?, selected_winner_comment_id:uuid?, created_at:timestamptz?, closed_at:timestamptz?
+reviews | id:uuid!, user_id:uuid?, media_title:text!, media_type:text?, review_text:text?, rating:int4?, created_at:timestamp?
+room_follows | id:uuid!, user_id:text!, room_id:text!, created_at:timestamptz!
+room_requests | id:uuid!, user_id:uuid?, media_type:text?, title:text!, created_at:timestamptz?
+room_take_replies | id:uuid!, take_id:uuid!, parent_reply_id:uuid?, user_id:uuid!, content:text!, upvotes:int4!, downvotes:int4!, created_at:timestamptz!, media_title:text?, media_type:text?, media_creator:text?, media_image_url:text?, media_external_id:text?, media_external_source:text?, media_subtype:text?, media_season_number:int4?, media_episode_number:int4?, media_episode_title:text?, media_url:text?
+room_take_votes | id:uuid!, take_id:uuid?, reply_id:uuid?, user_id:uuid!, vote:int4!, created_at:timestamptz!
+room_takes | id:uuid!, room_id:uuid!, user_id:uuid!, title:text!, body:text?, tag:text?, upvotes:int4!, reply_count:int4!, created_at:timestamptz!, has_spoiler:bool!, media_title:text?, media_type:text?, media_creator:text?, media_image_url:text?, media_external_id:text?, media_external_source:text?, rating:numeric?, media_subtype:text?, media_season_number:int4?, media_episode_number:int4?, media_episode_title:text?, media_url:text?
+seen_it_completions | id:uuid!, set_id:uuid!, user_id:uuid!, seen_count:int4?, total_count:int4?, percentage:int4?, completed_at:timestamp!
+seen_it_items | id:uuid!, set_id:uuid!, title:varchar!, image_url:text?, external_id:varchar?, external_source:varchar?, media_type:varchar?, year:varchar?, position:int4?, created_at:timestamp!
+seen_it_responses | id:uuid!, set_id:uuid!, item_id:uuid!, user_id:uuid!, seen:bool!, created_at:timestamp!
+seen_it_sets | id:uuid!, title:varchar!, description:text?, category:varchar?, media_type:varchar?, origin_type:varchar?, creator_id:uuid?, visibility:varchar?, items_count:int4?, plays_count:int4?, created_at:timestamp!, updated_at:timestamp?
+social_comment_likes | id:int4!, comment_id:int4!, user_id:uuid!, created_at:timestamptz!
+social_comment_votes | id:int4!, comment_id:int4!, user_id:varchar!, vote_type:int4!, created_at:timestamptz?
+social_post_comments | id:int4!, social_post_id:uuid!, user_id:uuid!, content:text!, created_at:timestamptz?, updated_at:timestamptz?, post_id:uuid?, likes_count:int4!, parent_comment_id:int4?
+social_post_likes | id:int4!, social_post_id:uuid!, user_id:uuid!, created_at:timestamptz?, post_id:uuid?
+social_posts | id:uuid!, user_id:uuid?, content:text?, post_type:text?, rating:float4?, progress:int4?, created_at:timestamptz?, updated_at:timestamptz?, likes_count:int4?, comments_count:int4?, media_title:text?, media_type:text?, media_creator:text?, image_url:text?, media_external_id:text?, media_external_source:text?, media_description:text?, visibility:text?, contains_spoilers:bool?, prediction_pool_id:text?, list_id:varchar?, rank_id:uuid?, upvotes_count:int4?, downvotes_count:int4?, fire_votes:int4?, ice_votes:int4?, rec_category:text?, origin_type:text?, origin_user_id:varchar?, room_id:text?, media_season_number:int4?, media_episode_number:int4?, media_episode_title:text?, canonical_media_id:uuid?
+strand_comments | id:uuid!, strand_id:uuid?, user_id:uuid?, content:text?, created_at:timestamp?
+strand_likes | id:uuid!, strand_id:uuid?, user_id:uuid?, created_at:timestamp?
+strand_media | id:uuid!, strand_id:uuid?, title:text?, creator:text?, image_url:text?, external_id:text?, media_type:text?
+strands | id:uuid!, user_id:uuid?, strand_type:text?, media_type:text?, title:text?, content:text?, created_at:timestamp?
+user_activity | id:uuid!, user_id:uuid!, action_type:text!, target_type:text?, target_id:uuid?, metadata:jsonb?, created_at:timestamptz?
+user_blocks | id:uuid!, blocker_id:uuid!, blocked_id:uuid!, created_at:timestamptz?
+user_highlights | id:uuid!, user_id:uuid!, title:text!, creator:text?, media_type:text?, image_url:text?, description:text?, external_id:text?, external_source:text?, created_at:timestamptz?, updated_at:timestamptz?
+user_lists | id:uuid!, user_id:uuid?, title:text!, description:text?, visibility:text?, created_at:timestamp?
+user_media | id:uuid!, user_id:uuid?, title:text!, type:text?, creator:text?, image_url:text?, notes:text?, created_at:timestamp?
+user_media_items | id:int8!, user_id:uuid!, media_id:uuid?, title:text!, media_type:text!, creator:text?, image_url:text?, progress:int4!, total:int4!, rating:numeric?, date_added:timestamptz!, external_id:text?, external_source:text?, list_id:uuid?
+user_predictions | id:uuid!, user_id:uuid!, pool_id:text!, prediction:text!, points_earned:int4?, is_winner:bool?, created_at:timestamptz?
+user_private_details | user_id:uuid!, birth_date:date!, created_at:timestamptz!, updated_at:timestamptz!, gender:text?
+user_profiles | id:int4!, user_id:uuid?, display_name:text?, bio:text?, avatar_url:text?, created_at:timestamptz?, gender:text?, age_range:text?
+user_recommendations | id:int4!, user_id:uuid!, recommendations:jsonb!, data_sources_used:jsonb?, source_model:text!, status:text!, generated_at:timestamp!, expires_at:timestamp!, stale_after:timestamp!, created_at:timestamp!, updated_at:timestamp!
+user_reputation_titles | id:uuid!, user_id:uuid!, title_key:text!, tier:text?, score:numeric?, secondary_score:numeric?, progress_pct:int4?, genre_context:text?, calculated_at:timestamptz?

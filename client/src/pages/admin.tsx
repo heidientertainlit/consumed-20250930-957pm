@@ -3,9 +3,18 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna, Download, MessageSquareText, ReceiptText } from "lucide-react";
+import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna, Download, MessageSquareText, ReceiptText, ShieldAlert } from "lucide-react";
 
 const TOOLS = [
+  {
+    path: "/admin/block-alerts",
+    icon: ShieldAlert,
+    title: "Block Alerts",
+    description: "Review and acknowledge private operational alerts for completed user blocks.",
+    color: "from-red-900/40 to-red-800/20 border-red-700/40",
+    iconColor: "text-red-400",
+    iconBg: "bg-red-900/50",
+  },
   {
     path: "/admin/import-ledger",
     icon: ReceiptText,
