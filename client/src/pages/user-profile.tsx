@@ -3501,7 +3501,7 @@ export default function UserProfile() {
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'rgba(196,181,253,0.7)' }}>
-                        Now Shaping Your DNA
+                        Your Entertainment DNA™ Profile
                       </p>
                       <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Currently Consuming</p>
                     </div>
