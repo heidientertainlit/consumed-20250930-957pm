@@ -439,7 +439,7 @@ export function CompareSheet({
                 </button>
               )}
               <span className="text-[18px] font-bold text-[#30203f]">
-                {step === "result" ? `You vs ${friendLabel(selected!)}` : "Compare DNA"}
+                {step === "result" ? `You vs ${friendLabel(selected!)}` : "Compare DNA Profiles"}
               </span>
             </div>
             <button
@@ -957,7 +957,7 @@ export default function DnaCompareFeedCard({ featured: featuredProp }: DnaCompar
         <div className="relative h-[44px]">
           <div className="absolute top-2.5 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100">
             <Dna size={10} className="text-violet-600" />
-            <span className="text-violet-600 text-[10px] font-bold uppercase tracking-widest">Compare DNA</span>
+            <span className="text-violet-600 text-[10px] font-bold uppercase tracking-widest">Compare DNA Profiles</span>
           </div>
           {(!isInviteEmpty) && <button
             onClick={() => setShareMenuOpen(v => !v)}
@@ -1296,7 +1296,7 @@ export function DnaComparePostCard({ item }: { item: any }) {
         <div className="relative h-[44px]">
           <div className="absolute top-2.5 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100">
             <Dna size={10} className="text-violet-600" />
-            <span className="text-violet-600 text-[10px] font-bold uppercase tracking-widest">Compare DNA</span>
+            <span className="text-violet-600 text-[10px] font-bold uppercase tracking-widest">Compare DNA Profiles</span>
           </div>
           <button
             onClick={async () => {
