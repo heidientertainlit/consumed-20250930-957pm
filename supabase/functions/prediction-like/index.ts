@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkBlockingRelationship } from "../_shared/block-relationships.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -57,6 +58,24 @@ serve(async (req) => {
     );
 
     if (req.method === 'POST') {
+      const { data: pool, error: poolError } = await serviceSupabase
+        .from('prediction_pools')
+        .select('origin_user_id, likes_count')
+        .eq('id', pool_id)
+        .single();
+      if (poolError || !pool) {
+        return new Response(JSON.stringify({ error: 'Prediction pool not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (pool.origin_user_id && await checkBlockingRelationship(serviceSupabase as any, user.id, pool.origin_user_id)) {
+        return new Response(JSON.stringify({ error: 'Blocked users cannot interact' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       // Add like - but first check if already exists
       const { data: existingLike } = await serviceSupabase
         .from('prediction_likes')
@@ -84,12 +103,6 @@ serve(async (req) => {
       }
 
       // Increment likes_count on the prediction pool
-      const { data: pool } = await serviceSupabase
-        .from('prediction_pools')
-        .select('likes_count')
-        .eq('id', pool_id)
-        .single();
-
       // Increment likes_count
       if (pool) {
         await serviceSupabase

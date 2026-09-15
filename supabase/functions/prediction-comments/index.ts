@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkBlockingRelationship, loadBlockedPeerIds } from "../_shared/block-relationships.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,6 +35,32 @@ function buildCommentTree(flatComments: any[]) {
   });
 
   return rootComments;
+}
+
+// Keep orphan handling unchanged while ensuring a hidden parent cannot expose
+// any descendant by being removed before the comment tree is constructed.
+function removeBlockedCommentSubtrees(comments: any[], blockedPeerIds: Set<string>) {
+  if (blockedPeerIds.size === 0) return comments;
+  const byId = new Map(comments.map((comment) => [comment.id, comment]));
+  const hidden = new Map<any, boolean>();
+  const isHidden = (comment: any, visiting = new Set<any>()): boolean => {
+    if (hidden.has(comment.id)) return hidden.get(comment.id)!;
+    if (blockedPeerIds.has(comment.user_id)) {
+      hidden.set(comment.id, true);
+      return true;
+    }
+    const parent = comment.parent_comment_id ? byId.get(comment.parent_comment_id) : null;
+    if (!parent || visiting.has(comment.id)) {
+      hidden.set(comment.id, false);
+      return false;
+    }
+    const next = new Set(visiting);
+    next.add(comment.id);
+    const result = isHidden(parent, next);
+    hidden.set(comment.id, result);
+    return result;
+  };
+  return comments.filter((comment) => !isHidden(comment));
 }
 
 serve(async (req) => {
@@ -97,8 +124,11 @@ serve(async (req) => {
         });
       }
 
+      const blockedPeerIds = await loadBlockedPeerIds(serviceSupabase as any, user.id);
+      const visibleComments = removeBlockedCommentSubtrees(comments || [], blockedPeerIds);
+
       // Fetch user info for all commenters
-      const userIds = [...new Set(comments?.map(c => c.user_id) || [])];
+      const userIds = [...new Set(visibleComments.map(c => c.user_id))];
       const userMap: Record<string, { user_name?: string; email?: string }> = {};
       
       if (userIds.length > 0) {
@@ -112,7 +142,7 @@ serve(async (req) => {
         });
       }
 
-      let transformedComments = comments?.map(comment => ({
+      let transformedComments = visibleComments.map(comment => ({
         id: comment.id,
         content: comment.content,
         created_at: comment.created_at,
@@ -122,8 +152,8 @@ serve(async (req) => {
       })) || [];
 
       // Include vote metadata if requested
-      if (includeMeta && comments && comments.length > 0) {
-        const commentIds = comments.map(c => String(c.id));
+      if (includeMeta && visibleComments.length > 0) {
+        const commentIds = visibleComments.map(c => String(c.id));
         
         // Get all votes for these comments
         const { data: allVotes } = await serviceSupabase
@@ -190,6 +220,24 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
       );
 
+      const { data: pool, error: poolError } = await serviceSupabase
+        .from('prediction_pools')
+        .select('origin_user_id')
+        .eq('id', pool_id)
+        .single();
+      if (poolError || !pool) {
+        return new Response(JSON.stringify({ error: 'Prediction pool not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (pool.origin_user_id && await checkBlockingRelationship(serviceSupabase as any, user.id, pool.origin_user_id)) {
+        return new Response(JSON.stringify({ error: 'Blocked users cannot interact' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       const insertData: any = {
         pool_id: pool_id,
         user_id: user.id,
@@ -198,6 +246,23 @@ serve(async (req) => {
 
       // Add parent_comment_id if this is a reply
       if (parent_comment_id) {
+        const { data: parentComment, error: parentError } = await serviceSupabase
+          .from('prediction_comments')
+          .select('user_id, pool_id')
+          .eq('id', parent_comment_id)
+          .single();
+        if (parentError || !parentComment || parentComment.pool_id !== pool_id) {
+          return new Response(JSON.stringify({ error: 'Parent comment not found for this pool' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        if (await checkBlockingRelationship(serviceSupabase as any, user.id, parentComment.user_id)) {
+          return new Response(JSON.stringify({ error: 'Blocked users cannot interact' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
         insertData.parent_comment_id = parent_comment_id;
       }
 
@@ -228,16 +293,16 @@ serve(async (req) => {
         .single();
 
       // Increment comments_count on the prediction pool
-      const { data: pool } = await serviceSupabase
+      const { data: poolWithCount } = await serviceSupabase
         .from('prediction_pools')
         .select('comments_count')
         .eq('id', pool_id)
         .single();
 
-      if (pool) {
+      if (poolWithCount) {
         await serviceSupabase
           .from('prediction_pools')
-          .update({ comments_count: (pool.comments_count || 0) + 1 })
+          .update({ comments_count: (poolWithCount.comments_count || 0) + 1 })
           .eq('id', pool_id);
       }
 

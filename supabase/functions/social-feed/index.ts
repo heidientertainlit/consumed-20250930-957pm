@@ -153,10 +153,17 @@ serve(async (req) => {
       // Fetch blocked user IDs (both directions) to exclude from feed (skip for guests)
       let blockedUserIds: string[] = [];
       if (appUser) {
-        const [{ data: blockedByMe }, { data: blockedMe }] = await Promise.all([
+        const [{ data: blockedByMe, error: blockedByMeError }, { data: blockedMe, error: blockedMeError }] = await Promise.all([
           supabaseAdmin.from('user_blocks').select('blocked_id').eq('blocker_id', appUser.id),
           supabaseAdmin.from('user_blocks').select('blocker_id').eq('blocked_id', appUser.id),
         ]);
+        if (blockedByMeError || blockedMeError) {
+          console.error('Failed to load block relationships:', blockedByMeError || blockedMeError);
+          return new Response(JSON.stringify({ error: 'Unable to load feed visibility' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
         blockedUserIds = [
           ...(blockedByMe?.map((r: any) => r.blocked_id) || []),
           ...(blockedMe?.map((r: any) => r.blocker_id) || []),
@@ -208,11 +215,11 @@ serve(async (req) => {
         query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
       }
 
-      // Exclude posts from blocked users (both directions)
+      // Exclude posts from blocked users (both directions) before the database
+      // applies pagination, preserving the established feed page contract.
       if (blockedUserIds.length > 0) {
         query = query.not('user_id', 'in', `(${blockedUserIds.join(',')})`);
       }
-
 
       // === PLAY-FIRST FEED FILTER ===
       // Only surface meaningful participatory content. Exclude low-value tracking
@@ -261,7 +268,7 @@ serve(async (req) => {
       // Keep add-to-list posts only when they carry a rating — those are real
       // engagement signals (ratings/reviews) and should appear in the feed carousel.
       // Pure list additions with no rating stay out of the feed (they live in Library).
-      const posts = rawPosts?.filter((p: any) =>
+      let posts = rawPosts?.filter((p: any) =>
         (p.post_type !== 'add-to-list' && p.post_type !== 'added_to_list') ||
         (p.rating && p.rating > 0)
       );
@@ -286,12 +293,29 @@ serve(async (req) => {
           .in('id', predictionPoolIds);
         
         if (pools) {
-          predictionPoolMap = new Map(pools.map(p => [p.id, p]));
+          predictionPoolMap = new Map(
+            pools
+              .filter((pool) => !blockedUserIds.includes(pool.origin_user_id))
+              .map(p => [p.id, p])
+          );
           console.log('Prediction pools fetched:', pools.length);
         }
         if (poolsError) {
           console.error('Error fetching prediction pools:', poolsError);
         }
+      }
+
+      // A post can reference a pool created by a different user. Do not leave
+      // that blocked pool's identifier or partial enrichment on an otherwise
+      // visible post; remove the associated item before any downstream
+      // enrichment runs.
+      const hiddenPredictionPoolIds = new Set(
+        predictionPoolIds.filter((poolId) => !predictionPoolMap.has(poolId))
+      );
+      if (hiddenPredictionPoolIds.size > 0) {
+        posts = posts?.filter((post) =>
+          !post.prediction_pool_id || !hiddenPredictionPoolIds.has(post.prediction_pool_id)
+        );
       }
 
       console.log('Prediction pools loaded:', predictionPoolMap.size);

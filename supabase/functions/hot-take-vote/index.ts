@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkBlockingRelationship } from "../_shared/block-relationships.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -82,6 +83,23 @@ serve(async (req) => {
         });
       } else {
         // Different vote - switch it
+        const { data: postForAccess, error: postAccessError } = await serviceSupabase
+          .from('social_posts')
+          .select('user_id')
+          .eq('id', postId)
+          .single();
+        if (postAccessError || !postForAccess) {
+          return new Response(JSON.stringify({ error: 'Post not found' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        if (await checkBlockingRelationship(serviceSupabase as any, user.id, postForAccess.user_id)) {
+          return new Response(JSON.stringify({ error: 'Blocked users cannot interact' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
         await serviceSupabase
           .from('hot_take_votes')
           .update({ vote_type: voteType })
@@ -114,6 +132,23 @@ serve(async (req) => {
     }
 
     // New vote
+    const { data: postForAccess, error: postAccessError } = await serviceSupabase
+      .from('social_posts')
+      .select('user_id')
+      .eq('id', postId)
+      .single();
+    if (postAccessError || !postForAccess) {
+      return new Response(JSON.stringify({ error: 'Post not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    if (await checkBlockingRelationship(serviceSupabase as any, user.id, postForAccess.user_id)) {
+      return new Response(JSON.stringify({ error: 'Blocked users cannot interact' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
     const { error: insertError } = await serviceSupabase
       .from('hot_take_votes')
       .insert({

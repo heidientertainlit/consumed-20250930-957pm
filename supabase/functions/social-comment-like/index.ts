@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkBlockingRelationship } from "../_shared/block-relationships.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,6 +43,42 @@ serve(async (req) => {
     }
 
     if (req.method === 'POST') {
+      const serviceSupabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      );
+      const { data: comment, error: commentError } = await serviceSupabase
+        .from('social_post_comments')
+        .select('user_id, likes_count, social_post_id')
+        .eq('id', comment_id)
+        .single();
+      if (commentError || !comment) {
+        return new Response(JSON.stringify({ error: 'Comment not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const { data: post, error: postError } = await serviceSupabase
+        .from('social_posts')
+        .select('user_id')
+        .eq('id', comment.social_post_id)
+        .single();
+      if (postError || !post) {
+        return new Response(JSON.stringify({ error: 'Post not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (
+        await checkBlockingRelationship(serviceSupabase as any, user.id, comment.user_id) ||
+        await checkBlockingRelationship(serviceSupabase as any, user.id, post.user_id)
+      ) {
+        return new Response(JSON.stringify({ error: 'Blocked users cannot interact' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       // Add like
       const { data: existingLike } = await supabase
         .from('social_comment_likes')
@@ -69,17 +106,6 @@ serve(async (req) => {
       }
 
       // Increment likes_count on the comment and get comment owner
-      const serviceSupabase = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '', 
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
-      );
-
-      const { data: comment } = await serviceSupabase
-        .from('social_post_comments')
-        .select('user_id, likes_count, post_id')
-        .eq('id', comment_id)
-        .single();
-
       // Increment likes_count
       if (comment) {
         await serviceSupabase
@@ -108,7 +134,7 @@ serve(async (req) => {
             type: 'comment_like',
             triggeredByUserId: user.id,
             message: `${likerName} liked your comment`,
-            postId: comment.post_id,
+            postId: comment.social_post_id,
             commentId: comment_id
           })
         });

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkBlockingRelationship } from "../_shared/block-relationships.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -90,6 +91,43 @@ serve(async (req) => {
 
     const vote_type = direction === 'up' ? 1 : -1;
     let voteAction = 'created';
+
+    // Toggling an existing vote off is a retraction and remains available even
+    // after either user blocks the other. New votes and direction changes are
+    // checked against both the comment author and the owning post author.
+    if (!existingVote || existingVote.vote_type !== vote_type) {
+      const { data: comment, error: commentError } = await supabaseAdmin
+        .from('social_post_comments')
+        .select('user_id, social_post_id')
+        .eq('id', commentIdInt)
+        .single();
+      if (commentError || !comment) {
+        return new Response(JSON.stringify({ error: 'Comment not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const { data: post, error: postError } = await supabaseAdmin
+        .from('social_posts')
+        .select('user_id')
+        .eq('id', comment.social_post_id)
+        .single();
+      if (postError || !post) {
+        return new Response(JSON.stringify({ error: 'Post not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (
+        await checkBlockingRelationship(supabaseAdmin as any, user.id, comment.user_id) ||
+        await checkBlockingRelationship(supabaseAdmin as any, user.id, post.user_id)
+      ) {
+        return new Response(JSON.stringify({ error: 'Blocked users cannot interact' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
 
     // Step 4: Handle vote create/update/delete
     if (existingVote) {

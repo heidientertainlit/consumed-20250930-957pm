@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkBlockingRelationship } from "../_shared/block-relationships.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,6 +43,28 @@ serve(async (req) => {
     }
 
     if (req.method === 'POST') {
+      const serviceSupabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      );
+      const { data: post, error: postError } = await serviceSupabase
+        .from('social_posts')
+        .select('user_id, likes_count')
+        .eq('id', post_id)
+        .single();
+      if (postError || !post) {
+        return new Response(JSON.stringify({ error: 'Post not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (await checkBlockingRelationship(serviceSupabase as any, user.id, post.user_id)) {
+        return new Response(JSON.stringify({ error: 'Blocked users cannot interact' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       // Add like
       const { data: existingLike } = await supabase
         .from('social_post_likes')
@@ -69,17 +92,6 @@ serve(async (req) => {
       }
 
       // Increment likes_count on the post and get post owner
-      const serviceSupabase = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '', 
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
-      );
-
-      const { data: post } = await serviceSupabase
-        .from('social_posts')
-        .select('user_id, likes_count')
-        .eq('id', post_id)
-        .single();
-
       // Increment likes_count
       if (post) {
         await serviceSupabase

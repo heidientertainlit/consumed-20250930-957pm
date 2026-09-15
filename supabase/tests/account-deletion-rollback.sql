@@ -5,10 +5,13 @@ begin;
 
 do $$
 declare
-  user_a constant uuid := '00000000-0000-0000-0000-00000000a001';
-  user_b constant uuid := '00000000-0000-0000-0000-00000000b001';
-  user_c constant uuid := '00000000-0000-0000-0000-00000000c001';
-  user_d constant uuid := '00000000-0000-0000-0000-00000000d003';
+  -- Supabase Auth creates RFC 4122 UUIDs. Use version-4-shaped fixture IDs so
+  -- the provider-deletion queue's production identifier validation is tested
+  -- with values that can actually reach delete_account_transaction.
+  user_a constant uuid := '00000000-0000-4000-8000-00000000a001';
+  user_b constant uuid := '00000000-0000-4000-8000-00000000b001';
+  user_c constant uuid := '00000000-0000-4000-8000-00000000c001';
+  user_d constant uuid := '00000000-0000-4000-8000-00000000d003';
   pool_id constant uuid := '00000000-0000-0000-0000-00000000d001';
   pool_b_id constant uuid := '00000000-0000-0000-0000-00000000d002';
   list_a constant uuid := '00000000-0000-0000-0000-00000000e001';
@@ -279,6 +282,18 @@ begin
      or exists (select 1 from public.room_takes where id = take_a)
      or exists (select 1 from public.admin_room_persona_provision_locks where created_by = user_a) then
     raise exception 'target A data survived account deletion';
+  end if;
+
+  -- The final production deletion migration records the server-side deletion
+  -- boundary and enqueues exactly one job per supported provider before Auth
+  -- is removed. These transaction-local rows are rolled back with the fixture.
+  if not exists (
+    select 1 from public.deleted_account_tombstones where user_id = user_a
+  ) or (
+    select count(*) from public.provider_deletion_jobs
+    where deleted_user_id = user_a
+  ) <> 3 then
+    raise exception 'account deletion did not create its tombstone and three provider jobs';
   end if;
 
   if not exists (select 1 from auth.users where id = user_b)

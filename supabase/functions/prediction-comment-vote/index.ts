@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkBlockingRelationship } from "../_shared/block-relationships.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -68,6 +69,38 @@ serve(async (req) => {
           });
         }
 
+        const { data: comment, error: commentError } = await serviceSupabase
+          .from('prediction_comments')
+          .select('user_id, pool_id')
+          .eq('id', comment_id)
+          .single();
+        if (commentError || !comment) {
+          return new Response(JSON.stringify({ error: 'Comment not found' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        const { data: pool, error: poolError } = await serviceSupabase
+          .from('prediction_pools')
+          .select('origin_user_id')
+          .eq('id', comment.pool_id)
+          .single();
+        if (poolError || !pool) {
+          return new Response(JSON.stringify({ error: 'Prediction pool not found' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        if (
+          await checkBlockingRelationship(serviceSupabase as any, user.id, comment.user_id) ||
+          (pool.origin_user_id && await checkBlockingRelationship(serviceSupabase as any, user.id, pool.origin_user_id))
+        ) {
+          return new Response(JSON.stringify({ error: 'Blocked users cannot interact' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
         const { error: updateError } = await serviceSupabase
           .from('prediction_comment_votes')
           .update({ vote_type })
@@ -80,6 +113,38 @@ serve(async (req) => {
           });
         }
       } else {
+        const { data: comment, error: commentError } = await serviceSupabase
+          .from('prediction_comments')
+          .select('user_id, pool_id')
+          .eq('id', comment_id)
+          .single();
+        if (commentError || !comment) {
+          return new Response(JSON.stringify({ error: 'Comment not found' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        const { data: pool, error: poolError } = await serviceSupabase
+          .from('prediction_pools')
+          .select('origin_user_id')
+          .eq('id', comment.pool_id)
+          .single();
+        if (poolError || !pool) {
+          return new Response(JSON.stringify({ error: 'Prediction pool not found' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        if (
+          await checkBlockingRelationship(serviceSupabase as any, user.id, comment.user_id) ||
+          (pool.origin_user_id && await checkBlockingRelationship(serviceSupabase as any, user.id, pool.origin_user_id))
+        ) {
+          return new Response(JSON.stringify({ error: 'Blocked users cannot interact' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
         const { error: insertError } = await serviceSupabase
           .from('prediction_comment_votes')
           .insert({

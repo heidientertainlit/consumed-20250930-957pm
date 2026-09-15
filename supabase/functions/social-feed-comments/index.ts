@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkBlockingRelationship, loadBlockedPeerIds } from "../_shared/block-relationships.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,6 +34,34 @@ function buildCommentTree(flatComments: any[]) {
   });
 
   return rootComments;
+}
+
+// When a parent is hidden due to a block relationship, none of its replies may
+// be promoted into the visible tree. Orphans remain roots as before.
+function removeBlockedCommentSubtrees(comments: any[], blockedPeerIds: Set<string>) {
+  if (blockedPeerIds.size === 0) return comments;
+  const byId = new Map(comments.map((comment) => [comment.id, comment]));
+  const hidden = new Map<any, boolean>();
+  const isHidden = (comment: any, visiting = new Set<any>()): boolean => {
+    if (hidden.has(comment.id)) return hidden.get(comment.id)!;
+    if (blockedPeerIds.has(comment.user_id)) {
+      hidden.set(comment.id, true);
+      return true;
+    }
+    const parent = comment.parent_comment_id ? byId.get(comment.parent_comment_id) : null;
+    // Keep the endpoint's established orphan behavior; only an existing hidden
+    // ancestor hides a reply.
+    if (!parent || visiting.has(comment.id)) {
+      hidden.set(comment.id, false);
+      return false;
+    }
+    const next = new Set(visiting);
+    next.add(comment.id);
+    const result = isHidden(parent, next);
+    hidden.set(comment.id, result);
+    return result;
+  };
+  return comments.filter((comment) => !isHidden(comment));
 }
 
 serve(async (req) => {
@@ -97,7 +126,12 @@ serve(async (req) => {
         });
       }
 
-      let transformedComments = comments?.map(comment => {
+      const blockedPeerIds = user
+        ? await loadBlockedPeerIds(serviceSupabase as any, user.id)
+        : new Set<string>();
+      const visibleComments = removeBlockedCommentSubtrees(comments || [], blockedPeerIds);
+
+      let transformedComments = visibleComments.map(comment => {
         const profile = comment.users;
         const displayName = profile?.first_name && profile?.last_name
           ? `${profile.first_name} ${profile.last_name}`.trim()
@@ -112,8 +146,8 @@ serve(async (req) => {
       }) || [];
 
       // Always include vote metadata for comments
-      if (comments && comments.length > 0) {
-        const commentIds = comments.map(c => c.id);
+      if (visibleComments.length > 0) {
+        const commentIds = visibleComments.map(c => c.id);
         
         // Get all votes on these comments to compute vote scores (gracefully handle if table doesn't exist)
         let allVotes: any[] = [];
@@ -213,6 +247,24 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
       );
 
+      const { data: post, error: postError } = await serviceSupabase
+        .from('social_posts')
+        .select('user_id')
+        .eq('id', post_id)
+        .single();
+      if (postError || !post) {
+        return new Response(JSON.stringify({ error: 'Post not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (await checkBlockingRelationship(serviceSupabase as any, user!.id, post.user_id)) {
+        return new Response(JSON.stringify({ error: 'Blocked users cannot interact' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       const insertData: any = {
         social_post_id: post_id,
         user_id: user!.id,
@@ -221,6 +273,23 @@ serve(async (req) => {
 
       // Add parent_comment_id if this is a reply
       if (parent_comment_id) {
+        const { data: parentComment, error: parentError } = await serviceSupabase
+          .from('social_post_comments')
+          .select('user_id, social_post_id')
+          .eq('id', parent_comment_id)
+          .single();
+        if (parentError || !parentComment || parentComment.social_post_id !== post_id) {
+          return new Response(JSON.stringify({ error: 'Parent comment not found for this post' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        if (await checkBlockingRelationship(serviceSupabase as any, user!.id, parentComment.user_id)) {
+          return new Response(JSON.stringify({ error: 'Blocked users cannot interact' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
         insertData.parent_comment_id = parent_comment_id;
       }
 
