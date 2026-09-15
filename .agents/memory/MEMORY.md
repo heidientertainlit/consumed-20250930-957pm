@@ -59,6 +59,7 @@
 - [Play friend challenges](play-friend-challenges.md) — exact-game links compare sender and recipient results inside the existing mobile result card; never require a new page or scrolling.
 - [Leaderboard share links](leaderboard-share-links.md) — share only server-verified Global rank snapshots; category owns destination, and native API calls must use the production app origin.
 - [Portable npm lockfile](portable-npm-lockfile.md) — keep package-lock free of package-firewall.replit.local URLs so Mac/Capacitor installs remain portable.
+- [Portable source builds](portable-source-builds.md) — verify clean Git builds without ignored uploads; local build success alone does not prove deployment portability.
 - [Supabase function deploy verification](supabase-function-deploy-verification.md) — verify intended Edge Function version/hash after bulk deploys; success output may not mean active code changed.
 - [Feed DNA answers](feed-dna-answers.md) — feed-question choices are explicit personality evidence; refresh signals after each answer and retire cards when the active set is complete.
 - [Analytics export model](analytics-export-model.md) — keep one-row user summaries separate from pivotable event tables; join every export through the same anonymous user ID.

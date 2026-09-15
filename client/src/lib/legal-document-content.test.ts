@@ -11,14 +11,12 @@ import {
 
 const repositoryRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
-function readUploadedSource(fileName: string) {
-  return readFileSync(join(repositoryRoot, "attached_assets", fileName), "utf8");
+function readLegalSource(fileName: string) {
+  return readFileSync(join(repositoryRoot, "client/src/content/legal", fileName), "utf8");
 }
 
 test("rendered Terms blocks preserve every supplied visible source line", () => {
-  const source = readUploadedSource(
-    "Pasted-Terms-of-Service-Entertainlit-Inc-dba-Consumed-Effectiv_1789505348262.txt",
-  );
+  const source = readLegalSource("terms.txt");
   const document = parseLegalDocument(source, "terms");
 
   assert.equal(flattenLegalDocumentText(document), sourceVisibleText(source));
@@ -27,9 +25,7 @@ test("rendered Terms blocks preserve every supplied visible source line", () => 
 });
 
 test("rendered Privacy Policy blocks preserve every supplied visible source line", () => {
-  const source = readUploadedSource(
-    "Pasted--Privacy-Policy-EntertainLit-Inc-dba-Consumed-Effective_1789505592802.txt",
-  );
+  const source = readLegalSource("privacy.txt");
   const document = parseLegalDocument(source, "privacy");
 
   assert.equal(flattenLegalDocumentText(document), sourceVisibleText(source));

@@ -1,0 +1,236 @@
+# Privacy Policy
+
+**EntertainLit Inc. (dba Consumed) · Effective Date: September 15, 2026**
+
+This Privacy Policy describes how EntertainLit Inc., doing business as Consumed (“Consumed,” “we,” “us,” or “our”), collects, uses, discloses, retains, and protects information when you use the Consumed mobile application, website, and related features and services (collectively, the “Service”).
+
+## 1. Information We Collect
+
+### A. Information You Provide
+
+When you create an account or use Consumed, we may collect information you provide, including:
+
+* Email address
+* Username and account information
+* Profile information
+* Media tracking activity, including movies, television, books, music, podcasts, YouTube, games, sports, and other entertainment
+* Ratings, reviews, lists, predictions, trivia participation, and leaderboard activity
+* Posts, comments, reactions, and other user-generated content
+* Information you provide through surveys, polls, questions, games, and other interactive features
+* Information you provide when connecting or interacting with available entertainment-related features or services
+* Support communications and information you provide when contacting us
+
+You choose what information and entertainment activity you provide or track through the Service, subject to information required to create and maintain your account.
+
+### B. Information Collected Through Your Use of the Service
+
+When you use Consumed, we may collect information about how you interact with the Service, including:
+
+* Device type and operating system
+* App and website usage and interaction data, such as features used, screens or pages viewed, and actions taken
+* Account and user identifiers
+* Push notification tokens
+* Analytics identifiers and related technical information
+* Referral, campaign, or attribution information that may accompany your interaction with the Service
+* Diagnostic, performance, security, and error information
+
+The specific information collected may depend on the device, platform, features you use, and your settings.
+
+### C. Information From Third-Party Services and Data Sources
+
+Some Consumed features may allow us to receive information from or interact with third-party services and entertainment data sources.
+
+Depending on the feature and your choices, this may include information about entertainment titles, metadata, entertainment activity, or other information made available through a connected service or data provider.
+
+Information received from third-party services is subject to the permissions, contractual restrictions, and other requirements applicable to those services.
+
+## 2. How We Use Your Information
+
+We may use information collected through the Service to:
+
+* Provide authentication and account access
+* Maintain and display your entertainment history, activity, ratings, lists, and other features
+* Enable social features and interactions with other users
+* Power games, predictions, trivia, rankings, leaderboards, surveys, polls, and other interactive features
+* Generate and update your Entertainment DNA™ profile
+* Generate similarity or match scores, recommendations, classifications, trends, summaries, and other entertainment-related insights
+* Personalize your experience within Consumed
+* Analyze how people use the Service and understand product performance
+* Develop, test, improve, and maintain Consumed features
+* Understand entertainment audiences, interests, behaviors, and trends
+* Create aggregated or de-identified research, analytics, and audience insights
+* Send optional service and push notifications
+* Monitor security, prevent fraud and abuse, and enforce our Terms of Service
+* Respond to reports, safety concerns, and support requests
+* Comply with applicable legal obligations
+
+Some features may use automated systems or artificial intelligence services to help generate recommendations, summaries, classifications, or other features and insights.
+
+**We do not sell personal information that identifies you to entertainment companies, advertisers, or other third parties.**
+
+As described below, Consumed may create and use aggregated or de-identified information and insights that are not intended to identify an individual user.
+
+## 3. Entertainment Activity and Entertainment DNA™ Profile
+
+Consumed allows you to track and interact with entertainment across media types.
+
+Information and activity associated with your use of Consumed may be used to generate and update your Entertainment DNA™ profile and related features, including similarity or match scores, recommendations, classifications, and other entertainment-related insights.
+
+Your Entertainment DNA™ profile may change over time as you add information, track entertainment, rate or review content, participate in features, or otherwise interact with the Service.
+
+These features are intended to create entertainment-related experiences and insights. They are not intended to make definitive assessments about you or determine sensitive personal characteristics.
+
+## 4. Aggregated and De-Identified Insights
+
+Consumed may create aggregated or de-identified information from activity and information associated with use of the Service.
+
+We may use this information to:
+
+* Understand entertainment audiences, behaviors, interests, and trends
+* Analyze engagement with entertainment, genres, formats, creators, and related topics
+* Improve and develop Consumed
+* Conduct research and analysis
+* Develop audience segments and aggregated insights
+* Provide research, analytics, reports, and insights to entertainment companies, creators, partners, and other organizations
+
+Aggregated or de-identified insights are intended to describe groups, patterns, or trends rather than identify individual Consumed users.
+
+We do not provide partners with an individual user's Entertainment DNA™ profile or personally identifiable entertainment activity as part of aggregated audience-insight reporting unless we separately disclose the practice and have an appropriate legal basis or permission to do so.
+
+## 5. Third-Party Service Providers and Content Sources
+
+We use third-party service providers and data sources to operate, secure, analyze, and improve Consumed and to provide certain features.
+
+These may include providers that support:
+
+* Cloud infrastructure, databases, and hosting
+* Authentication
+* Push notifications and communications
+* Product analytics and usage measurement
+* Artificial intelligence processing
+* Security, monitoring, and error reporting
+* Entertainment metadata and content information
+* Connected entertainment services and data
+* Other technical functionality necessary to provide the Service
+
+Third-party entertainment data and metadata may be provided by services such as The Movie Database (TMDB), Google Books, and other entertainment data providers or connected services available through Consumed.
+
+We may provide service providers with information reasonably necessary for them to perform services on our behalf. Their processing may also be subject to their own terms, privacy policies, and contractual obligations.
+
+Third-party or connected data may be subject to additional restrictions imposed by the provider. Availability of features that depend on third-party services may change if those services change, restrict, or discontinue access.
+
+We do not authorize our service providers to use personal information we provide to them for their own unrelated purposes except as permitted or required by applicable law or as otherwise disclosed to you.
+
+## 6. Analytics, Attribution, and Tracking
+
+We use analytics technologies, including product analytics services such as PostHog, to understand how people interact with Consumed, evaluate product performance, identify problems, and improve the Service.
+
+Analytics information may include product interactions, technical information, identifiers, referral information, and campaign or attribution information associated with visits or use of the Service.
+
+We may use attribution information to understand how users discover Consumed and to evaluate our own marketing efforts.
+
+Consumed does not use information collected through the Service to track users across apps or websites owned by other companies for targeted advertising unless we provide any required disclosures and obtain any consent required by applicable law or platform rules.
+
+Our use of analytics and attribution technologies may change as the Service evolves. We will update our disclosures when appropriate to reflect material changes to our practices.
+
+## 7. How We Disclose Information
+
+We may disclose information:
+
+* To service providers that process information on our behalf to operate, secure, analyze, support, or improve the Service
+* When you choose to make information visible through social or sharing features
+* When necessary to comply with law, legal process, or valid governmental requests
+* When reasonably necessary to protect the rights, safety, security, or integrity of Consumed, our users, or others
+* In connection with a merger, acquisition, financing, reorganization, sale of assets, or similar business transaction, subject to applicable law
+
+We may also provide aggregated or de-identified research, analytics, reports, and insights as described in Section 4.
+
+We do not sell personal information that identifies you to entertainment companies or other partners for their independent marketing purposes.
+
+## 8. Social Features and Visibility
+
+Consumed includes social features that may allow other users to see information or activity associated with your account.
+
+Depending on the feature and available settings, this may include your username, profile information, entertainment activity, ratings, reviews, lists, posts, comments, reactions, Entertainment DNA™ profile information, or other information you choose to make available through the Service.
+
+Some features may allow you to share information outside Consumed, such as through a share link. Information you choose to share publicly or with others may be viewed, saved, or reshared by those recipients.
+
+Available privacy and visibility controls may vary by feature.
+
+## 9. Data Retention
+
+We retain personal information for as long as reasonably necessary to provide the Service, maintain your account, fulfill the purposes described in this Privacy Policy, comply with legal obligations, resolve disputes, enforce agreements, maintain security, and prevent fraud or abuse.
+
+Retention periods may vary depending on the type of information and the purpose for which it is processed.
+
+Aggregated or de-identified information that cannot reasonably be linked to an identifiable individual may be retained and used after the underlying account or personal information is deleted, subject to applicable law.
+
+## 10. Account and Data Deletion
+
+You may initiate deletion of your Consumed account through the available in-app account controls.
+
+When your account is deleted, we will delete or de-identify personal information associated with your account from our active systems as appropriate, including user-generated content associated with the account, subject to information we are permitted or required to retain for legal, security, fraud-prevention, dispute-resolution, backup, or other legitimate purposes.
+
+Information may remain temporarily in backups or other systems until it is deleted through our ordinary retention processes.
+
+Aggregated or de-identified information that cannot reasonably be linked back to you may be retained.
+
+If information originated from or is controlled by a third-party service, deletion from Consumed does not necessarily delete information maintained independently by that third party.
+
+## 11. Your Rights and Choices
+
+Depending on where you live, you may have rights regarding your personal information, which may include the right to:
+
+* Access certain personal information we maintain about you
+* Request correction of inaccurate information
+* Request deletion of personal information
+* Obtain information about how personal information is used or disclosed
+* Object to or restrict certain processing where applicable
+* Exercise other privacy rights provided by applicable law
+
+You can control optional push notifications through your device settings.
+
+You may also have privacy and visibility controls available within Consumed for certain social features.
+
+To submit a privacy request or ask a question about your information, contact us at **[support@consumedapp.com](mailto:support@consumedapp.com)**.
+
+We may need to verify your identity before completing certain requests.
+
+## 12. Age Requirements and Children's Privacy
+
+Consumed is intended for users who are at least 16 years old.
+
+You must be at least 16 years old to create an account or use the Service. We do not knowingly permit users under 16 to maintain Consumed accounts.
+
+If we learn that an account is being used by someone under 16, we may close the account and delete or otherwise handle associated personal information as required by applicable law.
+
+If you believe someone under 16 has provided personal information to Consumed, contact us at **[support@consumedapp.com](mailto:support@consumedapp.com)**.
+
+## 13. Security
+
+We implement reasonable technical and organizational safeguards designed to protect information from unauthorized access, use, alteration, disclosure, or loss.
+
+However, no method of transmission over the internet or method of electronic storage is completely secure, and we cannot guarantee absolute security.
+
+## 14. International and Regional Privacy Rights
+
+Privacy and data-protection laws vary depending on where you live.
+
+Where applicable law provides additional or different privacy rights, we will process requests and personal information in accordance with those requirements.
+
+Nothing in this Privacy Policy is intended to limit rights that cannot lawfully be limited.
+
+## 15. Changes to This Privacy Policy
+
+We may update this Privacy Policy from time to time to reflect changes to Consumed, our data practices, legal requirements, or the services and technologies we use.
+
+When we update the Privacy Policy, we will update the Effective Date above. Where appropriate, we may provide additional notice of material changes through the Service, by email, or through another reasonable method.
+
+## 16. Contact Us
+
+If you have questions about this Privacy Policy, our privacy practices, or your personal information, contact:
+
+**EntertainLit Inc., doing business as Consumed**
+**Email:** [support@consumedapp.com](mailto:support@consumedapp.com)
+
+© 2026 Consumed.
