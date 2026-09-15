@@ -22,6 +22,7 @@ import { useFeatureFlags } from "@/lib/feature-flags";
 import { QuickActionSheet } from "./quick-action-sheet";
 import { QuickAddListSheet } from "./quick-add-list-sheet";
 import { SaveMediaSheet } from "./save-media-sheet";
+import { searchFriendLabel, markSearchFriendRequested, type SearchRelationship } from "@/lib/search-friend-state";
 
 interface NavigationProps {
   onTrackConsumption?: () => void;
@@ -42,7 +43,7 @@ interface MediaResult {
   description?: string;
 }
 
-interface UserResult {
+interface UserResult extends SearchRelationship {
   id: string;
   user_name: string;
   display_name?: string;
@@ -275,7 +276,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
 
   // Debounced user search
   const userQuery = useQuery<UserResult[]>({
-    queryKey: ['inline-user-search', searchQuery],
+    queryKey: ['inline-user-search', user?.id, searchQuery],
     queryFn: async () => {
       if (!searchQuery.trim() || !session?.access_token) return [];
 
@@ -409,7 +410,16 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
       
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async (_result, friendId) => {
+      // Cancel older search responses before applying the confirmed request.
+      await queryClient.cancelQueries({ queryKey: ['inline-user-search', user?.id] });
+      queryClient.setQueriesData<UserResult[]>(
+        { queryKey: ['inline-user-search', user?.id] },
+        people => markSearchFriendRequested(people, friendId),
+      );
+      for (const key of ['inline-user-search', 'user-search', 'friends', 'people-friends', 'pending-requests', 'people-affinity-v9']) {
+        void queryClient.invalidateQueries({ queryKey: [key] });
+      }
       toast({
         title: "Friend request sent!",
         description: "You'll be notified when they accept.",
@@ -417,6 +427,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
     },
     onError: (error: Error) => {
       const msg = error.message || "";
+      void queryClient.invalidateQueries({ queryKey: ['inline-user-search', user?.id] });
       if (msg.includes('Already friends') || msg.includes('duplicate key') || msg.includes('unique constraint')) {
         toast({
           title: "Already friends!",
@@ -592,16 +603,35 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
                             <p className="text-gray-400 text-xs">@{person.user_name}</p>
                           </div>
                         </div>
-                        {person.id !== user?.id && (
+                        {person.id !== user?.id && (searchFriendLabel(person) === "Add" ? (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={(e) => handleSendFriendRequest(person.id, e)}
+                            disabled={sendFriendRequestMutation.isPending}
                             className="text-xs h-7 border-purple-500 text-purple-400 hover:bg-purple-500/20"
                           >
-                            Add
+                            {sendFriendRequestMutation.isPending && sendFriendRequestMutation.variables === person.id ? "Sending…" : "Add"}
                           </Button>
-                        )}
+                        ) : searchFriendLabel(person) === "Wants to connect" ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="shrink-0 text-xs h-7 border-purple-500 text-purple-400 hover:bg-purple-500/20"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsSearchExpanded(false);
+                              setLocation("/people");
+                            }}
+                            title="View friend requests on People"
+                          >
+                            Wants to connect
+                          </Button>
+                        ) : (
+                          <span role="status" className="shrink-0 rounded-full bg-purple-500/20 px-2.5 py-1 text-xs text-purple-300">
+                            {searchFriendLabel(person)}
+                          </span>
+                        ))}
                       </div>
                     ))}
                   </div>
