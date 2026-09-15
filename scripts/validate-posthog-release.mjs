@@ -11,8 +11,7 @@
  * Run:
  *   node scripts/validate-posthog-release.mjs
  *   node scripts/validate-posthog-release.mjs \
- *     --sdk-dir=/tmp/posthog-js-1.433.3-comparison/package \
- *     --reset-mode=native-sdk-reset
+ *     --sdk-dir=/tmp/posthog-js-1.433.3-comparison/package
  *
  * No application workflow, provider, credential, package installation, or
  * published endpoint is used by this test.
@@ -24,7 +23,9 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gunzipSync } from "node:zlib";
 import {
+  assertAttributionRegression,
   assertRichLifecycle,
+  attributionControlScript,
   richWrapperControlScript,
 } from "./posthog-release-rich-fixture.mjs";
 
@@ -33,8 +34,6 @@ const posthogPath = resolve(root, "client/src/lib/posthog.ts");
 const authPath = resolve(root, "client/src/lib/auth.tsx");
 const sdkDirectoryArgument = process.argv.find((arg) => arg.startsWith("--sdk-dir="))?.slice(10);
 const sdkDirectory = resolve(sdkDirectoryArgument || resolve(root, "node_modules/posthog-js"));
-const resetMode = process.argv.find((arg) => arg.startsWith("--reset-mode="))?.slice(13) ||
-  "app-policy-helper";
 const sdkPaths = {
   array: resolve(sdkDirectory, "dist/array.js"),
   module: resolve(sdkDirectory, "dist/module.js"),
@@ -244,26 +243,6 @@ async function buildActualWrapper() {
     plugins: [{
       name: "posthog-release-local-shims",
       setup(build) {
-        if (resetMode === "native-sdk-reset") {
-          // Candidate-only alias: the checked-in helper is deliberately not
-          // bundled. This proves the candidate exercises the selected SDK's
-          // native reset without its get_property/reset/register preservation.
-          build.onResolve({ filter: /^\.\/posthog-replay-lifecycle$/ }, () => ({
-            path: "native-sdk-reset-fixture-shim",
-            namespace: "posthog-release-fixture",
-          }));
-          build.onLoad({
-            filter: /^native-sdk-reset-fixture-shim$/,
-            namespace: "posthog-release-fixture",
-          }, () => ({
-            contents: `
-              export function resetPostHogPreservingReplayPolicy(posthog) {
-                return posthog.reset();
-              }
-            `,
-            loader: "js",
-          }));
-        }
         build.onResolve({ filter: /^posthog-js$/ }, () => ({
           path: "posthog-js-fixture-shim",
           namespace: "posthog-release-fixture",
@@ -451,6 +430,8 @@ function fixtureHtml({ origin, wrapper, sdk, recorder, scenario }) {
           disable_compression: false,
           capture_pageview: false,
           capture_pageleave: true,
+          save_campaign_params: false,
+          capture_performance: { web_vitals_attribution: false },
           autocapture: true,
           persistence: "localStorage",
           person_profiles: "identified_only",
@@ -477,7 +458,9 @@ function fixtureHtml({ origin, wrapper, sdk, recorder, scenario }) {
         fixture.errors.push(String(error));
       }
     })();
-  </script>` : scenario.richLifecycle ? richWrapperControlScript(scenario) : `
+  </script>` : scenario.attributionRegression
+    ? attributionControlScript(scenario)
+    : scenario.richLifecycle ? richWrapperControlScript(scenario) : `
   <script src="/assets/posthog-wrapper.js"></script>
   <script>
     (async () => {
@@ -716,9 +699,43 @@ async function runBrowserScenario(playwright, assets, scenario) {
     args: ["--no-sandbox"],
   });
   const context = await browser.newContext({ userAgent: scenario.userAgent });
+  if (scenario.attributionRegression) {
+    await context.addCookies([
+      {
+        name: "_fbc",
+        value: "fb.1.1700000000.fixturefreshclick",
+        url: `${fixture.origin}/`,
+      },
+      {
+        name: "_fbp",
+        value: "fb.1.1700000000.1234567890",
+        url: `${fixture.origin}/`,
+      },
+    ]);
+  }
   await context.addInitScript(() => {
     Object.defineProperty(navigator, "webdriver", { get: () => undefined });
   });
+  if (scenario.attributionRegression) {
+    await context.addInitScript(() => {
+      window.__posthogReleaseMetaCookieReadCount = 0;
+      // The SDK's cookie reader searches each cookie with indexOf(name + '=').
+      // Generic persistence reads are legitimate, so observe targeted lookups
+      // rather than treating every read of the cookie jar as Meta collection.
+      const originalIndexOf = String.prototype.indexOf;
+      try {
+        String.prototype.indexOf = function (needle, position) {
+          if (needle === "_fbc=" || needle === "_fbp=") {
+            window.__posthogReleaseMetaCookieReadCount += 1;
+          }
+          return originalIndexOf.call(this, needle, position);
+        };
+        window.__posthogReleaseMetaCookieReadInstrumentation = true;
+      } catch {
+        window.__posthogReleaseMetaCookieReadInstrumentation = false;
+      }
+    });
+  }
   const page = await context.newPage();
   const externalAborted = [];
   const posthogRerouted = [];
@@ -764,7 +781,14 @@ async function runBrowserScenario(playwright, assets, scenario) {
   });
 
   try {
-    await page.goto(`${fixture.origin}/`);
+    const pageUrl = scenario.attributionRegression
+      ? `${fixture.origin}/?utm_source=fixture-source&utm_medium=fixture-medium` +
+        "&utm_campaign=fixture-campaign&utm_content=fixture-content&utm_term=fixture-term"
+      : `${fixture.origin}/`;
+    const gotoOptions = scenario.attributionRegression
+      ? { referer: `${fixture.origin}/referrer?referrer_source=fixture-referrer` }
+      : undefined;
+    await page.goto(pageUrl, gotoOptions);
     await page.waitForFunction(() => window.__posthogReleaseFixture?.ready === true, undefined, {
       timeout: 45_000,
     }).catch(async () => {
@@ -777,6 +801,16 @@ async function runBrowserScenario(playwright, assets, scenario) {
         requestPaths: fixture.requests.map((request) => request.path),
       });
     });
+    if (scenario.attributionRegression) {
+      // Wrapper capture waits for authorization, then enters the SDK's normal
+      // batch queue. Wait for receipt, not an optional/non-public flush method.
+      const deadline = Date.now() + 10_000;
+      while (Date.now() < deadline) {
+        const received = new Set(fixture.captures.map(({ item }) => eventName(item)));
+        if (received.has("release_attribution_probe") && received.has("sdk_attribution_probe")) break;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
     const state = await page.evaluate(() => ({
       ...window.__posthogReleaseFixture,
       initCalls: window.__posthogReleaseFixture.initCalls,
@@ -797,6 +831,44 @@ async function runBrowserScenario(playwright, assets, scenario) {
       });
       lastEvidence = richResult;
       return richResult;
+    }
+    if (scenario.attributionRegression) {
+      const attributionResult = assertAttributionRegression({
+        scenario,
+        state,
+        fixture,
+        events,
+        namedEvents,
+        externalAborted,
+        posthogRerouted,
+      });
+      // Only after checking the actual app's disabled configuration, prove
+      // both seeded cookies and the lookup observer work with the real SDK.
+      // This control stays inside the intercepted, disposable browser fixture.
+      const positiveControl = await page.evaluate(() => {
+        const sdk = window.posthog;
+        const previous = sdk.config.save_campaign_params;
+        try {
+          sdk.set_config({ save_campaign_params: true });
+          sdk.capture("meta_cookie_positive_control");
+          return {
+            targetedLookups: window.__posthogReleaseMetaCookieReadCount,
+            storedFbc: Boolean(sdk.persistence?.props?.$fbc_persistence),
+            storedFbp: Boolean(sdk.persistence?.props?.$fbp_persistence),
+          };
+        } finally {
+          sdk.set_config({ save_campaign_params: previous });
+        }
+      });
+      assert.ok(positiveControl.targetedLookups > 0,
+        `${scenario.name}: Meta-cookie lookup observer failed its positive control`);
+      assert.equal(positiveControl.storedFbc, true,
+        `${scenario.name}: seeded _fbc cookie failed its positive control`);
+      assert.equal(positiveControl.storedFbp, true,
+        `${scenario.name}: seeded _fbp cookie failed its positive control`);
+      attributionResult.metaCookiePositiveControl = positiveControl;
+      lastEvidence = attributionResult;
+      return attributionResult;
     }
     if (scenario.control) {
       const expectedRemoteConfig = {
@@ -839,6 +911,10 @@ async function runBrowserScenario(playwright, assets, scenario) {
       assert.equal(init.config.request_batching, true, `${scenario.name}: plain SDK batching changed`);
       assert.equal(init.config.autocapture, true, `${scenario.name}: plain SDK autocapture changed`);
       assert.equal(init.config.capture_pageleave, true, `${scenario.name}: plain SDK pageleave changed`);
+      assert.equal(init.config.save_campaign_params, false,
+        `${scenario.name}: plain SDK campaign persistence changed`);
+      assert.deepEqual(init.config.capture_performance, { web_vitals_attribution: false },
+        `${scenario.name}: plain SDK web-vitals attribution changed`);
       assert.equal(configScriptRequest?.responseStatus, 404,
         `${scenario.name}: config.js fallback was not exercised`);
       assert.equal(configRequest?.responseStatus, 200,
@@ -1069,10 +1145,6 @@ async function runProviderHarness(providerCode) {
 }
 
 async function main() {
-  assert.ok(
-    ["app-policy-helper", "native-sdk-reset"].includes(resetMode),
-    `unknown reset mode ${resetMode}; use app-policy-helper or native-sdk-reset`,
-  );
   const [sdkAssets, sdkPackage, recorder, wrapper, providerCode] = await Promise.all([
     loadSdkAssets(),
     loadLocalAsset(sdkPackagePath, "installed posthog-js package metadata"),
@@ -1084,13 +1156,8 @@ async function main() {
   assert.equal(packageJSON.name, "posthog-js");
   assert.match(packageJSON.version || "", /^\d+\.\d+\.\d+$/,
     `SDK directory did not contain a semantic posthog-js version ${packageJSON.version || "unknown"}`);
-  if (resetMode === "native-sdk-reset") {
-    assert.equal(packageJSON.version, "1.433.3",
-      `native-reset candidate must use the isolated 1.433.3 SDK, got ${packageJSON.version}`);
-  } else {
-    assert.equal(packageJSON.version, "1.352.0",
-      `installed helper baseline must use SDK 1.352.0, got ${packageJSON.version}`);
-  }
+  assert.equal(packageJSON.version, "1.433.3",
+    `release regression requires installed posthog-js 1.433.3, got ${packageJSON.version}`);
   assert.ok(sdkAssets.array.length > 100_000, "selected array SDK asset is unexpectedly small");
   assert.ok(sdkAssets.module.length > 100_000, "selected module SDK asset is unexpectedly small");
   assert.ok(recorder.length > 50_000, "selected rrweb asset is unexpectedly small");
@@ -1125,6 +1192,13 @@ async function main() {
     {
       name: "plain-sdk-control",
       control: true,
+      native: false,
+      platform: "web",
+      userAgent: fixtureUserAgent,
+    },
+    {
+      name: "web-attribution-controls",
+      attributionRegression: true,
       native: false,
       platform: "web",
       userAgent: fixtureUserAgent,
@@ -1171,7 +1245,6 @@ async function main() {
           ...scenario,
           name: `${sdkVariant}:${scenario.name}`,
           sdkVariant,
-          resetMode,
         },
       ));
     }
@@ -1287,6 +1360,14 @@ async function main() {
       freshPolicyUnchangedAfterReset: result.replayEvidence.freshPolicyUnchangedAfterReset,
       disabledPolicyNotManufactured: result.replayEvidence.disabledPolicyNotManufactured,
       remoteReplayPolicyNotOverridden: result.replayEvidence.remoteReplayPolicyNotOverridden,
+      sdkConfig: result.replayEvidence.sdkConfig,
+      metaCookieReadCount: result.replayEvidence.metaCookieReadCount,
+      metaCookieReadInstrumentation: result.replayEvidence.metaCookieReadInstrumentation,
+      attributionUrl: result.replayEvidence.attributionUrl,
+      attributionReferrer: result.replayEvidence.attributionReferrer,
+      initialPersonInfo: result.replayEvidence.initialPersonInfo,
+      clientSessionProps: result.replayEvidence.clientSessionProps,
+      sessionPersistenceProps: result.replayEvidence.sessionPersistenceProps,
       staleOptoutState: result.replayEvidence.staleOptoutState,
       staleAccountSwitchState: result.replayEvidence.staleAccountSwitchState,
       forbiddenOptoutRecords: result.replayEvidence.forbiddenOptoutRecords,
@@ -1321,7 +1402,7 @@ async function main() {
     status: replayFailures.length ? "fail" : "pass",
     command: `node scripts/validate-posthog-release.mjs${
       sdkDirectoryArgument ? ` --sdk-dir=${sdkDirectory}` : ""
-    } --reset-mode=${resetMode}`,
+    }`,
     mode: "local isolated Playwright fixture only",
     sdk: {
       version: packageJSON.version,
@@ -1329,13 +1410,7 @@ async function main() {
       variants: ["array.js", "module.js (IIFE fixture import)"],
     },
     installedSdk: packageJSON.version,
-    resetMode,
-    candidateOnlyDiff: resetMode === "native-sdk-reset"
-      ? "Fixture esbuild aliases ./posthog-replay-lifecycle to a one-line posthog.reset() export; app source and the installed SDK directory are not modified."
-      : "No fixture alias; the actual checked-in replay-policy helper is bundled.",
-    nativeHelperRedundancyProof: resetMode === "native-sdk-reset"
-      ? "The candidate bundle resolves the helper import only to the local fixture alias. That alias contains no get_property, persistence.register, or policy preservation and invokes only the selected SDK's posthog.reset()."
-      : "Not applicable: this installed-SDK baseline intentionally bundles the existing application helper.",
+    resetImplementation: "The actual app wrapper calls the installed SDK's posthog.reset(); no fixture alias or replay-policy helper is bundled.",
     externalNetworkBlocked: true,
     appBuild: false,
     providerNetwork: false,
@@ -1348,6 +1423,8 @@ async function main() {
       "logout -> guest -> different-account identity/session separation and previous-DOM exclusion",
       "normal events, surface labels, opt-out event/snapshot suppression, server-disabled replay, masked inputs, and ph-no-capture hooks",
       "web/native iOS/iPhone web surface labels",
+      "save_campaign_params=false with fresh _fbc/_fbp cookies: no cookie reads, Meta identifiers, or direct UTM properties while initial/session/referrer URLs remain",
+      "capture_performance.web_vitals_attribution=false and enabled remote recording configuration retention",
       "actual prepareProviderIdentity live -> failure -> same-live recovery",
       "duplicate live no-op and stale pending account/profile rejection",
     ],
@@ -1355,7 +1432,7 @@ async function main() {
     providerResult,
     ...(replayFailures.length ? {
       replayRecoveryFailure: "Actual SDK replay or lifecycle assertions failed; this report does not infer absence of previously queued events from suppression of newly attempted events.",
-      smallestCandidateRemedy: "Confirm the authorized opt-in invokes the installed SDK remote configuration loader and that delayed responses remain consent-gated.",
+      smallestRemedy: "Confirm the authorized opt-in invokes the installed SDK remote configuration loader and that delayed responses remain consent-gated.",
       replayFailures,
     } : {}),
     limitations: [
@@ -1375,7 +1452,6 @@ try {
     status: "fail",
     command: "node scripts/validate-posthog-release.mjs",
     mode: "local isolated Playwright fixture only",
-    resetMode,
     externalNetworkBlocked: true,
     evidence: lastEvidence,
     error: String(error?.stack || error),

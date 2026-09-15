@@ -3,7 +3,7 @@ name: Portable npm lockfile
 description: Prevent Replit-internal package URLs from breaking npm installs outside Replit.
 ---
 
-Keep committed npm lockfiles free of `package-firewall.replit.local` resolved URLs. Use public `https://registry.npmjs.org/` tarball URLs while preserving locked versions and integrity hashes.
+Keep committed npm lockfiles free of `package-firewall.replit.*` resolved URLs, including `.local` and `.internal`. Use public `https://registry.npmjs.org/` tarball URLs while preserving locked versions and integrity hashes.
 
 **Why:** Replit's transparent package proxy can write internal tarball addresses into the lockfile. Those addresses resolve inside Replit but fail during clean Mac/Capacitor installs.
 

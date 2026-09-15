@@ -93,3 +93,23 @@ historical data handling. Check which property family a report uses before
 claiming its attribution is unaffected. Keep new web-vitals attribution
 explicitly off if preserving the older metric detail; do not override the
 project's web-vitals enablement or metric allowlist.
+
+Describe Meta-cookie prevention as no targeted identifier extraction, not
+zero access to the browser's entire cookie jar.
+
+**Why:** The SDK can read the cookie jar for ordinary persistence checks even
+when its dedicated Meta reader is disabled. Counting all cookie reads falsely
+classifies those checks as advertising-identifier collection.
+
+**How to apply:** Distinguish generic access, targeted lookup, persistence, and
+transmission in privacy claims. Require a working positive control for tests
+whose evidence is that a privacy-sensitive operation did not occur.
+
+Keep the main application's campaign policy separate from the marketing site.
+
+**Why:** The user treats main-app analytics and marketing attribution as
+independent collection policies.
+
+**How to apply:** Do not broaden the app's campaign opt-out into marketing
+configuration or remote definition edits. Source-only checks are not evidence
+that live definitions were audited, or authorization for provider cleanup.

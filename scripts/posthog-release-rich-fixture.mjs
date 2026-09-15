@@ -281,6 +281,233 @@ export function richWrapperControlScript() {
   return richControlScript();
 }
 
+export function attributionControlScript() {
+  return `
+  <script src="/assets/posthog-wrapper.js"></script>
+  <script>
+    (async () => {
+      const fixture = window.__posthogReleaseFixture;
+      const wrapper = window.PosthogReleaseWrapper;
+      const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+      const clone = (value) => value == null ? value : JSON.parse(JSON.stringify(value));
+      const remoteConfig = () => window.posthog.persistence?.props?.$session_recording_remote_config ?? null;
+      try {
+        fixture.attributionUrl = window.location.href;
+        fixture.attributionReferrer = document.referrer;
+        wrapper.initPostHog();
+        await sleep(800);
+        fixture.remoteConfigBeforeWrapperOptIn = clone(remoteConfig());
+
+        wrapper.setPostHogCaptureAllowed(true, "${fakeUserId}");
+        await sleep(800);
+        fixture.remoteConfigAfterWrapperOptIn = clone(remoteConfig());
+        wrapper.identifyUser("${fakeUserId}", {
+          email: "fixture@example.test",
+          display_name: "Attribution Fixture User",
+        });
+        wrapper.trackEvent("release_attribution_probe", {
+          phase: "attribution", normal: true,
+        });
+        window.posthog.capture("sdk_attribution_probe", {
+          phase: "attribution", direct: true,
+        });
+        window.posthog.flush?.();
+        await sleep(1_800);
+
+        fixture.persistenceProps = clone(window.posthog.persistence?.props || {});
+        fixture.sessionPersistenceProps = clone(window.posthog.sessionPersistence?.props || {});
+        fixture.sdkConfig = {
+          saveCampaignParams: window.posthog.config?.save_campaign_params,
+          capturePerformance: clone(window.posthog.config?.capture_performance),
+        };
+        fixture.metaCookieReadCount = window.__posthogReleaseMetaCookieReadCount;
+        fixture.metaCookieReadInstrumentation =
+          window.__posthogReleaseMetaCookieReadInstrumentation === true;
+        fixture.ready = true;
+      } catch (error) {
+        fixture.errors.push(String(error));
+      }
+    })();
+  </script>`;
+}
+
+function findMetaIdentifierReferences(value, path = "root", references = []) {
+  if (value === null || value === undefined) return references;
+  if (typeof value === "string") {
+    if (value === "fb.1.1700000000.fixturefreshclick" ||
+      value === "fb.1.1700000000.1234567890") {
+      references.push({ path, value });
+    }
+    return references;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => findMetaIdentifierReferences(
+      entry, `${path}[${index}]`, references,
+    ));
+    return references;
+  }
+  if (typeof value !== "object") return references;
+  for (const [key, child] of Object.entries(value)) {
+    if (/(?:^|[$_])fb[cp](?:$|_)/i.test(key)) {
+      references.push({ path: `${path}.${key}`, value: child });
+    }
+    findMetaIdentifierReferences(child, `${path}.${key}`, references);
+  }
+  return references;
+}
+
+export function assertAttributionRegression({
+  scenario,
+  state,
+  fixture,
+  events,
+  namedEvents,
+  externalAborted,
+  posthogRerouted,
+}) {
+  const configRequests = fixture.requests.filter((request) => request.kind === "remote-config");
+  const configScriptRequests = fixture.requests.filter(
+    (request) => request.kind === "remote-config-script-fallback",
+  );
+  const probeEvents = events.filter((item) => [
+    "release_attribution_probe", "sdk_attribution_probe", "$identify",
+  ].includes(eventName(item)));
+  const directUtmKeys = [
+    "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term",
+  ];
+  const initialPersonInfo = state.persistenceProps?.$initial_person_info;
+  const clientSessionProps = state.persistenceProps?.$client_session_props;
+  const expectedUrl = `${fixture.origin}/?utm_source=fixture-source` +
+    "&utm_medium=fixture-medium&utm_campaign=fixture-campaign" +
+    "&utm_content=fixture-content&utm_term=fixture-term";
+  const expectedReferrer = `${fixture.origin}/referrer?referrer_source=fixture-referrer`;
+  const replayEvidence = {
+    configScriptStatus: configScriptRequests[0]?.responseStatus,
+    configStatus: configRequests[0]?.responseStatus,
+    configResponse: configRequests[0]?.response,
+    remoteConfigBeforeWrapperOptIn: state.remoteConfigBeforeWrapperOptIn,
+    remoteConfigAfterWrapperOptIn: state.remoteConfigAfterWrapperOptIn,
+    sdkConfig: state.sdkConfig,
+    metaCookieReadCount: state.metaCookieReadCount,
+    metaCookieReadInstrumentation: state.metaCookieReadInstrumentation,
+    initialPersonInfo,
+    clientSessionProps,
+    sessionPersistenceProps: state.sessionPersistenceProps,
+    attributionUrl: state.attributionUrl,
+    attributionReferrer: state.attributionReferrer,
+    probeEvents: probeEvents.map((item) => eventName(item)),
+    requestPaths: fixture.requests.map((request) => request.path),
+  };
+
+  assert.equal(externalAborted.length, 0,
+    `${scenario.name}: unexpected external requests ${externalAborted.join(", ")}`);
+  assert.ok(posthogRerouted.length,
+    `${scenario.name}: no published-host requests were locally intercepted`);
+  assert.ok(state.initCalls?.length, `${scenario.name}: initPostHog did not call the SDK`);
+  const init = state.initCalls[0];
+  assert.equal(init.key, "phc_local_release_regression_only",
+    `${scenario.name}: fake key changed`);
+  assert.equal(init.config.api_host, "https://us.i.posthog.com",
+    `${scenario.name}: host changed`);
+  assert.equal(init.config.api_transport, "fetch",
+    `${scenario.name}: transport changed`);
+  assert.equal(init.config.request_batching, true,
+    `${scenario.name}: batching changed`);
+  assert.equal(init.config.capture_pageview, false,
+    `${scenario.name}: pageview capture changed`);
+  assert.equal(init.config.capture_pageleave, true,
+    `${scenario.name}: pageleave capture changed`);
+  assert.equal(init.config.save_campaign_params, false,
+    `${scenario.name}: campaign parameter persistence changed`);
+  assert.deepEqual(init.config.capture_performance, { web_vitals_attribution: false },
+    `${scenario.name}: web-vitals attribution config changed`);
+  assert.deepEqual(state.sdkConfig?.capturePerformance, { web_vitals_attribution: false },
+    `${scenario.name}: SDK did not retain web-vitals attribution config`);
+  assert.equal(state.sdkConfig?.saveCampaignParams, false,
+    `${scenario.name}: SDK did not retain campaign persistence config`);
+  assert.equal(configScriptRequests[0]?.responseStatus, 404,
+    `${scenario.name}: config.js fallback was not exercised`);
+  assert.equal(configRequests[0]?.responseStatus, 200,
+    `${scenario.name}: remote JSON config did not load`);
+  assert.deepEqual(configRequests[0]?.response, {
+    sessionRecording: {
+      sampleRate: 1,
+      minimumDurationMilliseconds: 0,
+      maskAllInputs: true,
+    },
+    autocapture_opt_out: false,
+  }, `${scenario.name}: remote config schema changed`);
+  assert.equal(state.remoteConfigBeforeWrapperOptIn?.enabled, true,
+    `${scenario.name}: remote recording enablement was not retained`);
+
+  assert.equal(state.metaCookieReadInstrumentation, true,
+    `${scenario.name}: Meta-cookie read instrumentation was not installed`);
+  assert.equal(state.metaCookieReadCount, 0,
+    `${scenario.name}: save_campaign_params=false read a fresh Meta cookie`);
+  assert.ok(namedEvents.includes("release_attribution_probe"),
+    `${scenario.name}: wrapper attribution probe was not emitted`);
+  assert.ok(namedEvents.includes("sdk_attribution_probe"),
+    `${scenario.name}: direct SDK attribution probe was not emitted`);
+  assert.ok(probeEvents.length, `${scenario.name}: no attribution probe events were captured`);
+  for (const item of events) {
+    const properties = itemProperties(item);
+    for (const key of directUtmKeys) {
+      assert.equal(Object.prototype.hasOwnProperty.call(properties, key), false,
+        `${scenario.name}: direct ${key} escaped with save_campaign_params=false`);
+    }
+  }
+  for (const [name, store] of [
+    ["persistence", state.persistenceProps],
+    ["session persistence", state.sessionPersistenceProps],
+  ]) {
+    for (const key of directUtmKeys) {
+      assert.equal(Object.prototype.hasOwnProperty.call(store || {}, key), false,
+        `${scenario.name}: direct ${key} was stored in ${name}`);
+    }
+  }
+
+  assert.equal(state.attributionUrl, expectedUrl,
+    `${scenario.name}: attribution URL was not retained`);
+  assert.equal(new URL(state.attributionUrl).searchParams.has("fbclid"), false,
+    `${scenario.name}: conditional Meta-cookie regression fixture unexpectedly had fbclid`);
+  assert.ok(probeEvents.some((item) => itemProperties(item).$current_url === expectedUrl),
+    `${scenario.name}: emitted event lost its current attribution URL`);
+  assert.equal(state.attributionReferrer, expectedReferrer,
+    `${scenario.name}: referrer URL was not retained`);
+  assert.equal(typeof initialPersonInfo?.u, "string",
+    `${scenario.name}: initial person URL was not persisted`);
+  assert.ok(initialPersonInfo.u.includes(expectedUrl),
+    `${scenario.name}: initial person URL lost its query/referrer attribution`);
+  assert.equal(initialPersonInfo.r, expectedReferrer,
+    `${scenario.name}: initial person referrer URL was not persisted`);
+  assert.equal(typeof clientSessionProps?.props?.u, "string",
+    `${scenario.name}: session entry URL was not persisted`);
+  assert.ok(clientSessionProps.props.u.includes(expectedUrl),
+    `${scenario.name}: session entry URL lost its query attribution`);
+  assert.equal(clientSessionProps.props.r, expectedReferrer,
+    `${scenario.name}: session entry referrer URL was not persisted`);
+  assert.equal(state.sessionPersistenceProps?.$referrer, expectedReferrer,
+    `${scenario.name}: event referrer URL was not retained`);
+
+  const metaIdentifierReferences = [
+    ...findMetaIdentifierReferences(events, "events"),
+    ...findMetaIdentifierReferences(state.persistenceProps, "persistence"),
+    ...findMetaIdentifierReferences(state.sessionPersistenceProps, "sessionPersistence"),
+  ];
+  assert.deepEqual(metaIdentifierReferences, [],
+    `${scenario.name}: fresh Meta identifiers escaped events or persistence ` +
+      `${JSON.stringify(metaIdentifierReferences)}`);
+
+  return {
+    scenario: scenario.name,
+    mode: "actual-wrapper-attribution-regression:installed-sdk",
+    requestPaths: fixture.requests.map((request) => request.path),
+    events: namedEvents,
+    replayRecovered: true,
+    replayEvidence,
+  };
+}
+
 export function assertRichLifecycle({
   scenario,
   state,
@@ -298,7 +525,6 @@ export function assertRichLifecycle({
   const configScriptRequests = fixture.requests.filter(
     (request) => request.kind === "remote-config-script-fallback",
   );
-  const nativeSdkReset = scenario.resetMode === "native-sdk-reset";
   const replayDisabled = scenario.recordingDisabled || scenario.recordingSampleRate === 0;
   const snapshotItems = captureRecords
     .filter(({ item }) => snapshotValue(item) !== undefined)
@@ -431,6 +657,10 @@ export function assertRichLifecycle({
   assert.equal(init.config.request_batching, true, `${scenario.name}: batching changed`);
   assert.equal(init.config.autocapture, true, `${scenario.name}: autocapture changed`);
   assert.equal(init.config.capture_pageleave, true, `${scenario.name}: pageleave changed`);
+  assert.equal(init.config.save_campaign_params, false,
+    `${scenario.name}: campaign persistence changed`);
+  assert.deepEqual(init.config.capture_performance, { web_vitals_attribution: false },
+    `${scenario.name}: web-vitals attribution changed`);
   assert.equal(replayEvidence.remoteReplayPolicyNotOverridden, true,
     `${scenario.name}: wrapper locally overrode remote replay retention`);
   assert.ok(configScriptRequests.length >= 1 &&
@@ -466,6 +696,8 @@ export function assertRichLifecycle({
         `${scenario.name}: sampleRate 0 emitted a replay snapshot`);
     }
   } else {
+    assert.equal(state.remoteConfigBeforeWrapperOptIn?.enabled, true,
+      `${scenario.name}: remote recording enablement was not retained`);
     assert.deepEqual(configRequests[0]?.response, {
       sessionRecording: { sampleRate: 1, minimumDurationMilliseconds: 0, maskAllInputs: true },
       autocapture_opt_out: false,
@@ -514,20 +746,13 @@ export function assertRichLifecycle({
       assert.ok(replayEvidence.expiredPolicyForSwitchAge > 7_200_000,
         `${scenario.name}: account-switch expiry fixture did not exceed the one-hour TTL`);
     } else {
-      if (nativeSdkReset) {
-        // Native reset is exercised without the application policy helper.
-        // The selected SDK may retain its own remote policy cache; require
-        // the actual remote response and reject only a local policy override.
-        assert.equal(replayEvidence.remoteReplayPolicyNotOverridden, true,
-          `${scenario.name}: native SDK reset locally overrode remote replay policy`);
-        assert.equal(state.remoteConfigAfterRecoveryOptIn?.enabled, true,
-          `${scenario.name}: native SDK reset did not load a fresh remote policy`);
-      } else {
-        assert.equal(replayEvidence.freshPolicyUnchangedAfterOptIn, true,
-          `${scenario.name}: fresh policy changed during opt-in reset`);
-        assert.equal(replayEvidence.freshPolicyUnchangedAfterReset, true,
-          `${scenario.name}: fresh policy changed during reset`);
-      }
+      // The installed SDK's native reset owns the remote-policy lifecycle.
+      // Require the actual remote response and reject a wrapper-local policy
+      // override rather than manufacturing the old helper's cache behavior.
+      assert.equal(replayEvidence.remoteReplayPolicyNotOverridden, true,
+        `${scenario.name}: wrapper locally overrode remote replay policy`);
+      assert.equal(state.remoteConfigAfterRecoveryOptIn?.enabled, true,
+        `${scenario.name}: native SDK reset did not retain remote replay enablement`);
     }
     assert.ok(replayEvidence.recorderResourceLoaded,
       `${scenario.name}: local rrweb recorder was not loaded`);
@@ -612,7 +837,7 @@ export function assertRichLifecycle({
 
   const result = {
     scenario: scenario.name,
-    mode: `actual-wrapper-rich-identity-and-replay:${scenario.resetMode || "app-policy-helper"}`,
+    mode: "actual-wrapper-rich-identity-and-replay:installed-sdk-reset",
     requestPaths: fixture.requests.map((request) => request.path),
     events: namedEvents,
     replayRecovered: replayDisabled
