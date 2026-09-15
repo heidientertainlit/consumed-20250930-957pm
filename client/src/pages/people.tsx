@@ -814,9 +814,10 @@ function MediaShelf({ media, tribe, metric }: { media: TribeMedia[]; tribe: Trib
         disabled={!href}
         aria-label={`Add ${item.title} to your lists`}
         title={href ? "Add to your lists" : "Media details unavailable"}
-        className="absolute right-1 top-[6.5rem] flex h-8 w-8 items-center justify-center rounded-lg border border-white/60 bg-white/90 text-[#67447c] shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#67447c] disabled:opacity-40"
+        className="absolute right-2 top-[6.25rem] flex h-8 w-8 items-center justify-center rounded-full border border-white/20 transition-all active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#67447c] disabled:opacity-40"
+        style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
       >
-        <Plus size={18} aria-hidden="true" />
+        <Plus size={16} className="text-white" aria-hidden="true" />
       </button>
     </div>;
   })}</div>
