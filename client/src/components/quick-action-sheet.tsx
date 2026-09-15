@@ -251,7 +251,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   }, [selectedMedia]);
 
   useEffect(() => {
-    if (selectedMedia?.type === 'tv' && selectedMedia.external_id && selectedSeason) {
+    if (selectedMedia?.type === 'tv' && selectedMedia.external_id && selectedSeason !== null) {
       fetchEpisodes(selectedMedia.external_id, selectedSeason);
     } else {
       setEpisodes([]);
@@ -700,6 +700,15 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
               imageUrl: selectedMedia.image || selectedMedia.image_url || '',
               externalId: selectedMedia.external_id,
               externalSource: selectedMedia.external_source || 'tmdb',
+              seasonNumber: selectedSeason ?? undefined,
+              episodeNumber: selectedEpisode ?? undefined,
+              episodeTitle:
+                selectedEpisode !== null
+                  ? episodes.find((ep: any) => (ep.episodeNumber ?? ep.episode_number) === selectedEpisode)?.name || undefined
+                  : undefined,
+              ...(selectedMedia.type === 'book' && selectedMedia.volume_number != null
+                ? { volumeNumber: selectedMedia.volume_number }
+                : {}),
             },
             listType: selectedListId || 'currently',
             rating: ratingValue > 0 ? ratingValue : undefined,
@@ -707,8 +716,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
             containsSpoilers,
             privateMode,
             rewatchCount: rewatchCount > 1 ? rewatchCount : undefined,
-            seasonNumber: selectedSeason || undefined,
-            episodeNumber: selectedEpisode || undefined,
           }),
         });
         
@@ -1143,7 +1150,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                                 Whole series
                               </button>
                               {seasons.map((se: any) => {
-                                const n = se.seasonNumber || se.season_number;
+                                const n = se.seasonNumber ?? se.season_number;
                                 return (
                                   <button key={n} type="button" onClick={() => setSelectedSeason(selectedSeason === n ? null : n)}
                                     className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedSeason === n ? "bg-purple-600 border-purple-600 text-white" : "bg-white border-gray-200 text-gray-600"}`}>
@@ -1152,7 +1159,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                                 );
                               })}
                             </div>
-                            {selectedSeason && (
+                            {selectedSeason !== null && (
                               <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
                                 {isLoadingEpisodes ? (
                                   <div className="flex items-center gap-2 text-xs text-gray-400 py-1"><Loader2 className="animate-spin" size={12} /> Loading episodes…</div>
@@ -1163,7 +1170,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                                       All episodes
                                     </button>
                                     {episodes.map((ep: any) => {
-                                      const n = ep.episodeNumber || ep.episode_number;
+                                      const n = ep.episodeNumber ?? ep.episode_number;
                                       return (
                                         <button key={n} type="button" onClick={() => setSelectedEpisode(selectedEpisode === n ? null : n)}
                                           title={ep.name || undefined}

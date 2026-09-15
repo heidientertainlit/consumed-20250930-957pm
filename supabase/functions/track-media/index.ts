@@ -196,7 +196,7 @@ serve(async (req) => {
     // Parse the request body
     const requestBody = await req.json();
     const { media, rating, review, listType, skip_social_post, rewatchCount, containsSpoilers, privateMode, canonical_media_id: requestCanonicalMediaId } = requestBody;
-    const { title, mediaType: rawMediaType, mediaSubtype, creator, imageUrl, externalId, externalSource, seasonNumber, episodeNumber, episodeTitle, pageCount, canonical_media_id: mediaCanonicalMediaId, year, releaseYear } = media || {};
+    const { title, mediaType: rawMediaType, mediaSubtype, creator, imageUrl, externalId, externalSource, seasonNumber, episodeNumber, episodeTitle, volumeNumber, pageCount, canonical_media_id: mediaCanonicalMediaId, year, releaseYear } = media || {};
     // Normalize media type to lowercase canonical form — prevents 'Movie'/'TV Show'/'Podcast' drift
     const normalizeMediaType = (mt?: string): string | null => {
       const t = (mt || '').toLowerCase().trim();
@@ -456,6 +456,10 @@ serve(async (req) => {
             media_external_id: externalId,
             media_external_source: externalSource,
             ...(canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
+            media_season_number: seasonNumber ?? null,
+            media_episode_number: episodeNumber ?? null,
+            media_episode_title: episodeTitle ?? null,
+            ...(mediaType === 'book' && typeof volumeNumber === 'number' ? { media_volume_number: volumeNumber } : {}),
             rating: rating || null,
             contains_spoilers: containsSpoilers || false,
             visibility: 'public',

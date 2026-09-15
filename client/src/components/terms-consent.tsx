@@ -20,7 +20,10 @@ import {
   takeMatchingOAuthTermsConsentAttempt,
   subscribeToLegalTermsConsentChanges,
 } from "@/lib/legal-terms-consent";
-import { LEGAL_TERMS_VERSION } from "@/lib/legal-terms";
+import {
+  LEGAL_TERMS_VERSION,
+  TERMS_EFFECTIVE_DATE,
+} from "@/lib/legal-terms";
 import { TermsContent } from "@/components/terms-content";
 
 type ConsentCheckboxProps = {
@@ -212,7 +215,7 @@ function TermsAcceptancePrompt({
             </Button>
           </div>
           <p className="mt-3 text-center text-xs text-gray-500">
-            Current terms version: {LEGAL_TERMS_VERSION}
+            Terms effective date: {TERMS_EFFECTIVE_DATE}
           </p>
         </div>
       </div>

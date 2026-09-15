@@ -15,6 +15,7 @@ import { supabase } from "@/lib/supabase";
 import { trackEvent } from "@/lib/posthog";
 import ImportHistory, { ImportReceipt, receiptFromResponse } from "@/components/import-history";
 import { getBookVolumeLabel } from "@/lib/book-volume";
+import { buildQuickTrackThoughtPostPayload } from "@/lib/quick-track-post";
 
 export interface TrackDetailsMedia {
   title: string;
@@ -167,7 +168,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
     // so a save can never carry an episode from a different season.
     setEpisodes([]);
     setSelectedEpisode(null);
-    if (selectedMedia?.type === "tv" && selectedMedia.external_id && selectedSeason) {
+    if (selectedMedia?.type === "tv" && selectedMedia.external_id && selectedSeason !== null) {
       fetchEpisodes(selectedMedia.external_id, selectedSeason);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -231,6 +232,15 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
 
 
   const pickMedia = (r: any) => {
+    // A new title cannot inherit the previous title's season or episode.
+    // Clear synchronously as well as in the selectedMedia effect below so a
+    // quick submit cannot race the state reset.
+    seasonsReqId.current++;
+    episodesReqId.current++;
+    setSeasons([]);
+    setEpisodes([]);
+    setSelectedSeason(null);
+    setSelectedEpisode(null);
     setSelectedMedia(r);
     setSelectedList("queue");
     setStep("compose");
@@ -267,12 +277,15 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
         body: JSON.stringify({
           media: {
             ...mapMedia(selectedMedia),
-            seasonNumber: selectedSeason || undefined,
-            episodeNumber: selectedEpisode || undefined,
+            seasonNumber: selectedSeason ?? undefined,
+            episodeNumber: selectedEpisode ?? undefined,
             episodeTitle:
-              selectedEpisode
-                ? episodes.find((ep: any) => (ep.episodeNumber || ep.episode_number) === selectedEpisode)?.name || undefined
+              selectedEpisode !== null
+                ? episodes.find((ep: any) => (ep.episodeNumber ?? ep.episode_number) === selectedEpisode)?.name || undefined
                 : undefined,
+            ...(selectedMedia.type === "book" && selectedMedia.volume_number != null
+              ? { volumeNumber: selectedMedia.volume_number }
+              : {}),
           },
           listType: selectedList,
           rating: hasRating ? rating : undefined,
@@ -286,19 +299,15 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
       if (!hasRating && hasTake) {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser) throw new Error("Not authenticated");
-        const { error: postErr } = await supabase.from("social_posts").insert({
-          user_id: authUser.id,
+        const postPayload = buildQuickTrackThoughtPostPayload({
+          userId: authUser.id,
           content: takeText.trim(),
-          post_type: "thought",
-          visibility: "public",
-          media_title: selectedMedia.title || null,
-          media_type: selectedMedia.type?.toLowerCase() || null,
-          media_external_id: selectedMedia.external_id || null,
-          media_external_source: selectedMedia.external_source || "tmdb",
-          image_url: selectedMedia.image || selectedMedia.image_url || "",
-          fire_votes: 0,
-          ice_votes: 0,
+          media: selectedMedia,
+          selectedSeason,
+          selectedEpisode,
+          episodes,
         });
+        const { error: postErr } = await supabase.from("social_posts").insert(postPayload);
         if (postErr) throw postErr;
       }
 
@@ -589,7 +598,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
                           Whole series
                         </button>
                         {seasons.map((se: any) => {
-                          const n = se.seasonNumber || se.season_number;
+                          const n = se.seasonNumber ?? se.season_number;
                           return (
                             <button
                               key={n}
@@ -607,7 +616,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
                           );
                         })}
                       </div>
-                      {selectedSeason && (
+                      {selectedSeason !== null && (
                         <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
                           {isLoadingEpisodes ? (
                             <div className="flex items-center gap-2 text-sm text-gray-400 py-1">
@@ -628,7 +637,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
                                 All episodes
                               </button>
                               {episodes.map((ep: any) => {
-                                const n = ep.episodeNumber || ep.episode_number;
+                                const n = ep.episodeNumber ?? ep.episode_number;
                                 return (
                                   <button
                                     key={n}
@@ -650,11 +659,11 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
                           )}
                         </div>
                       )}
-                      {selectedSeason && selectedEpisode && (
+                      {selectedSeason !== null && selectedEpisode !== null && (
                         <p className="text-xs text-gray-500">
                           Tracking S{selectedSeason} · E{selectedEpisode}
-                          {episodes.find((ep: any) => (ep.episodeNumber || ep.episode_number) === selectedEpisode)?.name
-                            ? ` — ${episodes.find((ep: any) => (ep.episodeNumber || ep.episode_number) === selectedEpisode)?.name}`
+                          {episodes.find((ep: any) => (ep.episodeNumber ?? ep.episode_number) === selectedEpisode)?.name
+                            ? ` — ${episodes.find((ep: any) => (ep.episodeNumber ?? ep.episode_number) === selectedEpisode)?.name}`
                             : ""}
                         </p>
                       )}

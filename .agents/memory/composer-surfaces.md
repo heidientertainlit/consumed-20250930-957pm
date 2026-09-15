@@ -19,6 +19,10 @@ The “Add media” and “Share a take” actions belong inside the purple iden
 
 **How to apply:** reuse QuickTrackSheet for search-first add; reuse QuickActionSheet for in-dialog search/compose; never re-track the same media into a different list in the same flow. QuickActionSheet is shared (replit.md: don't change without explicit user permission — additive optional props are the safe pattern).
 
-**Typo rescue & season/episode (July 2026):** spell-fix edge fn retry lives in quick-track-sheet AND feed-composer-bar — rescue must trigger on zero *visible* (client-filtered) results, not raw results, because media-search leaks movies through type=tv. Season/episode pills exist in both; posts store media_season_number/media_episode_number/media_episode_title on social_posts (passed via inline-post, selected+passed through in social-feed transform, suffixed onto mediaTitle in feed.tsx). Other search surfaces (quick-action-sheet, new-room) still have neither.
+**Scope preservation:** A selected season, episode, or volume belongs to the conversation, not the title's canonical identity. Keep its visible label separate from the raw media title.
+
+**Why:** A single save can track media and publish a separate text-only take. Preserving scope on tracking alone left the actual feed post with no season despite a successful save; display-only tests did not catch it.
+
+**How to apply:** Trace every emitted post, not just the tracking request or the main text composer. Verify stored scope for the actual affected post before attributing a missing label to deployment or rendering. Never backfill a season from the post's prose.
 
 **Shared search (July 2026):** media-search-panel.tsx is THE single media search UI (input + type pills + results + spell-fix rescue + race guard). quick-track-sheet's search step and feed-composer-bar's inline "Add media" both render it. Still separate: feed-composer-bar's full-screen dark browse layer (/add poster grid) and quick-action-sheet/new-room searches.
