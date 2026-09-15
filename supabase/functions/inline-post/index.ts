@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { resolveCanonicalMedia } from '../_shared/canonical-media.ts';
+import { mediaScopeToPostColumns } from '../_shared/media-scope.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -156,6 +157,13 @@ serve(async (req) => {
         media_season_number,
         media_episode_number,
         media_episode_title,
+        media_volume_number,
+        // Accept camelCase scope fields as well as the persisted API names.
+        seasonNumber,
+        episodeNumber,
+        episodeTitle,
+        volumeNumber,
+        volume_number,
         prediction_question,
         prediction_options,
         poll_question,
@@ -165,6 +173,17 @@ serve(async (req) => {
         room_id
       } = body;
       const media_type = normType(rawMediaType);
+      const mediaScope = mediaScopeToPostColumns({
+        media_season_number,
+        media_episode_number,
+        media_episode_title,
+        media_volume_number,
+        seasonNumber,
+        episodeNumber,
+        episodeTitle,
+        volumeNumber,
+        volume_number,
+      });
       let canonicalMediaId: string | null = null;
       if (media_external_id && media_external_source && media_title && media_type) {
         try {
@@ -244,6 +263,7 @@ serve(async (req) => {
           media_external_id: media_external_id || null,
           media_external_source: media_external_source || null,
           ...(canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
+          ...mediaScope,
           visibility,
           contains_spoilers,
           image_url: finalImageUrl
@@ -347,11 +367,13 @@ serve(async (req) => {
           content: poll_question,
           post_type: 'poll',
           prediction_pool_id: poolId,
-          media_title: poll_question.substring(0, 100),
+          media_title: media_title || poll_question.substring(0, 100),
           media_type: media_type || null,
+          media_creator: media_creator || null,
           media_external_id: media_external_id || null,
           media_external_source: media_external_source || null,
           ...(canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
+          ...mediaScope,
           visibility,
           contains_spoilers,
           image_url: pollImageUrl
@@ -425,9 +447,7 @@ serve(async (req) => {
         media_external_id: media_external_id || null,
         media_external_source: media_external_source || null,
         ...(canonicalMediaId ? { canonical_media_id: canonicalMediaId } : {}),
-        media_season_number: media_season_number || null,
-        media_episode_number: media_episode_number || null,
-        media_episode_title: media_episode_title || null,
+        ...mediaScope,
         visibility,
         contains_spoilers,
         list_id: list_id || null,

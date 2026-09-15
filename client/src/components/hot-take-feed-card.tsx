@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { QuickAddListSheet } from './quick-add-list-sheet';
+import { formatMediaScopeLabel, type MediaScopeFields } from '@/lib/media-scope';
 
 interface HotTakeFeedCardProps {
   post: {
@@ -20,6 +21,15 @@ interface HotTakeFeedCardProps {
     media_title?: string;
     media_type?: string;
     image_url?: string;
+    media_season_number?: number | string | null;
+    media_episode_number?: number | string | null;
+    media_episode_title?: string | null;
+    media_volume_number?: number | string | null;
+    seasonNumber?: number | string | null;
+    episodeNumber?: number | string | null;
+    episodeTitle?: string | null;
+    volumeNumber?: number | string | null;
+    mediaItems?: MediaScopeFields[] | null;
     fire_votes?: number;
     ice_votes?: number;
     comments_count?: number;
@@ -38,6 +48,7 @@ export function HotTakeFeedCard({ post, onComment, onDelete, currentUserId }: Ho
   const [userVote, setUserVote] = useState<'fire' | 'ice' | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const mediaScopeLabel = formatMediaScopeLabel(post, post.mediaItems?.[0]);
 
   const handleVote = async (voteType: 'fire' | 'ice') => {
     if (!session || isVoting) return;
@@ -125,7 +136,12 @@ export function HotTakeFeedCard({ post, onComment, onDelete, currentUserId }: Ho
             </div>
             {post.media_title && (
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-xs text-purple-600 font-medium">🎬 {post.media_title}</span>
+                <div className="min-w-0">
+                  <span className="text-xs text-purple-600 font-medium truncate block">🎬 {post.media_title}</span>
+                  {mediaScopeLabel && (
+                    <span className="text-[10px] text-gray-500 leading-tight block mt-0.5">{mediaScopeLabel}</span>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -151,7 +167,12 @@ export function HotTakeFeedCard({ post, onComment, onDelete, currentUserId }: Ho
             />
             <div className="flex-1 min-w-0">
               {post.media_title && (
-                <p className="font-medium text-gray-900 text-sm line-clamp-2">{post.media_title}</p>
+                <div>
+                  <p className="font-medium text-gray-900 text-sm line-clamp-2">{post.media_title}</p>
+                  {mediaScopeLabel && (
+                    <p className="text-[10px] text-gray-500 leading-tight mt-0.5">{mediaScopeLabel}</p>
+                  )}
+                </div>
               )}
               {post.media_type && (
                 <p className="text-xs text-purple-600 capitalize">{post.media_type}</p>

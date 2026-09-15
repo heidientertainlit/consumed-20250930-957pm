@@ -436,7 +436,7 @@ export default function FeedComposerBar({
     // Drop any prior episode selection the moment the season changes.
     setEpisodes([]);
     setSelectedEpisode(null);
-    if (selectedMedia?.type === "tv" && selectedMedia.external_id && selectedSeason) {
+    if (selectedMedia?.type === "tv" && selectedMedia.external_id && selectedSeason !== null) {
       fetchEpisodes(selectedMedia.external_id, selectedSeason);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -696,6 +696,13 @@ export default function FeedComposerBar({
   };
 
   const selectMedia = (media: any) => {
+    // A new title cannot inherit the previous title's season or episode.
+    // Clear synchronously as well as in the selectedMedia effect below so a
+    // quick submit cannot race the state reset.
+    setSeasons([]);
+    setEpisodes([]);
+    setSelectedSeason(null);
+    setSelectedEpisode(null);
     setSelectedMedia(media);
     // In pageMode the search layer covers the composer card. Slide it away to
     // reveal the composer instead of navigating back off the /add page.
@@ -715,11 +722,15 @@ export default function FeedComposerBar({
     media_image_url: selectedMedia.image_url || selectedMedia.poster_url || selectedMedia.image,
     media_external_id: selectedMedia.external_id || selectedMedia.id,
     media_external_source: selectedMedia.external_source || selectedMedia.source || "tmdb",
-    media_season_number: selectedMedia.type === "tv" ? selectedSeason || undefined : undefined,
-    media_episode_number: selectedMedia.type === "tv" ? selectedEpisode || undefined : undefined,
+    media_season_number: selectedMedia.type === "tv" ? selectedSeason ?? undefined : undefined,
+    media_episode_number: selectedMedia.type === "tv" ? selectedEpisode ?? undefined : undefined,
     media_episode_title:
-      selectedMedia.type === "tv" && selectedEpisode
-        ? episodes.find((ep: any) => (ep.episodeNumber || ep.episode_number) === selectedEpisode)?.name || undefined
+      selectedMedia.type === "tv" && selectedEpisode !== null
+        ? episodes.find((ep: any) => (ep.episodeNumber ?? ep.episode_number) === selectedEpisode)?.name || undefined
+        : undefined,
+    media_volume_number:
+      (selectedMedia.type || selectedMedia.mediaType) === "book"
+        ? selectedMedia.volume_number ?? undefined
         : undefined,
   } : {};
 
@@ -836,7 +847,7 @@ export default function FeedComposerBar({
                       Whole series
                     </button>
                     {seasons.map((se: any) => {
-                      const n = se.seasonNumber || se.season_number;
+                      const n = se.seasonNumber ?? se.season_number;
                       return (
                         <button key={n} type="button" onClick={() => setSelectedSeason(selectedSeason === n ? null : n)}
                           className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedSeason === n ? "bg-purple-600 border-purple-600 text-white" : "bg-white border-gray-200 text-gray-600"}`}>
@@ -846,7 +857,7 @@ export default function FeedComposerBar({
                     })}
                   </div>
                 )}
-                {selectedSeason && (
+                {selectedSeason !== null && (
                   <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
                     {isLoadingEpisodes ? (
                       <div className="flex items-center gap-2 text-xs text-gray-400 py-1">
@@ -859,7 +870,7 @@ export default function FeedComposerBar({
                           All episodes
                         </button>
                         {episodes.map((ep: any) => {
-                          const n = ep.episodeNumber || ep.episode_number;
+                          const n = ep.episodeNumber ?? ep.episode_number;
                           return (
                             <button key={n} type="button" onClick={() => setSelectedEpisode(selectedEpisode === n ? null : n)}
                               title={ep.name || undefined}

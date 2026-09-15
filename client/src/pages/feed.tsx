@@ -68,6 +68,7 @@ import { blockedUsersQueryKey, filterCommentsForBlockedUsers, getBlockedUserIdsF
 import { useBlockedUsers } from "@/hooks/use-blocked-users";
 import { MEDIA_MATCH_SCORER_VERSION } from "@/lib/media-match";
 import { canonicalMediaIdFrom, mergePreferredMediaRatings } from "@/lib/canonical-media";
+import { formatMediaScopeLabel, type MediaScopeFields } from "@/lib/media-scope";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { GameMomentCard } from "@/components/game-moment-card";
 import { SocialProofCard, buildGameMomentSocialProof, buildLeaderboardSocialProof } from "@/components/social-proof-card";
@@ -116,6 +117,14 @@ interface SocialPost {
   mediaType?: string;
   externalId?: string;
   externalSource?: string;
+  media_season_number?: number | string | null;
+  media_episode_number?: number | string | null;
+  media_episode_title?: string | null;
+  media_volume_number?: number | string | null;
+  mediaSeasonNumber?: number | string | null;
+  mediaEpisodeNumber?: number | string | null;
+  mediaEpisodeTitle?: string | null;
+  mediaVolumeNumber?: number | string | null;
   user?: {
     id: string;
     username: string;
@@ -142,6 +151,14 @@ interface SocialPost {
     externalSource: string;
     canonical_media_id?: string;
     canonicalMediaId?: string;
+    seasonNumber?: number | string | null;
+    episodeNumber?: number | string | null;
+    episodeTitle?: string | null;
+    volumeNumber?: number | string | null;
+    media_season_number?: number | string | null;
+    media_episode_number?: number | string | null;
+    media_episode_title?: string | null;
+    media_volume_number?: number | string | null;
   }>;
   mediaItems: Array<{
     id: string;
@@ -154,6 +171,14 @@ interface SocialPost {
     externalSource: string;
     canonical_media_id?: string;
     canonicalMediaId?: string;
+    seasonNumber?: number | string | null;
+    episodeNumber?: number | string | null;
+    episodeTitle?: string | null;
+    volumeNumber?: number | string | null;
+    media_season_number?: number | string | null;
+    media_episode_number?: number | string | null;
+    media_episode_title?: string | null;
+    media_volume_number?: number | string | null;
   }>;
   // Grouped media fields
   groupedActivities?: Array<{
@@ -1906,6 +1931,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     return t;
   })();
   const mediaTypeLabel = mediaTypeNorm ? formatMediaTypeLabel(mediaTypeNorm) : null;
+  const mediaScopeLabel = post.mediaScopeLabel || formatMediaScopeLabel(
+    post,
+    post.mediaItems?.[0] as MediaScopeFields | undefined,
+  );
   const seenItLabel = (() => {
     if (mediaTypeNorm === 'music') return { idle: 'Heard it', done: 'Heard!' };
     if (mediaTypeNorm === 'podcast') return { idle: 'Listened', done: 'Listened!' };
@@ -2077,7 +2106,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         {mediaTypeNorm === 'tv' && <Tv2 size={16} className="text-white" />}
         {(!mediaTypeNorm || mediaTypeNorm === 'movie' || !['podcast','music','book','game','tv'].includes(mediaTypeNorm)) && <Film size={16} className="text-white" />}
       </div>
-      <p className="text-white text-[11px] font-bold leading-tight line-clamp-4 w-full drop-shadow">{post.mediaTitle}</p>
+       <div className="w-full">
+         <p className="text-white text-[11px] font-bold leading-tight line-clamp-4 drop-shadow">{post.mediaTitle}</p>
+         {mediaScopeLabel && (
+           <p className="text-white/70 text-[9px] leading-tight mt-0.5">{mediaScopeLabel}</p>
+         )}
+       </div>
     </div>
   ) : null;
 
@@ -2179,6 +2213,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <p className="text-xs font-semibold text-gray-800 truncate">{post.mediaTitle}</p>
                   {post.externalId?.startsWith('series-') && <span className="text-[9px] font-semibold text-purple-500 bg-purple-50 border border-purple-200 rounded-full px-1.5 py-0.5 shrink-0">Series</span>}
                 </div>
+                {mediaScopeLabel && (
+                  <p className="text-[10px] text-gray-500 leading-tight mt-0.5">{mediaScopeLabel}</p>
+                )}
                 {mediaTypeLabel && <span className="text-[10px] text-gray-400">{mediaTypeLabel}</span>}
               </div>
             </div>
@@ -2355,7 +2392,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <div className="flex-1 px-4 py-3 min-w-0">
               <p className="text-[16px] font-semibold text-gray-900 leading-snug">{post.content}</p>
               {post.mediaTitle && (
-                <p className="text-[11px] text-blue-400 font-medium mt-1.5 truncate">{post.mediaTitle}</p>
+                <div className="mt-1.5">
+                  <p className="text-[11px] text-blue-400 font-medium truncate">{post.mediaTitle}</p>
+                  {mediaScopeLabel && (
+                    <p className="text-[10px] text-blue-400/80 leading-tight mt-0.5">{mediaScopeLabel}</p>
+                  )}
+                </div>
               )}
             </div>
             {post.mediaImage && (
@@ -2620,6 +2662,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <div className="mt-auto p-2.5 relative z-[1]">
                     <div className="w-5 h-0.5 rounded-full bg-white/50 mb-1.5" />
                     <p className="text-white text-[12px] font-bold leading-tight line-clamp-4 drop-shadow">{post.mediaTitle}</p>
+                    {mediaScopeLabel && (
+                      <p className="text-white/70 text-[10px] leading-tight mt-0.5">{mediaScopeLabel}</p>
+                    )}
                     {mediaCreator && <p className="text-white/60 text-[10px] font-medium leading-tight mt-0.5 line-clamp-1">{mediaCreator}</p>}
                   </div>
                 </div>
@@ -2669,6 +2714,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {post.mediaTitle && (
                 <div className="min-w-0">
                   <p className="font-serif text-[19px] font-medium leading-[1.08] tracking-[-.035em] text-[#30203f]">{post.mediaTitle}</p>
+                  {mediaScopeLabel && (
+                    <p className="text-[12px] text-gray-500 leading-snug mt-1">{mediaScopeLabel}</p>
+                  )}
                   {mediaCreator && (
                     <p className="text-[12px] text-gray-500 leading-snug truncate mt-0.5">by {mediaCreator}</p>
                   )}
@@ -3215,11 +3263,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       })}
                     </div>
                     {post.mediaTitle && (
-                      <div className="truncate min-w-0">
+                      <div className="min-w-0">
                         {post.externalId && post.externalSource
-                          ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span></Link>
-                          : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span>
+                          ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer truncate block">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span></Link>
+                          : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400 truncate block">{post.mediaTitle}{post.externalId?.startsWith('series-') ? ' Series' : ''}</span>
                         }
+                        {mediaScopeLabel && (
+                          <p className="text-[10px] text-gray-500 leading-tight mt-0.5">{mediaScopeLabel}</p>
+                        )}
                       </div>
                     )}
                     {ratingSubmitted && ratingValue > 0 && !ratingJustSaved && (
@@ -3368,11 +3419,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                                 return <Star key={s} size={13} className="text-gray-200" />;
                               })}
                             </div>
-                            <div className="truncate min-w-0">
+                            <div className="min-w-0">
                               {post.externalId && post.externalSource
-                                ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer">{post.mediaTitle}{isSeries ? ' Series' : ''}</span></Link>
-                                : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400">{post.mediaTitle}{isSeries ? ' Series' : ''}</span>
+                                ? <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}><span className="text-[10px] font-light tracking-widest uppercase text-gray-400 hover:text-purple-400 cursor-pointer truncate block">{post.mediaTitle}{isSeries ? ' Series' : ''}</span></Link>
+                                : <span className="text-[10px] font-light tracking-widest uppercase text-gray-400 truncate block">{post.mediaTitle}{isSeries ? ' Series' : ''}</span>
                               }
+                              {mediaScopeLabel && (
+                                <p className="text-[10px] text-gray-500 leading-tight mt-0.5">{mediaScopeLabel}</p>
+                              )}
                             </div>
                           </div>
                           {ratingDiffLine(post.rating, 'mt-0.5')}
@@ -4046,6 +4100,10 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
     return t;
   })();
   const spMediaTypeLabel = spMediaTypeNorm ? formatMediaTypeLabel(spMediaTypeNorm) : null;
+  const spMediaScopeLabel = post.mediaScopeLabel || formatMediaScopeLabel(
+    post,
+    post.mediaItems?.[0] as MediaScopeFields | undefined,
+  );
   const spSeenItLabel = (() => {
     if (spMediaTypeNorm === 'music') return { idle: 'Heard it', done: 'Heard!' };
     if (spMediaTypeNorm === 'podcast') return { idle: 'Listened', done: 'Listened!' };
@@ -4164,6 +4222,9 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                   </Link>
                 ) : (
                   <p className="text-sm font-bold text-gray-900 line-clamp-2">{post.mediaTitle || 'Untitled'}</p>
+                )}
+                {spMediaScopeLabel && (
+                  <p className="text-[11px] text-gray-500 leading-tight mt-0.5">{spMediaScopeLabel}</p>
                 )}
               </div>
             </div>
@@ -4372,6 +4433,9 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                       </Link>
                     ) : (
                       <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
+                    )}
+                    {spMediaScopeLabel && (
+                      <p className="text-[11px] text-gray-500 leading-tight mt-0.5">{spMediaScopeLabel}</p>
                     )}
                   </div>
                   {post.rating && post.rating > 0 && isRatingType && (
@@ -4601,6 +4665,7 @@ function CurrentlyConsumingFeedCard({
     }
     return rawMedia;
   })();
+  const mediaScopeLabel = formatMediaScopeLabel(post, media as MediaScopeFields);
   const isOwnPost = user?.id && post.user?.id === user.id;
   
   const handleSubmitRating = async (rating: number) => {
@@ -4795,6 +4860,9 @@ function CurrentlyConsumingFeedCard({
               <div className="flex-1 min-w-0">
                 <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
                   <h3 className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-1">{media.title}</h3>
+                  {mediaScopeLabel && (
+                    <p className="text-[11px] text-gray-500 leading-tight mt-0.5">{mediaScopeLabel}</p>
+                  )}
                 </Link>
                 {media.creator && (
                   <p className="text-xs text-gray-600 mb-0.5">by {media.creator}</p>
@@ -5977,11 +6045,20 @@ export default function Feed() {
 
         const userObj = p.user || p.creator;
         const canonicalMediaId = canonicalMediaIdFrom(p, media);
+        const mediaScopeLabel = formatMediaScopeLabel(p, media as MediaScopeFields | undefined);
         return {
           id: p.id, type: postType,
           user: { id: userObj?.id || '', username: userObj?.username || '', displayName: userObj?.displayName || userObj?.display_name || '', avatar: userObj?.avatar_url || userObj?.avatarUrl || userObj?.avatar || '', is_persona: userObj?.is_persona || false },
           content: (postType === 'poll' || postType === 'predict') ? ((p as any).question || content) : content,
-          mediaTitle: (((media?.title || (p as any).mediaTitle || (p as any).media_title) || '') + ((p as any).media_season_number ? ` · S${(p as any).media_season_number}${(p as any).media_episode_number ? ` E${(p as any).media_episode_number}` : ''}` : '')) || undefined, mediaType: media?.mediaType || media?.type || (p as any).media_type, mediaImage: mediaImg, externalId: eid, externalSource: src, canonical_media_id: canonicalMediaId, canonicalMediaId,
+          // Keep the raw title canonical for identity, lookup, and tracking. Scope
+          // is display-only and is rendered on its own line by feed cards.
+          mediaTitle: (media?.title || (p as any).mediaTitle || (p as any).media_title) || undefined,
+          mediaScopeLabel,
+          media_season_number: (p as any).media_season_number ?? media?.seasonNumber,
+          media_episode_number: (p as any).media_episode_number ?? media?.episodeNumber,
+          media_episode_title: (p as any).media_episode_title ?? media?.episodeTitle,
+          media_volume_number: (p as any).media_volume_number ?? media?.volumeNumber,
+          mediaType: media?.mediaType || media?.type || (p as any).media_type, mediaImage: mediaImg, externalId: eid, externalSource: src, canonical_media_id: canonicalMediaId, canonicalMediaId,
           rating: resolvedRating, containsSpoilers: p.containsSpoilers || false, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
           fire_votes: p.fire_votes || 0, ice_votes: p.ice_votes || 0,
           options: (p as any).options || [], optionVotes: (p as any).optionVotes || [], timestamp: p.createdAt || p.created_at || p.timestamp, pollId: (p as any).poolId || p.id,
@@ -9285,6 +9362,17 @@ export default function Feed() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-sm text-gray-900 line-clamp-2">{highlightedPost.mediaItems[0].title}</h3>
+                            {formatMediaScopeLabel(
+                              highlightedPost,
+                              highlightedPost.mediaItems[0] as MediaScopeFields,
+                            ) && (
+                              <p className="text-[11px] text-gray-500 leading-tight mt-0.5">
+                                {formatMediaScopeLabel(
+                                  highlightedPost,
+                                  highlightedPost.mediaItems[0] as MediaScopeFields,
+                                )}
+                              </p>
+                            )}
                             {highlightedPost.mediaItems[0].mediaType && (
                               <p className="text-xs text-gray-500">{formatMediaTypeLabel(highlightedPost.mediaItems[0].mediaType)}</p>
                             )}
@@ -10008,6 +10096,17 @@ export default function Feed() {
                               />
                               <div>
                                 <p className="font-medium text-gray-900">{post.mediaItems[0].title}</p>
+                                {formatMediaScopeLabel(
+                                  post,
+                                  post.mediaItems[0] as MediaScopeFields,
+                                ) && (
+                                  <p className="text-[11px] text-gray-500 leading-tight mt-0.5">
+                                    {formatMediaScopeLabel(
+                                      post,
+                                      post.mediaItems[0] as MediaScopeFields,
+                                    )}
+                                  </p>
+                                )}
                                 <p className="text-xs text-gray-500">{formatMediaTypeLabel(post.mediaItems[0].mediaType)}</p>
                               </div>
                             </div>
@@ -10734,6 +10833,11 @@ export default function Feed() {
                                   <h3 className="font-semibold text-sm text-gray-900 line-clamp-1 hover:text-purple-600">
                                     {media.title}
                                   </h3>
+                                  {formatMediaScopeLabel(post, media as MediaScopeFields) && (
+                                    <div className="text-gray-500 text-[11px] leading-tight mt-0.5">
+                                      {formatMediaScopeLabel(post, media as MediaScopeFields)}
+                                    </div>
+                                  )}
                                   {media.creator && (
                                     <div className="text-gray-600 text-xs mb-0.5">
                                       by {media.creator}
@@ -10770,7 +10874,14 @@ export default function Feed() {
                                       }}
                                     >
                                       <span className="text-xs">{mediaTypeEmoji}</span>
-                                      <span className="text-sm text-gray-800 truncate">{item.title}</span>
+                                      <span className="min-w-0">
+                                        <span className="text-sm text-gray-800 truncate block">{item.title}</span>
+                                        {formatMediaScopeLabel(post, item as MediaScopeFields) && (
+                                          <span className="text-[10px] text-gray-500 leading-tight block">
+                                            {formatMediaScopeLabel(post, item as MediaScopeFields)}
+                                          </span>
+                                        )}
+                                      </span>
                                     </div>
                                   );
                                 })}
@@ -10812,7 +10923,14 @@ export default function Feed() {
                                     }}
                                   >
                                     <span className="text-sm">{mediaTypeEmoji}</span>
-                                    <span className="text-sm text-gray-800 truncate">{item.title}</span>
+                                    <span className="min-w-0">
+                                      <span className="text-sm text-gray-800 truncate block">{item.title}</span>
+                                      {formatMediaScopeLabel(post, item as MediaScopeFields) && (
+                                        <span className="text-[10px] text-gray-500 leading-tight block">
+                                          {formatMediaScopeLabel(post, item as MediaScopeFields)}
+                                        </span>
+                                      )}
+                                    </span>
                                   </div>
                                 );
                               })}
@@ -10867,6 +10985,11 @@ export default function Feed() {
                                   <h3 className="font-semibold text-sm text-gray-900 line-clamp-1 hover:text-purple-600">
                                     {media.title}
                                   </h3>
+                                  {formatMediaScopeLabel(post, media as MediaScopeFields) && (
+                                    <div className="text-gray-500 text-[11px] leading-tight mt-0.5">
+                                      {formatMediaScopeLabel(post, media as MediaScopeFields)}
+                                    </div>
+                                  )}
                                   {media.creator && (
                                     <div className="text-gray-600 text-xs mb-0.5">
                                       by {media.creator}
@@ -10929,7 +11052,14 @@ export default function Feed() {
                                       }}
                                     >
                                       <span className="text-xs">{mediaTypeEmoji}</span>
-                                      <span className="text-sm text-gray-800 truncate">{item.title}</span>
+                                      <span className="min-w-0">
+                                        <span className="text-sm text-gray-800 truncate block">{item.title}</span>
+                                        {formatMediaScopeLabel(post, item as MediaScopeFields) && (
+                                          <span className="text-[10px] text-gray-500 leading-tight block">
+                                            {formatMediaScopeLabel(post, item as MediaScopeFields)}
+                                          </span>
+                                        )}
+                                      </span>
                                     </div>
                                   );
                                 })}
@@ -10994,6 +11124,17 @@ export default function Feed() {
                                 <h3 className="font-semibold text-sm text-gray-900 line-clamp-1 hover:text-purple-600">
                                   {post.mediaItems[0].title}
                                 </h3>
+                                {formatMediaScopeLabel(
+                                  post,
+                                  post.mediaItems[0] as MediaScopeFields,
+                                ) && (
+                                  <div className="text-gray-500 text-[11px] leading-tight mt-0.5">
+                                    {formatMediaScopeLabel(
+                                      post,
+                                      post.mediaItems[0] as MediaScopeFields,
+                                    )}
+                                  </div>
+                                )}
                                 {post.mediaItems[0].creator && (
                                   <div className="text-gray-600 text-xs mb-0.5">
                                     by {post.mediaItems[0].creator}

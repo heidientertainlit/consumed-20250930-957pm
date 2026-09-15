@@ -5,6 +5,7 @@ import {
   HelpCircle, BarChart3, Users, CheckCircle2, Trophy,
   Film, Music, Tv2, Book, Headphones, Gamepad2, X, Send, User, Trash2
 } from 'lucide-react';
+import { formatMediaScopeLabel, type MediaScopeFields } from '@/lib/media-scope';
 
 export interface UGCPost {
   id: string;
@@ -13,6 +14,19 @@ export interface UGCPost {
   userName?: string;
   containsSpoilers?: boolean;
   mediaItems?: any[];
+  media_season_number?: number | string | null;
+  media_episode_number?: number | string | null;
+  media_episode_title?: string | null;
+  media_volume_number?: number | string | null;
+  mediaSeasonNumber?: number | string | null;
+  mediaEpisodeNumber?: number | string | null;
+  mediaEpisodeTitle?: string | null;
+  mediaVolumeNumber?: number | string | null;
+  seasonNumber?: number | string | null;
+  episodeNumber?: number | string | null;
+  episodeTitle?: string | null;
+  volumeNumber?: number | string | null;
+  mediaScopeLabel?: string;
   user?: {
     id: string;
     username: string;
@@ -255,6 +269,10 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, onVot
   const typeInfo = getTypeLabel(post.type);
   const TypeIcon = typeInfo.icon;
   const MediaIcon = getMediaIcon(post.mediaType);
+  const mediaScopeLabel = post.mediaScopeLabel || formatMediaScopeLabel(
+    post,
+    post.mediaItems?.[0] as MediaScopeFields | undefined,
+  );
   const username = post.user?.displayName || post.user?.username || 'Someone';
   const avatarLetter = username[0]?.toUpperCase() || '?';
 
@@ -301,7 +319,12 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, onVot
             {(post.type === 'poll' || post.type === 'predict') ? (
               <div>
                 {post.mediaTitle && (
-                  <p className="text-[10px] text-gray-500 mb-0.5 truncate">{post.mediaTitle}</p>
+                  <div className="mb-0.5">
+                    <p className="text-[10px] text-gray-500 truncate">{post.mediaTitle}</p>
+                    {mediaScopeLabel && (
+                      <p className="text-[10px] text-gray-400 leading-tight">{mediaScopeLabel}</p>
+                    )}
+                  </div>
                 )}
                 <p className="text-sm font-bold text-gray-900 line-clamp-2 mb-2">{post.content}</p>
                 {post.options && post.options.length > 0 && (() => {
@@ -387,7 +410,12 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, onVot
                 />
                 <div className="flex-1 min-w-0">
                   {post.mediaTitle && (
-                    <p className="text-xs font-semibold text-gray-900 line-clamp-1 mb-0.5">{post.mediaTitle}</p>
+                    <div className="mb-0.5">
+                      <p className="text-xs font-semibold text-gray-900 line-clamp-1">{post.mediaTitle}</p>
+                      {mediaScopeLabel && (
+                        <p className="text-[10px] text-gray-500 leading-tight mt-0.5">{mediaScopeLabel}</p>
+                      )}
+                    </div>
                   )}
                   {post.rating && post.rating > 0 && (
                     <div className="flex items-center gap-0.5 mb-1">
@@ -402,10 +430,15 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, onVot
             ) : (
               <div>
                 {post.mediaTitle && (
-                  <p className="text-xs font-semibold text-gray-900 line-clamp-1 mb-1">
-                    <MediaIcon size={11} className="inline mr-1 text-gray-400" />
-                    {post.mediaTitle}
-                  </p>
+                  <div className="mb-1">
+                    <p className="text-xs font-semibold text-gray-900 line-clamp-1">
+                      <MediaIcon size={11} className="inline mr-1 text-gray-400" />
+                      {post.mediaTitle}
+                    </p>
+                    {mediaScopeLabel && (
+                      <p className="text-[10px] text-gray-500 leading-tight mt-0.5">{mediaScopeLabel}</p>
+                    )}
+                  </div>
                 )}
                 {post.rating && post.rating > 0 && (
                   <div className="flex items-center gap-0.5 mb-1">

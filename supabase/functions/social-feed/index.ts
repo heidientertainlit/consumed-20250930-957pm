@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import {
+  mediaScopeToItemFields,
+  mediaScopeToPostColumns,
+  normalizeMediaScope,
+} from '../_shared/media-scope.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -198,6 +203,7 @@ serve(async (req) => {
           media_season_number,
           media_episode_number,
           media_episode_title,
+          media_volume_number,
           media_description,
           contains_spoilers,
           fire_votes,
@@ -615,7 +621,8 @@ serve(async (req) => {
             externalSource: post.media_external_source || pool?.media_external_source,
             canonical_media_id: post.canonical_media_id || null,
             imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source, post.id),
-            creator: post.media_creator
+            creator: post.media_creator,
+            ...normalizeMediaScope(post),
           });
         }
       });
@@ -1180,9 +1187,7 @@ serve(async (req) => {
               totalCount: listData.totalCount
             } : null,
             recCategory: post.rec_category || null,
-            media_season_number: post.media_season_number || null,
-            media_episode_number: post.media_episode_number || null,
-            media_episode_title: post.media_episode_title || null,
+            ...mediaScopeToPostColumns(post),
             mediaItems: [{
               id: `${post.media_external_source}-${post.media_external_id}`,
               title: post.media_title || '',
@@ -1192,7 +1197,8 @@ serve(async (req) => {
               rating: post.rating,
               externalId: post.media_external_id || '',
               externalSource: post.media_external_source || '',
-              canonical_media_id: post.canonical_media_id || null
+              canonical_media_id: post.canonical_media_id || null,
+              ...mediaScopeToItemFields(post),
             }]
           });
         } else {
@@ -1243,6 +1249,7 @@ serve(async (req) => {
             type: 'media_group',
             timestamp: mostRecentTimestamp,
             canonical_media_id: firstPost.canonical_media_id || null,
+            ...mediaScopeToPostColumns(firstPost),
             mediaItems: [{
               id: `${firstPost.media_external_source}-${firstPost.media_external_id}`,
               title: firstPost.media_title || '',
@@ -1251,7 +1258,8 @@ serve(async (req) => {
               imageUrl: ensureImageUrl(firstPost.image_url, firstPost.media_external_id, firstPost.media_external_source, firstPost.id),
               externalId: firstPost.media_external_id || '',
               externalSource: firstPost.media_external_source || '',
-              canonical_media_id: firstPost.canonical_media_id || null
+              canonical_media_id: firstPost.canonical_media_id || null,
+              ...mediaScopeToItemFields(firstPost),
             }],
             groupedActivities: activities,
             activityCount: activities.length
@@ -1360,6 +1368,7 @@ serve(async (req) => {
             externalId: post.media_external_id || '',
             externalSource: post.media_external_source || '',
             canonical_media_id: post.canonical_media_id || null,
+            ...mediaScopeToItemFields(post),
             description: post.media_description || ''
           }] : [],
           listId: effectiveListId || null,
@@ -1377,9 +1386,7 @@ serve(async (req) => {
             totalCount: listData.totalCount
           } : null,
           recCategory: post.rec_category || null,
-          media_season_number: post.media_season_number || null,
-          media_episode_number: post.media_episode_number || null,
-          media_episode_title: post.media_episode_title || null,
+          ...mediaScopeToPostColumns(post),
           mediaItems: hasMedia ? [{
             id: `embedded_${post.id}`,
             title: post.media_title,
@@ -1390,6 +1397,7 @@ serve(async (req) => {
             externalId: post.media_external_id || '',
             externalSource: post.media_external_source || '',
             canonical_media_id: post.canonical_media_id || null,
+            ...mediaScopeToItemFields(post),
             description: post.media_description || ''
           }] : [],
           gameMoment: gameMomentEnrichment,
@@ -1400,6 +1408,7 @@ serve(async (req) => {
       const transformedPredictions = (predictions || []).map((pred: any) => {
         const creatorUser = userMap.get(pred.origin_user_id) || { user_name: 'Unknown', display_name: 'Unknown', avatar: '' };
         const invitedUser = pred.invited_user_id ? (userMap.get(pred.invited_user_id) || null) : null;
+        const predictionMediaData = poolMediaDataMap.get(pred.id);
 
         // Calculate vote percentages for this prediction
         const poolVotes = voteCounts[pred.id] || {};
@@ -1454,18 +1463,20 @@ serve(async (req) => {
           },
           mediaExternalId: pred.media_external_id,
           mediaExternalSource: pred.media_external_source,
-          canonical_media_id: poolMediaDataMap.get(pred.id)?.canonical_media_id || null,
+          canonical_media_id: predictionMediaData?.canonical_media_id || null,
           mediaTitle: poolMediaTitleMap.get(pred.id) || null,
+          ...mediaScopeToPostColumns(predictionMediaData),
           // Add mediaItems for the prediction card to display media info
           mediaItems: poolMediaDataMap.has(pred.id) ? [{
             id: `pred-media-${pred.id}`,
-            title: poolMediaDataMap.get(pred.id).title || '',
-            mediaType: poolMediaDataMap.get(pred.id).mediaType || '',
-            externalId: poolMediaDataMap.get(pred.id).externalId || pred.media_external_id || '',
-            externalSource: poolMediaDataMap.get(pred.id).externalSource || pred.media_external_source || '',
-            canonical_media_id: poolMediaDataMap.get(pred.id).canonical_media_id || null,
-            imageUrl: poolMediaDataMap.get(pred.id).imageUrl || '',
-            creator: poolMediaDataMap.get(pred.id).creator || ''
+            title: predictionMediaData?.title || '',
+            mediaType: predictionMediaData?.mediaType || '',
+            externalId: predictionMediaData?.externalId || pred.media_external_id || '',
+            externalSource: predictionMediaData?.externalSource || pred.media_external_source || '',
+            canonical_media_id: predictionMediaData?.canonical_media_id || null,
+            imageUrl: predictionMediaData?.imageUrl || '',
+            creator: predictionMediaData?.creator || '',
+            ...mediaScopeToItemFields(predictionMediaData),
           }] : [],
           // Add isLiked status for predictions
           isLiked: likedPredictionIds.has(pred.id)
