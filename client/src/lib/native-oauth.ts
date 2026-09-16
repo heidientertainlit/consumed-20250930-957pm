@@ -6,6 +6,9 @@ function parseUrl(value: string): URL | null {
   }
 }
 
+export const NATIVE_OAUTH_CALLBACK_PATH = "/auth/callback";
+const LEGACY_NATIVE_OAUTH_CALLBACK_PATH = "/login";
+
 /**
  * Supabase returns the provider authorization URL when redirect handling is
  * disabled. Only hand that URL to the native browser when it is the expected
@@ -64,9 +67,13 @@ export function parseNativeAuthCallback(
   const refreshToken = getParameter("refresh_token");
   const attemptId = callback.searchParams.get("oauth_attempt");
   const isOAuthType = type === null || type === "signup";
+  const isOAuthCallbackPath = (
+    callback.pathname === NATIVE_OAUTH_CALLBACK_PATH
+    || callback.pathname === LEGACY_NATIVE_OAUTH_CALLBACK_PATH
+  );
 
   if (
-    callback.pathname === "/login"
+    isOAuthCallbackPath
     && isOAuthType
     && typeof attemptId === "string"
     && hasMatchingOAuthAttempt(attemptId)
@@ -74,7 +81,7 @@ export function parseNativeAuthCallback(
   ) return { kind: "oauth-error", attemptId };
 
   if (
-    callback.pathname === "/login"
+    isOAuthCallbackPath
     && isOAuthType
     && typeof attemptId === "string"
     && hasMatchingOAuthAttempt(attemptId)

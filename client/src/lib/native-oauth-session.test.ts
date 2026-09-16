@@ -48,12 +48,12 @@ test("native callback session orchestration releases the exact OAuth attempt on 
 
 test("an old or missing callback attempt never reaches the session handoff", async () => {
   const oldCallback = parseNativeAuthCallback(
-    "https://app.consumedapp.com/login?oauth_attempt=old#access_token=access&refresh_token=refresh",
+    "https://app.consumedapp.com/auth/callback?oauth_attempt=old#access_token=access&refresh_token=refresh",
     "https://app.consumedapp.com",
     (attemptId) => attemptId === "current",
   );
   const missingCallback = parseNativeAuthCallback(
-    "https://app.consumedapp.com/login#access_token=access&refresh_token=refresh",
+    "https://app.consumedapp.com/auth/callback#access_token=access&refresh_token=refresh",
     "https://app.consumedapp.com",
     () => true,
   );

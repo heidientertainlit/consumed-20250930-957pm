@@ -267,6 +267,17 @@ function CapacitorDeepLinkHandler() {
   return null;
 }
 
+function NativeOAuthCallbackPage() {
+  return (
+    <div className="min-h-screen bg-[#09060f] flex items-center justify-center px-6">
+      <div className="text-center text-white">
+        <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="mt-4 text-sm text-gray-300">Completing sign-in…</p>
+      </div>
+    </div>
+  );
+}
+
 const ADMIN_USER_ID = "88bfb2a0-e8ce-4081-b731-2a49567ff093";
 
 function Router() {
@@ -281,6 +292,10 @@ function Router() {
           <AppUpdateGate />
 
           <Switch>
+          <Route path="/auth/callback">
+            <NativeOAuthCallbackPage />
+          </Route>
+
           <Route path="/login">
             <PublicOnlyRoute>
               <LoginPage />
