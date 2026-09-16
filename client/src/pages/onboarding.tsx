@@ -1243,7 +1243,7 @@ export default function OnboardingPage() {
           <h1 className="text-[26px] leading-[1.15] font-bold" style={{ fontFamily: "Poppins, sans-serif" }}>
             Discover Your
             <br />
-            Entertainment DNA
+            Entertainment DNA™ Profile
           </h1>
           <p className="max-w-[310px] mt-3 text-[13px] leading-relaxed text-white/70">
             What you consume tells a story about you.
@@ -1326,7 +1326,7 @@ export default function OnboardingPage() {
               <div className="min-w-0">
                 <p className="truncate text-lg font-black text-gray-900">{cardName}</p>
                 <p className="mt-0.5 truncate text-sm font-semibold text-purple-600">
-                  {generatedProfile?.label || "Your Entertainment DNA"}
+                  {generatedProfile?.label || "Your Entertainment DNA™ Profile"}
                 </p>
                 <p className="mt-1 truncate text-xs text-gray-400">
                   @{normalizeUsername(identityUsername) || "yourusername"}
@@ -1701,7 +1701,7 @@ export default function OnboardingPage() {
             </div>
             {selectedTopics.length > 0 && !hasSelectedGenre && (
               <p className="mt-3 text-[12px] font-medium text-purple-600">
-                Add one more topic to help shape your Entertainment DNA. Sports can stay selected.
+                Add one more topic to help shape your Entertainment DNA™ Profile. Sports can stay selected.
               </p>
             )}
             {saveError && (
@@ -1850,7 +1850,7 @@ export default function OnboardingPage() {
                 That's 10!
               </h3>
               <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-                You've started to unlock your Entertainment DNA.
+                You've started to unlock your Entertainment DNA™ Profile.
               </p>
               <button
                 onClick={() => {
@@ -2097,7 +2097,7 @@ export default function OnboardingPage() {
           <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
             <Dna className="text-white animate-spin" size={40} style={{ animationDuration: "3s" }} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">Discovering Your Entertainment DNA</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Discovering Your Entertainment DNA™ Profile</h1>
           <p className="text-gray-700 mb-6 text-lg font-medium animate-pulse">Crafting your DNA profile...</p>
           <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4 overflow-hidden">
             <div
@@ -2124,7 +2124,7 @@ export default function OnboardingPage() {
         <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
           <Dna className="text-white" size={32} />
         </div>
-        <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 uppercase">Your Entertainment DNA</p>
+        <p className="text-[11px] tracking-[0.18em] font-bold text-purple-600 uppercase">Your Entertainment DNA™ Profile</p>
         <h1 className="text-[28px] leading-tight font-black text-gray-900 mt-1.5" style={{ fontFamily: "Poppins, sans-serif" }}>
           {generatedProfile?.label || "Your DNA is ready"}
         </h1>

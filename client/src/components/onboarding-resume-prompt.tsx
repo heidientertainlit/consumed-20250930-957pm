@@ -48,7 +48,7 @@ export function OnboardingResumePrompt({ userId }: { userId?: string | null }) {
           <Dna size={19} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-bold text-gray-900">Finish setting up your Entertainment DNA</p>
+          <p className="font-bold text-gray-900">Finish setting up your Entertainment DNA™ Profile</p>
           <p className="mt-1 text-sm leading-snug text-gray-600">
             Pick up where you left off. Your ratings and follows already count.
           </p>
