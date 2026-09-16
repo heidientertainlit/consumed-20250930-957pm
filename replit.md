@@ -3,6 +3,41 @@
 ## Overview
 Consumed is a mobile-first platform designed to transform entertainment consumption into an interactive, game-like experience. It encourages active engagement through ranking, voting, predicting, and knowledge testing, moving users from passive consumption to active participation. The platform aims to foster engagement, social comparison, and personalization, envisioning significant market potential by creating a dynamic and engaging space for entertainment enthusiasts.
 
+## PRODUCTION SAFETY — REQUIRED
+
+Never deploy, modify, migrate, reset, or otherwise change production infrastructure or production data without my explicit approval for that specific action.
+
+This includes, but is not limited to:
+
+* Supabase Edge Function deployments
+* Supabase database migrations or schema changes
+* Production database writes, resets, or destructive operations
+* Production secrets or environment variables
+* Vercel production deployments or production configuration
+* Authentication/OAuth production configuration
+* Apple/Google production authentication settings
+* Any workflow, script, hook, startup command, or automation that can modify production
+
+Starting, restarting, opening, previewing, developing, testing, building, syncing, or running this Replit workspace must NEVER automatically deploy or modify production.
+
+Development and testing actions should default to non-production environments whenever possible.
+
+Before any production-changing command is run, you must:
+
+1. Tell me exactly what production system will change.
+2. Tell me exactly what command/action you intend to run.
+3. Explain the expected impact and relevant risk.
+4. Ask for my explicit approval.
+5. Wait for that approval before executing it.
+
+My approval of one production action does not authorize additional production actions.
+
+Do not interpret requests such as “fix this,” “update this,” “make this work,” “build this,” or “continue” as permission to deploy to production.
+
+Code changes may be prepared without production deployment unless I explicitly authorize deployment.
+
+If production is currently broken and a production change appears necessary to restore service, explain the proposed recovery action and ask for approval rather than executing it automatically.
+
 ## Security preservation guardrails
 
 The existing security hardening is a protected baseline during app testing and subsequent feature fixes. A request to fix a feature, screen, sharing flow, or compatibility issue is **not** permission to weaken access controls.
