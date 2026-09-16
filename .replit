@@ -43,40 +43,7 @@ runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
-mode = "parallel"
 author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Deploy: daily-challenge"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Deploy: media-search"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Deploy: post-scheduled-content"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Deploy: generate-persona-content"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Deploy: social-feed"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Deploy: generate-trivia-polls"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Deploy: generate-dna-moments"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Deploy: People"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
