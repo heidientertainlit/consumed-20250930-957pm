@@ -36,7 +36,7 @@ export function BlockUserSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => { if (!open && !blockMutation.isPending) onClose(); }}>
-      <SheetContent side="bottom" className="rounded-t-2xl pb-safe bg-white text-gray-900">
+      <SheetContent side="bottom" overlayClassName="z-[100000]" className="z-[100001] rounded-t-2xl max-h-[85dvh] overflow-y-auto pb-[max(1.5rem,env(safe-area-inset-bottom))] bg-white text-gray-900">
         <SheetTitle className="mb-2 text-base font-semibold text-gray-900">
           {isSelf ? "You can't block yourself" : `Block ${targetUserName ? `@${targetUserName}` : "this user"}?`}
         </SheetTitle>

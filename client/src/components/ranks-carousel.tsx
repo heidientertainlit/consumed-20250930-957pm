@@ -11,6 +11,8 @@ import { BarChart3, ChevronDown, ChevronUp, Loader2, Plus, X, MessageCircle, Sen
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { ReportSheet } from '@/components/report-sheet';
 import { formatFeedName } from '@/lib/feed-name';
+import { useBlockedUsers } from '@/hooks/use-blocked-users';
+import { blockedUsersSignature } from '@/lib/block-user';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -84,7 +86,11 @@ interface RanksCarouselProps {
 }
 
 export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: RanksCarouselProps) {
-  const { session, user } = useAuth();
+  const { session, user, loading: authLoading } = useAuth();
+  const viewerId = user?.id || session?.user?.id;
+  const blocks = useBlockedUsers(viewerId);
+  const blockedIds = blocks.data || [];
+  const blocksReady = !authLoading && (!viewerId || blocks.isSuccess);
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -105,14 +111,19 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
   const [reportCommentTarget, setReportCommentTarget] = useState<{id: string; userId: string; userName: string} | null>(null);
 
   const { data: ranks, isLoading } = useQuery({
-    queryKey: ['consumed-ranks-carousel', rankIndex ?? `offset-${offset}`],
+    queryKey: ['consumed-ranks-carousel', rankIndex ?? `offset-${offset}`, viewerId ?? 'guest', blockedUsersSignature(blockedIds)],
     queryFn: async () => {
       const from = rankIndex !== undefined ? rankIndex : offset * 3;
       const to   = rankIndex !== undefined ? rankIndex : (offset * 3) + 2;
-      const { data: ranksData, error: ranksError } = await supabase
+      let ranksQuery = supabase
         .from('ranks')
         .select('*')
-        .eq('visibility', 'public')
+        .eq('visibility', 'public');
+      // Apply exclusions on the server before pagination, preserving ownerless ranks.
+      if (blockedIds.length > 0) {
+        ranksQuery = ranksQuery.or(`user_id.is.null,user_id.not.in.(${blockedIds.join(',')})`);
+      }
+      const { data: ranksData, error: ranksError } = await ranksQuery
         .order('created_at', { ascending: false })
         .range(from, to);
       
@@ -204,7 +215,7 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
         } as RankData;
       });
     },
-    enabled: !!session?.access_token
+    enabled: !!session?.access_token && blocksReady
   });
 
   useEffect(() => {
@@ -485,7 +496,7 @@ export function RanksCarousel({ expanded = false, offset = 0, rankIndex }: Ranks
     );
   }
 
-  if (!ranks || ranks.length === 0) {
+  if (!blocksReady || !ranks || ranks.length === 0) {
     return null;
   }
 

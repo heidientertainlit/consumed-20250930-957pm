@@ -37,7 +37,8 @@ export function UnblockUserSheet({
     <Sheet open={isOpen} onOpenChange={(open) => { if (!open && !unblockMutation.isPending) onClose(); }}>
       <SheetContent
         side="bottom"
-        className="rounded-t-2xl bg-white pb-safe text-gray-900"
+        overlayClassName="z-[100000]"
+        className="z-[100001] rounded-t-2xl max-h-[85dvh] overflow-y-auto bg-white pb-[max(1.5rem,env(safe-area-inset-bottom))] text-gray-900"
         aria-describedby="unblock-user-description"
       >
         <SheetTitle className="mb-2 text-base font-semibold text-gray-900">
