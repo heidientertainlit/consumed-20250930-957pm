@@ -386,33 +386,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (
     email: string,
     password: string,
-    options: AuthConsentOptions = {},
   ) => {
     clearOAuthTermsConsentAttempt()
-    if (!options.termsAccepted) {
-      return {
-        error: new Error("Please review and agree to the Terms of Service before signing in."),
-      }
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+    if (!error) {
+      rememberLastLoginMethod('email')
     }
-
-    const acceptanceAttempt = beginLegalTermsAcceptanceAttempt()
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (!error) {
-        rememberLastLoginMethod('email')
-        const { error: acceptanceError } = await acceptCurrentLegalTerms(data.user?.id)
-        if (acceptanceError) {
-          await withAuthStateRequestDeadline(supabase.auth.signOut()).catch(() => undefined)
-          return { error: acceptanceError }
-        }
-      }
-      return { error }
-    } finally {
-      finishLegalTermsAcceptanceAttempt(acceptanceAttempt)
-    }
+    return { error }
   }
 
   const signUp = async (
@@ -467,23 +450,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     options: AuthConsentOptions = {},
   ) => {
     clearOAuthTermsConsentAttempt()
-    if (!options.termsAccepted) {
-      return {
-        error: new Error("Please review and agree to the Terms of Service before signing in."),
-      }
-    }
 
     // Web sign-in returns to the exact current origin. Native returns through
     // the published app URL, whose callback lifecycle is handled separately.
     const appUrl = (import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com').replace(/\/$/, '')
     const nativePlatform = Capacitor.isNativePlatform()
     const redirectOrigin = nativePlatform ? appUrl : window.location.origin
-    const nativeAttempt = nativePlatform
-      ? beginOAuthTermsConsentAttempt(provider)
+    const consentAttempt = options.termsAccepted || nativePlatform
+      ? beginOAuthTermsConsentAttempt(provider, options.termsAccepted === true)
       : null
-    if (nativeAttempt) markNativeOAuthBrowserAttempt(nativeAttempt.id)
-    const redirectTo = nativeAttempt
-      ? `${redirectOrigin}/login?oauth_attempt=${encodeURIComponent(nativeAttempt.id)}`
+    if (nativePlatform && consentAttempt) markNativeOAuthBrowserAttempt(consentAttempt.id)
+    const redirectTo = nativePlatform && consentAttempt
+      ? `${redirectOrigin}/login?oauth_attempt=${encodeURIComponent(consentAttempt.id)}`
       : `${redirectOrigin}/login`
     let data: { url: string | null } | null = null
     let error: unknown = null
@@ -498,7 +476,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data = response.data
       error = response.error
     } catch (oauthError) {
-      if (nativeAttempt) clearMatchingOAuthTermsConsentAttempt(nativeAttempt.id)
+      if (consentAttempt) clearMatchingOAuthTermsConsentAttempt(consentAttempt.id)
       return {
         error: oauthError instanceof Error
           ? oauthError
@@ -506,7 +484,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     if (error) {
-      if (nativeAttempt) clearMatchingOAuthTermsConsentAttempt(nativeAttempt.id)
+      if (consentAttempt) clearMatchingOAuthTermsConsentAttempt(consentAttempt.id)
       return { error }
     }
 
@@ -521,7 +499,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           redirectTo,
         )
       ) {
-        clearMatchingOAuthTermsConsentAttempt(nativeAttempt?.id ?? null)
+        clearMatchingOAuthTermsConsentAttempt(consentAttempt?.id ?? null)
         return {
           error: new Error("Couldn't start sign-in securely. Please try again."),
         }
@@ -530,7 +508,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         await Browser.open({ url: authorizationUrl })
       } catch (browserError) {
-        clearMatchingOAuthTermsConsentAttempt(nativeAttempt?.id ?? null)
+        clearMatchingOAuthTermsConsentAttempt(consentAttempt?.id ?? null)
         return {
           error: browserError instanceof Error
             ? browserError
@@ -540,7 +518,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: null }
     }
 
-    beginOAuthTermsConsentAttempt(provider)
     return { error }
   }
 

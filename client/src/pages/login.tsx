@@ -28,7 +28,6 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false);
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
-  const [signInTermsAccepted, setSignInTermsAccepted] = useState(false);
   const [signUpTermsAccepted, setSignUpTermsAccepted] = useState(false);
   const [lastLoginMethod] = useState(getLastLoginMethod);
   const { user, session, loading, signIn, signUp, signInWithOAuth, resetPassword } = useAuth();
@@ -46,17 +45,9 @@ export default function LoginPage() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signInTermsAccepted) {
-      toast({
-        title: "Terms agreement required",
-        description: "Please review and agree to the Terms of Service before signing in.",
-        variant: "destructive",
-      });
-      return;
-    }
     setSubmitting(true);
     
-    const { error } = await signIn(email, password, { termsAccepted: signInTermsAccepted });
+    const { error } = await signIn(email, password);
     
     if (error) {
       toast({
@@ -268,8 +259,7 @@ export default function LoginPage() {
   const labelClasses = "text-sm font-medium text-gray-600 ml-1";
 
   const handleOAuth = async (provider: 'apple' | 'google', context: 'signin' | 'signup') => {
-    const termsAccepted = context === "signup" ? signUpTermsAccepted : signInTermsAccepted;
-    if (!termsAccepted) {
+    if (context === "signup" && !signUpTermsAccepted) {
       toast({
         title: "Terms agreement required",
         description: "Please review and agree to the Terms of Service before continuing.",
@@ -278,7 +268,10 @@ export default function LoginPage() {
       return;
     }
     setSubmitting(true);
-    const { error } = await signInWithOAuth(provider, { termsAccepted });
+    const { error } = await signInWithOAuth(
+      provider,
+      context === "signup" ? { termsAccepted: true } : undefined,
+    );
     if (error) {
       toast({
         title: `${provider === 'apple' ? 'Apple' : 'Google'} sign-in failed`,
@@ -290,7 +283,6 @@ export default function LoginPage() {
   };
 
   const renderSocialButtons = (context: 'signin' | 'signup') => {
-    const termsAccepted = context === "signup" ? signUpTermsAccepted : signInTermsAccepted;
     return (
     <div className="space-y-3 mt-5">
       <div className="relative py-1">
@@ -325,15 +317,14 @@ export default function LoginPage() {
         <SiGoogle className="h-4 w-4 text-[#4285F4]" />
         Continue with Google{context === 'signin' && lastLoginMethod === 'google' ? ' (last used)' : ''}
       </button>
-      <TermsConsentCheckbox
-        id={`checkbox-${context}-terms`}
-        checked={termsAccepted}
-        onCheckedChange={(value) => {
-          if (context === "signup") setSignUpTermsAccepted(value);
-          else setSignInTermsAccepted(value);
-        }}
-        className="mt-4"
-      />
+      {context === "signup" && (
+        <TermsConsentCheckbox
+          id="checkbox-signup-terms"
+          checked={signUpTermsAccepted}
+          onCheckedChange={setSignUpTermsAccepted}
+          className="mt-4"
+        />
+      )}
     </div>
     );
   };

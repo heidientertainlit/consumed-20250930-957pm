@@ -26,7 +26,6 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
   const [activeTab, setActiveTab] = useState('signin')
   const [showSignInPassword, setShowSignInPassword] = useState(false)
   const [showSignUpPassword, setShowSignUpPassword] = useState(false)
-  const [signInTermsAccepted, setSignInTermsAccepted] = useState(false)
   const [signUpTermsAccepted, setSignUpTermsAccepted] = useState(false)
   const [lastLoginMethod] = useState(getLastLoginMethod)
   const { toast } = useToast()
@@ -43,18 +42,10 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!signInTermsAccepted) {
-      toast({
-        title: "Terms agreement required",
-        description: "Please review and agree to the Terms of Service before signing in.",
-        variant: "destructive",
-      })
-      return
-    }
     setIsLoading(true)
 
     try {
-      const { error } = await signIn(email, password, { termsAccepted: signInTermsAccepted })
+      const { error } = await signIn(email, password)
 
       if (error) {
         toast({
@@ -131,8 +122,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
 
   const handleOAuth = async (provider: 'apple' | 'google', context: 'signin' | 'signup') => {
     setIsLoading(true)
-    const termsAccepted = context === "signup" ? signUpTermsAccepted : signInTermsAccepted
-    if (!termsAccepted) {
+    if (context === "signup" && !signUpTermsAccepted) {
       toast({
         title: "Terms agreement required",
         description: "Please review and agree to the Terms of Service before continuing.",
@@ -141,7 +131,10 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
       setIsLoading(false)
       return
     }
-    const { error } = await oauthSignIn(provider, { termsAccepted })
+    const { error } = await oauthSignIn(
+      provider,
+      context === "signup" ? { termsAccepted: true } : undefined,
+    )
     if (error) {
       toast({
         title: `${provider === 'apple' ? 'Apple' : 'Google'} sign-in failed`,
@@ -183,15 +176,14 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         <div className="relative flex justify-center text-xs">
           <span className="bg-card px-2 text-muted-foreground">or continue with email</span>
         </div>
-        <TermsConsentCheckbox
-          id={`modal-checkbox-${context}-terms`}
-          checked={context === "signup" ? signUpTermsAccepted : signInTermsAccepted}
-          onCheckedChange={(value) => {
-            if (context === "signup") setSignUpTermsAccepted(value)
-            else setSignInTermsAccepted(value)
-          }}
-          className="mt-3"
-        />
+        {context === "signup" && (
+          <TermsConsentCheckbox
+            id="modal-checkbox-signup-terms"
+            checked={signUpTermsAccepted}
+            onCheckedChange={setSignUpTermsAccepted}
+            className="mt-3"
+          />
+        )}
       </div>
     </div>
   )
@@ -199,7 +191,6 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
   const resetForm = () => {
     setEmail('')
     setPassword('')
-    setSignInTermsAccepted(false)
     setSignUpTermsAccepted(false)
     setIsLoading(false)
   }

@@ -11,6 +11,7 @@ import {
 const baseAttempt = {
   provider: "google" as const,
   termsVersion: LEGAL_TERMS_VERSION,
+  termsAccepted: true,
   issuedAt: 1_000,
 };
 
@@ -44,6 +45,20 @@ test("OAuth consent attempts are bound to the callback account and provider", ()
       now: 2_000,
     }),
     false,
+  );
+});
+
+test("OAuth callback correlation does not imply Terms consent", () => {
+  assert.equal(baseAttempt.termsAccepted, true);
+  assert.equal(
+    matchesOAuthConsentAttempt({
+      attempt: { ...baseAttempt, termsAccepted: false },
+      userId: "account-a",
+      authSignInUserId: "account-a",
+      provider: "google",
+      now: 2_000,
+    }),
+    true,
   );
 });
 

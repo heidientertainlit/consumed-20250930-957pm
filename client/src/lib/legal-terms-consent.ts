@@ -40,6 +40,7 @@ export type OAuthConsentAttempt = {
   id: string;
   provider: "apple" | "google";
   termsVersion: string;
+  termsAccepted: boolean;
   issuedAt: number;
 };
 
@@ -61,11 +62,13 @@ function createAttemptId() {
 
 export function beginOAuthTermsConsentAttempt(
   provider: OAuthConsentAttempt["provider"],
+  termsAccepted = true,
 ): OAuthConsentAttempt {
   const attempt: OAuthConsentAttempt = {
     id: createAttemptId(),
     provider,
     termsVersion: LEGAL_TERMS_VERSION,
+    termsAccepted,
     issuedAt: Date.now(),
   };
   nativeOAuthCallbackReceived = false;
@@ -92,6 +95,7 @@ function readOAuthTermsConsentAttempt(): OAuthConsentAttempt | null {
       typeof parsed.id !== "string"
       || (parsed.provider !== "apple" && parsed.provider !== "google")
       || typeof parsed.termsVersion !== "string"
+      || typeof parsed.termsAccepted !== "boolean"
       || typeof parsed.issuedAt !== "number"
       || !isFreshOAuthConsentAttempt(
         {
@@ -142,7 +146,7 @@ export function takeMatchingOAuthTermsConsentAttempt(user: User) {
   }
   clearOAuthTermsConsentAttempt();
   lastAuthSignInUserId = null;
-  return true;
+  return attempt.termsAccepted;
 }
 
 export function noteAuthSignIn(userId: string) {
