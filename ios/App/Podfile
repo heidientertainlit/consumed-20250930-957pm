@@ -15,6 +15,7 @@ def capacitor_pods
   pod 'CapacitorBrowser', :path => '../../node_modules/@capacitor/browser'
   pod 'CapacitorKeyboard', :path => '../../node_modules/@capacitor/keyboard'
   pod 'CapacitorShare', :path => '../../node_modules/@capacitor/share'
+  pod 'OneSignalCordovaDependencies', :git => 'https://github.com/OneSignal/OneSignal-Cordova-SDK.git', :tag => '5.5.7'
   pod 'CordovaPluginsStatic', :path => '../capacitor-cordova-ios-plugins'
 end
 

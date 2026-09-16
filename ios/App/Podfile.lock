@@ -3,11 +3,17 @@ PODS:
     - CapacitorCordova
   - CapacitorApp (8.1.1):
     - Capacitor
+  - CapacitorBrowser (8.0.4):
+    - Capacitor
   - CapacitorCordova (8.5.0)
   - CapacitorKeyboard (8.0.5):
     - Capacitor
+  - CapacitorShare (8.0.1):
+    - Capacitor
   - CordovaPluginsStatic (8.5.0):
     - CapacitorCordova
+    - OneSignalCordovaDependencies
+  - OneSignalCordovaDependencies (5.5.7):
     - OneSignalXCFramework (= 5.6.1)
   - OneSignalXCFramework (5.6.1):
     - OneSignalXCFramework/OneSignalComplete (= 5.6.1)
@@ -26,6 +32,7 @@ PODS:
   - OneSignalXCFramework/OneSignalCore (5.6.1)
   - OneSignalXCFramework/OneSignalExtension (5.6.1):
     - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalOSCore
     - OneSignalXCFramework/OneSignalOutcomes
   - OneSignalXCFramework/OneSignalInAppMessages (5.6.1):
     - OneSignalXCFramework/OneSignalCore
@@ -45,11 +52,13 @@ PODS:
   - OneSignalXCFramework/OneSignalNotifications (5.6.1):
     - OneSignalXCFramework/OneSignalCore
     - OneSignalXCFramework/OneSignalExtension
+    - OneSignalXCFramework/OneSignalOSCore
     - OneSignalXCFramework/OneSignalOutcomes
   - OneSignalXCFramework/OneSignalOSCore (5.6.1):
     - OneSignalXCFramework/OneSignalCore
   - OneSignalXCFramework/OneSignalOutcomes (5.6.1):
     - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalOSCore
   - OneSignalXCFramework/OneSignalUser (5.6.1):
     - OneSignalXCFramework/OneSignalCore
     - OneSignalXCFramework/OneSignalNotifications
@@ -59,9 +68,12 @@ PODS:
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
+  - "CapacitorBrowser (from `../../node_modules/@capacitor/browser`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
+  - "CapacitorShare (from `../../node_modules/@capacitor/share`)"
   - CordovaPluginsStatic (from `../capacitor-cordova-ios-plugins`)
+  - OneSignalCordovaDependencies (from `https://github.com/OneSignal/OneSignal-Cordova-SDK.git`, tag `5.5.7`)
 
 SPEC REPOS:
   trunk:
@@ -72,21 +84,36 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/ios"
   CapacitorApp:
     :path: "../../node_modules/@capacitor/app"
+  CapacitorBrowser:
+    :path: "../../node_modules/@capacitor/browser"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
   CapacitorKeyboard:
     :path: "../../node_modules/@capacitor/keyboard"
+  CapacitorShare:
+    :path: "../../node_modules/@capacitor/share"
   CordovaPluginsStatic:
     :path: "../capacitor-cordova-ios-plugins"
+  OneSignalCordovaDependencies:
+    :git: https://github.com/OneSignal/OneSignal-Cordova-SDK.git
+    :tag: 5.5.7
+
+CHECKOUT OPTIONS:
+  OneSignalCordovaDependencies:
+    :git: https://github.com/OneSignal/OneSignal-Cordova-SDK.git
+    :tag: 5.5.7
 
 SPEC CHECKSUMS:
   Capacitor: 00b87168591cc006ea6f5c0de681ec5c39a2c8eb
   CapacitorApp: 305bd13c44f6f9d164e2ee66a4faa956ed8c0e06
+  CapacitorBrowser: 752e0208aa07c7aa63d1f7cde895a3e9519b2656
   CapacitorCordova: 9d3acbb574048e7167d2af127a0af2123e619f2f
   CapacitorKeyboard: b6b0744890cdb1d9a96e2cafcc9253fdcc55de3b
-  CordovaPluginsStatic: 39bec07e628255e7d7e6d2c0f17316cbc31095f1
+  CapacitorShare: 0c58305114538568059bfc07111f22dcb9cb2a82
+  CordovaPluginsStatic: caf26469d65071ae6a1cf9fd53145fed2b30a533
+  OneSignalCordovaDependencies: bb8a4f10f4cd97d7ad862e6ec7b4b668ace64999
   OneSignalXCFramework: c38d48069949912d19e7c64d2ff30f5c9edba1ee
 
-PODFILE CHECKSUM: 2f02fbb4a72e364884247a11a5942b752c78743d
+PODFILE CHECKSUM: 2b4ad94e6af26271954a79e1aefa4b5c0b207c43
 
 COCOAPODS: 1.16.2
