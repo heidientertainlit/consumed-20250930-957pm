@@ -10,19 +10,19 @@ const supabaseUrl = "https://project.supabase.co";
 test("only the configured HTTPS Supabase authorize endpoint opens natively", () => {
   assert.equal(
     isTrustedNativeOAuthAuthorizationUrl(
-      "https://project.supabase.co/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fapp.consumedapp.com%2Fauth%2Fcallback%3Foauth_attempt%3Dattempt-1",
+      "https://project.supabase.co/auth/v1/authorize?provider=google&redirect_to=com.entertainlit.consumed%3A%2F%2Fauth%2Fcallback%3Foauth_attempt%3Dattempt-1",
       supabaseUrl,
       "google",
-      "https://app.consumedapp.com/auth/callback?oauth_attempt=attempt-1",
+      "com.entertainlit.consumed://auth/callback?oauth_attempt=attempt-1",
     ),
     true,
   );
   assert.equal(
     isTrustedNativeOAuthAuthorizationUrl(
-      "https://project.supabase.co/auth/v1/authorize?provider=apple&redirect_to=https%3A%2F%2Fapp.consumedapp.com%2Fauth%2Fcallback%3Foauth_attempt%3Dattempt-1",
+      "https://project.supabase.co/auth/v1/authorize?provider=apple&redirect_to=com.entertainlit.consumed%3A%2F%2Fauth%2Fcallback%3Foauth_attempt%3Dattempt-1",
       supabaseUrl,
       "apple",
-      "https://app.consumedapp.com/auth/callback?oauth_attempt=attempt-1",
+      "com.entertainlit.consumed://auth/callback?oauth_attempt=attempt-1",
     ),
     true,
   );
@@ -76,7 +76,7 @@ test("only the configured HTTPS Supabase authorize endpoint opens natively", () 
 test("native callbacks require the exact app path and callback type", () => {
   assert.deepEqual(
     parseNativeAuthCallback(
-      "https://app.consumedapp.com/auth/callback?oauth_attempt=attempt-1#access_token=access&refresh_token=refresh",
+      "com.entertainlit.consumed://auth/callback?oauth_attempt=attempt-1#access_token=access&refresh_token=refresh",
       "https://app.consumedapp.com",
       (attemptId) => attemptId === "attempt-1",
     ),
@@ -118,7 +118,15 @@ test("native callbacks require the exact app path and callback type", () => {
   );
   assert.equal(
     parseNativeAuthCallback(
-      "https://app.consumedapp.com/auth/wrong?oauth_attempt=attempt-1#access_token=access&refresh_token=refresh",
+      "com.entertainlit.consumed://auth/wrong?oauth_attempt=attempt-1#access_token=access&refresh_token=refresh",
+      "https://app.consumedapp.com",
+      () => true,
+    ),
+    null,
+  );
+  assert.equal(
+    parseNativeAuthCallback(
+      "other.app://auth/callback?oauth_attempt=attempt-1#access_token=access&refresh_token=refresh",
       "https://app.consumedapp.com",
       () => true,
     ),

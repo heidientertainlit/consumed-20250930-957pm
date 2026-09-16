@@ -7,6 +7,8 @@ function parseUrl(value: string): URL | null {
 }
 
 export const NATIVE_OAUTH_CALLBACK_PATH = "/auth/callback";
+export const NATIVE_OAUTH_CALLBACK_SCHEME = "com.entertainlit.consumed";
+export const NATIVE_OAUTH_CALLBACK_URL = `${NATIVE_OAUTH_CALLBACK_SCHEME}://auth/callback`;
 const LEGACY_NATIVE_OAUTH_CALLBACK_PATH = "/login";
 
 /**
@@ -55,8 +57,6 @@ export function parseNativeAuthCallback(
   if (
     !callback
     || !expectedApp
-    || callback.protocol !== "https:"
-    || callback.origin !== expectedApp.origin
   ) return null;
 
   const hashParams = new URLSearchParams(callback.hash.slice(1));
@@ -67,10 +67,20 @@ export function parseNativeAuthCallback(
   const refreshToken = getParameter("refresh_token");
   const attemptId = callback.searchParams.get("oauth_attempt");
   const isOAuthType = type === null || type === "signup";
-  const isOAuthCallbackPath = (
-    callback.pathname === NATIVE_OAUTH_CALLBACK_PATH
-    || callback.pathname === LEGACY_NATIVE_OAUTH_CALLBACK_PATH
+  const isNativeSchemeOAuthCallback = (
+    callback.protocol === `${NATIVE_OAUTH_CALLBACK_SCHEME}:`
+    && callback.hostname === "auth"
+    && callback.pathname === "/callback"
   );
+  const isLegacyHttpsOAuthCallback = (
+    callback.protocol === "https:"
+    && callback.origin === expectedApp.origin
+    && (
+      callback.pathname === NATIVE_OAUTH_CALLBACK_PATH
+      || callback.pathname === LEGACY_NATIVE_OAUTH_CALLBACK_PATH
+    )
+  );
+  const isOAuthCallbackPath = isNativeSchemeOAuthCallback || isLegacyHttpsOAuthCallback;
 
   if (
     isOAuthCallbackPath
@@ -91,7 +101,9 @@ export function parseNativeAuthCallback(
     return { kind: "oauth-session", accessToken, refreshToken, attemptId };
   }
   if (
-    callback.pathname === "/reset-password"
+    callback.protocol === "https:"
+    && callback.origin === expectedApp.origin
+    && callback.pathname === "/reset-password"
     && type === "recovery"
     && accessToken
     && refreshToken

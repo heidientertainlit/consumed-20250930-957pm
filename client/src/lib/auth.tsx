@@ -37,7 +37,7 @@ import {
 } from "./auth-flow"
 import {
   isTrustedNativeOAuthAuthorizationUrl,
-  NATIVE_OAUTH_CALLBACK_PATH,
+  NATIVE_OAUTH_CALLBACK_URL,
 } from "./native-oauth"
 import { createProviderIdentityTransition } from "./provider-identity-transition"
 import { createOneSignalIdentityAdapter } from "./onesignal-identity"
@@ -464,7 +464,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       : null
     if (nativePlatform && consentAttempt) markNativeOAuthBrowserAttempt(consentAttempt.id)
     const redirectTo = nativePlatform && consentAttempt
-      ? `${redirectOrigin}${NATIVE_OAUTH_CALLBACK_PATH}?oauth_attempt=${encodeURIComponent(consentAttempt.id)}`
+      ? `${NATIVE_OAUTH_CALLBACK_URL}?oauth_attempt=${encodeURIComponent(consentAttempt.id)}`
       : `${redirectOrigin}/login`
     let data: { url: string | null } | null = null
     let error: unknown = null

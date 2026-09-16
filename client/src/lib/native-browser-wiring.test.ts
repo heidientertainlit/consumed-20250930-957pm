@@ -23,7 +23,7 @@ test("email/password stays direct while only OAuth opens the native browser", ()
   assert.match(oauth, /skipBrowserRedirect: true/);
   assert.match(oauth, /if \(nativePlatform\)/);
   assert.match(oauth, /await Browser\.open\(\{ url: authorizationUrl \}\)/);
-  assert.match(oauth, /NATIVE_OAUTH_CALLBACK_PATH/);
+  assert.match(oauth, /NATIVE_OAUTH_CALLBACK_URL/);
   assert.match(auth, /const redirectOrigin = nativePlatform \? appUrl : window\.location\.origin/);
   assert.match(auth, /type OAuthProvider = ['"]google['"] \| ['"]apple['"]|type OAuthProvider = ['"]apple['"] \| ['"]google['"]/);
 });
