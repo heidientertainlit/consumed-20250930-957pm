@@ -2,8 +2,8 @@ import type { Express, NextFunction, Request, Response } from "express";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
-import { verifyLeaderboardShareToken } from "./leaderboard-share";
-import { createShareCardToken, type ShareCardKind } from "./share-card-image";
+import { verifyLeaderboardShareToken } from "./leaderboard-share.js";
+import { createShareCardToken, type ShareCardKind } from "./share-card-image.js";
 
 type OpenGraphTags = {
   title: string;

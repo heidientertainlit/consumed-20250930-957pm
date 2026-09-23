@@ -29,9 +29,9 @@ Replacing an existing static Open Graph image can make the preview artwork look 
 
 **How to apply:** Treat artwork bytes, crawler metadata, and the direct serverless route as three separate production checks.
 
-For this Vite/static-SPA deployment, use one explicit `api/og.ts` function and pass public share paths through a rewrite query parameter. Do not rely on a nested catch-all function filename. Imports from the function into project TypeScript must use the emitted `.js` extension under Node ESM.
+For this Vite/static-SPA deployment, use one explicit `api/og.ts` function and pass public share paths through a rewrite query parameter. Do not rely on a nested catch-all function filename. Every runtime relative import in the function's transitive project-module graph must use the emitted `.js` extension under Node ESM, not just the entry-point import.
 
-**Why:** The nested catch-all was omitted from production routing; after switching to an explicit function, Vercel compiled it to ESM but an extensionless project import crashed at invocation with `ERR_MODULE_NOT_FOUND`.
+**Why:** The nested catch-all was omitted from production routing; after switching to an explicit function, Vercel compiled it to ESM but an extensionless project import crashed at invocation with `ERR_MODULE_NOT_FOUND`. Fixing only the entry-point import left another extensionless dependency inside the imported module, which crashed all share routes when Node loaded the function.
 
 **How to apply:** Validate the direct function separately. Static HTML means discovery/routing failed; `FUNCTION_INVOCATION_FAILED` requires runtime logs. Confirm the compiled function locally and production after each Vercel deployment.
 
