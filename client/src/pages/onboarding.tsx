@@ -1,3 +1,4 @@
+import { sharedRouteFromPath } from "@/lib/share-deep-link";
 import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent } from "react";
 import { useLocation } from "wouter";
 import { ArrowRight, Camera, Check, ChevronRight, CircleUser, Dna, Eye, Feather, Forward, Gamepad2, Heart, HeartHandshake, HelpCircle, Home, Leaf, Loader2, Mic, Music, Palette, Plane, Rocket, Search, Sparkles, Trophy, Tv, Users, Video, Wand2, Youtube, Zap, Clapperboard, Smile, Skull, Crown, Drama, BookOpen } from "lucide-react";
@@ -684,7 +685,9 @@ export default function OnboardingPage() {
       if (step === "customize") {
         markOnboardingComplete(user.id);
         await waitForPendingSaves();
-        setLocation(destination);
+        const sharedReturn = sharedRouteFromPath(sessionStorage.getItem("identityReturnUrl"));
+        if (sharedReturn) sessionStorage.removeItem("identityReturnUrl");
+        setLocation(sharedReturn || destination);
         return;
       }
       if (identityHasExistingDna) {
@@ -692,9 +695,7 @@ export default function OnboardingPage() {
         const returnUrl = sessionStorage.getItem("identityReturnUrl");
         sessionStorage.removeItem("identityReturnUrl");
         setLocation(
-          returnUrl && !returnUrl.startsWith("/login") && !returnUrl.startsWith("/onboarding")
-            ? returnUrl
-            : "/activity",
+          sharedRouteFromPath(returnUrl) || "/activity",
         );
         return;
       }
@@ -721,7 +722,9 @@ export default function OnboardingPage() {
   const completeAndNavigate = async (route: string) => {
     markOnboardingComplete(user?.id);
     await waitForPendingSaves();
-    setLocation(route);
+    const sharedReturn = sharedRouteFromPath(sessionStorage.getItem("identityReturnUrl"));
+    if (sharedReturn) sessionStorage.removeItem("identityReturnUrl");
+    setLocation(sharedReturn || route);
   };
 
   const leaveForNow = async (route = "/activity") => {
@@ -794,7 +797,9 @@ export default function OnboardingPage() {
       if (profileResult.error) throw profileResult.error;
       if (profileResult.data && !resumeDNA) {
         markOnboardingComplete(user.id);
-        setLocation("/profile");
+        const sharedReturn = sharedRouteFromPath(sessionStorage.getItem("identityReturnUrl"));
+        if (sharedReturn) sessionStorage.removeItem("identityReturnUrl");
+        setLocation(sharedReturn || "/profile");
         return;
       }
       setHasExistingProfile(Boolean(profileResult.data));

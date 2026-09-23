@@ -28,6 +28,7 @@ import {
 } from "@/lib/legal-terms-consent";
 import { parseNativeAuthCallback } from "@/lib/native-oauth";
 import { restoreNativeAuthCallbackSession } from "@/lib/native-oauth-session";
+import { PENDING_SHARED_ROUTE, SHARED_ROUTE_EVENT, sharedRouteFromPath, sharedRouteFromUrl } from "@/lib/share-deep-link";
 
 // Pages
 import AdminPage from "@/pages/admin";
@@ -185,6 +186,30 @@ function PendingRouteHandler() {
   return null;
 }
 
+function NativeSharedLinkHandler() {
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const consume = () => {
+      // Auth and push routes retain their existing priority during startup.
+      if (localStorage.getItem("pendingOAuthSession") || localStorage.getItem("pendingRecovery")) return;
+      const route = sharedRouteFromPath(localStorage.getItem(PENDING_SHARED_ROUTE));
+      localStorage.removeItem(PENDING_SHARED_ROUTE);
+      if (route) setLocation(route);
+    };
+    window.addEventListener(SHARED_ROUTE_EVENT, consume);
+    // A cold-start URL may have arrived before React mounted.
+    void CapApp.getLaunchUrl().then((launch) => {
+      const route = launch?.url ? sharedRouteFromUrl(launch.url) : null;
+      if (route && !localStorage.getItem(PENDING_SHARED_ROUTE)) localStorage.setItem(PENDING_SHARED_ROUTE, route);
+      consume();
+    }).catch(consume);
+    return () => window.removeEventListener(SHARED_ROUTE_EVENT, consume);
+  }, [setLocation]);
+  return null;
+}
+
 /**
  * Handles Supabase auth deep links on iOS (Capacitor Universal Links).
  *
@@ -256,12 +281,13 @@ function CapacitorDeepLinkHandler() {
           localStorage.removeItem("pendingOAuthSession");
           localStorage.removeItem("pendingRoute");
         }
-        setLocation(callback.kind === "recovery-session" ? "/reset-password" : "/activity");
+        setLocation(callback.kind === "recovery-session" ? "/reset-password"
+          : sharedRouteFromPath(sessionStorage.getItem("returnUrl")) ? "/login" : "/activity");
       }
     };
 
-    CapApp.addListener('appUrlOpen', handleAppUrlOpen);
-    return () => { CapApp.removeAllListeners(); };
+    const listener = CapApp.addListener('appUrlOpen', handleAppUrlOpen);
+    return () => { void listener.then((handle) => handle.remove()); };
   }, [setLocation]);
 
   return null;
@@ -286,6 +312,7 @@ function Router() {
   return (
     <AuthProvider>
       <PendingRouteHandler />
+      <NativeSharedLinkHandler />
       <CapacitorDeepLinkHandler />
       <TermsAcceptanceGate>
         <PageTracker>
@@ -597,15 +624,15 @@ function Router() {
           </Route>
 
           <Route path="/media/:type/:source/:id">
-            <ProtectedRoute>
+            <IdentityAwareRoute>
               <MediaDetail />
-            </ProtectedRoute>
+            </IdentityAwareRoute>
           </Route>
 
           <Route path="/media/:type/:source/:prefix/:id">
-            <ProtectedRoute>
+            <IdentityAwareRoute>
               <MediaDetail />
-            </ProtectedRoute>
+            </IdentityAwareRoute>
           </Route>
 
           <Route path="/post/:id">

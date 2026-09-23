@@ -14,6 +14,7 @@ import {
   notifyNativeOAuthBrowserOutcome,
 } from "./lib/legal-terms-consent";
 import { parseNativeAuthCallback } from "./lib/native-oauth";
+import { PENDING_SHARED_ROUTE, SHARED_ROUTE_EVENT, sharedRouteFromPath, sharedRouteFromUrl } from "./lib/share-deep-link";
 
 // Replit's public development proxy does not accept an explicit :5000 port.
 // Normalize stale preview URLs before the SPA adds them to navigation history.
@@ -43,7 +44,11 @@ if (Capacitor.isNativePlatform()) {
       hasMatchingOAuthTermsConsentAttempt,
     );
     if (!callback) {
-      console.log("[RESET-DEBUG] Invalid native auth callback, ignoring");
+      const route = sharedRouteFromUrl(url);
+      if (route) {
+        localStorage.setItem(PENDING_SHARED_ROUTE, route);
+        window.dispatchEvent(new Event(SHARED_ROUTE_EVENT));
+      }
       return;
     }
     if (callback.kind === "oauth-error") {
@@ -68,7 +73,8 @@ if (Capacitor.isNativePlatform()) {
     }
     const isRecovery = callback.kind === "recovery-session";
     const storageKey = isRecovery ? "pendingRecovery" : "pendingOAuthSession";
-    const pendingRoute = isRecovery ? "/reset-password" : "/activity";
+    const pendingRoute = isRecovery ? "/reset-password"
+      : sharedRouteFromPath(sessionStorage.getItem("returnUrl")) ? "/login" : "/activity";
     localStorage.setItem(storageKey, JSON.stringify({
       accessToken: callback.accessToken,
       refreshToken: callback.refreshToken,

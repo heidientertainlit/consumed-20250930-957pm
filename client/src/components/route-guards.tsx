@@ -2,6 +2,7 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { sharedRouteFromPath } from "@/lib/share-deep-link";
 import {
   loadProfileIdentity,
   type ResolvedProfileIdentity,
@@ -168,11 +169,13 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
 
     const redirectAuthenticatedUser = async () => {
       const returnUrl = sessionStorage.getItem("returnUrl");
+      const sharedReturn = sharedRouteFromPath(returnUrl);
       const isLeaderboardShareReturn = Boolean(
         returnUrl
         && returnUrl.startsWith("/leaderboard?")
         && new URLSearchParams(returnUrl.split("?")[1] || "").has("share"),
       );
+      const destination = sharedReturn || (isLeaderboardShareReturn ? returnUrl : null);
       const dnaResult = await supabase
         .from("dna_profiles")
         .select("user_id")
@@ -188,8 +191,8 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
       if (dnaProfile) markOnboardingComplete(user.id);
 
       if (!identity.complete) {
-        if (isLeaderboardShareReturn && returnUrl) {
-          sessionStorage.setItem("identityReturnUrl", returnUrl);
+        if (destination) {
+          sessionStorage.setItem("identityReturnUrl", destination);
         }
         sessionStorage.removeItem("returnUrl");
         setLocation("/onboarding");
@@ -201,7 +204,7 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
       // post-login landing page. Incomplete profiles are routed to onboarding
       // above before reaching this branch.
       sessionStorage.removeItem("returnUrl");
-      setLocation(isLeaderboardShareReturn && returnUrl ? returnUrl : "/activity");
+      setLocation(destination || "/activity");
     };
 
     void redirectAuthenticatedUser();

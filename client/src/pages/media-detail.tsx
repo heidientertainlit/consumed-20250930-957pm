@@ -9,6 +9,8 @@ import RoomComposer, { DISCUSSION_TAGS, dbTagToDisplay } from "@/components/room
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
+import { GuestGate } from "@/components/guest-signup-gate";
+import { SUPABASE_ANON_KEY } from "@/lib/supabase";
 import MentionInput from "@/components/mention-input";
 import { shareLink } from "@/lib/share";
 import { MEDIA_MATCH_SCORER_VERSION } from "@/lib/media-match";
@@ -464,7 +466,8 @@ export default function MediaDetail() {
         `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${params?.source}&external_id=${params?.id}&media_type=${params?.type}`,
         {
           headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
+            'Authorization': `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`,
+            'apikey': SUPABASE_ANON_KEY,
             'Content-Type': 'application/json'
           }
         }
@@ -520,7 +523,7 @@ export default function MediaDetail() {
       console.error('Failed to fetch media details and no cached data found');
       throw new Error('Media not found');
     },
-    enabled: !!params?.source && !!params?.id && !!session?.access_token,
+    enabled: !!params?.source && !!params?.id,
     retry: false
   });
 
@@ -1464,6 +1467,7 @@ export default function MediaDetail() {
   };
 
   return (
+    <GuestGate enabled={!session}>
     <div className="min-h-screen bg-[#fbf8f5] pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
@@ -2464,5 +2468,6 @@ export default function MediaDetail() {
       />
 
     </div>
+    </GuestGate>
   );
 }
