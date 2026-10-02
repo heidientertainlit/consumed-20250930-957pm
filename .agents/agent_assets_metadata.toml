@@ -314,3 +314,17 @@ mtime_ms = 1789408179004
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/8e4ddbcf-8454-4f45-99c0-aeb7a8f2e98d/e5e96883-814d-4269-864a-69b01c309a63"
 storage_version_token = "1789408198676978"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "uqfmzWw6AaaDWXtP-9lfv"
+uri = "file://reports/persona-generator-test-batch.html"
+type = "html"
+title = "Review all 20 persona sample posts"
+description = "Actual AI outputs with persona, media, internal mode, rating, full content and admin debug metadata. Local dry run using checked-in persona definitions; no database drafts, scheduling or publishing."
+logical_id = "b84c1f2c-00de-441a-bb2c-1e983203e65a"
+content_hash = "sha256:3ea88d157afdfdb659aad1f8d1d2454ba5afeca8eb20980ccb0dcbcccb74cb35"
+size = 32279
+mtime_ms = 1790971468837
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/b84c1f2c-00de-441a-bb2c-1e983203e65a/1183b8dd-a63b-4a76-8c80-1449dfe9e37f"
+storage_version_token = "1790971708046790"
+content_type = "text/html"

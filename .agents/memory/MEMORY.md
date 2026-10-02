@@ -68,3 +68,4 @@
 - [Development share pages](development-share-page-rendering.md) — verify direct links as well as SPA navigation; metadata HTML must retain Vite's development preamble.
 - [Native update gate rollout](native-update-gate-rollout.md) — the first checker-bearing iOS release must remain supported; only later can remote minimum-version enforcement move beyond it.
 - [PostHog surface boundaries](posthog-surface-boundary.md) — register alone omits snapshot labels; preserve consent hooks and keep metadata changes separate from the paused migration.
+- [Persona generation voice](persona-generation-voice.md) — natural variation beats perfect quotas; modes are behaviors, and voices are tendencies rather than templates or caricatures.

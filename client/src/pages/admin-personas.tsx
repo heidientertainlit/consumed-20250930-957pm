@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { supabase, SUPABASE_URL } from "@/lib/supabase";
+import PersonaGenerationControls from "@/components/admin/persona-generation-controls";
+import DraftGenerationMetadata from "@/components/admin/draft-generation-metadata";
 import {
   Sparkles, Check, X, Clock, ChevronDown, ChevronUp,
   RefreshCw, Calendar, Star, MessageSquare, Flame,
@@ -489,10 +491,14 @@ export default function AdminPersonasPage() {
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Generation failed");
-      if (result.errors?.length) {
-        console.warn("Generation warnings:", result.errors);
-      }
-      toast({ title: `Generated ${result.generated} drafts`, description: "Review them below" });
+      const partialErrors = Array.isArray(result.errors) ? result.errors : [];
+      toast({
+        title: `Generated ${result.generated} drafts`,
+        description: partialErrors.length
+          ? `${partialErrors.length} item${partialErrors.length === 1 ? "" : "s"} had errors: ${partialErrors.slice(0, 2).join("; ")}`
+          : "Review them below",
+        variant: partialErrors.length ? "destructive" : "default",
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-drafts"] });
       setActiveTab("drafts");
     } catch (err: any) {
@@ -605,7 +611,7 @@ export default function AdminPersonasPage() {
               {useTrending ? "Trending mode ON — posts will react to what's hot right now" : "Generate from trending (TMDB + Open Library)"}
             </button>
             {useTrending && (
-              <p className="text-xs text-purple-400/70 mt-1.5">Each persona will write reactions to this week's trending TV, movies, and books — making posts feel timely and culturally relevant.</p>
+              <p className="text-xs text-purple-400/70 mt-1.5">Current trending titles are added as an optional candidate source alongside persona favorites and history.</p>
             )}
           </div>
 
@@ -620,6 +626,12 @@ export default function AdminPersonasPage() {
               <><Sparkles size={15} className="mr-2" />Generate {selectedPersonaIds.length > 0 ? `${selectedPersonaIds.length * postsPerPersona} drafts` : "drafts"}</>
             )}
           </Button>
+          <PersonaGenerationControls
+            personas={personas}
+            selectedPersonaIds={selectedPersonaIds}
+            postsPerPersona={postsPerPersona}
+            useTrending={useTrending}
+          />
         </div>
 
         <div className="flex items-center gap-1 mb-4 overflow-x-auto">
@@ -772,7 +784,11 @@ export default function AdminPersonasPage() {
                               {showNotes ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                               AI note
                             </button>
-                            {showNotes && <p className="mt-1.5 text-xs text-gray-500 italic pl-2 border-l border-gray-700">{draft.ai_notes}</p>}
+                            {showNotes && (
+                              <div className="pl-2 border-l border-gray-700">
+                                <DraftGenerationMetadata notes={draft.ai_notes} />
+                              </div>
+                            )}
                           </div>
                         )}
                         {rejectingId === draft.id ? (

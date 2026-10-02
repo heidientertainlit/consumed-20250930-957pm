@@ -1,0 +1,439 @@
+{
+  "dryRun": true,
+  "source": "Checked-in persona definitions; no live history/config queried",
+  "weights": {
+    "thoughtful": 30,
+    "micro": 10,
+    "casual": 15,
+    "rating": 10,
+    "question": 10,
+    "specific": 8,
+    "opinion": 8,
+    "low_energy": 9
+  },
+  "drafts": [
+    {
+      "persona_user_id": "marcusdelacroix",
+      "persona_user_name": "marcusdelacroix",
+      "persona_display_name": "Marcus Delacroix",
+      "post_type": "review",
+      "content": "André Aciman crafts a poignant tapestry of longing in \"Call Me by Your Name.\" The intensity of the emotional landscape between Elio and Oliver draws you in, making their connection feel both intimate and expansive. However, some might find the prose a bit dense at times, which might slow the emotional momentum. Still, it's a riveting exploration of desire and identity.",
+      "rating": null,
+      "media_title": "Call Me by Your Name",
+      "media_type": "book",
+      "media_creator": "André Aciman",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"thoughtful\",\"modeLabel\":\"Thoughtful reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"low\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":null,\"words\":61,\"externalId\":\"ar4j52mEdLoC\",\"externalSource\":\"googlebooks\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "alexmoreno402",
+      "persona_user_name": "alexmoreno402",
+      "persona_display_name": "Alex Moreno",
+      "post_type": "review",
+      "content": "The film's exploration of an intense and manipulative relationship feels too distant and emotionally vague. Often tedious, it fails to fully engage the viewer.",
+      "rating": 2.5,
+      "media_title": "The Souvenir",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"specific\",\"modeLabel\":\"Specific reaction\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"low\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":2.5,\"words\":24,\"externalId\":\"473019\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "reedreads",
+      "persona_user_name": "reedreads",
+      "persona_display_name": "Samantha Reed",
+      "post_type": "review",
+      "content": "captured the ups and downs of sisterhood really well, but could get melodramatic",
+      "rating": null,
+      "media_title": "Little Women",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"minimal\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"rare\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.8,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":0.8,\"low_energy\":1.8}},\"rating\":null,\"words\":13,\"externalId\":\"331482\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "alex_thompson",
+      "persona_user_name": "alex_thompson",
+      "persona_display_name": "Alex Thompson",
+      "post_type": "review",
+      "content": "Feels like a rollercoaster of cat and mouse vibes. Entertaining from start to finish.",
+      "rating": null,
+      "media_title": "Catch Me If You Can",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"minimal\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"rare\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.8,\"rating\":0.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":1.8}},\"rating\":null,\"words\":14,\"externalId\":\"640\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "emily27",
+      "persona_user_name": "emily27",
+      "persona_display_name": "Emily Park",
+      "post_type": "review",
+      "content": "Is it really possible to build a lasting connection without the physical aspect? This show's concept still keeps me guessing despite its flaws.",
+      "rating": null,
+      "media_title": "Love Is Blind",
+      "media_type": "tv",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"opinion\",\"modeLabel\":\"Hot take / opinion\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"expressive\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1.5,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":23,\"externalId\":\"99353\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "brooksj",
+      "persona_user_name": "brooksj",
+      "persona_display_name": "Julian Brooks",
+      "post_type": "review",
+      "content": "Taylor's foray into indie folk offers a dreamy escape, though not every track hits home. Solid 3.5.",
+      "rating": 3.5,
+      "media_title": "folklore",
+      "media_type": "music",
+      "media_creator": "Taylor Swift",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"rating\",\"modeLabel\":\"Rating + quick thought\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"standard\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":3.5,\"words\":17,\"externalId\":\"1524793738\",\"externalSource\":\"itunes\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "nick",
+      "persona_user_name": "nick",
+      "persona_display_name": "Nicholas Grant",
+      "post_type": "review",
+      "content": "What makes a business story memorable to you? Curious about your thoughts!",
+      "rating": null,
+      "media_title": "How I built this",
+      "media_type": "podcast",
+      "media_creator": "Jon Doe",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"question\",\"modeLabel\":\"Conversation starter\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":12,\"externalId\":\"1491387021\",\"externalSource\":\"itunes\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "sarah13",
+      "persona_user_name": "sarah13",
+      "persona_display_name": "Sarah Whitman",
+      "post_type": "review",
+      "content": "chilling exploration of family descent into chaos. met its unsettling reputation. five.",
+      "rating": 5,
+      "media_title": "Hereditary",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"low_energy\",\"modeLabel\":\"Low-energy reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"detailed\",\"energy\":\"restrained\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"rare\",\"sarcasm\":\"medium\",\"preferredModeWeights\":{\"thoughtful\":1.8,\"micro\":0.8,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":5,\"words\":12,\"externalId\":\"493922\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "kei",
+      "persona_user_name": "kei",
+      "persona_display_name": "Kei Tanaka",
+      "post_type": "review",
+      "content": "Still wrapping my mind around those twists. Titans are intense.",
+      "rating": null,
+      "media_title": "Attack on Titan",
+      "media_type": "tv",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"low_energy\",\"modeLabel\":\"Low-energy reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"expressive\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":10,\"externalId\":\"1429\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "lenahoff",
+      "persona_user_name": "lenahoff",
+      "persona_display_name": "Lena Hoffman",
+      "post_type": "review",
+      "content": "The Night Circus has a dreamlike quality that envelops you, with its rich imagery and magical world. I found the relationship between Celia and Marco captivating, though at times the plot felt a bit like a series of enchanting moments strung together. The atmosphere is so vividly crafted, it lingers long after closing the book.",
+      "rating": null,
+      "media_title": "The Night Circus",
+      "media_type": "book",
+      "media_creator": "Erin Morgenstern",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"thoughtful\",\"modeLabel\":\"Thoughtful reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"detailed\",\"energy\":\"restrained\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"rare\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1.8,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1.5,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":55,\"externalId\":\"t1MDOGpyW9gC\",\"externalSource\":\"googlebooks\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "marcusdelacroix",
+      "persona_user_name": "marcusdelacroix",
+      "persona_display_name": "Marcus Delacroix",
+      "post_type": "review",
+      "content": "A nuanced exploration of desire and identity, yet oddly restrained. Ranked a solid 3 for its atmosphere.",
+      "rating": 3,
+      "media_title": "Call Me by Your Name",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"rating\",\"modeLabel\":\"Rating + quick thought\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"low\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":3,\"words\":17,\"externalId\":\"398818\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "alexmoreno402",
+      "persona_user_name": "alexmoreno402",
+      "persona_display_name": "Alex Moreno",
+      "post_type": "review",
+      "content": "Lydia Tár's descent into chaos had a strangely mesmerizing quality. Understated but compelling.",
+      "rating": 3.5,
+      "media_title": "TÁR",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"specific\",\"modeLabel\":\"Specific reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"low\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":3.5,\"words\":13,\"externalId\":\"817758\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "reedreads",
+      "persona_user_name": "reedreads",
+      "persona_display_name": "Samantha Reed",
+      "post_type": "review",
+      "content": "What were your thoughts on the Barbie and Ken dynamic?",
+      "rating": null,
+      "media_title": "Barbie",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"question\",\"modeLabel\":\"Conversation starter\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"minimal\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"rare\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.8,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":0.8,\"low_energy\":1.8}},\"rating\":null,\"words\":10,\"externalId\":\"346698\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "alex_thompson",
+      "persona_user_name": "alex_thompson",
+      "persona_display_name": "Alex Thompson",
+      "post_type": "review",
+      "content": "You never get tired of the T. rex reveal.",
+      "rating": null,
+      "media_title": "Jurassic Park",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"minimal\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"rare\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.8,\"rating\":0.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":1.8}},\"rating\":null,\"words\":9,\"externalId\":\"329\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "emily27",
+      "persona_user_name": "emily27",
+      "persona_display_name": "Emily Park",
+      "post_type": "review",
+      "content": "Loved how it all came together by the end. Great journey.",
+      "rating": 4,
+      "media_title": "The Bear",
+      "media_type": "tv",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"low_energy\",\"modeLabel\":\"Low-energy reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"expressive\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1.5,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":4,\"words\":11,\"externalId\":\"136315\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "brooksj",
+      "persona_user_name": "brooksj",
+      "persona_display_name": "Julian Brooks",
+      "post_type": "review",
+      "content": "Nashville Skyline offers an interesting turn with Dylan's softer vocal style. The country influence shines through, giving a laid-back vibe that's enjoyable but not groundbreaking. Some tracks hit the mark, but others feel like they're missing that classic Dylan edge. Still, it's worth a listen at 3.5.",
+      "rating": 3.5,
+      "media_title": "Nashville Skyline",
+      "media_type": "music",
+      "media_creator": "Bob Dylan",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"thoughtful\",\"modeLabel\":\"Thoughtful reaction\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"standard\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":3.5,\"words\":47,\"externalId\":\"177980677\",\"externalSource\":\"itunes\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "nick",
+      "persona_user_name": "nick",
+      "persona_display_name": "Nicholas Grant",
+      "post_type": "review",
+      "content": "The fresh perspectives on innovation in \"Zero to One\" kept me intrigued. Peter Thiel's idea that true innovation occurs when you create something entirely new, rather than just enhancing what's already there, is thought-provoking. However, some of the broader economic theories felt a bit isolated from practical, everyday business applications. Still, I appreciated the invitation to think bigger.",
+      "rating": 4,
+      "media_title": "Zero to One",
+      "media_type": "book",
+      "media_creator": "Peter Thiel",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"thoughtful\",\"modeLabel\":\"Thoughtful reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":4,\"words\":58,\"externalId\":\"POOJDQAAQBAJ\",\"externalSource\":\"googlebooks\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "sarah13",
+      "persona_user_name": "sarah13",
+      "persona_display_name": "Sarah Whitman",
+      "post_type": "review",
+      "content": "There’s something mesmerizing about its bleak madness. loved it.",
+      "rating": 4,
+      "media_title": "The Lighthouse",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"detailed\",\"energy\":\"restrained\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"rare\",\"sarcasm\":\"medium\",\"preferredModeWeights\":{\"thoughtful\":1.8,\"micro\":0.8,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":4,\"words\":9,\"externalId\":\"503919\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "kei",
+      "persona_user_name": "kei",
+      "persona_display_name": "Kei Tanaka",
+      "post_type": "review",
+      "content": "immersive lore heaven!",
+      "rating": 4.5,
+      "media_title": "Elden Ring",
+      "media_type": "game",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"micro\",\"modeLabel\":\"Micro reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"expressive\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":4.5,\"words\":3,\"externalId\":\"326243\",\"externalSource\":\"rawg\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "lenahoff",
+      "persona_user_name": "lenahoff",
+      "persona_display_name": "Lena Hoffman",
+      "post_type": "review",
+      "content": "The dynamics between Cimorene and her friends bring a delightful richness. I appreciated their camaraderie while navigating the magical challenges together.",
+      "rating": null,
+      "media_title": "The Enchanted Forest Chronicles",
+      "media_type": "book",
+      "media_creator": "Patricia C. Wrede",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"specific\",\"modeLabel\":\"Specific reaction\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"detailed\",\"energy\":\"restrained\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"rare\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1.8,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1.5,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":21,\"externalId\":\"CTd3OA6YyhoC\",\"externalSource\":\"googlebooks\",\"warnings\":[]}}",
+      "status": "draft"
+    }
+  ],
+  "errors": [],
+  "state": [
+    {
+      "personaId": "marcusdelacroix",
+      "mediaKey": "book:callmebyyourname",
+      "mode": "thoughtful",
+      "words": 61,
+      "caps": false,
+      "content": "André Aciman crafts a poignant tapestry of longing in \"Call Me by Your Name.\" The intensity of the emotional landscape between Elio and Oliver draws you in, making their connection feel both intimate and expansive. However, some might find the prose a bit dense at times, which might slow the emotional momentum. Still, it's a riveting exploration of desire and identity."
+    },
+    {
+      "personaId": "alexmoreno402",
+      "mediaKey": "movie:thesouvenir",
+      "mode": "specific",
+      "words": 24,
+      "caps": false,
+      "content": "The film's exploration of an intense and manipulative relationship feels too distant and emotionally vague. Often tedious, it fails to fully engage the viewer."
+    },
+    {
+      "personaId": "reedreads",
+      "mediaKey": "movie:littlewomen",
+      "mode": "casual",
+      "words": 13,
+      "caps": false,
+      "content": "captured the ups and downs of sisterhood really well, but could get melodramatic"
+    },
+    {
+      "personaId": "alex_thompson",
+      "mediaKey": "movie:catchmeifyoucan",
+      "mode": "casual",
+      "words": 14,
+      "caps": false,
+      "content": "Feels like a rollercoaster of cat and mouse vibes. Entertaining from start to finish."
+    },
+    {
+      "personaId": "emily27",
+      "mediaKey": "tv:loveisblind",
+      "mode": "opinion",
+      "words": 23,
+      "caps": false,
+      "content": "Is it really possible to build a lasting connection without the physical aspect? This show's concept still keeps me guessing despite its flaws."
+    },
+    {
+      "personaId": "brooksj",
+      "mediaKey": "music:folklore",
+      "mode": "rating",
+      "words": 17,
+      "caps": false,
+      "content": "Taylor's foray into indie folk offers a dreamy escape, though not every track hits home. Solid 3.5."
+    },
+    {
+      "personaId": "nick",
+      "mediaKey": "podcast:howibuiltthis",
+      "mode": "question",
+      "words": 12,
+      "caps": false,
+      "content": "What makes a business story memorable to you? Curious about your thoughts!"
+    },
+    {
+      "personaId": "sarah13",
+      "mediaKey": "movie:hereditary",
+      "mode": "low_energy",
+      "words": 12,
+      "caps": false,
+      "content": "chilling exploration of family descent into chaos. met its unsettling reputation. five."
+    },
+    {
+      "personaId": "kei",
+      "mediaKey": "tv:attackontitan",
+      "mode": "low_energy",
+      "words": 10,
+      "caps": false,
+      "content": "Still wrapping my mind around those twists. Titans are intense."
+    },
+    {
+      "personaId": "lenahoff",
+      "mediaKey": "book:thenightcircus",
+      "mode": "thoughtful",
+      "words": 55,
+      "caps": false,
+      "content": "The Night Circus has a dreamlike quality that envelops you, with its rich imagery and magical world. I found the relationship between Celia and Marco captivating, though at times the plot felt a bit like a series of enchanting moments strung together. The atmosphere is so vividly crafted, it lingers long after closing the book."
+    },
+    {
+      "personaId": "marcusdelacroix",
+      "mediaKey": "movie:callmebyyourname",
+      "mode": "rating",
+      "words": 17,
+      "caps": false,
+      "content": "A nuanced exploration of desire and identity, yet oddly restrained. Ranked a solid 3 for its atmosphere."
+    },
+    {
+      "personaId": "alexmoreno402",
+      "mediaKey": "movie:tar",
+      "mode": "specific",
+      "words": 13,
+      "caps": false,
+      "content": "Lydia Tár's descent into chaos had a strangely mesmerizing quality. Understated but compelling."
+    },
+    {
+      "personaId": "reedreads",
+      "mediaKey": "movie:barbie",
+      "mode": "question",
+      "words": 10,
+      "caps": false,
+      "content": "What were your thoughts on the Barbie and Ken dynamic?"
+    },
+    {
+      "personaId": "alex_thompson",
+      "mediaKey": "movie:jurassicpark",
+      "mode": "casual",
+      "words": 9,
+      "caps": false,
+      "content": "You never get tired of the T. rex reveal."
+    },
+    {
+      "personaId": "emily27",
+      "mediaKey": "tv:thebear",
+      "mode": "low_energy",
+      "words": 11,
+      "caps": false,
+      "content": "Loved how it all came together by the end. Great journey."
+    },
+    {
+      "personaId": "brooksj",
+      "mediaKey": "music:nashvilleskyline",
+      "mode": "thoughtful",
+      "words": 47,
+      "caps": false,
+      "content": "Nashville Skyline offers an interesting turn with Dylan's softer vocal style. The country influence shines through, giving a laid-back vibe that's enjoyable but not groundbreaking. Some tracks hit the mark, but others feel like they're missing that classic Dylan edge. Still, it's worth a listen at 3.5."
+    },
+    {
+      "personaId": "nick",
+      "mediaKey": "book:zerotoone",
+      "mode": "thoughtful",
+      "words": 58,
+      "caps": false,
+      "content": "The fresh perspectives on innovation in \"Zero to One\" kept me intrigued. Peter Thiel's idea that true innovation occurs when you create something entirely new, rather than just enhancing what's already there, is thought-provoking. However, some of the broader economic theories felt a bit isolated from practical, everyday business applications. Still, I appreciated the invitation to think bigger."
+    },
+    {
+      "personaId": "sarah13",
+      "mediaKey": "movie:thelighthouse",
+      "mode": "casual",
+      "words": 9,
+      "caps": false,
+      "content": "There’s something mesmerizing about its bleak madness. loved it."
+    },
+    {
+      "personaId": "kei",
+      "mediaKey": "game:eldenring",
+      "mode": "micro",
+      "words": 3,
+      "caps": false,
+      "content": "immersive lore heaven!"
+    },
+    {
+      "personaId": "lenahoff",
+      "mediaKey": "book:theenchantedforestchronicles",
+      "mode": "specific",
+      "words": 21,
+      "caps": false,
+      "content": "The dynamics between Cimorene and her friends bring a delightful richness. I appreciated their camaraderie while navigating the magical challenges together."
+    }
+  ]
+}

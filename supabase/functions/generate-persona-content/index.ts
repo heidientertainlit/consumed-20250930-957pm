@@ -1,287 +1,125 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { authorizeAdminOrService } from "../_shared/authorization.ts";
+import { DEFAULT_MODE_WEIGHTS, deriveSocialVoice, mediaKey, validateModeWeights, validateVoice, type Persona, type RecentPost, type MediaCandidate } from "../_shared/persona-generation.ts";
+import { buildPersonaCandidates, createPersonaChat, fetchTrendingCandidates, resolveMediaCandidate } from "../_shared/persona-media-candidates.ts";
+import { generatePersonaBatch } from "../_shared/persona-generation-engine.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
+const SETTINGS_KEY = "persona_generation_mode_weights";
+function response(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+}
+serve(async req => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") return response({ error: "POST required" }, 405);
   try {
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { auth: { persistSession: false } }
-    );
-
-    const { personaIds, postsPerPersona = 2, useTrending = false } = await req.json();
-
-    if (!personaIds || !Array.isArray(personaIds) || personaIds.length === 0) {
-      return new Response(JSON.stringify({ error: 'personaIds array required' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    // Generation, debug previews and configuration are admin-only, not merely hidden in the UI.
+    const authorization = await authorizeAdminOrService(req);
+    if (!authorization.authorized) return response({ error: authorization.error }, authorization.status);
+    const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+    const body = await req.json();
+    const action = body.action || "generate";
+    if (action === "save-settings") {
+      const weights = validateModeWeights(body.weights);
+      const { error } = await db.from("app_settings").upsert({ key: SETTINGS_KEY, value: JSON.stringify(weights) }, { onConflict: "key" });
+      if (error) throw new Error("Could not save mode weights");
+      return response({ success: true, weights });
     }
-
-    // ── Fetch trending content once, share across all personas ──
-    let trendingContext = '';
-    if (useTrending) {
-      try {
-        const tmdbKey = Deno.env.get('TMDB_API_KEY') || '';
-        const googleBooksKey = Deno.env.get('GOOGLE_BOOKS_API_KEY') || '';
-        const trendingTitles: string[] = [];
-
-        // TMDB trending TV + movies this week
-        if (tmdbKey) {
-          try {
-            const [tvRes, movieRes] = await Promise.all([
-              fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${tmdbKey}`),
-              fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${tmdbKey}`),
-            ]);
-            if (tvRes.ok) {
-              const d = await tvRes.json();
-              ((d.results || []) as any[]).slice(0, 10).forEach((s: any, i: number) => {
-                if (s.name) trendingTitles.push(`${s.name} [TV, #${i + 1} trending]`);
-              });
-            }
-            if (movieRes.ok) {
-              const d = await movieRes.json();
-              ((d.results || []) as any[]).slice(0, 8).forEach((m: any, i: number) => {
-                if (m.title) trendingTitles.push(`${m.title} [Movie, #${i + 1} trending]`);
-              });
-            }
-          } catch (_) {}
-        }
-
-        // Open Library trending books this week (free, no key)
-        try {
-          const olRes = await fetch('https://openlibrary.org/trending/weekly.json?limit=10', {
-            headers: { 'User-Agent': 'Consumed-App/1.0' },
-          });
-          if (olRes.ok) {
-            const d = await olRes.json();
-            ((d.works || []) as any[]).slice(0, 8).forEach((w: any, i: number) => {
-              if (w.title) trendingTitles.push(`${w.title} [Book, #${i + 1} trending]`);
-            });
-          }
-        } catch (_) {}
-
-        // Google Books: recent popular fiction (free key)
-        if (googleBooksKey) {
-          try {
-            const gbRes = await fetch(
-              `https://www.googleapis.com/books/v1/volumes?q=subject:fiction&orderBy=newest&maxResults=6&key=${googleBooksKey}`
-            );
-            if (gbRes.ok) {
-              const d = await gbRes.json();
-              ((d.items || []) as any[]).slice(0, 5).forEach((item: any) => {
-                const title = item.volumeInfo?.title;
-                if (title) trendingTitles.push(`${title} [Book, new release]`);
-              });
-            }
-          } catch (_) {}
-        }
-
-        if (trendingTitles.length > 0) {
-          trendingContext = `\n\nTRENDING THIS WEEK — at least half of your posts should be personal reactions to something from this list (pick whatever fits your taste best):\n${trendingTitles.map((t, i) => `${i + 1}. ${t}`).join('\n')}\n\nThe other posts can be about anything that fits your personality.`;
-        }
-      } catch (_) {
-        // Trending fetch is best-effort — don't block generation
-      }
+    if (action === "save-voice") {
+      if (typeof body.personaId !== "string") return response({ error: "personaId required" }, 400);
+      const voice = validateVoice(body.voice);
+      const { data: persona, error } = await db.from("users").select("persona_config").eq("id", body.personaId).eq("is_persona", true).single();
+      if (error || !persona) return response({ error: "Persona not found" }, 404);
+      const { error: saveError } = await db.from("users").update({ persona_config: { ...persona.persona_config, social_voice: voice } }).eq("id", body.personaId).eq("is_persona", true);
+      if (saveError) throw new Error("Could not save persona voice");
+      return response({ success: true, voice });
     }
+    if (action !== "settings" && action !== "generate" && action !== "dry-run") return response({ error: "Unknown action" }, 400);
+    const { data: setting, error: settingError } = await db.from("app_settings").select("value").eq("key", SETTINGS_KEY).maybeSingle();
+    if (settingError) throw new Error("Could not load generation settings");
+    const weights = setting ? validateModeWeights(typeof setting.value === "string" ? JSON.parse(setting.value) : setting.value) : { ...DEFAULT_MODE_WEIGHTS };
+    if (action === "settings") return response({ weights, capabilities: { dryRun: true, generationVersion: 1 } });
 
-    const { data: personas, error: personaError } = await supabaseAdmin
-      .from('users')
-      .select('id, user_name, display_name, persona_config')
-      .in('id', personaIds)
-      .eq('is_persona', true);
-
-    if (personaError || !personas || personas.length === 0) {
-      return new Response(JSON.stringify({ error: 'No valid personas found', detail: personaError?.message }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    // Preview deliberately uses different field names. An older deployed handler sees
+    // no personaIds and rejects it, rather than ignoring dryRun and creating drafts.
+    const request = action === "dry-run"
+      ? { personaIds: body.previewPersonaIds, postsPerPersona: body.previewPostsPerPersona, useTrending: body.useTrending, dryRun: true }
+      : body;
+    const { personaIds, postsPerPersona = 2, useTrending = false, dryRun = false } = request;
+    if (!Array.isArray(personaIds) || !personaIds.length || personaIds.length > 50 || personaIds.some((id: unknown) => typeof id !== "string")) return response({ error: "Select 1–50 valid personas" }, 400);
+    if (!Number.isInteger(postsPerPersona) || postsPerPersona < 1 || postsPerPersona > 5) return response({ error: "postsPerPersona must be 1–5" }, 400);
+    if (typeof dryRun !== "boolean" || typeof useTrending !== "boolean") return response({ error: "dryRun and useTrending must be booleans" }, 400);
+    const { data: rows, error: personaError } = await db.from("users").select("id,user_name,display_name,persona_config").in("id", [...new Set(personaIds)]).eq("is_persona", true);
+    if (personaError || !rows?.length) return response({ error: "No valid personas found" }, 400);
+    const personas = rows as Persona[];
+    for (const p of personas) {
+      if (!p.persona_config) return response({ error: `${p.display_name} has no persona configuration` }, 400);
+      deriveSocialVoice(p.persona_config); // Validate stored overrides before making any model requests.
     }
-
-    const openaiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openaiKey) {
-      return new Response(JSON.stringify({ error: 'OPENAI_API_KEY not configured' }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    const { data: allPersonas, error: allPersonaError } = await db.from("users").select("id").eq("is_persona", true).limit(200);
+    if (allPersonaError) throw new Error("Could not load persona history owners");
+    const ids = allPersonas?.map(p => p.id) || [];
+    const since = new Date(Date.now() - 30 * 86400000).toISOString();
+    // Pending drafts/schedules are checked regardless of age; only publication history is time-bounded.
+    const historyResults = await Promise.all([
+      db.from("persona_post_drafts").select("persona_user_id,media_title,media_type,content,created_at").in("persona_user_id", ids).eq("status", "draft").order("created_at", { ascending: false }).limit(500),
+      db.from("scheduled_persona_posts").select("persona_user_id,media_title,media_type,content,created_at").in("persona_user_id", ids).eq("posted", false).order("created_at", { ascending: false }).limit(500),
+      db.from("social_posts").select("user_id,media_title,media_type,content,created_at").in("user_id", ids).gte("created_at", since).order("created_at", { ascending: false }).limit(500),
+    ]);
+    if (historyResults.some(r => r.error)) throw new Error("Could not load recent media history; generation stopped rather than ignoring repetition checks");
+    const recent: RecentPost[] = [];
+    const seen = new Set<string>();
+    for (const item of historyResults.flatMap(r => r.data || []).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))) {
+      if (!item.media_title || !item.media_type) continue;
+      const entry = { personaId: item.persona_user_id || item.user_id, title: item.media_title, type: item.media_type.toLowerCase(), content: item.content || "", createdAt: item.created_at };
+      const key = `${entry.personaId}:${mediaKey(entry)}`;
+      if (!seen.has(key)) { recent.push(entry); seen.add(key); }
     }
-
-    const allDrafts: any[] = [];
+    const { data: rejections, error: rejectionError } = await db.from("persona_post_drafts").select("persona_user_id,rejection_reason").in("persona_user_id", personas.map(p => p.id)).eq("status", "rejected").not("rejection_reason", "is", null).order("rejected_at", { ascending: false }).limit(100);
+    if (rejectionError) throw new Error("Could not load existing rejection feedback");
+    for (const p of personas) (p.persona_config as any).generation_feedback = (rejections || []).filter(r => r.persona_user_id === p.id).slice(0, 5).map(r => r.rejection_reason);
+    const key = Deno.env.get("OPENAI_API_KEY");
+    if (!key) return response({ error: "Writing provider is not configured" }, 503);
+    const chat = createPersonaChat(key);
+    const keys = { tmdb: Deno.env.get("TMDB_API_KEY"), books: Deno.env.get("GOOGLE_BOOKS_API_KEY"), rawg: Deno.env.get("RAWG_API_KEY") };
     const errors: string[] = [];
-
-    for (const persona of personas) {
-      const config = persona.persona_config as any;
-      if (!config) {
-        errors.push(`${persona.user_name}: no persona_config`);
-        continue;
-      }
-
-      const styleExamples = (config.style_examples || [])
-        .map((ex: any) => `[${ex.type}]: ${ex.content}`)
-        .join('\n\n');
-
-      // Fetch recent rejected drafts for this persona that have feedback
-      const { data: recentRejections } = await supabaseAdmin
-        .from('persona_post_drafts')
-        .select('content, rejection_reason')
-        .eq('persona_user_id', persona.id)
-        .eq('status', 'rejected')
-        .not('rejection_reason', 'is', null)
-        .order('rejected_at', { ascending: false })
-        .limit(5);
-
-      const rejectionBlock = recentRejections && recentRejections.length > 0
-        ? `\n\nRECENT REJECTIONS — learn from these and do NOT repeat these mistakes:\n` +
-          recentRejections.map((r: any, i: number) =>
-            `Rejected post ${i + 1}: "${r.content.slice(0, 120)}..."\nFeedback: ${r.rejection_reason}`
-          ).join('\n\n')
-        : '';
-
-      const systemPrompt = `You are ${persona.display_name} (@${persona.user_name}), a real person posting on a social entertainment platform called Consumed.
-
-PERSONALITY:
-- Bio: ${config.bio}
-- Tone: ${config.tone}
-- Interests: ${(config.interests || []).join(', ')}
-- Preferred media: ${(config.media_types || []).join(', ')}
-- Favorites: ${(config.favorite_media || []).join(', ')}
-- Posting style: ${config.posting_style}
-- Activity level: ${config.activity_level}
-
-WRITING STYLE EXAMPLES (match this voice exactly):
-${styleExamples}${rejectionBlock}`;
-
-      const userPrompt = `Generate ${postsPerPersona} distinct social posts this person would authentically write right now. Posts should be about specific real media (movies, TV shows, books, podcasts, music, or games) that fit their taste.${trendingContext}
-
-CRITICAL STYLE RULES — read carefully:
-- Write HUMAN REACTIONS, not descriptions. Posts must be personal opinions, feelings, or takes — never a plot summary or factual overview.
-- BAD example (NEVER do this): "The Witcher 3: Wild Hunt is an open-world RPG developed by CD Projekt Red. The game features a rich storyline and detailed world."
-- GOOD example: "Still thinking about the Bloody Baron quest three years later. That game wrecked me."
-- BAD example: "Oppenheimer is a biographical thriller about J. Robert Oppenheimer and the Manhattan Project directed by Christopher Nolan."
-- GOOD example: "Nolan somehow made a 3-hour physics lecture the most stressful thing I've watched all year."
-- Posts must feel like something you'd type in 30 seconds — impulsive, opinionated, conversational
-- First-person voice only. Use "I", "me", "my" naturally
-- Vary the topics across posts — don't repeat the same show or movie
-- Write entirely in this person's authentic voice — do NOT copy or paraphrase any existing reviews, Reddit posts, or published criticism
-- Reference factually accurate details: correct actor names, real plot points, actual directors/authors/artists
-- NEVER put any score or rating inside the post text. No "9/10", "4.5 stars", "8 out of 10", "9 stars out of 10", or ANY numerical rating in the content field. Ratings go ONLY in the separate "rating" JSON field.
-
-For each post return a JSON object with these exact fields:
-- post_type: always use "review" regardless of whether a rating is included. NEVER use "thought" or "hot_take".
-- content: the post text — NO ratings, NO scores, NO stars mentioned. Just the reaction in their voice.
-- rating: a number on a 5-STAR scale from 0.5 to 5.0 in 0.5 increments (e.g. 3.5, 4.0, 4.5, 5.0). MAXIMUM is 5.0. NEVER use 6, 7, 8, 9, or 10. If the post is not a review, use null.
-- media_title: exact title of the media being discussed
-- media_type: one of "movie", "tv", "book", "podcast", "music", "game"
-- media_creator: director, author, artist, or show creator name (if known)
-- ai_notes: one sentence explaining why this fits the persona
-
-Return ONLY a JSON array of ${postsPerPersona} post objects. No other text.`;
-
-      try {
-        const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${openaiKey}`,
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o',
-            max_tokens: 2048,
-            temperature: 0.9,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt },
-            ],
-          }),
-        });
-
-        if (!openaiResponse.ok) {
-          const errText = await openaiResponse.text();
-          const errMsg = `${persona.user_name}: OpenAI API error ${openaiResponse.status} - ${errText}`;
-          console.error(errMsg);
-          errors.push(errMsg);
-          continue;
-        }
-
-        const openaiData = await openaiResponse.json();
-        const rawText = openaiData.choices?.[0]?.message?.content || '';
-
-        if (!rawText) {
-          const errMsg = `${persona.user_name}: empty response from OpenAI`;
-          console.error(errMsg);
-          errors.push(errMsg);
-          continue;
-        }
-
-        let posts: any[] = [];
-        try {
-          const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-          posts = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
-          if (posts.length === 0) {
-            errors.push(`${persona.user_name}: parsed 0 posts from: ${rawText.substring(0, 200)}`);
-          }
-        } catch (parseErr) {
-          const errMsg = `${persona.user_name}: JSON parse error - ${parseErr} - raw: ${rawText.substring(0, 200)}`;
-          console.error(errMsg);
-          errors.push(errMsg);
-          continue;
-        }
-
-        for (const post of posts) {
-          const draft = {
-            persona_user_id: persona.id,
-            post_type: (post.post_type === 'thought' || !post.post_type) ? 'review' : post.post_type,
-            content: post.content || '',
-            rating: post.rating || null,
-            media_title: post.media_title || null,
-            media_type: post.media_type || null,
-            media_creator: post.media_creator || null,
-            ai_notes: post.ai_notes || null,
-            status: 'draft',
-          };
-
-          const { data: inserted, error: insertError } = await supabaseAdmin
-            .from('persona_post_drafts')
-            .insert(draft)
-            .select('id')
-            .single();
-
-          if (insertError) {
-            const errMsg = `${persona.user_name}: insert error - ${insertError.message}`;
-            console.error(errMsg);
-            errors.push(errMsg);
-          } else {
-            allDrafts.push({ ...draft, id: inserted.id, persona_user_name: persona.user_name, persona_display_name: persona.display_name });
-          }
-        }
-      } catch (err) {
-        const errMsg = `${persona.user_name}: unexpected error - ${err}`;
-        console.error(errMsg);
-        errors.push(errMsg);
-      }
+    let trending: MediaCandidate[] = [];
+    if (useTrending) {
+      try { trending = await fetchTrendingCandidates(keys); }
+      catch { errors.push("Trending providers unavailable; using persona candidates only"); }
     }
-
-    return new Response(JSON.stringify({
-      success: true,
-      generated: allDrafts.length,
-      drafts: allDrafts,
-      errors: errors.length > 0 ? errors : undefined,
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-
+    const cache = new Map<string, Promise<any>>();
+    const resolve = (title: string, type: string) => {
+      const id = mediaKey({ title, type });
+      if (!cache.has(id)) cache.set(id, resolveMediaCandidate(title, type, keys));
+      return cache.get(id)!;
+    };
+    const candidates = new Map();
+    // Four candidate jobs at a time avoids provider bursts. Each completed writing assignment sees batch state.
+    for (let start = 0; start < personas.length; start += 4) {
+      await Promise.all(personas.slice(start, start + 4).map(async p => {
+        try { candidates.set(p.id, await buildPersonaCandidates(p, trending, recent, chat, resolve)); }
+        catch { errors.push(`${p.display_name}: candidate selection failed`); candidates.set(p.id, []); }
+      }));
+    }
+    const generated = await generatePersonaBatch({ personas, postsPerPersona, weights, recent, candidates, chat, deadline: Date.now() + 105000 });
+    errors.push(...generated.errors);
+    const drafts = [];
+    for (const draft of generated.drafts) {
+      // This branch is the only draft write. Dry runs never insert/update/delete any database content.
+      if (dryRun) { drafts.push(draft); continue; }
+      const { persona_user_name, persona_display_name, ...stored } = draft;
+      const { data: inserted, error } = await db.from("persona_post_drafts").insert(stored).select("id").single();
+      if (error) errors.push(`${persona_display_name}: draft could not be saved`);
+      else drafts.push({ ...draft, id: inserted.id });
+    }
+    return response({ success: drafts.length > 0, generated: drafts.length, requested: personas.length * postsPerPersona, drafts, dryRun, errors: errors.length ? errors : undefined });
   } catch (error) {
-    console.error('Unexpected error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error', detail: String(error) }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    // Never include upstream request URLs, provider keys, or raw credential-bearing errors.
+    return response({ error: error instanceof Error ? error.message : "Generation failed" }, 400);
   }
 });
