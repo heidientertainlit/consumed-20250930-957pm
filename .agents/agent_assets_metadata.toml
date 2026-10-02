@@ -328,3 +328,17 @@ mtime_ms = 1790971468837
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/b84c1f2c-00de-441a-bb2c-1e983203e65a/1183b8dd-a63b-4a76-8c80-1449dfe9e37f"
 storage_version_token = "1790971708046790"
 content_type = "text/html"
+
+[[outputs]]
+id = "L063SviRMHDPbVP9oscDW"
+uri = "file://reports/persona-generator-naturalness-test-batch.html"
+type = "html"
+title = "Persona writing naturalness — 20-post review"
+description = "All 20 real, unedited AI posts with persona, media, mode, rating, content and debug metadata. Includes previous/current mode distribution; architecture and weights unchanged. No database saving, scheduling or publishing."
+logical_id = "d7c4dee9-40f0-4b5e-ad86-1f953e6cb25c"
+content_hash = "sha256:ca8320ce87a241820393e31540db4b2ab7fc7cfbc732fa7b13f1186ff608f3b8"
+size = 33506
+mtime_ms = 1790973329477
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/d7c4dee9-40f0-4b5e-ad86-1f953e6cb25c/c26bdef3-8eb1-4ded-b763-d91510993ddf"
+storage_version_token = "1790973425868437"
+content_type = "text/html"

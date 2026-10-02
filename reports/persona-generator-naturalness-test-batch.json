@@ -1,0 +1,460 @@
+{
+  "dryRun": true,
+  "source": "Checked-in persona definitions; no live history/config queried",
+  "weights": {
+    "thoughtful": 30,
+    "micro": 10,
+    "casual": 15,
+    "rating": 10,
+    "question": 10,
+    "specific": 8,
+    "opinion": 8,
+    "low_energy": 9
+  },
+  "modeCounts": {
+    "thoughtful": 5,
+    "micro": 0,
+    "casual": 6,
+    "rating": 2,
+    "question": 1,
+    "specific": 2,
+    "opinion": 2,
+    "low_energy": 2
+  },
+  "comparisonBaseline": "reports/persona-generator-test-batch.json",
+  "previousModeCounts": {
+    "thoughtful": 4,
+    "micro": 1,
+    "casual": 4,
+    "rating": 2,
+    "question": 2,
+    "specific": 3,
+    "opinion": 1,
+    "low_energy": 3
+  },
+  "drafts": [
+    {
+      "persona_user_id": "kei",
+      "persona_user_name": "kei",
+      "persona_display_name": "Kei Tanaka",
+      "post_type": "review",
+      "content": "Okay, Attack on Titan really packs a punch! The constant tension between the humans and Titans keeps me on edge in the best way possible. It’s incredible how they mix action with those deep emotional moments. But seriously, how do they manage to crank up the stakes every single episode?!",
+      "rating": null,
+      "media_title": "Attack on Titan",
+      "media_type": "tv",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"thoughtful\",\"modeLabel\":\"Thoughtful reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"expressive\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":50,\"externalId\":\"1429\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "brooksj",
+      "persona_user_name": "brooksj",
+      "persona_display_name": "Julian Brooks",
+      "post_type": "review",
+      "content": "Alizée's \"Blonde\" had some catchy moments but didn't quite hit as a no-skip album for me. It's got those pop vibes, but I found myself drifting in a couple of tracks. 3.5.",
+      "rating": 3.5,
+      "media_title": "Blonde",
+      "media_type": "music",
+      "media_creator": "Alizée",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"opinion\",\"modeLabel\":\"Hot take / opinion\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"standard\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":3.5,\"words\":32,\"externalId\":\"879108764\",\"externalSource\":\"itunes\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "alex_thompson",
+      "persona_user_name": "alex_thompson",
+      "persona_display_name": "Alex Thompson",
+      "post_type": "review",
+      "content": "Dinosaurs and chaos – can't go wrong with that.",
+      "rating": null,
+      "media_title": "Jurassic Park",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"low_energy\",\"modeLabel\":\"Low-energy reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"minimal\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"rare\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.8,\"rating\":0.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":1.8}},\"rating\":null,\"words\":9,\"externalId\":\"329\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "alexmoreno402",
+      "persona_user_name": "alexmoreno402",
+      "persona_display_name": "Alex Moreno",
+      "post_type": "review",
+      "content": "Visually stunning, but I couldn't shake the feeling of distance. The painter's gaze was captivating, though the story felt detached.",
+      "rating": 3,
+      "media_title": "Portrait of a Lady on Fire",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"specific\",\"modeLabel\":\"Specific reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"low\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":3,\"words\":20,\"externalId\":\"531428\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "reedreads",
+      "persona_user_name": "reedreads",
+      "persona_display_name": "Samantha Reed",
+      "post_type": "review",
+      "content": "I loved how \"The Bear\" really captures the chaos of a kitchen and the struggle to hold onto something meaningful. Carmy's journey felt messy and real, and the crew's transformation into a family was surprisingly touching. Some scenes left me a bit anxious, but it added to the intensity.",
+      "rating": null,
+      "media_title": "The Bear",
+      "media_type": "tv",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"thoughtful\",\"modeLabel\":\"Thoughtful reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"minimal\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"rare\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.8,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":0.8,\"low_energy\":1.8}},\"rating\":null,\"words\":49,\"externalId\":\"136315\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "marcusdelacroix",
+      "persona_user_name": "marcusdelacroix",
+      "persona_display_name": "Marcus Delacroix",
+      "post_type": "review",
+      "content": "Careful what you wish for—sometimes the dream turns into a nightmare.",
+      "rating": null,
+      "media_title": "Obsession",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Trending\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"low\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":null,\"words\":11,\"externalId\":\"1339713\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "nick",
+      "persona_user_name": "nick",
+      "persona_display_name": "Nicholas Grant",
+      "post_type": "review",
+      "content": "The Lean Startup really got me thinking about how to approach uncertainty in business. The idea of \"validated learning\" is a game-changer. Definitely 4 for me.",
+      "rating": 4,
+      "media_title": "The Lean Startup",
+      "media_type": "book",
+      "media_creator": "Eric Ries",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"rating\",\"modeLabel\":\"Rating + quick thought\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":4,\"words\":26,\"externalId\":\"tvfyz-4JILwC\",\"externalSource\":\"googlebooks\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "sarah13",
+      "persona_user_name": "sarah13",
+      "persona_display_name": "Sarah Whitman",
+      "post_type": "review",
+      "content": "Green Room is like punk rock meets survival horror. 3",
+      "rating": 3,
+      "media_title": "Green Room",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"detailed\",\"energy\":\"restrained\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"rare\",\"sarcasm\":\"medium\",\"preferredModeWeights\":{\"thoughtful\":1.8,\"micro\":0.8,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":3,\"words\":10,\"externalId\":\"313922\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "emily27",
+      "persona_user_name": "emily27",
+      "persona_display_name": "Emily Park",
+      "post_type": "review",
+      "content": "Is it possible to truly know someone in a pod? Or are we all just loving the idea of love?",
+      "rating": 3.5,
+      "media_title": "Love Is Blind",
+      "media_type": "tv",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"question\",\"modeLabel\":\"Conversation starter\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"expressive\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1.5,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":3.5,\"words\":20,\"externalId\":\"99353\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "lenahoff",
+      "persona_user_name": "lenahoff",
+      "persona_display_name": "Lena Hoffman",
+      "post_type": "review",
+      "content": "The blend of romance and action grabbed me right away. I found myself dog-earing so many pages filled with tense moments and swoon-worthy exchanges.",
+      "rating": 4.5,
+      "media_title": "A Court of Thorns and Roses",
+      "media_type": "book",
+      "media_creator": "Sarah J. Maas",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"specific\",\"modeLabel\":\"Specific reaction\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"detailed\",\"energy\":\"restrained\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"rare\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1.8,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1.5,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":4.5,\"words\":24,\"externalId\":\"E-kdBQAAQBAJ\",\"externalSource\":\"googlebooks\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "kei",
+      "persona_user_name": "kei",
+      "persona_display_name": "Kei Tanaka",
+      "post_type": "review",
+      "content": "Elden Ring is like stepping into a living, breathing fantasy world. The vast open landscapes and interconnected lore kept me so engaged. That sense of discovery whenever you uncover something new is really addictive. I just wish the combat was a bit more forgiving at times.",
+      "rating": null,
+      "media_title": "Elden Ring",
+      "media_type": "game",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"thoughtful\",\"modeLabel\":\"Thoughtful reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"expressive\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":46,\"externalId\":\"326243\",\"externalSource\":\"rawg\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "brooksj",
+      "persona_user_name": "brooksj",
+      "persona_display_name": "Julian Brooks",
+      "post_type": "review",
+      "content": "Inside Llewyn Davis captures the struggle and passion of a musician's life. Every moment felt raw and beautifully melancholic. Loved it. five.",
+      "rating": 5,
+      "media_title": "Inside Llewyn Davis",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"rating\",\"modeLabel\":\"Rating + quick thought\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"standard\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":5,\"words\":22,\"externalId\":\"86829\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "alex_thompson",
+      "persona_user_name": "alex_thompson",
+      "persona_display_name": "Alex Thompson",
+      "post_type": "review",
+      "content": "Some days I think I could work at Dunder Mifflin.",
+      "rating": null,
+      "media_title": "The Office",
+      "media_type": "tv",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"minimal\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"rare\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.8,\"rating\":0.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":1.8}},\"rating\":null,\"words\":10,\"externalId\":\"2316\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "alexmoreno402",
+      "persona_user_name": "alexmoreno402",
+      "persona_display_name": "Alex Moreno",
+      "post_type": "review",
+      "content": "Cate Blanchett really carries it, but I still couldn't decide if Lydia is fascinating or just insufferable. Kind of both? 3",
+      "rating": 3,
+      "media_title": "TÁR",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"low\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":3,\"words\":21,\"externalId\":\"817758\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "reedreads",
+      "persona_user_name": "reedreads",
+      "persona_display_name": "Samantha Reed",
+      "post_type": "review",
+      "content": "Barbie surprised me by being both fun and introspective. The real world vs. Barbie Land dynamic was more interesting than I expected. It went beyond just a colorful adventure and had some genuinely thoughtful moments. Anyone else find it made them think about perspectives?",
+      "rating": null,
+      "media_title": "Barbie",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"thoughtful\",\"modeLabel\":\"Thoughtful reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"minimal\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"rare\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.8,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":0.8,\"low_energy\":1.8}},\"rating\":null,\"words\":44,\"externalId\":\"346698\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "marcusdelacroix",
+      "persona_user_name": "marcusdelacroix",
+      "persona_display_name": "Marcus Delacroix",
+      "post_type": "review",
+      "content": "There's something about the languid pace and sun-drenched scenery that stays with me. It's a mood piece as much as a love story. Do you ever watch a film just for its atmosphere?",
+      "rating": 4,
+      "media_title": "Call Me by Your Name",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"opinion\",\"modeLabel\":\"Hot take / opinion\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"low\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":4,\"words\":33,\"externalId\":\"398818\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "nick",
+      "persona_user_name": "nick",
+      "persona_display_name": "Nicholas Grant",
+      "post_type": "review",
+      "content": "\"Zero to One\" really makes you rethink what \"innovation\" means. Thiel's emphasis on creating truly unique and non-replicable ventures stands out. It's not just about tweaking what's already there but finding a completely new path. I still wonder how often we settle for the former out of convenience.",
+      "rating": null,
+      "media_title": "Zero to One",
+      "media_type": "book",
+      "media_creator": "Peter Thiel",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"thoughtful\",\"modeLabel\":\"Thoughtful reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":48,\"externalId\":\"POOJDQAAQBAJ\",\"externalSource\":\"googlebooks\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "sarah13",
+      "persona_user_name": "sarah13",
+      "persona_display_name": "Sarah Whitman",
+      "post_type": "review",
+      "content": "Hereditary is an unsettling dive into family horror. It's genuinely chilling.",
+      "rating": 4,
+      "media_title": "Hereditary",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"detailed\",\"energy\":\"restrained\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"rare\",\"sarcasm\":\"medium\",\"preferredModeWeights\":{\"thoughtful\":1.8,\"micro\":0.8,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":4,\"words\":11,\"externalId\":\"493922\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "emily27",
+      "persona_user_name": "emily27",
+      "persona_display_name": "Emily Park",
+      "post_type": "review",
+      "content": "Didn't really click for me. Maybe I missed the hype.",
+      "rating": 2,
+      "media_title": "Succession",
+      "media_type": "tv",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"low_energy\",\"modeLabel\":\"Low-energy reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"expressive\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1.5,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":2,\"words\":10,\"externalId\":\"76331\",\"externalSource\":\"tmdb\",\"warnings\":[]}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "lenahoff",
+      "persona_user_name": "lenahoff",
+      "persona_display_name": "Lena Hoffman",
+      "post_type": "review",
+      "content": "Can't stop thinking about the dragons and all the twists. Definitely hooked.",
+      "rating": null,
+      "media_title": "Fourth Wing",
+      "media_type": "book",
+      "media_creator": "Rebecca Yarros",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"detailed\",\"energy\":\"restrained\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"rare\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1.8,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1.5,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":12,\"externalId\":\"E-OLEAAAQBAJ\",\"externalSource\":\"googlebooks\",\"warnings\":[]}}",
+      "status": "draft"
+    }
+  ],
+  "errors": [],
+  "state": [
+    {
+      "personaId": "kei",
+      "mediaKey": "tv:attackontitan",
+      "mode": "thoughtful",
+      "words": 50,
+      "caps": false,
+      "content": "Okay, Attack on Titan really packs a punch! The constant tension between the humans and Titans keeps me on edge in the best way possible. It’s incredible how they mix action with those deep emotional moments. But seriously, how do they manage to crank up the stakes every single episode?!"
+    },
+    {
+      "personaId": "brooksj",
+      "mediaKey": "music:blonde",
+      "mode": "opinion",
+      "words": 32,
+      "caps": false,
+      "content": "Alizée's \"Blonde\" had some catchy moments but didn't quite hit as a no-skip album for me. It's got those pop vibes, but I found myself drifting in a couple of tracks. 3.5."
+    },
+    {
+      "personaId": "alex_thompson",
+      "mediaKey": "movie:jurassicpark",
+      "mode": "low_energy",
+      "words": 9,
+      "caps": false,
+      "content": "Dinosaurs and chaos – can't go wrong with that."
+    },
+    {
+      "personaId": "alexmoreno402",
+      "mediaKey": "movie:portraitofaladyonfire",
+      "mode": "specific",
+      "words": 20,
+      "caps": false,
+      "content": "Visually stunning, but I couldn't shake the feeling of distance. The painter's gaze was captivating, though the story felt detached."
+    },
+    {
+      "personaId": "reedreads",
+      "mediaKey": "tv:thebear",
+      "mode": "thoughtful",
+      "words": 49,
+      "caps": false,
+      "content": "I loved how \"The Bear\" really captures the chaos of a kitchen and the struggle to hold onto something meaningful. Carmy's journey felt messy and real, and the crew's transformation into a family was surprisingly touching. Some scenes left me a bit anxious, but it added to the intensity."
+    },
+    {
+      "personaId": "marcusdelacroix",
+      "mediaKey": "movie:obsession",
+      "mode": "casual",
+      "words": 11,
+      "caps": false,
+      "content": "Careful what you wish for—sometimes the dream turns into a nightmare."
+    },
+    {
+      "personaId": "nick",
+      "mediaKey": "book:theleanstartup",
+      "mode": "rating",
+      "words": 26,
+      "caps": false,
+      "content": "The Lean Startup really got me thinking about how to approach uncertainty in business. The idea of \"validated learning\" is a game-changer. Definitely 4 for me."
+    },
+    {
+      "personaId": "sarah13",
+      "mediaKey": "movie:greenroom",
+      "mode": "casual",
+      "words": 10,
+      "caps": false,
+      "content": "Green Room is like punk rock meets survival horror. 3"
+    },
+    {
+      "personaId": "emily27",
+      "mediaKey": "tv:loveisblind",
+      "mode": "question",
+      "words": 20,
+      "caps": false,
+      "content": "Is it possible to truly know someone in a pod? Or are we all just loving the idea of love?"
+    },
+    {
+      "personaId": "lenahoff",
+      "mediaKey": "book:acourtofthornsandroses",
+      "mode": "specific",
+      "words": 24,
+      "caps": false,
+      "content": "The blend of romance and action grabbed me right away. I found myself dog-earing so many pages filled with tense moments and swoon-worthy exchanges."
+    },
+    {
+      "personaId": "kei",
+      "mediaKey": "game:eldenring",
+      "mode": "thoughtful",
+      "words": 46,
+      "caps": false,
+      "content": "Elden Ring is like stepping into a living, breathing fantasy world. The vast open landscapes and interconnected lore kept me so engaged. That sense of discovery whenever you uncover something new is really addictive. I just wish the combat was a bit more forgiving at times."
+    },
+    {
+      "personaId": "brooksj",
+      "mediaKey": "movie:insidellewyndavis",
+      "mode": "rating",
+      "words": 22,
+      "caps": false,
+      "content": "Inside Llewyn Davis captures the struggle and passion of a musician's life. Every moment felt raw and beautifully melancholic. Loved it. five."
+    },
+    {
+      "personaId": "alex_thompson",
+      "mediaKey": "tv:theoffice",
+      "mode": "casual",
+      "words": 10,
+      "caps": false,
+      "content": "Some days I think I could work at Dunder Mifflin."
+    },
+    {
+      "personaId": "alexmoreno402",
+      "mediaKey": "movie:tar",
+      "mode": "casual",
+      "words": 21,
+      "caps": false,
+      "content": "Cate Blanchett really carries it, but I still couldn't decide if Lydia is fascinating or just insufferable. Kind of both? 3"
+    },
+    {
+      "personaId": "reedreads",
+      "mediaKey": "movie:barbie",
+      "mode": "thoughtful",
+      "words": 44,
+      "caps": false,
+      "content": "Barbie surprised me by being both fun and introspective. The real world vs. Barbie Land dynamic was more interesting than I expected. It went beyond just a colorful adventure and had some genuinely thoughtful moments. Anyone else find it made them think about perspectives?"
+    },
+    {
+      "personaId": "marcusdelacroix",
+      "mediaKey": "movie:callmebyyourname",
+      "mode": "opinion",
+      "words": 33,
+      "caps": false,
+      "content": "There's something about the languid pace and sun-drenched scenery that stays with me. It's a mood piece as much as a love story. Do you ever watch a film just for its atmosphere?"
+    },
+    {
+      "personaId": "nick",
+      "mediaKey": "book:zerotoone",
+      "mode": "thoughtful",
+      "words": 48,
+      "caps": false,
+      "content": "\"Zero to One\" really makes you rethink what \"innovation\" means. Thiel's emphasis on creating truly unique and non-replicable ventures stands out. It's not just about tweaking what's already there but finding a completely new path. I still wonder how often we settle for the former out of convenience."
+    },
+    {
+      "personaId": "sarah13",
+      "mediaKey": "movie:hereditary",
+      "mode": "casual",
+      "words": 11,
+      "caps": false,
+      "content": "Hereditary is an unsettling dive into family horror. It's genuinely chilling."
+    },
+    {
+      "personaId": "emily27",
+      "mediaKey": "tv:succession",
+      "mode": "low_energy",
+      "words": 10,
+      "caps": false,
+      "content": "Didn't really click for me. Maybe I missed the hype."
+    },
+    {
+      "personaId": "lenahoff",
+      "mediaKey": "book:fourthwing",
+      "mode": "casual",
+      "words": 12,
+      "caps": false,
+      "content": "Can't stop thinking about the dragons and all the twists. Definitely hooked."
+    }
+  ]
+}

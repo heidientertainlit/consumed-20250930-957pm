@@ -79,6 +79,24 @@ test("mode-shape checks reject detached promotional paragraphs, not ordinary des
   assert.deepEqual(writingShapeIssues("The middle was too slow, but the ending made up for it. Good enough that a rewatch sounds fun, just not right away.","thoughtful"),[]);
   assert.ok(writingShapeIssues("This is a twelve word review that goes on forever and explains all its themes at great length.","micro").length);
 });
+test("first-person wording does not excuse editorial copy or become mandatory", () => {
+  assert.ok(writingShapeIssues("I found this thought-provoking and emotionally resonant, with meticulous attention to detail throughout its carefully written narrative and a visually striking finale.","thoughtful").length);
+  assert.deepEqual(writingShapeIssues("The quiet parts mattered more than the big speeches. Not every pause earned its length, but the last conversation changed the earlier scenes.","thoughtful"),[]);
+  assert.deepEqual(writingShapeIssues("pretty good","low_energy"),[]);
+  assert.deepEqual(writingShapeIssues("eh","micro"),[]);
+});
+test("writer distinguishes social register within modes without changing mode weights", () => {
+  const system = buildWritingPrompt(persona,media,"thoughtful",voice,null,[],[])[0].content;
+  assert.ok(system.includes("WRITE THE REACTION, NOT THE REVIEW"));
+  assert.ok(system.includes("FIRST PERSON IS NOT A FIX"));
+  assert.ok(system.includes("PRESERVE INTELLIGENCE"));
+  assert.ok(system.includes("Ordinary, boring, obvious reactions are successful posts"));
+  assert.ok(system.includes("Don't deliberately inject mistakes, slang or filler"));
+  assert.ok(buildWritingPrompt(persona,media,"question",voice,null,[],[])[1].content.includes("THIS PERSON has a reason"));
+  assert.ok(buildWritingPrompt(persona,media,"low_energy",voice,null,[],[])[1].content.includes("no contrived fragments"));
+  assert.ok(buildWritingPrompt(persona,media,"micro",voice,null,[],[])[1].content.includes("does not need to describe the media"));
+  assert.deepEqual(DEFAULT_MODE_WEIGHTS,{thoughtful:30,micro:10,casual:15,rating:10,question:10,specific:8,opinion:8,low_energy:9});
+});
 test("old /10 examples are sanitized, mode and exact media assigned before writing", () => {
   assert.ok(!cleanStyleExample("10/10 or 4.5 stars").match(/10\/10|4\.5 stars/));
   const prompt=buildWritingPrompt(persona,media,"micro",voice,4,[],[]);
@@ -108,4 +126,26 @@ test("batch generation assigns fields structurally and exposes admin-only metada
 test("invalid rating language repairs once; repeated failure never creates a draft", async () => {
   const result=await generatePersonaBatch({personas:[persona],postsPerPersona:1,weights:DEFAULT_MODE_WEIGHTS,recent:[],candidates:new Map([["p1",[media]]]),random:()=>.2,chat:async()=>JSON.stringify({content:"10/10"})});
   assert.equal(result.drafts.length,0);assert.equal(result.errors.length,1);
+});
+test("incomplete writer JSON repairs once without choosing another media, mode or rating", async () => {
+  const prompts: string[] = [];
+  const result = await generatePersonaBatch({personas:[persona],postsPerPersona:1,weights:DEFAULT_MODE_WEIGHTS,recent:[],candidates:new Map([["p1",[media]]]),random:()=>.2,
+    chat:async messages=>{
+      prompts.push(messages[1].content);
+      return prompts.length === 1 ? '{"content":"unfinished' : JSON.stringify({content:"The quiet parts mattered more than the big speeches. Not every pause earned its length, but the last conversation changed the earlier scenes."});
+    },
+  });
+  assert.equal(result.drafts.length,1);
+  assert.equal(prompts.length,2);
+  assert.ok(prompts[1].includes("Writer output was incomplete JSON"));
+  for (const label of ["Assigned media", "Assigned internal mode", "Authoritative rating"]) {
+    assert.equal(prompts[0].split("\n").find(line=>line.startsWith(label)),prompts[1].split("\n").find(line=>line.startsWith(label)));
+  }
+});
+test("repeated malformed writer output stops after the existing two attempts", async () => {
+  let calls=0;
+  const result=await generatePersonaBatch({personas:[persona],postsPerPersona:1,weights:DEFAULT_MODE_WEIGHTS,recent:[],candidates:new Map([["p1",[media]]]),random:()=>.2,chat:async()=>{calls++;return '{"content":"unfinished';}});
+  assert.equal(calls,2);
+  assert.equal(result.drafts.length,0);
+  assert.equal(result.errors.length,1);
 });

@@ -13,3 +13,22 @@ are valid alongside longer considered reactions.
 **How to apply:** When extending persona generation, preserve existing identities and
 use probabilistic variation rather than fixed mode rotations, mandatory cleverness or
 exact per-batch diversity quotas.
+
+## Approved architecture and social register
+
+The user confirmed the media selection, modes, persona voices, batch awareness, admin
+controls and current mode weights are the right architecture. Naturalness adjustments
+should address the writing layer, not redesign these systems or rebalance weights based
+on a single sample batch.
+
+Writing principle: **“WRITE THE REACTION, NOT THE REVIEW.”** Preserve intelligent,
+analytical and literary personas, but distinguish users' responses from editorial copy.
+Adding first-person wording does not make a review natural. Low effort must not become
+artificially awkward fragments; questions need a personal reason, not engagement bait.
+
+**Why:** The user approved the structural diversity but found several generated posts
+still read like professional criticism or mechanically simulated casual posts.
+
+**How to apply:** For register-focused changes, keep the approved architecture and
+weights intact; judge the underlying thought and language, not just length, lowercase
+text, vocabulary complexity or presence of “I.”

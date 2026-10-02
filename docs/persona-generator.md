@@ -29,6 +29,7 @@ not insert, update, schedule or publish records. Regular generation still saves 
 | --- | --- |
 | `supabase/functions/generate-persona-content/index.ts` | Authorized settings/voice/preview actions, bounded history reads, orchestration and draft-only persistence |
 | `supabase/functions/_shared/persona-generation.ts` | Modes, default weights, voice derivation, weighted planning, prompts, authoritative rating substitutions, validation and admin metadata |
+| `supabase/functions/_shared/persona-writing-instructions.ts` | Reaction-first social register and mode-specific writing guidance, without changing selection logic or weights |
 | `supabase/functions/_shared/persona-media-candidates.ts` | AI title suggestions followed by read-only provider verification; persona fit and optional trending candidates |
 | `supabase/functions/_shared/persona-generation-engine.ts` | Shuffled round-robin batch writing with media/mode/phrase awareness and a validation repair attempt |
 | `client/src/pages/admin-personas.tsx` | Integrates controls/debug notes and displays partial generation errors; keeps existing review workflow |
@@ -39,6 +40,8 @@ not insert, update, schedule or publish records. Regular generation still saves 
 | `scripts/test-persona-generator-dry-run.ts` | Local sample runner using fictional checked-in persona definitions, the real writing API and read-only providers |
 | `reports/persona-generator-test-batch.html` | Readable full review batch, including persona, media, mode, rating, content and metadata |
 | `reports/persona-generator-test-batch.json` | Structured review batch and generation errors |
+| `reports/persona-generator-naturalness-test-batch.html` | Subsequent writing-register review batch, with all post metadata and previous/current mode-count comparison |
+| `reports/persona-generator-naturalness-test-batch.json` | Unedited subsequent outputs, debug metadata and mode distribution comparison |
 
 ## Schema and configuration
 
@@ -99,6 +102,7 @@ npm run check
 node --import tsx --test supabase/functions/_shared/persona-generation*.test.ts
 npm run build
 node --import tsx scripts/test-persona-generator-dry-run.ts
+node --import tsx scripts/test-persona-generator-dry-run.ts reports/persona-generator-naturalness-test-batch reports/persona-generator-test-batch.json
 ```
 
 The delivered report contains 20 actual AI-written posts across 10 fictional personas.
@@ -109,3 +113,19 @@ The signed-in live admin UI was not verified: the preview browser correctly retu
 the sign-in screen. The function has not been deployed and production configuration/data
 has not been changed. Settings and preview controls remain unavailable against the old
 function until the updated function is deployed.
+
+## Writing-register adjustment
+
+The naturalness pass changes writing instructions and register validation only. Media
+selection, personas/voice derivation, modes, mode weights, batch planning, rating authority,
+admin controls and the review/scheduling/publishing pipeline remain unchanged.
+
+The writer now prioritizes **“WRITE THE REACTION, NOT THE REVIEW.”** It distinguishes
+personal social language from editorial criticism without flattening intelligent personas
+or requiring every post to be insightful. Conversation starters need a personal reason;
+low effort does not mean mechanically lowercase literary copy or awkward fragments.
+First-person introductions neither prove naturalness nor excuse promotional language.
+
+The runner accepts a distinct report output path and an optional previous-batch JSON
+path, preserving the original review report. Both runs use fresh probabilistic media/
+mode assignments, so the comparison is descriptive, not a paired experiment or a quota.

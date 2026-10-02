@@ -30,8 +30,13 @@ export async function generatePersonaBatch(options: {
         let content = "", issues: string[] = [];
         for (let attempt = 0; attempt < 2; attempt++) {
           const raw = await chat(buildWritingPrompt(persona, media, mode, voice, rating, state, recent, issues.join("; ")));
-          const value = JSON.parse(raw);
-          content = renderRatingPlaceholders(value.content, rating);
+          try {
+            const value = JSON.parse(raw);
+            content = renderRatingPlaceholders(value.content, rating);
+          } catch {
+            issues = ["Writer output was incomplete JSON or had invalid content/score placeholders. Return only a complete JSON object with one short content string; no planning, explanation or extra fields."];
+            continue; // Use the existing bounded repair, preserving media, mode and rating.
+          }
           issues = validateGeneratedContent(content, rating, media);
           issues.push(...writingShapeIssues(content, mode));
           if (typeof content === "string" && voice.emojiFrequency === "none" && /\p{Extended_Pictographic}/u.test(content)) issues.push("persona's emoji setting is none");
