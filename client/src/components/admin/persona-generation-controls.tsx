@@ -11,6 +11,12 @@ import {
   type PersonaConfig,
   type SocialVoice,
 } from "../../../../supabase/functions/_shared/persona-generation";
+import {
+  DEFAULT_INTENT_WEIGHTS,
+  POST_INTENTS,
+  validateIntentWeights,
+  type IntentWeights,
+} from "../../../../supabase/functions/_shared/persona-post-intents";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase, SUPABASE_URL } from "@/lib/supabase";
@@ -37,6 +43,7 @@ type DryRunDraft = Record<string, unknown> & {
   generation?: unknown;
   generationMeta?: unknown;
   ai_notes?: string;
+  meta?: unknown;
 };
 
 type DryRunResult = {
@@ -49,6 +56,7 @@ type DryRunResult = {
 type GeneratorCapabilities = {
   dryRun: boolean;
   generationVersion: number;
+  postIntent: boolean;
 };
 
 type Props = {
@@ -85,11 +93,15 @@ function labelize(value: string) {
 export default function PersonaGenerationControls({ personas, selectedPersonaIds, postsPerPersona, useTrending }: Props) {
   const queryClient = useQueryClient();
   const [weights, setWeights] = useState<ModeWeights>(DEFAULT_MODE_WEIGHTS);
+  const [intentWeights, setIntentWeights] = useState<IntentWeights>(DEFAULT_INTENT_WEIGHTS);
   const [capabilities, setCapabilities] = useState<GeneratorCapabilities | null>(null);
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsError, setSettingsError] = useState("");
   const [settingsMessage, setSettingsMessage] = useState("");
+  const [intentSaving, setIntentSaving] = useState(false);
+  const [intentError, setIntentError] = useState("");
+  const [intentMessage, setIntentMessage] = useState("");
   const [voicePersonaId, setVoicePersonaId] = useState("");
   const [voice, setVoice] = useState<SocialVoice | null>(null);
   const [voiceSaving, setVoiceSaving] = useState(false);
@@ -101,6 +113,9 @@ export default function PersonaGenerationControls({ personas, selectedPersonaIds
   const [showSettings, setShowSettings] = useState(false);
 
   const totalWeight = useMemo(() => Object.values(weights).reduce((sum, n) => sum + n, 0), [weights]);
+  const totalIntentWeight = useMemo(() => Object.values(intentWeights).reduce((sum, n) => sum + n, 0), [intentWeights]);
+  const intentCapabilityConfirmed = capabilities?.generationVersion === 2 && capabilities.postIntent === true;
+  const previewCapabilityConfirmed = capabilities?.dryRun === true && intentCapabilityConfirmed;
   const selectedVoicePersona = personas.find(persona => persona.id === voicePersonaId);
 
   useEffect(() => {
@@ -113,7 +128,13 @@ export default function PersonaGenerationControls({ personas, selectedPersonaIds
         const validated = validateModeWeights(result.weights);
         if (!cancelled) {
           setWeights(validated);
-          setCapabilities(result.capabilities && typeof result.capabilities.dryRun === "boolean"
+          if (result.intentWeights && typeof result.intentWeights === "object") {
+            setIntentWeights(validateIntentWeights(result.intentWeights));
+          }
+          setCapabilities(result.capabilities
+            && typeof result.capabilities.dryRun === "boolean"
+            && typeof result.capabilities.generationVersion === "number"
+            && typeof result.capabilities.postIntent === "boolean"
             ? result.capabilities as GeneratorCapabilities
             : null);
         }
@@ -170,6 +191,35 @@ export default function PersonaGenerationControls({ personas, selectedPersonaIds
     }
   };
 
+  const updateIntentWeight = (intent: keyof IntentWeights, value: string) => {
+    const numeric = value === "" ? 0 : Number(value);
+    setIntentWeights(previous => ({
+      ...previous,
+      [intent]: Number.isFinite(numeric) ? Math.min(100, Math.max(0, numeric)) : 0,
+    }));
+    setIntentMessage("");
+  };
+
+  const saveIntentWeights = async () => {
+    if (!intentCapabilityConfirmed) {
+      setIntentError("Intent settings are unavailable until generator version 2 with post-intent support is confirmed.");
+      return;
+    }
+    setIntentSaving(true);
+    setIntentError("");
+    setIntentMessage("");
+    try {
+      const validated = validateIntentWeights(intentWeights);
+      await invokeGenerator({ action: "save-intent-settings", intentWeights: validated });
+      setIntentWeights(validated);
+      setIntentMessage("Intent weights saved.");
+    } catch (error) {
+      setIntentError(error instanceof Error ? error.message : "Could not save intent weights.");
+    } finally {
+      setIntentSaving(false);
+    }
+  };
+
   const saveVoice = async () => {
     if (!voice || !selectedVoicePersona) return;
     setVoiceSaving(true);
@@ -187,8 +237,8 @@ export default function PersonaGenerationControls({ personas, selectedPersonaIds
   };
 
   const runDryRun = async () => {
-    if (settingsLoading || !capabilities?.dryRun || capabilities.generationVersion !== 1) {
-      setDryRunError("Dry-run preview is unavailable until generator capability version 1 is confirmed.");
+    if (settingsLoading || !previewCapabilityConfirmed) {
+      setDryRunError("Dry-run preview is unavailable until generator version 2 with post-intent support is confirmed.");
       return;
     }
     if (selectedPersonaIds.length === 0) {
@@ -240,7 +290,7 @@ export default function PersonaGenerationControls({ personas, selectedPersonaIds
           variant="outline"
           size="sm"
           onClick={runDryRun}
-          disabled={dryRunLoading || settingsLoading || !capabilities?.dryRun || capabilities.generationVersion !== 1 || selectedPersonaIds.length === 0}
+          disabled={dryRunLoading || settingsLoading || !previewCapabilityConfirmed || selectedPersonaIds.length === 0}
           className="border-purple-700/70 bg-purple-950/40 text-purple-200 hover:bg-purple-900/50"
         >
           {dryRunLoading ? <Loader2 size={14} className="mr-2 animate-spin" /> : <FlaskConical size={14} className="mr-2" />}
@@ -257,12 +307,12 @@ export default function PersonaGenerationControls({ personas, selectedPersonaIds
           {showSettings ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
         </button>
         <span className="ml-auto text-[11px] text-gray-500">
-          {settingsLoading ? "Checking preview support…" : capabilities?.dryRun && capabilities.generationVersion === 1 ? "Preview does not create drafts" : "Preview unavailable"}
+          {settingsLoading ? "Checking preview support…" : previewCapabilityConfirmed ? "Preview does not create drafts" : "Preview unavailable"}
         </span>
       </div>
-      {!settingsLoading && (!capabilities?.dryRun || capabilities.generationVersion !== 1) && (
+      {!settingsLoading && !previewCapabilityConfirmed && (
         <p role="status" className="rounded-md border border-amber-900/50 bg-amber-950/20 px-3 py-2 text-[11px] text-amber-200">
-          Dry-run is disabled until the generator confirms capability version 1. Preview requests will not be sent.
+          Dry-run is disabled until the generator confirms version 2 and post-intent support. Preview requests will not be sent.
         </p>
       )}
 
@@ -287,15 +337,54 @@ export default function PersonaGenerationControls({ personas, selectedPersonaIds
               <ul className="list-inside list-disc space-y-1">{dryRunResult.errors.map((error, index) => <li key={`${index}-${error}`}>{error}</li>)}</ul>
             </div>
           ) : null}
+          {(() => {
+            const metadataRows = dryRunResult.drafts.map(draft => {
+              const meta = (draft.generation || draft.generationMeta || draft.meta || draft.debug || {}) as Record<string, unknown>;
+              const rawMode = String(meta.mode || draft.post_type || meta.modeLabel || "");
+              const rawIntent = String(meta.intent || meta.intentLabel || "");
+              return {
+                mode: POST_MODES.find(mode => mode.id === rawMode || mode.label === rawMode)?.id || rawMode,
+                intent: POST_INTENTS.find(intent => intent.id === rawIntent || intent.label === rawIntent)?.id || rawIntent,
+              };
+            });
+            const hasModeMetadata = metadataRows.some(row => row.mode);
+            const hasIntentMetadata = metadataRows.some(row => row.intent);
+            if (!hasModeMetadata && !hasIntentMetadata) return null;
+            const modeCounts = Object.fromEntries(POST_MODES.map(mode => [mode.id, metadataRows.filter(row => row.mode === mode.id).length]));
+            const intentCounts = Object.fromEntries(POST_INTENTS.map(intent => [intent.id, metadataRows.filter(row => row.intent === intent.id).length]));
+            return (
+              <div className="grid gap-3 border-b border-gray-800 bg-gray-950/40 px-4 py-3 sm:grid-cols-2">
+                {(hasModeMetadata || hasIntentMetadata) && (
+                  <div>
+                    <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-gray-500">Mode distribution</p>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-400">
+                      {POST_MODES.map(mode => <span key={mode.id}>{mode.label}: <b className="font-medium tabular-nums text-gray-200">{modeCounts[mode.id]}</b></span>)}
+                    </div>
+                  </div>
+                )}
+                {(hasModeMetadata || hasIntentMetadata) && (
+                  <div>
+                    <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-gray-500">Intent distribution</p>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-400">
+                      {POST_INTENTS.map(intent => <span key={intent.id}>{intent.label}: <b className="font-medium tabular-nums text-gray-200">{intentCounts[intent.id]}</b></span>)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           <div className="divide-y divide-gray-800">
             {dryRunResult.drafts.map((draft, index) => {
               const generation = (draft.generation || draft.generationMeta || draft.meta || draft.debug || {}) as Record<string, unknown>;
               const voiceMeta = (generation.voice && typeof generation.voice === "object" ? generation.voice : {}) as Record<string, unknown>;
+              const consumption = (generation.consumption && typeof generation.consumption === "object" ? generation.consumption : {}) as Record<string, unknown>;
+              const intentContext = generation.context;
               const persona = draft.persona?.display_name
                 || draft.persona_display_name
                 || personas.find(item => item.id === (draft.personaId || draft.persona_id || draft.persona_user_id))?.display_name
                 || "Persona";
               const mode = String(generation.modeLabel || generation.mode || draft.post_type || "—");
+              const intentLabel = String(generation.intentLabel || generation.intent || "—");
               const media = String(draft.media_title || draft.mediaTitle || draft.media?.title || draft.title || "—");
               const rating = draft.rating == null ? "—" : `${draft.rating}/5`;
               return (
@@ -304,13 +393,25 @@ export default function PersonaGenerationControls({ personas, selectedPersonaIds
                     <div><span className="text-gray-500">Persona</span><p className="mt-0.5 text-gray-200">{persona}</p></div>
                     <div><span className="text-gray-500">Media</span><p className="mt-0.5 text-gray-200">{media}</p></div>
                     <div><span className="text-gray-500">Mode</span><p className="mt-0.5 text-purple-200">{mode}</p></div>
+                    {generation.intent ? <div><span className="text-gray-500">Intent</span><p className="mt-0.5 text-cyan-200">{intentLabel}</p></div> : null}
                     <div><span className="text-gray-500">Rating</span><p className="mt-0.5 text-gray-200">{rating}</p></div>
                   </div>
+                  {(generation.intent || Object.keys(consumption).length > 0) && (
+                    <p className="mb-2 text-[11px] text-gray-400">
+                      {Boolean(generation.intent) && <>Intent reason: {String(generation.intentReason || "—")}</>}
+                      {Boolean(generation.intent) && Object.keys(consumption).length > 0 && " · "}
+                      {Object.keys(consumption).length > 0 && <>Consumption: {String(consumption.state || "—")} ({String(consumption.source || "—")}){consumption.details ? ` — ${String(consumption.details)}` : ""}</>}
+                    </p>
+                  )}
                   <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-100">{String(draft.content || "(empty content)")}</p>
                   <details className="mt-3">
                     <summary className="cursor-pointer text-[11px] text-gray-500 hover:text-gray-300">Generation debug metadata</summary>
                     <p className="mt-2 text-[11px] text-gray-400">
                       Recently used: {generation.recentlyUsed === true ? "Yes" : generation.recentlyUsed === false ? "No" : "—"}
+                      {Boolean(generation.intent) && <> · Intent: {intentLabel}</>}
+                      {Boolean(generation.intent) && <> · Reason: {String(generation.intentReason || "—")}</>}
+                      {Object.keys(consumption).length > 0 && <> · Consumption: {String(consumption.state || "—")} ({String(consumption.source || "—")})</>}
+                      {Boolean(intentContext) && <> · Context: {JSON.stringify(intentContext)}</>}
                       {Object.keys(voiceMeta).length > 0 && (
                         <> · Voice: {String(voiceMeta.length || "—")}, {String(voiceMeta.energy || "—")}, {String(voiceMeta.capitalization || "—")} capitalization, ratings {String(voiceMeta.ratingFrequency || "—")}, questions {String(voiceMeta.questionFrequency || "—")}, sarcasm {String(voiceMeta.sarcasm || "—")}</>
                       )}
@@ -376,6 +477,57 @@ export default function PersonaGenerationControls({ personas, selectedPersonaIds
                   <Button size="sm" onClick={saveWeights} disabled={settingsSaving || settingsLoading} className="shrink-0 bg-purple-700 text-white hover:bg-purple-600">
                     {settingsSaving ? <Loader2 size={13} className="mr-1.5 animate-spin" /> : <Save size={13} className="mr-1.5" />}
                     Save weights
+                  </Button>
+                </div>
+              </>
+            )}
+          </section>
+
+          <section className={`${cardClass} p-4`}>
+            <div className="mb-3 flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal size={15} className="text-cyan-300" />
+                <div>
+                  <h3 className="text-sm font-medium text-gray-100">Global intent mix</h3>
+                  <p className="text-[11px] text-gray-500">Independent from mode weights; share is normalized.</p>
+                </div>
+              </div>
+              <span className="rounded-full bg-gray-800 px-2 py-1 text-[10px] text-gray-400">{totalIntentWeight ? `${totalIntentWeight.toFixed(1)} total` : "0 total"}</span>
+            </div>
+            {!intentCapabilityConfirmed ? (
+              <p role="status" className="rounded-md border border-amber-900/50 bg-amber-950/20 px-3 py-3 text-[11px] text-amber-200">
+                Intent controls are locked until generator version 2 and post-intent support are confirmed. No save request will be sent.
+              </p>
+            ) : (
+              <>
+                <div className="max-h-80 space-y-1.5 overflow-y-auto pr-1">
+                  {POST_INTENTS.map(intent => (
+                    <label key={intent.id} className="grid grid-cols-[minmax(0,1fr)_74px_48px] items-center gap-2 rounded-md bg-gray-950/70 px-2.5 py-1.5" title={intent.description}>
+                      <span className="min-w-0 truncate text-xs text-gray-300">{intent.label}</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.5"
+                        value={intentWeights[intent.id]}
+                        onChange={event => updateIntentWeight(intent.id, event.target.value)}
+                        aria-label={`${intent.label} weight`}
+                        className="h-7 border-gray-700 bg-gray-900 px-2 text-right text-xs text-white"
+                      />
+                      <span className="text-right text-[10px] tabular-nums text-gray-500">
+                        {totalIntentWeight ? `${(intentWeights[intent.id] / totalIntentWeight * 100).toFixed(1)}%` : "0%"}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <div className="min-h-5 text-[11px]">
+                    {intentError && <span role="alert" className="text-red-300">{intentError}</span>}
+                    {intentMessage && <span className="text-emerald-300">{intentMessage}</span>}
+                  </div>
+                  <Button size="sm" onClick={saveIntentWeights} disabled={intentSaving || settingsLoading} className="shrink-0 bg-cyan-800 text-white hover:bg-cyan-700">
+                    {intentSaving ? <Loader2 size={13} className="mr-1.5 animate-spin" /> : <Save size={13} className="mr-1.5" />}
+                    Save intents
                   </Button>
                 </div>
               </>

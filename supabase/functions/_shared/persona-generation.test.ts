@@ -7,6 +7,9 @@ import {
   type MediaCandidate, type Persona, type BatchEntry,
 } from "./persona-generation.ts";
 import { generatePersonaBatch } from "./persona-generation-engine.ts";
+import type { Chat } from "./persona-media-candidates.ts";
+const writerOnly = (writer: Chat): Chat => async messages =>
+  messages[1].content.includes('"task":"narrow_intent_validation"') ? '{"issues":[]}' : writer(messages);
 
 const persona: Persona = { id: "p1", display_name: "Example", user_name: "example", persona_config: {
   tone: "enthusiastic and dramatic", posting_style: "episode reactions + ratings", media_types: ["tv", "book"],
@@ -113,7 +116,7 @@ test("batch generation assigns fields structurally and exposes admin-only metada
   const assigned: string[] = [];
   const results = await generatePersonaBatch({ personas:[persona], postsPerPersona:2, weights:DEFAULT_MODE_WEIGHTS, recent:[],
     candidates:new Map([["p1",[media]]]),random:()=>.2,
-    chat:async messages=>{assigned.push(messages[1].content);return JSON.stringify({content:messages[1].content.includes("Thoughtful reaction")?"I liked it a lot more than expected. Still thinking about it today, even if it took a while to get going.":"pretty good.",rating:9,media_title:"Hijacked title",post_type:"hot_take"});},
+    chat:writerOnly(async messages=>{assigned.push(messages[1].content);return JSON.stringify({content:messages[1].content.includes("Thoughtful reaction")?"I liked it a lot more than expected. Still thinking about it today, even if it took a while to get going.":"pretty good.",rating:9,media_title:"Hijacked title",post_type:"hot_take"});}),
   });
   assert.equal(results.drafts.length,2);
   assert.equal(results.drafts[0].media_title,media.title);
@@ -130,10 +133,10 @@ test("invalid rating language repairs once; repeated failure never creates a dra
 test("incomplete writer JSON repairs once without choosing another media, mode or rating", async () => {
   const prompts: string[] = [];
   const result = await generatePersonaBatch({personas:[persona],postsPerPersona:1,weights:DEFAULT_MODE_WEIGHTS,recent:[],candidates:new Map([["p1",[media]]]),random:()=>.2,
-    chat:async messages=>{
+    chat:writerOnly(async messages=>{
       prompts.push(messages[1].content);
       return prompts.length === 1 ? '{"content":"unfinished' : JSON.stringify({content:"The quiet parts mattered more than the big speeches. Not every pause earned its length, but the last conversation changed the earlier scenes."});
-    },
+    }),
   });
   assert.equal(result.drafts.length,1);
   assert.equal(prompts.length,2);

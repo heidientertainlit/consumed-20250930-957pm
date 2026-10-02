@@ -1,4 +1,5 @@
 import { normalizedTitle, type MediaCandidate, type Persona, type RecentPost } from "./persona-generation.ts";
+import type { IntentContext } from "./persona-post-intents.ts";
 
 export type ProviderKeys = { tmdb?: string; books?: string; rawg?: string };
 const genres: Record<number, string> = { 28: "action", 12: "adventure", 16: "animation", 35: "comedy", 80: "crime", 99: "documentary", 18: "drama", 10751: "family", 14: "fantasy", 36: "history", 27: "horror", 10402: "music", 9648: "mystery", 10749: "romance", 878: "sci-fi", 53: "thriller", 10765: "sci-fi fantasy", 10764: "reality", 10759: "action adventure" };
@@ -56,6 +57,17 @@ export async function fetchTrendingCandidates(keys: ProviderKeys): Promise<Media
   const results = await Promise.allSettled(jobs);
   if (results.every(r => r.status === "rejected")) throw new Error("Trending providers unavailable");
   return results.flatMap(r => r.status === "fulfilled" ? r.value : []);
+}
+/** Enrich only the selected title. Provider facts, never model-invented characters or episodes. */
+export async function loadPersonaIntentContext(media: MediaCandidate, keys: ProviderKeys): Promise<IntentContext> {
+  if (media.externalSource !== "tmdb" || !media.externalId || !keys.tmdb || !["movie", "tv"].includes(media.type)) return media.intentContext || {};
+  const data = await json(`https://api.themoviedb.org/3/${media.type}/${encodeURIComponent(media.externalId)}/credits?api_key=${keys.tmdb}`);
+  const people: NonNullable<IntentContext["people"]> = [...(media.intentContext?.people || [])];
+  for (const item of (data.cast || []).slice(0, 5)) {
+    if (typeof item.character === "string" && item.character.trim() && !/^(?:self|himself|herself)$/i.test(item.character.trim())) people.push({ name: item.character.trim(), kind: "character" });
+    if (typeof item.name === "string" && item.name.trim()) people.push({ name: item.name.trim(), kind: "performer" });
+  }
+  return { ...media.intentContext, people };
 }
 export function personaFit(persona: Persona, item: MediaCandidate): number {
   const config = persona.persona_config;

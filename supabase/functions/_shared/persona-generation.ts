@@ -1,12 +1,13 @@
 /** Portable, side-effect-free planning shared by the generator, admin UI and dry-run tests. */
-import { MODE_REGISTER_GUIDANCE, PERSONAL_SOCIAL_REGISTER, REGISTER_EXAMPLES } from "./persona-writing-instructions.ts";
+import { MODE_REGISTER_GUIDANCE, PERSONAL_SOCIAL_REGISTER } from "./persona-writing-instructions.ts";
+import { intentWriterInstructions, intentRatingProbability, type IntentAssignment, type IntentContext, type IntentWeights, type PostIntent } from "./persona-post-intents.ts";
 export const POST_MODES = [
-  { id: "thoughtful", label: "Thoughtful reaction", description: "A considered PERSONAL opinion in two to four ordinary sentences: what landed or didn't for this person. Room for nuance, not a plot summary, literary analysis or sales pitch. Polished writing is optional.", words: [25, 85] },
+  { id: "thoughtful", label: "Thoughtful reaction", description: "More room to express the assigned social behavior, usually two to four ordinary sentences. It need not be an evaluation, summary or polished argument.", words: [25, 85] },
   { id: "micro", label: "Micro reaction", description: "An original, tiny emotional reaction. Usually one to five words. It need not be clever.", words: [1, 8] },
   { id: "casual", label: "Casual thought", description: "A conversational observation, usually a sentence. It may be plain, unfinished or informal.", words: [5, 30] },
-  { id: "rating", label: "Rating + quick thought", description: "A brief opinion with optional natural rating language, always consistent with the assigned five-star rating.", words: [3, 30] },
+  { id: "rating", label: "Rating + quick thought", description: "A brief expression of the assigned social behavior alongside stars. Optional natural score wording must match the authoritative five-star rating.", words: [3, 30] },
   { id: "question", label: "Conversation starter", description: "An original question inviting other people's opinions. Do not make up facts or pretend to be awaiting a first watch if a rating is assigned.", words: [4, 30] },
-  { id: "specific", label: "Specific reaction", description: "A focused response to an aspect supported by the supplied context. Without that evidence, react to the overall experience; invent no episodes or characters.", words: [2, 25] },
+  { id: "specific", label: "Specific reaction", description: "Focus the assigned social behavior on a supported aspect. Without detailed evidence, stay general; invent no episodes or characters.", words: [2, 25] },
   { id: "opinion", label: "Hot take / opinion", description: "A personal stance, perhaps disagreement or ambivalence. Not automatically negative, confrontational or performatively controversial.", words: [5, 40] },
   { id: "low_energy", label: "Low-energy reaction", description: "An ordinary, understated response. No obligation to entertain, explain or sound polished.", words: [1, 15] },
 ] as const;
@@ -28,6 +29,7 @@ export type PersonaConfig = {
   bio?: string; tone?: string; interests?: string[]; media_types?: string[];
   favorite_media?: string[]; posting_style?: string; activity_level?: string;
   style_examples?: { type: string; content: string }[]; social_voice?: Partial<SocialVoice>;
+  intent_preferences?: Partial<IntentWeights>;
   generation_feedback?: string[];
 };
 export type Persona = { id: string; user_name: string; display_name: string; persona_config: PersonaConfig };
@@ -36,13 +38,16 @@ export type MediaCandidate = {
   canonicalId?: string; description?: string; genres?: string[];
   source: "Trending" | "Persona Favorite" | "History" | "Discovery";
   fit: number;
+  intentContext?: IntentContext;
 };
-export type RecentPost = { personaId: string; title: string; type: string; content?: string; createdAt?: string };
-export type BatchEntry = { personaId: string; mediaKey: string; mode: PostMode; words: number; caps: boolean; content: string };
+export type RecentPost = { personaId: string; title: string; type: string; content?: string; createdAt?: string; intent?: PostIntent };
+export type BatchEntry = { personaId: string; mediaKey: string; mode: PostMode; words: number; caps: boolean; content: string; intent?: PostIntent };
 export type GenerationMeta = {
   version: 1; mode: PostMode; modeLabel: string; mediaSource: string; recentlyUsed: boolean;
   voice: SocialVoice; externalId?: string; externalSource?: string; words: number;
   rating: number | null; warnings: string[];
+  intent?: PostIntent; intentLabel?: string; intentReason?: string;
+  consumption?: IntentAssignment["consumption"]; context?: IntentContext;
 };
 export function validateModeWeights(value: unknown): ModeWeights {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Mode weights must be an object");
@@ -137,9 +142,11 @@ export function chooseMedia(items: MediaCandidate[], personaId: string, recent: 
   // Source cardinality must not turn 25 weak trends into stronger evidence than 3 genuine favorites.
   return weightedPick(candidates, item => mediaSelectionWeight(item, personaId, recent, batch) * sourcePrior[item.source] / sourceCounts.get(item.source)!, random);
 }
-export function chooseMode(weights: ModeWeights, voice: SocialVoice, batch: BatchEntry[], random = Math.random): PostMode {
+export function chooseMode(weights: ModeWeights, voice: SocialVoice, batch: BatchEntry[], random = Math.random, compatible?: PostMode[]): PostMode {
   const last = batch.slice(-5);
-  return weightedPick(POST_MODES.map(m => m.id), mode => {
+  const modes = POST_MODES.map(m => m.id).filter(id => !compatible || compatible.includes(id));
+  if (!modes.some(id => weights[id] * voice.preferredModeWeights[id] > 0)) throw new Error("No configured writing mode is compatible with the assigned intent/state");
+  return weightedPick(modes, mode => {
     let w = weights[mode] * voice.preferredModeWeights[mode];
     if (mode === "question") w *= voice.questionFrequency === "rare" ? .4 : voice.questionFrequency === "frequent" ? 1.5 : 1;
     if (mode === "rating") w *= voice.ratingFrequency === "rare" ? .35 : voice.ratingFrequency === "frequent" ? 1.5 : 1;
@@ -151,8 +158,9 @@ export function chooseMode(weights: ModeWeights, voice: SocialVoice, batch: Batc
     return w;
   }, random);
 }
-export function chooseRating(mode: PostMode, voice: SocialVoice, random = Math.random): number | null {
-  const probability = voice.ratingFrequency === "rare" ? .15 : voice.ratingFrequency === "frequent" ? .8 : .45;
+export function chooseRating(mode: PostMode, voice: SocialVoice, random = Math.random, assignment?: IntentAssignment): number | null {
+  const probability = assignment ? intentRatingProbability(assignment, voice) : voice.ratingFrequency === "rare" ? .15 : voice.ratingFrequency === "frequent" ? .8 : .45;
+  if (probability === 0) return null;
   if (mode !== "rating" && random() > probability) return null;
   // Keep mixed/negative opinions possible rather than making every persona ecstatic.
   return weightedPick([.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5], n => [.5, 1, 1, 2, 3, 5, 9, 12, 10, 8][Math.round(n * 2) - 1], random);
@@ -197,18 +205,22 @@ export function writingShapeIssues(content: string, mode: PostMode): string[] {
 export function cleanStyleExample(content: string): string {
   return content.replace(/\b\d+(?:\.\d+)?\s*\/\s*(?:10|5)\b/g, "").replace(/\b\d+(?:\.\d+)?\s*(?:stars?|out of (?:five|ten|5|10))\b/gi, "").replace(/ {2,}/g, " ").trim();
 }
-export function buildWritingPrompt(persona: Persona, media: MediaCandidate, mode: PostMode, voice: SocialVoice, rating: number | null, batch: BatchEntry[], recent: RecentPost[], repair?: string) {
+export function buildWritingPrompt(persona: Persona, media: MediaCandidate, mode: PostMode, voice: SocialVoice, rating: number | null, batch: BatchEntry[], recent: RecentPost[], repair?: string, assignment?: IntentAssignment) {
   const spec = POST_MODES.find(m => m.id === mode)!;
   const phrases = repeatedPhrases([...recent.slice(-30).map(p => p.content || ""), ...batch.map(p => p.content)]);
   const capsPressure = batch.slice(-6).filter(p => p.caps).length >= 2;
   const config = persona.persona_config;
   const { preferredModeWeights: _modePreferences, ...writingVoice } = voice;
-  const stance = rating === null ? "An unscored personal reaction, not an endorsement blurb." : rating >= 4 ? "Liked or loved it, without forced hype." : rating >= 3 ? "Mixed/moderately positive, not an ecstatic rave." : "Disappointed or unimpressed, without obligatory snark.";
-  return [
-    { role: "system", content: `You are ${persona.display_name}. Preserve this person's existing identity:\n${JSON.stringify({ bio: config.bio, tone: config.tone, interests: config.interests, posting_style: config.posting_style })}\nSocial voice tendencies derived from their existing descriptions and examples: ${JSON.stringify(writingVoice)}. Preferences, not rigid rules or a caricature; no requirement to express every trait in every post. Assigned mode takes precedence over habitual verbosity, not over identity. Emoji setting "none" means no emojis; other settings are probabilities, not a requirement.\nExisting admin rejection feedback: ${JSON.stringify(config.generation_feedback || [])}\n\n${PERSONAL_SOCIAL_REGISTER}\n\n${REGISTER_EXAMPLES}\n\nDo not invent named characters, events, episode/season numbers, endings, quotes or credits. Only use specifics explicitly supported by supplied context; prefer a general reaction when uncertain. No spoiler details. No predefined reactions/templates: use this person's own wording.` },
+  const stance = assignment && ["not_started", "starting"].includes(assignment.consumption.state) ? "Expectations or intention only; no verdict on completed consumption." : rating === null ? "No forced verdict or endorsement. Let the assigned social behavior determine the thought." : rating >= 4 ? "Liked or loved it, without forced hype." : rating >= 3 ? "Mixed/moderately positive, not an ecstatic rave." : "Disappointed or unimpressed, without obligatory snark.";
+  const messages = [
+    { role: "system", content: `You are ${persona.display_name}. Preserve this person's existing identity:\n${JSON.stringify({ bio: config.bio, tone: config.tone, interests: config.interests, posting_style: config.posting_style })}\nSocial voice tendencies derived from their existing descriptions and examples: ${JSON.stringify(writingVoice)}. Preferences, not rigid rules or a caricature; no requirement to express every trait in every post. Assigned intent takes precedence over mode: mode shapes expression, not the reason to post. Emoji setting "none" means no emojis; other settings are probabilities, not a requirement.\nExisting admin rejection feedback: ${JSON.stringify(config.generation_feedback || [])}\n\n${PERSONAL_SOCIAL_REGISTER}\n\nDo not invent named characters, events, episode/season numbers, endings, quotes or credits. Only use specifics explicitly supported by supplied context. Broad fictional consumption states are allowed and assigned by the planner, but do not invent specific progress counts or additional personal biography. No spoiler details. No predefined reactions/templates: use this person's own wording.` },
     { role: "user", content: `Assigned media (do not choose another): ${JSON.stringify({ title: media.title, type: media.type, creator: media.creator, reliableContext: media.description?.slice(0, 900) || "No detailed context supplied. Use a general reaction; do not invent facts." })}\nAssigned internal mode: ${spec.label}. Behavior: ${spec.description}. Approximate target ${spec.words[0]}–${spec.words[1]} words (not a fill-in template; do not pad the thought with review language).\nWriting within this mode: ${MODE_REGISTER_GUIDANCE[mode]}\nEmotional stance: ${stance}\nAuthoritative rating: ${rating === null ? "none. No rating language or numerical scores in the body." : `${rating}/5. Already visible on the card. If you optionally reference your actual score, use {{rating}} for the number or {{rating_words}} for its written form; the application substitutes the authoritative value. Say it naturally, with no obligation to mention the score. Never /10. A clearly hypothetical better rating is allowed.`}\nRating-only (empty content) is permitted occasionally if there is a rating and this is a micro or low-energy post. Never return empty content without a rating.\nRecent batch shapes: ${batch.slice(-5).map(p => `${p.mode}, ${p.words} words${p.caps ? ", all caps" : ""}`).join("; ") || "none yet"}.\n${capsPressure ? "Several recent posts use capitals; prefer ordinary capitalization for this post." : "Capitals are optional according to voice."}\nDiscourage already-used phrases: ${phrases.join("; ") || "none yet"}. Do not reuse the openings or rhetorical shape of these recent posts:\n${batch.slice(-3).map(p => p.content).join("\n")}\n${repair ? `Previous attempt failed validation: ${repair}. Correct the underlying thought/register, not just capitalization or pronouns. Do not change the assignment.` : ""}\nFinal register check: Is this something this person would type, or does it explain/sell/analyze the work for an audience? Keep the reaction, not the review. No need to be original, insightful or clever; no borrowed demonstration phrases.\nReturn ONLY JSON: {"content":"post text"}. No rating, media or post_type fields; those are already assigned.`,
     },
   ];
+  if (assignment) {
+    messages[1].content = `${intentWriterInstructions(assignment)}\n\n${messages[1].content}\nIntent is the primary assignment. Recent intents: ${batch.slice(-8).map(p => p.intent || "unknown").join(", ") || "none"}. Do not supply an evaluation merely because a mode permits more words. Word targets are soft guidance, never an obligation to pad or explain a tiny human thought.`;
+  }
+  return messages;
 }
 /** Numbers in hypothetical clauses are not claims about the actual rating. */
 export function validateGeneratedContent(content: unknown, rating: number | null, media: MediaCandidate): string[] {

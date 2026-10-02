@@ -37,15 +37,20 @@ text, vocabulary complexity or presence of “I.”
 The user subsequently requested a separate POST INTENT / SOCIAL BEHAVIOR layer before
 writing: why the person posts, independently of the writing mode. Do not treat this as
 another wording-only adjustment. Preserve existing modes and the media/voice work.
-Review/evaluation should remain common, initially around 25–35%, rather than dominate.
+Review/evaluation should remain common, initially around 20–25%, rather than dominate.
 Intent weights must be configurable, nonuniform and context-sensitive, without quotas.
 Ratings must respond to intent; anticipation must not receive a rating.
-Unsupported episode, character, adaptation, progress or relationship context must not
-be invented to satisfy an intent.
+Broad fictional consumption states (not started, starting, in progress, finished,
+dropped, revisiting) may be assigned without historical database proof and treated as
+truth for the generated post. Do not invent precise progress/repeat counts, factual
+media details or unsupported personal biography to satisfy an intent.
 
 **Why:** The user found that differently formatted evaluations still feel like a feed
-of reviews rather than different social behaviors.
+of reviews rather than different social behaviors. Other intents can still contain
+opinions, so review intent does not need to represent every evaluative post.
 
 **How to apply:** Separate intent planning from writing shape, and check context
-eligibility before selecting an intent. The user requested an architecture proposal
-before implementation; a proposal is not approval to implement.
+eligibility before selecting an intent. Keep validation narrow: contradictions,
+unsupported specific facts and obvious intent failures, not grammar, polish, length,
+insight or perfect demonstration of the intent. Tiny or ambiguous human thoughts are
+valid; do not repair them into explanatory posts.

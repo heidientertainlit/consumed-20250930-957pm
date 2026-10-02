@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import vm from "node:vm";
 import { build } from "esbuild";
 import { DEFAULT_MODE_WEIGHTS, deriveSocialVoice } from "./persona-generation.ts";
+import { DEFAULT_INTENT_WEIGHTS } from "./persona-post-intents.ts";
 
 /** Execute the actual Edge handler with isolated auth, provider and database adapters. */
 async function harness() {
@@ -12,10 +13,10 @@ async function harness() {
   const weights = Object.fromEntries(Object.keys(DEFAULT_MODE_WEIGHTS).map(id => [id, id === "thoughtful" ? 100 : 0]));
   const db = {
     from(table: string) {
-      let projection = "", action = "read", payload: any;
+      let projection = "", action = "read", payload: any, settingKey = "";
       const query: any = {
         select(value: string) { projection = value; return query; },
-        in() { return query; }, eq() { return query; }, gte() { return query; },
+        in() { return query; }, eq(key: string, value: string) { if (key === "key") settingKey = value; return query; }, gte() { return query; },
         order() { return query; }, limit() { return query; }, not() { return query; },
         insert(data: any) { action = "insert"; payload = data; return query; },
         upsert(data: any) { action = "upsert"; payload = data; return query; },
@@ -23,7 +24,7 @@ async function harness() {
         result(single = false) {
           if (action !== "read") { writes.push({ table, action, data: payload }); return { data: { id: "draft-id" }, error: null }; }
           reads.push(table);
-          if (table === "app_settings") return { data: { value: JSON.stringify(weights) }, error: null };
+          if (table === "app_settings") return { data: { value: JSON.stringify(settingKey === "persona_generation_intent_weights" ? DEFAULT_INTENT_WEIGHTS : weights) }, error: null };
           if (table === "users") {
             if (projection === "persona_config") return { data: { persona_config: { ...config } }, error: null };
             const persona = { id: "p1", user_name: "example", display_name: "Example", persona_config: { ...config } };
@@ -64,7 +65,8 @@ async function harness() {
       if (url === "https://api.openai.com/v1/chat/completions") {
         const body = JSON.parse(options.body);
         const candidateRequest = body.messages[1].content.startsWith("Persona tastes:");
-        const value = candidateRequest
+        const validationRequest = body.messages[1].content.includes('"task":"narrow_intent_validation"');
+        const value = validationRequest ? { issues: [] } : candidateRequest
           ? { candidates: [{ title: "Known Movie", type: "movie", source: "Persona Favorite" }] }
           : { content: "Honestly, I liked it more than expected. The pacing was a little slow, but the ending worked for me." };
         return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(value) } }] }));
@@ -72,6 +74,7 @@ async function harness() {
       if (url.startsWith("https://api.themoviedb.org/3/search/movie")) {
         return new Response(JSON.stringify({ results: [{ id: 42, title: "Known Movie", release_date: "2000-01-01", genre_ids: [18], overview: "A family drama." }] }));
       }
+      if (url.startsWith("https://api.themoviedb.org/3/movie/42/credits")) return new Response(JSON.stringify({ cast: [{ name: "Verified Performer", character: "Verified Character" }] }));
       throw new Error("Unexpected provider request in isolated test");
     },
   };
@@ -109,7 +112,7 @@ test("normal generation inserts drafts only, leaving scheduling and publishing u
 });
 test("unauthorized configuration and preview requests never reach the database", async () => {
   const h = await harness();
-  for (const action of ["settings", "save-settings", "save-voice", "dry-run"]) {
+  for (const action of ["settings", "save-settings", "save-intent-settings", "save-voice", "dry-run"]) {
     assert.equal((await h.request({ action }, false)).status, 401);
   }
   assert.equal(h.reads.length, 0);
@@ -130,6 +133,20 @@ test("settings advertise preview capability; invalid weights are rejected before
   const h = await harness();
   const settings = await h.request({ action: "settings" });
   assert.equal(settings.body.capabilities.dryRun, true);
+  assert.equal(settings.body.capabilities.generationVersion, 2);
+  assert.equal(settings.body.capabilities.postIntent, true);
+  assert.equal(settings.body.intentWeights.review, 22);
   assert.equal((await h.request({ action: "save-settings", weights: { ...DEFAULT_MODE_WEIGHTS, micro: -1 } })).status, 400);
   assert.equal(h.writes.length, 0);
+});
+test("intent weights save independently and invalid intent configuration cannot write", async () => {
+  const h = await harness();
+  assert.equal((await h.request({ action: "save-intent-settings", intentWeights: { ...DEFAULT_INTENT_WEIGHTS, review: -1 } })).status, 400);
+  assert.equal(h.writes.length, 0);
+  assert.equal((await h.request({ action: "save-intent-settings", intentWeights: DEFAULT_INTENT_WEIGHTS })).status, 200);
+  assert.equal(h.writes.length, 1);
+  assert.equal(h.writes[0].data.key, "persona_generation_intent_weights");
+  const config = JSON.parse(h.writes[0].data.value);
+  assert.equal(config.review, 22);
+  assert.deepEqual(DEFAULT_MODE_WEIGHTS, {thoughtful:30,micro:10,casual:15,rating:10,question:10,specific:8,opinion:8,low_energy:9});
 });

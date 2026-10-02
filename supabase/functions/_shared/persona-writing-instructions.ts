@@ -2,9 +2,9 @@ import type { PostMode } from "./persona-generation.ts";
 
 /** Register guidance only. No selection logic, quotas, reusable posts or new persona identities. */
 export const PERSONAL_SOCIAL_REGISTER = `CORE WRITING PRINCIPLE: WRITE THE REACTION, NOT THE REVIEW.
-Before writing, silently ask: "What would THIS PERSON actually type into an entertainment social app after consuming this?" Not: "How would someone review this media item?" Return the post, not that reasoning.
+Before writing, silently ask: "Why did THIS PERSON open an entertainment social app to post this, given their assigned intent and consumption state?" Not: "How would someone review this media item?" Return the post, not that reasoning.
 
-This is a user talking about entertainment, not a critic, marketer, synopsis writer or entertainment journalist. Center their response: what stayed with them, annoyed them, delighted them, surprised them, or simply whether they liked it. Don't explain the work to prospective consumers or recommend it to an imagined audience.
+This is a user talking about entertainment, not a critic, marketer, synopsis writer or entertainment journalist. Center their assigned social behavior: starting, revisiting, wondering, wanting something next, recognizing themselves, reacting, or sometimes evaluating. Don't default to explaining the work or recommending it to an imagined audience. A deliberately assigned recommendation may address a particular kind of person, naturally rather than as marketing copy.
 
 REGISTER, NOT LENGTH: A long reaction can be entirely conversational. A short sentence can still be editorial copy. Don't use the title-summary-adjectives-verdict pattern. Avoid professional-review formulations such as "crafts a poignant...", "offers an exploration of...", "the emotional landscape", "the influence shines through", "worth a watch/listen/read", "fails to engage the viewer", "its themes/portrayal", or generic claims that something is captivating, compelling or thought-provoking. These illustrate an editorial register, not a word blacklist. Specific, genuinely personal use of precise vocabulary is fine.
 
@@ -28,10 +28,10 @@ A question can have a personal reason: "I can't tell if I missed something or if
 These demonstrate the register, not content to adapt to the assigned title. Do not quote, paraphrase or recycle them. An equally plain thought in this person's own words is enough. Notice that none explains the work to an imagined audience or tries to supply a quotable critical verdict.`;
 
 export const MODE_REGISTER_GUIDANCE: Record<PostMode, string> = {
-  thoughtful: "A person has more to say: two to four conversational sentences about what did or didn't work FOR THEM. Their thinking can be nuanced or analytical without explaining themes to readers. No mandatory polished opening, balanced critique or final recommendation.",
+  thoughtful: "A person has more to say about the assigned intent, often two to four conversational sentences. Their thinking can be nuanced without becoming a review. Shorter thoughts are fine; no mandatory polished opening, balanced critique or conclusion.",
   micro: "An immediate reaction: one word, a few words, an emotion, a fragment, or the assigned rating. It does not need to describe the media, contain insight or be entertaining.",
   casual: "An ordinary thought someone would type without composing copy. A simple observation or reaction is enough; no need for a clever hook or explanation.",
-  rating: "A quick personal thought alongside the assigned stars. Rating language is optional and must use the authoritative placeholders. No miniature professional review to justify the score.",
+  rating: "Express the assigned intent briefly alongside the assigned stars. Rating language is optional and must use the authoritative placeholders. Stars do not require a miniature review to justify them.",
   question: "Ask because THIS PERSON has a reason: their response, uncertainty, disagreement or desire to talk about this media. Usually tie it to their own experience. Don't invent a scene/episode to make the question specific, and don't add a generic audience-engagement sign-off.",
   specific: "React to a particular aspect ONLY when supplied facts support it. Still a user's response, not a description of that aspect for an audience. If details are missing, a general response is better than an invented fact.",
   opinion: "A personal stance in this person's normal register. It can be articulate, ambivalent or understated; not automatically provocative, combative, insightful or clever.",

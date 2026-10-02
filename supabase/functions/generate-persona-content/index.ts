@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authorizeAdminOrService } from "../_shared/authorization.ts";
-import { DEFAULT_MODE_WEIGHTS, deriveSocialVoice, mediaKey, validateModeWeights, validateVoice, type Persona, type RecentPost, type MediaCandidate } from "../_shared/persona-generation.ts";
-import { buildPersonaCandidates, createPersonaChat, fetchTrendingCandidates, resolveMediaCandidate } from "../_shared/persona-media-candidates.ts";
+import { DEFAULT_MODE_WEIGHTS, deriveSocialVoice, mediaKey, parseGenerationNotes, validateModeWeights, validateVoice, type Persona, type RecentPost, type MediaCandidate } from "../_shared/persona-generation.ts";
+import { DEFAULT_INTENT_WEIGHTS, validateIntentWeights } from "../_shared/persona-post-intents.ts";
+import { buildPersonaCandidates, createPersonaChat, fetchTrendingCandidates, resolveMediaCandidate, loadPersonaIntentContext } from "../_shared/persona-media-candidates.ts";
 import { generatePersonaBatch } from "../_shared/persona-generation-engine.ts";
 
 const corsHeaders = {
@@ -10,6 +11,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 const SETTINGS_KEY = "persona_generation_mode_weights";
+const INTENT_SETTINGS_KEY = "persona_generation_intent_weights";
 function response(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
@@ -29,6 +31,12 @@ serve(async req => {
       if (error) throw new Error("Could not save mode weights");
       return response({ success: true, weights });
     }
+    if (action === "save-intent-settings") {
+      const intentWeights = validateIntentWeights(body.intentWeights);
+      const { error } = await db.from("app_settings").upsert({ key: INTENT_SETTINGS_KEY, value: JSON.stringify(intentWeights) }, { onConflict: "key" });
+      if (error) throw new Error("Could not save intent weights");
+      return response({ success: true, intentWeights });
+    }
     if (action === "save-voice") {
       if (typeof body.personaId !== "string") return response({ error: "personaId required" }, 400);
       const voice = validateVoice(body.voice);
@@ -42,7 +50,10 @@ serve(async req => {
     const { data: setting, error: settingError } = await db.from("app_settings").select("value").eq("key", SETTINGS_KEY).maybeSingle();
     if (settingError) throw new Error("Could not load generation settings");
     const weights = setting ? validateModeWeights(typeof setting.value === "string" ? JSON.parse(setting.value) : setting.value) : { ...DEFAULT_MODE_WEIGHTS };
-    if (action === "settings") return response({ weights, capabilities: { dryRun: true, generationVersion: 1 } });
+    const { data: intentSetting, error: intentSettingError } = await db.from("app_settings").select("value").eq("key", INTENT_SETTINGS_KEY).maybeSingle();
+    if (intentSettingError) throw new Error("Could not load intent settings");
+    const intentWeights = intentSetting ? validateIntentWeights(typeof intentSetting.value === "string" ? JSON.parse(intentSetting.value) : intentSetting.value) : { ...DEFAULT_INTENT_WEIGHTS };
+    if (action === "settings") return response({ weights, intentWeights, capabilities: { dryRun: true, generationVersion: 2, postIntent: true } });
 
     // Preview deliberately uses different field names. An older deployed handler sees
     // no personaIds and rejects it, rather than ignoring dryRun and creating drafts.
@@ -66,11 +77,19 @@ serve(async req => {
     const since = new Date(Date.now() - 30 * 86400000).toISOString();
     // Pending drafts/schedules are checked regardless of age; only publication history is time-bounded.
     const historyResults = await Promise.all([
-      db.from("persona_post_drafts").select("persona_user_id,media_title,media_type,content,created_at").in("persona_user_id", ids).eq("status", "draft").order("created_at", { ascending: false }).limit(500),
+      db.from("persona_post_drafts").select("persona_user_id,media_title,media_type,content,created_at,ai_notes").in("persona_user_id", ids).eq("status", "draft").order("created_at", { ascending: false }).limit(500),
       db.from("scheduled_persona_posts").select("persona_user_id,media_title,media_type,content,created_at").in("persona_user_id", ids).eq("posted", false).order("created_at", { ascending: false }).limit(500),
       db.from("social_posts").select("user_id,media_title,media_type,content,created_at").in("user_id", ids).gte("created_at", since).order("created_at", { ascending: false }).limit(500),
     ]);
     if (historyResults.some(r => r.error)) throw new Error("Could not load recent media history; generation stopped rather than ignoring repetition checks");
+    // Approved draft metadata survives the unchanged scheduling/publication pipeline.
+    // It is read only for intent history, never added to the media-selection history.
+    const { data: approvedHistory, error: approvedHistoryError } = await db.from("persona_post_drafts").select("persona_user_id,media_title,media_type,content,created_at,ai_notes").in("persona_user_id", ids).eq("status", "approved").gte("created_at", since).order("created_at", { ascending: false }).limit(500);
+    if (approvedHistoryError) throw new Error("Could not load recent intent history");
+    const intentRecent: RecentPost[] = [...(historyResults[0].data || []), ...(approvedHistory || [])].filter(item => parseGenerationNotes(item.ai_notes)?.intent).map(item => ({
+      personaId: item.persona_user_id, title: item.media_title, type: item.media_type, content: item.content,
+      createdAt: item.created_at, intent: parseGenerationNotes(item.ai_notes)!.intent,
+    })).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
     const recent: RecentPost[] = [];
     const seen = new Set<string>();
     for (const item of historyResults.flatMap(r => r.data || []).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))) {
@@ -106,7 +125,7 @@ serve(async req => {
         catch { errors.push(`${p.display_name}: candidate selection failed`); candidates.set(p.id, []); }
       }));
     }
-    const generated = await generatePersonaBatch({ personas, postsPerPersona, weights, recent, candidates, chat, deadline: Date.now() + 105000 });
+    const generated = await generatePersonaBatch({ personas, postsPerPersona, weights, intentWeights, recent, intentRecent, candidates, chat, loadContext: media => loadPersonaIntentContext(media, keys), deadline: Date.now() + 105000 });
     errors.push(...generated.errors);
     const drafts = [];
     for (const draft of generated.drafts) {

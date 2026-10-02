@@ -1,0 +1,1362 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Consumed — Persona generation review</title><style>body{margin:0;background:#0a0e18;color:#edf0f9;font:16px/1.6 system-ui;padding:32px}main{max-width:1000px;margin:auto}h1{font-size:32px;margin-bottom:8px}header{margin-bottom:32px}.note{color:#b1b8cd}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px}article{position:relative;padding:24px;border:1px solid #2d354b;background:#141b2b;border-radius:16px}h2{font-size:18px;margin:0 28px 8px 0}.number{float:right;color:#aa80ff}.details{font-size:13px;color:#aeb8d2}blockquote{margin:20px 0;white-space:pre-wrap}summary{font-size:12px;color:#bd9aff;cursor:pointer}pre{font-size:11px;white-space:pre-wrap}.stats{padding:12px 16px;background:#241a40;border-radius:10px;font-size:13px}a{color:#d5c0ff}section{margin:24px 0}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:8px;border-bottom:1px solid #2d354b}th{color:#bd9aff}@media(max-width:480px){body{padding:16px}th,td{padding:6px 4px;font-size:11px}}</style><main><header><h1>Persona generation review</h1><p class="note">20 actual AI-generated sample posts across 10 fictional personas. Local dry run: nothing saved to a database, scheduled or published.</p><p class="note">Uses checked-in persona configurations and verified provider media. Live pending/scheduled/published history and any live voice overrides were not queried for this sample. Consumption states are broad fictional planner assignments, not claims about real user tracking. Specific people/media facts come from supplied provider context.</p><div class="stats">No generation errors.</div><section><h2>Mode distribution — weights unchanged</h2><table><thead><tr><th>Mode</th><th>Base weight</th><th>Previous batch</th><th>This batch</th></tr></thead><tbody><tr><td>Thoughtful reaction</td><td>30</td><td>5</td><td>3 (15%)</td></tr><tr><td>Micro reaction</td><td>10</td><td>0</td><td>4 (20%)</td></tr><tr><td>Casual thought</td><td>15</td><td>6</td><td>6 (30%)</td></tr><tr><td>Rating + quick thought</td><td>10</td><td>2</td><td>0 (0%)</td></tr><tr><td>Conversation starter</td><td>10</td><td>1</td><td>2 (10%)</td></tr><tr><td>Specific reaction</td><td>8</td><td>2</td><td>1 (5%)</td></tr><tr><td>Hot take / opinion</td><td>8</td><td>2</td><td>2 (10%)</td></tr><tr><td>Low-energy reaction</td><td>9</td><td>2</td><td>2 (10%)</td></tr></tbody></table><p class="note">Same checked-in personas and weights; fresh random media/mode assignments, not a paired or quota-balanced experiment. These counts describe the actual outputs, not a quality score.</p></section><section><h2>Intent distribution — independent weighted planning</h2><table><thead><tr><th>Intent</th><th>Base weight</th><th>This batch</th></tr></thead><tbody><tr><td>Review / evaluation</td><td>22</td><td>1 (5%)</td></tr><tr><td>Immediate reaction</td><td>12</td><td>3 (15%)</td></tr><tr><td>Observation</td><td>8</td><td>3 (15%)</td></tr><tr><td>Confession</td><td>4</td><td>1 (5%)</td></tr><tr><td>Genuine question</td><td>6</td><td>3 (15%)</td></tr><tr><td>What next? / recommendation ask</td><td>7</td><td>1 (5%)</td></tr><tr><td>Comparison</td><td>3</td><td>0 (0%)</td></tr><tr><td>Character / person focus</td><td>5</td><td>1 (5%)</td></tr><tr><td>Moment / scene reaction</td><td>2</td><td>0 (0%)</td></tr><tr><td>Revisit / rewatch</td><td>6</td><td>2 (10%)</td></tr><tr><td>Expectation vs. reality</td><td>4</td><td>0 (0%)</td></tr><tr><td>Behavior / aftereffect</td><td>4</td><td>0 (0%)</td></tr><tr><td>Currently consuming</td><td>4</td><td>1 (5%)</td></tr><tr><td>Drop / abandon</td><td>2</td><td>0 (0%)</td></tr><tr><td>Anticipation / starting</td><td>4</td><td>1 (5%)</td></tr><tr><td>Identity / self-recognition</td><td>3</td><td>0 (0%)</td></tr><tr><td>Recommendation</td><td>2</td><td>2 (10%)</td></tr><tr><td>Social / relational</td><td>1</td><td>1 (5%)</td></tr><tr><td>Side thought / association</td><td>1</td><td>0 (0%)</td></tr></tbody></table><p class="note">Review/evaluation starts at base weight 22. Actual probabilities vary with eligibility, state, persona and soft diversity penalties; no quotas or rotations.</p></section><section><h2>Validation warnings</h2><p class='note'>No validation warnings.</p></section></header><div class="grid"><article><div class="number">1</div><h2>Nicholas Grant</h2><div class="details">How I Built This with Guy Raz · podcast<br><strong>Intent:</strong> Recommendation<br><strong>Mode:</strong> Casual thought<br><strong>Consumption:</strong> finished (fictional_planner)<br><strong>Rating:</strong> 4/5 · Discovery</div><blockquote>If you&#39;re into business stories and startups, &#39;How I Built This&#39; is a gem. Guy Raz really digs into the hows and whys of successful companies.</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;casual&quot;,
+  &quot;modeLabel&quot;: &quot;Casual thought&quot;,
+  &quot;mediaSource&quot;: &quot;Discovery&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;medium&quot;,
+    &quot;energy&quot;: &quot;casual&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;standard&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;occasional&quot;,
+    &quot;questionFrequency&quot;: &quot;frequent&quot;,
+    &quot;sarcasm&quot;: &quot;none&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 0.8,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 0.8,
+      &quot;question&quot;: 1.5,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 0.8,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: 4,
+  &quot;words&quot;: 26,
+  &quot;externalId&quot;: &quot;1150510297&quot;,
+  &quot;externalSource&quot;: &quot;itunes&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;recommendation&quot;,
+  &quot;intentLabel&quot;: &quot;Recommendation&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for podcast, Discovery, finished; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;finished&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Guy Raz | Wondery&quot;,
+        &quot;kind&quot;: &quot;creator&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">2</div><h2>Sarah Whitman</h2><div class="details">Midsommar · movie<br><strong>Intent:</strong> Immediate reaction<br><strong>Mode:</strong> Thoughtful reaction<br><strong>Consumption:</strong> in progress (fictional_planner)<br><strong>Rating:</strong> 3/5 · Persona Favorite</div><blockquote>Midsommar is like if Wonderland hosted a deeply unsettling summer camp. There&#39;s something hypnotic about the brightness hiding all the lurking menace. Florence Pugh&#39;s performance has me on edge — in the best way. Quite the folk horror trip so far!</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;thoughtful&quot;,
+  &quot;modeLabel&quot;: &quot;Thoughtful reaction&quot;,
+  &quot;mediaSource&quot;: &quot;Persona Favorite&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;detailed&quot;,
+    &quot;energy&quot;: &quot;restrained&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;standard&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;frequent&quot;,
+    &quot;questionFrequency&quot;: &quot;rare&quot;,
+    &quot;sarcasm&quot;: &quot;medium&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1.8,
+      &quot;micro&quot;: 0.8,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 1.8,
+      &quot;question&quot;: 0.8,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 1.7,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: 3,
+  &quot;words&quot;: 41,
+  &quot;externalId&quot;: &quot;530385&quot;,
+  &quot;externalSource&quot;: &quot;tmdb&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;reaction&quot;,
+  &quot;intentLabel&quot;: &quot;Immediate reaction&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for movie, Persona Favorite, in_progress; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;in_progress&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Dani&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Florence Pugh&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Christian&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Jack Reynor&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Josh&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;William Jackson Harper&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Mark&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Will Poulter&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Pelle&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Vilhelm Blomgren&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">3</div><h2>Kei Tanaka</h2><div class="details">Attack on Titan · tv<br><strong>Intent:</strong> Recommendation<br><strong>Mode:</strong> Micro reaction<br><strong>Consumption:</strong> finished (fictional_planner)<br><strong>Rating:</strong> 4/5 · Persona Favorite</div><blockquote>Titans and turmoil: a wild ride for lore hunters!</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;micro&quot;,
+  &quot;modeLabel&quot;: &quot;Micro reaction&quot;,
+  &quot;mediaSource&quot;: &quot;Persona Favorite&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;short&quot;,
+    &quot;energy&quot;: &quot;enthusiastic&quot;,
+    &quot;capitalization&quot;: &quot;expressive&quot;,
+    &quot;punctuation&quot;: &quot;expressive&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;occasional&quot;,
+    &quot;questionFrequency&quot;: &quot;occasional&quot;,
+    &quot;sarcasm&quot;: &quot;none&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 1.5,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 0.8,
+      &quot;question&quot;: 0.8,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 0.8,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: 4,
+  &quot;words&quot;: 9,
+  &quot;externalId&quot;: &quot;1429&quot;,
+  &quot;externalSource&quot;: &quot;tmdb&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;recommendation&quot;,
+  &quot;intentLabel&quot;: &quot;Recommendation&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for tv, Persona Favorite, finished; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;finished&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Armin Arlert (voice)&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Marina Inoue&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Connie Springer (voice)&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Hiro Shimono&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Eren Yeager (voice)&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Yuki Kaji&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Falco Grice (voice)&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Natsuki Hanae&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Gabi Braun (voice)&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Ayane Sakura&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">4</div><h2>Marcus Delacroix</h2><div class="details">Call Me by Your Name · movie<br><strong>Intent:</strong> Genuine question<br><strong>Mode:</strong> Conversation starter<br><strong>Consumption:</strong> finished (fictional_planner)<br><strong>Rating:</strong> None · Persona Favorite</div><blockquote>After watching &#39;Call Me by Your Name&#39;, I&#39;m curious—how does everyone interpret the role of memory in Elio and Oliver&#39;s relationship? It&#39;s fascinating how the summer impacts them.</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;question&quot;,
+  &quot;modeLabel&quot;: &quot;Conversation starter&quot;,
+  &quot;mediaSource&quot;: &quot;Persona Favorite&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;medium&quot;,
+    &quot;energy&quot;: &quot;casual&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;standard&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;occasional&quot;,
+    &quot;questionFrequency&quot;: &quot;frequent&quot;,
+    &quot;sarcasm&quot;: &quot;low&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 0.8,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 0.8,
+      &quot;question&quot;: 1.5,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 1.7,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 28,
+  &quot;externalId&quot;: &quot;398818&quot;,
+  &quot;externalSource&quot;: &quot;tmdb&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;question&quot;,
+  &quot;intentLabel&quot;: &quot;Genuine question&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for movie, Persona Favorite, finished; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;finished&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Elio&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Timothée Chalamet&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Oliver&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Armie Hammer&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Mr. Perlman&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Michael Stuhlbarg&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Annella&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Amira Casar&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Marzia&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Esther Garrel&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">5</div><h2>Julian Brooks</h2><div class="details">folklore · music<br><strong>Intent:</strong> Immediate reaction<br><strong>Mode:</strong> Hot take / opinion<br><strong>Consumption:</strong> finished (fictional_planner)<br><strong>Rating:</strong> 2/5 · Persona Favorite</div><blockquote>Finished folklore and it didn’t quite hit the mark for me. Everything felt a bit too soft, lacking the punch I&#39;ve come to expect. 2</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;opinion&quot;,
+  &quot;modeLabel&quot;: &quot;Hot take / opinion&quot;,
+  &quot;mediaSource&quot;: &quot;Persona Favorite&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;short&quot;,
+    &quot;energy&quot;: &quot;enthusiastic&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;expressive&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;frequent&quot;,
+    &quot;questionFrequency&quot;: &quot;occasional&quot;,
+    &quot;sarcasm&quot;: &quot;none&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 1.5,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 1.8,
+      &quot;question&quot;: 0.8,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 0.8,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: 2,
+  &quot;words&quot;: 25,
+  &quot;externalId&quot;: &quot;1524793738&quot;,
+  &quot;externalSource&quot;: &quot;itunes&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;reaction&quot;,
+  &quot;intentLabel&quot;: &quot;Immediate reaction&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for music, Persona Favorite, finished; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;finished&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Taylor Swift&quot;,
+        &quot;kind&quot;: &quot;creator&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">6</div><h2>Alex Thompson</h2><div class="details">Parks and Recreation · tv<br><strong>Intent:</strong> Currently consuming<br><strong>Mode:</strong> Conversation starter<br><strong>Consumption:</strong> in progress (fictional_planner)<br><strong>Rating:</strong> None · Discovery</div><blockquote>Which Parks and Rec character do you vibe with most? I&#39;m stuck between Leslie&#39;s enthusiasm and Ron&#39;s no-nonsense attitude. They&#39;re both great in their own ways.</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;question&quot;,
+  &quot;modeLabel&quot;: &quot;Conversation starter&quot;,
+  &quot;mediaSource&quot;: &quot;Discovery&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;short&quot;,
+    &quot;energy&quot;: &quot;casual&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;minimal&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;rare&quot;,
+    &quot;questionFrequency&quot;: &quot;occasional&quot;,
+    &quot;sarcasm&quot;: &quot;none&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 0.8,
+      &quot;casual&quot;: 1.8,
+      &quot;rating&quot;: 0.8,
+      &quot;question&quot;: 0.8,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 0.8,
+      &quot;low_energy&quot;: 1.8
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 26,
+  &quot;externalId&quot;: &quot;8592&quot;,
+  &quot;externalSource&quot;: &quot;tmdb&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;progress&quot;,
+  &quot;intentLabel&quot;: &quot;Currently consuming&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for tv, Discovery, in_progress; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;in_progress&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Leslie Knope&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Amy Poehler&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Tom Haverford&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Aziz Ansari&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Ron Swanson&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Nick Offerman&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;April Ludgate&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Aubrey Plaza&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Andy Dwyer&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Chris Pratt&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">7</div><h2>Lena Hoffman</h2><div class="details">Fourth Wing · book<br><strong>Intent:</strong> Observation<br><strong>Mode:</strong> Thoughtful reaction<br><strong>Consumption:</strong> revisiting (fictional_planner)<br><strong>Rating:</strong> None · Persona Favorite</div><blockquote>Revisiting &#39;Fourth Wing&#39;, I find myself still captivated by how Yarros weaves tension and romance into a fantasy world. It&#39;s intriguing how she balances fiery passion with the weight of destiny. It&#39;s like stepping back into a familiar but always surprising dance.</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;thoughtful&quot;,
+  &quot;modeLabel&quot;: &quot;Thoughtful reaction&quot;,
+  &quot;mediaSource&quot;: &quot;Persona Favorite&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;detailed&quot;,
+    &quot;energy&quot;: &quot;restrained&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;standard&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;occasional&quot;,
+    &quot;questionFrequency&quot;: &quot;rare&quot;,
+    &quot;sarcasm&quot;: &quot;none&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1.8,
+      &quot;micro&quot;: 0.8,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 0.8,
+      &quot;question&quot;: 0.8,
+      &quot;specific&quot;: 1.5,
+      &quot;opinion&quot;: 0.8,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 42,
+  &quot;externalId&quot;: &quot;E-OLEAAAQBAJ&quot;,
+  &quot;externalSource&quot;: &quot;googlebooks&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;observation&quot;,
+  &quot;intentLabel&quot;: &quot;Observation&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for book, Persona Favorite, revisiting; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;revisiting&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Rebecca Yarros&quot;,
+        &quot;kind&quot;: &quot;creator&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">8</div><h2>Emily Park</h2><div class="details">Big Little Lies · tv<br><strong>Intent:</strong> Observation<br><strong>Mode:</strong> Micro reaction<br><strong>Consumption:</strong> revisiting (fictional_planner)<br><strong>Rating:</strong> None · Discovery</div><blockquote>Iconic Monterey madness!</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;micro&quot;,
+  &quot;modeLabel&quot;: &quot;Micro reaction&quot;,
+  &quot;mediaSource&quot;: &quot;Discovery&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;short&quot;,
+    &quot;energy&quot;: &quot;enthusiastic&quot;,
+    &quot;capitalization&quot;: &quot;expressive&quot;,
+    &quot;punctuation&quot;: &quot;expressive&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;occasional&quot;,
+    &quot;questionFrequency&quot;: &quot;occasional&quot;,
+    &quot;sarcasm&quot;: &quot;none&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 1.5,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 0.8,
+      &quot;question&quot;: 0.8,
+      &quot;specific&quot;: 1.5,
+      &quot;opinion&quot;: 0.8,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 3,
+  &quot;externalId&quot;: &quot;66292&quot;,
+  &quot;externalSource&quot;: &quot;tmdb&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;observation&quot;,
+  &quot;intentLabel&quot;: &quot;Observation&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for tv, Discovery, revisiting; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;revisiting&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Celeste Wright&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Nicole Kidman&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Madeline Mackenzie&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Reese Witherspoon&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Jane Chapman&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Shailene Woodley&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Renata Klein&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Laura Dern&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Perry Wright&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Alexander Skarsgård&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">9</div><h2>Samantha Reed</h2><div class="details">Barbie · movie<br><strong>Intent:</strong> Confession<br><strong>Mode:</strong> Casual thought<br><strong>Consumption:</strong> finished (fictional_planner)<br><strong>Rating:</strong> None · Persona Favorite</div><blockquote>Didn&#39;t expect to find life lessons in a Barbie movie, but here we are.</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;casual&quot;,
+  &quot;modeLabel&quot;: &quot;Casual thought&quot;,
+  &quot;mediaSource&quot;: &quot;Persona Favorite&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;short&quot;,
+    &quot;energy&quot;: &quot;casual&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;minimal&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;rare&quot;,
+    &quot;questionFrequency&quot;: &quot;frequent&quot;,
+    &quot;sarcasm&quot;: &quot;none&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 0.8,
+      &quot;casual&quot;: 1.8,
+      &quot;rating&quot;: 0.8,
+      &quot;question&quot;: 1.5,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 0.8,
+      &quot;low_energy&quot;: 1.8
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 14,
+  &quot;externalId&quot;: &quot;346698&quot;,
+  &quot;externalSource&quot;: &quot;tmdb&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;confession&quot;,
+  &quot;intentLabel&quot;: &quot;Confession&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for movie, Persona Favorite, finished; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;finished&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Barbie&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Margot Robbie&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Ken&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Ryan Gosling&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Gloria&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;America Ferrera&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Sasha&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Ariana Greenblatt&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Barbie&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Issa Rae&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">10</div><h2>Alex Moreno</h2><div class="details">TÁR · movie<br><strong>Intent:</strong> Genuine question<br><strong>Mode:</strong> Low-energy reaction<br><strong>Consumption:</strong> finished (fictional_planner)<br><strong>Rating:</strong> None · Persona Favorite</div><blockquote>What does TÁR say about separating art from artist?</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;low_energy&quot;,
+  &quot;modeLabel&quot;: &quot;Low-energy reaction&quot;,
+  &quot;mediaSource&quot;: &quot;Persona Favorite&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;medium&quot;,
+    &quot;energy&quot;: &quot;casual&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;standard&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;frequent&quot;,
+    &quot;questionFrequency&quot;: &quot;occasional&quot;,
+    &quot;sarcasm&quot;: &quot;low&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 0.8,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 1.8,
+      &quot;question&quot;: 0.8,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 1.7,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 9,
+  &quot;externalId&quot;: &quot;817758&quot;,
+  &quot;externalSource&quot;: &quot;tmdb&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;question&quot;,
+  &quot;intentLabel&quot;: &quot;Genuine question&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for movie, Persona Favorite, finished; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;finished&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Lydia Tár&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Cate Blanchett&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Sharon Goodnow&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Nina Hoss&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Francesca Lentini&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Noémie Merlant&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Olga Metkina&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Sophie Kauer&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Andris Davis&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Julian Glover&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">11</div><h2>Nicholas Grant</h2><div class="details">How I Built This with Guy Raz · podcast<br><strong>Intent:</strong> Social / relational<br><strong>Mode:</strong> Thoughtful reaction<br><strong>Consumption:</strong> finished (fictional_planner)<br><strong>Rating:</strong> None · Discovery</div><blockquote>Just finished binging &quot;How I Built This&quot; and it stirred up some serious inspiration. I love hearing the grit and creativity from founders. It kind of makes me want to start something myself. Anyone else feel the itch to create after listening to Guy Raz&#39;s interviews?</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;thoughtful&quot;,
+  &quot;modeLabel&quot;: &quot;Thoughtful reaction&quot;,
+  &quot;mediaSource&quot;: &quot;Discovery&quot;,
+  &quot;recentlyUsed&quot;: true,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;medium&quot;,
+    &quot;energy&quot;: &quot;casual&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;standard&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;occasional&quot;,
+    &quot;questionFrequency&quot;: &quot;frequent&quot;,
+    &quot;sarcasm&quot;: &quot;none&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 0.8,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 0.8,
+      &quot;question&quot;: 1.5,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 0.8,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 46,
+  &quot;externalId&quot;: &quot;1150510297&quot;,
+  &quot;externalSource&quot;: &quot;itunes&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;social&quot;,
+  &quot;intentLabel&quot;: &quot;Social / relational&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for podcast, Discovery, finished; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;finished&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Guy Raz | Wondery&quot;,
+        &quot;kind&quot;: &quot;creator&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">12</div><h2>Sarah Whitman</h2><div class="details">The Substance · podcast<br><strong>Intent:</strong> Revisit / rewatch<br><strong>Mode:</strong> Casual thought<br><strong>Consumption:</strong> revisiting (fictional_planner)<br><strong>Rating:</strong> 3/5 · Persona Favorite</div><blockquote>Still creeps me out in the best way. Familiar voices adding to the unease.</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;casual&quot;,
+  &quot;modeLabel&quot;: &quot;Casual thought&quot;,
+  &quot;mediaSource&quot;: &quot;Persona Favorite&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;detailed&quot;,
+    &quot;energy&quot;: &quot;restrained&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;standard&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;frequent&quot;,
+    &quot;questionFrequency&quot;: &quot;rare&quot;,
+    &quot;sarcasm&quot;: &quot;medium&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1.8,
+      &quot;micro&quot;: 0.8,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 1.8,
+      &quot;question&quot;: 0.8,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 1.7,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: 3,
+  &quot;words&quot;: 14,
+  &quot;externalId&quot;: &quot;1067631915&quot;,
+  &quot;externalSource&quot;: &quot;itunes&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;rewatch&quot;,
+  &quot;intentLabel&quot;: &quot;Revisit / rewatch&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for podcast, Persona Favorite, revisiting; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;revisiting&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Unknown&quot;,
+        &quot;kind&quot;: &quot;creator&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">13</div><h2>Kei Tanaka</h2><div class="details">Elden Ring · game<br><strong>Intent:</strong> Review / evaluation<br><strong>Mode:</strong> Micro reaction<br><strong>Consumption:</strong> finished (fictional_planner)<br><strong>Rating:</strong> None · Persona Favorite</div><blockquote>Pure adventure bliss!</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;micro&quot;,
+  &quot;modeLabel&quot;: &quot;Micro reaction&quot;,
+  &quot;mediaSource&quot;: &quot;Persona Favorite&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;short&quot;,
+    &quot;energy&quot;: &quot;enthusiastic&quot;,
+    &quot;capitalization&quot;: &quot;expressive&quot;,
+    &quot;punctuation&quot;: &quot;expressive&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;occasional&quot;,
+    &quot;questionFrequency&quot;: &quot;occasional&quot;,
+    &quot;sarcasm&quot;: &quot;none&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 1.5,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 0.8,
+      &quot;question&quot;: 0.8,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 0.8,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 3,
+  &quot;externalId&quot;: &quot;326243&quot;,
+  &quot;externalSource&quot;: &quot;rawg&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;review&quot;,
+  &quot;intentLabel&quot;: &quot;Review / evaluation&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for game, Persona Favorite, finished; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;finished&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {}
+}</pre></details></article><article><div class="number">14</div><h2>Marcus Delacroix</h2><div class="details">The Goldfinch · book<br><strong>Intent:</strong> Immediate reaction<br><strong>Mode:</strong> Specific reaction<br><strong>Consumption:</strong> finished (fictional_planner)<br><strong>Rating:</strong> None · Discovery</div><blockquote>The way Theo&#39;s life twists and turns in &#39;The Goldfinch&#39; left me thinking about fate and choice. Anyone else find themselves caught up in his world?</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;specific&quot;,
+  &quot;modeLabel&quot;: &quot;Specific reaction&quot;,
+  &quot;mediaSource&quot;: &quot;Discovery&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;medium&quot;,
+    &quot;energy&quot;: &quot;casual&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;standard&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;occasional&quot;,
+    &quot;questionFrequency&quot;: &quot;frequent&quot;,
+    &quot;sarcasm&quot;: &quot;low&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 0.8,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 0.8,
+      &quot;question&quot;: 1.5,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 1.7,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 26,
+  &quot;externalId&quot;: &quot;dvuK7isszLIC&quot;,
+  &quot;externalSource&quot;: &quot;googlebooks&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;reaction&quot;,
+  &quot;intentLabel&quot;: &quot;Immediate reaction&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for book, Discovery, finished; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;finished&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Donna Tartt&quot;,
+        &quot;kind&quot;: &quot;creator&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">15</div><h2>Julian Brooks</h2><div class="details">Once · movie<br><strong>Intent:</strong> What next? / recommendation ask<br><strong>Mode:</strong> Casual thought<br><strong>Consumption:</strong> finished (fictional_planner)<br><strong>Rating:</strong> None · Discovery</div><blockquote>That final song had me feeling all the feels. What other movies capture music and connection like this?</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;casual&quot;,
+  &quot;modeLabel&quot;: &quot;Casual thought&quot;,
+  &quot;mediaSource&quot;: &quot;Discovery&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;short&quot;,
+    &quot;energy&quot;: &quot;enthusiastic&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;expressive&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;frequent&quot;,
+    &quot;questionFrequency&quot;: &quot;occasional&quot;,
+    &quot;sarcasm&quot;: &quot;none&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 1.5,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 1.8,
+      &quot;question&quot;: 0.8,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 0.8,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 18,
+  &quot;externalId&quot;: &quot;5723&quot;,
+  &quot;externalSource&quot;: &quot;tmdb&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;request&quot;,
+  &quot;intentLabel&quot;: &quot;What next? / recommendation ask&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for movie, Discovery, finished; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;finished&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Guy&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Glen Hansard&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Girl&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Markéta Irglová&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Timmy Drummer&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Hugh Walsh&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Lead Guitarist&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Gerard Hendrick&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Bassist&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Alaistair Foley&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">16</div><h2>Alex Thompson</h2><div class="details">Jurassic Park · movie<br><strong>Intent:</strong> Revisit / rewatch<br><strong>Mode:</strong> Low-energy reaction<br><strong>Consumption:</strong> revisiting (fictional_planner)<br><strong>Rating:</strong> None · Persona Favorite</div><blockquote>Still amazed by the T. rex scene every time. 🚫</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;low_energy&quot;,
+  &quot;modeLabel&quot;: &quot;Low-energy reaction&quot;,
+  &quot;mediaSource&quot;: &quot;Persona Favorite&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;short&quot;,
+    &quot;energy&quot;: &quot;casual&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;minimal&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;rare&quot;,
+    &quot;questionFrequency&quot;: &quot;occasional&quot;,
+    &quot;sarcasm&quot;: &quot;none&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 0.8,
+      &quot;casual&quot;: 1.8,
+      &quot;rating&quot;: 0.8,
+      &quot;question&quot;: 0.8,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 0.8,
+      &quot;low_energy&quot;: 1.8
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 10,
+  &quot;externalId&quot;: &quot;329&quot;,
+  &quot;externalSource&quot;: &quot;tmdb&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;rewatch&quot;,
+  &quot;intentLabel&quot;: &quot;Revisit / rewatch&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for movie, Persona Favorite, revisiting; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;revisiting&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Grant&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Sam Neill&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Ellie&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Laura Dern&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Malcolm&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Jeff Goldblum&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Hammond&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Richard Attenborough&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Muldoon&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Bob Peck&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">17</div><h2>Lena Hoffman</h2><div class="details">Howl&#39;s Moving Castle · movie<br><strong>Intent:</strong> Anticipation / starting<br><strong>Mode:</strong> Hot take / opinion<br><strong>Consumption:</strong> not started (fictional_planner)<br><strong>Rating:</strong> None · Discovery</div><blockquote>Finally starting &#39;Howl&#39;s Moving Castle&#39; tonight. Curious to see if the characters are as enchanting as everyone says.</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;opinion&quot;,
+  &quot;modeLabel&quot;: &quot;Hot take / opinion&quot;,
+  &quot;mediaSource&quot;: &quot;Discovery&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;detailed&quot;,
+    &quot;energy&quot;: &quot;restrained&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;standard&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;occasional&quot;,
+    &quot;questionFrequency&quot;: &quot;rare&quot;,
+    &quot;sarcasm&quot;: &quot;none&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1.8,
+      &quot;micro&quot;: 0.8,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 0.8,
+      &quot;question&quot;: 0.8,
+      &quot;specific&quot;: 1.5,
+      &quot;opinion&quot;: 0.8,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 18,
+  &quot;externalId&quot;: &quot;4935&quot;,
+  &quot;externalSource&quot;: &quot;tmdb&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;anticipation&quot;,
+  &quot;intentLabel&quot;: &quot;Anticipation / starting&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for movie, Discovery, not_started; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;not_started&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Sophie (voice)&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Chieko Baisho&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Howl (voice)&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Takuya Kimura&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Witch of the Waste (voice)&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Akihiro Miwa&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Calcifer (voice)&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Tatsuya Gashuin&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Markl (voice)&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Ryunosuke Kamiki&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">18</div><h2>Emily Park</h2><div class="details">Selling Sunset · tv<br><strong>Intent:</strong> Character / person focus<br><strong>Mode:</strong> Casual thought<br><strong>Consumption:</strong> in progress (fictional_planner)<br><strong>Rating:</strong> None · Discovery</div><blockquote>Chrishell&#39;s energy is so contagious! Love how she brings the fun drama. 🌟</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;casual&quot;,
+  &quot;modeLabel&quot;: &quot;Casual thought&quot;,
+  &quot;mediaSource&quot;: &quot;Discovery&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;short&quot;,
+    &quot;energy&quot;: &quot;enthusiastic&quot;,
+    &quot;capitalization&quot;: &quot;expressive&quot;,
+    &quot;punctuation&quot;: &quot;expressive&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;occasional&quot;,
+    &quot;questionFrequency&quot;: &quot;occasional&quot;,
+    &quot;sarcasm&quot;: &quot;none&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 1.5,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 0.8,
+      &quot;question&quot;: 0.8,
+      &quot;specific&quot;: 1.5,
+      &quot;opinion&quot;: 0.8,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 13,
+  &quot;externalId&quot;: &quot;87826&quot;,
+  &quot;externalSource&quot;: &quot;tmdb&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;character&quot;,
+  &quot;intentLabel&quot;: &quot;Character / person focus&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for tv, Discovery, in_progress; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;in_progress&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Brett Oppenheim&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Jason Oppenheim&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Chrishell Stause&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Mary Fitzgerald&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Emma Hernan&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">19</div><h2>Samantha Reed</h2><div class="details">The Bear · tv<br><strong>Intent:</strong> Genuine question<br><strong>Mode:</strong> Micro reaction<br><strong>Consumption:</strong> revisiting (fictional_planner)<br><strong>Rating:</strong> None · Persona Favorite</div><blockquote>Still drawn to Carmy&#39;s journey. Why can&#39;t I stop watching?</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;micro&quot;,
+  &quot;modeLabel&quot;: &quot;Micro reaction&quot;,
+  &quot;mediaSource&quot;: &quot;Persona Favorite&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;short&quot;,
+    &quot;energy&quot;: &quot;casual&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;minimal&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;rare&quot;,
+    &quot;questionFrequency&quot;: &quot;frequent&quot;,
+    &quot;sarcasm&quot;: &quot;none&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 0.8,
+      &quot;casual&quot;: 1.8,
+      &quot;rating&quot;: 0.8,
+      &quot;question&quot;: 1.5,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 0.8,
+      &quot;low_energy&quot;: 1.8
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 10,
+  &quot;externalId&quot;: &quot;136315&quot;,
+  &quot;externalSource&quot;: &quot;tmdb&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;question&quot;,
+  &quot;intentLabel&quot;: &quot;Genuine question&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for tv, Persona Favorite, revisiting; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;revisiting&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Carmen &#39;Carmy&#39; Berzatto&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Jeremy Allen White&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Richard &#39;Richie&#39; Jerimovich&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Ebon Moss-Bachrach&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Sydney Adamu&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Ayo Edebiri&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Marcus Brooks&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Lionel Boyce&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Natalie &#39;Sugar&#39; Berzatto&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Abby Elliott&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      }
+    ]
+  }
+}</pre></details></article><article><div class="number">20</div><h2>Alex Moreno</h2><div class="details">Aftersun · movie<br><strong>Intent:</strong> Observation<br><strong>Mode:</strong> Casual thought<br><strong>Consumption:</strong> finished (fictional_planner)<br><strong>Rating:</strong> None · Persona Favorite</div><blockquote>Aftersun beautifully captures that feeling of remembering someone through hazy childhood memories. Mesmerizing.</blockquote><details><summary>Admin generation metadata</summary><pre>{
+  &quot;version&quot;: 1,
+  &quot;mode&quot;: &quot;casual&quot;,
+  &quot;modeLabel&quot;: &quot;Casual thought&quot;,
+  &quot;mediaSource&quot;: &quot;Persona Favorite&quot;,
+  &quot;recentlyUsed&quot;: false,
+  &quot;voice&quot;: {
+    &quot;length&quot;: &quot;medium&quot;,
+    &quot;energy&quot;: &quot;casual&quot;,
+    &quot;capitalization&quot;: &quot;standard&quot;,
+    &quot;punctuation&quot;: &quot;standard&quot;,
+    &quot;emojiFrequency&quot;: &quot;none&quot;,
+    &quot;ratingFrequency&quot;: &quot;frequent&quot;,
+    &quot;questionFrequency&quot;: &quot;occasional&quot;,
+    &quot;sarcasm&quot;: &quot;low&quot;,
+    &quot;preferredModeWeights&quot;: {
+      &quot;thoughtful&quot;: 1,
+      &quot;micro&quot;: 0.8,
+      &quot;casual&quot;: 1.1,
+      &quot;rating&quot;: 1.8,
+      &quot;question&quot;: 0.8,
+      &quot;specific&quot;: 1,
+      &quot;opinion&quot;: 1.7,
+      &quot;low_energy&quot;: 0.9
+    }
+  },
+  &quot;rating&quot;: null,
+  &quot;words&quot;: 13,
+  &quot;externalId&quot;: &quot;965150&quot;,
+  &quot;externalSource&quot;: &quot;tmdb&quot;,
+  &quot;warnings&quot;: [],
+  &quot;intent&quot;: &quot;observation&quot;,
+  &quot;intentLabel&quot;: &quot;Observation&quot;,
+  &quot;intentReason&quot;: &quot;Weighted eligible choice for movie, Persona Favorite, finished; persona preferences and soft recent/batch penalties applied.&quot;,
+  &quot;consumption&quot;: {
+    &quot;state&quot;: &quot;finished&quot;,
+    &quot;source&quot;: &quot;fictional_planner&quot;
+  },
+  &quot;context&quot;: {
+    &quot;people&quot;: [
+      {
+        &quot;name&quot;: &quot;Calum&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Paul Mescal&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Sophie&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Frankie Corio&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Michael&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Brooklyn Toulson&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Adult Sophie&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Celia Rowlson-Hall&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Belinda&quot;,
+        &quot;kind&quot;: &quot;character&quot;
+      },
+      {
+        &quot;name&quot;: &quot;Sally Messham&quot;,
+        &quot;kind&quot;: &quot;performer&quot;
+      }
+    ]
+  }
+}</pre></details></article></div></main></html>

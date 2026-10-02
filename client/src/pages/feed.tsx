@@ -2080,7 +2080,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       {/* Pill + timestamp — right side */}
       <div className="ml-auto flex items-center gap-1.5">
         <span className="text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">
-          {(post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'take' : 'reviewed'}
+          {(post.rating || 0) > 0 ? 'rated' : post.type === 'thought' ? 'take' : 'posted about'}
         </span>
         <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
       </div>
@@ -5868,7 +5868,7 @@ export default function Feed() {
     if (!socialPosts?.length) return [];
     const getVerb = (type: string) => {
       if (type === 'rating') return 'rated';
-      if (type === 'review') return 'reviewed';
+      if (type === 'review') return 'posted about';
       if (type === 'rate-review') return 'rated';
       if (type === 'predict' || type === 'prediction') return 'predicted';
       if (type === 'hot_take') return 'shared a hot take on';

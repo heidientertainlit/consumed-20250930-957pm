@@ -342,3 +342,17 @@ mtime_ms = 1790973329477
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/d7c4dee9-40f0-4b5e-ad86-1f953e6cb25c/c26bdef3-8eb1-4ded-b763-d91510993ddf"
 storage_version_token = "1790973425868437"
 content_type = "text/html"
+
+[[outputs]]
+id = "MDPauQBCQctQShuAXacCJ"
+uri = "file://reports/persona-generator-intent-test-batch.html"
+type = "html"
+title = "Post intent — 20-post social behavior review"
+description = "20 unedited AI posts with Persona, Media, Intent, Mode, Consumption state, Rating, Post and debug metadata. Includes all intent/mode counts and validation warnings. Local-only: no database post saves, scheduling or publishing."
+logical_id = "25189878-47ce-4165-9f86-1d052de8c4bb"
+content_hash = "sha256:9e7efb4c79d3d2af02562c20d0a695e182f1524639dbb89a97b4bc1fccd4ddf1"
+size = 62289
+mtime_ms = 1790978347213
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/25189878-47ce-4165-9f86-1d052de8c4bb/325ebbd1-c647-4c51-9d13-d6dc7c25a507"
+storage_version_token = "1790978734541648"
+content_type = "text/html"
