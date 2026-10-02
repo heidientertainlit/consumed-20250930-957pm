@@ -17,9 +17,8 @@ exact per-batch diversity quotas.
 ## Approved architecture and social register
 
 The user confirmed the media selection, modes, persona voices, batch awareness, admin
-controls and current mode weights are the right architecture. Naturalness adjustments
-should address the writing layer, not redesign these systems or rebalance weights based
-on a single sample batch.
+controls and current mode weights should be preserved. Register-only adjustments should
+not redesign these systems or rebalance weights based on a single sample batch.
 
 Writing principle: **“WRITE THE REACTION, NOT THE REVIEW.”** Preserve intelligent,
 analytical and literary personas, but distinguish users' responses from editorial copy.
@@ -32,3 +31,21 @@ still read like professional criticism or mechanically simulated casual posts.
 **How to apply:** For register-focused changes, keep the approved architecture and
 weights intact; judge the underlying thought and language, not just length, lowercase
 text, vocabulary complexity or presence of “I.”
+
+## Separate social intent
+
+The user subsequently requested a separate POST INTENT / SOCIAL BEHAVIOR layer before
+writing: why the person posts, independently of the writing mode. Do not treat this as
+another wording-only adjustment. Preserve existing modes and the media/voice work.
+Review/evaluation should remain common, initially around 25–35%, rather than dominate.
+Intent weights must be configurable, nonuniform and context-sensitive, without quotas.
+Ratings must respond to intent; anticipation must not receive a rating.
+Unsupported episode, character, adaptation, progress or relationship context must not
+be invented to satisfy an intent.
+
+**Why:** The user found that differently formatted evaluations still feel like a feed
+of reviews rather than different social behaviors.
+
+**How to apply:** Separate intent planning from writing shape, and check context
+eligibility before selecting an intent. The user requested an architecture proposal
+before implementation; a proposal is not approval to implement.
