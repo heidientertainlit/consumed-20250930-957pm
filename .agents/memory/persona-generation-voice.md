@@ -120,3 +120,16 @@ works by other artists without returning the intended favorite.
 
 **How to apply:** Keep creator identity in verification and lookup-cache identity. Do not
 weaken matching or force a candidate simply to make a diagnostic succeed.
+
+## Freeze evidence across approval hand-offs
+
+Keep experimental freeze manifests and original baselines in the workspace, not
+only under `/tmp`.
+
+**Why:** Temporary files can disappear across session/environment hand-offs. A missing
+old checksum record cannot establish that the old frozen sources remain unchanged.
+
+**How to apply:** Preserve the original manifest with the experiment's reports before
+requesting approval. Check it before provider calls. If it is unavailable, distinguish
+that preflight failure from a generation run and do not claim a reconstructed baseline
+proves the earlier freeze.

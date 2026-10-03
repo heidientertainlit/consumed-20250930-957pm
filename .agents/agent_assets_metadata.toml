@@ -398,3 +398,31 @@ mtime_ms = 1791003166371
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/e641d04e-9b45-40a4-9aa7-4aebd6f3b5f4/c3369df8-d01c-46a2-bcc6-a58c4152d9b0"
 storage_version_token = "1791003338225684"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "qnwcBGb7JUulTIj7Pvq4Q"
+uri = "file://reports/persona-generator-typed-thought-json-fixed-batch.html"
+type = "html"
+title = "Read first — fresh typed-thought batch"
+description = "18 accepted posts from 20 assignments, in generation order. Author names are hidden on the cards until reveal. Includes assignment details, one emoji-only repair, all 22 raw writer responses, both rejected assignments and creator-resolution diagnostics."
+logical_id = "38fcd1da-a0e2-48dd-bece-78021b06adfc"
+content_hash = "sha256:7e199085937e36fbcbd1673fcbd0ca848c66bea613bfdefdc656f6d65c26f966"
+size = 141748
+mtime_ms = 1791045148930
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/38fcd1da-a0e2-48dd-bece-78021b06adfc/85ce9f62-b507-4799-93ac-5d5653ac3a04"
+storage_version_token = "1791045516961918"
+content_type = "text/html"
+
+[[outputs]]
+id = "N9nFyHj8jtP-6sE3HOlMH"
+uri = "file://reports/persona-generator-typed-thought-json-fixed-batch.json"
+type = "unspecified"
+title = "Full raw batch and diagnostics"
+description = "Exact prompts and all 22 writer responses, including two validation retries; 18 accepted drafts, two rejected assignments, original emoji-repaired text, unchanged weights and creator-aware lookup/cache traces. No posts saved, scheduled or published."
+logical_id = "7c16b69b-e357-4d82-8c32-ffab4f9c4e5d"
+content_hash = "sha256:c7c05cc1bc54038219ccd26372e90e87d1d70e7f718e2a885d905651923e4c12"
+size = 207531
+mtime_ms = 1791045148922
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/7c16b69b-e357-4d82-8c32-ffab4f9c4e5d/dc7191af-c005-49b8-8709-cfd5d42d5fe0"
+storage_version_token = "1791045517646027"
+content_type = "application/octet-stream"

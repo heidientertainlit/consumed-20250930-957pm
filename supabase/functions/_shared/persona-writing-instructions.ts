@@ -10,7 +10,7 @@ Thoughtful does not mean literary. Sophisticated expression is allowed when it f
 Treat the supplied consumption state as true. Keep media facts, specific progress, biography and relationships within the supplied evidence. Do not invent specifics or reveal spoiler details.
 The card already displays the title and rating. Follow the supplied rating and emoji rules.
 Before returning, ask internally: "Does this sound like someone typed a thought, or like someone wrote content?" Prefer the typed thought.
-Return only {"content":"…"}.`;
+Return only JSON: {"content":"…"}.`;
 
 export const REGISTER_EXAMPLES = `REGISTER DEMONSTRATION ONLY — not phrases, openings or sentence structures to reuse:
 An articulate person's reaction can be: "I think this worked better for me as a character study than as a mystery."

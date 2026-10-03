@@ -8,6 +8,14 @@ import { planPostIntent, DEFAULT_INTENT_WEIGHTS, buildIntentValidationPrompt } f
 const persona: Persona = { id: "p", user_name: "alex_thompson", display_name: "Alex Thompson", persona_config: { generation_feedback: ["Keep my supplied preference."] } };
 const media = { title: "Known Movie", type: "movie", source: "Discovery" as const, fit: 1 };
 const check = "Does this sound like someone typed a thought, or like someone wrote content?";
+test("all assembled writer messages explicitly request JSON for the provider's JSON-object mode", () => {
+  for (const mode of POST_MODES) {
+    for (const failure of [undefined, "Malformed JSON."]) {
+      const prompt = buildWritingPrompt(persona, media, mode.id, deriveSocialVoice({}), null, [], [], failure);
+      assert.ok(prompt.some(message => message.content.includes('Return only JSON: {"content":"…"}')));
+    }
+  }
+});
 test("writer receives the approved typed-thought contract, one hint and no audience/composition/batch targets", () => {
   const assignment = planPostIntent(persona, media, DEFAULT_INTENT_WEIGHTS, [], [], () => .5);
   for (const mode of POST_MODES) {
