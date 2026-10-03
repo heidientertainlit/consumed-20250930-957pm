@@ -2,6 +2,7 @@
 import { MODE_REGISTER_GUIDANCE, PERSONAL_SOCIAL_REGISTER } from "./persona-writing-instructions.ts";
 import { resolveAuthorStyle, authorStyleInstructions, type AuthorStyle } from "./persona-author-style.ts";
 import type { EmojiRepair } from "./persona-emoji-repair.ts";
+import { premiseContext } from "./persona-premise.ts";
 import { intentWriterInstructions, intentRatingProbability, type IntentAssignment, type IntentContext, type IntentWeights, type PostIntent } from "./persona-post-intents.ts";
 export const POST_MODES = [
   { id: "thoughtful", label: "Thoughtful reaction", description: "More room to express the assigned social behavior, usually two to four ordinary sentences. It need not be an evaluation, summary or polished argument.", words: [25, 85] },
@@ -50,6 +51,7 @@ export type GenerationMeta = {
   voice: SocialVoice; externalId?: string; externalSource?: string; words: number;
   rating: number | null; warnings: string[];
   intent?: PostIntent; intentLabel?: string; intentReason?: string;
+  premise?: string;
   consumption?: IntentAssignment["consumption"]; context?: IntentContext;
   authorStyle?: AuthorStyle | null;
   styleWarnings?: string[];
@@ -211,12 +213,13 @@ export function writingShapeIssues(content: string, mode: PostMode): string[] {
 export function cleanStyleExample(content: string): string {
   return content.replace(/\b\d+(?:\.\d+)?\s*\/\s*(?:10|5)\b/g, "").replace(/\b\d+(?:\.\d+)?\s*(?:stars?|out of (?:five|ten|5|10))\b/gi, "").replace(/ {2,}/g, " ").trim();
 }
-export function buildWritingPrompt(persona: Persona, media: MediaCandidate, mode: PostMode, voice: SocialVoice, rating: number | null, batch: BatchEntry[], recent: RecentPost[], repair?: string, assignment?: IntentAssignment) {
+export function buildWritingPrompt(persona: Persona, media: MediaCandidate, mode: PostMode, voice: SocialVoice, rating: number | null, batch: BatchEntry[], recent: RecentPost[], repair?: string, assignment?: IntentAssignment, premise?: string) {
   const config = persona.persona_config;
-  const { preferredModeWeights: _modePreferences, ...writingVoice } = voice;
+  const { preferredModeWeights: _modePreferences, questionFrequency: _questionFrequency, ...writingVoice } = voice;
+  const upperBound = POST_MODES.find(spec => spec.id === mode)!.words[1];
   return [
     { role: "system", content: `You are ${persona.display_name}. Preserve this person's existing identity:\n${JSON.stringify({ bio: config.bio, tone: config.tone, interests: config.interests, posting_style: config.posting_style })}\nSocial voice: ${JSON.stringify(writingVoice)}.\n${authorStyleInstructions(resolveAuthorStyle(persona))}\n\n${PERSONAL_SOCIAL_REGISTER}\nEmoji setting "none" means no emojis; other settings are tendencies, not a requirement.\nUse only supplied evidence for named people, scenes, episodes, quotes, credits, progress/repeat/time counts, purchases and personal relationships. No additional biography. Starting/not-started cannot imply completed consumption.\nExisting admin rejection feedback: ${JSON.stringify(config.generation_feedback || [])}` },
-    { role: "user", content: `${assignment ? `${intentWriterInstructions(assignment)}\n` : ""}Assigned media (do not choose another): ${JSON.stringify({ title: media.title, type: media.type, creator: media.creator, reliableContext: media.description?.slice(0, 900) || "No detailed context supplied." })}\nTyping mode: ${mode}. ${MODE_REGISTER_GUIDANCE[mode]}\nAuthoritative rating: ${rating === null ? "none. No rating language or numerical scores in the body." : `${rating}/5. Optional score wording must use {{rating}} for the number or {{rating_words}} for words; the application substitutes the assigned value. Never /10. Clearly hypothetical other scores are allowed.`}\nRating-only (empty content) is permitted occasionally with a rating in micro or low_energy mode. Never return empty content without a rating.${repair ? `\nPrevious attempt failed validation: ${repair}. Correct only this failure; keep the assignment unchanged.` : ""}` },
+    { role: "user", content: `${assignment ? `${intentWriterInstructions({ ...assignment, context: premiseContext(assignment) })}\n` : ""}Assigned media (do not choose another): ${JSON.stringify({ title: media.title, type: media.type, creator: media.creator })}\nConcrete premise: ${JSON.stringify(premise)}\nExpress this supplied meaning in this person's voice. Do not invent a different central thought or expand it into an assessment of the work. Questions and requests come from the premise, not a frequency setting or a mode label.\nTyping mode: ${mode}. ${MODE_REGISTER_GUIDANCE[mode]} Approximate upper bound: ${upperBound} words; shorter is fine. This is not a length target to fill.\nAuthoritative rating: ${rating === null ? "none. No rating language or numerical scores in the body." : `${rating}/5. Optional score wording must use {{rating}} for the number or {{rating_words}} for words; the application substitutes the assigned value. Never /10. Clearly hypothetical other scores are allowed.`}\nRating-only (empty content) is permitted occasionally with a rating in micro or low_energy mode. Never return empty content without a rating.${repair ? `\nPrevious attempt failed validation: ${repair}. Correct only this failure; keep the assignment and premise unchanged.` : ""}` },
   ];
 }
 /** Numbers in hypothetical clauses are not claims about the actual rating. */

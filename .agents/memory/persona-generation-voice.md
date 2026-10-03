@@ -102,14 +102,30 @@ The user confirmed that the author profiles are beginning to work. Keep them unc
 for the writer-target experiment. The approved objective is “DO NOT WRITE A POST FOR
 AN AUDIENCE. SIMULATE WHAT THIS PERSON TYPED.” Prefer reducing composition instructions
 over adding rules. The typed-thought versus wrote-content check is a writer instruction
-only: never add a validator, scorer, retry condition or additional generation pass.
+only: never turn that check into a validator, scorer or retry condition.
 
 **Why:** The user sees residual composed entertainment copy and artificial social
-questions, not a need for different profiles or another planning layer.
+questions, not a need for different profiles.
 
 **How to apply:** Questions must represent something the person genuinely wants answered.
 Preserve the accepted systems, profiles and weights; make the single requested sample
 before review and do not alter profiles, weights, prompts or generation logic afterward.
+
+## Concrete meaning before expression
+
+The user subsequently approved one lightweight premise step: decide what this person
+actually wants to say before the writer expresses it. This is the explicit exception
+to the earlier no-extra-generation-pass constraint, not permission for a larger planner,
+thought taxonomy, quality scorer or additional validator.
+
+**Why:** The audit found that assigning a social behavior alone left the writer to
+invent conventional entertainment thoughts or reframe provider descriptions.
+
+**How to apply:** Keep fictional subjective reactions permissible, while requiring
+support for specific media facts and biography. Minimize provider context rather than
+giving every writer the full synopsis or cast list. Questions should follow a genuine
+question/request premise, not independently prompted question frequency. Approximate
+mode length ceilings are guidance, not sentence templates or new validation gates.
 
 Known-favorite identity may be separate trusted reference data, without rewriting
 persona profiles. Reject failed creator verification rather than choosing a same-titled

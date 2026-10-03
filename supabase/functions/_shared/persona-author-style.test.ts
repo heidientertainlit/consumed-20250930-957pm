@@ -93,6 +93,7 @@ test("Jurassic Park emoji regression: one local repair, no extra writer or valid
     personas: [p], postsPerPersona: 1, weights: DEFAULT_MODE_WEIGHTS, recent: [],
     candidates: new Map([[p.id, [media]]]), random: () => .5,
     chat: async messages => {
+      if (messages[0].content.startsWith("Choose one concrete premise")) return '{"premise":"They still enjoy returning to it."}';
       if (messages[1].content.includes('"task":"narrow_intent_validation"')) {
         validators++;
         assert.ok(messages[1].content.includes("Still amazed by the T. rex scene every time. "));
@@ -120,7 +121,7 @@ test("emoji-only unrated output fails rather than being rewritten; permitted emo
     const result = await generatePersonaBatch({
       personas: [p], postsPerPersona: 1, weights: DEFAULT_MODE_WEIGHTS, recent: [],
       candidates: new Map([[p.id, [media]]]), random: () => .99,
-      chat: async messages => messages[1].content.includes('"task":"narrow_intent_validation"') ? '{"issues":[]}' : (writers++, JSON.stringify({ content: text })),
+      chat: async messages => messages[0].content.startsWith("Choose one concrete premise") ? '{"premise":"They still enjoy returning to it."}' : messages[1].content.includes('"task":"narrow_intent_validation"') ? '{"issues":[]}' : (writers++, JSON.stringify({ content: text })),
     });
     assert.equal(writers, 1);
     if (text === "🚫") {

@@ -426,3 +426,31 @@ mtime_ms = 1791045148922
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/7c16b69b-e357-4d82-8c32-ffab4f9c4e5d/dc7191af-c005-49b8-8709-cfd5d42d5fe0"
 storage_version_token = "1791045517646027"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "opVvZRQZjaiePsXgjFIXZ"
+uri = "file://reports/persona-generator-premise-final-batch.html"
+type = "html"
+title = "Final premise batch — raw posts and assignments"
+description = "19 accepted posts from 20 assignments, with persona, media, state, intent, premise, mode, rating, raw writer attempts and distributions. No retuning after the run."
+logical_id = "27e3ee1b-2d4e-429f-8eb6-09ce8984de78"
+content_hash = "sha256:619be00577ad0ade7e2db37c0c022f12a8f27f155a2ac75b6f39200b50fddfca"
+size = 184854
+mtime_ms = 1791054815119
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/27e3ee1b-2d4e-429f-8eb6-09ce8984de78/b9b70c06-48db-42c7-af60-08444f63b4c9"
+storage_version_token = "1791054882590466"
+content_type = "text/html"
+
+[[outputs]]
+id = "7aob7irdwDZvmPVMFg3fq"
+uri = "file://reports/persona-generator-premise-final-batch.json"
+type = "unspecified"
+title = "Final batch — complete raw JSON"
+description = "All 20 premise requests/responses, 21 writer requests/responses, validation results, accepted posts, rejection and provider identity diagnostics."
+logical_id = "1275bf71-c492-46b5-88a2-2b0e34029926"
+content_hash = "sha256:dd4f16054d922d07f145f06bbdacf9d2ff1ce4fca5f2f3dc80b47b0cf4519bfc"
+size = 292730
+mtime_ms = 1791054815107
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/1275bf71-c492-46b5-88a2-2b0e34029926/0702e171-3c48-4b40-8e77-c98609d77a4d"
+storage_version_token = "1791054883236166"
+content_type = "application/octet-stream"

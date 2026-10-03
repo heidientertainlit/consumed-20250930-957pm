@@ -4,6 +4,9 @@ import fs from "node:fs";
 import { DEFAULT_INTENT_WEIGHTS, POST_INTENTS, planPostIntent, intentEligible, compatibleIntentModes, consumptionContradictions, buildIntentValidationPrompt, validateIntentWeights, type PostIntent, type IntentAssignment } from "./persona-post-intents.ts";
 import { chooseMode, chooseRating, DEFAULT_MODE_WEIGHTS, deriveSocialVoice, buildWritingPrompt, parseGenerationNotes, type Persona, type MediaCandidate, type BatchEntry } from "./persona-generation.ts";
 import { generatePersonaBatch } from "./persona-generation-engine.ts";
+import type { Chat } from "./persona-media-candidates.ts";
+const withPremise = (chat: Chat): Chat => async messages => messages[0].content.startsWith("Choose one concrete premise")
+  ? '{"premise":"They have one small response to the experience."}' : chat(messages);
 
 const persona: Persona = { id: "p1", user_name: "person", display_name: "Person", persona_config: { bio: "Likes entertainment.", interests: ["drama"], media_types: ["movie", "book"] } };
 const media: MediaCandidate = { title: "Known title", type: "movie", source: "Discovery", fit: .8, description: "A drama." };
@@ -85,7 +88,7 @@ test("successful tiny human thoughts are not repaired even in thoughtful mode", 
   for(const [intent,state,content] of [["reaction","finished","oh NO"],["rewatch","revisiting","still perfect."],["progress","in_progress","I don't know about this one guys"]] as const) {
     let writes=0, checks=0;
     const result=await generatePersonaBatch({personas:[persona],postsPerPersona:1,weights:{...DEFAULT_MODE_WEIGHTS,thoughtful:100,micro:0,casual:0,rating:0,question:0,specific:0,opinion:0,low_energy:0},intentWeights:weightsOnly(intent),recent:[],candidates:new Map([["p1",[media]]]),scenario:()=>({state,source:"supplied"}),random:()=>.9,
-      chat:async messages=>{if(messages[1].content.includes('"task":"narrow_intent_validation"')){checks++;return '{"issues":[]}';} writes++;return JSON.stringify({content});}});
+      chat:withPremise(async messages=>{if(messages[1].content.includes('"task":"narrow_intent_validation"')){checks++;return '{"issues":[]}';} writes++;return JSON.stringify({content});})});
     assert.equal(result.drafts.length,1,result.errors.join(";"));
     assert.equal(result.drafts[0].content,content);
     assert.equal(writes,1);assert.equal(checks,1);
@@ -96,7 +99,7 @@ test("contradictions repair within the same assignment; warnings disclose the re
   let writers=0;
   const assignments:string[]=[];
   const result=await generatePersonaBatch({personas:[persona],postsPerPersona:1,weights:DEFAULT_MODE_WEIGHTS,intentWeights:weightsOnly("anticipation"),recent:[],candidates:new Map([["p1",[media]]]),random:()=>.5,
-    chat:async messages=>{if(messages[1].content.includes('"task":"narrow_intent_validation"'))return '{"issues":[]}';writers++;assignments.push(messages[1].content);return JSON.stringify({content:writers===1?"Just finished watching it.":"Starting this tonight."});}});
+    chat:withPremise(async messages=>{if(messages[1].content.includes('"task":"narrow_intent_validation"'))return '{"issues":[]}';writers++;assignments.push(messages[1].content);return JSON.stringify({content:writers===1?"Just finished watching it.":"Starting this tonight."});})});
   assert.equal(result.drafts.length,1,result.errors.join(";"));
   assert.equal(writers,2);assert.equal(result.drafts[0].rating,null);
   assert.ok(parseGenerationNotes(result.drafts[0].ai_notes)?.warnings.some(w=>w.includes("Claims experienced")));
@@ -105,12 +108,12 @@ test("contradictions repair within the same assignment; warnings disclose the re
 test("unsupported facts and obvious intent failures repair once, no silent relabeling",async()=>{
   let writers=0;
   const result=await generatePersonaBatch({personas:[persona],postsPerPersona:1,weights:DEFAULT_MODE_WEIGHTS,intentWeights:weightsOnly("character"),recent:[],candidates:new Map([["p1",[{...media,intentContext:{people:[{name:"Known Character",kind:"character"}]}}]]]),random:()=>.5,
-    chat:async messages=>{if(messages[1].content.includes('"task":"narrow_intent_validation"'))return JSON.stringify({issues:["Unsupported named character"]});writers++;return JSON.stringify({content:"Invented Person forever."});}});
+    chat:withPremise(async messages=>{if(messages[1].content.includes('"task":"narrow_intent_validation"'))return JSON.stringify({issues:["Unsupported named character"]});writers++;return JSON.stringify({content:"Invented Person forever."});})});
   assert.equal(writers,2);assert.equal(result.drafts.length,0);assert.equal(result.errors.length,1);
 });
 test("validator failure is explicit and never accepts unverified output",async()=>{
   const result=await generatePersonaBatch({personas:[persona],postsPerPersona:1,weights:DEFAULT_MODE_WEIGHTS,recent:[],candidates:new Map([["p1",[media]]]),random:()=>.5,
-    chat:async messages=>messages[1].content.includes('"task":"narrow_intent_validation"')?'{"content":"wrong schema"}':'{"content":"nice"}'});
+    chat:withPremise(async messages=>messages[1].content.includes('"task":"narrow_intent_validation"')?'{"content":"wrong schema"}':'{"content":"nice"}')});
   assert.equal(result.drafts.length,0);assert.ok(result.errors[0].includes("valid result"));
 });
 test("feed wording no longer calls an unrated anticipation post reviewed",()=>{

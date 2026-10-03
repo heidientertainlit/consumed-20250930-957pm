@@ -24,7 +24,7 @@ export const MODE_REGISTER_GUIDANCE: Record<PostMode, string> = {
   micro: "Very brief.",
   casual: "An ordinary thought.",
   rating: "A quick thought alongside the assigned rating.",
-  question: "Something this person genuinely wants answered.",
+  question: "Brief expression of the supplied premise.",
   specific: "One supported aspect.",
   opinion: "A personal stance.",
   low_energy: "Little effort.",

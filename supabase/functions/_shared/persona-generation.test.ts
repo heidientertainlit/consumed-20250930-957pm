@@ -9,6 +9,7 @@ import {
 import { generatePersonaBatch } from "./persona-generation-engine.ts";
 import type { Chat } from "./persona-media-candidates.ts";
 const writerOnly = (writer: Chat): Chat => async messages =>
+  messages[0].content.startsWith("Choose one concrete premise") ? '{"premise":"They liked it more than expected."}' :
   messages[1].content.includes('"task":"narrow_intent_validation"') ? '{"issues":[]}' : writer(messages);
 
 const persona: Persona = { id: "p1", display_name: "Example", user_name: "example", persona_config: {
@@ -95,7 +96,7 @@ test("writer distinguishes social register within modes without changing mode we
   assert.ok(system.includes("Thoughtful does not mean literary"));
   assert.ok(system.includes("genuinely wants answered"));
   assert.ok(system.includes("not trying to create content"));
-  assert.ok(buildWritingPrompt(persona,media,"question",voice,null,[],[])[1].content.includes("genuinely wants answered"));
+  assert.ok(buildWritingPrompt(persona,media,"question",voice,null,[],[])[1].content.includes("Questions and requests come from the premise"));
   assert.ok(buildWritingPrompt(persona,media,"low_energy",voice,null,[],[])[1].content.includes("Little effort"));
   assert.ok(buildWritingPrompt(persona,media,"micro",voice,null,[],[])[1].content.includes("Very brief"));
   assert.deepEqual(DEFAULT_MODE_WEIGHTS,{thoughtful:30,micro:10,casual:15,rating:10,question:10,specific:8,opinion:8,low_energy:9});
@@ -127,7 +128,7 @@ test("batch generation assigns fields structurally and exposes admin-only metada
   assert.ok(!assigned[1].includes("Still thinking about it")); // Other authors' prose no longer primes the writer.
 });
 test("invalid rating language repairs once; repeated failure never creates a draft", async () => {
-  const result=await generatePersonaBatch({personas:[persona],postsPerPersona:1,weights:DEFAULT_MODE_WEIGHTS,recent:[],candidates:new Map([["p1",[media]]]),random:()=>.2,chat:async()=>JSON.stringify({content:"10/10"})});
+  const result=await generatePersonaBatch({personas:[persona],postsPerPersona:1,weights:DEFAULT_MODE_WEIGHTS,recent:[],candidates:new Map([["p1",[media]]]),random:()=>.2,chat:writerOnly(async()=>JSON.stringify({content:"10/10"}))});
   assert.equal(result.drafts.length,0);assert.equal(result.errors.length,1);
 });
 test("incomplete writer JSON repairs once without choosing another media, mode or rating", async () => {
@@ -147,7 +148,7 @@ test("incomplete writer JSON repairs once without choosing another media, mode o
 });
 test("repeated malformed writer output stops after the existing two attempts", async () => {
   let calls=0;
-  const result=await generatePersonaBatch({personas:[persona],postsPerPersona:1,weights:DEFAULT_MODE_WEIGHTS,recent:[],candidates:new Map([["p1",[media]]]),random:()=>.2,chat:async()=>{calls++;return '{"content":"unfinished';}});
+  const result=await generatePersonaBatch({personas:[persona],postsPerPersona:1,weights:DEFAULT_MODE_WEIGHTS,recent:[],candidates:new Map([["p1",[media]]]),random:()=>.2,chat:writerOnly(async()=>{calls++;return '{"content":"unfinished';})});
   assert.equal(calls,2);
   assert.equal(result.drafts.length,0);
   assert.equal(result.errors.length,1);

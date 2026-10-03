@@ -9,7 +9,7 @@ test("report preserves batch order/text, escapes content, hides identities initi
   const result = await generatePersonaBatch({
     personas: [p], postsPerPersona: 1, weights: DEFAULT_MODE_WEIGHTS, recent: [], random: () => .99,
     candidates: new Map([[p.id, [{ title: "A & B", type: "movie", source: "Discovery", fit: 1 }]]]),
-    chat: async messages => messages[1].content.includes('"task":"narrow_intent_validation"')
+    chat: async messages => messages[0].content.startsWith("Choose one concrete premise") ? '{"premise":"They enjoyed it."}' : messages[1].content.includes('"task":"narrow_intent_validation"')
       ? '{"issues":[]}' : JSON.stringify({ content: '<script>alert("x")</script> 🚫' }),
   });
   const before = JSON.stringify(result);
@@ -35,5 +35,5 @@ test("report preserves batch order/text, escapes content, hides identities initi
   assert.ok(!html.includes("<script>raw rejected response</script>"));
   assert.ok(html.includes("&lt;script&gt;raw rejected response&lt;/script&gt;"));
   assert.ok(html.indexOf("Known-favorite identity verification") > html.indexOf('<article id="post-1">'));
-  for (const field of ["Persona:", "Intent:", "Mode:", "State:", "Rating:", "Intent distribution", "Mode distribution", "Validation/style warnings", "Emoji repairs"]) assert.ok(html.includes(field), field);
+  for (const field of ["Persona:", "Intent:", "Premise:", "Mode:", "State:", "Rating:", "Intent distribution", "Mode distribution", "Validation/style warnings", "Emoji repairs"]) assert.ok(html.includes(field), field);
 });

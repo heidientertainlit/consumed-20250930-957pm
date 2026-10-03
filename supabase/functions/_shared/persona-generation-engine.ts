@@ -5,6 +5,7 @@ import {
 } from "./persona-generation.ts";
 import type { Chat } from "./persona-media-candidates.ts";
 import { resolveAuthorStyle } from "./persona-author-style.ts";
+import { generatePremise } from "./persona-premise.ts";
 import { repairDisallowedEmoji, type EmojiRepair } from "./persona-emoji-repair.ts";
 import { DEFAULT_INTENT_WEIGHTS, planPostIntent, compatibleIntentModes, consumptionContradictions, buildIntentValidationPrompt, validateIntentWeights, type IntentWeights, type IntentContext, type ConsumptionScenario } from "./persona-post-intents.ts";
 
@@ -41,6 +42,7 @@ export async function generatePersonaBatch(options: {
           catch { contextWarnings.push("Extra provider context unavailable; unsupported specific intents remain ineligible."); }
         }
         const assignment = planPostIntent(persona, media, intentWeights, state, options.intentRecent || recent, random, options.scenario?.(persona, media), POST_MODES.filter(m => weights[m.id] * voice.preferredModeWeights[m.id] > 0).map(m => m.id));
+        const premise = await generatePremise(chat, persona, media, assignment);
         const mode = chooseMode(weights, voice, state, random, compatibleIntentModes(assignment));
         const rating = chooseRating(mode, voice, random, assignment);
         let content = "", issues: string[] = [];
@@ -48,7 +50,7 @@ export async function generatePersonaBatch(options: {
         const styleWarnings: string[] = [];
         const emojiRepairs: EmojiRepair[] = [];
         for (let attempt = 0; attempt < 2; attempt++) {
-          const raw = await chat(buildWritingPrompt(persona, media, mode, voice, rating, state, recent, issues.join("; "), assignment));
+          const raw = await chat(buildWritingPrompt(persona, media, mode, voice, rating, state, recent, issues.join("; "), assignment, premise));
           try {
             const value = JSON.parse(raw);
             content = renderRatingPlaceholders(value.content, rating);
@@ -83,7 +85,7 @@ export async function generatePersonaBatch(options: {
           voice, rating, words, externalId: media.externalId, externalSource: media.externalSource,
           warnings: [...contextWarnings, ...repairWarnings, ...styleWarnings],
           authorStyle, styleWarnings, emojiRepairs,
-          intent: assignment.intent, intentLabel: assignment.intentLabel, intentReason: assignment.reason,
+            intent: assignment.intent, intentLabel: assignment.intentLabel, intentReason: assignment.reason, premise,
           consumption: assignment.consumption, context: assignment.context,
         };
         drafts.push({

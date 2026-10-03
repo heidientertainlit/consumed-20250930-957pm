@@ -39,8 +39,12 @@ const personas: Persona[] = selected.map(p => {
 if (!process.env.OPENAI_API_KEY) throw new Error("Writing provider is not configured");
 const providerChat = createPersonaChat(process.env.OPENAI_API_KEY);
 const writerOutputs: { persona: string; raw: string; messages: { role: string; content: string }[] }[] = [];
+const premiseOutputs: { raw: string; messages: { role: string; content: string }[] }[] = [];
+const validationOutputs: { raw: string; messages: { role: string; content: string }[] }[] = [];
 const chat: typeof providerChat = async messages => {
   const raw = await providerChat(messages);
+  if (messages[0].content.startsWith("Choose one concrete premise")) premiseOutputs.push({ raw, messages });
+  if (messages[1].content.includes('"task":"narrow_intent_validation"')) validationOutputs.push({ raw, messages });
   if (messages[0].content.startsWith("You are ")) {
     writerOutputs.push({ persona: messages[0].content.split(". Preserve this person's existing identity:")[0].slice(8), raw, messages });
   }
@@ -74,7 +78,7 @@ const intentCounts = Object.fromEntries(POST_INTENTS.map(({id})=>[id,result.draf
 const validationWarnings = result.drafts.flatMap((d,i)=>(parseGenerationNotes(d.ai_notes)?.warnings || []).map(warning=>`Post ${i+1}: ${warning}`));
 const styleWarnings = result.drafts.flatMap((d,i)=>(parseGenerationNotes(d.ai_notes)?.styleWarnings || []).map(warning=>`Post ${i+1}: ${warning}`));
 const emojiRepairs = result.drafts.flatMap((d,i)=>(parseGenerationNotes(d.ai_notes)?.emojiRepairs || []).map(repair=>({post:i+1,...repair})));
-await fs.writeFile(`${out}.json`,JSON.stringify({dryRun:true,source:"Checked-in persona definitions and unchanged curated author profiles; no live history/config queried. Broad consumption states assigned fictionally; specific facts provider-grounded. No manual editing or post-run retuning.",weights:DEFAULT_MODE_WEIGHTS,intentWeights:DEFAULT_INTENT_WEIGHTS,modeCounts:modes,intentCounts,validationWarnings,styleWarnings,emojiRepairs,writerOutputs,mediaResolutionDebug,favoriteIdentityChecks,comparisonBaseline:comparisonPath,previousModeCounts,...result},null,2));
+await fs.writeFile(`${out}.json`,JSON.stringify({dryRun:true,source:"Checked-in persona definitions and unchanged curated author profiles; no live history/config queried. Broad consumption states assigned fictionally; specific facts provider-grounded. One concrete premise per assignment. No manual editing or post-run retuning.",weights:DEFAULT_MODE_WEIGHTS,intentWeights:DEFAULT_INTENT_WEIGHTS,modeCounts:modes,intentCounts,validationWarnings,styleWarnings,emojiRepairs,writerOutputs,premiseOutputs,validationOutputs,mediaResolutionDebug,favoriteIdentityChecks,comparisonBaseline:comparisonPath,previousModeCounts,...result},null,2));
 const reportPath = `${out}.html`;
-await fs.writeFile(reportPath,renderPersonaReport({drafts:result.drafts,errors:result.errors,personaCount:personas.length,previousModeCounts,writerOutputs,mediaResolutionDebug,favoriteIdentityChecks,reportTitle:"Typed-thought writer — raw 20-post batch"}));
+await fs.writeFile(reportPath,renderPersonaReport({drafts:result.drafts,errors:result.errors,personaCount:personas.length,previousModeCounts,writerOutputs,premiseOutputs,mediaResolutionDebug,favoriteIdentityChecks,showPlanning:true,reportTitle:"Concrete premise → writer — final raw 20-post batch"}));
 console.log(JSON.stringify({generated:result.drafts.length,intentCounts,modeCounts:modes,validationWarnings,styleWarnings,emojiRepairs,favoriteIdentityChecks,writerResponses:writerOutputs.length,errors:result.errors,report:`${out}.html`}));

@@ -14,6 +14,8 @@ export function renderPersonaReport(options: {
   drafts: Draft[]; errors: string[]; personaCount: number;
   previousModeCounts?: Record<string, number> | null;
   reportTitle?: string;
+  showPlanning?: boolean;
+  premiseOutputs?: { raw: string; messages: { role: string; content: string }[] }[];
   writerOutputs?: { persona: string; raw: string }[];
   mediaResolutionDebug?: MediaResolutionDebug[];
   favoriteIdentityChecks?: { persona: string; expected: { title: string; type: string; creator: string }; verified: boolean; resolved: unknown; purpose: string }[];
@@ -35,6 +37,7 @@ export function renderPersonaReport(options: {
         <strong>Media:</strong> ${escape(draft.media_title)}${draft.media_creator ? ` — ${escape(draft.media_creator)}` : ""} · ${escape(draft.media_type)}<br>
         <strong>Intent:</strong> ${escape(meta.intentLabel)} · <strong>Mode:</strong> ${escape(meta.modeLabel)}<br>
         <strong>State:</strong> ${escape(meta.consumption?.state.replace(/_/g, " "))} (${escape(meta.consumption?.source)}) · ${escape(meta.mediaSource)}
+        ${meta.premise ? `<br><strong>Premise:</strong> ${escape(meta.premise)}` : ""}
       </div>
       <blockquote>${draft.content ? escape(draft.content) : "<i>Rating only — no text</i>"}</blockquote>
       ${meta.warnings.length ? `<ul class="warnings">${meta.warnings.map(w => `<li>${escape(w)}</li>`).join("")}</ul>` : ""}
@@ -69,15 +72,15 @@ export function renderPersonaReport(options: {
     body.blind .identity,body.blind .planning,body.blind .debug{display:none}
     section{margin:28px 0}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:8px;border-bottom:1px solid #2d354b}th{color:#cfb4ff}
     @media(max-width:480px){body{padding:16px}h1{font-size:26px}article{padding:18px}th,td{padding:6px 4px;font-size:11px}}
-  </style></head><body class="blind"><main>
+  </style></head><body class="${options.showPlanning ? "" : "blind"}"><main>
     <h1>${escape(title)}</h1>
     <p class="note">${drafts.length} actual AI-generated posts across ${personaCount} fictional personas. Local-only: no database post saves, scheduling, publishing or deployment.</p>
-    <p class="note">Names and planning labels are hidden initially. Read the posts before checking their assignments. Generation order is preserved; no hand-editing, selection of better outputs or profile retuning. The only automatic style edit is the approved emoji-only repair, disclosed with its original text when it occurs.</p>
+    <p class="note">${options.showPlanning ? "Personas, assignments and concrete premises are shown alongside every final post." : "Names and planning labels are hidden initially. Read the posts before checking their assignments."} Generation order is preserved; no hand-editing, selection of better outputs or profile retuning. The only automatic style edit is the approved emoji-only repair, disclosed with its original text when it occurs.</p>
     <div class="stats">${errors.length ? escape(errors.join("; ")) : "No generation errors."}</div>
-    <div class="controls"><button id="toggle" type="button" aria-pressed="false">Reveal personas &amp; planning details</button></div>
+    <div class="controls"><button id="toggle" type="button" aria-pressed="${!!options.showPlanning}">${options.showPlanning ? "Hide" : "Reveal"} personas &amp; planning details</button></div>
     <div class="grid">${cards}</div>
     <section><h2>Reading questions</h2><ol>
-      <li>Did making the writer less instructed make the people sound more human?</li><li>Do they have genuinely different reasons for posting?</li>
+      <li>Does the final post express its supplied premise?</li><li>Do they have genuinely different reasons for posting?</li>
       <li>Does the writing still fall back into one shared AI/entertainment-copy voice?</li>
       <li>Are the personas distinct without exaggerated characters or repetitive gimmicks?</li>
     </ol><p class="note">Different metadata is not evidence of success. Ordinary posts need not strongly reveal their author.</p></section>
@@ -88,8 +91,9 @@ export function renderPersonaReport(options: {
     <section><h2>Validation/style warnings</h2>${warnings.length ? `<ul>${warnings.map(w => `<li>${escape(w)}</li>`).join("")}</ul>` : "<p>No validation or style warnings.</p>"}
       <h2>Emoji repairs</h2><p>${repairs.length} emoji-only repair(s). Original and repaired text are preserved in the JSON; any repairs are also disclosed beside their posts.</p></section>
     ${options.writerOutputs ? `<section class="debug"><h2>Raw writer responses — including retries</h2>
-      <p>${options.writerOutputs.length} writer response(s) for ${drafts.length} accepted posts. This includes attempts rejected by the unchanged validation pipeline. The JSON also retains the exact writer prompts. No typed-thought scorer, style validator or extra generation pass was added.</p>
+      <p>${options.writerOutputs.length} writer response(s) for ${drafts.length} accepted posts. This includes attempts rejected by the unchanged validation pipeline. The JSON also retains the exact writer prompts. No thought scorer or additional style validator was added.</p>
       ${options.writerOutputs.map((w, i) => `<details><summary>Response ${i + 1} — ${escape(w.persona)}</summary><pre>${escape(w.raw)}</pre></details>`).join("")}</section>` : ""}
+    ${options.premiseOutputs ? `<section class="debug"><h2>Raw premise responses and exact requests</h2>${options.premiseOutputs.map((p, i) => `<details><summary>Premise ${i + 1}</summary><pre>${escape(JSON.stringify(p, null, 2))}</pre></details>`).join("")}</section>` : ""}
     ${options.mediaResolutionDebug ? `<section class="debug"><h2>Known-favorite identity verification</h2>
       <p>Diagnostic-only lookups do not insert candidates or force assignments. Expected creators are trusted identity hints, not model-suggested artists. Failed verification rejects the work; no title-only fallback.</p>
       <pre>${escape(JSON.stringify(options.favoriteIdentityChecks || [], null, 2))}</pre>

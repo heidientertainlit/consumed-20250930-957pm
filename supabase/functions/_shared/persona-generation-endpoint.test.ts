@@ -65,8 +65,9 @@ async function harness() {
       if (url === "https://api.openai.com/v1/chat/completions") {
         const body = JSON.parse(options.body);
         const candidateRequest = body.messages[1].content.startsWith("Persona tastes:");
+        const premiseRequest = body.messages[0].content.startsWith("Choose one concrete premise");
         const validationRequest = body.messages[1].content.includes('"task":"narrow_intent_validation"');
-        const value = validationRequest ? { issues: [] } : candidateRequest
+        const value = premiseRequest ? { premise: "They liked it more than expected." } : validationRequest ? { issues: [] } : candidateRequest
           ? { candidates: [{ title: "Known Movie", type: "movie", source: "Persona Favorite" }] }
           : { content: "Honestly, I liked it more than expected. The pacing was a little slow, but the ending worked for me." };
         return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(value) } }] }));
