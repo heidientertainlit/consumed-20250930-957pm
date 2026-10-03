@@ -54,3 +54,18 @@ eligibility before selecting an intent. Keep validation narrow: contradictions,
 unsupported specific facts and obvious intent failures, not grammar, polish, length,
 insight or perfect demonstration of the intent. Tiny or ambiguous human thoughts are
 valid; do not repair them into explanatory posts.
+
+## Preserve the accepted architecture; differentiate authors
+
+The user confirmed: “The POST INTENT architecture is working. KEEP IT.”
+Do not add more intents, modes, states, planners, validators or diversity systems to
+address the remaining authorial fingerprint. Focus on persona differentiation and
+natural sentence construction, not more global writing rules or an enormous blacklist.
+
+**Why:** The user finds that the feed now has meaningfully different reasons for
+posting, but too many personas still sound like the same polished AI copywriter when
+their names are hidden.
+
+**How to apply:** Preserve the approved structure. Distinguish deeper author-specific
+thinking and sentence habits from presentation mechanics; inspect and report findings
+before implementing a voice change when requested.
