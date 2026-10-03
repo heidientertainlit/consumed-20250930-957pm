@@ -7,7 +7,8 @@ import fs from "node:fs/promises";
 import vm from "node:vm";
 import path from "node:path";
 import { DEFAULT_MODE_WEIGHTS, deriveSocialVoice, parseGenerationNotes, POST_MODES, type Persona, type MediaCandidate } from "../supabase/functions/_shared/persona-generation.ts";
-import { buildPersonaCandidates, createPersonaChat, fetchTrendingCandidates, resolveMediaCandidate, loadPersonaIntentContext } from "../supabase/functions/_shared/persona-media-candidates.ts";
+import { buildPersonaCandidates, createPersonaChat, fetchTrendingCandidates, createCachedPersonaMediaResolver, loadPersonaIntentContext, type MediaResolutionDebug } from "../supabase/functions/_shared/persona-media-candidates.ts";
+import { knownFavoriteIdentity } from "../supabase/functions/_shared/persona-favorite-identity.ts";
 import { DEFAULT_INTENT_WEIGHTS, POST_INTENTS } from "../supabase/functions/_shared/persona-post-intents.ts";
 import { generatePersonaBatch } from "../supabase/functions/_shared/persona-generation-engine.ts";
 import { renderPersonaReport } from "./persona-generation-report.ts";
@@ -37,23 +38,27 @@ const personas: Persona[] = selected.map(p => {
 });
 if (!process.env.OPENAI_API_KEY) throw new Error("Writing provider is not configured");
 const providerChat = createPersonaChat(process.env.OPENAI_API_KEY);
-const writerOutputs: { persona: string; raw: string }[] = [];
+const writerOutputs: { persona: string; raw: string; messages: { role: string; content: string }[] }[] = [];
 const chat: typeof providerChat = async messages => {
   const raw = await providerChat(messages);
   if (messages[0].content.startsWith("You are ")) {
-    writerOutputs.push({ persona: messages[0].content.split(". Preserve this person's existing identity:")[0].slice(8), raw });
+    writerOutputs.push({ persona: messages[0].content.split(". Preserve this person's existing identity:")[0].slice(8), raw, messages });
   }
   return raw;
 };
 const keys = {tmdb:process.env.TMDB_API_KEY,books:process.env.GOOGLE_BOOKS_API_KEY,rawg:process.env.RAWG_API_KEY};
 const trending = await fetchTrendingCandidates(keys);
 const candidates = new Map<string,MediaCandidate[]>();
-const cache = new Map<string,Promise<any>>();
-const resolve = (title:string,type:string) => {
-  const key=`${type}:${title.toLowerCase()}`;
-  if(!cache.has(key)) cache.set(key,resolveMediaCandidate(title,type,keys));
-  return cache.get(key)!;
-};
+const mediaResolutionDebug: MediaResolutionDebug[] = [];
+const resolve = createCachedPersonaMediaResolver(keys, entry => mediaResolutionDebug.push(entry));
+const favoriteIdentityChecks = [];
+// Read-only diagnostics, not injected candidates or forced media assignments.
+for (const persona of personas) for (const title of persona.persona_config.favorite_media || []) {
+  const identity = knownFavoriteIdentity(persona, title);
+  if (!identity) continue;
+  const resolved = await resolve(identity.title, identity.type, identity.creator);
+  favoriteIdentityChecks.push({ persona: persona.display_name, expected: identity, verified: !!resolved, resolved, purpose: "diagnostic-only; not inserted into the candidate pool" });
+}
 for(let start=0;start<personas.length;start+=3) {
   await Promise.all(personas.slice(start,start+3).map(async p=>{
     deriveSocialVoice(p.persona_config);
@@ -69,7 +74,7 @@ const intentCounts = Object.fromEntries(POST_INTENTS.map(({id})=>[id,result.draf
 const validationWarnings = result.drafts.flatMap((d,i)=>(parseGenerationNotes(d.ai_notes)?.warnings || []).map(warning=>`Post ${i+1}: ${warning}`));
 const styleWarnings = result.drafts.flatMap((d,i)=>(parseGenerationNotes(d.ai_notes)?.styleWarnings || []).map(warning=>`Post ${i+1}: ${warning}`));
 const emojiRepairs = result.drafts.flatMap((d,i)=>(parseGenerationNotes(d.ai_notes)?.emojiRepairs || []).map(repair=>({post:i+1,...repair})));
-await fs.writeFile(`${out}.json`,JSON.stringify({dryRun:true,source:"Checked-in persona definitions and approved curated author profiles; no live history/config queried. Broad consumption states assigned fictionally; specific facts provider-grounded. No manual editing or profile retuning.",weights:DEFAULT_MODE_WEIGHTS,intentWeights:DEFAULT_INTENT_WEIGHTS,modeCounts:modes,intentCounts,validationWarnings,styleWarnings,emojiRepairs,writerOutputs,comparisonBaseline:comparisonPath,previousModeCounts,...result},null,2));
+await fs.writeFile(`${out}.json`,JSON.stringify({dryRun:true,source:"Checked-in persona definitions and unchanged curated author profiles; no live history/config queried. Broad consumption states assigned fictionally; specific facts provider-grounded. No manual editing or post-run retuning.",weights:DEFAULT_MODE_WEIGHTS,intentWeights:DEFAULT_INTENT_WEIGHTS,modeCounts:modes,intentCounts,validationWarnings,styleWarnings,emojiRepairs,writerOutputs,mediaResolutionDebug,favoriteIdentityChecks,comparisonBaseline:comparisonPath,previousModeCounts,...result},null,2));
 const reportPath = `${out}.html`;
-await fs.writeFile(reportPath,renderPersonaReport({drafts:result.drafts,errors:result.errors,personaCount:personas.length,previousModeCounts}));
-console.log(JSON.stringify({generated:result.drafts.length,intentCounts,modeCounts:modes,validationWarnings,styleWarnings,emojiRepairs,errors:result.errors,report:`${out}.html`}));
+await fs.writeFile(reportPath,renderPersonaReport({drafts:result.drafts,errors:result.errors,personaCount:personas.length,previousModeCounts,writerOutputs,mediaResolutionDebug,favoriteIdentityChecks,reportTitle:"Typed-thought writer — raw 20-post batch"}));
+console.log(JSON.stringify({generated:result.drafts.length,intentCounts,modeCounts:modes,validationWarnings,styleWarnings,emojiRepairs,favoriteIdentityChecks,writerResponses:writerOutputs.length,errors:result.errors,report:`${out}.html`}));

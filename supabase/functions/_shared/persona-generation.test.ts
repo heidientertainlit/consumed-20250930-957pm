@@ -90,20 +90,20 @@ test("first-person wording does not excuse editorial copy or become mandatory", 
 });
 test("writer distinguishes social register within modes without changing mode weights", () => {
   const system = buildWritingPrompt(persona,media,"thoughtful",voice,null,[],[])[0].content;
-  assert.ok(system.includes("WRITE THE REACTION, NOT THE REVIEW"));
-  assert.ok(system.includes("First-person wording is optional"));
-  assert.ok(system.includes("Plain, intelligent, brief or considered responses are equally valid"));
-  assert.ok(system.includes("No need to be clever, insightful, polished"));
-  assert.ok(system.includes("Don't manufacture casualness"));
-  assert.ok(buildWritingPrompt(persona,media,"question",voice,null,[],[])[1].content.includes("THIS PERSON has a reason"));
-  assert.ok(buildWritingPrompt(persona,media,"low_energy",voice,null,[],[])[1].content.includes("no contrived fragments"));
-  assert.ok(buildWritingPrompt(persona,media,"micro",voice,null,[],[])[1].content.includes("does not need to describe the media"));
+  assert.ok(system.includes("SIMULATE WHAT THIS PERSON TYPED"));
+  assert.ok(system.includes("not requirements to demonstrate"));
+  assert.ok(system.includes("Thoughtful does not mean literary"));
+  assert.ok(system.includes("genuinely wants answered"));
+  assert.ok(system.includes("not trying to create content"));
+  assert.ok(buildWritingPrompt(persona,media,"question",voice,null,[],[])[1].content.includes("genuinely wants answered"));
+  assert.ok(buildWritingPrompt(persona,media,"low_energy",voice,null,[],[])[1].content.includes("Little effort"));
+  assert.ok(buildWritingPrompt(persona,media,"micro",voice,null,[],[])[1].content.includes("Very brief"));
   assert.deepEqual(DEFAULT_MODE_WEIGHTS,{thoughtful:30,micro:10,casual:15,rating:10,question:10,specific:8,opinion:8,low_energy:9});
 });
 test("old /10 examples are sanitized, mode and exact media assigned before writing", () => {
   assert.ok(!cleanStyleExample("10/10 or 4.5 stars").match(/10\/10|4\.5 stars/));
   const prompt=buildWritingPrompt(persona,media,"micro",voice,4,[],[]);
-  assert.ok(prompt[1].content.includes("Assigned internal mode: Micro reaction"));
+  assert.ok(prompt[1].content.includes("Typing mode: micro"));
   assert.ok(prompt[1].content.includes("Authoritative rating: 4/5"));
   assert.ok(!prompt[0].content.includes("10/10"));
   assert.ok(!prompt[1].content.includes("at least half"));
@@ -116,7 +116,7 @@ test("batch generation assigns fields structurally and exposes admin-only metada
   const assigned: string[] = [];
   const results = await generatePersonaBatch({ personas:[persona], postsPerPersona:2, weights:DEFAULT_MODE_WEIGHTS, recent:[],
     candidates:new Map([["p1",[media]]]),random:()=>.2,
-    chat:writerOnly(async messages=>{assigned.push(messages[1].content);return JSON.stringify({content:messages[1].content.includes("Thoughtful reaction")?"I liked it a lot more than expected. Still thinking about it today, even if it took a while to get going.":"pretty good.",rating:9,media_title:"Hijacked title",post_type:"hot_take"});}),
+    chat:writerOnly(async messages=>{assigned.push(messages[1].content);return JSON.stringify({content:messages[1].content.includes("Typing mode: thoughtful")?"I liked it a lot more than expected. Still thinking about it today, even if it took a while to get going.":"pretty good.",rating:9,media_title:"Hijacked title",post_type:"hot_take"});}),
   });
   assert.equal(results.drafts.length,2);
   assert.equal(results.drafts[0].media_title,media.title);
@@ -124,7 +124,7 @@ test("batch generation assigns fields structurally and exposes admin-only metada
   assert.notEqual(results.drafts[0].rating,9);
   assert.ok(parseGenerationNotes(results.drafts[0].ai_notes)?.mode);
   assert.equal(results.state.length,2);
-  assert.ok(assigned[1].includes("Still thinking about it"));
+  assert.ok(!assigned[1].includes("Still thinking about it")); // Other authors' prose no longer primes the writer.
 });
 test("invalid rating language repairs once; repeated failure never creates a draft", async () => {
   const result=await generatePersonaBatch({personas:[persona],postsPerPersona:1,weights:DEFAULT_MODE_WEIGHTS,recent:[],candidates:new Map([["p1",[media]]]),random:()=>.2,chat:async()=>JSON.stringify({content:"10/10"})});

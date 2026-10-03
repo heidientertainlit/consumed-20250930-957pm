@@ -13,7 +13,11 @@ test("report preserves batch order/text, escapes content, hides identities initi
       ? '{"issues":[]}' : JSON.stringify({ content: '<script>alert("x")</script> 🚫' }),
   });
   const before = JSON.stringify(result);
-  const html = renderPersonaReport({ ...result, personaCount: 1 });
+  const html = renderPersonaReport({ ...result, personaCount: 1,
+    writerOutputs: [{ persona: "A < B", raw: '<script>raw rejected response</script>' }],
+    favoriteIdentityChecks: [{ persona: "Julian", expected: { title: "Blonde", type: "music", creator: "Frank Ocean" }, verified: true, resolved: { creator: "Frank Ocean", externalId: "provider-id" }, purpose: "diagnostic-only; not inserted into the candidate pool" }],
+    mediaResolutionDebug: [{ requested: { title: "Blonde", type: "music", expectedCreator: "Frank Ocean" }, cacheKey: '["music","blonde","frank ocean"]', cacheHit: false, status: "verified", resolved: { title: "Blonde", type: "music", creator: "Frank Ocean", externalId: "provider-id", externalSource: "itunes" } }],
+  });
   assert.equal(JSON.stringify(result), before);
   assert.ok(html.includes('<body class="blind">'));
   assert.ok(html.includes('body.blind .identity'));
@@ -24,5 +28,12 @@ test("report preserves batch order/text, escapes content, hides identities initi
   assert.ok(html.includes("&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;"));
   assert.ok(html.includes("Emoji-only repair — original writer text"));
   assert.ok(html.includes("🚫"));
+  assert.ok(html.includes("Known-favorite identity verification"));
+  assert.ok(html.includes("Frank Ocean"));
+  assert.ok(html.includes("expectedCreator"));
+  assert.ok(html.includes("Raw writer responses — including retries"));
+  assert.ok(!html.includes("<script>raw rejected response</script>"));
+  assert.ok(html.includes("&lt;script&gt;raw rejected response&lt;/script&gt;"));
+  assert.ok(html.indexOf("Known-favorite identity verification") > html.indexOf('<article id="post-1">'));
   for (const field of ["Persona:", "Intent:", "Mode:", "State:", "Rating:", "Intent distribution", "Mode distribution", "Validation/style warnings", "Emoji repairs"]) assert.ok(html.includes(field), field);
 });

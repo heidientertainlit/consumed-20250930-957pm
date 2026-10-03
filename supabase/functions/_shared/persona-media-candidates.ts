@@ -1,5 +1,6 @@
 import { normalizedTitle, type MediaCandidate, type Persona, type RecentPost } from "./persona-generation.ts";
 import type { IntentContext } from "./persona-post-intents.ts";
+import { creatorMatches, knownFavoriteIdentity, mediaResolutionKey, normalizedCreator } from "./persona-favorite-identity.ts";
 
 export type ProviderKeys = { tmdb?: string; books?: string; rawg?: string };
 const genres: Record<number, string> = { 28: "action", 12: "adventure", 16: "animation", 35: "comedy", 80: "crime", 99: "documentary", 18: "drama", 10751: "family", 14: "fantasy", 36: "history", 27: "horror", 10402: "music", 9648: "mystery", 10749: "romance", 878: "sci-fi", 53: "thriller", 10765: "sci-fi fantasy", 10764: "reality", 10759: "action adventure" };
@@ -19,7 +20,10 @@ function released(date: unknown): boolean {
   return typeof date === "string" && date.length >= 4 && date.slice(0, 10) <= new Date().toISOString().slice(0, 10);
 }
 /** Direct GET-only provider lookups: no Supabase/cache writes, including dry runs. */
-export async function resolveMediaCandidate(title: string, type: string, keys: ProviderKeys): Promise<Omit<MediaCandidate, "source" | "fit"> | null> {
+export async function resolveMediaCandidate(title: string, type: string, keys: ProviderKeys, expectedCreator?: string): Promise<Omit<MediaCandidate, "source" | "fit"> | null> {
+  if (expectedCreator !== undefined && !normalizedCreator(expectedCreator)) throw new Error("Expected creator must be nonempty");
+  // No creator verification is available in these existing search responses.
+  if (expectedCreator !== undefined && !["music", "podcast", "book"].includes(type)) return null;
   if ((type === "movie" || type === "tv") && keys.tmdb) {
     const data = await json(`https://api.themoviedb.org/3/search/${type}?api_key=${keys.tmdb}&query=${encodeURIComponent(title)}&include_adult=false`);
     const item = data.results?.find((r: any) => matches(title, r.title || r.name || "") && released(r.release_date || r.first_air_date));
@@ -27,14 +31,14 @@ export async function resolveMediaCandidate(title: string, type: string, keys: P
     return { title: item.title || item.name, type, externalId: String(item.id), externalSource: "tmdb", description: item.overview, genres: (item.genre_ids || []).map((id: number) => genres[id]).filter(Boolean) };
   }
   if (type === "book") {
-    const data = await json(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(`intitle:${title}`)}&maxResults=5${keys.books ? `&key=${keys.books}` : ""}`);
-    const item = data.items?.find((r: any) => matches(title, r.volumeInfo?.title || "") && released(r.volumeInfo?.publishedDate));
+    const data = await json(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(`intitle:${title}${expectedCreator !== undefined ? ` inauthor:${expectedCreator}` : ""}`)}&maxResults=5${keys.books ? `&key=${keys.books}` : ""}`);
+    const item = data.items?.find((r: any) => matches(title, r.volumeInfo?.title || "") && released(r.volumeInfo?.publishedDate) && (expectedCreator === undefined || creatorMatches(expectedCreator, r.volumeInfo?.authors)));
     if (!item) return null;
-    return { title: item.volumeInfo.title, type, creator: item.volumeInfo.authors?.[0], externalId: item.id, externalSource: "googlebooks", description: item.volumeInfo.description?.replace(/<[^>]+>/g, " "), genres: item.volumeInfo.categories || [] };
+    return { title: item.volumeInfo.title, type, creator: expectedCreator === undefined ? item.volumeInfo.authors?.[0] : item.volumeInfo.authors.find((author: unknown) => creatorMatches(expectedCreator, author)), externalId: item.id, externalSource: "googlebooks", description: item.volumeInfo.description?.replace(/<[^>]+>/g, " "), genres: item.volumeInfo.categories || [] };
   }
   if (type === "podcast" || type === "music") {
-    const data = await json(`https://itunes.apple.com/search?term=${encodeURIComponent(title)}&entity=${type === "podcast" ? "podcast" : "album"}&limit=8`);
-    const item = data.results?.find((r: any) => matches(title, r.collectionName || r.trackName || ""));
+    const data = await json(`https://itunes.apple.com/search?term=${encodeURIComponent(expectedCreator === undefined ? title : `${title} ${expectedCreator}`)}&entity=${type === "podcast" ? "podcast" : "album"}&limit=8`);
+    const item = data.results?.find((r: any) => matches(title, r.collectionName || r.trackName || "") && (expectedCreator === undefined || creatorMatches(expectedCreator, r.artistName)));
     if (!item) return null;
     return { title: item.collectionName || item.trackName, type, creator: item.artistName, externalId: String(item.collectionId || item.trackId), externalSource: "itunes", genres: item.genres || [item.primaryGenreName].filter(Boolean) };
   }
@@ -45,6 +49,30 @@ export async function resolveMediaCandidate(title: string, type: string, keys: P
     return { title: item.name, type, externalId: String(item.id), externalSource: "rawg", genres: item.genres?.map((g: any) => g.name) || [] };
   }
   return null;
+}
+export type MediaResolutionDebug = {
+  requested: { title: string; type: string; expectedCreator?: string };
+  cacheKey: string; cacheHit: boolean; status: "verified" | "rejected" | "error";
+  resolved: Pick<MediaCandidate, "title" | "type" | "creator" | "externalId" | "externalSource"> | null;
+};
+export type PersonaMediaResolver = (title: string, type: string, expectedCreator?: string) => Promise<Omit<MediaCandidate, "source" | "fit"> | null>;
+/** Same lookup cache in local and backend paths; known creators cannot share title-only entries. */
+export function createCachedPersonaMediaResolver(keys: ProviderKeys, trace?: (entry: MediaResolutionDebug) => void): PersonaMediaResolver {
+  const cache = new Map<string, ReturnType<PersonaMediaResolver>>();
+  return async (title, type, expectedCreator) => {
+    const cacheKey = mediaResolutionKey(title, type, expectedCreator);
+    const cacheHit = cache.has(cacheKey);
+    if (!cacheHit) cache.set(cacheKey, resolveMediaCandidate(title, type, keys, expectedCreator));
+    try {
+      const item = await cache.get(cacheKey)!;
+      trace?.({ requested: { title, type, expectedCreator }, cacheKey, cacheHit, status: item ? "verified" : "rejected",
+        resolved: item ? { title: item.title, type: item.type, creator: item.creator, externalId: item.externalId, externalSource: item.externalSource } : null });
+      return item;
+    } catch (error) {
+      trace?.({ requested: { title, type, expectedCreator }, cacheKey, cacheHit, status: "error", resolved: null });
+      throw error;
+    }
+  };
 }
 export async function fetchTrendingCandidates(keys: ProviderKeys): Promise<MediaCandidate[]> {
   const jobs: Promise<MediaCandidate[]>[] = [];
@@ -93,7 +121,7 @@ export function createPersonaChat(apiKey: string): Chat {
     return text;
   };
 }
-export async function buildPersonaCandidates(persona: Persona, trending: MediaCandidate[], recent: RecentPost[], chat: Chat, resolve: (title: string, type: string) => Promise<Omit<MediaCandidate, "source" | "fit"> | null>): Promise<MediaCandidate[]> {
+export async function buildPersonaCandidates(persona: Persona, trending: MediaCandidate[], recent: RecentPost[], chat: Chat, resolve: PersonaMediaResolver): Promise<MediaCandidate[]> {
   const config = persona.persona_config;
   const types = (config.media_types || ["movie", "tv", "book"]).map(t => t.toLowerCase());
   const raw = await chat([
@@ -108,8 +136,13 @@ export async function buildPersonaCandidates(persona: Persona, trending: MediaCa
     if (types.includes(p.type)) requests.push({ title: p.title, type: p.type, source: "History" });
   }
   const resolved = await Promise.allSettled(requests.map(async (r: any) => {
-    const item = await resolve(r.title, r.type);
+    const identity = knownFavoriteIdentity(persona, r.title);
+    if (identity && r.source === "Persona Favorite" && identity.type !== r.type) return null;
+    const expectedCreator = identity && identity.type === r.type ? identity.creator : undefined;
+    const item = await resolve(r.title, r.type, expectedCreator);
     if (!item) return null;
+    // Fail closed even if a custom resolver forgets to enforce the supplied identity.
+    if (expectedCreator !== undefined && !creatorMatches(expectedCreator, item.creator)) return null;
     const isFavorite = r.source === "Persona Favorite" && (config.favorite_media || []).some(t => matches(t, item.title));
     const source = isFavorite ? "Persona Favorite" : r.source === "History" ? "History" : "Discovery";
     return { ...item, source, fit: 0 } as MediaCandidate;

@@ -72,8 +72,8 @@ test("same media and mode reach distinct author styles without changing the assi
   assert.notEqual(a[0].content, b[0].content);
   assert.ok(a[0].content.includes('"certainty":"declarative"'));
   assert.ok(b[0].content.includes('"certainty":"tentative"'));
-  assert.ok(PERSONAL_SOCIAL_REGISTER.length < 1000);
-  for (const phrase of ["Do not invent named characters", "No spoiler details", "No predefined reactions", "Emoji setting"]) assert.ok(a[0].content.includes(phrase));
+  assert.ok(PERSONAL_SOCIAL_REGISTER.length < 1800);
+  for (const phrase of ["named people, scenes, episodes, quotes, credits", "spoiler details", "No additional biography", "Emoji setting"]) assert.ok(a[0].content.includes(phrase));
 });
 test("emoji-only repair handles flags, modifiers, ZWJ, keycaps and pictographs without touching prose", () => {
   const text = "Still good. 🚫 👩🏽‍💻 🇺🇸 1️⃣ ❤️ 🌟\n© 2026 ™ ® 3.5/5";

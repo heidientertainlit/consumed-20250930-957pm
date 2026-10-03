@@ -1,0 +1,1257 @@
+{
+  "dryRun": true,
+  "source": "Checked-in persona definitions and unchanged curated author profiles; no live history/config queried. Broad consumption states assigned fictionally; specific facts provider-grounded. No manual editing or post-run retuning.",
+  "weights": {
+    "thoughtful": 30,
+    "micro": 10,
+    "casual": 15,
+    "rating": 10,
+    "question": 10,
+    "specific": 8,
+    "opinion": 8,
+    "low_energy": 9
+  },
+  "intentWeights": {
+    "review": 22,
+    "reaction": 12,
+    "observation": 8,
+    "confession": 4,
+    "question": 6,
+    "request": 7,
+    "comparison": 3,
+    "character": 5,
+    "moment": 2,
+    "rewatch": 6,
+    "expectation": 4,
+    "behavior": 4,
+    "progress": 4,
+    "drop": 2,
+    "anticipation": 4,
+    "identity": 3,
+    "recommendation": 2,
+    "social": 1,
+    "association": 1
+  },
+  "modeCounts": {
+    "thoughtful": 0,
+    "micro": 0,
+    "casual": 0,
+    "rating": 0,
+    "question": 0,
+    "specific": 0,
+    "opinion": 0,
+    "low_energy": 0
+  },
+  "intentCounts": {
+    "review": 0,
+    "reaction": 0,
+    "observation": 0,
+    "confession": 0,
+    "question": 0,
+    "request": 0,
+    "comparison": 0,
+    "character": 0,
+    "moment": 0,
+    "rewatch": 0,
+    "expectation": 0,
+    "behavior": 0,
+    "progress": 0,
+    "drop": 0,
+    "anticipation": 0,
+    "identity": 0,
+    "recommendation": 0,
+    "social": 0,
+    "association": 0
+  },
+  "validationWarnings": [],
+  "styleWarnings": [],
+  "emojiRepairs": [],
+  "writerOutputs": [],
+  "mediaResolutionDebug": [
+    {
+      "requested": {
+        "title": "Blonde",
+        "type": "music",
+        "expectedCreator": "Frank Ocean"
+      },
+      "cacheKey": "[\"music\",\"blonde\",\"frank ocean\"]",
+      "cacheHit": false,
+      "status": "rejected",
+      "resolved": null
+    },
+    {
+      "requested": {
+        "title": "Aftersun",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"aftersun\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Aftersun",
+        "type": "movie",
+        "externalId": "965150",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Portrait of a Lady on Fire",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"portraitofaladyonfire\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Portrait of a Lady on Fire",
+        "type": "movie",
+        "externalId": "531428",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Great Beauty",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"thegreatbeauty\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Great Beauty",
+        "type": "movie",
+        "externalId": "179144",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Tár",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"tar\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "TÁR",
+        "type": "movie",
+        "externalId": "817758",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Dekalog",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"dekalog\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Dekalog",
+        "type": "tv",
+        "externalId": "42699",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Yi Yi",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"yiyi\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Yi Yi",
+        "type": "movie",
+        "externalId": "25538",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Carlos",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"carlos\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Carlos",
+        "type": "tv",
+        "externalId": "41693",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Tree of Life",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"thetreeoflife\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Tree of Life",
+        "type": "movie",
+        "externalId": "8967",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Hereditary",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"hereditary\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Hereditary",
+        "type": "movie",
+        "externalId": "493922",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Witch",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"thewitch\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Witch",
+        "type": "movie",
+        "externalId": "310131",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "It Follows",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"itfollows\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "It Follows",
+        "type": "movie",
+        "externalId": "270303",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Substance",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"thesubstance\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Substance",
+        "type": "movie",
+        "externalId": "933260",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Lighthouse",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"thelighthouse\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Lighthouse",
+        "type": "movie",
+        "externalId": "503919",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Midsommar",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"midsommar\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Midsommar",
+        "type": "movie",
+        "externalId": "530385",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Halloween (1978)",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"halloween1978\",null]",
+      "cacheHit": false,
+      "status": "rejected",
+      "resolved": null
+    },
+    {
+      "requested": {
+        "title": "Succession",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"succession\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Succession",
+        "type": "tv",
+        "externalId": "76331",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Bear",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"thebear\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Bear",
+        "type": "tv",
+        "externalId": "136315",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Love Is Blind",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"loveisblind\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Love Is Blind",
+        "type": "tv",
+        "externalId": "99353",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "The White Lotus",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"thewhitelotus\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The White Lotus",
+        "type": "tv",
+        "externalId": "111803",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "RedHanded",
+        "type": "podcast"
+      },
+      "cacheKey": "[\"podcast\",\"redhanded\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "RedHanded",
+        "type": "podcast",
+        "creator": "RedHanded",
+        "externalId": "1250599915",
+        "externalSource": "itunes"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Traitors",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"thetraitors\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Traitors",
+        "type": "tv",
+        "externalId": "215307",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Rehearsal",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"therehearsal\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Rehearsal",
+        "type": "tv",
+        "externalId": "204284",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Rabbit Hole",
+        "type": "podcast"
+      },
+      "cacheKey": "[\"podcast\",\"rabbithole\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Rabbit Hole",
+        "type": "podcast",
+        "creator": "The New York Times",
+        "externalId": "1507423923",
+        "externalSource": "itunes"
+      }
+    },
+    {
+      "requested": {
+        "title": "Station Eleven",
+        "type": "book"
+      },
+      "cacheKey": "[\"book\",\"stationeleven\",null]",
+      "cacheHit": false,
+      "status": "rejected",
+      "resolved": null
+    },
+    {
+      "requested": {
+        "title": "Outlander",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"outlander\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Outlander",
+        "type": "tv",
+        "externalId": "56570",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Stardust",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"stardust\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Stardust",
+        "type": "movie",
+        "externalId": "2270",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Pan's Labyrinth",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"panslabyrinth\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Pan's Labyrinth",
+        "type": "movie",
+        "externalId": "1417",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Portrait of a Lady on Fire",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"portraitofaladyonfire\",null]",
+      "cacheHit": true,
+      "status": "verified",
+      "resolved": {
+        "title": "Portrait of a Lady on Fire",
+        "type": "movie",
+        "externalId": "531428",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Great Beauty",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"thegreatbeauty\",null]",
+      "cacheHit": true,
+      "status": "verified",
+      "resolved": {
+        "title": "The Great Beauty",
+        "type": "movie",
+        "externalId": "179144",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Call Me By Your Name",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"callmebyyourname\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Call Me by Your Name",
+        "type": "movie",
+        "externalId": "398818",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "The End of the F***ing World",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"theendofthefingworld\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The End of the F***ing World",
+        "type": "tv",
+        "externalId": "74577",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "A Court of Thorns and Roses",
+        "type": "book"
+      },
+      "cacheKey": "[\"book\",\"acourtofthornsandroses\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "A Court of Thorns and Roses",
+        "type": "book",
+        "creator": "Sarah J. Maas",
+        "externalId": "E-kdBQAAQBAJ",
+        "externalSource": "googlebooks"
+      }
+    },
+    {
+      "requested": {
+        "title": "Jonathan Strange & Mr Norrell",
+        "type": "book"
+      },
+      "cacheKey": "[\"book\",\"jonathanstrangeandmrnorrell\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Jonathan Strange and Mr Norrell",
+        "type": "book",
+        "creator": "Susanna Clarke",
+        "externalId": "i_-bdQjbAZ8C",
+        "externalSource": "googlebooks"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Night Circus",
+        "type": "book"
+      },
+      "cacheKey": "[\"book\",\"thenightcircus\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Night Circus",
+        "type": "book",
+        "creator": "Erin Morgenstern",
+        "externalId": "t1MDOGpyW9gC",
+        "externalSource": "googlebooks"
+      }
+    },
+    {
+      "requested": {
+        "title": "Blonde",
+        "type": "music",
+        "expectedCreator": "Frank Ocean"
+      },
+      "cacheKey": "[\"music\",\"blonde\",\"frank ocean\"]",
+      "cacheHit": true,
+      "status": "rejected",
+      "resolved": null
+    },
+    {
+      "requested": {
+        "title": "Folklore",
+        "type": "music"
+      },
+      "cacheKey": "[\"music\",\"folklore\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "folklore",
+        "type": "music",
+        "creator": "Taylor Swift",
+        "externalId": "1524793738",
+        "externalSource": "itunes"
+      }
+    },
+    {
+      "requested": {
+        "title": "Fourth Wing",
+        "type": "book"
+      },
+      "cacheKey": "[\"book\",\"fourthwing\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Fourth Wing",
+        "type": "book",
+        "creator": "Rebecca Yarros",
+        "externalId": "E-OLEAAAQBAJ",
+        "externalSource": "googlebooks"
+      }
+    },
+    {
+      "requested": {
+        "title": "This Is Spinal Tap",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"thisisspinaltap\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "This Is Spinal Tap",
+        "type": "movie",
+        "externalId": "11031",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Queen's Gambit",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"thequeensgambit\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Queen's Gambit",
+        "type": "tv",
+        "externalId": "87739",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Folklore: The Long Pond Studio Sessions",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"folklorethelongpondstudiosessions\",null]",
+      "cacheHit": false,
+      "status": "rejected",
+      "resolved": null
+    },
+    {
+      "requested": {
+        "title": "Sound of Metal",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"soundofmetal\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Sound of Metal",
+        "type": "movie",
+        "externalId": "502033",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Top 10 Lists",
+        "type": "book"
+      },
+      "cacheKey": "[\"book\",\"top10lists\",null]",
+      "cacheHit": false,
+      "status": "rejected",
+      "resolved": null
+    },
+    {
+      "requested": {
+        "title": "A Little Life",
+        "type": "book"
+      },
+      "cacheKey": "[\"book\",\"alittlelife\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "A Little Life",
+        "type": "book",
+        "creator": "Hanya Yanagihara",
+        "externalId": "hjwnrgEACAAJ",
+        "externalSource": "googlebooks"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Starless Sea",
+        "type": "book"
+      },
+      "cacheKey": "[\"book\",\"thestarlesssea\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Starless Sea",
+        "type": "book",
+        "creator": "Erin Morgenstern",
+        "externalId": "uYKDDwAAQBAJ",
+        "externalSource": "googlebooks"
+      }
+    },
+    {
+      "requested": {
+        "title": "London Grammar: If You Wait",
+        "type": "music"
+      },
+      "cacheKey": "[\"music\",\"londongrammarifyouwait\",null]",
+      "cacheHit": false,
+      "status": "rejected",
+      "resolved": null
+    },
+    {
+      "requested": {
+        "title": "Nebraska",
+        "type": "music"
+      },
+      "cacheKey": "[\"music\",\"nebraska\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Nebraska",
+        "type": "music",
+        "creator": "Bruce Springsteen",
+        "externalId": "185798980",
+        "externalSource": "itunes"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Goldfinch",
+        "type": "book"
+      },
+      "cacheKey": "[\"book\",\"thegoldfinch\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Goldfinch",
+        "type": "book",
+        "creator": "Donna Tartt",
+        "externalId": "dvuK7isszLIC",
+        "externalSource": "googlebooks"
+      }
+    },
+    {
+      "requested": {
+        "title": "Attack on Titan",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"attackontitan\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Attack on Titan",
+        "type": "tv",
+        "externalId": "1429",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Neon Genesis Evangelion",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"neongenesisevangelion\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Neon Genesis Evangelion",
+        "type": "tv",
+        "externalId": "890",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Blade Runner 2049",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"bladerunner2049\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Blade Runner 2049",
+        "type": "movie",
+        "externalId": "335984",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Ghost in the Shell (1995)",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"ghostintheshell1995\",null]",
+      "cacheHit": false,
+      "status": "rejected",
+      "resolved": null
+    },
+    {
+      "requested": {
+        "title": "The Legend of Zelda: Breath of the Wild",
+        "type": "game"
+      },
+      "cacheKey": "[\"game\",\"thelegendofzeldabreathofthewild\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Legend of Zelda: Breath of the Wild",
+        "type": "game",
+        "externalId": "22511",
+        "externalSource": "rawg"
+      }
+    },
+    {
+      "requested": {
+        "title": "Mass Effect 2",
+        "type": "game"
+      },
+      "cacheKey": "[\"game\",\"masseffect2\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Mass Effect 2",
+        "type": "game",
+        "externalId": "4806",
+        "externalSource": "rawg"
+      }
+    },
+    {
+      "requested": {
+        "title": "Freakonomics Radio",
+        "type": "podcast"
+      },
+      "cacheKey": "[\"podcast\",\"freakonomicsradio\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Freakonomics Radio",
+        "type": "podcast",
+        "creator": "Freakonomics Radio + Stitcher",
+        "externalId": "354668519",
+        "externalSource": "itunes"
+      }
+    },
+    {
+      "requested": {
+        "title": "Elden Ring",
+        "type": "game"
+      },
+      "cacheKey": "[\"game\",\"eldenring\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Elden Ring",
+        "type": "game",
+        "externalId": "326243",
+        "externalSource": "rawg"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Office",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"theoffice\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Office",
+        "type": "tv",
+        "externalId": "2316",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Parks and Recreation",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"parksandrecreation\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Parks and Recreation",
+        "type": "tv",
+        "externalId": "8592",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Office Ladies",
+        "type": "podcast"
+      },
+      "cacheKey": "[\"podcast\",\"officeladies\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Office Ladies",
+        "type": "podcast",
+        "creator": "Audacy & Jenna Fischer and Angela Kinsey",
+        "externalId": "1480311435",
+        "externalSource": "itunes"
+      }
+    },
+    {
+      "requested": {
+        "title": "Jurassic Park",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"jurassicpark\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Jurassic Park",
+        "type": "movie",
+        "externalId": "329",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Friends",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"friends\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Friends",
+        "type": "tv",
+        "externalId": "1668",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Brooklyn Nine-Nine",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"brooklynninenine\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Brooklyn Nine-Nine",
+        "type": "tv",
+        "externalId": "48891",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Jurassic World",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"jurassicworld\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Jurassic World",
+        "type": "movie",
+        "externalId": "135397",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Masters of Scale",
+        "type": "podcast"
+      },
+      "cacheKey": "[\"podcast\",\"mastersofscale\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Masters of Scale",
+        "type": "podcast",
+        "creator": "WaitWhat",
+        "externalId": "1227971746",
+        "externalSource": "itunes"
+      }
+    },
+    {
+      "requested": {
+        "title": "How I Built This",
+        "type": "podcast"
+      },
+      "cacheKey": "[\"podcast\",\"howibuiltthis\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "How I built this",
+        "type": "podcast",
+        "creator": "Jon Doe",
+        "externalId": "1491387021",
+        "externalSource": "itunes"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Innovator's Dilemma",
+        "type": "book"
+      },
+      "cacheKey": "[\"book\",\"theinnovatorsdilemma\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Innovator's Dilemma",
+        "type": "book",
+        "creator": "Clayton Christensen",
+        "externalId": "3JnBAgAAQBAJ",
+        "externalSource": "googlebooks"
+      }
+    },
+    {
+      "requested": {
+        "title": "The E-Myth Revisited",
+        "type": "book"
+      },
+      "cacheKey": "[\"book\",\"theemythrevisited\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The E-Myth Revisited",
+        "type": "book",
+        "creator": "Michael E. Gerber",
+        "externalId": "HHJVIpbpSgsC",
+        "externalSource": "googlebooks"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Lean Startup",
+        "type": "book"
+      },
+      "cacheKey": "[\"book\",\"theleanstartup\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Lean Startup",
+        "type": "book",
+        "creator": "Eric Ries",
+        "externalId": "tvfyz-4JILwC",
+        "externalSource": "googlebooks"
+      }
+    },
+    {
+      "requested": {
+        "title": "Zero to One",
+        "type": "book"
+      },
+      "cacheKey": "[\"book\",\"zerotoone\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Zero to One",
+        "type": "book",
+        "creator": "Peter Thiel",
+        "externalId": "POOJDQAAQBAJ",
+        "externalSource": "googlebooks"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Lost World",
+        "type": "book"
+      },
+      "cacheKey": "[\"book\",\"thelostworld\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Lost World",
+        "type": "book",
+        "creator": "Sir Arthur Conan Doyle",
+        "externalId": "rnR4_oIpllEC",
+        "externalSource": "googlebooks"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Bear",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"thebear\",null]",
+      "cacheHit": true,
+      "status": "verified",
+      "resolved": {
+        "title": "The Bear",
+        "type": "tv",
+        "externalId": "136315",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Succession",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"succession\",null]",
+      "cacheHit": true,
+      "status": "verified",
+      "resolved": {
+        "title": "Succession",
+        "type": "tv",
+        "externalId": "76331",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Barbie",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"barbie\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Barbie",
+        "type": "movie",
+        "externalId": "346698",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Menu",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"themenu\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Menu",
+        "type": "movie",
+        "externalId": "593643",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "The Devil Wears Prada",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"thedevilwearsprada\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "The Devil Wears Prada",
+        "type": "movie",
+        "externalId": "350",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "Atlanta",
+        "type": "tv"
+      },
+      "cacheKey": "[\"tv\",\"atlanta\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "Atlanta",
+        "type": "tv",
+        "externalId": "65495",
+        "externalSource": "tmdb"
+      }
+    },
+    {
+      "requested": {
+        "title": "La La Land",
+        "type": "movie"
+      },
+      "cacheKey": "[\"movie\",\"lalaland\",null]",
+      "cacheHit": false,
+      "status": "verified",
+      "resolved": {
+        "title": "La La Land",
+        "type": "movie",
+        "externalId": "313369",
+        "externalSource": "tmdb"
+      }
+    }
+  ],
+  "favoriteIdentityChecks": [
+    {
+      "persona": "Julian Brooks",
+      "expected": {
+        "title": "Blonde",
+        "type": "music",
+        "creator": "Frank Ocean"
+      },
+      "verified": false,
+      "resolved": null,
+      "purpose": "diagnostic-only; not inserted into the candidate pool"
+    }
+  ],
+  "comparisonBaseline": "reports/persona-generator-author-style-test-batch.json",
+  "previousModeCounts": {
+    "thoughtful": 4,
+    "micro": 3,
+    "casual": 6,
+    "rating": 2,
+    "question": 3,
+    "specific": 2,
+    "opinion": 0,
+    "low_energy": 0
+  },
+  "drafts": [],
+  "errors": [
+    "Sarah Whitman: Writing provider returned 400",
+    "Kei Tanaka: Writing provider returned 400",
+    "Julian Brooks: Writing provider returned 400",
+    "Alex Moreno: Writing provider returned 400",
+    "Alex Thompson: Writing provider returned 400",
+    "Lena Hoffman: Writing provider returned 400",
+    "Emily Park: Writing provider returned 400",
+    "Samantha Reed: Writing provider returned 400",
+    "Nicholas Grant: Writing provider returned 400",
+    "Marcus Delacroix: Writing provider returned 400",
+    "Sarah Whitman: Writing provider returned 400",
+    "Kei Tanaka: Writing provider returned 400",
+    "Julian Brooks: Writing provider returned 400",
+    "Alex Moreno: Writing provider returned 400",
+    "Alex Thompson: Writing provider returned 400",
+    "Lena Hoffman: Writing provider returned 400",
+    "Emily Park: Writing provider returned 400",
+    "Samantha Reed: Writing provider returned 400",
+    "Nicholas Grant: Writing provider returned 400",
+    "Marcus Delacroix: Writing provider returned 400"
+  ],
+  "state": []
+}

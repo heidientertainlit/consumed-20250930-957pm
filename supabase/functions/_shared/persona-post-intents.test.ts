@@ -65,9 +65,9 @@ test("mode and intent stay independent; thoughtfulness does not require evaluati
   const assignment=assigned("observation","finished");
   const prompt=buildWritingPrompt(persona,media,"thoughtful",voice,null,[],[],undefined,assignment);
   assert.ok(prompt[1].content.includes("Assigned POST INTENT"));
-  assert.ok(prompt[1].content.includes("Thoughtful reaction"));
-  assert.ok(prompt[1].content.includes("Mode controls only expression"));
-  assert.ok(prompt[1].content.includes("never an obligation"));
+  assert.ok(prompt[1].content.includes("Typing mode: thoughtful"));
+  assert.ok(prompt[0].content.includes("The supplied intent describes why they opened the app"));
+  assert.ok(prompt[0].content.includes("not requirements to demonstrate"));
   assert.deepEqual(consumptionContradictions("oh NO",assigned("reaction","finished")),[]);
   assert.deepEqual(consumptionContradictions("still perfect.",assigned("rewatch","revisiting")),[]);
   assert.deepEqual(consumptionContradictions("I don't know about this one guys",assigned("progress","in_progress")),[]);
@@ -100,7 +100,7 @@ test("contradictions repair within the same assignment; warnings disclose the re
   assert.equal(result.drafts.length,1,result.errors.join(";"));
   assert.equal(writers,2);assert.equal(result.drafts[0].rating,null);
   assert.ok(parseGenerationNotes(result.drafts[0].ai_notes)?.warnings.some(w=>w.includes("Claims experienced")));
-  assert.equal(assignments[0].split("Assigned internal mode:")[1].split("\n")[0],assignments[1].split("Assigned internal mode:")[1].split("\n")[0]);
+  assert.equal(assignments[0].split("Typing mode:")[1].split("\n")[0],assignments[1].split("Typing mode:")[1].split("\n")[0]);
 });
 test("unsupported facts and obvious intent failures repair once, no silent relabeling",async()=>{
   let writers=0;

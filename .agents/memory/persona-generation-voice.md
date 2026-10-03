@@ -95,3 +95,28 @@ not requirements every post must visibly demonstrate.
 **How to apply:** Assess names-hidden text for human differentiation, different reasons
 for posting, residual shared entertainment-copy voice and exaggerated/repetitive gimmicks.
 Do not turn those reading questions into new automatic style validators.
+
+## Confirmed profiles; typed-thought objective
+
+The user confirmed that the author profiles are beginning to work. Keep them unchanged
+for the writer-target experiment. The approved objective is “DO NOT WRITE A POST FOR
+AN AUDIENCE. SIMULATE WHAT THIS PERSON TYPED.” Prefer reducing composition instructions
+over adding rules. The typed-thought versus wrote-content check is a writer instruction
+only: never add a validator, scorer, retry condition or additional generation pass.
+
+**Why:** The user sees residual composed entertainment copy and artificial social
+questions, not a need for different profiles or another planning layer.
+
+**How to apply:** Questions must represent something the person genuinely wants answered.
+Preserve the accepted systems, profiles and weights; make the single requested sample
+before review and do not alter profiles, weights, prompts or generation logic afterward.
+
+Known-favorite identity may be separate trusted reference data, without rewriting
+persona profiles. Reject failed creator verification rather than choosing a same-titled
+work. Report unresolved lookups honestly; search absence is not proof of nonexistence.
+
+**Why:** Live album searches can return other releases by the right artist and same-titled
+works by other artists without returning the intended favorite.
+
+**How to apply:** Keep creator identity in verification and lookup-cache identity. Do not
+weaken matching or force a candidate simply to make a diagnostic succeed.

@@ -157,11 +157,7 @@ export function intentWriterInstructions(assignment: IntentAssignment): string {
   return `Assigned POST INTENT (WHY this person opened the app): ${assignment.intentLabel}.
 Social behavior: ${POST_INTENTS.find(i => i.id === assignment.intent)!.description}
 Assigned consumption state: ${assignment.consumption.state} (${assignment.consumption.source}). This broad fictional/supplied state is true for this post. ${assignment.consumption.details || ""}
-Supported specific context: ${JSON.stringify(assignment.context)}.
-Intent controls the reason for posting. Mode controls only expression, length and effort. Do not turn a non-review intent into a review because the mode is thoughtful, opinion or rating.
-Invent a plausible personal response, not additional media facts or biography. No precise progress, repeat counts, personal relationships, purchases or exact time spans unless supplied.
-A question need not be about quality. A recommendation request can simply express wanting something similar. Progress may express uncertainty with no explicit progress words. Revisiting may be just a tiny 'still' reaction. Starting/anticipation cannot imply finished consumption.
-Write the behavior, not its label. There is no need to explain the reason for posting. No reusable phrases or demonstrations to copy.`;
+Supported specific context: ${JSON.stringify(assignment.context)}.`;
 }
 export function consumptionContradictions(content: string, assignment: IntentAssignment): string[] {
   const text = content.toLowerCase();

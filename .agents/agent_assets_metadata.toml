@@ -384,3 +384,17 @@ mtime_ms = 1790999239794
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/02589dbc-2afc-4c8f-99ea-d91babf763f3/d57dc235-6c5b-48f8-a686-63a684e25cd0"
 storage_version_token = "1790999444514004"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "YltKc548He3lrbmMUFwdc"
+uri = "file://reports/persona-generator-typed-thought-test-batch.json"
+type = "unspecified"
+title = "Failed batch record — zero posts generated"
+description = "The single attempted batch produced 20 HTTP 400 errors and no writer responses. Includes creator-aware cache traces showing Blonde/Frank Ocean was rejected rather than replaced with Alizée. No posts were saved or scheduled; no post-run prompt or generation changes were made."
+logical_id = "e641d04e-9b45-40a4-9aa7-4aebd6f3b5f4"
+content_hash = "sha256:5c0dac893f9c82c4180bf10d66db9b16cfe0fb9196cc6508f574fc49dd8a183a"
+size = 31038
+mtime_ms = 1791003166371
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/e641d04e-9b45-40a4-9aa7-4aebd6f3b5f4/c3369df8-d01c-46a2-bcc6-a58c4152d9b0"
+storage_version_token = "1791003338225684"
+content_type = "application/octet-stream"

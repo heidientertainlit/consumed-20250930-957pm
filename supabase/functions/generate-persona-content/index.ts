@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authorizeAdminOrService } from "../_shared/authorization.ts";
 import { DEFAULT_MODE_WEIGHTS, deriveSocialVoice, mediaKey, parseGenerationNotes, validateModeWeights, validateVoice, type Persona, type RecentPost, type MediaCandidate } from "../_shared/persona-generation.ts";
 import { DEFAULT_INTENT_WEIGHTS, validateIntentWeights } from "../_shared/persona-post-intents.ts";
-import { buildPersonaCandidates, createPersonaChat, fetchTrendingCandidates, resolveMediaCandidate, loadPersonaIntentContext } from "../_shared/persona-media-candidates.ts";
+import { buildPersonaCandidates, createPersonaChat, fetchTrendingCandidates, createCachedPersonaMediaResolver, loadPersonaIntentContext } from "../_shared/persona-media-candidates.ts";
 import { generatePersonaBatch } from "../_shared/persona-generation-engine.ts";
 
 const corsHeaders = {
@@ -111,12 +111,7 @@ serve(async req => {
       try { trending = await fetchTrendingCandidates(keys); }
       catch { errors.push("Trending providers unavailable; using persona candidates only"); }
     }
-    const cache = new Map<string, Promise<any>>();
-    const resolve = (title: string, type: string) => {
-      const id = mediaKey({ title, type });
-      if (!cache.has(id)) cache.set(id, resolveMediaCandidate(title, type, keys));
-      return cache.get(id)!;
-    };
+    const resolve = createCachedPersonaMediaResolver(keys);
     const candidates = new Map();
     // Four candidate jobs at a time avoids provider bursts. Each completed writing assignment sees batch state.
     for (let start = 0; start < personas.length; start += 4) {

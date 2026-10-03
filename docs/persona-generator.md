@@ -228,3 +228,37 @@ sample batch; no further architecture changes should follow that run before user
 node --import tsx scripts/test-persona-generator-dry-run.ts reports/persona-generator-author-style-test-batch reports/persona-generator-intent-test-batch.json
 node --import tsx --test supabase/functions/_shared/persona-generation*.test.ts supabase/functions/_shared/persona-post-intents.test.ts supabase/functions/_shared/persona-author-style.test.ts scripts/persona-generation-report.test.ts
 ```
+
+## Typed-thought writer experiment
+
+The approved writer objective is “DO NOT WRITE A POST FOR AN AUDIENCE. SIMULATE WHAT
+THIS PERSON TYPED.” The internal typed-thought/content check is writer guidance only:
+it is never a validator, score, retry condition or additional generation pass.
+Author profiles, surface voice, modes, weights, intent planning, consumption states,
+selection scoring, validation and emoji repair remain unchanged.
+
+The writer receives identity/style, assigned intent/state and supported media facts,
+one short mode hint, rating/emoji restrictions and relevant admin feedback. It no longer
+receives audience-facing mode labels/descriptions, numerical word targets, sentence
+counts, recent batch shapes/capitalization pressure, discouraged-phrase lists, other
+authors' recent prose or repeated register/intent instructions. Retries ask to correct
+only the actual validation failure rather than broadly rewrite the register.
+
+Known favorite identity is separate trusted reference metadata, not a persona rewrite.
+Julian's “Blonde” requires music by Frank Ocean. Existing lookups accept an optional
+expected creator and verify it against provider credits as well as the title. Both
+backend and local caches include that creator. A mismatched or unverified known
+favorite is rejected, never replaced with a same-titled work or relabeled Discovery.
+Other selection/source/fit logic is unchanged.
+
+The local report retains exact writer prompts and every response, including retries.
+Creator-aware provider/cache traces and diagnostic-only favorite checks follow the
+raw posts. These read-only checks do not insert candidates or force assignments. A
+rejected lookup is reported honestly; absence from search is not proof a work does
+not exist. Do not alter any profiles, weights, prompts or generation logic after
+seeing the fresh batch.
+
+```sh
+node --import tsx scripts/test-persona-generator-dry-run.ts reports/persona-generator-typed-thought-test-batch reports/persona-generator-author-style-test-batch.json
+node --import tsx --test supabase/functions/_shared/persona-generation*.test.ts supabase/functions/_shared/persona-post-intents.test.ts supabase/functions/_shared/persona-author-style.test.ts supabase/functions/_shared/persona-favorite-identity.test.ts supabase/functions/_shared/persona-typed-thought.test.ts scripts/persona-generation-report.test.ts
+```

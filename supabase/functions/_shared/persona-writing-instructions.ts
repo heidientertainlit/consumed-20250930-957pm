@@ -1,11 +1,16 @@
 import type { PostMode } from "./persona-generation.ts";
 
 /** Register guidance only. No selection logic, quotas, reusable posts or new persona identities. */
-export const PERSONAL_SOCIAL_REGISTER = `CORE WRITING PRINCIPLE: WRITE THE REACTION, NOT THE REVIEW.
-Write the assigned social behavior in this person's author style, not a description of the work for an audience. A review or recommendation can be assigned, but other intents need not become evaluations.
-Plain, intelligent, brief or considered responses are equally valid. No need to be clever, insightful, polished or strongly identifiable in every post. First-person wording is optional; adding it does not turn editorial copy into a personal response. Don't manufacture casualness.
-Questions should come from actual curiosity, not audience engagement bait.
-The card already displays title and rating. Supplied descriptions are fact-grounding only, not a synopsis to paraphrase.`;
+export const PERSONAL_SOCIAL_REGISTER = `DO NOT WRITE A POST FOR AN AUDIENCE. SIMULATE WHAT THIS PERSON TYPED.
+You are the supplied fictional person. They opened Consumed and typed a thought about this entertainment.
+Use their existing identity, social voice and author style as tendencies, not requirements to demonstrate. They are not trying to create content, attract engagement, write a caption, demonstrate insight or complete an assignment.
+The supplied intent describes why they opened the app. The mode describes how briefly or expansively they typed—not how impressive the writing should be.
+A question expresses something this person genuinely wants answered. A recommendation request comes from something they personally want next. Do not append an audience-response invitation by default.
+Thoughtful does not mean literary. Sophisticated expression is allowed when it fits this person, but the thought should feel personally arrived at rather than like finished criticism.
+Treat the supplied consumption state as true. Keep media facts, specific progress, biography and relationships within the supplied evidence. Do not invent specifics or reveal spoiler details.
+The card already displays the title and rating. Follow the supplied rating and emoji rules.
+Before returning, ask internally: "Does this sound like someone typed a thought, or like someone wrote content?" Prefer the typed thought.
+Return only {"content":"…"}.`;
 
 export const REGISTER_EXAMPLES = `REGISTER DEMONSTRATION ONLY — not phrases, openings or sentence structures to reuse:
 An articulate person's reaction can be: "I think this worked better for me as a character study than as a mystery."
@@ -15,12 +20,12 @@ A question can have a personal reason: "I can't tell if I missed something or if
 These demonstrate the register, not content to adapt to the assigned title. Do not quote, paraphrase or recycle them. An equally plain thought in this person's own words is enough. Notice that none explains the work to an imagined audience or tries to supply a quotable critical verdict.`;
 
 export const MODE_REGISTER_GUIDANCE: Record<PostMode, string> = {
-  thoughtful: "A person has more to say about the assigned intent, often two to four conversational sentences. Their thinking can be nuanced without becoming a review. Shorter thoughts are fine; no mandatory polished opening, balanced critique or conclusion.",
-  micro: "An immediate reaction: one word, a few words, an emotion, a fragment, or the assigned rating. It does not need to describe the media, contain insight or be entertaining.",
-  casual: "An ordinary thought someone would type without composing copy. A simple observation or reaction is enough; no need for a clever hook or explanation.",
-  rating: "Express the assigned intent briefly alongside the assigned stars. Rating language is optional and must use the authoritative placeholders. Stars do not require a miniature review to justify them.",
-  question: "Ask because THIS PERSON has a reason: their response, uncertainty, disagreement or desire to talk about this media. Usually tie it to their own experience. Don't invent a scene/episode to make the question specific, and don't add a generic audience-engagement sign-off.",
-  specific: "React to a particular aspect ONLY when supplied facts support it. Still a user's response, not a description of that aspect for an audience. If details are missing, a general response is better than an invented fact.",
-  opinion: "A personal stance in this person's normal register. It can be articulate, ambivalent or understated; not automatically provocative, combative, insightful or clever.",
-  low_energy: "This person simply isn't putting much effort into the post. An uncomplicated opinion, completion update or assigned rating is sufficient. Do not generate literary descriptions and make them lowercase; no contrived fragments or disconnected score word tacked on.",
+  thoughtful: "More room for a considered thought.",
+  micro: "Very brief.",
+  casual: "An ordinary thought.",
+  rating: "A quick thought alongside the assigned rating.",
+  question: "Something this person genuinely wants answered.",
+  specific: "One supported aspect.",
+  opinion: "A personal stance.",
+  low_energy: "Little effort.",
 };
