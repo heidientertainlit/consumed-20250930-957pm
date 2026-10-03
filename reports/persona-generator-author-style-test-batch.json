@@ -1,0 +1,631 @@
+{
+  "dryRun": true,
+  "source": "Checked-in persona definitions and approved curated author profiles; no live history/config queried. Broad consumption states assigned fictionally; specific facts provider-grounded. No manual editing or profile retuning.",
+  "weights": {
+    "thoughtful": 30,
+    "micro": 10,
+    "casual": 15,
+    "rating": 10,
+    "question": 10,
+    "specific": 8,
+    "opinion": 8,
+    "low_energy": 9
+  },
+  "intentWeights": {
+    "review": 22,
+    "reaction": 12,
+    "observation": 8,
+    "confession": 4,
+    "question": 6,
+    "request": 7,
+    "comparison": 3,
+    "character": 5,
+    "moment": 2,
+    "rewatch": 6,
+    "expectation": 4,
+    "behavior": 4,
+    "progress": 4,
+    "drop": 2,
+    "anticipation": 4,
+    "identity": 3,
+    "recommendation": 2,
+    "social": 1,
+    "association": 1
+  },
+  "modeCounts": {
+    "thoughtful": 4,
+    "micro": 3,
+    "casual": 6,
+    "rating": 2,
+    "question": 3,
+    "specific": 2,
+    "opinion": 0,
+    "low_energy": 0
+  },
+  "intentCounts": {
+    "review": 2,
+    "reaction": 2,
+    "observation": 2,
+    "confession": 3,
+    "question": 2,
+    "request": 2,
+    "comparison": 0,
+    "character": 2,
+    "moment": 0,
+    "rewatch": 0,
+    "expectation": 0,
+    "behavior": 2,
+    "progress": 1,
+    "drop": 0,
+    "anticipation": 1,
+    "identity": 0,
+    "recommendation": 0,
+    "social": 1,
+    "association": 0
+  },
+  "validationWarnings": [
+    "Post 5: Style check failed: emojiFrequency=none. One emoji-only repair removed 1 sequence(s); all other text unchanged (writer attempt 1).",
+    "Post 7: Repair requested: incomplete JSON or invalid content/score placeholders.",
+    "Post 19: Repair requested: incomplete JSON or invalid content/score placeholders."
+  ],
+  "styleWarnings": [
+    "Post 5: Style check failed: emojiFrequency=none. One emoji-only repair removed 1 sequence(s); all other text unchanged (writer attempt 1)."
+  ],
+  "emojiRepairs": [
+    {
+      "post": 5,
+      "original": "Fired up for \"The Bear\"! 🍽️",
+      "repaired": "Fired up for \"The Bear\"! ",
+      "removed": [
+        "🍽️"
+      ],
+      "reason": "emojiFrequency_none"
+    }
+  ],
+  "writerOutputs": [
+    {
+      "persona": "Julian Brooks",
+      "raw": "{\"content\":\"Finishing \\\"Blonde\\\" got me thinking about how powerful music in different languages can be. Alizée's album took me on a journey, and now I'm curious about other French artists who bring that kind of depth and intensity. Any suggestions?\"}"
+    },
+    {
+      "persona": "Alex Thompson",
+      "raw": "{\"content\":\"I haven't seen Jurassic Park before. Wondering if it's as tense as people say.\"}"
+    },
+    {
+      "persona": "Lena Hoffman",
+      "raw": "{\"content\":\"Alice Hoffman has a way of turning simple truths into something magical.\"}"
+    },
+    {
+      "persona": "Marcus Delacroix",
+      "raw": "{\"content\":\"Revisiting High Fidelity, I still love the dynamic between Rob and Barry. Any other films with a similar music-infused friendship vibe?\"}"
+    },
+    {
+      "persona": "Emily Park",
+      "raw": "{\"content\":\"Fired up for \\\"The Bear\\\"! 🍽️\"}"
+    },
+    {
+      "persona": "Sarah Whitman",
+      "raw": "{\"content\":\"After finishing Hereditary, can family secrets ever be locked away for good?\"}"
+    },
+    {
+      "persona": "Kei Tanaka",
+      "raw": "{\"content\\\":\\\"Confession time: I was totally fascinated by the Major's journey in 'Ghost in the Shell'. It got me thinking about the blurred lines between humanity and technology. Plus, the visuals kept me in awe throughout.\\\"} ഞ്ചായThe post convincingly expresses a personal and thoughtful reaction to \"\t\t:14058,\"behavior\":8,\"author_trait\":\"20107-S-S-C-S-ABS-P-NO-R-DeOMG\",\"labels\":[\"confess\",\"reflect\",\"thoughtful\"],\"sentiment\":8}"
+    },
+    {
+      "persona": "Kei Tanaka",
+      "raw": "{\"content\":\"Confession time: when I first watched Ghost in the Shell, I wasn't entirely sure how I felt about Johansson playing Major. But by the end, I found myself appreciating her take on the character. Guess it was a gradual win for me.\"}"
+    },
+    {
+      "persona": "Alex Moreno",
+      "raw": "{\"content\":\"By the end of The Lighthouse, I realized I'm oddly comforted by madness. 5/5.\"}"
+    },
+    {
+      "persona": "Nicholas Grant",
+      "raw": "{\"content\":\"I'm revisiting The Tim Ferriss Show. Does anyone else feel like his interview style brings out the best in guests?\"}"
+    },
+    {
+      "persona": "Samantha Reed",
+      "raw": "{\"content\":\"How do you feel about Carmy's journey in The Bear?\"}"
+    },
+    {
+      "persona": "Julian Brooks",
+      "raw": "{\"content\":\"Taylor Swift's storytelling magic.\"}"
+    },
+    {
+      "persona": "Alex Thompson",
+      "raw": "{\"content\":\"Just finished Jurassic Park. Any suggestions for more thrilling adventures?\"}"
+    },
+    {
+      "persona": "Lena Hoffman",
+      "raw": "{\"content\":\"Just finished \\\"A Court of Thorns and Roses\\\" and I'm feeling strangely attached to the world Maas created. It's one of those books where the journey stays with you, even after the last page.\"}"
+    },
+    {
+      "persona": "Marcus Delacroix",
+      "raw": "{\"content\":\"\\\"The Great Beauty\\\" is a beguiling journey into the heart of Rome's opulent façade, revealing both its captivating charm and its hollow depths. Toni Servillo's portrayal of Jep Gambardella is nothing short of mesmerizing, providing the contemplative lens through which we explore a city of contradictions. The film's haunting beauty is inescapable, leaving a lingering impression long after the credits roll.\"}"
+    },
+    {
+      "persona": "Emily Park",
+      "raw": "{\"content\":\"Watching Kendall and Roman clash again... these Roy sibling dynamics never get old!\"}"
+    },
+    {
+      "persona": "Sarah Whitman",
+      "raw": "{\"content\":\"Unsettling saint or sinister savior?\"}"
+    },
+    {
+      "persona": "Kei Tanaka",
+      "raw": "{\"content\":\"Finished Attack on Titan and all I can think is: what now?\"}"
+    },
+    {
+      "persona": "Alex Moreno",
+      "raw": "{\"content\":\"Aftersun captures the silent reverberations of memory. It's less about what happened and more about what's remembered. 4/5.\"}"
+    },
+    {
+      "persona": "Nicholas Grant",
+      "raw": "{\"content\\\":\\\"Always intrigued by Ferriss's way of blending tactics with storytelling.\\\"} inkle.slug.hero.dominoes.sunday.widget<|vq_14733|>{\":\"][\"  }"
+    },
+    {
+      "persona": "Nicholas Grant",
+      "raw": "{\"content\":\"Listening to The Tim Ferriss Show and I'm wondering how he always lands these fascinating guests.\"}"
+    },
+    {
+      "persona": "Samantha Reed",
+      "raw": "{\"content\":\"Still can't figure out how Carmy deals with all that pressure. Any thoughts?\"}"
+    }
+  ],
+  "comparisonBaseline": "reports/persona-generator-intent-test-batch.json",
+  "previousModeCounts": {
+    "thoughtful": 3,
+    "micro": 4,
+    "casual": 6,
+    "rating": 0,
+    "question": 2,
+    "specific": 1,
+    "opinion": 2,
+    "low_energy": 2
+  },
+  "drafts": [
+    {
+      "persona_user_id": "brooksj",
+      "persona_user_name": "brooksj",
+      "persona_display_name": "Julian Brooks",
+      "post_type": "review",
+      "content": "Finishing \"Blonde\" got me thinking about how powerful music in different languages can be. Alizée's album took me on a journey, and now I'm curious about other French artists who bring that kind of depth and intensity. Any suggestions?",
+      "rating": null,
+      "media_title": "Blonde",
+      "media_type": "music",
+      "media_creator": "Alizée",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"thoughtful\",\"modeLabel\":\"Thoughtful reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"standard\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":39,\"externalId\":\"879108764\",\"externalSource\":\"itunes\",\"warnings\":[],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"open\",\"thinking_style\":\"mixed\",\"stance\":\"earnest\",\"specificity\":\"selective\",\"focus\":\"experience\",\"certainty\":\"declarative\",\"polish\":\"off_the_cuff\",\"explanation_drive\":\"selective\",\"adjective_density\":\"moderate\",\"reference_style\":\"occasional\",\"principles\":[\"Take music personally and commit to preferences; explain through listening and feeling rather than a claim of artistic importance.\",\"Passion lives in the preference, not automatically in superlatives or slogans. Defending a favorite need not become a performance.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"behavior\",\"intentLabel\":\"Behavior / aftereffect\",\"intentReason\":\"Weighted eligible choice for music, Persona Favorite, finished; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"finished\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Alizée\",\"kind\":\"creator\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "alex_thompson",
+      "persona_user_name": "alex_thompson",
+      "persona_display_name": "Alex Thompson",
+      "post_type": "review",
+      "content": "I haven't seen Jurassic Park before. Wondering if it's as tense as people say.",
+      "rating": null,
+      "media_title": "Jurassic Park",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"minimal\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"rare\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.8,\"rating\":0.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":1.8}},\"rating\":null,\"words\":14,\"externalId\":\"329\",\"externalSource\":\"tmdb\",\"warnings\":[],\"authorStyle\":{\"directness\":\"blunt\",\"emotional_expression\":\"reserved\",\"thinking_style\":\"literal\",\"stance\":\"earnest\",\"specificity\":\"broad\",\"focus\":\"experience\",\"certainty\":\"declarative\",\"polish\":\"off_the_cuff\",\"explanation_drive\":\"low\",\"adjective_density\":\"sparse\",\"reference_style\":\"rare\",\"principles\":[\"State the response without building a case for it; an ordinary preference can be the whole thought.\",\"Entertainment need not become a discussion or identity statement. Occasional dry understatement is natural, not obligatory.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"confession\",\"intentLabel\":\"Confession\",\"intentReason\":\"Weighted eligible choice for movie, Persona Favorite, starting; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"starting\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Grant\",\"kind\":\"character\"},{\"name\":\"Sam Neill\",\"kind\":\"performer\"},{\"name\":\"Ellie\",\"kind\":\"character\"},{\"name\":\"Laura Dern\",\"kind\":\"performer\"},{\"name\":\"Malcolm\",\"kind\":\"character\"},{\"name\":\"Jeff Goldblum\",\"kind\":\"performer\"},{\"name\":\"Hammond\",\"kind\":\"character\"},{\"name\":\"Richard Attenborough\",\"kind\":\"performer\"},{\"name\":\"Muldoon\",\"kind\":\"character\"},{\"name\":\"Bob Peck\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "lenahoff",
+      "persona_user_name": "lenahoff",
+      "persona_display_name": "Lena Hoffman",
+      "post_type": "review",
+      "content": "Alice Hoffman has a way of turning simple truths into something magical.",
+      "rating": null,
+      "media_title": "Practical Magic",
+      "media_type": "book",
+      "media_creator": "Alice Hoffman",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"detailed\",\"energy\":\"restrained\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"rare\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1.8,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1.5,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":12,\"externalId\":\"xp4mDwAAQBAJ\",\"externalSource\":\"googlebooks\",\"warnings\":[],\"authorStyle\":{\"directness\":\"elaborative\",\"emotional_expression\":\"open\",\"thinking_style\":\"mixed\",\"stance\":\"earnest\",\"specificity\":\"selective\",\"focus\":\"experience\",\"certainty\":\"qualified\",\"polish\":\"considered\",\"explanation_drive\":\"selective\",\"adjective_density\":\"moderate\",\"reference_style\":\"rare\",\"principles\":[\"Notice personal attachment to the experience; reflection is warm and affectionate rather than an account of the author's artistry.\",\"Let a thought gently develop or correct itself. Adjectives can name feelings; emotional openness does not require decorative language.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"character\",\"intentLabel\":\"Character / person focus\",\"intentReason\":\"Weighted eligible choice for book, Discovery, finished; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"finished\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Alice Hoffman\",\"kind\":\"creator\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "marcusdelacroix",
+      "persona_user_name": "marcusdelacroix",
+      "persona_display_name": "Marcus Delacroix",
+      "post_type": "review",
+      "content": "Revisiting High Fidelity, I still love the dynamic between Rob and Barry. Any other films with a similar music-infused friendship vibe?",
+      "rating": null,
+      "media_title": "High Fidelity",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"specific\",\"modeLabel\":\"Specific reaction\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"low\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":null,\"words\":21,\"externalId\":\"243\",\"externalSource\":\"tmdb\",\"warnings\":[],\"authorStyle\":{\"directness\":\"elaborative\",\"emotional_expression\":\"reserved\",\"thinking_style\":\"associative\",\"stance\":\"earnest\",\"specificity\":\"selective\",\"focus\":\"interpretation\",\"certainty\":\"declarative\",\"polish\":\"composed\",\"explanation_drive\":\"high\",\"adjective_density\":\"moderate\",\"reference_style\":\"natural_when_relevant\",\"principles\":[\"Make the distinction that matters personally: what a work means, where it belongs in one's taste or why a category is inadequate.\",\"Express feeling through judgment and interpretation, not a comprehensive assessment. Rankings and cultural references are available, never a mandatory shape.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"request\",\"intentLabel\":\"What next? / recommendation ask\",\"intentReason\":\"Weighted eligible choice for movie, Discovery, revisiting; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"revisiting\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Rob\",\"kind\":\"character\"},{\"name\":\"John Cusack\",\"kind\":\"performer\"},{\"name\":\"Laura\",\"kind\":\"character\"},{\"name\":\"Iben Hjejle\",\"kind\":\"performer\"},{\"name\":\"Dick\",\"kind\":\"character\"},{\"name\":\"Todd Louiso\",\"kind\":\"performer\"},{\"name\":\"Barry\",\"kind\":\"character\"},{\"name\":\"Jack Black\",\"kind\":\"performer\"},{\"name\":\"Marie De Salle\",\"kind\":\"character\"},{\"name\":\"Lisa Bonet\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "emily27",
+      "persona_user_name": "emily27",
+      "persona_display_name": "Emily Park",
+      "post_type": "review",
+      "content": "Fired up for \"The Bear\"! ",
+      "rating": null,
+      "media_title": "The Bear",
+      "media_type": "tv",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"micro\",\"modeLabel\":\"Micro reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"expressive\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1.5,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":5,\"externalId\":\"136315\",\"externalSource\":\"tmdb\",\"warnings\":[\"Style check failed: emojiFrequency=none. One emoji-only repair removed 1 sequence(s); all other text unchanged (writer attempt 1).\"],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"expressive\",\"thinking_style\":\"literal\",\"stance\":\"playful\",\"specificity\":\"selective\",\"focus\":\"experience\",\"certainty\":\"qualified\",\"polish\":\"off_the_cuff\",\"explanation_drive\":\"low\",\"adjective_density\":\"moderate\",\"reference_style\":\"occasional\",\"principles\":[\"React to people and relationships before organizing an opinion; be confident about feelings without needing a settled interpretation.\",\"A thought may change direction while still emotionally inside the experience. Enthusiasm can mean attachment or frustration, not constant hype.\"]},\"styleWarnings\":[\"Style check failed: emojiFrequency=none. One emoji-only repair removed 1 sequence(s); all other text unchanged (writer attempt 1).\"],\"emojiRepairs\":[{\"original\":\"Fired up for \\\"The Bear\\\"! 🍽️\",\"repaired\":\"Fired up for \\\"The Bear\\\"! \",\"removed\":[\"🍽️\"],\"reason\":\"emojiFrequency_none\"}],\"intent\":\"anticipation\",\"intentLabel\":\"Anticipation / starting\",\"intentReason\":\"Weighted eligible choice for tv, Persona Favorite, starting; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"starting\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Carmen 'Carmy' Berzatto\",\"kind\":\"character\"},{\"name\":\"Jeremy Allen White\",\"kind\":\"performer\"},{\"name\":\"Richard 'Richie' Jerimovich\",\"kind\":\"character\"},{\"name\":\"Ebon Moss-Bachrach\",\"kind\":\"performer\"},{\"name\":\"Sydney Adamu\",\"kind\":\"character\"},{\"name\":\"Ayo Edebiri\",\"kind\":\"performer\"},{\"name\":\"Marcus Brooks\",\"kind\":\"character\"},{\"name\":\"Lionel Boyce\",\"kind\":\"performer\"},{\"name\":\"Natalie 'Sugar' Berzatto\",\"kind\":\"character\"},{\"name\":\"Abby Elliott\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "sarah13",
+      "persona_user_name": "sarah13",
+      "persona_display_name": "Sarah Whitman",
+      "post_type": "review",
+      "content": "After finishing Hereditary, can family secrets ever be locked away for good?",
+      "rating": null,
+      "media_title": "Hereditary",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"question\",\"modeLabel\":\"Conversation starter\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"detailed\",\"energy\":\"restrained\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"rare\",\"sarcasm\":\"medium\",\"preferredModeWeights\":{\"thoughtful\":1.8,\"micro\":0.8,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":null,\"words\":12,\"externalId\":\"493922\",\"externalSource\":\"tmdb\",\"warnings\":[],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"reserved\",\"thinking_style\":\"literal\",\"stance\":\"dry\",\"specificity\":\"detail_oriented\",\"focus\":\"balanced\",\"certainty\":\"declarative\",\"polish\":\"considered\",\"explanation_drive\":\"selective\",\"adjective_density\":\"sparse\",\"reference_style\":\"occasional\",\"principles\":[\"Know the genre without giving a lecture; keep some distance between an unsettling experience and its emotional expression.\",\"Dry humor can come from willingly seeking discomfort. A plain response is equally natural; not every post needs a joke.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"observation\",\"intentLabel\":\"Observation\",\"intentReason\":\"Weighted eligible choice for movie, Persona Favorite, finished; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"finished\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Annie Graham\",\"kind\":\"character\"},{\"name\":\"Toni Collette\",\"kind\":\"performer\"},{\"name\":\"Peter Graham\",\"kind\":\"character\"},{\"name\":\"Alex Wolff\",\"kind\":\"performer\"},{\"name\":\"Steve Graham\",\"kind\":\"character\"},{\"name\":\"Gabriel Byrne\",\"kind\":\"performer\"},{\"name\":\"Charlie Graham\",\"kind\":\"character\"},{\"name\":\"Milly Shapiro\",\"kind\":\"performer\"},{\"name\":\"Joan\",\"kind\":\"character\"},{\"name\":\"Ann Dowd\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "kei",
+      "persona_user_name": "kei",
+      "persona_display_name": "Kei Tanaka",
+      "post_type": "review",
+      "content": "Confession time: when I first watched Ghost in the Shell, I wasn't entirely sure how I felt about Johansson playing Major. But by the end, I found myself appreciating her take on the character. Guess it was a gradual win for me.",
+      "rating": null,
+      "media_title": "Ghost in the Shell",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"thoughtful\",\"modeLabel\":\"Thoughtful reaction\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"expressive\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":42,\"externalId\":\"315837\",\"externalSource\":\"tmdb\",\"warnings\":[\"Repair requested: incomplete JSON or invalid content/score placeholders.\"],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"expressive\",\"thinking_style\":\"literal\",\"stance\":\"playful\",\"specificity\":\"detail_oriented\",\"focus\":\"balanced\",\"certainty\":\"qualified\",\"polish\":\"off_the_cuff\",\"explanation_drive\":\"selective\",\"adjective_density\":\"sparse\",\"reference_style\":\"occasional\",\"principles\":[\"Engage by trying to understand how things work; excitement can come from figuring something out, accepting difficulty or revising an assumption.\",\"Preferences can be firm while theories stay tentative. Gaming/anime language is natural when relevant, not a requirement for slang or metaphors.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"confession\",\"intentLabel\":\"Confession\",\"intentReason\":\"Weighted eligible choice for movie, Discovery, finished; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"finished\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Major Mira Killian / Motoko Kusanagi\",\"kind\":\"character\"},{\"name\":\"Scarlett Johansson\",\"kind\":\"performer\"},{\"name\":\"Aramaki\",\"kind\":\"character\"},{\"name\":\"Takeshi Kitano\",\"kind\":\"performer\"},{\"name\":\"Batou\",\"kind\":\"character\"},{\"name\":\"Pilou Asbæk\",\"kind\":\"performer\"},{\"name\":\"Kuze\",\"kind\":\"character\"},{\"name\":\"Michael Pitt\",\"kind\":\"performer\"},{\"name\":\"Togusa\",\"kind\":\"character\"},{\"name\":\"Chin Han\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "alexmoreno402",
+      "persona_user_name": "alexmoreno402",
+      "persona_display_name": "Alex Moreno",
+      "post_type": "review",
+      "content": "By the end of The Lighthouse, I realized I'm oddly comforted by madness. 5/5.",
+      "rating": 5,
+      "media_title": "The Lighthouse",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"rating\",\"modeLabel\":\"Rating + quick thought\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"low\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":5,\"words\":14,\"externalId\":\"503919\",\"externalSource\":\"tmdb\",\"warnings\":[],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"reserved\",\"thinking_style\":\"associative\",\"stance\":\"wry\",\"specificity\":\"selective\",\"focus\":\"interpretation\",\"certainty\":\"qualified\",\"polish\":\"composed\",\"explanation_drive\":\"selective\",\"adjective_density\":\"sparse\",\"reference_style\":\"natural_when_relevant\",\"principles\":[\"Think about cinema while remaining aware of the desire to make that interest sound important; sometimes question the argument behind one's own taste.\",\"A strong judgment can coexist with self-awareness. Precise imagery or film references are possible, but neither doubt nor a punchline is compulsory.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"confession\",\"intentLabel\":\"Confession\",\"intentReason\":\"Weighted eligible choice for movie, Discovery, finished; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"finished\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Thomas Howard\",\"kind\":\"character\"},{\"name\":\"Robert Pattinson\",\"kind\":\"performer\"},{\"name\":\"Thomas Wake\",\"kind\":\"character\"},{\"name\":\"Willem Dafoe\",\"kind\":\"performer\"},{\"name\":\"Mermaid\",\"kind\":\"character\"},{\"name\":\"Valeriia Karaman\",\"kind\":\"performer\"},{\"name\":\"Ephraim Winslow\",\"kind\":\"character\"},{\"name\":\"Logan Hawkes\",\"kind\":\"performer\"},{\"name\":\"Woman on the Rocks\",\"kind\":\"character\"},{\"name\":\"Kyla Nicolle\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "nick",
+      "persona_user_name": "nick",
+      "persona_display_name": "Nicholas Grant",
+      "post_type": "review",
+      "content": "I'm revisiting The Tim Ferriss Show. Does anyone else feel like his interview style brings out the best in guests?",
+      "rating": null,
+      "media_title": "The Tim Ferriss Show",
+      "media_type": "podcast",
+      "media_creator": "Tim Ferriss: Bestselling Author, Human Guinea Pig",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"question\",\"modeLabel\":\"Conversation starter\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":20,\"externalId\":\"863897795\",\"externalSource\":\"itunes\",\"warnings\":[],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"reserved\",\"thinking_style\":\"literal\",\"stance\":\"earnest\",\"specificity\":\"detail_oriented\",\"focus\":\"balanced\",\"certainty\":\"qualified\",\"polish\":\"considered\",\"explanation_drive\":\"high\",\"adjective_density\":\"sparse\",\"reference_style\":\"rare\",\"principles\":[\"Ask what is useful, believable or applicable; prefer concrete decisions and imperfect experience to impressive general advice.\",\"Explain a reason when it clarifies personal application. Not every post needs a takeaway, framework or endorsement.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"review\",\"intentLabel\":\"Review / evaluation\",\"intentReason\":\"Weighted eligible choice for podcast, Discovery, revisiting; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"revisiting\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Tim Ferriss: Bestselling Author, Human Guinea Pig\",\"kind\":\"creator\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "reedreads",
+      "persona_user_name": "reedreads",
+      "persona_display_name": "Samantha Reed",
+      "post_type": "review",
+      "content": "How do you feel about Carmy's journey in The Bear?",
+      "rating": null,
+      "media_title": "The Bear",
+      "media_type": "tv",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"question\",\"modeLabel\":\"Conversation starter\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":true,\"voice\":{\"length\":\"short\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"minimal\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"rare\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.8,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":0.8,\"low_energy\":1.8}},\"rating\":null,\"words\":10,\"externalId\":\"136315\",\"externalSource\":\"tmdb\",\"warnings\":[],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"open\",\"thinking_style\":\"literal\",\"stance\":\"earnest\",\"specificity\":\"selective\",\"focus\":\"experience\",\"certainty\":\"tentative\",\"polish\":\"off_the_cuff\",\"explanation_drive\":\"selective\",\"adjective_density\":\"sparse\",\"reference_style\":\"occasional\",\"principles\":[\"Work out the response while saying it; acknowledge feelings warmly without dramatizing them.\",\"Uncertainty is genuine, not a setup for a confident verdict. Popular discussion may prompt curiosity without determining the opinion.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"reaction\",\"intentLabel\":\"Immediate reaction\",\"intentReason\":\"Weighted eligible choice for tv, Persona Favorite, finished; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"finished\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Carmen 'Carmy' Berzatto\",\"kind\":\"character\"},{\"name\":\"Jeremy Allen White\",\"kind\":\"performer\"},{\"name\":\"Richard 'Richie' Jerimovich\",\"kind\":\"character\"},{\"name\":\"Ebon Moss-Bachrach\",\"kind\":\"performer\"},{\"name\":\"Sydney Adamu\",\"kind\":\"character\"},{\"name\":\"Ayo Edebiri\",\"kind\":\"performer\"},{\"name\":\"Marcus Brooks\",\"kind\":\"character\"},{\"name\":\"Lionel Boyce\",\"kind\":\"performer\"},{\"name\":\"Natalie 'Sugar' Berzatto\",\"kind\":\"character\"},{\"name\":\"Abby Elliott\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "brooksj",
+      "persona_user_name": "brooksj",
+      "persona_display_name": "Julian Brooks",
+      "post_type": "review",
+      "content": "Taylor Swift's storytelling magic.",
+      "rating": null,
+      "media_title": "folklore",
+      "media_type": "music",
+      "media_creator": "Taylor Swift",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"micro\",\"modeLabel\":\"Micro reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"standard\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":4,\"externalId\":\"1524793738\",\"externalSource\":\"itunes\",\"warnings\":[],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"open\",\"thinking_style\":\"mixed\",\"stance\":\"earnest\",\"specificity\":\"selective\",\"focus\":\"experience\",\"certainty\":\"declarative\",\"polish\":\"off_the_cuff\",\"explanation_drive\":\"selective\",\"adjective_density\":\"moderate\",\"reference_style\":\"occasional\",\"principles\":[\"Take music personally and commit to preferences; explain through listening and feeling rather than a claim of artistic importance.\",\"Passion lives in the preference, not automatically in superlatives or slogans. Defending a favorite need not become a performance.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"character\",\"intentLabel\":\"Character / person focus\",\"intentReason\":\"Weighted eligible choice for music, Persona Favorite, finished; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"finished\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Taylor Swift\",\"kind\":\"creator\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "alex_thompson",
+      "persona_user_name": "alex_thompson",
+      "persona_display_name": "Alex Thompson",
+      "post_type": "review",
+      "content": "Just finished Jurassic Park. Any suggestions for more thrilling adventures?",
+      "rating": null,
+      "media_title": "Jurassic Park",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":true,\"voice\":{\"length\":\"short\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"minimal\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"rare\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.8,\"rating\":0.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":1.8}},\"rating\":null,\"words\":10,\"externalId\":\"329\",\"externalSource\":\"tmdb\",\"warnings\":[],\"authorStyle\":{\"directness\":\"blunt\",\"emotional_expression\":\"reserved\",\"thinking_style\":\"literal\",\"stance\":\"earnest\",\"specificity\":\"broad\",\"focus\":\"experience\",\"certainty\":\"declarative\",\"polish\":\"off_the_cuff\",\"explanation_drive\":\"low\",\"adjective_density\":\"sparse\",\"reference_style\":\"rare\",\"principles\":[\"State the response without building a case for it; an ordinary preference can be the whole thought.\",\"Entertainment need not become a discussion or identity statement. Occasional dry understatement is natural, not obligatory.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"request\",\"intentLabel\":\"What next? / recommendation ask\",\"intentReason\":\"Weighted eligible choice for movie, Persona Favorite, finished; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"finished\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Grant\",\"kind\":\"character\"},{\"name\":\"Sam Neill\",\"kind\":\"performer\"},{\"name\":\"Ellie\",\"kind\":\"character\"},{\"name\":\"Laura Dern\",\"kind\":\"performer\"},{\"name\":\"Malcolm\",\"kind\":\"character\"},{\"name\":\"Jeff Goldblum\",\"kind\":\"performer\"},{\"name\":\"Hammond\",\"kind\":\"character\"},{\"name\":\"Richard Attenborough\",\"kind\":\"performer\"},{\"name\":\"Muldoon\",\"kind\":\"character\"},{\"name\":\"Bob Peck\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "lenahoff",
+      "persona_user_name": "lenahoff",
+      "persona_display_name": "Lena Hoffman",
+      "post_type": "review",
+      "content": "Just finished \"A Court of Thorns and Roses\" and I'm feeling strangely attached to the world Maas created. It's one of those books where the journey stays with you, even after the last page.",
+      "rating": null,
+      "media_title": "A Court of Thorns and Roses",
+      "media_type": "book",
+      "media_creator": "Sarah J. Maas",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"thoughtful\",\"modeLabel\":\"Thoughtful reaction\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"detailed\",\"energy\":\"restrained\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"rare\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1.8,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1.5,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":34,\"externalId\":\"E-kdBQAAQBAJ\",\"externalSource\":\"googlebooks\",\"warnings\":[],\"authorStyle\":{\"directness\":\"elaborative\",\"emotional_expression\":\"open\",\"thinking_style\":\"mixed\",\"stance\":\"earnest\",\"specificity\":\"selective\",\"focus\":\"experience\",\"certainty\":\"qualified\",\"polish\":\"considered\",\"explanation_drive\":\"selective\",\"adjective_density\":\"moderate\",\"reference_style\":\"rare\",\"principles\":[\"Notice personal attachment to the experience; reflection is warm and affectionate rather than an account of the author's artistry.\",\"Let a thought gently develop or correct itself. Adjectives can name feelings; emotional openness does not require decorative language.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"reaction\",\"intentLabel\":\"Immediate reaction\",\"intentReason\":\"Weighted eligible choice for book, Discovery, finished; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"finished\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Sarah J. Maas\",\"kind\":\"creator\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "marcusdelacroix",
+      "persona_user_name": "marcusdelacroix",
+      "persona_display_name": "Marcus Delacroix",
+      "post_type": "review",
+      "content": "\"The Great Beauty\" is a beguiling journey into the heart of Rome's opulent façade, revealing both its captivating charm and its hollow depths. Toni Servillo's portrayal of Jep Gambardella is nothing short of mesmerizing, providing the contemplative lens through which we explore a city of contradictions. The film's haunting beauty is inescapable, leaving a lingering impression long after the credits roll.",
+      "rating": 4.5,
+      "media_title": "The Great Beauty",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"thoughtful\",\"modeLabel\":\"Thoughtful reaction\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"low\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":4.5,\"words\":61,\"externalId\":\"179144\",\"externalSource\":\"tmdb\",\"warnings\":[],\"authorStyle\":{\"directness\":\"elaborative\",\"emotional_expression\":\"reserved\",\"thinking_style\":\"associative\",\"stance\":\"earnest\",\"specificity\":\"selective\",\"focus\":\"interpretation\",\"certainty\":\"declarative\",\"polish\":\"composed\",\"explanation_drive\":\"high\",\"adjective_density\":\"moderate\",\"reference_style\":\"natural_when_relevant\",\"principles\":[\"Make the distinction that matters personally: what a work means, where it belongs in one's taste or why a category is inadequate.\",\"Express feeling through judgment and interpretation, not a comprehensive assessment. Rankings and cultural references are available, never a mandatory shape.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"review\",\"intentLabel\":\"Review / evaluation\",\"intentReason\":\"Weighted eligible choice for movie, Discovery, finished; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"finished\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Jep Gambardella\",\"kind\":\"character\"},{\"name\":\"Toni Servillo\",\"kind\":\"performer\"},{\"name\":\"Romano\",\"kind\":\"character\"},{\"name\":\"Carlo Verdone\",\"kind\":\"performer\"},{\"name\":\"Ramona\",\"kind\":\"character\"},{\"name\":\"Sabrina Ferilli\",\"kind\":\"performer\"},{\"name\":\"Lello Cava\",\"kind\":\"character\"},{\"name\":\"Carlo Buccirosso\",\"kind\":\"performer\"},{\"name\":\"Trumeau\",\"kind\":\"character\"},{\"name\":\"Iaia Forte\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "emily27",
+      "persona_user_name": "emily27",
+      "persona_display_name": "Emily Park",
+      "post_type": "review",
+      "content": "Watching Kendall and Roman clash again... these Roy sibling dynamics never get old!",
+      "rating": null,
+      "media_title": "Succession",
+      "media_type": "tv",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"specific\",\"modeLabel\":\"Specific reaction\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"expressive\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1.5,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":13,\"externalId\":\"76331\",\"externalSource\":\"tmdb\",\"warnings\":[],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"expressive\",\"thinking_style\":\"literal\",\"stance\":\"playful\",\"specificity\":\"selective\",\"focus\":\"experience\",\"certainty\":\"qualified\",\"polish\":\"off_the_cuff\",\"explanation_drive\":\"low\",\"adjective_density\":\"moderate\",\"reference_style\":\"occasional\",\"principles\":[\"React to people and relationships before organizing an opinion; be confident about feelings without needing a settled interpretation.\",\"A thought may change direction while still emotionally inside the experience. Enthusiasm can mean attachment or frustration, not constant hype.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"social\",\"intentLabel\":\"Social / relational\",\"intentReason\":\"Weighted eligible choice for tv, Persona Favorite, revisiting; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"revisiting\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Kendall Roy\",\"kind\":\"character\"},{\"name\":\"Jeremy Strong\",\"kind\":\"performer\"},{\"name\":\"Roman Roy\",\"kind\":\"character\"},{\"name\":\"Kieran Culkin\",\"kind\":\"performer\"},{\"name\":\"Siobhan 'Shiv' Roy\",\"kind\":\"character\"},{\"name\":\"Sarah Snook\",\"kind\":\"performer\"},{\"name\":\"Logan Roy\",\"kind\":\"character\"},{\"name\":\"Brian Cox\",\"kind\":\"performer\"},{\"name\":\"Tom Wambsgans\",\"kind\":\"character\"},{\"name\":\"Matthew Macfadyen\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "sarah13",
+      "persona_user_name": "sarah13",
+      "persona_display_name": "Sarah Whitman",
+      "post_type": "review",
+      "content": "Unsettling saint or sinister savior?",
+      "rating": null,
+      "media_title": "Saint Maud",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"micro\",\"modeLabel\":\"Micro reaction\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"detailed\",\"energy\":\"restrained\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"rare\",\"sarcasm\":\"medium\",\"preferredModeWeights\":{\"thoughtful\":1.8,\"micro\":0.8,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":null,\"words\":5,\"externalId\":\"575776\",\"externalSource\":\"tmdb\",\"warnings\":[],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"reserved\",\"thinking_style\":\"literal\",\"stance\":\"dry\",\"specificity\":\"detail_oriented\",\"focus\":\"balanced\",\"certainty\":\"declarative\",\"polish\":\"considered\",\"explanation_drive\":\"selective\",\"adjective_density\":\"sparse\",\"reference_style\":\"occasional\",\"principles\":[\"Know the genre without giving a lecture; keep some distance between an unsettling experience and its emotional expression.\",\"Dry humor can come from willingly seeking discomfort. A plain response is equally natural; not every post needs a joke.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"question\",\"intentLabel\":\"Genuine question\",\"intentReason\":\"Weighted eligible choice for movie, Discovery, revisiting; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"revisiting\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Maud\",\"kind\":\"character\"},{\"name\":\"Morfydd Clark\",\"kind\":\"performer\"},{\"name\":\"Amanda\",\"kind\":\"character\"},{\"name\":\"Jennifer Ehle\",\"kind\":\"performer\"},{\"name\":\"Carol\",\"kind\":\"character\"},{\"name\":\"Lily Frazer\",\"kind\":\"performer\"},{\"name\":\"Joy\",\"kind\":\"character\"},{\"name\":\"Lily Knight\",\"kind\":\"performer\"},{\"name\":\"Esther\",\"kind\":\"character\"},{\"name\":\"Rosie Sansom\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "kei",
+      "persona_user_name": "kei",
+      "persona_display_name": "Kei Tanaka",
+      "post_type": "review",
+      "content": "Finished Attack on Titan and all I can think is: what now?",
+      "rating": null,
+      "media_title": "Attack on Titan",
+      "media_type": "tv",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"expressive\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":0.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":12,\"externalId\":\"1429\",\"externalSource\":\"tmdb\",\"warnings\":[],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"expressive\",\"thinking_style\":\"literal\",\"stance\":\"playful\",\"specificity\":\"detail_oriented\",\"focus\":\"balanced\",\"certainty\":\"qualified\",\"polish\":\"off_the_cuff\",\"explanation_drive\":\"selective\",\"adjective_density\":\"sparse\",\"reference_style\":\"occasional\",\"principles\":[\"Engage by trying to understand how things work; excitement can come from figuring something out, accepting difficulty or revising an assumption.\",\"Preferences can be firm while theories stay tentative. Gaming/anime language is natural when relevant, not a requirement for slang or metaphors.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"behavior\",\"intentLabel\":\"Behavior / aftereffect\",\"intentReason\":\"Weighted eligible choice for tv, Persona Favorite, finished; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"finished\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Armin Arlert (voice)\",\"kind\":\"character\"},{\"name\":\"Marina Inoue\",\"kind\":\"performer\"},{\"name\":\"Connie Springer (voice)\",\"kind\":\"character\"},{\"name\":\"Hiro Shimono\",\"kind\":\"performer\"},{\"name\":\"Eren Yeager (voice)\",\"kind\":\"character\"},{\"name\":\"Yuki Kaji\",\"kind\":\"performer\"},{\"name\":\"Falco Grice (voice)\",\"kind\":\"character\"},{\"name\":\"Natsuki Hanae\",\"kind\":\"performer\"},{\"name\":\"Gabi Braun (voice)\",\"kind\":\"character\"},{\"name\":\"Ayane Sakura\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "alexmoreno402",
+      "persona_user_name": "alexmoreno402",
+      "persona_display_name": "Alex Moreno",
+      "post_type": "review",
+      "content": "Aftersun captures the silent reverberations of memory. It's less about what happened and more about what's remembered. 4/5.",
+      "rating": 4,
+      "media_title": "Aftersun",
+      "media_type": "movie",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"rating\",\"modeLabel\":\"Rating + quick thought\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":false,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"low\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":1.7,\"low_energy\":0.9}},\"rating\":4,\"words\":18,\"externalId\":\"965150\",\"externalSource\":\"tmdb\",\"warnings\":[],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"reserved\",\"thinking_style\":\"associative\",\"stance\":\"wry\",\"specificity\":\"selective\",\"focus\":\"interpretation\",\"certainty\":\"qualified\",\"polish\":\"composed\",\"explanation_drive\":\"selective\",\"adjective_density\":\"sparse\",\"reference_style\":\"natural_when_relevant\",\"principles\":[\"Think about cinema while remaining aware of the desire to make that interest sound important; sometimes question the argument behind one's own taste.\",\"A strong judgment can coexist with self-awareness. Precise imagery or film references are possible, but neither doubt nor a punchline is compulsory.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"observation\",\"intentLabel\":\"Observation\",\"intentReason\":\"Weighted eligible choice for movie, Persona Favorite, finished; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"finished\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Calum\",\"kind\":\"character\"},{\"name\":\"Paul Mescal\",\"kind\":\"performer\"},{\"name\":\"Sophie\",\"kind\":\"character\"},{\"name\":\"Frankie Corio\",\"kind\":\"performer\"},{\"name\":\"Michael\",\"kind\":\"character\"},{\"name\":\"Brooklyn Toulson\",\"kind\":\"performer\"},{\"name\":\"Adult Sophie\",\"kind\":\"character\"},{\"name\":\"Celia Rowlson-Hall\",\"kind\":\"performer\"},{\"name\":\"Belinda\",\"kind\":\"character\"},{\"name\":\"Sally Messham\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "nick",
+      "persona_user_name": "nick",
+      "persona_display_name": "Nicholas Grant",
+      "post_type": "review",
+      "content": "Listening to The Tim Ferriss Show and I'm wondering how he always lands these fascinating guests.",
+      "rating": null,
+      "media_title": "The Tim Ferriss Show",
+      "media_type": "podcast",
+      "media_creator": "Tim Ferriss: Bestselling Author, Human Guinea Pig",
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":true,\"voice\":{\"length\":\"medium\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"standard\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"occasional\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.1,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":null,\"words\":16,\"externalId\":\"863897795\",\"externalSource\":\"itunes\",\"warnings\":[\"Repair requested: incomplete JSON or invalid content/score placeholders.\"],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"reserved\",\"thinking_style\":\"literal\",\"stance\":\"earnest\",\"specificity\":\"detail_oriented\",\"focus\":\"balanced\",\"certainty\":\"qualified\",\"polish\":\"considered\",\"explanation_drive\":\"high\",\"adjective_density\":\"sparse\",\"reference_style\":\"rare\",\"principles\":[\"Ask what is useful, believable or applicable; prefer concrete decisions and imperfect experience to impressive general advice.\",\"Explain a reason when it clarifies personal application. Not every post needs a takeaway, framework or endorsement.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"progress\",\"intentLabel\":\"Currently consuming\",\"intentReason\":\"Weighted eligible choice for podcast, Discovery, in_progress; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"in_progress\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Tim Ferriss: Bestselling Author, Human Guinea Pig\",\"kind\":\"creator\"}]}}}",
+      "status": "draft"
+    },
+    {
+      "persona_user_id": "reedreads",
+      "persona_user_name": "reedreads",
+      "persona_display_name": "Samantha Reed",
+      "post_type": "review",
+      "content": "Still can't figure out how Carmy deals with all that pressure. Any thoughts?",
+      "rating": null,
+      "media_title": "The Bear",
+      "media_type": "tv",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Persona Favorite\",\"recentlyUsed\":true,\"voice\":{\"length\":\"short\",\"energy\":\"casual\",\"capitalization\":\"standard\",\"punctuation\":\"minimal\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"rare\",\"questionFrequency\":\"frequent\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":0.8,\"casual\":1.8,\"rating\":0.8,\"question\":1.5,\"specific\":1,\"opinion\":0.8,\"low_energy\":1.8}},\"rating\":null,\"words\":13,\"externalId\":\"136315\",\"externalSource\":\"tmdb\",\"warnings\":[],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"open\",\"thinking_style\":\"literal\",\"stance\":\"earnest\",\"specificity\":\"selective\",\"focus\":\"experience\",\"certainty\":\"tentative\",\"polish\":\"off_the_cuff\",\"explanation_drive\":\"selective\",\"adjective_density\":\"sparse\",\"reference_style\":\"occasional\",\"principles\":[\"Work out the response while saying it; acknowledge feelings warmly without dramatizing them.\",\"Uncertainty is genuine, not a setup for a confident verdict. Popular discussion may prompt curiosity without determining the opinion.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"question\",\"intentLabel\":\"Genuine question\",\"intentReason\":\"Weighted eligible choice for tv, Persona Favorite, revisiting; persona preferences and soft recent/batch penalties applied.\",\"consumption\":{\"state\":\"revisiting\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Carmen 'Carmy' Berzatto\",\"kind\":\"character\"},{\"name\":\"Jeremy Allen White\",\"kind\":\"performer\"},{\"name\":\"Richard 'Richie' Jerimovich\",\"kind\":\"character\"},{\"name\":\"Ebon Moss-Bachrach\",\"kind\":\"performer\"},{\"name\":\"Sydney Adamu\",\"kind\":\"character\"},{\"name\":\"Ayo Edebiri\",\"kind\":\"performer\"},{\"name\":\"Marcus Brooks\",\"kind\":\"character\"},{\"name\":\"Lionel Boyce\",\"kind\":\"performer\"},{\"name\":\"Natalie 'Sugar' Berzatto\",\"kind\":\"character\"},{\"name\":\"Abby Elliott\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    }
+  ],
+  "errors": [],
+  "state": [
+    {
+      "personaId": "brooksj",
+      "mediaKey": "music:blonde",
+      "mode": "thoughtful",
+      "intent": "behavior",
+      "words": 39,
+      "caps": false,
+      "content": "Finishing \"Blonde\" got me thinking about how powerful music in different languages can be. Alizée's album took me on a journey, and now I'm curious about other French artists who bring that kind of depth and intensity. Any suggestions?"
+    },
+    {
+      "personaId": "alex_thompson",
+      "mediaKey": "movie:jurassicpark",
+      "mode": "casual",
+      "intent": "confession",
+      "words": 14,
+      "caps": false,
+      "content": "I haven't seen Jurassic Park before. Wondering if it's as tense as people say."
+    },
+    {
+      "personaId": "lenahoff",
+      "mediaKey": "book:practicalmagic",
+      "mode": "casual",
+      "intent": "character",
+      "words": 12,
+      "caps": false,
+      "content": "Alice Hoffman has a way of turning simple truths into something magical."
+    },
+    {
+      "personaId": "marcusdelacroix",
+      "mediaKey": "movie:highfidelity",
+      "mode": "specific",
+      "intent": "request",
+      "words": 21,
+      "caps": false,
+      "content": "Revisiting High Fidelity, I still love the dynamic between Rob and Barry. Any other films with a similar music-infused friendship vibe?"
+    },
+    {
+      "personaId": "emily27",
+      "mediaKey": "tv:thebear",
+      "mode": "micro",
+      "intent": "anticipation",
+      "words": 5,
+      "caps": false,
+      "content": "Fired up for \"The Bear\"! "
+    },
+    {
+      "personaId": "sarah13",
+      "mediaKey": "movie:hereditary",
+      "mode": "question",
+      "intent": "observation",
+      "words": 12,
+      "caps": false,
+      "content": "After finishing Hereditary, can family secrets ever be locked away for good?"
+    },
+    {
+      "personaId": "kei",
+      "mediaKey": "movie:ghostintheshell",
+      "mode": "thoughtful",
+      "intent": "confession",
+      "words": 42,
+      "caps": false,
+      "content": "Confession time: when I first watched Ghost in the Shell, I wasn't entirely sure how I felt about Johansson playing Major. But by the end, I found myself appreciating her take on the character. Guess it was a gradual win for me."
+    },
+    {
+      "personaId": "alexmoreno402",
+      "mediaKey": "movie:thelighthouse",
+      "mode": "rating",
+      "intent": "confession",
+      "words": 14,
+      "caps": false,
+      "content": "By the end of The Lighthouse, I realized I'm oddly comforted by madness. 5/5."
+    },
+    {
+      "personaId": "nick",
+      "mediaKey": "podcast:thetimferrissshow",
+      "mode": "question",
+      "intent": "review",
+      "words": 20,
+      "caps": false,
+      "content": "I'm revisiting The Tim Ferriss Show. Does anyone else feel like his interview style brings out the best in guests?"
+    },
+    {
+      "personaId": "reedreads",
+      "mediaKey": "tv:thebear",
+      "mode": "question",
+      "intent": "reaction",
+      "words": 10,
+      "caps": false,
+      "content": "How do you feel about Carmy's journey in The Bear?"
+    },
+    {
+      "personaId": "brooksj",
+      "mediaKey": "music:folklore",
+      "mode": "micro",
+      "intent": "character",
+      "words": 4,
+      "caps": false,
+      "content": "Taylor Swift's storytelling magic."
+    },
+    {
+      "personaId": "alex_thompson",
+      "mediaKey": "movie:jurassicpark",
+      "mode": "casual",
+      "intent": "request",
+      "words": 10,
+      "caps": false,
+      "content": "Just finished Jurassic Park. Any suggestions for more thrilling adventures?"
+    },
+    {
+      "personaId": "lenahoff",
+      "mediaKey": "book:acourtofthornsandroses",
+      "mode": "thoughtful",
+      "intent": "reaction",
+      "words": 34,
+      "caps": false,
+      "content": "Just finished \"A Court of Thorns and Roses\" and I'm feeling strangely attached to the world Maas created. It's one of those books where the journey stays with you, even after the last page."
+    },
+    {
+      "personaId": "marcusdelacroix",
+      "mediaKey": "movie:thegreatbeauty",
+      "mode": "thoughtful",
+      "intent": "review",
+      "words": 61,
+      "caps": false,
+      "content": "\"The Great Beauty\" is a beguiling journey into the heart of Rome's opulent façade, revealing both its captivating charm and its hollow depths. Toni Servillo's portrayal of Jep Gambardella is nothing short of mesmerizing, providing the contemplative lens through which we explore a city of contradictions. The film's haunting beauty is inescapable, leaving a lingering impression long after the credits roll."
+    },
+    {
+      "personaId": "emily27",
+      "mediaKey": "tv:succession",
+      "mode": "specific",
+      "intent": "social",
+      "words": 13,
+      "caps": false,
+      "content": "Watching Kendall and Roman clash again... these Roy sibling dynamics never get old!"
+    },
+    {
+      "personaId": "sarah13",
+      "mediaKey": "movie:saintmaud",
+      "mode": "micro",
+      "intent": "question",
+      "words": 5,
+      "caps": false,
+      "content": "Unsettling saint or sinister savior?"
+    },
+    {
+      "personaId": "kei",
+      "mediaKey": "tv:attackontitan",
+      "mode": "casual",
+      "intent": "behavior",
+      "words": 12,
+      "caps": false,
+      "content": "Finished Attack on Titan and all I can think is: what now?"
+    },
+    {
+      "personaId": "alexmoreno402",
+      "mediaKey": "movie:aftersun",
+      "mode": "rating",
+      "intent": "observation",
+      "words": 18,
+      "caps": false,
+      "content": "Aftersun captures the silent reverberations of memory. It's less about what happened and more about what's remembered. 4/5."
+    },
+    {
+      "personaId": "nick",
+      "mediaKey": "podcast:thetimferrissshow",
+      "mode": "casual",
+      "intent": "progress",
+      "words": 16,
+      "caps": false,
+      "content": "Listening to The Tim Ferriss Show and I'm wondering how he always lands these fascinating guests."
+    },
+    {
+      "personaId": "reedreads",
+      "mediaKey": "tv:thebear",
+      "mode": "casual",
+      "intent": "question",
+      "words": 13,
+      "caps": false,
+      "content": "Still can't figure out how Carmy deals with all that pressure. Any thoughts?"
+    }
+  ]
+}

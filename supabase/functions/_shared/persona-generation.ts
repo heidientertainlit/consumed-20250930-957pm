@@ -1,5 +1,7 @@
 /** Portable, side-effect-free planning shared by the generator, admin UI and dry-run tests. */
 import { MODE_REGISTER_GUIDANCE, PERSONAL_SOCIAL_REGISTER } from "./persona-writing-instructions.ts";
+import { resolveAuthorStyle, authorStyleInstructions, type AuthorStyle } from "./persona-author-style.ts";
+import type { EmojiRepair } from "./persona-emoji-repair.ts";
 import { intentWriterInstructions, intentRatingProbability, type IntentAssignment, type IntentContext, type IntentWeights, type PostIntent } from "./persona-post-intents.ts";
 export const POST_MODES = [
   { id: "thoughtful", label: "Thoughtful reaction", description: "More room to express the assigned social behavior, usually two to four ordinary sentences. It need not be an evaluation, summary or polished argument.", words: [25, 85] },
@@ -29,6 +31,7 @@ export type PersonaConfig = {
   bio?: string; tone?: string; interests?: string[]; media_types?: string[];
   favorite_media?: string[]; posting_style?: string; activity_level?: string;
   style_examples?: { type: string; content: string }[]; social_voice?: Partial<SocialVoice>;
+  author_style?: Partial<AuthorStyle>;
   intent_preferences?: Partial<IntentWeights>;
   generation_feedback?: string[];
 };
@@ -48,6 +51,9 @@ export type GenerationMeta = {
   rating: number | null; warnings: string[];
   intent?: PostIntent; intentLabel?: string; intentReason?: string;
   consumption?: IntentAssignment["consumption"]; context?: IntentContext;
+  authorStyle?: AuthorStyle | null;
+  styleWarnings?: string[];
+  emojiRepairs?: EmojiRepair[];
 };
 export function validateModeWeights(value: unknown): ModeWeights {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Mode weights must be an object");
@@ -213,7 +219,7 @@ export function buildWritingPrompt(persona: Persona, media: MediaCandidate, mode
   const { preferredModeWeights: _modePreferences, ...writingVoice } = voice;
   const stance = assignment && ["not_started", "starting"].includes(assignment.consumption.state) ? "Expectations or intention only; no verdict on completed consumption." : rating === null ? "No forced verdict or endorsement. Let the assigned social behavior determine the thought." : rating >= 4 ? "Liked or loved it, without forced hype." : rating >= 3 ? "Mixed/moderately positive, not an ecstatic rave." : "Disappointed or unimpressed, without obligatory snark.";
   const messages = [
-    { role: "system", content: `You are ${persona.display_name}. Preserve this person's existing identity:\n${JSON.stringify({ bio: config.bio, tone: config.tone, interests: config.interests, posting_style: config.posting_style })}\nSocial voice tendencies derived from their existing descriptions and examples: ${JSON.stringify(writingVoice)}. Preferences, not rigid rules or a caricature; no requirement to express every trait in every post. Assigned intent takes precedence over mode: mode shapes expression, not the reason to post. Emoji setting "none" means no emojis; other settings are probabilities, not a requirement.\nExisting admin rejection feedback: ${JSON.stringify(config.generation_feedback || [])}\n\n${PERSONAL_SOCIAL_REGISTER}\n\nDo not invent named characters, events, episode/season numbers, endings, quotes or credits. Only use specifics explicitly supported by supplied context. Broad fictional consumption states are allowed and assigned by the planner, but do not invent specific progress counts or additional personal biography. No spoiler details. No predefined reactions/templates: use this person's own wording.` },
+    { role: "system", content: `You are ${persona.display_name}. Preserve this person's existing identity:\n${JSON.stringify({ bio: config.bio, tone: config.tone, interests: config.interests, posting_style: config.posting_style })}\nSocial voice tendencies derived from their existing descriptions and examples: ${JSON.stringify(writingVoice)}. Preferences, not rigid rules or a caricature; no requirement to express every trait in every post. Assigned intent takes precedence over mode: mode shapes expression, not the reason to post. Emoji setting "none" means no emojis; other settings are probabilities, not a requirement.\n${authorStyleInstructions(resolveAuthorStyle(persona))}\nExisting admin rejection feedback: ${JSON.stringify(config.generation_feedback || [])}\n\n${PERSONAL_SOCIAL_REGISTER}\n\nDo not invent named characters, events, episode/season numbers, endings, quotes or credits. Only use specifics explicitly supported by supplied context. Broad fictional consumption states are allowed and assigned by the planner, but do not invent specific progress counts or additional personal biography. No spoiler details. No predefined reactions/templates: use this person's own wording.` },
     { role: "user", content: `Assigned media (do not choose another): ${JSON.stringify({ title: media.title, type: media.type, creator: media.creator, reliableContext: media.description?.slice(0, 900) || "No detailed context supplied. Use a general reaction; do not invent facts." })}\nAssigned internal mode: ${spec.label}. Behavior: ${spec.description}. Approximate target ${spec.words[0]}–${spec.words[1]} words (not a fill-in template; do not pad the thought with review language).\nWriting within this mode: ${MODE_REGISTER_GUIDANCE[mode]}\nEmotional stance: ${stance}\nAuthoritative rating: ${rating === null ? "none. No rating language or numerical scores in the body." : `${rating}/5. Already visible on the card. If you optionally reference your actual score, use {{rating}} for the number or {{rating_words}} for its written form; the application substitutes the authoritative value. Say it naturally, with no obligation to mention the score. Never /10. A clearly hypothetical better rating is allowed.`}\nRating-only (empty content) is permitted occasionally if there is a rating and this is a micro or low-energy post. Never return empty content without a rating.\nRecent batch shapes: ${batch.slice(-5).map(p => `${p.mode}, ${p.words} words${p.caps ? ", all caps" : ""}`).join("; ") || "none yet"}.\n${capsPressure ? "Several recent posts use capitals; prefer ordinary capitalization for this post." : "Capitals are optional according to voice."}\nDiscourage already-used phrases: ${phrases.join("; ") || "none yet"}. Do not reuse the openings or rhetorical shape of these recent posts:\n${batch.slice(-3).map(p => p.content).join("\n")}\n${repair ? `Previous attempt failed validation: ${repair}. Correct the underlying thought/register, not just capitalization or pronouns. Do not change the assignment.` : ""}\nFinal register check: Is this something this person would type, or does it explain/sell/analyze the work for an audience? Keep the reaction, not the review. No need to be original, insightful or clever; no borrowed demonstration phrases.\nReturn ONLY JSON: {"content":"post text"}. No rating, media or post_type fields; those are already assigned.`,
     },
   ];

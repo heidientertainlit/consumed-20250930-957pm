@@ -356,3 +356,31 @@ mtime_ms = 1790978347213
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/25189878-47ce-4165-9f86-1d052de8c4bb/325ebbd1-c647-4c51-9d13-d6dc7c25a507"
 storage_version_token = "1790978734541648"
 content_type = "text/html"
+
+[[outputs]]
+id = "P1vAflnTOH_sTaGeuMaIO"
+uri = "file://reports/persona-generator-author-style-test-batch.html"
+type = "html"
+title = "Author style — raw 20-post reading report"
+description = "Opens with names and planning labels hidden. Reveal Persona, Media, Intent, Mode, State and Rating after reading. Includes all intent/mode counts, three warnings, one disclosed emoji-only repair and its original text. No manual edits or profile retuning."
+logical_id = "5c903bfe-fabc-45e9-a9d1-2d557703e2a3"
+content_hash = "sha256:21e45d9601ddefde5d8aa8af036c12172061dccd1e565bdf9b00538002d5d4ff"
+size = 92140
+mtime_ms = 1790999239806
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/5c903bfe-fabc-45e9-a9d1-2d557703e2a3/d5947d8f-efba-4ca4-ae9f-c71d04244318"
+storage_version_token = "1790999437787125"
+content_type = "text/html"
+
+[[outputs]]
+id = "Amd4d--YfWLDRJIQi6wrX"
+uri = "file://reports/persona-generator-author-style-test-batch.json"
+type = "unspecified"
+title = "Author style — raw batch data and writer responses"
+description = "All 20 accepted posts, 22 verbatim writer responses including two malformed-output retries, resolved profiles, unchanged weights, warnings and original/repaired emoji text. Local-only; no database post saves, scheduling, publishing or deployment."
+logical_id = "02589dbc-2afc-4c8f-99ea-d91babf763f3"
+content_hash = "sha256:f2f7eca0a5ab3752432891c2156b610b55ebb46db7b277948ed123b31159456a"
+size = 63578
+mtime_ms = 1790999239794
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/02589dbc-2afc-4c8f-99ea-d91babf763f3/d57dc235-6c5b-48f8-a686-63a684e25cd0"
+storage_version_token = "1790999444514004"
+content_type = "application/octet-stream"

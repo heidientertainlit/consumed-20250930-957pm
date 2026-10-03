@@ -10,9 +10,17 @@ import { DEFAULT_MODE_WEIGHTS, deriveSocialVoice, parseGenerationNotes, POST_MOD
 import { buildPersonaCandidates, createPersonaChat, fetchTrendingCandidates, resolveMediaCandidate, loadPersonaIntentContext } from "../supabase/functions/_shared/persona-media-candidates.ts";
 import { DEFAULT_INTENT_WEIGHTS, POST_INTENTS } from "../supabase/functions/_shared/persona-post-intents.ts";
 import { generatePersonaBatch } from "../supabase/functions/_shared/persona-generation-engine.ts";
+import { renderPersonaReport } from "./persona-generation-report.ts";
 
 const out = process.argv[2] || "reports/persona-generator-test-batch";
 const comparisonPath = process.argv[3];
+for (const suffix of [".json", ".html"]) {
+  const exists = await fs.stat(`${out}${suffix}`).then(() => true, (error: NodeJS.ErrnoException) => {
+    if (error.code === "ENOENT") return false;
+    throw error;
+  });
+  if (exists) throw new Error(`Refusing to overwrite a delivered report: ${out}${suffix}`);
+}
 if (comparisonPath === `${out}.json`) throw new Error("Comparison batch must not be overwritten");
 const previousBatch = comparisonPath ? JSON.parse(await fs.readFile(comparisonPath, "utf8")) : null;
 const countModes = (drafts: any[]) => Object.fromEntries(POST_MODES.map(({id}) => [id, drafts.filter(d => parseGenerationNotes(d.ai_notes)?.mode === id).length]));
@@ -28,7 +36,15 @@ const personas: Persona[] = selected.map(p => {
   return {id:username, user_name:username, display_name, persona_config:config};
 });
 if (!process.env.OPENAI_API_KEY) throw new Error("Writing provider is not configured");
-const chat = createPersonaChat(process.env.OPENAI_API_KEY);
+const providerChat = createPersonaChat(process.env.OPENAI_API_KEY);
+const writerOutputs: { persona: string; raw: string }[] = [];
+const chat: typeof providerChat = async messages => {
+  const raw = await providerChat(messages);
+  if (messages[0].content.startsWith("You are ")) {
+    writerOutputs.push({ persona: messages[0].content.split(". Preserve this person's existing identity:")[0].slice(8), raw });
+  }
+  return raw;
+};
 const keys = {tmdb:process.env.TMDB_API_KEY,books:process.env.GOOGLE_BOOKS_API_KEY,rawg:process.env.RAWG_API_KEY};
 const trending = await fetchTrendingCandidates(keys);
 const candidates = new Map<string,MediaCandidate[]>();
@@ -51,18 +67,9 @@ await fs.mkdir(path.dirname(out),{recursive:true});
 const modes = countModes(result.drafts);
 const intentCounts = Object.fromEntries(POST_INTENTS.map(({id})=>[id,result.drafts.filter(d=>parseGenerationNotes(d.ai_notes)?.intent===id).length]));
 const validationWarnings = result.drafts.flatMap((d,i)=>(parseGenerationNotes(d.ai_notes)?.warnings || []).map(warning=>`Post ${i+1}: ${warning}`));
-await fs.writeFile(`${out}.json`,JSON.stringify({dryRun:true,source:"Checked-in persona definitions; no live history/config queried. Broad consumption states assigned fictionally by the planner; specific media/person facts are provider-grounded.",weights:DEFAULT_MODE_WEIGHTS,intentWeights:DEFAULT_INTENT_WEIGHTS,modeCounts:modes,intentCounts,validationWarnings,comparisonBaseline:comparisonPath,previousModeCounts,...result},null,2));
-const escape=(s:unknown)=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]!));
-const cards=result.drafts.map((d,i)=>{
-  const meta=JSON.parse(d.ai_notes).generation;
-  return `<article><div class="number">${i+1}</div><h2>${escape(d.persona_display_name)}</h2><div class="details">${escape(d.media_title)} · ${escape(d.media_type)}<br><strong>Intent:</strong> ${escape(meta.intentLabel)}<br><strong>Mode:</strong> ${escape(meta.modeLabel)}<br><strong>Consumption:</strong> ${escape(meta.consumption?.state?.replace(/_/g," "))} (${escape(meta.consumption?.source)})<br><strong>Rating:</strong> ${d.rating===null?"None":`${d.rating}/5`} · ${escape(meta.mediaSource)}</div><blockquote>${d.content?escape(d.content):"<i>Rating only — no text</i>"}</blockquote>${meta.warnings?.length?`<p class="note">${escape(meta.warnings.join(" · "))}</p>`:""}<details><summary>Admin generation metadata</summary><pre>${escape(JSON.stringify(meta,null,2))}</pre></details></article>`;
-}).join("");
-const distribution = `<section><h2>Mode distribution — weights unchanged</h2><table><thead><tr><th>Mode</th><th>Base weight</th>${previousModeCounts ? "<th>Previous batch</th>" : ""}<th>This batch</th></tr></thead><tbody>${POST_MODES.map(({id,label})=>`<tr><td>${escape(label)}</td><td>${DEFAULT_MODE_WEIGHTS[id]}</td>${previousModeCounts ? `<td>${previousModeCounts[id]}</td>` : ""}<td>${modes[id]} (${result.drafts.length ? Math.round(modes[id]/result.drafts.length*100) : 0}%)</td></tr>`).join("")}</tbody></table><p class="note">Same checked-in personas and weights; fresh random media/mode assignments, not a paired or quota-balanced experiment. These counts describe the actual outputs, not a quality score.</p></section>`;
-const intentDistribution = `<section><h2>Intent distribution — independent weighted planning</h2><table><thead><tr><th>Intent</th><th>Base weight</th><th>This batch</th></tr></thead><tbody>${POST_INTENTS.map(({id,label})=>`<tr><td>${escape(label)}</td><td>${DEFAULT_INTENT_WEIGHTS[id]}</td><td>${intentCounts[id]} (${result.drafts.length?Math.round(intentCounts[id]/result.drafts.length*100):0}%)</td></tr>`).join("")}</tbody></table><p class="note">Review/evaluation starts at base weight 22. Actual probabilities vary with eligibility, state, persona and soft diversity penalties; no quotas or rotations.</p></section>`;
-const warningSection = `<section><h2>Validation warnings</h2>${validationWarnings.length?`<ul>${validationWarnings.map(warning=>`<li>${escape(warning)}</li>`).join("")}</ul>`:"<p class='note'>No validation warnings.</p>"}</section>`;
-await fs.writeFile(`${out}.html`,`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Consumed — Persona generation review</title><style>body{margin:0;background:#0a0e18;color:#edf0f9;font:16px/1.6 system-ui;padding:32px}main{max-width:1000px;margin:auto}h1{font-size:32px;margin-bottom:8px}header{margin-bottom:32px}.note{color:#b1b8cd}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px}article{position:relative;padding:24px;border:1px solid #2d354b;background:#141b2b;border-radius:16px}h2{font-size:18px;margin:0 28px 8px 0}.number{float:right;color:#aa80ff}.details{font-size:13px;color:#aeb8d2}blockquote{margin:20px 0;white-space:pre-wrap}summary{font-size:12px;color:#bd9aff;cursor:pointer}pre{font-size:11px;white-space:pre-wrap}.stats{padding:12px 16px;background:#241a40;border-radius:10px;font-size:13px}a{color:#d5c0ff}section{margin:24px 0}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:8px;border-bottom:1px solid #2d354b}th{color:#bd9aff}@media(max-width:480px){body{padding:16px}th,td{padding:6px 4px;font-size:11px}}</style><main><header><h1>Persona generation review</h1><p class="note">${result.drafts.length} actual AI-generated sample posts across ${personas.length} fictional personas. Local dry run: nothing saved to a database, scheduled or published.</p><p class="note">Uses checked-in persona configurations and verified provider media. Live pending/scheduled/published history and any live voice overrides were not queried for this sample.</p><div class="stats">${result.errors.length?escape(result.errors.join("; ")):"No generation errors."}</div>${distribution}</header><div class="grid">${cards}</div></main></html>`);
-// Insert the additional report sections without altering prior delivered reports.
+const styleWarnings = result.drafts.flatMap((d,i)=>(parseGenerationNotes(d.ai_notes)?.styleWarnings || []).map(warning=>`Post ${i+1}: ${warning}`));
+const emojiRepairs = result.drafts.flatMap((d,i)=>(parseGenerationNotes(d.ai_notes)?.emojiRepairs || []).map(repair=>({post:i+1,...repair})));
+await fs.writeFile(`${out}.json`,JSON.stringify({dryRun:true,source:"Checked-in persona definitions and approved curated author profiles; no live history/config queried. Broad consumption states assigned fictionally; specific facts provider-grounded. No manual editing or profile retuning.",weights:DEFAULT_MODE_WEIGHTS,intentWeights:DEFAULT_INTENT_WEIGHTS,modeCounts:modes,intentCounts,validationWarnings,styleWarnings,emojiRepairs,writerOutputs,comparisonBaseline:comparisonPath,previousModeCounts,...result},null,2));
 const reportPath = `${out}.html`;
-const reportHtml = await fs.readFile(reportPath,"utf8");
-await fs.writeFile(reportPath,reportHtml.replace(`${distribution}</header>`,`${distribution}${intentDistribution}${warningSection}</header>`).replace("Live pending/scheduled/published history and any live voice overrides were not queried for this sample.","Live pending/scheduled/published history and any live voice overrides were not queried for this sample. Consumption states are broad fictional planner assignments, not claims about real user tracking. Specific people/media facts come from supplied provider context."));
-console.log(JSON.stringify({generated:result.drafts.length,intentCounts,modeCounts:modes,validationWarnings,errors:result.errors,report:`${out}.html`}));
+await fs.writeFile(reportPath,renderPersonaReport({drafts:result.drafts,errors:result.errors,personaCount:personas.length,previousModeCounts}));
+console.log(JSON.stringify({generated:result.drafts.length,intentCounts,modeCounts:modes,validationWarnings,styleWarnings,emojiRepairs,errors:result.errors,report:`${out}.html`}));

@@ -91,10 +91,10 @@ test("first-person wording does not excuse editorial copy or become mandatory", 
 test("writer distinguishes social register within modes without changing mode weights", () => {
   const system = buildWritingPrompt(persona,media,"thoughtful",voice,null,[],[])[0].content;
   assert.ok(system.includes("WRITE THE REACTION, NOT THE REVIEW"));
-  assert.ok(system.includes("FIRST PERSON IS NOT A FIX"));
-  assert.ok(system.includes("PRESERVE INTELLIGENCE"));
-  assert.ok(system.includes("Ordinary, boring, obvious reactions are successful posts"));
-  assert.ok(system.includes("Don't deliberately inject mistakes, slang or filler"));
+  assert.ok(system.includes("First-person wording is optional"));
+  assert.ok(system.includes("Plain, intelligent, brief or considered responses are equally valid"));
+  assert.ok(system.includes("No need to be clever, insightful, polished"));
+  assert.ok(system.includes("Don't manufacture casualness"));
   assert.ok(buildWritingPrompt(persona,media,"question",voice,null,[],[])[1].content.includes("THIS PERSON has a reason"));
   assert.ok(buildWritingPrompt(persona,media,"low_energy",voice,null,[],[])[1].content.includes("no contrived fragments"));
   assert.ok(buildWritingPrompt(persona,media,"micro",voice,null,[],[])[1].content.includes("does not need to describe the media"));

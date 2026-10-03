@@ -195,3 +195,36 @@ Reports show Persona, Media, Intent, Mode, Consumption state, Rating, Post, inte
 distributions and validation warnings. Broad fictional states are disclosed; no live
 configuration/history is queried and no test posts are saved to the database, scheduled,
 published or deployed.
+
+## Approved persona author style
+
+`persona_config.social_voice` remains unchanged. The separate optional `author_style`
+holds categorical thought-construction tendencies and short behavioral principles.
+Ten intentional profiles are curated in `persona-author-style.ts`, keyed by existing
+seeded usernames (not database UUIDs). Saved author-style fields override those defaults
+individually; surface voice saves preserve the sibling configuration. Uncurated personas
+keep their existing identity path unless a complete author profile is explicitly supplied.
+There is no keyword-derived author classification or additional model/planning pass.
+
+Only the resolved tendencies and principles reach the writer—not existing example prose
+or the illustrative approval samples. The shared register contract is shorter; factuality,
+intent, state, rating, spoiler and biography constraints remain. No prose-quality or
+persona-recognizability checks have been added. Ordinary posts are valid.
+
+For `emojiFrequency: none`, grapheme-aware detection rejects emoji presentation and
+performs one local emoji-only repair per writer output. Non-emoji characters and whitespace
+are preserved exactly. Original/repaired text and removed sequences are recorded in
+metadata with a style warning. Empty unrated results fail instead of being broadly
+rewritten. Other emoji settings are unchanged; no semantic emoji judgment is performed.
+
+The local runner refuses to overwrite previous reports and retains raw writer responses,
+including bounded retries. The HTML opens with persona names, planning labels and debug
+metadata hidden; its reveal button exposes every requested field. Distributions and all
+validation/style warnings follow the posts. Read the text, not metadata differences, to
+judge author differentiation. These approved profiles must not be fitted to the first
+sample batch; no further architecture changes should follow that run before user review.
+
+```sh
+node --import tsx scripts/test-persona-generator-dry-run.ts reports/persona-generator-author-style-test-batch reports/persona-generator-intent-test-batch.json
+node --import tsx --test supabase/functions/_shared/persona-generation*.test.ts supabase/functions/_shared/persona-post-intents.test.ts supabase/functions/_shared/persona-author-style.test.ts scripts/persona-generation-report.test.ts
+```

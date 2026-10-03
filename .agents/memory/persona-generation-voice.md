@@ -83,3 +83,15 @@ authors without reproducing the existing editorial examples.
 keep factuality, intent, state, rating and safety constraints when simplifying shared
 register guidance. The separate emoji exception is deterministic enforcement of
 `emojiFrequency: none` with one emoji-only repair, not a semantic emoji judgment.
+
+Do not optimize or retune the approved author profiles from the first test batch.
+Bring the unedited results back for reading before any additional architecture changes.
+Different metadata is not a success criterion; ordinary posts with little visible
+persona identity can still succeed.
+
+**Why:** The user explicitly treats these as tendencies across a person's posts,
+not requirements every post must visibly demonstrate.
+
+**How to apply:** Assess names-hidden text for human differentiation, different reasons
+for posting, residual shared entertainment-copy voice and exaggerated/repetitive gimmicks.
+Do not turn those reading questions into new automatic style validators.

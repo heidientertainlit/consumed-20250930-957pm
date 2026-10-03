@@ -4,6 +4,8 @@ import {
   type Persona, type ModeWeights, type MediaCandidate, type RecentPost, type BatchEntry, type GenerationMeta,
 } from "./persona-generation.ts";
 import type { Chat } from "./persona-media-candidates.ts";
+import { resolveAuthorStyle } from "./persona-author-style.ts";
+import { repairDisallowedEmoji, type EmojiRepair } from "./persona-emoji-repair.ts";
 import { DEFAULT_INTENT_WEIGHTS, planPostIntent, compatibleIntentModes, consumptionContradictions, buildIntentValidationPrompt, validateIntentWeights, type IntentWeights, type IntentContext, type ConsumptionScenario } from "./persona-post-intents.ts";
 
 export async function generatePersonaBatch(options: {
@@ -30,6 +32,7 @@ export async function generatePersonaBatch(options: {
       }
       try {
         const voice = deriveSocialVoice(persona.persona_config);
+        const authorStyle = resolveAuthorStyle(persona);
         const chosen = chooseMedia(candidates.get(persona.id) || [], persona.id, recent, state, random);
         const contextWarnings: string[] = [];
         let media = { ...chosen };
@@ -42,6 +45,8 @@ export async function generatePersonaBatch(options: {
         const rating = chooseRating(mode, voice, random, assignment);
         let content = "", issues: string[] = [];
         const repairWarnings: string[] = [];
+        const styleWarnings: string[] = [];
+        const emojiRepairs: EmojiRepair[] = [];
         for (let attempt = 0; attempt < 2; attempt++) {
           const raw = await chat(buildWritingPrompt(persona, media, mode, voice, rating, state, recent, issues.join("; "), assignment));
           try {
@@ -51,6 +56,13 @@ export async function generatePersonaBatch(options: {
             issues = ["Writer output was incomplete JSON or had invalid content/score placeholders. Return only a complete JSON object with one content string; no planning, explanation or extra fields."];
             repairWarnings.push("Repair requested: incomplete JSON or invalid content/score placeholders.");
             continue; // Use the existing bounded repair, preserving media, mode and rating.
+          }
+          const emojiRepair = repairDisallowedEmoji(content, voice.emojiFrequency);
+          if (emojiRepair) {
+            emojiRepairs.push(emojiRepair);
+            content = emojiRepair.repaired;
+            styleWarnings.push(`Style check failed: emojiFrequency=none. One emoji-only repair removed ${emojiRepair.removed.length} sequence(s); all other text unchanged (writer attempt ${attempt + 1}).`);
+            if (!content.trim() && rating === null) throw new Error("Emoji-only repair leaves empty unrated content; no draft created");
           }
           issues = validateGeneratedContent(content, rating, { ...media, description: [media.description, ...(assignment.context.moments || []), assignment.consumption.details].filter(Boolean).join("\n") });
           issues.push(...consumptionContradictions(content, assignment));
@@ -69,7 +81,8 @@ export async function generatePersonaBatch(options: {
           version: 1, mode, modeLabel: spec.label, mediaSource: media.source,
           recentlyUsed: recent.some(p => mediaKey(p) === mediaKey(media)) || state.some(p => p.mediaKey === mediaKey(media)),
           voice, rating, words, externalId: media.externalId, externalSource: media.externalSource,
-          warnings: [...contextWarnings, ...repairWarnings],
+          warnings: [...contextWarnings, ...repairWarnings, ...styleWarnings],
+          authorStyle, styleWarnings, emojiRepairs,
           intent: assignment.intent, intentLabel: assignment.intentLabel, intentReason: assignment.reason,
           consumption: assignment.consumption, context: assignment.context,
         };

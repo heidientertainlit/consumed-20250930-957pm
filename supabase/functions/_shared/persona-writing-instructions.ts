@@ -2,23 +2,10 @@ import type { PostMode } from "./persona-generation.ts";
 
 /** Register guidance only. No selection logic, quotas, reusable posts or new persona identities. */
 export const PERSONAL_SOCIAL_REGISTER = `CORE WRITING PRINCIPLE: WRITE THE REACTION, NOT THE REVIEW.
-Before writing, silently ask: "Why did THIS PERSON open an entertainment social app to post this, given their assigned intent and consumption state?" Not: "How would someone review this media item?" Return the post, not that reasoning.
-
-This is a user talking about entertainment, not a critic, marketer, synopsis writer or entertainment journalist. Center their assigned social behavior: starting, revisiting, wondering, wanting something next, recognizing themselves, reacting, or sometimes evaluating. Don't default to explaining the work or recommending it to an imagined audience. A deliberately assigned recommendation may address a particular kind of person, naturally rather than as marketing copy.
-
-REGISTER, NOT LENGTH: A long reaction can be entirely conversational. A short sentence can still be editorial copy. Don't use the title-summary-adjectives-verdict pattern. Avoid professional-review formulations such as "crafts a poignant...", "offers an exploration of...", "the emotional landscape", "the influence shines through", "worth a watch/listen/read", "fails to engage the viewer", "its themes/portrayal", or generic claims that something is captivating, compelling or thought-provoking. These illustrate an editorial register, not a word blacklist. Specific, genuinely personal use of precise vocabulary is fine.
-
-FIRST PERSON IS NOT A FIX: Adding "I found" to polished review prose does not make it a user's reaction. Equally, no first-person pronoun is required. The underlying thought should belong to this person, rather than describe the work for an audience.
-
-PRESERVE INTELLIGENCE: Analytical, articulate, literary and nerdy people may have precise or complex opinions. Don't flatten their intelligence or vocabulary. A smart human talking about what worked for them is different from professional review copy. Identity labels such as "reviews", "thoughtful" or "analytical" do not change the social register.
-
-NO PERFORMANCE REQUIREMENT: Ordinary, boring, obvious reactions are successful posts. Don't optimize every post for originality, insight, wit, literary quality, emotional intensity or engagement. Don't invent a clever angle merely to justify posting. Thoughtful mode permits more to say, not a more impressive vocabulary. There need not be a balanced pro/con assessment or a concluding recommendation.
-
-NATURAL, NOT MANUFACTURED CASUAL: Contractions, fragments, uneven punctuation, occasional lowercase and emphasis are allowed according to this person's voice. Clean grammar is equally natural. Don't deliberately inject mistakes, slang or filler. Don't write an elegant review and then strip capitalization/punctuation or chop it into awkward fragments. Low effort is about the thought, not damaged grammar. No borrowed catchphrases or stock reactions.
-
-QUESTIONS ARE NOT ENGAGEMENT BAIT: A question should usually come from this person's own reaction, uncertainty or experience with the assigned media. No generic discussion topic followed by a request for audience thoughts. No brand-account invitation, audience survey, or obligation to end a post with a question.
-
-The attached media card already displays title and any rating. Don't automatically repeat either in the text. Descriptions below are fact-grounding only, never a synopsis to paraphrase.`;
+Write the assigned social behavior in this person's author style, not a description of the work for an audience. A review or recommendation can be assigned, but other intents need not become evaluations.
+Plain, intelligent, brief or considered responses are equally valid. No need to be clever, insightful, polished or strongly identifiable in every post. First-person wording is optional; adding it does not turn editorial copy into a personal response. Don't manufacture casualness.
+Questions should come from actual curiosity, not audience engagement bait.
+The card already displays title and rating. Supplied descriptions are fact-grounding only, not a synopsis to paraphrase.`;
 
 export const REGISTER_EXAMPLES = `REGISTER DEMONSTRATION ONLY — not phrases, openings or sentence structures to reuse:
 An articulate person's reaction can be: "I think this worked better for me as a character study than as a mystery."
