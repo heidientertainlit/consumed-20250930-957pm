@@ -69,3 +69,17 @@ their names are hidden.
 **How to apply:** Preserve the approved structure. Distinguish deeper author-specific
 thinking and sentence habits from presentation mechanics; inspect and report findings
 before implementing a voice change when requested.
+
+Preserve the existing surface voice attributes and their admin overrides. Deeper
+author-style tendencies should describe thought construction, not just presentation;
+intentional profiles for the ten test personas must not be derived solely from keyword
+matching. Curate useful human behavior from examples rather than automatically
+passing the existing example prose to the writer.
+
+**Why:** The user wants the same media, intent and mode to yield recognizably different
+authors without reproducing the existing editorial examples.
+
+**How to apply:** Prefer stable author-specific principles over phrase imitation, and
+keep factuality, intent, state, rating and safety constraints when simplifying shared
+register guidance. The separate emoji exception is deterministic enforcement of
+`emojiFrequency: none` with one emoji-only repair, not a semantic emoji judgment.
