@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authorizeAdminOrService } from "../_shared/authorization.ts";
+import { parseGenerationNotes } from "../_shared/persona-generation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,6 +50,9 @@ serve(async (req) => {
 
     const finalContent = content_override ?? draft.content;
     const finalRating = rating_override !== undefined ? rating_override : draft.rating;
+    // Carry the already-verified media identity through publication. No new media
+    // selection, content generation or provider lookup takes place during approval.
+    const mediaIdentity = parseGenerationNotes(draft.ai_notes);
 
     // Save edits back to draft if changed
     if (content_override !== undefined || rating_override !== undefined) {
@@ -69,6 +73,8 @@ serve(async (req) => {
         media_title: draft.media_title,
         media_type: draft.media_type,
         media_creator: draft.media_creator,
+        media_external_id: mediaIdentity?.externalId || null,
+        media_external_source: mediaIdentity?.externalSource || null,
         contains_spoilers: false,
         scheduled_for,
         posted: false,

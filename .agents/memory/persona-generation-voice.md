@@ -127,6 +127,18 @@ giving every writer the full synopsis or cast list. Questions should follow a ge
 question/request premise, not independently prompted question frequency. Approximate
 mode length ceilings are guidance, not sentence templates or new validation gates.
 
+## Final architecture approval
+
+The user approved this as the final generation architecture: “Do not do any further
+voice/prompt/weight tuning.” The sole approved completion correction is premise/state
+consistency, including no upcoming finale when consumption is finished.
+
+**Why:** The user explicitly considers the persona-generation/content-quality work
+complete after that correction.
+
+**How to apply:** Do not run further content-quality batches or reopen tuning. Keep
+unrelated functional fixes, such as poster navigation, separate from generation behavior.
+
 Known-favorite identity may be separate trusted reference data, without rewriting
 persona profiles. Reject failed creator verification rather than choosing a same-titled
 work. Report unresolved lookups honestly; search absence is not proof of nonexistence.

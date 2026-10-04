@@ -36,6 +36,7 @@ export interface UGCPost {
   };
   content: string;
   mediaTitle?: string;
+  mediaCreator?: string;
   mediaType?: string;
   mediaImage?: string;
   externalId?: string;

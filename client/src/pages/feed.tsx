@@ -42,6 +42,7 @@ import { InlineFeedStarRater } from "@/components/inline-feed-star-rater";
 import { RatingSaveFeedback } from "@/components/rating-save-feedback";
 import { useConfirmedRatingSave } from "@/hooks/use-confirmed-rating-save";
 import { saveFeedRating } from "@/lib/save-feed-rating";
+import { useFeedMediaNavigation } from "@/hooks/use-feed-media-navigation";
 import { dbTagToDisplay } from "@/components/room-composer";
 import { type UGCPost } from "@/components/user-content-carousel";
 import ConversationsPanel from "@/components/conversations-panel";
@@ -1382,6 +1383,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [dislikeCount, setDislikeCount] = useState(0);
   // Poster card detail sheet
   const [posterDetailOpen, setPosterDetailOpen] = useState(false);
+  const posterNavigation = useFeedMediaNavigation(post, session?.access_token);
   // "Tell a friend" — copies a share link, brief confirmation
   const takeInputRef = useRef<HTMLInputElement>(null);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -2097,7 +2099,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     movie: 'from-gray-700 to-gray-900',
   };
   const posterFallback = post.mediaTitle ? (
-    <div className={`relative flex-shrink-0 w-[88px] h-[132px] rounded-xl overflow-hidden shadow-md bg-gradient-to-br ${posterFallbackBg[mediaTypeNorm || ''] || 'from-gray-700 to-gray-900'} flex flex-col items-end justify-between p-2`}>
+    <button type="button" onClick={(e) => { e.stopPropagation(); void posterNavigation.open(); }} disabled={posterNavigation.loading} aria-label={`Open ${post.mediaTitle} media details`} className={`relative flex-shrink-0 w-[88px] h-[132px] rounded-xl overflow-hidden shadow-md bg-gradient-to-br ${posterFallbackBg[mediaTypeNorm || ''] || 'from-gray-700 to-gray-900'} flex flex-col items-end justify-between p-2`}>
       <div className="self-start opacity-60">
         {mediaTypeNorm === 'podcast' && <Headphones size={16} className="text-white" />}
         {mediaTypeNorm === 'music' && <Music size={16} className="text-white" />}
@@ -2112,21 +2114,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
            <p className="text-white/70 text-[9px] leading-tight mt-0.5">{mediaScopeLabel}</p>
          )}
        </div>
-    </div>
+    </button>
   ) : null;
 
   const posterEl = post.mediaImage && post.mediaImage.startsWith('http') ? (
     <div className="relative flex-shrink-0 w-[88px] h-[132px]">
-      {post.externalId && post.externalSource ? (
-        <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
+      {posterNavigation.href ? (
+        <Link href={posterNavigation.href}>
           <div className="relative w-full h-full rounded-xl overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
             <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           </div>
         </Link>
       ) : (
-        <div className="relative w-full h-full rounded-xl overflow-hidden shadow-md">
+        <button type="button" onClick={(e) => { e.stopPropagation(); void posterNavigation.open(); }} disabled={posterNavigation.loading} aria-label={`Open ${post.mediaTitle} media details`} className="relative w-full h-full rounded-xl overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
           <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-        </div>
+        </button>
       )}
       {onAddToList && (post.externalId || post.mediaTitle) && (
         <button
@@ -2631,11 +2633,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <div
               className="relative w-full rounded-xl overflow-hidden bg-gray-900 cursor-pointer"
               style={{ height: 180, boxShadow: '0 6px 20px rgba(0,0,0,0.22)' }}
-              onClick={() => {
+              role="link"
+              tabIndex={0}
+              aria-label={`Open ${post.mediaTitle} media details`}
+              aria-busy={posterNavigation.loading}
+              onKeyDown={(e) => {
+                if (e.target !== e.currentTarget || !["Enter", " "].includes(e.key)) return;
+                e.preventDefault();
+                void posterNavigation.open();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
                 if (swipeProps?.getSwiped?.()) return;
-                if (post.externalSource && post.externalId) {
-                  setLocation(`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`);
-                }
+                void posterNavigation.open();
               }}
             >
               {swipeProps?.overlays}
@@ -3814,6 +3824,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   const [loadingComments, setLoadingComments] = useState(false);
   const [reportCommentLocal, setReportCommentLocal] = useState<{ commentId: string; userId: string; userName: string } | null>(null);
   const hasFetchedComments = useRef(false);
+  const spPosterNavigation = useFeedMediaNavigation(post, session?.access_token);
   const blockedViewerId = session?.user?.id || currentUserId;
   const blockedUsers = useBlockedUsers(blockedViewerId);
   const blockedUserIds = blockedUsers.data || [];
@@ -4143,12 +4154,14 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
 
   const spPosterEl = post.mediaImage && post.mediaImage.startsWith('http') ? (
     <div className="relative flex-shrink-0 self-start w-16 h-[96px]">
-      {post.externalId && post.externalSource ? (
-        <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
+      {spPosterNavigation.href ? (
+        <Link href={spPosterNavigation.href}>
           <img src={post.mediaImage} alt={post.mediaTitle} className="w-16 h-[96px] rounded-xl object-cover shadow-md cursor-pointer hover:opacity-90 transition-opacity" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         </Link>
       ) : (
-        <img src={post.mediaImage} alt={post.mediaTitle} className="w-16 h-[96px] rounded-xl object-cover shadow-md" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        <button type="button" onClick={(e) => { e.stopPropagation(); void spPosterNavigation.open(); }} disabled={spPosterNavigation.loading} aria-label={`Open ${post.mediaTitle} media details`}>
+          <img src={post.mediaImage} alt={post.mediaTitle} className="w-16 h-[96px] rounded-xl object-cover shadow-md cursor-pointer hover:opacity-90" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        </button>
       )}
       {spMediaTypeNorm && (
         <div className="absolute bottom-1 left-1 bg-purple-600/50 backdrop-blur-sm rounded-md p-1">
@@ -6058,7 +6071,7 @@ export default function Feed() {
           media_episode_number: (p as any).media_episode_number ?? media?.episodeNumber,
           media_episode_title: (p as any).media_episode_title ?? media?.episodeTitle,
           media_volume_number: (p as any).media_volume_number ?? media?.volumeNumber,
-          mediaType: media?.mediaType || media?.type || (p as any).media_type, mediaImage: mediaImg, externalId: eid, externalSource: src, canonical_media_id: canonicalMediaId, canonicalMediaId,
+          mediaType: media?.mediaType || media?.type || (p as any).media_type, mediaCreator: media?.creator || (p as any).media_creator, mediaImage: mediaImg, externalId: eid, externalSource: src, canonical_media_id: canonicalMediaId, canonicalMediaId,
           rating: resolvedRating, containsSpoilers: p.containsSpoilers || false, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
           fire_votes: p.fire_votes || 0, ice_votes: p.ice_votes || 0,
           options: (p as any).options || [], optionVotes: (p as any).optionVotes || [], timestamp: p.createdAt || p.created_at || p.timestamp, pollId: (p as any).poolId || p.id,

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildPremisePrompt, premiseContext } from "./persona-premise.ts";
+import { buildPremisePrompt, premiseContext, premiseStateContradictions, generatePremise } from "./persona-premise.ts";
 import { buildWritingPrompt, deriveSocialVoice, DEFAULT_MODE_WEIGHTS, parseGenerationNotes, POST_MODES, type Persona } from "./persona-generation.ts";
 import { generatePersonaBatch } from "./persona-generation-engine.ts";
 import { DEFAULT_INTENT_WEIGHTS, type IntentAssignment } from "./persona-post-intents.ts";
@@ -63,4 +63,33 @@ test("malformed premise fails explicitly without another premise call or an inve
   assert.equal(calls, 1);
   assert.equal(result.drafts.length, 0);
   assert.match(result.errors[0], /Premise generation returned no meaning/);
+});
+
+test("premises reject obvious completion/state contradictions, including an upcoming finale after finishing", () => {
+  for (const [state, premise] of [
+    ["finished", "I'm so emotionally invested in this season, I can't believe the finale is next!"],
+    ["finished", "I haven't finished it yet."],
+    ["finished", "She still has chapters left."],
+    ["finished", "I've never seen this."],
+    ["not_started", "I just finished watching it."],
+    ["starting", "After finishing it, I'm relieved."],
+    ["in_progress", "I just finished reading it."],
+    ["revisiting", "I've never read this."],
+    ["dropped", "I've never seen it."],
+  ] as const) assert.ok(premiseStateContradictions(premise, { ...assignment, consumption: { state, source: "supplied" } }).length, `${state}: ${premise}`);
+  for (const premise of [
+    "The finale was satisfying.",
+    "I want another book that makes me feel the same way.",
+    "I want to rewatch this tomorrow.",
+    "I'm not finished thinking about this.",
+  ]) assert.deepEqual(premiseStateContradictions(premise, assignment), []);
+  assert.deepEqual(premiseStateContradictions("The finale is next.", { ...assignment, consumption: { state: "in_progress", source: "supplied" } }), []);
+  assert.ok(buildPremisePrompt(persona, media, assignment)[0].content.includes("finished means the experience is complete"));
+});
+
+test("a contradictory premise fails before writing without retrying or changing the assigned state", async () => {
+  let calls = 0;
+  await assert.rejects(generatePremise(async () => { calls++; return '{"premise":"The finale is next!"}'; }, persona, media, assignment), /Premise\/state mismatch/);
+  assert.equal(calls, 1);
+  assert.equal(assignment.consumption.state, "finished");
 });
