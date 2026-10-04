@@ -454,3 +454,17 @@ mtime_ms = 1791054815107
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/1275bf71-c492-46b5-88a2-2b0e34029926/0702e171-3c48-4b40-8e77-c98609d77a4d"
 storage_version_token = "1791054883236166"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Fs3lfvRUCv8RX-t_oKHX-"
+uri = "file://reports/persona-backend-deployment-verification.txt"
+type = "text"
+title = "Persona backend deployment verification"
+description = "Exact non-saving preview response, decoded intent/state/premise/mode/author-style metadata, deployed versions and execution evidence."
+logical_id = "ea23e1b8-b9a6-4c5e-98a4-af7ed5f4006a"
+content_hash = "sha256:c7ae77bc7b6589d6d92f205f6ce7d4204efc94d2bbc71de5e25b731473fe0bcd"
+size = 9024
+mtime_ms = 1791087807504
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/ea23e1b8-b9a6-4c5e-98a4-af7ed5f4006a/2cc86470-0813-4933-b5ad-2f7f63f08ecc"
+storage_version_token = "1791087808103881"
+content_type = "text/plain"

@@ -1,0 +1,374 @@
+PERSONA BACKEND DEPLOYMENT VERIFICATION
+
+DEPLOYMENT RESULTS
+{
+  "functions": {
+    "post-scheduled-content": {
+      "previousVersion": 806,
+      "activeVersion": 807,
+      "jwtVerification": true,
+      "runtimeSourceMatched": true
+    },
+    "admin-approve-draft": {
+      "previousVersion": 19,
+      "activeVersion": 20,
+      "jwtVerification": true,
+      "runtimeSourceMatched": true
+    },
+    "generate-persona-content": {
+      "previousVersion": 803,
+      "activeVersion": 804,
+      "jwtVerification": true,
+      "runtimeSourceMatched": true
+    }
+  },
+  "cron": {
+    "job": 4,
+    "active": true,
+    "schedule": "*/15 * * * *",
+    "restoredAt": "2026-10-04T04:21:49.528Z",
+    "nextScheduledPostInvocationNotYetObserved": false
+  },
+  "preview": {
+    "httpStatus": 200,
+    "generated": 1,
+    "dryRun": true,
+    "saved": false
+  },
+  "productionRecords": [
+    {
+      "table": "social_posts",
+      "rows": 1394,
+      "unchanged": true
+    },
+    {
+      "table": "users",
+      "rows": 216,
+      "unchanged": true
+    },
+    {
+      "table": "social_post_likes",
+      "rows": 275,
+      "unchanged": true
+    },
+    {
+      "table": "social_post_comments",
+      "rows": 154,
+      "unchanged": true
+    },
+    {
+      "table": "social_comment_likes",
+      "rows": 14,
+      "unchanged": true
+    },
+    {
+      "table": "social_comment_votes",
+      "rows": 4,
+      "unchanged": true
+    },
+    {
+      "table": "media_ratings",
+      "rows": 1020,
+      "unchanged": true
+    },
+    {
+      "table": "persona_post_drafts",
+      "rows": 76,
+      "unchanged": true
+    },
+    {
+      "table": "scheduled_persona_posts",
+      "rows": 8,
+      "unchanged": true
+    }
+  ],
+  "errorEvidence": {
+    "eventsChecked": 18,
+    "unexpectedErrors": 0
+  },
+  "rollbackDirectory": "/tmp/persona-backend-release-PHQ2lT/rollback/"
+}
+
+EXACT DRY-RUN API RESPONSE
+{
+  "success": true,
+  "generated": 1,
+  "requested": 1,
+  "drafts": [
+    {
+      "persona_user_id": "5028acbc-ecd5-480b-99a0-e1122a57571a",
+      "persona_user_name": "brooksj",
+      "persona_display_name": "Julian Brooks",
+      "post_type": "review",
+      "content": "'Atlanta' nails the balance between humor and poignancy effortlessly. This series creates a narrative that's both entertaining and insightful. Solid 4!",
+      "rating": 4,
+      "media_title": "Atlanta",
+      "media_type": "tv",
+      "media_external_id": "65495",
+      "media_external_source": "tmdb",
+      "media_creator": null,
+      "ai_notes": "{\"generation\":{\"version\":1,\"mode\":\"casual\",\"modeLabel\":\"Casual thought\",\"mediaSource\":\"Discovery\",\"recentlyUsed\":false,\"voice\":{\"length\":\"short\",\"energy\":\"enthusiastic\",\"capitalization\":\"standard\",\"punctuation\":\"expressive\",\"emojiFrequency\":\"none\",\"ratingFrequency\":\"frequent\",\"questionFrequency\":\"occasional\",\"sarcasm\":\"none\",\"preferredModeWeights\":{\"thoughtful\":1,\"micro\":1.5,\"casual\":1.1,\"rating\":1.8,\"question\":0.8,\"specific\":1,\"opinion\":0.8,\"low_energy\":0.9}},\"rating\":4,\"words\":21,\"externalId\":\"65495\",\"externalSource\":\"tmdb\",\"warnings\":[],\"authorStyle\":{\"directness\":\"straightforward\",\"emotional_expression\":\"open\",\"thinking_style\":\"mixed\",\"stance\":\"earnest\",\"specificity\":\"selective\",\"focus\":\"experience\",\"certainty\":\"declarative\",\"polish\":\"off_the_cuff\",\"explanation_drive\":\"selective\",\"adjective_density\":\"moderate\",\"reference_style\":\"occasional\",\"principles\":[\"Take music personally and commit to preferences; explain through listening and feeling rather than a claim of artistic importance.\",\"Passion lives in the preference, not automatically in superlatives or slogans. Defending a favorite need not become a performance.\"]},\"styleWarnings\":[],\"emojiRepairs\":[],\"intent\":\"review\",\"intentLabel\":\"Review / evaluation\",\"intentReason\":\"Weighted eligible choice for tv, Discovery, finished; persona preferences and soft recent/batch penalties applied.\",\"premise\":\"I'm impressed by how 'Atlanta' blends humor and poignancy to create a compelling narrative.\",\"consumption\":{\"state\":\"finished\",\"source\":\"fictional_planner\"},\"context\":{\"people\":[{\"name\":\"Earnest 'Earn' Marks\",\"kind\":\"character\"},{\"name\":\"Donald Glover\",\"kind\":\"performer\"},{\"name\":\"Alfred 'Paper Boi' Miles\",\"kind\":\"character\"},{\"name\":\"Brian Tyree Henry\",\"kind\":\"performer\"},{\"name\":\"Darius Epps\",\"kind\":\"character\"},{\"name\":\"LaKeith Stanfield\",\"kind\":\"performer\"},{\"name\":\"Vanessa 'Van' Keefer\",\"kind\":\"character\"},{\"name\":\"Zazie Beetz\",\"kind\":\"performer\"}]}}}",
+      "status": "draft"
+    }
+  ],
+  "dryRun": true
+}
+
+DECODED GENERATION METADATA
+{
+  "version": 1,
+  "mode": "casual",
+  "modeLabel": "Casual thought",
+  "mediaSource": "Discovery",
+  "recentlyUsed": false,
+  "voice": {
+    "length": "short",
+    "energy": "enthusiastic",
+    "capitalization": "standard",
+    "punctuation": "expressive",
+    "emojiFrequency": "none",
+    "ratingFrequency": "frequent",
+    "questionFrequency": "occasional",
+    "sarcasm": "none",
+    "preferredModeWeights": {
+      "thoughtful": 1,
+      "micro": 1.5,
+      "casual": 1.1,
+      "rating": 1.8,
+      "question": 0.8,
+      "specific": 1,
+      "opinion": 0.8,
+      "low_energy": 0.9
+    }
+  },
+  "rating": 4,
+  "words": 21,
+  "externalId": "65495",
+  "externalSource": "tmdb",
+  "warnings": [],
+  "authorStyle": {
+    "directness": "straightforward",
+    "emotional_expression": "open",
+    "thinking_style": "mixed",
+    "stance": "earnest",
+    "specificity": "selective",
+    "focus": "experience",
+    "certainty": "declarative",
+    "polish": "off_the_cuff",
+    "explanation_drive": "selective",
+    "adjective_density": "moderate",
+    "reference_style": "occasional",
+    "principles": [
+      "Take music personally and commit to preferences; explain through listening and feeling rather than a claim of artistic importance.",
+      "Passion lives in the preference, not automatically in superlatives or slogans. Defending a favorite need not become a performance."
+    ]
+  },
+  "styleWarnings": [],
+  "emojiRepairs": [],
+  "intent": "review",
+  "intentLabel": "Review / evaluation",
+  "intentReason": "Weighted eligible choice for tv, Discovery, finished; persona preferences and soft recent/batch penalties applied.",
+  "premise": "I'm impressed by how 'Atlanta' blends humor and poignancy to create a compelling narrative.",
+  "consumption": {
+    "state": "finished",
+    "source": "fictional_planner"
+  },
+  "context": {
+    "people": [
+      {
+        "name": "Earnest 'Earn' Marks",
+        "kind": "character"
+      },
+      {
+        "name": "Donald Glover",
+        "kind": "performer"
+      },
+      {
+        "name": "Alfred 'Paper Boi' Miles",
+        "kind": "character"
+      },
+      {
+        "name": "Brian Tyree Henry",
+        "kind": "performer"
+      },
+      {
+        "name": "Darius Epps",
+        "kind": "character"
+      },
+      {
+        "name": "LaKeith Stanfield",
+        "kind": "performer"
+      },
+      {
+        "name": "Vanessa 'Van' Keefer",
+        "kind": "character"
+      },
+      {
+        "name": "Zazie Beetz",
+        "kind": "performer"
+      }
+    ]
+  }
+}
+
+EXECUTION EVIDENCE
+[
+  {
+    "event_message": "OPTIONS | 200 | https://mahpgcogwpawvviapqza.supabase.co/functions/v1/post-scheduled-content",
+    "event_type": "",
+    "execution_id": "b9339334-fdd3-46c7-a7a0-a35c3016c801",
+    "function_id": "9cc6db22-382a-4b86-b42e-d1e9a5d21097",
+    "level": "",
+    "method": "OPTIONS",
+    "source": "function_edge_logs",
+    "status": "200",
+    "timestamp": "2026-10-04T04:20:18.088000",
+    "version": "807"
+  },
+  {
+    "event_message": "OPTIONS | 200 | https://mahpgcogwpawvviapqza.supabase.co/functions/v1/admin-approve-draft",
+    "event_type": "",
+    "execution_id": "432b87ca-644e-4659-b455-3ace54b41dd2",
+    "function_id": "930caa88-4363-41af-bd9d-f9ba3923c017",
+    "level": "",
+    "method": "OPTIONS",
+    "source": "function_edge_logs",
+    "status": "200",
+    "timestamp": "2026-10-04T04:20:18.391000",
+    "version": "20"
+  },
+  {
+    "event_message": "POST | 200 | https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-persona-content",
+    "event_type": "",
+    "execution_id": "ef3893aa-bf6d-4fbd-b88b-f0c6a773f28f",
+    "function_id": "ad60d8c1-72a9-444e-97d8-eaa09ca7e3ab",
+    "level": "",
+    "method": "POST",
+    "source": "function_edge_logs",
+    "status": "200",
+    "timestamp": "2026-10-04T04:20:25.520000",
+    "version": "804"
+  }
+]
+
+Scope: exactly three Edge Functions deployed. No frontend/social-feed release, schema migration, native build, real draft creation, scheduling, batch generation, or manual publishing. Approval/publisher checks used non-mutating OPTIONS requests; generation used one non-saving POST dry-run. Publisher cron restored after checks passed. Its normal 2026-10-04 04:30 UTC run succeeded: POST HTTP 200 on publisher version 807, with "No scheduled posts due" and no content changes.
+
+
+NORMAL PUBLISHER CRON VERIFICATION
+{
+  "run": {
+    "runid": 19250,
+    "status": "succeeded",
+    "start_time": "2026-10-04 04:30:00.171043+00",
+    "end_time": "2026-10-04 04:30:00.235985+00"
+  },
+  "execution": {
+    "event_message": "POST | 200 | https://mahpgcogwpawvviapqza.supabase.co/functions/v1/post-scheduled-content",
+    "execution_id": "8b7a7e0b-07e6-4b50-b0aa-eafa7de2761c",
+    "function_id": "9cc6db22-382a-4b86-b42e-d1e9a5d21097",
+    "level": "",
+    "method": "POST",
+    "source": "function_edge_logs",
+    "status": "200",
+    "timestamp": "2026-10-04T04:30:01.953000",
+    "version": "807"
+  },
+  "checked_at": "2026-10-04T04:30:40.588Z"
+}
+
+FINAL FULL RELEASE-WINDOW EXECUTION EVIDENCE
+[
+  {
+    "event_message": "OPTIONS | 200 | https://mahpgcogwpawvviapqza.supabase.co/functions/v1/post-scheduled-content",
+    "execution_id": "b9339334-fdd3-46c7-a7a0-a35c3016c801",
+    "function_id": "9cc6db22-382a-4b86-b42e-d1e9a5d21097",
+    "level": "",
+    "method": "OPTIONS",
+    "source": "function_edge_logs",
+    "status": "200",
+    "timestamp": "2026-10-04T04:20:18.088000",
+    "version": "807"
+  },
+  {
+    "event_message": "OPTIONS | 200 | https://mahpgcogwpawvviapqza.supabase.co/functions/v1/admin-approve-draft",
+    "execution_id": "432b87ca-644e-4659-b455-3ace54b41dd2",
+    "function_id": "930caa88-4363-41af-bd9d-f9ba3923c017",
+    "level": "",
+    "method": "OPTIONS",
+    "source": "function_edge_logs",
+    "status": "200",
+    "timestamp": "2026-10-04T04:20:18.391000",
+    "version": "20"
+  },
+  {
+    "event_message": "POST | 200 | https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-persona-content",
+    "execution_id": "ef3893aa-bf6d-4fbd-b88b-f0c6a773f28f",
+    "function_id": "ad60d8c1-72a9-444e-97d8-eaa09ca7e3ab",
+    "level": "",
+    "method": "POST",
+    "source": "function_edge_logs",
+    "status": "200",
+    "timestamp": "2026-10-04T04:20:25.520000",
+    "version": "804"
+  },
+  {
+    "event_message": "POST | 200 | https://mahpgcogwpawvviapqza.supabase.co/functions/v1/post-scheduled-content",
+    "execution_id": "8b7a7e0b-07e6-4b50-b0aa-eafa7de2761c",
+    "function_id": "9cc6db22-382a-4b86-b42e-d1e9a5d21097",
+    "level": "",
+    "method": "POST",
+    "source": "function_edge_logs",
+    "status": "200",
+    "timestamp": "2026-10-04T04:30:01.953000",
+    "version": "807"
+  }
+]
+
+FINAL AFTER-CRON CONTENT FINGERPRINT CHECKS
+[
+  {
+    "table": "social_posts",
+    "rows": 1394,
+    "unchanged": true
+  },
+  {
+    "table": "users",
+    "rows": 216,
+    "unchanged": true
+  },
+  {
+    "table": "social_post_likes",
+    "rows": 275,
+    "unchanged": true
+  },
+  {
+    "table": "social_post_comments",
+    "rows": 154,
+    "unchanged": true
+  },
+  {
+    "table": "social_comment_likes",
+    "rows": 14,
+    "unchanged": true
+  },
+  {
+    "table": "social_comment_votes",
+    "rows": 4,
+    "unchanged": true
+  },
+  {
+    "table": "media_ratings",
+    "rows": 1020,
+    "unchanged": true
+  },
+  {
+    "table": "persona_post_drafts",
+    "rows": 76,
+    "unchanged": true
+  },
+  {
+    "table": "scheduled_persona_posts",
+    "rows": 8,
+    "unchanged": true
+  }
+]

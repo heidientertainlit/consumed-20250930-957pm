@@ -26,3 +26,15 @@ Verify production function-log access before pausing cron or replacing functions
 **Why:** Management API log inspection returned HTTP 410 during a release preflight even though function metadata and rollback downloads worked. Deployment access does not establish access to production logs.
 
 **How to apply:** Establish a working read-only log-inspection path first. If the approval requires log verification and access fails, stop before production changes rather than deploying without the required verification.
+
+Supabase's supported Management API log endpoint is `/analytics/endpoints/logs`, with ClickHouse queries against the unified `logs` table. This project's working source filter is `source`; nested attributes use `log_attributes` map keys.
+
+**Why:** Supabase retired `logs.all` in September 2026; its HTTP 410 does not mean project logs are unavailable. The replacement exposes both function request/status records and runtime/error events.
+
+**How to apply:** Correlate `function_edge_logs` and `function_logs` by function/execution IDs and deployed version, using bounded time windows. Check HTTP status and query errors before interpreting empty results.
+
+Verify downloaded deployment dependencies from normalized runtime imports, not raw TypeScript imports.
+
+**Why:** Downloaded bundles correctly omit type-only dependencies. Traversing every source-level import produced a false missing-dependency failure even though the active runtime implementation matched.
+
+**How to apply:** Erase TypeScript types before traversing and comparing dependencies. A missing type-only file is not a deployment defect; missing or mismatched runtime source is.
