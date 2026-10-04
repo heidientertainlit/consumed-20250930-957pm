@@ -44,3 +44,9 @@ Bundle isolated downloaded sources before executing local baseline tests.
 **Why:** Direct Node/tsx imports of extracted TypeScript outside the project's package boundary exposed CommonJS export behavior, causing a false missing-export failure. Bundling restored the module's real exports.
 
 **How to apply:** For executable comparisons against downloaded baseline code, use an ESM bundle and mocked dependencies; do not interpret a direct-import packaging error as a deployed-code defect.
+
+Create and validate every isolated download directory before deploying.
+
+**Why:** The Supabase CLI resolves `--workdir` before downloading and fails if that directory does not already exist. An absent verification directory interrupted an otherwise completed deployment.
+
+**How to apply:** Pre-create both rollback and post-deployment verification directories during preflight, so source verification cannot fail on a local filesystem prerequisite after production changes.
