@@ -20,3 +20,9 @@ The Management API function-body response can be an ESZIP archive, not a plain T
 **Why:** Feeding the downloaded body directly into a source transformer fails on the archive header and cannot verify the deployed entrypoint.
 
 **How to apply:** Extract the relevant module before source comparison; account for TypeScript transpilation when comparing it with workspace code.
+
+Verify production function-log access before pausing cron or replacing functions when log inspection is a release requirement.
+
+**Why:** Management API log inspection returned HTTP 410 during a release preflight even though function metadata and rollback downloads worked. Deployment access does not establish access to production logs.
+
+**How to apply:** Establish a working read-only log-inspection path first. If the approval requires log verification and access fails, stop before production changes rather than deploying without the required verification.
