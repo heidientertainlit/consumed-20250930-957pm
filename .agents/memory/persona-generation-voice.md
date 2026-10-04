@@ -3,6 +3,14 @@ name: Persona generation voice
 description: User intent for natural variation without quotas or template-generated personas
 ---
 
+## Production approval and change freeze
+
+The user approved the bot system for production use and instructed: “Do not make any additional prompt, premise, author-style, intent, mode, weight, validation or architecture changes.” Do not modify the system based on production draft results.
+
+**Why:** The user wants to review actual production drafts generated with normal selection/randomness, without result-driven tuning or a special batch chosen to look better.
+
+**How to apply:** Preserve the approved system when generating drafts. Do not automatically approve, schedule or publish drafts when generation-only review is requested.
+
 For persona content, the user prioritizes “Natural > mathematically perfect diversity.”
 Modes describe behaviors, not fixed phrases or templates. Individual voices should be
 tendencies rather than caricatures. Plain, tiny, low-energy and rating-only reactions
