@@ -6,7 +6,7 @@ import { generatePersonaBatch } from "./persona-generation-engine.ts";
 import { DEFAULT_INTENT_WEIGHTS, type IntentAssignment } from "./persona-post-intents.ts";
 
 const persona: Persona = { id: "p", user_name: "p", display_name: "Person", persona_config: { bio: "Likes books.", social_voice: { questionFrequency: "frequent" } } };
-const media = { title: "A book", type: "book", source: "Discovery" as const, fit: 1, description: "SYNOPSIS_SENTINEL", genres: ["Fantasy"] };
+const media = { title: "A book", type: "book", source: "Discovery" as const, fit: 1, externalId: "verified-book", externalSource: "googlebooks", description: "SYNOPSIS_SENTINEL", genres: ["Fantasy"] };
 const assignment: IntentAssignment = { intent: "reaction", intentLabel: "Reaction", reason: "test", consumption: { state: "finished", source: "supplied" }, context: { people: [{ name: "CAST_SENTINEL", kind: "performer" }], moments: ["MOMENT_SENTINEL"] } };
 
 test("premise input uses identity, media, state and intent; no synopsis, mode, rating or full cast", () => {

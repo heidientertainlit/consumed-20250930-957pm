@@ -9,7 +9,7 @@ const withPremise = (chat: Chat): Chat => async messages => messages[0].content.
   ? '{"premise":"They have one small response to the experience."}' : chat(messages);
 
 const persona: Persona = { id: "p1", user_name: "person", display_name: "Person", persona_config: { bio: "Likes entertainment.", interests: ["drama"], media_types: ["movie", "book"] } };
-const media: MediaCandidate = { title: "Known title", type: "movie", source: "Discovery", fit: .8, description: "A drama." };
+const media: MediaCandidate = { title: "Known title", type: "movie", source: "Discovery", fit: .8, externalId: "123", externalSource: "tmdb", description: "A drama." };
 const voice = deriveSocialVoice(persona.persona_config);
 const weightsOnly = (id: PostIntent) => Object.fromEntries(POST_INTENTS.map(i => [i.id, i.id === id ? 100 : 0])) as typeof DEFAULT_INTENT_WEIGHTS;
 const assigned = (intent: PostIntent, state: IntentAssignment["consumption"]["state"]): IntentAssignment => ({ intent, intentLabel: intent, reason: "test", consumption: { state, source: "fictional_planner" }, context: {} });

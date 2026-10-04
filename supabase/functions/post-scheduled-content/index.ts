@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { persistedPersonaMediaIdentity } from '../_shared/persona-media-identity.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -56,6 +57,7 @@ serve(async (req) => {
 
     for (const scheduledPost of duePosts) {
       try {
+        const mediaIdentity = persistedPersonaMediaIdentity(scheduledPost);
         const { data: newPost, error: insertError } = await supabaseAdmin
           .from('social_posts')
           .insert({
@@ -67,8 +69,7 @@ serve(async (req) => {
             media_type: scheduledPost.media_type,
             media_creator: scheduledPost.media_creator,
             image_url: scheduledPost.image_url,
-            media_external_id: scheduledPost.media_external_id,
-            media_external_source: scheduledPost.media_external_source,
+            ...mediaIdentity,
             media_description: scheduledPost.media_description,
             contains_spoilers: scheduledPost.contains_spoilers,
             visibility: 'public',

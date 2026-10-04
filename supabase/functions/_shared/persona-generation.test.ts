@@ -16,7 +16,7 @@ const persona: Persona = { id: "p1", display_name: "Example", user_name: "exampl
   tone: "enthusiastic and dramatic", posting_style: "episode reactions + ratings", media_types: ["tv", "book"],
   interests: ["drama"], favorite_media: ["A real title"], style_examples: [{ type: "review", content: "A full 10/10 no notes." }],
 } };
-const media: MediaCandidate = { title: "A real title", type: "tv", source: "Persona Favorite", fit: 1 };
+const media: MediaCandidate = { title: "A real title", type: "tv", source: "Persona Favorite", fit: 1, externalId: "123", externalSource: "tmdb" };
 const voice = deriveSocialVoice(persona.persona_config);
 test("eight internal modes and configurable weights preserve a 30% base thoughtful share", () => {
   assert.equal(POST_MODES.length, 8);

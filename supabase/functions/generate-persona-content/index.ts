@@ -92,7 +92,7 @@ serve(async req => {
     })).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
     const recent: RecentPost[] = [];
     const seen = new Set<string>();
-    for (const item of historyResults.flatMap(r => r.data || []).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))) {
+    for (const item of historyResults.flatMap<Record<string, any>>(r => r.data || []).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))) {
       if (!item.media_title || !item.media_type) continue;
       const entry = { personaId: item.persona_user_id || item.user_id, title: item.media_title, type: item.media_type.toLowerCase(), content: item.content || "", createdAt: item.created_at };
       const key = `${entry.personaId}:${mediaKey(entry)}`;

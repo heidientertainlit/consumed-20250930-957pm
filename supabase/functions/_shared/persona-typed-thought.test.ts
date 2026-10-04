@@ -6,7 +6,7 @@ import { generatePersonaBatch } from "./persona-generation-engine.ts";
 import { planPostIntent, DEFAULT_INTENT_WEIGHTS, buildIntentValidationPrompt } from "./persona-post-intents.ts";
 
 const persona: Persona = { id: "p", user_name: "alex_thompson", display_name: "Alex Thompson", persona_config: { generation_feedback: ["Keep my supplied preference."] } };
-const media = { title: "Known Movie", type: "movie", source: "Discovery" as const, fit: 1 };
+const media = { title: "Known Movie", type: "movie", source: "Discovery" as const, fit: 1, externalId: "123", externalSource: "tmdb" };
 const check = "Does this sound like someone typed a thought, or like someone wrote content?";
 test("all assembled writer messages explicitly request JSON for the provider's JSON-object mode", () => {
   for (const mode of POST_MODES) {

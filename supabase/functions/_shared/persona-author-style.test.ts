@@ -8,7 +8,7 @@ import { buildWritingPrompt, deriveSocialVoice, DEFAULT_MODE_WEIGHTS, parseGener
 import { generatePersonaBatch } from "./persona-generation-engine.ts";
 import { PERSONAL_SOCIAL_REGISTER } from "./persona-writing-instructions.ts";
 
-const media = { title: "Known title", type: "movie", source: "Discovery" as const, fit: 1 };
+const media = { title: "Known title", type: "movie", source: "Discovery" as const, fit: 1, externalId: "123", externalSource: "tmdb" };
 const persona = (name: string): Persona => ({ id: "real-database-uuid", user_name: name, display_name: name, persona_config: {} });
 
 test("all ten intentional profiles resolve by username, not UUID; no guessed profile for others", () => {

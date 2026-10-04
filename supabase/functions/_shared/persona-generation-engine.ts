@@ -4,6 +4,7 @@ import {
   type Persona, type ModeWeights, type MediaCandidate, type RecentPost, type BatchEntry, type GenerationMeta,
 } from "./persona-generation.ts";
 import type { Chat } from "./persona-media-candidates.ts";
+import { requirePersonaMediaIdentity } from "./persona-media-identity.ts";
 import { resolveAuthorStyle } from "./persona-author-style.ts";
 import { generatePremise } from "./persona-premise.ts";
 import { repairDisallowedEmoji, type EmojiRepair } from "./persona-emoji-repair.ts";
@@ -35,6 +36,7 @@ export async function generatePersonaBatch(options: {
         const voice = deriveSocialVoice(persona.persona_config);
         const authorStyle = resolveAuthorStyle(persona);
         const chosen = chooseMedia(candidates.get(persona.id) || [], persona.id, recent, state, random);
+        const mediaIdentity = requirePersonaMediaIdentity(chosen.externalId, chosen.externalSource);
         const contextWarnings: string[] = [];
         let media = { ...chosen };
         if (options.loadContext) {
@@ -91,6 +93,7 @@ export async function generatePersonaBatch(options: {
         drafts.push({
           persona_user_id: persona.id, persona_user_name: persona.user_name, persona_display_name: persona.display_name,
           post_type: "review", content, rating, media_title: media.title, media_type: media.type,
+          ...mediaIdentity,
           media_creator: media.creator || null, ai_notes: encodeGenerationNotes(meta), status: "draft",
         });
         state.push({ personaId: persona.id, mediaKey: mediaKey(media), mode, intent: assignment.intent, words, caps: hasAllCaps(content), content });

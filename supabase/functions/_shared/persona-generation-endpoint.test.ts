@@ -109,6 +109,8 @@ test("normal generation inserts drafts only, leaving scheduling and publishing u
   assert.equal(h.writes[0].table, "persona_post_drafts");
   assert.equal(h.writes[0].action, "insert");
   assert.ok(h.writes[0].data.ai_notes);
+  assert.equal(h.writes[0].data.media_external_id, "42");
+  assert.equal(h.writes[0].data.media_external_source, "tmdb");
   assert.ok(!("persona_display_name" in h.writes[0].data));
 });
 test("unauthorized configuration and preview requests never reach the database", async () => {
