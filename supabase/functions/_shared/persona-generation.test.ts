@@ -56,6 +56,54 @@ test("textual score placeholders derive their value from the structured rating",
   assert.equal(renderRatingPlaceholders("{{rating}} and I stand by it",3.5),"3.5 and I stand by it");
   assert.throws(()=>renderRatingPlaceholders("{{rating}} stars",null));
 });
+test("bare assigned scores are omitted from prose while coherent ratings and other numbers survive", () => {
+  const thought = "Fraser's style might really shake things up! Curious how he'll handle the crew dynamic.";
+  for (const token of ["{{rating}}", "{{rating_words}}", "3", "3."]) {
+    assert.equal(renderRatingPlaceholders(`${thought} ${token}`, 3), thought);
+    assert.equal(renderRatingPlaceholders(token, 3), "");
+  }
+  assert.equal(renderRatingPlaceholders(`${thought}\n{{rating}}`, 3), thought);
+  assert.equal(renderRatingPlaceholders("Liked it. {{rating}}!", 4.5), "Liked it.");
+  assert.equal(renderRatingPlaceholders("Definitely earning its {{rating}} from me.", 4.5), "Definitely earning its 4.5 from me.");
+  assert.equal(renderRatingPlaceholders("I'd give it {{rating}}/5.", 3), "I'd give it 3/5.");
+  assert.equal(renderRatingPlaceholders("{{rating_words}} stars for me.", 3.5), "three and a half stars for me.");
+  assert.equal(renderRatingPlaceholders("Episode 3", 3), "Episode 3");
+  assert.equal(renderRatingPlaceholders("There are 3 left.", 3), "There are 3 left.");
+  assert.equal(renderRatingPlaceholders("It took 3.5 hours.", 5), "It took 3.5 hours.");
+  assert.equal(renderRatingPlaceholders("A thought. 3.5", 5), "A thought. 3.5");
+  assert.equal(renderRatingPlaceholders("The number was 3.", null), "The number was 3.");
+});
+test("generation formats a bare trailing score without changing the assigned rating or adding a retry", async () => {
+  const thought = "Curious how he'll handle the crew dynamic.";
+  let writers = 0, validators = 0;
+  const result = await generatePersonaBatch({
+    personas: [persona], postsPerPersona: 1,
+    weights: Object.fromEntries(POST_MODES.map(m => [m.id, m.id === "low_energy" ? 100 : 0])) as typeof DEFAULT_MODE_WEIGHTS,
+    recent: [], candidates: new Map([[persona.id, [media]]]), random: () => 0,
+    scenario: () => ({ state: "finished", source: "supplied" }),
+    chat: async messages => {
+      if (messages[0].content.startsWith("Choose one concrete premise")) return '{"premise":"Curious what this person will do to the group dynamic."}';
+      if (messages[1].content.includes('"task":"narrow_intent_validation"')) {
+        validators++;
+        const input = JSON.parse(messages[1].content);
+        assert.equal(input.content, thought);
+        return '{"issues":[]}';
+      }
+      writers++;
+      return JSON.stringify({ content: `${thought} {{rating}}` });
+    },
+  });
+  assert.equal(result.drafts.length, 1, result.errors.join(";"));
+  const draft = result.drafts[0], meta = parseGenerationNotes(draft.ai_notes)!;
+  assert.equal(draft.content, thought);
+  assert.equal(typeof draft.rating, "number");
+  assert.equal(draft.rating, meta.rating);
+  assert.equal(meta.mode, "low_energy");
+  assert.equal(draft.media_external_id, media.externalId);
+  assert.equal(draft.media_external_source, media.externalSource);
+  assert.equal(writers, 1);
+  assert.equal(validators, 1);
+});
 test("weighted mode randomness is not a fixed rotation; disabled modes stay disabled", () => {
   const weights = {...DEFAULT_MODE_WEIGHTS,thoughtful:0};
   for(let i=0;i<100;i++) assert.notEqual(chooseMode(weights, voice,[],()=>i/100),"thoughtful");

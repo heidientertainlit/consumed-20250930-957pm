@@ -22,6 +22,19 @@ test("premise input uses identity, media, state and intent; no synopsis, mode, r
   assert.equal(premiseContext({ ...assignment, intent: "character" }).people![0].name, "CAST_SENTINEL");
 });
 
+test("premise prompt requests a minimal semantic note, not polished or persona-voiced criticism", () => {
+  const instruction = buildPremisePrompt(persona, media, assignment)[0].content;
+  for (const required of [
+    "smallest concrete thought that satisfies the assigned intent",
+    "internal semantic note",
+    "not prose that should sound good",
+    "written in the persona's voice",
+    "Do not turn it into entertainment criticism",
+    "wants to know whether the case has changed since the podcast",
+    "These illustrate semantic size, not phrases to copy",
+  ]) assert.ok(instruction.includes(required), required);
+});
+
 test("all writer modes receive the premise and soft upper bound without question-frequency or composition prompting", () => {
   for (const mode of POST_MODES) {
     const prompt = buildWritingPrompt(persona, media, mode.id, deriveSocialVoice(persona.persona_config), null, [], [], undefined, assignment, "She is annoyed she enjoyed it.");
@@ -30,6 +43,10 @@ test("all writer modes receive the premise and soft upper bound without question
     assert.ok(full.includes(`Approximate upper bound: ${mode.words[1]} words`));
     for (const absent of ["questionFrequency", "SYNOPSIS_SENTINEL", "CAST_SENTINEL", "two to four", "genuinely wants answered.\\nAuthoritative"]) assert.ok(!full.includes(absent), absent);
     assert.ok(full.includes("Do not invent a different central thought"));
+    assert.ok(full.includes("stop when the thought is complete"));
+    assert.ok(full.includes("One sentence is enough"));
+    assert.ok(full.includes("repeat a genuine question in different ways"));
+    assert.ok(full.includes("does not require expansion"));
   }
 });
 

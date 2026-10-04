@@ -42,6 +42,9 @@ test("a retry requests only correction of the supplied failure, without a regist
   assert.ok(!prompt[1].content.includes("underlying thought/register"));
   assert.ok(prompt[1].content.includes("{{rating}}"));
   assert.ok(prompt[1].content.includes("{{rating_words}}"));
+  assert.ok(prompt[1].content.includes("structured rating is already displayed on the card"));
+  assert.ok(prompt[1].content.includes("coherent textual rating wording"));
+  assert.ok(prompt[1].content.includes("Never append a bare score or return only a score token"));
 });
 test("typed-thought check stays writer-only; ordinary valid output gets no style retry or extra pass", async () => {
   const assignment = planPostIntent(persona, media, DEFAULT_INTENT_WEIGHTS, [], [], () => .5);

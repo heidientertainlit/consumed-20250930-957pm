@@ -190,12 +190,20 @@ export function repeatedPhrases(posts: string[]): string[] {
 }
 export function wordCount(content: string): number { return content.trim() ? content.trim().split(/\s+/).length : 0; }
 export function hasAllCaps(content: string): boolean { return /\b[A-Z]{3,}\b/.test(content); }
-/** Let the writer invent wording, but derive optional score expressions from the assigned value. */
+/** Derive coherent optional score wording; bare score tokens belong to the card, not prose. */
 export function renderRatingPlaceholders(content: unknown, rating: number | null): string {
   if (typeof content !== "string") throw new Error("content must be a string");
   if (/\{\{rating(?:_words)?\}\}/.test(content) && rating === null) throw new Error("No rating is assigned to this post");
   const names: Record<number, string> = { .5: "half", 1: "one", 1.5: "one and a half", 2: "two", 2.5: "two and a half", 3: "three", 3.5: "three and a half", 4: "four", 4.5: "four and a half", 5: "five" };
-  return content.replace(/\{\{rating\}\}/g, String(rating)).replace(/\{\{rating_words\}\}/g, rating === null ? "" : names[rating]);
+  if (rating === null) return content;
+  // Remove only isolated score lines or a trailing score-only sentence. Preserve
+  // natural score wording, /5 notation, and numbers embedded in ordinary prose.
+  const score = `(?:\\{\\{rating(?:_words)?\\}\\}|${String(rating).replace(".", "\\.")})`;
+  const prose = content
+    .replace(new RegExp(`^\\s*${score}\\s*[.!?]?\\s*$`, "gm"), "")
+    .replace(new RegExp(`([.!?]\\s+)${score}\\s*[.!?]?\\s*$`), "$1");
+  const rendered = prose.replace(/\{\{rating\}\}/g, String(rating)).replace(/\{\{rating_words\}\}/g, names[rating]);
+  return prose === content ? rendered : rendered.trim();
 }
 export function writingShapeIssues(content: string, mode: PostMode): string[] {
   const words = wordCount(content);
@@ -219,7 +227,7 @@ export function buildWritingPrompt(persona: Persona, media: MediaCandidate, mode
   const upperBound = POST_MODES.find(spec => spec.id === mode)!.words[1];
   return [
     { role: "system", content: `You are ${persona.display_name}. Preserve this person's existing identity:\n${JSON.stringify({ bio: config.bio, tone: config.tone, interests: config.interests, posting_style: config.posting_style })}\nSocial voice: ${JSON.stringify(writingVoice)}.\n${authorStyleInstructions(resolveAuthorStyle(persona))}\n\n${PERSONAL_SOCIAL_REGISTER}\nEmoji setting "none" means no emojis; other settings are tendencies, not a requirement.\nUse only supplied evidence for named people, scenes, episodes, quotes, credits, progress/repeat/time counts, purchases and personal relationships. No additional biography. Starting/not-started cannot imply completed consumption.\nExisting admin rejection feedback: ${JSON.stringify(config.generation_feedback || [])}` },
-    { role: "user", content: `${assignment ? `${intentWriterInstructions({ ...assignment, context: premiseContext(assignment) })}\n` : ""}Assigned media (do not choose another): ${JSON.stringify({ title: media.title, type: media.type, creator: media.creator })}\nConcrete premise: ${JSON.stringify(premise)}\nExpress this supplied meaning in this person's voice. Do not invent a different central thought or expand it into an assessment of the work. Questions and requests come from the premise, not a frequency setting or a mode label.\nTyping mode: ${mode}. ${MODE_REGISTER_GUIDANCE[mode]} Approximate upper bound: ${upperBound} words; shorter is fine. This is not a length target to fill.\nAuthoritative rating: ${rating === null ? "none. No rating language or numerical scores in the body." : `${rating}/5. Optional score wording must use {{rating}} for the number or {{rating_words}} for words; the application substitutes the assigned value. Never /10. Clearly hypothetical other scores are allowed.`}\nRating-only (empty content) is permitted occasionally with a rating in micro or low_energy mode. Never return empty content without a rating.${repair ? `\nPrevious attempt failed validation: ${repair}. Correct only this failure; keep the assignment and premise unchanged.` : ""}` },
+    { role: "user", content: `${assignment ? `${intentWriterInstructions({ ...assignment, context: premiseContext(assignment) })}\n` : ""}Assigned media (do not choose another): ${JSON.stringify({ title: media.title, type: media.type, creator: media.creator })}\nConcrete premise: ${JSON.stringify(premise)}\nExpress this supplied meaning in this person's voice. Do not invent a different central thought or expand it into an assessment of the work. Questions and requests come from the premise, not a frequency setting or a mode label.\nTyping mode: ${mode}. ${MODE_REGISTER_GUIDANCE[mode]} Approximate upper bound: ${upperBound} words; shorter is fine. This is not a length target to fill.\nAuthoritative rating: ${rating === null ? "none. No rating language or numerical scores in the body." : `${rating}/5. The structured rating is already displayed on the card; otherwise omit it from the prose. If naturally expressed, use coherent textual rating wording with {{rating}} for the number or {{rating_words}} for words; the application substitutes the assigned value. Never append a bare score or return only a score token. Never /10. Clearly hypothetical other scores are allowed.`}\nRating-only (empty content) is permitted occasionally with a rating in micro or low_energy mode. Never return empty content without a rating.${repair ? `\nPrevious attempt failed validation: ${repair}. Correct only this failure; keep the assignment and premise unchanged.` : ""}` },
   ];
 }
 /** Numbers in hypothetical clauses are not claims about the actual rating. */

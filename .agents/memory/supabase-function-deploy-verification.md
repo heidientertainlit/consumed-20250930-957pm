@@ -38,3 +38,9 @@ Verify downloaded deployment dependencies from normalized runtime imports, not r
 **Why:** Downloaded bundles correctly omit type-only dependencies. Traversing every source-level import produced a false missing-dependency failure even though the active runtime implementation matched.
 
 **How to apply:** Erase TypeScript types before traversing and comparing dependencies. A missing type-only file is not a deployment defect; missing or mismatched runtime source is.
+
+Bundle isolated downloaded sources before executing local baseline tests.
+
+**Why:** Direct Node/tsx imports of extracted TypeScript outside the project's package boundary exposed CommonJS export behavior, causing a false missing-export failure. Bundling restored the module's real exports.
+
+**How to apply:** For executable comparisons against downloaded baseline code, use an ESM bundle and mocked dependencies; do not interpret a direct-import packaging error as a deployed-code defect.
