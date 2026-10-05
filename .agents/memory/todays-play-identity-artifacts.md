@@ -8,3 +8,9 @@ Today's Play should support polls, predictions and other non-trivia questions. K
 **Why:** The user rejected additional gameplay steps and chose behavior-based identity artifacts as the engaging element.
 
 **How to apply:** Keep this direction scoped to Today's Play, not removal of trivia elsewhere in Play. Treat the proposed artifact names and thresholds as examples until the earning rules are agreed. Artifacts should reflect recorded behavior, not redefine the existing Entertainment DNA scoring.
+
+Use a fixed catalog of approximately 20 prewritten artifacts selected or rotated based on responses, rather than AI-invented artifacts.
+
+**Why:** The user wants a controlled set so “AI isn't running wild.”
+
+**How to apply:** Keep artifact names and copy curated. Rotation must not manufacture behavioral claims unsupported by the player's recorded responses.
