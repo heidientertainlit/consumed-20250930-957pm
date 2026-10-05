@@ -20,3 +20,9 @@ The user's supplied question ideas should guide the generator's creative directi
 **Why:** The user asked to include their ideas as directions “but also have it create more.”
 
 **How to apply:** Keep the earlier non-trivia direction when using this mixed-format inspiration. Trending-source changes are still being discussed, not approved for implementation.
+
+Most Today's Play questions should offer four answer choices.
+
+**Why:** The user asked for most questions to have “4 answers/responses you can choose.”
+
+**How to apply:** Make four choices the default when implementing the agreed generator changes, without treating this discussion as approval to change or run the generator now.
