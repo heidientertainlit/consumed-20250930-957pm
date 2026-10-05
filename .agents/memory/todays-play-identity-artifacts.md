@@ -14,3 +14,9 @@ Use a fixed catalog of approximately 20 prewritten artifacts selected or rotated
 **Why:** The user wants a controlled set so “AI isn't running wild.”
 
 **How to apply:** Keep artifact names and copy curated. Rotation must not manufacture behavioral claims unsupported by the player's recorded responses.
+
+The user's supplied question ideas should guide the generator's creative directions while allowing it to create additional original questions, rather than becoming a closed question bank.
+
+**Why:** The user asked to include their ideas as directions “but also have it create more.”
+
+**How to apply:** Keep the earlier non-trivia direction when using this mixed-format inspiration. Trending-source changes are still being discussed, not approved for implementation.
