@@ -70,3 +70,4 @@
 - [PostHog surface boundaries](posthog-surface-boundary.md) — register alone omits snapshot labels; preserve consent hooks and keep metadata changes separate from the paused migration.
 - [Persona generation voice](persona-generation-voice.md) — natural variation beats perfect quotas; modes are behaviors, and voices are tendencies rather than templates or caricatures.
 - [Writer JSON-mode contract](writer-json-mode-contract.md) — JSON-object mode requires a literal “JSON” instruction in an input message; an object example alone is insufficient.
+- [Today's Play identity artifacts](todays-play-identity-artifacts.md) — simple non-trivia daily questions; earned artifacts after answering, not extra gameplay steps.
