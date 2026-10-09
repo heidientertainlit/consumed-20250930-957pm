@@ -13,6 +13,7 @@
 - [Supabase service key mismatch](supabase-service-key-mismatch.md) — the workspace service-role credential targets a different project than the app; do not use it for app-project diagnostics.
 - [TanStack Query v5 refetchInterval](tanstack-refetchinterval-v5.md) — the callback receives the Query object, not data; read `query.state.data`, else polling silently never fires.
 - [media-search type param](media-search-type-param.md) — edge fn reads `type` not `media_type`; callers sending `media_type` (Track/quick-action sheets) get no server filter. No `game` source exists.
+- [Cross-endpoint fixtures](cross-endpoint-fixtures.md) — execute reused handlers' real request interpretation; canned endpoint results can hide broken forwarding contracts.
 - [media_ratings writes](media-ratings-writes.md) — inserts need media_title + media_type (NOT NULL) or they fail silently; "tracked" counts list_items, not ratings.
 - [Google Books cover placeholders](googlebooks-cover-placeholders.md) — coverless editions return a valid gray "image not available" PNG; only build cover URLs when `imageLinks` exists.
 - [Composer surfaces](composer-surfaces.md) — QuickActionSheet = in-dialog media search; FeedComposerBar = full-screen /add-style overlay. Reuse QuickActionSheet for "search without leaving the dialog".
@@ -48,6 +49,7 @@
 - [Taste group presentation](taste-group-presentation.md) — present Tribes as unnamed groups connected by recognizable media, simple types, people, and match strength.
 - [Friends and matches](friends-matches.md) — individual relationships share one Friends destination; preserve premium match discovery while keeping accepted friends and management distinct.
 - [Preview webview registration](preview-webview-registration.md) — if port 5000 and proxy are healthy but Preview is unreachable, explicitly re-register the workflow as a port-5000 webview.
+- [External mockup styles](mockup-external-tailwind.md) — Tailwind v4 fixtures importing production components need explicit source discovery for those components.
 - [Feed person affinity](feed-person-affinity.md) — reviewer % must reuse the authoritative People affinity score; never calculate a separate exact-title-overlap percentage in the feed.
 - [Canonical media identity](canonical-media-identity.md) — cross-provider work identity is server-owned; exact aliases and authoritative keys outrank verified title+creator+year.
 - [Supabase migration history drift](supabase-migration-history-drift.md) — remote history omits many local migrations; isolate new pushes so unrelated files are never replayed.
@@ -69,5 +71,6 @@
 - [Native update gate rollout](native-update-gate-rollout.md) — the first checker-bearing iOS release must remain supported; only later can remote minimum-version enforcement move beyond it.
 - [PostHog surface boundaries](posthog-surface-boundary.md) — register alone omits snapshot labels; preserve consent hooks and keep metadata changes separate from the paused migration.
 - [Persona generation voice](persona-generation-voice.md) — natural variation beats perfect quotas; modes are behaviors, and voices are tendencies rather than templates or caricatures.
+- [Persona conversation timing](persona-conversation-timing.md) — late delivery preserves full reviewed gaps after actual arrival, even when the conversation finishes later than planned.
 - [Writer JSON-mode contract](writer-json-mode-contract.md) — JSON-object mode requires a literal “JSON” instruction in an input message; an object example alone is insufficient.
 - [Today's Play identity artifacts](todays-play-identity-artifacts.md) — simple non-trivia daily questions; earned artifacts after answering, not extra gameplay steps.

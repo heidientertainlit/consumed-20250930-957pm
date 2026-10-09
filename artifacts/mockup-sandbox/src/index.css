@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@source "../../../client/src/components/admin/persona-conversation-controls.tsx";
 
 @custom-variant dark (&:is(.dark *));
 

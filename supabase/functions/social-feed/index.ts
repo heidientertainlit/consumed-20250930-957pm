@@ -200,6 +200,7 @@ serve(async (req) => {
           media_external_id, 
           media_external_source, 
            canonical_media_id,
+          persona_conversation_id,
           media_season_number,
           media_episode_number,
           media_episode_title,
@@ -1122,7 +1123,7 @@ serve(async (req) => {
         const isSpecialType = specialPostTypes.includes(post.post_type);
         
         // When grouping is disabled, treat all media posts as single posts (groupPosts.length === 1 path)
-        if (ENABLE_MEDIA_GROUPING && hasMedia && !isSpecialType) {
+        if (ENABLE_MEDIA_GROUPING && hasMedia && !isSpecialType && !post.persona_conversation_id) {
           const mediaKey = `${post.media_external_source}:${post.media_external_id}`;
           if (!mediaGroups.has(mediaKey)) {
             mediaGroups.set(mediaKey, []);

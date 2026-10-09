@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { supabase, SUPABASE_URL } from "@/lib/supabase";
 import PersonaGenerationControls from "@/components/admin/persona-generation-controls";
+import PersonaConversationControls from "@/components/admin/persona-conversation-controls";
 import DraftGenerationMetadata from "@/components/admin/draft-generation-metadata";
 import {
   Sparkles, Check, X, Clock, ChevronDown, ChevronUp,
@@ -549,6 +550,8 @@ export default function AdminPersonasPage() {
           <h1 className="text-2xl font-bold text-white mb-1">Generate Persona Posts</h1>
           <p className="text-gray-400 text-sm">AI-powered persona content generation and scheduling</p>
         </div>
+
+        <PersonaConversationControls />
 
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
           <div className="flex items-center gap-2 mb-4">

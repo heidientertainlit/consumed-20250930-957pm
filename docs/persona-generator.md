@@ -1,5 +1,9 @@
 # Persona generator changes
 
+The separate [private conversation workflow](persona-conversations.md) does not
+change this approved standalone generator. Its schema, worker and release
+requirements are documented independently.
+
 ## Scope and safety
 
 The planner chooses verified media, an internal writing mode and an optional five-star

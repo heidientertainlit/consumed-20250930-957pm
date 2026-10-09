@@ -534,6 +534,9 @@ export default function CommentsSection({
       return filterCommentsForBlockedUsers(fetchedComments, blockedUserIds);
     },
     enabled: !!session?.access_token && blockedUsersReady,
+    // Arriving scheduled replies reuse this live graph, not a copied thread.
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false,
   });
 
   const handleSubmit = (e: React.FormEvent) => {

@@ -105,6 +105,15 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
       );
 
+      const { data: root, error: rootError } = await serviceSupabase.from('social_posts')
+        .select('user_id,visibility').eq('id', post_id).maybeSingle();
+      if (rootError || !root || (root.visibility && root.visibility !== 'public' && root.user_id !== user?.id) ||
+          (user && await checkBlockingRelationship(serviceSupabase as any, user.id, root.user_id))) {
+        return new Response(JSON.stringify({ error: 'Post not available' }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       // Fetch all comments for this post (including replies)
       const { data: comments, error } = await serviceSupabase
         .from('social_post_comments')
@@ -249,10 +258,10 @@ serve(async (req) => {
 
       const { data: post, error: postError } = await serviceSupabase
         .from('social_posts')
-        .select('user_id')
+        .select('user_id,visibility')
         .eq('id', post_id)
         .single();
-      if (postError || !post) {
+      if (postError || !post || (post.visibility && post.visibility !== 'public' && post.user_id !== user!.id)) {
         return new Response(JSON.stringify({ error: 'Post not found' }), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }

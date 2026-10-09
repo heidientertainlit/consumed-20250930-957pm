@@ -23,6 +23,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 import { supabase } from "@/lib/supabase";
 import MediaPlayTab from "@/components/media-play-tab";
+import { useBlockedUsers } from "@/hooks/use-blocked-users";
 import { apiRequest } from "@/lib/queryClient";
 import {
   DropdownMenu,
@@ -51,6 +52,7 @@ export default function MediaDetail() {
     id: `${paramsPrefixed.prefix}/${paramsPrefixed.id}`
   } : paramsStandard;
   const { session, user } = useAuth();
+  const blockedUsers = useBlockedUsers(user?.id);
   const { archetypeKey } = useDnaArchetype();
   const [showAbout, setShowAbout] = useState(false);
   const [showAllPlatforms, setShowAllPlatforms] = useState(false);
@@ -136,14 +138,20 @@ export default function MediaDetail() {
   const [editProgress, setEditProgress] = useState(0);
   const [editTotal, setEditTotal] = useState(0);
   const [editMode, setEditMode] = useState<'percent' | 'page' | 'episode' | 'minutes'>('percent');
+  const blockSignature = [...(blockedUsers.data || [])].sort().join(",");
+  const commentVisibilityKey = `${user?.id}|${params?.id}|${params?.source}|${blockSignature}|${blockedUsers.status}`;
+  const commentVisibilityRef = useRef(commentVisibilityKey);
+  commentVisibilityRef.current = commentVisibilityKey;
 
   // Scroll to top when page loads
   useEffect(() => {
     window.scrollTo(0, 0);
+    setExpandedComments({});
   }, [params?.id, params?.type, params?.source]);
 
   // Fetch comments for a post
   const fetchComments = async (postId: string, force = false) => {
+    const requestVisibilityKey = commentVisibilityRef.current;
     if (!force && expandedComments[postId]) {
       // Already loaded, just toggle visibility
       return;
@@ -161,9 +169,12 @@ export default function MediaDetail() {
       );
       if (response.ok) {
         const data = await response.json();
-        setExpandedComments(prev => ({ ...prev, [postId]: data.comments || data || [] }));
+        if (requestVisibilityKey === commentVisibilityRef.current) setExpandedComments(prev => ({ ...prev, [postId]: data.comments || data || [] }));
+      } else {
+        if (requestVisibilityKey === commentVisibilityRef.current) setExpandedComments(prev => ({ ...prev, [postId]: [] }));
       }
     } catch (error) {
+      if (requestVisibilityKey === commentVisibilityRef.current) setExpandedComments(prev => ({ ...prev, [postId]: [] }));
       console.error('Failed to fetch comments:', error);
     } finally {
       setLoadingComments(prev => {
@@ -173,6 +184,32 @@ export default function MediaDetail() {
       });
     }
   };
+
+  const openCommentIds = Object.keys(expandedComments).sort().join(",");
+  useEffect(() => {
+    if (!openCommentIds || !session?.access_token || !blockedUsers.isSuccess) return;
+    const requestVisibilityKey = commentVisibilityRef.current;
+    let stopped = false;
+    const controller = new AbortController();
+    const refreshOpenComments = async () => {
+      await Promise.all(openCommentIds.split(",").map(async postId => {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments?post_id=${postId}&include=meta`, {
+            headers: { Authorization: `Bearer ${session.access_token}` }, signal: controller.signal,
+          });
+          const data = response.ok ? await response.json() : { comments: [] };
+          if (!stopped && requestVisibilityKey === commentVisibilityRef.current) setExpandedComments(prev => ({ ...prev, [postId]: data.comments || [] }));
+        } catch {
+          if (!stopped && requestVisibilityKey === commentVisibilityRef.current) setExpandedComments(prev => ({ ...prev, [postId]: [] }));
+        }
+      }));
+    };
+    // A changed block set must invalidate cached descendants immediately.
+    setExpandedComments(prev => Object.fromEntries(Object.entries(prev).map(([id]) => [id, []])));
+    void refreshOpenComments();
+    const timer = window.setInterval(() => void refreshOpenComments(), 30000);
+    return () => { stopped = true; controller.abort(); window.clearInterval(timer); };
+  }, [openCommentIds, session?.access_token, commentVisibilityKey]);
 
   const toggleComments = (postId: string) => {
     if (expandedComments[postId]) {
@@ -237,6 +274,8 @@ export default function MediaDetail() {
         return newSet;
       });
       queryClient.invalidateQueries({ queryKey: ['media-detail'] });
+      queryClient.invalidateQueries({ queryKey: ['media-social-activity'] });
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
     }
   });
 
@@ -267,6 +306,9 @@ export default function MediaDetail() {
       // Force a fresh fetch so the new comment/reply shows without a page refresh.
       fetchComments(variables.postId, true);
       queryClient.invalidateQueries({ queryKey: ['media-detail'] });
+      queryClient.invalidateQueries({ queryKey: ['media-social-activity'] });
+      queryClient.invalidateQueries({ queryKey: ['post-comments', variables.postId] });
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
     }
   });
 
@@ -423,6 +465,9 @@ export default function MediaDetail() {
     onSuccess: (data) => {
       // Force a fresh fetch so the deletion is reflected without a page refresh.
       fetchComments(data.postId, true);
+      queryClient.invalidateQueries({ queryKey: ['media-social-activity'] });
+      queryClient.invalidateQueries({ queryKey: ['post-comments', data.postId] });
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       toast({ title: "Comment deleted" });
     }
   });
@@ -538,13 +583,15 @@ export default function MediaDetail() {
   });
 
   // Fetch ALL social activity for this specific media
-  const { data: socialActivity = [] } = useQuery({
+  const { data: socialActivityRows = [] } = useQuery({
     queryKey: ['media-social-activity', canonicalMediaId, params?.source, params?.id],
     queryFn: async () => {
       const data = await preferredMediaRows('social_posts', `
           id,
           user_id,
           post_type,
+          persona_conversation_id,
+          visibility,
           rating,
           content,
           created_at,
@@ -580,8 +627,12 @@ export default function MediaDetail() {
 
       return data || [];
     },
-    enabled: !!params?.source && !!params?.id
+    enabled: !!params?.source && !!params?.id,
+    refetchInterval: 30000,
   });
+  const socialActivity = (!user?.id || blockedUsers.isSuccess) ? socialActivityRows.filter((post: any) =>
+    !(blockedUsers.data || []).includes(post.user_id) &&
+    (!post.visibility || post.visibility === 'public' || post.user_id === user?.id)) : [];
 
   // Fetch ALL ratings for this media so every rater shows up in the conversation,
   // even users whose rating never produced a social post.
@@ -646,11 +697,13 @@ export default function MediaDetail() {
     const groups = new Map<string, any[]>();
     const order: string[] = [];
     for (const post of takes as any[]) {
+      if (post.persona_conversation_id) continue;
       const uid = post.user_id || post.id;
       if (!groups.has(uid)) { groups.set(uid, []); order.push(uid); }
       groups.get(uid)!.push(post);
     }
-    const result: any[] = [];
+    // Preserve each shared thread, without borrowing another post's rating.
+    const result: any[] = takes.filter((post: any) => post.persona_conversation_id);
     for (const uid of order) {
       // posts are newest-first (socialActivity is ordered created_at desc)
       const posts = groups.get(uid)!;

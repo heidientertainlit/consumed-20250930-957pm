@@ -8241,6 +8241,7 @@ export default function Feed() {
     },
     onSuccess: () => {
       console.log('✅ Like mutation succeeded - optimistic update is correct');
+      queryClient.invalidateQueries({ queryKey: ["media-social-activity"] });
       // Don't refetch immediately - let the optimistic update stand
       // The next natural feed refresh will sync the data
     },
@@ -8296,6 +8297,7 @@ export default function Feed() {
     onSuccess: (data, variables) => {
       console.log('🔄 Invalidating queries for comment success');
       queryClient.invalidateQueries({ queryKey: ["social-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["media-social-activity"] });
       queryClient.invalidateQueries({ queryKey: ["post-comments", variables.postId] });
       setCommentInputs(prev => ({ ...prev, [variables.postId]: '' }));
     },
@@ -8419,6 +8421,7 @@ export default function Feed() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["social-feed"] });
       queryClient.invalidateQueries({ queryKey: ["post-comments", variables.postId] });
+      queryClient.invalidateQueries({ queryKey: ["media-social-activity"] });
     },
   });
 

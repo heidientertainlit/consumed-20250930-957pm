@@ -13,6 +13,8 @@ type Scenario = {
   resourceBlocked?: boolean;
   own?: boolean;
   commentRows?: any[];
+  privateRoot?: boolean;
+  missingRoot?: boolean;
   existingVote?: boolean;
 };
 
@@ -38,7 +40,10 @@ function rowsFor(s: Scenario, table: string, filters: Record<string, unknown>) {
     const inbound = filters.blocked_id === "actor" && s.blocked === "inbound" && filters.blocker_id === "target";
     return { data: outbound || inbound ? [{ blocker_id: filters.blocker_id, blocked_id: filters.blocked_id }] : [], error: null };
   }
-  if (table === "social_posts") return { data: [{ user_id: s.own ? "actor" : s.resourceBlocked ? "owner" : "target", likes_count: 0 }], error: null };
+  if (table === "social_posts") return { data: s.missingRoot ? [] : [{
+    user_id: s.own ? "actor" : s.resourceBlocked ? "owner" : s.commentRows ? "public-owner" : "target",
+    visibility: s.privateRoot ? "private" : "public", likes_count: 0,
+  }], error: null };
   if (table === "social_post_comments") {
     if (s.commentRows) return { data: s.commentRows, error: null };
     return {
@@ -156,6 +161,14 @@ test("social likes retain unblocked and own interactions", async () => {
     const endpoint = handlerFor("social-feed-like", scenario);
     assert.equal((await endpoint.request("POST", { post_id: "post" })).status, 200);
     assert.ok(endpoint.mutations.includes("social_post_likes:insert"));
+  }
+});
+
+test("social comment reads cannot expose missing/private roots or blocked authors", async () => {
+  for (const scenario of [{ privateRoot: true }, { missingRoot: true }, { blocked: "inbound" as const }]) {
+    const endpoint = handlerFor("social-feed-comments", scenario);
+    assert.equal((await endpoint.request("GET", {}, true, "?post_id=post")).status, 404);
+    assert.deepEqual(endpoint.mutations, []);
   }
 });
 

@@ -1,2 +1,10 @@
 [functions.posthog-capture]
 verify_jwt = false
+
+# Both new endpoints enforce their own authorization before any data access.
+# Avoid the gateway's legacy JWT verifier rejecting asymmetric session tokens.
+[functions.admin-persona-conversations]
+verify_jwt = false
+
+[functions.deliver-persona-conversations]
+verify_jwt = false

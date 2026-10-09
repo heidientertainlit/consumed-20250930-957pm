@@ -74,8 +74,12 @@ export function createCachedPersonaMediaResolver(keys: ProviderKeys, trace?: (en
     }
   };
 }
-export async function fetchTrendingCandidates(keys: ProviderKeys): Promise<MediaCandidate[]> {
+export async function fetchTrendingCandidates(keys: ProviderKeys, report?: (coverage: { provider: string; types: string[]; status: string; fetchedAt: string; error?: string }) => void): Promise<MediaCandidate[]> {
   const jobs: Promise<MediaCandidate[]>[] = [];
+  const providers: { provider: string; types: string[] }[] = [];
+  if (!keys.tmdb) report?.({ provider: "TMDB", types: ["movie", "tv"], status: "unavailable", fetchedAt: new Date().toISOString(), error: "Provider not configured" });
+  if (keys.tmdb) for (const type of ["tv", "movie"]) providers.push({ provider: "TMDB", types: [type] });
+  providers.push({ provider: "Open Library", types: ["book"] });
   if (keys.tmdb) for (const type of ["tv", "movie"]) jobs.push(json(`https://api.themoviedb.org/3/trending/${type}/week?api_key=${keys.tmdb}`).then(data =>
     (data.results || []).slice(0, 10).filter((r: any) => released(r.release_date || r.first_air_date)).map((r: any) => ({ title: r.title || r.name, type, externalId: String(r.id), externalSource: "tmdb", description: r.overview, genres: (r.genre_ids || []).map((id: number) => genres[id]).filter(Boolean), source: "Trending", fit: .5 })),
   ));
@@ -83,6 +87,8 @@ export async function fetchTrendingCandidates(keys: ProviderKeys): Promise<Media
     (data.works || []).slice(0, 8).map((r: any) => ({ title: r.title, type: "book", externalId: r.key?.replace(/^\//, ""), externalSource: "openlibrary", creator: r.author_name?.[0], source: "Trending", fit: .5 })),
   ));
   const results = await Promise.allSettled(jobs);
+  results.forEach((result, index) => report?.({ ...providers[index], status: result.status === "fulfilled" ? "ok" : "failed", fetchedAt: new Date().toISOString(),
+    ...(result.status === "rejected" ? { error: "Provider fetch failed; no verified trends from this source" } : {}) }));
   if (results.every(r => r.status === "rejected")) throw new Error("Trending providers unavailable");
   return results.flatMap(r => r.status === "fulfilled" ? r.value : []);
 }
