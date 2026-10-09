@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Netflix history access test</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <header>
+      <span class="badge">ISOLATED · LOCAL ONLY</span>
+      <h1>Netflix history test</h1>
+      <p class="intro">Check whether your browser can read viewing history again without another login.</p>
+    </header>
+    <aside class="notice">
+      <strong>No connection to Consumed</strong>
+      <p>No passwords or cookies are collected. History stays in this extension on this computer. Nothing is sent to a server.</p>
+    </aside>
+    <section class="setup" aria-labelledby="setup-heading">
+      <h2 id="setup-heading">Before you check</h2>
+      <ol>
+        <li>Sign into Netflix directly in this browser.</li>
+        <li>Select your own profile and open <strong>Viewing activity</strong> from your Netflix account.</li>
+        <li>Confirm the selected profile. Only already-loaded rows will be read.</li>
+      </ol>
+      <label class="field-label" for="profile-label">Local profile label</label>
+      <input id="profile-label" maxlength="60" placeholder="Example: My Netflix profile" autocomplete="off">
+      <p class="hint">Use the same label each time. It does not verify which Netflix profile is active.</p>
+      <label class="consent">
+        <input type="checkbox" id="consent">
+        <span>I am authorized to view this profile and understand that Netflix's access restrictions still apply.</span>
+      </label>
+      <button id="check" class="primary" disabled>Check loaded history</button>
+      <p id="status" role="status" aria-live="polite">Install this extension in desktop Chrome or Edge to begin.</p>
+    </section>
+    <section class="results" aria-labelledby="result-heading">
+      <h2 id="result-heading">Saved test result</h2>
+      <dl class="stats">
+        <div><dt>Rows saved</dt><dd id="saved-count">—</dd></div>
+        <div><dt>Not in baseline</dt><dd id="new-count">—</dd></div>
+      </dl>
+      <p id="last-check" class="hint">No history has been checked.</p>
+      <p class="hint">“Not in baseline” can include older rows you just loaded. It does not prove a new viewing, completion, or rating.</p>
+      <ul id="new-entries" aria-label="Rows not previously saved"></ul>
+    </section>
+    <footer>
+      <button id="clear" class="secondary" disabled>Delete this prototype's local data</button>
+      <p>No background checks. No full-history guarantee. Not affiliated with or approved by Netflix. This test does not establish permission or iPhone compatibility.</p>
+    </footer>
+  </main>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
