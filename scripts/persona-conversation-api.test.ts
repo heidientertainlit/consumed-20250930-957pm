@@ -42,7 +42,8 @@ async function loadHandler(path: string) {
   return g.fixtureHandler;
 }
 function fixture() {
-  const writes: any[] = []; const calls: any[] = [];
+  const writes: any[] = []; const calls: any[] = []; const queries: any[] = [];
+  let scanFails = false; const failedRPCs = new Set<string>();
   const searchRequests: any[] = [], providerRequests: string[] = [], pending: Promise<any>[] = [];
   let realSearch = false;
   let nextSubject = 1;
@@ -56,12 +57,23 @@ function fixture() {
     auth: { getUser: async (token: string) => ({ data: { user: token === "admin-session" ? { id: admin } : token === "human-session" ? { id: a } : null }, error: null }) },
     from(table: string) {
       let filters: ((r: any) => boolean)[] = [], operation = "", payload: any, one = false;
+      let orderKey = "", ascending = true, rowLimit = Infinity;
       const q: any = {
-        select: () => q, order: () => q, limit: () => q,
+        select: () => q,
+        order: (key: string, options?: { ascending?: boolean }) => {
+          orderKey = key; ascending = options?.ascending !== false;
+          queries.push({ table, method: "order", key }); return q;
+        },
+        limit: (value: number) => { rowLimit = value; queries.push({ table, method: "limit", value }); return q; },
         eq: (key: string, value: any) => { filters.push(r => r[key] === value); return q; },
         gt: (key: string, value: any) => { filters.push(r => r[key] > value); return q; },
         lte: (key: string, value: any) => { filters.push(r => r[key] <= value); return q; },
-        or: () => q,
+        or: (expression: string) => {
+          queries.push({ table, method: "or", expression });
+          const match = /^next_attempt_at\.is\.null,next_attempt_at\.lte\.(.+)$/.exec(expression);
+          if (!match) throw new Error(`Unsupported fixture OR expression: ${expression}`);
+          filters.push(r => r.next_attempt_at == null || r.next_attempt_at <= match[1]); return q;
+        },
         in: (key: string, value: any[]) => { filters.push(r => value.includes(r[key])); return q; },
         insert: (value: any) => { operation = "insert"; payload = value; return q; },
         upsert: (value: any) => { operation = "upsert"; payload = value; return q; },
@@ -69,7 +81,15 @@ function fixture() {
         single: () => { one = true; return q; }, maybeSingle: () => { one = true; return q; },
         then(resolve: any, reject: any) {
           try {
+            if (scanFails && table === "persona_conversation_runs" && !operation) {
+              return Promise.resolve({ data: null, error: { message: "fixture scan unavailable" } }).then(resolve, reject);
+            }
             let found = (rows[table] || []).filter(r => filters.every(f => f(r)));
+            if (orderKey) found.sort((a, b) => {
+              const result = a[orderKey] === b[orderKey] ? 0 : a[orderKey] < b[orderKey] ? -1 : 1;
+              return ascending ? result : -result;
+            });
+            found = found.slice(0, rowLimit);
             if (operation) {
               writes.push({ table, operation, payload });
               if (operation === "insert") {
@@ -90,6 +110,7 @@ function fixture() {
     },
     rpc: async (name: string, args: any) => {
       calls.push({ name, args });
+      if (failedRPCs.has(args.p_run)) return { data: null, error: { message: "fixture transaction unavailable" } };
       return { data: name === "resolve_media_canonical_batch" ? [] : { id: sid }, error: null };
     },
   };
@@ -138,7 +159,9 @@ function fixture() {
     if (url.includes("themoviedb.org")) return Response.json({ results: [{ id: 900, title: "Provider film", name: "Provider TV", release_date: "2020-01-01", first_air_date: "2020-01-01" }] });
     throw new Error("Unexpected network attempted");
   };
-  return { rows, writes, calls, searchRequests, providerRequests, pending, useActualSearch: () => { realSearch = true; }, get modelCount() { return modelCount; },
+  return { rows, writes, calls, queries, searchRequests, providerRequests, pending,
+    failWorkerScan: () => { scanFails = true; }, failWorkerRPC: (id: string) => failedRPCs.add(id),
+    useActualSearch: () => { realSearch = true; }, get modelCount() { return modelCount; },
     failJSON: () => { malformed = true; }, failModeration: () => { flagged = true; },
     failFacts: () => { factsFail = true; }, failProviders: () => { providersFail = true; } };
 }
@@ -149,6 +172,48 @@ const request = (body: any, token = "admin-session") => new Request("https://fix
   method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(body),
 });
 const generation = { action: "generate", topic: "An exact topic", subjectId: sid, participantIds: [a, b], openingAuthorId: a, replyCount: 2, durationMinutes: 5, maxWords: 60 };
+
+test("scheduled worker filters state, start time and retry time and scans at most twenty runs", async () => {
+  const f = fixture();
+  const past = "2000-01-01T00:00:00.000Z", future = "2099-01-01T00:00:00.000Z";
+  f.rows.persona_conversation_runs = [
+    ...Array.from({ length: 25 }, (_, i) => ({
+      id: `due-${i}`, status: "scheduled", start_at: past, next_attempt_at: null,
+    })),
+    { id: "draft", status: "draft", start_at: past },
+    { id: "approved-only", status: "approved", start_at: past },
+    { id: "paused", status: "paused", start_at: past },
+    { id: "cancelled", status: "cancelled", start_at: past },
+    { id: "future", status: "scheduled", start_at: future },
+    { id: "backoff", status: "scheduled", start_at: past, next_attempt_at: future },
+  ];
+  const response = await worker(request({}, "fixture-service"));
+  assert.equal(response.status, 200);
+  const deliveryCalls = f.calls.filter(call => call.name === "deliver_persona_conversation");
+  assert.equal(deliveryCalls.length, 20);
+  assert(deliveryCalls.every(call => call.args.p_run.startsWith("due-")));
+  assert(f.queries.some(query => query.table === "persona_conversation_runs" && query.method === "limit" && query.value === 20));
+  assert.equal(f.writes.length, 0, "Only the transactional RPC may publish");
+});
+
+test("worker scan failure cannot invoke delivery, and one RPC failure does not lose later due runs", async () => {
+  let f = fixture(); f.failWorkerScan();
+  assert.equal((await worker(request({}, "fixture-service"))).status, 500);
+  assert.equal(f.calls.length, 0);
+  assert.equal(f.writes.length, 0);
+  f = fixture();
+  f.rows.persona_conversation_runs = [
+    { id: "fail", status: "scheduled", start_at: "2000-01-01" },
+    { id: "next", status: "scheduled", start_at: "2000-01-01" },
+  ];
+  f.failWorkerRPC("fail");
+  const response = await worker(request({}, "fixture-service"));
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.results[0].status, "failed");
+  assert.deepEqual(f.calls.map(call => call.args.p_run), ["fail", "next"]);
+  assert.equal(f.writes.length, 0);
+});
 
 test("admin authorization, service-only worker, no private reads for human", async () => {
   const f = fixture();

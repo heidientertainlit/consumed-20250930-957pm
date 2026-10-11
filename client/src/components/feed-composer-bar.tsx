@@ -13,6 +13,7 @@ import { QuickTrackSheet } from "@/components/quick-track-sheet";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
 import RoomComposer, { DISCUSSION_TAGS } from "@/components/room-composer";
+import { useTrendingContent } from "@/components/use-trending-content";
 
 type MediaFilter = "all" | "tv" | "movie" | "book" | "podcast" | "music" | "game" | "youtube";
 
@@ -243,7 +244,6 @@ export default function FeedComposerBar({
   const seasonsReqId = useRef(0);
   const episodesReqId = useRef(0);
   const [recommendedItems, setRecommendedItems] = useState<any[]>([]);
-  const [trendingItems, setTrendingItems] = useState<any[]>([]);
   const [friendsConsumingItems, setFriendsConsumingItems] = useState<any[]>([]);
   const [friendRecItems, setFriendRecItems] = useState<any[]>([]);
   const [wantToItems, setWantToItems] = useState<any[]>([]);
@@ -258,6 +258,12 @@ export default function FeedComposerBar({
   const [seriesBulkAdding, setSeriesBulkAdding] = useState(false);
   const [seriesUserLists, setSeriesUserLists] = useState<any[]>([]);
   const [seriesUserListsLoading, setSeriesUserListsLoading] = useState(false);
+  const { data: trendingContent = [], isLoading: trendingLoading, isError: trendingError, refetch: refetchTrending } = useTrendingContent(showMediaSearch);
+  const trendingItems = trendingContent.map(item => ({
+    ...item,
+    type: item.media_type,
+    external_id: item.external_id,
+  }));
 
   const fetchSeriesBooks = async (seriesTitle: string, seriesId: string, author?: string): Promise<any[]> => {
     if (seriesBooksMap[seriesId]) return seriesBooksMap[seriesId];
@@ -529,33 +535,6 @@ export default function FeedComposerBar({
           }))
         );
       });
-
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    fetch(`${supabaseUrl}/functions/v1/get-trending-content`, {
-      headers: {
-        'Authorization': `Bearer ${anonKey}`,
-        'Content-Type': 'application/json',
-      },
-    })
-      .then(r => r.json())
-      .then(data => {
-        setTrendingItems(
-          (data.items || [])
-            .filter((item: any) => item.image_url)
-            .slice(0, 25)
-            .map((item: any) => ({
-              title: item.title,
-              type: item.media_type,
-              image_url: item.image_url,
-              external_id: item.external_id || item.id,
-              external_source: item.external_source || 'tmdb',
-              source_label: item.source_label,
-              source_key: item.source_key,
-            }))
-        );
-      })
-      .catch(() => {});
 
     // Friends are consuming — recent items from friends' "Currently" lists
     (async () => {
@@ -1055,20 +1034,34 @@ export default function FeedComposerBar({
                     </div>
                   )}
 
-                  {trendingItems.length > 0 && (
+                  {(trendingItems.length > 0 || trendingLoading || trendingError) && (
                     <div className="mb-6">
                       <div className="flex items-center justify-between px-5 mb-3">
                         <p className={`text-sm font-bold ${pageMode ? 'text-gray-900' : 'text-white'}`}>Trending Now</p>
-                        <span className={`text-xs font-medium ${pageMode ? 'text-purple-600' : 'text-purple-400'}`}>See all</span>
+                        {trendingError ? (
+                          <button type="button" data-guest-allowed onClick={() => void refetchTrending()} className={`text-xs font-semibold ${pageMode ? 'text-purple-700' : 'text-purple-300'}`}>Try again</button>
+                        ) : (
+                          <span className={`text-xs font-medium ${pageMode ? 'text-purple-600' : 'text-purple-400'}`}>See all</span>
+                        )}
                       </div>
-                      <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-                        {trendingItems.map((r, i) => (
-                          <MediaCard key={i} item={r} light={pageMode}
-                            onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source }); setIsQuickAddOpen(true); }}
-                            onRate={() => { selectMedia(r); }}
-                          />
-                        ))}
-                      </div>
+                      {trendingLoading ? (
+                        <div className="flex gap-3 px-5" aria-label="Loading trending titles">
+                          {[0, 1, 2, 3].map(index => <div key={index} className="h-[148px] w-[104px] shrink-0 animate-pulse rounded-xl bg-purple-100/60" />)}
+                        </div>
+                      ) : trendingItems.length > 0 ? (
+                        <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                          {trendingItems.map((r, i) => (
+                            <MediaCard key={`${r.external_source}:${r.external_id}:${i}`} item={r} light={pageMode}
+                              onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source }); setIsQuickAddOpen(true); }}
+                              onRate={() => { selectMedia(r); }}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <p className={`mx-5 rounded-xl px-3 py-2.5 text-xs ${pageMode ? 'bg-purple-50 text-purple-700' : 'bg-white/5 text-white/60'}`}>
+                          {trendingError ? "Trending titles couldn’t load." : "No trending titles are available right now."}
+                        </p>
+                      )}
                     </div>
                   )}
 

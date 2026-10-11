@@ -6,6 +6,7 @@ import { Plus, MessageSquare, Flame, Dna, Trophy, Library, Forward } from "lucid
 import FeedComposerBar from "@/components/feed-composer-bar";
 import { QuickTrackSheet } from "@/components/quick-track-sheet";
 import { DnaShareExperience } from "@/components/dna-share-experience";
+import { formatDnaGreeting, resolveFirstName } from "@/components/feed-identity-name";
 
 interface DnaBits {
   label: string | null;
@@ -31,12 +32,8 @@ export function FeedIdentityHero() {
   const [globalRank, setGlobalRank] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
-
-  const displayName =
-    user?.user_metadata?.display_name ||
-    user?.user_metadata?.first_name ||
-    user?.email?.split("@")[0] ||
-    "";
+  const [firstName, setFirstName] = useState("");
+  const [firstNameResolvedForUser, setFirstNameResolvedForUser] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -44,7 +41,7 @@ export function FeedIdentityHero() {
     let cancelled = false;
 
     (async () => {
-      const [dnaRes, streakRes, trackedRes] = await Promise.all([
+      const [dnaRes, streakRes, trackedRes, profileRes] = await Promise.all([
         supabase
           .from("dna_profiles")
           .select("label, tagline, flavor_notes, favorite_genres, secondary_archetypes")
@@ -59,12 +56,19 @@ export function FeedIdentityHero() {
           .from("list_items")
           .select("id", { count: "exact", head: true })
           .eq("user_id", uid),
+        supabase
+          .from("users")
+          .select("first_name")
+          .eq("id", uid)
+          .maybeSingle(),
       ]);
 
       if (cancelled) return;
       if (dnaRes.data) setDna(dnaRes.data as DnaBits);
       if (streakRes.data) setStreak(streakRes.data.current_streak || 0);
       if (typeof trackedRes.count === "number") setTracked(trackedRes.count);
+      setFirstName(resolveFirstName(profileRes.data?.first_name, user?.user_metadata));
+      setFirstNameResolvedForUser(uid);
       setLoading(false);
 
       // All-time global leaderboard rank (same source as profile — best-effort)
@@ -94,8 +98,8 @@ export function FeedIdentityHero() {
   // colouring the final word with the purple gradient (e.g. The / Emotional / Binger).
   const headline = dna?.label
     || (isFirstTimeIdentity
-      ? (displayName ? `Welcome to Consumed, ${displayName}` : "Welcome to Consumed")
-      : (displayName ? `Welcome back ${displayName}` : "Welcome back"));
+      ? (firstName ? `Welcome to Consumed, ${firstName}` : "Welcome to Consumed")
+      : (firstName ? `Welcome back ${firstName}` : "Welcome back"));
   const headlineWords = headline.trim().split(/\s+/);
   const hasPrefix = headlineWords[0]?.toLowerCase() === "the" && headlineWords.length > 2;
   const prefix = hasPrefix ? headlineWords[0] : null;
@@ -114,7 +118,7 @@ export function FeedIdentityHero() {
   if (globalRank) stats.push({ Icon: Trophy, color: "#fbbf24", value: `#${globalRank}`, label: "Leaderboard", href: "/leaderboard" });
   stats.push({ Icon: Library, color: "#a78bfa", value: tracked.toLocaleString(), label: "Tracked" });
 
-  if (loading) {
+  if (loading || firstNameResolvedForUser !== user?.id) {
     return <div className="rounded-3xl animate-pulse" style={{ height: 280, background: "rgba(255,255,255,0.05)" }} />;
   }
 
@@ -175,27 +179,35 @@ export function FeedIdentityHero() {
             </button>
           </div>
 
-          {/* Headline + avatar */}
-          <div className="relative flex items-center gap-4">
-            <div className="flex-1 min-w-0">
-              <h1 className="font-bold tracking-tight leading-[1.08]">
+          {/* The mobile stack gives the full archetype label its own width above the face. */}
+          <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="w-full min-w-0">
+              {dna?.label && (
+                <p
+                  className="mb-1 text-[11px] font-bold uppercase leading-snug"
+                  style={{ color: "rgba(192,160,255,0.9)", letterSpacing: "0.12em", overflowWrap: "anywhere" }}
+                >
+                  {formatDnaGreeting(firstName)}
+                </p>
+              )}
+              <h1 className="w-full min-w-0 font-bold tracking-tight leading-[1.08]" style={{ overflowWrap: "anywhere" }}>
                 {prefix && (
                   <span className="block text-[22px]" style={{ color: "rgba(255,255,255,0.9)" }}>
                     {prefix}
                   </span>
                 )}
-                <span className="block text-[32px] text-white">
+                <span className="block text-[clamp(1.75rem,8vw,2rem)] text-white">
                   {mainWords.join(" ")}
                 </span>
               </h1>
             </div>
             <button
               onClick={() => setLocation("/profile")}
-              className="shrink-0 active:scale-95 transition-transform"
+              className="self-end shrink-0 active:scale-95 transition-transform sm:self-auto"
               aria-label="View your DNA page"
               data-testid="button-hero-face-dna"
             >
-              <IdentityFace size={108} className="mr-2" />
+              <IdentityFace size={108} />
             </button>
           </div>
 

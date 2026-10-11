@@ -142,8 +142,9 @@ After **separate explicit release authorization**:
 
 1. Back up/check the target schema. Confirm UUID `social_posts.id`, the actual
    comment ID type/defaults, canonical alias tables, moderation triggers and
-   deletion rules. The inspected production comment IDs are integer (`int4`),
-   not the bigint identity used by the simplified local fixture. A targeted
+   deletion rules. The inspected production comment IDs are integer (`int4`);
+   the local fixture now uses integer IDs/defaults and includes the deployed
+   legacy insert counter alongside conversation-scoped recounting. A targeted
    disposable rehearsal with production-shaped columns, relevant constraints,
    and deployed post/comment triggers passed; it is not a full staging clone.
    The private stage has already applied
@@ -157,8 +158,12 @@ After **separate explicit release authorization**:
    the **active** function version/source hash, not just successful CLI output.
    Do not deploy or change the existing standalone generation/scheduling
    functions. Verify authorization/RLS using staging fixtures before live use.
-3. A supported scheduling option is Supabase **Cron (`pg_cron`) + `pg_net`**
-   invoking the new service-only worker once per minute. Store the approved
+3. Scheduled delivery uses Supabase **Cron (`pg_cron`) + `pg_net`**
+   invoking the new service-only worker once per minute. The guarded installer
+   is `supabase/operations/persona-conversation-delivery-timer.sql`; it is a
+   manual release operation, not a startup hook or automatic migration.
+   It creates a dedicated **inactive** job and rejects an already existing
+   conversation timer rather than replacing it. Store the approved
    project URL/service credential in Supabase Vault using its secure setup
    flow, never source code/browser configuration. Ensure this key belongs to
    the actual app project; the workspace's service key may target another
@@ -220,24 +225,73 @@ Unrated reviews remain supported. An internal `rating` engagement label is
 not evidence of an invented star rating; do not change review semantics or
 the protected standalone generator because of that label alone.
 
-Illustrative activation SQL, to run **only after explicit job authorization**,
-assuming the corresponding Vault secrets/extensions have been securely set up:
+## Scheduled delivery: built locally, activation requires approval
+
+The intended flow is **private draft → admin reviews the full conversation →
+admin approves its exact revision → admin schedules → approved messages are
+delivered at the reviewed intervals**. Scheduled delivery is not autonomous
+content generation or unapproved publishing.
+
+The dedicated dispatcher first checks for an approved, scheduled, due run
+whose retry/pacing time has arrived. Drafts, approval-only runs, future starts,
+stale approvals, paused runs, and cancellations do not trigger a worker request.
+The delivery transaction checks these conditions again under its row lock.
+The dispatcher never inserts posts/comments or changes persona configuration.
+The timer is minute-granularity, not an exact-second alarm: a due message may
+arrive on the next timer tick, and reviewed reply gaps remain preserved.
+
+Before production activation, separately approve the following exact actions:
+
+1. Deploy only the new worker:
+   `npx supabase functions deploy deliver-persona-conversations --project-ref mahpgcogwpawvviapqza --use-api`.
+2. Release the already-prepared shared-surface changes through separate targeted
+   deployments of `social-feed` and `social-feed-comments`, if not already
+   released. Verify active source/version and preserved authorization.
+3. Securely configure the two named Vault secrets from the **actual app
+   project**, never the mismatched workspace service-role credential.
+   Neither installer nor build creates secrets. Do not print their values.
+4. Apply only `supabase/operations/persona-conversation-delivery-timer.sql`
+   through the Management API. It requires existing Cron, pg_net, Vault and
+   conversation schema; it installs no extensions and commits the new job
+   inactive. Other generators and jobs are untouched.
+5. Review the existing scheduled queue before explicitly activating this job:
+   approved due conversations become eligible at the next tick. Confirm worker
+   authorization, secure credentials and project target before activation.
+
+The dispatcher restricts the target to the app project's Supabase origin,
+so credentials cannot be sent to a workspace URL or another host. Missing
+credentials or an unexpected target fail explicitly. The dispatcher function
+is not callable by anonymous users, authenticated users, or the service role;
+only the trusted Cron database owner is granted execution.
+
+Activation SQL below is **a separately approved production action**, not part
+of installing the inactive timer:
 
 ```sql
--- TEMPLATE ONLY; not a migration and not executed during this task.
-select cron.schedule('persona-social-conversations', '* * * * *', $job$
-  select net.http_post(
-    url := (select decrypted_secret from vault.decrypted_secrets
-            where name = 'consumed_supabase_url')
-           || '/functions/v1/deliver-persona-conversations',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || (select decrypted_secret
-        from vault.decrypted_secrets where name = 'consumed_service_role')),
-    body := '{}'::jsonb,
-    timeout_milliseconds := 50000
-  );
-$job$);
--- Stop job delivery: select cron.unschedule('persona-social-conversations');
+-- NOT executed by local development/testing.
+select cron.alter_job(
+  (select jobid from cron.job where jobname='persona-social-conversations'),
+  active:=true
+);
+-- Global pause (also requires approval):
+-- select cron.alter_job(
+--   (select jobid from cron.job where jobname='persona-social-conversations'),
+--   active:=false
+-- );
 -- Pausing/cancelling an individual run also prevents its unreleased messages.
 ```
+
+A queued HTTP request is not proof that content was delivered. Inspect the
+conversation's delivery mappings/history and bounded Cron/Edge Function logs.
+HTTP failures retry through later ticks; transaction failures retain the
+existing five-minute backoff and five-failure pause. The isolated SQL fixture
+uses fake Cron, Vault and network transports with the inspected signatures:
+it never contacts production or retrieves real credentials.
+
+`scripts/test-persona-conversations-local.sh` also runs
+`scripts/persona-conversation-delivery-integration.ts` against its disposable
+Unix socket. That check executes the real delivery worker and real database
+RPCs through a local-only adapter: draft and approval remain private, future
+schedules do not release early, a timer dispatch delivers the opening, repeated
+ticks do not duplicate it, pause/resume preserves the reviewed thread, and both
+replies arrive with consistent counts before the run becomes completed.

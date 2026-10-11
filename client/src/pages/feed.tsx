@@ -16,7 +16,6 @@ import FeedHero from "@/components/feed-hero";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
 import { DnaMomentCard } from "@/components/dna-moment-card";
-import { FeedIdentityHero, HeroCTAButtons, IdentityFace } from "@/components/feed-identity-hero";
 import { OnboardingResumePrompt } from "@/components/onboarding-resume-prompt";
 import CastApprovalCard from "@/components/cast-approval-card";
 
@@ -80,6 +79,9 @@ import { TodaysPlayNudge } from "@/components/todays-play-nudge";
 import { WhatsYourMove } from "@/components/whats-your-move"; // kept for reference — not currently rendered
 import FeedComposerBar from "@/components/feed-composer-bar";
 import TribeFeedCard from "@/components/tribe-feed-card";
+import { TopTrendingCarousel } from "@/components/top-trending-carousel";
+import { QuickActionSheet } from "@/components/quick-action-sheet";
+import { FeedIdentityZone } from "@/components/feed-identity-zone";
 
 const FEED_REVIEW_TEXT_CLASS = "text-[14px] font-normal leading-snug text-gray-800";
 const feedAffinityRequests = new Map<string, Promise<number | null>>();
@@ -5634,8 +5636,11 @@ export default function Feed() {
   const [reportCommentData, setReportCommentData] = useState<{ commentId: string; userId: string; userName: string } | null>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
+  const [trendingActionMedia, setTrendingActionMedia] = useState<any>(null);
+  const [isTrendingActionOpen, setIsTrendingActionOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const isUnfilteredNowFeed = (selectedFilter === "All" || selectedFilter === "all") && !selectedCategory;
   const [showCategoryPills, setShowCategoryPills] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
@@ -6542,14 +6547,29 @@ export default function Feed() {
     return out;
   }, [feedPlaySlots, promotedRatings, feedRatingCarousels]);
 
+  // Move the first real rating/review deck to the top of Now. Keep the exact
+  // existing ugc_stack object so its established swipe, review, and comment UI
+  // remains the source of truth; all following decks retain their feed order.
+  const { topRatingDeck, feedSlotsAfterTopRating } = useMemo(() => {
+    const index = mixedFeedSlots.findIndex((item: any) =>
+      item?.type === "ugc_stack" && Array.isArray(item.posts) && item.posts.length > 0
+    );
+    return {
+      topRatingDeck: index >= 0 ? mixedFeedSlots[index] : null,
+      feedSlotsAfterTopRating: isUnfilteredNowFeed && index >= 0
+        ? mixedFeedSlots.filter((_: any, itemIndex: number) => itemIndex !== index)
+        : mixedFeedSlots,
+    };
+  }, [mixedFeedSlots, isUnfilteredNowFeed]);
+
   // Map each play slot to a sequential index for renderPostBatchByIndex
   const slotAssignments = useMemo(() => {
     const map = new Map<number, any>();
-    mixedFeedSlots.forEach((item, i) => {
+    feedSlotsAfterTopRating.forEach((item: any, i: number) => {
       map.set(i, item);
     });
     return map;
-  }, [mixedFeedSlots]);
+  }, [feedSlotsAfterTopRating]);
 
   // Compact play activity card — leaderboard nudges and friend activity
   const renderPlayActivityCard = (item: any) => {
@@ -7014,7 +7034,7 @@ export default function Feed() {
 
   const renderPostBatchByIndex = (batchIndex: number) => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
-    const len = mixedFeedSlots.length;
+    const len = feedSlotsAfterTopRating.length;
     if (len === 0 || batchIndex >= len) return null;
     const item = slotAssignments.get(batchIndex);
     if (!item) return null;
@@ -7063,7 +7083,7 @@ export default function Feed() {
 
   const renderRemainingPosts = () => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
-    const remaining = mixedFeedSlots.slice(19);
+    const remaining = feedSlotsAfterTopRating.slice(19);
     if (remaining.length === 0) return null;
 
     // Collect all promoted posts into up to 3 stacks of up to 8 cards each
@@ -9118,83 +9138,8 @@ export default function Feed() {
         </div>
       )}
 
-      {/* Guest DNA teaser — entice signup with Entertainment DNA (guest hero zone) */}
-      {isGuestMode && (
-        <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-4 -mt-px">
-          <div className="max-w-4xl mx-auto px-4 pt-4">
-            <div className="rounded-2xl border border-purple-500/25 bg-white/[0.04] p-5" data-testid="guest-dna-teaser">
-              <div className="flex items-start gap-1.5">
-                <div className="flex flex-col">
-                  <p className="text-purple-300 text-[11px] font-semibold uppercase tracking-[0.18em]">
-                    Your Entertainment DNA™
-                  </p>
-                  <span className="mt-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-purple-300/65">
-                    Profile
-                  </span>
-                </div>
-                <Dna className="mt-0.5 w-3.5 h-3.5 text-purple-300" />
-              </div>
-              <div className="flex items-center justify-between gap-4 mt-3">
-                <div className="min-w-0">
-                  <p className="text-white/90 text-2xl font-medium leading-none">The</p>
-                  <p className="text-white text-3xl font-bold leading-tight mt-0.5">Emotional Binger</p>
-                  <p className="text-purple-300/90 text-sm italic mt-2.5">with shades of</p>
-                  <p className="text-purple-100 text-sm font-medium mt-0.5">
-                    Comfort Rewatcher <span className="text-purple-400">•</span> Prestige Detective
-                  </p>
-                </div>
-                <IdentityFace size={80} />
-              </div>
-              <button className="mt-4 w-full bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_55%,#2563eb_100%)] text-white text-sm font-bold rounded-full py-2.5 shadow-[0_7px_20px_rgba(50,42,180,.38)] transition active:scale-[.98] active:brightness-95 flex items-center justify-center gap-2" data-testid="button-guest-dna-cta">
-                See My DNA
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <div className="grid grid-cols-3 divide-x divide-white/10 border-t border-white/10 mt-4 pt-4">
-                <div className="flex flex-col items-center gap-1.5 px-1 text-center">
-                  <div className="w-8 h-8 rounded-full border border-purple-400/50 flex items-center justify-center">
-                    <Flame className="w-4 h-4 text-purple-300" />
-                  </div>
-                  <p className="text-purple-200 text-xs font-semibold leading-tight">Play daily</p>
-                  <p className="text-purple-300/70 text-[11px] leading-tight">build a streak</p>
-                </div>
-                <div className="flex flex-col items-center gap-1.5 px-1 text-center">
-                  <div className="w-8 h-8 rounded-full border border-purple-400/50 flex items-center justify-center">
-                    <Trophy className="w-4 h-4 text-purple-300" />
-                  </div>
-                  <p className="text-purple-200 text-xs font-semibold leading-tight">See your rank</p>
-                  <p className="text-purple-300/70 text-[11px] leading-tight">leaderboard</p>
-                </div>
-                <div className="flex flex-col items-center gap-1.5 px-1 text-center">
-                  <div className="w-8 h-8 rounded-full border border-purple-400/50 flex items-center justify-center">
-                    <Activity className="w-4 h-4 text-purple-300" />
-                  </div>
-                  <p className="text-purple-200 text-xs font-semibold leading-tight">Track your taste</p>
-                  <p className="text-purple-300/70 text-[11px] leading-tight">every rating counts</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Header Section — identity hero + DNA moment need a logged-in user, hidden for guests */}
-      {!isGuestMode && (
-        <div className="-mt-px" style={{ background: "linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)" }}>
-          <div className="max-w-4xl mx-auto px-4 pt-6 pb-6">
-            
-            {/* Composer Trigger - dark hero zone */}
-            <div>
-
-              <FeedIdentityHero />
-              <div className="mt-4">
-                <HeroCTAButtons />
-              </div>
-
-            </div>
-            
-          </div>
-        </div>
-      )}
+      {/* DNA identity remains the page hero; discovery leads only the feed below. */}
+      <FeedIdentityZone isGuestMode={isGuestMode} />
 
       <div className="max-w-4xl mx-auto px-4 pt-4 pb-6" data-feed-content>
         {!isGuestMode && <OnboardingResumePrompt userId={user?.id} />}
@@ -9448,8 +9393,28 @@ export default function Feed() {
 
               {/* === FEED SEQUENCE === */}
 
+              {isUnfilteredNowFeed && (
+                <TopTrendingCarousel
+                  onAdd={(media) => {
+                    setTrendingActionMedia(media);
+                    setIsTrendingActionOpen(true);
+                  }}
+                />
+              )}
+
+              {isUnfilteredNowFeed && topRatingDeck?.posts?.some((post: any) => !dismissedPostIds.has(post.id)) && (
+                <section className="mb-5" aria-labelledby="what-people-are-saying-title" data-testid="what-people-are-saying">
+                  <div className="mb-3 px-1">
+                    <h2 id="what-people-are-saying-title" className="text-[13px] font-extrabold tracking-[0.12em] text-[#35234b]">WHAT PEOPLE ARE SAYING</h2>
+                    <p className="mt-0.5 text-[11px] text-violet-500/80">Real ratings and reviews from your feed</p>
+                  </div>
+                  {renderFeedItem(topRatingDeck, "top-rating-deck")}
+                </section>
+              )}
+
+
               {/* ── Everyone's Talking — featured trending conversation, above the take carousel ── */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && everyonesTalking && everyonesTalking.length > 0 && (
+              {isUnfilteredNowFeed && everyonesTalking && everyonesTalking.length > 0 && (
                 <EveryonesTalkingCard
                   key={everyonesTalking[0].key}
                   groups={everyonesTalking.slice(0, 3)}
@@ -9552,9 +9517,6 @@ export default function Feed() {
               {/* {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <ChallengePoolsFeedBanner />
               )} */}
-
-              {/* — Rating carousel #0 — */}
-              {renderRatingCarousel(0)}
 
               {/* UGC slot 9 — after TV trivia round 1 */}
               {renderPostBatchByIndex(9)}
@@ -11595,6 +11557,15 @@ export default function Feed() {
           setQuickAddMedia(null);
         }}
         media={quickAddMedia}
+      />
+
+      <QuickActionSheet
+        isOpen={isTrendingActionOpen}
+        onClose={() => {
+          setIsTrendingActionOpen(false);
+          setTrendingActionMedia(null);
+        }}
+        preselectedMedia={trendingActionMedia}
       />
 
       {/* Bet Modal - Will they like it? */}

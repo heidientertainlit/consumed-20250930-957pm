@@ -18,8 +18,15 @@ create table media_provider_aliases(external_source text,external_id text,canoni
 create table social_posts(id uuid primary key default gen_random_uuid(),user_id uuid references users,post_type text,content text,rating numeric,
   media_title text,media_type text,media_creator text,media_external_id text,media_external_source text,canonical_media_id uuid,
   visibility text,likes_count integer,comments_count integer,created_at timestamptz default now());
-create table social_post_comments(id bigint generated always as identity primary key,social_post_id uuid references social_posts,
-  user_id uuid references users,content text,parent_comment_id bigint references social_post_comments,created_at timestamptz default now());
+create table social_post_comments(id serial primary key,social_post_id uuid not null references social_posts,
+  user_id uuid not null references users,content text not null,parent_comment_id integer references social_post_comments,
+  post_id uuid references social_posts,likes_count integer not null default 0,
+  created_at timestamptz default now(),updated_at timestamptz default now());
+-- Preserve the deployed legacy insert counter alongside the NEW scoped recount.
+create function increment_comments_count() returns trigger language plpgsql as $$
+begin update social_posts set comments_count=comments_count+1 where id=new.social_post_id; return new; end $$;
+create trigger trigger_increment_comments_count after insert on social_post_comments
+  for each row execute function increment_comments_count();
 grant usage on schema public to service_role,anon,authenticated;
 grant all on all tables in schema public to service_role;
 grant all on all sequences in schema public to service_role;
@@ -143,3 +150,69 @@ D=$!
 wait "$C"; wait "$D"
 "${PSQL[@]}" -c "select assert_true((select comments_count=4 from social_posts where persona_conversation_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),'concurrent human replies do not deadlock or lose counts');"
 echo "PASS: private lifecycle, authorization, concurrency, pacing, retries and shared identity"
+
+# Isolated timer contracts. Every credential and network request below is FAKE.
+# These schemas implement the inspected Cron/pg_net signatures without making
+# network calls or reading workspace/production secrets.
+"${PSQL[@]}" <<'SQL'
+create role postgres nologin;
+create schema cron;
+create table cron.job(jobid bigserial primary key,jobname text unique,schedule text,command text,active boolean default true);
+create function cron.schedule(job_name text,schedule text,command text) returns bigint language sql as $$
+  insert into cron.job(jobname,schedule,command) values(job_name,schedule,command) returning jobid $$;
+create function cron.alter_job(job_id bigint,schedule text default null,command text default null,
+  database text default null,username text default null,active boolean default null)
+returns void language sql as $$
+  update cron.job set active=coalesce($6,cron.job.active) where jobid=$1 $$;
+create schema vault;
+create table vault.decrypted_secrets(name text unique,decrypted_secret text);
+create schema net;
+create table net.fixture_requests(id bigserial primary key,url text,body jsonb,headers jsonb,timeout_milliseconds integer);
+create function net.http_post(url text,body jsonb default '{}',params jsonb default '{}',
+  headers jsonb default '{}',timeout_milliseconds integer default 5000)
+returns bigint language sql as $$
+  insert into net.fixture_requests(url,body,headers,timeout_milliseconds)
+  values($1,$2,$4,$5) returning id $$;
+-- Emulate the Cron job owner, but not Supabase access or production credentials.
+grant usage on schema public,vault,net to postgres;
+SQL
+"${PSQL[@]}" -f "$ROOT/supabase/operations/persona-conversation-delivery-timer.sql"
+"${PSQL[@]}" <<'SQL'
+select assert_true((select count(*)=1 and bool_and(not active) from cron.job),'new conversation timer is installed inactive');
+select assert_true((select command='select public.dispatch_due_persona_conversations();' from cron.job),'timer invokes only the dedicated dispatcher');
+select rejects('set role anon; select dispatch_due_persona_conversations()','anonymous timer dispatch denied');
+select rejects('set role authenticated; select dispatch_due_persona_conversations()','human timer dispatch denied');
+select rejects('set role service_role; select dispatch_due_persona_conversations()','worker cannot enable or invoke timer');
+-- Other lifecycle fixtures must not count as an eligible schedule here.
+update persona_conversation_runs set status='cancelled';
+select assert_true(dispatch_due_persona_conversations()->>'status'='idle','idle timer does not need credentials or queue network requests');
+insert into persona_conversation_runs(id,created_by,topic,participant_ids,opening_author_id,messages)
+values('dddddddd-dddd-4ddd-8ddd-dddddddddddd','11111111-1111-4111-8111-111111111111',
+ 'Timer fixture',roster(),(roster())[1],messages());
+select assert_true(dispatch_due_persona_conversations()->>'status'='idle','draft never triggers delivery');
+update persona_conversation_runs set status='scheduled',start_at=now()-interval '1 hour' where id='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+select assert_true(dispatch_due_persona_conversations()->>'status'='idle','unapproved schedule never triggers delivery');
+update persona_conversation_runs set approved_revision=revision+1 where id='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+select assert_true(dispatch_due_persona_conversations()->>'status'='idle','stale approval never triggers delivery');
+update persona_conversation_runs set approved_revision=revision,start_at=now()+interval '1 hour' where id='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+select assert_true(dispatch_due_persona_conversations()->>'status'='idle','future schedule never triggers early');
+update persona_conversation_runs set start_at=now()-interval '1 hour',next_attempt_at=now()+interval '5 minutes' where id='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+select assert_true(dispatch_due_persona_conversations()->>'status'='idle','retry and pacing next-attempt time respected by timer');
+update persona_conversation_runs set next_attempt_at=null where id='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+select rejects('select dispatch_due_persona_conversations()','due run fails explicitly when credentials missing');
+insert into vault.decrypted_secrets values('consumed_supabase_url','https://wrong-project.invalid'),('consumed_service_role','fixture-only-not-a-real-key');
+select rejects('select dispatch_due_persona_conversations()','credential is never sent to another project');
+select assert_true((select count(*)=0 from net.fixture_requests),'no network requests before due/approval/target checks succeed');
+update vault.decrypted_secrets set decrypted_secret='https://mahpgcogwpawvviapqza.supabase.co/' where name='consumed_supabase_url';
+select assert_true(dispatch_due_persona_conversations()->>'status'='enqueued','approved due schedule queues dedicated worker');
+select assert_true((select count(*)=1 and bool_and(url='https://mahpgcogwpawvviapqza.supabase.co/functions/v1/deliver-persona-conversations' and body='{}'::jsonb and timeout_milliseconds=10000) from net.fixture_requests),'dispatch target/body/timeout match worker contract');
+select assert_true((select count(*)=0 from social_posts where persona_conversation_id='dddddddd-dddd-4ddd-8ddd-dddddddddddd'),'timer never inserts posts directly');
+update persona_conversation_runs set status='paused' where id='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+select assert_true(dispatch_due_persona_conversations()->>'status'='idle','paused conversation is not dispatched');
+update persona_conversation_runs set status='cancelled' where id='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+select assert_true(dispatch_due_persona_conversations()->>'status'='idle','cancelled conversation is not dispatched');
+select assert_true((select count(*)=1 from net.fixture_requests),'pause/cancel/idle never queue additional requests');
+SQL
+echo "PASS: dedicated inactive timer, approved schedules only, project-bound dispatch and no direct publishing"
+PERSONA_LOCAL_PG_SOCKET="$SOCKET_DIR" PERSONA_LOCAL_PG_PORT="$PORT" \
+  "$ROOT/node_modules/.bin/tsx" "$ROOT/scripts/persona-conversation-delivery-integration.ts"
