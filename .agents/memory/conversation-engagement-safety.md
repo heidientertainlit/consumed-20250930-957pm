@@ -1,10 +1,10 @@
 ---
 name: Conversation engagement safety
-description: Unrated conversation publishing must account for deployed post-side-effect triggers, not just draft and comment integrity.
+description: Reviews may omit star ratings; distinguish internal engagement labels from actual ratings and verify downstream effects before declaring a release blocker.
 ---
 
-Unrated persona discussion roots must not be classified as rating engagements. Verify the deployed post-side-effect triggers in an isolated database before releasing a new publisher.
+“There doesn't have to be a rating to give a review.” Reviews may omit a star rating. Do not require stars or categorically reclassify an unrated review as a discussion.
 
-**Why:** A production-shaped rehearsal found that an unrated conversation tagged as a review created a selected rating engagement under the existing production trigger. Simplified fixtures omitted that trigger, so their passing “no fabricated activity” assertion did not cover the side effect.
+**Why:** The user clarified this product rule after a release assessment incorrectly treated an internal rating-engagement classification as sufficient proof of fabricated rating activity. That classification alone does not establish an invented star rating or harmful downstream behavior.
 
-**How to apply:** Inspect live trigger definitions read-only and reproduce their relevant schema, defaults, constraints, and behavior in local release tests. Check ordinary rated posts and ordinary comment counts alongside conversation behavior. Prefer correcting the new publisher's semantics over changing existing protected generation or engagement behavior. A targeted rehearsal is not certification of the entire production schema.
+**How to apply:** Preserve unrated reviews. When assessing publishing side effects, distinguish the stored star value, internal engagement category, and downstream use of that category. Verify an actual unintended consequence before calling it a release blocker or changing publisher semantics. Reproduce relevant deployed triggers in isolated tests rather than relying only on simplified fixtures.
