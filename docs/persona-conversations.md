@@ -115,10 +115,25 @@ tests remain applicable. The Mockup Sandbox's
 `persona-conversations/ConversationStudioFixture` uses an in-memory transport
 and inert Supabase shim for browser interaction checks, not an auth bypass.
 
-## Release handoff — NOT executed
+## Release handoff — private admin stage applied
 
-No schema push, Edge Function deployment, cron activation, live generation,
-public posting, or Git network operations were performed for implementation.
+Initial implementation performed no schema push, Edge Function deployment,
+cron activation, live generation, public posting, or Git network operations.
+The separately approved private admin stage has since applied only the
+conversation schema transaction and deployed `admin-persona-conversations`.
+The endpoint is ACTIVE and its normalized deployed entrypoint matches the
+tested workspace code. All 182 pre-existing function versions/statuses and
+the three pre-existing posts/comments trigger definitions remained unchanged.
+The new private tables have RLS enabled and deny anonymous/authenticated reads;
+the delivery RPC is service-only. Verification found zero conversation drafts,
+subjects, gender metadata, public conversation posts, or conversation cron jobs.
+No delivery worker, shared-feed update, frontend release, content generation,
+or Git network operation was performed. Signed-in admin UI and live generation
+have not been verified.
+
+The direct Management API schema transaction did not add a migration-history
+record. Do not reapply it or run a later schema push until its history
+bookkeeping has been reconciled through a separately approved action.
 Local fixture verification does not prove compatibility with every installed
 production trigger or constraint; verify against an authorized disposable
 staging copy of the live schema before release.
@@ -131,7 +146,9 @@ After **separate explicit release authorization**:
    not the bigint identity used by the simplified local fixture. A targeted
    disposable rehearsal with production-shaped columns, relevant constraints,
    and deployed post/comment triggers passed; it is not a full staging clone.
-   Apply only `20261009000000_persona_social_conversations.sql`. This project's
+   The private stage has already applied
+   `20261009000000_persona_social_conversations.sql`; do not apply it again.
+   This project's
    remote migration history differs from local history: use an isolated
    Supabase workdir with remote-history placeholders. A dry run must list
    **only this migration**, never replay unrelated historical migrations.
