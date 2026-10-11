@@ -8,10 +8,15 @@ test("report preserves batch order/text, escapes content, hides identities initi
   const p: Persona = { id: "p", user_name: "alex_thompson", display_name: "A < B", persona_config: {} };
   const result = await generatePersonaBatch({
     personas: [p], postsPerPersona: 1, weights: DEFAULT_MODE_WEIGHTS, recent: [], random: () => .99,
-    candidates: new Map([[p.id, [{ title: "A & B", type: "movie", source: "Discovery", fit: 1 }]]]),
+    candidates: new Map([[p.id, [{
+      title: "A & B", type: "movie", source: "Discovery", fit: 1,
+      externalId: "fixture-movie-1", externalSource: "tmdb",
+    }]]]),
     chat: async messages => messages[0].content.startsWith("Choose one concrete premise") ? '{"premise":"They enjoyed it."}' : messages[1].content.includes('"task":"narrow_intent_validation"')
       ? '{"issues":[]}' : JSON.stringify({ content: '<script>alert("x")</script> 🚫' }),
   });
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.drafts.length, 1, "The verified fixture must produce a report card");
   const before = JSON.stringify(result);
   const html = renderPersonaReport({ ...result, personaCount: 1,
     writerOutputs: [{ persona: "A < B", raw: '<script>raw rejected response</script>' }],

@@ -125,8 +125,12 @@ staging copy of the live schema before release.
 
 After **separate explicit release authorization**:
 
-1. Back up/check the target schema. Confirm UUID `social_posts.id`, bigint
-   comment IDs, canonical alias tables, moderation triggers and deletion rules.
+1. Back up/check the target schema. Confirm UUID `social_posts.id`, the actual
+   comment ID type/defaults, canonical alias tables, moderation triggers and
+   deletion rules. The inspected production comment IDs are integer (`int4`),
+   not the bigint identity used by the simplified local fixture. A targeted
+   disposable rehearsal with production-shaped columns, relevant constraints,
+   and deployed post/comment triggers passed; it is not a full staging clone.
    Apply only `20261009000000_persona_social_conversations.sql`. This project's
    remote migration history differs from local history: use an isolated
    Supabase workdir with remote-history placeholders. A dry run must list
@@ -144,6 +148,60 @@ After **separate explicit release authorization**:
    project. Keep this job **inactive** until separately authorized.
 4. Have the user handle Git operations manually. Review a private staging
    thread on both desktop/mobile before authorizing live content separately.
+
+### First production stage: private admin only — approval required
+
+Local preparation does not authorize either action below. Request approval for
+each action individually; approval for one does not authorize the other.
+
+**Action A — apply only the new schema transaction**
+
+- Target: hosted Supabase project `mahpgcogwpawvviapqza`.
+- Exact API action: `POST
+  https://api.supabase.com/v1/projects/mahpgcogwpawvviapqza/database/query`
+  with JSON body `{ "query": <entire contents of
+  supabase/migrations/20261009000000_persona_social_conversations.sql> }`.
+  Authenticate using the management token from the environment without
+  printing it. The file contains its own `BEGIN`/`COMMIT` transaction.
+- Expected changes: three private tables, their indexes/RLS/grants and
+  service-only conversation routines; one nullable
+  `social_posts.persona_conversation_id` column and foreign key; one new
+  conversation-scoped comment-count trigger.
+- Relevant risk: the migration touches the shared posts/comments schema and
+  briefly needs database locks. Its new deferred trigger is attached to all
+  comment inserts/deletes but only recounts conversation-linked posts.
+  Targeted isolated tests preserved ordinary comment-count behavior; they
+  cannot guarantee every production interaction.
+- Does not replay migration history or write content/persona configuration.
+  It creates a delivery RPC but does not invoke it, install cron, or start
+  automatic posting. Direct Management API execution does not itself record
+  the migration in Supabase migration history; reconcile that only through a
+  separately approved action. If the transaction fails, do not retry or
+  partially apply individual statements without investigating.
+
+**Action B — deploy only the private admin function**
+
+```sh
+npx supabase functions deploy admin-persona-conversations \
+  --project-ref mahpgcogwpawvviapqza --use-api
+```
+
+- This introduces one admin-authorized endpoint; it does not redeploy
+  `generate-persona-content`, `post-scheduled-content`, `admin-approve-draft`,
+  `media-search`, `social-feed`, or `social-feed-comments`.
+- Schema action A must succeed first. Verify the active deployed version/source
+  and state-loading authorization afterward; do not invoke generation,
+  scheduling, or persona metadata writes during that verification.
+- Admins can generate private drafts and manage them once this endpoint is
+  available. Actually generating a live private draft writes data and uses
+  the AI provider, so obtain separate approval for that test.
+- Do not deploy `deliver-persona-conversations`, update the shared feed
+  endpoints, create/activate cron, publish the frontend, perform Git network
+  operations, or release a public thread as part of either action.
+
+Unrated reviews remain supported. An internal `rating` engagement label is
+not evidence of an invented star rating; do not change review semantics or
+the protected standalone generator because of that label alone.
 
 Illustrative activation SQL, to run **only after explicit job authorization**,
 assuming the corresponding Vault secrets/extensions have been securely set up:
