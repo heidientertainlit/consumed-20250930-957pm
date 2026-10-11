@@ -73,5 +73,6 @@
 - [Persona generation voice](persona-generation-voice.md) — natural variation beats perfect quotas; modes are behaviors, and voices are tendencies rather than templates or caricatures.
 - [Persona conversation timing](persona-conversation-timing.md) — late delivery preserves full reviewed gaps after actual arrival, even when the conversation finishes later than planned.
 - [Conversation engagement safety](conversation-engagement-safety.md) — reviews need no star rating; an internal activity label alone does not prove fabricated ratings or a release blocker.
+- [Conversation publishing policy](conversation-publishing-policy.md) — admin approval then scheduling then delivery; no autonomous unapproved publishing.
 - [Writer JSON-mode contract](writer-json-mode-contract.md) — JSON-object mode requires a literal “JSON” instruction in an input message; an object example alone is insufficient.
 - [Today's Play identity artifacts](todays-play-identity-artifacts.md) — simple non-trivia daily questions; earned artifacts after answering, not extra gameplay steps.
