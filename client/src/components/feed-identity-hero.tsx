@@ -101,7 +101,7 @@ export function FeedIdentityHero() {
       ? (firstName ? `Welcome to Consumed, ${firstName}` : "Welcome to Consumed")
       : (firstName ? `Welcome back ${firstName}` : "Welcome back"));
   const headlineWords = headline.trim().split(/\s+/);
-  const hasPrefix = headlineWords[0]?.toLowerCase() === "the" && headlineWords.length > 2;
+  const hasPrefix = headlineWords[0]?.toLowerCase() === "the" && headlineWords.length > 1;
   const prefix = hasPrefix ? headlineWords[0] : null;
   const mainWords = hasPrefix ? headlineWords.slice(1) : headlineWords;
 
@@ -179,9 +179,10 @@ export function FeedIdentityHero() {
             </button>
           </div>
 
-          {/* The mobile stack gives the full archetype label its own width above the face. */}
-          <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <div className="w-full min-w-0">
+          {/* Keep the face beside the title on mobile, with a little of it tucked
+              past the card edge so long names still have room to wrap. */}
+          <div className="relative flex items-center gap-2 sm:gap-4">
+            <div className="min-w-0 flex-1">
               {dna?.label && (
                 <p
                   className="mb-1 text-[11px] font-bold uppercase leading-snug"
@@ -190,7 +191,7 @@ export function FeedIdentityHero() {
                   {formatDnaGreeting(firstName)}
                 </p>
               )}
-              <h1 className="w-full min-w-0 font-bold tracking-tight leading-[1.08]" style={{ overflowWrap: "anywhere" }}>
+              <h1 className="min-w-0 font-bold tracking-tight leading-[1.08]" style={{ overflowWrap: "anywhere" }}>
                 {prefix && (
                   <span className="block text-[22px]" style={{ color: "rgba(255,255,255,0.9)" }}>
                     {prefix}
@@ -203,11 +204,11 @@ export function FeedIdentityHero() {
             </div>
             <button
               onClick={() => setLocation("/profile")}
-              className="self-end shrink-0 active:scale-95 transition-transform sm:self-auto"
+              className="relative -mr-12 flex h-[88px] w-[88px] shrink-0 items-center justify-center active:scale-95 transition-transform sm:mr-0 sm:h-[108px] sm:w-[108px]"
               aria-label="View your DNA page"
               data-testid="button-hero-face-dna"
             >
-              <IdentityFace size={108} />
+              <IdentityFace size={108} className="scale-[.8] sm:scale-100" />
             </button>
           </div>
 

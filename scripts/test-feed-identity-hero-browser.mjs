@@ -87,6 +87,7 @@ try {
         const geometry = await page.evaluate(() => {
           const title = document.querySelector("h1").getBoundingClientRect();
           const face = document.querySelector('[data-testid="button-hero-face-dna"]').getBoundingClientRect();
+          const card = document.querySelector('[data-testid="button-hero-face-dna"]').parentElement.parentElement.getBoundingClientRect();
           const greeting = document.querySelector("h1").previousElementSibling.getBoundingClientRect();
           const range = document.createRange(); range.selectNodeContents(document.querySelector("h1"));
           const text = [...range.getClientRects()].filter(rect => rect.width > 0);
@@ -95,12 +96,20 @@ try {
             greetingAbove: greeting.bottom <= title.top,
             textFits: text.every(rect => rect.left >= title.left - 1 && rect.right <= title.right + 1),
             overflow: document.documentElement.scrollWidth > innerWidth,
+            faceFitsDesign: innerWidth < 640 ? face.right > card.right && card.right - face.left >= 44 : face.right <= card.right,
           };
         });
-        assert.deepEqual(geometry, { overlap: false, greetingAbove: true, textFits: true, overflow: false }, `${width}px / ${fontSize}px / ${label}`);
+        assert.deepEqual(geometry, { overlap: false, greetingAbove: true, textFits: true, overflow: false, faceFitsDesign: true }, `${width}px / ${fontSize}px / ${label}`);
       }
     }
   }
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "16px";
+    window.mountHero("The Completionist", "Heidi");
+  });
+  await page.getByText("HEIDI, YOU’RE", { exact: true }).waitFor();
+  await page.screenshot({ path: "/tmp/dna-face-mobile-layout.png" });
   await page.evaluate(() => window.mountHero(null, "Heidi"));
   await page.getByRole("heading", { name: "Welcome back Heidi" }).waitFor();
   assert.equal(await page.getByText("HEIDI, YOU’RE", { exact: true }).count(), 0);
