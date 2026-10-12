@@ -2597,6 +2597,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       ? formatFeedName(latestReply.user?.displayName, latestReply.user?.username || latestReply.username)
       : '';
     const remainingReplyCount = Math.max(0, conversationCount - 1);
+    const hasMoreFeaturedReviews = showDiscoveryHeading && !!swipeProps?.navigate
+      && (stackIndex ?? 0) < (swipeProps?.totalPosts ?? 0) - 1;
 
     return (
       <>
@@ -2609,14 +2611,25 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             : undefined}
         >
           {showDiscoveryHeading && (
-            <div className="px-4 pt-4 pr-12">
-              <h2 id="what-people-are-saying-title" className="font-fraunces text-base font-semibold leading-snug text-gray-900">What People Are Saying</h2>
+            <div className={`px-4 pt-4 ${hasMoreFeaturedReviews && currentUserId && post.user?.id !== currentUserId ? "pr-24" : "pr-12"}`}>
+              <h2 id="what-people-are-saying-title" className="font-fraunces text-[22px] font-semibold leading-snug text-gray-900 sm:text-[26px]">What People Are Saying</h2>
             </div>
+          )}
+          {hasMoreFeaturedReviews && (
+            <button
+              type="button"
+              data-guest-allowed
+              onClick={(e) => { e.stopPropagation(); swipeProps!.navigate!(-1); }}
+              className="absolute top-1 right-1 z-10 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+              aria-label="Show another review"
+            >
+              <ChevronRight size={22} aria-hidden="true" />
+            </button>
           )}
           {currentUserId && post.user?.id !== currentUserId && (
             <button
               onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }}
-              className="absolute top-1 right-1 z-10 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 hover:text-orange-600 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 transition-colors"
+              className={`absolute top-1 ${hasMoreFeaturedReviews ? "right-12" : "right-1"} z-10 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 hover:text-orange-600 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 transition-colors`}
               title="Report review"
               aria-label="Report review"
             >
@@ -2624,7 +2637,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </button>
           )}
 
-          {/* Featured cards use only a quiet overlapping-card edge, not dots or next controls. */}
+          {/* Featured cards keep the quiet overlap and corner chevron, without dots or a navigation strip. */}
           {showDiscoveryHeading && <div className="h-3" />}
           {!showDiscoveryHeading && swipeProps?.navigate && swipeProps?.totalPosts && swipeProps.totalPosts > 1 && (
               <div className="flex min-h-12 items-center justify-center gap-1.5 px-12 pt-4 pb-2">

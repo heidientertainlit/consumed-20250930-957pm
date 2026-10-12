@@ -21,8 +21,8 @@ For the featured carousel, put avatar and shortened reviewer name first, then co
 
 **How to apply:** Keep this localized to featured reviews; preserve stars, match pills, related ratings, all reaction controls, and owner delete.
 
-Use only a subtle overlapping-card edge to suggest more reviews, without dots, “Next” labels, thumbnails, or visible previous/next controls.
+Use a subtle overlapping-card edge plus a simple upper-right “>” to suggest more reviews, without dots, “Next” labels, thumbnails, or a previous/next navigation strip. Keep the Fraunces heading slightly smaller than Trending now.
 
-**Why:** The user explicitly rejected the added next-review controls and preview.
+**Why:** The user rejected the added next-review strip and preview, then specifically requested an upper-right “>” and a heading slightly smaller than Trending now.
 
-**How to apply:** Preserve swipe navigation and show the overlap only when the carousel contains multiple posts. Do not introduce another labeled navigation strip.
+**How to apply:** Preserve swipe navigation and show the overlap only when the carousel contains multiple posts. The corner chevron advances to another review and must not overlap reporting. Do not introduce another labeled navigation strip.

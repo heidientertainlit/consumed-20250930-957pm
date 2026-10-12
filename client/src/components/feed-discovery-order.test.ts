@@ -38,9 +38,16 @@ test("Featured review heading lives inside its carousel and uses Fraunces", () =
   assert.match(feed, /data-testid=\{showDiscoveryHeading \? "featured-review-carousel-card" : undefined\}/);
   assert.match(feed, /showDiscoveryHeading && \([^]*?<h2 id="what-people-are-saying-title"/);
   const reviewClass = feed.match(/id="what-people-are-saying-title" className="([^"]+)"/)?.[1];
-  assert.equal(reviewClass, "font-fraunces text-base font-semibold leading-snug text-gray-900");
+  assert.equal(reviewClass, "font-fraunces text-[22px] font-semibold leading-snug text-gray-900 sm:text-[26px]");
   assert.doesNotMatch(feed, /Real ratings and reviews from your feed|WHAT PEOPLE ARE SAYING/);
   assert.match(feed, /data-testid="what-people-are-saying">\s*\{renderFeedItem\(topRatingDeck, "top-rating-deck"\)\}/);
+});
+
+test("Featured reviews have a guest-accessible corner chevron without crowding the report button", () => {
+  assert.match(feed, /data-guest-allowed\s+onClick=\{\(e\) => \{ e\.stopPropagation\(\); swipeProps!\.navigate!\(-1\); \}\}/);
+  assert.match(feed, /aria-label="Show another review"/);
+  assert.match(feed, /hasMoreFeaturedReviews \? "right-12" : "right-1"/);
+  assert.match(feed, /\(stackIndex \?\? 0\) < \(swipeProps\?\.totalPosts \?\? 0\) - 1/);
 });
 
 test("Featured reviews emphasize the reviewer and commentary without next controls or dots", () => {
