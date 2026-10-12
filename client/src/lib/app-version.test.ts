@@ -37,3 +37,16 @@ test("fails open when a version is malformed", () => {
     "none",
   );
 });
+
+test("automatically synchronized thresholds require every older version, not the latest", () => {
+  const synchronized = {
+    ...config,
+    latest_version: "1.0.9",
+    minimum_supported_version: "1.0.9",
+  };
+  assert.equal(getUpdateRequirement("1.0.7", synchronized), "required");
+  assert.equal(getUpdateRequirement("1.0.8", synchronized), "required");
+  assert.equal(getUpdateRequirement("1.0.9", synchronized), "none");
+  assert.equal(getUpdateRequirement("1.0.10", synchronized), "none");
+  assert.equal(getUpdateRequirement("1.0.9-beta.1", synchronized), "required");
+});
