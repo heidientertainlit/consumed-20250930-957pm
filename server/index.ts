@@ -21,6 +21,7 @@ if (process.env.NODE_ENV === "development") {
           pending = loadUSCharts({
             flixKey: process.env.FLIXPATROL_API_KEY, tmdbKey: process.env.TMDB_API_KEY,
             nytKey: process.env.NYT_API_KEY,
+            openaiKey: process.env.OPENAI_API_KEY, googleBooksKey: process.env.GOOGLE_BOOKS_API_KEY,
           }).finally(() => { pending = undefined; });
         }
         cached = await pending;

@@ -123,11 +123,21 @@ export function TopTrendingCarousel({
                   >
                     <ImageOff className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 text-violet-200" aria-hidden="true" />
                     <img
+                      key={item.image_url}
                       src={item.image_url}
                       alt={item.title}
                       loading="lazy"
                       className={`relative h-full w-full transition-transform duration-300 group-hover:scale-[1.04] ${item.media_type === "music" || item.media_type === "podcast" ? "object-contain" : "object-cover"}`}
-                      onError={(event) => { event.currentTarget.style.opacity = "0"; }}
+                      onError={(event) => {
+                        const image = event.currentTarget;
+                        if (item.fallback_image_url && !image.dataset.fallbackTried) {
+                          image.dataset.fallbackTried = "true";
+                          image.src = item.fallback_image_url;
+                          return;
+                        }
+                        image.style.opacity = "0";
+                      }}
+                      onLoad={(event) => { event.currentTarget.style.opacity = "1"; }}
                     />
                   </button>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)" }} />

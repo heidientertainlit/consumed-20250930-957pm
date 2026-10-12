@@ -12,7 +12,7 @@ serve(async req => {
   try {
     const admin = createClient(Deno.env.get("SUPABASE_URL") || "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "");
     // Never reuse the previous global/Consumed/TMDB payload for verified US charts.
-    const cacheKey = "us-top-charts-v2";
+    const cacheKey = "us-top-charts-v2-flat-covers";
     let cached: any = null;
     try {
       const { data } = await admin.from("trending_content_cache")
@@ -33,6 +33,21 @@ serve(async req => {
     const payload = await loadUSCharts({
       flixKey: Deno.env.get("FLIXPATROL_API_KEY"), tmdbKey: Deno.env.get("TMDB_API_KEY"),
       nytKey: Deno.env.get("NYT_API_KEY"),
+      openaiKey: Deno.env.get("OPENAI_API_KEY"), googleBooksKey: Deno.env.get("GOOGLE_BOOKS_API_KEY"),
+      coverCache: {
+        async get(key) {
+          const { data, error } = await admin.from("trending_content_cache").select("payload")
+            .eq("cache_key", key).abortSignal(AbortSignal.timeout(2000)).maybeSingle();
+          if (error) throw new Error("Cover cache read failed");
+          return data?.payload;
+        },
+        async set(key, value) {
+          const { error } = await admin.from("trending_content_cache")
+            .upsert({ cache_key: key, payload: value, updated_at: new Date().toISOString() })
+            .abortSignal(AbortSignal.timeout(2000));
+          if (error) throw new Error("Cover cache write failed");
+        },
+      },
     });
     // Preserve bounded, real previous charts per source during a provider outage.
     // Do not label stale results as fresh or fall back to global/Consumed activity.

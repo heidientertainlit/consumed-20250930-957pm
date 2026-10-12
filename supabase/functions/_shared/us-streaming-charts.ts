@@ -25,6 +25,8 @@ export interface ChartItem {
   rank: number;
   chart_country: "US";
   chart_date: string;
+  fallback_image_url?: string;
+  cover_status?: string;
 }
 export type Fetcher = typeof fetch;
 type Resource = Record<string, any>;

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { preferredBookCover } from "@shared/book-cover-preferences";
 
 export interface TrendingContentItem {
   id?: string;
@@ -13,6 +14,7 @@ export interface TrendingContentItem {
   rank?: number;
   chart_country?: string;
   chart_date?: string;
+  fallback_image_url?: string;
 }
 
 const trendingContentQueryKey = ["trending-content", "us-charts-v2"];
@@ -32,13 +34,20 @@ export function normalizeTrendingItems(items: unknown): TrendingContentItem[] {
       && typeof item.image_url === "string" && item.image_url)
     // Category selection must happen BEFORE the display limit, or podcasts vanish.
     .slice(0, 500)
-    .map(item => ({
-      ...item,
-      external_source: providerAliases[item.external_source] || item.external_source,
-      // `id` is a display key such as "app-0", not a provider media ID.
-      external_id: item.external_id != null && String(item.external_id).trim()
-        ? String(item.external_id).trim() : undefined,
-    }));
+    .map(item => {
+      const preferred = preferredBookCover(item);
+      return {
+        ...item,
+        // Verified imagery can improve without changing the book's provider ID.
+        image_url: preferred || item.image_url,
+        fallback_image_url: preferred && preferred !== item.image_url
+          ? item.image_url : item.fallback_image_url,
+        external_source: providerAliases[item.external_source] || item.external_source,
+        // `id` is a display key such as "app-0", not a provider media ID.
+        external_id: item.external_id != null && String(item.external_id).trim()
+          ? String(item.external_id).trim() : undefined,
+      };
+    });
 }
 
 async function fetchTrendingContent(): Promise<TrendingContentItem[]> {

@@ -1,4 +1,5 @@
 import { getUSStreamingCharts, type ChartItem, type Fetcher } from "./us-streaming-charts.ts";
+import { improveBookCovers, type CoverOptions, type CoverCache } from "./book-cover-quality.ts";
 
 function feedDate(value: string): string {
   const timestamp = Date.parse(value);
@@ -6,7 +7,7 @@ function feedDate(value: string): string {
   return new Date(timestamp).toISOString().slice(0, 10);
 }
 
-export async function getUSBookCharts(key: string | undefined, fetcher: Fetcher = fetch): Promise<ChartItem[]> {
+export async function getUSBookCharts(key: string | undefined, fetcher: Fetcher = fetch, coverOptions: CoverOptions = {}): Promise<ChartItem[]> {
   if (!key) throw new Error("NYT chart key required");
   const lists = [
     { slug: "hardcover-fiction", label: "NYT Fiction" },
@@ -24,10 +25,13 @@ export async function getUSBookCharts(key: string | undefined, fetcher: Fetcher 
       image_url: book.book_image || "", creator: book.author,
       source_label: list.label, source_key: `nyt-${list.slug}`, rank: book.rank,
       external_id: book.primary_isbn13 || book.primary_isbn10, external_source: "openlibrary",
+      alternate_isbns: (book.isbns || []).flatMap((isbn: any) => [isbn.isbn13, isbn.isbn10]).filter(Boolean),
       chart_country: "US" as const, chart_date: data.results.bestsellers_date,
     }));
   }));
-  return results.flatMap(result => result.status === "fulfilled" ? result.value : []);
+  return improveBookCovers(results.flatMap(result => result.status === "fulfilled" ? result.value : []), {
+    ...coverOptions, fetcher,
+  });
 }
 
 export async function getUSMusicCharts(fetcher: Fetcher = fetch): Promise<ChartItem[]> {
@@ -63,10 +67,13 @@ export async function getUSPodcastCharts(fetcher: Fetcher = fetch): Promise<Char
 
 export async function loadUSCharts(options: {
   flixKey?: string; tmdbKey?: string; nytKey?: string; fetcher?: Fetcher; now?: Date;
+  openaiKey?: string; googleBooksKey?: string; coverCache?: CoverCache;
 }) {
   const results = await Promise.allSettled([
     getUSStreamingCharts({ key: options.flixKey, tmdbKey: options.tmdbKey, fetcher: options.fetcher, now: options.now }),
-    getUSBookCharts(options.nytKey, options.fetcher),
+    getUSBookCharts(options.nytKey, options.fetcher, {
+      openaiKey: options.openaiKey, googleBooksKey: options.googleBooksKey, cache: options.coverCache,
+    }),
     getUSMusicCharts(options.fetcher),
     getUSPodcastCharts(options.fetcher),
   ]);
