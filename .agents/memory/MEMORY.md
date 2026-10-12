@@ -13,6 +13,7 @@
 - [Supabase service key mismatch](supabase-service-key-mismatch.md) — the workspace service-role credential targets a different project than the app; do not use it for app-project diagnostics.
 - [TanStack Query v5 refetchInterval](tanstack-refetchinterval-v5.md) — the callback receives the Query object, not data; read `query.state.data`, else polling silently never fires.
 - [media-search type param](media-search-type-param.md) — edge fn reads `type` not `media_type`; callers sending `media_type` (Track/quick-action sheets) get no server filter. No `game` source exists.
+- [Search enrichment latency](search-enrichment-latency.md) — optional book-series AI can delay non-book searches; scope opt-ins without removing All/Books or legacy series support.
 - [Cross-endpoint fixtures](cross-endpoint-fixtures.md) — execute reused handlers' real request interpretation; canned endpoint results can hide broken forwarding contracts.
 - [media_ratings writes](media-ratings-writes.md) — inserts need media_title + media_type (NOT NULL) or they fail silently; "tracked" counts list_items, not ratings.
 - [Google Books cover placeholders](googlebooks-cover-placeholders.md) — coverless editions return a valid gray "image not available" PNG; only build cover URLs when `imageLinks` exists.
