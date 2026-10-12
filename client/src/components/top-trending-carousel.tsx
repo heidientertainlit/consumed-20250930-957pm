@@ -154,7 +154,7 @@ export function TopTrendingCarousel({
               )}
             </div>
           </div>
-          <div className="scrollbar-hide -mx-1 mt-4 overflow-x-auto px-1" role="group" aria-label="Filter trending titles by category">
+          <div className="scrollbar-hide -mx-1 mt-[14px] overflow-x-auto px-1" role="group" aria-label="Filter trending titles by category">
             <div className="flex w-max items-center gap-1.5">
               {([
                 ["all", "All"],
