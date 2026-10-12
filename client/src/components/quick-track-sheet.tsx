@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { Capacitor } from "@capacitor/core";
 import MediaSearchPanel from "@/components/media-search-panel";
 import { createPortal } from "react-dom";
 import {
@@ -16,6 +17,7 @@ import { trackEvent } from "@/lib/posthog";
 import ImportHistory, { ImportReceipt, receiptFromResponse } from "@/components/import-history";
 import { getBookVolumeLabel } from "@/lib/book-volume";
 import { buildQuickTrackThoughtPostPayload } from "@/lib/quick-track-post";
+import { getQuickTrackPosition } from "@/lib/quick-track-position";
 
 export interface TrackDetailsMedia {
   title: string;
@@ -76,6 +78,13 @@ function typeLabel(type?: string, mediaSubtype?: string): string {
 export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: QuickTrackSheetProps) {
   const { session } = useAuth();
   const { toast } = useToast();
+
+  // Snapshot before MediaSearchPanel's autofocus opens the native keyboard.
+  // Keep it through typing, filters and step changes; recapture on reopening.
+  const sheetPosition = useMemo(
+    () => isOpen ? getQuickTrackPosition(Capacitor.getPlatform(), window.innerHeight) : undefined,
+    [isOpen],
+  );
 
   const [step, setStep] = useState<Step>(initialStep);
   // Typo rescue: when a search returns zero results we ask spell-fix for a
@@ -408,7 +417,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
 
       <div
         className="absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"
-        style={{ top: '12%', maxHeight: '82vh' }}
+        style={sheetPosition}
       >
         {/* grab handle */}
         <div className="flex justify-center pt-2.5 pb-1">
