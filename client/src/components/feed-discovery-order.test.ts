@@ -33,12 +33,14 @@ test("DNA stays above the feed; trending and reviews lead only feed content", ()
   assert.match(feed, /preselectedMedia=\{trendingActionMedia\}/);
 });
 
-test("Featured review heading lives inside its carousel and matches the established media-title serif style", () => {
+test("Featured review heading lives inside its carousel and matches Trending now typography at a smaller size", () => {
   assert.match(feed, /showDiscoveryHeading=\{keyPrefix === "top-rating-deck"\}/);
   assert.match(feed, /data-testid=\{showDiscoveryHeading \? "featured-review-carousel-card" : undefined\}/);
   assert.match(feed, /showDiscoveryHeading && \([^]*?<h2 id="what-people-are-saying-title"/);
   const reviewClass = feed.match(/id="what-people-are-saying-title" className="([^"]+)"/)?.[1];
-  assert.equal(reviewClass, "font-serif text-[22px] font-medium leading-[1.08] tracking-[-.035em] text-[#30203f] sm:text-[26px]");
+  assert.equal(reviewClass, "text-[22px] font-semibold leading-[1.12] tracking-[-0.045em] text-[#201c29] sm:text-[26px]");
+  const trendingClass = trending.match(/id="top-trending-title" className="([^"]+)"/)?.[1];
+  assert.equal(reviewClass?.replace(/text-\[\d+px\]/g, "text-[size]"), trendingClass?.replace(/text-\[\d+px\]/g, "text-[size]"));
   assert.doesNotMatch(feed, /Real ratings and reviews from your feed|WHAT PEOPLE ARE SAYING/);
   assert.match(feed, /data-testid="what-people-are-saying">\s*\{renderFeedItem\(topRatingDeck, "top-rating-deck"\)\}/);
 });
