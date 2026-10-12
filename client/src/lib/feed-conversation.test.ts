@@ -1,0 +1,165 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
+import { buildFeedConversation, toggleFeedConversationLike, type RelatedFeedRating } from "./feed-conversation";
+import { FeedConversationSection, type FeedConversationEntry } from "../components/feed-conversation-section";
+
+const rating = (userId: string, overrides: Partial<RelatedFeedRating> = {}): RelatedFeedRating => ({
+  userId, userName: userId, displayName: "Alex T.", rating: 4, ...overrides,
+});
+const comment = (id: number, userId: string, content = "A real comment", replies: any[] = []) => ({
+  id, user: { id: userId, displayName: "Alex Taylor", avatar: "/avatar.png" },
+  content, likesCount: 3, likedByCurrentUser: true, replies,
+});
+const render = (entries: FeedConversationEntry[], expanded = false, canInteract = true) =>
+  renderToStaticMarkup(React.createElement(FeedConversationSection, {
+    entries, expanded, canInteract, currentUserId: "viewer",
+    onExpand() {}, onLike() {}, onReply() {}, onDelete() {}, onReport() {},
+  }));
+
+test("viewer rating is first in the same section as friends' ratings and real comments", () => {
+  const entries = buildFeedConversation({
+    ratings: [rating("friend"), rating("viewer", { rating: 2, avatar: "/own.png" })],
+    comments: [comment(1, "other")], viewerId: "viewer", ownRating: 4.5,
+  });
+  assert.equal(entries[0].name, "You");
+  assert.equal(entries[0].rating, 4.5);
+  assert.equal(entries[0].avatar, "/own.png");
+  assert.deepEqual(new Set(entries.map(e => e.kind)), new Set(["rating", "comment"]));
+  assert.equal(entries.filter(e => e.isOwnRating).length, 1);
+  assert.match(render(entries), /4.5 out of 5 stars/);
+});
+
+test("a just-saved rating appears first even before related reviews finish loading", () => {
+  const entries = buildFeedConversation({
+    ratings: [], comments: [comment(1, "friend")], viewerId: "viewer", ownRating: 5, ownAvatar: "/me.png",
+  });
+  assert.equal(entries[0].rating, 5);
+  assert.equal(entries[0].avatar, "/me.png");
+  assert.equal(entries[0].postId, undefined);
+  assert.doesNotMatch(render(entries), /Like your review|Delete/);
+});
+
+test("no viewer rating is invented, and a removed rating cannot return from stale related data", () => {
+  for (const ownRating of [undefined, 0]) {
+    const entries = buildFeedConversation({
+      ratings: [rating("viewer")], comments: [], viewerId: "viewer", ownRating,
+    });
+    assert.equal(entries.length, 0);
+  }
+});
+
+test("identical review/comment merges once with real comment reactions, and remains pinned when yours", () => {
+  const entries = buildFeedConversation({
+    ratings: [rating("viewer", { content: "A real comment", postId: "separate-review" })],
+    comments: [comment(1, "viewer")], viewerId: "viewer", ownRating: 5,
+  });
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].kind, "comment");
+  assert.equal(entries[0].id, "comment:1");
+  assert.equal(entries[0].rating, 5);
+  assert.equal(entries[0].isLiked, true);
+  assert.match(render(entries), /Unlike your comment/);
+});
+
+test("unrelated comments from the same reviewer are not swallowed by their rating", () => {
+  const entries = buildFeedConversation({
+    ratings: [rating("friend", { content: "The review" })],
+    comments: [comment(1, "friend", "A different reply")],
+  });
+  assert.equal(entries.length, 2);
+  assert.deepEqual(entries.map(e => e.content), ["A different reply", "The review"]);
+});
+
+test("nested replies remain nested; blocked roots and descendants never become visible", () => {
+  const entries = buildFeedConversation({
+    ratings: [rating("blocked")],
+    comments: [
+      comment(1, "friend", "Root", [comment(2, "friend-2", "Nested", [comment(3, "blocked")])]),
+      comment(4, "blocked", "Hidden root", [comment(5, "friend-3", "Hidden descendant")]),
+    ],
+    blockedUserIds: ["blocked"],
+  });
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].children?.length, 1);
+  assert.equal(entries[0].children?.[0].children?.length, 0);
+  assert.doesNotMatch(render(entries), /Nested/);
+  assert.match(render(entries), /View 1 more reply/);
+  assert.match(render(entries, true), /Nested/);
+  assert.doesNotMatch(render(entries, true), /Hidden descendant/);
+});
+
+test("viewer is pinned without reducing the three peer previews; remaining count is accurate", () => {
+  const entries = buildFeedConversation({
+    ratings: [rating("viewer"), rating("friend-1"), rating("friend-2"), rating("friend-3"), rating("friend-4")],
+    comments: [], viewerId: "viewer", ownRating: 5,
+  });
+  const html = render(entries);
+  assert.equal((html.match(/out of 5 stars/g) || []).length, 4);
+  assert.match(html, /View 1 more take/);
+  assert.equal((render(entries, true).match(/out of 5 stars/g) || []).length, 5);
+});
+
+test("comments without ratings still show their avatar, short name, content and real heart state", () => {
+  const entries = buildFeedConversation({ ratings: [], comments: [comment(1, "friend")] });
+  const html = render(entries);
+  assert.match(html, /Alex T\./);
+  assert.match(html, /A real comment/);
+  assert.match(html, /Unlike Alex T\.&#x27;s comment/);
+  assert.match(html, /aria-pressed="true"/);
+  assert.doesNotMatch(html, /out of 5 stars/);
+});
+
+test("guest expansion is allowed, write reactions are disabled, and moderation is not shown", () => {
+  const entries = buildFeedConversation({ ratings: [], comments: [1, 2, 3, 4].map(id => comment(id, "friend")) });
+  const html = render(entries, false, false);
+  assert.match(html, /disabled=""/);
+  assert.match(html, /data-guest-allowed="true"/);
+  assert.doesNotMatch(html, />Delete<|>Report</);
+});
+
+test("half stars use an actual clipped half-filled icon instead of rounding up", () => {
+  const entries = buildFeedConversation({ ratings: [rating("friend", { rating: 3.5 })], comments: [] });
+  const html = render(entries);
+  assert.match(html, /3.5 out of 5 stars/);
+  assert.match(html, /width:50%/);
+});
+
+test("real comment and review likes use their respective existing APIs and support unlike", async () => {
+  const commentEntry = buildFeedConversation({ ratings: [], comments: [comment(42, "friend")] })[0];
+  const reviewEntry = buildFeedConversation({
+    ratings: [rating("friend", { postId: "review-id", isLiked: false })], comments: [],
+  })[0];
+  const calls: any[] = [];
+  const request = (async (url: any, init: any) => {
+    calls.push({ url, method: init.method, body: JSON.parse(init.body) });
+    return new Response('{"success":true}', { status: 200 });
+  }) as typeof fetch;
+  await toggleFeedConversationLike("https://example.test", "test-token", commentEntry, request);
+  await toggleFeedConversationLike("https://example.test", "test-token", reviewEntry, request);
+  assert.deepEqual(calls, [
+    { url: "https://example.test/functions/v1/social-comment-like", method: "DELETE", body: { comment_id: "42" } },
+    { url: "https://example.test/functions/v1/social-feed-like", method: "POST", body: { post_id: "review-id" } },
+  ]);
+});
+
+test("failed likes report failure rather than fabricating successful reactions", async () => {
+  const entry = buildFeedConversation({ ratings: [], comments: [comment(1, "friend")] })[0];
+  await assert.rejects(toggleFeedConversationLike("https://example.test", "test-token", entry,
+    (async () => new Response('{"error":"blocked"}', { status: 403 })) as typeof fetch), /Couldn't update/);
+  await assert.rejects(toggleFeedConversationLike("https://example.test", "", entry), /Sign in/);
+});
+
+test("feed mounts one shared discussion before its action footer, not separate ratings or comment previews", () => {
+  const feed = readFileSync(new URL("../pages/feed.tsx", import.meta.url), "utf8");
+  const rated = feed.slice(feed.indexOf("  if (isRatingPost) {"), feed.indexOf("        {/* Counter follow-up"));
+  assert.equal((rated.match(/<FeedConversationSection/g) || []).length, 1);
+  assert.ok(rated.indexOf("<FeedConversationSection") < rated.indexOf("Action row:"));
+  assert.doesNotMatch(rated, /relatedRatings\.map|latestReply|You rated this/);
+  assert.match(rated, /loadedViewerRatingKey === viewerRatingKey/);
+  assert.match(rated, /likedByCurrentUser: !entry.isLiked/);
+  assert.match(feed, /discussionReadsAllowed = !blockedViewerId \|\| blockedUsers\.isSuccess/);
+  assert.match(rated, /lastCommentsViewerId\.current === blockedViewerId/);
+});

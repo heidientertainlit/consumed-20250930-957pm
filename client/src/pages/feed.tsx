@@ -38,6 +38,8 @@ import { ReportSheet } from "@/components/report-sheet";
 import PostDetailSheet from "@/components/post-detail-sheet";
 import { ShareRatingCard } from "@/components/share-rating-card";
 import { InlineFeedStarRater } from "@/components/inline-feed-star-rater";
+import { FeedConversationSection, type FeedConversationEntry } from "@/components/feed-conversation-section";
+import { buildFeedConversation, toggleFeedConversationLike, type RelatedFeedRating } from "@/lib/feed-conversation";
 import { RatingSaveFeedback } from "@/components/rating-save-feedback";
 import { useConfirmedRatingSave } from "@/hooks/use-confirmed-rating-save";
 import { saveFeedRating } from "@/lib/save-feed-rating";
@@ -1326,27 +1328,32 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [showRating, setShowRating] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const viewerRatingKey = `${post.id}:${session?.user?.id || ""}`;
+  const [loadedViewerRatingKey, setLoadedViewerRatingKey] = useState("");
+  const [loadedRelatedRatingKey, setLoadedRelatedRatingKey] = useState("");
   const [showStarPicker, setShowStarPicker] = useState(false);
   const [communityRating, setCommunityRating] = useState<number | null>(null);
   const [externalRating, setExternalRating] = useState<number | null>(null);
   const [externalRatingLabel, setExternalRatingLabel] = useState<string>('');
   const [tasteAlignment, setTasteAlignment] = useState<number | null>(null);
   const [alignmentNudge, setAlignmentNudge] = useState(false);
-  const [relatedRatings, setRelatedRatings] = useState<Array<{userId: string; userName: string; displayName: string; avatar?: string; rating: number; content?: string}>>([]);
+  const [relatedRatings, setRelatedRatings] = useState<RelatedFeedRating[]>([]);
+  const [conversationLikePending, setConversationLikePending] = useState(false);
   const [showAllRelated, setShowAllRelated] = useState(false);
   const blockedViewerId = session?.user?.id || currentUserId;
   const blockedUsers = useBlockedUsers(blockedViewerId);
+  const discussionReadsAllowed = !blockedViewerId || blockedUsers.isSuccess;
   const blockedUserIds = blockedUsers.data || [];
   const blockedUserIdsKey = `${blockedViewerId || "anonymous"}:${blockedUserIds.join(",")}`;
 
   useEffect(() => {
-    if (!blockedUsers.isSuccess) {
+    if (!discussionReadsAllowed) {
       setComments([]);
       setCommentsLoaded(false);
       return;
     }
     setComments((current) => filterCommentsForBlockedUsers(current, blockedUserIds));
-  }, [blockedUserIdsKey, blockedUsers.isSuccess]);
+  }, [blockedUserIdsKey, discussionReadsAllowed]);
   const [showAllComments, setShowAllComments] = useState(false);
   const [, setLocation] = useLocation();
   const [seenItDone, setSeenItDone] = useState(false);
@@ -1514,6 +1521,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [showCounterPrompt, setShowCounterPrompt] = useState(false);
   const [replyOpen, setReplyOpen] = useState(false);
   const [reportCommentTarget, setReportCommentTarget] = useState<{id: string; userId: string; userName: string} | null>(null);
+  const [ratingReportTarget, setRatingReportTarget] = useState<FeedConversationEntry | null>(null);
 
   const handleStarClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1590,18 +1598,23 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       });
 
     // User's own existing rating (so "Your Turn" shows already-rated state)
+    let cancelled = false;
+    setRatingValue(0);
+    setRatingSubmitted(false);
     const userId = session?.user?.id;
     if (userId) {
       fetchPreferredRatings(externalId, externalSource, userId).then((rows) => {
           const data = rows[0];
-          if (data?.rating) {
+          if (!cancelled && data?.rating) {
+            setLoadedViewerRatingKey(viewerRatingKey);
             setRatingValue(Number(data.rating));
             setRatingSubmitted(true);
             setShowInlineRater(false);
           }
         });
     }
-  }, [post.externalId, post.externalSource, canonicalMediaId, session?.user?.id]);
+    return () => { cancelled = true; };
+  }, [post.externalId, post.externalSource, canonicalMediaId, session?.user?.id, viewerRatingKey]);
 
   // External (3rd-party) rating from TMDB/Spotify etc.
   useEffect(() => {
@@ -1646,7 +1659,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     const externalId = post.externalId || post.mediaItems?.[0]?.externalId;
     const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource;
     const currentId = session?.user?.id;
-    if (!externalId || !externalSource || !currentId) return;
+    if (!externalId || !externalSource || !currentId || !blockedUsers.isSuccess) return;
+    let cancelled = false;
     const primaryUserId = post.user?.id;
     Promise.all([
       fetchPreferredRatings(externalId, externalSource),
@@ -1656,14 +1670,16 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         .or(`user_id.eq.${currentId},friend_id.eq.${currentId}`)
         .eq('status', 'accepted'),
     ]).then(async ([ratings, friendshipsResult]) => {
-        if (!ratings || ratings.length === 0) return;
+        if (cancelled || !ratings || ratings.length === 0) return;
         const friendIds = new Set(
           (friendshipsResult.data || []).map((friendship: any) =>
             friendship.user_id === currentId ? friendship.friend_id : friendship.user_id
           )
         );
         const filtered = ratings.filter((r: any) =>
-          friendIds.has(r.user_id) && r.user_id !== primaryUserId && r.user_id !== currentId
+          !blockedUserIds.includes(r.user_id) && (
+            r.user_id === currentId || (friendIds.has(r.user_id) && r.user_id !== primaryUserId)
+          )
         );
         if (filtered.length === 0) return;
         const ids = filtered.map((r: any) => r.user_id);
@@ -1677,23 +1693,33 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         // while historical provider rows remain visible.
         const legacyPosts = supabase
           .from('social_posts')
-          .select('id, user_id, content')
+          .select('id, user_id, content, likes_count, created_at')
           .in('user_id', ids)
           .eq('media_external_id', externalId)
           .eq('media_external_source', externalSource)
-          .in('post_type', ['rating', 'rate-review', 'review'])
-          .not('content', 'is', null)
+          .in('post_type', ['rating', 'rate-review', 'review', 'thought'])
+          .order('created_at', { ascending: false })
           .limit(20);
         const canonicalPosts = canonicalMediaId
-          ? supabase.from('social_posts').select('id, user_id, content').in('user_id', ids)
-            .eq('canonical_media_id', canonicalMediaId).in('post_type', ['rating', 'rate-review', 'review'])
-            .not('content', 'is', null).limit(20)
+          ? supabase.from('social_posts').select('id, user_id, content, likes_count, created_at').in('user_id', ids)
+            .eq('canonical_media_id', canonicalMediaId).in('post_type', ['rating', 'rate-review', 'review', 'thought'])
+            .order('created_at', { ascending: false }).limit(20)
           : null;
         const [canonicalPostsResult, legacyPostsResult] = await Promise.all([canonicalPosts, legacyPosts]);
         const postsByUser = new Map<string, any>();
-        (legacyPostsResult.data || []).forEach((p: any) => postsByUser.set(p.user_id, p));
-        (canonicalPostsResult?.data || []).forEach((p: any) => postsByUser.set(p.user_id, p));
+        (legacyPostsResult.data || []).forEach((p: any) => { if (!postsByUser.has(p.user_id)) postsByUser.set(p.user_id, p); });
+        const canonicalUsers = new Set<string>();
+        (canonicalPostsResult?.data || []).forEach((p: any) => {
+          if (!canonicalUsers.has(p.user_id)) { postsByUser.set(p.user_id, p); canonicalUsers.add(p.user_id); }
+        });
         const posts = Array.from(postsByUser.values());
+        const { data: viewerLikes } = posts.length
+          ? await supabase.from('social_post_likes').select('social_post_id')
+            .eq('user_id', currentId).in('social_post_id', posts.map(p => p.id))
+          : { data: [] };
+        if (cancelled) return;
+        setLoadedRelatedRatingKey(viewerRatingKey);
+        const likedPostIds = new Set((viewerLikes || []).map((like: any) => like.social_post_id));
         const contentMap: Record<string, string> = {};
         (posts || []).forEach((p: any) => { if (p.content?.trim()) contentMap[p.user_id] = p.content.trim(); });
         setRelatedRatings(filtered.map((r: any) => ({
@@ -1708,18 +1734,24 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           avatar: userMap[r.user_id]?.avatar || undefined,
           rating: Number(r.rating),
           content: contentMap[r.user_id],
+          postId: postsByUser.get(r.user_id)?.id,
+          likes: postsByUser.get(r.user_id)?.likes_count || 0,
+          isLiked: likedPostIds.has(postsByUser.get(r.user_id)?.id),
         })));
-      });
-  }, [post.externalId, post.externalSource, canonicalMediaId, post.user?.id, session?.user?.id]);
+      }).catch(error => console.error('Could not load additional ratings', error));
+    return () => { cancelled = true; };
+  }, [post.externalId, post.externalSource, canonicalMediaId, post.user?.id, session?.user?.id, viewerRatingKey, blockedUserIdsKey, blockedUsers.isSuccess]);
 
   // Auto-load comments for rating/review cards so they show inline without a tap.
   // The same component instance can be handed a DIFFERENT post (promoted card slots
   // reshuffle on feed refetch) — reset stale comment state whenever post.id changes,
   // otherwise the previous post's comments display under the new post.
   const lastCommentsPostId = useRef(post.id);
+  const lastCommentsViewerId = useRef(blockedViewerId);
   useEffect(() => {
-    if (lastCommentsPostId.current !== post.id) {
+    if (lastCommentsPostId.current !== post.id || lastCommentsViewerId.current !== blockedViewerId) {
       lastCommentsPostId.current = post.id;
+      lastCommentsViewerId.current = blockedViewerId;
       hasFetched.current = false;
       setComments([]);
       setCommentsLoaded(false);
@@ -1728,7 +1760,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       setReplyOpen(false);
     }
     const isRating = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought';
-    if (!isRating || !post.id || !blockedUsers.isSuccess || hasFetched.current) return;
+    if (!isRating || !post.id || !discussionReadsAllowed || hasFetched.current) return;
     hasFetched.current = true;
     let cancelled = false;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
@@ -1753,7 +1785,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       cancelled = true;
       if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [post.id, post.type, session?.access_token, blockedUsers.isSuccess]);
+  }, [post.id, post.type, session?.access_token, blockedViewerId, discussionReadsAllowed]);
 
   const ratingSave = useConfirmedRatingSave({
     resetKey: `${post.id}:${session?.user?.id || ''}`,
@@ -1775,6 +1807,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       if (media.canonicalMediaId) setResolvedCanonicalMediaId(media.canonicalMediaId);
       setRatingValue(rating);
       setRatingSubmitted(true);
+      setLoadedViewerRatingKey(viewerRatingKey);
       setShowStarPicker(false);
       setShowInlineRater(false);
       setHoverRating(0);
@@ -1880,6 +1913,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         hasFetched.current = false;
         const data = await fetchComments(post.id);
         setComments(data || []);
+        setCommentsLoaded(true);
+        setShowAllComments(true);
         hasFetched.current = true;
       }
     } catch (_) {}
@@ -1904,6 +1939,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         hasFetched.current = false;
         const data = await fetchComments(post.id);
         setComments(data || []);
+        setCommentsLoaded(true);
+        setShowAllComments(true);
         hasFetched.current = true;
       }
     } catch (_) {}
@@ -1913,7 +1950,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const deleteComment = async (commentId: string) => {
     if (!session?.access_token) return;
     const { error } = await supabase.from('social_post_comments').delete().eq('id', commentId);
-    if (!error) setComments(prev => prev.filter((c: any) => c.id !== commentId));
+    if (error) { window.alert("Couldn't delete this comment. Please try again."); return; }
+    const remove = (tree: any[]): any[] => tree
+      .filter(c => String(c.id) !== String(commentId))
+      .map(c => ({ ...c, replies: remove(c.replies || []) }));
+    setComments(remove);
   };
 
   const getTypeInfo = () => {
@@ -2576,23 +2617,46 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     const conversationCount = commentsLoaded
       ? flattenedConversation.length
       : Math.max(post.comments || 0, flattenedConversation.length);
-    const uniqueConversationParticipants = flattenedConversation.filter((comment: any, index: number, allComments: any[]) => {
-      const participantKey = comment.user?.id || comment.userId || comment.user?.username || comment.username || comment.id;
-      return allComments.findIndex((candidate: any) => {
-        const candidateKey = candidate.user?.id || candidate.userId || candidate.user?.username || candidate.username || candidate.id;
-        return candidateKey === participantKey;
-      }) === index;
+    const discussionEntries = buildFeedConversation({
+      ratings: loadedRelatedRatingKey === viewerRatingKey ? relatedRatings : [],
+      comments: commentsLoaded && discussionReadsAllowed && lastCommentsPostId.current === post.id && lastCommentsViewerId.current === blockedViewerId
+        ? filterCommentsForBlockedUsers(comments, blockedUserIds) : [],
+      viewerId: session?.user?.id,
+      ownRating: ratingSubmitted && loadedViewerRatingKey === viewerRatingKey ? ratingValue : undefined,
+      ownAvatar: session?.user?.user_metadata?.avatar_url,
+      blockedUserIds,
     });
-    const conversationPeopleCount = uniqueConversationParticipants.length;
-    const conversationLabel = conversationPeopleCount > 0
-      ? `${conversationPeopleCount} ${conversationPeopleCount === 1 ? 'person' : 'people'} talking`
-      : `${conversationCount} ${conversationCount === 1 ? 'reply' : 'replies'}`;
-    const latestReply = [...flattenedConversation]
-      .sort((a: any, b: any) => new Date(b.createdAt || b.created_at || 0).getTime() - new Date(a.createdAt || a.created_at || 0).getTime())[0];
-    const latestReplyName = latestReply
-      ? formatFeedName(latestReply.user?.displayName, latestReply.user?.username || latestReply.username)
-      : '';
-    const remainingReplyCount = Math.max(0, conversationCount - 1);
+    const likeDiscussionEntry = async (entry: FeedConversationEntry) => {
+      if (!session?.access_token || conversationLikePending) return;
+      const isComment = entry.kind === "comment";
+      const targetId = isComment ? entry.id.slice("comment:".length) : entry.postId;
+      if (!targetId) return;
+      setConversationLikePending(true);
+      try {
+        await toggleFeedConversationLike(supabaseUrl, session.access_token, entry);
+        if (lastCommentsPostId.current !== post.id) return;
+        if (isComment) {
+          const update = (tree: any[]): any[] => tree.map(comment => ({
+            ...comment,
+            ...(String(comment.id) === targetId ? {
+              isLiked: !entry.isLiked,
+              likedByCurrentUser: !entry.isLiked,
+              likesCount: Math.max(0, entry.likes + (entry.isLiked ? -1 : 1)),
+              likes_count: Math.max(0, entry.likes + (entry.isLiked ? -1 : 1)),
+            } : {}),
+            replies: update(comment.replies || []),
+          }));
+          setComments(update);
+        } else {
+          setRelatedRatings(rows => rows.map(row => row.postId === targetId
+            ? { ...row, isLiked: !entry.isLiked, likes: Math.max(0, entry.likes + (entry.isLiked ? -1 : 1)) }
+            : row));
+          globalQueryClient.invalidateQueries({ queryKey: ["social-feed"] });
+        }
+      } catch (error) {
+        window.alert(error instanceof Error ? error.message : "Couldn't update this like.");
+      } finally { setConversationLikePending(false); }
+    };
     const hasMoreReviews = !!swipeProps?.navigate
       && (stackIndex ?? 0) < (swipeProps?.totalPosts ?? 0) - 1;
 
@@ -2818,75 +2882,56 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               )}
 
 
-              {/* Accepted friends' ratings — shown automatically below the primary review */}
-              {relatedRatings.length > 0 && (
-                <div className="mt-1" onClick={(e) => e.stopPropagation()}>
-                  {relatedRatings.map((r) => (
-                    <div key={r.userId} className="flex items-center gap-2 py-1">
-                      <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-gray-500">
-                        {formatFeedName(r.displayName, r.userName)}
-                      </span>
-                      <div className="flex shrink-0 items-center gap-0.5" aria-label={`${r.rating} out of 5 stars`}>
-                        {[1,2,3,4,5].map(s => (
-                          <Star key={s} size={10} className={s <= Math.round(r.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'} />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Your own rating, once submitted */}
-              {isOtherUser && ratingSubmitted && ratingValue > 0 && (
-                <p className="text-xs text-gray-500 mt-auto pt-2">You rated this <span className="text-yellow-500 font-semibold">{ratingValue}/5 ★</span></p>
-              )}
             </div>{/* end take (right) */}
           </div>
             );
           })()}
 
-          {/* Conversation preview appears once a discussion exists */}
-          {commentsLoaded && conversationCount > 0 && !showComments && !replyOpen && (
-            <button
-              type="button"
-              className="mx-4 mb-2 mt-3 w-[calc(100%_-_2rem)] rounded-2xl border border-violet-100 bg-violet-50/70 px-3.5 py-3 text-left transition-colors hover:bg-violet-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowComments(true);
-              }}
-              aria-label={`View ${conversationCount} ${conversationCount === 1 ? 'reply' : 'replies'}`}
-            >
-              {latestReply ? (
-                <span className="block">
-                  <span className="flex items-start gap-2.5">
-                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-400 text-[11px] font-bold text-white">
-                      {latestReply.user?.avatar ? (
-                        <img src={latestReply.user.avatar} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        latestReplyName[0]?.toUpperCase() || '?'
-                      )}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-baseline gap-1.5">
-                        <span className="truncate text-[13px] font-semibold text-gray-800">{latestReplyName}</span>
-                        {latestReply.user?.username && (
-                          <span className="truncate text-[11px] text-gray-400">@{formatUsername(latestReply.user.username)}</span>
-                        )}
-                        <span className="ml-auto shrink-0 text-[10px] text-gray-400">{timeAgo(latestReply.createdAt || latestReply.created_at)}</span>
-                      </span>
-                      <span className="mt-0.5 block line-clamp-2 text-[13px] leading-snug text-gray-700">{latestReply.content}</span>
-                    </span>
-                  </span>
-                  {remainingReplyCount > 0 && (
-                    <span className="-mx-3.5 -mb-3 mt-2 block border-t border-violet-100 px-3.5 py-2 text-[12px] font-semibold text-violet-600">
-                      View {remainingReplyCount} more {remainingReplyCount === 1 ? 'reply' : 'replies'} →
-                    </span>
-                  )}
-                </span>
-              ) : (
-                <span className="text-[14px] font-medium text-gray-600">{conversationLabel}</span>
-              )}
-            </button>
+          {/* Additional ratings and comments share one section, with your rating first. */}
+          {discussionEntries.length > 0 && (
+            <div className="mt-3 mb-2" onClick={(e) => e.stopPropagation()} data-testid="feed-conversation">
+              <FeedConversationSection
+                entries={discussionEntries}
+                expanded={showAllComments}
+                onExpand={() => setShowAllComments(true)}
+                onLike={likeDiscussionEntry}
+                canInteract={!!session?.access_token && !conversationLikePending}
+                currentUserId={session?.user?.id}
+                onReply={(entry) => {
+                  if (entry.kind === "rating" && entry.postId) {
+                    setLocation(`/post/${entry.postId}`);
+                    return;
+                  }
+                  setReplyingToId(entry.id.slice("comment:".length));
+                  setReplyText("");
+                  setReplyOpen(true);
+                }}
+                onDelete={(entry) => {
+                  if (!window.confirm("Delete this " + (entry.kind === "comment" ? "comment" : "review") + "?")) return;
+                  if (entry.kind === "comment") deleteComment(entry.id.slice("comment:".length));
+                  else if (entry.postId && onDeletePost) {
+                    onDeletePost(entry.postId);
+                    setRelatedRatings(rows => rows.map(row => row.postId === entry.postId
+                      ? { ...row, postId: undefined, content: undefined, likes: 0, isLiked: false } : row));
+                  }
+                }}
+                onReport={(entry) => {
+                  if (entry.kind === "rating" && entry.postId) { setRatingReportTarget(entry); return; }
+                  setReportCommentTarget({ id: entry.id.slice("comment:".length), userId: entry.userId, userName: entry.name });
+                }}
+                renderReply={(entry) => entry.kind === "comment" && replyingToId === entry.id.slice("comment:".length) && session?.access_token ? (
+                  <div className="mt-2 flex items-center gap-2 rounded-lg bg-gray-50 px-2 py-2 border border-violet-200">
+                    <input autoFocus value={replyText} onChange={(e) => setReplyText(e.target.value)}
+                      aria-label={`Reply to ${entry.name}`} placeholder={`Reply to ${entry.name}…`}
+                      className="min-w-0 flex-1 bg-transparent text-xs focus:outline-none"
+                      onKeyDown={(e) => { if (e.key === "Enter") submitReply(entry.id.slice("comment:".length)); }} />
+                    <button onClick={() => submitReply(entry.id.slice("comment:".length))}
+                      disabled={!replyText.trim() || submitting} className="text-xs font-semibold text-violet-600 disabled:opacity-40">Post</button>
+                    <button aria-label="Cancel reply" onClick={() => { setReplyingToId(null); setReplyText(""); }} className="text-gray-400"><X size={13} /></button>
+                  </div>
+                ) : null}
+              />
+            </div>
           )}
 
           {/* YOUR TURN — inline star rater appears above the action row */}
@@ -3011,101 +3056,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
         {/* ── Inline Comments section ── */}
         <div className="border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
-          {/* Header — only shown when there are comments */}
-          {(showComments || replyOpen) && comments.length > 2 && (
-            <div className="flex items-center justify-end px-4 pt-2">
-              <button onClick={() => setShowAllComments(v => !v)} className="flex items-center gap-0.5 text-[10px] font-medium text-violet-500">
-                {showAllComments ? 'Less' : 'Newest'} <ChevronDown size={11} className={`transition-transform ${showAllComments ? 'rotate-180' : ''}`} />
-              </button>
-            </div>
-          )}
-
-          {/* Comment list */}
-          {(showComments || replyOpen) && comments.length > 0 && (
-            <div className="px-4 pt-1 pb-2 divide-y divide-gray-100">
-              {(showAllComments ? comments : comments.slice(0, 2)).map((c: any) => {
-                const cName = formatFeedName(c.user?.displayName, c.user?.username || c.username);
-                const isReplying = replyingToId === c.id;
-                return (
-                  <div key={c.id} className="flex gap-2.5 py-3 first:pt-2">
-                    <div className="w-6 h-6 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center text-[10px] font-medium text-gray-400 overflow-hidden mt-0.5">
-                      {c.user?.avatar ? <img src={c.user.avatar} className="w-full h-full object-cover" alt="" /> : (cName[0]?.toUpperCase() || '?')}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      {/* Comment text featured */}
-                      <p className="text-[15px] text-gray-900 leading-snug">{c.content}</p>
-                      {/* Name · time — quiet, under the text */}
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[12px] text-gray-400">— {cName}{c.created_at ? `  ·  ${timeAgo(c.created_at)}` : ''}</span>
-                        <div className="ml-auto flex items-center gap-1">
-                          {currentUserId === (c.user?.id || c.userId) ? (
-                            <button onClick={(e) => { e.stopPropagation(); deleteComment(c.id); }} className="text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
-                          ) : currentUserId ? (
-                            <button onClick={(e) => { e.stopPropagation(); setReportCommentTarget({ id: c.id, userId: c.user?.id || c.userId || '', userName: c.user?.username || c.username || 'User' }); }} className="text-gray-300 hover:text-orange-500 transition-colors" title="Report comment"><Flag size={12} /></button>
-                          ) : null}
-                        </div>
-                      </div>
-                      {/* Action row — light thumbs + Reply, left-aligned */}
-                      <div className="flex items-center gap-5 mt-1.5">
-                        <div className="flex items-center gap-1 text-gray-400">
-                          <ThumbsUp size={13} strokeWidth={1.75} />
-                          {(c.likes_count || 0) > 0 && <span className="text-[11px]">{c.likes_count}</span>}
-                        </div>
-                        <ThumbsDown size={13} strokeWidth={1.75} className="text-gray-400 translate-y-[1px]" />
-                        <button onClick={() => { setReplyingToId(isReplying ? null : c.id); setReplyText(''); setReplyOpen(true); }} className="text-[12px] font-semibold text-gray-500 hover:text-violet-500 transition-colors">Reply</button>
-                      </div>
-                      {isReplying && (
-                        <div className="mt-2 flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-violet-200">
-                          <input autoFocus type="text" value={replyText} onChange={(e) => setReplyText(e.target.value)}
-                            placeholder={`Reply to ${cName}…`} className="flex-1 text-xs bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400"
-                            onKeyPress={(e) => e.key === 'Enter' && submitReply(c.id)} />
-                          <button onClick={() => submitReply(c.id)} disabled={!replyText.trim() || submitting} className="text-[11px] font-semibold text-violet-600 disabled:opacity-40">Post</button>
-                          <button onClick={() => { setReplyingToId(null); setReplyText(''); }} className="text-gray-400"><X size={11} /></button>
-                        </div>
-                      )}
-                      {c.replies?.length > 0 && (
-                        <div className="mt-2 pl-3 border-l-2 border-gray-100 space-y-2">
-                          {c.replies.map((r: any) => {
-                            const rName = formatFeedName(r.user?.displayName, r.user?.username || r.username);
-                            return (
-                              <div key={r.id} className="pt-1">
-                                <p className="text-[14px] text-gray-800 leading-snug">{r.content}</p>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[11px] text-gray-500">— {rName}{r.created_at ? ` · ${timeAgo(r.created_at)}` : ''}</span>
-                                  {currentUserId === (r.user?.id || r.userId) ? (
-                                    <button onClick={(e) => { e.stopPropagation(); deleteComment(r.id); }} className="ml-auto text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={11} /></button>
-                                  ) : currentUserId ? (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setReportCommentTarget({ id: r.id, userId: r.user?.id || r.userId || '', userName: r.user?.username || r.username || 'User' });
-                                      }}
-                                      className="ml-auto text-gray-300 hover:text-orange-500 transition-colors"
-                                      title="Report reply"
-                                    >
-                                      <Flag size={11} />
-                                    </button>
-                                  ) : null}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-              {!showAllComments && comments.length > 2 && (
-                <div className="py-2">
-                  <button onClick={() => setShowAllComments(true)} className="text-[11px] font-semibold text-violet-500 hover:text-violet-700">
-                    View all {comments.length} comments ↓
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* ── Join the conversation — revealed by Reply ── */}
           {session?.access_token && replyOpen && (
             <div ref={takeBarRef} className="flex items-center gap-2 px-4 pb-4 pt-1" onClick={(e) => e.stopPropagation()}>
@@ -3180,6 +3130,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           contentId={reportCommentTarget?.id || ''}
           reportedUserId={reportCommentTarget?.userId}
           reportedUserName={reportCommentTarget?.userName}
+        />
+        <ReportSheet
+          isOpen={!!ratingReportTarget}
+          onClose={() => setRatingReportTarget(null)}
+          contentType="post"
+          contentId={ratingReportTarget?.postId || ""}
+          reportedUserId={ratingReportTarget?.userId}
+          reportedUserName={ratingReportTarget?.name}
         />
         <ShareRatingCard
           isOpen={shareCardOpen}
@@ -8675,6 +8633,8 @@ export default function Feed() {
     }
 
     const viewerId = session?.user?.id;
+    // The comments endpoint already restricts anonymous reads to public posts.
+    if (!viewerId) return transformedComments;
     const blockedUsersState = viewerId ? globalQueryClient.getQueryState(blockedUsersQueryKey(viewerId)) : undefined;
     if (!viewerId || blockedUsersState?.status !== "success") {
       throw new Error("Blocked users have not been verified for this account yet.");
