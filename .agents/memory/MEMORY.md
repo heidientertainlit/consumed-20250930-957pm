@@ -33,6 +33,7 @@
 - [iOS keyboard viewport sizing](ios-keyboard-viewport-sizing.md) — size portaled sheets from the shared visible viewport; avoid double keyboard offsets when Capacitor already resizes the webview.
 - [Rated feed card structure](rated-feed-card-structure.md) — keep the compact media/rating card primary; conversation preview and social actions form a distinct layer beneath it.
 - [Now DNA hero placement](now-dna-hero-placement.md) — “top of the feed” means below the DNA page hero; never move discovery above the user's DNA section.
+- [Now trending presentation](now-trending-presentation.md) — match Add browsing typography; show title and media type, without sparkle icons, chart-source badges, or usernames.
 - [Supabase OAuth callbacks](supabase-oauth-callbacks.md) — OAuth returns through /login; native universal-link sessions must be restored on both warm and cold app launches.
 - [Apple OAuth credential rotation](apple-oauth-credential-rotation.md) — Supabase uses a signed Apple client-secret JWT that expires after 180 days; rotate it before expiry.
 - [Feed identity labels](feed-identity-labels.md) — feed-visible names use first name + last initial; usernames remain raw only as handles, routes, profile identity, and backend identifiers.

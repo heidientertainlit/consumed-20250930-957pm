@@ -1,28 +1,14 @@
 import { useRef } from "react";
-import { ArrowLeft, ArrowRight, Plus, Sparkles, ImageOff } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, ImageOff } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTrendingContent, type TrendingContentItem } from "@/components/use-trending-content";
 
-const sourceColors: Record<string, string> = {
-  consumed: "bg-violet-100 text-violet-700",
-  netflix: "bg-rose-100 text-rose-700",
-  "disney-plus": "bg-indigo-100 text-indigo-700",
-  max: "bg-blue-100 text-blue-700",
-  "trending-tv": "bg-violet-100 text-violet-700",
-  "trending-movies": "bg-indigo-100 text-indigo-700",
-  nyt: "bg-fuchsia-100 text-fuchsia-700",
-  "open-library": "bg-purple-100 text-purple-700",
-  apple_music: "bg-fuchsia-100 text-fuchsia-700",
-  "apple-music": "bg-fuchsia-100 text-fuchsia-700",
-  "apple-podcasts": "bg-sky-100 text-sky-700",
-};
-
 function mediaTypeLabel(type?: string) {
   const labels: Record<string, string> = {
-    tv: "TV",
+    tv: "TV Show",
     movie: "Movie",
     book: "Book",
-    book_series: "Book series",
+    book_series: "Book Series",
     music: "Music",
     podcast: "Podcast",
   };
@@ -47,14 +33,9 @@ export function TopTrendingCarousel({
   return (
     <section className="mb-5 rounded-2xl border border-violet-100 bg-white px-4 py-4 shadow-[0_8px_28px_rgba(82,48,132,0.06)] sm:px-5" aria-labelledby="top-trending-title" data-testid="top-trending-carousel">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
-            <Sparkles size={16} />
-          </span>
-          <div>
-            <h2 id="top-trending-title" className="text-[13px] font-extrabold tracking-[0.12em] text-[#35234b]">TOP &amp; TRENDING</h2>
-            <p className="text-[11px] text-violet-500/80">Across the things you love</p>
-          </div>
+        <div className="min-w-0">
+          <h2 id="top-trending-title" className="text-sm font-bold text-gray-900">Top &amp; Trending</h2>
+          <p className="text-xs text-gray-500">Across all media types</p>
         </div>
         {!isLoading && !isError && items.length > 3 && (
           <div className="hidden shrink-0 gap-1.5 sm:flex">
@@ -125,13 +106,10 @@ export function TopTrendingCarousel({
                   >
                     <Plus size={16} />
                   </button>
-                  <span className={`pointer-events-none absolute left-2 top-2 max-w-[calc(100%-1rem)] truncate rounded-md px-1.5 py-1 text-[8px] font-bold leading-none shadow-sm ${sourceColors[item.source_key || ""] || "bg-white/95 text-violet-800"}`}>
-                    {item.source_label || "Trending"}
-                  </span>
                 </div>
                 <button type="button" onClick={() => navigateToMedia(item)} disabled={!canNavigate} className="mt-2 block w-full text-left disabled:cursor-default">
-                  <span className="line-clamp-2 text-[11px] font-bold leading-snug text-[#30223e]">{item.title}</span>
-                  <span className="mt-1 block text-[9px] font-medium uppercase tracking-wide text-violet-500">{mediaTypeLabel(item.media_type)}</span>
+                  <span className="line-clamp-2 text-xs font-semibold leading-snug text-gray-900">{item.title}</span>
+                  <span className="mt-0.5 block text-[10px] text-gray-500">{mediaTypeLabel(item.media_type)}</span>
                 </button>
               </article>
             );
