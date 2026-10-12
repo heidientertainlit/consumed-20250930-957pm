@@ -33,14 +33,33 @@ test("DNA stays above the feed; trending and reviews lead only feed content", ()
   assert.match(feed, /preselectedMedia=\{trendingActionMedia\}/);
 });
 
-test("Featured review heading lives inside its carousel and uses the compact ranked-list heading font", () => {
+test("Featured review heading lives inside its carousel and uses Fraunces", () => {
   assert.match(feed, /showDiscoveryHeading=\{keyPrefix === "top-rating-deck"\}/);
   assert.match(feed, /data-testid=\{showDiscoveryHeading \? "featured-review-carousel-card" : undefined\}/);
   assert.match(feed, /showDiscoveryHeading && \([^]*?<h2 id="what-people-are-saying-title"/);
   const reviewClass = feed.match(/id="what-people-are-saying-title" className="([^"]+)"/)?.[1];
-  assert.equal(reviewClass, "text-base font-semibold leading-snug text-gray-900");
+  assert.equal(reviewClass, "font-fraunces text-base font-semibold leading-snug text-gray-900");
   assert.doesNotMatch(feed, /Real ratings and reviews from your feed|WHAT PEOPLE ARE SAYING/);
   assert.match(feed, /data-testid="what-people-are-saying">\s*\{renderFeedItem\(topRatingDeck, "top-rating-deck"\)\}/);
+});
+
+test("Featured reviews emphasize the reviewer and commentary without next controls or dots", () => {
+  const ratedCard = feed.slice(feed.indexOf("if (isRatingPost) {"), feed.indexOf("function TinderCardStack"));
+  const identity = ratedCard.indexOf("{featuredReviewerDisplayName}");
+  const title = ratedCard.indexOf('{post.mediaTitle}</p>', identity);
+  const review = ratedCard.indexOf('>"{post.content}"</p>', title);
+  assert.ok(identity > 0 && title > identity && review > title);
+  assert.match(ratedCard, /font-sans text-\[15px\] font-semibold/);
+  assert.match(ratedCard, /line-clamp-5 text-\[17px\]/);
+  assert.match(ratedCard, /!showDiscoveryHeading && swipeProps\?\.navigate/);
+  assert.match(ratedCard, /boxShadow: "5px 7px/);
+  assert.doesNotMatch(ratedCard, /nextFeaturedPost|Next review|Previous review/);
+  assert.match(ratedCard, /handleReaction\('up'\)/);
+  assert.match(ratedCard, /handleReaction\('down'\)/);
+  assert.match(ratedCard, /<ThumbsUp/);
+  assert.match(ratedCard, /<ThumbsDown/);
+  assert.match(ratedCard, /<MessageCircle[^]*?Reply/);
+  assert.match(ratedCard, /Share/);
 });
 
 test("Trending discovery uses the production endpoint and preserves provider identity", () => {
