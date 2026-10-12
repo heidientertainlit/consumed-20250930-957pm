@@ -21,17 +21,17 @@ The featured “What People Are Saying” heading belongs inside its carousel's 
 
 **How to apply:** Match Trending now's sans-serif heading family, weight, leading, spacing, and color, preserving the smaller size. Keep this heading specific to the featured Now review carousel.
 
-For all Now rating and review cards, put avatar and shortened reviewer name first, then commentary at its original size, then the smaller standard serif title and season. Commentary may be clamped. Shorten multi-surname display names using the first surname's initial, even for the owner or accepted friends.
+For all Now rating and review cards, put avatar and shortened reviewer name first, then commentary at its original size, then the smaller app sans-serif title and season. Commentary may be clamped. Shorten multi-surname display names using the first surname's initial, even for the owner or accepted friends.
 
 **Why:** The user approved this hierarchy, then asked for additional rating cards to match it. Only the first carousel needs “What People Are Saying” to orient people entering the app.
 
 **How to apply:** Share the presentation across all Now rating and review cards, independently of whether the introductory heading is shown. Preserve stars, match pills, related ratings, all reaction controls, and owner delete.
 
-Use the standard serif font, not Fraunces, for media titles on these rating/review cards.
+Use the app's body sans-serif font, matching the review text, for media titles on these rating/review cards. Do not use Fraunces, Georgia, or another serif.
 
-**Why:** After trying the bundled Fraunces font, the user explicitly asked to switch these cards' media titles to the serif font instead and repeated that the title still looked like Fraunces.
+**Why:** The user clarified, “I want Crew Girl to be our SAN serif font.” Earlier references to “serif” meant sans-serif; replacing Fraunces with another serif did not achieve the requested look.
 
-**How to apply:** Use an explicit Georgia / Times family rather than the browser-dependent generic UI serif. Keep this scoped to the shared Now rating/review title styling. Preserve its size, weight, placement, and the separate sans-serif discovery heading; do not change fonts elsewhere.
+**How to apply:** Match the review text's Plus Jakarta Sans family and its system sans-serif fallbacks. Keep this scoped to the shared Now rating/review title styling. Preserve its size, weight, placement, and the separate discovery heading; do not change fonts elsewhere.
 
 Use a subtle overlapping-card edge plus a simple upper-right “>” to suggest more reviews, without dots, “Next” labels, thumbnails, or a previous/next navigation strip. Keep the heading slightly smaller than Trending now.
 

@@ -46,9 +46,9 @@ test("Featured review heading lives inside its carousel and matches Trending now
   assert.match(feed, /data-testid="what-people-are-saying">\s*\{renderFeedItem\(topRatingDeck, "top-rating-deck"\)\}/);
 });
 
-test("Review-card media titles use the standard serif instead of Fraunces", () => {
+test("Review-card media titles use the app's body sans-serif instead of Fraunces or Georgia", () => {
   assert.match(feed, /feed-review-media-title text-\[15px\] font-medium leading-tight text-\[#30203f\]/);
-  assert.match(styles, /\.feed-review-media-title\s*\{\s*font-family: Georgia, "Times New Roman", Times, serif !important;/);
+  assert.match(styles, /\.feed-review-media-title\s*\{\s*font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;/);
   assert.doesNotMatch(feed, /font-fraunces text-\[15px\] font-medium/);
   assert.match(styles, /@font-face\s*\{[^}]*font-family: "Consumed Fraunces";[^}]*src: url\("\.\.\/\.\.\/server\/assets\/Fraunces\.ttf"\)[^}]*font-weight: 100 900;/);
   assert.match(styles, /\.font-fraunces\s*\{\s*font-family: 'Consumed Fraunces', Georgia, serif !important;/);
