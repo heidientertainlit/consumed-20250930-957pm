@@ -93,6 +93,7 @@ test("Trending trims vertical spacing without shrinking its posters or text", ()
   assert.match(trending, /bg-white px-5 py-4/);
   assert.doesNotMatch(trending, /sm:py-8/);
   assert.match(trending, /<div className="mb-\[14px\]">/);
+  assert.match(trending, /relative top-1 flex items-center justify-between gap-3/);
   assert.match(trending, /mt-\[14px\] overflow-x-auto px-1/);
   assert.match(trending, /scrollbar-hide -mx-1 mt-\[14px\] flex snap-x/);
   assert.match(trending, /mt-2 flex items-center gap-1.5 text-left/);

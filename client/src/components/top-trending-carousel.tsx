@@ -135,7 +135,7 @@ export function TopTrendingCarousel({
   return (
     <section className="mb-5 rounded-[24px] bg-white px-5 py-4 shadow-[0_2px_6px_rgba(26,18,43,0.05)] sm:px-9" aria-labelledby="top-trending-title" data-testid="top-trending-carousel">
         <div className="mb-[14px]">
-          <div className="flex items-center justify-between gap-3">
+          <div className="relative top-1 flex items-center justify-between gap-3">
             <h2 id="top-trending-title" className="text-[24px] font-semibold leading-[1.12] tracking-[-0.045em] text-[#201c29] sm:text-[30px]">Trending now</h2>
             <div className="flex shrink-0 items-center gap-3">
               <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-[0.12em] text-[#7656cb]" data-testid="trending-live-label">
