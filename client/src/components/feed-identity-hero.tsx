@@ -190,7 +190,7 @@ export function FeedIdentityHero() {
             )}
               <button
                 onClick={() => setLocation("/profile")}
-                className="relative float-right ml-2 flex h-[88px] w-[88px] shrink-0 items-center justify-center active:scale-95 transition-transform sm:h-[108px] sm:w-[108px]"
+                className="relative float-right ml-2 mb-1 flex h-[88px] w-[88px] shrink-0 items-center justify-center active:scale-95 transition-transform sm:h-[108px] sm:w-[108px]"
                 aria-label="View your DNA page"
                 data-testid="button-hero-face-dna"
               >
@@ -220,17 +220,17 @@ export function FeedIdentityHero() {
                 ))}
               </span>
             </h1>
-          </div>
 
-          {/* Secondary archetypes — subtle "with shades of" subtitle, aligned to the headline */}
-          {secondaries.length > 0 && (
-            <div className="relative mt-2">
-              <p className="text-[12px] italic" style={{ color: "rgba(255,255,255,0.4)" }}>with shades of</p>
-              <p className="text-[14px] font-medium mt-1" style={{ color: "rgba(255,255,255,0.75)" }}>
-                {secondaries.join(" • ")}
-              </p>
-            </div>
-          )}
+            {/* Keep supporting text in the name's flow so the face doesn't force a blank gap. */}
+            {secondaries.length > 0 && (
+              <div className="relative mt-2">
+                <p className="text-[12px] italic" style={{ color: "rgba(255,255,255,0.4)" }}>with shades of</p>
+                <p className="text-[14px] font-medium mt-1" style={{ color: "rgba(255,255,255,0.75)" }}>
+                  {secondaries.join(" • ")}
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* DNA completion nudge — finishing the integrated flow always generates a profile,
               so "no profile label yet" is the reliable "hasn't completed DNA" signal. */}

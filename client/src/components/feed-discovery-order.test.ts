@@ -115,12 +115,14 @@ test("Trending trims vertical spacing without shrinking its posters or text", ()
 });
 
 test("DNA name spacing is tighter without shrinking the face or preventing name wrapping", () => {
-  assert.match(identityHero, /relative float-right ml-2 flex h-\[88px\] w-\[88px\]/);
+  assert.match(identityHero, /relative float-right ml-2 mb-1 flex h-\[88px\] w-\[88px\]/);
   assert.match(identityHero, /sm:h-\[108px\] sm:w-\[108px\]/);
   assert.match(identityHero, /<IdentityFace size=\{108\} className="scale-\[\.8\] sm:scale-100"/);
   assert.match(identityHero, /secondaries\.length > 0 && \(\s*<div className="relative mt-2">/);
   assert.match(identityHero, /className="relative flow-root"/);
   assert.match(identityHero, /maxWidth: "100%", overflowWrap: "break-word"/);
+  assert.match(identityHero, /<\/h1>\s*\{\/\*[^]*?\*\/\}\s*\{secondaries\.length > 0/);
+  assert.match(identityHero, /\{secondaries\.join\(" • "\)\}[^]*?\)\}\s*<\/div>\s*\{\/\* DNA completion nudge/);
 });
 
 test("Add browsing retains a capped, balanced chart selection and provider IDs", () => {
