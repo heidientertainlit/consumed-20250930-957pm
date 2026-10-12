@@ -96,6 +96,15 @@ export function TopTrendingCarousel({
               onLoad={(event) => { event.currentTarget.style.opacity = "1"; }}
             />
           </button>
+          <span
+            className="pointer-events-none absolute right-2 top-2 z-[2] rounded-md bg-[#171322]/70 p-1 backdrop-blur-sm"
+            title={mediaTypeLabel(item.media_type)}
+            data-testid="trending-media-icon"
+            data-media-type={item.media_type}
+            aria-hidden="true"
+          >
+            <MediaTypeIcon className="h-4 w-4 text-[#c8bfd7]" />
+          </span>
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-16" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.58) 0%, transparent 100%)" }} />
           <button
             type="button"
@@ -117,7 +126,6 @@ export function TopTrendingCarousel({
           data-media-type={item.media_type}
           className={`mt-2 flex items-center gap-1.5 text-left disabled:cursor-default ${inDialog ? "w-full" : "ml-[38px] w-[100px] sm:ml-12 sm:w-[146px]"}`}
         >
-          <MediaTypeIcon className="h-4 w-4 shrink-0 text-[#9b8bae]" aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate text-[14px] font-semibold leading-snug text-[#201c29] sm:text-base">{item.title}</span>
         </button>
       </article>
@@ -146,7 +154,7 @@ export function TopTrendingCarousel({
               )}
             </div>
           </div>
-          <div className="scrollbar-hide -mx-1 mt-2.5 overflow-x-auto px-1" role="group" aria-label="Filter trending titles by category">
+          <div className="scrollbar-hide -mx-1 mt-4 overflow-x-auto px-1" role="group" aria-label="Filter trending titles by category">
             <div className="flex w-max items-center gap-1.5">
               {([
                 ["all", "All"],
@@ -162,10 +170,10 @@ export function TopTrendingCarousel({
                   data-guest-allowed
                   aria-pressed={category === value}
                   onClick={() => setCategory(value)}
-                  className={`shrink-0 rounded-full px-2.5 py-[7px] text-[14px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 sm:px-3.5 sm:py-2 sm:text-[17px] ${
+                  className={`shrink-0 rounded-full px-2.5 py-1.5 text-[12px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 sm:px-3 sm:text-[13px] ${
                     category === value
-                      ? "bg-[#191523] text-white hover:bg-[#302940]"
-                      : "bg-[#f0edf3] text-[#514b5c] hover:bg-[#e9e4ef]"
+                      ? "bg-[#68458c] text-white hover:bg-[#583778]"
+                      : "bg-[#f7f5f8] text-[#514b5c] hover:bg-[#eeebf3]"
                   }`}
                 >
                   {label}
