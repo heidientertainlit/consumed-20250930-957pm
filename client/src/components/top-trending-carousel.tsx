@@ -107,15 +107,27 @@ export function TopTrendingCarousel({
 
   return (
     <section className="mb-5 rounded-[24px] bg-white px-5 py-4 shadow-[0_2px_6px_rgba(26,18,43,0.05)] sm:px-9" aria-labelledby="top-trending-title" data-testid="top-trending-carousel">
-        <div className="mb-3">
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.19em] text-[#7656cb]">
-            <span className="h-3 w-3 rounded-full bg-[#3b82f6] motion-safe:animate-[trending-live-blink_3s_ease-in-out_infinite]" aria-hidden="true" />
-            <span>Live this week</span>
+        <div className="mb-1">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="top-trending-title" className="text-[24px] font-semibold leading-[1.12] tracking-[-0.045em] text-[#201c29] sm:text-[30px]">Trending now</h2>
+            <div className="flex shrink-0 items-center gap-3">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-[0.12em] text-[#7656cb]" data-testid="trending-live-label">
+                <span className="h-3 w-3 rounded-full bg-[#3b82f6] motion-safe:animate-[trending-live-blink_3s_ease-in-out_infinite]" aria-hidden="true" />
+                <span>LIVE</span>
+              </div>
+              {!isLoading && !isError && visibleItems.length > 3 && (
+                <div className="hidden gap-1.5 sm:flex">
+                  <button type="button" data-guest-allowed aria-label="Scroll trending titles left" onClick={() => scrollRef.current?.scrollBy({ left: -420, behavior: "smooth" })} className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-100 text-violet-600 transition-colors hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300">
+                    <ArrowLeft size={15} />
+                  </button>
+                  <button type="button" data-guest-allowed aria-label="Scroll trending titles right" onClick={() => scrollRef.current?.scrollBy({ left: 420, behavior: "smooth" })} className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-100 text-violet-600 transition-colors hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300">
+                    <ArrowRight size={15} />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="mt-2 flex items-center justify-between gap-3">
-              <h2 id="top-trending-title" className="text-[24px] font-semibold leading-[1.12] tracking-[-0.045em] text-[#201c29] sm:text-[38px]">Trending now</h2>
-          </div>
-          <div className="scrollbar-hide -mx-1 mt-4 overflow-x-auto px-1" role="group" aria-label="Filter trending titles by category">
+          <div className="scrollbar-hide -mx-1 mt-1.5 overflow-x-auto px-1" role="group" aria-label="Filter trending titles by category">
             <div className="flex w-max items-center gap-1.5">
               {([
                 ["all", "All"],
@@ -144,18 +156,8 @@ export function TopTrendingCarousel({
           </div>
         </div>
 
-        {!isLoading && !isError && visibleItems.length > 3 && (
-          <div className="mb-2 hidden justify-end gap-1.5 sm:flex">
-            <button type="button" data-guest-allowed aria-label="Scroll trending titles left" onClick={() => scrollRef.current?.scrollBy({ left: -420, behavior: "smooth" })} className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-100 text-violet-600 transition-colors hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300">
-              <ArrowLeft size={15} />
-            </button>
-            <button type="button" data-guest-allowed aria-label="Scroll trending titles right" onClick={() => scrollRef.current?.scrollBy({ left: 420, behavior: "smooth" })} className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-100 text-violet-600 transition-colors hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300">
-              <ArrowRight size={15} />
-            </button>
-          </div>
-        )}
       {isLoading ? (
-        <div className="mt-3 flex gap-5 overflow-hidden px-4 pb-2" aria-label="Loading trending media">
+        <div className="mt-1 flex gap-5 overflow-hidden px-4 pb-2" aria-label="Loading trending media">
           {[0, 1, 2, 3].map((index) => (
             <div key={index} className="w-[176px] shrink-0 animate-pulse">
               <div className="aspect-[2/3] rounded-[20px] bg-[#e9e5ed]" />
@@ -165,18 +167,18 @@ export function TopTrendingCarousel({
           ))}
         </div>
       ) : isError ? (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-violet-50/70 px-3.5 py-3">
+        <div className="mt-1 flex items-center justify-between gap-3 rounded-xl bg-violet-50/70 px-3.5 py-3">
           <p className="text-xs text-violet-800">Trending titles couldn’t load just now.</p>
           <button type="button" data-guest-allowed onClick={() => void refetch()} className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm hover:bg-violet-100">Try again</button>
         </div>
       ) : visibleItems.length === 0 ? (
-        <p className="mt-3 rounded-xl bg-violet-50/70 px-3.5 py-3 text-xs text-violet-700">
+        <p className="mt-1 rounded-xl bg-violet-50/70 px-3.5 py-3 text-xs text-violet-700">
           {category === "all"
             ? "No chart titles are available right now."
             : `No ${category === "movie" ? "movie" : category} chart titles are available right now.`}
         </p>
       ) : (
-        <div ref={scrollRef} className="scrollbar-hide -mx-1 mt-3 flex snap-x snap-mandatory gap-1.5 overflow-x-auto px-1 pb-2 touch-pan-x sm:gap-4" data-testid="trending-media-track">
+        <div ref={scrollRef} className="scrollbar-hide -mx-1 mt-1 flex snap-x snap-mandatory gap-1.5 overflow-x-auto px-1 pb-2 touch-pan-x sm:gap-4" data-testid="trending-media-track">
           {visibleItems.map((item, index) => renderPoster(item, index))}
         </div>
       )}

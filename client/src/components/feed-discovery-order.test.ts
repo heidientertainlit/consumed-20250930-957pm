@@ -43,13 +43,16 @@ test("Trending discovery uses the production endpoint and preserves provider ide
   assert.match(trending, /aria-pressed=\{category === value\}/);
   assert.match(trending, /data-guest-allowed\s+aria-pressed/);
   assert.match(trending, /selectTrendingItems\(items, category\)/);
-  assert.match(trending, /Live this week/);
+  assert.match(trending, /<span>LIVE<\/span>/);
+  assert.doesNotMatch(trending, /Live this week/);
   assert.doesNotMatch(trending, /See all|trending-all-dialog/);
-  assert.match(trending, /gap-2 text-\[11px\]/);
+  assert.match(trending, /gap-1.5 text-\[10px\]/);
+  assert.match(trending, /tracking-\[0.12em\]/);
+  assert.match(trending, /data-testid="trending-live-label"/);
   assert.match(trending, /bg-\[#3b82f6\]/);
   assert.match(trending, /motion-safe:animate-\[trending-live-blink_3s_ease-in-out_infinite\]/);
   assert.match(trending, /text-\[24px\] font-semibold/);
-  assert.match(trending, /sm:text-\[38px\]/);
+  assert.match(trending, /sm:text-\[30px\]/);
   assert.match(trending, /bg-\[#191523\] text-white/);
   assert.match(trending, /data-testid="trending-position"/);
   assert.match(trending, /\{index \+ 1\}/);
@@ -89,8 +92,9 @@ test("Trending uses one white card without an outer frame or border line", () =>
 test("Trending trims vertical spacing without shrinking its posters or text", () => {
   assert.match(trending, /bg-white px-5 py-4/);
   assert.doesNotMatch(trending, /sm:py-8/);
-  assert.match(trending, /<div className="mb-3">/);
-  assert.match(trending, /scrollbar-hide -mx-1 mt-3 flex snap-x/);
+  assert.match(trending, /<div className="mb-1">/);
+  assert.match(trending, /mt-1.5 overflow-x-auto px-1/);
+  assert.match(trending, /scrollbar-hide -mx-1 mt-1 flex snap-x/);
   assert.match(trending, /mt-2 block text-left/);
   assert.match(trending, /w-\[100px\] sm:ml-12 sm:w-\[146px\]/);
   assert.match(trending, /text-\[14px\] font-semibold leading-snug/);
