@@ -9,11 +9,11 @@ Keep the poster, title, stars, match score, short review, and reviewer identity 
 
 **How to apply:** Preserve both thumbs, Reply (including its bubble icon), Rate, Share, post reporting, comment reporting, and threaded replies when changing rated feed cards. Standalone rated/list-activity cards must use the same grouped thumbs-up/thumbs-down treatment as the main card path rather than the legacy heart footer. Never collapse those capabilities into decorative or nonfunctional controls. Reply previews must be readable in guest mode without exposing private profile fields. Once the comment request succeeds, the actual flattened comment tree is authoritative over denormalized counts: show a real reply preview when present, and hide stale reply counts when no comment row exists.
 
-If the viewer has rated the title, put their own rating first in the shared discussion section, labeled “You,” even when there are no comments. Do not leave it beside the primary poster or below other replies.
+If the viewer has rated the title, show the rating together with their comment in the shared discussion section, labeled “You,” and pin that combined row first. Use a standalone rating row only when there is no suitable top-level comment by the viewer.
 
-**Why:** The user explicitly said, “But put my own rating at the top of the comments if I've rated it.”
+**Why:** The user first requested their rating at the top, then clarified, “if I've rated it, it shows along with my comment,” after seeing separate rating-only and comment rows.
 
-**How to apply:** Use the actual saved rating, including half-stars, and preserve distinct comments rather than hiding every message from someone who also rated the title. Only identical review/comment text may be combined.
+**How to apply:** Attach the actual saved rating, including half-stars, to the viewer's comment without changing its identity, reactions, moderation actions, or replies. Preserve distinct comments and separate review text; deduplicate only identical text. Never repeat the stars in a second rating-only row.
 
 The featured “What People Are Saying” heading belongs inside its carousel's white card, matching the font of Trending now but slightly smaller. Omit the “Real ratings and reviews from your feed” subtitle.
 

@@ -13,7 +13,7 @@ export interface RelatedFeedRating {
   isLiked?: boolean;
 }
 
-/** Keep real comments (and their threads) intact; merge only an identical review. */
+/** Put the viewer's rating on their comment; preserve distinct text and threads. */
 export function buildFeedConversation({
   ratings, comments, viewerId, ownRating, ownAvatar, blockedUserIds = [],
 }: {
@@ -40,6 +40,19 @@ export function buildFeedConversation({
   });
   const rows = comments.filter(c => !blocked.has(c.user?.id || c.userId || c.user_id)).map(commentEntry);
   const normalize = (text?: string) => (text || "").trim().replace(/\s+/g, " ");
+  const viewerReview = ratings.find(rating => rating.userId === viewerId)?.content;
+  const ownComment = viewerId && ownRating && ownRating > 0
+    ? (viewerReview?.trim()
+        ? rows.find(row => row.userId === viewerId && normalize(row.content) === normalize(viewerReview))
+        : undefined)
+      || rows.find(row => row.userId === viewerId && row.content?.trim())
+      || rows.find(row => row.userId === viewerId)
+    : undefined;
+  if (ownComment) {
+    ownComment.rating = ownRating;
+    ownComment.isOwnRating = true;
+    ownComment.name = "You";
+  }
   const seenRatings = new Set<string>();
   for (const rating of ratings) {
     if (blocked.has(rating.userId) || seenRatings.has(rating.userId)) continue;
@@ -55,13 +68,15 @@ export function buildFeedConversation({
       identicalComment.isOwnRating = rating.userId === viewerId;
       if (identicalComment.isOwnRating) identicalComment.name = "You";
     } else {
+      const attachedToOwnComment = rating.userId === viewerId && Boolean(ownComment);
+      if (attachedToOwnComment && !rating.content?.trim()) continue;
       rows.push({
         id: `rating:${rating.userId}`, userId: rating.userId,
-        name: rating.userId === viewerId ? "You" : rating.displayName,
-        avatar: rating.avatar, rating: value, content: rating.content,
+        name: rating.userId === viewerId && !attachedToOwnComment ? "You" : rating.displayName,
+        avatar: rating.avatar, rating: attachedToOwnComment ? undefined : value, content: rating.content,
         kind: "rating", postId: rating.postId,
         likes: rating.likes || 0, isLiked: rating.isLiked || false,
-        isOwnRating: rating.userId === viewerId,
+        isOwnRating: rating.userId === viewerId && !attachedToOwnComment,
       });
     }
   }

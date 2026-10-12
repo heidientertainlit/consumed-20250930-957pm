@@ -42,6 +42,69 @@ test("a just-saved rating appears first even before related reviews finish loadi
   assert.doesNotMatch(render(entries), /Like your review|Delete/);
 });
 
+test("viewer rating joins their existing comment instead of creating a separate You row", () => {
+  const own = comment(2, "viewer", "Obsessssssed. Love love love", [comment(3, "friend", "Agreed")]);
+  const entries = buildFeedConversation({
+    ratings: [rating("viewer", { rating: 2 }), rating("friend")],
+    comments: [comment(1, "other"), own], viewerId: "viewer", ownRating: 4.5,
+  });
+  assert.equal(entries[0].id, "comment:2");
+  assert.equal(entries[0].kind, "comment");
+  assert.equal(entries[0].name, "You");
+  assert.equal(entries[0].rating, 4.5);
+  assert.equal(entries[0].content, own.content);
+  assert.equal(entries[0].likes, 3);
+  assert.equal(entries[0].isLiked, true);
+  assert.equal(entries[0].children?.[0].id, "comment:3");
+  assert.equal(entries.filter(entry => entry.userId === "viewer").length, 1);
+  const html = render(entries, true);
+  assert.match(html, /4.5 out of 5 stars/);
+  assert.match(html, /Obsessssssed\. Love love love/);
+  assert.match(html, /Unlike your comment/);
+  assert.match(html, /Agreed/);
+  assert.match(html, />Delete</);
+});
+
+test("viewer comment gets their current rating before related reviews have loaded", () => {
+  const entries = buildFeedConversation({
+    ratings: [], comments: [comment(1, "friend"), comment(2, "viewer", "Love it")],
+    viewerId: "viewer", ownRating: 5,
+  });
+  assert.equal(entries[0].id, "comment:2");
+  assert.equal(entries[0].rating, 5);
+  assert.equal(entries.filter(entry => entry.isOwnRating).length, 1);
+  assert.ok(!entries.some(entry => entry.id === "rating:viewer"));
+});
+
+test("a distinct viewer review is preserved as text without duplicating their attached stars", () => {
+  const entries = buildFeedConversation({
+    ratings: [rating("viewer", { content: "My separate review", postId: "own-review" })],
+    comments: [comment(1, "viewer", "My comment here")], viewerId: "viewer", ownRating: 5,
+  });
+  assert.equal(entries[0].content, "My comment here");
+  assert.equal(entries[0].rating, 5);
+  assert.equal(entries[1].content, "My separate review");
+  assert.equal(entries[1].rating, undefined);
+  assert.equal(entries[1].postId, "own-review");
+  assert.equal(entries.filter(entry => entry.isOwnRating).length, 1);
+  assert.equal((render(entries).match(/out of 5 stars/g) || []).length, 1);
+});
+
+test("multiple viewer comments stay intact and removing the rating removes the attached stars", () => {
+  const comments = [comment(1, "viewer", "Earlier comment"), comment(2, "viewer", "My review")];
+  const ratings = [rating("viewer", { content: "My review" })];
+  const entries = buildFeedConversation({ ratings, comments, viewerId: "viewer", ownRating: 5 });
+  assert.equal(entries.length, 2);
+  assert.equal(entries[0].id, "comment:2");
+  assert.equal(entries[0].rating, 5);
+  assert.equal(entries[1].content, "Earlier comment");
+  for (const ownRating of [0, undefined]) {
+    const cleared = buildFeedConversation({ ratings, comments, viewerId: "viewer", ownRating });
+    assert.equal(cleared.length, 2);
+    assert.ok(cleared.every(entry => !entry.isOwnRating && entry.rating === undefined));
+  }
+});
+
 test("no viewer rating is invented, and a removed rating cannot return from stale related data", () => {
   for (const ownRating of [undefined, 0]) {
     const entries = buildFeedConversation({
