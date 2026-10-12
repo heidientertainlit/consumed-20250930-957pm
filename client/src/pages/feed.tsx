@@ -1295,7 +1295,7 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList, forceActionFirst, forceNormal, stackPosts, stackIndex, swipeProps, showFullName }: {
+function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList, forceActionFirst, forceNormal, stackPosts, stackIndex, swipeProps, showFullName, showDiscoveryHeading }: {
   post: UGCPost;
   onLike: (id: string) => void;
   isLiked: boolean;
@@ -1310,6 +1310,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   stackIndex?: number;
   swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode; animKey?: number; enterDir?: 'from-right' | 'from-left'; dragX?: number; getSwiped?: () => boolean; navigate?: (dir: 1 | -1) => void; totalPosts?: number };
   showFullName?: boolean;
+  showDiscoveryHeading?: boolean;
 }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
@@ -2587,7 +2588,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     return (
       <>
         {/* ── SeenIt-style carousel card ── */}
-        <div className="relative bg-white rounded-2xl shadow-sm overflow-visible">
+        <div className="relative bg-white rounded-2xl shadow-sm overflow-visible" data-testid={showDiscoveryHeading ? "featured-review-carousel-card" : undefined}>
+          {showDiscoveryHeading && (
+            <div className="px-4 pt-4 pr-12">
+              <h2 id="what-people-are-saying-title" className="text-base font-semibold leading-snug text-gray-900">What people are saying</h2>
+            </div>
+          )}
           {currentUserId && post.user?.id !== currentUserId && (
             <button
               onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }}
@@ -6644,6 +6650,7 @@ export default function Feed() {
               onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
               forceActionFirst={true}
               forceNormal={true}
+              showDiscoveryHeading={keyPrefix === "top-rating-deck"}
               stackPosts={allPosts}
               stackIndex={idx}
               swipeProps={swipeProps}
@@ -9404,10 +9411,6 @@ export default function Feed() {
 
               {isUnfilteredNowFeed && topRatingDeck?.posts?.some((post: any) => !dismissedPostIds.has(post.id)) && (
                 <section className="mb-5" aria-labelledby="what-people-are-saying-title" data-testid="what-people-are-saying">
-                  <div className="mb-3 px-1">
-                    <h2 id="what-people-are-saying-title" className="text-[13px] font-extrabold tracking-[0.12em] text-[#35234b]">WHAT PEOPLE ARE SAYING</h2>
-                    <p className="mt-0.5 text-[11px] text-violet-500/80">Real ratings and reviews from your feed</p>
-                  </div>
                   {renderFeedItem(topRatingDeck, "top-rating-deck")}
                 </section>
               )}

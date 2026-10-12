@@ -12,7 +12,7 @@ const composer = readFileSync(new URL("./feed-composer-bar.tsx", import.meta.url
 
 test("DNA stays above the feed; trending and reviews lead only feed content", () => {
   const trendingHeading = feed.indexOf("<TopTrendingCarousel");
-  const reviewHeading = feed.indexOf("WHAT PEOPLE ARE SAYING");
+  const reviewHeading = feed.indexOf('data-testid="what-people-are-saying"');
   const identityZoneRender = feed.indexOf("<FeedIdentityZone");
   const talkingCard = feed.indexOf("key={everyonesTalking[0].key}");
 
@@ -31,6 +31,16 @@ test("DNA stays above the feed; trending and reviews lead only feed content", ()
   assert.match(feed, /renderFeedItem\(topRatingDeck, "top-rating-deck"\)/);
   assert.match(feed, /feedSlotsAfterTopRating/);
   assert.match(feed, /preselectedMedia=\{trendingActionMedia\}/);
+});
+
+test("Featured review heading lives inside its carousel and uses the compact ranked-list heading font", () => {
+  assert.match(feed, /showDiscoveryHeading=\{keyPrefix === "top-rating-deck"\}/);
+  assert.match(feed, /data-testid=\{showDiscoveryHeading \? "featured-review-carousel-card" : undefined\}/);
+  assert.match(feed, /showDiscoveryHeading && \([^]*?<h2 id="what-people-are-saying-title"/);
+  const reviewClass = feed.match(/id="what-people-are-saying-title" className="([^"]+)"/)?.[1];
+  assert.equal(reviewClass, "text-base font-semibold leading-snug text-gray-900");
+  assert.doesNotMatch(feed, /Real ratings and reviews from your feed|WHAT PEOPLE ARE SAYING/);
+  assert.match(feed, /data-testid="what-people-are-saying">\s*\{renderFeedItem\(topRatingDeck, "top-rating-deck"\)\}/);
 });
 
 test("Trending discovery uses the production endpoint and preserves provider identity", () => {
