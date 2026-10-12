@@ -9,8 +9,8 @@ Keep the user's DNA section at the top of the Now page. TOP & TRENDING belongs a
 
 **How to apply:** Treat page-level DNA identity and its controls as separate from feed ordering. Carousel work must not replace, remove, or move that DNA hero below feed content.
 
-Long DNA titles should wrap without looking crowded; the user specifically suggested letting the happy face sit partly off the edge.
+Keep the happy face fully inside the DNA card. Long title words may move to the next row rather than crowding or obscuring the face.
 
-**Why:** The user disliked the long-title happy-face presentation and explicitly offered title wrapping or partial face clipping as acceptable fixes.
+**Why:** The user liked the compact improvement but clarified that the face did not need to go off-screen; they asked to bring it back and wrap long words instead.
 
-**How to apply:** Partial smiley clipping on mobile is intentional, not an overflow defect to undo. Preserve readable titles, an accessible face button, and the unchanged page-level DNA placement.
+**How to apply:** Prefer natural whole-word wrapping and a fully visible, accessible face button. Preserve the compact presentation and unchanged page-level DNA placement.

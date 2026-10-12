@@ -87,19 +87,36 @@ try {
         const geometry = await page.evaluate(() => {
           const title = document.querySelector("h1").getBoundingClientRect();
           const face = document.querySelector('[data-testid="button-hero-face-dna"]').getBoundingClientRect();
-          const card = document.querySelector('[data-testid="button-hero-face-dna"]').parentElement.parentElement.getBoundingClientRect();
-          const greeting = document.querySelector("h1").previousElementSibling.getBoundingClientRect();
-          const range = document.createRange(); range.selectNodeContents(document.querySelector("h1"));
-          const text = [...range.getClientRects()].filter(rect => rect.width > 0);
+          const card = document.querySelector('[data-testid="button-hero-face-dna"]').closest(".rounded-3xl").getBoundingClientRect();
+          const greeting = document.querySelector("h1").parentElement.querySelector("p").getBoundingClientRect();
+          const heading = document.querySelector("h1");
+          const walker = document.createTreeWalker(heading, NodeFilter.SHOW_TEXT);
+          const text = [];
+          while (walker.nextNode()) {
+            if (!walker.currentNode.textContent.trim()) continue;
+            const range = document.createRange();
+            range.selectNodeContents(walker.currentNode);
+            text.push(...[...range.getClientRects()].filter(rect => rect.width > 0));
+          }
           return {
-            overlap: title.left < face.right && title.right > face.left && title.top < face.bottom && title.bottom > face.top,
+            overlap: text.some(rect => rect.left < face.right && rect.right > face.left && rect.top < face.bottom && rect.bottom > face.top),
             greetingAbove: greeting.bottom <= title.top,
             textFits: text.every(rect => rect.left >= title.left - 1 && rect.right <= title.right + 1),
             overflow: document.documentElement.scrollWidth > innerWidth,
-            faceFitsDesign: innerWidth < 640 ? face.right > card.right && card.right - face.left >= 44 : face.right <= card.right,
+            faceFitsDesign: face.right <= card.right && face.left >= card.left && face.width >= 44 && face.height >= 44,
+            wholeWords: [...heading.querySelectorAll("span[style]")].filter(el => el.style.maxWidth).every(el => {
+              const clone = el.cloneNode(true);
+              Object.assign(clone.style, { maxWidth: "none", width: "max-content", whiteSpace: "nowrap", position: "absolute", visibility: "hidden" });
+              el.parentElement.appendChild(clone);
+              const intrinsicWidth = clone.getBoundingClientRect().width;
+              clone.remove();
+              // Emergency wrapping is necessary only when the word cannot fit
+              // even on its own full-width row (including enlarged text).
+              return intrinsicWidth > title.width + 1 || el.clientHeight <= parseFloat(getComputedStyle(el).lineHeight) + 1;
+            }),
           };
         });
-        assert.deepEqual(geometry, { overlap: false, greetingAbove: true, textFits: true, overflow: false, faceFitsDesign: true }, `${width}px / ${fontSize}px / ${label}`);
+        assert.deepEqual(geometry, { overlap: false, greetingAbove: true, textFits: true, overflow: false, faceFitsDesign: true, wholeWords: true }, `${width}px / ${fontSize}px / ${label}`);
       }
     }
   }

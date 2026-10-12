@@ -179,37 +179,47 @@ export function FeedIdentityHero() {
             </button>
           </div>
 
-          {/* Keep the face beside the title on mobile, with a little of it tucked
-              past the card edge so long names still have room to wrap. */}
-          <div className="relative flex items-center gap-2 sm:gap-4">
-            <div className="min-w-0 flex-1">
-              {dna?.label && (
-                <p
-                  className="mb-1 text-[11px] font-bold uppercase leading-snug"
-                  style={{ color: "rgba(192,160,255,0.9)", letterSpacing: "0.12em", overflowWrap: "anywhere" }}
+          <div className="relative flow-root">
+            {dna?.label && (
+              <p
+                className="mb-1 text-[11px] font-bold uppercase leading-snug"
+                style={{ color: "rgba(192,160,255,0.9)", letterSpacing: "0.12em", overflowWrap: "anywhere" }}
+              >
+                {formatDnaGreeting(firstName)}
+              </p>
+            )}
+              <button
+                onClick={() => setLocation("/profile")}
+                className="relative float-right ml-2 mb-1 flex h-[88px] w-[88px] shrink-0 items-center justify-center active:scale-95 transition-transform sm:h-[108px] sm:w-[108px]"
+                aria-label="View your DNA page"
+                data-testid="button-hero-face-dna"
+              >
+                <IdentityFace size={108} className="scale-[.8] sm:scale-100" />
+              </button>
+            <h1 className="font-bold tracking-tight leading-[1.08]">
+              {prefix && (
+                <span
+                  className="block text-[22px]"
+                  style={{ color: "rgba(255,255,255,0.9)", overflowWrap: "anywhere" }}
                 >
-                  {formatDnaGreeting(firstName)}
-                </p>
-              )}
-              <h1 className="min-w-0 font-bold tracking-tight leading-[1.08]" style={{ overflowWrap: "anywhere" }}>
-                {prefix && (
-                  <span className="block text-[22px]" style={{ color: "rgba(255,255,255,0.9)" }}>
-                    {prefix}
-                  </span>
-                )}
-                <span className="block text-[clamp(1.75rem,8vw,2rem)] text-white">
-                  {mainWords.join(" ")}
+                  {prefix}
                 </span>
-              </h1>
-            </div>
-            <button
-              onClick={() => setLocation("/profile")}
-              className="relative -mr-12 flex h-[88px] w-[88px] shrink-0 items-center justify-center active:scale-95 transition-transform sm:mr-0 sm:h-[108px] sm:w-[108px]"
-              aria-label="View your DNA page"
-              data-testid="button-hero-face-dna"
-            >
-              <IdentityFace size={108} className="scale-[.8] sm:scale-100" />
-            </button>
+              )}
+              {prefix && " "}
+              <span className="text-[clamp(1.75rem,8vw,2rem)] text-white">
+                {mainWords.map((word, index) => (
+                  <span key={`${word}-${index}`}>
+                    {index > 0 && " "}
+                    <span
+                      className="inline-block"
+                      style={{ maxWidth: "100%", overflowWrap: "break-word" }}
+                    >
+                      {word}
+                    </span>
+                  </span>
+                ))}
+              </span>
+            </h1>
           </div>
 
           {/* Secondary archetypes — subtle "with shades of" subtitle, aligned to the headline */}
