@@ -3,13 +3,13 @@ name: Now trending presentation
 description: User's visual and metadata boundaries for the Now Top & Trending carousel.
 ---
 
-Top & Trending should match the Add page's browsing typography and dark poster-overlay plus buttons. Its cards show the title and media type, not where the title is trending or any usernames. Do not add an AI-style sparkle beside the heading.
+Top & Trending should match the Add page's browsing typography and dark poster-overlay plus buttons. Its cards show a purple media-type icon to the left of the title, not a written media-type line underneath, chart-source labels, or usernames. Do not add an AI-style sparkle beside the heading.
 
 The user's latest direction: small, tightly tracked “LIVE” with a slowly blinking blue dot to the right of the compact “Trending now” heading, tighter heading/filter/poster gaps, no subtitle or “See all” button, a single white rounded card with no outer frame or border line, and oversized pale numbers behind real posters. Filters remain All, TV, Movies, Books, Podcasts, Music.
 
 **Why:** The user wants this section to match the rest of the app and explicitly supplied the reference. They subsequently requested removal of the nested outer card and border line because they made the content smaller. They found the heavily compressed heading/filter/poster gaps too tight; keep clear separation between these rows rather than minimizing height at all costs.
 
-**How to apply:** Use a near-black active pill and pale lavender-gray inactive pills. Treat carousel numbers as decorative positions, not official cross-source ranks. Keep the poster artwork real, titles and media types visible, and existing navigation and Add actions intact.
+**How to apply:** Use a near-black active pill and pale lavender-gray inactive pills. Treat carousel numbers as decorative positions, not official cross-source ranks. Keep real artwork and a compact icon/title row with accessible full title and media type, and preserve existing navigation and Add actions.
 
 **Why:** The user supplied the Add page as the desired visual reference and explicitly requested simpler metadata, no AI star, and the exact same dark plus buttons. They also asked that the first poster be inset, not cut off on the left.
 

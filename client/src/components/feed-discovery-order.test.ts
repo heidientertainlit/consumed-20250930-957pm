@@ -95,10 +95,16 @@ test("Trending trims vertical spacing without shrinking its posters or text", ()
   assert.match(trending, /<div className="mb-2.5">/);
   assert.match(trending, /mt-2.5 overflow-x-auto px-1/);
   assert.match(trending, /scrollbar-hide -mx-1 mt-2.5 flex snap-x/);
-  assert.match(trending, /mt-2 block text-left/);
+  assert.match(trending, /mt-2 flex items-center gap-1.5 text-left/);
   assert.match(trending, /w-\[100px\] sm:ml-12 sm:w-\[146px\]/);
   assert.match(trending, /text-\[14px\] font-semibold leading-snug/);
-  assert.match(trending, /text-\[13px\] text-\[#77727e\]/);
+  assert.match(trending, /<MediaTypeIcon className="h-4 w-4 shrink-0 text-\[#7656cb\]" aria-hidden="true"/);
+  assert.match(trending, /min-w-0 flex-1 truncate text-\[14px\]/);
+  assert.match(trending, /aria-label=\{`\$\{mediaTypeLabel\(item.media_type\)\}: \$\{item.title\}`\}/);
+  assert.doesNotMatch(trending, /<span[^>]*>\{mediaTypeLabel\(item.media_type\)\}<\/span>/);
+  for (const mapping of ["movie: Film", "tv: Tv", "book: BookOpen", "book_series: BookOpen", "music: Music", "podcast: Podcast"]) {
+    assert.ok(trending.includes(mapping));
+  }
 });
 
 test("Add browsing retains a capped, balanced chart selection and provider IDs", () => {

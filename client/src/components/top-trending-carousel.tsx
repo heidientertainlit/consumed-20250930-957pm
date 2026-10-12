@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Plus, ImageOff } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, ImageOff, Film, Tv, BookOpen, Music, Podcast, Layers } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTrendingContent, type TrendingContentItem } from "@/components/use-trending-content";
 import { selectTrendingItems, type TrendingCategory } from "./trending-selection";
@@ -15,6 +15,15 @@ function mediaTypeLabel(type?: string) {
   };
   return labels[type?.toLowerCase() || ""] || type || "Media";
 }
+
+const mediaTypeIcons: Record<string, typeof Film> = {
+  movie: Film,
+  tv: Tv,
+  book: BookOpen,
+  book_series: BookOpen,
+  music: Music,
+  podcast: Podcast,
+};
 
 export function TopTrendingCarousel({
   onAdd,
@@ -51,6 +60,7 @@ export function TopTrendingCarousel({
   const renderPoster = (item: TrendingContentItem, index: number, inDialog = false) => {
     const key = `${item.external_source || "source"}:${item.external_id || item.id || item.title}:${index}`;
     const canNavigate = Boolean(item.external_source && item.external_id);
+    const MediaTypeIcon = mediaTypeIcons[item.media_type?.toLowerCase() || ""] || Layers;
     return (
       <article key={key} className={inDialog ? "min-w-0" : "w-[138px] shrink-0 snap-start sm:w-[194px]"}>
         <div className="relative">
@@ -97,9 +107,18 @@ export function TopTrendingCarousel({
           </button>
         </div>
         </div>
-        <button type="button" onClick={() => navigateToMedia(item)} disabled={!canNavigate} className={`mt-2 block text-left disabled:cursor-default ${inDialog ? "w-full" : "ml-[38px] w-[100px] sm:ml-12 sm:w-[146px]"}`}>
-          <span className="line-clamp-2 text-[14px] font-semibold leading-snug text-[#201c29] sm:text-base">{item.title}</span>
-          <span className="mt-0.5 block text-[13px] text-[#77727e] sm:text-sm">{mediaTypeLabel(item.media_type)}</span>
+        <button
+          type="button"
+          onClick={() => navigateToMedia(item)}
+          disabled={!canNavigate}
+          aria-label={`${mediaTypeLabel(item.media_type)}: ${item.title}`}
+          title={`${item.title} · ${mediaTypeLabel(item.media_type)}`}
+          data-testid="trending-title-row"
+          data-media-type={item.media_type}
+          className={`mt-2 flex items-center gap-1.5 text-left disabled:cursor-default ${inDialog ? "w-full" : "ml-[38px] w-[100px] sm:ml-12 sm:w-[146px]"}`}
+        >
+          <MediaTypeIcon className="h-4 w-4 shrink-0 text-[#7656cb]" aria-hidden="true" />
+          <span className="min-w-0 flex-1 truncate text-[14px] font-semibold leading-snug text-[#201c29] sm:text-base">{item.title}</span>
         </button>
       </article>
     );
