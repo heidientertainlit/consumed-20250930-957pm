@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Loader2, X, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { shouldRequestBookSeries, type BookSeriesDiscovery } from "@/lib/media-search-book-series";
 import { getBookVolumeLabel } from "@/lib/book-volume";
 
 /**
@@ -26,10 +27,10 @@ type MediaTypeFilter = Exclude<(typeof MEDIA_SEARCH_FILTERS)[number]["value"], u
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
-export function mediaSearchBody(query: string, type?: MediaTypeFilter) {
+export function mediaSearchBody(query: string, type?: MediaTypeFilter, includeBookSeries = true) {
   return {
     query: query.trim(),
-    include_book_series: true,
+    include_book_series: includeBookSeries,
     ...(type ? { type } : {}),
   };
 }
@@ -46,12 +47,14 @@ export async function requestMediaSearch({
   type,
   bearer,
   signal,
+  includeBookSeries = true,
   fetcher = fetch,
 }: {
   query: string;
   type?: MediaTypeFilter;
   bearer: string;
   signal: AbortSignal;
+  includeBookSeries?: boolean;
   fetcher?: typeof fetch;
 }): Promise<any[]> {
   const response = await fetcher(`${SUPABASE_URL}/functions/v1/media-search`, {
@@ -61,7 +64,7 @@ export async function requestMediaSearch({
       "Content-Type": "application/json",
     },
     signal,
-    body: JSON.stringify(mediaSearchBody(query, type)),
+    body: JSON.stringify(mediaSearchBody(query, type, includeBookSeries)),
   });
   let data: any;
   try {
@@ -92,11 +95,13 @@ function typeLabel(type?: string, mediaSubtype?: string): string {
 export interface MediaSearchPanelProps {
   onSelect: (result: any) => void;
   autoFocus?: boolean;
+  /** Opt-in narrowing; legacy consumers retain cross-media series discovery. */
+  bookSeriesDiscovery?: BookSeriesDiscovery;
   /** Optional content shown below the empty-state hint (e.g. recently tracked). */
   emptyStateExtra?: React.ReactNode;
 }
 
-export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStateExtra }: MediaSearchPanelProps) {
+export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStateExtra, bookSeriesDiscovery = "always" }: MediaSearchPanelProps) {
   const { session } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -131,7 +136,7 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
     return () => clearTimeout(timer);
     // doSearch deliberately uses the query/type arguments captured by this effect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, session?.access_token, mediaTypeFilter]);
+  }, [searchQuery, session?.access_token, mediaTypeFilter, bookSeriesDiscovery]);
 
   useEffect(() => () => {
     searchAbortRef.current?.abort();
@@ -151,7 +156,10 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
     setIsSearching(true);
     setSearchError("");
     try {
-      const results = await requestMediaSearch({ query, type, bearer, signal: controller.signal });
+      const results = await requestMediaSearch({
+        query, type, bearer, signal: controller.signal,
+        includeBookSeries: shouldRequestBookSeries(type, bookSeriesDiscovery),
+      });
       if (reqId === searchReqId.current) setSearchResults(results);
     } catch (error) {
       if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return;

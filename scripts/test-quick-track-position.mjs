@@ -61,7 +61,10 @@ try {
     entryPoints: [entry], outfile: join(temp, "bundle.js"), bundle: true,
     format: "iife", platform: "browser", jsx: "automatic", absWorkingDir: root,
     nodePaths: [join(root, "node_modules")],
-    define: { "import.meta.env.VITE_SUPABASE_URL": JSON.stringify("https://fixture.invalid") },
+    define: {
+      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify("https://fixture.invalid"),
+      "import.meta.env.VITE_SUPABASE_ANON_KEY": JSON.stringify("fixture-anon"),
+    },
     plugins: [{ name: "isolated-services", setup(api) {
       api.onResolve({ filter: /.*/ }, args => args.path in doubles
         ? { path: args.path, namespace: "double" } : undefined);
@@ -105,8 +108,19 @@ try {
   }
   await input.fill("fixture");
   await page.getByTestId("media-search-result-fixture-title").waitFor();
+  assert.equal(await page.evaluate(() => window.__fixture.requests.at(-1).body.include_book_series), true);
+  for (const type of ["movie", "tv", "music", "podcast", "youtube", "game"]) {
+    await page.getByTestId(`filter-media-${type}`).click();
+    await page.waitForFunction(type => window.__fixture.requests.at(-1)?.body.type === type, type);
+    await page.getByTestId("media-search-result-fixture-title").waitFor();
+    assert.equal(await page.evaluate(() => window.__fixture.requests.at(-1).body.include_book_series), false, type);
+  }
+  await page.getByTestId("filter-media-all").click();
+  await page.waitForFunction(() => !("type" in window.__fixture.requests.at(-1).body));
+  assert.equal(await page.evaluate(() => window.__fixture.requests.at(-1).body.include_book_series), true);
   await page.getByTestId("filter-media-book").click();
   await page.waitForFunction(() => window.__fixture.requests.some(r => r.body.type === "book"));
+  assert.equal(await page.evaluate(() => window.__fixture.requests.at(-1).body.include_book_series), true);
   assert.equal(await top(), 115);
   assert.equal(await page.getByTestId("media-search-type-filters").evaluate(n => getComputedStyle(n).overflowX), "auto");
   assert.equal(await input.evaluate(n => getComputedStyle(n).fontSize), "16px");
