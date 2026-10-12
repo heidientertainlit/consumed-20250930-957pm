@@ -468,3 +468,17 @@ mtime_ms = 1791087807504
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/ea23e1b8-b9a6-4c5e-98a4-af7ed5f4006a/2cc86470-0813-4933-b5ad-2f7f63f08ecc"
 storage_version_token = "1791087808103881"
 content_type = "text/plain"
+
+[[outputs]]
+id = "4Rmrr832XYFFmNrma6md4"
+uri = "file://attached_assets/image_search/threshing-day-publisher.jpg"
+type = "image"
+title = "Threshing Day — official flat cover"
+description = "Straight-on ebook cover from Entangled Publishing for Threshing Day by Rebecca Yarros. This has not yet replaced the image in the app."
+logical_id = "1370f4a0-9297-4be4-830d-a8402e603b25"
+content_hash = "sha256:179185f1ba9f2e26ceb42f59b94a5e7800c25e8a01b1079036a01c2b76022053"
+size = 93860
+mtime_ms = 1791765631752
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/1370f4a0-9297-4be4-830d-a8402e603b25/06e1d1e8-fffd-40c5-b34c-25f67fb28d13"
+storage_version_token = "1791765652764058"
+content_type = "image/jpeg"
