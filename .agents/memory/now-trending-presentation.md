@@ -3,7 +3,7 @@ name: Now trending presentation
 description: User's visual and metadata boundaries for the Now Top & Trending carousel.
 ---
 
-Top & Trending should match the Add page's browsing typography and dark poster-overlay plus buttons. Its cards show a light, muted lavender media-type icon in the poster's upper-right corner, not beside the title or as a written media-type line underneath, chart-source labels, or usernames. Do not add an AI-style sparkle beside the heading.
+Top & Trending should match the Add page's browsing typography and dark poster-overlay plus buttons. Its cards show a light, muted lavender media-type icon in the poster's upper-left corner, not beside the title or as a written media-type line underneath, chart-source labels, or usernames. Do not add an AI-style sparkle beside the heading.
 
 The user's latest direction: small, tightly tracked “LIVE” with a slowly blinking blue dot to the right of the compact “Trending now” heading, tighter heading/filter/poster gaps, no subtitle or “See all” button, a single white rounded card with no outer frame or border line, and oversized pale numbers behind real posters. Filters remain All, TV, Movies, Books, Podcasts, Music.
 

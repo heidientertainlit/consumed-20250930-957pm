@@ -97,7 +97,7 @@ export function TopTrendingCarousel({
             />
           </button>
           <span
-            className="pointer-events-none absolute right-2 top-2 z-[2] rounded-md bg-[#171322]/70 p-1 backdrop-blur-sm"
+            className="pointer-events-none absolute left-2 top-2 z-[2] rounded-md bg-[#171322]/70 p-1 backdrop-blur-sm"
             title={mediaTypeLabel(item.media_type)}
             data-testid="trending-media-icon"
             data-media-type={item.media_type}
@@ -134,7 +134,7 @@ export function TopTrendingCarousel({
 
   return (
     <section className="mb-5 rounded-[24px] bg-white px-5 py-4 shadow-[0_2px_6px_rgba(26,18,43,0.05)] sm:px-9" aria-labelledby="top-trending-title" data-testid="top-trending-carousel">
-        <div className="mb-2.5">
+        <div className="mb-[14px]">
           <div className="flex items-center justify-between gap-3">
             <h2 id="top-trending-title" className="text-[24px] font-semibold leading-[1.12] tracking-[-0.045em] text-[#201c29] sm:text-[30px]">Trending now</h2>
             <div className="flex shrink-0 items-center gap-3">
@@ -184,7 +184,7 @@ export function TopTrendingCarousel({
         </div>
 
       {isLoading ? (
-        <div className="mt-2.5 flex gap-5 overflow-hidden px-4 pb-2" aria-label="Loading trending media">
+        <div className="mt-[14px] flex gap-5 overflow-hidden px-4 pb-2" aria-label="Loading trending media">
           {[0, 1, 2, 3].map((index) => (
             <div key={index} className="w-[176px] shrink-0 animate-pulse">
               <div className="aspect-[2/3] rounded-[20px] bg-[#e9e5ed]" />
@@ -194,18 +194,18 @@ export function TopTrendingCarousel({
           ))}
         </div>
       ) : isError ? (
-        <div className="mt-2.5 flex items-center justify-between gap-3 rounded-xl bg-violet-50/70 px-3.5 py-3">
+        <div className="mt-[14px] flex items-center justify-between gap-3 rounded-xl bg-violet-50/70 px-3.5 py-3">
           <p className="text-xs text-violet-800">Trending titles couldn’t load just now.</p>
           <button type="button" data-guest-allowed onClick={() => void refetch()} className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm hover:bg-violet-100">Try again</button>
         </div>
       ) : visibleItems.length === 0 ? (
-        <p className="mt-2.5 rounded-xl bg-violet-50/70 px-3.5 py-3 text-xs text-violet-700">
+        <p className="mt-[14px] rounded-xl bg-violet-50/70 px-3.5 py-3 text-xs text-violet-700">
           {category === "all"
             ? "No chart titles are available right now."
             : `No ${category === "movie" ? "movie" : category} chart titles are available right now.`}
         </p>
       ) : (
-        <div ref={scrollRef} className="scrollbar-hide -mx-1 mt-2.5 flex snap-x snap-mandatory gap-1.5 overflow-x-auto px-1 pb-2 touch-pan-x sm:gap-4" data-testid="trending-media-track">
+        <div ref={scrollRef} className="scrollbar-hide -mx-1 mt-[14px] flex snap-x snap-mandatory gap-1.5 overflow-x-auto px-1 pb-2 touch-pan-x sm:gap-4" data-testid="trending-media-track">
           {visibleItems.map((item, index) => renderPoster(item, index))}
         </div>
       )}

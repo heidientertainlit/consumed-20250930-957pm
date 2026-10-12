@@ -92,14 +92,14 @@ test("Trending uses one white card without an outer frame or border line", () =>
 test("Trending trims vertical spacing without shrinking its posters or text", () => {
   assert.match(trending, /bg-white px-5 py-4/);
   assert.doesNotMatch(trending, /sm:py-8/);
-  assert.match(trending, /<div className="mb-2.5">/);
+  assert.match(trending, /<div className="mb-\[14px\]">/);
   assert.match(trending, /mt-4 overflow-x-auto px-1/);
-  assert.match(trending, /scrollbar-hide -mx-1 mt-2.5 flex snap-x/);
+  assert.match(trending, /scrollbar-hide -mx-1 mt-\[14px\] flex snap-x/);
   assert.match(trending, /mt-2 flex items-center gap-1.5 text-left/);
   assert.match(trending, /w-\[100px\] sm:ml-12 sm:w-\[146px\]/);
   assert.match(trending, /text-\[14px\] font-semibold leading-snug/);
   assert.match(trending, /<MediaTypeIcon className="h-4 w-4 text-\[#c8bfd7\]"/);
-  assert.match(trending, /pointer-events-none absolute right-2 top-2/);
+  assert.match(trending, /pointer-events-none absolute left-2 top-2/);
   assert.match(trending, /data-testid="trending-media-icon"/);
   assert.match(trending, /rounded-full px-2.5 py-1.5 text-\[12px\]/);
   assert.match(trending, /sm:px-3 sm:text-\[13px\]/);
