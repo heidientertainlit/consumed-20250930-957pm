@@ -125,15 +125,16 @@ test("DNA name spacing is tighter without shrinking the face or preventing name 
   assert.match(identityHero, /\{secondaries\.join\(" • "\)\}[^]*?\)\}\s*<\/div>\s*\{\/\* DNA completion nudge/);
 });
 
-test("Now DNA cards drop the header labels and emphasize only the first name in the greeting", () => {
+test("Now DNA cards drop the header labels and apply one gradient across the full greeting", () => {
   for (const source of [identityHero, identityZone]) {
     assert.doesNotMatch(source, /Your Entertainment DNA™|>\s*Profile\s*</);
   }
   assert.match(identityHero, /min-w-0 text-\[13px\] font-bold uppercase leading-snug/);
-  assert.match(identityHero, /data-testid="dna-greeting-name"/);
+  assert.match(identityHero, /data-testid="dna-greeting-gradient"/);
   assert.match(identityHero, /backgroundImage: "linear-gradient\(135deg, #c084fc 0%, #a78bfa 55%, #60a5fa 100%\)"/);
   assert.match(identityHero, /WebkitTextFillColor: "transparent"/);
-  assert.match(identityHero, /\{greetingName\}\s*<\/span>\s*\{greeting\.slice\(greetingName\.length\)\}/);
+  assert.match(identityHero, /\{greeting\}\s*<\/span>/);
+  assert.doesNotMatch(identityHero, /greetingName|greeting\.slice/);
   assert.match(identityHero, /aria-label=\{dna\?\.label \? "Share your DNA" : "Finish setting up your DNA"\}/);
 });
 

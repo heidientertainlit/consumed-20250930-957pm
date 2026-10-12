@@ -105,7 +105,6 @@ export function FeedIdentityHero() {
   const prefix = hasPrefix ? headlineWords[0] : null;
   const mainWords = hasPrefix ? headlineWords.slice(1) : headlineWords;
   const greeting = formatDnaGreeting(firstName);
-  const greetingName = firstName.trim().toLocaleUpperCase();
 
   const purpleText: React.CSSProperties = {
     background: "linear-gradient(90deg, #a855f7 0%, #d946ef 100%)",
@@ -154,22 +153,17 @@ export function FeedIdentityHero() {
                   style={{ color: "rgba(192,160,255,0.9)", letterSpacing: "0.12em", overflowWrap: "anywhere" }}
                   data-testid="dna-greeting"
                 >
-                  {greetingName ? (
-                    <>
-                      <span
-                        data-testid="dna-greeting-name"
-                        style={{
-                          backgroundImage: "linear-gradient(135deg, #c084fc 0%, #a78bfa 55%, #60a5fa 100%)",
-                          backgroundClip: "text",
-                          WebkitBackgroundClip: "text",
-                          WebkitTextFillColor: "transparent",
-                        }}
-                      >
-                        {greetingName}
-                      </span>
-                      {greeting.slice(greetingName.length)}
-                    </>
-                  ) : greeting}
+                  <span
+                    data-testid="dna-greeting-gradient"
+                    style={{
+                      backgroundImage: "linear-gradient(135deg, #c084fc 0%, #a78bfa 55%, #60a5fa 100%)",
+                      backgroundClip: "text",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                    }}
+                  >
+                    {greeting}
+                  </span>
                 </p>
               )}
               <button
