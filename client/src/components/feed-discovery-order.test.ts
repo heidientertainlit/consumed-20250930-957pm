@@ -7,6 +7,7 @@ const feed = readFileSync(new URL("../pages/feed.tsx", import.meta.url), "utf8")
 const trending = readFileSync(new URL("./top-trending-carousel.tsx", import.meta.url), "utf8");
 const trendingHook = readFileSync(new URL("./use-trending-content.ts", import.meta.url), "utf8");
 const identityZone = readFileSync(new URL("./feed-identity-zone.tsx", import.meta.url), "utf8");
+const identityHero = readFileSync(new URL("./feed-identity-hero.tsx", import.meta.url), "utf8");
 const composer = readFileSync(new URL("./feed-composer-bar.tsx", import.meta.url), "utf8");
 
 test("DNA stays above the feed; trending and reviews lead only feed content", () => {
@@ -111,6 +112,15 @@ test("Trending trims vertical spacing without shrinking its posters or text", ()
   for (const mapping of ["movie: Film", "tv: Tv", "book: BookOpen", "book_series: BookOpen", "music: Music", "podcast: Podcast"]) {
     assert.ok(trending.includes(mapping));
   }
+});
+
+test("DNA name spacing is tighter without shrinking the face or preventing name wrapping", () => {
+  assert.match(identityHero, /relative float-right ml-2 flex h-\[88px\] w-\[88px\]/);
+  assert.match(identityHero, /sm:h-\[108px\] sm:w-\[108px\]/);
+  assert.match(identityHero, /<IdentityFace size=\{108\} className="scale-\[\.8\] sm:scale-100"/);
+  assert.match(identityHero, /secondaries\.length > 0 && \(\s*<div className="relative mt-2">/);
+  assert.match(identityHero, /className="relative flow-root"/);
+  assert.match(identityHero, /maxWidth: "100%", overflowWrap: "break-word"/);
 });
 
 test("Add browsing retains a capped, balanced chart selection and provider IDs", () => {
