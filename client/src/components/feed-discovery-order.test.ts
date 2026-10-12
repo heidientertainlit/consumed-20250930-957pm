@@ -47,7 +47,8 @@ test("Featured review heading lives inside its carousel and matches Trending now
 });
 
 test("Review-card media titles use the standard serif instead of Fraunces", () => {
-  assert.match(feed, /font-serif text-\[15px\] font-medium leading-tight text-\[#30203f\]/);
+  assert.match(feed, /feed-review-media-title text-\[15px\] font-medium leading-tight text-\[#30203f\]/);
+  assert.match(styles, /\.feed-review-media-title\s*\{\s*font-family: Georgia, "Times New Roman", Times, serif !important;/);
   assert.doesNotMatch(feed, /font-fraunces text-\[15px\] font-medium/);
   assert.match(styles, /@font-face\s*\{[^}]*font-family: "Consumed Fraunces";[^}]*src: url\("\.\.\/\.\.\/server\/assets\/Fraunces\.ttf"\)[^}]*font-weight: 100 900;/);
   assert.match(styles, /\.font-fraunces\s*\{\s*font-family: 'Consumed Fraunces', Georgia, serif !important;/);
@@ -66,7 +67,7 @@ test("All rating cards share the identity-first layout without dots, while only 
   const review = ratedCard.indexOf('>"{post.content}"</p>', identity);
   const title = ratedCard.indexOf('{post.mediaTitle}</p>', review);
   assert.ok(identity > 0 && review > identity && title > review);
-  assert.match(ratedCard, /font-serif text-\[15px\] font-medium/);
+  assert.match(ratedCard, /feed-review-media-title text-\[15px\] font-medium/);
   assert.match(ratedCard, /\$\{FEED_REVIEW_TEXT_CLASS\} line-clamp-5/);
   assert.match(feed, /const FEED_REVIEW_TEXT_CLASS = "text-\[14px\]/);
   assert.doesNotMatch(ratedCard, /Go to post|showDiscoveryHeading && post\.mediaTitle|showDiscoveryHeading && !!swipeProps/);

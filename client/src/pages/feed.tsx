@@ -2871,7 +2871,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {/* All rating cards put the smaller serif title and season beneath the commentary. */}
               {post.mediaTitle && (
                 <div className="mt-2 min-w-0">
-                  <p className="font-serif text-[15px] font-medium leading-tight text-[#30203f]">{post.mediaTitle}</p>
+                  <p className="feed-review-media-title text-[15px] font-medium leading-tight text-[#30203f]">{post.mediaTitle}</p>
                   {mediaScopeLabel && (
                     <p className="font-sans text-[11px] text-gray-500 leading-snug mt-1">{mediaScopeLabel}</p>
                   )}

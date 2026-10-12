@@ -165,6 +165,10 @@
     font-family: 'Consumed Fraunces', Georgia, serif !important;
   }
 
+  .feed-review-media-title {
+    font-family: Georgia, "Times New Roman", Times, serif !important;
+  }
+
 }
 
 @layer utilities {

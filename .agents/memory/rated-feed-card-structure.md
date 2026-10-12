@@ -29,9 +29,9 @@ For all Now rating and review cards, put avatar and shortened reviewer name firs
 
 Use the standard serif font, not Fraunces, for media titles on these rating/review cards.
 
-**Why:** After trying the bundled Fraunces font, the user explicitly asked to switch these cards' media titles to the serif font instead.
+**Why:** After trying the bundled Fraunces font, the user explicitly asked to switch these cards' media titles to the serif font instead and repeated that the title still looked like Fraunces.
 
-**How to apply:** Keep this scoped to the shared Now rating/review title styling. Preserve its size, weight, placement, and the separate sans-serif discovery heading; do not change fonts elsewhere.
+**How to apply:** Use an explicit Georgia / Times family rather than the browser-dependent generic UI serif. Keep this scoped to the shared Now rating/review title styling. Preserve its size, weight, placement, and the separate sans-serif discovery heading; do not change fonts elsewhere.
 
 Use a subtle overlapping-card edge plus a simple upper-right “>” to suggest more reviews, without dots, “Next” labels, thumbnails, or a previous/next navigation strip. Keep the heading slightly smaller than Trending now.
 
