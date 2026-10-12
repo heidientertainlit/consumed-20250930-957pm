@@ -21,17 +21,17 @@ The featured “What People Are Saying” heading belongs inside its carousel's 
 
 **How to apply:** Match Trending now's sans-serif heading family, weight, leading, spacing, and color, preserving the smaller size. Keep this heading specific to the featured Now review carousel.
 
-For all Now rating and review cards, put avatar and shortened reviewer name first, then commentary at its original size, then the smaller Fraunces title and season. Commentary may be clamped. Shorten multi-surname display names using the first surname's initial, even for the owner or accepted friends.
+For all Now rating and review cards, put avatar and shortened reviewer name first, then commentary at its original size, then the smaller standard serif title and season. Commentary may be clamped. Shorten multi-surname display names using the first surname's initial, even for the owner or accepted friends.
 
 **Why:** The user approved this hierarchy, then asked for additional rating cards to match it. Only the first carousel needs “What People Are Saying” to orient people entering the app.
 
 **How to apply:** Share the presentation across all Now rating and review cards, independently of whether the introductory heading is shown. Preserve stars, match pills, related ratings, all reaction controls, and owner delete.
 
-Use the bundled variable Fraunces for rating-card media titles, not a Google-only font dependency with missing medium weight.
+Use the standard serif font, not Fraunces, for media titles on these rating/review cards.
 
-**Why:** The user repeatedly questioned the title's Fraunces appearance. The previous web font supplied regular and semibold only, despite the card requesting medium weight; native font loading was not verified.
+**Why:** After trying the bundled Fraunces font, the user explicitly asked to switch these cards' media titles to the serif font instead.
 
-**How to apply:** Verify the actual rendered font, not just the CSS family name, and preserve the locally bundled full weight range for consistent native and web builds.
+**How to apply:** Keep this scoped to the shared Now rating/review title styling. Preserve its size, weight, placement, and the separate sans-serif discovery heading; do not change fonts elsewhere.
 
 Use a subtle overlapping-card edge plus a simple upper-right “>” to suggest more reviews, without dots, “Next” labels, thumbnails, or a previous/next navigation strip. Keep the heading slightly smaller than Trending now.
 
