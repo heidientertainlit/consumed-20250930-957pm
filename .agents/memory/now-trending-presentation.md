@@ -7,7 +7,7 @@ Top & Trending should match the Add page's browsing typography and dark poster-o
 
 The user's latest direction: small, tightly tracked “LIVE” with a slowly blinking blue dot to the right of the compact “Trending now” heading, tighter heading/filter/poster gaps, no subtitle or “See all” button, a single white rounded card with no outer frame or border line, and oversized pale numbers behind real posters. Filters remain All, TV, Movies, Books, Podcasts, Music.
 
-**Why:** The user wants this section to match the rest of the app and explicitly supplied the reference. They subsequently requested removal of the nested outer card and border line because they made the content smaller.
+**Why:** The user wants this section to match the rest of the app and explicitly supplied the reference. They subsequently requested removal of the nested outer card and border line because they made the content smaller. They found the heavily compressed heading/filter/poster gaps too tight; keep clear separation between these rows rather than minimizing height at all costs.
 
 **How to apply:** Use a near-black active pill and pale lavender-gray inactive pills. Treat carousel numbers as decorative positions, not official cross-source ranks. Keep the poster artwork real, titles and media types visible, and existing navigation and Add actions intact.
 
