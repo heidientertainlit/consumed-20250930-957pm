@@ -25,6 +25,7 @@ test("DNA stays above the feed; trending and reviews lead only feed content", ()
   assert.equal((feed.match(/<FeedIdentityZone/g) || []).length, 1);
   assert.match(identityZone, /<FeedIdentityHero\s*\/>/);
   assert.match(identityZone, /<HeroCTAButtons\s*\/>/);
+  assert.match(identityZone, /max-w-4xl mx-auto px-4 pt-6 pb-5/);
   assert.match(identityZone, /data-testid="guest-dna-teaser"/);
   assert.match(feed, /renderFeedItem\(topRatingDeck, "top-rating-deck"\)/);
   assert.match(feed, /feedSlotsAfterTopRating/);
