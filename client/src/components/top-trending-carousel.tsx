@@ -39,37 +39,49 @@ export function TopTrendingCarousel({
 
   return (
     <section className="mb-5 rounded-2xl border border-violet-100 bg-white px-4 py-4 shadow-[0_8px_28px_rgba(82,48,132,0.06)] sm:px-5" aria-labelledby="top-trending-title" data-testid="top-trending-carousel">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h2 id="top-trending-title" className="text-sm font-bold text-gray-900">Top &amp; Trending</h2>
-          <p className="text-xs text-gray-500">Latest US charts{!isLoading && !isError ? ` · ${visibleItems.length} titles` : ""}</p>
-        </div>
-        <div className="flex shrink-0 items-center gap-1.5">
-          <label className="sr-only" htmlFor="trending-category-filter">Filter trending titles by category</label>
-          <select
-            id="trending-category-filter"
-            data-guest-allowed
-            value={category}
-            onChange={(event) => setCategory(event.target.value as TrendingCategory)}
-            className="h-8 max-w-[112px] rounded-full border border-violet-100 bg-white px-2.5 text-xs font-medium text-violet-700 outline-none transition focus-visible:ring-2 focus-visible:ring-violet-300 sm:max-w-none"
-          >
-            <option value="all">All</option>
-            <option value="movie">Movies</option>
-            <option value="tv">TV</option>
-            <option value="book">Books</option>
-            <option value="music">Music</option>
-            <option value="podcast">Podcasts</option>
-          </select>
+      <div className="mb-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 id="top-trending-title" className="text-base font-bold leading-tight text-gray-900">Trending Now</h2>
+            <p className="text-xs text-gray-500">What everyone’s into right now</p>
+          </div>
           {!isLoading && !isError && visibleItems.length > 3 && (
-            <div className="hidden gap-1.5 sm:flex">
-              <button type="button" data-guest-allowed aria-label="Scroll trending titles left" onClick={() => scrollRef.current?.scrollBy({ left: -420, behavior: "smooth" })} className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-100 text-violet-600 transition hover:bg-violet-50">
+            <div className="hidden shrink-0 gap-1.5 sm:flex">
+              <button type="button" data-guest-allowed aria-label="Scroll trending titles left" onClick={() => scrollRef.current?.scrollBy({ left: -420, behavior: "smooth" })} className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-100 text-violet-600 transition-colors hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300">
                 <ArrowLeft size={15} />
               </button>
-              <button type="button" data-guest-allowed aria-label="Scroll trending titles right" onClick={() => scrollRef.current?.scrollBy({ left: 420, behavior: "smooth" })} className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-100 text-violet-600 transition hover:bg-violet-50">
+              <button type="button" data-guest-allowed aria-label="Scroll trending titles right" onClick={() => scrollRef.current?.scrollBy({ left: 420, behavior: "smooth" })} className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-100 text-violet-600 transition-colors hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300">
                 <ArrowRight size={15} />
               </button>
             </div>
           )}
+        </div>
+        <div className="scrollbar-hide -mx-1 mt-2 overflow-x-auto px-1" role="group" aria-label="Filter trending titles by category">
+          <div className="flex w-max min-w-full items-center gap-1 sm:gap-1.5">
+            {([
+              ["all", "All"],
+              ["tv", "TV"],
+              ["movie", "Movies"],
+              ["book", "Books"],
+              ["podcast", "Podcasts"],
+              ["music", "Music"],
+            ] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                data-guest-allowed
+                aria-pressed={category === value}
+                onClick={() => setCategory(value)}
+                className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-1 sm:px-3 sm:py-1.5 sm:text-[11px] ${
+                  category === value
+                    ? "border-violet-700 bg-violet-700 text-white hover:bg-violet-800"
+                    : "border-violet-100 bg-white text-gray-600 hover:border-violet-200 hover:bg-violet-50"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

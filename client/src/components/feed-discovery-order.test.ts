@@ -37,10 +37,13 @@ test("Trending discovery uses the production endpoint and preserves provider ide
   assert.match(trendingHook, /external_source\?: string/);
   assert.match(trending, /externalSource: item\.external_source/);
   assert.doesNotMatch(trending, /source_label|Sparkles/);
-  assert.match(trending, /Top &amp; Trending/);
-  assert.match(trending, /Latest US charts/);
+  assert.match(trending, /Trending Now/);
+  assert.match(trending, /What everyone’s into right now/);
+  assert.doesNotMatch(trending, /<select|<option|visibleItems\.length\} titles/);
+  assert.match(trending, /aria-pressed=\{category === value\}/);
+  assert.match(trending, /data-guest-allowed\s+aria-pressed/);
   assert.match(trending, /selectTrendingItems\(items, category\)/);
-  assert.match(trending, /text-sm font-bold text-gray-900/);
+  assert.match(trending, /text-base font-bold leading-tight text-gray-900/);
   assert.match(trending, /text-xs font-semibold leading-snug text-gray-900/);
   assert.match(trending, /text-\[10px\] text-gray-500/);
   assert.doesNotMatch(trending, /uppercase|tracking-/);
