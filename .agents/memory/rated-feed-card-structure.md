@@ -3,17 +3,23 @@ name: Rated feed card structure
 description: Approved hierarchy for rated and reviewed posts in the main feed.
 ---
 
-Keep the poster, title, stars, match score, short review, and reviewer identity together as the primary media moment. A rating and its review text may arrive as separate rating-only and thought records; pair same-user/same-media companions created close together so stars stay with the visible review, and suppress the redundant rating-only slide. Additional ratings and comments belong together beneath that primary media moment, in one white discussion section with avatars, short names, optional stars, text, and reaction hearts.
+Keep the poster, title, stars, match score, short review, and reviewer identity together as the primary media moment. A rating and its review text may arrive as separate rating-only and thought records; pair same-user/same-media companions created close together so stars stay with the visible review, and suppress the redundant rating-only slide. Additional ratings and comments belong together beneath that primary media moment, in one white discussion section with avatars, short names, optional stars, text, and thumbs-up/thumbs-down voting rather than hearts.
 
-**Why:** The user approved separating the primary review from discussion, then provided examples and explicitly asked for additional ratings and comments in the same place. Rendering companion records independently made review cards appear to lose their stars.
+**Why:** The user approved separating the primary review from discussion, then provided examples and explicitly asked for additional ratings and comments in the same place. They subsequently requested thumbs up or thumbs down instead of a heart. Rendering companion records independently made review cards appear to lose their stars.
 
-**How to apply:** Preserve both thumbs, Reply (including its bubble icon), Rate, Share, post reporting, comment reporting, and threaded replies when changing rated feed cards. Standalone rated/list-activity cards must use the same grouped thumbs-up/thumbs-down treatment as the main card path rather than the legacy heart footer. Never collapse those capabilities into decorative or nonfunctional controls. Reply previews must be readable in guest mode without exposing private profile fields. Once the comment request succeeds, the actual flattened comment tree is authoritative over denormalized counts: show a real reply preview when present, and hide stale reply counts when no comment row exists.
+**How to apply:** Preserve both thumbs, Reply (including its bubble icon on the primary card footer), Rate, Share, post reporting, comment reporting, and threaded replies when changing rated feed cards. Standalone rated/list-activity cards must use the same grouped thumbs-up/thumbs-down treatment as the main card path rather than the legacy heart footer. Never collapse those capabilities into decorative or nonfunctional controls. Reply previews must be readable in guest mode without exposing private profile fields. Once the comment request succeeds, the actual flattened comment tree is authoritative over denormalized counts: show a real reply preview when present, and hide stale reply counts when no comment row exists.
 
 If the viewer has rated the title, show the rating together with their comment in the shared discussion section, labeled “You,” and pin that combined row first. Use a standalone rating row only when there is no suitable top-level comment by the viewer.
 
 **Why:** The user first requested their rating at the top, then clarified, “if I've rated it, it shows along with my comment,” after seeing separate rating-only and comment rows.
 
 **How to apply:** Attach the actual saved rating, including half-stars, to the viewer's comment without changing its identity, reactions, moderation actions, or replies. Preserve distinct comments and separate review text; deduplicate only identical text. Never repeat the stars in a second rating-only row.
+
+In discussion rows, place the thumbs side by side beneath the comment in light gray. Reply is an icon-only curved left arrow. Put the owner's Delete control in the upper-right corner.
+
+**Why:** The user explicitly requested this arrangement and supplied a curved-arrow reference.
+
+**How to apply:** Keep real counts, selected vote state, toggling, and both directions functional. Preserve reporting for other people's comments and accessible labels for icon-only Reply/Delete/Report controls. Do not restyle the primary review's separate action footer.
 
 The featured “What People Are Saying” heading belongs inside its carousel's white card, matching the font of Trending now but slightly smaller. Omit the “Real ratings and reviews from your feed” subtitle.
 

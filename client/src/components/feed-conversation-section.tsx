@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { ChevronRight, Flag, Heart, MessageCircle, Star, Trash2 } from "lucide-react";
+import { ChevronRight, CornerUpLeft, Flag, Star, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
 
 export type FeedConversationEntry = {
   id: string;
@@ -10,6 +10,9 @@ export type FeedConversationEntry = {
   content?: string;
   likes: number;
   isLiked: boolean;
+  upVoteCount?: number;
+  downVoteCount?: number;
+  currentUserVote?: "up" | "down" | null;
   kind: "rating" | "comment";
   postId?: string;
   children?: FeedConversationEntry[];
@@ -20,7 +23,8 @@ export interface FeedConversationSectionProps {
   entries: FeedConversationEntry[];
   expanded: boolean;
   onExpand: () => void;
-  onLike: (entry: FeedConversationEntry) => void;
+  onVote: (entry: FeedConversationEntry, direction: "up" | "down") => void;
+  votePending?: boolean;
   canInteract: boolean;
   currentUserId?: string;
   onReply: (entry: FeedConversationEntry) => void;
@@ -68,7 +72,8 @@ function EntryRow({
   entry,
   canInteract,
   currentUserId,
-  onLike,
+  onVote,
+  votePending,
   onReply,
   onDelete,
   onReport,
@@ -80,7 +85,8 @@ function EntryRow({
   entry: FeedConversationEntry;
   canInteract: boolean;
   currentUserId?: string;
-  onLike: (entry: FeedConversationEntry) => void;
+  onVote: (entry: FeedConversationEntry, direction: "up" | "down") => void;
+  votePending: boolean;
   onReply: (entry: FeedConversationEntry) => void;
   onDelete: (entry: FeedConversationEntry) => void;
   onReport: (entry: FeedConversationEntry) => void;
@@ -91,7 +97,7 @@ function EntryRow({
 }) {
   const isOwn = Boolean(entry.isOwnRating || (currentUserId && entry.userId === currentUserId));
   const hasReactionTarget = entry.kind === "comment" || Boolean(entry.postId);
-  const canLike = hasReactionTarget && canInteract;
+  const canVote = hasReactionTarget && canInteract && !votePending;
   const contentLabel = entry.kind === "rating" ? "review" : "comment";
 
   return (
@@ -99,66 +105,65 @@ function EntryRow({
       <div className="group flex min-w-0 items-start gap-2.5 py-2.5 sm:gap-3">
         <Avatar entry={entry} />
         <div className="min-w-0 flex-1 pt-[1px]">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <div className="flex min-w-0 items-start justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             <span className="max-w-full truncate text-[14px] font-bold leading-5 text-[#1f1c2c]">
               {entry.isOwnRating ? "You" : entry.name}
             </span>
             {entry.rating !== undefined && entry.rating > 0 && <RatingStars rating={entry.rating} />}
+            </div>
+            {hasReactionTarget && canInteract && (
+              <button
+                type="button"
+                onClick={() => isOwn ? onDelete(entry) : onReport(entry)}
+                aria-label={`${isOwn ? "Delete your" : "Report " + entry.name + "'s"} ${contentLabel}`}
+                title={isOwn ? "Delete" : "Report"}
+                className="-mt-1.5 -mr-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#b5b5bd] hover:text-[#78658b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2]"
+              >
+                {isOwn ? <Trash2 size={15} strokeWidth={1.8} /> : <Flag size={15} strokeWidth={1.8} />}
+              </button>
+            )}
           </div>
           {entry.content?.trim() && (
             <p className="mt-0.5 whitespace-pre-wrap break-words text-[14px] leading-[1.45] text-[#45414e]">
               {entry.kind === "rating" ? `“${entry.content}”` : entry.content}
             </p>
           )}
-          {hasReactionTarget && <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+          {hasReactionTarget && (
+          <div className="mt-1 flex flex-wrap items-center gap-2" aria-label="Comment actions">
+            {(["up", "down"] as const).map(direction => {
+              const selected = entry.currentUserVote === direction;
+              const Icon = direction === "up" ? ThumbsUp : ThumbsDown;
+              return (
+                <button
+                  key={direction}
+                  type="button"
+                  disabled={!canVote}
+                  onClick={() => onVote(entry, direction)}
+                  aria-label={`${selected ? "Remove " : ""}${direction === "up" ? "thumbs up" : "thumbs down"} ${isOwn ? "on your" : "on " + entry.name + "'s"} ${contentLabel}`}
+                  aria-pressed={selected}
+                  className={`inline-flex min-h-8 min-w-10 items-center justify-center gap-1 rounded-full px-1 text-[12px] tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2] ${
+                    selected ? "text-[#813be2]" : "text-[#a3a3ad]"
+                  } ${canVote ? "hover:text-[#813be2]" : "cursor-not-allowed opacity-70"}`}
+                >
+                  <Icon size={17} strokeWidth={1.8} className={selected ? "fill-[#ede2fc]" : ""} />
+                  <span>{direction === "up" ? entry.upVoteCount ?? 0 : entry.downVoteCount ?? 0}</span>
+                </button>
+              );
+            })}
             <button
               type="button"
               onClick={() => onReply(entry)}
-              className="inline-flex items-center gap-1 text-[11px] font-medium text-[#78658b] hover:text-[#7040b2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2]"
+              aria-label={`Reply to ${isOwn ? "your" : entry.name + "'s"} ${contentLabel}`}
+              title="Reply"
+              className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-[#a3a3ad] hover:text-[#813be2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2]"
             >
-              <MessageCircle size={12} strokeWidth={1.8} />
-              Reply
+              <CornerUpLeft size={19} strokeWidth={1.8} />
             </button>
-            {canInteract && isOwn && (
-              <button
-                type="button"
-                onClick={() => onDelete(entry)}
-                className="inline-flex items-center gap-1 text-[11px] font-medium text-[#78658b] hover:text-[#9a394b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2]"
-              >
-                <Trash2 size={12} strokeWidth={1.8} />
-                Delete
-              </button>
-            )}
-            {canInteract && !isOwn && (
-              <button
-                type="button"
-                onClick={() => onReport(entry)}
-                className="inline-flex items-center gap-1 text-[11px] font-medium text-[#78658b] hover:text-[#7040b2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2]"
-              >
-                <Flag size={12} strokeWidth={1.8} />
-                Report
-              </button>
-            )}
-          </div>}
+          </div>
+          )}
           {renderReply?.(entry)}
         </div>
-        {hasReactionTarget ? (
-          <button
-            type="button"
-            disabled={!canLike}
-            onClick={() => onLike(entry)}
-            aria-label={`${entry.isLiked ? "Unlike" : "Like"} ${isOwn ? "your" : entry.name + "'s"} ${contentLabel}`}
-            aria-pressed={entry.isLiked}
-            className={`mt-0.5 inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full px-1 text-[13px] tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2] ${
-              entry.isLiked ? "text-[#813be2]" : "text-[#777282]"
-            } ${canLike ? "hover:text-[#813be2]" : "cursor-not-allowed opacity-70"}`}
-          >
-            <Heart size={19} strokeWidth={1.8} className={entry.isLiked ? "fill-current" : ""} />
-            <span>{entry.likes}</span>
-          </button>
-        ) : (
-          <span className="w-[37px] shrink-0" aria-hidden="true" />
-        )}
       </div>
       {expanded && expandedChildren(entry).map((child) => (
         <EntryRow
@@ -166,7 +171,8 @@ function EntryRow({
           entry={child}
           canInteract={canInteract}
           currentUserId={currentUserId}
-          onLike={onLike}
+          onVote={onVote}
+          votePending={votePending}
           onReply={onReply}
           onDelete={onDelete}
           onReport={onReport}
@@ -192,7 +198,8 @@ export function FeedConversationSection({
   entries,
   expanded,
   onExpand,
-  onLike,
+  onVote,
+  votePending = false,
   canInteract,
   currentUserId,
   onReply,
@@ -241,7 +248,8 @@ export function FeedConversationSection({
                 entry={entry}
                 canInteract={canInteract}
                 currentUserId={currentUserId}
-                onLike={onLike}
+                onVote={onVote}
+                votePending={votePending}
                 onReply={onReply}
                 onDelete={onDelete}
                 onReport={onReport}

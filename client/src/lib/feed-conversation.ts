@@ -11,6 +11,8 @@ export interface RelatedFeedRating {
   postId?: string;
   likes?: number;
   isLiked?: boolean;
+  downVoteCount?: number;
+  currentUserVote?: "up" | "down" | null;
 }
 
 /** Put the viewer's rating on their comment; preserve distinct text and threads. */
@@ -34,6 +36,9 @@ export function buildFeedConversation({
     content: comment.content,
     likes: comment.likesCount ?? comment.likes_count ?? 0,
     isLiked: comment.isLiked ?? comment.likedByCurrentUser ?? false,
+    upVoteCount: comment.upVoteCount ?? 0,
+    downVoteCount: comment.downVoteCount ?? 0,
+    currentUserVote: comment.currentUserVote ?? null,
     children: (comment.replies || []).filter((child: any) =>
       !blocked.has(child.user?.id || child.userId || child.user_id)
     ).map(commentEntry),
@@ -76,6 +81,9 @@ export function buildFeedConversation({
         avatar: rating.avatar, rating: attachedToOwnComment ? undefined : value, content: rating.content,
         kind: "rating", postId: rating.postId,
         likes: rating.likes || 0, isLiked: rating.isLiked || false,
+        upVoteCount: rating.likes || 0,
+        downVoteCount: rating.downVoteCount || 0,
+        currentUserVote: rating.currentUserVote ?? (rating.isLiked ? "up" : null),
         isOwnRating: rating.userId === viewerId && !attachedToOwnComment,
       });
     }
@@ -89,20 +97,3 @@ export function buildFeedConversation({
   return [...rows.filter(row => row.isOwnRating), ...rows.filter(row => !row.isOwnRating)];
 }
 
-export async function toggleFeedConversationLike(
-  baseUrl: string,
-  accessToken: string,
-  entry: FeedConversationEntry,
-  request: typeof fetch = fetch,
-) {
-  if (!accessToken) throw new Error("Sign in to like a reply.");
-  const isComment = entry.kind === "comment";
-  const targetId = isComment ? entry.id.slice("comment:".length) : entry.postId;
-  if (!targetId) throw new Error("This rating has no review to like.");
-  const response = await request(`${baseUrl}/functions/v1/${isComment ? "social-comment-like" : "social-feed-like"}`, {
-    method: entry.isLiked ? "DELETE" : "POST",
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify(isComment ? { comment_id: targetId } : { post_id: targetId }),
-  });
-  if (!response.ok) throw new Error("Couldn't update this like. Please try again.");
-}

@@ -39,7 +39,8 @@ import PostDetailSheet from "@/components/post-detail-sheet";
 import { ShareRatingCard } from "@/components/share-rating-card";
 import { InlineFeedStarRater } from "@/components/inline-feed-star-rater";
 import { FeedConversationSection, type FeedConversationEntry } from "@/components/feed-conversation-section";
-import { buildFeedConversation, toggleFeedConversationLike, type RelatedFeedRating } from "@/lib/feed-conversation";
+import { buildFeedConversation, type RelatedFeedRating } from "@/lib/feed-conversation";
+import { readReviewVotes, voteFeedConversation } from "@/lib/feed-conversation-votes";
 import { RatingSaveFeedback } from "@/components/rating-save-feedback";
 import { useConfirmedRatingSave } from "@/hooks/use-confirmed-rating-save";
 import { saveFeedRating } from "@/lib/save-feed-rating";
@@ -1338,7 +1339,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [tasteAlignment, setTasteAlignment] = useState<number | null>(null);
   const [alignmentNudge, setAlignmentNudge] = useState(false);
   const [relatedRatings, setRelatedRatings] = useState<RelatedFeedRating[]>([]);
-  const [conversationLikePending, setConversationLikePending] = useState(false);
+  const [conversationVotePending, setConversationVotePending] = useState(false);
+  const conversationVoteLock = useRef(false);
+  const activeConversationKey = useRef(viewerRatingKey);
+  activeConversationKey.current = viewerRatingKey;
   const [showAllRelated, setShowAllRelated] = useState(false);
   const blockedViewerId = session?.user?.id || currentUserId;
   const blockedUsers = useBlockedUsers(blockedViewerId);
@@ -1713,13 +1717,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           if (!canonicalUsers.has(p.user_id)) { postsByUser.set(p.user_id, p); canonicalUsers.add(p.user_id); }
         });
         const posts = Array.from(postsByUser.values());
-        const { data: viewerLikes } = posts.length
-          ? await supabase.from('social_post_likes').select('social_post_id')
-            .eq('user_id', currentId).in('social_post_id', posts.map(p => p.id))
-          : { data: [] };
+        const [viewerLikesResult, reactionsResult] = posts.length
+          ? await Promise.all([
+            supabase.from('social_post_likes').select('social_post_id')
+              .eq('user_id', currentId).in('social_post_id', posts.map(p => p.id)),
+            supabase.from('post_reactions').select('social_post_id, user_id, reaction')
+              .in('social_post_id', posts.map(p => p.id)).eq('reaction', 'disagree'),
+          ])
+          : [{ data: [], error: null }, { data: [], error: null }];
+        if (viewerLikesResult.error || reactionsResult.error) throw new Error('Could not load review votes.');
         if (cancelled) return;
         setLoadedRelatedRatingKey(viewerRatingKey);
-        const likedPostIds = new Set((viewerLikes || []).map((like: any) => like.social_post_id));
+        const likedPostIds = new Set((viewerLikesResult.data || []).map((like: any) => like.social_post_id));
+        const reactions = reactionsResult.data || [];
         const contentMap: Record<string, string> = {};
         (posts || []).forEach((p: any) => { if (p.content?.trim()) contentMap[p.user_id] = p.content.trim(); });
         setRelatedRatings(filtered.map((r: any) => ({
@@ -1737,6 +1747,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           postId: postsByUser.get(r.user_id)?.id,
           likes: postsByUser.get(r.user_id)?.likes_count || 0,
           isLiked: likedPostIds.has(postsByUser.get(r.user_id)?.id),
+          downVoteCount: reactions.filter(reaction => reaction.social_post_id === postsByUser.get(r.user_id)?.id).length,
+          currentUserVote: reactions.some(reaction => reaction.social_post_id === postsByUser.get(r.user_id)?.id && reaction.user_id === currentId)
+            ? 'down' : likedPostIds.has(postsByUser.get(r.user_id)?.id) ? 'up' : null,
         })));
       }).catch(error => console.error('Could not load additional ratings', error));
     return () => { cancelled = true; };
@@ -2626,36 +2639,53 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       ownAvatar: session?.user?.user_metadata?.avatar_url,
       blockedUserIds,
     });
-    const likeDiscussionEntry = async (entry: FeedConversationEntry) => {
-      if (!session?.access_token || conversationLikePending) return;
+    const voteDiscussionEntry = async (entry: FeedConversationEntry, direction: 'up' | 'down') => {
+      if (!session?.access_token || conversationVoteLock.current) return;
       const isComment = entry.kind === "comment";
       const targetId = isComment ? entry.id.slice("comment:".length) : entry.postId;
       if (!targetId) return;
-      setConversationLikePending(true);
-      try {
-        await toggleFeedConversationLike(supabaseUrl, session.access_token, entry);
-        if (lastCommentsPostId.current !== post.id) return;
+      const requestKey = viewerRatingKey;
+      conversationVoteLock.current = true;
+      setConversationVotePending(true);
+      const applyVotes = (votes: Awaited<ReturnType<typeof voteFeedConversation>>) => {
+        if (activeConversationKey.current !== requestKey) return;
         if (isComment) {
           const update = (tree: any[]): any[] => tree.map(comment => ({
             ...comment,
             ...(String(comment.id) === targetId ? {
-              isLiked: !entry.isLiked,
-              likedByCurrentUser: !entry.isLiked,
-              likesCount: Math.max(0, entry.likes + (entry.isLiked ? -1 : 1)),
-              likes_count: Math.max(0, entry.likes + (entry.isLiked ? -1 : 1)),
+              ...votes,
+              voteScore: votes.upVoteCount - votes.downVoteCount,
             } : {}),
             replies: update(comment.replies || []),
           }));
           setComments(update);
         } else {
           setRelatedRatings(rows => rows.map(row => row.postId === targetId
-            ? { ...row, isLiked: !entry.isLiked, likes: Math.max(0, entry.likes + (entry.isLiked ? -1 : 1)) }
+            ? { ...row, ...votes, isLiked: votes.currentUserVote === 'up', likes: votes.upVoteCount }
             : row));
-          globalQueryClient.invalidateQueries({ queryKey: ["social-feed"] });
         }
+      };
+      try {
+        applyVotes(await voteFeedConversation({
+          baseUrl: supabaseUrl, accessToken: session.access_token,
+          viewerId: session.user.id, entry, direction, client: supabase,
+        }));
+        globalQueryClient.invalidateQueries({ queryKey: ["post-comments"] });
+        if (!isComment) globalQueryClient.invalidateQueries({ queryKey: ["social-feed"] });
       } catch (error) {
-        window.alert(error instanceof Error ? error.message : "Couldn't update this like.");
-      } finally { setConversationLikePending(false); }
+        // A review direction change spans existing APIs. Reconcile saved state
+        // if only part succeeded, rather than retaining a fictitious old vote.
+        if (!isComment && activeConversationKey.current === requestKey) {
+          try { applyVotes(await readReviewVotes(supabase, targetId, session.user.id)); }
+          catch { /* Keep the previous state; report the failed request below. */ }
+        }
+        if (activeConversationKey.current === requestKey) {
+          window.alert(error instanceof Error ? error.message : "Couldn't update your vote.");
+        }
+      } finally {
+        conversationVoteLock.current = false;
+        setConversationVotePending(false);
+      }
     };
     const hasMoreReviews = !!swipeProps?.navigate
       && (stackIndex ?? 0) < (swipeProps?.totalPosts ?? 0) - 1;
@@ -2894,8 +2924,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 entries={discussionEntries}
                 expanded={showAllComments}
                 onExpand={() => setShowAllComments(true)}
-                onLike={likeDiscussionEntry}
-                canInteract={!!session?.access_token && !conversationLikePending}
+                onVote={voteDiscussionEntry}
+                votePending={conversationVotePending}
+                canInteract={!!session?.access_token}
                 currentUserId={session?.user?.id}
                 onReply={(entry) => {
                   if (entry.kind === "rating" && entry.postId) {
