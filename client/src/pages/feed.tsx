@@ -2554,11 +2554,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   // ── Full-bleed poster card for rating / review / thought posts ───────────
   if (isRatingPost) {
     const displayName = formatFeedName(post.user?.displayName, post.user?.username);
-    const reviewerDisplayName = showFullName
-      ? post.user?.displayName?.trim() || displayName
-      : displayName;
-    const featuredReviewerDisplayName = (() => {
-      if (!showDiscoveryHeading) return reviewerDisplayName;
+    const reviewerDisplayName = (() => {
       const reviewer = post.user as any;
       const structuredFirst = reviewer?.firstName?.trim() || reviewer?.first_name?.trim();
       const structuredLast = reviewer?.lastName?.trim() || reviewer?.last_name?.trim();
@@ -2597,7 +2593,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       ? formatFeedName(latestReply.user?.displayName, latestReply.user?.username || latestReply.username)
       : '';
     const remainingReplyCount = Math.max(0, conversationCount - 1);
-    const hasMoreFeaturedReviews = showDiscoveryHeading && !!swipeProps?.navigate
+    const hasMoreReviews = !!swipeProps?.navigate
       && (stackIndex ?? 0) < (swipeProps?.totalPosts ?? 0) - 1;
 
     return (
@@ -2605,17 +2601,17 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         {/* ── SeenIt-style carousel card ── */}
         <div
           className="relative bg-white rounded-2xl shadow-sm overflow-visible"
-          data-testid={showDiscoveryHeading ? "featured-review-carousel-card" : undefined}
-          style={showDiscoveryHeading && (swipeProps?.totalPosts ?? 0) > 1
+          data-testid={showDiscoveryHeading ? "featured-review-carousel-card" : "review-carousel-card"}
+          style={(swipeProps?.totalPosts ?? 0) > 1
             ? { boxShadow: "5px 7px 0 -1px #f3f0f7, 5px 7px 0 0 #e4deec" }
             : undefined}
         >
           {showDiscoveryHeading && (
-            <div className={`px-4 pt-4 ${hasMoreFeaturedReviews && currentUserId && post.user?.id !== currentUserId ? "pr-24" : "pr-12"}`}>
+            <div className={`px-4 pt-4 ${hasMoreReviews && currentUserId && post.user?.id !== currentUserId ? "pr-24" : "pr-12"}`}>
               <h2 id="what-people-are-saying-title" className="text-[22px] font-semibold leading-[1.12] tracking-[-0.045em] text-[#201c29] sm:text-[26px]">What People Are Saying</h2>
             </div>
           )}
-          {hasMoreFeaturedReviews && (
+          {hasMoreReviews && (
             <button
               type="button"
               data-guest-allowed
@@ -2629,7 +2625,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {currentUserId && post.user?.id !== currentUserId && (
             <button
               onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }}
-              className={`absolute top-1 ${hasMoreFeaturedReviews ? "right-12" : "right-1"} z-10 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 hover:text-orange-600 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 transition-colors`}
+              className={`absolute top-1 ${hasMoreReviews ? "right-12" : "right-1"} z-10 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 hover:text-orange-600 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 transition-colors`}
               title="Report review"
               aria-label="Report review"
             >
@@ -2637,28 +2633,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </button>
           )}
 
-          {/* Featured cards keep the quiet overlap and corner chevron, without dots or a navigation strip. */}
-          {showDiscoveryHeading && <div className="h-3" />}
-          {!showDiscoveryHeading && swipeProps?.navigate && swipeProps?.totalPosts && swipeProps.totalPosts > 1 && (
-              <div className="flex min-h-12 items-center justify-center gap-1.5 px-12 pt-4 pb-2">
-                {Array.from({ length: swipeProps.totalPosts }).map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const currentIndex = stackIndex ?? 0;
-                      if (i === currentIndex) return;
-                      swipeProps.navigate!(i > currentIndex ? -1 : 1);
-                    }}
-                    aria-label={`Go to post ${i + 1}`}
-                    className={`rounded-full transition-all ${i === (stackIndex ?? 0) ? 'w-2 h-2 bg-purple-500' : 'w-1.5 h-1.5 bg-gray-300'}`}
-                  />
-                ))}
-              </div>
-          )}
-          {!showDiscoveryHeading && !(swipeProps?.navigate && swipeProps?.totalPosts && swipeProps.totalPosts > 1) && (
-            <div className="h-12" />
-          )}
+          {/* Heading-free cards reserve space for the corner controls above the reviewer. */}
+          <div className={showDiscoveryHeading || !(hasMoreReviews || (currentUserId && post.user?.id !== currentUserId)) ? "h-3" : "h-10"} />
 
           {/* Content row — poster anchored left, take on the right (updates as you swipe) */}
           {(() => {
@@ -2761,20 +2737,20 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
             {/* Take (right) */}
             <div className="flex-1 min-w-0 flex flex-col" style={{ minHeight: 180 }} onClick={(e) => e.stopPropagation()}>
-              {showDiscoveryHeading && (
+              {(
                 <div className="mb-2 flex min-w-0 items-center gap-2">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-500 text-[9px] font-bold text-white ring-1 ring-violet-100" aria-hidden="true">
                     {(post.user as any)?.avatar ? (
                       <img src={(post.user as any).avatar} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      featuredReviewerDisplayName.split(/\s+/).map((part: string) => part[0]).join("").slice(0, 2).toUpperCase()
+                      reviewerDisplayName.split(/\s+/).map((part: string) => part[0]).join("").slice(0, 2).toUpperCase()
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p
                       className={`truncate text-[13px] font-semibold leading-tight text-gray-700 ${post.user?.id ? 'cursor-pointer hover:text-violet-700' : ''}`}
                       onClick={(e) => { if (post.user?.id) { e.stopPropagation(); setLocation(`/user/${post.user.id}`); } }}
-                    >{featuredReviewerDisplayName}</p>
+                    >{reviewerDisplayName}</p>
                     {isOtherUser && tasteAlignment !== null ? (
                       <p className="mt-0.5 text-[10px] font-medium leading-tight text-violet-600"><span className="font-bold">{tasteAlignment}%</span> aligned with you</p>
                     ) : isOtherUser && alignmentNudge && !ratingSubmitted ? (
@@ -2783,18 +2759,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </div>
                   {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
                     <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this post?')) onDeletePost(post.id); }} className="shrink-0 rounded-full p-1 text-gray-300 transition-colors hover:bg-red-50 hover:text-red-500" title="Delete post" aria-label="Delete post"><Trash2 size={13} /></button>
-                  )}
-                </div>
-              )}
-              {/* Non-featured cards retain their existing title placement and styling. */}
-              {!showDiscoveryHeading && post.mediaTitle && (
-                <div className="min-w-0">
-                  <p className="font-serif text-[19px] font-medium leading-[1.08] tracking-[-.035em] text-[#30203f]">{post.mediaTitle}</p>
-                  {mediaScopeLabel && (
-                    <p className="text-[12px] text-gray-500 leading-snug mt-1">{mediaScopeLabel}</p>
-                  )}
-                  {mediaCreator && (
-                    <p className="text-[12px] text-gray-500 leading-snug truncate mt-0.5">by {mediaCreator}</p>
                   )}
                 </div>
               )}
@@ -2837,11 +2801,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
               {/* Review text — quote, under the reviewer block */}
               {hasContent && (
-                <p className={`${FEED_REVIEW_TEXT_CLASS} ${showDiscoveryHeading ? "line-clamp-5" : ""} mt-1.5`}>"{post.content}"</p>
+                <p className={`${FEED_REVIEW_TEXT_CLASS} line-clamp-5 mt-1.5`}>"{post.content}"</p>
               )}
 
-              {/* Featured title and season sit beneath the commentary. */}
-              {showDiscoveryHeading && post.mediaTitle && (
+              {/* All rating cards put the smaller Fraunces title and season beneath the commentary. */}
+              {post.mediaTitle && (
                 <div className="mt-2 min-w-0">
                   <p className="font-fraunces text-[15px] font-medium leading-tight text-[#30203f]">{post.mediaTitle}</p>
                   {mediaScopeLabel && (
@@ -2853,36 +2817,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 </div>
               )}
 
-              {/* Reviewer — unchanged placement and full-name rules for non-featured rated cards. */}
-              {!showDiscoveryHeading && <div className="flex items-center gap-2.5 mt-2">
-                <div
-                  className="w-6 h-6 rounded-full overflow-hidden bg-violet-500 text-white text-[9px] font-bold flex items-center justify-center shrink-0 ring-1 ring-violet-100"
-                  aria-hidden="true"
-                >
-                  {(post.user as any)?.avatar ? (
-                    <img src={(post.user as any).avatar} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    featuredReviewerDisplayName.split(/\s+/).map((part: string) => part[0]).join("").slice(0, 2).toUpperCase()
-                  )}
-                </div>
-                <span className="-mx-1 text-[13px] font-semibold text-gray-500" aria-hidden="true">–</span>
-                <div className="flex-1 min-w-0">
-                  <p
-                    className={`text-[13px] font-semibold text-gray-700 leading-tight truncate ${post.user?.id ? 'cursor-pointer hover:text-violet-700' : ''}`}
-                    onClick={(e) => { if (post.user?.id) { e.stopPropagation(); setLocation(`/user/${post.user.id}`); } }}
-                  >{featuredReviewerDisplayName}</p>
-                  {isOtherUser && tasteAlignment !== null ? (
-                    <p className="mt-0.5 text-[11px] text-violet-600 font-medium leading-tight"><span className="font-bold">{tasteAlignment}%</span> aligned with you</p>
-                  ) : isOtherUser && alignmentNudge && !ratingSubmitted ? (
-                    <p className="text-[11px] text-gray-400 leading-tight">Rate 10 things to see your alignment</p>
-                  ) : null}
-                </div>
-                <div className="flex items-center gap-0.5 flex-shrink-0 self-start">
-                  {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
-                    <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this post?')) onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50" title="Delete post"><Trash2 size={13} /></button>
-                  )}
-                </div>
-              </div>}
 
               {/* Accepted friends' ratings — shown automatically below the primary review */}
               {relatedRatings.length > 0 && (

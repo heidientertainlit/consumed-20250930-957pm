@@ -36,7 +36,7 @@ test("DNA stays above the feed; trending and reviews lead only feed content", ()
 
 test("Featured review heading lives inside its carousel and matches Trending now typography at a smaller size", () => {
   assert.match(feed, /showDiscoveryHeading=\{keyPrefix === "top-rating-deck"\}/);
-  assert.match(feed, /data-testid=\{showDiscoveryHeading \? "featured-review-carousel-card" : undefined\}/);
+  assert.match(feed, /data-testid=\{showDiscoveryHeading \? "featured-review-carousel-card" : "review-carousel-card"\}/);
   assert.match(feed, /showDiscoveryHeading && \([^]*?<h2 id="what-people-are-saying-title"/);
   const reviewClass = feed.match(/id="what-people-are-saying-title" className="([^"]+)"/)?.[1];
   assert.equal(reviewClass, "text-[22px] font-semibold leading-[1.12] tracking-[-0.045em] text-[#201c29] sm:text-[26px]");
@@ -55,20 +55,23 @@ test("Featured title uses bundled variable Fraunces with a real medium weight", 
 test("Featured reviews have a guest-accessible corner chevron without crowding the report button", () => {
   assert.match(feed, /data-guest-allowed\s+onClick=\{\(e\) => \{ e\.stopPropagation\(\); swipeProps!\.navigate!\(-1\); \}\}/);
   assert.match(feed, /aria-label="Show another review"/);
-  assert.match(feed, /hasMoreFeaturedReviews \? "right-12" : "right-1"/);
+  assert.match(feed, /hasMoreReviews \? "right-12" : "right-1"/);
   assert.match(feed, /\(stackIndex \?\? 0\) < \(swipeProps\?\.totalPosts \?\? 0\) - 1/);
 });
 
-test("Featured reviews emphasize the reviewer and commentary without next controls or dots", () => {
+test("All rating cards share the identity-first layout without dots, while only the first gets the heading", () => {
   const ratedCard = feed.slice(feed.indexOf("if (isRatingPost) {"), feed.indexOf("function TinderCardStack"));
-  const identity = ratedCard.indexOf("{featuredReviewerDisplayName}");
+  const identity = ratedCard.indexOf("{reviewerDisplayName}");
   const review = ratedCard.indexOf('>"{post.content}"</p>', identity);
   const title = ratedCard.indexOf('{post.mediaTitle}</p>', review);
   assert.ok(identity > 0 && review > identity && title > review);
   assert.match(ratedCard, /font-fraunces text-\[15px\] font-medium/);
-  assert.match(ratedCard, /\$\{FEED_REVIEW_TEXT_CLASS\} \$\{showDiscoveryHeading \? "line-clamp-5" : ""\}/);
+  assert.match(ratedCard, /\$\{FEED_REVIEW_TEXT_CLASS\} line-clamp-5/);
   assert.match(feed, /const FEED_REVIEW_TEXT_CLASS = "text-\[14px\]/);
-  assert.match(ratedCard, /!showDiscoveryHeading && swipeProps\?\.navigate/);
+  assert.doesNotMatch(ratedCard, /Go to post|showDiscoveryHeading && post\.mediaTitle|showDiscoveryHeading && !!swipeProps/);
+  assert.equal((ratedCard.match(/\{reviewerDisplayName\}/g) || []).length, 1);
+  assert.equal((ratedCard.match(/id="what-people-are-saying-title"/g) || []).length, 1);
+  assert.match(ratedCard, /showDiscoveryHeading && \(\s*<div[^]*?<h2 id="what-people-are-saying-title"/);
   assert.match(ratedCard, /boxShadow: "5px 7px/);
   assert.doesNotMatch(ratedCard, /nextFeaturedPost|Next review|Previous review/);
   assert.match(ratedCard, /handleReaction\('up'\)/);

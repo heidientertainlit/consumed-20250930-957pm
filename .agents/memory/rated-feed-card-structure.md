@@ -15,13 +15,13 @@ The featured “What People Are Saying” heading belongs inside its carousel's 
 
 **How to apply:** Match Trending now's sans-serif heading family, weight, leading, spacing, and color, preserving the smaller size. Keep this heading specific to the featured Now review carousel.
 
-For the featured carousel, put avatar and shortened reviewer name first, then commentary at its original size, then the smaller Fraunces title and season. Commentary may be clamped. Shorten multi-surname display names using the first surname's initial, even for the owner or accepted friends.
+For all Now rating and review cards, put avatar and shortened reviewer name first, then commentary at its original size, then the smaller Fraunces title and season. Commentary may be clamped. Shorten multi-surname display names using the first surname's initial, even for the owner or accepted friends.
 
-**Why:** The user requested the short identity above the quote, then revised the layout to restore the commentary size and place the smaller Fraunces title and season below it.
+**Why:** The user approved this hierarchy, then asked for additional rating cards to match it. Only the first carousel needs “What People Are Saying” to orient people entering the app.
 
-**How to apply:** Keep this localized to featured reviews; preserve stars, match pills, related ratings, all reaction controls, and owner delete.
+**How to apply:** Share the presentation across all Now rating and review cards, independently of whether the introductory heading is shown. Preserve stars, match pills, related ratings, all reaction controls, and owner delete.
 
-Use the bundled variable Fraunces for the featured media title, not a Google-only font dependency with missing medium weight.
+Use the bundled variable Fraunces for rating-card media titles, not a Google-only font dependency with missing medium weight.
 
 **Why:** The user repeatedly questioned the title's Fraunces appearance. The previous web font supplied regular and semibold only, despite the card requesting medium weight; native font loading was not verified.
 
