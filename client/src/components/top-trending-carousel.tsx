@@ -97,7 +97,7 @@ export function TopTrendingCarousel({
           </button>
         </div>
         </div>
-        <button type="button" onClick={() => navigateToMedia(item)} disabled={!canNavigate} className={`mt-3 block text-left disabled:cursor-default ${inDialog ? "w-full" : "ml-[38px] w-[100px] sm:ml-12 sm:w-[146px]"}`}>
+        <button type="button" onClick={() => navigateToMedia(item)} disabled={!canNavigate} className={`mt-2 block text-left disabled:cursor-default ${inDialog ? "w-full" : "ml-[38px] w-[100px] sm:ml-12 sm:w-[146px]"}`}>
           <span className="line-clamp-2 text-[14px] font-semibold leading-snug text-[#201c29] sm:text-base">{item.title}</span>
           <span className="mt-0.5 block text-[13px] text-[#77727e] sm:text-sm">{mediaTypeLabel(item.media_type)}</span>
         </button>
@@ -106,8 +106,8 @@ export function TopTrendingCarousel({
   };
 
   return (
-    <section className="mb-5 rounded-[24px] bg-white px-5 py-6 shadow-[0_2px_6px_rgba(26,18,43,0.05)] sm:px-9 sm:py-8" aria-labelledby="top-trending-title" data-testid="top-trending-carousel">
-        <div className="mb-6">
+    <section className="mb-5 rounded-[24px] bg-white px-5 py-4 shadow-[0_2px_6px_rgba(26,18,43,0.05)] sm:px-9" aria-labelledby="top-trending-title" data-testid="top-trending-carousel">
+        <div className="mb-3">
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.19em] text-[#7656cb]">
             <span className="h-3 w-3 rounded-full bg-[#22c55e]" aria-hidden="true" />
             <span>Live this week</span>
@@ -155,7 +155,7 @@ export function TopTrendingCarousel({
           </div>
         )}
       {isLoading ? (
-        <div className="mt-5 flex gap-5 overflow-hidden px-4 pb-2" aria-label="Loading trending media">
+        <div className="mt-3 flex gap-5 overflow-hidden px-4 pb-2" aria-label="Loading trending media">
           {[0, 1, 2, 3].map((index) => (
             <div key={index} className="w-[176px] shrink-0 animate-pulse">
               <div className="aspect-[2/3] rounded-[20px] bg-[#e9e5ed]" />
@@ -165,18 +165,18 @@ export function TopTrendingCarousel({
           ))}
         </div>
       ) : isError ? (
-        <div className="mt-5 flex items-center justify-between gap-3 rounded-xl bg-violet-50/70 px-3.5 py-3">
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-violet-50/70 px-3.5 py-3">
           <p className="text-xs text-violet-800">Trending titles couldn’t load just now.</p>
           <button type="button" data-guest-allowed onClick={() => void refetch()} className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm hover:bg-violet-100">Try again</button>
         </div>
       ) : visibleItems.length === 0 ? (
-        <p className="mt-5 rounded-xl bg-violet-50/70 px-3.5 py-3 text-xs text-violet-700">
+        <p className="mt-3 rounded-xl bg-violet-50/70 px-3.5 py-3 text-xs text-violet-700">
           {category === "all"
             ? "No chart titles are available right now."
             : `No ${category === "movie" ? "movie" : category} chart titles are available right now.`}
         </p>
       ) : (
-        <div ref={scrollRef} className="scrollbar-hide -mx-1 mt-5 flex snap-x snap-mandatory gap-1.5 overflow-x-auto px-1 pb-2 touch-pan-x sm:gap-4" data-testid="trending-media-track">
+        <div ref={scrollRef} className="scrollbar-hide -mx-1 mt-3 flex snap-x snap-mandatory gap-1.5 overflow-x-auto px-1 pb-2 touch-pan-x sm:gap-4" data-testid="trending-media-track">
           {visibleItems.map((item, index) => renderPoster(item, index))}
         </div>
       )}

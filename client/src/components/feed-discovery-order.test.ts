@@ -83,6 +83,17 @@ test("Trending uses one white card without an outer frame or border line", () =>
   assert.doesNotMatch(trending, /rounded-\[24px\] border border-\[#e8e3ec\] bg-white/);
 });
 
+test("Trending trims vertical spacing without shrinking its posters or text", () => {
+  assert.match(trending, /bg-white px-5 py-4/);
+  assert.doesNotMatch(trending, /sm:py-8/);
+  assert.match(trending, /<div className="mb-3">/);
+  assert.match(trending, /scrollbar-hide -mx-1 mt-3 flex snap-x/);
+  assert.match(trending, /mt-2 block text-left/);
+  assert.match(trending, /w-\[100px\] sm:ml-12 sm:w-\[146px\]/);
+  assert.match(trending, /text-\[14px\] font-semibold leading-snug/);
+  assert.match(trending, /text-\[13px\] text-\[#77727e\]/);
+});
+
 test("Add browsing retains a capped, balanced chart selection and provider IDs", () => {
   assert.match(composer, /selectTrendingItems\(trendingContent, "all"\)/);
   assert.match(composer, /type: item\.media_type/);
