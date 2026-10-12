@@ -5,11 +5,11 @@ description: User's visual and metadata boundaries for the Now Top & Trending ca
 
 Top & Trending should match the Add page's browsing typography and dark poster-overlay plus buttons. Its cards show the title and media type, not where the title is trending or any usernames. Do not add an AI-style sparkle beside the heading.
 
-The user’s reference specifies “Trending Now,” the subtitle “What everyone’s into right now,” and pill filters in the order All, TV, Movies, Books, Podcasts, Music—not a dropdown.
+The user's latest reference supersedes the earlier compact Add-style layout: “LIVE THIS WEEK” with a red dot, “Trending now,” “What everyone’s consuming right now,” a purple “See all,” a warm rounded outer frame, and oversized pale numbers behind real posters. Filters remain All, TV, Movies, Books, Podcasts, Music.
 
 **Why:** The user wants this section to match the rest of the app and explicitly supplied the reference.
 
-**How to apply:** Keep this heading, subtitle, and purple-active/outlined-inactive filter treatment when updating the chart sources.
+**How to apply:** Use a near-black active pill and pale lavender-gray inactive pills. Treat carousel numbers as decorative positions, not official cross-source ranks. Keep the poster artwork real and See all functional.
 
 **Why:** The user supplied the Add page as the desired visual reference and explicitly requested simpler metadata, no AI star, and the exact same dark plus buttons. They also asked that the first poster be inset, not cut off on the left.
 
