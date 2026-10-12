@@ -109,11 +109,11 @@ export function TopTrendingCarousel({
     <section className="mb-5 rounded-[24px] bg-white px-5 py-4 shadow-[0_2px_6px_rgba(26,18,43,0.05)] sm:px-9" aria-labelledby="top-trending-title" data-testid="top-trending-carousel">
         <div className="mb-3">
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.19em] text-[#7656cb]">
-            <span className="h-3 w-3 rounded-full bg-[#22c55e]" aria-hidden="true" />
+            <span className="h-3 w-3 rounded-full bg-[#3b82f6] motion-safe:animate-[trending-live-blink_3s_ease-in-out_infinite]" aria-hidden="true" />
             <span>Live this week</span>
           </div>
           <div className="mt-2 flex items-center justify-between gap-3">
-              <h2 id="top-trending-title" className="text-[26px] font-semibold leading-[1.12] tracking-[-0.045em] text-[#201c29] sm:text-[42px]">Trending now</h2>
+              <h2 id="top-trending-title" className="text-[24px] font-semibold leading-[1.12] tracking-[-0.045em] text-[#201c29] sm:text-[38px]">Trending now</h2>
           </div>
           <div className="scrollbar-hide -mx-1 mt-4 overflow-x-auto px-1" role="group" aria-label="Filter trending titles by category">
             <div className="flex w-max items-center gap-1.5">

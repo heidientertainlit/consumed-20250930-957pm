@@ -46,7 +46,10 @@ test("Trending discovery uses the production endpoint and preserves provider ide
   assert.match(trending, /Live this week/);
   assert.doesNotMatch(trending, /See all|trending-all-dialog/);
   assert.match(trending, /gap-2 text-\[11px\]/);
-  assert.match(trending, /bg-\[#22c55e\]/);
+  assert.match(trending, /bg-\[#3b82f6\]/);
+  assert.match(trending, /motion-safe:animate-\[trending-live-blink_3s_ease-in-out_infinite\]/);
+  assert.match(trending, /text-\[24px\] font-semibold/);
+  assert.match(trending, /sm:text-\[38px\]/);
   assert.match(trending, /bg-\[#191523\] text-white/);
   assert.match(trending, /data-testid="trending-position"/);
   assert.match(trending, /\{index \+ 1\}/);

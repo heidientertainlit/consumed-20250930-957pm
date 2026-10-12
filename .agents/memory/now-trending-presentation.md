@@ -5,7 +5,7 @@ description: User's visual and metadata boundaries for the Now Top & Trending ca
 
 Top & Trending should match the Add page's browsing typography and dark poster-overlay plus buttons. Its cards show the title and media type, not where the title is trending or any usernames. Do not add an AI-style sparkle beside the heading.
 
-The user's latest direction: slightly smaller “LIVE THIS WEEK” with a green dot, “Trending now,” no subtitle or “See all” button, a single white rounded card with no outer frame or border line, and oversized pale numbers behind real posters. Filters remain All, TV, Movies, Books, Podcasts, Music.
+The user's latest direction: slightly smaller “LIVE THIS WEEK” with a slowly blinking blue dot, a slightly smaller “Trending now” heading, no subtitle or “See all” button, a single white rounded card with no outer frame or border line, and oversized pale numbers behind real posters. Filters remain All, TV, Movies, Books, Podcasts, Music.
 
 **Why:** The user wants this section to match the rest of the app and explicitly supplied the reference. They subsequently requested removal of the nested outer card and border line because they made the content smaller.
 
