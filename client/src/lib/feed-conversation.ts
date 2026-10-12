@@ -17,7 +17,7 @@ export interface RelatedFeedRating {
 
 /** Put the viewer's rating on their comment; preserve distinct text and threads. */
 export function buildFeedConversation({
-  ratings, comments, viewerId, ownRating, ownAvatar, blockedUserIds = [],
+  ratings, comments, viewerId, ownRating, ownAvatar, blockedUserIds = [], reviewThreads = {},
 }: {
   ratings: RelatedFeedRating[];
   comments: any[];
@@ -25,14 +25,16 @@ export function buildFeedConversation({
   ownRating?: number;
   ownAvatar?: string;
   blockedUserIds?: string[];
+  reviewThreads?: Record<string, any[]>;
 }): FeedConversationEntry[] {
   const blocked = new Set(blockedUserIds);
-  const commentEntry = (comment: any): FeedConversationEntry => ({
+  const commentEntry = (comment: any, threadPostId?: string): FeedConversationEntry => ({
     id: `comment:${comment.id}`,
     userId: comment.user?.id || comment.userId || comment.user_id || "",
     name: formatFeedName(comment.user?.displayName, comment.user?.username || comment.username),
     avatar: comment.user?.avatar,
     kind: "comment",
+    threadPostId,
     content: comment.content,
     likes: comment.likesCount ?? comment.likes_count ?? 0,
     isLiked: comment.isLiked ?? comment.likedByCurrentUser ?? false,
@@ -41,9 +43,10 @@ export function buildFeedConversation({
     currentUserVote: comment.currentUserVote ?? null,
     children: (comment.replies || []).filter((child: any) =>
       !blocked.has(child.user?.id || child.userId || child.user_id)
-    ).map(commentEntry),
+    ).map((child: any) => commentEntry(child, threadPostId)),
   });
-  const rows = comments.filter(c => !blocked.has(c.user?.id || c.userId || c.user_id)).map(commentEntry);
+  const rows = comments.filter(c => !blocked.has(c.user?.id || c.userId || c.user_id))
+    .map(comment => commentEntry(comment));
   const normalize = (text?: string) => (text || "").trim().replace(/\s+/g, " ");
   const viewerReview = ratings.find(rating => rating.userId === viewerId)?.content;
   const ownComment = viewerId && ownRating && ownRating > 0
@@ -84,6 +87,9 @@ export function buildFeedConversation({
         upVoteCount: rating.likes || 0,
         downVoteCount: rating.downVoteCount || 0,
         currentUserVote: rating.currentUserVote ?? (rating.isLiked ? "up" : null),
+        children: rating.postId ? (reviewThreads[rating.postId] || [])
+          .filter(comment => !blocked.has(comment.user?.id || comment.userId || comment.user_id))
+          .map(comment => commentEntry(comment, rating.postId)) : [],
         isOwnRating: rating.userId === viewerId && !attachedToOwnComment,
       });
     }

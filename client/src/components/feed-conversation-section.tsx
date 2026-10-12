@@ -15,6 +15,7 @@ export type FeedConversationEntry = {
   currentUserVote?: "up" | "down" | null;
   kind: "rating" | "comment";
   postId?: string;
+  threadPostId?: string;
   children?: FeedConversationEntry[];
   isOwnRating?: boolean;
 };

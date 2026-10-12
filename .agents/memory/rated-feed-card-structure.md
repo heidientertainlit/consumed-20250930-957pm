@@ -21,6 +21,12 @@ In discussion rows, place the thumbs side by side beneath the comment in light g
 
 **How to apply:** Keep real counts, selected vote state, toggling, and both directions functional. Preserve reporting for other people's comments and accessible labels for icon-only Reply/Delete/Report controls. Do not restyle the primary review's separate action footer.
 
+Replies to both actual comments and additional review rows must stay inline beneath the selected row, never navigate to a post page or open another dialog.
+
+**Why:** The user found replying to their own comment worked inline while replying to a friend's additional review opened a separate view.
+
+**How to apply:** Save a response to an additional review in that review's own post thread, then show it nested beneath the review. Preserve that owning-post context for deeper replies, voting, and deletion. Do not attach a friend's review replies to the primary card's unrelated post.
+
 The featured “What People Are Saying” heading belongs inside its carousel's white card, matching the font of Trending now but slightly smaller. Omit the “Real ratings and reviews from your feed” subtitle.
 
 **Why:** After trying serif styles, the user explicitly requested the same font as Trending now.

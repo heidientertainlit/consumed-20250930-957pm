@@ -41,6 +41,7 @@ import { InlineFeedStarRater } from "@/components/inline-feed-star-rater";
 import { FeedConversationSection, type FeedConversationEntry } from "@/components/feed-conversation-section";
 import { buildFeedConversation, type RelatedFeedRating } from "@/lib/feed-conversation";
 import { readReviewVotes, voteFeedConversation } from "@/lib/feed-conversation-votes";
+import { conversationReplyTarget, postConversationReply } from "@/lib/feed-conversation-replies";
 import { RatingSaveFeedback } from "@/components/rating-save-feedback";
 import { useConfirmedRatingSave } from "@/hooks/use-confirmed-rating-save";
 import { saveFeedRating } from "@/lib/save-feed-rating";
@@ -1349,6 +1350,22 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const discussionReadsAllowed = !blockedViewerId || blockedUsers.isSuccess;
   const blockedUserIds = blockedUsers.data || [];
   const blockedUserIdsKey = `${blockedViewerId || "anonymous"}:${blockedUserIds.join(",")}`;
+  const discussionScopeKey = `${viewerRatingKey}:${blockedUserIdsKey}`;
+  const activeDiscussionScope = useRef(discussionScopeKey);
+  activeDiscussionScope.current = discussionScopeKey;
+  const [reviewThreads, setReviewThreads] = useState<{ key: string; threads: Record<string, any[]> }>({ key: "", threads: {} });
+  const reviewThreadRequests = useRef(new Map<string, number>());
+  const [discussionReplyTarget, setDiscussionReplyTarget] = useState<{ key: string; entry: FeedConversationEntry } | null>(null);
+  const activeDiscussionReplyId = useRef<string | null>(null);
+  activeDiscussionReplyId.current = discussionReplyTarget?.entry.id || null;
+  const [discussionReplyError, setDiscussionReplyError] = useState<{ message: string; reloadPostId?: string } | null>(null);
+  const discussionReplyPosting = useRef(false);
+  useEffect(() => {
+    setDiscussionReplyTarget(null);
+    setDiscussionReplyError(null);
+    setReplyText("");
+    setReviewThreads({ key: discussionScopeKey, threads: {} });
+  }, [discussionScopeKey]);
 
   useEffect(() => {
     if (!discussionReadsAllowed) {
@@ -1960,7 +1977,57 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     setSubmitting(false);
   };
 
-  const deleteComment = async (commentId: string) => {
+  const refreshDiscussionThread = async (threadPostId: string) => {
+    const scope = discussionScopeKey;
+    const requestNumber = (reviewThreadRequests.current.get(threadPostId) || 0) + 1;
+    reviewThreadRequests.current.set(threadPostId, requestNumber);
+    const data = await fetchComments(threadPostId);
+    if (activeDiscussionScope.current !== scope || reviewThreadRequests.current.get(threadPostId) !== requestNumber) return;
+    if (threadPostId === post.id) {
+      setComments(data || []);
+      setCommentsLoaded(true);
+      hasFetched.current = true;
+    } else {
+      setReviewThreads(current => ({
+        key: scope,
+        threads: { ...(current.key === scope ? current.threads : {}), [threadPostId]: data || [] },
+      }));
+    }
+  };
+
+  const submitDiscussionReply = async (entry: FeedConversationEntry) => {
+    if (!session?.access_token || !replyText.trim() || discussionReplyPosting.current || submitting) return;
+    const scope = discussionScopeKey;
+    const target = conversationReplyTarget(entry, post.id);
+    discussionReplyPosting.current = true;
+    setSubmitting(true);
+    setDiscussionReplyError(null);
+    let posted = false;
+    try {
+      await postConversationReply({
+        baseUrl: supabaseUrl, accessToken: session.access_token,
+        entry, primaryPostId: post.id, content: replyText,
+      });
+      posted = true;
+      if (activeDiscussionScope.current !== scope) return;
+      setReplyText("");
+      setShowAllComments(true);
+      await refreshDiscussionThread(target.postId);
+      if (activeDiscussionScope.current === scope) setDiscussionReplyTarget(null);
+      globalQueryClient.invalidateQueries({ queryKey: ["post-comments"] });
+    } catch (error) {
+      if (activeDiscussionScope.current === scope) setDiscussionReplyError({
+        message: posted ? "Your reply was posted, but the thread couldn't refresh."
+          : error instanceof Error ? error.message : "Couldn't post your reply.",
+        reloadPostId: posted ? target.postId : undefined,
+      });
+    } finally {
+      discussionReplyPosting.current = false;
+      setSubmitting(false);
+    }
+  };
+
+  const deleteComment = async (commentId: string, threadPostId?: string) => {
     if (!session?.access_token) return;
     const { error } = await supabase.from('social_post_comments').delete().eq('id', commentId);
     if (error) { window.alert("Couldn't delete this comment. Please try again."); return; }
@@ -1968,6 +2035,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       .filter(c => String(c.id) !== String(commentId))
       .map(c => ({ ...c, replies: remove(c.replies || []) }));
     setComments(remove);
+    if (threadPostId) setReviewThreads(current => current.key === discussionScopeKey ? ({
+      ...current,
+      threads: { ...current.threads, [threadPostId]: remove(current.threads[threadPostId] || []) },
+    }) : current);
   };
 
   const getTypeInfo = () => {
@@ -2638,6 +2709,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       ownRating: ratingSubmitted && loadedViewerRatingKey === viewerRatingKey ? ratingValue : undefined,
       ownAvatar: session?.user?.user_metadata?.avatar_url,
       blockedUserIds,
+      reviewThreads: reviewThreads.key === discussionScopeKey ? reviewThreads.threads : {},
     });
     const voteDiscussionEntry = async (entry: FeedConversationEntry, direction: 'up' | 'down') => {
       if (!session?.access_token || conversationVoteLock.current) return;
@@ -2658,7 +2730,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             } : {}),
             replies: update(comment.replies || []),
           }));
-          setComments(update);
+          if (entry.threadPostId) setReviewThreads(current => current.key === discussionScopeKey ? ({
+            ...current,
+            threads: { ...current.threads, [entry.threadPostId!]: update(current.threads[entry.threadPostId!] || []) },
+          }) : current);
+          else setComments(update);
         } else {
           setRelatedRatings(rows => rows.map(row => row.postId === targetId
             ? { ...row, ...votes, isLiked: votes.currentUserVote === 'up', likes: votes.upVoteCount }
@@ -2929,17 +3005,25 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 canInteract={!!session?.access_token}
                 currentUserId={session?.user?.id}
                 onReply={(entry) => {
-                  if (entry.kind === "rating" && entry.postId) {
-                    setLocation(`/post/${entry.postId}`);
-                    return;
-                  }
-                  setReplyingToId(entry.id.slice("comment:".length));
+                  if (!session?.access_token || discussionReplyPosting.current) return;
+                  activeDiscussionReplyId.current = entry.id;
+                  setDiscussionReplyTarget({ key: discussionScopeKey, entry });
+                  setDiscussionReplyError(null);
                   setReplyText("");
-                  setReplyOpen(true);
+                  setReplyingToId(null);
+                  setReplyOpen(false);
+                  setShowAllComments(true);
+                  if (entry.kind === "rating" && entry.postId) {
+                    refreshDiscussionThread(entry.postId).catch(() => {
+                      if (activeDiscussionScope.current === discussionScopeKey && activeDiscussionReplyId.current === entry.id) {
+                        setDiscussionReplyError({ message: "Couldn't load existing replies.", reloadPostId: entry.postId });
+                      }
+                    });
+                  }
                 }}
                 onDelete={(entry) => {
                   if (!window.confirm("Delete this " + (entry.kind === "comment" ? "comment" : "review") + "?")) return;
-                  if (entry.kind === "comment") deleteComment(entry.id.slice("comment:".length));
+                  if (entry.kind === "comment") deleteComment(entry.id.slice("comment:".length), entry.threadPostId);
                   else if (entry.postId && onDeletePost) {
                     onDeletePost(entry.postId);
                     setRelatedRatings(rows => rows.map(row => row.postId === entry.postId
@@ -2950,15 +3034,33 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   if (entry.kind === "rating" && entry.postId) { setRatingReportTarget(entry); return; }
                   setReportCommentTarget({ id: entry.id.slice("comment:".length), userId: entry.userId, userName: entry.name });
                 }}
-                renderReply={(entry) => entry.kind === "comment" && replyingToId === entry.id.slice("comment:".length) && session?.access_token ? (
-                  <div className="mt-2 flex items-center gap-2 rounded-lg bg-gray-50 px-2 py-2 border border-violet-200">
+                renderReply={(entry) => discussionReplyTarget?.key === discussionScopeKey && discussionReplyTarget.entry.id === entry.id && session?.access_token ? (
+                  <div className="mt-2">
+                  <div className="flex items-center gap-2 rounded-lg bg-gray-50 px-2 py-2 border border-violet-200">
                     <input autoFocus value={replyText} onChange={(e) => setReplyText(e.target.value)}
+                      disabled={submitting}
                       aria-label={`Reply to ${entry.name}`} placeholder={`Reply to ${entry.name}…`}
                       className="min-w-0 flex-1 bg-transparent text-xs focus:outline-none"
-                      onKeyDown={(e) => { if (e.key === "Enter") submitReply(entry.id.slice("comment:".length)); }} />
-                    <button onClick={() => submitReply(entry.id.slice("comment:".length))}
+                      onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) { e.preventDefault(); submitDiscussionReply(entry); } }} />
+                    <button onClick={() => submitDiscussionReply(entry)}
                       disabled={!replyText.trim() || submitting} className="text-xs font-semibold text-violet-600 disabled:opacity-40">Post</button>
-                    <button aria-label="Cancel reply" onClick={() => { setReplyingToId(null); setReplyText(""); }} className="text-gray-400"><X size={13} /></button>
+                    <button aria-label="Cancel reply" disabled={submitting} onClick={() => { setDiscussionReplyTarget(null); setDiscussionReplyError(null); setReplyText(""); }} className="text-gray-400"><X size={13} /></button>
+                  </div>
+                  {discussionReplyError && <div className="mt-1 text-xs text-red-600" role="alert">
+                    {discussionReplyError.message}
+                    {discussionReplyError.reloadPostId && <button className="ml-2 underline" onClick={() => {
+                      refreshDiscussionThread(discussionReplyError.reloadPostId!).then(() => {
+                        if (activeDiscussionScope.current === discussionScopeKey && activeDiscussionReplyId.current === entry.id) {
+                          setDiscussionReplyError(null);
+                        }
+                      })
+                        .catch(() => {
+                          if (activeDiscussionScope.current === discussionScopeKey && activeDiscussionReplyId.current === entry.id) {
+                            setDiscussionReplyError({ ...discussionReplyError, message: "Couldn't refresh replies. Please try again." });
+                          }
+                        });
+                    }}>Reload replies</button>}
+                  </div>}
                   </div>
                 ) : null}
               />
