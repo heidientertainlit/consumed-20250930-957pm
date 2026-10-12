@@ -2773,15 +2773,15 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   )}
                 </div>
               )}
-              {/* Title follows the reviewer in the featured carousel; other cards retain their existing styling. */}
-              {post.mediaTitle && (
+              {/* Non-featured cards retain their existing title placement and styling. */}
+              {!showDiscoveryHeading && post.mediaTitle && (
                 <div className="min-w-0">
-                  <p className={showDiscoveryHeading ? "font-sans text-[15px] font-semibold leading-tight tracking-normal text-[#30203f]" : "font-serif text-[19px] font-medium leading-[1.08] tracking-[-.035em] text-[#30203f]"}>{post.mediaTitle}</p>
+                  <p className="font-serif text-[19px] font-medium leading-[1.08] tracking-[-.035em] text-[#30203f]">{post.mediaTitle}</p>
                   {mediaScopeLabel && (
-                    <p className={`${showDiscoveryHeading ? "font-sans text-[11px]" : "text-[12px]"} text-gray-500 leading-snug mt-1`}>{mediaScopeLabel}</p>
+                    <p className="text-[12px] text-gray-500 leading-snug mt-1">{mediaScopeLabel}</p>
                   )}
                   {mediaCreator && (
-                    <p className={`${showDiscoveryHeading ? "font-sans text-[11px]" : "text-[12px]"} text-gray-500 leading-snug truncate mt-0.5`}>by {mediaCreator}</p>
+                    <p className="text-[12px] text-gray-500 leading-snug truncate mt-0.5">by {mediaCreator}</p>
                   )}
                 </div>
               )}
@@ -2824,7 +2824,20 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
               {/* Review text — quote, under the reviewer block */}
               {hasContent && (
-                <p className={`${showDiscoveryHeading ? "line-clamp-5 text-[17px] font-normal leading-snug text-gray-800" : FEED_REVIEW_TEXT_CLASS} mt-1.5`}>"{post.content}"</p>
+                <p className={`${FEED_REVIEW_TEXT_CLASS} ${showDiscoveryHeading ? "line-clamp-5" : ""} mt-1.5`}>"{post.content}"</p>
+              )}
+
+              {/* Featured title and season sit beneath the commentary. */}
+              {showDiscoveryHeading && post.mediaTitle && (
+                <div className="mt-2 min-w-0">
+                  <p className="font-fraunces text-[15px] font-medium leading-tight text-[#30203f]">{post.mediaTitle}</p>
+                  {mediaScopeLabel && (
+                    <p className="font-sans text-[11px] text-gray-500 leading-snug mt-1">{mediaScopeLabel}</p>
+                  )}
+                  {mediaCreator && (
+                    <p className="font-sans text-[11px] text-gray-500 leading-snug truncate mt-0.5">by {mediaCreator}</p>
+                  )}
+                </div>
               )}
 
               {/* Reviewer — unchanged placement and full-name rules for non-featured rated cards. */}

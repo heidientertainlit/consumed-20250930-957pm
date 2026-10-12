@@ -15,9 +15,9 @@ The featured “What People Are Saying” heading belongs inside its carousel's 
 
 **How to apply:** Keep this heading specific to the featured Now review carousel, including when slides change. Do not add it to every review elsewhere in the feed.
 
-For the featured carousel, put avatar and shortened reviewer name above the smaller sans-serif title and season; make commentary larger and allow it to be clamped. Shorten multi-surname display names using the first surname's initial, even for the owner or accepted friends.
+For the featured carousel, put avatar and shortened reviewer name first, then commentary at its original size, then the smaller Fraunces title and season. Commentary may be clamped. Shorten multi-surname display names using the first surname's initial, even for the owner or accepted friends.
 
-**Why:** The user requested this hierarchy and a short name instead of the long name under the quote.
+**Why:** The user requested the short identity above the quote, then revised the layout to restore the commentary size and place the smaller Fraunces title and season below it.
 
 **How to apply:** Keep this localized to featured reviews; preserve stars, match pills, related ratings, all reaction controls, and owner delete.
 

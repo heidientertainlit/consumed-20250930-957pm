@@ -46,11 +46,12 @@ test("Featured review heading lives inside its carousel and uses Fraunces", () =
 test("Featured reviews emphasize the reviewer and commentary without next controls or dots", () => {
   const ratedCard = feed.slice(feed.indexOf("if (isRatingPost) {"), feed.indexOf("function TinderCardStack"));
   const identity = ratedCard.indexOf("{featuredReviewerDisplayName}");
-  const title = ratedCard.indexOf('{post.mediaTitle}</p>', identity);
-  const review = ratedCard.indexOf('>"{post.content}"</p>', title);
-  assert.ok(identity > 0 && title > identity && review > title);
-  assert.match(ratedCard, /font-sans text-\[15px\] font-semibold/);
-  assert.match(ratedCard, /line-clamp-5 text-\[17px\]/);
+  const review = ratedCard.indexOf('>"{post.content}"</p>', identity);
+  const title = ratedCard.indexOf('{post.mediaTitle}</p>', review);
+  assert.ok(identity > 0 && review > identity && title > review);
+  assert.match(ratedCard, /font-fraunces text-\[15px\] font-medium/);
+  assert.match(ratedCard, /\$\{FEED_REVIEW_TEXT_CLASS\} \$\{showDiscoveryHeading \? "line-clamp-5" : ""\}/);
+  assert.match(feed, /const FEED_REVIEW_TEXT_CLASS = "text-\[14px\]/);
   assert.match(ratedCard, /!showDiscoveryHeading && swipeProps\?\.navigate/);
   assert.match(ratedCard, /boxShadow: "5px 7px/);
   assert.doesNotMatch(ratedCard, /nextFeaturedPost|Next review|Previous review/);
