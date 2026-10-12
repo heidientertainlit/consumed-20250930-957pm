@@ -130,8 +130,7 @@ export function TopTrendingCarousel({
 
   return (
     <>
-    <section className="mb-5 rounded-[28px] bg-[#f3f1ed] p-3 sm:p-4" aria-labelledby="top-trending-title" data-testid="top-trending-carousel">
-      <div className="rounded-[24px] border border-[#e8e3ec] bg-white px-5 py-6 sm:px-9 sm:py-8">
+    <section className="mb-5 rounded-[24px] bg-white px-5 py-6 shadow-[0_2px_6px_rgba(26,18,43,0.05)] sm:px-9 sm:py-8" aria-labelledby="top-trending-title" data-testid="top-trending-carousel">
         <div className="mb-6">
           <div className="flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.19em] text-[#7656cb]">
             <span className="h-3 w-3 rounded-full bg-[#ed4c61]" aria-hidden="true" />
@@ -209,7 +208,6 @@ export function TopTrendingCarousel({
           {visibleItems.map((item, index) => renderPoster(item, index))}
         </div>
       )}
-      </div>
     </section>
     <Dialog open={allOpen} onOpenChange={setAllOpen}>
       <DialogContent data-testid="trending-all-dialog" onCloseAutoFocus={() => {

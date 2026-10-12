@@ -77,6 +77,14 @@ test("Chart provider aliases preserve real IDs and never use synthetic display I
   assert.match(feed, /feedSlotsAfterTopRating: isUnfilteredNowFeed && index >= 0/);
 });
 
+test("Trending uses one white card without an outer frame or border line", () => {
+  const sectionClasses = trending.match(/<section className="([^"]*)"[^>]*data-testid="top-trending-carousel"/)?.[1];
+  assert.ok(sectionClasses);
+  assert.match(sectionClasses, /bg-white/);
+  assert.doesNotMatch(sectionClasses, /\bborder|bg-\[#f3f1ed\]/);
+  assert.doesNotMatch(trending, /rounded-\[24px\] border border-\[#e8e3ec\] bg-white/);
+});
+
 test("Add browsing retains a capped, balanced chart selection and provider IDs", () => {
   assert.match(composer, /selectTrendingItems\(trendingContent, "all"\)/);
   assert.match(composer, /type: item\.media_type/);
