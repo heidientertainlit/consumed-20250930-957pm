@@ -156,7 +156,7 @@ export function FeedIdentityHero() {
                   <span
                     data-testid="dna-greeting-gradient"
                     style={{
-                      backgroundImage: "linear-gradient(135deg, #c084fc 0%, #a78bfa 55%, #60a5fa 100%)",
+                      backgroundImage: "linear-gradient(90deg, #60a5fa 0%, #a78bfa 55%, #c084fc 100%)",
                       backgroundClip: "text",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",

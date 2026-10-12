@@ -7,6 +7,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Bundle the existing variable font for consistent web and native rendering. */
+@font-face {
+  font-family: "Consumed Fraunces";
+  src: url("../../server/assets/Fraunces.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 :root {
   --keyboard-height: 0px;
 }
@@ -153,7 +162,7 @@
   }
 
   .font-fraunces {
-    font-family: 'Fraunces', Georgia, serif !important;
+    font-family: 'Consumed Fraunces', Georgia, serif !important;
   }
 
 }

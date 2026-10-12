@@ -21,6 +21,12 @@ For the featured carousel, put avatar and shortened reviewer name first, then co
 
 **How to apply:** Keep this localized to featured reviews; preserve stars, match pills, related ratings, all reaction controls, and owner delete.
 
+Use the bundled variable Fraunces for the featured media title, not a Google-only font dependency with missing medium weight.
+
+**Why:** The user repeatedly questioned the title's Fraunces appearance. The previous web font supplied regular and semibold only, despite the card requesting medium weight; native font loading was not verified.
+
+**How to apply:** Verify the actual rendered font, not just the CSS family name, and preserve the locally bundled full weight range for consistent native and web builds.
+
 Use a subtle overlapping-card edge plus a simple upper-right “>” to suggest more reviews, without dots, “Next” labels, thumbnails, or a previous/next navigation strip. Keep the heading slightly smaller than Trending now.
 
 **Why:** The user rejected the added next-review strip and preview, then specifically requested an upper-right “>” and a heading slightly smaller than Trending now.

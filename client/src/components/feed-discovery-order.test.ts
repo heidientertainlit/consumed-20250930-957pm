@@ -9,6 +9,7 @@ const trendingHook = readFileSync(new URL("./use-trending-content.ts", import.me
 const identityZone = readFileSync(new URL("./feed-identity-zone.tsx", import.meta.url), "utf8");
 const identityHero = readFileSync(new URL("./feed-identity-hero.tsx", import.meta.url), "utf8");
 const composer = readFileSync(new URL("./feed-composer-bar.tsx", import.meta.url), "utf8");
+const styles = readFileSync(new URL("../index.css", import.meta.url), "utf8");
 
 test("DNA stays above the feed; trending and reviews lead only feed content", () => {
   const trendingHeading = feed.indexOf("<TopTrendingCarousel");
@@ -43,6 +44,12 @@ test("Featured review heading lives inside its carousel and matches Trending now
   assert.equal(reviewClass?.replace(/text-\[\d+px\]/g, "text-[size]"), trendingClass?.replace(/text-\[\d+px\]/g, "text-[size]"));
   assert.doesNotMatch(feed, /Real ratings and reviews from your feed|WHAT PEOPLE ARE SAYING/);
   assert.match(feed, /data-testid="what-people-are-saying">\s*\{renderFeedItem\(topRatingDeck, "top-rating-deck"\)\}/);
+});
+
+test("Featured title uses bundled variable Fraunces with a real medium weight", () => {
+  assert.match(feed, /font-fraunces text-\[15px\] font-medium/);
+  assert.match(styles, /@font-face\s*\{[^}]*font-family: "Consumed Fraunces";[^}]*src: url\("\.\.\/\.\.\/server\/assets\/Fraunces\.ttf"\)[^}]*font-weight: 100 900;/);
+  assert.match(styles, /\.font-fraunces\s*\{\s*font-family: 'Consumed Fraunces', Georgia, serif !important;/);
 });
 
 test("Featured reviews have a guest-accessible corner chevron without crowding the report button", () => {
@@ -170,7 +177,7 @@ test("Now DNA cards drop the header labels and apply one gradient across the ful
   }
   assert.match(identityHero, /min-w-0 text-\[13px\] font-bold uppercase leading-snug/);
   assert.match(identityHero, /data-testid="dna-greeting-gradient"/);
-  assert.match(identityHero, /backgroundImage: "linear-gradient\(135deg, #c084fc 0%, #a78bfa 55%, #60a5fa 100%\)"/);
+  assert.match(identityHero, /backgroundImage: "linear-gradient\(90deg, #60a5fa 0%, #a78bfa 55%, #c084fc 100%\)"/);
   assert.match(identityHero, /WebkitTextFillColor: "transparent"/);
   assert.match(identityHero, /\{greeting\}\s*<\/span>/);
   assert.doesNotMatch(identityHero, /greetingName|greeting\.slice/);
