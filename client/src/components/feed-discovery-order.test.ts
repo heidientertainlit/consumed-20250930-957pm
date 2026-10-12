@@ -7,6 +7,7 @@ const feed = readFileSync(new URL("../pages/feed.tsx", import.meta.url), "utf8")
 const trending = readFileSync(new URL("./top-trending-carousel.tsx", import.meta.url), "utf8");
 const trendingHook = readFileSync(new URL("./use-trending-content.ts", import.meta.url), "utf8");
 const identityZone = readFileSync(new URL("./feed-identity-zone.tsx", import.meta.url), "utf8");
+const composer = readFileSync(new URL("./feed-composer-bar.tsx", import.meta.url), "utf8");
 
 test("DNA stays above the feed; trending and reviews lead only feed content", () => {
   const trendingHeading = feed.indexOf("<TopTrendingCarousel");
@@ -37,7 +38,8 @@ test("Trending discovery uses the production endpoint and preserves provider ide
   assert.match(trending, /externalSource: item\.external_source/);
   assert.doesNotMatch(trending, /source_label|Sparkles/);
   assert.match(trending, /Top &amp; Trending/);
-  assert.match(trending, /Across all media types/);
+  assert.match(trending, /Latest US charts/);
+  assert.match(trending, /selectTrendingItems\(items, category\)/);
   assert.match(trending, /text-sm font-bold text-gray-900/);
   assert.match(trending, /text-xs font-semibold leading-snug text-gray-900/);
   assert.match(trending, /text-\[10px\] text-gray-500/);
@@ -66,4 +68,10 @@ test("Chart provider aliases preserve real IDs and never use synthetic display I
   assert.throws(() => normalizeTrendingItems({}), /Invalid trending/);
   assert.doesNotMatch(trending, /externalId: item\.external_id \|\| item\.id/);
   assert.match(feed, /feedSlotsAfterTopRating: isUnfilteredNowFeed && index >= 0/);
+});
+
+test("Add browsing retains a capped, balanced chart selection and provider IDs", () => {
+  assert.match(composer, /selectTrendingItems\(trendingContent, "all"\)/);
+  assert.match(composer, /type: item\.media_type/);
+  assert.match(composer, /external_id: item\.external_id/);
 });

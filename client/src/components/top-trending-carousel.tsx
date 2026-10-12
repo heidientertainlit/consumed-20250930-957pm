@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Plus, ImageOff } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTrendingContent, type TrendingContentItem } from "@/components/use-trending-content";
+import { selectTrendingItems, type TrendingCategory } from "./trending-selection";
 
 function mediaTypeLabel(type?: string) {
   const labels: Record<string, string> = {
@@ -23,6 +24,12 @@ export function TopTrendingCarousel({
   const { data: items = [], isLoading, isError, refetch } = useTrendingContent();
   const [, setLocation] = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [category, setCategory] = useState<TrendingCategory>("all");
+  const visibleItems = selectTrendingItems(items, category);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollLeft = 0;
+  }, [category]);
 
   const navigateToMedia = (item: TrendingContentItem) => {
     const externalId = item.external_id;
@@ -35,18 +42,35 @@ export function TopTrendingCarousel({
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 id="top-trending-title" className="text-sm font-bold text-gray-900">Top &amp; Trending</h2>
-          <p className="text-xs text-gray-500">Across all media types</p>
+          <p className="text-xs text-gray-500">Latest US charts{!isLoading && !isError ? ` · ${visibleItems.length} titles` : ""}</p>
         </div>
-        {!isLoading && !isError && items.length > 3 && (
-          <div className="hidden shrink-0 gap-1.5 sm:flex">
-            <button type="button" data-guest-allowed aria-label="Scroll trending titles left" onClick={() => scrollRef.current?.scrollBy({ left: -420, behavior: "smooth" })} className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-100 text-violet-600 transition hover:bg-violet-50">
-              <ArrowLeft size={15} />
-            </button>
-            <button type="button" data-guest-allowed aria-label="Scroll trending titles right" onClick={() => scrollRef.current?.scrollBy({ left: 420, behavior: "smooth" })} className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-100 text-violet-600 transition hover:bg-violet-50">
-              <ArrowRight size={15} />
-            </button>
-          </div>
-        )}
+        <div className="flex shrink-0 items-center gap-1.5">
+          <label className="sr-only" htmlFor="trending-category-filter">Filter trending titles by category</label>
+          <select
+            id="trending-category-filter"
+            data-guest-allowed
+            value={category}
+            onChange={(event) => setCategory(event.target.value as TrendingCategory)}
+            className="h-8 max-w-[112px] rounded-full border border-violet-100 bg-white px-2.5 text-xs font-medium text-violet-700 outline-none transition focus-visible:ring-2 focus-visible:ring-violet-300 sm:max-w-none"
+          >
+            <option value="all">All</option>
+            <option value="movie">Movies</option>
+            <option value="tv">TV</option>
+            <option value="book">Books</option>
+            <option value="music">Music</option>
+            <option value="podcast">Podcasts</option>
+          </select>
+          {!isLoading && !isError && visibleItems.length > 3 && (
+            <div className="hidden gap-1.5 sm:flex">
+              <button type="button" data-guest-allowed aria-label="Scroll trending titles left" onClick={() => scrollRef.current?.scrollBy({ left: -420, behavior: "smooth" })} className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-100 text-violet-600 transition hover:bg-violet-50">
+                <ArrowLeft size={15} />
+              </button>
+              <button type="button" data-guest-allowed aria-label="Scroll trending titles right" onClick={() => scrollRef.current?.scrollBy({ left: 420, behavior: "smooth" })} className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-100 text-violet-600 transition hover:bg-violet-50">
+                <ArrowRight size={15} />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {isLoading ? (
@@ -64,11 +88,15 @@ export function TopTrendingCarousel({
           <p className="text-xs text-violet-800">Trending titles couldn’t load just now.</p>
           <button type="button" data-guest-allowed onClick={() => void refetch()} className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm hover:bg-violet-100">Try again</button>
         </div>
-      ) : items.length === 0 ? (
-        <p className="rounded-xl bg-violet-50/70 px-3.5 py-3 text-xs text-violet-700">No trending titles are available right now.</p>
+      ) : visibleItems.length === 0 ? (
+        <p className="rounded-xl bg-violet-50/70 px-3.5 py-3 text-xs text-violet-700">
+          {category === "all"
+            ? "No chart titles are available right now."
+            : `No ${category === "movie" ? "movie" : category} chart titles are available right now.`}
+        </p>
       ) : (
         <div ref={scrollRef} className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 touch-pan-x" data-testid="trending-media-track">
-          {items.map((item, index) => {
+          {visibleItems.map((item, index) => {
             const key = `${item.external_source || "source"}:${item.external_id || item.id || item.title}:${index}`;
             const canNavigate = Boolean(item.external_source && item.external_id);
             return (

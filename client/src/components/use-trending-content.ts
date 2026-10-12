@@ -10,9 +10,12 @@ export interface TrendingContentItem {
   source_label?: string;
   source_key?: string;
   creator?: string;
+  rank?: number;
+  chart_country?: string;
+  chart_date?: string;
 }
 
-const trendingContentQueryKey = ["trending-content"];
+const trendingContentQueryKey = ["trending-content", "us-charts-v2"];
 
 // Chart labels are not always provider names. These aliases refer to the same
 // authoritative provider IDs, not title-based guesses at a different work.
@@ -27,7 +30,8 @@ export function normalizeTrendingItems(items: unknown): TrendingContentItem[] {
   return items
     .filter(item => item && typeof item.title === "string" && item.title.trim()
       && typeof item.image_url === "string" && item.image_url)
-    .slice(0, 25)
+    // Category selection must happen BEFORE the display limit, or podcasts vanish.
+    .slice(0, 500)
     .map(item => ({
       ...item,
       external_source: providerAliases[item.external_source] || item.external_source,
@@ -39,7 +43,8 @@ export function normalizeTrendingItems(items: unknown): TrendingContentItem[] {
 
 async function fetchTrendingContent(): Promise<TrendingContentItem[]> {
   const baseUrl = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
-  const response = await fetch(`${baseUrl}/functions/v1/get-trending-content`, {
+  const url = import.meta.env.DEV ? "/api/us-trending-charts" : `${baseUrl}/functions/v1/get-trending-content`;
+  const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
       "Content-Type": "application/json",

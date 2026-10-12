@@ -14,6 +14,7 @@ import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
 import RoomComposer, { DISCUSSION_TAGS } from "@/components/room-composer";
 import { useTrendingContent } from "@/components/use-trending-content";
+import { selectTrendingItems } from "@/components/trending-selection";
 
 type MediaFilter = "all" | "tv" | "movie" | "book" | "podcast" | "music" | "game" | "youtube";
 
@@ -259,7 +260,8 @@ export default function FeedComposerBar({
   const [seriesUserLists, setSeriesUserLists] = useState<any[]>([]);
   const [seriesUserListsLoading, setSeriesUserListsLoading] = useState(false);
   const { data: trendingContent = [], isLoading: trendingLoading, isError: trendingError, refetch: refetchTrending } = useTrendingContent(showMediaSearch);
-  const trendingItems = trendingContent.map(item => ({
+  // Preserve browse size and media variety even with a larger streaming pool.
+  const trendingItems = selectTrendingItems(trendingContent, "all").map(item => ({
     ...item,
     type: item.media_type,
     external_id: item.external_id,
