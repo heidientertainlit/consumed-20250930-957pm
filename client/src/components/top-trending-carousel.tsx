@@ -67,7 +67,7 @@ export function TopTrendingCarousel({
       ) : items.length === 0 ? (
         <p className="rounded-xl bg-violet-50/70 px-3.5 py-3 text-xs text-violet-700">No trending titles are available right now.</p>
       ) : (
-        <div ref={scrollRef} className="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 touch-pan-x sm:-mx-5 sm:px-5" data-testid="trending-media-track">
+        <div ref={scrollRef} className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 touch-pan-x" data-testid="trending-media-track">
           {items.map((item, index) => {
             const key = `${item.external_source || "source"}:${item.external_id || item.id || item.title}:${index}`;
             const canNavigate = Boolean(item.external_source && item.external_id);
@@ -90,7 +90,7 @@ export function TopTrendingCarousel({
                       onError={(event) => { event.currentTarget.style.opacity = "0"; }}
                     />
                   </button>
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#21152f]/80 to-transparent" />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)" }} />
                   <button
                     type="button"
                     onClick={() => onAdd({
@@ -101,10 +101,11 @@ export function TopTrendingCarousel({
                       externalSource: item.external_source,
                       creator: item.creator,
                     })}
-                    className="absolute bottom-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white text-violet-700 shadow-md transition hover:scale-105 hover:bg-violet-50 active:scale-95"
+                    className="absolute bottom-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 border border-white/20"
+                    style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
                     aria-label={`Add ${item.title}`}
                   >
-                    <Plus size={16} />
+                    <Plus size={16} className="text-white" />
                   </button>
                 </div>
                 <button type="button" onClick={() => navigateToMedia(item)} disabled={!canNavigate} className="mt-2 block w-full text-left disabled:cursor-default">

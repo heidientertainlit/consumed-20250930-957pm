@@ -42,6 +42,10 @@ test("Trending discovery uses the production endpoint and preserves provider ide
   assert.match(trending, /text-xs font-semibold leading-snug text-gray-900/);
   assert.match(trending, /text-\[10px\] text-gray-500/);
   assert.doesNotMatch(trending, /uppercase|tracking-/);
+  assert.doesNotMatch(trending, /-mx-4|-mx-5/);
+  assert.match(trending, /background: "rgba\(0,0,0,0\.6\)", backdropFilter: "blur\(4px\)"/);
+  assert.match(trending, /active:scale-90 border border-white\/20/);
+  assert.match(trending, /<Plus size=\{16\} className="text-white"/);
   assert.match(trending, /setLocation\(`\/media\/\$\{item\.media_type/);
   assert.match(trending, /data-guest-allowed aria-label="Scroll trending titles left"/);
   assert.match(trending, /data-guest-allowed aria-label="Scroll trending titles right"/);
