@@ -9,11 +9,11 @@ Keep the poster, title, stars, match score, short review, and reviewer identity 
 
 **How to apply:** Preserve both thumbs, Reply (including its bubble icon), Rate, Share, post reporting, comment reporting, and threaded replies when changing rated feed cards. Standalone rated/list-activity cards must use the same grouped thumbs-up/thumbs-down treatment as the main card path rather than the legacy heart footer. Never collapse those capabilities into decorative or nonfunctional controls. Reply previews must be readable in guest mode without exposing private profile fields. Once the comment request succeeds, the actual flattened comment tree is authoritative over denormalized counts: show a real reply preview when present, and hide stale reply counts when no comment row exists.
 
-The featured “What People Are Saying” heading belongs inside its carousel's white card in Fraunces. Omit the “Real ratings and reviews from your feed” subtitle.
+The featured “What People Are Saying” heading belongs inside its carousel's white card in the app's established media-title serif style. Omit the “Real ratings and reviews from your feed” subtitle.
 
-**Why:** The user first requested the internal heading placement and removal of the subtitle, then explicitly changed the heading font to Fraunces.
+**Why:** The user requested the internal placement and serif heading, then corrected that a separate heavier Fraunces setting was not the style the app uses.
 
-**How to apply:** Keep this heading specific to the featured Now review carousel, including when slides change. Do not add it to every review elsewhere in the feed.
+**How to apply:** Match the existing media-title serif family, medium weight, tight leading and letter spacing rather than selecting a different font solely by name. Keep this heading specific to the featured Now review carousel.
 
 For the featured carousel, put avatar and shortened reviewer name first, then commentary at its original size, then the smaller Fraunces title and season. Commentary may be clamped. Shorten multi-surname display names using the first surname's initial, even for the owner or accepted friends.
 

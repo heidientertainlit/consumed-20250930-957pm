@@ -2612,7 +2612,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         >
           {showDiscoveryHeading && (
             <div className={`px-4 pt-4 ${hasMoreFeaturedReviews && currentUserId && post.user?.id !== currentUserId ? "pr-24" : "pr-12"}`}>
-              <h2 id="what-people-are-saying-title" className="font-fraunces text-[22px] font-semibold leading-snug text-gray-900 sm:text-[26px]">What People Are Saying</h2>
+              <h2 id="what-people-are-saying-title" className="font-serif text-[22px] font-medium leading-[1.08] tracking-[-.035em] text-[#30203f] sm:text-[26px]">What People Are Saying</h2>
             </div>
           )}
           {hasMoreFeaturedReviews && (
