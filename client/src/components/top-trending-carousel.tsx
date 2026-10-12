@@ -117,7 +117,7 @@ export function TopTrendingCarousel({
           data-media-type={item.media_type}
           className={`mt-2 flex items-center gap-1.5 text-left disabled:cursor-default ${inDialog ? "w-full" : "ml-[38px] w-[100px] sm:ml-12 sm:w-[146px]"}`}
         >
-          <MediaTypeIcon className="h-4 w-4 shrink-0 text-[#7656cb]" aria-hidden="true" />
+          <MediaTypeIcon className="h-4 w-4 shrink-0 text-[#9b8bae]" aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate text-[14px] font-semibold leading-snug text-[#201c29] sm:text-base">{item.title}</span>
         </button>
       </article>
@@ -162,7 +162,7 @@ export function TopTrendingCarousel({
                   data-guest-allowed
                   aria-pressed={category === value}
                   onClick={() => setCategory(value)}
-                  className={`shrink-0 rounded-full px-3.5 py-2.5 text-[14px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 sm:px-6 sm:py-3 sm:text-[17px] ${
+                  className={`shrink-0 rounded-full px-2.5 py-[7px] text-[14px] font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 sm:px-3.5 sm:py-2 sm:text-[17px] ${
                     category === value
                       ? "bg-[#191523] text-white hover:bg-[#302940]"
                       : "bg-[#f0edf3] text-[#514b5c] hover:bg-[#e9e4ef]"

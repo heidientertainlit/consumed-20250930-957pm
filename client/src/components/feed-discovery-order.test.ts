@@ -98,7 +98,9 @@ test("Trending trims vertical spacing without shrinking its posters or text", ()
   assert.match(trending, /mt-2 flex items-center gap-1.5 text-left/);
   assert.match(trending, /w-\[100px\] sm:ml-12 sm:w-\[146px\]/);
   assert.match(trending, /text-\[14px\] font-semibold leading-snug/);
-  assert.match(trending, /<MediaTypeIcon className="h-4 w-4 shrink-0 text-\[#7656cb\]" aria-hidden="true"/);
+  assert.match(trending, /<MediaTypeIcon className="h-4 w-4 shrink-0 text-\[#9b8bae\]" aria-hidden="true"/);
+  assert.match(trending, /rounded-full px-2.5 py-\[7px\] text-\[14px\]/);
+  assert.match(trending, /sm:px-3.5 sm:py-2 sm:text-\[17px\]/);
   assert.match(trending, /min-w-0 flex-1 truncate text-\[14px\]/);
   assert.match(trending, /aria-label=\{`\$\{mediaTypeLabel\(item.media_type\)\}: \$\{item.title\}`\}/);
   assert.doesNotMatch(trending, /<span[^>]*>\{mediaTypeLabel\(item.media_type\)\}<\/span>/);
