@@ -1,4 +1,4 @@
-import { Activity, ArrowRight, Dna, Flame, Trophy } from "lucide-react";
+import { Activity, ArrowRight, Flame, Trophy } from "lucide-react";
 import { FeedIdentityHero, HeroCTAButtons, IdentityFace } from "@/components/feed-identity-hero";
 
 export function FeedIdentityZone({ isGuestMode }: { isGuestMode: boolean }) {
@@ -7,18 +7,7 @@ export function FeedIdentityZone({ isGuestMode }: { isGuestMode: boolean }) {
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-4 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
           <div className="rounded-2xl border border-purple-500/25 bg-white/[0.04] p-5" data-testid="guest-dna-teaser">
-            <div className="flex items-start gap-1.5">
-              <div className="flex flex-col">
-                <p className="text-purple-300 text-[11px] font-semibold uppercase tracking-[0.18em]">
-                  Your Entertainment DNA™
-                </p>
-                <span className="mt-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-purple-300/65">
-                  Profile
-                </span>
-              </div>
-              <Dna className="mt-0.5 w-3.5 h-3.5 text-purple-300" />
-            </div>
-            <div className="flex items-center justify-between gap-4 mt-3">
+            <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-white/90 text-2xl font-medium leading-none">The</p>
                 <p className="text-white text-3xl font-bold leading-tight mt-0.5">Emotional Binger</p>

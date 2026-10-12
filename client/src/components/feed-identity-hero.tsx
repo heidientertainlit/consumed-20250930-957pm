@@ -104,6 +104,8 @@ export function FeedIdentityHero() {
   const hasPrefix = headlineWords[0]?.toLowerCase() === "the" && headlineWords.length > 1;
   const prefix = hasPrefix ? headlineWords[0] : null;
   const mainWords = hasPrefix ? headlineWords.slice(1) : headlineWords;
+  const greeting = formatDnaGreeting(firstName);
+  const greetingName = firstName.trim().toLocaleUpperCase();
 
   const purpleText: React.CSSProperties = {
     background: "linear-gradient(90deg, #a855f7 0%, #d946ef 100%)",
@@ -144,50 +146,47 @@ export function FeedIdentityHero() {
             style={{ background: "radial-gradient(circle, rgba(217,70,239,0.09), transparent 70%)" }}
           />
 
-          {/* Header row */}
-          <div className="relative flex items-center justify-between mb-4">
-            <div className="flex items-start gap-1.5">
-              <div className="flex flex-col">
-                <span
-                  className="text-[11px] font-bold uppercase"
-                  style={{ letterSpacing: "0.16em", color: "rgba(192,160,255,0.9)" }}
-                >
-                  Your Entertainment DNA™
-                </span>
-                <span
-                  className="mt-0.5 text-[8px] font-medium uppercase"
-                  style={{ letterSpacing: "0.12em", color: "rgba(192,160,255,0.65)" }}
-                >
-                  Profile
-                </span>
-              </div>
-              <Dna size={13} className="mt-0.5 text-purple-400" />
-            </div>
-            <button
-              onClick={() => {
-                if (dna?.label) {
-                  setShareOpen(true);
-                } else {
-                  setLocation("/onboarding?resume=dna");
-                }
-              }}
-              className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform"
-              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
-              aria-label={dna?.label ? "Share your DNA" : "Finish setting up your DNA"}
-            >
-              <Forward size={13} className="text-purple-300" />
-            </button>
-          </div>
-
           <div className="relative flow-root">
-            {dna?.label && (
-              <p
-                className="mb-1 text-[11px] font-bold uppercase leading-snug"
-                style={{ color: "rgba(192,160,255,0.9)", letterSpacing: "0.12em", overflowWrap: "anywhere" }}
+            <div className="mb-1 flex items-center justify-between gap-3">
+              {dna?.label && (
+                <p
+                  className="min-w-0 text-[13px] font-bold uppercase leading-snug"
+                  style={{ color: "rgba(192,160,255,0.9)", letterSpacing: "0.12em", overflowWrap: "anywhere" }}
+                  data-testid="dna-greeting"
+                >
+                  {greetingName ? (
+                    <>
+                      <span
+                        data-testid="dna-greeting-name"
+                        style={{
+                          backgroundImage: "linear-gradient(135deg, #c084fc 0%, #a78bfa 55%, #60a5fa 100%)",
+                          backgroundClip: "text",
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                        }}
+                      >
+                        {greetingName}
+                      </span>
+                      {greeting.slice(greetingName.length)}
+                    </>
+                  ) : greeting}
+                </p>
+              )}
+              <button
+                onClick={() => {
+                  if (dna?.label) {
+                    setShareOpen(true);
+                  } else {
+                    setLocation("/onboarding?resume=dna");
+                  }
+                }}
+                className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-transform active:scale-90"
+                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
+                aria-label={dna?.label ? "Share your DNA" : "Finish setting up your DNA"}
               >
-                {formatDnaGreeting(firstName)}
-              </p>
-            )}
+                <Forward size={13} className="text-purple-300" />
+              </button>
+            </div>
               <button
                 onClick={() => setLocation("/profile")}
                 className="relative float-right ml-2 mb-1 flex h-[88px] w-[88px] shrink-0 items-center justify-center active:scale-95 transition-transform sm:h-[108px] sm:w-[108px]"

@@ -20,3 +20,9 @@ Keep the DNA card compact for short profile names without restricting the space 
 **Why:** The user found the space under “The Completionist” excessive and explicitly asked to reduce it without breaking longer profile names.
 
 **How to apply:** Keep supporting text close to the name, allow the content to expand naturally, and preserve the face's size. Check both short and long names rather than imposing a fixed card height.
+
+Keep “Your Entertainment DNA™” and “Profile” labels off the Now DNA card. The greeting should be slightly larger, with only the first name in a purple-to-blue gradient like Add media.
+
+**Why:** The user explicitly asked to remove the labels and highlight the first name.
+
+**How to apply:** Keep this scoped to the Now card, not the full DNA profile page. Preserve the share action and use readable gradient tones on the dark background.
