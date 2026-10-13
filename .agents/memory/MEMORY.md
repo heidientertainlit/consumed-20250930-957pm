@@ -80,3 +80,5 @@
 - [Conversation publishing policy](conversation-publishing-policy.md) — admin approval then scheduling then delivery; no autonomous unapproved publishing.
 - [Writer JSON-mode contract](writer-json-mode-contract.md) — JSON-object mode requires a literal “JSON” instruction in an input message; an object example alone is insufficient.
 - [Today's Play identity artifacts](todays-play-identity-artifacts.md) — simple non-trivia daily questions; earned artifacts after answering, not extra gameplay steps.
+- [Content Research boundary](content-research-boundary.md) — admin title-based editorial research stays separate from personal DNA and publishing; partial coverage is preferable to filler.
+- [Admin Edge sessions](admin-edge-session-verification.md) — legacy gateway verification can reject asymmetric admin JWTs before self-authorized handlers run.

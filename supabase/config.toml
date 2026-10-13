@@ -8,3 +8,8 @@ verify_jwt = false
 
 [functions.deliver-persona-conversations]
 verify_jwt = false
+
+# The function validates the session and human-admin role before any costly work.
+# Let that check handle asymmetric session JWTs, not the legacy gateway verifier.
+[functions.admin-content-research]
+verify_jwt = false

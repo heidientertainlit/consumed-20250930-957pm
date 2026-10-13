@@ -3,9 +3,18 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna, Download, MessageSquareText, ReceiptText, ShieldAlert } from "lucide-react";
+import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna, Download, MessageSquareText, ReceiptText, ShieldAlert, BookOpen } from "lucide-react";
 
 const TOOLS = [
+  {
+    path: "/admin/content-research",
+    icon: BookOpen,
+    title: "Content Research",
+    description: "Explore verified cross-media titles, review editorial connections, and copy a curated outline. No personal DNA or publishing.",
+    color: "from-teal-900/40 to-teal-800/20 border-teal-700/40",
+    iconColor: "text-teal-400",
+    iconBg: "bg-teal-900/50",
+  },
   {
     path: "/admin/block-alerts",
     icon: ShieldAlert,
