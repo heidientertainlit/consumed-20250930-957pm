@@ -36,6 +36,7 @@
 - [Now DNA hero placement](now-dna-hero-placement.md) — “top of the feed” means below the DNA page hero; never move discovery above the user's DNA section.
 - [Now trending presentation](now-trending-presentation.md) — match Add browsing typography; show title and media type, without sparkle icons, chart-source badges, or usernames.
 - [Supabase OAuth callbacks](supabase-oauth-callbacks.md) — OAuth returns through /login; native universal-link sessions must be restored on both warm and cold app launches.
+- [Native share release boundary](native-share-release-boundary.md) — archive evidence is not installed-build proof; share-only work cannot silently approve unrelated native release changes.
 - [Apple OAuth credential rotation](apple-oauth-credential-rotation.md) — Supabase uses a signed Apple client-secret JWT that expires after 180 days; rotate it before expiry.
 - [Feed identity labels](feed-identity-labels.md) — feed-visible names use first name + last initial; usernames remain raw only as handles, routes, profile identity, and backend identifiers.
 - [Resumable onboarding state](resumable-onboarding-state.md) — new DNA requires post-reveal identity via a durable marker; legacy DNA bypass is explicit, never inferred from account age.

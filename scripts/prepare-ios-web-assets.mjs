@@ -4,6 +4,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadEnv } from 'vite';
+import { verifyNativeShareBundle } from './lib/verify-native-share-bundle.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const env = loadEnv('production', join(root, 'client'), 'VITE_');
@@ -39,6 +40,13 @@ async function assetManifest(directory, prefix = '') {
   return result;
 }
 
+run('node', ['--import', 'tsx', '--test',
+  'client/src/lib/share-deep-link.test.ts',
+  'client/src/lib/native-share-delivery.test.ts',
+  'client/src/lib/native-oauth.test.ts',
+  'client/src/lib/native-oauth-session.test.ts',
+  'scripts/test-native-share-packaging.mjs',
+]);
 run('npm', ['run', 'build']);
 
 const webRoot = join(root, 'dist/public');
@@ -47,6 +55,7 @@ const html = await readFile(join(webRoot, 'index.html'), 'utf8');
 const entryPath = html.match(/<script\b[^>]*\bsrc=["'](\/assets\/[^"']+\.js)["']/)?.[1];
 if (!entryPath) throw new Error('Built web entry script was not found; iOS copy was not started.');
 const bundle = await readFile(join(webRoot, entryPath.slice(1)), 'utf8');
+verifyNativeShareBundle(bundle);
 for (const marker of ['web_app', 'ios_app', 'before_send', 'isNativePlatform', 'getPlatform']) {
   if (!bundle.includes(marker)) {
     throw new Error(`Built bundle is missing labeling marker ${marker}; iOS copy was not started.`);
@@ -75,5 +84,6 @@ console.log(JSON.stringify({
   copiedBuildFilesVerified: Object.keys(built).length,
   controlledIngestion: 'disabled',
   nativeLoading: 'packaged assets',
+  sharedLinkDelivery: 'native-share-delivery-v1',
   physicalIPhoneVerification: 'required before App Store submission',
 }, null, 2));

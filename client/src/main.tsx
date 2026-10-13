@@ -14,7 +14,8 @@ import {
   notifyNativeOAuthBrowserOutcome,
 } from "./lib/legal-terms-consent";
 import { parseNativeAuthCallback } from "./lib/native-oauth";
-import { PENDING_SHARED_ROUTE, SHARED_ROUTE_EVENT, sharedRouteFromPath, sharedRouteFromUrl } from "./lib/share-deep-link";
+import { sharedRouteFromPath } from "./lib/share-deep-link";
+import { nativeShareDelivery } from "./lib/native-share-delivery";
 
 // Replit's public development proxy does not accept an explicit :5000 port.
 // Normalize stale preview URLs before the SPA adds them to navigation history.
@@ -44,11 +45,7 @@ if (Capacitor.isNativePlatform()) {
       hasMatchingOAuthTermsConsentAttempt,
     );
     if (!callback) {
-      const route = sharedRouteFromUrl(url);
-      if (route) {
-        localStorage.setItem(PENDING_SHARED_ROUTE, route);
-        window.dispatchEvent(new Event(SHARED_ROUTE_EVENT));
-      }
+      nativeShareDelivery.capture(url);
       return;
     }
     if (callback.kind === "oauth-error") {

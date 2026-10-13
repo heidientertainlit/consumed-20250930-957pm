@@ -1,6 +1,6 @@
 import { Switch, Route, useLocation } from "wouter";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useKeyboardAdjust } from "@/hooks/use-keyboard-adjust";
 import { Capacitor } from "@capacitor/core";
 import { App as CapApp } from "@capacitor/app";
@@ -28,7 +28,8 @@ import {
 } from "@/lib/legal-terms-consent";
 import { parseNativeAuthCallback } from "@/lib/native-oauth";
 import { restoreNativeAuthCallbackSession } from "@/lib/native-oauth-session";
-import { PENDING_SHARED_ROUTE, SHARED_ROUTE_EVENT, sharedRouteFromPath, sharedRouteFromUrl } from "@/lib/share-deep-link";
+import { sharedRouteFromPath } from "@/lib/share-deep-link";
+import { NativeSharedLinkHandler } from "@/components/native-shared-link-handler";
 
 // Pages
 import AdminPage from "@/pages/admin";
@@ -128,7 +129,7 @@ function PageTracker({ children }: { children: React.ReactNode }) {
  * main.tsx saves: localStorage.setItem("pendingRoute", "/some/path")
  * This effect runs after Wouter is mounted, so routing works reliably.
  */
-function PendingRouteHandler() {
+function PendingRouteHandler({ onReady }: { onReady: (ready: boolean) => void }) {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -180,33 +181,13 @@ function PendingRouteHandler() {
       }
     };
 
-    void restorePendingAuthAndRoute();
-  }, [setLocation]);
+    let active = true;
+    void restorePendingAuthAndRoute().finally(() => {
+      if (active) onReady(true);
+    });
+    return () => { active = false; };
+  }, [setLocation, onReady]);
 
-  return null;
-}
-
-function NativeSharedLinkHandler() {
-  const [, setLocation] = useLocation();
-
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-    const consume = () => {
-      // Auth and push routes retain their existing priority during startup.
-      if (localStorage.getItem("pendingOAuthSession") || localStorage.getItem("pendingRecovery")) return;
-      const route = sharedRouteFromPath(localStorage.getItem(PENDING_SHARED_ROUTE));
-      localStorage.removeItem(PENDING_SHARED_ROUTE);
-      if (route) setLocation(route);
-    };
-    window.addEventListener(SHARED_ROUTE_EVENT, consume);
-    // A cold-start URL may have arrived before React mounted.
-    void CapApp.getLaunchUrl().then((launch) => {
-      const route = launch?.url ? sharedRouteFromUrl(launch.url) : null;
-      if (route && !localStorage.getItem(PENDING_SHARED_ROUTE)) localStorage.setItem(PENDING_SHARED_ROUTE, route);
-      consume();
-    }).catch(consume);
-    return () => window.removeEventListener(SHARED_ROUTE_EVENT, consume);
-  }, [setLocation]);
   return null;
 }
 
@@ -308,11 +289,12 @@ const ADMIN_USER_ID = "88bfb2a0-e8ce-4081-b731-2a49567ff093";
 
 function Router() {
   useKeyboardAdjust();
+  const [startupReady, setStartupReady] = useState(false);
 
   return (
     <AuthProvider>
-      <PendingRouteHandler />
-      <NativeSharedLinkHandler />
+      <PendingRouteHandler onReady={setStartupReady} />
+      <NativeSharedLinkHandler startupReady={startupReady} />
       <CapacitorDeepLinkHandler />
       <TermsAcceptanceGate>
         <PageTracker>
