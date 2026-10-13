@@ -24,24 +24,21 @@ Local verification passed:
 - `node scripts/test-share-compatibility.mjs` (10 public-sharing scenarios)
 - Current production bundle passed the shared-link marker check.
 
-**Native assets have not been copied for this change.** The existing native
-copy does not contain the updated coordinator. No new archive was produced
-or installed, and physical-device behavior has not been verified.
+**Native assets are now prepared and verified in this workspace.**
+`npm run prepare:ios` passed all 20 focused tests, built the application,
+verified the shared-link implementation, and copied it into the iOS project.
+All 39 built files matched their copied files by hash. The native configuration
+uses packaged assets. No new Xcode archive was produced or installed, and
+physical-device behavior has not been verified.
 
-## Build boundary — stop before copying
+## Scope
 
-`docs/ios-surface-labeling-release-check.md` records an unresolved release
-warning and a native analytics baseline difference. This share-link change
-does not resolve or approve either. No analytics code, configuration or
-secrets were changed. The warning was not independently re-diagnosed during
-this share-only work.
+No analytics code, configuration or secrets were changed. An older unrelated
+release note was not verified as a current blocker and is not a prerequisite
+for this share-link work. Existing preparation safeguards passed without
+bypassing or modifying them.
 
-Select an approved source/configuration baseline or resolve that release
-warning separately before preparing a full iPhone candidate. A normal build
-packages the entire current application, not just these share-link changes.
-Do not bypass existing preparation safeguards to make a candidate build.
-
-## Mac handoff — only after the build boundary is cleared
+## Mac handoff
 
 1. Bring the approved source, including these share-link changes, onto your
    Mac using your normal manual Git process. Agent performs no Git networking.

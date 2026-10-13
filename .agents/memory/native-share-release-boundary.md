@@ -9,8 +9,8 @@ Verify the actual packaged candidate, not just the current website, when diagnos
 
 **How to apply:** Inspect archive version and bundled behavior; test native delivery lifecycles separately from URL parsing; require physical-device evidence before claiming Universal Links work.
 
-A share-link-only authorization does not approve unrelated release-baseline changes.
+A share-link-only authorization does not approve unrelated changes or investigations. Do not turn an unverified historical release note into a new prerequisite.
 
-**Why:** Preparing an iPhone candidate bundles the entire current application. Existing release notes flagged analytics differences and unresolved verification outside the share-link scope.
+**Why:** The user repeatedly instructed us to focus on share links after an unrelated analytics warning was incorrectly treated as a packaging blocker without verifying its relevance.
 
-**How to apply:** Keep share work isolated, preserve existing build safeguards, and explicitly resolve the approved candidate boundary before copying/distributing a full native build. Do not silently fix or approve unrelated analytics work.
+**How to apply:** Keep share work isolated and use the existing preparation safeguards. Stop for an actual failed prerequisite, not an assumed one. Do not modify analytics/search or expand into those investigations without a separate request.
