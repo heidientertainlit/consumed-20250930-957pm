@@ -1,3 +1,5 @@
+// Capture callback presence before App imports initialize the Supabase SDK.
+import { authNavigationIntent, NAVIGATION_ATTEMPT_PARAM, validInternalDestination } from "./lib/auth-navigation-intent";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
@@ -14,7 +16,6 @@ import {
   notifyNativeOAuthBrowserOutcome,
 } from "./lib/legal-terms-consent";
 import { parseNativeAuthCallback } from "./lib/native-oauth";
-import { authNavigationIntent, NAVIGATION_ATTEMPT_PARAM, validInternalDestination } from "./lib/auth-navigation-intent";
 import { nativeShareDelivery } from "./lib/native-share-delivery";
 
 // Replit's public development proxy does not accept an explicit :5000 port.

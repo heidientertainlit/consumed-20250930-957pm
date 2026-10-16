@@ -40,6 +40,16 @@ export default function LoginPage() {
     if (!id || id !== authNavigationIntent.peek()?.id) authNavigationIntent.clear();
   }, [loading, user]);
 
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted && authNavigationIntent.peek()?.webOAuthStartedAt !== undefined) {
+        authNavigationIntent.clear();
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   useEffect(() => subscribeToNativeOAuthBrowserOutcomes((message) => {
     authNavigationIntent.clear();
     setSubmitting(false);

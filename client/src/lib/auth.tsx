@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
-import { authNavigationIntent, NAVIGATION_ATTEMPT_PARAM } from './auth-navigation-intent'
+import { authNavigationIntent } from './auth-navigation-intent'
 import { User, Session } from '@supabase/supabase-js'
 import { SUPABASE_URL, supabase } from './supabase'
 import { sessionTracker } from './sessionTracker'
@@ -230,7 +230,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void (async () => {
       try {
         const startup = await resolveInitialAuthStartup(
-          () => supabase.auth.getSession(),
+          () => {
+            if (!authNavigationIntent.prepareWebOAuthReturn()) return supabase.auth.getSession();
+            // Observe the existing SDK's initialization result; do not exchange
+            // tokens ourselves or adopt an old session after a failed callback.
+            return supabase.auth.initialize().then(({ error }) => {
+              authNavigationIntent.finishWebOAuthReturn(!error);
+              return supabase.auth.getSession();
+            });
+          },
           () => supabase.auth.signOut(),
         );
         if (!authWorkGeneration.current.isCurrent(initialGeneration)) return;
@@ -350,7 +358,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // handles everything. Push permission will be requested after normal login.
 
           } else if (event === 'SIGNED_OUT') {
-            authNavigationIntent.clear()
+            authNavigationIntent.invalidateAccountBoundary()
             clearOAuthTermsConsentAttempt()
             clearLocallyAcceptedLegalTerms()
             clearAuthSignInNote()
@@ -450,7 +458,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    authNavigationIntent.clear()
+    authNavigationIntent.invalidateAccountBoundary()
     clearOAuthTermsConsentAttempt()
     clearLocallyAcceptedLegalTerms()
     const { error } = await supabase.auth.signOut()
@@ -471,11 +479,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const consentAttempt = options.termsAccepted || nativePlatform
       ? beginOAuthTermsConsentAttempt(provider, options.termsAccepted === true)
       : null
-    const navigationAttempt = authNavigationIntent.begin(window.location.href, consentAttempt?.id)
+    if (nativePlatform) authNavigationIntent.begin(window.location.href, consentAttempt?.id)
+    else authNavigationIntent.beginWebOAuth(window.location.href)
     if (nativePlatform && consentAttempt) markNativeOAuthBrowserAttempt(consentAttempt.id)
     const redirectTo = nativePlatform && consentAttempt
       ? `${NATIVE_OAUTH_CALLBACK_URL}?oauth_attempt=${encodeURIComponent(consentAttempt.id)}`
-      : `${redirectOrigin}/login${navigationAttempt ? `?${NAVIGATION_ATTEMPT_PARAM}=${encodeURIComponent(navigationAttempt)}` : ""}`
+      : `${redirectOrigin}/login`
     let data: { url: string | null } | null = null
     let error: unknown = null
     try {
