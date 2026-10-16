@@ -33,6 +33,12 @@ The first consumer validation intentionally uses a frozen public-card export of 
 
 **How to apply:** Treat this as saved-result validation, not a general live recommendation service. Preserve the existing cards, use exact media identities, and stop for the owner's quality review before broadening coverage or engine behavior.
 
+The user tested the consumer media-page recommendations and explicitly reported: “THOSE ARE MUCH BETTER.”
+
+**Why:** This is direct positive quality feedback on the bounded consumer test, not just approval of the architecture.
+
+**How to apply:** Preserve this reviewed recommendation baseline. The feedback does not authorize pool expansion, tuning, release or resuming the paused admin tool.
+
 The prior lab checkpoint compared CURRENT, provider/relationship/structured-metadata ranking, and that approach plus semantic scoring. It did not establish that the weights or results are suitable for consumers. No LLM reranking was included.
 
 **Why:** Comparing engine evidence was useful, but completing lab infrastructure does not demonstrate consumer recommendation quality.
