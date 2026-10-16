@@ -78,6 +78,7 @@
 - [Persona conversation timing](persona-conversation-timing.md) — late delivery preserves full reviewed gaps after actual arrival, even when the conversation finishes later than planned.
 - [Conversation engagement safety](conversation-engagement-safety.md) — reviews need no star rating; an internal activity label alone does not prove fabricated ratings or a release blocker.
 - [Conversation publishing policy](conversation-publishing-policy.md) — admin approval then scheduling then delivery; no autonomous unapproved publishing.
+- [Conversation studio selection](conversation-studio-selection.md) — reuse consumer search unchanged; exact media scope, one Context, automatic interest-based personas.
 - [Writer JSON-mode contract](writer-json-mode-contract.md) — JSON-object mode requires a literal “JSON” instruction in an input message; an object example alone is insufficient.
 - [Today's Play identity artifacts](todays-play-identity-artifacts.md) — simple non-trivia daily questions; earned artifacts after answering, not extra gameplay steps.
 - [Content Research boundary](content-research-boundary.md) — admin title-based editorial research stays separate from personal DNA and publishing; partial coverage is preferable to filler.

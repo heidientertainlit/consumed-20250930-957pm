@@ -147,8 +147,9 @@ function fixture() {
       const request = JSON.parse(options.body);
       assert(request.messages.some((m: any) => m.content.includes("JSON")), "JSON-object mode has explicit JSON instructions");
       const reviewing = request.messages[0].content.includes("checking EVERY");
+      const selecting = request.messages[0].content.includes("Choose 2–");
       const suggesting = request.messages[0].content.includes("subjective discussion question");
-      const result = reviewing ? { issues: factsFail ? ["Unsupported facts"] : [] } : suggesting
+      const result = selecting ? { openingAuthorId: a, participants: [a, b].map(id => ({ id, interest: "film", reason: "Saved film interest fits the selected movie." })) } : reviewing ? { issues: factsFail ? ["Unsupported facts"] : [] } : suggesting
         ? { suggestions: JSON.parse(request.messages[1].content).map((s: any) => ({ id: s.id, topic: `What did you think about ${s.subject.title}?` })) } : { messages };
       return Response.json({ choices: [{ message: { content: malformed ? "invalid json" : JSON.stringify(result) } }] });
     }
@@ -172,6 +173,37 @@ const request = (body: any, token = "admin-session") => new Request("https://fix
   method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(body),
 });
 const generation = { action: "generate", topic: "An exact topic", subjectId: sid, participantIds: [a, b], openingAuthorId: a, replyCount: 2, durationMinutes: 5, maxWords: 60 };
+
+test("automatic participant generation validates interests and saves reasons without publishing", async () => {
+  const f = fixture();
+  for (const person of f.rows.users.filter((p: any) => p.is_persona)) person.persona_config.interests = ["film"];
+  const res = await handler(request({ ...generation, participantIds: undefined, openingAuthorId: undefined, autoParticipants: true }));
+  assert.equal(res.status, 200, await res.clone().text());
+  const run = await res.json();
+  assert.deepEqual(run.participant_ids, [a, b]);
+  assert.equal(run.provenance.filter((p: any) => p.kind === "persona-selection").length, 2);
+  assert.equal(run.status, "draft");
+  assert.ok(f.writes.every((w: any) => w.table === "persona_conversation_runs"));
+});
+
+test("automatic selection refuses unsupported interests without saving a draft", async () => {
+  const f = fixture();
+  const res = await handler(request({ ...generation, autoParticipants: true }));
+  assert.notEqual(res.status, 200);
+  assert.equal(f.writes.length, 0);
+});
+
+test("shared search selection verifies the exact result before issuing a subject ID", async () => {
+  const f = fixture();
+  const media = { title: subject.title, type: "movie", external_source: "tmdb", external_id: "900" };
+  const res = await handler(request({ action: "select-subject", media }));
+  assert.equal(res.status, 200, await res.clone().text());
+  const stored = await res.json();
+  assert.equal(stored.subject.externalId, "900");
+  const before = f.writes.length;
+  assert.notEqual((await handler(request({ action: "select-subject", media: { ...media, external_id: "unverified" } }))).status, 200);
+  assert.equal(f.writes.length, before);
+});
 
 test("scheduled worker filters state, start time and retry time and scans at most twenty runs", async () => {
   const f = fixture();
