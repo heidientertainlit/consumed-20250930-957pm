@@ -19,7 +19,13 @@ Do not spend additional time building or polishing the Recommendation Lab, spend
 
 **Why:** The user wants reusable recommendation-engine work, not continued investment in a separate admin deliverable.
 
-**How to apply:** Reuse useful profiling, verification, ranking, embeddings and tests. Treat the bounded lab as optional validation infrastructure, not a prerequisite for every consumer improvement. Prefer testing through the existing media-page UI behind an admin/dev-only flag before affecting normal users, subject to implementation approval.
+**How to apply:** Reuse useful profiling, verification, ranking, embeddings and tests. Treat the bounded lab as optional validation infrastructure, not a prerequisite for every consumer improvement.
+
+The user clarified that “admin/dev-only preview” meant local development work for review before Git/release, not an admin-only feature in the app. The intended consumer More like this experience does not need an admin permission gate or a CURRENT/Experimental switch.
+
+**Why:** The user wants ordinary users to see similar-title recommendations on media detail pages and is concerned that extra admin infrastructure overcomplicates or misclassifies the feature.
+
+**How to apply:** Keep development/release boundaries separate from in-app authorization. Do not add an admin gate or comparison selector for this consumer feature unless the user explicitly requests one again. The private Recommendation Lab/content-creation tool remains paused, not abandoned; do not delete, redesign, polish or expand it.
 
 The prior lab checkpoint compared CURRENT, provider/relationship/structured-metadata ranking, and that approach plus semantic scoring. It did not establish that the weights or results are suitable for consumers. No LLM reranking was included.
 
