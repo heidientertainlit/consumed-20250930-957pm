@@ -9,23 +9,23 @@ V2 must balance subject/themes with appeal/experience, generally favoring appeal
 
 **How to apply:** Retain signal-level evidence and missingness; test weights rather than treating permanent values as established. Preserve cross-media discovery. TasteDive is excluded, as documented in the media-detail recommendation scope.
 
-Build an isolated internal CURRENT versus V2 comparison lab first, with persistent Great/Fine/Bad evaluations and deliberately varied source works. Production recommendation behavior remains untouched until separately approved.
+The primary goal is improving the existing consumer-facing Media Detail → “More like this” recommendations. The older private/content-creation “what's similar to this?” tool is a separate use case, not the current deliverable. Both may ultimately share an underlying recommendation engine.
 
-**Why:** The user wants to review the smallest technical architecture before any implementation and evaluate quality before replacement.
+**Why:** The user explicitly corrected a scope mix-up after work shifted into the admin Recommendation Lab instead of the consumer media-detail feature.
 
-**How to apply:** Do not expand into shared search, canonical identity, media pages, conversations, ratings, navigation, or existing schemas beyond separately approved isolated experiment additions. Flag blockers instead of broadening scope.
+**How to apply:** Anchor recommendation work to the consumer media-page section unless the user explicitly chooses the private tool. Older lab/task instructions must not silently override a new request; clarify conflicting scope before implementation.
 
-The user approved a small end-to-end checkpoint with roughly 10–15 varied source titles, then explicitly required another stop before catalog expansion, weight changes, LLM reranking or consumer integration.
+Do not spend additional time building or polishing the Recommendation Lab, spend dashboard, run controls, or other admin infrastructure unless it is necessary to validate the recommendation engine.
 
-**Why:** The user wants to test the actual recommendations personally before deciding what to improve or scale.
+**Why:** The user wants reusable recommendation-engine work, not continued investment in a separate admin deliverable.
 
-**How to apply:** Treat quality weaknesses as findings for the owner's review, not permission to tune, expand preparation or connect V2. Keep every experiment write in the two lab tables; production inputs stay read-only.
+**How to apply:** Reuse useful profiling, verification, ranking, embeddings and tests. Treat the bounded lab as optional validation infrastructure, not a prerequisite for every consumer improvement. Prefer testing through the existing media-page UI behind an admin/dev-only flag before affecting normal users, subject to implementation approval.
 
-The approved initial lab has three configurations: CURRENT, provider/relationship/structured-metadata ranking, and that approach plus semantic retrieval/scoring. No LLM reranking initially. Use text-embedding-3-small first and keep initial model spend within $5–$15.
+The prior lab checkpoint compared CURRENT, provider/relationship/structured-metadata ranking, and that approach plus semantic scoring. It did not establish that the weights or results are suitable for consumers. No LLM reranking was included.
 
-**Why:** The user confirmed this bounded experiment and wants candidate generation and semantic scoring evaluated without another ranking variable.
+**Why:** Comparing engine evidence was useful, but completing lab infrastructure does not demonstrate consumer recommendation quality.
 
-**How to apply:** Preparation must not mutate production canonical records. Show only provider-verified candidates with supported destinations; sparse or empty categories are acceptable. Retain diagnostic feedback reasons and source cases that distinguish subject overlap from appeal overlap.
+**How to apply:** Preserve the evidence and reusable tests without claiming an improved consumer feature has shipped. Keep experiment preparation isolated from production canonical writes, preserve provider-verified destinations, and make missing coverage explicit.
 
 Minimize new experiment tables after auditing the live schema. Reuse genuinely appropriate existing structures, but do not force reuse that contaminates production data or weakens isolation.
 
