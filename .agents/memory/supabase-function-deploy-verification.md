@@ -33,6 +33,12 @@ Supabase's supported Management API log endpoint is `/analytics/endpoints/logs`,
 
 **How to apply:** Correlate `function_edge_logs` and `function_logs` by function/execution IDs and deployed version, using bounded time windows. Check HTTP status and query errors before interpreting empty results.
 
+Use explicit `iso_timestamp_start` and `iso_timestamp_end` parameters and narrow column selections for log queries. The API can return HTTP 200 with an `error` object instead of a `result` array.
+
+**Why:** Failed diagnostic queries returned a generic backend error despite successful HTTP transport; treating that response as an empty result would incorrectly imply no requests or failures occurred.
+
+**How to apply:** Validate the response body before drawing conclusions, and start from a small working query before adding filters or aggregates.
+
 Verify downloaded deployment dependencies from normalized runtime imports, not raw TypeScript imports.
 
 **Why:** Downloaded bundles correctly omit type-only dependencies. Traversing every source-level import produced a false missing-dependency failure even though the active runtime implementation matched.
