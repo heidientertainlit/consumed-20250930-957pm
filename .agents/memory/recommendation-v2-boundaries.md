@@ -21,6 +21,12 @@ The approved initial lab has three configurations: CURRENT, provider/relationshi
 
 **How to apply:** Preparation must not mutate production canonical records. Show only provider-verified candidates with supported destinations; sparse or empty categories are acceptable. Retain diagnostic feedback reasons and source cases that distinguish subject overlap from appeal overlap.
 
+Minimize new experiment tables after auditing the live schema. Reuse genuinely appropriate existing structures, but do not force reuse that contaminates production data or weakens isolation.
+
+**Why:** The user explicitly requested an existing-schema reuse audit before any lab migration.
+
+**How to apply:** Distinguish read-only reuse of production evidence from writable experiment state. Propose consolidating bounded lab records before adding dedicated tables for every entity; do not repurpose production caches or feedback merely because they contain JSON.
+
 Cache source-grounded work profiles and replaceable embeddings rather than paying for model calls on every media-page open. Investigate existing Supabase/pgvector and inexpensive small-model options before adding infrastructure. Do not build large collaborative filtering now; reserve interfaces for signed preferences, affinity, DNA and co-consumption later.
 
 **Why:** The user explicitly prioritizes cost control, provider replaceability, and a small experiment over a premature recommendation platform.
