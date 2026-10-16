@@ -6,6 +6,7 @@ import {
 } from "@/lib/similar-media";
 
 type SimilarMediaInput = {
+  enabled?: boolean;
   userId?: string;
   accessToken?: string;
   source?: string;
@@ -17,7 +18,7 @@ type SimilarMediaInput = {
 export function useSimilarMedia(input: SimilarMediaInput) {
   const { userId, accessToken, source, externalId, title, type } = input;
   const baseUrl = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
-  const enabled = !!userId && !!accessToken && !!source && !!externalId && !!title;
+  const enabled = input.enabled !== false && !!userId && !!accessToken && !!source && !!externalId && !!title;
   // Scope personalization by account, and distinguish remakes/identical titles
   // by provider identity. Never carry previous-title data into the new route.
   const scope = ["similar-media-v2", userId, source, externalId, title, type];

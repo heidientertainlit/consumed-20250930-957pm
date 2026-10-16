@@ -17,3 +17,7 @@ verify_jwt = false
 # Private lab: validates session and authoritative human-admin role itself.
 [functions.admin-recommendation-lab]
 verify_jwt = false
+
+# Read-only media-page preview; validates human-admin sessions itself.
+[functions.media-recommendation-preview]
+verify_jwt = false

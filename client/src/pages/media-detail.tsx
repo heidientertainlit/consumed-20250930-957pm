@@ -23,8 +23,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 import { supabase } from "@/lib/supabase";
 import MediaPlayTab from "@/components/media-play-tab";
-import MoreLikeThis from "@/components/more-like-this";
-import { useSimilarMedia } from "@/hooks/use-similar-media";
+import MediaDetailSimilarMedia from "@/components/media-detail-similar-media";
 import { useBlockedUsers } from "@/hooks/use-blocked-users";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -751,15 +750,6 @@ export default function MediaDetail() {
   // Theories feature has no backend yet — real count is 0 until built.
   const theoriesCount = 0;
   const formatCount = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : `${n}`);
-
-  const similarMediaState = useSimilarMedia({
-    userId: user?.id,
-    accessToken: session?.access_token,
-    source: params?.source,
-    externalId: params?.id,
-    title: mediaItem?.title,
-    type: mediaItem?.type || mediaItem?.media_type || params?.type,
-  });
 
   // Query to find which lists contain this media item
   const { data: listsContainingMedia = [] } = useQuery({
@@ -1805,7 +1795,12 @@ export default function MediaDetail() {
             );
           })()}
 
-          {session?.access_token && <MoreLikeThis {...similarMediaState} />}
+          {session?.access_token && <MediaDetailSimilarMedia
+            key={`${user?.id}:${params?.type}:${params?.source}:${params?.id}`}
+            userId={user?.id} accessToken={session.access_token}
+            source={params?.source} externalId={params?.id} title={mediaItem?.title}
+            type={mediaItem?.type || mediaItem?.media_type || params?.type}
+          />}
 
           {/* Recommendations remain visible above the unchanged Takes / Play views. */}
           <div className="bg-white/95 backdrop-blur-md border-b border-gray-100 mb-4 -mx-4 px-4">
