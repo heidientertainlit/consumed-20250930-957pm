@@ -20,3 +20,9 @@ Real-component browser fixtures need the production stylesheet for layout, scrol
 **Why:** A JavaScript-only fixture with CSS imports stubbed out rendered empty loading blocks with zero height, falsely reporting production skeletons as hidden.
 
 **How to apply:** Compile the actual Tailwind stylesheet in the isolated fixture before making visual or scrolling assertions. Controlled transport proves frontend behavior, not live personalized recommendation quality or server completion.
+
+Do not pursue TasteDive for Consumed recommendations.
+
+**Why:** The user tested TasteDive, found its recommendations poor, and explicitly said not to go in that direction.
+
+**How to apply:** Exclude TasteDive from provider proposals and implementation; do not treat earlier suggestions to evaluate it as approval.
