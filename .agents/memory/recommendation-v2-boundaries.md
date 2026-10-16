@@ -31,13 +31,19 @@ The first consumer validation intentionally uses a frozen public-card export of 
 
 **Why:** The user approved a bounded local/unpushed test without new page-load model calls, new infrastructure, pool expansion, weight tuning or LLM reranking. A local export avoids coupling consumer rendering to private lab authorization or exposing evaluations and usage records.
 
-**How to apply:** Treat this as saved-result validation, not a general live recommendation service. Preserve the existing cards, use exact media identities, and stop for the owner's quality review before broadening coverage or engine behavior.
+**How to apply:** This was saved-result validation, not a general live recommendation service. Preserve the existing cards and exact media identities. The subsequent on-demand coverage request below supersedes the initial fixed-source/no-page-load-preparation boundary.
 
 The user tested the consumer media-page recommendations and explicitly reported: “THOSE ARE MUCH BETTER.”
 
 **Why:** This is direct positive quality feedback on the bounded consumer test, not just approval of the architecture.
 
-**How to apply:** Preserve this reviewed recommendation baseline. The feedback does not authorize pool expansion, tuning, release or resuming the paused admin tool.
+**How to apply:** Preserve this reviewed recommendation baseline. The feedback alone did not authorize expansion; the user subsequently explicitly requested broader consumer coverage. Tuning, release and resuming the paused admin tool remain separate.
+
+The user wants improved cross-media recommendations on all consumer media-detail pages, generated when someone first visits an unprepared title and cached for subsequent visitors. They explicitly do not want advance generation for the whole catalog and asked about updates for trending content.
+
+**Why:** The user said: “I don't want to generate titles in advance for everything” and “I just want it to generate as someone new visits it, then assuming it just has been cached or can update if ther eis something trending?”
+
+**How to apply:** Use title-level shared caching, not per-visitor generation. On-demand preparation is the requested direction; the initial prohibition on new page-load preparation is no longer the desired coverage behavior. Refresh timing, trending inputs and an expanded-test spending cap have not been agreed. Do not treat this request as approval to resume admin work, tune weights, release, or change shared search/canonical identity.
 
 The prior lab checkpoint compared CURRENT, provider/relationship/structured-metadata ranking, and that approach plus semantic scoring. It did not establish that the weights or results are suitable for consumers. No LLM reranking was included.
 
