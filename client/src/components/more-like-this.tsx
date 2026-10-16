@@ -20,6 +20,7 @@ type MoreLikeThisProps = {
   isGenerating: boolean;
   hasError?: boolean;
   onAdd?: (item: SimilarMediaItem) => void;
+  onInteraction?: () => void;
 };
 
 function getMediaType(type: string): {
@@ -180,6 +181,7 @@ export default function MoreLikeThis({
   isGenerating,
   hasError = false,
   onAdd,
+  onInteraction,
 }: MoreLikeThisProps) {
   const hasAvailableSlots = slots.some((slot) => slot.status !== "unavailable");
   const showInitialSkeletons = isGenerating && !hasAvailableSlots;
@@ -193,11 +195,13 @@ export default function MoreLikeThis({
     !showInitialSkeletons;
 
   return (
-    <section className="min-w-0 mb-5" aria-label="More like this" data-testid="more-like-this">
+    <section className="min-w-0 mb-5" aria-label="More like this" data-testid="more-like-this"
+      onPointerDownCapture={onInteraction} onKeyDownCapture={onInteraction}>
       <h2 className="mb-3 text-sm font-bold text-violet-950">More like this</h2>
       <div
         className="-mx-4 overflow-x-auto overscroll-x-contain px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         data-testid="more-like-this-scroll"
+        onScroll={onInteraction}
         style={{ touchAction: "pan-x pan-y" }}
       >
         <div className="flex w-max items-start gap-3">

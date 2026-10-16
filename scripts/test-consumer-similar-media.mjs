@@ -22,6 +22,9 @@ function Fixture(){
  return <main style={{maxWidth:650,margin:"20px auto",padding:16}}>
  <button onClick={()=>setId("unprepared")}>Unprepared source</button>
  <button onClick={()=>setId("1236045")}>Prepared source</button>
+  <button onClick={()=>setId("shared-cached")}>Cached source</button>
+  <button onClick={()=>setId("cold-source")}>Cold source</button>
+  <button onClick={()=>setId("cold-touched")}>Touched cold source</button>
  <button onClick={()=>setUser("")}>Sign out fixture</button>
  <button onClick={()=>setUser("another-ordinary-account")}>Other account</button>
  <output hidden data-testid="added">{added?JSON.stringify(added):""}</output>
@@ -41,11 +44,23 @@ try {
   await server.listen();
   browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  const calls = [], errors = [];
+   const calls = [], errors = [], sharedCalls = [];
+   let coldReady = false;
+   const sharedCards = [
+     { title: "Improved cross-media book", type: "book", external_source: "openlibrary", external_id: "OL9W", poster_url: "" },
+     { title: "Improved TV show", type: "tv", external_source: "tmdb", external_id: "999", poster_url: "" },
+   ];
   page.on("pageerror", e => errors.push(e.message));
   await page.route("**/functions/v1/**", async route => {
     const url = route.request().url(), body = route.request().postDataJSON();
-    calls.push({ url, body });
+     if (url.endsWith("/media-similarity")) {
+       sharedCalls.push(body);
+       const cold = body.externalId.startsWith("cold-");
+       if (body.externalId === "shared-cached" || (cold && coldReady))
+         return route.fulfill({ json: { items: sharedCards, preparing: false } });
+       return route.fulfill({ json: { items: [], preparing: cold } });
+     }
+     calls.push({ url, body });
     if (url.endsWith("/conversational-search")) return route.fulfill({
       json: { recommendations: [{ title: "Existing path result", type: "movie" }] },
     });
@@ -56,7 +71,7 @@ try {
   });
   await page.goto("http://127.0.0.1:5126");
   await page.locator('[data-testid="more-like-this"] a').first().waitFor();
-  assert.equal(calls.length, 0, "Prepared source must not generate/resolve recommendations");
+   assert.equal(calls.length, 0, "Prepared baseline must not invoke legacy generation/resolution");
   assert.equal(await page.locator("select").count(), 0, "No admin or comparison selector");
   assert.equal(await page.getByText(/Admin preview|CURRENT|Experimental/).count(), 0);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
@@ -91,10 +106,34 @@ try {
   await page.getByRole("button", { name: "Other account", exact: true }).click();
   await page.locator('[data-testid="more-like-this"] a').first().waitFor();
   assert.equal(calls.length, 2, "Ordinary accounts need no admin check or model request");
+   // Any cached title, not just the original prepared sources, renders mixed types
+   // without starting the legacy generator.
+   await page.getByRole("button", { name: "Cached source", exact: true }).click();
+   await page.getByText("Improved cross-media book", { exact: true }).waitFor();
+   assert.equal(calls.length, 2);
+   assert.equal(await page.getByText("Improved TV show", { exact: true }).count(), 1);
+   // A cold miss keeps established results until shared preparation completes.
+   await page.getByRole("button", { name: "Cold source", exact: true }).click();
+   await page.getByText("Existing path result", { exact: true }).waitFor();
+   coldReady = true;
+   await page.getByText("Improved cross-media book", { exact: true }).waitFor();
+   // Once someone interacts, polling may save improved results but cannot replace
+   // the poster under their finger during this visit.
+   coldReady = false;
+   await page.getByRole("button", { name: "Touched cold source", exact: true }).click();
+   await page.getByText("Existing path result", { exact: true }).waitFor();
+   await page.getByTestId("more-like-this-scroll").dispatchEvent("scroll");
+   coldReady = true;
+   await page.waitForResponse(async r => r.url().endsWith("/media-similarity") &&
+     r.request().postDataJSON()?.externalId === "cold-touched" && (await r.json()).items.length > 0);
+   await page.getByRole("button", { name: /^Add Existing path result to list$/ }).click();
+   assert.equal(await page.getByText("Improved cross-media book", { exact: true }).count(), 0);
+   assert.equal(await page.getByText("Existing path result", { exact: true }).count(), 1);
+   assert.ok(sharedCalls.some(c => c.externalId === "unprepared"));
   await page.setViewportSize({ width: 1280, height: 800 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   assert.deepEqual(errors, []);
-  console.log("PASS consumer cards: prepared zero-call path, ordinary accounts, existing fallback, source/account transitions, destinations, mobile/desktop.");
+   console.log("PASS consumer cards: all-title shared cache, cold preparation, interaction pinning, ordinary accounts, legacy fallback, transitions, Add, mobile/desktop.");
 } finally {
   await browser?.close(); await server.close(); await rm(temp, { recursive: true, force: true });
 }

@@ -43,7 +43,7 @@ The user wants improved cross-media recommendations on all consumer media-detail
 
 **Why:** The user said: “I don't want to generate titles in advance for everything” and “I just want it to generate as someone new visits it, then assuming it just has been cached or can update if ther eis something trending?”
 
-**How to apply:** Use title-level shared caching, not per-visitor generation. On-demand preparation is the requested direction; the initial prohibition on new page-load preparation is no longer the desired coverage behavior. Refresh timing, trending inputs and an expanded-test spending cap have not been agreed. Do not treat this request as approval to resume admin work, tune weights, release, or change shared search/canonical identity.
+**How to apply:** Use title-level shared caching, not per-visitor generation. The user explicitly approved extending beyond the 11 titles after agreeing to normal page loading, existing-results/placeholders during cold preparation, stale results during refresh, and no card replacement under someone's finger. The initial prohibition on new page-load preparation is superseded. No exact refresh interval or spending cap was chosen by the user. This does not authorize admin work, weight tuning, production activation, or shared search/canonical identity changes.
 
 The prior lab checkpoint compared CURRENT, provider/relationship/structured-metadata ranking, and that approach plus semantic scoring. It did not establish that the weights or results are suitable for consumers. No LLM reranking was included.
 
