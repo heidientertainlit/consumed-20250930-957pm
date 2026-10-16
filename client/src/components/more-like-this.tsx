@@ -101,11 +101,10 @@ function PosterCard({
         />
       ) : null}
       <span
-        className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-black/65 px-1.5 py-1 text-[9px] font-semibold leading-none text-white shadow-sm backdrop-blur-sm"
+        className="absolute left-1.5 top-1.5 inline-flex items-center justify-center rounded-full bg-black/65 p-1.5 text-white shadow-sm backdrop-blur-sm"
         aria-label={`Media type: ${mediaType.label}`}
       >
         <TypeIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
-        {mediaType.label}
       </span>
     </div>
   );

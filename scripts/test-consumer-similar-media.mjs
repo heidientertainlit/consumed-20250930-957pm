@@ -71,6 +71,7 @@ try {
   assert.equal(calls.length, 0, "Selecting a recommendation to add makes no recommendation requests");
   const card = page.getByTestId("similar-media-0");
   await card.locator('[aria-label^="Media type:"]').waitFor();
+  assert.equal((await card.locator('[aria-label^="Media type:"]').textContent()).trim(), "", "Type badge must be icon-only");
   const posterBounds = await card.locator('[class*="aspect-"]').first().boundingBox();
   const addBounds = await card.getByRole("button", { name: /^Add .+ to list$/ }).boundingBox();
   assert.ok(addBounds.x >= posterBounds.x && addBounds.y >= posterBounds.y);

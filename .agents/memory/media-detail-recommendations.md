@@ -3,6 +3,12 @@ name: Media-detail recommendation scope
 description: User-approved cross-media recommendation boundaries and verification requirements.
 ---
 
+Poster media-type badges must show icons only, not visible “Film”, “TV” or other type words. Keep accessible type labels.
+
+**Why:** The user said written type labels take up too much space on the poster.
+
+**How to apply:** Preserve compact top-left type icons and the bottom-right Add control when changing recommendation cards.
+
 Cross-media recommendations are intentional and important to Consumed. Do not prioritize recommendations simply because they share the source title's media type, and do not change the generator's mix or ranking as part of resolution or presentation work.
 
 **Why:** The user explicitly corrected a proposed same-type-first approach before approving implementation.
