@@ -15,9 +15,9 @@ The primary goal is improving the existing consumer-facing Media Detail → “M
 
 **How to apply:** Anchor recommendation work to the consumer media-page section unless the user explicitly chooses the private tool. Older lab/task instructions must not silently override a new request; clarify conflicting scope before implementation.
 
-Do not spend additional time building or polishing the Recommendation Lab, spend dashboard, run controls, or other admin infrastructure unless it is necessary to validate the recommendation engine.
+The private Recommendation Lab/content-creation tool is paused, not abandoned. Do not add admin features, UI, workflows, endpoints, controls, dashboards, comparison tools or lab functionality to prepare for future reuse.
 
-**Why:** The user wants reusable recommendation-engine work, not continued investment in a separate admin deliverable.
+**Why:** The user wants reusable recommendation-engine work, not continued investment in a separate admin deliverable, and explicitly clarified that admin work must not expand the consumer scope.
 
 **How to apply:** Reuse useful profiling, verification, ranking, embeddings and tests. Treat the bounded lab as optional validation infrastructure, not a prerequisite for every consumer improvement.
 
@@ -26,6 +26,12 @@ The user clarified that “admin/dev-only preview” meant local development wor
 **Why:** The user wants ordinary users to see similar-title recommendations on media detail pages and is concerned that extra admin infrastructure overcomplicates or misclassifies the feature.
 
 **How to apply:** Keep development/release boundaries separate from in-app authorization. Do not add an admin gate or comparison selector for this consumer feature unless the user explicitly requests one again. The private Recommendation Lab/content-creation tool remains paused, not abandoned; do not delete, redesign, polish or expand it.
+
+The first consumer validation intentionally uses a frozen public-card export of the existing saved rankings for prepared titles, with existing behavior everywhere else.
+
+**Why:** The user approved a bounded local/unpushed test without new page-load model calls, new infrastructure, pool expansion, weight tuning or LLM reranking. A local export avoids coupling consumer rendering to private lab authorization or exposing evaluations and usage records.
+
+**How to apply:** Treat this as saved-result validation, not a general live recommendation service. Preserve the existing cards, use exact media identities, and stop for the owner's quality review before broadening coverage or engine behavior.
 
 The prior lab checkpoint compared CURRENT, provider/relationship/structured-metadata ranking, and that approach plus semantic scoring. It did not establish that the weights or results are suitable for consumers. No LLM reranking was included.
 

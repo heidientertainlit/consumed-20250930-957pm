@@ -4,9 +4,9 @@ import {
   resolveSimilarMedia,
   type RecommendationSlot,
 } from "@/lib/similar-media";
+import { preparedSimilarMedia } from "@/lib/prepared-similar-media";
 
 type SimilarMediaInput = {
-  enabled?: boolean;
   userId?: string;
   accessToken?: string;
   source?: string;
@@ -18,7 +18,9 @@ type SimilarMediaInput = {
 export function useSimilarMedia(input: SimilarMediaInput) {
   const { userId, accessToken, source, externalId, title, type } = input;
   const baseUrl = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
-  const enabled = input.enabled !== false && !!userId && !!accessToken && !!source && !!externalId && !!title;
+  const prepared = preparedSimilarMedia(source, externalId, type);
+  const signedIn = !!userId && !!accessToken;
+  const enabled = prepared === null && signedIn && !!source && !!externalId && !!title;
   // Scope personalization by account, and distinguish remakes/identical titles
   // by provider identity. Never carry previous-title data into the new route.
   const scope = ["similar-media-v2", userId, source, externalId, title, type];
@@ -51,6 +53,15 @@ export function useSimilarMedia(input: SimilarMediaInput) {
     status: resolution.isPending ? "pending" : resolution.data ? "ready" : "unavailable",
     ...(resolution.data ? { item: resolution.data } : {}),
   }));
+  if (signedIn && prepared !== null) return {
+    slots: prepared.map((item, index) => ({
+      key: `prepared:${type}:${source}:${externalId}:${index}`,
+      status: "ready" as const,
+      item,
+    })),
+    isGenerating: false,
+    hasError: false,
+  };
   return {
     slots,
     isGenerating: enabled && generation.isPending,
