@@ -23,7 +23,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 import { supabase } from "@/lib/supabase";
 import MediaPlayTab from "@/components/media-play-tab";
-import MoreLikeThis from "@/components/more-like-this";
+import MoreLikeThis, { type SimilarMediaItem } from "@/components/more-like-this";
 import { useSimilarMedia } from "@/hooks/use-similar-media";
 import { useBlockedUsers } from "@/hooks/use-blocked-users";
 import { apiRequest } from "@/lib/queryClient";
@@ -137,6 +137,7 @@ export default function MediaDetail() {
   // Progress sheet state
   const [isProgressSheetOpen, setIsProgressSheetOpen] = useState(false);
   const [isListSheetOpen, setIsListSheetOpen] = useState(false);
+  const [recommendationToAdd, setRecommendationToAdd] = useState<SimilarMediaItem | null>(null);
   const [editProgress, setEditProgress] = useState(0);
   const [editTotal, setEditTotal] = useState(0);
   const [editMode, setEditMode] = useState<'percent' | 'page' | 'episode' | 'minutes'>('percent');
@@ -1805,7 +1806,10 @@ export default function MediaDetail() {
             );
           })()}
 
-          {session?.access_token && <MoreLikeThis {...similarMediaState} />}
+          {session?.access_token && <MoreLikeThis {...similarMediaState} onAdd={(item) => {
+            setRecommendationToAdd(item);
+            setIsListSheetOpen(true);
+          }} />}
 
           {/* Recommendations remain visible above the unchanged Takes / Play views. */}
           <div className="bg-white/95 backdrop-blur-md border-b border-gray-100 mb-4 -mx-4 px-4">
@@ -2314,8 +2318,17 @@ export default function MediaDetail() {
 
       <QuickAddListSheet
         isOpen={isListSheetOpen}
-        onClose={() => setIsListSheetOpen(false)}
-        media={mediaItem || mediaData ? {
+        onClose={() => {
+          setIsListSheetOpen(false);
+          setRecommendationToAdd(null);
+        }}
+        media={recommendationToAdd ? {
+          title: recommendationToAdd.title,
+          mediaType: recommendationToAdd.type,
+          imageUrl: recommendationToAdd.poster_url,
+          externalId: recommendationToAdd.external_id,
+          externalSource: recommendationToAdd.external_source,
+        } : mediaItem || mediaData ? {
           title: mediaItem?.title || mediaData.title,
           mediaType: (() => {
             const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();

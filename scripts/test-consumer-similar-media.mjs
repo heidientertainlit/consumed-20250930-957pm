@@ -16,7 +16,7 @@ import {useSimilarMedia} from "${root}/client/src/hooks/use-similar-media";
 import Cards from "${root}/client/src/components/more-like-this";
 import "${root}/client/src/index.css";
 function Fixture(){
- const [id,setId]=useState("1236045"),[user,setUser]=useState("ordinary-account");
+ const [id,setId]=useState("1236045"),[user,setUser]=useState("ordinary-account"),[added,setAdded]=useState(null);
  const state=useSimilarMedia({userId:user||undefined,accessToken:user?"fixture-only":undefined,
  source:"tmdb",externalId:id,title:"Source title",type:"movie"});
  return <main style={{maxWidth:650,margin:"20px auto",padding:16}}>
@@ -24,7 +24,8 @@ function Fixture(){
  <button onClick={()=>setId("1236045")}>Prepared source</button>
  <button onClick={()=>setUser("")}>Sign out fixture</button>
  <button onClick={()=>setUser("another-ordinary-account")}>Other account</button>
- <Cards {...state}/></main>;
+ <output hidden data-testid="added">{added?JSON.stringify(added):""}</output>
+ <Cards {...state} onAdd={setAdded}/></main>;
 }
 createRoot(document.getElementById("root")).render(<QueryClientProvider client={new QueryClient()}><Fixture/></QueryClientProvider>);
 `);
@@ -61,6 +62,21 @@ try {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   const href = await page.locator('[data-testid="more-like-this"] a').first().getAttribute("href");
   assert.match(href, /^\/media\/(?:movie|tv|book|music|podcast)\//);
+  const originalUrl = page.url();
+  await page.getByRole("button", { name: /^Add .+ to list$/ }).first().click();
+  const added = JSON.parse(await page.getByTestId("added").textContent());
+  assert.ok(added.external_id && added.external_source && added.title && added.type);
+  assert.equal(page.url(), originalUrl, "Add must not navigate");
+  assert.equal(await page.locator('[data-testid="more-like-this"] a button').count(), 0, "No button nested in navigation");
+  assert.equal(calls.length, 0, "Selecting a recommendation to add makes no recommendation requests");
+  const card = page.getByTestId("similar-media-0");
+  await card.locator('[aria-label^="Media type:"]').waitFor();
+  const posterBounds = await card.locator('[class*="aspect-"]').first().boundingBox();
+  const addBounds = await card.getByRole("button", { name: /^Add .+ to list$/ }).boundingBox();
+  assert.ok(addBounds.x >= posterBounds.x && addBounds.y >= posterBounds.y);
+  assert.ok(addBounds.x + addBounds.width <= posterBounds.x + posterBounds.width);
+  assert.ok(addBounds.y + addBounds.height <= posterBounds.y + posterBounds.height, "Add stays inside poster, not over title");
+  await page.getByTestId("more-like-this").screenshot({ path: "/tmp/consumer-similar-media-cards.jpg" });
   await page.getByRole("button", { name: "Unprepared source", exact: true }).click();
   await page.getByText("Existing path result", { exact: true }).waitFor();
   assert.equal(calls.length, 2);

@@ -1,7 +1,7 @@
-import { BookOpen, Film, Mic, Music, Tv } from "lucide-react";
+import { BookOpen, Film, Mic, Music, Plus, Tv, Youtube } from "lucide-react";
 import { Link } from "wouter";
 
-type SimilarMediaItem = {
+export type SimilarMediaItem = {
   title: string;
   type: string;
   poster_url: string;
@@ -19,24 +19,36 @@ type MoreLikeThisProps = {
   slots: MoreLikeThisSlot[];
   isGenerating: boolean;
   hasError?: boolean;
+  onAdd?: (item: SimilarMediaItem) => void;
 };
 
-function getTypeIcon(type: string) {
+function getMediaType(type: string): {
+  label: string;
+  icon: typeof Film;
+} {
   const normalizedType = type.toLowerCase();
 
-  if (normalizedType.includes("book")) return <BookOpen className="h-3 w-3" />;
+  if (normalizedType.includes("book")) return { label: "Book", icon: BookOpen };
   if (normalizedType.includes("tv") || normalizedType.includes("series")) {
-    return <Tv className="h-3 w-3" />;
+    return { label: "TV", icon: Tv };
   }
   if (
     normalizedType.includes("music") ||
     normalizedType.includes("album") ||
     normalizedType.includes("song")
   ) {
-    return <Music className="h-3 w-3" />;
+    return { label: "Music", icon: Music };
   }
-  if (normalizedType.includes("podcast")) return <Mic className="h-3 w-3" />;
-  return <Film className="h-3 w-3" />;
+  if (normalizedType.includes("podcast")) return { label: "Podcast", icon: Mic };
+  if (normalizedType.includes("youtube")) {
+    return { label: "YouTube", icon: Youtube };
+  }
+  return { label: "Film", icon: Film };
+}
+
+function getTypeIcon(type: string) {
+  const Icon = getMediaType(type).icon;
+  return <Icon className="h-3 w-3" aria-hidden="true" />;
 }
 
 function getMediaHref(item: SimilarMediaItem) {
@@ -59,9 +71,11 @@ function PosterFallback({ type }: { type: string }) {
 function PosterCard({
   item,
   slotIndex,
+  onAdd,
 }: {
   item: SimilarMediaItem;
   slotIndex: number;
+  onAdd?: (item: SimilarMediaItem) => void;
 }) {
   const isVerified =
     Boolean(item.title.trim()) &&
@@ -69,27 +83,36 @@ function PosterCard({
     Boolean(item.external_id.trim()) &&
     Boolean(item.external_source.trim());
 
-  const content = (
-    <>
-      <div className="relative mb-1.5 aspect-[2/3] overflow-hidden rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 shadow-sm transition-shadow group-hover:shadow-md">
-        <PosterFallback type={item.type} />
-        {item.poster_url ? (
-          <img
-            key={item.poster_url}
-            src={item.poster_url}
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover"
-            onError={(event) => {
-              event.currentTarget.style.display = "none";
-            }}
-          />
-        ) : null}
-      </div>
-      <p className="line-clamp-2 text-xs font-medium leading-4 text-gray-900 transition-colors group-hover:text-purple-700">
-        {item.title}
-      </p>
-    </>
+  const mediaType = getMediaType(item.type);
+  const TypeIcon = mediaType.icon;
+  const poster = (
+    <div className="relative mb-1.5 aspect-[2/3] overflow-hidden rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 shadow-sm transition-shadow group-hover:shadow-md">
+      <PosterFallback type={item.type} />
+      {item.poster_url ? (
+        <img
+          key={item.poster_url}
+          src={item.poster_url}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      ) : null}
+      <span
+        className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-black/65 px-1.5 py-1 text-[9px] font-semibold leading-none text-white shadow-sm backdrop-blur-sm"
+        aria-label={`Media type: ${mediaType.label}`}
+      >
+        <TypeIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
+        {mediaType.label}
+      </span>
+    </div>
+  );
+  const title = (
+    <p className="line-clamp-2 text-xs font-medium leading-4 text-gray-900 transition-colors group-hover:text-purple-700">
+      {item.title}
+    </p>
   );
 
   if (!isVerified) {
@@ -98,20 +121,44 @@ function PosterCard({
         className="w-[5.25rem] flex-shrink-0 text-left"
         data-testid={`similar-media-${slotIndex}`}
       >
-        {content}
+        {poster}
+        {title}
       </div>
     );
   }
 
   return (
-    <Link
-      href={getMediaHref(item)}
-      className="group w-[5.25rem] flex-shrink-0 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
-      aria-label={`View ${item.title}`}
+    <div
+      className="group relative w-[5.25rem] flex-shrink-0"
       data-testid={`similar-media-${slotIndex}`}
     >
-      {content}
-    </Link>
+      <div className="relative">
+        <Link
+          href={getMediaHref(item)}
+          className="block rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
+          aria-label={`View ${item.title}`}
+        >
+          {poster}
+        </Link>
+        {onAdd ? (
+          <button
+            type="button"
+            aria-label={`Add ${item.title} to list`}
+            onClick={() => onAdd(item)}
+            className="absolute bottom-2 right-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/65 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/60"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
+      <Link
+        href={getMediaHref(item)}
+        className="block rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
+        aria-label={`View ${item.title}`}
+      >
+        {title}
+      </Link>
+    </div>
   );
 }
 
@@ -133,6 +180,7 @@ export default function MoreLikeThis({
   slots,
   isGenerating,
   hasError = false,
+  onAdd,
 }: MoreLikeThisProps) {
   const hasAvailableSlots = slots.some((slot) => slot.status !== "unavailable");
   const showInitialSkeletons = isGenerating && !hasAvailableSlots;
@@ -169,6 +217,7 @@ export default function MoreLikeThis({
                     key={slot.key}
                     item={slot.item}
                     slotIndex={index}
+                    onAdd={onAdd}
                   />
                 );
               })}
