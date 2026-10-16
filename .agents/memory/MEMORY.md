@@ -22,6 +22,7 @@
 - [Genre cache architecture](genre-cache.md) — genre cached per-title in media_genres keyed by (external_source,external_id); no media catalog exists; canonicalized; cache-first+write-back; backfill-genres edge fn.
 - [rebuild-recommendations cache safety](recommendations-rebuild.md) — AI recs resolved via media-search (hallucination filter); never overwrite user_recommendations with too-few recs or the carousel vanishes.
 - [Media-detail recommendations](media-detail-recommendations.md) — preserve cross-media mix and generator order; type/year/creator restrictions belong to each recommended item, not the source.
+- [Recommendation V2 boundaries](recommendation-v2-boundaries.md) — isolated comparison lab first; multi-signal ranking favors appeal over subject; no freely invented LLM candidates.
 - [YouTube media type](youtube-media-type.md) — first-class type with media_subtype channel/video; channel add auto-follows creator; never map youtube→tv; UC-regex distinguishes IDs.
 - [Creator follows feed DNA & recs](creator-follows-dna.md) — user_dna_signals is delete-and-reinsert by extract-dna-signals; derive new signal sources there, never write signals elsewhere.
 - [DNA Moment feed cards](dna-moments-cards.md) — cards return null on ANY query error (silent vanish); dna_moments is public-read-only RLS, admin page client writes fail; verify schema vs client filters.
