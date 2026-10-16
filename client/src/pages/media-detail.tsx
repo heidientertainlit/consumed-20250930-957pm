@@ -23,6 +23,8 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 import { supabase } from "@/lib/supabase";
 import MediaPlayTab from "@/components/media-play-tab";
+import MoreLikeThis from "@/components/more-like-this";
+import { useSimilarMedia } from "@/hooks/use-similar-media";
 import { useBlockedUsers } from "@/hooks/use-blocked-users";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -60,7 +62,7 @@ export default function MediaDetail() {
   // trigger was the hero "Hot Takes" stat. That stat row is hidden for now, so this stays
   // false. Kept in place (not removed) so it can be re-enabled with the stat row later.
   const [showReviews, setShowReviews] = useState(false);
-  const [mediaTab, setMediaTab] = useState<'takes' | 'play' | 'explore'>('takes');
+  const [mediaTab, setMediaTab] = useState<'takes' | 'play'>('takes');
   const [showConversations, setShowConversations] = useState(false);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
@@ -750,89 +752,13 @@ export default function MediaDetail() {
   const theoriesCount = 0;
   const formatCount = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : `${n}`);
 
-  // Fetch similar media across different types using AI
-  const { data: similarMedia = [], isLoading: isSimilarLoading } = useQuery({
-    queryKey: ['similar-media', mediaItem?.title, mediaItem?.type],
-    queryFn: async () => {
-      if (!session?.access_token || !mediaItem?.title) return [];
-      
-      const mediaType = mediaItem.type || mediaItem.media_type || params?.type;
-      const prompt = `Find me media similar to "${mediaItem.title}" (${mediaType}). Include: other ${mediaType === 'tv' ? 'TV shows' : mediaType === 'movie' ? 'movies' : mediaType?.toLowerCase() + 's'} like it, soundtrack music, books it's based on or similar books, related podcasts, and any connected media. Mix of types please.`;
-      
-      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/conversational-search', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query: prompt })
-      });
-      
-      if (!response.ok) return [];
-      const result = await response.json();
-      
-      // Extract recommendations from AI response (may be in recommendations or results)
-      const recs = result.recommendations || result.results || [];
-      const limitedRecs = recs.slice(0, 6);
-      
-      // Enrich each recommendation with poster images by searching media-search
-      const enrichedRecs = await Promise.all(
-        limitedRecs.map(async (item: any) => {
-          const itemType = (item.type || item.media_type || '').toLowerCase();
-          const searchTypes = itemType.includes('book') ? ['book'] : itemType.includes('music') || itemType.includes('album') ? ['music'] : itemType.includes('podcast') ? ['podcast'] : ['movie', 'tv'];
-          const searchQuery = item.title + (item.year ? ` ${item.year}` : '');
-          try {
-            const searchResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/media-search`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${session.access_token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ query: searchQuery, types: searchTypes, limit: 1 })
-            });
-            
-            if (searchResponse.ok) {
-              const searchData = await searchResponse.json();
-              const match = searchData.results?.[0];
-              if (match) {
-                let posterUrl = match.poster_url || match.image || match.image_url || '';
-                const matchSource = match.external_source || match.source || '';
-                const matchId = match.external_id || match.id || '';
-                if (!posterUrl && matchSource === 'googlebooks' && matchId) {
-                  posterUrl = `https://books.google.com/books/content?id=${matchId}&printsec=frontcover&img=1&zoom=1`;
-                }
-                if (!posterUrl && (matchSource === 'openlibrary' || matchSource === 'open_library') && matchId) {
-                  posterUrl = `https://covers.openlibrary.org/b/olid/${matchId.replace(/^works\//, '')}-L.jpg`;
-                }
-                return {
-                  title: match.title || item.title,
-                  type: match.type || item.type || item.media_type,
-                  poster_url: posterUrl,
-                  year: match.year || item.year,
-                  external_id: matchId,
-                  external_source: matchSource,
-                };
-              }
-            }
-          } catch (e) {
-            console.error('Failed to enrich recommendation:', e);
-          }
-          
-          return {
-            title: item.title,
-            type: item.type || item.media_type,
-            poster_url: item.poster_url || item.poster || item.image_url || '',
-            year: item.year,
-            external_id: item.external_id || item.id,
-            external_source: item.external_source || item.source,
-          };
-        })
-      );
-      
-      return enrichedRecs;
-    },
-    enabled: !!session?.access_token && !!mediaItem?.title,
-    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
+  const similarMediaState = useSimilarMedia({
+    userId: user?.id,
+    accessToken: session?.access_token,
+    source: params?.source,
+    externalId: params?.id,
+    title: mediaItem?.title,
+    type: mediaItem?.type || mediaItem?.media_type || params?.type,
   });
 
   // Query to find which lists contain this media item
@@ -1879,12 +1805,14 @@ export default function MediaDetail() {
             );
           })()}
 
-          {/* Takes / Play / Explore tabs — same look as room tabs */}
+          {session?.access_token && <MoreLikeThis {...similarMediaState} />}
+
+          {/* Recommendations remain visible above the unchanged Takes / Play views. */}
           <div className="bg-white/95 backdrop-blur-md border-b border-gray-100 mb-4 -mx-4 px-4">
             <div className="flex">
-              {(['takes', 'play', 'explore'] as const).map((t) => {
+              {(['takes', 'play'] as const).map((t) => {
                 const active = mediaTab === t;
-                const label = t === 'takes' ? 'Takes' : t === 'play' ? 'Play' : 'Explore';
+                const label = t === 'takes' ? 'Takes' : 'Play';
                 return (
                   <button
                     key={t}
@@ -2266,124 +2194,6 @@ export default function MediaDetail() {
 
           </div>{/* end takes-tab content */}
 
-          {mediaTab === 'explore' && (
-          <div className="space-y-4">
-            {/* Similar Media Section */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-purple-500" />
-                You Might Also Like
-              </h2>
-              
-              {isSimilarLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
-                  <span className="ml-2 text-gray-500">Finding similar content...</span>
-                </div>
-              ) : similarMedia.length > 0 ? (
-                <div className="overflow-x-auto -mx-2">
-                  <div className="flex gap-3 px-2 pb-2" style={{ minWidth: 'max-content' }}>
-                    {similarMedia.map((item: any, index: number) => {
-                      const getTypeIcon = (type: string) => {
-                        const t = type?.toLowerCase();
-                        if (t?.includes('movie')) return <Film className="w-3 h-3" />;
-                        if (t?.includes('tv') || t?.includes('series')) return <Tv className="w-3 h-3" />;
-                        if (t?.includes('book')) return <BookOpen className="w-3 h-3" />;
-                        if (t?.includes('music') || t?.includes('album') || t?.includes('song')) return <Music className="w-3 h-3" />;
-                        if (t?.includes('podcast')) return <Mic className="w-3 h-3" />;
-                        return <Film className="w-3 h-3" />;
-                      };
-                      
-                      const getTypeColor = (type: string) => {
-                        const t = type?.toLowerCase();
-                        if (t?.includes('movie')) return 'bg-blue-100 text-blue-700';
-                        if (t?.includes('tv') || t?.includes('series')) return 'bg-purple-100 text-purple-700';
-                        if (t?.includes('book')) return 'bg-amber-100 text-amber-700';
-                        if (t?.includes('music') || t?.includes('album') || t?.includes('song')) return 'bg-green-100 text-green-700';
-                        if (t?.includes('podcast')) return 'bg-pink-100 text-pink-700';
-                        return 'bg-gray-100 text-gray-700';
-                      };
-
-                      const handleClick = () => {
-                        // Navigate to media detail if we have IDs, otherwise search
-                        if (item.external_id && item.external_source) {
-                          setLocation(`/media/${item.type || 'movie'}/${item.external_source}/${item.external_id}`);
-                        } else {
-                          const searchTerm = item.title + (item.year ? ` ${item.year}` : '');
-                          setLocation(`/add?q=${encodeURIComponent(searchTerm)}`);
-                        }
-                      };
-
-                      const handleAddClick = (e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        setQuickAddMedia({
-                          title: item.title,
-                          mediaType: item.type || 'movie',
-                          imageUrl: item.poster_url,
-                          externalId: item.external_id,
-                          externalSource: item.external_source,
-                        });
-                        setIsQuickAddOpen(true);
-                      };
-
-                      return (
-                        <div
-                          key={`${item.title}-${index}`}
-                          onClick={handleClick}
-                          className="flex-shrink-0 w-28 cursor-pointer group"
-                          data-testid={`similar-media-${index}`}
-                        >
-                          <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 mb-2 shadow-sm group-hover:shadow-md transition-shadow">
-                            {item.poster_url ? (
-                              <img
-                                src={item.poster_url}
-                                alt={item.title}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                  target.parentElement?.classList.add('show-fallback');
-                                }}
-                              />
-                            ) : null}
-                            <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-200 to-blue-200 ${item.poster_url ? 'absolute inset-0 -z-10' : ''}`}>
-                              <div className="text-purple-600 opacity-60 scale-150">
-                                {getTypeIcon(item.type)}
-                              </div>
-                            </div>
-                            <div className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 ${getTypeColor(item.type)}`}>
-                              {getTypeIcon(item.type)}
-                              <span className="truncate max-w-[50px]">{item.type || 'Media'}</span>
-                            </div>
-                            <button
-                              onClick={handleAddClick}
-                              className="absolute bottom-1 right-1 w-6 h-6 bg-white/90 rounded-full flex items-center justify-center shadow-sm"
-                              data-testid={`add-similar-${index}`}
-                            >
-                              <Plus size={14} className="text-purple-600" />
-                            </button>
-                          </div>
-                          <p className="text-xs font-medium text-gray-900 line-clamp-2 group-hover:text-purple-600 transition-colors">
-                            {item.title}
-                          </p>
-                          {item.year && (
-                            <p className="text-[10px] text-gray-500">{item.year}</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-6 text-gray-500">
-                  <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No recommendations available yet</p>
-                </div>
-              )}
-            </div>
-
-          </div>
-          )}
 
 
         </div>
