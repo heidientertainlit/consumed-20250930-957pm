@@ -1,5 +1,11 @@
 # Recommendation lab: storage foundation only
 
+This documents the original storage-only checkpoint. The subsequent bounded
+end-to-end checkpoint is documented in
+[recommendation-lab-checkpoint.md](recommendation-lab-checkpoint.md); its private
+service worker supersedes the original draft-only write restriction without
+granting direct browser writes or connecting consumer recommendations.
+
 ## Scope
 
 Migration `20261016010000` adds `vector` in `extensions`, two public tables

@@ -15,6 +15,12 @@ Build an isolated internal CURRENT versus V2 comparison lab first, with persiste
 
 **How to apply:** Do not expand into shared search, canonical identity, media pages, conversations, ratings, navigation, or existing schemas beyond separately approved isolated experiment additions. Flag blockers instead of broadening scope.
 
+The user approved a small end-to-end checkpoint with roughly 10–15 varied source titles, then explicitly required another stop before catalog expansion, weight changes, LLM reranking or consumer integration.
+
+**Why:** The user wants to test the actual recommendations personally before deciding what to improve or scale.
+
+**How to apply:** Treat quality weaknesses as findings for the owner's review, not permission to tune, expand preparation or connect V2. Keep every experiment write in the two lab tables; production inputs stay read-only.
+
 The approved initial lab has three configurations: CURRENT, provider/relationship/structured-metadata ranking, and that approach plus semantic retrieval/scoring. No LLM reranking initially. Use text-embedding-3-small first and keep initial model spend within $5–$15.
 
 **Why:** The user confirmed this bounded experiment and wants candidate generation and semantic scoring evaluated without another ranking variable.

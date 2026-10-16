@@ -3,9 +3,18 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna, Download, MessageSquareText, ReceiptText, ShieldAlert, BookOpen } from "lucide-react";
+import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna, Download, MessageSquareText, ReceiptText, ShieldAlert, BookOpen, FlaskConical } from "lucide-react";
 
 const TOOLS = [
+  {
+    path: "/admin/recommendation-lab",
+    icon: FlaskConical,
+    title: "Recommendation Lab",
+    description: "Compare stored recommendation paths, inspect evidence, and save private evaluations.",
+    color: "from-teal-900/40 to-cyan-900/20 border-teal-700/40",
+    iconColor: "text-teal-300",
+    iconBg: "bg-teal-900/50",
+  },
   {
     path: "/admin/content-research",
     icon: BookOpen,
