@@ -234,6 +234,9 @@ function isLegalRoute(pathname: string) {
  */
 export function TermsAcceptanceGate({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  // Normal app navigation must not invalidate a verified account's agreement.
+  // Entering/leaving a legal route still changes whether this gate applies.
+  const legalRoute = isLegalRoute(location);
   const {
     user,
     session,
@@ -264,7 +267,7 @@ export function TermsAcceptanceGate({ children }: { children: React.ReactNode })
     setResolvedUserId(null);
     setAcceptedUserId(null);
 
-    if (authLoading || !user || !session?.access_token || isLegalRoute(location)) {
+    if (authLoading || !user || !session?.access_token || legalRoute) {
       setLoading(false);
       return () => {
         cancelled = true;
@@ -324,7 +327,7 @@ export function TermsAcceptanceGate({ children }: { children: React.ReactNode })
     return () => {
       cancelled = true;
     };
-  }, [authLoading, location, retryKey, session?.access_token, user]);
+  }, [authLoading, legalRoute, retryKey, session?.access_token, user]);
 
   const handleSignOut = async () => {
     const { error: signOutError } = await signOut();
@@ -343,7 +346,7 @@ export function TermsAcceptanceGate({ children }: { children: React.ReactNode })
       />
     );
   }
-  if (isLegalRoute(location) || !user) return <>{children}</>;
+  if (legalRoute || !user) return <>{children}</>;
   if (resolvedUserId !== user.id) return <LegalGateLoading />;
   if (error && errorUserId === user.id) {
     return (

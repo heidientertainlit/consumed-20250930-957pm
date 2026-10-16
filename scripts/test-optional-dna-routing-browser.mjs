@@ -21,18 +21,21 @@ import {TermsAcceptanceGate} from '@/components/terms-consent';
 import {OnboardingResumePrompt} from '@/components/onboarding-resume-prompt';
 import OnboardingPage from '@/pages/onboarding';
 import UserProfile from '@/pages/user-profile';
+import Feed from '@/pages/feed';
 import LoginPage from '@/pages/login';
 import {FriendDNACompareButton} from '@/components/friend-dna-comparison';
 import {QueryClientProvider} from '@tanstack/react-query';
 import {queryClient} from '@/lib/queryClient';
 import {authNavigationIntent as intent} from '@/lib/auth-navigation-intent';
 import {LEGAL_TERMS_VERSION} from '@/lib/legal-terms';
+import {beginLegalTermsAcceptanceAttempt,finishLegalTermsAcceptanceAttempt} from '@/lib/legal-terms-consent';
 const seed=window.__SEED__ || {};
 const user={id:'fixture-user',email:'fixture@example.invalid',app_metadata:{provider:seed.provider||'email'},user_metadata:{}};
 const listeners=new Set();
 window.fx={
  auth:seed.guest?{user:null,session:null,loading:false}:{user,session:{access_token:'synthetic-session',user},loading:false},
- writes:[],reads:[],routes:[],requests:[],
+  writes:[],reads:[],routes:[],requests:[],termsReads:[],pendingTerms:[],holdTerms:!!seed.holdTerms,termsError:!!seed.termsError,
+  feedMounts:0,feedUnmounts:0,networkStarted:[],
   profile:seed.incomplete?{id:user.id,first_name:null,last_name:null,user_name:null,identity_confirmed_at:null}:
   {id:user.id,first_name:'Fixture',last_name:'User',user_name:'fixture_user',identity_confirmed_at:'2026-01-01'},
  dna:seed.dna?{user_id:user.id,requires_identity_customization:seed.incomplete!==true,label:'Existing DNA',profile_text:'Never change this.'}:null,
@@ -40,32 +43,42 @@ window.fx={
  acceptance:seed.termsMissing?null:{terms_version:LEGAL_TERMS_VERSION,accepted_at:'2026-01-01'},
   subscribe:fn=>{listeners.add(fn);return()=>listeners.delete(fn)},compareClicks:0,
  setAuth:next=>{window.fx.auth=next;listeners.forEach(fn=>fn())},
- login:()=>{intent.begin(window.location.href);intent.observeAccount(user.id,null,window.location.href);window.fx.setAuth({user,session:{access_token:'synthetic-session',user},loading:false})}
+  login:()=>{intent.begin(window.location.href);intent.observeAccount(user.id,null,window.location.href);window.fx.setAuth({user,session:{access_token:'synthetic-session',user},loading:false})},
+  logout:()=>window.fx.setAuth({user:null,session:null,loading:false}),
+  refreshTerms:()=>{const attempt=beginLegalTermsAcceptanceAttempt();finishLegalTermsAcceptanceAttempt(attempt)},
+  switchAccount:id=>{const next={...user,id};window.fx.setAuth({user:next,session:{access_token:'session-for-'+id,user:next},loading:false})}
 };
 window.intent=intent;
+window.testQueries=queryClient;
 if(seed.webReturn){
  if(intent.prepareWebOAuthReturn())intent.finishWebOAuthReturn(!seed.sdkError);
  if(window.fx.auth.user)intent.observeAccount(user.id,null,window.location.href);
  history.replaceState(null,'',window.location.pathname+window.location.search);
 }
+function RealFeedFixture(){
+ React.useEffect(()=>{window.fx.feedMounts++;return()=>{window.fx.feedUnmounts++}},[]);
+ return <Feed/>;
+}
 function Fixture(){
  const [location,setLocation]=useLocation();
+  window.fx.navigate=setLocation;
  React.useEffect(()=>{window.fx.routes.push(location)},[location]);
   return <QueryClientProvider client={queryClient}><TermsAcceptanceGate><Switch>
   <Route path="/login"><PublicOnlyRoute>{seed.realLogin?<LoginPage/>:<button onClick={()=>window.fx.login()}>Authenticate fixture</button>}</PublicOnlyRoute></Route>
  <Route path="/onboarding"><ProtectedRoute><OnboardingPage/></ProtectedRoute></Route>
   <Route path="/profile"><ProtectedRoute>{seed.realProfile?<UserProfile/>:<><h1>DNA page fixture</h1><button onClick={()=>setLocation('/onboarding?resume=dna')}>Finish My DNA</button></>}</ProtectedRoute></Route>
   <Route path="/test-dna-feature"><ProtectedRoute><FriendDNACompareButton friendId="friend-fixture" friendName="Friend" userDnaLevel={seed.dna?(seed.items>=10?2:1):0} userItemCount={seed.items||0} hasSurvey={!!seed.dna} onCompare={()=>{window.fx.compareClicks++}}/></ProtectedRoute></Route>
- <Route path="/activity"><IdentityAwareRoute><h1>NOW fixture</h1><OnboardingResumePrompt userId={window.fx.auth.user?.id}/></IdentityAwareRoute></Route>
+  <Route path="/activity"><IdentityAwareRoute>{seed.realFeed?<RealFeedFixture/>:<><h1>NOW fixture</h1><OnboardingResumePrompt userId={window.fx.auth.user?.id}/></>}</IdentityAwareRoute></Route>
  <Route><ProtectedRoute><h1>Destination fixture</h1></ProtectedRoute></Route>
   </Switch></TermsAcceptanceGate></QueryClientProvider>
 }
 // StrictMode exercises effect replay and one-time redirect consumption.
-createRoot(document.getElementById('root')).render(<React.StrictMode><Fixture/></React.StrictMode>);
+const Root=seed.lifecycle?React.Fragment:React.StrictMode;
+createRoot(document.getElementById('root')).render(<Root><Fixture/></Root>);
 `;
 const auth = `
 import {useSyncExternalStore} from 'react';
-export function useAuth(){const fx=window.fx;return {...useSyncExternalStore(fx.subscribe,()=>fx.auth),startupError:null,retryStartup(){},signOut:async()=>({error:null}),signIn:async()=>({error:null}),signUp:async()=>({error:null}),signInWithOAuth:async()=>({error:null}),resetPassword:async()=>({error:null})}}
+export function useAuth(){const fx=window.fx;return {...useSyncExternalStore(fx.subscribe,()=>fx.auth),startupError:null,retryStartup(){},signOut:async()=>{fx.logout();return {error:null}},signIn:async()=>({error:null}),signUp:async()=>({error:null}),signInWithOAuth:async()=>({error:null}),resetPassword:async()=>({error:null})}}
 `;
 const database = `
 export const supabase={
@@ -92,7 +105,12 @@ function query(table){
    table==='edna_responses'?fx.responses:
    table==='edna_questions'?Array.from({length:5},(_,i)=>({id:'q'+(i+1),display_order:i+1,question_text:'Question '+(i+1),options:i===4?['Characters']:[],is_active:true})):
     table==='media_ratings'?[{media_title:'Fixture title',media_type:'movie'}]:state.single?null:[];
-  return Promise.resolve({data,error:null}).then(resolve,reject);
+   const result={data,error:table==='account_terms_acceptances'&&fx.termsError?{message:'Synthetic verification failure'}:null};
+   if(table==='account_terms_acceptances'){
+    fx.termsReads.push(fx.auth.user?.id);
+    if(fx.holdTerms)return new Promise(done=>fx.pendingTerms.push({userId:fx.auth.user?.id,finish:()=>done(result)})).then(resolve,reject);
+   }
+   return Promise.resolve(result).then(resolve,reject);
  };
   return (...args)=>{if(['single','maybeSingle'].includes(String(key)))state.single=true;if(['insert','upsert','update','delete'].includes(String(key))){window.fx.writes.push({table,operation:key,payload:args[0]})}return proxy}
  }});
@@ -128,8 +146,11 @@ try {
   browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
   const cases = [];
   async function run(name, seed, start, check) {
+    if(process.argv[2] && !name.includes(process.argv[2]))return;
     const context = await browser.newContext();
     const errors = [], requests = [];
+    const network={counts:{feed:0,trending:0},pending:{feed:[],trending:[]}};
+    network.finish=(kind,status=200)=>network.pending[kind].splice(0).forEach(done=>done(status));
     await context.addInitScript(value => {
       window.__SEED__ = value;
       if (value.partial || value.dna) localStorage.setItem("consumed_onboarding_progress:fixture-user", JSON.stringify({step:"drivers",updatedAt:"2026-01-01"}));
@@ -151,10 +172,28 @@ try {
     const page = await context.newPage();
     page.setDefaultTimeout(10_000);
     page.on("pageerror", error => errors.push(error.message));
-    await page.route("**/*", route => {
+    await page.route("**/*", async route => {
       const request = route.request(), url = new URL(request.url());
+      if(seed.realFeed && url.origin===origin && url.pathname.startsWith("/api/"))return route.fulfill({json:[]});
       if (url.origin === origin) return route.continue();
       requests.push(url.pathname);
+      const kind=url.pathname.endsWith("/social-feed")?"feed":url.pathname.endsWith("/get-trending-content")?"trending":null;
+      if(seed.realFeed && kind){
+        network.counts[kind]++;
+        await page.evaluate(value=>window.fx.networkStarted.push(value),kind);
+        let status=seed[kind==="feed"?"failFeed":"failTrending"]?503:200;
+        if(seed[kind==="feed"?"holdFeed":"holdTrending"])status=await new Promise(done=>network.pending[kind].push(done));
+        return route.fulfill({status,json:status!==200?{error:"Synthetic request failure"}:kind==="feed"?{
+          currentUserId:"fixture-user",posts:[{
+            id:"fixture-independent-post",type:"hot_take",content:"Independent social feed result",
+            user:{id:"fixture-author",username:"fixture_author",displayName:"Fixture Author",avatar:""},
+            createdAt:new Date().toISOString(),likes:0,comments:0,mediaItems:[]
+          }]
+        }:{items:[{
+          title:"Independent trending result",media_type:"movie",external_source:"tmdb",external_id:"1",
+          image_url:"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+        }]}});
+      }
       // No real backend, image host, analytics or identity provider is reachable.
       if (url.hostname === "fixture.invalid" || url.hostname === "mahpgcogwpawvviapqza.supabase.co") {
         if (url.pathname.endsWith("generate-dna-profile")) return route.fulfill({json:{label:"Generated fixture DNA",tagline:"Explicit generation only",profile_text:"Fixture result."}});
@@ -165,7 +204,7 @@ try {
     });
     await page.goto(origin + start);
     try {
-      await check(page, context);
+      await check(page, context, network);
       assert.deepEqual(errors, []);
       if (seed.realProfile) assert.equal(requests.some(p=>p.includes("/generate-dna-")),false);
       cases.push(name);
@@ -312,6 +351,124 @@ try {
       const event=new Event("pageshow");Object.defineProperty(event,"persisted",{value:true});window.dispatchEvent(event);
     });
     assert.equal(await page.evaluate(()=>window.intent.peek()),null);
+  });
+  // Use real Feed + Terms + route components, with no StrictMode effect replay,
+  // so these counters measure genuine removals rather than development checks.
+  const feedSeed={realFeed:true,lifecycle:true,dna:true};
+  const waitForBothRequests=page=>page.waitForFunction(()=>["feed","trending"].every(kind=>window.fx.networkStarted.includes(kind)));
+  const waitForFeed=page=>page.getByText("Independent social feed result",{exact:true}).first().waitFor();
+  const waitForTrending=page=>page.getByText("Independent trending result",{exact:true}).first().waitFor();
+  const waitForTerms=page=>page.getByRole("button",{name:/accept|agree/i}).first().waitFor();
+  const counts=page=>page.evaluate(()=>({mounts:window.fx.feedMounts,unmounts:window.fx.feedUnmounts,terms:window.fx.termsReads}));
+
+  await run("real NOW login mounts once and verifies agreement once",{...feedSeed,guest:true},"/login",async(page,context,network)=>{
+    await page.getByRole("button",{name:"Authenticate fixture"}).click();
+    await waitForBothRequests(page);
+    await waitForFeed(page);
+    await waitForTrending(page);
+    assert.equal(new URL(page.url()).pathname,"/activity");
+    assert.deepEqual(await counts(page),{mounts:1,unmounts:0,terms:["fixture-user"]});
+    assert.deepEqual(network.counts,{feed:1,trending:1});
+    await noWrites(page);
+  });
+  await run("real NOW missing Terms cannot mount or request content",{...feedSeed,termsMissing:true},"/activity",async(page,context,network)=>{
+    await waitForTerms(page);
+    assert.deepEqual(await counts(page),{mounts:0,unmounts:0,terms:["fixture-user"]});
+    assert.deepEqual(network.counts,{feed:0,trending:0});
+    await noWrites(page);
+  });
+  await run("real NOW verification failure stays blocked and explicit retry revalidates",{...feedSeed,termsError:true},"/activity",async page=>{
+    await page.getByText("We couldn't verify your Terms of Service agreement. Check your connection and try again.",{exact:true}).waitFor();
+    assert.equal((await counts(page)).mounts,0);
+    await page.evaluate(()=>{window.fx.termsError=false});
+    await page.getByRole("button",{name:/try again|retry/i}).click();
+    await waitForFeed(page);
+    assert.deepEqual(await counts(page),{mounts:1,unmounts:0,terms:["fixture-user","fixture-user"]});
+  });
+  await run("real NOW account replacement cannot inherit verified Terms",feedSeed,"/activity",async page=>{
+    await waitForFeed(page);
+    await page.evaluate(()=>{window.fx.acceptance=null;window.fx.switchAccount("replacement-user")});
+    await waitForTerms(page);
+    assert.deepEqual(await counts(page),{mounts:1,unmounts:1,terms:["fixture-user","replacement-user"]});
+    await noWrites(page);
+  });
+  await run("real NOW signout and same-account sign-in must verify again",feedSeed,"/activity",async page=>{
+    await waitForFeed(page);
+    await page.evaluate(()=>{window.fx.logout();window.fx.navigate("/login")});
+    await page.getByRole("button",{name:"Authenticate fixture"}).waitFor();
+    await page.evaluate(()=>{window.fx.acceptance=null});
+    await page.getByRole("button",{name:"Authenticate fixture"}).click();
+    await waitForTerms(page);
+    assert.deepEqual(await counts(page),{mounts:1,unmounts:1,terms:["fixture-user","fixture-user"]});
+    await noWrites(page);
+  });
+  await run("real NOW late verification cannot authorize a replacement account",{...feedSeed,holdTerms:true},"/activity",async page=>{
+    await page.waitForFunction(()=>window.fx.pendingTerms.length===1);
+    await page.evaluate(()=>{window.fx.acceptance=null;window.fx.switchAccount("replacement-user")});
+    await page.waitForFunction(()=>window.fx.pendingTerms.length===2);
+    await page.evaluate(()=>window.fx.pendingTerms[0].finish());
+    assert.equal((await counts(page)).mounts,0);
+    await page.evaluate(()=>window.fx.pendingTerms[1].finish());
+    await waitForTerms(page);
+    assert.deepEqual(await counts(page),{mounts:0,unmounts:0,terms:["fixture-user","replacement-user"]});
+  });
+  await run("real NOW consent-change events still revalidate",feedSeed,"/activity",async page=>{
+    await waitForFeed(page);
+    await page.evaluate(()=>{window.fx.acceptance=null;window.fx.refreshTerms()});
+    await waitForTerms(page);
+    assert.deepEqual((await counts(page)).terms,["fixture-user","fixture-user"]);
+    assert.equal((await counts(page)).unmounts,1);
+  });
+  await run("real NOW leaving an exempt legal route still verifies agreement",feedSeed,"/activity",async page=>{
+    await waitForFeed(page);
+    await page.evaluate(()=>window.fx.navigate("/terms"));
+    await page.getByRole("heading",{name:"Destination fixture"}).waitFor();
+    await page.evaluate(()=>{window.fx.acceptance=null;window.fx.navigate("/activity")});
+    await waitForTerms(page);
+    assert.deepEqual((await counts(page)).terms,["fixture-user","fixture-user"]);
+  });
+  await run("real NOW session-token change still revalidates",feedSeed,"/activity",async page=>{
+    await waitForFeed(page);
+    await page.evaluate(()=>{
+      window.fx.acceptance=null;
+      window.fx.setAuth({...window.fx.auth,session:{...window.fx.auth.session,access_token:"rotated-synthetic-session"}});
+    });
+    await waitForTerms(page);
+    assert.deepEqual((await counts(page)).terms,["fixture-user","fixture-user"]);
+  });
+  await run("real NOW requests start independently and Trending resolves during held feed",{...feedSeed,holdFeed:true,holdTrending:true},"/activity",async(page,context,network)=>{
+    await waitForBothRequests(page);
+    assert.deepEqual(network.counts,{feed:1,trending:1});
+    assert.equal(network.pending.feed.length,1);
+    assert.equal(network.pending.trending.length,1);
+    network.finish("trending");
+    await waitForTrending(page);
+    assert.equal(await page.evaluate(()=>window.testQueries.getQueryState(["social-feed","auth"]).status),"pending");
+    network.finish("feed");
+    await waitForFeed(page);
+    assert.deepEqual(network.counts,{feed:1,trending:1});
+    assert.deepEqual(await counts(page),{mounts:1,unmounts:0,terms:["fixture-user"]});
+  });
+  await run("real NOW feed resolves while Trending is held",{...feedSeed,holdFeed:true,holdTrending:true},"/activity",async(page,context,network)=>{
+    await waitForBothRequests(page);
+    network.finish("feed");
+    await waitForFeed(page);
+    assert.equal(await page.evaluate(()=>window.testQueries.getQueryState(["trending-content","us-charts-v2"]).status),"pending");
+    network.finish("trending");
+    await waitForTrending(page);
+    assert.deepEqual(network.counts,{feed:1,trending:1});
+  });
+  await run("real NOW failed social feed cannot prevent Trending",{...feedSeed,failFeed:true},"/activity",async(page,context,network)=>{
+    await waitForTrending(page);
+    await page.waitForFunction(()=>window.testQueries.getQueryState(["social-feed","auth"])?.status==="error");
+    assert.deepEqual(network.counts,{feed:1,trending:1});
+  });
+  await run("real NOW failed Trending cannot prevent social feed",{...feedSeed,failTrending:true},"/activity",async(page,context,network)=>{
+    await waitForFeed(page);
+    await page.waitForFunction(()=>window.testQueries.getQueryState(["trending-content","us-charts-v2"])?.status==="error");
+    // Trending's existing single retry remains unchanged, not a duplicate mount.
+    assert.deepEqual(network.counts,{feed:1,trending:2});
+    assert.deepEqual(await counts(page),{mounts:1,unmounts:0,terms:["fixture-user"]});
   });
   console.log("Passed", cases.length, "isolated browser cases. Live OAuth, email delivery and physical-device handoff are not exercised.");
 } finally {

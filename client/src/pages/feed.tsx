@@ -5718,6 +5718,49 @@ function SwipeableCardStack({ posts, onLike, likedPosts, session, fetchComments,
   );
 }
 
+function SocialFeedLoading() {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3, 4].map((n) => (
+        <div key={n} className="bg-white rounded-2xl border border-gray-200 p-6 animate-pulse shadow-sm">
+          {/* User info skeleton */}
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+            <div className="flex-1">
+              <div className="h-4 bg-gray-200 rounded mb-2 w-1/3"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+            </div>
+          </div>
+
+          {/* Text skeleton */}
+          <div className="h-4 bg-gray-200 rounded mb-4 w-3/4"></div>
+
+          {/* Media card skeleton */}
+          <div className="bg-gray-100 rounded-2xl p-4 mb-4">
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 bg-gray-200 rounded-lg"></div>
+              <div className="flex-1">
+                <div className="h-5 bg-gray-200 rounded mb-2 w-2/3"></div>
+                <div className="h-3 bg-gray-200 rounded mb-2 w-1/2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Interaction bar skeleton */}
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+            <div className="flex items-center space-x-6">
+              <div className="h-6 bg-gray-200 rounded w-8"></div>
+              <div className="h-6 bg-gray-200 rounded w-8"></div>
+            </div>
+            <div className="h-4 bg-gray-200 rounded w-16"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Feed() {
   const [, setLocation] = useLocation();
   
@@ -9308,51 +9351,14 @@ export default function Feed() {
         {/* Activity Stream */}
         <div className="space-y-3">
 
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="bg-white rounded-2xl border border-gray-200 p-6 animate-pulse shadow-sm">
-                  {/* User info skeleton */}
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
-                    <div className="flex-1">
-                      <div className="h-4 bg-gray-200 rounded mb-2 w-1/3"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/4"></div>
-                    </div>
-                  </div>
-
-                  {/* Text skeleton */}
-                  <div className="h-4 bg-gray-200 rounded mb-4 w-3/4"></div>
-
-                  {/* Media card skeleton */}
-                  <div className="bg-gray-100 rounded-2xl p-4 mb-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-16 h-16 bg-gray-200 rounded-lg"></div>
-                      <div className="flex-1">
-                        <div className="h-5 bg-gray-200 rounded mb-2 w-2/3"></div>
-                        <div className="h-3 bg-gray-200 rounded mb-2 w-1/2"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Interaction bar skeleton */}
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                    <div className="flex items-center space-x-6">
-                      <div className="h-6 bg-gray-200 rounded w-8"></div>
-                      <div className="h-6 bg-gray-200 rounded w-8"></div>
-                    </div>
-                    <div className="h-4 bg-gray-200 rounded w-16"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : !session && !isGuestMode ? (
+          {!isLoading && !session && !isGuestMode ? (
             <div className="text-center py-8">
               <p className="text-gray-600">Please sign in to view your social feed.</p>
             </div>
-          ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'challenges', 'All', 'all', 'games'].includes(selectedFilter) ? (
+          ) : isLoading || (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'challenges', 'All', 'all', 'games'].includes(selectedFilter) ? (
             <div className="space-y-4 pb-24">
+              {!isLoading && (
+                <>
               {/* Empty state for filtered views */}
               {feedFilter === 'friends' && filteredPosts.length === 0 && (
                 <div className="bg-white rounded-2xl p-8 text-center border border-gray-100" data-testid="empty-filter-state">
@@ -9496,6 +9502,9 @@ export default function Feed() {
               )}
 
 
+                </>
+              )}
+
               {/* === FEED SEQUENCE === */}
 
               {isUnfilteredNowFeed && (
@@ -9507,6 +9516,8 @@ export default function Feed() {
                 />
               )}
 
+              {isLoading ? <SocialFeedLoading /> : (
+                <>
               {isUnfilteredNowFeed && topRatingDeck?.posts?.some((post: any) => !dismissedPostIds.has(post.id)) && (
                 <section className="mb-5" aria-labelledby="what-people-are-saying-title" data-testid="what-people-are-saying">
                   {renderFeedItem(topRatingDeck, "top-rating-deck")}
@@ -11476,6 +11487,8 @@ export default function Feed() {
               {/* End of Feed - keep it clean, no message */}
               {!hasNextPage && filteredPosts.length > 0 && (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
                 <div className="h-8" />
+              )}
+                </>
               )}
 
             </div>
