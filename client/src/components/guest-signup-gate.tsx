@@ -1,5 +1,6 @@
 import { useState, useCallback, createContext, useContext } from "react";
 import { useLocation } from "wouter";
+import { authNavigationIntent } from "@/lib/auth-navigation-intent";
 import { Dna, X } from "lucide-react";
 
 /**
@@ -25,9 +26,9 @@ export function GuestSignupSheet({ open, onClose }: { open: boolean; onClose: ()
 
   const go = (tab: 'signup' | 'signin') => {
     const fullPath = window.location.pathname + window.location.search + window.location.hash;
-    sessionStorage.setItem('returnUrl', fullPath === '/login' ? '/' : fullPath);
+    const login = authNavigationIntent.login(fullPath);
     onClose();
-    setLocation(tab === 'signup' ? '/login?tab=signup' : '/login');
+    setLocation(tab === 'signup' ? `${login}${login.includes("?") ? "&" : "?"}tab=signup` : login);
   };
 
   if (!open) return null;

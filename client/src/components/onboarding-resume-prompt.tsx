@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabase";
 import {
   dismissOnboardingPrompt,
   isOnboardingPromptDismissed,
-  markOnboardingComplete,
 } from "@/components/route-guards";
 
 export function OnboardingResumePrompt({ userId }: { userId?: string | null }) {
@@ -30,7 +29,6 @@ export function OnboardingResumePrompt({ userId }: { userId?: string | null }) {
           return;
         }
         if (data) {
-          markOnboardingComplete(userId);
           setVisible(false);
         } else {
           setVisible(true);
@@ -53,7 +51,7 @@ export function OnboardingResumePrompt({ userId }: { userId?: string | null }) {
             Pick up where you left off. Your ratings and follows already count.
           </p>
           <button
-            onClick={() => setLocation("/onboarding?resume=1")}
+            onClick={() => setLocation("/profile")}
             className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-purple-700"
           >
             Continue setup <ArrowRight size={15} />

@@ -6,10 +6,14 @@ import { supabase } from "@/lib/supabase";
 import { Helmet } from "react-helmet";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
+import { authNavigationIntent } from "@/lib/auth-navigation-intent";
 
 export default function InvitePage() {
   const { userId } = useParams<{ userId: string }>();
   const [, navigate] = useLocation();
+  const { user, loading: authLoading } = useAuth();
+  const openLogin = () => navigate(authNavigationIntent.login(window.location.pathname + window.location.search));
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['invite-profile', userId],
@@ -36,13 +40,13 @@ export default function InvitePage() {
   }, [userId]);
 
   useEffect(() => {
-    if (profile?.id) {
+    if (profile?.id && !authLoading && !user) {
       const timer = setTimeout(() => {
-        navigate('/login');
+        openLogin();
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [profile?.id, navigate]);
+  }, [profile?.id, navigate, authLoading, user]);
 
   const displayName = profile?.display_name || profile?.username || 'A friend';
   const appUrl = APP_BASE;
@@ -86,13 +90,13 @@ export default function InvitePage() {
               <p className="text-gray-400 text-sm mb-4">
                 Sign up to connect with {displayName} and share your entertainment!
               </p>
-              <Button
-                onClick={() => navigate('/login')}
+              {!user && <Button
+                onClick={openLogin}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3"
                 data-testid="button-join-now"
               >
                 Join Now
-              </Button>
+              </Button>}
               <p className="text-gray-500 text-xs mt-3">
                 <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
                 Or wait to be redirected...

@@ -1,4 +1,3 @@
-import { sharedRouteFromPath } from "@/lib/share-deep-link";
 import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent } from "react";
 import { useLocation } from "wouter";
 import { ArrowRight, Camera, Check, ChevronRight, CircleUser, Dna, Eye, Feather, Forward, Gamepad2, Heart, HeartHandshake, HelpCircle, Home, Leaf, Loader2, Mic, Music, Palette, Plane, Rocket, Search, Sparkles, Trophy, Tv, Users, Video, Wand2, Youtube, Zap, Clapperboard, Smile, Skull, Crown, Drama, BookOpen } from "lucide-react";
@@ -685,18 +684,12 @@ export default function OnboardingPage() {
       if (step === "customize") {
         markOnboardingComplete(user.id);
         await waitForPendingSaves();
-        const sharedReturn = sharedRouteFromPath(sessionStorage.getItem("identityReturnUrl"));
-        if (sharedReturn) sessionStorage.removeItem("identityReturnUrl");
-        setLocation(sharedReturn || destination);
+        setLocation("/profile");
         return;
       }
       if (identityHasExistingDna) {
         markOnboardingComplete(user?.id);
-        const returnUrl = sessionStorage.getItem("identityReturnUrl");
-        sessionStorage.removeItem("identityReturnUrl");
-        setLocation(
-          sharedRouteFromPath(returnUrl) || "/activity",
-        );
+        setLocation("/profile");
         return;
       }
       saveOnboardingProgress(user?.id, "debate");
@@ -722,9 +715,7 @@ export default function OnboardingPage() {
   const completeAndNavigate = async (route: string) => {
     markOnboardingComplete(user?.id);
     await waitForPendingSaves();
-    const sharedReturn = sharedRouteFromPath(sessionStorage.getItem("identityReturnUrl"));
-    if (sharedReturn) sessionStorage.removeItem("identityReturnUrl");
-    setLocation(sharedReturn || route);
+    setLocation("/profile");
   };
 
   const leaveForNow = async (route = "/activity") => {
@@ -796,10 +787,7 @@ export default function OnboardingPage() {
 
       if (profileResult.error) throw profileResult.error;
       if (profileResult.data && !resumeDNA) {
-        markOnboardingComplete(user.id);
-        const sharedReturn = sharedRouteFromPath(sessionStorage.getItem("identityReturnUrl"));
-        if (sharedReturn) sessionStorage.removeItem("identityReturnUrl");
-        setLocation(sharedReturn || "/profile");
+        setLocation("/profile");
         return;
       }
       setHasExistingProfile(Boolean(profileResult.data));
@@ -864,7 +852,8 @@ export default function OnboardingPage() {
         hasLoveResponse,
         hasDriverResponse,
       });
-      saveOnboardingProgress(user.id, nextStep, { preserveCompletion: Boolean(profileResult.data) });
+      // Loading an existing generated profile must not reset its saved progress.
+      if (!profileResult.data && !draft) saveOnboardingProgress(user.id, nextStep);
       setStep(nextStep);
     };
 

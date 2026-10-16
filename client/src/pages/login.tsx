@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock, User, AtSign } from "lucide-react";
 import { SiApple, SiGoogle } from "react-icons/si";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { resetOnboardingState } from "@/components/route-guards";
+import { authNavigationIntent, NAVIGATION_ATTEMPT_PARAM } from "@/lib/auth-navigation-intent";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { getLastLoginMethod, lastLoginMethodLabels } from "@/lib/last-login-method";
 import { TermsConsentCheckbox } from "@/components/terms-consent";
@@ -34,7 +34,14 @@ export default function LoginPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
+  useEffect(() => {
+    if (loading || user) return;
+    const id = new URLSearchParams(window.location.search).get(NAVIGATION_ATTEMPT_PARAM);
+    if (!id || id !== authNavigationIntent.peek()?.id) authNavigationIntent.clear();
+  }, [loading, user]);
+
   useEffect(() => subscribeToNativeOAuthBrowserOutcomes((message) => {
+    authNavigationIntent.clear();
     setSubmitting(false);
     toast({
       title: "Sign-in failed",
@@ -207,9 +214,6 @@ export default function LoginPage() {
         localStorage.removeItem('consumed_referrer');
       }
       
-      // Clear any stale user-scoped onboarding state so new users always start cleanly.
-      resetOnboardingState(data?.user?.id);
-      localStorage.removeItem('consumed_onboarding_completed');
       setSubmitting(false);
     }
   };

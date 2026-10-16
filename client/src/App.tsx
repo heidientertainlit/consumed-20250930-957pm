@@ -28,7 +28,7 @@ import {
 } from "@/lib/legal-terms-consent";
 import { parseNativeAuthCallback } from "@/lib/native-oauth";
 import { restoreNativeAuthCallbackSession } from "@/lib/native-oauth-session";
-import { sharedRouteFromPath } from "@/lib/share-deep-link";
+import { authNavigationIntent, NAVIGATION_ATTEMPT_PARAM } from "@/lib/auth-navigation-intent";
 import { NativeSharedLinkHandler } from "@/components/native-shared-link-handler";
 
 // Pages
@@ -147,9 +147,11 @@ function PendingRouteHandler({ onReady }: { onReady: (ready: boolean) => void })
             || !hasMatchingOAuthTermsConsentAttempt(attemptId)
           ) {
             console.error("[AUTH-DEBUG] Invalid or stale pending OAuth session");
+            authNavigationIntent.clear();
             localStorage.removeItem("pendingRoute");
             return;
           }
+          authNavigationIntent.verifyNativeCallback(attemptId);
           const restored = await restoreNativeAuthCallbackSession(
             {
               kind: "oauth-session",
@@ -164,11 +166,13 @@ function PendingRouteHandler({ onReady }: { onReady: (ready: boolean) => void })
             },
           );
           if (!restored) {
+            authNavigationIntent.clear();
             console.error("[AUTH-DEBUG] Failed to restore pending OAuth session");
             localStorage.removeItem("pendingRoute");
             return;
           }
         } catch {
+          authNavigationIntent.clear();
           console.error("[AUTH-DEBUG] Invalid pending OAuth session");
           localStorage.removeItem("pendingRoute");
           return;
@@ -178,7 +182,13 @@ function PendingRouteHandler({ onReady }: { onReady: (ready: boolean) => void })
       const route = localStorage.getItem("pendingRoute");
       if (route) {
         localStorage.removeItem("pendingRoute");
-        setLocation(route);
+        const isOAuthLanding = pendingOAuthRaw && (route === "/activity"
+          || route === `/login?${NAVIGATION_ATTEMPT_PARAM}=${encodeURIComponent(authNavigationIntent.peek()?.id || "")}`);
+        const isRecoveryLanding = route === "/reset-password" && localStorage.getItem("pendingRecovery");
+        const navigation = authNavigationIntent.peek();
+        const isCurrentNavigation = navigation?.phase === "navigation" && navigation.path === route
+          && authNavigationIntent.takeNavigation(authNavigationIntent.currentOwner()) === route;
+        if (isOAuthLanding || isRecoveryLanding || isCurrentNavigation) setLocation(route);
       }
     };
 
@@ -229,6 +239,7 @@ function CapacitorDeepLinkHandler() {
         return;
       }
       if (callback.kind === "oauth-error") {
+        authNavigationIntent.clear();
         clearMatchingOAuthTermsConsentAttempt(callback.attemptId);
         notifyNativeOAuthBrowserOutcome("Sign-in was denied. Please try again.");
         void Browser.close().catch(() => {});
@@ -249,6 +260,8 @@ function CapacitorDeepLinkHandler() {
           // Recovery callbacks never own a pre-auth OAuth consent attempt.
       }
       console.log("[AUTH-DEBUG] CapacitorDeepLinkHandler: calling setSession()");
+      if (callback.kind === "recovery-session") authNavigationIntent.discardAuthentication();
+      else authNavigationIntent.verifyNativeCallback(callback.attemptId);
       const restored = await restoreNativeAuthCallbackSession(
         callback,
         (tokens) => supabase.auth.setSession(tokens),
@@ -264,7 +277,8 @@ function CapacitorDeepLinkHandler() {
           localStorage.removeItem("pendingRoute");
         }
         setLocation(callback.kind === "recovery-session" ? "/reset-password"
-          : sharedRouteFromPath(sessionStorage.getItem("returnUrl")) ? "/login" : "/activity");
+          : authNavigationIntent.peek()?.phase === "authenticated"
+            ? `/login?${NAVIGATION_ATTEMPT_PARAM}=${encodeURIComponent(authNavigationIntent.peek()!.id)}` : "/activity");
       }
     };
 

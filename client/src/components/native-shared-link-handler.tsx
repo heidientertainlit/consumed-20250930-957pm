@@ -14,6 +14,7 @@ export function NativeSharedLinkHandler({ startupReady }: { startupReady: boolea
     const consume = () => nativeShareDelivery.consume(
       sharedNavigationReady(localStorage, location, loading, startupReady, !!user),
       setLocation,
+      user?.id ?? null,
     );
     const unsubscribe = nativeShareDelivery.subscribe(consume);
     consume();

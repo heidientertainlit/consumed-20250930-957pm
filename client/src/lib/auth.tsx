@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { authNavigationIntent, NAVIGATION_ATTEMPT_PARAM } from './auth-navigation-intent'
 import { User, Session } from '@supabase/supabase-js'
 import { SUPABASE_URL, supabase } from './supabase'
 import { sessionTracker } from './sessionTracker'
@@ -133,6 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // emitting SIGNED_OUT first. Invalidate the old identity synchronously,
   // then serialize native logout transitions before allowing a new login.
   const reconcileAuthIdentity = (nextUserId: string | null) => {
+    authNavigationIntent.observeAccount(nextUserId, observedAuthUserId, window.location.href);
     if (observedAuthUserId === nextUserId) {
       return oneSignalIdentity.transitionTo(nextUserId).completion;
     }
@@ -208,6 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isNativePlatform()) {
       void Browser.addListener("browserFinished", () => {
         if (consumeNativeOAuthBrowserCancellation()) {
+          authNavigationIntent.clear()
           notifyNativeOAuthBrowserOutcome("Sign-in was cancelled. Please try again.");
         }
       }).then((listener) => {
@@ -347,6 +350,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // handles everything. Push permission will be requested after normal login.
 
           } else if (event === 'SIGNED_OUT') {
+            authNavigationIntent.clear()
             clearOAuthTermsConsentAttempt()
             clearLocallyAcceptedLegalTerms()
             clearAuthSignInNote()
@@ -391,13 +395,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
   ) => {
     clearOAuthTermsConsentAttempt()
+    authNavigationIntent.begin(window.location.href)
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
     if (!error) {
       rememberLastLoginMethod('email')
-    }
+    } else authNavigationIntent.clear()
     return { error }
   }
 
@@ -416,6 +421,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const acceptanceAttempt = beginLegalTermsAcceptanceAttempt()
+    authNavigationIntent.begin(window.location.href)
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -431,10 +437,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!error && data.session) {
         const { error: acceptanceError } = await acceptCurrentLegalTerms(data.user?.id)
         if (acceptanceError) {
+          authNavigationIntent.clear()
           await withAuthStateRequestDeadline(supabase.auth.signOut()).catch(() => undefined)
           return { error: acceptanceError, data }
         }
       }
+      if (error) authNavigationIntent.clear()
       return { error, data }
     } finally {
       finishLegalTermsAcceptanceAttempt(acceptanceAttempt)
@@ -442,6 +450,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
+    authNavigationIntent.clear()
     clearOAuthTermsConsentAttempt()
     clearLocallyAcceptedLegalTerms()
     const { error } = await supabase.auth.signOut()
@@ -462,10 +471,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const consentAttempt = options.termsAccepted || nativePlatform
       ? beginOAuthTermsConsentAttempt(provider, options.termsAccepted === true)
       : null
+    const navigationAttempt = authNavigationIntent.begin(window.location.href, consentAttempt?.id)
     if (nativePlatform && consentAttempt) markNativeOAuthBrowserAttempt(consentAttempt.id)
     const redirectTo = nativePlatform && consentAttempt
       ? `${NATIVE_OAUTH_CALLBACK_URL}?oauth_attempt=${encodeURIComponent(consentAttempt.id)}`
-      : `${redirectOrigin}/login`
+      : `${redirectOrigin}/login${navigationAttempt ? `?${NAVIGATION_ATTEMPT_PARAM}=${encodeURIComponent(navigationAttempt)}` : ""}`
     let data: { url: string | null } | null = null
     let error: unknown = null
     try {
@@ -479,6 +489,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data = response.data
       error = response.error
     } catch (oauthError) {
+      authNavigationIntent.clear()
       if (consentAttempt) clearMatchingOAuthTermsConsentAttempt(consentAttempt.id)
       return {
         error: oauthError instanceof Error
@@ -487,6 +498,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     if (error) {
+      authNavigationIntent.clear()
       if (consentAttempt) clearMatchingOAuthTermsConsentAttempt(consentAttempt.id)
       return { error }
     }
@@ -502,6 +514,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           redirectTo,
         )
       ) {
+        authNavigationIntent.clear()
         clearMatchingOAuthTermsConsentAttempt(consentAttempt?.id ?? null)
         return {
           error: new Error("Couldn't start sign-in securely. Please try again."),
@@ -511,6 +524,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         await Browser.open({ url: authorizationUrl })
       } catch (browserError) {
+        authNavigationIntent.clear()
         clearMatchingOAuthTermsConsentAttempt(consentAttempt?.id ?? null)
         return {
           error: browserError instanceof Error

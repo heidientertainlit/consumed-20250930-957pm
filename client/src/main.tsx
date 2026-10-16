@@ -14,7 +14,7 @@ import {
   notifyNativeOAuthBrowserOutcome,
 } from "./lib/legal-terms-consent";
 import { parseNativeAuthCallback } from "./lib/native-oauth";
-import { sharedRouteFromPath } from "./lib/share-deep-link";
+import { authNavigationIntent, NAVIGATION_ATTEMPT_PARAM, validInternalDestination } from "./lib/auth-navigation-intent";
 import { nativeShareDelivery } from "./lib/native-share-delivery";
 
 // Replit's public development proxy does not accept an explicit :5000 port.
@@ -49,6 +49,7 @@ if (Capacitor.isNativePlatform()) {
       return;
     }
     if (callback.kind === "oauth-error") {
+      authNavigationIntent.clear();
       clearMatchingOAuthTermsConsentAttempt(callback.attemptId);
       notifyNativeOAuthBrowserOutcome("Sign-in was denied. Please try again.");
       void Browser.close().catch(() => {});
@@ -69,9 +70,13 @@ if (Capacitor.isNativePlatform()) {
         // Recovery callbacks never own a pre-auth OAuth consent attempt.
     }
     const isRecovery = callback.kind === "recovery-session";
+    if (isRecovery) authNavigationIntent.discardAuthentication();
+    else authNavigationIntent.verifyNativeCallback(callback.attemptId);
+    const navigation = authNavigationIntent.peek();
     const storageKey = isRecovery ? "pendingRecovery" : "pendingOAuthSession";
     const pendingRoute = isRecovery ? "/reset-password"
-      : sharedRouteFromPath(sessionStorage.getItem("returnUrl")) ? "/login" : "/activity";
+      : navigation?.callbackId === callback.attemptId
+        ? `/login?${NAVIGATION_ATTEMPT_PARAM}=${encodeURIComponent(navigation.id)}` : "/activity";
     localStorage.setItem(storageKey, JSON.stringify({
       accessToken: callback.accessToken,
       refreshToken: callback.refreshToken,
@@ -104,10 +109,15 @@ if (
     OneSignal.initialize("f3e5ce59-cb78-4f05-8d7b-511c45dc2c76");
 
     OneSignal.Notifications.addEventListener("click", (event: any) => {
-      const route = event?.notification?.additionalData?.route as string | undefined;
+      const rawRoute = event?.notification?.additionalData?.route as string | undefined;
+      const route = validInternalDestination(rawRoute);
       if (route) {
+        const navigationId = authNavigationIntent.capture(route, authNavigationIntent.currentOwner());
         localStorage.setItem("pendingRoute", route);
         setTimeout(() => {
+          if (authNavigationIntent.peek()?.id !== navigationId
+            || authNavigationIntent.takeNavigation(authNavigationIntent.currentOwner()) !== route) return;
+          if (localStorage.getItem("pendingRoute") === route) localStorage.removeItem("pendingRoute");
           if (window.location.hash.startsWith("#")) {
             const path = route.startsWith("/") ? route : `/${route}`;
             window.location.hash = `#${path}`;

@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity, MessageSquarePlus, Trash2, Dna, Send, Check, Flag, Ban, Youtube, SlidersHorizontal } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { authNavigationIntent } from "@/lib/auth-navigation-intent";
 import { getGameAlignment } from "@/lib/identity-feedback";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
@@ -136,7 +137,7 @@ export default function UserProfile() {
   useEffect(() => {
     if (!user && !loading && userParams?.id) {
       // Store the profile URL they're trying to visit
-      sessionStorage.setItem('returnUrl', `/user/${userParams.id}`);
+      authNavigationIntent.capture(window.location.pathname + window.location.search + window.location.hash);
     }
   }, [user, loading, userParams?.id]);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);

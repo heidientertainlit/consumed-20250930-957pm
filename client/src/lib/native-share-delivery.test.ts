@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createNativeShareDelivery, sharedNavigationReady } from "./native-share-delivery";
 import { PENDING_SHARED_ROUTE } from "./share-deep-link";
+import { createAuthNavigationIntent } from "./auth-navigation-intent";
 
 const animals = "https://app.consumedapp.com/media/movie/tmdb/1236045";
 const second = "https://app.consumedapp.com/media/book/googlebooks/Hq9PEAAAQBAJ";
@@ -27,6 +28,28 @@ test("early media event survives until router and startup are ready", () => {
   delivery.consume(true, navigate);
   delivery.consume(true, navigate);
   assert.deepEqual(visits, [animalPath]);
+});
+
+test("native delivery consumes before navigation and cannot re-enter with the same link", () => {
+  const { delivery, visits, store } = fixture();
+  delivery.capture(animals, "user-a");
+  delivery.consume(true, route => {
+    visits.push(route);
+    delivery.consume(true, next => visits.push(next), "user-a");
+  }, "user-a");
+  assert.deepEqual(visits, [animalPath]);
+  assert.equal(store.getItem(PENDING_SHARED_ROUTE), null);
+});
+
+test("a pending native link cannot leak into another account or survive sign-out", () => {
+  const { delivery, visits, navigate, store } = fixture();
+  delivery.capture(animals, "user-a");
+  delivery.consume(true, navigate, "user-b");
+  assert.deepEqual(visits, []);
+  delivery.capture(second, "user-a");
+  createAuthNavigationIntent(() => store).clear();
+  delivery.consume(true, navigate, "user-b");
+  assert.deepEqual(visits, []);
 });
 
 test("cold launch fallback navigates exact Animals URL only once across remounts", async () => {
